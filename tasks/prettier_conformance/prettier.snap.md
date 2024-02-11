@@ -1,12 +1,10 @@
-Compatibility: 238/562 (42.35%)
+Compatibility: 242/562 (43.06%)
 
 # Failed
 
 ### arrays
-* arrays/empty.js
 * arrays/numbers-negative-comment-after-minus.js
 * arrays/numbers-negative.js
-* arrays/numbers-with-holes.js
 * arrays/numbers-with-trailing-comments.js
 * arrays/numbers-with-tricky-comments.js
 * arrays/numbers2.js
@@ -33,9 +31,6 @@ Compatibility: 238/562 (42.35%)
 * arrows/long-call-no-args.js
 * arrows/parens.js
 
-### arrows/newline-before-arrow
-* arrows/newline-before-arrow/newline-before-arrow.js
-
 ### assignment
 * assignment/binaryish.js
 * assignment/call-with-template.js
@@ -43,6 +38,7 @@ Compatibility: 238/562 (42.35%)
 * assignment/chain.js
 * assignment/discussion-15196.js
 * assignment/issue-10218.js
+* assignment/issue-2184.js
 * assignment/issue-2540.js
 * assignment/issue-6922.js
 * assignment/issue-7572.js
@@ -58,7 +54,6 @@ Compatibility: 238/562 (42.35%)
 * assignment-comments/string.js
 
 ### async
-* async/conditional-expression.js
 * async/inline-await.js
 * async/nested.js
 
@@ -66,12 +61,13 @@ Compatibility: 238/562 (42.35%)
 * binary-expressions/arrow.js
 * binary-expressions/call.js
 * binary-expressions/comment.js
+* binary-expressions/if.js
 * binary-expressions/inline-jsx.js
 * binary-expressions/inline-object-array.js
 * binary-expressions/jsx_parent.js
-* binary-expressions/return.js
 * binary-expressions/short-right.js
 * binary-expressions/test.js
+* binary-expressions/unary.js
 
 ### break-calls
 * break-calls/break.js
@@ -96,6 +92,7 @@ Compatibility: 238/562 (42.35%)
 * chain-expression/test.js
 
 ### class-comment
+* class-comment/class-property.js
 * class-comment/misc.js
 * class-comment/superclass.js
 
@@ -109,16 +106,14 @@ Compatibility: 238/562 (42.35%)
 * classes/property.js
 
 ### classes-private-fields
-* classes-private-fields/private_fields.js
+* classes-private-fields/with_comments.js
 
 ### comments
 * comments/arrow.js
-* comments/assignment-pattern.js
 * comments/before-comma.js
 * comments/binary-expressions-block-comments.js
 * comments/binary-expressions-parens.js
 * comments/binary-expressions-single-comments.js
-* comments/binary-expressions.js
 * comments/blank.js
 * comments/break-continue-statements.js
 * comments/call_comment.js
@@ -212,6 +207,9 @@ Compatibility: 238/562 (42.35%)
 * empty-paren-comment/class.js
 * empty-paren-comment/empty_paren_comment.js
 
+### end-of-line
+* end-of-line/example.js
+
 ### export
 * export/blank-line-between-specifiers.js
 * export/same-local-and-exported.js
@@ -288,11 +286,11 @@ Compatibility: 238/562 (42.35%)
 
 ### logical_expressions
 * logical_expressions/issue-7024.js
-* logical_expressions/logical_expression_operators.js
 
 ### member
 * member/conditional.js
 * member/expand.js
+* member/logical.js
 
 ### method-chain
 * method-chain/bracket_0-1.js
@@ -334,12 +332,8 @@ Compatibility: 238/562 (42.35%)
 ### no-semi-babylon-extensions
 * no-semi-babylon-extensions/no-semi.js
 
-### nullish-coalescing
-* nullish-coalescing/nullish_coalesing_operator.js
-
 ### object-prop-break-in
 * object-prop-break-in/short-keys.js
-* object-prop-break-in/test.js
 
 ### object-property-ignore
 * object-property-ignore/ignore.js
@@ -349,6 +343,7 @@ Compatibility: 238/562 (42.35%)
 * objects/escape-sequence-key.js
 * objects/expand.js
 * objects/expression.js
+* objects/right-break.js
 
 ### optional-chaining
 * optional-chaining/chaining.js
@@ -381,9 +376,6 @@ Compatibility: 238/562 (42.35%)
 * require-amd/named-amd-module.js
 * require-amd/require.js
 
-### rest
-* rest/trailing-commas.js
-
 ### return
 * return/binaryish.js
 * return/comment.js
@@ -398,7 +390,7 @@ Compatibility: 238/562 (42.35%)
 ### strings
 * strings/escaped.js
 * strings/multiline-literal.js
-* strings/strings.js
+* strings/non-octal-eight-and-nine.js
 * strings/template-literals.js
 
 ### switch

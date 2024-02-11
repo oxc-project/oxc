@@ -5,7 +5,7 @@ use oxc_diagnostics::Result;
 use crate::{
     lexer::Kind,
     list::{NormalList, SeparatedList},
-    Parser,
+    ParserImpl,
 };
 
 pub struct TSEnumMemberList<'a> {
@@ -13,7 +13,7 @@ pub struct TSEnumMemberList<'a> {
 }
 
 impl<'a> SeparatedList<'a> for TSEnumMemberList<'a> {
-    fn new(p: &Parser<'a>) -> Self {
+    fn new(p: &ParserImpl<'a>) -> Self {
         Self { members: p.ast.new_vec() }
     }
 
@@ -25,7 +25,7 @@ impl<'a> SeparatedList<'a> for TSEnumMemberList<'a> {
         Kind::RCurly
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let element = p.parse_ts_enum_member()?;
         self.members.push(element);
         Ok(())
@@ -37,7 +37,7 @@ pub struct TSTupleElementList<'a> {
 }
 
 impl<'a> SeparatedList<'a> for TSTupleElementList<'a> {
-    fn new(p: &Parser<'a>) -> Self {
+    fn new(p: &ParserImpl<'a>) -> Self {
         Self { elements: p.ast.new_vec() }
     }
 
@@ -49,7 +49,7 @@ impl<'a> SeparatedList<'a> for TSTupleElementList<'a> {
         Kind::RBrack
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let span = p.start_span();
         if p.is_at_named_tuple_element() {
             let _is_rest = p.eat(Kind::Dot3);
@@ -91,7 +91,7 @@ pub struct TSTypeParameterList<'a> {
 }
 
 impl<'a> SeparatedList<'a> for TSTypeParameterList<'a> {
-    fn new(p: &Parser<'a>) -> Self {
+    fn new(p: &ParserImpl<'a>) -> Self {
         Self { params: p.ast.new_vec() }
     }
 
@@ -103,7 +103,7 @@ impl<'a> SeparatedList<'a> for TSTypeParameterList<'a> {
         Kind::RAngle
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let param = p.parse_ts_type_parameter()?;
         self.params.push(param);
         Ok(())
@@ -115,7 +115,7 @@ pub struct TSInterfaceOrObjectBodyList<'a> {
 }
 
 impl<'a> TSInterfaceOrObjectBodyList<'a> {
-    pub(crate) fn new(p: &Parser<'a>) -> Self {
+    pub(crate) fn new(p: &ParserImpl<'a>) -> Self {
         Self { body: p.ast.new_vec() }
     }
 }
@@ -129,7 +129,7 @@ impl<'a> NormalList<'a> for TSInterfaceOrObjectBodyList<'a> {
         Kind::RCurly
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let property = p.parse_ts_type_signature()?;
         self.body.push(property);
         Ok(())
@@ -141,7 +141,7 @@ pub struct TSTypeArgumentList<'a> {
 }
 
 impl<'a> SeparatedList<'a> for TSTypeArgumentList<'a> {
-    fn new(p: &Parser<'a>) -> Self {
+    fn new(p: &ParserImpl<'a>) -> Self {
         Self { params: p.ast.new_vec() }
     }
 
@@ -153,7 +153,7 @@ impl<'a> SeparatedList<'a> for TSTypeArgumentList<'a> {
         Kind::RAngle
     }
 
-    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let ty = p.parse_ts_type()?;
         self.params.push(ty);
         Ok(())

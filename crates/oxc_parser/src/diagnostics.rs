@@ -326,3 +326,8 @@ pub struct UsingDeclarationsMustBeInitialized(#[label] pub Span);
 #[error("TS1089: `static` modifier cannot appear on a constructor declaration.")]
 #[diagnostic()]
 pub struct StaticConstructor(#[label] pub Span);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("No line break is allowed before '=>'.")]
+#[diagnostic()]
+pub struct NoLineBreakIsAllowedBeforeArrow(#[label] pub Span);

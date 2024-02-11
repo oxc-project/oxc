@@ -16,6 +16,7 @@ mod number;
 mod numeric;
 mod punctuation;
 mod regex;
+mod search;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64"))]
 mod simd;
 mod source;
@@ -26,6 +27,7 @@ mod token;
 mod trivia_builder;
 mod typescript;
 mod unicode;
+mod whitespace;
 
 use rustc_hash::FxHashMap;
 use std::collections::VecDeque;
@@ -46,7 +48,7 @@ pub use self::{
     number::{parse_big_int, parse_float, parse_int},
     token::Token,
 };
-use crate::diagnostics;
+use crate::{diagnostics, UniquePromise};
 
 #[derive(Debug, Clone, Copy)]
 pub struct LexerCheckpoint<'a> {
@@ -95,12 +97,24 @@ pub struct Lexer<'a> {
     /// Data store for escaped templates, indexed by [Token::start] when [Token::escaped] is true
     /// `None` is saved when the string contains an invalid escape sequence.
     pub escaped_templates: FxHashMap<u32, Option<&'a str>>,
+
+    /// `memchr` Finder for end of multi-line comments. Created lazily when first used.
+    multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
 }
 
 #[allow(clippy::unused_self)]
 impl<'a> Lexer<'a> {
-    pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
-        let source = Source::new(source_text);
+    /// Create new `Lexer`.
+    ///
+    /// Requiring a `UniquePromise` to be provided guarantees only 1 `Lexer` can exist
+    /// on a single thread at one time.
+    pub(super) fn new(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        unique: UniquePromise,
+    ) -> Self {
+        let source = Source::new(source_text, unique);
 
         // The first token is at the start of file, so is allows on a new line
         let token = Token::new_on_new_line();
@@ -115,10 +129,23 @@ impl<'a> Lexer<'a> {
             trivia_builder: TriviaBuilder::default(),
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
+            multi_line_comment_end_finder: None,
         }
     }
 
-    /// Remaining string from `Chars`
+    /// Backdoor to create a `Lexer` without holding a `UniquePromise`, for benchmarks.
+    /// This function must NOT be exposed in public API as it breaks safety invariants.
+    #[cfg(feature = "benchmarking")]
+    pub fn new_for_benchmarks(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+    ) -> Self {
+        let unique = UniquePromise::new_for_tests();
+        Self::new(allocator, source_text, source_type, unique)
+    }
+
+    /// Remaining string from `Source`
     pub fn remaining(&self) -> &'a str {
         self.source.remaining()
     }
@@ -134,14 +161,8 @@ impl<'a> Lexer<'a> {
     }
 
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
-    ///
-    /// # SAFETY
-    /// `checkpoint` must have been created from this `Lexer`.
-    #[allow(clippy::missing_safety_doc)] // Clippy is wrong!
-    pub unsafe fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
+    pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
         self.errors.truncate(checkpoint.errors_pos);
-        // SAFETY: Caller guarantees `checkpoint` was created from this `Lexer`,
-        // and therefore `checkpoint.position` was created from `self.source`.
         self.source.set_position(checkpoint.position);
         self.token = checkpoint.token;
         self.lookahead.clear();
@@ -159,10 +180,7 @@ impl<'a> Lexer<'a> {
         let position = self.source.position();
 
         if let Some(lookahead) = self.lookahead.back() {
-            // SAFETY: `self.lookahead` only contains lookaheads created by this `Lexer`.
-            // `self.source` never changes, so `lookahead.position` must have been created
-            // from `self.source`.
-            unsafe { self.source.set_position(lookahead.position) };
+            self.source.set_position(lookahead.position);
         }
 
         for _i in self.lookahead.len()..n {
@@ -178,8 +196,7 @@ impl<'a> Lexer<'a> {
         // read, so that's not possible. So no need to restore `self.token` here.
         // It's already in same state as it was at start of this function.
 
-        // SAFETY: `position` was created above from `self.source`. `self.source` never changes.
-        unsafe { self.source.set_position(position) };
+        self.source.set_position(position);
 
         self.lookahead[n - 1].token
     }
@@ -192,10 +209,7 @@ impl<'a> Lexer<'a> {
     /// Main entry point
     pub fn next_token(&mut self) -> Token {
         if let Some(lookahead) = self.lookahead.pop_front() {
-            // SAFETY: `self.lookahead` only contains lookaheads created by this `Lexer`.
-            // `self.source` never changes, so `lookahead.position` must have been created
-            // from `self.source`.
-            unsafe { self.source.set_position(lookahead.position) };
+            self.source.set_position(lookahead.position);
             return lookahead.token;
         }
         let kind = self.read_next_token();
@@ -296,4 +310,10 @@ impl<'a> Lexer<'a> {
             }
         }
     }
+}
+
+/// Call a closure while hinting to compiler that this branch is rarely taken.
+#[cold]
+pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
+    f()
 }

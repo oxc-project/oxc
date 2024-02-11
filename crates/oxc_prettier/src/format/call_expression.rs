@@ -68,7 +68,7 @@ pub(super) fn print_call_expression<'a>(
 
     parts.push(print_call_expression_arguments(p, expression));
 
-    Doc::Group(Group::new(parts, false))
+    Doc::Group(Group::new(parts))
 }
 
 fn print_call_expression_arguments<'a>(
@@ -140,7 +140,7 @@ fn print_call_expression_arguments<'a>(
         ));
         parts.push(line!());
         parts.push(ss!(")"));
-        Doc::Group(Group::new(parts, true))
+        Doc::Group(Group::new(parts).with_break(true))
     };
 
     if should_expand_first_arg(arguments) {
@@ -231,7 +231,7 @@ fn print_call_expression_arguments<'a>(
             misc::has_new_line_in_range(p.source_text, arg.span().start, arg.span().end)
         });
 
-    Doc::Group(Group::new(parts, should_break))
+    Doc::Group(Group::new(parts).with_break(should_break))
 }
 
 /// https://github.com/prettier/prettier/blob/7aecca5d6473d73f562ca3af874831315f8f2581/src/language-js/print/call-expression.js#L93-L116

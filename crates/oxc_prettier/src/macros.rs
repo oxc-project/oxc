@@ -16,6 +16,13 @@ macro_rules! ss {
 }
 
 #[macro_export]
+macro_rules! space {
+    () => {{
+        Doc::Str(" ")
+    }};
+}
+
+#[macro_export]
 macro_rules! string {
     ($p:ident, $s:expr) => {{
         $p.str($s)
@@ -93,7 +100,7 @@ macro_rules! group {
             $(
                 temp_vec.push($x);
             )*
-            Doc::Group($crate::doc::Group::new(temp_vec, false))
+            Doc::Group($crate::doc::Group::new(temp_vec))
         }
     };
 }
@@ -122,7 +129,7 @@ macro_rules! group_break {
             $(
                 temp_vec.push($x);
             )*
-            Doc::Group($crate::doc::Group::new(temp_vec, true))
+            Doc::Group($crate::doc::Group::new(temp_vec).with_break(true))
         }
     };
 }

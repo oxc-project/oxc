@@ -56,7 +56,7 @@ pub struct Prettier<'a> {
 
     /// The stack of AST Nodes
     /// See <https://github.com/prettier/prettier/blob/main/src/common/ast-path.js>
-    nodes: Vec<AstKind<'a>>,
+    stack: Vec<AstKind<'a>>,
 
     group_id_builder: GroupIdBuilder,
     args: PrettierArgs,
@@ -81,7 +81,7 @@ impl<'a> Prettier<'a> {
             source_text,
             options,
             trivias: trivias.comments.into_iter().peekable(),
-            nodes: vec![],
+            stack: vec![],
             group_id_builder: GroupIdBuilder::default(),
             args: PrettierArgs::default(),
         }
@@ -97,30 +97,30 @@ impl<'a> Prettier<'a> {
     }
 
     fn enter_node(&mut self, kind: AstKind<'a>) {
-        self.nodes.push(kind);
+        self.stack.push(kind);
     }
 
     fn leave_node(&mut self) {
-        self.nodes.pop();
+        self.stack.pop();
     }
 
     fn current_kind(&self) -> AstKind<'a> {
-        self.nodes[self.nodes.len() - 1]
+        self.stack[self.stack.len() - 1]
     }
 
     fn parent_kind(&self) -> AstKind<'a> {
-        self.nodes[self.nodes.len() - 2]
+        self.stack[self.stack.len() - 2]
     }
 
     fn parent_parent_kind(&self) -> Option<AstKind<'a>> {
-        let len = self.nodes.len();
-        (len >= 3).then(|| self.nodes[len - 3])
+        let len = self.stack.len();
+        (len >= 3).then(|| self.stack[len - 3])
     }
 
     #[allow(unused)]
     fn nth_parent_kind(&self, n: usize) -> Option<AstKind<'a>> {
-        let len = self.nodes.len();
-        (len > n).then(|| self.nodes[len - n - 1])
+        let len = self.stack.len();
+        (len > n).then(|| self.stack[len - n - 1])
     }
 
     /// A hack for erasing the lifetime requirement.
@@ -160,7 +160,7 @@ impl<'a> Prettier<'a> {
         while idx != old_idx {
             old_idx = idx;
             idx = self.skip_to_line_end(idx);
-            // idx = self.skip_inline_comment(idx);
+            idx = self.skip_inline_comment(idx);
             idx = self.skip_spaces(idx, /* backwards */ false);
         }
         idx = self.skip_trailing_comment(idx);
@@ -180,6 +180,12 @@ impl<'a> Prettier<'a> {
             return Some(start_index);
         }
         self.skip_everything_but_new_line(Some(start_index), /* backwards */ false)
+    }
+
+    #[allow(clippy::unused_self)]
+    fn skip_inline_comment(&self, start_index: Option<u32>) -> Option<u32> {
+        let start_index = start_index?;
+        Some(start_index)
     }
 
     fn skip_to_line_end(&self, start_index: Option<u32>) -> Option<u32> {

@@ -3,7 +3,7 @@ use oxc_ast::{ast::*, AstKind};
 use crate::{
     comments::CommentFlags,
     doc::{Doc, DocBuilder, Group},
-    hardline, if_break, indent, line, softline, ss, Format, Prettier,
+    hardline, if_break, indent, line, softline, space, ss, Format, Prettier,
 };
 
 pub(super) fn should_hug_the_only_function_parameter(
@@ -72,12 +72,12 @@ pub(super) fn print_function_parameters<'a>(
     let mut printed = p.vec();
     for (i, param) in params.items.iter().enumerate() {
         printed.push(param.format(p));
-        if i == params.items.len() - 1 {
+        if i == params.items.len() - 1 && params.rest.is_none() {
             break;
         }
         printed.push(ss!(","));
         if should_hug_the_only_function_parameter(p, params) {
-            printed.push(ss!(" "));
+            printed.push(space!());
         } else if p.is_next_line_empty(param.span) {
             printed.extend(hardline!());
             printed.extend(hardline!());
@@ -87,9 +87,6 @@ pub(super) fn print_function_parameters<'a>(
     }
 
     if let Some(rest) = &params.rest {
-        if !params.items.is_empty() {
-            printed.push(ss!(", "));
-        }
         printed.push(rest.format(p));
     }
 
@@ -106,7 +103,7 @@ pub(super) fn print_function_parameters<'a>(
     }
 
     if p.args.expand_first_arg {
-        Doc::Group(Group::new(parts, false))
+        Doc::Group(Group::new(parts))
     } else {
         Doc::Array(parts)
     }

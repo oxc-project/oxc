@@ -1,6 +1,6 @@
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxc_parser::__lexer::{Kind, Lexer};
+use oxc_parser::lexer::{Kind, Lexer};
 use oxc_span::SourceType;
 use oxc_tasks_common::{TestFile, TestFiles};
 
@@ -32,7 +32,7 @@ fn bench_lexer(criterion: &mut Criterion) {
                     // Otherwise the allocator will allocate huge memory chunks (by power of two) from the
                     // system allocator, which makes time measurement unequal during long runs.
                     let allocator = Allocator::default();
-                    let mut lexer = Lexer::new(&allocator, source_text, source_type);
+                    let mut lexer = Lexer::new_for_benchmarks(&allocator, source_text, source_type);
                     while lexer.next_token().kind != Kind::Eof {}
                     allocator
                 });

@@ -100,6 +100,7 @@ mod eslint {
 
 mod typescript {
     pub mod adjacent_overload_signatures;
+    pub mod array_type;
     pub mod ban_ts_comment;
     pub mod ban_types;
     pub mod no_duplicate_enum_values;
@@ -140,7 +141,9 @@ mod jest {
     pub mod no_test_prefixes;
     pub mod no_test_return_statement;
     pub mod prefer_called_with;
+    pub mod prefer_equality_matcher;
     pub mod prefer_todo;
+    pub mod require_to_throw_message;
     pub mod valid_describe_callback;
     pub mod valid_expect;
     pub mod valid_title;
@@ -389,6 +392,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::use_isnan,
     eslint::valid_typeof,
     typescript::adjacent_overload_signatures,
+    typescript::array_type,
     typescript::ban_ts_comment,
     typescript::ban_types,
     typescript::no_duplicate_enum_values,
@@ -426,7 +430,9 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_test_prefixes,
     jest::no_test_return_statement,
     jest::prefer_called_with,
+    jest::prefer_equality_matcher,
     jest::prefer_todo,
+    jest::require_to_throw_message,
     jest::valid_describe_callback,
     jest::valid_expect,
     jest::valid_title,

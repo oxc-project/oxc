@@ -886,7 +886,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
             Self::ConditionalExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::AssignmentExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::SequenceExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::ImportExpression(expr) => expr.gen(p, ctx),
+            Self::ImportExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::TemplateLiteral(literal) => literal.gen(p, ctx),
             Self::TaggedTemplateExpression(expr) => expr.gen(p, ctx),
             Self::Super(sup) => sup.gen(p, ctx),
@@ -1254,7 +1254,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for PrivateFieldExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence > self.precedence(), |p| {
+        let wrap = precedence > self.precedence() || ctx.has_forbid_call();
+        let ctx = ctx.and_forbid_call(false);
+        p.wrap(wrap, |p| {
             self.callee.gen_expr(p, self.precedence(), ctx);
             if self.optional {
                 p.print_str(b"?.");
@@ -1636,7 +1638,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayAssignmentTarget<'a> {
         p.print(b'[');
         p.print_list(&self.elements, ctx);
         if let Some(target) = &self.rest {
-            p.print_comma();
+            if !self.elements.is_empty() {
+                p.print_comma();
+            }
             p.print_ellipsis();
             target.gen(p, ctx);
         }
@@ -1734,15 +1738,19 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for SequenceExpression<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportExpression<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        p.print_str(b"import(");
-        self.source.gen_expr(p, Precedence::Assign, Context::default());
-        if !self.arguments.is_empty() {
-            p.print_comma();
-            p.print_expressions(&self.arguments, Precedence::Assign, Context::default());
-        }
-        p.print(b')');
+impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ImportExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+        let wrap = precedence > self.precedence() || ctx.has_forbid_call();
+        let ctx = ctx.and_forbid_call(false);
+        p.wrap(wrap, |p| {
+            p.print_str(b"import(");
+            self.source.gen_expr(p, Precedence::Assign, ctx);
+            if !self.arguments.is_empty() {
+                p.print_comma();
+                p.print_expressions(&self.arguments, Precedence::Assign, ctx);
+            }
+            p.print(b')');
+        });
     }
 }
 
@@ -1800,7 +1808,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         p.wrap(precedence > self.precedence(), |p| {
             p.print_str(b"new ");
-            self.callee.gen_expr(p, self.precedence(), ctx);
+            self.callee.gen_expr(p, Precedence::NewWithoutArgs, ctx.and_forbid_call(true));
             p.wrap(true, |p| {
                 p.print_list(&self.arguments, ctx);
             });

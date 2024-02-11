@@ -392,6 +392,12 @@ pub enum ArrayExpressionElement<'a> {
     Elision(Span),
 }
 
+impl<'a> ArrayExpressionElement<'a> {
+    pub fn is_elision(&self) -> bool {
+        matches!(self, Self::Elision(_))
+    }
+}
+
 /// Object Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
@@ -1992,6 +1998,15 @@ impl<'a> ClassElement<'a> {
             Self::TSAbstractMethodDefinition(_def) => None,
             Self::TSAbstractPropertyDefinition(_def) => None,
         }
+    }
+
+    pub fn is_property(&self) -> bool {
+        matches!(
+            self,
+            Self::PropertyDefinition(_)
+                | Self::AccessorProperty(_)
+                | Self::TSAbstractPropertyDefinition(_)
+        )
     }
 
     pub fn is_ts_empty_body_function(&self) -> bool {

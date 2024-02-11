@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use crate::{
     doc::{Doc, DocBuilder},
     format::function_parameters::should_group_function_parameters,
-    group, if_break, indent, softline, ss, Format, Prettier,
+    group, if_break, indent, softline, space, ss, Format, Prettier,
 };
 
 pub(super) fn print_function<'a>(
@@ -41,7 +41,7 @@ pub(super) fn print_function<'a>(
     // Prettier has `returnTypeDoc` to group together, write this for keep same with prettier.
     parts.push(group!(p, params_doc));
     if let Some(body) = &func.body {
-        parts.push(ss!(" "));
+        parts.push(space!());
         parts.push(body.format(p));
     }
     if func.is_ts_declare_function() || func.body.is_none() {
@@ -94,7 +94,7 @@ fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<
     parts.push(group!(p, parameters_doc));
 
     if let Some(body) = &function.body {
-        parts.push(ss!(" "));
+        parts.push(space!());
         parts.push(body.format(p));
     }
     Doc::Array(parts)
@@ -110,7 +110,7 @@ pub(super) fn print_return_or_throw_argument<'a>(
     parts.push(ss!(if is_return { "return" } else { "throw" }));
 
     if let Some(argument) = argument {
-        parts.push(ss!(" "));
+        parts.push(space!());
         parts.push(
             if argument.is_binaryish() || matches!(argument, Expression::SequenceExpression(_)) {
                 group![

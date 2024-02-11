@@ -33,7 +33,7 @@ use oxc_syntax::identifier::is_identifier_name;
 use crate::{
     array,
     doc::{Doc, DocBuilder, Group, Separator},
-    format, group, hardline, indent, line, softline, ss, string, wrap, Prettier,
+    format, group, hardline, indent, line, softline, space, ss, string, wrap, Prettier,
 };
 
 use self::{array::Array, object::ObjectLike, template_literal::TemplateLiteralPrinter};
@@ -165,7 +165,7 @@ impl<'a> Format<'a> for IfStatement<'a> {
             if let Some(alternate) = &self.alternate {
                 let else_on_same_line = matches!(alternate, Statement::BlockStatement(_));
                 if else_on_same_line {
-                    parts.push(ss!(" "));
+                    parts.push(space!());
                 } else {
                     parts.extend(hardline!());
                 }
@@ -248,7 +248,7 @@ impl<'a> Format<'a> for ForInStatement<'a> {
             parts.push(ss!(")"));
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
-            Doc::Group(Group::new(parts, false))
+            Doc::Group(Group::new(parts))
         })
     }
 }
@@ -268,7 +268,7 @@ impl<'a> Format<'a> for ForOfStatement<'a> {
             parts.push(ss!(")"));
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
-            Doc::Group(Group::new(parts, false))
+            Doc::Group(Group::new(parts))
         })
     }
 }
@@ -295,7 +295,7 @@ impl<'a> Format<'a> for WhileStatement<'a> {
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
 
-            Doc::Group(Group::new(parts, false))
+            Doc::Group(Group::new(parts))
         })
     }
 }
@@ -312,7 +312,7 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
             parts.push(do_body);
 
             if matches!(self.body, Statement::BlockStatement(_)) {
-                parts.push(ss!(" "));
+                parts.push(space!());
             } else {
                 parts.extend(hardline!());
             }
@@ -335,7 +335,7 @@ impl<'a> Format<'a> for ContinueStatement {
         parts.push(ss!("continue"));
 
         if let Some(label) = &self.label {
-            parts.push(ss!(" "));
+            parts.push(space!());
             parts.push(format!(p, label));
         }
 
@@ -349,7 +349,7 @@ impl<'a> Format<'a> for BreakStatement {
         parts.push(ss!("break"));
 
         if let Some(label) = &self.label {
-            parts.push(ss!(" "));
+            parts.push(space!());
             parts.push(format!(p, label));
         }
 
@@ -375,7 +375,7 @@ impl<'a> Format<'a> for SwitchStatement<'a> {
             header_parts.push(softline!());
             header_parts.push(ss!(")"));
 
-            parts.push(Doc::Group(Group::new(header_parts, false)));
+            parts.push(Doc::Group(Group::new(header_parts)));
 
             parts.push(ss!(" {"));
 
@@ -434,7 +434,7 @@ impl<'a> Format<'a> for SwitchCase<'a> {
             }
 
             if is_only_one_block_statement {
-                consequent_parts.push(ss!(" "));
+                consequent_parts.push(space!());
             } else {
                 consequent_parts.extend(hardline!());
             }
@@ -445,7 +445,7 @@ impl<'a> Format<'a> for SwitchCase<'a> {
             if is_only_one_block_statement {
                 parts.extend(consequent_parts);
             } else {
-                parts.push(indent!(p, Doc::Group(Group::new(consequent_parts, false))));
+                parts.push(indent!(p, Doc::Group(Group::new(consequent_parts))));
             }
         }
 
@@ -478,7 +478,7 @@ impl<'a> Format<'a> for TryStatement<'a> {
         parts.push(ss!("try "));
         parts.push(format!(p, self.block));
         if let Some(handler) = &self.handler {
-            parts.push(ss!(" "));
+            parts.push(space!());
             parts.push(format!(p, handler));
         }
         if let Some(finalizer) = &self.finalizer {
@@ -584,7 +584,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
 
             let mut parts = p.vec();
             parts.push(ss!(kind));
-            parts.push(ss!(" "));
+            parts.push(space!());
 
             let is_hardline = !p.parent_kind().is_iteration_statement()
                 && self.declarations.iter().all(|decl| decl.init.is_some());
@@ -613,7 +613,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
                 }
             }
 
-            Doc::Group(Group::new(parts, false))
+            Doc::Group(Group::new(parts))
         })
     }
 }
@@ -1103,7 +1103,7 @@ impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         if let Some(decl) = &self.declaration {
-            parts.push(ss!(" "));
+            parts.push(space!());
             parts.push(decl.format(p));
         } else {
             parts.push(module::print_module_specifiers(
@@ -1359,7 +1359,9 @@ impl<'a> Format<'a> for RegExpLiteral {
 impl<'a> Format<'a> for StringLiteral {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, StringLiteral, {
-            Doc::Str(string::print_string(p, self.value.as_str(), p.options.single_quote))
+            let raw = &p.source_text[(self.span.start + 1) as usize..(self.span.end - 1) as usize];
+            // TODO: implement `makeString` from prettier/src/utils/print-string.js
+            Doc::Str(string::print_string(p, raw, p.options.single_quote))
         })
     }
 }
@@ -1510,7 +1512,7 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
                     parts.push(ss!(": "));
                     parts.push(format!(p, self.value));
                 }
-                return Doc::Group(Group::new(parts, false));
+                return Doc::Group(Group::new(parts));
             }
 
             if self.shorthand {
@@ -1556,7 +1558,7 @@ impl<'a> Format<'a> for PropertyKey<'a> {
 
         wrap!(p, self, PropertyKey, {
             // Perf: Cache the result of `need_quote` to avoid checking it in each PropertyKey
-            let need_quote = p.options.quote_props.is_consistent()
+            let need_quote = p.options.quote_props.consistent()
                 && match p.parent_parent_kind() {
                     Some(AstKind::ObjectExpression(a)) => a.properties.iter().any(|x| match x {
                         ObjectPropertyKind::ObjectProperty(p) => {
@@ -1584,16 +1586,20 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                 PropertyKey::PrivateIdentifier(ident) => ident.format(p),
                 PropertyKey::Expression(expr) => match expr {
                     Expression::StringLiteral(literal) => {
-                        let unquote = if need_quote {
-                            false
+                        // This does not pass quotes/objects.js
+                        // because prettier uses the function `isEs5IdentifierName` based on unicode version 3,
+                        // but `is_identifier_name` uses the latest unicode version.
+                        if is_identifier_name(literal.value.as_str())
+                            && (p.options.quote_props.as_needed()
+                                || (p.options.quote_props.consistent()/* && !needsQuoteProps.get(parent) */))
+                        {
+                            string!(p, literal.value.as_str())
                         } else {
-                            is_identifier_name(literal.value.as_str())
-                        };
-
-                        if !unquote || p.options.quote_props.is_preserve() {
-                            literal.format(p)
-                        } else {
-                            p.str(literal.value.as_str())
+                            Doc::Str(string::print_string(
+                                p,
+                                literal.value.as_str(),
+                                p.options.single_quote,
+                            ))
                         }
                     }
                     Expression::NumberLiteral(literal) => {
@@ -1628,7 +1634,7 @@ impl<'a> Format<'a> for YieldExpression<'a> {
                 parts.push(ss!("*"));
             }
             if let Some(argument) = &self.argument {
-                parts.push(ss!(" "));
+                parts.push(space!());
                 parts.push(format!(p, argument));
             }
             Doc::Array(parts)
@@ -1654,7 +1660,7 @@ impl<'a> Format<'a> for UnaryExpression<'a> {
             let mut parts = p.vec();
             parts.push(string!(p, self.operator.as_str()));
             if self.operator.is_keyword() {
-                parts.push(ss!(" "));
+                parts.push(space!());
             }
             parts.push(format!(p, self.argument));
             Doc::Array(parts)
@@ -1667,7 +1673,7 @@ impl<'a> Format<'a> for BinaryExpression<'a> {
         wrap!(p, self, BinaryExpression, {
             let doc = binaryish::print_binaryish_expression(
                 p,
-                (&self.left).into(),
+                &self.left,
                 self.operator.into(),
                 &self.right,
             );
@@ -1683,12 +1689,14 @@ impl<'a> Format<'a> for BinaryExpression<'a> {
 impl<'a> Format<'a> for PrivateInExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, PrivateInExpression, {
-            binaryish::print_binaryish_expression(
+            array![
                 p,
-                (&self.left).into(),
-                self.operator.into(),
-                &self.right,
-            )
+                format!(p, self.left),
+                space!(),
+                ss!(self.operator.as_str()),
+                space!(),
+                format!(p, self.right)
+            ]
         })
     }
 }
@@ -1698,7 +1706,7 @@ impl<'a> Format<'a> for LogicalExpression<'a> {
         wrap!(p, self, LogicalExpression, {
             let doc = binaryish::print_binaryish_expression(
                 p,
-                (&self.left).into(),
+                &self.left,
                 self.operator.into(),
                 &self.right,
             );
@@ -1849,7 +1857,7 @@ impl<'a> Format<'a> for ImportExpression<'a> {
             parts.push(softline!());
             parts.push(ss!(")"));
 
-            Doc::Group(Group::new(parts, false))
+            Doc::Group(Group::new(parts))
         })
     }
 }
@@ -2153,7 +2161,7 @@ impl<'a> Format<'a> for ObjectPattern<'a> {
 impl<'a> Format<'a> for BindingProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         if self.shorthand {
-            self.key.format(p)
+            self.value.format(p)
         } else {
             group!(p, format!(p, self.key), ss!(": "), format!(p, self.value))
         }

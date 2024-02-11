@@ -4,14 +4,14 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::GetSpan;
 
-use crate::{diagnostics, Parser};
+use crate::{diagnostics, ParserImpl};
 
 pub trait CoverGrammar<'a, T>: Sized {
-    fn cover(value: T, p: &mut Parser<'a>) -> Result<Self>;
+    fn cover(value: T, p: &mut ParserImpl<'a>) -> Result<Self>;
 }
 
 impl<'a> CoverGrammar<'a, Expression<'a>> for AssignmentTarget<'a> {
-    fn cover(expr: Expression<'a>, p: &mut Parser<'a>) -> Result<Self> {
+    fn cover(expr: Expression<'a>, p: &mut ParserImpl<'a>) -> Result<Self> {
         match expr {
             Expression::ArrayExpression(array_expr) => {
                 ArrayAssignmentTarget::cover(array_expr.unbox(), p)
@@ -34,7 +34,7 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for AssignmentTarget<'a> {
 
 impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
     #[allow(clippy::only_used_in_recursion)]
-    fn cover(expr: Expression<'a>, p: &mut Parser<'a>) -> Result<Self> {
+    fn cover(expr: Expression<'a>, p: &mut ParserImpl<'a>) -> Result<Self> {
         match expr {
             Expression::Identifier(ident) => {
                 Ok(SimpleAssignmentTarget::AssignmentTargetIdentifier(ident))
@@ -65,7 +65,7 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
 }
 
 impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
-    fn cover(expr: ArrayExpression<'a>, p: &mut Parser<'a>) -> Result<Self> {
+    fn cover(expr: ArrayExpression<'a>, p: &mut ParserImpl<'a>) -> Result<Self> {
         let mut elements = p.ast.new_vec();
         let mut rest = None;
 
@@ -100,7 +100,7 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
 }
 
 impl<'a> CoverGrammar<'a, Expression<'a>> for AssignmentTargetMaybeDefault<'a> {
-    fn cover(expr: Expression<'a>, p: &mut Parser<'a>) -> Result<Self> {
+    fn cover(expr: Expression<'a>, p: &mut ParserImpl<'a>) -> Result<Self> {
         match expr {
             Expression::AssignmentExpression(assignment_expr) => {
                 let target = AssignmentTargetWithDefault::cover(assignment_expr.unbox(), p)?;
@@ -115,13 +115,13 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for AssignmentTargetMaybeDefault<'a> {
 }
 
 impl<'a> CoverGrammar<'a, AssignmentExpression<'a>> for AssignmentTargetWithDefault<'a> {
-    fn cover(expr: AssignmentExpression<'a>, _p: &mut Parser<'a>) -> Result<Self> {
+    fn cover(expr: AssignmentExpression<'a>, _p: &mut ParserImpl<'a>) -> Result<Self> {
         Ok(Self { span: expr.span, binding: expr.left, init: expr.right })
     }
 }
 
 impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
-    fn cover(expr: ObjectExpression<'a>, p: &mut Parser<'a>) -> Result<Self> {
+    fn cover(expr: ObjectExpression<'a>, p: &mut ParserImpl<'a>) -> Result<Self> {
         let mut properties = p.ast.new_vec();
         let mut rest = None;
 
@@ -147,7 +147,7 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
 }
 
 impl<'a> CoverGrammar<'a, ObjectProperty<'a>> for AssignmentTargetProperty<'a> {
-    fn cover(property: ObjectProperty<'a>, p: &mut Parser<'a>) -> Result<Self> {
+    fn cover(property: ObjectProperty<'a>, p: &mut ParserImpl<'a>) -> Result<Self> {
         if property.shorthand {
             let binding = match property.key {
                 PropertyKey::Identifier(ident) => {

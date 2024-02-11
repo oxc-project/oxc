@@ -82,15 +82,22 @@ pub struct Group<'a> {
 }
 
 impl<'a> Group<'a> {
-    pub fn new(contents: Vec<'a, Doc<'a>>, should_break: bool) -> Self {
-        Self { contents, should_break, id: None, expanded_states: None }
+    pub fn new(contents: Vec<'a, Doc<'a>>) -> Self {
+        Self { contents, should_break: false, id: None, expanded_states: None }
     }
+
     pub fn new_conditional_group(
         contents: Vec<'a, Doc<'a>>,
         expanded_states: Vec<'a, Doc<'a>>,
     ) -> Self {
         Self { contents, should_break: false, id: None, expanded_states: Some(expanded_states) }
     }
+
+    pub fn with_break(mut self, yes: bool) -> Self {
+        self.should_break = yes;
+        self
+    }
+
     pub fn with_id(mut self, id: GroupId) -> Self {
         self.id = Some(id);
         self
