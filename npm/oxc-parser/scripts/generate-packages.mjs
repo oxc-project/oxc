@@ -51,19 +51,21 @@ function generateNativePackage(target) {
   const manifest = {
     name: package_name(target),
     version,
-    author,
+    main: binaryName,
     license,
-    homepage,
+    author,
     bugs,
+    homepage,
     repository,
-    os: [platform],
+    files: [binaryName],
     cpu: [arch],
+    os: [platform],
     ...libc
   };
 
   const manifestPath = resolve(packageRoot, "package.json");
   console.log(`Create manifest ${manifestPath}`);
-  fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 
   console.log(`Copy binary ${binaryTarget}`);
   fs.copyFileSync(binarySource, binaryTarget);
@@ -90,7 +92,7 @@ function writeManifest() {
   console.log('manifestPath', manifestPath);
   console.log('manifestData', manifestData);
 
-  const content = JSON.stringify(manifestData);
+  const content = JSON.stringify(manifestData, null, 2);
   fs.writeFileSync(manifestPath, content);
 
   let files = ["index.js", "index.d.ts"];
