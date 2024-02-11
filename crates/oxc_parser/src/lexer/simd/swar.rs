@@ -39,9 +39,8 @@ impl<const N: usize> LookupTable<N> {
     }
 }
 
-// A const alternative to u64::from_ne_bytes to avoid bumping MSRV (1.36 => 1.44)
 // creates a u64 whose bytes are each equal to b
 #[allow(overflowing_literals)]
 const fn uniform_segment(b: u8) -> usize {
-    b as usize * 0x01_01_01_01_01_01_01_01 as usize /* [1_u8; 8] */
+    usize::from_ne_bytes([b; ALIGNMENT])
 }
