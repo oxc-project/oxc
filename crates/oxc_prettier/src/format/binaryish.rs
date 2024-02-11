@@ -15,8 +15,9 @@ pub(super) fn print_binaryish_expression<'a>(
     operator: BinaryishOperator,
     right: &Expression<'a>,
 ) -> Doc<'a> {
+    let parent_kind = p.parent_kind();
     let is_inside_parenthesis = matches!(
-        p.parent_kind(),
+        parent_kind,
         AstKind::IfStatement(_)
             | AstKind::WhileStatement(_)
             | AstKind::SwitchStatement(_)
@@ -27,6 +28,13 @@ pub(super) fn print_binaryish_expression<'a>(
 
     if is_inside_parenthesis {
         return Doc::Array(parts);
+    }
+
+    // Avoid indenting sub-expressions in some cases where the first sub-expression is already
+    // indented accordingly. We should indent sub-expressions where the first case isn't indented.
+    let should_not_indent = matches!(parent_kind, AstKind::ReturnStatement(_));
+    if should_not_indent {
+        return Doc::Group(Group::new(parts, false));
     }
 
     let first_group_index = parts.iter().position(|part| {

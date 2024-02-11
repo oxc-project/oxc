@@ -1,4 +1,4 @@
-Compatibility: 240/562 (42.70%)
+Compatibility: 242/562 (43.06%)
 
 # Failed
 
@@ -65,7 +65,6 @@ Compatibility: 240/562 (42.70%)
 * binary-expressions/inline-jsx.js
 * binary-expressions/inline-object-array.js
 * binary-expressions/jsx_parent.js
-* binary-expressions/return.js
 * binary-expressions/short-right.js
 * binary-expressions/test.js
 * binary-expressions/unary.js
@@ -380,9 +379,6 @@ Compatibility: 240/562 (42.70%)
 ### return
 * return/binaryish.js
 * return/comment.js
-
-### return-outside-function
-* return-outside-function/return-outside-function.js
 
 ### sequence-break
 * sequence-break/break.js
