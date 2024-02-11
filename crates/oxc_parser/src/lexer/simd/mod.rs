@@ -92,6 +92,7 @@ fn tabulate<const N: usize>(delimiters: [u8; N]) -> [u8; 16] {
         debug_assert!(d < 128, "delimiter must be an ASCII character");
         // lower 4 bits is the column index, higher 4 bits is the row index
         let (col, row) = (d & 0x0F, d >> 4);
+        // use bitwise `or`` to combine the row with the same column
         table[col as usize] |= 1 << row;
     }
     table
