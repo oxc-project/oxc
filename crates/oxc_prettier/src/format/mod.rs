@@ -248,7 +248,7 @@ impl<'a> Format<'a> for ForInStatement<'a> {
             parts.push(ss!(")"));
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
-            Doc::Group(Group::new(parts, false))
+            Doc::Group(Group::new(parts))
         })
     }
 }
@@ -268,7 +268,7 @@ impl<'a> Format<'a> for ForOfStatement<'a> {
             parts.push(ss!(")"));
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
-            Doc::Group(Group::new(parts, false))
+            Doc::Group(Group::new(parts))
         })
     }
 }
@@ -295,7 +295,7 @@ impl<'a> Format<'a> for WhileStatement<'a> {
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
 
-            Doc::Group(Group::new(parts, false))
+            Doc::Group(Group::new(parts))
         })
     }
 }
@@ -375,7 +375,7 @@ impl<'a> Format<'a> for SwitchStatement<'a> {
             header_parts.push(softline!());
             header_parts.push(ss!(")"));
 
-            parts.push(Doc::Group(Group::new(header_parts, false)));
+            parts.push(Doc::Group(Group::new(header_parts)));
 
             parts.push(ss!(" {"));
 
@@ -445,7 +445,7 @@ impl<'a> Format<'a> for SwitchCase<'a> {
             if is_only_one_block_statement {
                 parts.extend(consequent_parts);
             } else {
-                parts.push(indent!(p, Doc::Group(Group::new(consequent_parts, false))));
+                parts.push(indent!(p, Doc::Group(Group::new(consequent_parts))));
             }
         }
 
@@ -613,7 +613,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
                 }
             }
 
-            Doc::Group(Group::new(parts, false))
+            Doc::Group(Group::new(parts))
         })
     }
 }
@@ -1512,7 +1512,7 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
                     parts.push(ss!(": "));
                     parts.push(format!(p, self.value));
                 }
-                return Doc::Group(Group::new(parts, false));
+                return Doc::Group(Group::new(parts));
             }
 
             if self.shorthand {
@@ -1857,7 +1857,7 @@ impl<'a> Format<'a> for ImportExpression<'a> {
             parts.push(softline!());
             parts.push(ss!(")"));
 
-            Doc::Group(Group::new(parts, false))
+            Doc::Group(Group::new(parts))
         })
     }
 }
