@@ -192,6 +192,11 @@ impl<'a> Source<'a> {
         self.ptr = pos.ptr;
     }
 
+    #[inline]
+    pub(super) fn advance_to_end(&mut self) {
+        self.ptr = self.end;
+    }
+
     /// Get string slice from a `SourcePosition` up to the current position of `Source`.
     pub(super) fn str_from_pos_to_current(&self, pos: SourcePosition) -> &'a str {
         assert!(pos.ptr <= self.ptr);
@@ -224,6 +229,18 @@ impl<'a> Source<'a> {
         let len = self.ptr as usize - pos.addr();
         let slice = slice::from_raw_parts(pos.ptr, len);
         std::str::from_utf8_unchecked(slice)
+    }
+
+    /// Get string slice from a `SourcePosition` up to the end of `Source`.
+    #[inline]
+    pub(super) fn str_from_pos_to_end(&self, pos: SourcePosition) -> &'a str {
+        // SAFETY: Invariants of `SourcePosition` is that it cannot be after end of `Source`,
+        // and always on a UTF-8 character boundary
+        unsafe {
+            let len = self.end as usize - pos.addr();
+            let slice = slice::from_raw_parts(pos.ptr, len);
+            std::str::from_utf8_unchecked(slice)
+        }
     }
 
     /// Get current position in source, relative to start of source.
