@@ -7,7 +7,31 @@
 use super::simd;
 
 /// Batch size for searching
-pub const SEARCH_BATCH_SIZE: usize = simd::LookupTable::ALIGNMENT;
+pub const SEARCH_BATCH_SIZE: usize = simd::MatchTable::ALIGNMENT;
+
+pub struct SimdByteMatchTable(simd::MatchTable);
+
+#[allow(dead_code)]
+impl SimdByteMatchTable {
+    // Create new `SimdByteMatchTable`.
+    pub fn new<const N: usize>(delimiters: [u8; N]) -> Self {
+        Self(simd::MatchTable::new(delimiters))
+    }
+
+    /// Declare that using this table for searching.
+    /// An unsafe function here, whereas for `SafeByteMatchTable` it's safe.
+    /// `byte_search!` macro calls `.use_table()` on whatever table it's provided, which makes
+    /// using the macro unsafe for `ByteMatchTable`, but safe for `SafeByteMatchTable`.
+    #[allow(clippy::unused_self)]
+    #[inline]
+    pub const unsafe fn use_table(&self) {}
+
+    /// Test a value against this `ByteMatchTable`.
+    #[inline]
+    pub fn matches(&self, data: &[u8; SEARCH_BATCH_SIZE]) -> Option<usize> {
+        self.0.match_vectored(data)
+    }
+}
 
 /// Byte matcher lookup table.
 ///

@@ -6,13 +6,13 @@ use core::arch::x86_64::*;
 use super::tabulate;
 
 #[derive(Debug)]
-pub struct LookupTable {
+pub struct MatchTable {
     table: __m256i,
     arf: __m256i,
     lsh: __m256i,
 }
 
-impl LookupTable {
+impl MatchTable {
     pub const ALIGNMENT: usize = 32;
 
     pub fn new<const N: usize>(delimiters: [u8; N]) -> Self {

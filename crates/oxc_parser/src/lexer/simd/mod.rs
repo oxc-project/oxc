@@ -6,31 +6,31 @@ mod neon;
 mod swar;
 
 #[derive(Debug)]
-pub(crate) struct LookupTable {
+pub(crate) struct MatchTable {
     #[cfg(target_feature = "avx2")]
-    table: avx2::LookupTable,
+    table: avx2::MatchTable,
     #[cfg(target_feature = "neon")]
-    table: neon::LookupTable,
+    table: neon::MatchTable,
     #[cfg(all(not(target_feature = "avx2"), not(target_arch = "aarch64")))]
-    table: swar::LookupTable,
+    table: swar::MatchTable,
 }
 
-impl LookupTable {
+impl MatchTable {
     #[cfg(target_feature = "avx2")]
-    pub const ALIGNMENT: usize = avx2::LookupTable::ALIGNMENT;
+    pub const ALIGNMENT: usize = avx2::MatchTable::ALIGNMENT;
     #[cfg(target_feature = "neon")]
-    pub const ALIGNMENT: usize = neon::LookupTable::ALIGNMENT;
+    pub const ALIGNMENT: usize = neon::MatchTable::ALIGNMENT;
     #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
-    pub const ALIGNMENT: usize = swar::LookupTable::ALIGNMENT;
+    pub const ALIGNMENT: usize = swar::MatchTable::ALIGNMENT;
 
     pub fn new<const N: usize>(delimiters: [u8; N]) -> Self {
         Self {
             #[cfg(target_feature = "avx2")]
-            table: avx2::LookupTable::new(delimiters),
+            table: avx2::MatchTable::new(delimiters),
             #[cfg(target_feature = "neon")]
-            table: neon::LookupTable::new(delimiters),
+            table: neon::MatchTable::new(delimiters),
             #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
-            table: swar::LookupTable::new(delimiters),
+            table: swar::MatchTable::new(delimiters),
         }
     }
 

@@ -1,11 +1,11 @@
 //! SWAR: SIMD Within A Register
 
 #[derive(Debug)]
-pub struct LookupTable {
+pub struct MatchTable {
     delimiters: Vec<usize>,
 }
 
-impl LookupTable {
+impl MatchTable {
     pub const ALIGNMENT: usize = core::mem::size_of::<usize>();
 
     pub fn new<const N: usize>(delimiters: [u8; N]) -> Self {

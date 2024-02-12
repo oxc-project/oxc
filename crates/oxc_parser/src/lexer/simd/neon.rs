@@ -2,12 +2,12 @@ use super::tabulate;
 use core::arch::aarch64::*;
 
 #[derive(Debug)]
-pub struct LookupTable {
+pub struct MatchTable {
     table: uint8x16_t,
     arf: uint8x16_t,
 }
 
-impl LookupTable {
+impl MatchTable {
     pub const ALIGNMENT: usize = 16;
 
     pub fn new<const N: usize>(delimiters: [u8; N]) -> Self {
