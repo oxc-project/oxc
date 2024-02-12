@@ -10,8 +10,8 @@ pub struct MatchTable {
 impl MatchTable {
     pub const ALIGNMENT: usize = 16;
 
-    pub fn new<const N: usize>(delimiters: [u8; N]) -> Self {
-        let table = tabulate(delimiters);
+    pub fn new(bytes: [bool; 256]) -> Self {
+        let table = tabulate(bytes);
         let table = unsafe { vld1q_u8(table.as_ptr()) };
         let arf = unsafe {
             vld1q_u8([1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128].as_ptr())
@@ -20,11 +20,11 @@ impl MatchTable {
     }
 
     #[inline]
-    pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<usize> {
+    pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<(usize, u8)> {
         let ptr = data.as_ptr();
         // SAFETY:
         // data is aligned and has ALIGNMENT bytes
-        unsafe { self.match_delimiters(ptr) }
+        unsafe { self.match_delimiters(ptr) }.map(|pos| (pos, data[pos]))
     }
 
     // same with avx2, but neon doesn't have a _mm256_movemask_epi8 instruction
@@ -74,18 +74,4 @@ unsafe fn offsetz(x: uint8x16_t) -> usize {
     } else {
         16
     }
-}
-
-#[test]
-fn neon_match() {
-    use crate::{lexer::source::Source, parser_parse::UniquePromise};
-    let table = LookupTable::new([b'\r', b'\n', b'"', b'\'', b'\\']);
-    let unique = UniquePromise::new_for_tests();
-    let source = Source::new(
-        r#""hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!""#,
-        unique,
-    );
-    let (offset, actual_len) = table.match_vectored(&source);
-    assert_eq!(offset, Some(0));
-    assert_eq!(actual_len, LookupTable::ALIGNMENT);
 }

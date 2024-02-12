@@ -118,6 +118,40 @@ impl<'a> Source<'a> {
         }
     }
 
+    /// Peek next `N` bytes of source without consuming it.
+    /// also the `N` is the length to pad the peeked bytes to.
+    /// returns None if the peeked bytes would be EOF.
+    /// returns Some((cow_bytes, actual_length)) if the peeked bytes is not EOF.
+    #[inline]
+    pub(super) unsafe fn peek_n_with_padding<const N: usize>(
+        &self,
+    ) -> Option<(Cow<'_, [u8; N]>, usize)> {
+        const PADDING: u8 = u8::MAX;
+        let remaining_len = self.end as usize - self.ptr as usize;
+        if remaining_len == 0 {
+            return None;
+        }
+        if remaining_len < N {
+            let padding = N - remaining_len;
+            // unintialized array to save CPU cycles
+            let mut dst = MaybeUninit::<[u8; N]>::uninit();
+            // copy the remaining bytes to the array
+            ptr::copy_nonoverlapping(self.ptr, dst.as_mut_ptr().cast(), remaining_len);
+            // write the padding bytes to the end of the array
+            ptr::write_bytes(dst.as_mut_ptr().add(remaining_len), PADDING, padding);
+            Some((Cow::Owned(dst.assume_init()), remaining_len))
+        } else {
+            let bytes = from_raw_parts(self.ptr, N);
+            Some((Cow::Borrowed(bytes.try_into().unwrap()), N))
+        }
+    }
+
+    /// Get the nth byte from ptr of the source position
+    #[inline]
+    pub(super) unsafe fn nth(&self, nth: usize) -> u8 {
+        *self.ptr.add(nth)
+    }
+
     /// Get remaining source text as `&str`.
     #[inline]
     pub(super) fn remaining(&self) -> &'a str {
@@ -567,41 +601,6 @@ impl<'a> SourcePosition<'a> {
         #[allow(clippy::ptr_as_ptr)]
         let p = self.ptr as *const [u8; 2];
         *p.as_ref().unwrap_unchecked()
-    }
-
-    /// Peek next `N` bytes of source without consuming it.
-    /// also the `N` is the length to pad the peeked bytes to.
-    /// returns None if the peeked bytes would be EOF.
-    /// returns Some((array, actual_length)) if the peeked bytes is not EOF.
-    #[inline]
-    pub(super) unsafe fn peek_n_with_padding<const N: usize>(
-        &self,
-        end: *const u8,
-    ) -> Option<(Cow<'_, [u8; N]>, usize)> {
-        const PADDING: u8 = u8::MAX;
-        let remaining_len = end as usize - self.ptr as usize;
-        if remaining_len == 0 {
-            return None;
-        }
-        if remaining_len < N {
-            let padding = N - remaining_len;
-            // unintialized array to save CPU cycles
-            let mut dst = MaybeUninit::<[u8; N]>::uninit();
-            // copy the remaining bytes to the array
-            ptr::copy_nonoverlapping(self.ptr, dst.as_mut_ptr().cast(), remaining_len);
-            // write the padding bytes to the end of the array
-            ptr::write_bytes(dst.as_mut_ptr().add(remaining_len), PADDING, padding);
-            Some((Cow::Owned(dst.assume_init()), remaining_len))
-        } else {
-            let bytes = from_raw_parts(self.ptr, N);
-            Some((Cow::Borrowed(bytes.try_into().unwrap()), N))
-        }
-    }
-
-    /// Get the nth byte from ptr of the source position
-    #[inline]
-    pub(super) unsafe fn read_n(&self, nth: usize) -> u8 {
-        *self.ptr.add(nth)
     }
 }
 

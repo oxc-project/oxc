@@ -8,7 +8,7 @@ pub struct MatchTable {
 impl MatchTable {
     pub const ALIGNMENT: usize = core::mem::size_of::<usize>();
 
-    pub fn new(bytes: [bool; 256]) -> Self {
+    pub const fn new(bytes: [bool; 256]) -> Self {
         let mut delimiters = vec![];
         let mut i = 0;
         loop {

@@ -4,6 +4,7 @@ use core::arch::x86::*;
 use core::arch::x86_64::*;
 
 use super::tabulate;
+use concat_arrays::concat_arrays;
 
 #[derive(Debug)]
 pub struct MatchTable {
@@ -15,11 +16,12 @@ pub struct MatchTable {
 impl MatchTable {
     pub const ALIGNMENT: usize = 32;
 
-    pub fn new<const N: usize>(delimiters: [u8; N]) -> Self {
+    pub fn new(bytes: [bool; 256]) -> Self {
         // SAFETY:
         // delimiters must be an ASCII character and checked by `tabulate`
         unsafe {
-            let table = tabulate(delimiters);
+            let table = tabulate(bytes);
+            let table = concat_arrays!(table, table);
             let table = _mm256_lddqu_si256(table.as_ptr().cast());
             // arf: 0b10000000, 0b01000000, 0b00100000, 0b00010000, 0b00001000, 0b00000100, 0b00000010, 0b00000001
             // for input data match each row of the table, be like a mask
@@ -37,11 +39,11 @@ impl MatchTable {
 
     // match 32 bytes at a time, return the position of the first found delimiter
     #[inline]
-    pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<usize> {
+    pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<(usize, u8)> {
         let ptr = data.as_ptr();
         // SAFETY:
         // data is aligned and has ALIGNMENT bytes
-        unsafe { self.match_delimiters(ptr) }
+        unsafe { self.match_delimiters(ptr) }.map(|pos| (pos, data[pos]))
     }
 
     // match 32 bytes at a time, return the position of the first found delimiter

@@ -2,7 +2,7 @@
 mod avx2;
 #[cfg(target_feature = "neon")]
 mod neon;
-#[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
+// #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
 mod swar;
 
 #[derive(Debug)]
@@ -23,19 +23,19 @@ impl MatchTable {
     #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
     pub const ALIGNMENT: usize = swar::MatchTable::ALIGNMENT;
 
-    pub fn new<const N: usize>(delimiters: [u8; N]) -> Self {
+    pub fn new(bytes: [bool; 256]) -> Self {
         Self {
             #[cfg(target_feature = "avx2")]
-            table: avx2::MatchTable::new(delimiters),
+            table: avx2::MatchTable::new(bytes),
             #[cfg(target_feature = "neon")]
-            table: neon::MatchTable::new(delimiters),
+            table: neon::MatchTable::new(bytes),
             #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
-            table: swar::MatchTable::new(delimiters),
+            table: swar::MatchTable::new(bytes),
         }
     }
 
     #[inline]
-    pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<usize> {
+    pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<(usize, u8)> {
         self.table.match_vectored(data)
     }
 }
@@ -76,14 +76,22 @@ impl MatchTable {
 // Returns a 16 column(element) vector, each column is a 8-bit mask for
 // match the delimiter.
 #[inline]
-fn tabulate<const N: usize>(delimiters: [u8; N]) -> [u8; 16] {
+const fn tabulate(bytes: [bool; 256]) -> [u8; 16] {
     let mut table = [0u8; 16];
-    for d in delimiters {
-        debug_assert!(d < 128, "delimiter must be an ASCII character");
-        // lower 4 bits is the column index, higher 4 bits is the row index
-        let (col, row) = (d & 0x0F, d >> 4);
-        // use bitwise `or`` to combine the row with the same column
-        table[col as usize] |= 1 << row;
+    let mut i = 0;
+    loop {
+        let set = bytes[0];
+        if set {
+            debug_assert!(i < 128, "delimiter must be an ASCII character");
+            // lower 4 bits is the column index, higher 4 bits is the row index
+            let (col, row) = (i & 0x0F, i >> 4);
+            // use bitwise `or`` to combine the row with the same column
+            table[col] |= 1 << row;
+        }
+        i += 1;
+        if i == 256 {
+            break;
+        }
     }
     table
 }

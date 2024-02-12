@@ -1,29 +1,36 @@
 use super::{
     cold_branch,
-    search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
+    search::{byte_search, simd_byte_match_table, SimdByteMatchTable, SEARCH_BATCH_SIZE},
     Kind, Lexer, SourcePosition,
 };
 use crate::diagnostics;
 
-use std::cmp::max;
-
+use once_cell::sync::Lazy;
 use oxc_allocator::String;
 use oxc_span::Span;
 use oxc_syntax::identifier::{
     is_identifier_part, is_identifier_part_unicode, is_identifier_start_unicode,
 };
+use std::cmp::max;
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
 
-static ASCII_ID_START_TABLE: SafeByteMatchTable =
-    safe_byte_match_table!(|b| b.is_ascii_alphabetic() || b == b'_' || b == b'$');
+static ASCII_ID_START_TABLE: Lazy<SimdByteMatchTable> =
+    simd_byte_match_table!(|b| b.is_ascii_alphabetic() || b == b'_' || b == b'$');
 
-static NOT_ASCII_ID_CONTINUE_TABLE: SafeByteMatchTable =
-    safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || b == b'_' || b == b'$'));
+static NOT_ASCII_ID_CONTINUE_TABLE: Lazy<SimdByteMatchTable> =
+    simd_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || b == b'_' || b == b'$'));
 
 #[inline]
-fn is_identifier_start_ascii_byte(byte: u8) -> bool {
-    ASCII_ID_START_TABLE.matches(byte)
+fn is_identifier_start_ascii_byte(data: Option<&[u8; SEARCH_BATCH_SIZE]>) -> bool {
+    let data = match data {
+        Some(data) => data,
+        None => return false,
+    };
+    match ASCII_ID_START_TABLE.matches(data) {
+        Some((pos, _)) => pos == 0,
+        None => false,
+    }
 }
 
 impl<'a> Lexer<'a> {
@@ -226,8 +233,8 @@ impl<'a> Lexer<'a> {
 
         // Handle if not an ASCII identifier byte.
         // SAFETY: Not at EOF, so safe to read a byte.
-        let b = unsafe { start_pos.read() };
-        if !is_identifier_start_ascii_byte(b) {
+        let data = unsafe { self.source.peek_n_with_padding::<SEARCH_BATCH_SIZE>() };
+        if !is_identifier_start_ascii_byte(data.as_ref().map(|x| x.0.as_ref())) {
             return self.private_identifier_not_ascii_id();
         }
 
