@@ -85,7 +85,6 @@ pub(crate) fn string_literal_lookup(source: &Source) -> Position {
 // Returns a 16 column(element) vector, each column is a 8-bit mask for
 // match the delimiter.
 #[inline]
-#[allow(clippy::cast_possible_truncation)]
 fn tabulate<const N: usize>(delimiters: [u8; N]) -> [u8; 16] {
     let mut table = [0u8; 16];
     for d in delimiters {
