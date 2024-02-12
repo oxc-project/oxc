@@ -1409,10 +1409,8 @@ dependencies = [
  "encoding_rs",
  "encoding_rs_io",
  "futures",
- "jemallocator",
  "lazy_static",
  "miette",
- "mimalloc",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
@@ -1538,8 +1536,6 @@ version = "0.7.0"
 dependencies = [
  "insta",
  "itertools 0.12.1",
- "jemallocator",
- "mimalloc",
  "num-bigint",
  "num-traits",
  "oxc_allocator",
@@ -1561,8 +1557,6 @@ dependencies = [
  "brotlic",
  "flate2",
  "humansize",
- "jemallocator",
- "mimalloc",
  "oxc_allocator",
  "oxc_codegen",
  "oxc_minifier",
@@ -1638,8 +1632,6 @@ dependencies = [
 name = "oxc_prettier_conformance"
 version = "0.0.0"
 dependencies = [
- "jemallocator",
- "mimalloc",
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",
@@ -1739,8 +1731,6 @@ name = "oxc_transform_conformance"
 version = "0.0.0"
 dependencies = [
  "indexmap",
- "jemallocator",
- "mimalloc",
  "oxc_allocator",
  "oxc_codegen",
  "oxc_diagnostics",
