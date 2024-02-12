@@ -11,10 +11,10 @@ use std::cmp::max;
 const MIN_ESCAPED_STR_LEN: usize = 16;
 
 static DOUBLE_QUOTE_STRING_END_TABLE: Lazy<SimdByteMatchTable> =
-    simd_byte_match_table!(|b| matches!(b, b'"' | b'\r' | b'\n' | b'\\'));
+    simd_byte_match_table!(|b| matches!(b, b'"' | b'\r' | b'\n' | b'\\'), false);
 
 static SINGLE_QUOTE_STRING_END_TABLE: Lazy<SimdByteMatchTable> =
-    simd_byte_match_table!(|b| matches!(b, b'\'' | b'\r' | b'\n' | b'\\'));
+    simd_byte_match_table!(|b| matches!(b, b'\'' | b'\r' | b'\n' | b'\\'), false);
 
 /// Macro to handle a string literal.
 ///

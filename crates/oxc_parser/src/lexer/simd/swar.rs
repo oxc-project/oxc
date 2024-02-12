@@ -14,7 +14,7 @@ impl MatchTable {
         loop {
             let set = bytes[0];
             if set {
-                debug_assert!(i < 128, "delimiter must be an ASCII character");
+                debug_addssert!(i < 128, "delimiter must be an ASCII character");
                 delimiters.push(Self::uniform_segment(i as u8));
             }
             i += 1;

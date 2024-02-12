@@ -5,7 +5,7 @@ use super::{
 use once_cell::sync::Lazy;
 
 static NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE: Lazy<SimdByteMatchTable> =
-    simd_byte_match_table!(|b| !matches!(b, b' ' | b'\t' | b'\r' | b'\n'));
+    simd_byte_match_table!(|b| matches!(b, b' ' | b'\t' | b'\r' | b'\n'), true);
 
 impl<'a> Lexer<'a> {
     pub(super) fn line_break_handler(&mut self) -> Kind {

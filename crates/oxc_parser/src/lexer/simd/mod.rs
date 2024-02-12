@@ -23,14 +23,14 @@ impl MatchTable {
     #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
     pub const ALIGNMENT: usize = swar::MatchTable::ALIGNMENT;
 
-    pub fn new(bytes: [bool; 256]) -> Self {
+    pub fn new(bytes: [bool; 256], reverse: bool) -> Self {
         Self {
             #[cfg(target_feature = "avx2")]
-            table: avx2::MatchTable::new(bytes),
+            table: avx2::MatchTable::new(bytes, reverse),
             #[cfg(target_feature = "neon")]
-            table: neon::MatchTable::new(bytes),
+            table: neon::MatchTable::new(bytes, reverse),
             #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
-            table: swar::MatchTable::new(bytes),
+            table: swar::MatchTable::new(bytes, reverse),
         }
     }
 
@@ -80,7 +80,7 @@ const fn tabulate(bytes: [bool; 256]) -> [u8; 16] {
     let mut table = [0u8; 16];
     let mut i = 0;
     loop {
-        let set = bytes[0];
+        let set = bytes[i];
         if set {
             debug_assert!(i < 128, "delimiter must be an ASCII character");
             // lower 4 bits is the column index, higher 4 bits is the row index

@@ -14,8 +14,8 @@ pub struct SimdByteMatchTable(simd::MatchTable);
 #[allow(dead_code)]
 impl SimdByteMatchTable {
     // Create new `SimdByteMatchTable`.
-    pub fn new(bytes: [bool; 256]) -> Self {
-        Self(simd::MatchTable::new(bytes))
+    pub fn new(bytes: [bool; 256], reverse: bool) -> Self {
+        Self(simd::MatchTable::new(bytes, reverse))
     }
 
     /// Declare that using this table for searching.
@@ -34,13 +34,13 @@ impl SimdByteMatchTable {
 }
 
 macro_rules! simd_byte_match_table {
-    (|$byte:ident| $res:expr) => {{
+    (|$byte:ident| $res:expr, $reverse:expr) => {{
         use crate::lexer::search::SimdByteMatchTable;
         use once_cell::sync::Lazy;
         seq_macro::seq!($byte in 0u8..=255 {
             // Clippy creates warnings because e.g. `byte_match_table!(|b| b == 0)`
             // is expanded to `SafeByteMatchTable([0 == 0, ... ])`
-            Lazy::new(||SimdByteMatchTable::new([#($res,)*]))
+            Lazy::new(||SimdByteMatchTable::new([#($res,)*], $reverse))
         })
     }};
 }

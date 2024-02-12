@@ -17,10 +17,10 @@ const LS_BYTES_2_AND_3: [u8; 2] = [0x80, 0xA8];
 const PS_BYTES_2_AND_3: [u8; 2] = [0x80, 0xA9];
 
 static LINE_BREAK_TABLE: Lazy<SimdByteMatchTable> =
-    simd_byte_match_table!(|b| matches!(b, b'\r' | b'\n' | LS_OR_PS_FIRST));
+    simd_byte_match_table!(|b| matches!(b, b'\r' | b'\n' | LS_OR_PS_FIRST), false);
 
 static MULTILINE_COMMENT_START_TABLE: Lazy<SimdByteMatchTable> =
-    simd_byte_match_table!(|b| matches!(b, b'*' | b'\r' | b'\n' | LS_OR_PS_FIRST));
+    simd_byte_match_table!(|b| matches!(b, b'*' | b'\r' | b'\n' | LS_OR_PS_FIRST), false);
 
 impl<'a> Lexer<'a> {
     /// Section 12.4 Single Line Comment

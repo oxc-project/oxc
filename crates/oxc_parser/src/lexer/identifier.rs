@@ -16,10 +16,10 @@ use std::cmp::max;
 const MIN_ESCAPED_STR_LEN: usize = 16;
 
 static ASCII_ID_START_TABLE: Lazy<SimdByteMatchTable> =
-    simd_byte_match_table!(|b| b.is_ascii_alphabetic() || b == b'_' || b == b'$');
+    simd_byte_match_table!(|b| b.is_ascii_alphabetic() || b == b'_' || b == b'$', false);
 
 static NOT_ASCII_ID_CONTINUE_TABLE: Lazy<SimdByteMatchTable> =
-    simd_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || b == b'_' || b == b'$'));
+    simd_byte_match_table!(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'$', true);
 
 #[inline]
 fn is_identifier_start_ascii_byte(data: Option<&[u8; SEARCH_BATCH_SIZE]>) -> bool {
