@@ -4,8 +4,10 @@
 //! * `byte_match_table!` and `safe_byte_match_table!` macros create those tables at compile time.
 //! * `byte_search!` macro searches source text for first byte matching a byte table.
 
+use super::simd;
+
 /// Batch size for searching
-pub const SEARCH_BATCH_SIZE: usize = 32;
+pub const SEARCH_BATCH_SIZE: usize = simd::LookupTable::ALIGNMENT;
 
 /// Byte matcher lookup table.
 ///

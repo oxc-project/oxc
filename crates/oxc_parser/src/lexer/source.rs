@@ -118,58 +118,6 @@ impl<'a> Source<'a> {
         }
     }
 
-    /// Get the length of the remaining source text.
-    #[inline]
-    pub(super) fn remaining_len(&self) -> usize {
-        self.end as usize - self.ptr as usize
-    }
-
-    /// Advance the internal cursor of the slice.
-    #[inline]
-    pub(super) fn advance(&mut self, advance: usize) {
-        debug_assert!(self.remaining_len() >= advance, "advancing past end of source");
-        unsafe {
-            self.ptr = self.ptr.add(advance);
-        }
-    }
-
-    /// Peek next `N` bytes of source without consuming it.
-    /// also the `N` is the length to pad the peeked bytes to.
-    /// returns None if the peeked bytes would be EOF.
-    /// returns Some((array, actual_length)) if the peeked bytes is not EOF.
-    #[inline]
-    pub(super) fn peek_n_with_padding<const N: usize>(&self) -> Option<(Cow<'_, [u8; N]>, usize)> {
-        const PADDING: u8 = u8::MAX;
-        let remaining_len = self.remaining_len();
-        if remaining_len == 0 {
-            return None;
-        }
-        if remaining_len < N {
-            let padding = N - remaining_len;
-            // unintialized array to save CPU cycles
-            let mut dst = MaybeUninit::<[u8; N]>::uninit();
-            unsafe {
-                // copy the remaining bytes to the array
-                ptr::copy_nonoverlapping(self.ptr, dst.as_mut_ptr() as *mut _, remaining_len);
-                // write the padding bytes to the end of the array
-                ptr::write_bytes(dst.as_mut_ptr().add(remaining_len), PADDING, padding);
-            }
-            Some((Cow::Owned(unsafe { dst.assume_init() }), remaining_len))
-        } else {
-            let bytes = unsafe { from_raw_parts(self.ptr, N) };
-            Some((Cow::Borrowed(bytes.try_into().unwrap()), N))
-        }
-    }
-
-    /// Get the nth byte from ptr of the source text
-    #[inline]
-    pub(super) fn nth(&self, nth: usize) -> u8 {
-        debug_assert!(self.remaining_len() >= nth, "nth byte out of bounds");
-        // SAFETY:
-        // `nth` guaranteed to be within bounds of remaining source text.
-        unsafe { *self.ptr.add(nth) }
-    }
-
     /// Get remaining source text as `&str`.
     #[inline]
     pub(super) fn remaining(&self) -> &'a str {
@@ -180,7 +128,7 @@ impl<'a> Source<'a> {
         // Invariant of `Source` is that `ptr` is always on a UTF-8 character boundary,
         // so slice from `ptr` to `end` will always be a valid UTF-8 string.
         unsafe {
-            let len = self.remaining_len();
+            let len = self.end as usize - self.ptr as usize;
             let slice = slice::from_raw_parts(self.ptr, len);
             debug_assert!(slice.is_empty() || !is_utf8_cont_byte(slice[0]));
             str::from_utf8_unchecked(slice)
@@ -619,6 +567,41 @@ impl<'a> SourcePosition<'a> {
         #[allow(clippy::ptr_as_ptr)]
         let p = self.ptr as *const [u8; 2];
         *p.as_ref().unwrap_unchecked()
+    }
+
+    /// Peek next `N` bytes of source without consuming it.
+    /// also the `N` is the length to pad the peeked bytes to.
+    /// returns None if the peeked bytes would be EOF.
+    /// returns Some((array, actual_length)) if the peeked bytes is not EOF.
+    #[inline]
+    pub(super) unsafe fn peek_n_with_padding<const N: usize>(
+        &self,
+        end: *const u8,
+    ) -> Option<(Cow<'_, [u8; N]>, usize)> {
+        const PADDING: u8 = u8::MAX;
+        let remaining_len = end as usize - self.ptr as usize;
+        if remaining_len == 0 {
+            return None;
+        }
+        if remaining_len < N {
+            let padding = N - remaining_len;
+            // unintialized array to save CPU cycles
+            let mut dst = MaybeUninit::<[u8; N]>::uninit();
+            // copy the remaining bytes to the array
+            ptr::copy_nonoverlapping(self.ptr, dst.as_mut_ptr().cast(), remaining_len);
+            // write the padding bytes to the end of the array
+            ptr::write_bytes(dst.as_mut_ptr().add(remaining_len), PADDING, padding);
+            Some((Cow::Owned(dst.assume_init()), remaining_len))
+        } else {
+            let bytes = from_raw_parts(self.ptr, N);
+            Some((Cow::Borrowed(bytes.try_into().unwrap()), N))
+        }
+    }
+
+    /// Get the nth byte from ptr of the source position
+    #[inline]
+    pub(super) unsafe fn read_n(&self, nth: usize) -> u8 {
+        *self.ptr.add(nth)
     }
 }
 
