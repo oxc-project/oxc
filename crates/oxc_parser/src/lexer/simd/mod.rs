@@ -1,52 +1,43 @@
-#[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), target_feature = "avx2"))]
+#[cfg(target_feature = "avx2")]
 mod avx2;
-#[cfg(target_arch = "aarch64")]
+#[cfg(target_feature = "neon")]
 mod neon;
-#[cfg(all(not(target_feature = "avx2"), not(target_arch = "aarch64")))]
+#[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
 mod swar;
 
-use crate::lexer::source::Source;
-use once_cell::sync::Lazy;
-
-pub(crate) struct Position {
-    // the offset of the first found delimiter
-    pub(crate) offset: Option<usize>,
-    // the number of actual remaining bytes in the source
-    // sometimes theres a chance that the source is shorter than the alignment with padding
-    pub(crate) actual_len: usize,
-    // the maximum length of each segment, in avx2, it's 32 bytes
-    #[allow(dead_code)]
-    pub(crate) alignment: usize,
+#[derive(Debug)]
+pub(crate) struct LookupTable {
+    #[cfg(target_feature = "avx2")]
+    table: avx2::LookupTable,
+    #[cfg(target_feature = "neon")]
+    table: neon::LookupTable,
+    #[cfg(all(not(target_feature = "avx2"), not(target_arch = "aarch64")))]
+    table: swar::LookupTable,
 }
 
-#[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), target_feature = "avx2"))]
-static AVX2_STRING_LITERAL_LOOKUP_TABLE: Lazy<avx2::LookupTable<5>> =
-    Lazy::new(|| avx2::LookupTable::new([b'\r', b'\n', b'"', b'\'', b'\\']));
+impl LookupTable {
+    #[cfg(target_feature = "avx2")]
+    pub const ALIGNMENT: usize = avx2::LookupTable::ALIGNMENT;
+    #[cfg(target_feature = "neon")]
+    pub const ALIGNMENT: usize = neon::LookupTable::ALIGNMENT;
+    #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
+    pub const ALIGNMENT: usize = swar::LookupTable::ALIGNMENT;
 
-#[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), target_feature = "avx2"))]
-pub(crate) fn string_literal_lookup(source: &Source) -> Position {
-    let (offset, actual_len) = AVX2_STRING_LITERAL_LOOKUP_TABLE.match_vectored(source);
-    Position { offset, actual_len, alignment: avx2::ALIGNMENT }
-}
+    pub fn new<const N: usize>(delimiters: [u8; N]) -> Self {
+        Self {
+            #[cfg(target_feature = "avx2")]
+            table: avx2::LookupTable::new(delimiters),
+            #[cfg(target_feature = "neon")]
+            table: neon::LookupTable::new(delimiters),
+            #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
+            table: swar::LookupTable::new(delimiters),
+        }
+    }
 
-#[cfg(target_arch = "aarch64")]
-static NEON_STRING_LITERAL_LOOKUP_TABLE: Lazy<neon::LookupTable<5>> =
-    Lazy::new(|| neon::LookupTable::new([b'\r', b'\n', b'"', b'\'', b'\\']));
-
-#[cfg(target_arch = "aarch64")]
-pub(crate) fn string_literal_lookup(source: &Source) -> Position {
-    let (offset, actual_len) = NEON_STRING_LITERAL_LOOKUP_TABLE.match_vectored(source);
-    Position { offset, actual_len, alignment: neon::ALIGNMENT }
-}
-
-#[cfg(all(not(target_feature = "avx2"), not(target_arch = "aarch64")))]
-static SWAR_STRING_LITERAL_LOOKUP_TABLE: Lazy<swar::LookupTable<5>> =
-    Lazy::new(|| swar::LookupTable::new([b'\r', b'\n', b'"', b'\'', b'\\']));
-
-#[cfg(all(not(target_feature = "avx2"), not(target_arch = "aarch64")))]
-pub(crate) fn string_literal_lookup(source: &Source) -> Position {
-    let (offset, actual_len) = SWAR_STRING_LITERAL_LOOKUP_TABLE.match_vectored(source);
-    Position { offset, actual_len, alignment: swar::ALIGNMENT }
+    #[inline]
+    pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<usize> {
+        self.table.match_vectored(data)
+    }
 }
 
 // Create an ascii table with given delimiters, only fill

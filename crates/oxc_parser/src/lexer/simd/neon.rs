@@ -1,16 +1,16 @@
 use super::tabulate;
-use crate::{lexer::source::Source, parser_parse::UniquePromise};
 use core::arch::aarch64::*;
 
-pub(crate) const ALIGNMENT: usize = 16;
-
-pub struct LookupTable<const N: usize> {
+#[derive(Debug)]
+pub struct LookupTable {
     table: uint8x16_t,
     arf: uint8x16_t,
 }
 
-impl<const N: usize> LookupTable<N> {
-    pub fn new(delimiters: [u8; N]) -> Self {
+impl LookupTable {
+    pub const ALIGNMENT: usize = 16;
+
+    pub fn new<const N: usize>(delimiters: [u8; N]) -> Self {
         let table = tabulate(delimiters);
         let table = unsafe { vld1q_u8(table.as_ptr()) };
         let arf = unsafe {
@@ -20,15 +20,17 @@ impl<const N: usize> LookupTable<N> {
     }
 
     #[inline]
-    pub fn match_vectored(&self, source: &Source) -> (Option<usize>, usize) {
-        if let Some((seg, actual_len)) = source.peek_n_with_padding::<ALIGNMENT>() {
-            let ptr = seg.as_ptr();
-            // SAFETY:
-            // seg is aligned and has ALIGNMENT bytes
-            (unsafe { self.match_delimiters(ptr) }, actual_len)
-        } else {
-            (None, 0)
-        }
+    pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<usize> {
+        debug_assert!(
+            data.len() >= Self::ALIGNMENT,
+            "data.len({}) must be gt ALIGNMENT {}",
+            data.len(),
+            Self::ALIGNMENT
+        );
+        let ptr = data.as_ptr();
+        // SAFETY:
+        // seg is aligned and has ALIGNMENT bytes
+        unsafe { self.match_delimiters(ptr) }
     }
 
     // same with avx2, but neon doesn't have a _mm256_movemask_epi8 instruction
@@ -44,7 +46,7 @@ impl<const N: usize> LookupTable<N> {
         let result = vceqq_u8(tmp, row);
         let unmatched = offsetz(result);
         // reach the end of the segment, so no delimiter found
-        if unmatched == ALIGNMENT {
+        if unmatched == Self::ALIGNMENT {
             None
         } else {
             Some(unmatched)
@@ -82,6 +84,7 @@ unsafe fn offsetz(x: uint8x16_t) -> usize {
 
 #[test]
 fn neon_match() {
+    use crate::{lexer::source::Source, parser_parse::UniquePromise};
     let table = LookupTable::new([b'\r', b'\n', b'"', b'\'', b'\\']);
     let unique = UniquePromise::new_for_tests();
     let source = Source::new(
@@ -90,5 +93,5 @@ fn neon_match() {
     );
     let (offset, actual_len) = table.match_vectored(&source);
     assert_eq!(offset, Some(0));
-    assert_eq!(actual_len, ALIGNMENT);
+    assert_eq!(actual_len, LookupTable::ALIGNMENT);
 }

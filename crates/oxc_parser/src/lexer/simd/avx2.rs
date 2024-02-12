@@ -4,19 +4,18 @@ use core::arch::x86::*;
 use core::arch::x86_64::*;
 
 use super::tabulate;
-use crate::lexer::source::Source;
 
-pub(crate) const ALIGNMENT: usize = 32;
-
-pub struct LookupTable<const N: usize> {
+#[derive(Debug)]
+pub struct LookupTable {
     table: __m256i,
     arf: __m256i,
     lsh: __m256i,
 }
 
-impl<const N: usize> LookupTable<N> {
-    #[allow(non_snake_case, overflowing_literals)]
-    pub fn new(delimiters: [u8; N]) -> Self {
+impl LookupTable {
+    pub const ALIGNMENT: usize = 32;
+
+    pub fn new<const N: usize>(delimiters: [u8; N]) -> Self {
         // SAFETY:
         // delimiters must be an ASCII character and checked by `tabulate`
         unsafe {
@@ -36,17 +35,23 @@ impl<const N: usize> LookupTable<N> {
         }
     }
 
+    pub const fn alignment(&self) -> usize {
+        ALIGNMENT
+    }
+
     // match 32 bytes at a time, return the position of the first found delimiter
     #[inline]
-    pub fn match_vectored(&self, source: &Source) -> (Option<usize>, usize) {
-        if let Some((seg, actual_len)) = source.peek_n_with_padding::<ALIGNMENT>() {
-            let ptr = seg.as_ptr();
-            // SAFETY:
-            // seg is aligned and has ALIGNMENT bytes
-            (unsafe { self.match_delimiters(ptr) }, actual_len)
-        } else {
-            (None, 0)
-        }
+    pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<usize> {
+        debug_assert!(
+            data.len() >= ALIGNMENT,
+            "data.len({}) must be gt ALIGNMENT {}",
+            data.len(),
+            ALIGNMENT
+        );
+        let ptr = data.as_ptr();
+        // SAFETY:
+        // seg is aligned and has ALIGNMENT bytes
+        unsafe { self.match_delimiters(ptr) }
     }
 
     // match 32 bytes at a time, return the position of the first found delimiter
