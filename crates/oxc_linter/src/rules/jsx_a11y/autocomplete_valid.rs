@@ -1,4 +1,9 @@
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{get_element_type, has_jsx_prop_lowercase},
+    AstNode,
+};
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
@@ -22,7 +27,7 @@ struct AutocompleteValidDiagnostic {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct AutocompleteValid;
+pub struct AutocompleteValid(Box<AutocompleteValidConfig>);
 declare_oxc_lint!(
     /// ### What it does
     /// Enforces that an element's autocomplete attribute must be a valid value.
@@ -41,6 +46,25 @@ declare_oxc_lint!(
     AutocompleteValid,
     correctness
 );
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AutocompleteValidConfig {
+    input_components: Vec<String>,
+}
+
+impl std::ops::Deref for AutocompleteValid {
+    type Target = AutocompleteValidConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::default::Default for AutocompleteValidConfig {
+    fn default() -> Self {
+        Self { input_components: vec!["input".to_string()] }
+    }
+}
 
 static VALID_AUTOCOMPLETE_VALUES: phf::Set<&'static str> = phf_set! {
     "on",
@@ -139,8 +163,30 @@ fn is_valid_autocomplete_value(value: &str) -> bool {
 }
 
 impl Rule for AutocompleteValid {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let mut input_components: Vec<String> = vec!["input".to_string()];
+        if let Some(config) = value.get(0) {
+            if let Some(serde_json::Value::Array(components)) = config.get("inputComponents") {
+                input_components = components
+                    .iter()
+                    .filter_map(|c| c.as_str().map(std::string::ToString::to_string))
+                    .collect();
+            }
+        }
+
+        // Add default input component
+        input_components.push("input".to_string());
+
+        Self(Box::new(AutocompleteValidConfig { input_components }))
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
+            let Some(name) = &get_element_type(ctx, jsx_el) else { return };
+            if !self.input_components.contains(name) {
+                return;
+            }
+
             let autocomplete_prop = match has_jsx_prop_lowercase(jsx_el, "autocomplete") {
                 Some(autocomplete_prop) => autocomplete_prop,
                 None => return,
