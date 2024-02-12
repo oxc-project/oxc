@@ -54,12 +54,14 @@ where
 }
 
 impl<'a> Format<'a> for Program<'a> {
+    #[allow(clippy::cast_possible_truncation)]
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         p.enter_node(AstKind::Program(p.alloc(self)));
         let mut parts = p.vec();
         if let Some(hashbang) = &self.hashbang {
             parts.push(hashbang.format(p));
-            if p.is_next_line_empty_after_index(hashbang.span.end - 1) {
+            let c = p.source_text[..hashbang.span.end as usize].chars().last().unwrap();
+            if p.is_next_line_empty_after_index(hashbang.span.end - c.len_utf8() as u32) {
                 parts.extend(hardline!());
             }
         }

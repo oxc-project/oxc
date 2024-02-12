@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_parser::Parser;
+use oxc_parser::{Parser, ParserReturn};
+use oxc_prettier::{Prettier, PrettierOptions};
 use oxc_span::SourceType;
 
 use crate::{
@@ -13,41 +13,32 @@ use crate::{
     typescript::TypeScriptCase,
 };
 
-fn get_result(source_text: &str, source_type: SourceType, options: CodegenOptions) -> TestResult {
-    if !get_normal_result(source_text, source_type, options)
-        || !get_minify_result(source_text, source_type, options)
-    {
-        TestResult::ParseError(String::new(), false)
-    } else {
+/// Idempotency test
+fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
+    let options = PrettierOptions::default();
+
+    let allocator = Allocator::default();
+    let ParserReturn { program, trivias, .. } =
+        Parser::new(&allocator, source_text, source_type).preserve_parens(false).parse();
+    let source_text1 = Prettier::new(&allocator, source_text, trivias, options).build(&program);
+
+    let allocator = Allocator::default();
+    let ParserReturn { program, trivias, .. } =
+        Parser::new(&allocator, &source_text1, source_type).preserve_parens(false).parse();
+    let source_text2 = Prettier::new(&allocator, &source_text1, trivias, options).build(&program);
+
+    if source_text1 == source_text2 {
         TestResult::Passed
+    } else {
+        TestResult::ParseError(String::new(), false)
     }
 }
 
-/// Idempotency test
-fn get_normal_result(source_text: &str, source_type: SourceType, options: CodegenOptions) -> bool {
-    let allocator = Allocator::default();
-    let program1 = Parser::new(&allocator, source_text, source_type).parse().program;
-    let source_text1 = Codegen::<false>::new(source_text.len(), options).build(&program1);
-    let program2 = Parser::new(&allocator, &source_text1, source_type).parse().program;
-    let source_text2 = Codegen::<false>::new(source_text1.len(), options).build(&program2);
-    source_text1 == source_text2
-}
-
-/// Minify idempotency test
-fn get_minify_result(source_text: &str, source_type: SourceType, options: CodegenOptions) -> bool {
-    let allocator = Allocator::default();
-    let program1 = Parser::new(&allocator, source_text, source_type).parse().program;
-    let source_text1 = Codegen::<true>::new(source_text.len(), options).build(&program1);
-    let program2 = Parser::new(&allocator, &source_text1, source_type).parse().program;
-    let source_text2 = Codegen::<true>::new(source_text1.len(), options).build(&program2);
-    source_text1 == source_text2
-}
-
-pub struct CodegenTest262Case {
+pub struct PrettierTest262Case {
     base: Test262Case,
 }
 
-impl Case for CodegenTest262Case {
+impl Case for PrettierTest262Case {
     fn new(path: PathBuf, code: String) -> Self {
         Self { base: Test262Case::new(path, code) }
     }
@@ -72,16 +63,16 @@ impl Case for CodegenTest262Case {
         let source_text = self.base.code();
         let is_module = self.base.meta().flags.contains(&TestFlag::Module);
         let source_type = SourceType::default().with_module(is_module);
-        let result = get_result(source_text, source_type, CodegenOptions);
+        let result = get_result(source_text, source_type);
         self.base.set_result(result);
     }
 }
 
-pub struct CodegenBabelCase {
+pub struct PrettierBabelCase {
     base: BabelCase,
 }
 
-impl Case for CodegenBabelCase {
+impl Case for PrettierBabelCase {
     fn new(path: PathBuf, code: String) -> Self {
         Self { base: BabelCase::new(path, code) }
     }
@@ -105,16 +96,16 @@ impl Case for CodegenBabelCase {
     fn run(&mut self) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type, CodegenOptions);
+        let result = get_result(source_text, source_type);
         self.base.set_result(result);
     }
 }
 
-pub struct CodegenTypeScriptCase {
+pub struct PrettierTypeScriptCase {
     base: TypeScriptCase,
 }
 
-impl Case for CodegenTypeScriptCase {
+impl Case for PrettierTypeScriptCase {
     fn new(path: PathBuf, code: String) -> Self {
         Self { base: TypeScriptCase::new(path, code) }
     }
@@ -138,16 +129,16 @@ impl Case for CodegenTypeScriptCase {
     fn run(&mut self) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type, CodegenOptions);
+        let result = get_result(source_text, source_type);
         self.base.set_result(result);
     }
 }
 
-pub struct CodegenMiscCase {
+pub struct PrettierMiscCase {
     base: MiscCase,
 }
 
-impl Case for CodegenMiscCase {
+impl Case for PrettierMiscCase {
     fn new(path: PathBuf, code: String) -> Self {
         Self { base: MiscCase::new(path, code) }
     }
@@ -171,7 +162,7 @@ impl Case for CodegenMiscCase {
     fn run(&mut self) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type, CodegenOptions);
+        let result = get_result(source_text, source_type);
         self.base.set_result(result);
     }
 }

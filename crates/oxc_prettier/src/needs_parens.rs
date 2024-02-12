@@ -553,6 +553,8 @@ impl<'a> Prettier<'a> {
             AstKind::TaggedTemplateExpression(e) => AstKind::from_expression(&e.tag),
             AstKind::AssignmentExpression(e) => AstKind::AssignmentTarget(&e.left),
             AstKind::MemberExpression(e) => AstKind::from_expression(e.object()),
+            AstKind::BinaryExpression(e) => AstKind::from_expression(&e.left),
+            AstKind::LogicalExpression(e) => AstKind::from_expression(&e.left),
             _ => panic!("need to handle {}", kind.debug_name()),
         }
     }
