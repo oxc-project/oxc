@@ -2,7 +2,7 @@
 mod avx2;
 #[cfg(target_feature = "neon")]
 mod neon;
-// #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
+#[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
 mod swar;
 
 #[derive(Debug)]
