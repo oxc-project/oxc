@@ -7,7 +7,6 @@ pub struct LookupTable {
 
 impl LookupTable {
     pub const ALIGNMENT: usize = core::mem::size_of::<usize>();
-    // The capacity of each segment being processed
 
     pub fn new<const N: usize>(delimiters: [u8; N]) -> Self {
         Self { delimiters: delimiters.into_iter().map(Self::uniform_segment).collect() }

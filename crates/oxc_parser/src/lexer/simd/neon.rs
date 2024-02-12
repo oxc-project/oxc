@@ -23,7 +23,7 @@ impl LookupTable {
     pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<usize> {
         let ptr = data.as_ptr();
         // SAFETY:
-        // seg is aligned and has ALIGNMENT bytes
+        // data is aligned and has ALIGNMENT bytes
         unsafe { self.match_delimiters(ptr) }
     }
 

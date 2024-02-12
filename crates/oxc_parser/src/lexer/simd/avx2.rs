@@ -35,16 +35,12 @@ impl LookupTable {
         }
     }
 
-    pub const fn alignment(&self) -> usize {
-        ALIGNMENT
-    }
-
     // match 32 bytes at a time, return the position of the first found delimiter
     #[inline]
     pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<usize> {
         let ptr = data.as_ptr();
         // SAFETY:
-        // seg is aligned and has ALIGNMENT bytes
+        // data is aligned and has ALIGNMENT bytes
         unsafe { self.match_delimiters(ptr) }
     }
 
