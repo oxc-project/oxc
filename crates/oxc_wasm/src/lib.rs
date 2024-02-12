@@ -137,29 +137,24 @@ impl Oxc {
 
         let program = allocator.alloc(ret.program);
 
-        let semantic_builder = SemanticBuilder::new(source_text, source_type);
+        let semantic_ret = SemanticBuilder::new(source_text, source_type)
+            .with_trivias(ret.trivias)
+            .with_check_syntax_error(true)
+            .build(program);
 
-        if run_options.syntax() && !run_options.lint() {
-            let semantic_ret = semantic_builder
-                .with_trivias(ret.trivias)
-                .with_check_syntax_error(true)
-                .build(program);
+        if run_options.syntax() {
             self.save_diagnostics(semantic_ret.errors);
-        } else if run_options.lint() {
-            let semantic_ret = semantic_builder
-                .with_trivias(ret.trivias)
-                .with_check_syntax_error(true)
-                .build(program);
-            self.save_diagnostics(semantic_ret.errors);
+        }
 
+        // Only lint if there are not syntax errors
+        if run_options.lint() && self.diagnostics.borrow().is_empty() {
             let semantic = Rc::new(semantic_ret.semantic);
             let lint_ctx = LintContext::new(path.into_boxed_path(), &semantic);
             let linter_ret = Linter::default().run(lint_ctx);
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);
-        } else {
-            semantic_builder.build(program);
         }
+
         self.ast = program.serialize(&self.serializer)?;
 
         if run_options.prettier_format() {
