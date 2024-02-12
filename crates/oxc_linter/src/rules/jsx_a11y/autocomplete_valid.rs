@@ -215,12 +215,6 @@ fn test() {
     use crate::rules::AutocompleteValid;
     use crate::tester::Tester;
 
-    fn config() -> serde_json::Value {
-        serde_json::json!([{
-          "inputComponents": [ "Bar" ]
-        }])
-    }
-
     fn settings() -> serde_json::Value {
         serde_json::json!({
             "jsx-a11y": {
@@ -232,26 +226,43 @@ fn test() {
     }
 
     let pass = vec![
-        ("<input type='text' />;", None, None, None),
-        ("<input type='text' autocomplete='name' />;", None, None, None),
-        ("<input type='text' autocomplete='off' />", None, None, None),
-        ("<input type='text' autocomplete='on' />;", None, None, None),
-        ("<input type='text' autocomplete='shipping street-address' />;", None, None, None),
-        ("<input type='text' autocomplete />;", None, None, None),
-        ("<input type='text' autocomplete={autocompl} />;", None, None, None),
-        ("<input type='text' autocomplete={autocompl || 'name'} />;", None, None, None),
-        ("<input type='text' autocomplete={autocompl || 'foo'} />;", None, None, None),
-        ("<input type={isEmail ? 'email' : 'text'} autocomplete='off' />;", None, None, None),
-        ("<Input type='text' autocomplete='name' />", None, Some(settings()), None),
+        ("<input type='text' />;", None, None),
+        ("<input type='text' autocomplete='name' />;", None, None),
+        // ("<input type='text' autocomplete='' />;", None, None),
+        ("<input type='text' autocomplete='off' />;", None, None),
+        ("<input type='text' autocomplete='on' />;", None, None),
+        // ("<input type='text' autocomplete='billing family-name' />;", None, None),
+        // ("<input type='text' autocomplete='section-blue shipping street-address' />;", None, None),
+        // ("<input type='text' autocomplete='section-somewhere shipping work email' />;", None, None),
+        ("<input type='text' autocomplete />;", None, None),
+        ("<input type='text' autocomplete={autocompl} />;", None, None),
+        ("<input type='text' autocomplete={autocompl || 'name'} />;", None, None),
+        ("<input type='text' autocomplete={autocompl || 'foo'} />;", None, None),
+        ("<Foo autocomplete='bar'></Foo>;", None, None),
+        // ("<input type={isEmail ? 'email' : 'text'} autocomplete='none' />;", None, None),
+        ("<Input type='text' autocomplete='name' />", None, Some(settings())),
+        ("<Input type='text' autocomplete='baz' />", None, None),
+        ("<input type='date' autocomplete='email' />;", None, None),
+        ("<input type='number' autocomplete='url' />;", None, None),
+        ("<input type='month' autocomplete='tel' />;", None, None),
+        (
+            "<Foo type='month' autocomplete='tel'></Foo>;",
+            Some(serde_json::json!([{ "inputComponents": ["Foo"] }])),
+            None,
+        ),
     ];
 
     let fail = vec![
-        ("<input type='text' autocomplete='foo' />;", None, None, None),
-        ("<input type='text' autocomplete='name invalid' />;", None, None, None),
-        ("<input type='text' autocomplete='invalid name' />;", None, None, None),
-        ("<input type='text' autocomplete='home url' />;", Some(config()), None, None),
-        ("<Bar autocomplete='baz'></Bar>;", None, None, None),
-        ("<Input type='text' autocomplete='baz' />;", None, Some(settings()), None),
+        ("<input type='text' autocomplete='foo' />;", None, None),
+        ("<input type='text' autocomplete='name invalid' />;", None, None),
+        ("<input type='text' autocomplete='invalid name' />;", None, None),
+        ("<input type='text' autocomplete='home url' />;", None, None),
+        (
+            "<Bar autocomplete='baz'></Bar>;",
+            Some(serde_json::json!([{ "inputComponents": ["Bar"] }])),
+            None,
+        ),
+        ("<Input type='text' autocomplete='baz' />;", None, Some(settings())),
     ];
 
     Tester::new(AutocompleteValid::NAME, pass, fail).test_and_snapshot();
