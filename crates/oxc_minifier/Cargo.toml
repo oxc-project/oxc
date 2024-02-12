@@ -38,9 +38,3 @@ oxc_codegen = { workspace = true }
 insta     = { workspace = true }
 walkdir   = { workspace = true }
 pico-args = { workspace = true }
-
-[target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
-jemallocator = { workspace = true }
-
-[target.'cfg(target_os = "windows")'.dev-dependencies]
-mimalloc = { workspace = true }
