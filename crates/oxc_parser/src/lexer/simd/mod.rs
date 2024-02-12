@@ -35,8 +35,12 @@ impl MatchTable {
     }
 
     #[inline]
-    pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<(usize, u8)> {
-        self.table.match_vectored(data)
+    pub fn match_vectored(
+        &self,
+        data: &[u8; Self::ALIGNMENT],
+        padding: usize,
+    ) -> Option<(usize, u8)> {
+        self.table.match_vectored(data, padding)
     }
 }
 

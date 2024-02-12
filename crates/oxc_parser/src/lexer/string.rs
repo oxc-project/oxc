@@ -100,8 +100,9 @@ macro_rules! handle_string_literal_escape {
 
             // Consume bytes until reach end of string, line break, or another escape
             let chunk_start = $lexer.source.position();
-            while let Some((data, _actual_len)) = $lexer.source.peek_n_with_padding::<SEARCH_BATCH_SIZE>() {
-                if let Some((_pos, b)) = $table.matches(&data) {
+            while let Some((data, actual_len)) = $lexer.source.position().peek_n_with_padding::<{crate::lexer::search::SEARCH_BATCH_SIZE}>($lexer.source.end_addr()) {
+                if let Some((pos, b)) = $table.matches(&data, crate::lexer::search::SEARCH_BATCH_SIZE - actual_len) {
+                    $lexer.source.advance(pos) ;
                     match b {
                         b if b == $delimiter => {
                             // End of string found. Push last chunk to `str`.
@@ -132,12 +133,7 @@ macro_rules! handle_string_literal_escape {
                         _ => assert_unchecked::unreachable_unchecked!(),
                     }
                 } else {
-                    // SAFETY: A byte is available, as we just peeked it.
-                    // This may put `source`'s position on a UTF-8 continuation byte, which violates
-                    // `Source`'s invariant temporarily, but the guarantees of `SafeByteMatchTable`
-                    // mean `!table.matches(b)` on this branch prevents exiting this loop until
-                    // `source` is positioned on a UTF-8 character boundary again.
-                    unsafe { $lexer.source.next_byte_unchecked() };
+                    $lexer.source.advance(actual_len) ;
                     continue;
                 }
             }
