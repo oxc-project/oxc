@@ -1,6 +1,6 @@
 use super::{
     cold_branch,
-    search::{byte_search, simd_byte_match_table, SimdByteMatchTable},
+    search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
     source::SourcePosition,
     Kind, Lexer,
 };
@@ -9,18 +9,17 @@ use crate::diagnostics;
 use oxc_syntax::identifier::is_line_terminator;
 
 use memchr::memmem::Finder;
-use once_cell::sync::Lazy;
 
 // Irregular line breaks - '\u{2028}' (LS) and '\u{2029}' (PS)
 const LS_OR_PS_FIRST: u8 = 0xE2;
 const LS_BYTES_2_AND_3: [u8; 2] = [0x80, 0xA8];
 const PS_BYTES_2_AND_3: [u8; 2] = [0x80, 0xA9];
 
-static LINE_BREAK_TABLE: Lazy<SimdByteMatchTable> =
-    simd_byte_match_table!(|b| matches!(b, b'\r' | b'\n' | LS_OR_PS_FIRST), false);
+static LINE_BREAK_TABLE: SafeByteMatchTable =
+    safe_byte_match_table!(|b| matches!(b, b'\r' | b'\n' | LS_OR_PS_FIRST));
 
-static MULTILINE_COMMENT_START_TABLE: Lazy<SimdByteMatchTable> =
-    simd_byte_match_table!(|b| matches!(b, b'*' | b'\r' | b'\n' | LS_OR_PS_FIRST), false);
+static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
+    safe_byte_match_table!(|b| matches!(b, b'*' | b'\r' | b'\n' | LS_OR_PS_FIRST));
 
 impl<'a> Lexer<'a> {
     /// Section 12.4 Single Line Comment

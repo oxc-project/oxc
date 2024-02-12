@@ -246,10 +246,16 @@ impl SafeByteMatchTable {
     #[inline]
     pub const fn use_table(&self) {}
 
-    /// Test a value against this `SafeByteMatchTable`.
+    /// Returns the position of matched first delimiter and the matched first byte.
     #[inline]
-    pub const fn matches(&self, b: u8) -> bool {
-        self.0[b as usize]
+    pub fn matches(&self, data: &[u8; SEARCH_BATCH_SIZE], padding: usize) -> Option<(usize, u8)> {
+        let actual_len = SEARCH_BATCH_SIZE - padding;
+        for (i, &b) in data[..actual_len].iter().enumerate() {
+            if self.0[b as usize] {
+                return Some((i, b));
+            }
+        }
+        None
     }
 }
 

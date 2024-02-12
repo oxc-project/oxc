@@ -104,8 +104,10 @@ mod tests {
         ];
 
         for (idx, d) in data.into_iter().enumerate() {
+            let pos = d.position();
             let (data, actual_len) =
-                unsafe { d.peek_n_with_padding::<{ MatchTable::ALIGNMENT }>() }.unwrap();
+                unsafe { pos.peek_n_with_padding::<{ MatchTable::ALIGNMENT }>(d.end_addr()) }
+                    .unwrap();
             let result = table.match_vectored(&data, 16 - actual_len);
             assert_eq!((result, actual_len), expected[idx]);
         }
