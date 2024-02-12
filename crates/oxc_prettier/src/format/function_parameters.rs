@@ -6,57 +6,6 @@ use crate::{
     hardline, if_break, indent, line, softline, space, ss, Format, Prettier,
 };
 
-pub(super) fn should_hug_the_only_function_parameter(
-    p: &mut Prettier<'_>,
-    params: &FormalParameters<'_>,
-) -> bool {
-    if params.parameters_count() != 1 {
-        return false;
-    }
-    let Some(parameter) = params.items.first() else { return false };
-
-    let all_comment_flags = CommentFlags::Trailing
-        | CommentFlags::Leading
-        | CommentFlags::Dangling
-        | CommentFlags::Block
-        | CommentFlags::Line
-        | CommentFlags::PrettierIgnore
-        | CommentFlags::First
-        | CommentFlags::Last;
-    if p.has_comment(parameter.span, all_comment_flags) {
-        return false;
-    }
-
-    match &parameter.pattern.kind {
-        BindingPatternKind::ObjectPattern(_) | BindingPatternKind::ArrayPattern(_) => true,
-        BindingPatternKind::BindingIdentifier(_) => {
-            let Some(ts_type_annotation) = &parameter.pattern.type_annotation else { return false };
-            matches!(
-                ts_type_annotation.type_annotation,
-                TSType::TSTypeLiteral(_) | TSType::TSMappedType(_)
-            )
-        }
-        BindingPatternKind::AssignmentPattern(assignment_pattern) => {
-            let left = &assignment_pattern.left.kind;
-            if matches!(left, BindingPatternKind::ObjectPattern(_)) {
-                return true;
-            }
-
-            if !matches!(left, BindingPatternKind::ArrayPattern(_)) {
-                return false;
-            }
-
-            let right = &assignment_pattern.right;
-            match right {
-                Expression::Identifier(_) => true,
-                Expression::ObjectExpression(obj_expr) => obj_expr.properties.len() == 0,
-                Expression::ArrayExpression(arr_expr) => arr_expr.elements.len() == 0,
-                _ => false,
-            }
-        }
-    }
-}
-
 pub(super) fn print_function_parameters<'a>(
     p: &mut Prettier<'a>,
     params: &FormalParameters<'a>,
@@ -117,6 +66,57 @@ pub(super) fn print_function_parameters<'a>(
         Doc::Array(parts)
     } else {
         Doc::Group(Group::new(parts))
+    }
+}
+
+pub(super) fn should_hug_the_only_function_parameter(
+    p: &mut Prettier<'_>,
+    params: &FormalParameters<'_>,
+) -> bool {
+    if params.parameters_count() != 1 {
+        return false;
+    }
+    let Some(parameter) = params.items.first() else { return false };
+
+    let all_comment_flags = CommentFlags::Trailing
+        | CommentFlags::Leading
+        | CommentFlags::Dangling
+        | CommentFlags::Block
+        | CommentFlags::Line
+        | CommentFlags::PrettierIgnore
+        | CommentFlags::First
+        | CommentFlags::Last;
+    if p.has_comment(parameter.span, all_comment_flags) {
+        return false;
+    }
+
+    match &parameter.pattern.kind {
+        BindingPatternKind::ObjectPattern(_) | BindingPatternKind::ArrayPattern(_) => true,
+        BindingPatternKind::BindingIdentifier(_) => {
+            let Some(ts_type_annotation) = &parameter.pattern.type_annotation else { return false };
+            matches!(
+                ts_type_annotation.type_annotation,
+                TSType::TSTypeLiteral(_) | TSType::TSMappedType(_)
+            )
+        }
+        BindingPatternKind::AssignmentPattern(assignment_pattern) => {
+            let left = &assignment_pattern.left.kind;
+            if matches!(left, BindingPatternKind::ObjectPattern(_)) {
+                return true;
+            }
+
+            if !matches!(left, BindingPatternKind::ArrayPattern(_)) {
+                return false;
+            }
+
+            let right = &assignment_pattern.right;
+            match right {
+                Expression::Identifier(_) => true,
+                Expression::ObjectExpression(obj_expr) => obj_expr.properties.len() == 0,
+                Expression::ArrayExpression(arr_expr) => arr_expr.elements.len() == 0,
+                _ => false,
+            }
+        }
     }
 }
 

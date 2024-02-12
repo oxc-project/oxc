@@ -1764,6 +1764,10 @@ impl<'a> Function<'a> {
             body.directives.iter().any(|directive| directive.directive == "use strict")
         })
     }
+
+    pub fn is_abstract(&self) -> bool {
+        self.modifiers.contains(ModifierKind::Abstract)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -1914,6 +1918,10 @@ impl<'a> Class<'a> {
 
     pub fn is_declaration(&self) -> bool {
         self.r#type == ClassType::ClassDeclaration
+    }
+
+    pub fn is_abstract(&self) -> bool {
+        self.modifiers.contains(ModifierKind::Abstract)
     }
 
     pub fn is_declare(&self) -> bool {

@@ -1,9 +1,6 @@
-ts compatibility: 20/528 (3.79%)
+ts compatibility: 36/528 (6.82%)
 
 # Failed
-
-### abstract-class
-* abstract-class/export-default.ts
 
 ### abstract-construct-types
 * abstract-construct-types/abstract-construct-types.ts
@@ -85,15 +82,11 @@ ts compatibility: 20/528 (3.79%)
 * cast/parenthesis.ts
 * cast/tuple-and-record.ts
 
-### catch-clause
-* catch-clause/type-annotation.ts
-
 ### chain-expression
 * chain-expression/test.ts
 * chain-expression/test2.ts
 
 ### class
-* class/abstract-method.ts
 * class/constructor.ts
 * class/declare-readonly-field-initializer-w-annotation.ts
 * class/declare-readonly-field-initializer.ts
@@ -121,7 +114,6 @@ ts compatibility: 20/528 (3.79%)
 ### comments
 * comments/15707.ts
 * comments/abstract_class.ts
-* comments/abstract_methods.ts
 * comments/after_jsx_generic.tsx
 * comments/declare_function.ts
 * comments/interface.ts
@@ -143,7 +135,6 @@ ts compatibility: 20/528 (3.79%)
 * comments-2/last-arg.ts
 
 ### compiler
-* compiler/ClassDeclaration22.ts
 * compiler/anyIsAssignableToObject.ts
 * compiler/castOfAwait.ts
 * compiler/castParentheses.ts
@@ -181,28 +172,19 @@ ts compatibility: 20/528 (3.79%)
 * conformance/classes/nestedClassDeclaration.ts
 
 ### conformance/classes/classDeclarations/classAbstractKeyword
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAssignabilityConstructorFunction.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractClinterfaceAssignability.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructorAssignability.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractCrashedOnce.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractExtends.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractFactoryFunction.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractGeneric.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractImportInstantiation.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInAModule.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations1.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverrideWithAbstract.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractProperties.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSingleLineDecl.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSuperCalls.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethod1.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethods2.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts
 
 ### conformance/classes/classDeclarations/classHeritageSpecification
@@ -263,9 +245,7 @@ ts compatibility: 20/528 (3.79%)
 
 ### conformance/types/any
 * conformance/types/any/anyAsConstructor.ts
-* conformance/types/any/anyAsFunctionCall.ts
 * conformance/types/any/anyAsGenericFunctionCall.ts
-* conformance/types/any/anyPropertyAccess.ts
 
 ### conformance/types/constKeyword
 * conformance/types/constKeyword/constKeyword.ts

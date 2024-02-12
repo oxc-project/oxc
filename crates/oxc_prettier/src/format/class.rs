@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 use crate::{
     array,
     doc::{Doc, DocBuilder},
-    format::assignment,
+    format::{assignment, function},
     hardline, space, ss, Format, Prettier,
 };
 
@@ -12,6 +12,9 @@ use super::assignment::AssignmentLikeNode;
 
 pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
     let mut parts = p.vec();
+    if class.is_abstract() {
+        parts.push(ss!("abstract "));
+    }
     parts.push(ss!("class "));
     if let Some(id) = &class.id {
         parts.push(id.format(p));
@@ -50,10 +53,7 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
         }
     }
 
-    // TODO: if there are any dangling comments, print them
-
     let mut parts = p.vec();
-    // TODO is class_body.len() != 0, print hardline after heritage
 
     parts.push(ss!("{"));
     if !parts_inner.is_empty() {
@@ -103,6 +103,7 @@ impl<'a, 'b> ClassMemberish<'a, 'b> {
             ClassMemberish::AccessorProperty(accessor_property) => accessor_property.r#static,
         }
     }
+
     fn is_override(&self) -> bool {
         match self {
             ClassMemberish::PropertyDefinition(property_definition) => {
@@ -261,4 +262,19 @@ fn should_print_semicolon_after_class_property<'a>(
             false
         }
     }
+}
+
+pub(super) fn print_class_method<'a>(
+    p: &mut Prettier<'a>,
+    method: &MethodDefinition<'a>,
+) -> Doc<'a> {
+    let mut parts = p.vec();
+    if method.r#static {
+        parts.push(ss!("static "));
+    }
+    if method.r#override {
+        parts.push(ss!("override "));
+    }
+    parts.push(function::print_method(p, method));
+    Doc::Array(parts)
 }

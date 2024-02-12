@@ -57,10 +57,6 @@ pub(super) fn print_function<'a>(
 pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> Doc<'a> {
     let mut parts = p.vec();
 
-    if method.r#static {
-        parts.push(ss!("static "));
-    }
-
     match method.kind {
         MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
         MethodDefinitionKind::Get => {
@@ -93,11 +89,18 @@ fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<
     let parameters_doc =
         if should_group_parameters { group!(p, parameters_doc) } else { parameters_doc };
     parts.push(group!(p, parameters_doc));
+    if let Some(return_type) = &function.return_type {
+        parts.push(ss!(": "));
+        parts.push(return_type.format(p));
+    }
 
     if let Some(body) = &function.body {
         parts.push(space!());
         parts.push(body.format(p));
+    } else if p.options.semi {
+        parts.push(ss!(";"));
     }
+
     Doc::Array(parts)
 }
 

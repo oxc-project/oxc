@@ -1024,7 +1024,18 @@ impl<'a> Format<'a> for FormalParameters<'a> {
 
 impl<'a> Format<'a> for FormalParameter<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, FormalParameter, { self.pattern.format(p) })
+        wrap!(p, self, FormalParameter, {
+            let mut parts = p.vec();
+            if let Some(accessibility) = self.accessibility {
+                parts.push(ss!(match accessibility {
+                    TSAccessibility::Private => "private ",
+                    TSAccessibility::Protected => "protected ",
+                    TSAccessibility::Public => "public ",
+                }));
+            }
+            parts.push(self.pattern.format(p));
+            Doc::Array(parts)
+        })
     }
 }
 
@@ -2115,7 +2126,7 @@ impl<'a> Format<'a> for StaticBlock<'a> {
 
 impl<'a> Format<'a> for MethodDefinition<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, MethodDefinition, { function::print_method(p, self) })
+        wrap!(p, self, MethodDefinition, { class::print_class_method(p, self) })
     }
 }
 
@@ -2144,12 +2155,18 @@ impl<'a> Format<'a> for PrivateIdentifier {
 
 impl<'a> Format<'a> for BindingPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        match self.kind {
+        let mut parts = p.vec();
+        parts.push(match self.kind {
             BindingPatternKind::BindingIdentifier(ref ident) => ident.format(p),
             BindingPatternKind::ObjectPattern(ref pattern) => pattern.format(p),
             BindingPatternKind::ArrayPattern(ref pattern) => pattern.format(p),
             BindingPatternKind::AssignmentPattern(ref pattern) => pattern.format(p),
+        });
+        if let Some(type_annotation) = &self.type_annotation {
+            parts.push(ss!(": "));
+            parts.push(type_annotation.format(p));
         }
+        Doc::Array(parts)
     }
 }
 
@@ -2224,7 +2241,7 @@ impl<'a> Format<'a> for RegExpFlags {
 
 impl<'a> Format<'a> for TSAbstractMethodDefinition<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array![p, ss!("abstract "), self.method_definition.format(p)]
     }
 }
 
@@ -2237,5 +2254,11 @@ impl<'a> Format<'a> for TSAbstractPropertyDefinition<'a> {
 impl<'a> Format<'a> for TSIndexSignature<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
+    }
+}
+
+impl<'a> Format<'a> for TSTypeAnnotation<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        self.type_annotation.format(p)
     }
 }
