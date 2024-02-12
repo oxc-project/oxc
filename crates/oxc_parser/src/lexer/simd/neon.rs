@@ -31,14 +31,14 @@ impl<const N: usize> LookupTable<N> {
         }
     }
 
-    // same with avx2, but none doesn't have a _mm256_movemask_epi8 instruction
+    // same with avx2, but neon doesn't have a _mm256_movemask_epi8 instruction
     // so, we need to use a different approach(offsetz)
     #[inline]
     unsafe fn match_delimiters(&self, ptr: *const u8) -> Option<usize> {
         let data = vld1q_u8(ptr);
         let col_idx = vandq_u8(data, vdupq_n_u8(0b1111));
         let col = vqtbl1q_u8(self.table, col_idx);
-        let row_idx = vshrq_n_u8::<4>(data);
+        let row_idx = vshrq_n_u8(data, 4);
         let row = vqtbl1q_u8(self.arf, row_idx);
         let tmp = vandq_u8(col, row);
         let result = vceqq_u8(tmp, row);
