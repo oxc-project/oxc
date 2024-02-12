@@ -39,19 +39,18 @@ impl MatchTable {
         let row = vqtbl1q_u8(self.arf, row_idx);
         let tmp = vandq_u8(col, row);
         let result = vceqq_u8(tmp, row);
-        let unmatched = offsetz(result, self.reverse);
+        let first_found = offsetz(result, self.reverse);
         // reach the end of the segment, so no delimiter found
-        if unmatched == Self::ALIGNMENT {
+        if first_found == Self::ALIGNMENT {
             None
         } else {
-            Some(unmatched)
+            Some(first_found)
         }
     }
 }
 
 #[inline]
 unsafe fn offsetz(x: uint8x16_t, reverse: bool) -> usize {
-    let x = if reverse { vmvnq_u8(x) } else { x };
     #[inline]
     fn clz(x: u64) -> usize {
         // perf: rust will unroll this loop
@@ -61,9 +60,10 @@ unsafe fn offsetz(x: uint8x16_t, reverse: bool) -> usize {
                 return i;
             }
         }
-        8 // Technically not reachable since zero-guarded
+        7 // Technically not reachable since zero-guarded
     }
 
+    let x = if reverse { vmvnq_u8(x) } else { x };
     // Extract two u64
     let x = vreinterpretq_u64_u8(x);
     // Extract to general purpose registers to perform clz
@@ -84,18 +84,26 @@ fn neon_match_non_ascii() {
         // find non ascii
         MatchTable::new([#(b.is_ascii_alphanumeric() || b == b'_' || b == b'$',)*], true)
     });
-    let data = "AAAAA\"\rAAAAAAAAA";
-    let result = table.match_vectored(data.as_bytes().try_into().unwrap());
-    assert_eq!(result, Some((5, b'"')));
+    let data = ["AAAAAAAA\"\rAAAAAA", "AAAAAAAAAAAAAAA\""];
+    let expected = [Some((8, b'"')), Some((15, b'"'))];
+
+    for (idx, d) in data.into_iter().enumerate() {
+        let result = table.match_vectored(d.as_bytes().try_into().unwrap());
+        assert_eq!(result, expected[idx]);
+    }
 }
 
 #[test]
 fn neon_match_non_space() {
     let table = seq_macro::seq!(b in 0u8..=255 {
         // find non ascii
-        MatchTable::new([#(matches!(b, b' ' | b'\t' | b'\r' | b'\n'),)*], true)
+        MatchTable::new([#(matches!(b, b' ' | b'\t' | b'\r' | b'\n'),)*], false)
     });
-    let data = "AAAAA\"\rAAAAAAAAA";
-    let result = table.match_vectored(data.as_bytes().try_into().unwrap());
-    assert_eq!(result, Some((0, b'A')));
+    let data = ["AAAAAAAA\"\rAAAAAA", "AAAAAAAAAAAAAAA\r"];
+    let expected = [Some((9, b'\r')), Some((15, b'\r'))];
+
+    for (idx, d) in data.into_iter().enumerate() {
+        let result = table.match_vectored(d.as_bytes().try_into().unwrap());
+        assert_eq!(result, expected[idx]);
+    }
 }
