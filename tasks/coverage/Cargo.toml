@@ -28,6 +28,7 @@ oxc_codegen      = { workspace = true }
 oxc_diagnostics  = { workspace = true }
 oxc_semantic     = { workspace = true }
 oxc_minifier     = { workspace = true }
+oxc_prettier     = { workspace = true }
 oxc_span         = { workspace = true }
 oxc_tasks_common = { workspace = true }
 

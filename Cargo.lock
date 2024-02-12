@@ -1417,6 +1417,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_minifier",
  "oxc_parser",
+ "oxc_prettier",
  "oxc_semantic",
  "oxc_span",
  "oxc_tasks_common",
