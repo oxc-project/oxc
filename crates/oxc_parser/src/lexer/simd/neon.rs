@@ -21,12 +21,6 @@ impl LookupTable {
 
     #[inline]
     pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<usize> {
-        debug_assert!(
-            data.len() >= Self::ALIGNMENT,
-            "data.len({}) must be gt ALIGNMENT {}",
-            data.len(),
-            Self::ALIGNMENT
-        );
         let ptr = data.as_ptr();
         // SAFETY:
         // seg is aligned and has ALIGNMENT bytes

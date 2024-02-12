@@ -14,20 +14,9 @@ impl LookupTable {
     }
 
     #[inline]
-    pub fn match_vectored(&self, data: &[u8]) -> Option<usize> {
-        debug_assert!(
-            data.len() >= Self::ALIGNMENT,
-            "data.len({}) must be gt ALIGNMENT {}",
-            data.len(),
-            Self::ALIGNMENT
-        );
-        self.match_delimiters(data.try_into().unwrap())
-    }
-
-    #[inline]
-    fn match_delimiters(&self, seg: [u8; Self::ALIGNMENT]) -> Option<usize> {
+    pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<usize> {
+        let x = usize::from_ne_bytes(*data);
         for d in &self.delimiters {
-            let x = usize::from_ne_bytes(seg);
             let y = *d ^ x;
             let found = y.to_ne_bytes().into_iter().position(|b| b == 0);
             if let Some(i) = found {
