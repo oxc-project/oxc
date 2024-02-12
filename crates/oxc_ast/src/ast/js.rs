@@ -92,20 +92,30 @@ pub enum Expression<'a> {
 }
 
 impl<'a> Expression<'a> {
-    /// `PrimaryExpression`
-    /// [tc39/ecma262#prod-PrimaryExpression](https://tc39.es/ecma262/#prod-PrimaryExpression)
-    #[rustfmt::skip]
     pub fn is_primary_expression(&self) -> bool {
-        self.is_literal() || matches!(self, Self::Identifier(_) | Self::ThisExpression(_) | Self::FunctionExpression(_)
-                                          | Self::ClassExpression(_) | Self::ParenthesizedExpression(_)
-                                          | Self::ArrayExpression(_) | Self::ObjectExpression(_))
+        self.is_literal()
+            || matches!(
+                self,
+                Self::Identifier(_)
+                    | Self::ThisExpression(_)
+                    | Self::FunctionExpression(_)
+                    | Self::ClassExpression(_)
+                    | Self::ParenthesizedExpression(_)
+                    | Self::ArrayExpression(_)
+                    | Self::ObjectExpression(_)
+            )
     }
 
-    #[rustfmt::skip]
     pub fn is_literal(&self) -> bool {
         // Note: TemplateLiteral is not `Literal`
-        matches!(self, Self::BooleanLiteral(_) | Self::NullLiteral(_) | Self::NumberLiteral(_)
-                     | Self::BigintLiteral(_) | Self::RegExpLiteral(_) | Self::StringLiteral(_)
+        matches!(
+            self,
+            Self::BooleanLiteral(_)
+                | Self::NullLiteral(_)
+                | Self::NumberLiteral(_)
+                | Self::BigintLiteral(_)
+                | Self::RegExpLiteral(_)
+                | Self::StringLiteral(_)
         )
     }
 
@@ -371,7 +381,7 @@ pub struct ThisExpression {
     pub span: Span,
 }
 
-/// Array Expression
+/// <https://tc39.es/ecma262/#prod-ArrayLiteral>
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
@@ -379,6 +389,8 @@ pub struct ArrayExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub elements: Vec<'a, ArrayExpressionElement<'a>>,
+    /// Array trailing comma
+    /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
     pub trailing_comma: Option<Span>,
 }
 
@@ -389,6 +401,8 @@ pub struct ArrayExpression<'a> {
 pub enum ArrayExpressionElement<'a> {
     SpreadElement(Box<'a, SpreadElement<'a>>),
     Expression(Expression<'a>),
+    /// Array hole for sparse arrays
+    /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
     Elision(Span),
 }
 
@@ -564,7 +578,6 @@ pub struct TemplateElement {
 }
 
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/impatient-js/ch_template-literals.html#template-strings-cooked-vs-raw)
-/// for more info
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
@@ -580,13 +593,16 @@ pub struct TemplateElementValue {
     pub cooked: Option<Atom>,
 }
 
-/// Member Expression
+/// <https://tc39.es/ecma262/#prod-MemberExpression>
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum MemberExpression<'a> {
+    /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
     ComputedMemberExpression(ComputedMemberExpression<'a>),
+    /// `MemberExpression[?Yield, ?Await] . IdentifierName`
     StaticMemberExpression(StaticMemberExpression<'a>),
+    /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
     PrivateFieldExpression(PrivateFieldExpression<'a>),
 }
 
@@ -676,6 +692,7 @@ impl<'a> MemberExpression<'a> {
     }
 }
 
+/// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
@@ -687,6 +704,7 @@ pub struct ComputedMemberExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
+/// `MemberExpression[?Yield, ?Await] . IdentifierName`
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
@@ -698,6 +716,7 @@ pub struct StaticMemberExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
+/// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
@@ -1300,7 +1319,7 @@ pub struct VariableDeclarator<'a> {
 }
 
 /// Using Declaration
-/// <https://github.com/tc39/proposal-explicit-resource-management>
+/// * <https://github.com/tc39/proposal-explicit-resource-management>
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
@@ -1565,6 +1584,7 @@ pub struct DebuggerStatement {
 }
 
 /// Destructuring Binding Patterns
+/// * <https://tc39.es/ecma262/#prod-BindingPattern>
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
@@ -1755,6 +1775,7 @@ pub enum FunctionType {
     TSDeclareFunction,
 }
 
+/// <https://tc39.es/ecma262/#prod-FormalParameters>
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
@@ -1810,6 +1831,7 @@ impl<'a> FormalParameters<'a> {
     }
 }
 
+/// <https://tc39.es/ecma262/#prod-FunctionBody>
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
@@ -2154,10 +2176,15 @@ impl<'a> ModuleDeclaration<'a> {
         matches!(self, Self::ImportDeclaration(_))
     }
 
-    #[rustfmt::skip]
     pub fn is_export(&self) -> bool {
-        matches!(self, Self::ExportAllDeclaration(_) | Self::ExportDefaultDeclaration(_) | Self::ExportNamedDeclaration(_)
-                | Self::TSExportAssignment(_) | Self::TSNamespaceExportDeclaration(_))
+        matches!(
+            self,
+            Self::ExportAllDeclaration(_)
+                | Self::ExportDefaultDeclaration(_)
+                | Self::ExportNamedDeclaration(_)
+                | Self::TSExportAssignment(_)
+                | Self::TSNamespaceExportDeclaration(_)
+        )
     }
 
     pub fn is_default_export(&self) -> bool {
@@ -2208,8 +2235,10 @@ pub struct ImportDeclaration<'a> {
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier>>,
     pub source: StringLiteral,
-    pub with_clause: Option<WithClause<'a>>, // Some(vec![]) for empty assertion
-    pub import_kind: ImportOrExportKind,     // `import type { foo } from 'bar'`
+    /// Some(vec![]) for empty assertion
+    pub with_clause: Option<WithClause<'a>>,
+    /// `import type { foo } from 'bar'`
+    pub import_kind: ImportOrExportKind,
 }
 
 #[derive(Debug, Hash)]
@@ -2304,7 +2333,8 @@ pub struct ExportNamedDeclaration<'a> {
     pub declaration: Option<Declaration<'a>>,
     pub specifiers: Vec<'a, ExportSpecifier>,
     pub source: Option<StringLiteral>,
-    pub export_kind: ImportOrExportKind, // `export type { foo }`
+    /// `export type { foo }`
+    pub export_kind: ImportOrExportKind,
 }
 
 impl<'a> ExportNamedDeclaration<'a> {
@@ -2402,11 +2432,11 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     }
 }
 
-// es2022: <https://github.com/estree/estree/blob/master/es2022.md#modules>
-// <https://github.com/tc39/ecma262/pull/2154>
-// support:
-//   import {"\0 any unicode" as foo} from "";
-//   export {foo as "\0 any unicode"};
+/// Support:
+///   * `import {"\0 any unicode" as foo} from ""`
+///   * `export {foo as "\0 any unicode"}`
+/// * es2022: <https://github.com/estree/estree/blob/master/es2022.md#modules>
+/// * <https://github.com/tc39/ecma262/pull/2154>
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
