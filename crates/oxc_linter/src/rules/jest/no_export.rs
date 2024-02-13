@@ -57,19 +57,30 @@ impl Rule for NoExport {
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use std::path::PathBuf;
 
     let pass = vec![
-        ("describe('a test', () => { expect(1).toBe(1); })", None),
-        ("window.location = 'valid'", None),
-        ("module.somethingElse = 'foo';", None),
-        ("export const myThing = 'valid'", None),
-        ("export default function () {}", None),
-        ("module.exports = function(){}", None),
-        ("module.exports.myThing = 'valid';", None),
+        (
+            "describe('a test', () => { expect(1).toBe(1); })",
+            None,
+            None,
+            Some(PathBuf::from("foo.test.js")),
+        ),
+        ("window.location = 'valid'", None, None, None),
+        ("module.somethingElse = 'foo';", None, None, None),
+        ("export const myThing = 'valid'", None, None, None),
+        ("export default function () {}", None, None, None),
+        ("module.exports = function(){}", None, None, None),
+        ("module.exports.myThing = 'valid';", None, None, None),
     ];
 
     let fail = vec![
-        ("export const myThing = 'invalid'; test('a test', () => { expect(1).toBe(1);});", None),
+        (
+            "export const myThing = 'invalid'; test('a test', () => { expect(1).toBe(1);});",
+            None,
+            None,
+            Some(PathBuf::from("foo.test.js")),
+        ),
         (
             "
               export const myThing = 'invalid';
@@ -79,6 +90,8 @@ fn test() {
               });
             ",
             None,
+            None,
+            Some(PathBuf::from("foo.test.js")),
         ),
         (
             "
@@ -89,6 +102,8 @@ fn test() {
               });
             ",
             None,
+            None,
+            Some(PathBuf::from("foo.test.js")),
         ),
         (
             "
@@ -98,8 +113,15 @@ fn test() {
               });
             ",
             None,
+            None,
+            Some(PathBuf::from("foo.test.js")),
         ),
-        ("export default function() {};  test('a test', () => { expect(1).toBe(1);});", None),
+        (
+            "export default function() {};  test('a test', () => { expect(1).toBe(1);});",
+            None,
+            None,
+            Some(PathBuf::from("foo.test.js")),
+        ),
         (
             "
               const foo = 1;
@@ -109,6 +131,8 @@ fn test() {
               export {foo, bar};
             ",
             None,
+            None,
+            Some(PathBuf::from("foo.test.js")),
         ),
         // TODO: support `module.exports`
         // ("module.exports['invalid'] = function() {};  test('a test', () => { expect(1).toBe(1);});", None),
