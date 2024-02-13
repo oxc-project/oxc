@@ -39,11 +39,21 @@ impl MatchTable {
 
     // match 32 bytes at a time, return the position of the first found delimiter
     #[inline]
-    pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<(usize, u8)> {
+    pub fn match_vectored(
+        &self,
+        data: &[u8; Self::ALIGNMENT],
+        actual_len: usize,
+    ) -> Option<(usize, u8)> {
         let ptr = data.as_ptr();
         // SAFETY:
         // data is aligned and has ALIGNMENT bytes
-        unsafe { self.match_delimiters(ptr) }.map(|pos| (pos, data[pos]))
+        unsafe { self.match_delimiters(ptr) }.map(|pos| (pos, data[pos])).and_then(|(pos, b)| {
+            if pos >= actual_len {
+                None
+            } else {
+                Some((pos, b))
+            }
+        })
     }
 
     // match 32 bytes at a time, return the position of the first found delimiter

@@ -3,7 +3,7 @@ mod avx2;
 #[cfg(target_feature = "neon")]
 mod neon;
 #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
-mod swar;
+use crate::lexer::search::SafeByteMatchTable;
 
 #[derive(Debug)]
 pub(crate) struct MatchTable {
@@ -12,7 +12,17 @@ pub(crate) struct MatchTable {
     #[cfg(target_feature = "neon")]
     table: neon::MatchTable,
     #[cfg(all(not(target_feature = "avx2"), not(target_arch = "aarch64")))]
-    table: swar::MatchTable,
+    table: SafeByteMatchTable,
+}
+
+#[cfg(all(not(target_feature = "avx2"), not(target_arch = "aarch64")))]
+fn new_safe_byte_match_table(mut bytes: [bool; 256], reverse: bool) -> SafeByteMatchTable {
+    if reverse {
+        for b in &mut bytes {
+            *b = !*b;
+        }
+    }
+    SafeByteMatchTable::new(bytes)
 }
 
 impl MatchTable {
@@ -21,7 +31,7 @@ impl MatchTable {
     #[cfg(target_feature = "neon")]
     pub const ALIGNMENT: usize = neon::MatchTable::ALIGNMENT;
     #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
-    pub const ALIGNMENT: usize = swar::MatchTable::ALIGNMENT;
+    pub const ALIGNMENT: usize = 16;
 
     pub fn new(bytes: [bool; 256], reverse: bool) -> Self {
         Self {
@@ -30,7 +40,7 @@ impl MatchTable {
             #[cfg(target_feature = "neon")]
             table: neon::MatchTable::new(bytes, reverse),
             #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
-            table: swar::MatchTable::new(bytes, reverse),
+            table: new_safe_byte_match_table(bytes, reverse),
         }
     }
 
@@ -40,13 +50,7 @@ impl MatchTable {
         data: &[u8; Self::ALIGNMENT],
         actual_len: usize,
     ) -> Option<(usize, u8)> {
-        self.table.match_vectored(data).and_then(|(pos, b)| {
-            if pos >= actual_len {
-                None
-            } else {
-                Some((pos, b))
-            }
-        })
+        self.table.matches(data, actual_len)
     }
 }
 
@@ -85,6 +89,7 @@ impl MatchTable {
 //
 // Returns a 16 column(element) vector, each column is a 8-bit mask for
 // match the delimiter.
+#[cfg(any(target_feature = "avx2", target_arch = "aarch64"))]
 #[inline]
 const fn tabulate(bytes: [bool; 256]) -> [u8; 16] {
     let mut table = [0u8; 16];
@@ -104,63 +109,4 @@ const fn tabulate(bytes: [bool; 256]) -> [u8; 16] {
         }
     }
     table
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::lexer::simd::MatchTable;
-    use crate::lexer::{source::Source, UniquePromise};
-    #[test]
-    fn neon_find_non_ascii() {
-        let table = seq_macro::seq!(b in 0u8..=255 {
-            // find non ascii
-            MatchTable::new([#(b.is_ascii_alphanumeric() || b == b'_' || b == b'$',)*], true)
-        });
-        let data = [
-            "AAAAAAAA\"\rAAAAAA",
-            "AAAAAAAAAAAAAAA\"",
-            "AAAAAAAAAAAAAAAA",
-            "AAAAAAAA",
-            "AAAAAAAA\"\rAAAAAA",
-            "AAAAAAAAAAAAAAA\r",
-        ]
-        .map(|x| Source::new(x, UniquePromise::new_for_tests()));
-        let expected = [
-            (Some((8, b'"')), MatchTable::ALIGNMENT),
-            (Some((15, b'"')), MatchTable::ALIGNMENT),
-            (None, MatchTable::ALIGNMENT),
-            (None, 8),
-            (Some((8, b'\"')), MatchTable::ALIGNMENT),
-            (Some((15, b'\r')), MatchTable::ALIGNMENT),
-        ];
-
-        for (idx, d) in data.into_iter().enumerate() {
-            let pos = d.position();
-            let (data, actual_len) =
-                unsafe { pos.peek_n_with_padding::<{ MatchTable::ALIGNMENT }>(d.end_addr()) }
-                    .unwrap();
-            let result = table.match_vectored(&data, actual_len);
-            assert_eq!((result, actual_len), expected[idx]);
-        }
-    }
-
-    #[test]
-    fn neon_find_single_quote_string() {
-        let table = seq_macro::seq!(b in 0u8..=255 {
-            // find non ascii
-            MatchTable::new([#(matches!(b, b'\'' | b'\r' | b'\n' | b'\\'),)*], false)
-        });
-        let s1 = String::from(138u8 as char);
-        let data = [&s1].map(|x| Source::new(x, UniquePromise::new_for_tests()));
-        let expected = [(None, 2)];
-
-        for (idx, d) in data.into_iter().enumerate() {
-            let pos = d.position();
-            let (data, actual_len) =
-                unsafe { pos.peek_n_with_padding::<{ MatchTable::ALIGNMENT }>(d.end_addr()) }
-                    .unwrap();
-            let result = table.match_vectored(&data, actual_len);
-            assert_eq!((result, actual_len), expected[idx]);
-        }
-    }
 }

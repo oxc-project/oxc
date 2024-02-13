@@ -201,6 +201,7 @@ pub(crate) use byte_match_table;
 ///   }
 /// }
 /// ```
+#[derive(Debug)]
 #[repr(C, align(64))]
 pub struct SafeByteMatchTable([bool; 256]);
 

@@ -22,11 +22,17 @@ impl MatchTable {
     }
 
     #[inline]
-    pub fn match_vectored(&self, data: &[u8; Self::ALIGNMENT]) -> Option<(usize, u8)> {
+    pub fn matches(&self, data: &[u8; Self::ALIGNMENT], actual_len: usize) -> Option<(usize, u8)> {
         let ptr = data.as_ptr();
         // SAFETY:
         // data is aligned and has ALIGNMENT bytes
-        unsafe { self.match_delimiters(ptr) }.map(|pos| (pos, data[pos]))
+        unsafe { self.match_delimiters(ptr) }.map(|pos| (pos, data[pos])).and_then(|(pos, b)| {
+            if pos >= actual_len {
+                None
+            } else {
+                Some((pos, b))
+            }
+        })
     }
 
     // same with avx2, but neon doesn't have a _mm256_movemask_epi8 instruction
@@ -73,4 +79,63 @@ unsafe fn offsetz(x: uint8x16_t, reverse: bool) -> Option<usize> {
         return None;
     };
     Some(pos)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::lexer::simd::MatchTable;
+    use crate::lexer::{source::Source, UniquePromise};
+    #[test]
+    fn neon_find_non_ascii() {
+        let table = seq_macro::seq!(b in 0u8..=255 {
+            // find non ascii
+            MatchTable::new([#(b.is_ascii_alphanumeric() || b == b'_' || b == b'$',)*], true)
+        });
+        let data = [
+            "AAAAAAAA\"\rAAAAAA",
+            "AAAAAAAAAAAAAAA\"",
+            "AAAAAAAAAAAAAAAA",
+            "AAAAAAAA",
+            "AAAAAAAA\"\rAAAAAA",
+            "AAAAAAAAAAAAAAA\r",
+        ]
+        .map(|x| Source::new(x, UniquePromise::new_for_tests()));
+        let expected = [
+            (Some((8, b'"')), MatchTable::ALIGNMENT),
+            (Some((15, b'"')), MatchTable::ALIGNMENT),
+            (None, MatchTable::ALIGNMENT),
+            (None, 8),
+            (Some((8, b'\"')), MatchTable::ALIGNMENT),
+            (Some((15, b'\r')), MatchTable::ALIGNMENT),
+        ];
+
+        for (idx, d) in data.into_iter().enumerate() {
+            let pos = d.position();
+            let (data, actual_len) =
+                unsafe { pos.peek_n_with_padding::<{ MatchTable::ALIGNMENT }>(d.end_addr()) }
+                    .unwrap();
+            let result = table.matches(&data, actual_len);
+            assert_eq!((result, actual_len), expected[idx]);
+        }
+    }
+
+    #[test]
+    fn neon_find_single_quote_string() {
+        let table = seq_macro::seq!(b in 0u8..=255 {
+            // find non ascii
+            MatchTable::new([#(matches!(b, b'\'' | b'\r' | b'\n' | b'\\'),)*], false)
+        });
+        let s1 = String::from(138u8 as char);
+        let data = [&s1].map(|x| Source::new(x, UniquePromise::new_for_tests()));
+        let expected = [(None, 2)];
+
+        for (idx, d) in data.into_iter().enumerate() {
+            let pos = d.position();
+            let (data, actual_len) =
+                unsafe { pos.peek_n_with_padding::<{ MatchTable::ALIGNMENT }>(d.end_addr()) }
+                    .unwrap();
+            let result = table.matches(&data, actual_len);
+            assert_eq!((result, actual_len), expected[idx]);
+        }
+    }
 }
