@@ -33,7 +33,7 @@ impl MatchTable {
     #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
     pub const ALIGNMENT: usize = 16;
 
-    pub fn new(bytes: [bool; 256], reverse: bool) -> Self {
+    pub const fn new(bytes: [bool; 256], reverse: bool) -> Self {
         Self {
             #[cfg(target_feature = "avx2")]
             table: avx2::MatchTable::new(bytes, reverse),

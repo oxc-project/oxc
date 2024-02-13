@@ -5,7 +5,6 @@ use super::{
 };
 use crate::diagnostics;
 
-use once_cell::sync::Lazy;
 use oxc_allocator::String;
 use oxc_span::Span;
 use oxc_syntax::identifier::{
@@ -15,10 +14,10 @@ use std::{borrow::Cow, cmp::max};
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
 
-static ASCII_ID_START_TABLE: Lazy<SimdByteMatchTable> =
+static ASCII_ID_START_TABLE: SimdByteMatchTable =
     simd_byte_match_table!(|b| b.is_ascii_alphabetic() || b == b'_' || b == b'$', false);
 
-static NOT_ASCII_ID_CONTINUE_TABLE: Lazy<SimdByteMatchTable> =
+static NOT_ASCII_ID_CONTINUE_TABLE: SimdByteMatchTable =
     simd_byte_match_table!(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'$', true);
 
 #[inline]

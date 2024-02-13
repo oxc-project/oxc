@@ -307,17 +307,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "concat-arrays"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1df715824eb382e34b7afb7463b0247bf41538aeba731fba05241ecdb5dc3747"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "console"
 version = "0.15.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1583,11 +1572,9 @@ version = "0.7.0"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.4.2",
- "concat-arrays",
  "memchr",
  "miette",
  "num-bigint",
- "once_cell",
  "ouroboros",
  "oxc_allocator",
  "oxc_ast",

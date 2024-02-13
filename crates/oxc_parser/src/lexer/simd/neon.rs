@@ -3,8 +3,8 @@ use core::arch::aarch64::*;
 
 #[derive(Debug)]
 pub struct MatchTable {
-    table: uint8x16_t,
-    arf: uint8x16_t,
+    table: [u8; 16],
+    arf: [u8; 16],
     //The result of the match is reversed.
     reverse: bool,
 }
@@ -12,12 +12,9 @@ pub struct MatchTable {
 impl MatchTable {
     pub const ALIGNMENT: usize = 16;
 
-    pub fn new(bytes: [bool; 256], reverse: bool) -> Self {
+    pub const fn new(bytes: [bool; 256], reverse: bool) -> Self {
         let table = tabulate16(bytes);
-        let table = unsafe { vld1q_u8(table.as_ptr()) };
-        let arf = unsafe {
-            vld1q_u8([1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128].as_ptr())
-        };
+        let arf = [1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128];
         Self { table, arf, reverse }
     }
 
@@ -41,9 +38,9 @@ impl MatchTable {
     unsafe fn match_delimiters(&self, ptr: *const u8) -> Option<usize> {
         let data = vld1q_u8(ptr);
         let col_idx = vandq_u8(data, vdupq_n_u8(0x8F));
-        let col = vqtbl1q_u8(self.table, col_idx);
+        let col = vqtbl1q_u8(vld1q_u8(self.table.as_ptr()), col_idx);
         let row_idx = vshrq_n_u8(data, 4);
-        let row = vqtbl1q_u8(self.arf, row_idx);
+        let row = vqtbl1q_u8(vld1q_u8(self.arf.as_ptr()), row_idx);
         let tmp = vandq_u8(col, row);
         let result = vceqq_u8(tmp, row);
         offsetz(result, self.reverse)
