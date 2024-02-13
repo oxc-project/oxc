@@ -38,9 +38,15 @@ impl MatchTable {
     pub fn match_vectored(
         &self,
         data: &[u8; Self::ALIGNMENT],
-        padding: usize,
+        actual_len: usize,
     ) -> Option<(usize, u8)> {
-        self.table.match_vectored(data, padding)
+        self.table.match_vectored(data).and_then(|(pos, b)| {
+            if pos >= actual_len {
+                None
+            } else {
+                Some((pos, b))
+            }
+        })
     }
 }
 
@@ -98,4 +104,43 @@ const fn tabulate(bytes: [bool; 256]) -> [u8; 16] {
         }
     }
     table
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::lexer::simd::MatchTable;
+    use crate::lexer::{source::Source, UniquePromise};
+    #[test]
+    fn neon() {
+        let table = seq_macro::seq!(b in 0u8..=255 {
+            // find non ascii
+            MatchTable::new([#(b.is_ascii_alphanumeric() || b == b'_' || b == b'$',)*], true)
+        });
+        let data = [
+            "AAAAAAAA\"\rAAAAAA",
+            "AAAAAAAAAAAAAAA\"",
+            "AAAAAAAAAAAAAAAA",
+            "AAAAAAAA",
+            "AAAAAAAA\"\rAAAAAA",
+            "AAAAAAAAAAAAAAA\r",
+        ]
+        .map(|x| Source::new(x, UniquePromise::new_for_tests()));
+        let expected = [
+            (Some((8, b'"')), MatchTable::ALIGNMENT),
+            (Some((15, b'"')), MatchTable::ALIGNMENT),
+            (None, MatchTable::ALIGNMENT),
+            (None, 8),
+            (Some((8, b'\"')), MatchTable::ALIGNMENT),
+            (Some((15, b'\r')), MatchTable::ALIGNMENT),
+        ];
+
+        for (idx, d) in data.into_iter().enumerate() {
+            let pos = d.position();
+            let (data, actual_len) =
+                unsafe { pos.peek_n_with_padding::<{ MatchTable::ALIGNMENT }>(d.end_addr()) }
+                    .unwrap();
+            let result = table.match_vectored(&data, actual_len);
+            assert_eq!((result, actual_len), expected[idx]);
+        }
+    }
 }
