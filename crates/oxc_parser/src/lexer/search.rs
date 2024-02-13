@@ -33,7 +33,7 @@ impl SimdByteMatchTable {
         data: &[u8; SEARCH_BATCH_SIZE],
         actual_len: usize,
     ) -> Option<(usize, u8)> {
-        self.0.match_vectored(data, actual_len)
+        self.0.matches(data, actual_len)
     }
 }
 
