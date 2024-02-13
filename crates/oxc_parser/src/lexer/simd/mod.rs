@@ -45,11 +45,7 @@ impl MatchTable {
     }
 
     #[inline]
-    pub fn match_vectored(
-        &self,
-        data: &[u8; Self::ALIGNMENT],
-        actual_len: usize,
-    ) -> Option<(usize, u8)> {
+    pub fn matches(&self, data: &[u8; Self::ALIGNMENT], actual_len: usize) -> Option<(usize, u8)> {
         self.table.matches(data, actual_len)
     }
 }
