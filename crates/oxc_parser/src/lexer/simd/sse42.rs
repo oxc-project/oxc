@@ -24,10 +24,8 @@ impl MatchTable {
         let arf = [
             0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ];
-        let lsh = [0x0f; 32];
+        let lsh = [0x0f; 16];
         Self { table, arf, lsh, reverse }
     }
 
@@ -58,7 +56,7 @@ impl MatchTable {
         let row_idx =
             _mm_and_si128(_mm_lddqu_si128(self.lsh.as_ptr().cast()), _mm_srli_epi16(data, 4));
         // get the table row of each data byte
-        let row = _mm_shuffle_epi8(_mm256_lddqu_si128(self.arf.as_ptr().cast()), row_idx);
+        let row = _mm_shuffle_epi8(_mm_lddqu_si128(self.arf.as_ptr().cast()), row_idx);
         // row & col returns the matched delimiter in the table
         let bits = _mm_and_si128(row, col);
         // unmatched element's bits are 0b00000000
@@ -70,7 +68,7 @@ impl MatchTable {
         // unmatched bits are 1, so we need to count the trailing ones(little-endian)
         let unmatched = if self.reverse { r.trailing_zeros() } else { r.trailing_ones() } as usize;
         // reach the end of the segment, so no delimiter found
-        if unmatched == Self::ALIGNMENT {
+        if unmatched == ALIGNMENT {
             None
         } else {
             Some(unmatched)

@@ -2,23 +2,42 @@
 mod avx2;
 #[cfg(target_feature = "neon")]
 mod neon;
-#[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
+#[cfg(all(not(target_feature = "avx2"), target_feature = "sse4.2"))]
+mod sse42;
+
+#[cfg(all(
+    not(target_feature = "avx2"),
+    not(target_feature = "sse4.2"),
+    not(target_feature = "neon")
+))]
 use crate::lexer::search::SafeByteMatchTable;
 
 #[cfg(target_feature = "avx2")]
 pub const ALIGNMENT: usize = avx2::ALIGNMENT;
 #[cfg(target_feature = "neon")]
 pub const ALIGNMENT: usize = neon::ALIGNMENT;
-#[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
+#[cfg(all(not(target_feature = "avx2"), target_feature = "sse4.2"))]
+pub const ALIGNMENT: usize = sse42::ALIGNMENT;
+#[cfg(all(
+    not(target_feature = "avx2"),
+    not(target_feature = "sse4.2"),
+    not(target_feature = "neon")
+))]
 pub const ALIGNMENT: usize = 16;
 
 #[derive(Debug)]
 pub(crate) struct MatchTable {
     #[cfg(target_feature = "avx2")]
     table: avx2::MatchTable,
-    #[cfg(target_feature = "neon")]
+    #[cfg(target_arch = "aarch64")]
     table: neon::MatchTable,
-    #[cfg(all(not(target_feature = "avx2"), not(target_arch = "aarch64")))]
+    #[cfg(all(not(target_feature = "avx2"), target_feature = "sse4.2"))]
+    table: sse2::MatchTable,
+    #[cfg(all(
+        not(target_feature = "avx2"),
+        not(target_feature = "sse4.2"),
+        not(target_feature = "neon")
+    ))]
     table: SafeByteMatchTable,
 }
 
@@ -29,7 +48,13 @@ impl MatchTable {
             table: avx2::MatchTable::new(bytes, reverse),
             #[cfg(target_feature = "neon")]
             table: neon::MatchTable::new(bytes, reverse),
-            #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
+            #[cfg(all(not(target_feature = "avx2"), target_feature = "sse4.2"))]
+            table: sse42::MatchTable::new(bytes, reverse),
+            #[cfg(all(
+                not(target_feature = "avx2"),
+                not(target_feature = "sse4.2"),
+                not(target_feature = "neon")
+            ))]
             table: SafeByteMatchTable::new(bytes),
         }
     }
