@@ -29,7 +29,7 @@ impl MatchTable {
         Self { table, arf, lsh, reverse }
     }
 
-    // match 32 bytes at a time, return the position of the first found delimiter
+    // match 16 bytes at a time, return the position of the first found delimiter
     #[inline]
     pub fn matches(&self, data: &[u8; ALIGNMENT], actual_len: usize) -> Option<(usize, u8)> {
         let ptr = data.as_ptr();
@@ -44,7 +44,7 @@ impl MatchTable {
         })
     }
 
-    // match 32 bytes at a time, return the position of the first found delimiter
+    // match 16 bytes at a time, return the position of the first found delimiter
     #[inline]
     #[allow(overflowing_literals, clippy::cast_sign_loss)]
     unsafe fn match_delimiters(&self, ptr: *const u8) -> Option<usize> {
@@ -64,7 +64,7 @@ impl MatchTable {
         let v = _mm_cmpeq_epi8(bits, _mm_setzero_si128());
         // get the leading bit of each byte, v = 0b000000001000...
         // if the byte is unmatched, the corresponding location in `r` is 1, opposite the bit is 0
-        let r = _mm_movemask_epi8(v) as u32;
+        let r = _mm_movemask_epi8(v) as u16;
         // unmatched bits are 1, so we need to count the trailing ones(little-endian)
         let unmatched = if self.reverse { r.trailing_zeros() } else { r.trailing_ones() } as usize;
         // reach the end of the segment, so no delimiter found

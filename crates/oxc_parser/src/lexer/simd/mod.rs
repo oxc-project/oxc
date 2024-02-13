@@ -29,10 +29,10 @@ pub const ALIGNMENT: usize = 16;
 pub(crate) struct MatchTable {
     #[cfg(target_feature = "avx2")]
     table: avx2::MatchTable,
-    #[cfg(target_arch = "aarch64")]
+    #[cfg(target_feature = "neon")]
     table: neon::MatchTable,
     #[cfg(all(not(target_feature = "avx2"), target_feature = "sse4.2"))]
-    table: sse2::MatchTable,
+    table: sse42::MatchTable,
     #[cfg(all(
         not(target_feature = "avx2"),
         not(target_feature = "sse4.2"),
@@ -42,6 +42,7 @@ pub(crate) struct MatchTable {
 }
 
 impl MatchTable {
+    #[allow(unused_variables)]
     pub const fn new(bytes: [bool; 256], reverse: bool) -> Self {
         Self {
             #[cfg(target_feature = "avx2")]
