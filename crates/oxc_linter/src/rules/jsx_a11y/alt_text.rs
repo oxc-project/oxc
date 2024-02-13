@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        JSXAttributeItem, JSXAttributeValue, JSXElement, JSXExpression,
-        JSXExpressionContainer, JSXOpeningElement,
+        JSXAttributeItem, JSXAttributeValue, JSXElement, JSXExpression, JSXExpressionContainer,
+        JSXOpeningElement,
     },
     AstKind,
 };
@@ -13,7 +13,8 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::utils::{
-    get_element_type, get_prop_value, get_string_literal_prop_value, has_jsx_prop_lowercase, object_has_accessible_child
+    get_element_type, get_prop_value, get_string_literal_prop_value, has_jsx_prop_lowercase,
+    object_has_accessible_child,
 };
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -235,7 +236,6 @@ fn aria_label_has_value<'a>(item: &'a JSXAttributeItem<'a>) -> bool {
         _ => true,
     }
 }
-
 
 fn img_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
     if let Some(alt_prop) = has_jsx_prop_lowercase(node, "alt") {

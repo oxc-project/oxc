@@ -74,7 +74,7 @@ pub fn get_string_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Opti
 }
 
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/isHiddenFromScreenReader.js
-pub fn is_hidden_from_screen_reader( ctx: &LintContext, node: &JSXOpeningElement) -> bool {
+pub fn is_hidden_from_screen_reader(ctx: &LintContext, node: &JSXOpeningElement) -> bool {
     if let Some(name) = get_element_type(ctx, node) {
         if name.as_str().to_uppercase() == "INPUT" {
             if let Some(item) = has_jsx_prop_lowercase(node, "type") {

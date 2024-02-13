@@ -10,8 +10,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_element_type, has_jsx_prop_lowercase,
-        is_hidden_from_screen_reader, object_has_accessible_child,
+        get_element_type, has_jsx_prop_lowercase, is_hidden_from_screen_reader,
+        object_has_accessible_child,
     },
     AstNode,
 };
