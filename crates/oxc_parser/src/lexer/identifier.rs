@@ -18,7 +18,7 @@ static ASCII_ID_START_TABLE: SimdByteMatchTable =
     simd_byte_match_table!(|b| b.is_ascii_alphabetic() || b == b'_' || b == b'$', false);
 
 static NOT_ASCII_ID_CONTINUE_TABLE: SimdByteMatchTable =
-    simd_byte_match_table!(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'$', true);
+    simd_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || b == b'_' || b == b'$'), true);
 
 #[inline]
 fn is_identifier_start_ascii_byte(data: Option<(Cow<[u8; SEARCH_BATCH_SIZE]>, usize)>) -> bool {

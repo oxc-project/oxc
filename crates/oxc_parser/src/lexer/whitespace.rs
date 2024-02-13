@@ -4,7 +4,7 @@ use super::{
 };
 
 static NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE: SimdByteMatchTable =
-    simd_byte_match_table!(|b| matches!(b, b' ' | b'\t' | b'\r' | b'\n'), true);
+    simd_byte_match_table!(|b| !matches!(b, b' ' | b'\t' | b'\r' | b'\n'), true);
 
 impl<'a> Lexer<'a> {
     pub(super) fn line_break_handler(&mut self) -> Kind {

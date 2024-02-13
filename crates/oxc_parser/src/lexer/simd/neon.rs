@@ -13,7 +13,7 @@ pub struct MatchTable {
 
 impl MatchTable {
     pub const fn new(bytes: [bool; 256], reverse: bool) -> Self {
-        let table = tabulate16(bytes);
+        let table = tabulate16(bytes, reverse);
         let arf = [1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128];
         Self { table, arf, reverse }
     }

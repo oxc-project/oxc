@@ -22,16 +22,6 @@ pub(crate) struct MatchTable {
     table: SafeByteMatchTable,
 }
 
-#[cfg(all(not(target_feature = "avx2"), not(target_arch = "aarch64")))]
-fn new_safe_byte_match_table(mut bytes: [bool; 256], reverse: bool) -> SafeByteMatchTable {
-    if reverse {
-        for b in &mut bytes {
-            *b = !*b;
-        }
-    }
-    SafeByteMatchTable::new(bytes)
-}
-
 impl MatchTable {
     pub const fn new(bytes: [bool; 256], reverse: bool) -> Self {
         Self {
@@ -40,7 +30,7 @@ impl MatchTable {
             #[cfg(target_feature = "neon")]
             table: neon::MatchTable::new(bytes, reverse),
             #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
-            table: new_safe_byte_match_table(bytes, reverse),
+            table: SafeByteMatchTable::new(bytes),
         }
     }
 
@@ -87,11 +77,11 @@ impl MatchTable {
 // match the delimiter.
 #[allow(dead_code)]
 #[inline]
-const fn tabulate16(bytes: [bool; 256]) -> [u8; 16] {
+const fn tabulate16(bytes: [bool; 256], reverse: bool) -> [u8; 16] {
     let mut table = [0u8; 16];
     let mut i = 0;
     while i < 256 {
-        let set = bytes[i];
+        let set = if reverse { !bytes[i] } else { bytes[i] };
         if set {
             debug_assert!(i < 128, "delimiter must be an ASCII character");
             // lower 4 bits is the column index, higher 4 bits is the row index
@@ -106,11 +96,11 @@ const fn tabulate16(bytes: [bool; 256]) -> [u8; 16] {
 
 #[allow(dead_code)]
 #[inline]
-const fn tabulate32(bytes: [bool; 256]) -> [u8; 32] {
+const fn tabulate32(bytes: [bool; 256], reverse: bool) -> [u8; 32] {
     let mut table = [0u8; 32];
     let mut i = 0;
     while i < 256 {
-        let set = bytes[i];
+        let set = if reverse { !bytes[i] } else { bytes[i] };
         if set {
             debug_assert!(i < 128, "delimiter must be an ASCII character");
             // lower 4 bits is the column index, higher 4 bits is the row index

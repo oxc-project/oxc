@@ -17,7 +17,7 @@ pub struct MatchTable {
 
 impl MatchTable {
     pub const fn new(bytes: [bool; 256], reverse: bool) -> Self {
-        let table = tabulate16(bytes);
+        let table = tabulate16(bytes, reverse);
         // arf: 0b10000000, 0b01000000, 0b00100000, 0b00010000, 0b00001000, 0b00000100, 0b00000010, 0b00000001
         // for input data match each row of the table, be like a mask
         #[rustfmt::skip]
