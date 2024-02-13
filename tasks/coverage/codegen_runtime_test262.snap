@@ -1,6 +1,6 @@
 codegen_runtime_test262 Summary:
 AST Parsed     : 19407/19407 (100.00%)
-Positive Passed: 19260/19407 (99.24%)
+Positive Passed: 19262/19407 (99.25%)
 Expect to run correctly: "annexB/built-ins/String/prototype/substr/surrogate-pairs.js"
 But got a runtime error: Test262Error: start: 1 Expected SameValue(«�», «\udf06») to be true
 
@@ -432,12 +432,6 @@ But got a runtime error: ReferenceError: Must call super constructor in derived 
 
 Expect to run correctly: "language/statements/class/subclass/derived-class-return-override-for-of-arrow.js"
 But got a runtime error: ReferenceError: Must call super constructor in derived class before accessing 'this' or returning from derived constructor
-
-Expect to run correctly: "language/statements/for-of/head-lhs-async-escaped.js"
-But got a runtime error: SyntaxError: The left-hand side of a for-of loop may not be 'async'.
-
-Expect to run correctly: "language/statements/for-of/head-lhs-async-parens.js"
-But got a runtime error: SyntaxError: The left-hand side of a for-of loop may not be 'async'.
 
 Expect to run correctly: "language/statements/for-of/string-astral-truncated.js"
 But got a runtime error: Test262Error: Expected SameValue(«\», «\ud801») to be true

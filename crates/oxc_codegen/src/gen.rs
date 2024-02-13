@@ -315,7 +315,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatementLeft<'a> {
         match &self {
             ForStatementLeft::UsingDeclaration(var) => var.gen(p, ctx),
             ForStatementLeft::VariableDeclaration(var) => var.gen(p, ctx),
-            ForStatementLeft::AssignmentTarget(target) => target.gen(p, ctx),
+            ForStatementLeft::AssignmentTarget(target) => {
+                let wrap = matches!(
+                    target,
+                    AssignmentTarget::SimpleAssignmentTarget(
+                        SimpleAssignmentTarget::AssignmentTargetIdentifier(identifier)
+                    ) if identifier.name == "async"
+                );
+                p.wrap(wrap, |p| target.gen(p, ctx));
+            }
         }
     }
 }
