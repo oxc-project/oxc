@@ -5,6 +5,13 @@ mod neon;
 #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
 use crate::lexer::search::SafeByteMatchTable;
 
+#[cfg(target_feature = "avx2")]
+pub const ALIGNMENT: usize = avx2::ALIGNMENT;
+#[cfg(target_feature = "neon")]
+pub const ALIGNMENT: usize = neon::ALIGNMENT;
+#[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
+pub const ALIGNMENT: usize = 16;
+
 #[derive(Debug)]
 pub(crate) struct MatchTable {
     #[cfg(target_feature = "avx2")]
@@ -26,13 +33,6 @@ fn new_safe_byte_match_table(mut bytes: [bool; 256], reverse: bool) -> SafeByteM
 }
 
 impl MatchTable {
-    #[cfg(target_feature = "avx2")]
-    pub const ALIGNMENT: usize = avx2::MatchTable::ALIGNMENT;
-    #[cfg(target_feature = "neon")]
-    pub const ALIGNMENT: usize = neon::MatchTable::ALIGNMENT;
-    #[cfg(all(not(target_feature = "avx2"), not(target_feature = "neon")))]
-    pub const ALIGNMENT: usize = 16;
-
     pub const fn new(bytes: [bool; 256], reverse: bool) -> Self {
         Self {
             #[cfg(target_feature = "avx2")]
@@ -45,7 +45,7 @@ impl MatchTable {
     }
 
     #[inline]
-    pub fn matches(&self, data: &[u8; Self::ALIGNMENT], actual_len: usize) -> Option<(usize, u8)> {
+    pub fn matches(&self, data: &[u8; ALIGNMENT], actual_len: usize) -> Option<(usize, u8)> {
         self.table.matches(data, actual_len)
     }
 }

@@ -1,17 +1,17 @@
 use super::tabulate16;
 use core::arch::aarch64::*;
 
+pub const ALIGNMENT: usize = 16;
+
 #[derive(Debug)]
 pub struct MatchTable {
-    table: [u8; 16],
-    arf: [u8; 16],
+    table: [u8; ALIGNMENT],
+    arf: [u8; ALIGNMENT],
     //The result of the match is reversed.
     reverse: bool,
 }
 
 impl MatchTable {
-    pub const ALIGNMENT: usize = 16;
-
     pub const fn new(bytes: [bool; 256], reverse: bool) -> Self {
         let table = tabulate16(bytes);
         let arf = [1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128];
@@ -19,7 +19,7 @@ impl MatchTable {
     }
 
     #[inline]
-    pub fn matches(&self, data: &[u8; Self::ALIGNMENT], actual_len: usize) -> Option<(usize, u8)> {
+    pub fn matches(&self, data: &[u8; ALIGNMENT], actual_len: usize) -> Option<(usize, u8)> {
         let ptr = data.as_ptr();
         // SAFETY:
         // data is aligned and has ALIGNMENT bytes
@@ -80,7 +80,7 @@ unsafe fn offsetz(x: uint8x16_t, reverse: bool) -> Option<usize> {
 
 #[cfg(test)]
 mod tests {
-    use super::MatchTable;
+    use super::{MatchTable, ALIGNMENT};
     use crate::lexer::{source::Source, UniquePromise};
     #[test]
     fn neon_find_non_ascii() {
@@ -98,19 +98,18 @@ mod tests {
         ]
         .map(|x| Source::new(x, UniquePromise::new_for_tests()));
         let expected = [
-            (Some((8, b'"')), MatchTable::ALIGNMENT),
-            (Some((15, b'"')), MatchTable::ALIGNMENT),
-            (None, MatchTable::ALIGNMENT),
+            (Some((8, b'"')), ALIGNMENT),
+            (Some((15, b'"')), ALIGNMENT),
+            (None, ALIGNMENT),
             (None, 8),
-            (Some((8, b'\"')), MatchTable::ALIGNMENT),
-            (Some((15, b'\r')), MatchTable::ALIGNMENT),
+            (Some((8, b'\"')), ALIGNMENT),
+            (Some((15, b'\r')), ALIGNMENT),
         ];
 
         for (idx, d) in data.into_iter().enumerate() {
             let pos = d.position();
             let (data, actual_len) =
-                unsafe { pos.peek_n_with_padding::<{ MatchTable::ALIGNMENT }>(d.end_addr()) }
-                    .unwrap();
+                unsafe { pos.peek_n_with_padding::<ALIGNMENT>(d.end_addr()) }.unwrap();
             let result = table.matches(&data, actual_len);
             assert_eq!((result, actual_len), expected[idx]);
         }
@@ -129,8 +128,7 @@ mod tests {
         for (idx, d) in data.into_iter().enumerate() {
             let pos = d.position();
             let (data, actual_len) =
-                unsafe { pos.peek_n_with_padding::<{ MatchTable::ALIGNMENT }>(d.end_addr()) }
-                    .unwrap();
+                unsafe { pos.peek_n_with_padding::<ALIGNMENT>(d.end_addr()) }.unwrap();
             let result = table.matches(&data, actual_len);
             assert_eq!((result, actual_len), expected[idx]);
         }

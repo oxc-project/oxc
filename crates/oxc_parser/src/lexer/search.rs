@@ -7,7 +7,7 @@
 use super::simd;
 
 /// Batch size for searching
-pub const SEARCH_BATCH_SIZE: usize = simd::MatchTable::ALIGNMENT;
+pub const SEARCH_BATCH_SIZE: usize = simd::ALIGNMENT;
 
 pub struct SimdByteMatchTable(simd::MatchTable);
 

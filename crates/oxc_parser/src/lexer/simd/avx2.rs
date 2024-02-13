@@ -5,17 +5,17 @@ use core::arch::x86_64::*;
 
 use super::tabulate32;
 
+pub const ALIGNMENT: usize = 32;
+
 #[derive(Debug)]
 pub struct MatchTable {
-    table: [u8; 32],
-    arf: [u8; 32],
-    lsh: [u8; 32],
+    table: [u8; ALIGNMENT],
+    arf: [u8; ALIGNMENT],
+    lsh: [u8; ALIGNMENT],
     reverse: bool,
 }
 
 impl MatchTable {
-    pub const ALIGNMENT: usize = 32;
-
     pub const fn new(bytes: [bool; 256], reverse: bool) -> Self {
         let table = tabulate32(bytes);
         // arf: 0b10000000, 0b01000000, 0b00100000, 0b00010000, 0b00001000, 0b00000100, 0b00000010, 0b00000001
@@ -33,7 +33,7 @@ impl MatchTable {
 
     // match 32 bytes at a time, return the position of the first found delimiter
     #[inline]
-    pub fn matches(&self, data: &[u8; Self::ALIGNMENT], actual_len: usize) -> Option<(usize, u8)> {
+    pub fn matches(&self, data: &[u8; ALIGNMENT], actual_len: usize) -> Option<(usize, u8)> {
         let ptr = data.as_ptr();
         // SAFETY:
         // data is aligned and has ALIGNMENT bytes
@@ -72,7 +72,7 @@ impl MatchTable {
         // unmatched bits are 1, so we need to count the trailing ones(little-endian)
         let unmatched = if self.reverse { r.trailing_zeros() } else { r.trailing_ones() } as usize;
         // reach the end of the segment, so no delimiter found
-        if unmatched == Self::ALIGNMENT {
+        if unmatched == ALIGNMENT {
             None
         } else {
             Some(unmatched)
@@ -82,7 +82,7 @@ impl MatchTable {
 
 #[cfg(test)]
 mod tests {
-    use super::MatchTable;
+    use super::{MatchTable, ALIGNMENT};
     use crate::lexer::{source::Source, UniquePromise};
     #[test]
     fn avx2_find_non_ascii() {
@@ -100,19 +100,18 @@ mod tests {
         ]
         .map(|x| Source::new(x, UniquePromise::new_for_tests()));
         let expected = [
-            (Some((8, b'"')), MatchTable::ALIGNMENT),
-            (Some((15, b'"')), MatchTable::ALIGNMENT),
-            (None, MatchTable::ALIGNMENT),
+            (Some((8, b'"')), ALIGNMENT),
+            (Some((15, b'"')), ALIGNMENT),
+            (None, ALIGNMENT),
             (None, 8),
-            (Some((8, b'\"')), MatchTable::ALIGNMENT),
-            (Some((15, b'\r')), MatchTable::ALIGNMENT),
+            (Some((8, b'\"')), ALIGNMENT),
+            (Some((15, b'\r')), ALIGNMENT),
         ];
 
         for (idx, d) in data.into_iter().enumerate() {
             let pos = d.position();
             let (data, actual_len) =
-                unsafe { pos.peek_n_with_padding::<{ MatchTable::ALIGNMENT }>(d.end_addr()) }
-                    .unwrap();
+                unsafe { pos.peek_n_with_padding::<{ ALIGNMENT }>(d.end_addr()) }.unwrap();
             let result = table.matches(&data, actual_len);
             assert_eq!((result, actual_len), expected[idx]);
         }
@@ -131,8 +130,7 @@ mod tests {
         for (idx, d) in data.into_iter().enumerate() {
             let pos = d.position();
             let (data, actual_len) =
-                unsafe { pos.peek_n_with_padding::<{ MatchTable::ALIGNMENT }>(d.end_addr()) }
-                    .unwrap();
+                unsafe { pos.peek_n_with_padding::<{ ALIGNMENT }>(d.end_addr()) }.unwrap();
             let result = table.matches(&data, actual_len);
             assert_eq!((result, actual_len), expected[idx]);
         }
