@@ -74,9 +74,9 @@ pub fn get_string_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Opti
 }
 
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/isHiddenFromScreenReader.js
-pub fn is_hidden_from_screen_reader(node: &JSXOpeningElement) -> bool {
-    if let JSXElementName::Identifier(iden) = &node.name {
-        if iden.name.as_str().to_uppercase() == "INPUT" {
+pub fn is_hidden_from_screen_reader(ctx: &LintContext, node: &JSXOpeningElement) -> bool {
+    if let Some(name) = get_element_type(ctx, node) {
+        if name.as_str().to_uppercase() == "INPUT" {
             if let Some(item) = has_jsx_prop_lowercase(node, "type") {
                 let hidden = get_string_literal_prop_value(item);
 
@@ -99,14 +99,14 @@ pub fn is_hidden_from_screen_reader(node: &JSXOpeningElement) -> bool {
 }
 
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/hasAccessibleChild.js
-pub fn object_has_accessible_child(node: &JSXElement<'_>) -> bool {
+pub fn object_has_accessible_child(ctx: &LintContext, node: &JSXElement<'_>) -> bool {
     node.children.iter().any(|child| match child {
         JSXChild::Text(text) => !text.value.is_empty(),
-        JSXChild::Element(el) => !is_hidden_from_screen_reader(&el.opening_element),
+        JSXChild::Element(el) => !is_hidden_from_screen_reader(ctx, &el.opening_element),
         JSXChild::ExpressionContainer(JSXExpressionContainer {
             expression: JSXExpression::Expression(expr),
             ..
-        }) => !expr.is_undefined(),
+        }) => !expr.is_undefined() && !expr.is_null(),
         _ => false,
     }) || has_jsx_prop_lowercase(&node.opening_element, "dangerouslySetInnerHTML").is_some()
         || has_jsx_prop_lowercase(&node.opening_element, "children").is_some()
@@ -219,7 +219,8 @@ pub fn get_parent_es6_component<'a, 'b>(ctx: &'b LintContext<'a>) -> Option<&'b 
     })
 }
 
-// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/getElementType.js
+/// Resolve element type(name) using jsx-a11y settings
+/// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/getElementType.js
 pub fn get_element_type(context: &LintContext, element: &JSXOpeningElement) -> Option<String> {
     let JSXElementName::Identifier(ident) = &element.name else {
         return None;

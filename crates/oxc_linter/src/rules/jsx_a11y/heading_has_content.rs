@@ -107,12 +107,12 @@ impl Rule for HeadingHasContent {
 
         let maybe_parent = ctx.nodes().parent_node(node.id()).map(oxc_semantic::AstNode::kind);
         if let Some(AstKind::JSXElement(parent)) = maybe_parent {
-            if object_has_accessible_child(parent) {
+            if object_has_accessible_child(ctx, parent) {
                 return;
             }
         }
 
-        if is_hidden_from_screen_reader(jsx_el) {
+        if is_hidden_from_screen_reader(ctx, jsx_el) {
             return;
         }
 
