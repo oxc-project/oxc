@@ -553,6 +553,7 @@ macro_rules! byte_search {
             )
         } {
             if let Some((pos, b)) = $table.matches(&data, actual_len) {
+                // Advance the $pos with the batch matched pos
                 // SAFETY: `pos` is not at end of source, so safe to advance `pos` bytes.
                 // See above about UTF-8 character boundaries invariant.
                 $pos = unsafe { $pos.add(pos) };
@@ -576,8 +577,8 @@ macro_rules! byte_search {
 
                 let $match_start = $start;
                 return $match_handler;
-                // No match in batch - loop round and searching next batch
             }
+            // No match in batch - loop round and searching next batch
 
             // No match - continue searching
             // SAFETY: `$pos` cannot go out of bounds in this loop (see above).

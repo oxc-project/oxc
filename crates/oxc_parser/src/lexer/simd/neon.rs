@@ -34,7 +34,7 @@ impl MatchTable {
     #[inline]
     unsafe fn match_delimiters(&self, ptr: *const u8) -> Option<usize> {
         let data = vld1q_u8(ptr);
-        let col_idx = vandq_u8(data, vdupq_n_u8(0b1111));
+        let col_idx = vandq_u8(data, vdupq_n_u8(0x8F));
         let col = vqtbl1q_u8(self.table, col_idx);
         let row_idx = vshrq_n_u8(data, 4);
         let row = vqtbl1q_u8(self.arf, row_idx);
