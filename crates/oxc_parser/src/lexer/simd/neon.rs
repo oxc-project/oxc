@@ -12,7 +12,7 @@ pub struct MatchTable {
 impl MatchTable {
     pub const ALIGNMENT: usize = 16;
 
-    pub const fn new(bytes: [bool; 256], reverse: bool) -> Self {
+    pub fn new(bytes: [bool; 256], reverse: bool) -> Self {
         let table = tabulate16(bytes);
         let table = unsafe { vld1q_u8(table.as_ptr()) };
         let arf = unsafe {
