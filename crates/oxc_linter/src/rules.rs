@@ -102,6 +102,7 @@ mod typescript {
     pub mod adjacent_overload_signatures;
     pub mod array_type;
     pub mod ban_ts_comment;
+    pub mod ban_tslint_comment;
     pub mod ban_types;
     pub mod no_duplicate_enum_values;
     pub mod no_empty_interface;
@@ -394,6 +395,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::adjacent_overload_signatures,
     typescript::array_type,
     typescript::ban_ts_comment,
+    typescript::ban_tslint_comment,
     typescript::ban_types,
     typescript::no_duplicate_enum_values,
     typescript::no_empty_interface,

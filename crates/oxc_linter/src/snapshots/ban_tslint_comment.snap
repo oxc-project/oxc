@@ -1,0 +1,56 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: ban_tslint_comment
+---
+
+  ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:disable"
+   ╭─[ban_tslint_comment.tsx:1:1]
+ 1 │ /* tslint:disable */
+   · ────────────────────
+   ╰────
+
+  ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:enable"
+   ╭─[ban_tslint_comment.tsx:1:1]
+ 1 │ /* tslint:enable */
+   · ───────────────────
+   ╰────
+
+  ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:disable:rule1 rule2 rule3..."
+   ╭─[ban_tslint_comment.tsx:1:1]
+ 1 │ /* tslint:disable:rule1 rule2 rule3... */
+   · ─────────────────────────────────────────
+   ╰────
+
+  ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:enable:rule1 rule2 rule3..."
+   ╭─[ban_tslint_comment.tsx:1:1]
+ 1 │ /* tslint:enable:rule1 rule2 rule3... */
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:disable-next-line"
+   ╭─[ban_tslint_comment.tsx:1:1]
+ 1 │ // tslint:disable-next-line
+   · ───────────────────────────
+   ╰────
+
+  ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:disable-line"
+   ╭─[ban_tslint_comment.tsx:1:13]
+ 1 │ someCode(); // tslint:disable-line
+   ·             ──────────────────────
+   ╰────
+
+  ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:disable-next-line:rule1 rule2 rule3..."
+   ╭─[ban_tslint_comment.tsx:1:1]
+ 1 │ // tslint:disable-next-line:rule1 rule2 rule3...
+   · ────────────────────────────────────────────────
+   ╰────
+
+  ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:disable-line"
+   ╭─[ban_tslint_comment.tsx:2:9]
+ 1 │ const woah = doSomeStuff();
+ 2 │         // tslint:disable-line
+   ·         ───────────────────────
+ 3 │         console.log(woah);
+ 4 │         
+   ╰────
+
