@@ -1,4 +1,4 @@
-use super::tabulate;
+use super::tabulate16;
 use core::arch::aarch64::*;
 
 #[derive(Debug)]
@@ -12,8 +12,8 @@ pub struct MatchTable {
 impl MatchTable {
     pub const ALIGNMENT: usize = 16;
 
-    pub fn new(bytes: [bool; 256], reverse: bool) -> Self {
-        let table = tabulate(bytes);
+    pub const fn new(bytes: [bool; 256], reverse: bool) -> Self {
+        let table = tabulate16(bytes);
         let table = unsafe { vld1q_u8(table.as_ptr()) };
         let arf = unsafe {
             vld1q_u8([1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128].as_ptr())
@@ -83,7 +83,7 @@ unsafe fn offsetz(x: uint8x16_t, reverse: bool) -> Option<usize> {
 
 #[cfg(test)]
 mod tests {
-    use crate::lexer::simd::MatchTable;
+    use super::MatchTable;
     use crate::lexer::{source::Source, UniquePromise};
     #[test]
     fn neon_find_non_ascii() {

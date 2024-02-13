@@ -89,12 +89,12 @@ impl MatchTable {
 //
 // Returns a 16 column(element) vector, each column is a 8-bit mask for
 // match the delimiter.
-#[cfg(any(target_feature = "avx2", target_arch = "aarch64"))]
+#[allow(dead_code)]
 #[inline]
-const fn tabulate(bytes: [bool; 256]) -> [u8; 16] {
+const fn tabulate16(bytes: [bool; 256]) -> [u8; 16] {
     let mut table = [0u8; 16];
     let mut i = 0;
-    loop {
+    while i < 256 {
         let set = bytes[i];
         if set {
             debug_assert!(i < 128, "delimiter must be an ASCII character");
@@ -104,9 +104,26 @@ const fn tabulate(bytes: [bool; 256]) -> [u8; 16] {
             table[col] |= 1 << row;
         }
         i += 1;
-        if i == 256 {
-            break;
+    }
+    table
+}
+
+#[allow(dead_code)]
+#[inline]
+const fn tabulate32(bytes: [bool; 256]) -> [u8; 32] {
+    let mut table = [0u8; 32];
+    let mut i = 0;
+    while i < 256 {
+        let set = bytes[i];
+        if set {
+            debug_assert!(i < 128, "delimiter must be an ASCII character");
+            // lower 4 bits is the column index, higher 4 bits is the row index
+            let (col, row) = (i & 0x0F, i >> 4);
+            // use bitwise `or`` to combine the row with the same column
+            table[col] |= 1 << row;
+            table[col + 16] |= 1 << row;
         }
+        i += 1;
     }
     table
 }

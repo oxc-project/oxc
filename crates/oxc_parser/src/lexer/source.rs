@@ -575,11 +575,13 @@ impl<'a> SourcePosition<'a> {
             let padding = N - remaining_len;
             // unintialized array to save CPU cycles
             let mut dst = MaybeUninit::<[u8; N]>::uninit();
+            let bytes = &mut *dst.as_mut_ptr();
             // copy the remaining bytes to the array
-            ptr::copy_nonoverlapping(self.ptr, dst.as_mut_ptr().cast(), remaining_len);
+            ptr::copy_nonoverlapping(self.ptr, bytes.as_mut_ptr(), remaining_len);
             // write the padding bytes to the end of the array
-            ptr::write_bytes(dst.as_mut_ptr().add(remaining_len), PADDING, padding);
-            Some((Cow::Owned(dst.assume_init()), remaining_len))
+            ptr::write_bytes(bytes.as_mut_ptr().add(remaining_len), PADDING, padding);
+            let dst = dst.assume_init();
+            Some((Cow::Owned(dst), remaining_len))
         } else {
             let bytes = from_raw_parts(self.ptr, N);
             Some((Cow::Borrowed(bytes.try_into().unwrap()), N))
