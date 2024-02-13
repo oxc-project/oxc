@@ -28,8 +28,12 @@ impl SimdByteMatchTable {
 
     /// Test a value against this `ByteMatchTable`.
     #[inline]
-    pub fn matches(&self, data: &[u8; SEARCH_BATCH_SIZE], padding: usize) -> Option<(usize, u8)> {
-        self.0.match_vectored(data, padding)
+    pub fn matches(
+        &self,
+        data: &[u8; SEARCH_BATCH_SIZE],
+        actual_len: usize,
+    ) -> Option<(usize, u8)> {
+        self.0.match_vectored(data, actual_len)
     }
 }
 
@@ -248,8 +252,11 @@ impl SafeByteMatchTable {
 
     /// Returns the position of matched first delimiter and the matched first byte.
     #[inline]
-    pub fn matches(&self, data: &[u8; SEARCH_BATCH_SIZE], padding: usize) -> Option<(usize, u8)> {
-        let actual_len = SEARCH_BATCH_SIZE - padding;
+    pub fn matches(
+        &self,
+        data: &[u8; SEARCH_BATCH_SIZE],
+        actual_len: usize,
+    ) -> Option<(usize, u8)> {
         for (i, &b) in data[..actual_len].iter().enumerate() {
             if self.0[b as usize] {
                 return Some((i, b));
@@ -545,10 +552,7 @@ macro_rules! byte_search {
                 $lexer.source.end_addr(),
             )
         } {
-            if let Some((pos, b)) =
-                $table.matches(&data, crate::lexer::search::SEARCH_BATCH_SIZE - actual_len)
-            {
-                // Not a match after all - continue searching.
+            if let Some((pos, b)) = $table.matches(&data, actual_len) {
                 // SAFETY: `pos` is not at end of source, so safe to advance `pos` bytes.
                 // See above about UTF-8 character boundaries invariant.
                 $pos = unsafe { $pos.add(pos) };

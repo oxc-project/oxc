@@ -101,7 +101,7 @@ macro_rules! handle_string_literal_escape {
             // Consume bytes until reach end of string, line break, or another escape
             let chunk_start = $lexer.source.position();
             while let Some((data, actual_len)) = $lexer.source.position().peek_n_with_padding::<{crate::lexer::search::SEARCH_BATCH_SIZE}>($lexer.source.end_addr()) {
-                if let Some((pos, b)) = $table.matches(&data, crate::lexer::search::SEARCH_BATCH_SIZE - actual_len) {
+                if let Some((pos, b)) = $table.matches(&data, actual_len) {
                     $lexer.source.advance(pos);
                     match b {
                         b if b == $delimiter => {
