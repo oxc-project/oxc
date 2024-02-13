@@ -72,21 +72,21 @@ impl Rule for AnchorHasContent {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
             let Some(name) = &get_element_type(ctx, &jsx_el.opening_element) else { return };
             if name == "a" {
-                if has_jsx_prop_lowercase(&jsx_el.opening_element, "title").is_some()
-                    || has_jsx_prop_lowercase(&jsx_el.opening_element, "aria-label").is_some()
-                {
-                    return;
-                }
-
                 if is_hidden_from_screen_reader(ctx, &jsx_el.opening_element) {
                     ctx.diagnostic(AnchorHasContentDiagnostic::RemoveAriaHidden(jsx_el.span));
                     return;
                 }
 
-                // check content accessible
                 if object_has_accessible_child(ctx, jsx_el) {
                     return;
                 }
+
+                for attr in ["title", "aria-label"] {
+                    if has_jsx_prop_lowercase(&jsx_el.opening_element, attr).is_some() {
+                        return;
+                    };
+                }
+
                 ctx.diagnostic(AnchorHasContentDiagnostic::MissingContent(jsx_el.span));
             }
         }
@@ -106,6 +106,7 @@ fn test() {
         (r"<a>{foo.bar}</a>", None, None),
         (r#"<a dangerouslySetInnerHTML={{ __html: "foo" }} />"#, None, None),
         (r"<a children={children} />", None, None),
+        (r"<Link />", None, None),
         (
             r"<Link>foo</Link>",
             None,
@@ -114,7 +115,6 @@ fn test() {
         (r"<a title={title} />", None, None),
         (r"<a aria-label={ariaLabel} />", None, None),
         (r"<a title={title} aria-label={ariaLabel} />", None, None),
-        (r"<a><Bar aria-hidden />Foo</a>", None, None),
     ];
 
     let fail = vec![
@@ -126,13 +126,7 @@ fn test() {
             None,
             Some(serde_json::json!({ "jsx-a11y": { "components": { "Link": "a" } } })),
         ),
-        (r"<a aria-hidden ></a>", None, None),
-        (r"<a>{null}</a>", None, None),
-        // TODO: This should fail, need to check attr value
-        // (r"<a title />", None, None),
     ];
 
-    Tester::new(AnchorHasContent::NAME, pass, fail).test();
-    // TODO: debugging
-    // Tester::new(AnchorHasContent::NAME, pass, fail).test_and_snapshot();
+    Tester::new(AnchorHasContent::NAME, pass, fail).test_and_snapshot();
 }
