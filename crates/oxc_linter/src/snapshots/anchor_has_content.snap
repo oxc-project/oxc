@@ -4,9 +4,9 @@ expression: anchor_has_content
 ---
 
   ⚠ eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
-   ╭─[anchor_has_content.tsx:1:2]
+   ╭─[anchor_has_content.tsx:1:1]
  1 │ <a />
-   ·  ─
+   · ─────
    ╰────
   help: Provide screen reader accessible content when using `a` elements.
 
@@ -15,7 +15,7 @@ expression: anchor_has_content
  1 │ <a><Bar aria-hidden /></a>
    · ──────────────────────────
    ╰────
-  help: Remove the `aria-hidden` attribute to allow the anchor element and its content visible to assistive technologies.
+  help: Provide screen reader accessible content when using `a` elements.
 
   ⚠ eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
    ╭─[anchor_has_content.tsx:1:1]
@@ -25,30 +25,9 @@ expression: anchor_has_content
   help: Provide screen reader accessible content when using `a` elements.
 
   ⚠ eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
-   ╭─[anchor_has_content.tsx:1:2]
+   ╭─[anchor_has_content.tsx:1:1]
  1 │ <Link />
-   ·  ────
-   ╰────
-  help: Provide screen reader accessible content when using `a` elements.
-
-  ⚠ eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
-   ╭─[anchor_has_content.tsx:1:1]
- 1 │ <a aria-hidden ></a>
-   · ────────────────────
-   ╰────
-  help: Remove the `aria-hidden` attribute to allow the anchor element and its content visible to assistive technologies.
-
-  ⚠ eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
-   ╭─[anchor_has_content.tsx:1:1]
- 1 │ <a>{null}</a>
-   · ─────────────
-   ╰────
-  help: Provide screen reader accessible content when using `a` elements.
-
-  ⚠ eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
-   ╭─[anchor_has_content.tsx:1:2]
- 1 │ <a title />
-   ·  ─
+   · ────────
    ╰────
   help: Provide screen reader accessible content when using `a` elements.
 

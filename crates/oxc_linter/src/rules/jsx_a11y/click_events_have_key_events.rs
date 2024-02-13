@@ -65,7 +65,8 @@ impl Rule for ClickEventsHaveKeyEvents {
             return;
         };
 
-        if is_hidden_from_screen_reader(jsx_opening_el) || is_presentation_role(jsx_opening_el) {
+        if is_hidden_from_screen_reader(ctx, jsx_opening_el) || is_presentation_role(jsx_opening_el)
+        {
             return;
         }
 

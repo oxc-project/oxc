@@ -117,7 +117,7 @@ impl Rule for ImgRedundantAlt {
             return;
         }
 
-        if is_hidden_from_screen_reader(jsx_el) {
+        if is_hidden_from_screen_reader(ctx, jsx_el) {
             return;
         }
 

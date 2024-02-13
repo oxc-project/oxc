@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement, JSXExpression,
-        JSXExpressionContainer, JSXOpeningElement,
+        JSXAttributeItem, JSXAttributeValue, JSXElement, JSXExpression, JSXExpressionContainer,
+        JSXOpeningElement,
     },
     AstKind,
 };
@@ -14,6 +14,7 @@ use oxc_span::Span;
 
 use crate::utils::{
     get_element_type, get_prop_value, get_string_literal_prop_value, has_jsx_prop_lowercase,
+    object_has_accessible_child,
 };
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -236,31 +237,6 @@ fn aria_label_has_value<'a>(item: &'a JSXAttributeItem<'a>) -> bool {
     }
 }
 
-// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/hasAccessibleChild.js
-fn object_has_accessible_child(node: &JSXElement<'_>) -> bool {
-    node.children.iter().any(|child| match child {
-        JSXChild::Text(text) => !text.value.is_empty(),
-        JSXChild::Fragment(_) => true,
-        JSXChild::Element(el) => {
-            let is_hidden_from_screen_reader =
-                has_jsx_prop_lowercase(&el.opening_element, "aria-hidden").map_or(false, |v| {
-                    match get_prop_value(v) {
-                        None => true,
-                        Some(JSXAttributeValue::StringLiteral(s)) if s.value == "true" => true,
-                        _ => false,
-                    }
-                });
-            !is_hidden_from_screen_reader
-        }
-        JSXChild::ExpressionContainer(JSXExpressionContainer {
-            expression: JSXExpression::Expression(expr),
-            ..
-        }) => !expr.is_undefined(),
-        _ => false,
-    }) || has_jsx_prop_lowercase(&node.opening_element, "dangerouslySetInnerHTML").is_some()
-        || has_jsx_prop_lowercase(&node.opening_element, "children").is_some()
-}
-
 fn img_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
     if let Some(alt_prop) = has_jsx_prop_lowercase(node, "alt") {
         if !is_valid_alt_prop(alt_prop) {
@@ -305,7 +281,7 @@ fn object_rule<'a>(
         .and_then(get_string_literal_prop_value)
         .map_or(false, |v| !v.is_empty());
 
-    if has_label || has_title_attr || object_has_accessible_child(parent) {
+    if has_label || has_title_attr || object_has_accessible_child(ctx, parent) {
         return;
     }
     ctx.diagnostic(AltTextDiagnostic::Object(node.span));
