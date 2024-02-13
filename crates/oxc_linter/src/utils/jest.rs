@@ -74,19 +74,19 @@ pub enum JestGeneralFnKind {
     Jest,
 }
 
+/// <https://jestjs.io/docs/configuration#testmatch-arraystring>
 pub fn is_jest_file(ctx: &LintContext) -> bool {
-    if JEST_METHOD_NAMES
-        .iter()
-        .any(|name| ctx.scopes().root_unresolved_references().contains_key(*name))
-    {
+    if ctx.file_path().components().any(|c| match c {
+        std::path::Component::Normal(p) => p == std::ffi::OsStr::new("__tests__"),
+        _ => false,
+    }) {
         return true;
-    };
+    }
 
-    let import_entries = &ctx.semantic().module_record().import_entries;
-
-    return import_entries.iter().any(|import_entry| {
-        matches!(import_entry.module_request.name().as_str(), "@jest/globals")
-    });
+    let file_path = ctx.file_path().to_string_lossy();
+    ["spec.js", "spec.jsx", "spec.ts", "spec.tsx", "test.js", "test.jsx", "test.ts", "test.tsx"]
+        .iter()
+        .any(|ext| file_path.ends_with(ext))
 }
 
 pub fn is_type_of_jest_fn_call<'a>(
@@ -285,4 +285,35 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
 
 fn is_pure_string(template_literal: &TemplateLiteral) -> bool {
     template_literal.expressions.is_empty() && template_literal.quasis.len() == 1
+}
+#[cfg(test)]
+mod test {
+    use crate::LintContext;
+    use oxc_allocator::Allocator;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::SourceType;
+    use std::{path::Path, rc::Rc};
+
+    #[test]
+    fn test_is_jest_file() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let parser_ret = Parser::new(&allocator, "", source_type).parse();
+        let program = allocator.alloc(parser_ret.program);
+        let semantic_ret = SemanticBuilder::new("", source_type).build(program).semantic;
+        let semantic_ret = Rc::new(semantic_ret);
+
+        let path = Path::new("foo.js");
+        let ctx = LintContext::new(Box::from(path), &semantic_ret);
+        assert!(!super::is_jest_file(&ctx));
+
+        let path = Path::new("foo.test.js");
+        let ctx = LintContext::new(Box::from(path), &semantic_ret);
+        assert!(super::is_jest_file(&ctx));
+
+        let path = Path::new("__tests__/foo/test.spec.js");
+        let ctx = LintContext::new(Box::from(path), &semantic_ret);
+        assert!(super::is_jest_file(&ctx));
+    }
 }
