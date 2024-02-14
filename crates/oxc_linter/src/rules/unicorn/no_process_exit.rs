@@ -38,23 +38,28 @@ declare_oxc_lint!(
     /// if (problem) process.exit(1);
     /// ```
     NoProcessExit,
-    correctness
+    restriction,
 );
 
 impl Rule for NoProcessExit {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run_once<'a>(&self, ctx: &LintContext<'_>) {
         // Allowed in shebang
-        if ctx.source_text().starts_with("#!") {
+        let Some(root) = ctx.nodes().iter().next() else { return };
+        let AstKind::Program(program) = root.kind() else { return };
+        if program.hashbang.is_some() {
             return;
         }
 
-        if let AstKind::CallExpression(expr) = node.kind() {
-            if is_method_call(expr, Some(&["process"]), Some(&["exit"]), None, None) {
-                if is_inside_process_event_handler(ctx, node) || is_worker_threads_imported(ctx) {
-                    return;
-                }
+        for node in ctx.nodes().iter() {
+            if let AstKind::CallExpression(expr) = node.kind() {
+                if is_method_call(expr, Some(&["process"]), Some(&["exit"]), None, None) {
+                    if is_inside_process_event_handler(ctx, node) || is_worker_threads_imported(ctx)
+                    {
+                        return;
+                    }
 
-                ctx.diagnostic(NoProcessExitDiagnostic(expr.span));
+                    ctx.diagnostic(NoProcessExitDiagnostic(expr.span));
+                }
             }
         }
     }
