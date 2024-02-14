@@ -41,7 +41,7 @@ impl EarlyErrorJavaScript {
             AstKind::StringLiteral(lit) => check_string_literal(lit, ctx),
             AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
 
-            AstKind::Directive(dir) => check_directive(dir, node, ctx),
+            AstKind::Directive(dir) => check_directive(dir, ctx),
             AstKind::ModuleDeclaration(decl) => {
                 check_module_declaration(decl, node, ctx);
             }
@@ -389,7 +389,7 @@ fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
 
 // It is a Syntax Error if FunctionBodyContainsUseStrict of AsyncFunctionBody is true and IsSimpleParameterList of FormalParameters is false.
 // background: https://humanwhocodes.com/blog/2016/10/the-ecmascript-2016-change-you-probably-dont-know/
-fn check_directive<'a>(directive: &Directive, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
+fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Illegal 'use strict' directive in function with non-simple parameter list")]
     #[diagnostic()]
@@ -399,21 +399,16 @@ fn check_directive<'a>(directive: &Directive, node: &AstNode<'a>, ctx: &Semantic
         return;
     }
 
-    if !ctx.scope.get_flags(node.scope_id()).is_function() {
+    if !ctx.current_scope_flags().is_function() {
         return;
     }
 
-    for node_id in ctx.nodes.ancestors(node.id()) {
-        match ctx.nodes.kind(node_id) {
-            AstKind::Function(Function { params, .. })
-            | AstKind::ArrowExpression(ArrowExpression { params, .. }) => {
-                if !params.is_simple_parameter_list() {
-                    return ctx.error(IllegalUseStrict(directive.span));
-                }
-                break;
-            }
-            _ => {}
-        }
+    if matches!(ctx.nodes.kind(ctx.scope.get_node_id(ctx.current_scope_id)),
+        AstKind::Function(Function { params, .. })
+        | AstKind::ArrowExpression(ArrowExpression { params, .. }) 
+        if !params.is_simple_parameter_list())
+    {
+        ctx.error(IllegalUseStrict(directive.span));
     }
 }
 
