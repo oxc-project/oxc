@@ -23,7 +23,7 @@ impl OxcRunOptions {
 
     #[wasm_bindgen(getter)]
     pub fn syntax(&self) -> bool {
-        self.format
+        self.syntax
     }
 
     #[wasm_bindgen(setter)]
