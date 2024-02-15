@@ -23,11 +23,17 @@ pub struct LintOptions {
     pub config_path: Option<PathBuf>,
     pub fix: bool,
     pub timing: bool,
+    pub deepscan_plugin: bool,
+    pub eslint_plugin: bool,
     pub import_plugin: bool,
     pub jest_plugin: bool,
     pub jsx_a11y_plugin: bool,
     pub nextjs_plugin: bool,
+    pub oxc_plugin: bool,
+    pub react_plugin: bool,
     pub react_perf_plugin: bool,
+    pub typescript_plugin: bool,
+    pub unicorn_plugin: bool,
     pub env: ESLintEnv,
 }
 
@@ -38,11 +44,17 @@ impl Default for LintOptions {
             config_path: None,
             fix: false,
             timing: false,
+            deepscan_plugin: true,
+            eslint_plugin: true,
             import_plugin: false,
             jest_plugin: false,
             jsx_a11y_plugin: false,
             nextjs_plugin: false,
+            oxc_plugin: true,
+            react_plugin: true,
             react_perf_plugin: false,
+            typescript_plugin: true,
+            unicorn_plugin: true,
             env: ESLintEnv::default(),
         }
     }
@@ -76,6 +88,18 @@ impl LintOptions {
     }
 
     #[must_use]
+    pub fn with_deepscan_plugin(mut self, yes: bool) -> Self {
+        self.deepscan_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_eslint_plugin(mut self, yes: bool) -> Self {
+        self.eslint_plugin = yes;
+        self
+    }
+
+    #[must_use]
     pub fn with_import_plugin(mut self, yes: bool) -> Self {
         self.import_plugin = yes;
         self
@@ -100,8 +124,32 @@ impl LintOptions {
     }
 
     #[must_use]
+    pub fn with_oxc_plugin(mut self, yes: bool) -> Self {
+        self.oxc_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_react_plugin(mut self, yes: bool) -> Self {
+        self.react_plugin = yes;
+        self
+    }
+
+    #[must_use]
     pub fn with_react_perf_plugin(mut self, yes: bool) -> Self {
         self.react_perf_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_typescript_plugin(mut self, yes: bool) -> Self {
+        self.typescript_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_unicorn_plugin(mut self, yes: bool) -> Self {
+        self.unicorn_plugin = yes;
         self
     }
 
@@ -167,11 +215,17 @@ impl TryFrom<&Number> for AllowWarnDeny {
     }
 }
 
+const DEEPSCAN_PLUGIN_NAME: &str = "deepscan";
+const ESLINT_PLUGIN_NAME: &str = "eslint";
 const IMPORT_PLUGIN_NAME: &str = "import";
 const JEST_PLUGIN_NAME: &str = "jest";
 const JSX_A11Y_PLUGIN_NAME: &str = "jsx_a11y";
 const NEXTJS_PLUGIN_NAME: &str = "nextjs";
+const OXC_PLUGIN_NAME: &str = "oxc";
+const REACT_PLUGIN_NAME: &str = "react";
 const REACT_PERF_PLUGIN_NAME: &str = "react_perf";
+const TYPESCRIPT_PLUGIN_NAME: &str = "typescript";
+const UNICORN_PLUGIN_NAME: &str = "unicorn";
 
 impl LintOptions {
     /// # Errors
@@ -247,11 +301,17 @@ impl LintOptions {
             }
         };
 
+        may_exclude_plugin_rules(self.deepscan_plugin, DEEPSCAN_PLUGIN_NAME);
+        may_exclude_plugin_rules(self.eslint_plugin, ESLINT_PLUGIN_NAME);
         may_exclude_plugin_rules(self.import_plugin, IMPORT_PLUGIN_NAME);
         may_exclude_plugin_rules(self.jest_plugin, JEST_PLUGIN_NAME);
         may_exclude_plugin_rules(self.jsx_a11y_plugin, JSX_A11Y_PLUGIN_NAME);
         may_exclude_plugin_rules(self.nextjs_plugin, NEXTJS_PLUGIN_NAME);
+        may_exclude_plugin_rules(self.oxc_plugin, OXC_PLUGIN_NAME);
+        may_exclude_plugin_rules(self.react_plugin, REACT_PLUGIN_NAME);
         may_exclude_plugin_rules(self.react_perf_plugin, REACT_PERF_PLUGIN_NAME);
+        may_exclude_plugin_rules(self.typescript_plugin, TYPESCRIPT_PLUGIN_NAME);
+        may_exclude_plugin_rules(self.unicorn_plugin, UNICORN_PLUGIN_NAME);
 
         rules
     }

@@ -38,6 +38,7 @@ impl Runner for LintRunner {
             fix_options,
             codeowner_options,
             enable_plugins,
+            disable_plugins,
             config,
             ..
         } = self.options;
@@ -97,11 +98,17 @@ impl Runner for LintRunner {
             .with_filter(filter)
             .with_config_path(config)
             .with_fix(fix_options.fix)
+            .with_deepscan_plugin(disable_plugins.deepscan_plugin)
+            .with_eslint_plugin(disable_plugins.eslint_plugin)
             .with_import_plugin(enable_plugins.import_plugin)
             .with_jest_plugin(enable_plugins.jest_plugin)
             .with_jsx_a11y_plugin(enable_plugins.jsx_a11y_plugin)
             .with_nextjs_plugin(enable_plugins.nextjs_plugin)
-            .with_react_perf_plugin(enable_plugins.react_perf_plugin);
+            .with_oxc_plugin(disable_plugins.oxc_plugin)
+            .with_react_plugin(disable_plugins.react_plugin)
+            .with_react_perf_plugin(enable_plugins.react_perf_plugin)
+            .with_typescript_plugin(disable_plugins.typescript_plugin)
+            .with_unicorn_plugin(disable_plugins.unicorn_plugin);
 
         let linter = match Linter::from_options(lint_options) {
             Ok(lint_service) => lint_service,
@@ -163,7 +170,7 @@ impl LintRunner {
                 .filter(|path_being_checked| {
                     // Strips the prefix of "./", because paths will look like "./foo/bar.js"
                     // however owners.of() will not match against these relative paths.
-                    // So instead we simply strp the prefix and check against "foo/bar.js".
+                    // So instead we simply strip the prefix and check against "foo/bar.js".
                     let path_to_check = path_being_checked
                         .strip_prefix("./")
                         .unwrap_or(path_being_checked)

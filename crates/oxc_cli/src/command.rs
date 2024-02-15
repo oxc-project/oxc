@@ -104,6 +104,34 @@ pub struct EnablePlugins {
     pub react_perf_plugin: bool,
 }
 
+/// Disable Default Plugins
+#[derive(Debug, Clone, Bpaf)]
+pub struct DisablePlugins {
+    /// Disable the deepscan plugin and skip <TBD>
+    #[bpaf(long("no-deepscan-plugin"), flag(false, true))]
+    pub deepscan_plugin: bool,
+
+    /// Disable the eslint plugin and skip <TBD>
+    #[bpaf(long("no-eslint-plugin"), flag(false, true))]
+    pub eslint_plugin: bool,
+
+    /// Disable the oxc plugin and skip lints based on Rust clippy
+    #[bpaf(long("no-oxc-plugin"), flag(false, true))]
+    pub oxc_plugin: bool,
+
+    /// Disable the react plugin and skip react problems
+    #[bpaf(long("no-react-plugin"), flag(false, true))]
+    pub react_plugin: bool,
+
+    /// Disable the typescript plugin and skip typescript problems
+    #[bpaf(long("no-typescript-plugin"), flag(false, true))]
+    pub typescript_plugin: bool,
+
+    /// Disable the unicorn plugin and skip <TBD>
+    #[bpaf(long("no-unicorn-plugin"), flag(false, true))]
+    pub unicorn_plugin: bool,
+}
+
 #[derive(Debug, Clone, Bpaf)]
 pub struct LintOptions {
     #[bpaf(external(lint_filter), map(LintFilter::into_tuple), many)]
@@ -111,6 +139,9 @@ pub struct LintOptions {
 
     #[bpaf(external)]
     pub enable_plugins: EnablePlugins,
+
+    #[bpaf(external)]
+    pub disable_plugins: DisablePlugins,
 
     #[bpaf(external)]
     pub fix_options: FixOptions,
