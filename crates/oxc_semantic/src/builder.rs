@@ -8,7 +8,6 @@ use oxc_ast::{ast::*, AstKind, Trivias, TriviasMap, Visit};
 use oxc_diagnostics::Error;
 use oxc_span::{Atom, SourceType, Span};
 use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
-use rustc_hash::FxHashMap;
 
 use crate::{
     binder::Binder,
@@ -319,28 +318,17 @@ impl<'a> SemanticBuilder<'a> {
             .drain()
             .collect::<Vec<(Atom, Vec<ReferenceId>)>>();
 
-        let mut unresolved_references: FxHashMap<Atom, Vec<ReferenceId>> = FxHashMap::default();
-        let mut resolved_references: Vec<(SymbolId, Vec<ReferenceId>)> = vec![];
+        let parent_scope_id =
+            self.scope.get_parent_id(self.current_scope_id).unwrap_or(self.current_scope_id);
 
         for (name, reference_ids) in all_references {
             if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, &name) {
-                resolved_references.push((symbol_id, reference_ids));
+                for reference_id in &reference_ids {
+                    self.symbols.references[*reference_id].set_symbol_id(symbol_id);
+                }
+                self.symbols.resolved_references[symbol_id].extend(reference_ids);
             } else {
-                unresolved_references.insert(name, reference_ids);
-            }
-        }
-
-        let scope_id =
-            self.scope.get_parent_id(self.current_scope_id).unwrap_or(self.current_scope_id);
-
-        for (name, reference_ids) in unresolved_references {
-            self.scope.extend_unresolved_reference(scope_id, name, reference_ids);
-        }
-
-        for (symbol_id, reference_ids) in resolved_references {
-            for reference_id in reference_ids {
-                self.symbols.references[reference_id].set_symbol_id(symbol_id);
-                self.symbols.resolved_references[symbol_id].push(reference_id);
+                self.scope.extend_unresolved_reference(parent_scope_id, name, reference_ids);
             }
         }
     }
