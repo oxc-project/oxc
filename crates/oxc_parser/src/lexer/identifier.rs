@@ -47,7 +47,12 @@ impl<'a> Lexer<'a> {
     /// # SAFETY
     /// * `self.source` must not be exhausted (at least 1 char remaining).
     /// * Next char must be ASCII.
-    #[allow(clippy::missing_safety_doc)] // Clippy is wrong!
+    // Clippy is wrong!
+    #[allow(clippy::missing_safety_doc)]
+    // Inline into all identifier byte handlers, which avoids a function call on a hot path.
+    // NB: `#[inline]` is not sufficient to force compiler to inline.
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
     pub(super) unsafe fn identifier_name_handler(&mut self) -> &'a str {
         // Advance past 1st byte.
         // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
