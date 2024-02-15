@@ -42,27 +42,26 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoProcessExit {
-    fn run_once<'a>(&self, ctx: &LintContext<'_>) {
-        // Allowed in shebang
-        let Some(root) = ctx.nodes().iter().next() else { return };
-        let AstKind::Program(program) = root.kind() else { return };
-        if program.hashbang.is_some() {
-            return;
-        }
-
-        for node in ctx.nodes().iter() {
-            if let AstKind::CallExpression(expr) = node.kind() {
-                if is_method_call(expr, Some(&["process"]), Some(&["exit"]), None, None) {
-                    if is_inside_process_event_handler(ctx, node) || is_worker_threads_imported(ctx)
-                    {
-                        return;
-                    }
-
-                    ctx.diagnostic(NoProcessExitDiagnostic(expr.span));
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::CallExpression(expr) = node.kind() {
+            if is_method_call(expr, Some(&["process"]), Some(&["exit"]), None, None) {
+                if has_hashbang(ctx)
+                    || is_inside_process_event_handler(ctx, node)
+                    || is_worker_threads_imported(ctx)
+                {
+                    return;
                 }
+
+                ctx.diagnostic(NoProcessExitDiagnostic(expr.span));
             }
         }
     }
+}
+
+fn has_hashbang(ctx: &LintContext) -> bool {
+    let Some(root) = ctx.nodes().iter().next() else { return false };
+    let AstKind::Program(program) = root.kind() else { return false };
+    program.hashbang.is_some()
 }
 
 fn is_inside_process_event_handler(ctx: &LintContext, node: &AstNode) -> bool {
