@@ -44,10 +44,10 @@ impl Rule for NoNewWrappers {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::NewExpression(expr) = node.kind() else { return };
         let Expression::Identifier(ident) = &expr.callee else { return };
-        if ident.name == "String" || ident.name == "Number" || ident.name == "Boolean" {
-            if ctx.semantic().is_reference_to_global_variable(ident) {
-                ctx.diagnostic(NoNewWrappersDiagnostic(ident.name.clone(), expr.span));
-            }
+        if (ident.name == "String" || ident.name == "Number" || ident.name == "Boolean")
+            && ctx.semantic().is_reference_to_global_variable(ident)
+        {
+            ctx.diagnostic(NoNewWrappersDiagnostic(ident.name.clone(), expr.span));
         }
     }
 }
