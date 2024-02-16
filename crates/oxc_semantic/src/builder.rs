@@ -2,7 +2,6 @@
 
 use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 
-use itertools::Itertools;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, TriviasMap, Visit};
 use oxc_diagnostics::Error;
@@ -62,6 +61,7 @@ pub struct SemanticBuilder<'a> {
     pub namespace_stack: Vec<SymbolId>,
     /// If true, the current node is in the type definition
     in_type_definition: bool,
+    current_reference_flag: ReferenceFlag,
 
     // builders
     pub nodes: AstNodes<'a>,
@@ -103,6 +103,7 @@ impl<'a> SemanticBuilder<'a> {
             current_node_flags: NodeFlags::empty(),
             current_symbol_flags: SymbolFlags::empty(),
             in_type_definition: false,
+            current_reference_flag: ReferenceFlag::empty(),
             current_scope_id,
             function_stack: vec![],
             namespace_stack: vec![],
@@ -1723,6 +1724,22 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
             }
+            AstKind::UpdateExpression(_) => {
+                if self.is_not_expression_statement_parent() {
+                    self.current_reference_flag |= ReferenceFlag::Read;
+                }
+                self.current_reference_flag |= ReferenceFlag::Write;
+            }
+            AstKind::AssignmentExpression(expr) => {
+                if self.is_not_expression_statement_parent()
+                    || expr.operator != AssignmentOperator::Assign
+                {
+                    self.current_reference_flag |= ReferenceFlag::Read;
+                }
+            }
+            AstKind::AssignmentTarget(_) => {
+                self.current_reference_flag |= ReferenceFlag::Write;
+            }
             AstKind::JSXElementName(elem) => {
                 self.reference_jsx_element_name(elem);
             }
@@ -1774,6 +1791,20 @@ impl<'a> SemanticBuilder<'a> {
             | AstKind::TSTypeAnnotation(_) => {
                 self.in_type_definition = false;
             }
+            AstKind::UpdateExpression(_) => {
+                if self.is_not_expression_statement_parent() {
+                    self.current_reference_flag -= ReferenceFlag::Read;
+                }
+                self.current_reference_flag -= ReferenceFlag::Write;
+            }
+            AstKind::AssignmentExpression(expr) => {
+                if self.is_not_expression_statement_parent()
+                    || expr.operator != AssignmentOperator::Assign
+                {
+                    self.current_reference_flag -= ReferenceFlag::Read;
+                }
+            }
+            AstKind::AssignmentTarget(_) => self.current_reference_flag -= ReferenceFlag::Write,
             _ => {}
         }
     }
@@ -1802,71 +1833,17 @@ impl<'a> SemanticBuilder<'a> {
     /// Resolve reference flags for the current ast node.
     fn resolve_reference_usages(&self) -> ReferenceFlag {
         if self.in_type_definition {
-            return ReferenceFlag::Type;
-        }
-
-        let mut flags = ReferenceFlag::None;
-
-        if self.nodes.parent_id(self.current_node_id).is_none() {
-            return ReferenceFlag::Read;
-        }
-
-        // This func should only get called when an IdentifierReference is
-        // reached
-        debug_assert!(matches!(
-            self.nodes.get_node(self.current_node_id).kind(),
-            AstKind::IdentifierReference(_)
-        ));
-
-        for (curr, parent) in self
-            .nodes
-            .iter_parents(self.current_node_id)
-            .tuple_windows::<(&AstNode<'a>, &AstNode<'a>)>()
+            ReferenceFlag::Type
+        } else if self.current_reference_flag.is_write()
+            && !matches!(
+                self.nodes.parent_kind(self.current_node_id),
+                Some(AstKind::MemberExpression(_))
+            )
         {
-            match (curr.kind(), parent.kind()) {
-                // lhs of assignment expression
-                (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
-                    debug_assert!(!flags.is_read());
-                    flags = ReferenceFlag::write();
-                    // a lhs expr will not propagate upwards into a rhs
-                    // expression, sow e can safely break
-                    break;
-                }
-                (AstKind::AssignmentTarget(_), AstKind::AssignmentExpression(expr)) => {
-                    flags |= if expr.operator == AssignmentOperator::Assign {
-                        ReferenceFlag::write()
-                    } else {
-                        ReferenceFlag::read_write()
-                    };
-                    break;
-                }
-                (_, AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_)) => {
-                    flags |= ReferenceFlag::write();
-                    // continue up tree
-                }
-                (_, AstKind::UpdateExpression(_)) => {
-                    flags |= ReferenceFlag::Write;
-                    // continue up tree
-                }
-                (
-                    AstKind::AssignmentTarget(_),
-                    AstKind::ForInStatement(_) | AstKind::ForOfStatement(_),
-                ) => {
-                    break;
-                }
-                (_, AstKind::ParenthesizedExpression(_)) => {
-                    // continue up tree
-                }
-                _ => {
-                    flags |= ReferenceFlag::Read;
-                    break;
-                }
-            }
+            self.current_reference_flag
+        } else {
+            ReferenceFlag::Read
         }
-
-        debug_assert!(flags != ReferenceFlag::None);
-
-        flags
     }
 
     fn reference_jsx_element_name(&mut self, elem: &JSXElementName) {
@@ -1892,5 +1869,16 @@ impl<'a> SemanticBuilder<'a> {
                 self.declare_reference(reference);
             }
         }
+    }
+
+    fn is_not_expression_statement_parent(&self) -> bool {
+        for node in self.nodes.iter_parents(self.current_node_id).skip(1) {
+            return match node.kind() {
+                AstKind::ParenthesizedExpression(_) => continue,
+                AstKind::ExpressionStatement(_) => false,
+                _ => true,
+            };
+        }
+        false
     }
 }

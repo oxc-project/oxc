@@ -254,6 +254,7 @@ mod tests {
             // simple cases
             (SourceType::default(), "let a = 1; a = 2", ReferenceFlag::write()),
             (SourceType::default(), "let a = 1, b; b = a", ReferenceFlag::read()),
+            (SourceType::default(), "let a = 1, b; b[a]", ReferenceFlag::read()),
             (SourceType::default(), "let a = 1, b = 1, c; c = a + b", ReferenceFlag::read()),
             (SourceType::default(), "function a() { return }; a()", ReferenceFlag::read()),
             (SourceType::default(), "class a {}; new a()", ReferenceFlag::read()),
@@ -285,8 +286,8 @@ mod tests {
             (SourceType::default(), "let a = 1, b; b = a += 5", ReferenceFlag::read_write()),
             (SourceType::default(), "let a = 1; a += 5", ReferenceFlag::read_write()),
             // note: we consider a to be written, and the read of `1` propagates upwards
-            (SourceType::default(), "let a, b; b = a = 1", ReferenceFlag::write()),
-            (SourceType::default(), "let a, b; b = (a = 1)", ReferenceFlag::write()),
+            (SourceType::default(), "let a, b; b = a = 1", ReferenceFlag::read_write()),
+            (SourceType::default(), "let a, b; b = (a = 1)", ReferenceFlag::read_write()),
             (SourceType::default(), "let a, b, c; b = c = a", ReferenceFlag::read()),
             // sequences return last value in sequence
             (SourceType::default(), "let a, b; b = (0, a++)", ReferenceFlag::read_write()),
@@ -324,7 +325,7 @@ mod tests {
             (
                 SourceType::default(),
                 "let a; function foo(a) { return a }; foo(a = 1)",
-                ReferenceFlag::write(),
+                ReferenceFlag::read_write(),
             ),
             // typescript
             (typescript, "let a: number = 1; (a as any) = true", ReferenceFlag::write()),
