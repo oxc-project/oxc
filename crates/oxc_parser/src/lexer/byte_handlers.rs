@@ -31,10 +31,10 @@ static BYTE_HANDLERS: [ByteHandler; 256] = [
     UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // 9
     UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // A
     UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // B
-    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // C
+    UER, UER, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // C
     UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // D
     UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // E
-    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UER, UER, UER, UER, UER, UER, UER, UER, // F
+    UNI, UNI, UNI, UNI, UNI, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // F
 ];
 
 /// Macro for defining a byte handler.
@@ -679,11 +679,11 @@ byte_handler!(UNI(lexer) {
     lexer.unicode_char_handler()
 });
 
-// UTF-8 continuation bytes (128-191) (i.e. middle of a multi-byte UTF-8 sequence)
-// + and byte values which are not legal in UTF-8 strings (248-255).
-// `handle_byte()` should only be called with 1st byte of a valid UTF-8 char,
+// UTF-8 continuation bytes (0x80 - 0xBF) (i.e. middle of a multi-byte UTF-8 sequence)
+// + and byte values which are not legal in UTF-8 strings (0xC0, 0xC1, 0xF5 - 0xFF).
+// `handle_byte()` should only be called with 1st byte of a valid UTF-8 character,
 // so something has gone wrong if we get here.
-// https://en.wikipedia.org/wiki/UTF-8
+// https://datatracker.ietf.org/doc/html/rfc3629
 // NB: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII bytes.
 byte_handler!(UER(_lexer) {
     unreachable!();
