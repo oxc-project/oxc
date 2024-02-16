@@ -203,6 +203,7 @@ mod unicorn {
     pub mod no_new_buffer;
     pub mod no_null;
     pub mod no_object_as_default_parameter;
+    pub mod no_process_exit;
     pub mod no_static_only_class;
     pub mod no_thenable;
     pub mod no_this_assignment;
@@ -463,6 +464,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_new_buffer,
     unicorn::no_null,
     unicorn::no_object_as_default_parameter,
+    unicorn::no_process_exit,
     unicorn::no_static_only_class,
     unicorn::no_thenable,
     unicorn::no_this_assignment,
