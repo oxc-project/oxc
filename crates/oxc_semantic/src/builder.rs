@@ -1725,14 +1725,17 @@ impl<'a> SemanticBuilder<'a> {
                 self.reference_identifier(ident);
             }
             AstKind::UpdateExpression(_) => {
-                if self.is_not_expression_statement_parent() {
+                if !self.current_reference_flag.is_read()
+                    && self.is_not_expression_statement_parent()
+                {
                     self.current_reference_flag |= ReferenceFlag::Read;
                 }
                 self.current_reference_flag |= ReferenceFlag::Write;
             }
             AstKind::AssignmentExpression(expr) => {
-                if self.is_not_expression_statement_parent()
-                    || expr.operator != AssignmentOperator::Assign
+                if !self.current_reference_flag.is_read()
+                    && (expr.operator != AssignmentOperator::Assign
+                        || (self.is_not_expression_statement_parent()))
                 {
                     self.current_reference_flag |= ReferenceFlag::Read;
                 }
@@ -1792,14 +1795,17 @@ impl<'a> SemanticBuilder<'a> {
                 self.in_type_definition = false;
             }
             AstKind::UpdateExpression(_) => {
-                if self.is_not_expression_statement_parent() {
+                if !self.current_reference_flag.is_read()
+                    && self.is_not_expression_statement_parent()
+                {
                     self.current_reference_flag -= ReferenceFlag::Read;
                 }
                 self.current_reference_flag -= ReferenceFlag::Write;
             }
             AstKind::AssignmentExpression(expr) => {
-                if self.is_not_expression_statement_parent()
-                    || expr.operator != AssignmentOperator::Assign
+                if !self.current_reference_flag.is_read()
+                    && (expr.operator != AssignmentOperator::Assign
+                        || (self.is_not_expression_statement_parent()))
                 {
                     self.current_reference_flag -= ReferenceFlag::Read;
                 }
