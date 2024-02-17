@@ -4,7 +4,6 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::ScopeFlags;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -58,22 +57,15 @@ impl Rule for NoRenderReturnValue {
                             ));
                         }
 
-                        let is_arrow_function = ctx
-                            .scopes()
-                            .get_flags(parent_node.scope_id())
-                            .contains(ScopeFlags::Arrow);
-
-                        if is_arrow_function {
-                            for node_id in ctx.nodes().ancestors(parent_node.id()).skip(1) {
-                                let node = ctx.nodes().get_node(node_id);
-                                if let AstKind::ArrowExpression(e) = node.kind() {
-                                    if e.expression {
-                                        ctx.diagnostic(NoRenderReturnValueDiagnostic(
-                                            ident.span.merge(&property_span),
-                                        ));
-                                    } else {
-                                        break;
-                                    }
+                        let scope_id = parent_node.scope_id();
+                        if ctx.scopes().get_flags(scope_id).is_arrow() {
+                            if let AstKind::ArrowExpression(e) =
+                                ctx.nodes().kind(ctx.scopes().get_node_id(scope_id))
+                            {
+                                if e.expression {
+                                    ctx.diagnostic(NoRenderReturnValueDiagnostic(
+                                        ident.span.merge(&property_span),
+                                    ));
                                 }
                             }
                         }
