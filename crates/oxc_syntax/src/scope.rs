@@ -53,6 +53,10 @@ impl ScopeFlags {
         self.contains(Self::Function)
     }
 
+    pub fn is_arrow(&self) -> bool {
+        self.contains(Self::Arrow)
+    }
+
     pub fn is_constructor(&self) -> bool {
         self.contains(Self::Constructor)
     }
