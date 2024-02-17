@@ -43,11 +43,10 @@ impl<'a> Binder for VariableDeclarator<'a> {
         let mut var_scope_ids = vec![];
         if !builder.current_scope_flags().is_var() {
             for scope_id in builder.scope.ancestors(current_scope_id).skip(1) {
+                var_scope_ids.push(scope_id);
                 if builder.scope.get_flags(scope_id).is_var() {
-                    var_scope_ids.push(scope_id);
                     break;
                 }
-                var_scope_ids.push(scope_id);
             }
         }
 
@@ -60,10 +59,7 @@ impl<'a> Binder for VariableDeclarator<'a> {
                     builder.check_redeclaration(*scope_id, span, name, excludes, true)
                 {
                     ident.symbol_id.set(Some(symbol_id));
-                    if self.kind.is_var() {
-                        builder
-                            .add_redeclared_variables(VariableInfo { span: ident.span, symbol_id });
-                    }
+                    builder.add_redeclared_variables(VariableInfo { span: ident.span, symbol_id });
                     return;
                 }
             }
