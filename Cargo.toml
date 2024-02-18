@@ -86,7 +86,7 @@ oxc_language_server = { path = "crates/oxc_language_server" }
 assert-unchecked          = { version = "0.1.2" }
 bpaf                      = { version = "0.9.9" }
 bitflags                  = { version = "2.4.2" }
-bumpalo                   = { version = "3.14.0" }
+bumpalo                   = { version = "3.15.0" }
 convert_case              = { version = "0.6.0" }
 criterion                 = { version = "0.5.1", default-features = false }
 crossbeam-channel         = { version = "0.5.11" }

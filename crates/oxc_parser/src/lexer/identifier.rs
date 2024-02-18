@@ -155,8 +155,6 @@ impl<'a> Lexer<'a> {
         let mut str = String::with_capacity_in(capacity, self.allocator);
 
         // Push identifier up this point into `str`
-        // `bumpalo::collections::string::String::push_str` is currently expensive due to
-        // inefficiency in bumpalo's implementation. But best we have right now.
         str.push_str(so_far);
 
         // Process escape and get rest of identifier
