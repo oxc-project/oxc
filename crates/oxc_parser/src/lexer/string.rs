@@ -81,8 +81,6 @@ macro_rules! handle_string_literal_escape {
         let mut str = String::with_capacity_in(capacity, $lexer.allocator);
 
         // Push chunk before `\` into `str`.
-        // `bumpalo::collections::string::String::push_str` is currently expensive due to
-        // inefficiency in bumpalo's implementation. But best we have right now.
         str.push_str(so_far);
 
         'outer: loop {
