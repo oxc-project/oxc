@@ -1731,11 +1731,14 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_reference_flag |= ReferenceFlag::Write;
             }
             AstKind::AssignmentExpression(expr) => {
-                if self.is_not_expression_statement_parent()
-                    || expr.operator != AssignmentOperator::Assign
+                if expr.operator != AssignmentOperator::Assign
+                    || self.is_not_expression_statement_parent()
                 {
                     self.current_reference_flag |= ReferenceFlag::Read;
                 }
+            }
+            AstKind::MemberExpression(_) => {
+                self.current_reference_flag = ReferenceFlag::Read;
             }
             AstKind::AssignmentTarget(_) => {
                 self.current_reference_flag |= ReferenceFlag::Write;
@@ -1798,8 +1801,8 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_reference_flag -= ReferenceFlag::Write;
             }
             AstKind::AssignmentExpression(expr) => {
-                if self.is_not_expression_statement_parent()
-                    || expr.operator != AssignmentOperator::Assign
+                if expr.operator != AssignmentOperator::Assign
+                    || self.is_not_expression_statement_parent()
                 {
                     self.current_reference_flag -= ReferenceFlag::Read;
                 }
@@ -1834,12 +1837,7 @@ impl<'a> SemanticBuilder<'a> {
     fn resolve_reference_usages(&self) -> ReferenceFlag {
         if self.in_type_definition {
             ReferenceFlag::Type
-        } else if self.current_reference_flag.is_write()
-            && !matches!(
-                self.nodes.parent_kind(self.current_node_id),
-                Some(AstKind::MemberExpression(_))
-            )
-        {
+        } else if self.current_reference_flag.is_write() {
             self.current_reference_flag
         } else {
             ReferenceFlag::Read

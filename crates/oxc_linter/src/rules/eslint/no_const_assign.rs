@@ -72,6 +72,7 @@ fn test() {
         ("class X {} X = 1;", None),
         ("try {} catch (x) { x = 1; }", None),
         ("const a = 1; { let a = 2; { a += 1; } }", None),
+        ("const foo = 1;let bar;bar[foo ?? foo] = 42;", None),
     ];
 
     let fail = vec![
