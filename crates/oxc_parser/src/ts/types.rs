@@ -762,7 +762,7 @@ impl<'a> ParserImpl<'a> {
         let is_type_of = self.eat(Kind::Typeof);
         self.expect(Kind::Import)?;
         self.expect(Kind::LParen)?;
-        let parameter = self.parse_ts_type()?;
+        let argument = self.parse_ts_type()?;
         self.expect(Kind::RParen)?;
 
         let qualifier = if self.eat(Kind::Dot) { Some(self.parse_ts_type_name()?) } else { None };
@@ -772,7 +772,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.ts_import_type(
             self.end_span(span),
             is_type_of,
-            parameter,
+            argument,
             qualifier,
             type_parameters,
         ))

@@ -1650,14 +1650,14 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         is_type_of: bool,
-        parameter: TSType<'a>,
+        argument: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> TSType<'a> {
         TSType::TSImportType(self.alloc(TSImportType {
             span,
             is_type_of,
-            parameter,
+            argument,
             qualifier,
             type_parameters,
         }))
