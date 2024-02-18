@@ -120,6 +120,7 @@
     "@vscode/vsce": "^2.22.0",
     "cross-env": "^7.0.3",
     "esbuild": "^0.20.0",
+    "ovsx": "^0.8.3",
     "prettier": "^3.2.4",
     "typescript": "^5.3.3"
   },
