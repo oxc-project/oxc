@@ -8,7 +8,7 @@ fn test(source_text: &str, expected: &str) {
     let source_type = SourceType::default().with_module(true);
     let program = Parser::new(&allocator, source_text, source_type).parse().program;
     let program = allocator.alloc(program);
-    let result = Codegen::<false>::new(source_text.len(), CodegenOptions).build(program);
+    let result = Codegen::<false>::new(source_text.len(), CodegenOptions::default()).build(program);
     assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
 }
 

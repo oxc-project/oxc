@@ -509,7 +509,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ModuleDeclaration<'a> {
             Self::ExportAllDeclaration(decl) => decl.gen(p, ctx),
             Self::ExportDefaultDeclaration(decl) => decl.gen(p, ctx),
             Self::ExportNamedDeclaration(decl) => decl.gen(p, ctx),
-            _ => p.needs_semicolon = false,
+            Self::TSExportAssignment(decl) => decl.gen(p, ctx),
+            Self::TSNamespaceExportDeclaration(decl) => decl.gen(p, ctx),
         }
     }
 }
@@ -519,14 +520,14 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Declaration<'a> {
         match self {
             Self::VariableDeclaration(decl) => {
                 // Codegen is not intended to be used as a code formatting tool, so we need filter out the TypeScript syntax here.
-                if !decl.is_typescript_syntax() {
+                if !p.options.enable_typescript && !decl.is_typescript_syntax() {
                     p.print_indent();
                     decl.gen(p, ctx);
                     p.print_semicolon_after_statement();
                 }
             }
             Self::FunctionDeclaration(decl) => {
-                if !decl.is_typescript_syntax() {
+                if !p.options.enable_typescript && !decl.is_typescript_syntax() {
                     p.print_indent();
                     p.print_space_before_identifier();
                     decl.gen(p, ctx);
@@ -534,7 +535,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Declaration<'a> {
                 }
             }
             Self::ClassDeclaration(decl) => {
-                if !decl.is_typescript_syntax() {
+                if !p.options.enable_typescript && !decl.is_typescript_syntax() {
                     p.print_indent();
                     p.print_space_before_identifier();
                     decl.gen(p, ctx);
@@ -546,11 +547,81 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Declaration<'a> {
                 declaration.gen(p, ctx);
                 p.print_soft_newline();
             }
-            _ => {}
+            Declaration::TSTypeAliasDeclaration(_decl) => {
+                unimplemented!("TSTypeAliasDeclaration")
+            }
+            Declaration::TSInterfaceDeclaration(decl) => {
+                decl.gen(p, ctx)
+            }
+            Declaration::TSEnumDeclaration(decl) => {
+                decl.gen(p, ctx)
+            }
+            Declaration::TSModuleDeclaration(decl) => {
+                decl.gen(p, ctx)
+            }
+            Declaration::TSImportEqualsDeclaration(_decl) => {
+                unimplemented!("TSImportEqualsDeclaration")
+            }
         }
     }
 }
 
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if self.modifiers.contains(ModifierKind::Export) {
+            p.print_str(b"export ");
+        }
+        if self.modifiers.contains(ModifierKind::Declare) {
+            p.print_str(b"declare ");
+        }
+        p.print_str(b"module ");
+        p.print_space_before_identifier();
+        p.print_str(self.id.name().as_bytes());
+        p.print_hard_space();
+        match &self.body {
+            TSModuleDeclarationBody::TSModuleDeclaration(body) => {
+                body.gen(p, ctx)
+            }
+            TSModuleDeclarationBody::TSModuleBlock(body) => {
+                p.print_block(&body.body, Separator::None, ctx);
+            }
+        }
+    }
+}
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.print_indent();
+        p.print_space_before_identifier();
+        p.print_str(b"enum ");
+        self.id.gen(p, ctx);
+        p.print_space_before_identifier();
+        p.print_block_start();
+        p.print_list(&self.body.members, ctx);
+        p.print_block_end();
+        p.print_semicolon_after_statement();
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumMember<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        match &self.id {
+            TSEnumMemberName::Identifier(decl) => {
+                p.print_str(decl.name.as_bytes());
+            }
+            TSEnumMemberName::StringLiteral(decl) => {
+                p.print_str(decl.value.as_bytes());
+            }
+            TSEnumMemberName::ComputedPropertyName(decl) => {
+                p.print_str(b"[");
+                decl.gen_expr(p, Precedence::lowest(), ctx);
+                p.print_str(b"]");
+            }
+            TSEnumMemberName::NumberLiteral(decl) => {
+                decl.gen(p, ctx);
+            }
+        }
+    }
+}
 impl<'a, const MINIFY: bool> Gen<MINIFY> for UsingDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         if self.is_await {
@@ -591,7 +662,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclarator<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if self.is_typescript_syntax() {
+        if !p.options.enable_typescript && self.is_typescript_syntax() {
             return;
         }
         let n = p.code_len();
@@ -768,7 +839,7 @@ impl<const MINIFY: bool> Gen<MINIFY> for ImportAttribute {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if self.is_typescript_syntax() {
+        if !p.options.enable_typescript && self.is_typescript_syntax() {
             return;
         }
         p.print_str(b"export ");
@@ -791,6 +862,27 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
                 p.needs_semicolon = true;
             }
         }
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSExportAssignment<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if !p.options.enable_typescript {
+            return;
+        }
+        p.print_str(b"export = ");
+        self.expression.gen_expr(p, Precedence::lowest(), ctx);
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSNamespaceExportDeclaration {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if !p.options.enable_typescript {
+            return;
+        }
+
+        p.print_str(b"export as namespace ");
+        self.id.gen(p, ctx);
     }
 }
 
@@ -817,7 +909,7 @@ impl<const MINIFY: bool> Gen<MINIFY> for ModuleExportName {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportAllDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if self.is_typescript_syntax() {
+        if !p.options.enable_typescript && self.is_typescript_syntax() {
             return;
         }
         p.print_str(b"export ");
@@ -841,7 +933,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportAllDeclaration<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if self.is_typescript_syntax() {
+        if !p.options.enable_typescript && self.is_typescript_syntax() {
             return;
         }
         p.print_str(b"export default ");
@@ -858,12 +950,23 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclarationKind<'a> {
             }
             Self::FunctionDeclaration(fun) => fun.gen(p, ctx),
             Self::ClassDeclaration(class) => {
-                if !class.is_typescript_syntax() {
+                if !p.options.enable_typescript && !class.is_typescript_syntax() {
                     class.gen(p, ctx);
                     p.print_soft_newline();
                 }
             }
-            _ => {}
+            Self::TSInterfaceDeclaration(decl) => {
+                if p.options.enable_typescript {
+                    decl.gen(p, ctx);
+                    p.print_soft_newline();
+                }
+            }
+            Self::TSEnumDeclaration(decl) => {
+                if p.options.enable_typescript {
+                    decl.gen(p, ctx);
+                    p.print_soft_newline();
+                }
+            }
         }
     }
 }
@@ -1853,7 +1956,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
             p.print_soft_space();
             p.print_block_start();
             for item in &self.body.body {
-                if item.is_typescript_syntax() {
+                if !p.options.enable_typescript && item.is_typescript_syntax() {
                     continue;
                 }
                 p.print_indent();
@@ -1880,7 +1983,317 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ClassElement<'a> {
             Self::MethodDefinition(elem) => elem.gen(p, ctx),
             Self::PropertyDefinition(elem) => elem.gen(p, ctx),
             Self::AccessorProperty(elem) => elem.gen(p, ctx),
-            _ => {}
+            Self::TSAbstractMethodDefinition(elem) => elem.gen(p, ctx),
+            Self::TSAbstractPropertyDefinition(elem) => elem.gen(p, ctx),
+            Self::TSIndexSignature(elem) => elem.gen(p, ctx),
+        }
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSInterfaceDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        let n = p.code_len();
+        let wrap = p.start_of_stmt == n || p.start_of_default_export == n;
+        p.wrap(wrap, |p| {
+            p.print_str(b"interface");
+            p.print_hard_space();
+            self.id.gen(p, ctx);
+            if let Some(extends) = &self.extends {
+                if !extends.is_empty() {
+                    p.print_str(b" extends ");
+                    p.print_list(&extends, ctx);
+                }
+            }
+            p.print_soft_space();
+            p.print_block_start();
+            for item in &self.body.body {
+                p.print_indent();
+                p.print_semicolon_if_needed();
+                item.gen(p, ctx);
+                p.print_soft_newline();
+            }
+            p.print_block_end();
+            p.needs_semicolon = false;
+        });
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSInterfaceHeritage<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        self.expression.gen_expr(p, Precedence::Call, ctx);
+        if let Some(type_parameters) = &self.type_parameters {
+            type_parameters.gen(p, ctx);
+        }
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeParameterInstantiation<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.print_str(b"<");
+        p.print_list(&self.params, ctx);
+        p.print_str(b">");
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        match self {
+            Self::TSFunctionType(_decl) => {
+                unimplemented!("TSFunctionType")
+            },
+            Self::TSConstructorType(_decl) => {
+                unimplemented!("TSConstructorType")
+            },
+            Self::TSArrayType(decl) => {
+                decl.element_type.gen(p, ctx);
+                p.print_str(b"[]");
+            },
+            Self::TSTupleType(decl) => {
+                p.print_str(b"[");
+                p.print_list(&decl.element_types, ctx);
+                p.print_str(b"]");
+            },
+            Self::TSUnionType(decl) => {
+                for (index, item) in decl.types.iter().enumerate() {
+                    if index != 0 {
+                        p.print_soft_space();
+                        p.print_str(b"|");
+                        p.print_soft_space();
+                    }
+                    item.gen(p, ctx);
+                }
+            },
+            Self::TSIntersectionType(decl) => {
+                for (index, item) in decl.types.iter().enumerate() {
+                    if index != 0 {
+                        p.print_soft_space();
+                        p.print_str(b"&");
+                        p.print_soft_space();
+                    }
+                    item.gen(p, ctx);
+                }
+            },
+            Self::TSConditionalType(decl) => {
+                decl.check_type.gen(p, ctx);
+                p.print_str(b" extends ");
+                decl.extends_type.gen(p, ctx);
+                p.print_str(b" ? ");
+                decl.true_type.gen(p, ctx);
+                p.print_str(b" : ");
+                decl.false_type.gen(p, ctx);
+            },
+            Self::TSInferType(decl) => {
+                p.print_str(b"infer ");
+                decl.type_parameter.gen(p, ctx);
+            },
+            Self::TSIndexedAccessType(decl) => {
+                decl.object_type.gen(p, ctx);
+                p.print_str(b"[");
+                decl.index_type.gen(p, ctx);
+                p.print_str(b"]");
+            },
+            Self::TSMappedType(_decl) => {
+                unimplemented!()
+            },
+            Self::TSLiteralType(decl) => {
+                decl.literal.gen(p, ctx);
+            },
+            Self::TSImportType(_decl) => {
+                unimplemented!()
+            },
+            Self::TSQualifiedName(decl) => {
+                decl.left.gen(p, ctx);
+                p.print_str(b".");
+                decl.right.gen(p, ctx);
+            },
+            Self::TSAnyKeyword(_decl) => {
+                p.print_str(b"any");
+            },
+            Self::TSBigIntKeyword(_decl) => {
+                p.print_str(b"bigint");
+            },
+            Self::TSBooleanKeyword(_decl) => {
+                p.print_str(b"boolean");
+            },
+            Self::TSNeverKeyword(_decl) => {
+                p.print_str(b"never");
+            },
+            Self::TSNullKeyword(_decl) => {
+                p.print_str(b"null");
+            },
+            Self::TSNumberKeyword(_decl) => {
+                p.print_str(b"number");
+            },
+            Self::TSObjectKeyword(_decl) => {
+                p.print_str(b"object");
+            },
+            Self::TSStringKeyword(_decl) => {
+                p.print_str(b"string");
+            },
+            Self::TSSymbolKeyword(_decl) => {
+                unimplemented!("TSSymbolKeyword")
+            },
+            Self::TSThisKeyword(_decl) => {
+                p.print_str(b"this");
+            },
+            Self::TSUndefinedKeyword(_decl) => {
+                p.print_str(b"undefined");
+            },
+            Self::TSUnknownKeyword(_decl) => {
+                p.print_str(b"unknown");
+            },
+            Self::TSVoidKeyword(_decl) => {
+                p.print_str(b"void");
+            },
+            Self::TSTemplateLiteralType(_decl) => {
+                unimplemented!("TSTemplateLiteralType")
+            },
+            Self::TSTypeLiteral(decl) => {
+                p.print_str(b"{");
+                p.print_list(&decl.members, ctx);
+                p.print_str(b"}");
+            },
+            Self::TSTypeOperatorType(decl) => decl.gen(p, ctx),
+            Self::TSTypePredicate(decl) => {
+                if decl.asserts {
+                    p.print_str(b"asserts ");
+                }
+                match &decl.parameter_name {
+                    TSTypePredicateName::Identifier(ident) => {
+                        ident.gen(p, ctx);
+                    }
+                    TSTypePredicateName::This(_ident) => {
+                        p.print_str(b"this");
+                    }
+                }
+                if let Some(type_annotation) = &decl.type_annotation {
+                    p.print_str(b" is ");
+                    type_annotation.gen(p, ctx);
+                }
+            },
+            Self::TSTypeQuery(decl) => decl.gen(p, ctx),
+            Self::TSTypeReference(decl) => {
+                decl.type_name.gen(p, ctx);
+                if let Some(type_parameters) = &decl.type_parameters {
+                    type_parameters.gen(p, ctx);
+                }
+            },
+            Self::JSDocNullableType(decl) => {
+                if decl.postfix {
+                    decl.type_annotation.gen(p, ctx);
+                    p.print_str(b"?");
+                } else {
+                    p.print_str(b"?");
+                    decl.type_annotation.gen(p, ctx);
+                }
+            },
+            Self::JSDocUnknownType(_decl) => p.print_str(b"unknown"),
+        }
+    }
+}
+
+
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeAnnotation<'a> {
+    fn gen(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+        unimplemented!("TSTypeAnnotation")
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeOperatorType<'a> {
+    fn gen(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+        unimplemented!("TSTypeOperatorType")
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
+    fn gen(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+        unimplemented!("TSSignature")
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeParameter<'a> {
+    fn gen(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+        unimplemented!("TSTypeParameter")
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTupleElement<'a> {
+    fn gen(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+        unimplemented!("TSTupleElement")
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSAbstractMethodDefinition<'a> {
+    fn gen(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+        unimplemented!("TSAbstractMethodDefinition")
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSAbstractPropertyDefinition<'a> {
+    fn gen(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+        unimplemented!("TSAbstractPropertyDefinition")
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSIndexSignature<'a> {
+    fn gen(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+        unimplemented!("TSIndexSignature")
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSLiteral<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        match self {
+            Self::BooleanLiteral(decl) => {
+                p.print_str(if decl.value { b"true" } else { b"false" });
+            }
+            Self::NullLiteral(_decl) => {
+                p.print_str(b"null");
+            }
+            Self::NumberLiteral(decl) => {
+                decl.gen(p, ctx);
+            }
+            Self::BigintLiteral(_decl) => {
+                unimplemented!("BigintLiteral")
+            }
+            Self::RegExpLiteral(_decl) => {
+                unimplemented!("RegExpLiteral")
+            }
+            Self::StringLiteral(decl) => {
+                p.print_str(decl.value.as_bytes());
+            }
+            Self::TemplateLiteral(_decl) => {
+                unimplemented!()
+            }
+            Self::UnaryExpression(_decl) => {
+                unimplemented!()
+            }
+        }
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeQuery<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.print_str(b"typeof ");
+        self.expr_name.gen(p, ctx);
+        if let Some(type_params) = &self.type_parameters {
+            type_params.gen(p, ctx);
+        }
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeName<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        match self {
+            Self::IdentifierReference(decl) => {
+                p.print_str(decl.name.as_bytes());
+            }
+            Self::QualifiedName(decl) => {
+                decl.left.gen(p, ctx);
+                p.print_str(b".");
+                decl.right.gen(p, ctx);
+            }
         }
     }
 }
@@ -2092,7 +2505,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for StaticBlock<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if self.value.is_typescript_syntax() {
+        if !p.options.enable_typescript && self.value.is_typescript_syntax() {
             return;
         }
         self.decorators.gen(p, ctx);

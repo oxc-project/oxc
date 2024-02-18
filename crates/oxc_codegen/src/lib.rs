@@ -32,7 +32,9 @@ pub use crate::{
 // use crate::mangler::Mangler;
 
 #[derive(Debug, Default, Clone, Copy)]
-pub struct CodegenOptions;
+pub struct CodegenOptions{
+    enable_typescript: bool,
+}
 
 pub struct Codegen<const MINIFY: bool> {
     #[allow(unused)]
