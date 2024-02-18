@@ -160,8 +160,14 @@ jobs:
         working-directory: editors/vscode
         run: pnpm install
 
-      - name: Publish extension to Microsoft Marketplace
+      - name: Publish to Microsoft Marketplace
         working-directory: editors/vscode
         run: pnpm exec vsce publish --packagePath oxc_language_server-*.vsix
         env:
           VSCE_PAT: ${{ secrets.VSCE_PERSONAL_ACCESS_TOKEN }}
+
+      - name: Publish to Open VSX Registry
+        working-directory: editors/vscode
+        run: pnpm exec ovsx publish --packagePath oxc_language_server-*.vsix
+        env:
+          OVSX_PAT: ${{ secrets.OPEN_VSX_TOKEN }}
