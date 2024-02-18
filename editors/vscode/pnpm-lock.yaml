@@ -25,6 +25,9 @@ devDependencies:
   esbuild:
     specifier: ^0.20.0
     version: 0.20.0
+  ovsx:
+    specifier: ^0.8.3
+    version: 0.8.3
   prettier:
     specifier: ^3.2.4
     version: 3.2.4
@@ -394,6 +397,10 @@ packages:
     dev: true
     optional: true
 
+  /ci-info@2.0.0:
+    resolution: {integrity: sha512-5tK7EtrZ0N+OLFMthtqOj4fI2Jeb88C4CAZPu25LDVUgXJ0A3Js4PMGqrn0JU1W0Mh1/Z8wZzYPxqUrXeBboCQ==}
+    dev: true
+
   /color-convert@1.9.3:
     resolution: {integrity: sha512-QfAUtd+vFdAtFQcC8CCyYt1fYWxSqAiK2cSD6zDB8N3cpsEBAvRxp9zOGg6G/SHHJYAT88/az/IuDGALsNVbGg==}
     dependencies:
@@ -570,6 +577,16 @@ packages:
       pend: 1.2.0
     dev: true
 
+  /follow-redirects@1.15.5:
+    resolution: {integrity: sha512-vSFWUON1B+yAw1VN4xMfxgn5fTUiaOzAJCKBwIIgT/+7CuGy9+r+5gITvP62j3RmaD5Ph65UaERdOSRGUzZtgw==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
+    dev: true
+
   /fs-constants@1.0.0:
     resolution: {integrity: sha512-y6OAwoSIf7FyjMIv94u+b5rdheZEjzR63GTyZJm5qh4Bi+2YgwLCcI/fPFZkL5PSixOt6ZNKm+w+Hfp/Bciwow==}
     requiresBuild: true
@@ -682,6 +699,13 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /is-ci@2.0.0:
+    resolution: {integrity: sha512-YfJT7rkpQB0updsdHLGWrvhBJfcfzNNawYDNIyQXJz0IViGf75O8EBPKSdvw2rF+LGCsX4FZ8tcr3b19LcZq4w==}
+    hasBin: true
+    dependencies:
+      ci-info: 2.0.0
+    dev: true
 
   /isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
@@ -809,6 +833,22 @@ packages:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
     dependencies:
       wrappy: 1.0.2
+    dev: true
+
+  /ovsx@0.8.3:
+    resolution: {integrity: sha512-LG7wTzy4eYV/KolFeO4AwWPzQSARvCONzd5oHQlNvYOlji2r/zjbdK8pyObZN84uZlk6rQBWrJrAdJfh/SX0Hg==}
+    engines: {node: '>= 14'}
+    hasBin: true
+    dependencies:
+      '@vscode/vsce': 2.22.0
+      commander: 6.2.1
+      follow-redirects: 1.15.5
+      is-ci: 2.0.0
+      leven: 3.1.0
+      semver: 7.5.4
+      tmp: 0.2.1
+    transitivePeerDependencies:
+      - debug
     dev: true
 
   /parse-semver@1.1.1:
