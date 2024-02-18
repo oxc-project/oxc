@@ -12,6 +12,7 @@ use crate::{
     js::list::{ArrayPatternList, ObjectPatternProperties},
     lexer::Kind,
     list::{NormalList, SeparatedList},
+    ts::list::TSImportAttributeList,
     Context, ParserImpl,
 };
 
@@ -763,6 +764,8 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Import)?;
         self.expect(Kind::LParen)?;
         let argument = self.parse_ts_type()?;
+        let attributes =
+            if self.eat(Kind::Comma) { Some(self.parse_ts_import_attributes()?) } else { None };
         self.expect(Kind::RParen)?;
 
         let qualifier = if self.eat(Kind::Dot) { Some(self.parse_ts_type_name()?) } else { None };
@@ -774,8 +777,20 @@ impl<'a> ParserImpl<'a> {
             is_type_of,
             argument,
             qualifier,
+            attributes,
             type_parameters,
         ))
+    }
+
+    fn parse_ts_import_attributes(&mut self) -> Result<TSImportAttributes<'a>> {
+        let span = self.start_span();
+        // { with:
+        self.expect(Kind::LCurly)?;
+        self.expect(Kind::With)?;
+        self.expect(Kind::Colon)?;
+        let elements = TSImportAttributeList::parse(self)?.elements;
+        self.expect(Kind::RCurly)?;
+        Ok(TSImportAttributes { span, elements })
     }
 
     fn parse_ts_constructor_type(&mut self) -> Result<TSType<'a>> {
