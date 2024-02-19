@@ -143,6 +143,39 @@ impl Case for CodegenTypeScriptCase {
     }
 }
 
+pub struct CodegenTypeScriptOutputCase {
+    base: TypeScriptCase,
+}
+
+impl Case for CodegenTypeScriptOutputCase {
+    fn new(path: PathBuf, code: String) -> Self {
+        Self { base: TypeScriptCase::new(path, code) }
+    }
+
+    fn code(&self) -> &str {
+        self.base.code()
+    }
+
+    fn path(&self) -> &Path {
+        self.base.path()
+    }
+
+    fn test_result(&self) -> &TestResult {
+        self.base.test_result()
+    }
+
+    fn skip_test_case(&self) -> bool {
+        self.base.skip_test_case() || self.base.should_fail()
+    }
+
+    fn run(&mut self) {
+        let source_text = self.base.code();
+        let source_type = self.base.source_type();
+        let result = get_result(source_text, source_type, CodegenOptions{ enable_typescript: true });
+        self.base.set_result(result);
+    }
+}
+
 pub struct CodegenMiscCase {
     base: MiscCase,
 }

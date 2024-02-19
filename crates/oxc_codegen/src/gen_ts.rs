@@ -22,7 +22,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
         match self {
             Self::TSFunctionType(decl) => decl.gen(p, ctx),
             Self::TSConstructorType(_decl) => {
-                unimplemented!("TSConstructorType")
+                // TODO: TSConstructorType
             }
             Self::TSArrayType(decl) => {
                 decl.element_type.gen(p, ctx);
@@ -73,13 +73,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
                 p.print_str(b"]");
             }
             Self::TSMappedType(_decl) => {
-                unimplemented!()
+                // TODO: Implement this
             }
             Self::TSLiteralType(decl) => {
                 decl.literal.gen(p, ctx);
             }
             Self::TSImportType(_decl) => {
-                unimplemented!()
+                // TODO: Implement this
             }
             Self::TSQualifiedName(decl) => {
                 decl.left.gen(p, ctx);
@@ -111,7 +111,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
                 p.print_str(b"string");
             }
             Self::TSSymbolKeyword(_decl) => {
-                unimplemented!("TSSymbolKeyword")
+                // TODO: TSSymbolKeyword
             }
             Self::TSThisKeyword(_decl) => {
                 p.print_str(b"this");
@@ -126,7 +126,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
                 p.print_str(b"void");
             }
             Self::TSTemplateLiteralType(_decl) => {
-                unimplemented!("TSTemplateLiteralType")
+                // TODO: TSTemplateLiteralType
             }
             Self::TSTypeLiteral(decl) => {
                 p.print_str(b"{");
@@ -217,10 +217,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSLiteral<'a> {
                 decl.gen(p, ctx);
             }
             Self::BigintLiteral(_decl) => {
-                unimplemented!("BigintLiteral")
+                // TODO: BigintLiteral
             }
             Self::RegExpLiteral(_decl) => {
-                unimplemented!("RegExpLiteral")
+                // TODO: RegExpLiteral
             }
             Self::StringLiteral(decl) => {
                 p.print(b'\'');
@@ -228,10 +228,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSLiteral<'a> {
                 p.print(b'\'');
             }
             Self::TemplateLiteral(_decl) => {
-                unimplemented!()
+                // TODO: Implement this
             }
             Self::UnaryExpression(_decl) => {
-                unimplemented!()
+                // TODO: Implement this
             }
         }
     }
@@ -316,13 +316,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                 }
             }
             Self::TSCallSignatureDeclaration(signature) => {
-                unimplemented!("TSCallSignatureDeclaration")
+                // TODO: TSCallSignatureDeclaration
             }
             Self::TSConstructSignatureDeclaration(signature) => {
-                unimplemented!("TSConstructSignatureDeclaration")
+                // TODO: TSConstructSignatureDeclaration
             }
             Self::TSMethodSignature(signature) => {
-                unimplemented!("TSMethodSignature")
+                // TODO: TSMethodSignature
             }
         }
     }

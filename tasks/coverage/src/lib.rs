@@ -24,6 +24,7 @@ use crate::{
     test262::{Test262Case, Test262Suite},
     typescript::{TypeScriptCase, TypeScriptSuite},
 };
+use crate::codegen::CodegenTypeScriptOutputCase;
 
 /// # Panics
 /// Invalid Project Root
@@ -63,6 +64,7 @@ impl AppArgs {
         Test262Suite::<CodegenTest262Case>::new().run("codegen_test262", self);
         BabelSuite::<CodegenBabelCase>::new().run("codegen_babel", self);
         TypeScriptSuite::<CodegenTypeScriptCase>::new().run("codegen_typescript", self);
+        TypeScriptSuite::<CodegenTypeScriptOutputCase>::new().run("codegen_typescript_output", self);
         MiscSuite::<CodegenMiscCase>::new().run("codegen_misc", self);
     }
 
