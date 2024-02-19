@@ -29,10 +29,12 @@ impl<'a> JSDocBuilder<'a> {
     }
 
     pub fn retrieve_jsdoc_comments(&mut self, kind: &AstKind<'a>) -> bool {
-        // TODO: Limit target AST kinds to process
-        let span = kind.span();
+        if !(kind.is_statement() || kind.is_declaration()) {
+            return false;
+        }
 
-        // 1. Retrieve all leading comments
+        // 1. Retrieve every kind of leading comments for this node
+        let span = kind.span();
         let mut leading_comments = vec![];
         for (start, comment) in self.trivias.comments().range(..span.start) {
             if !self.leading_comments_seen.contains(start) {
@@ -40,9 +42,8 @@ impl<'a> JSDocBuilder<'a> {
             }
             self.leading_comments_seen.insert(*start);
         }
-        // Should handle trailing comments as well?
 
-        // 2. Exclude non JSDoc comments
+        // 2. Parse JSDoc comments only
         let leading_jsdoc_comments = leading_comments
             .iter()
             .filter(|(_, comment)| comment.is_multi_line())
