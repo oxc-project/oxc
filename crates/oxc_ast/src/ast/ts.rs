@@ -776,7 +776,7 @@ pub struct TSImportType<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub is_type_of: bool,
-    pub parameter: TSType<'a>,
+    pub argument: TSType<'a>,
     pub qualifier: Option<TSTypeName<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
