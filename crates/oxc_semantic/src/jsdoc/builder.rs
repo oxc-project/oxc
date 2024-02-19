@@ -1,67 +1,52 @@
-use std::{collections::BTreeMap, rc::Rc};
+use std::collections::BTreeMap;
 
-use oxc_ast::{AstKind, TriviasMap};
-use oxc_span::{GetSpan, Span};
+use oxc_ast::Comment;
+use oxc_span::Span;
 
 use super::{JSDoc, JSDocComment};
 
 pub struct JSDocBuilder<'a> {
     source_text: &'a str,
 
-    trivias: Rc<TriviasMap>,
-
-    docs: BTreeMap<Span, JSDocComment<'a>>,
+    docs: BTreeMap<Span, Vec<JSDocComment<'a>>>,
 }
 
 impl<'a> JSDocBuilder<'a> {
-    pub fn new(source_text: &'a str, trivias: &Rc<TriviasMap>) -> Self {
-        Self { source_text, trivias: Rc::clone(trivias), docs: BTreeMap::default() }
+    pub fn new(source_text: &'a str) -> Self {
+        Self { source_text, docs: BTreeMap::default() }
     }
 
     pub fn build(self) -> JSDoc<'a> {
         JSDoc::new(self.docs)
     }
 
-    /// Save the span if the given kind has a jsdoc comment attached
-    pub fn retrieve_jsdoc_comment(&mut self, kind: AstKind<'a>) -> bool {
-        if !kind.is_declaration() {
-            return false;
-        }
-        let span = kind.span();
-        let comment_text = self.find_jsdoc_comment(span);
-        if let Some(comment_text) = comment_text {
-            self.docs.insert(span, JSDocComment::new(comment_text));
-        }
-        comment_text.is_some()
-    }
+    pub fn save_jsdoc_comments(&mut self, span: Span, comments: &[(&u32, &Comment)]) -> bool {
+        let jsdoc_comments = comments
+            .iter()
+            .filter(|(_, comment)| comment.is_multi_line())
+            .filter_map(|(start, comment)| {
+                let comment_span = Span::new(**start, comment.end());
+                // Inside of marker: /*_CONTENT_*/
+                let comment_content = comment_span.source_text(self.source_text);
+                // Should start with "*": /**_CONTENT_*/
+                if !comment_content.starts_with('*') {
+                    return None;
+                }
+                Some(comment_content)
+            })
+            .map(|comment_content| {
+                // Remove the very first `*`?
+                // Remove the first `*` and whitespaces in each line?
+                JSDocComment::new(comment_content)
+            })
+            .collect::<Vec<_>>();
 
-    /// Find the jsdoc doc in front of this span, a.k.a leading comment
-    fn find_jsdoc_comment(&self, span: Span) -> Option<&'a str> {
-        let (start, comment) = self.trivias.comments().range(..span.start).next()?;
-
-        if comment.kind().is_single_line() {
-            return None;
-        }
-
-        let comment_text = Span::new(*start, comment.end()).source_text(self.source_text);
-
-        // Comments beginning with /*, /***, or more than 3 stars will be ignored.
-        let mut chars = comment_text.chars();
-        if chars.next() != Some('*') {
-            return None;
-        }
-        if chars.next() == Some('*') {
-            return None;
+        if !jsdoc_comments.is_empty() {
+            self.docs.insert(span, jsdoc_comments);
+            return true;
         }
 
-        // The comment is the leading comment of this span if there is nothing in between.
-        // +2 to skip `*/` ending
-        let text_between = Span::new(comment.end() + 2, span.start).source_text(self.source_text);
-        if text_between.chars().any(|c| !c.is_whitespace()) {
-            return None;
-        }
-
-        Some(comment_text)
+        false
     }
 }
 
@@ -79,7 +64,7 @@ mod test {
         source_text: &'a str,
         symbol: &'a str,
         source_type: Option<SourceType>,
-    ) -> Option<JSDocComment<'a>> {
+    ) -> Option<Vec<JSDocComment<'a>>> {
         let source_type = source_type.unwrap_or_default();
         let ret = Parser::new(allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
@@ -87,13 +72,12 @@ mod test {
             .with_trivias(ret.trivias)
             .build(program)
             .semantic;
-        let jsdoc = semantic.jsdoc();
         let start = source_text.find(symbol).unwrap() as u32;
         let span = Span::new(start, start + symbol.len() as u32);
-        jsdoc.get_by_span(span)
+        semantic.jsdoc().get_by_span(span)
     }
 
-    fn test_jsdoc(source_text: &str, symbol: &str, source_type: Option<SourceType>) {
+    fn test_jsdoc_found(source_text: &str, symbol: &str, source_type: Option<SourceType>) {
         let allocator = Allocator::default();
         assert!(
             get_jsdoc(&allocator, source_text, symbol, source_type).is_some(),
@@ -113,8 +97,9 @@ mod test {
     fn not_found() {
         let source_texts = [
             "function foo() {}",
+            "// single
+            function foo() {}",
             "/* test */function foo() {}",
-            "/*** test */function foo() {}",
             "/** test */ ; function foo() {}",
             "/** test */ function foo1() {} function foo() {}",
         ];
@@ -127,6 +112,7 @@ mod test {
     fn found() {
         let source_texts = [
             "/** test */function foo() {}",
+            "/*** test */function foo() {}",
             "
             /** test */
         function foo() {}",
@@ -138,9 +124,16 @@ mod test {
             function foo() {}",
             "/** test */
             function foo() {}",
+            "/** test */
+            // noop
+            function foo() {}",
+            "/** test */
+            /*noop*/
+            function foo() {}",
+            "/** foo1 */ function foo1() {} /** test */ function foo() {}",
         ];
         for source_text in source_texts {
-            test_jsdoc(source_text, "function foo() {}", None);
+            test_jsdoc_found(source_text, "function foo() {}", None);
         }
     }
 
@@ -151,6 +144,6 @@ mod test {
             bar: string;
         }";
         let source_type = SourceType::default().with_typescript(true);
-        test_jsdoc(source, "bar: string;", Some(source_type));
+        test_jsdoc_found(source, "bar: string;", Some(source_type));
     }
 }

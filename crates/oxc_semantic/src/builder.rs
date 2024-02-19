@@ -5,8 +5,9 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, TriviasMap, Visit};
 use oxc_diagnostics::Error;
-use oxc_span::{Atom, SourceType, Span};
+use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
+use rustc_hash::FxHashSet;
 
 use crate::{
     binder::Binder,
@@ -62,6 +63,7 @@ pub struct SemanticBuilder<'a> {
     /// If true, the current node is in the type definition
     in_type_definition: bool,
     current_reference_flag: ReferenceFlag,
+    comments_before_seen: FxHashSet<u32>,
 
     // builders
     pub nodes: AstNodes<'a>,
@@ -107,12 +109,13 @@ impl<'a> SemanticBuilder<'a> {
             current_scope_id,
             function_stack: vec![],
             namespace_stack: vec![],
+            comments_before_seen: FxHashSet::default(),
             nodes: AstNodes::default(),
             scope,
             symbols: SymbolTable::default(),
             module_record: Arc::new(ModuleRecord::default()),
             label_builder: LabelBuilder::default(),
-            jsdoc: JSDocBuilder::new(source_text, &trivias),
+            jsdoc: JSDocBuilder::new(source_text),
             check_syntax_error: false,
             redeclare_variables: RedeclareVariables { variables: vec![] },
             cfg: ControlFlowGraph::new(),
@@ -123,7 +126,7 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_trivias(mut self, trivias: Trivias) -> Self {
         self.trivias = Rc::new(TriviasMap::from(trivias));
-        self.jsdoc = JSDocBuilder::new(self.source_text, &self.trivias);
+        self.jsdoc = JSDocBuilder::new(self.source_text);
         self
     }
 
@@ -203,10 +206,23 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
+        let span = kind.span();
+
+        let mut leading_comments = vec![];
+        // Should handle trailing comments as well?
+        for (start, comment) in self.trivias.comments().range(..span.start) {
+            if !self.comments_before_seen.contains(start) {
+                leading_comments.push((start, comment));
+            }
+            self.comments_before_seen.insert(*start);
+        }
+
+        // Usage is left to each builder
         let mut flags = self.current_node_flags;
-        if self.jsdoc.retrieve_jsdoc_comment(kind) {
+        if self.jsdoc.save_jsdoc_comments(span, &leading_comments) {
             flags |= NodeFlags::JSDoc;
         }
+
         let ast_node = AstNode::new(kind, self.current_scope_id, self.cfg.current_node_ix, flags);
         let parent_node_id =
             if matches!(kind, AstKind::Program(_)) { None } else { Some(self.current_node_id) };

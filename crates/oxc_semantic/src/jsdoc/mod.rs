@@ -14,7 +14,7 @@ mod parser;
 #[derive(Debug)]
 pub struct JSDoc<'a> {
     /// JSDocs by Span
-    docs: BTreeMap<Span, JSDocComment<'a>>,
+    docs: BTreeMap<Span, Vec<JSDocComment<'a>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -25,11 +25,11 @@ pub struct JSDocComment<'a> {
 }
 
 impl<'a> JSDoc<'a> {
-    pub fn new(docs: BTreeMap<Span, JSDocComment<'a>>) -> Self {
+    pub fn new(docs: BTreeMap<Span, Vec<JSDocComment<'a>>>) -> Self {
         Self { docs }
     }
 
-    pub fn get_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<JSDocComment<'a>> {
+    pub fn get_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<Vec<JSDocComment<'a>>> {
         if !node.flags().has_jsdoc() {
             return None;
         }
@@ -37,7 +37,7 @@ impl<'a> JSDoc<'a> {
         self.get_by_span(span)
     }
 
-    pub fn get_by_span<'b>(&'b self, span: Span) -> Option<JSDocComment<'a>> {
+    pub fn get_by_span<'b>(&'b self, span: Span) -> Option<Vec<JSDocComment<'a>>> {
         self.docs.get(&span).cloned()
     }
 }
