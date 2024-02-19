@@ -10,6 +10,7 @@
 
 mod context;
 mod gen;
+mod gen_ts;
 mod operator;
 
 use std::str::from_utf8_unchecked;
@@ -32,7 +33,9 @@ pub use crate::{
 // use crate::mangler::Mangler;
 
 #[derive(Debug, Default, Clone, Copy)]
-pub struct CodegenOptions;
+pub struct CodegenOptions {
+    pub enable_typescript: bool,
+}
 
 pub struct Codegen<const MINIFY: bool> {
     #[allow(unused)]
