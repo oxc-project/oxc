@@ -56,7 +56,22 @@ mod test {
     use oxc_parser::Parser;
     use oxc_span::{SourceType, Span};
 
-    use crate::{jsdoc::JSDocComment, SemanticBuilder};
+    use crate::{jsdoc::JSDocComment, Semantic, SemanticBuilder};
+
+    fn build_semantic<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: Option<SourceType>,
+    ) -> Semantic<'a> {
+        let source_type = source_type.unwrap_or_default();
+        let ret = Parser::new(allocator, source_text, source_type).parse();
+        let program = allocator.alloc(ret.program);
+        let semantic = SemanticBuilder::new(source_text, source_type)
+            .with_trivias(ret.trivias)
+            .build(program)
+            .semantic;
+        semantic
+    }
 
     #[allow(clippy::cast_possible_truncation)]
     fn get_jsdoc<'a>(
@@ -65,13 +80,7 @@ mod test {
         symbol: &'a str,
         source_type: Option<SourceType>,
     ) -> Option<Vec<JSDocComment<'a>>> {
-        let source_type = source_type.unwrap_or_default();
-        let ret = Parser::new(allocator, source_text, source_type).parse();
-        let program = allocator.alloc(ret.program);
-        let semantic = SemanticBuilder::new(source_text, source_type)
-            .with_trivias(ret.trivias)
-            .build(program)
-            .semantic;
+        let semantic = build_semantic(allocator, source_text, source_type);
         let start = source_text.find(symbol).unwrap() as u32;
         let span = Span::new(start, start + symbol.len() as u32);
         semantic.jsdoc().get_by_span(span)
@@ -97,11 +106,12 @@ mod test {
     fn not_found() {
         let source_texts = [
             "function foo() {}",
-            "// single
+            "// test
             function foo() {}",
             "/* test */function foo() {}",
             "/** test */ ; function foo() {}",
             "/** test */ function foo1() {} function foo() {}",
+            "function foo() {} /** test */",
         ];
         for source_text in source_texts {
             test_jsdoc_not_found(source_text, "function foo() {}");
@@ -145,5 +155,27 @@ mod test {
         }";
         let source_type = SourceType::default().with_typescript(true);
         test_jsdoc_found(source, "bar: string;", Some(source_type));
+    }
+
+    #[test]
+    fn get_all_jsdoc() {
+        let allocator = Allocator::default();
+        let semantic = build_semantic(
+            &allocator,
+            r"
+            /** jsdoc1 */
+            let x;
+            /** jsdoc2 */
+            /** jsdoc3 */
+            let y;
+            /** jsdoc4 *//** jsdoc5 */ /** jsdoc6 */
+            let z;
+            /** jsdoc7 */
+            /** jsdoc8 */
+        ",
+            Some(SourceType::default()),
+        );
+        // Trailing JSDoc comments are not supported yet, needs EOL token?
+        assert_eq!(semantic.jsdoc().iter_all().count(), 6);
     }
 }

@@ -40,6 +40,10 @@ impl<'a> JSDoc<'a> {
     pub fn get_by_span<'b>(&'b self, span: Span) -> Option<Vec<JSDocComment<'a>>> {
         self.docs.get(&span).cloned()
     }
+
+    pub fn iter_all<'b>(&'b self) -> impl Iterator<Item = &JSDocComment<'a>> + 'b {
+        self.docs.iter().flat_map(|(_, comments)| comments)
+    }
 }
 
 impl<'a> JSDocComment<'a> {
