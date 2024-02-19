@@ -4,12 +4,12 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::{self, Error},
+    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-next(no-duplicate-head):")]
@@ -44,38 +44,31 @@ impl Rule for NoDuplicateHead {
                         let document_import = decl.specifiers.as_ref().and_then(|specifiers| {
                             specifiers.iter().find(|spec| matches!(spec, ImportDefaultSpecifier(_)))
                         });
-                        if let Some(ImportDefaultSpecifier(document_improt_specifier)) =
+                        if let Some(ImportDefaultSpecifier(document_import_specifier)) =
                             document_import
                         {
                             document_import_name =
-                                Some(document_improt_specifier.local.name.clone());
+                                Some(document_import_specifier.local.name.clone());
                         }
                     }
                 }
                 oxc_ast::AstKind::ReturnStatement(stmt) => {
-                    let document_class_id = nodes.ancestors(node.id()).find(|node_id| match nodes
-                        .get_node(*node_id)
-                        .kind()
-                    {
+                    let document_class_id = nodes.ancestors(node.id()).find(|node_id| {
+                        matches!(nodes.get_node(*node_id).kind(),
                         AstKind::Class(class)
                             if class
                                 .super_class
                                 .as_ref()
                                 .and_then(|sc| sc.as_identifier())
                                 .map(|id| &id.name)
-                                == document_import_name.as_ref() =>
-                        {
-                            true
-                        }
-                        _ => false,
+                                == document_import_name.as_ref())
                     });
-                    let Some(document_class) = document_class_id.map(|id| nodes.get_node(id))
-                    else {
+                    if document_class_id.map(|id| nodes.get_node(id)).is_none() {
                         continue;
-                    };
+                    }
 
                     let Some(Expression::JSXElement(ref element)) =
-                        stmt.argument.as_ref().map(|arg| arg.get_inner_expression())
+                        stmt.argument.as_ref().map(oxc_ast::ast::Expression::get_inner_expression)
                     else {
                         continue;
                     };
@@ -90,7 +83,6 @@ impl Rule for NoDuplicateHead {
                                 .unwrap_or_default()
                         })
                         .collect::<Vec<_>>();
-                    dbg!(&head_components);
                     if head_components.len() > 1 {
                         for component in head_components {
                             ctx.diagnostic(NoDuplicateHeadDiagnostic(component.span()));
@@ -108,7 +100,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"import Document, { Html, Head, Main, NextScript } from 'next/document'
+        r"import Document, { Html, Head, Main, NextScript } from 'next/document'
 			
 			      class MyDocument extends Document {
 			        static async getInitialProps(ctx) {
@@ -125,7 +117,7 @@ fn test() {
 			      }
 			
 			      export default MyDocument
-			    "#,
+			    ",
         r#"import Document, { Html, Head, Main, NextScript } from 'next/document'
 			
 			      class MyDocument extends Document {
@@ -149,7 +141,7 @@ fn test() {
     ];
 
     let fail = vec![
-        r#"
+        r"
 			      import Document, { Html, Main, NextScript } from 'next/document'
 			      import Head from 'next/head'
 			
@@ -166,8 +158,8 @@ fn test() {
 			      }
 			
 			      export default MyDocument
-			      "#,
-        r#"
+			      ",
+        r"
 			      import Document, { Html, Main, NextScript } from 'next/document'
 			      import Head from 'next/head'
 			
@@ -199,7 +191,7 @@ fn test() {
 			      }
 			
 			      export default MyDocument
-			      "#,
+			      ",
     ];
 
     Tester::new(NoDuplicateHead::NAME, pass, fail).test_and_snapshot();
