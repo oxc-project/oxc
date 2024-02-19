@@ -1,20 +1,19 @@
 use super::{
     cold_branch,
-    search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
+    search::{byte_search, simd_byte_match_table, SimdByteMatchTable},
     Kind, Lexer, LexerContext, Span, Token,
 };
 use crate::diagnostics;
-
 use oxc_allocator::String;
 use std::cmp::max;
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
 
-static DOUBLE_QUOTE_STRING_END_TABLE: SafeByteMatchTable =
-    safe_byte_match_table!(|b| matches!(b, b'"' | b'\r' | b'\n' | b'\\'));
+static DOUBLE_QUOTE_STRING_END_TABLE: SimdByteMatchTable =
+    simd_byte_match_table!(|b| matches!(b, b'"' | b'\r' | b'\n' | b'\\'), false);
 
-static SINGLE_QUOTE_STRING_END_TABLE: SafeByteMatchTable =
-    safe_byte_match_table!(|b| matches!(b, b'\'' | b'\r' | b'\n' | b'\\'));
+static SINGLE_QUOTE_STRING_END_TABLE: SimdByteMatchTable =
+    simd_byte_match_table!(|b| matches!(b, b'\'' | b'\r' | b'\n' | b'\\'), false);
 
 /// Macro to handle a string literal.
 ///
@@ -98,44 +97,41 @@ macro_rules! handle_string_literal_escape {
 
             // Consume bytes until reach end of string, line break, or another escape
             let chunk_start = $lexer.source.position();
-            while let Some(b) = $lexer.source.peek_byte() {
-                match b {
-                    b if !$table.matches(b) => {
-                        // SAFETY: A byte is available, as we just peeked it.
-                        // This may put `source`'s position on a UTF-8 continuation byte, which violates
-                        // `Source`'s invariant temporarily, but the guarantees of `SafeByteMatchTable`
-                        // mean `!table.matches(b)` on this branch prevents exiting this loop until
-                        // `source` is positioned on a UTF-8 character boundary again.
-                        unsafe { $lexer.source.next_byte_unchecked() };
-                        continue;
-                    }
-                    b if b == $delimiter => {
-                        // End of string found. Push last chunk to `str`.
-                        let chunk = $lexer.source.str_from_pos_to_current(chunk_start);
-                        str.push_str(chunk);
+            while let Some((data, actual_len)) = $lexer.source.position().peek_n_with_padding::<{crate::lexer::search::SEARCH_BATCH_SIZE}>($lexer.source.end_addr()) {
+                if let Some((pos, b)) = $table.matches(&data, actual_len) {
+                    $lexer.source.advance(pos);
+                    match b {
+                        b if b == $delimiter => {
+                            // End of string found. Push last chunk to `str`.
+                            let chunk = $lexer.source.str_from_pos_to_current(chunk_start);
+                            str.push_str(chunk);
 
-                        // Consume closing quote.
-                        // SAFETY: Caller guarantees delimiter is ASCII, so consuming it cannot move
-                        // `lexer.source` off a UTF-8 character boundary
-                        $lexer.source.next_byte_unchecked();
-                        break 'outer;
+                            // Consume closing quote.
+                            // SAFETY: Caller guarantees delimiter is ASCII, so consuming it cannot move
+                            // `lexer.source` off a UTF-8 character boundary
+                            $lexer.source.next_byte_unchecked();
+                            break 'outer;
+                        }
+                        b'\\' => {
+                            // Another escape found. Push last chunk to `str`, and loop back to handle escape.
+                            let chunk = $lexer.source.str_from_pos_to_current(chunk_start);
+                            str.push_str(chunk);
+                            continue 'outer;
+                        }
+                        b'\r' | b'\n' => {
+                            // This is impossible in valid JS, so cold path
+                            return cold_branch(|| {
+                                $lexer.consume_char();
+                                $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
+                                Kind::Undetermined
+                            });
+                        }
+                        // SAFETY: Caller guarantees `table` does not match any other bytes
+                        _ => assert_unchecked::unreachable_unchecked!(),
                     }
-                    b'\\' => {
-                        // Another escape found. Push last chunk to `str`, and loop back to handle escape.
-                        let chunk = $lexer.source.str_from_pos_to_current(chunk_start);
-                        str.push_str(chunk);
-                        continue 'outer;
-                    }
-                    b'\r' | b'\n' => {
-                        // This is impossible in valid JS, so cold path
-                        return cold_branch(|| {
-                            $lexer.consume_char();
-                            $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
-                            Kind::Undetermined
-                        });
-                    }
-                    // SAFETY: Caller guarantees `table` does not match any other bytes
-                    _ => assert_unchecked::unreachable_unchecked!(),
+                } else {
+                    $lexer.source.advance(actual_len) ;
+                    continue;
                 }
             }
 

@@ -1,7 +1,9 @@
 #![allow(clippy::unnecessary_safety_comment)]
 
-use super::search::SEARCH_BATCH_SIZE;
 use crate::{UniquePromise, MAX_LEN};
+use std::ptr;
+use std::slice::from_raw_parts;
+use std::{borrow::Cow, mem::MaybeUninit};
 
 use std::{marker::PhantomData, slice, str};
 
@@ -67,10 +69,6 @@ pub(super) struct Source<'a> {
     end: *const u8,
     /// Pointer to current position in source string
     ptr: *const u8,
-    /// Memory address past which not enough bytes remaining in source to process a batch of
-    /// `SEARCH_BATCH_SIZE` bytes in one go.
-    /// Must be `usize`, not a pointer, as if source is very short, a pointer could be out of bounds.
-    end_for_batch_search_addr: usize,
     /// Marker for immutable borrow of source string
     _marker: PhantomData<&'a str>,
 }
@@ -94,13 +92,7 @@ impl<'a> Source<'a> {
         // for direct pointer equality with `ptr` to check if at end of file.
         let end = unsafe { start.add(source_text.len()) };
 
-        // `saturating_sub` not `wrapping_sub` so that value doesn't wrap around if source
-        // is very short, and has very low memory address (e.g. 16). If that's the case,
-        // `end_for_batch_search_addr` will be 0, so a test whether any non-null pointer is past end
-        // will always test positive, and disable batch search.
-        let end_for_batch_search_addr = (end as usize).saturating_sub(SEARCH_BATCH_SIZE);
-
-        Self { start, end, ptr: start, end_for_batch_search_addr, _marker: PhantomData }
+        Self { start, end, ptr: start, _marker: PhantomData }
     }
 
     /// Get entire source text as `&str`.
@@ -113,6 +105,12 @@ impl<'a> Source<'a> {
             let slice = slice::from_raw_parts(self.start, len);
             str::from_utf8_unchecked(slice)
         }
+    }
+
+    /// Get the nth byte from ptr of the source position
+    #[inline]
+    pub(super) unsafe fn advance(&mut self, advance: usize) {
+        self.set_position(self.position().add(advance));
     }
 
     /// Get remaining source text as `&str`.
@@ -142,13 +140,6 @@ impl<'a> Source<'a> {
     #[inline]
     pub(super) fn end_addr(&self) -> usize {
         self.end as usize
-    }
-
-    /// Get last memory address at which a batch of `Lexer::search::SEARCH_BATCH_SIZE` bytes
-    /// can be read without going out of bounds.
-    #[inline]
-    pub(super) fn end_for_batch_search_addr(&self) -> usize {
-        self.end_for_batch_search_addr
     }
 
     /// Get current position.
@@ -564,6 +555,37 @@ impl<'a> SourcePosition<'a> {
         #[allow(clippy::ptr_as_ptr)]
         let p = self.ptr as *const [u8; 2];
         *p.as_ref().unwrap_unchecked()
+    }
+
+    /// Peek next `N` bytes of source without consuming it.
+    /// also the `N` is the length to pad the peeked bytes to.
+    /// returns None if the peeked bytes would be EOF.
+    /// returns Some((cow_bytes, actual_length)) if the peeked bytes is not EOF.
+    #[inline]
+    pub(super) unsafe fn peek_n_with_padding<const N: usize>(
+        &self,
+        end_addr: usize,
+    ) -> Option<(Cow<'_, [u8; N]>, usize)> {
+        const PADDING: u8 = u8::MAX;
+        let remaining_len = end_addr - self.ptr as usize;
+        if remaining_len == 0 {
+            return None;
+        }
+        if remaining_len < N {
+            let padding = N - remaining_len;
+            // unintialized array to save CPU cycles
+            let mut dst = MaybeUninit::<[u8; N]>::uninit();
+            let bytes = &mut *dst.as_mut_ptr();
+            // copy the remaining bytes to the array
+            ptr::copy_nonoverlapping(self.ptr, bytes.as_mut_ptr(), remaining_len);
+            // write the padding bytes to the end of the array
+            ptr::write_bytes(bytes.as_mut_ptr().add(remaining_len), PADDING, padding);
+            let dst = dst.assume_init();
+            Some((Cow::Owned(dst), remaining_len))
+        } else {
+            let bytes = from_raw_parts(self.ptr, N);
+            Some((Cow::Borrowed(bytes.try_into().unwrap()), N))
+        }
     }
 }
 

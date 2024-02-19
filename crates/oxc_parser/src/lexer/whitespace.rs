@@ -1,10 +1,10 @@
 use super::{
-    search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
+    search::{byte_search, simd_byte_match_table, SimdByteMatchTable},
     Kind, Lexer,
 };
 
-static NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE: SafeByteMatchTable =
-    safe_byte_match_table!(|b| !matches!(b, b' ' | b'\t' | b'\r' | b'\n'));
+static NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE: SimdByteMatchTable =
+    simd_byte_match_table!(|b| !matches!(b, b' ' | b'\t' | b'\r' | b'\n'), true);
 
 impl<'a> Lexer<'a> {
     pub(super) fn line_break_handler(&mut self) -> Kind {
