@@ -29,7 +29,13 @@ impl<'a> JSDocBuilder<'a> {
     }
 
     pub fn retrieve_jsdoc_comments(&mut self, kind: &AstKind<'a>) -> bool {
-        if !(kind.is_statement() || kind.is_declaration()) {
+        // We should expand this condition to cover more cases?
+        // TypeScript's `canHaveJSDoc()` function defines so many kinds!
+        // https://github.com/microsoft/TypeScript/blob/d04e3489b0d8e6bc9a8a9396a633632a5a467328/src/compiler/utilities.ts#L4195
+        if !(kind.is_statement()
+            || kind.is_declaration()
+            || matches!(kind, AstKind::ParenthesizedExpression(_)))
+        {
             return false;
         }
 
@@ -187,19 +193,24 @@ mod test {
         let semantic = build_semantic(
             &allocator,
             r"
-            /** jsdoc1 */
-            let x;
-            /** jsdoc2 */
-            /** jsdoc3 */
-            let y;
-            /** jsdoc4 *//** jsdoc5 */ /** jsdoc6 */
-            let z;
-            // TODO: Trailing JSDoc comments are not handled yet, needs EOL token?
-            /** jsdoc7 */
-            /** jsdoc8 */
-        ",
+            /** For ; */
+            ;
+            /** For class X {} *//** For class X {} */
+            class X {
+                /** For foo */
+                foo = /** For (1) */ (1);
+
+                /** THIS is ignored in TS */
+                // bar() {
+                //     // ...
+                // }
+            }
+
+            /** THIS is bound to EOF token in TS */
+            ",
             Some(SourceType::default()),
         );
-        assert_eq!(semantic.jsdoc().iter_all().count(), 6);
+        semantic.jsdoc().iter_all().for_each(|i| println!("{i:?}"));
+        assert_eq!(semantic.jsdoc().iter_all().count(), 5);
     }
 }
