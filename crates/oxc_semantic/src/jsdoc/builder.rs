@@ -1,27 +1,49 @@
 use std::collections::BTreeMap;
+use std::rc::Rc;
 
-use oxc_ast::Comment;
-use oxc_span::Span;
+use oxc_ast::{AstKind, TriviasMap};
+use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashSet;
 
 use super::{JSDoc, JSDocComment};
 
 pub struct JSDocBuilder<'a> {
     source_text: &'a str,
-
+    trivias: Rc<TriviasMap>,
     docs: BTreeMap<Span, Vec<JSDocComment<'a>>>,
+    comments_before_seen: FxHashSet<u32>,
 }
 
 impl<'a> JSDocBuilder<'a> {
-    pub fn new(source_text: &'a str) -> Self {
-        Self { source_text, docs: BTreeMap::default() }
+    pub fn new(source_text: &'a str, trivias: &Rc<TriviasMap>) -> Self {
+        Self {
+            source_text,
+            trivias: Rc::clone(trivias),
+            comments_before_seen: FxHashSet::default(),
+            docs: BTreeMap::default(),
+        }
     }
 
     pub fn build(self) -> JSDoc<'a> {
         JSDoc::new(self.docs)
     }
 
-    pub fn save_jsdoc_comments(&mut self, span: Span, comments: &[(&u32, &Comment)]) -> bool {
-        let jsdoc_comments = comments
+    pub fn retrieve_jsdoc_comments(&mut self, kind: &AstKind<'a>) -> bool {
+        // TODO: Limit target AST kinds to process
+        let span = kind.span();
+
+        // 1. Retrieve all leading comments
+        let mut leading_comments = vec![];
+        for (start, comment) in self.trivias.comments().range(..span.start) {
+            if !self.comments_before_seen.contains(start) {
+                leading_comments.push((start, comment));
+            }
+            self.comments_before_seen.insert(*start);
+        }
+        // Should handle trailing comments as well?
+
+        // 2. Exclude non JSDoc comments
+        let leading_jsdoc_comments = leading_comments
             .iter()
             .filter(|(_, comment)| comment.is_multi_line())
             .filter_map(|(start, comment)| {
@@ -41,8 +63,9 @@ impl<'a> JSDocBuilder<'a> {
             })
             .collect::<Vec<_>>();
 
-        if !jsdoc_comments.is_empty() {
-            self.docs.insert(span, jsdoc_comments);
+        // 3. Save and return `true` to mark JSDoc flag
+        if !leading_jsdoc_comments.is_empty() {
+            self.docs.insert(span, leading_jsdoc_comments);
             return true;
         }
 
