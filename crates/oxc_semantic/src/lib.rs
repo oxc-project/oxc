@@ -327,6 +327,19 @@ mod tests {
                 "let a; function foo(a) { return a }; foo(a = 1)",
                 ReferenceFlag::read_write(),
             ),
+            // member expression
+            (SourceType::default(), "let a; a.b = 1", ReferenceFlag::read()),
+            (SourceType::default(), "let a; let b; b[a += 1] = 1", ReferenceFlag::read_write()),
+            (
+                SourceType::default(),
+                "let a; let b; let c; b[c[a = c['a']] = 'c'] = 'b'",
+                ReferenceFlag::read_write(),
+            ),
+            (
+                SourceType::default(),
+                "let a; let b; let c; a[c[b = c['a']] = 'c'] = 'b'",
+                ReferenceFlag::read(),
+            ),
             // typescript
             (typescript, "let a: number = 1; (a as any) = true", ReferenceFlag::write()),
             (typescript, "let a: number = 1; a = true as any", ReferenceFlag::write()),
