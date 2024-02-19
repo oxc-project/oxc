@@ -235,10 +235,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
 
     fn print_block1(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
         self.print_block_start();
-        for item in &stmt.body {
-            self.print_semicolon_if_needed();
-            item.gen(self, ctx);
-        }
+        self.print_directives_and_statements_with_semicolon_order(None, &stmt.body, ctx, true);
         self.print_block_end();
         self.needs_semicolon = false;
     }
@@ -332,5 +329,70 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         if wrap {
             self.print(b')');
         }
+    }
+
+    fn wrap_quote<F: FnMut(&mut Self, char)>(&mut self, s: &str, mut f: F) {
+        let quote = choose_quote(s);
+        self.print(quote as u8);
+        f(self, quote);
+        self.print(quote as u8);
+    }
+
+    fn print_directives_and_statements_with_semicolon_order(
+        &mut self,
+        directives: Option<&[Directive]>,
+        statements: &[Statement<'_>],
+        ctx: Context,
+        print_semicolon_first: bool,
+    ) {
+        if let Some(directives) = directives {
+            if directives.is_empty() {
+                if let Some(Statement::ExpressionStatement(s)) = statements.first() {
+                    if matches!(s.expression.get_inner_expression(), Expression::StringLiteral(_)) {
+                        self.print_semicolon();
+                    }
+                }
+            } else {
+                for directive in directives {
+                    directive.gen(self, ctx);
+                }
+                self.print_soft_newline();
+            }
+        }
+        for stmt in statements {
+            if let Statement::Declaration(decl) = stmt {
+                if decl.is_typescript_syntax()
+                    && !self.options.enable_typescript
+                    && !matches!(decl, Declaration::TSEnumDeclaration(_))
+                {
+                    continue;
+                }
+            }
+            if print_semicolon_first {
+                self.print_semicolon_if_needed();
+                stmt.gen(self, ctx);
+            } else {
+                stmt.gen(self, ctx);
+                self.print_semicolon_if_needed();
+            }
+        }
+    }
+}
+
+fn choose_quote(s: &str) -> char {
+    let mut single_cost = 0;
+    let mut double_cost = 0;
+    for c in s.chars() {
+        match c {
+            '\'' => single_cost += 1,
+            '"' => double_cost += 1,
+            _ => {}
+        }
+    }
+
+    if single_cost > double_cost {
+        '"'
+    } else {
+        '\''
     }
 }
