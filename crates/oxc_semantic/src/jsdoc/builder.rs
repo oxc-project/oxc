@@ -11,7 +11,7 @@ pub struct JSDocBuilder<'a> {
     source_text: &'a str,
     trivias: Rc<TriviasMap>,
     docs: BTreeMap<Span, Vec<JSDocComment<'a>>>,
-    comments_before_seen: FxHashSet<u32>,
+    leading_comments_seen: FxHashSet<u32>,
 }
 
 impl<'a> JSDocBuilder<'a> {
@@ -19,8 +19,8 @@ impl<'a> JSDocBuilder<'a> {
         Self {
             source_text,
             trivias: Rc::clone(trivias),
-            comments_before_seen: FxHashSet::default(),
             docs: BTreeMap::default(),
+            leading_comments_seen: FxHashSet::default(),
         }
     }
 
@@ -35,10 +35,10 @@ impl<'a> JSDocBuilder<'a> {
         // 1. Retrieve all leading comments
         let mut leading_comments = vec![];
         for (start, comment) in self.trivias.comments().range(..span.start) {
-            if !self.comments_before_seen.contains(start) {
+            if !self.leading_comments_seen.contains(start) {
                 leading_comments.push((start, comment));
             }
-            self.comments_before_seen.insert(*start);
+            self.leading_comments_seen.insert(*start);
         }
         // Should handle trailing comments as well?
 
@@ -193,12 +193,12 @@ mod test {
             let y;
             /** jsdoc4 *//** jsdoc5 */ /** jsdoc6 */
             let z;
+            // TODO: Trailing JSDoc comments are not handled yet, needs EOL token?
             /** jsdoc7 */
             /** jsdoc8 */
         ",
             Some(SourceType::default()),
         );
-        // Trailing JSDoc comments are not supported yet, needs EOL token?
         assert_eq!(semantic.jsdoc().iter_all().count(), 6);
     }
 }
