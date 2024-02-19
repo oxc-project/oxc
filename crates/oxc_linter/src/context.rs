@@ -155,7 +155,7 @@ impl<'a> LintContext<'a> {
     }
 
     /* JSDoc */
-    pub fn jsdoc(&self, node: &AstNode<'a>) -> Option<JSDocComment<'a>> {
+    pub fn jsdoc(&self, node: &AstNode<'a>) -> Option<Vec<JSDocComment<'a>>> {
         self.semantic().jsdoc().get_by_node(node)
     }
 }
