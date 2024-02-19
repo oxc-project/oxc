@@ -159,3 +159,35 @@ impl<'a> SeparatedList<'a> for TSTypeArgumentList<'a> {
         Ok(())
     }
 }
+
+pub struct TSImportAttributeList<'a> {
+    pub elements: Vec<'a, TSImportAttribute<'a>>,
+}
+
+impl<'a> SeparatedList<'a> for TSImportAttributeList<'a> {
+    fn new(p: &ParserImpl<'a>) -> Self {
+        Self { elements: p.ast.new_vec() }
+    }
+
+    fn open(&self) -> Kind {
+        Kind::LCurly
+    }
+
+    fn close(&self) -> Kind {
+        Kind::RCurly
+    }
+
+    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
+        let span = p.start_span();
+        let name = match p.cur_kind() {
+            Kind::Str => TSImportAttributeName::StringLiteral(p.parse_literal_string()?),
+            _ => TSImportAttributeName::Identifier(p.parse_identifier_name()?),
+        };
+
+        p.expect(Kind::Colon)?;
+        let value = p.parse_expression()?;
+        let element = TSImportAttribute { span: p.end_span(span), name, value };
+        self.elements.push(element);
+        Ok(())
+    }
+}

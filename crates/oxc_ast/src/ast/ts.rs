@@ -778,7 +778,35 @@ pub struct TSImportType<'a> {
     pub is_type_of: bool,
     pub argument: TSType<'a>,
     pub qualifier: Option<TSTypeName<'a>>,
+    pub attributes: Option<TSImportAttributes<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+}
+
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+pub struct TSImportAttributes<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub elements: Vec<'a, TSImportAttribute<'a>>,
+}
+
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+pub struct TSImportAttribute<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub name: TSImportAttributeName,
+    pub value: Expression<'a>,
+}
+
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+pub enum TSImportAttributeName {
+    Identifier(IdentifierName),
+    StringLiteral(StringLiteral),
 }
 
 #[derive(Debug, Hash)]
