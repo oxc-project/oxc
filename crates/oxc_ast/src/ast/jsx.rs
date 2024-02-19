@@ -86,6 +86,16 @@ pub enum JSXElementName<'a> {
     MemberExpression(Box<'a, JSXMemberExpression<'a>>),
 }
 
+impl<'a> JSXElementName<'a> {
+    pub fn as_identifier(&self) -> Option<&JSXIdentifier> {
+        if let Self::Identifier(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+}
+
 /// JSX Namespaced Name
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
@@ -235,6 +245,16 @@ pub enum JSXChild<'a> {
     Fragment(Box<'a, JSXFragment<'a>>),
     ExpressionContainer(JSXExpressionContainer<'a>),
     Spread(JSXSpreadChild<'a>),
+}
+
+impl<'a> JSXChild<'a> {
+    pub fn as_element(&self) -> Option<&Box<'a, JSXElement<'a>>> {
+        if let Self::Element(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Debug, Hash)]

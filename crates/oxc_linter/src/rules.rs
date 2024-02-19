@@ -307,6 +307,7 @@ mod nextjs {
     pub mod no_before_interactive_script_outside_document;
     pub mod no_css_tags;
     pub mod no_document_import_in_page;
+    pub mod no_duplicate_head;
     pub mod no_head_element;
     pub mod no_head_import_in_document;
     pub mod no_img_element;
@@ -596,4 +597,5 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_document_import_in_page,
     nextjs::no_unwanted_polyfillio,
     nextjs::no_before_interactive_script_outside_document,
+    nextjs::no_duplicate_head,
 }

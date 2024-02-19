@@ -295,6 +295,14 @@ impl<'a> Expression<'a> {
             _ => false,
         }
     }
+
+    pub fn as_identifier(&self) -> Option<&Box<'a, IdentifierReference>> {
+        if let Self::Identifier(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
 }
 
 /// Identifier Name
