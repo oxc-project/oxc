@@ -13,7 +13,7 @@ use pico_args::Arguments;
 // run `cargo run -p oxc_minifier --example minifier`
 // or `just watch "run -p oxc_minifier --example minifier"`
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
 
     let name = args.subcommand().ok().flatten().unwrap_or_else(|| String::from("test.js"));
@@ -22,7 +22,7 @@ fn main() {
     let twice = args.contains("--twice");
 
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path).unwrap_or_else(|_| panic!("{name} not found"));
+    let source_text = std::fs::read_to_string(path)?;
     let source_type = SourceType::from_path(path).unwrap();
 
     let printed = minify(&source_text, source_type, mangle, whitespace);
@@ -32,6 +32,8 @@ fn main() {
         let printed = minify(&printed, source_type, mangle, whitespace);
         println!("{printed}");
     }
+
+    Ok(())
 }
 
 fn minify(source_text: &str, source_type: SourceType, mangle: bool, whitespace: bool) -> String {
