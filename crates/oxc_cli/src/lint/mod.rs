@@ -6,7 +6,7 @@ use oxc_linter::{partial_loader::LINT_PARTIAL_LOADER_EXT, LintOptions, LintServi
 use oxc_span::VALID_EXTENSIONS;
 
 use crate::{
-    command::LintOptions as CliLintOptions,
+    command::{LintOptions as CliLintOptions, OutputFormat, OutputOptions, WarningOptions},
     walk::{Extensions, Walk},
     CliRunResult, LintResult, Runner,
 };
@@ -37,6 +37,7 @@ impl Runner for LintRunner {
             fix_options,
             enable_plugins,
             config,
+            output_options,
             ..
         } = self.options;
 
@@ -110,10 +111,7 @@ impl Runner for LintRunner {
         };
 
         let lint_service = LintService::new(cwd, &paths, linter);
-
-        let diagnostic_service = DiagnosticService::default()
-            .with_quiet(warning_options.quiet)
-            .with_max_warnings(warning_options.max_warnings);
+        let diagnostic_service = Self::get_diagnostic_service(&warning_options, &output_options);
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn({
@@ -134,6 +132,24 @@ impl Runner for LintRunner {
             max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
             deny_warnings: warning_options.deny_warnings,
         })
+    }
+}
+
+impl LintRunner {
+    fn get_diagnostic_service(
+        warning_options: &WarningOptions,
+        output_options: &OutputOptions,
+    ) -> DiagnosticService {
+        let mut diagnostic_service = DiagnosticService::default()
+            .with_quiet(warning_options.quiet)
+            .with_max_warnings(warning_options.max_warnings);
+
+        match output_options.format {
+            OutputFormat::Default => {}
+            OutputFormat::Json => diagnostic_service.set_json_reporter(),
+        }
+
+        diagnostic_service
     }
 }
 
