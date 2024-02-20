@@ -41,6 +41,10 @@ pub struct LintOptions {
     #[bpaf(external)]
     pub warning_options: WarningOptions,
 
+    /// list all the rules that are currently registered
+    #[bpaf(long("rules"), switch, hide_usage)]
+    pub list_rules: bool,
+
     #[bpaf(external)]
     pub misc_options: MiscOptions,
 
@@ -202,6 +206,7 @@ mod lint_options {
         let options = get_lint_options(".");
         assert_eq!(options.paths, vec![PathBuf::from(".")]);
         assert!(!options.fix_options.fix);
+        assert!(!options.list_rules);
     }
 
     #[test]
@@ -245,5 +250,11 @@ mod lint_options {
                 (AllowWarnDeny::Allow, "no-var".into())
             ]
         );
+    }
+
+    #[test]
+    fn list_rules() {
+        let options = get_lint_options("--rules");
+        assert!(options.list_rules);
     }
 }

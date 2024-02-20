@@ -51,10 +51,6 @@ impl CliCommand {
 /// Miscellaneous
 #[derive(Debug, Clone, Bpaf)]
 pub struct MiscOptions {
-    /// list all the rules that are currently registered
-    #[bpaf(switch, hide_usage)]
-    pub rules: bool,
-
     /// Number of threads to use. Set to 1 for using only 1 CPU core
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<usize>,
@@ -73,7 +69,6 @@ mod misc_options {
     #[test]
     fn default() {
         let options = get_misc_options(".");
-        assert!(!options.rules);
         assert!(options.threads.is_none());
     }
 
@@ -81,11 +76,5 @@ mod misc_options {
     fn threads() {
         let options = get_misc_options("--threads 4 .");
         assert_eq!(options.threads, Some(4));
-    }
-
-    #[test]
-    fn list_rules() {
-        let options = get_misc_options("--rules");
-        assert!(options.rules);
     }
 }
