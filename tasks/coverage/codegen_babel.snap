@@ -1,6 +1,6 @@
 codegen_babel Summary:
 AST Parsed     : 2096/2096 (100.00%)
-Positive Passed: 2043/2096 (97.47%)
+Positive Passed: 2044/2096 (97.52%)
 Typescript failed: "comments/basic/export-default-anonymous-class/input.js"
 Typescript failed: "comments/decorators/decorators-after-export/input.js"
 Typescript failed: "comments/decorators/decorators-before-export/input.js"
@@ -40,7 +40,6 @@ Typescript failed: "typescript/types/abstract-constructor-signatures-babel-7/inp
 Typescript failed: "typescript/types/constructor-signatures/input.ts"
 Typescript failed: "typescript/types/constructor-signatures-babel-7/input.ts"
 Typescript failed: "typescript/types/import-type-dynamic/input.ts"
-Minify failed: "typescript/types/intrinsic-identifier/input.ts"
 Typescript failed: "typescript/types/keywords/input.ts"
 Typescript failed: "typescript/types/literal-bigint/input.ts"
 Typescript failed: "typescript/types/literal-bigint-negative/input.ts"
