@@ -328,40 +328,36 @@ pub(crate) use safe_byte_match_table;
 /// ```
 /// impl<'a> Lexer<'a> {
 ///   fn eat_stuff(&mut self) -> bool {
-///     // SAFETY: It is unsafe to use `continue_if`. See requirements below.
-///     unsafe {
-///       byte_search! {
-///         lexer: self,
-///         table: NOT_STUFF_TABLE,
-///         continue_if: |matched_byte, pos| {
-///           // Matching byte found. Decide whether it's really a match.
-///           // NB: `lexer.source` has NOT been updated at this point.
-///           // SAFETY: If return `true` to continue searching, must NOT alter `pos`.
-///           if matched_byte == 0xE2 {
-///             // Only match a specific Unicode char (in this case 0xE2, 0x80, 0xA8)
-///             unsafe { pos.add(1).read() != 0x80 || pos.add(2).read() != 0xA8) }
-///           } else {
-///             // All others do match. `handle_match` is executed.
-///             false
-///           }
-///         },
-///         handle_match: |matched_byte| {
-///           // Matching byte has been found and `continue_if` returned `false` for it.
-///           // `matched_byte` is `u8` value of first byte which matched the table.
-///           // `lexer.source` is now positioned on first matching byte.
-///           // Handle the next matching byte (deal with any special cases).
-///           // Value this block evaluates to will be returned from enclosing function.
-///           true
-///         },
-///         handle_eof: || {
-///           // No bytes from start position to end of source matched the table.
-///           // `lexer.source` is now positioned at EOF.
-///           // Handle EOF in some way.
-///           // Value this block evaluates to will be returned from enclosing function.
+///     byte_search! {
+///       lexer: self,
+///       table: NOT_STUFF_TABLE,
+///       continue_if: |matched_byte, pos| {
+///         // Matching byte found. Decide whether it's really a match.
+///         // NB: `lexer.source` has NOT been updated at this point.
+///         if matched_byte == 0xE2 {
+///           // Only match a specific Unicode char (in this case 0xE2, 0x80, 0xA8)
+///           unsafe { pos.add(1).read() != 0x80 || pos.add(2).read() != 0xA8) }
+///         } else {
+///           // All others do match. `handle_match` is executed.
 ///           false
-///         },
-///       };
-///     }
+///         }
+///       },
+///       handle_match: |matched_byte| {
+///         // Matching byte has been found and `continue_if` returned `false` for it.
+///         // `matched_byte` is `u8` value of first byte which matched the table.
+///         // `lexer.source` is now positioned on first matching byte.
+///         // Handle the next matching byte (deal with any special cases).
+///         // Value this block evaluates to will be returned from enclosing function.
+///         true
+///       },
+///       handle_eof: || {
+///         // No bytes from start position to end of source matched the table.
+///         // `lexer.source` is now positioned at EOF.
+///         // Handle EOF in some way.
+///         // Value this block evaluates to will be returned from enclosing function.
+///         false
+///       },
+///     };
 ///
 ///     // This is unreachable.
 ///     // Macro always exits current function with a `return` statement.
@@ -414,12 +410,6 @@ macro_rules! byte_search {
         handle_match: |$match_byte:ident, $match_start:ident| $match_handler:expr,
         handle_eof: |$eof_start:ident| $eof_handler:expr,
     ) => {{
-        // User has free access to change `$pos` in `continue_if`.
-        // They must satisfy safety requirements explained above.
-        #[inline]
-        unsafe fn unsafe_noop() {}
-        unsafe_noop();
-
         let start = $lexer.source.position();
         byte_search! {
             lexer: $lexer,
@@ -458,12 +448,6 @@ macro_rules! byte_search {
         handle_match: |$match_byte:ident| $match_handler:expr,
         handle_eof: || $eof_handler:expr,
     ) => {{
-        // User has free access to change `$pos` in `continue_if`.
-        // They must satisfy safety requirements explained above.
-        #[inline]
-        unsafe fn unsafe_noop() {}
-        unsafe_noop();
-
         byte_search! {
             lexer: $lexer,
             table: $table,
