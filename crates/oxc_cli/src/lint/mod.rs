@@ -111,7 +111,8 @@ impl Runner for LintRunner {
         };
 
         let lint_service = LintService::new(cwd, &paths, linter);
-        let diagnostic_service = Self::get_diagnostic_service(&warning_options, &output_options);
+        let mut diagnostic_service =
+            Self::get_diagnostic_service(&warning_options, &output_options);
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn({
