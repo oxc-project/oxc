@@ -3,6 +3,7 @@
 
 mod graphic_reporter;
 mod graphical_theme;
+mod reporter;
 mod service;
 
 use std::path::PathBuf;

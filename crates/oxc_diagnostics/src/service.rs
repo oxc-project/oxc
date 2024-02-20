@@ -2,17 +2,22 @@ use std::{
     cell::Cell,
     io::{BufWriter, Write},
     path::{Path, PathBuf},
-    sync::mpsc,
-    sync::Arc,
+    sync::{mpsc, Arc},
 };
 
-use crate::{miette::NamedSource, Error, GraphicalReportHandler, MinifiedFileError, Severity};
+use crate::{
+    miette::{JSONReportHandler, NamedSource},
+    reporter::DiagnosticReporter,
+    Error, MinifiedFileError, Severity,
+};
 
 pub type DiagnosticTuple = (PathBuf, Vec<Error>);
 pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;
 pub type DiagnosticReceiver = mpsc::Receiver<Option<DiagnosticTuple>>;
 
 pub struct DiagnosticService {
+    reporter: DiagnosticReporter,
+
     /// Disable reporting on warnings, only errors are reported
     quiet: bool,
 
@@ -34,6 +39,7 @@ impl Default for DiagnosticService {
     fn default() -> Self {
         let (sender, receiver) = mpsc::channel();
         Self {
+            reporter: DiagnosticReporter::default(),
             quiet: false,
             max_warnings: None,
             warnings_count: Cell::new(0),
@@ -45,6 +51,10 @@ impl Default for DiagnosticService {
 }
 
 impl DiagnosticService {
+    pub fn set_json_reporter(&mut self) {
+        self.reporter = DiagnosticReporter::Json(JSONReportHandler::new());
+    }
+
     #[must_use]
     pub fn with_quiet(mut self, yes: bool) -> Self {
         self.quiet = yes;
@@ -91,7 +101,6 @@ impl DiagnosticService {
     /// * When the writer fails to write
     pub fn run(&self) {
         let mut buf_writer = BufWriter::new(std::io::stdout());
-        let handler = GraphicalReportHandler::new();
 
         while let Ok(Some((path, diagnostics))) = self.receiver.recv() {
             let mut output = String::new();
@@ -116,7 +125,7 @@ impl DiagnosticService {
                 }
 
                 let mut err = String::new();
-                handler.render_report(&mut err, diagnostic.as_ref()).unwrap();
+                self.reporter.render_report(&mut err, diagnostic.as_ref());
                 // Skip large output and print only once
                 if err.lines().any(|line| line.len() >= 400) {
                     let minified_diagnostic = Error::new(MinifiedFileError(path.clone()));
