@@ -12,8 +12,13 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-next(no-duplicate-head):")]
-#[diagnostic(severity(warning), help("Do not include multiple instances of `<Head/>`. See: https://nextjs.org/docs/messages/no-duplicate-head"))]
+#[error("eslint-plugin-next(no-duplicate-head): Do not include multiple instances of `<Head/>`. See: https://nextjs.org/docs/messages/no-duplicate-head")]
+#[diagnostic(
+    severity(warning),
+    help(
+        "Only use a single `<Head />` component in your custom document in `pages/_document.js`."
+    )
+)]
 struct NoDuplicateHeadDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]

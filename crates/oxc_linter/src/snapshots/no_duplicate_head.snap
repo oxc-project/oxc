@@ -3,34 +3,34 @@ source: crates/oxc_linter/src/tester.rs
 expression: no_duplicate_head
 ---
 
-  ⚠ eslint-plugin-next(no-duplicate-head):
+  ⚠ eslint-plugin-next(no-duplicate-head): Do not include multiple instances of `<Head/>`. See: https://nextjs.org/docs/messages/no-duplicate-head
     ╭─[no_duplicate_head.tsx:9:27]
   8 │                         <Html>
   9 │                           <Head />
     ·                           ────────
  10 │                           <Head />
     ╰────
-  help: Do not include multiple instances of `<Head/>`. See: https://nextjs.org/docs/messages/no-duplicate-head
+  help: Only use a single `<Head />` component in your custom document in `pages/_document.js`.
 
-  ⚠ eslint-plugin-next(no-duplicate-head):
+  ⚠ eslint-plugin-next(no-duplicate-head): Do not include multiple instances of `<Head/>`. See: https://nextjs.org/docs/messages/no-duplicate-head
     ╭─[no_duplicate_head.tsx:10:27]
   9 │                           <Head />
  10 │                           <Head />
     ·                           ────────
  11 │                           <Head />
     ╰────
-  help: Do not include multiple instances of `<Head/>`. See: https://nextjs.org/docs/messages/no-duplicate-head
+  help: Only use a single `<Head />` component in your custom document in `pages/_document.js`.
 
-  ⚠ eslint-plugin-next(no-duplicate-head):
+  ⚠ eslint-plugin-next(no-duplicate-head): Do not include multiple instances of `<Head/>`. See: https://nextjs.org/docs/messages/no-duplicate-head
     ╭─[no_duplicate_head.tsx:11:27]
  10 │                           <Head />
  11 │                           <Head />
     ·                           ────────
  12 │                         </Html>
     ╰────
-  help: Do not include multiple instances of `<Head/>`. See: https://nextjs.org/docs/messages/no-duplicate-head
+  help: Only use a single `<Head />` component in your custom document in `pages/_document.js`.
 
-  ⚠ eslint-plugin-next(no-duplicate-head):
+  ⚠ eslint-plugin-next(no-duplicate-head): Do not include multiple instances of `<Head/>`. See: https://nextjs.org/docs/messages/no-duplicate-head
     ╭─[no_duplicate_head.tsx:9:27]
   8 │                             <Html>
   9 │ ╭─▶                           <Head>
@@ -42,9 +42,9 @@ expression: no_duplicate_head
  15 │ ╰─▶                           </Head>
  16 │                               <body>
     ╰────
-  help: Do not include multiple instances of `<Head/>`. See: https://nextjs.org/docs/messages/no-duplicate-head
+  help: Only use a single `<Head />` component in your custom document in `pages/_document.js`.
 
-  ⚠ eslint-plugin-next(no-duplicate-head):
+  ⚠ eslint-plugin-next(no-duplicate-head): Do not include multiple instances of `<Head/>`. See: https://nextjs.org/docs/messages/no-duplicate-head
     ╭─[no_duplicate_head.tsx:20:27]
  19 │                               </body>
  20 │ ╭─▶                           <Head>
@@ -56,5 +56,5 @@ expression: no_duplicate_head
  26 │ ╰─▶                           </Head>
  27 │                             </Html>
     ╰────
-  help: Do not include multiple instances of `<Head/>`. See: https://nextjs.org/docs/messages/no-duplicate-head
+  help: Only use a single `<Head />` component in your custom document in `pages/_document.js`.
 
