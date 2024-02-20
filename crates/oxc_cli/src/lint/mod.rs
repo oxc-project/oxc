@@ -23,7 +23,7 @@ impl Runner for LintRunner {
     }
 
     fn run(self) -> CliRunResult {
-        if self.options.misc_options.rules {
+        if self.options.list_rules {
             let mut stdout = BufWriter::new(std::io::stdout());
             Linter::print_rules(&mut stdout);
             return CliRunResult::None;
