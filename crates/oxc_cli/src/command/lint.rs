@@ -1,4 +1,4 @@
-use std::{ffi::OsString, path::PathBuf};
+use std::path::PathBuf;
 
 use bpaf::Bpaf;
 use oxc_linter::AllowWarnDeny;
@@ -43,9 +43,6 @@ pub struct LintOptions {
 
     #[bpaf(external)]
     pub misc_options: MiscOptions,
-
-    #[bpaf(external)]
-    pub codeowner_options: CodeownerOptions,
 
     /// ESLint configuration file (experimental)
     ///
@@ -156,18 +153,6 @@ pub struct EnablePlugins {
     /// Enable the React performance plugin and detect rendering performance problems
     #[bpaf(switch, hide_usage)]
     pub react_perf_plugin: bool,
-}
-
-/// Codeowners
-#[derive(Debug, Clone, Bpaf)]
-pub struct CodeownerOptions {
-    /// Path to CODEOWNERS file
-    #[bpaf(argument("PATH"), hide_usage)]
-    pub codeowners_file: Option<OsString>,
-
-    /// Code owner names, e.g. @Boshen
-    #[bpaf(argument("NAME"), hide_usage)]
-    pub codeowners: Vec<String>,
 }
 
 #[cfg(test)]
