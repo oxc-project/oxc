@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 10/10 (100.00%)
-Positive Passed: 10/10 (100.00%)
-Negative Passed: 7/7 (100.00%)
+AST Parsed     : 11/11 (100.00%)
+Positive Passed: 11/11 (100.00%)
+Negative Passed: 8/8 (100.00%)
 
   × Unexpected token
    ╭─[fail/oxc-169.js:1:1]
@@ -89,6 +89,15 @@ Negative Passed: 7/7 (100.00%)
  1 │ x = (/* a */)
    ·     ─────────
    ╰────
+
+  × Expected `with` but found `string`
+    ╭─[fail/oxc-2394.ts:20:22]
+ 19 │ export type LocalInterface =
+ 20 │     & import("pkg", {"resolution-mode": "require"}).RequireInterface
+    ·                      ────────┬────────
+    ·                              ╰── `with` expected
+ 21 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
+    ╰────
 
   × The keyword 'let' is reserved
    ╭─[fail/oxc.js:1:1]

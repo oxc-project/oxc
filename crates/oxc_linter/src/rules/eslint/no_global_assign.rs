@@ -91,6 +91,7 @@ fn test() {
         ("top = 0;", None),
         // ("onload = 0;", None), // env: { browser: true }
         ("require = 0;", None),
+        ("window[parseInt('42', 10)] = 99;", None),
         // ("a = 1", None), // globals: { a: true } },
         // ("/*global a:true*/ a = 1", None),
     ];

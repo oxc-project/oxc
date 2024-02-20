@@ -1,15 +1,14 @@
 use ignore::gitignore::Gitignore;
-use std::{env, io::BufWriter, path::Path, time::Instant, vec::Vec};
+use std::{env, io::BufWriter, time::Instant, vec::Vec};
 
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{partial_loader::LINT_PARTIAL_LOADER_EXT, LintOptions, LintService, Linter};
 use oxc_span::VALID_EXTENSIONS;
 
 use crate::{
-    codeowners,
-    command::LintOptions as CliLintOptions,
+    command::{LintOptions as CliLintOptions, OutputFormat, OutputOptions, WarningOptions},
     walk::{Extensions, Walk},
-    CliRunResult, CodeownerOptions, LintResult, Runner,
+    CliRunResult, LintResult, Runner,
 };
 
 pub struct LintRunner {
@@ -24,7 +23,7 @@ impl Runner for LintRunner {
     }
 
     fn run(self) -> CliRunResult {
-        if self.options.misc_options.rules {
+        if self.options.list_rules {
             let mut stdout = BufWriter::new(std::io::stdout());
             Linter::print_rules(&mut stdout);
             return CliRunResult::None;
@@ -36,9 +35,9 @@ impl Runner for LintRunner {
             warning_options,
             ignore_options,
             fix_options,
-            codeowner_options,
             enable_plugins,
             config,
+            output_options,
             ..
         } = self.options;
 
@@ -85,11 +84,6 @@ impl Runner for LintRunner {
         let paths =
             Walk::new(&paths, &ignore_options).with_extensions(Extensions(extensions)).paths();
 
-        let paths = match Self::apply_codeowners_file(&codeowner_options, paths) {
-            Ok(new_paths) => new_paths,
-            Err(err) => return err,
-        };
-
         let number_of_files = paths.len();
 
         let cwd = std::env::current_dir().unwrap().into_boxed_path();
@@ -117,10 +111,8 @@ impl Runner for LintRunner {
         };
 
         let lint_service = LintService::new(cwd, &paths, linter);
-
-        let diagnostic_service = DiagnosticService::default()
-            .with_quiet(warning_options.quiet)
-            .with_max_warnings(warning_options.max_warnings);
+        let mut diagnostic_service =
+            Self::get_diagnostic_service(&warning_options, &output_options);
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn({
@@ -145,49 +137,20 @@ impl Runner for LintRunner {
 }
 
 impl LintRunner {
-    fn apply_codeowners_file(
-        options: &CodeownerOptions,
-        paths: Vec<Box<Path>>,
-    ) -> Result<Vec<Box<Path>>, CliRunResult> {
-        if options.codeowners_file.is_some() && options.codeowners.is_empty() {
-            return Err(CliRunResult::InvalidOptions {
-                message: "No wanted codeowners provided.".to_string(),
-            });
+    fn get_diagnostic_service(
+        warning_options: &WarningOptions,
+        output_options: &OutputOptions,
+    ) -> DiagnosticService {
+        let mut diagnostic_service = DiagnosticService::default()
+            .with_quiet(warning_options.quiet)
+            .with_max_warnings(warning_options.max_warnings);
+
+        match output_options.format {
+            OutputFormat::Default => {}
+            OutputFormat::Json => diagnostic_service.set_json_reporter(),
         }
 
-        let maybe_codeowners_file = options.codeowners_file.as_ref().map(codeowners::from_path);
-
-        if let Some(owners) = maybe_codeowners_file {
-            return Ok(paths
-                .into_iter()
-                .filter(|path_being_checked| {
-                    // Strips the prefix of "./", because paths will look like "./foo/bar.js"
-                    // however owners.of() will not match against these relative paths.
-                    // So instead we simply strp the prefix and check against "foo/bar.js".
-                    let path_to_check = path_being_checked
-                        .strip_prefix("./")
-                        .unwrap_or(path_being_checked)
-                        .to_path_buf();
-
-                    owners.of(path_to_check).map_or(false, |owners_of_path| {
-                        owners_of_path
-                            .iter()
-                            .map(|owner| match owner {
-                                codeowners::Owner::Email(s)
-                                | codeowners::Owner::Team(s)
-                                | codeowners::Owner::Username(s) => s,
-                            })
-                            .any(|owner| options.codeowners.contains(owner))
-                    })
-                })
-                .collect::<Vec<_>>());
-        } else if options.codeowners_file.is_some() {
-            return Err(CliRunResult::InvalidOptions {
-                message: "Codeowners file could not be read or parsed.".to_string(),
-            });
-        }
-
-        Ok(paths)
+        diagnostic_service
     }
 }
 

@@ -10,12 +10,19 @@ pub struct Element {
     pub name: Atom,
     pub span: Span,
     pub is_private: bool,
+    pub r#static: bool,
     pub kind: ElementKind,
 }
 
 impl Element {
-    pub fn new(name: Atom, span: Span, is_private: bool, kind: ElementKind) -> Self {
-        Self { name, span, is_private, kind }
+    pub fn new(
+        name: Atom,
+        span: Span,
+        r#static: bool,
+        is_private: bool,
+        kind: ElementKind,
+    ) -> Self {
+        Self { name, span, is_private, r#static, kind }
     }
 }
 
