@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        AccessorProperty, ClassBody, ClassElement, MethodDefinition, PrivateIdentifier,
-        PropertyDefinition,
+        AccessorProperty, ClassBody, ClassElement, MethodDefinition, MethodDefinitionKind,
+        PrivateIdentifier, PropertyDefinition,
     },
     AstKind,
 };
@@ -64,7 +64,13 @@ impl ClassTableBuilder {
             if let Some(class_id) = self.current_class_id {
                 self.classes.add_element(
                     class_id,
-                    Element::new(name, property.key.span(), is_private, ElementKind::Property),
+                    Element::new(
+                        name,
+                        property.key.span(),
+                        property.r#static,
+                        is_private,
+                        ElementKind::Accessor,
+                    ),
                 );
             }
         }
@@ -79,7 +85,13 @@ impl ClassTableBuilder {
             if let Some(class_id) = self.current_class_id {
                 self.classes.add_element(
                     class_id,
-                    Element::new(name, property.key.span(), is_private, ElementKind::Property),
+                    Element::new(
+                        name,
+                        property.key.span(),
+                        property.r#static,
+                        is_private,
+                        ElementKind::Property,
+                    ),
                 );
             }
         }
@@ -111,7 +123,7 @@ impl ClassTableBuilder {
     }
 
     pub fn declare_class_method(&mut self, method: &MethodDefinition) {
-        if method.kind.is_constructor() {
+        if method.kind.is_constructor() || method.value.is_typescript_syntax() {
             return;
         }
         let is_private = method.key.is_private_identifier();
@@ -121,7 +133,21 @@ impl ClassTableBuilder {
             if let Some(class_id) = self.current_class_id {
                 self.classes.add_element(
                     class_id,
-                    Element::new(name, method.key.span(), is_private, ElementKind::Method),
+                    Element::new(
+                        name,
+                        method.key.span(),
+                        method.r#static,
+                        is_private,
+                        match method.kind {
+                            MethodDefinitionKind::Method => ElementKind::Method,
+                            MethodDefinitionKind::Get => ElementKind::Method | ElementKind::Getter,
+                            MethodDefinitionKind::Set => ElementKind::Method | ElementKind::Setter,
+                            MethodDefinitionKind::Constructor => {
+                                // Skip constructor
+                                unreachable!()
+                            }
+                        },
+                    ),
                 );
             }
         }
