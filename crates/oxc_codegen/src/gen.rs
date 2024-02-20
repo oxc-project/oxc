@@ -73,6 +73,11 @@ fn print_directives_and_statements_with_semicolon_order<const MINIFY: bool>(
         }
     }
     for stmt in statements {
+        if let Statement::Declaration(decl) = stmt {
+            if decl.is_typescript_syntax() && !p.options.enable_typescript {
+                continue;
+            }
+        }
         if print_semicolon_first {
             p.print_semicolon_if_needed();
             stmt.gen(p, ctx);

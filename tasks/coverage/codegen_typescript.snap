@@ -1,6 +1,6 @@
 codegen_typescript Summary:
 AST Parsed     : 5243/5243 (100.00%)
-Positive Passed: 4642/5243 (88.54%)
+Positive Passed: 4643/5243 (88.56%)
 Typescript failed: "compiler/DeclarationErrorsNoEmitOnError.ts"
 Typescript failed: "compiler/acceptSymbolAsWeakType.ts"
 Typescript failed: "compiler/ambientNameRestrictions.ts"
@@ -535,7 +535,6 @@ Typescript failed: "conformance/types/stringLiteral/stringLiteralTypesAndTuples0
 Typescript failed: "conformance/types/stringLiteral/stringLiteralTypesAsTypeParameterConstraint02.ts"
 Typescript failed: "conformance/types/stringLiteral/stringLiteralTypesWithTemplateStrings01.ts"
 Typescript failed: "conformance/types/thisType/thisTypeInClasses.ts"
-Minify failed: "conformance/types/thisType/thisTypeInFunctions4.ts"
 Typescript failed: "conformance/types/thisType/thisTypeOptionalCall.ts"
 Typescript failed: "conformance/types/tuple/named/namedTupleMembers.ts"
 Typescript failed: "conformance/types/typeAliases/typeAliases.ts"
