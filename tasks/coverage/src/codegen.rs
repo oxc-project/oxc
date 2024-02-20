@@ -13,18 +13,22 @@ use crate::{
     typescript::TypeScriptCase,
 };
 
-fn get_result(source_text: &str, source_type: SourceType, options: CodegenOptions) -> TestResult {
-    if !get_normal_result(source_text, source_type, options)
-        || !get_minify_result(source_text, source_type, options)
-    {
-        TestResult::ParseError(String::new(), false)
-    } else {
-        TestResult::Passed
+fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
+    if !get_normal_result(source_text, source_type) {
+        return TestResult::CodegenError("Default");
     }
+    if !get_minify_result(source_text, source_type) {
+        return TestResult::CodegenError("Minify");
+    }
+    if !get_typescript_result(source_text, source_type) {
+        return TestResult::CodegenError("Typescript");
+    }
+    TestResult::Passed
 }
 
 /// Idempotency test
-fn get_normal_result(source_text: &str, source_type: SourceType, options: CodegenOptions) -> bool {
+fn get_normal_result(source_text: &str, source_type: SourceType) -> bool {
+    let options = CodegenOptions::default();
     let allocator = Allocator::default();
     let program1 = Parser::new(&allocator, source_text, source_type).parse().program;
     let source_text1 = Codegen::<false>::new(source_text.len(), options).build(&program1);
@@ -34,12 +38,24 @@ fn get_normal_result(source_text: &str, source_type: SourceType, options: Codege
 }
 
 /// Minify idempotency test
-fn get_minify_result(source_text: &str, source_type: SourceType, options: CodegenOptions) -> bool {
+fn get_minify_result(source_text: &str, source_type: SourceType) -> bool {
+    let options = CodegenOptions::default();
     let allocator = Allocator::default();
     let program1 = Parser::new(&allocator, source_text, source_type).parse().program;
     let source_text1 = Codegen::<true>::new(source_text.len(), options).build(&program1);
     let program2 = Parser::new(&allocator, &source_text1, source_type).parse().program;
     let source_text2 = Codegen::<true>::new(source_text1.len(), options).build(&program2);
+    source_text1 == source_text2
+}
+
+/// TypeScript idempotency test
+fn get_typescript_result(source_text: &str, source_type: SourceType) -> bool {
+    let options = CodegenOptions { enable_typescript: true };
+    let allocator = Allocator::default();
+    let program1 = Parser::new(&allocator, source_text, source_type).parse().program;
+    let source_text1 = Codegen::<false>::new(source_text.len(), options).build(&program1);
+    let program2 = Parser::new(&allocator, &source_text1, source_type).parse().program;
+    let source_text2 = Codegen::<false>::new(source_text1.len(), options).build(&program2);
     source_text1 == source_text2
 }
 
@@ -72,7 +88,7 @@ impl Case for CodegenTest262Case {
         let source_text = self.base.code();
         let is_module = self.base.meta().flags.contains(&TestFlag::Module);
         let source_type = SourceType::default().with_module(is_module);
-        let result = get_result(source_text, source_type, CodegenOptions);
+        let result = get_result(source_text, source_type);
         self.base.set_result(result);
     }
 }
@@ -105,7 +121,7 @@ impl Case for CodegenBabelCase {
     fn run(&mut self) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type, CodegenOptions);
+        let result = get_result(source_text, source_type);
         self.base.set_result(result);
     }
 }
@@ -138,7 +154,7 @@ impl Case for CodegenTypeScriptCase {
     fn run(&mut self) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type, CodegenOptions);
+        let result = get_result(source_text, source_type);
         self.base.set_result(result);
     }
 }
@@ -171,7 +187,7 @@ impl Case for CodegenMiscCase {
     fn run(&mut self) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type, CodegenOptions);
+        let result = get_result(source_text, source_type);
         self.base.set_result(result);
     }
 }

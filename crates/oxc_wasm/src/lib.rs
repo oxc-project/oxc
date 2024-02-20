@@ -221,9 +221,9 @@ impl Oxc {
         }
 
         self.codegen_text = if minifier_options.whitespace() {
-            Codegen::<true>::new(source_text.len(), CodegenOptions).build(program)
+            Codegen::<true>::new(source_text.len(), CodegenOptions::default()).build(program)
         } else {
-            Codegen::<false>::new(source_text.len(), CodegenOptions).build(program)
+            Codegen::<false>::new(source_text.len(), CodegenOptions::default()).build(program)
         };
 
         Ok(())
