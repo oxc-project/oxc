@@ -1,4 +1,3 @@
-mod codeowners;
 mod command;
 mod format;
 mod lint;

@@ -1,15 +1,14 @@
 use ignore::gitignore::Gitignore;
-use std::{env, io::BufWriter, path::Path, time::Instant, vec::Vec};
+use std::{env, io::BufWriter, time::Instant, vec::Vec};
 
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{partial_loader::LINT_PARTIAL_LOADER_EXT, LintOptions, LintService, Linter};
 use oxc_span::VALID_EXTENSIONS;
 
 use crate::{
-    codeowners,
     command::LintOptions as CliLintOptions,
     walk::{Extensions, Walk},
-    CliRunResult, CodeownerOptions, LintResult, Runner,
+    CliRunResult, LintResult, Runner,
 };
 
 pub struct LintRunner {
@@ -36,7 +35,6 @@ impl Runner for LintRunner {
             warning_options,
             ignore_options,
             fix_options,
-            codeowner_options,
             enable_plugins,
             config,
             ..
@@ -84,11 +82,6 @@ impl Runner for LintRunner {
 
         let paths =
             Walk::new(&paths, &ignore_options).with_extensions(Extensions(extensions)).paths();
-
-        let paths = match Self::apply_codeowners_file(&codeowner_options, paths) {
-            Ok(new_paths) => new_paths,
-            Err(err) => return err,
-        };
 
         let number_of_files = paths.len();
 
@@ -141,53 +134,6 @@ impl Runner for LintRunner {
             max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
             deny_warnings: warning_options.deny_warnings,
         })
-    }
-}
-
-impl LintRunner {
-    fn apply_codeowners_file(
-        options: &CodeownerOptions,
-        paths: Vec<Box<Path>>,
-    ) -> Result<Vec<Box<Path>>, CliRunResult> {
-        if options.codeowners_file.is_some() && options.codeowners.is_empty() {
-            return Err(CliRunResult::InvalidOptions {
-                message: "No wanted codeowners provided.".to_string(),
-            });
-        }
-
-        let maybe_codeowners_file = options.codeowners_file.as_ref().map(codeowners::from_path);
-
-        if let Some(owners) = maybe_codeowners_file {
-            return Ok(paths
-                .into_iter()
-                .filter(|path_being_checked| {
-                    // Strips the prefix of "./", because paths will look like "./foo/bar.js"
-                    // however owners.of() will not match against these relative paths.
-                    // So instead we simply strp the prefix and check against "foo/bar.js".
-                    let path_to_check = path_being_checked
-                        .strip_prefix("./")
-                        .unwrap_or(path_being_checked)
-                        .to_path_buf();
-
-                    owners.of(path_to_check).map_or(false, |owners_of_path| {
-                        owners_of_path
-                            .iter()
-                            .map(|owner| match owner {
-                                codeowners::Owner::Email(s)
-                                | codeowners::Owner::Team(s)
-                                | codeowners::Owner::Username(s) => s,
-                            })
-                            .any(|owner| options.codeowners.contains(owner))
-                    })
-                })
-                .collect::<Vec<_>>());
-        } else if options.codeowners_file.is_some() {
-            return Err(CliRunResult::InvalidOptions {
-                message: "Codeowners file could not be read or parsed.".to_string(),
-            });
-        }
-
-        Ok(paths)
     }
 }
 

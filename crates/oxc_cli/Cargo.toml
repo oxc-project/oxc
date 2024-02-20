@@ -40,18 +40,12 @@ oxc_linter      = { workspace = true }
 oxc_parser      = { workspace = true }
 oxc_prettier    = { workspace = true }
 oxc_span        = { workspace = true }
-glob            = { workspace = true }
-lazy_static     = { workspace = true }
-regex           = { workspace = true }
 
 ignore             = { workspace = true, features = ["simd-accel"] }
 miette             = { workspace = true }
 rayon              = { workspace = true }
 bpaf               = { workspace = true, features = ["derive", "autocomplete", "bright-color"] }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
-
-[dev_dependencies]
-pretty_assertions = "0.6" # Used in codeowners.rs
 
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 jemallocator = { workspace = true }
