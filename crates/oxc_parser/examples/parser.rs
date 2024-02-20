@@ -9,10 +9,10 @@ use oxc_span::SourceType;
 // run `cargo run -p oxc_parser --example parser`
 // or `cargo watch -x "run -p oxc_parser --example parser"`
 
-fn main() {
+fn main() -> Result<(), String> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path).unwrap_or_else(|_| panic!("{name} not found"));
+    let source_text = std::fs::read_to_string(path).map_err(|_| format!("Missing '{name}'"))?;
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
@@ -26,4 +26,6 @@ fn main() {
             println!("{error:?}");
         }
     }
+
+    Ok(())
 }

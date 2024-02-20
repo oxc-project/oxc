@@ -12,14 +12,14 @@ use oxc_span::SourceType;
 // run `cargo run -p oxc_prettier --example prettier`
 // or `just example prettier`
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
 
     let name = args.subcommand().ok().flatten().unwrap_or_else(|| String::from("test.js"));
     let semi = !args.contains("--no-semi");
 
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path).unwrap_or_else(|_| panic!("{name} not found"));
+    let source_text = std::fs::read_to_string(path)?;
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
     let ret = Parser::new(&allocator, &source_text, source_type).preserve_parens(false).parse();
@@ -31,4 +31,6 @@ fn main() {
     )
     .build(&ret.program);
     println!("{output}");
+
+    Ok(())
 }

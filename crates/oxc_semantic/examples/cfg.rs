@@ -16,7 +16,7 @@ use petgraph::dot::{Config, Dot};
 //    - CFG blocks (test.cfg.txt)
 //    - CFG graph (test.dot)
 
-fn main() -> Result<(), std::io::Error> {
+fn main() -> std::io::Result<()> {
     let test_file_name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let ast_file_name = env::args().nth(1).unwrap_or_else(|| "test.ast.txt".to_string());
     let cfg_file_name = env::args().nth(1).unwrap_or_else(|| "test.cfg.txt".to_string());
@@ -27,10 +27,7 @@ fn main() -> Result<(), std::io::Error> {
     let cfg_file_path = Path::new(&cfg_file_name);
     let dot_file_path = Path::new(&dot_file_name);
 
-    let source_text = Arc::new(
-        std::fs::read_to_string(test_file_path)
-            .unwrap_or_else(|_| panic!("{test_file_name} not found")),
-    );
+    let source_text = Arc::new(std::fs::read_to_string(test_file_path)?);
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(test_file_path).unwrap();
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
@@ -51,7 +48,8 @@ fn main() -> Result<(), std::io::Error> {
             .map(|error| error.with_source_code(Arc::clone(&source_text)).to_string())
             .join("\n\n");
 
-        panic!("Semantic analysis failed:\n\n{error_message}",);
+        println!("Semantic analysis failed:\n\n{error_message}",);
+        return Ok(());
     }
 
     let mut ast_nodes_by_block = HashMap::<_, Vec<_>>::new();

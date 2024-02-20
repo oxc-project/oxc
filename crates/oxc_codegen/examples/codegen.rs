@@ -9,10 +9,10 @@ use oxc_span::SourceType;
 // 1. create a `test.js`
 // 2. run `cargo run -p oxc_codegen --example codegen` or `just example codegen`
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path).unwrap_or_else(|_| panic!("{name} not found"));
+    let source_text = std::fs::read_to_string(path)?;
     let source_type = SourceType::from_path(path).unwrap();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
@@ -22,7 +22,7 @@ fn main() {
             let error = error.with_source_code(source_text.clone());
             println!("{error:?}");
         }
-        return;
+        return Ok(());
     }
 
     println!("Original:");
@@ -37,4 +37,6 @@ fn main() {
     let minified = Codegen::<true>::new(source_text.len(), codegen_options).build(&ret.program);
     println!("Minified:");
     println!("{minified}");
+
+    Ok(())
 }
