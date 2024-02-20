@@ -7,7 +7,7 @@ use bpaf::Bpaf;
 pub use self::{
     format::{format_command, FormatOptions},
     ignore::IgnoreOptions,
-    lint::{lint_command, CodeownerOptions, LintOptions},
+    lint::{lint_command, LintOptions},
 };
 
 use self::{format::format_options, lint::lint_options};
