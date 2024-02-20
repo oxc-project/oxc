@@ -41,6 +41,9 @@ pub struct LintOptions {
     #[bpaf(external)]
     pub warning_options: WarningOptions,
 
+    #[bpaf(external)]
+    pub output_options: OutputOptions,
+
     /// list all the rules that are currently registered
     #[bpaf(long("rules"), switch, hide_usage)]
     pub list_rules: bool,
@@ -51,7 +54,7 @@ pub struct LintOptions {
     /// ESLint configuration file (experimental)
     ///
     /// * only `.json` extension is supported
-    #[bpaf(long("config"), short('c'), argument("PATH"))]
+    #[bpaf(long, short, argument("PATH"))]
     pub config: Option<PathBuf>,
 
     /// Single file, single path or list of paths
@@ -134,6 +137,21 @@ pub struct WarningOptions {
     pub max_warnings: Option<usize>,
 }
 
+/// Output
+#[derive(Debug, Clone, Bpaf)]
+pub struct OutputOptions {
+    /// Use a specific output format (default, json)
+    // last flag is the default
+    #[bpaf(long, short, flag(OutputFormat::Json, OutputFormat::Default))]
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum OutputFormat {
+    Default,
+    Json,
+}
+
 /// Enable Plugins
 #[allow(clippy::struct_field_names)]
 #[derive(Debug, Clone, Bpaf)]
@@ -194,7 +212,7 @@ mod lint_options {
 
     use oxc_linter::AllowWarnDeny;
 
-    use super::{lint_command, LintOptions};
+    use super::{lint_command, LintOptions, OutputFormat};
 
     fn get_lint_options(arg: &str) -> LintOptions {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
@@ -207,6 +225,7 @@ mod lint_options {
         assert_eq!(options.paths, vec![PathBuf::from(".")]);
         assert!(!options.fix_options.fix);
         assert!(!options.list_rules);
+        assert_eq!(options.output_options.format, OutputFormat::Default);
     }
 
     #[test]
@@ -250,6 +269,12 @@ mod lint_options {
                 (AllowWarnDeny::Allow, "no-var".into())
             ]
         );
+    }
+
+    #[test]
+    fn format() {
+        let options = get_lint_options("-f json");
+        assert_eq!(options.output_options.format, OutputFormat::Json);
     }
 
     #[test]
