@@ -28,7 +28,7 @@ fn main() {
     println!("Original:");
     println!("{source_text}");
 
-    let codegen_options = CodegenOptions;
+    let codegen_options = CodegenOptions::default();
     let printed = Codegen::<false>::new(source_text.len(), codegen_options).build(&ret.program);
     println!("Printed:");
     println!("{printed}");

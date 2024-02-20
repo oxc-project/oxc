@@ -8,7 +8,25 @@ fn test(source_text: &str, expected: &str) {
     let source_type = SourceType::default().with_module(true);
     let program = Parser::new(&allocator, source_text, source_type).parse().program;
     let program = allocator.alloc(program);
-    let result = Codegen::<false>::new(source_text.len(), CodegenOptions).build(program);
+    let result = Codegen::<false>::new(source_text.len(), CodegenOptions::default()).build(program);
+    assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
+}
+
+fn test_ts_same_out(source_text: &str) {
+    test_ts(source_text, &format!("{source_text}\n"), false);
+}
+
+fn test_ts(source_text: &str, expected: &str, is_typescript_definition: bool) {
+    let allocator = Allocator::default();
+    let source_type = SourceType::default()
+        .with_typescript(true)
+        .with_typescript_definition(is_typescript_definition)
+        .with_module(true);
+    let program = Parser::new(&allocator, source_text, source_type).parse().program;
+    let program = allocator.alloc(program);
+    let result =
+        Codegen::<false>::new(source_text.len(), CodegenOptions { enable_typescript: true })
+            .build(program);
     assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
 }
 
@@ -112,4 +130,23 @@ fn module_decl() {
 #[test]
 fn new_expr() {
     test("new (foo()).bar();", "new (foo()).bar();\n");
+}
+
+#[test]
+fn typescript() {
+    test_ts_same_out("let x: string = `\\x01`;");
+
+    test_ts_same_out("function foo<T extends string>(x: T, y: string, ...restOfParams: Omit<T, 'x'>): T {\n\treturn x;\n}");
+
+    test_ts_same_out("let x: string[] = ['abc', 'def', 'ghi'];");
+    test_ts_same_out("let x: Array<string> = ['abc', 'def', 'ghi',];");
+    test_ts_same_out("let x: [string, number] = ['abc', 123];");
+    test_ts_same_out("let x: string | number = 'abc';");
+    test_ts_same_out("let x: string & number = 'abc';");
+    test_ts_same_out("let x: typeof String = 'string';");
+    test_ts_same_out("let x: keyof string = 'length';");
+    test_ts_same_out("let x: keyof typeof String = 'length';");
+    test_ts_same_out("let x: string['length'] = 123;");
+
+    test_ts_same_out("function isString(value: unknown): asserts value is string {\n\tif (typeof value !== 'string') {\n\t\tthrow new Error('Not a string');\n\t}\n}");
 }

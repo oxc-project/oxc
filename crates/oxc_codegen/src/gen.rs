@@ -591,7 +591,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclarator<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if self.is_typescript_syntax() {
+        if !p.options.enable_typescript && self.is_typescript_syntax() {
             return;
         }
         let n = p.code_len();
@@ -609,9 +609,20 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
                 p.print_space_before_identifier();
                 id.gen(p, ctx);
             }
+            if p.options.enable_typescript {
+                if let Some(type_parameters) = &self.type_parameters {
+                    type_parameters.gen(p, ctx);
+                }
+            }
             p.print(b'(');
             self.params.gen(p, ctx);
             p.print(b')');
+            if p.options.enable_typescript {
+                if let Some(return_type) = &self.return_type {
+                    p.print_str(b": ");
+                    return_type.gen(p, ctx);
+                }
+            }
             p.print_soft_space();
             if let Some(body) = &self.body {
                 body.gen(p, ctx);
@@ -638,6 +649,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for FunctionBody<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for FormalParameter<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.decorators.gen(p, ctx);
+        if p.options.enable_typescript && self.readonly {
+            p.print_str(b"readonly ");
+        }
         self.pattern.gen(p, ctx);
     }
 }
@@ -648,6 +662,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for FormalParameters<'a> {
         if let Some(rest) = &self.rest {
             if !self.items.is_empty() {
                 p.print_comma();
+                p.print_soft_space();
             }
             rest.gen(p, ctx);
         }
@@ -768,7 +783,7 @@ impl<const MINIFY: bool> Gen<MINIFY> for ImportAttribute {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if self.is_typescript_syntax() {
+        if !p.options.enable_typescript && self.is_typescript_syntax() {
             return;
         }
         p.print_str(b"export ");
@@ -817,7 +832,7 @@ impl<const MINIFY: bool> Gen<MINIFY> for ModuleExportName {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportAllDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if self.is_typescript_syntax() {
+        if !p.options.enable_typescript && self.is_typescript_syntax() {
             return;
         }
         p.print_str(b"export ");
@@ -841,7 +856,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportAllDeclaration<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if self.is_typescript_syntax() {
+        if !p.options.enable_typescript && self.is_typescript_syntax() {
             return;
         }
         p.print_str(b"export default ");
@@ -858,7 +873,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclarationKind<'a> {
             }
             Self::FunctionDeclaration(fun) => fun.gen(p, ctx),
             Self::ClassDeclaration(class) => {
-                if !class.is_typescript_syntax() {
+                if !p.options.enable_typescript && !class.is_typescript_syntax() {
                     class.gen(p, ctx);
                     p.print_soft_newline();
                 }
@@ -2092,7 +2107,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for StaticBlock<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if self.value.is_typescript_syntax() {
+        if !p.options.enable_typescript && self.value.is_typescript_syntax() {
             return;
         }
         self.decorators.gen(p, ctx);
@@ -2185,6 +2200,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingPattern<'a> {
             BindingPatternKind::ObjectPattern(pattern) => pattern.gen(p, ctx),
             BindingPatternKind::ArrayPattern(pattern) => pattern.gen(p, ctx),
             BindingPatternKind::AssignmentPattern(pattern) => pattern.gen(p, ctx),
+        }
+        if p.options.enable_typescript {
+            if let Some(type_annotation) = &self.type_annotation {
+                p.print_colon();
+                p.print_soft_space();
+                type_annotation.gen(p, ctx);
+            }
         }
     }
 }

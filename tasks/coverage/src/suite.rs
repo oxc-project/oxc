@@ -34,6 +34,7 @@ pub enum TestResult {
     ParseError(String, /* panicked */ bool),
     CorrectError(String, /* panicked */ bool),
     RuntimeError(String),
+    CodegenError(/* reason */ &'static str),
 }
 
 pub struct CoverageReport<'a, T> {
@@ -380,7 +381,12 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                     format!("Expect Syntax Error: {:?}\n", normalize_path(self.path())).as_bytes(),
                 )?;
             }
-            _ => {}
+            TestResult::CodegenError(reason) => {
+                writer.write_all(
+                    format!("{reason} failed: {:?}\n", normalize_path(self.path())).as_bytes(),
+                )?;
+            }
+            TestResult::Passed | TestResult::ToBeRun | TestResult::CorrectError(..) => {}
         }
         Ok(())
     }
