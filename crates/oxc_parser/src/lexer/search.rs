@@ -234,10 +234,10 @@ impl SafeByteMatchTable {
 macro_rules! safe_byte_match_table {
     (|$byte:ident| $res:expr) => {{
         use crate::lexer::search::SafeByteMatchTable;
+        // Clippy creates warnings because e.g. `safe_byte_match_table!(|b| b == 0)`
+        // is expanded to `SafeByteMatchTable([0 == 0, ... ])`
         #[allow(clippy::eq_op)]
         const TABLE: SafeByteMatchTable = seq_macro::seq!($byte in 0u8..=255 {
-            // Clippy creates warnings because e.g. `byte_match_table!(|b| b == 0)`
-            // is expanded to `SafeByteMatchTable([0 == 0, ... ])`
             SafeByteMatchTable::new([#($res,)*])
         });
         TABLE
