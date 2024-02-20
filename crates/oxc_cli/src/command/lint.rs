@@ -1,42 +1,12 @@
-use bpaf::{doc::Style, Bpaf};
-use oxc_linter::AllowWarnDeny;
 use std::{ffi::OsString, path::PathBuf};
 
-const VERSION: &str = match option_env!("OXC_VERSION") {
-    Some(v) => v,
-    None => "dev",
+use bpaf::Bpaf;
+use oxc_linter::AllowWarnDeny;
+
+use super::{
+    ignore::{ignore_options, IgnoreOptions},
+    misc_options, CliCommand, MiscOptions, VERSION,
 };
-
-#[derive(Debug, Clone, Bpaf)]
-#[bpaf(options, version(VERSION))]
-pub enum CliCommand {
-    /// Lint this repository
-    #[bpaf(command)]
-    Lint(#[bpaf(external(lint_options))] LintOptions),
-
-    /// Format this repository
-    #[bpaf(command)]
-    Format(#[bpaf(external(format_options))] FormatOptions),
-}
-
-impl CliCommand {
-    pub fn handle_threads(&self) {
-        match self {
-            Self::Lint(options) => {
-                Self::set_rayon_threads(options.misc_options.threads);
-            }
-            Self::Format(options) => {
-                Self::set_rayon_threads(options.misc_options.threads);
-            }
-        }
-    }
-
-    fn set_rayon_threads(threads: Option<usize>) {
-        if let Some(threads) = threads {
-            rayon::ThreadPoolBuilder::new().num_threads(threads).build_global().unwrap();
-        }
-    }
-}
 
 // To add a header or footer, see
 // <https://docs.rs/bpaf/latest/bpaf/struct.OptionParser.html#method.descr>
@@ -52,56 +22,6 @@ impl LintCommand {
     pub fn handle_threads(&self) {
         CliCommand::set_rayon_threads(self.lint_options.misc_options.threads);
     }
-}
-
-/// Formatter for the JavaScript Oxidation Compiler
-#[derive(Debug, Clone, Bpaf)]
-#[bpaf(options, version(VERSION))]
-pub struct FormatCommand {
-    #[bpaf(external(format_options))]
-    pub format_options: FormatOptions,
-}
-
-impl FormatCommand {
-    pub fn handle_threads(&self) {
-        CliCommand::set_rayon_threads(self.format_options.misc_options.threads);
-    }
-}
-
-/// Miscellaneous
-#[derive(Debug, Clone, Bpaf)]
-pub struct MiscOptions {
-    /// list all the rules that are currently registered
-    #[bpaf(switch, hide_usage)]
-    pub rules: bool,
-
-    /// Number of threads to use. Set to 1 for using only 1 CPU core
-    #[bpaf(argument("INT"), hide_usage)]
-    pub threads: Option<usize>,
-}
-
-/// Enable Plugins
-#[derive(Debug, Clone, Bpaf)]
-pub struct EnablePlugins {
-    /// Enable the experimental import plugin and detect ESM problems
-    #[bpaf(switch, hide_usage)]
-    pub import_plugin: bool,
-
-    /// Enable the Jest plugin and detect test problems
-    #[bpaf(switch, hide_usage)]
-    pub jest_plugin: bool,
-
-    /// Enable the JSX-a11y plugin and detect accessibility problems
-    #[bpaf(switch, hide_usage)]
-    pub jsx_a11y_plugin: bool,
-
-    /// Enable the Next.js plugin and detect Next.js problems
-    #[bpaf(switch, hide_usage)]
-    pub nextjs_plugin: bool,
-
-    /// Enable the React performance plugin and detect rendering performance problems
-    #[bpaf(switch, hide_usage)]
-    pub react_perf_plugin: bool,
 }
 
 #[derive(Debug, Clone, Bpaf)]
@@ -188,64 +108,12 @@ impl LintFilter {
     }
 }
 
-#[derive(Debug, Clone, Bpaf)]
-pub struct FormatOptions {
-    #[bpaf(external)]
-    pub misc_options: MiscOptions,
-
-    #[bpaf(external)]
-    pub ignore_options: IgnoreOptions,
-
-    /// Single file, single path or list of paths
-    #[bpaf(positional("PATH"), many)]
-    pub paths: Vec<PathBuf>,
-}
-
-/// Codeowners
-#[derive(Debug, Clone, Bpaf)]
-pub struct CodeownerOptions {
-    /// Path to CODEOWNERS file
-    #[bpaf(argument("PATH"), hide_usage)]
-    pub codeowners_file: Option<OsString>,
-
-    /// Code owner names, e.g. @Boshen
-    #[bpaf(argument("NAME"), hide_usage)]
-    pub codeowners: Vec<String>,
-}
-
 /// Fix Problems
 #[derive(Debug, Clone, Bpaf)]
 pub struct FixOptions {
     /// Fix as many issues as possible. Only unfixed issues are reported in the output
     #[bpaf(switch)]
     pub fix: bool,
-}
-
-const NO_IGNORE_HELP: &[(&str, Style)] = &[
-    ("Disables excluding of files from .eslintignore files, ", Style::Text),
-    ("--ignore-path", Style::Literal),
-    (" flags and ", Style::Text),
-    ("--ignore-pattern", Style::Literal),
-    (" flags", Style::Text),
-];
-
-/// Ignore Files
-#[derive(Debug, Clone, Bpaf)]
-pub struct IgnoreOptions {
-    /// Specify the file to use as your .eslintignore
-    #[bpaf(argument("PATH"), fallback(".eslintignore".into()), hide_usage)]
-    pub ignore_path: OsString,
-
-    /// Specify patterns of files to ignore (in addition to those in .eslintignore)
-    ///
-    /// The supported syntax is the same as for .eslintignore and .gitignore files
-    /// You should quote your patterns in order to avoid shell interpretation of glob patterns
-    #[bpaf(argument("PAT"), many, hide_usage)]
-    pub ignore_pattern: Vec<String>,
-
-    ///
-    #[bpaf(switch, hide_usage, help(NO_IGNORE_HELP))]
-    pub no_ignore: bool,
 }
 
 /// Handle Warnings
@@ -265,33 +133,41 @@ pub struct WarningOptions {
     pub max_warnings: Option<usize>,
 }
 
-#[cfg(test)]
-mod misc_options {
-    use super::{lint_command, MiscOptions};
+/// Enable Plugins
+#[allow(clippy::struct_field_names)]
+#[derive(Debug, Clone, Bpaf)]
+pub struct EnablePlugins {
+    /// Enable the experimental import plugin and detect ESM problems
+    #[bpaf(switch, hide_usage)]
+    pub import_plugin: bool,
 
-    fn get_misc_options(arg: &str) -> MiscOptions {
-        let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
-        lint_command().run_inner(args.as_slice()).unwrap().lint_options.misc_options
-    }
+    /// Enable the Jest plugin and detect test problems
+    #[bpaf(switch, hide_usage)]
+    pub jest_plugin: bool,
 
-    #[test]
-    fn default() {
-        let options = get_misc_options(".");
-        assert!(!options.rules);
-        assert!(options.threads.is_none());
-    }
+    /// Enable the JSX-a11y plugin and detect accessibility problems
+    #[bpaf(switch, hide_usage)]
+    pub jsx_a11y_plugin: bool,
 
-    #[test]
-    fn threads() {
-        let options = get_misc_options("--threads 4 .");
-        assert_eq!(options.threads, Some(4));
-    }
+    /// Enable the Next.js plugin and detect Next.js problems
+    #[bpaf(switch, hide_usage)]
+    pub nextjs_plugin: bool,
 
-    #[test]
-    fn list_rules() {
-        let options = get_misc_options("--rules");
-        assert!(options.rules);
-    }
+    /// Enable the React performance plugin and detect rendering performance problems
+    #[bpaf(switch, hide_usage)]
+    pub react_perf_plugin: bool,
+}
+
+/// Codeowners
+#[derive(Debug, Clone, Bpaf)]
+pub struct CodeownerOptions {
+    /// Path to CODEOWNERS file
+    #[bpaf(argument("PATH"), hide_usage)]
+    pub codeowners_file: Option<OsString>,
+
+    /// Code owner names, e.g. @Boshen
+    #[bpaf(argument("NAME"), hide_usage)]
+    pub codeowners: Vec<String>,
 }
 
 #[cfg(test)]
@@ -325,9 +201,11 @@ mod warning_options {
 
 #[cfg(test)]
 mod lint_options {
-    use super::{lint_command, LintOptions};
-    use oxc_linter::AllowWarnDeny;
     use std::path::PathBuf;
+
+    use oxc_linter::AllowWarnDeny;
+
+    use super::{lint_command, LintOptions};
 
     fn get_lint_options(arg: &str) -> LintOptions {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
@@ -382,48 +260,5 @@ mod lint_options {
                 (AllowWarnDeny::Allow, "no-var".into())
             ]
         );
-    }
-}
-
-#[cfg(test)]
-mod ignore_options {
-    use super::{lint_command, IgnoreOptions};
-    use std::{ffi::OsString, path::PathBuf};
-
-    fn get_ignore_options(arg: &str) -> IgnoreOptions {
-        let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
-        lint_command().run_inner(args.as_slice()).unwrap().lint_options.ignore_options
-    }
-
-    #[test]
-    fn default() {
-        let options = get_ignore_options(".");
-        assert_eq!(options.ignore_path, OsString::from(".eslintignore"));
-        assert!(!options.no_ignore);
-        assert!(options.ignore_pattern.is_empty());
-    }
-
-    #[test]
-    fn ignore_path() {
-        let options = get_ignore_options("--ignore-path .xxx foo.js");
-        assert_eq!(options.ignore_path, PathBuf::from(".xxx"));
-    }
-
-    #[test]
-    fn no_ignore() {
-        let options = get_ignore_options("--no-ignore foo.js");
-        assert!(options.no_ignore);
-    }
-
-    #[test]
-    fn single_ignore_pattern() {
-        let options = get_ignore_options("--ignore-pattern ./test foo.js");
-        assert_eq!(options.ignore_pattern, vec![String::from("./test")]);
-    }
-
-    #[test]
-    fn multiple_ignore_pattern() {
-        let options = get_ignore_options("--ignore-pattern ./test --ignore-pattern bar.js foo.js");
-        assert_eq!(options.ignore_pattern, vec![String::from("./test"), String::from("bar.js")]);
     }
 }
