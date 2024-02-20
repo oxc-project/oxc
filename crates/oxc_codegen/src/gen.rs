@@ -591,10 +591,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclarator<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if !p.options.enable_typescript {
-            if self.is_typescript_syntax() {
-                return;
-            }
+        if !p.options.enable_typescript && self.is_typescript_syntax() {
+            return;
         }
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
@@ -785,10 +783,8 @@ impl<const MINIFY: bool> Gen<MINIFY> for ImportAttribute {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if !p.options.enable_typescript {
-            if self.is_typescript_syntax() {
-                return;
-            }
+        if !p.options.enable_typescript && self.is_typescript_syntax() {
+            return;
         }
         p.print_str(b"export ");
         match &self.declaration {
@@ -836,10 +832,8 @@ impl<const MINIFY: bool> Gen<MINIFY> for ModuleExportName {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportAllDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if !p.options.enable_typescript {
-            if self.is_typescript_syntax() {
-                return;
-            }
+        if !p.options.enable_typescript && self.is_typescript_syntax() {
+            return;
         }
         p.print_str(b"export ");
         p.print(b'*');
@@ -862,10 +856,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportAllDeclaration<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if !p.options.enable_typescript {
-            if self.is_typescript_syntax() {
-                return;
-            }
+        if !p.options.enable_typescript && self.is_typescript_syntax() {
+            return;
         }
         p.print_str(b"export default ");
         self.declaration.gen(p, ctx);
@@ -881,11 +873,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclarationKind<'a> {
             }
             Self::FunctionDeclaration(fun) => fun.gen(p, ctx),
             Self::ClassDeclaration(class) => {
-                if !p.options.enable_typescript {
-                    if !class.is_typescript_syntax() {
-                        class.gen(p, ctx);
-                        p.print_soft_newline();
-                    }
+                if !p.options.enable_typescript && !class.is_typescript_syntax() {
+                    class.gen(p, ctx);
+                    p.print_soft_newline();
                 }
             }
             _ => {}
@@ -2117,10 +2107,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for StaticBlock<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if !p.options.enable_typescript {
-            if self.value.is_typescript_syntax() {
-                return;
-            }
+        if !p.options.enable_typescript && self.value.is_typescript_syntax() {
+            return;
         }
         self.decorators.gen(p, ctx);
 

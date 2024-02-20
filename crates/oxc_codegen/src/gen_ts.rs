@@ -1,5 +1,6 @@
 use crate::context::Context;
 use crate::{Codegen, Gen, GenExpr};
+#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_syntax::precedence::Precedence;
 
@@ -130,7 +131,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
             }
             Self::TSTypeLiteral(decl) => {
                 p.print_str(b"{");
-                for item in decl.members.iter() {
+                for item in &decl.members {
                     item.gen(p, ctx);
                     p.print_semicolon();
                 }
@@ -315,13 +316,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                     type_annotation.gen(p, ctx);
                 }
             }
-            Self::TSCallSignatureDeclaration(signature) => {
+            Self::TSCallSignatureDeclaration(_signature) => {
                 // TODO: TSCallSignatureDeclaration
             }
-            Self::TSConstructSignatureDeclaration(signature) => {
+            Self::TSConstructSignatureDeclaration(_signature) => {
                 // TODO: TSConstructSignatureDeclaration
             }
-            Self::TSMethodSignature(signature) => {
+            Self::TSMethodSignature(_signature) => {
                 // TODO: TSMethodSignature
             }
         }
