@@ -91,10 +91,19 @@ impl StickyRegex for Regex {
     }
 }
 
+fn quick_test(s: &str) -> bool {
+    let mut chars = s.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c == '\\' && chars.peek().is_some_and(|c| *c == '8' || *c == '9') {
+            return true;
+        }
+    }
+    false
+}
+
 #[allow(clippy::cast_possible_truncation)]
 fn check_string(ctx: &LintContext<'_>, string: &str) {
     lazy_static! {
-        static ref QUICK_TEST_REGEX: Regex = Regex::new(r"\\[89]").unwrap();
         static ref NONOCTAL_REGEX: Regex =
             Regex::new(r"(?:[^\\]|(?P<previousEscape>\\.))*?(?P<decimalEscape>\\[89])").unwrap();
     }
@@ -104,7 +113,7 @@ fn check_string(ctx: &LintContext<'_>, string: &str) {
         return;
     }
 
-    if !QUICK_TEST_REGEX.is_match(string) {
+    if !quick_test(string) {
         return;
     }
 
