@@ -384,7 +384,6 @@ impl Message {
     }
 }
 
-#[ignore]
 #[test]
 fn test_1() {
     use crate::tester::Tester;
@@ -394,7 +393,7 @@ fn test_1() {
     ];
     let fail = vec![];
 
-    Tester::new(ValidExpect::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(ValidExpect::NAME, pass, fail).with_jest_plugin(true).test();
 }
 
 #[test]
