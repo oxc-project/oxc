@@ -5,6 +5,7 @@ use std::sync::Arc;
 use flexbuffers::FlexbufferSerializer;
 use napi::bindgen_prelude::Buffer;
 use napi_derive::napi;
+use oxc_ast::CommentKind;
 use serde::Serialize;
 
 use oxc_allocator::Allocator;
@@ -27,7 +28,16 @@ pub struct ParserOptions {
 #[napi(object)]
 pub struct ParseResult {
     pub program: String,
+    pub comments: Vec<Comment>,
     pub errors: Vec<String>,
+}
+
+#[napi(object)]
+pub struct Comment {
+    pub r#type: &'static str,
+    pub value: String,
+    pub start: u32,
+    pub end: u32,
 }
 
 fn parse<'a>(
@@ -88,7 +98,22 @@ pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseR
             .collect()
     };
 
-    ParseResult { program, errors }
+    let comments = ret
+        .trivias
+        .comments
+        .into_iter()
+        .map(|(start, end, kind)| Comment {
+            r#type: match kind {
+                CommentKind::SingleLine => "Line",
+                CommentKind::MultiLine => "Block",
+            },
+            value: source_text[start as usize..end as usize].to_string(),
+            start,
+            end,
+        })
+        .collect::<Vec<Comment>>();
+
+    ParseResult { program, comments, errors }
 }
 
 /// Returns a binary AST in flexbuffers format.

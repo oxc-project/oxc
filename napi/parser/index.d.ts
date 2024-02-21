@@ -14,7 +14,14 @@ export interface ParserOptions {
 }
 export interface ParseResult {
   program: string
+  comments: Array<Comment>
   errors: Array<string>
+}
+export interface Comment {
+  type: string
+  value: string
+  start: number
+  end: number
 }
 /**
  * Parse without returning anything.
