@@ -12,10 +12,6 @@ fn test(source_text: &str, expected: &str) {
     assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
 }
 
-fn test_ts_same_out(source_text: &str) {
-    test_ts(source_text, &format!("{source_text}\n"), false);
-}
-
 fn test_ts(source_text: &str, expected: &str, is_typescript_definition: bool) {
     let allocator = Allocator::default();
     let source_type = SourceType::default()
@@ -134,19 +130,35 @@ fn new_expr() {
 
 #[test]
 fn typescript() {
-    test_ts_same_out("let x: string = `\\x01`;");
+    test_ts("let x: string = `\\x01`;", "let x: string = `\\x01`;\n", false);
 
-    test_ts_same_out("function foo<T extends string>(x: T, y: string, ...restOfParams: Omit<T, 'x'>): T {\n\treturn x;\n}");
+    test_ts("function foo<T extends string>(x: T, y: string, ...restOfParams: Omit<T, 'x'>): T {\n\treturn x;\n}", "function foo<T extends string>(x: T, y: string, ...restOfParams: Omit<T, 'x'>): T {\n\treturn x;\n}\n", false);
 
-    test_ts_same_out("let x: string[] = ['abc', 'def', 'ghi'];");
-    test_ts_same_out("let x: Array<string> = ['abc', 'def', 'ghi',];");
-    test_ts_same_out("let x: [string, number] = ['abc', 123];");
-    test_ts_same_out("let x: string | number = 'abc';");
-    test_ts_same_out("let x: string & number = 'abc';");
-    test_ts_same_out("let x: typeof String = 'string';");
-    test_ts_same_out("let x: keyof string = 'length';");
-    test_ts_same_out("let x: keyof typeof String = 'length';");
-    test_ts_same_out("let x: string['length'] = 123;");
+    test_ts(
+        "let x: string[] = ['abc', 'def', 'ghi'];",
+        "let x: (string)[] = ['abc', 'def', 'ghi'];\n",
+        false,
+    );
+    test_ts(
+        "let x: Array<string> = ['abc', 'def', 'ghi',];",
+        "let x: Array<string> = ['abc', 'def', 'ghi',];\n",
+        false,
+    );
+    test_ts(
+        "let x: [string, number] = ['abc', 123];",
+        "let x: [string, number] = ['abc', 123];\n",
+        false,
+    );
+    test_ts("let x: string | number = 'abc';", "let x: ((string) | (number)) = 'abc';\n", false);
+    test_ts("let x: string & number = 'abc';", "let x: ((string) & (number)) = 'abc';\n", false);
+    test_ts("let x: typeof String = 'string';", "let x: typeof String = 'string';\n", false);
+    test_ts("let x: keyof string = 'length';", "let x: keyof string = 'length';\n", false);
+    test_ts(
+        "let x: keyof typeof String = 'length';",
+        "let x: keyof typeof String = 'length';\n",
+        false,
+    );
+    test_ts("let x: string['length'] = 123;", "let x: string['length'] = 123;\n", false);
 
-    test_ts_same_out("function isString(value: unknown): asserts value is string {\n\tif (typeof value !== 'string') {\n\t\tthrow new Error('Not a string');\n\t}\n}");
+    test_ts("function isString(value: unknown): asserts value is string {\n\tif (typeof value !== 'string') {\n\t\tthrow new Error('Not a string');\n\t}\n}", "function isString(value: unknown): asserts value is string {\n\tif (typeof value !== 'string') {\n\t\tthrow new Error('Not a string');\n\t}\n}\n", false);
 }
