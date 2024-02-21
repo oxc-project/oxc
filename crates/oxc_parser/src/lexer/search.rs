@@ -325,7 +325,7 @@ pub(crate) use safe_byte_match_table;
 ///
 /// Can also add a block to decide whether to continue searching for some matches:
 ///
-/// ```
+/// ```text
 /// impl<'a> Lexer<'a> {
 ///   fn eat_stuff(&mut self) -> bool {
 ///     byte_search! {
