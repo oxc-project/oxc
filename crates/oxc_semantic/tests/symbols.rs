@@ -93,3 +93,64 @@ fn test_types_simple() {
         .has_number_of_references(1)
         .test();
 }
+
+#[test]
+fn test_type_parameter() {
+    let tester = SemanticTester::ts(
+        "
+        type A<AB> = AB
+        type B<AB> = AB
+        interface C<CC> {
+            C: CC;
+        }
+        class D<DD> {
+            a: DD;
+            method(b: DD) {
+                
+            }
+        }
+        function F<FF>() {
+            return '' as FF
+        }
+    ",
+    );
+
+    tester
+        .has_symbol("AB")
+        .contains_flags(SymbolFlags::TypeParameter)
+        .has_number_of_references(1)
+        .test();
+
+    tester
+        .has_symbol("CC")
+        .contains_flags(SymbolFlags::TypeParameter)
+        .has_number_of_references(1)
+        .test();
+
+    tester
+        .has_symbol("DD")
+        .contains_flags(SymbolFlags::TypeParameter)
+        .has_number_of_references(2)
+        .test();
+
+    tester
+        .has_symbol("FF")
+        .contains_flags(SymbolFlags::TypeParameter)
+        .has_number_of_references(1)
+        .test();
+}
+
+#[test]
+fn test_type_parameter_name_same_with_other_symbols() {
+    SemanticTester::ts(
+        "
+        interface CC {
+        }
+        class A<CC> {
+          a: CC;
+        }
+    ",
+    )
+    .has_symbol("CC")
+    .test();
+}

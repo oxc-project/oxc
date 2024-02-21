@@ -1553,7 +1553,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             // E.g., `let c = class A { foo() { console.log(A) } }`
             self.enter_scope(ScopeFlags::empty());
         }
-
         self.enter_node(kind);
 
         /* cfg */
@@ -1564,6 +1563,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(id) = &class.id {
             self.visit_binding_identifier(id);
         }
+        self.enter_scope(ScopeFlags::TypeBlock);
+
         if let Some(parameters) = &class.type_parameters {
             self.visit_ts_type_parameter_declaration(parameters);
         }
@@ -1586,6 +1587,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.leave_node(kind);
+        self.leave_scope();
         if is_class_expr {
             self.leave_scope();
         }
