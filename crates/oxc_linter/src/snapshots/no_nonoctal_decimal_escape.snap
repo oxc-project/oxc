@@ -61,14 +61,14 @@ expression: no_nonoctal_decimal_escape
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:4]
- 1 │ 'fo\9'
+ 1 │ 'xo\9'
    ·    ──
    ╰────
   help: Replace '\9' with '9'. This maintains the current functionality.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\9' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:4]
- 1 │ 'fo\9'
+ 1 │ 'xo\9'
    ·    ──
    ╰────
   help: Replace '\9' with '\\9' to include the actual backslash character.
