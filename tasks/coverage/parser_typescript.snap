@@ -1,7 +1,7 @@
 parser_typescript Summary:
 AST Parsed     : 5239/5243 (99.92%)
 Positive Passed: 5232/5243 (99.79%)
-Negative Passed: 1040/4879 (21.32%)
+Negative Passed: 1063/4879 (21.79%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -304,7 +304,6 @@ Expect Syntax Error: "compiler/classStaticInitializersUsePropertiesBeforeDeclara
 Expect Syntax Error: "compiler/classStaticPropertyAccess.ts"
 Expect Syntax Error: "compiler/classTypeParametersInStatics.ts"
 Expect Syntax Error: "compiler/classUsedBeforeInitializedVariables.ts"
-Expect Syntax Error: "compiler/classWithDuplicateIdentifier.ts"
 Expect Syntax Error: "compiler/classWithMultipleBaseClasses.ts"
 Expect Syntax Error: "compiler/classWithOverloadImplementationOfWrongName.ts"
 Expect Syntax Error: "compiler/classWithOverloadImplementationOfWrongName2.ts"
@@ -527,11 +526,8 @@ Expect Syntax Error: "compiler/downlevelLetConst12.ts"
 Expect Syntax Error: "compiler/downlevelLetConst16.ts"
 Expect Syntax Error: "compiler/downlevelLetConst18.ts"
 Expect Syntax Error: "compiler/downlevelLetConst19.ts"
-Expect Syntax Error: "compiler/duplicateClassElements.ts"
 Expect Syntax Error: "compiler/duplicateDefaultExport.ts"
-Expect Syntax Error: "compiler/duplicateIdentifierComputedName.ts"
 Expect Syntax Error: "compiler/duplicateIdentifierDifferentModifiers.ts"
-Expect Syntax Error: "compiler/duplicateIdentifierDifferentSpelling.ts"
 Expect Syntax Error: "compiler/duplicateIdentifierInCatchBlock.ts"
 Expect Syntax Error: "compiler/duplicateIdentifiersAcrossContainerBoundaries.ts"
 Expect Syntax Error: "compiler/duplicateInterfaceMembers1.ts"
@@ -676,7 +672,6 @@ Expect Syntax Error: "compiler/exportDefaultMissingName.ts"
 Expect Syntax Error: "compiler/exportDefaultTypeAndClass.ts"
 Expect Syntax Error: "compiler/exportDefaultTypeAndFunctionOverloads.ts"
 Expect Syntax Error: "compiler/exportDefaultTypeClassAndValue.ts"
-Expect Syntax Error: "compiler/exportEqualsClassRedeclarationError.ts"
 Expect Syntax Error: "compiler/exportInterfaceClassAndValue.ts"
 Expect Syntax Error: "compiler/exportInterfaceClassAndValueWithDuplicatesInImportList.ts"
 Expect Syntax Error: "compiler/exportSameNameFuncVar.ts"
@@ -704,7 +699,6 @@ Expect Syntax Error: "compiler/extractInferenceImprovement.ts"
 Expect Syntax Error: "compiler/fakeInfinity1.ts"
 Expect Syntax Error: "compiler/fallFromLastCase2.ts"
 Expect Syntax Error: "compiler/fatarrowfunctionsOptionalArgsErrors4.ts"
-Expect Syntax Error: "compiler/fieldAndGetterWithSameName.ts"
 Expect Syntax Error: "compiler/findLast.ts"
 Expect Syntax Error: "compiler/firstMatchRegExpMatchArray.ts"
 Expect Syntax Error: "compiler/fixTypeParameterInSignatureWithRestParameters.ts"
@@ -720,7 +714,6 @@ Expect Syntax Error: "compiler/forwardDeclaredCommonTypes01.ts"
 Expect Syntax Error: "compiler/forwardRefInClassProperties.ts"
 Expect Syntax Error: "compiler/forwardRefInEnum.ts"
 Expect Syntax Error: "compiler/functionAndInterfaceWithSeparateErrors.ts"
-Expect Syntax Error: "compiler/functionAndPropertyNameConflict.ts"
 Expect Syntax Error: "compiler/functionArgShadowing.ts"
 Expect Syntax Error: "compiler/functionAssignment.ts"
 Expect Syntax Error: "compiler/functionCall10.ts"
@@ -764,7 +757,6 @@ Expect Syntax Error: "compiler/functionToFunctionWithPropError.ts"
 Expect Syntax Error: "compiler/functionTypeArgumentArityErrors.ts"
 Expect Syntax Error: "compiler/functionTypeArgumentAssignmentCompat.ts"
 Expect Syntax Error: "compiler/functionVariableInReturnTypeAnnotation.ts"
-Expect Syntax Error: "compiler/functionWithSameNameAsField.ts"
 Expect Syntax Error: "compiler/functionsMissingReturnStatementsAndExpressionsStrictNullChecks.ts"
 Expect Syntax Error: "compiler/functionsWithModifiersInBlocks1.ts"
 Expect Syntax Error: "compiler/fuzzy.ts"
@@ -1303,7 +1295,6 @@ Expect Syntax Error: "compiler/noUnusedLocals_writeOnlyProperty_dynamicNames.ts"
 Expect Syntax Error: "compiler/nonArrayRestArgs.ts"
 Expect Syntax Error: "compiler/nonExportedElementsOfMergedModules.ts"
 Expect Syntax Error: "compiler/nonIdenticalTypeConstraints.ts"
-Expect Syntax Error: "compiler/nonMergedDeclarationsAndOverloads.ts"
 Expect Syntax Error: "compiler/nonMergedOverloads.ts"
 Expect Syntax Error: "compiler/nonObjectUnionNestedExcessPropertyCheck.ts"
 Expect Syntax Error: "compiler/nonexistentPropertyOnUnion.ts"
@@ -1313,7 +1304,6 @@ Expect Syntax Error: "compiler/null.ts"
 Expect Syntax Error: "compiler/nullKeyword.ts"
 Expect Syntax Error: "compiler/nullableFunctionError.ts"
 Expect Syntax Error: "compiler/numberToString.ts"
-Expect Syntax Error: "compiler/numericClassMembers1.ts"
 Expect Syntax Error: "compiler/numericIndexExpressions.ts"
 Expect Syntax Error: "compiler/numericIndexerConstraint.ts"
 Expect Syntax Error: "compiler/numericIndexerConstraint1.ts"
@@ -1351,7 +1341,6 @@ Expect Syntax Error: "compiler/operatorAddNullUndefined.ts"
 Expect Syntax Error: "compiler/optionalArgsWithDefaultValues.ts"
 Expect Syntax Error: "compiler/optionalChainWithInstantiationExpression1.ts"
 Expect Syntax Error: "compiler/optionalFunctionArgAssignability.ts"
-Expect Syntax Error: "compiler/optionalParamArgsTest.ts"
 Expect Syntax Error: "compiler/optionalParamAssignmentCompat.ts"
 Expect Syntax Error: "compiler/optionalParamReferencingOtherParams2.ts"
 Expect Syntax Error: "compiler/optionalParamReferencingOtherParams3.ts"
@@ -1389,7 +1378,6 @@ Expect Syntax Error: "compiler/overloadsAndTypeArgumentArityErrors.ts"
 Expect Syntax Error: "compiler/overloadsInDifferentContainersDisagreeOnAmbient.ts"
 Expect Syntax Error: "compiler/overloadsWithComputedNames.ts"
 Expect Syntax Error: "compiler/overloadsWithProvisionalErrors.ts"
-Expect Syntax Error: "compiler/overloadsWithinClasses.ts"
 Expect Syntax Error: "compiler/overridingPrivateStaticMembers.ts"
 Expect Syntax Error: "compiler/paramPropertiesInSignatures.ts"
 Expect Syntax Error: "compiler/parameterListAsTupleType.ts"
@@ -1482,7 +1470,6 @@ Expect Syntax Error: "compiler/reactReduxLikeDeferredInferenceAllowsAssignment.t
 Expect Syntax Error: "compiler/readonlyAssignmentInSubclassOfClassExpression.ts"
 Expect Syntax Error: "compiler/readonlyMembers.ts"
 Expect Syntax Error: "compiler/readonlyTupleAndArrayElaboration.ts"
-Expect Syntax Error: "compiler/reassignStaticProp.ts"
 Expect Syntax Error: "compiler/reboundIdentifierOnImportAlias.ts"
 Expect Syntax Error: "compiler/recursiveBaseCheck.ts"
 Expect Syntax Error: "compiler/recursiveBaseCheck2.ts"
@@ -2133,6 +2120,7 @@ Expect Syntax Error: "conformance/classes/members/privateNames/privateNamesInNes
 Expect Syntax Error: "conformance/classes/members/privateNames/privateNamesInNestedClasses-2.ts"
 Expect Syntax Error: "conformance/classes/members/privateNames/privateNamesIncompatibleModifiersJs.ts"
 Expect Syntax Error: "conformance/classes/members/privateNames/privateNamesUnique-1.ts"
+Expect Syntax Error: "conformance/classes/members/privateNames/privateNamesUnique-3.ts"
 Expect Syntax Error: "conformance/classes/members/privateNames/privateNamesUnique-4.ts"
 Expect Syntax Error: "conformance/classes/members/privateNames/privateNamesUnique-5.ts"
 Expect Syntax Error: "conformance/classes/members/privateNames/privateNamesUseBeforeDef.ts"
@@ -2151,7 +2139,6 @@ Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOv
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/assignParameterPropertyToPropertyDeclarationES2022.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/assignParameterPropertyToPropertyDeclarationESNext.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessor1.ts"
-Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessor11.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessor3.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessor4.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessor5.ts"
@@ -2171,8 +2158,6 @@ Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/memberFunct
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionsWithPrivateOverloads.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionsWithPublicPrivateOverloads.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/staticMemberAssignsToConstructorFunctionMembers.ts"
-Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/propertyAndAccessorWithSameName.ts"
-Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/propertyAndFunctionWithSameName.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/propertyOverridesAccessors.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/propertyOverridesAccessors2.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/propertyOverridesAccessors3.ts"
@@ -2181,8 +2166,6 @@ Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/propertyOve
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/redeclaredProperty.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/redefinedPararameterProperty.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/strictPropertyInitialization.ts"
-Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/twoAccessorsWithSameName.ts"
-Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/twoAccessorsWithSameName2.ts"
 Expect Syntax Error: "conformance/classes/staticIndexSignature/staticIndexSignature1.ts"
 Expect Syntax Error: "conformance/classes/staticIndexSignature/staticIndexSignature2.ts"
 Expect Syntax Error: "conformance/classes/staticIndexSignature/staticIndexSignature3.ts"
@@ -2367,8 +2350,6 @@ Expect Syntax Error: "conformance/es6/computedProperties/computedPropertyNames38
 Expect Syntax Error: "conformance/es6/computedProperties/computedPropertyNames38_ES6.ts"
 Expect Syntax Error: "conformance/es6/computedProperties/computedPropertyNames39_ES5.ts"
 Expect Syntax Error: "conformance/es6/computedProperties/computedPropertyNames39_ES6.ts"
-Expect Syntax Error: "conformance/es6/computedProperties/computedPropertyNames40_ES5.ts"
-Expect Syntax Error: "conformance/es6/computedProperties/computedPropertyNames40_ES6.ts"
 Expect Syntax Error: "conformance/es6/computedProperties/computedPropertyNames42_ES5.ts"
 Expect Syntax Error: "conformance/es6/computedProperties/computedPropertyNames42_ES6.ts"
 Expect Syntax Error: "conformance/es6/computedProperties/computedPropertyNames43_ES5.ts"
@@ -3181,7 +3162,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/MemberFunctionDeclarations/
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration3.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration5.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclarationAmbiguities1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration3.ts"
@@ -3537,7 +3517,6 @@ Expect Syntax Error: "conformance/types/mapped/recursiveMappedTypes.ts"
 Expect Syntax Error: "conformance/types/members/augmentedTypeAssignmentCompatIndexSignature.ts"
 Expect Syntax Error: "conformance/types/members/classWithPrivateProperty.ts"
 Expect Syntax Error: "conformance/types/members/duplicateNumericIndexers.ts"
-Expect Syntax Error: "conformance/types/members/duplicatePropertyNames.ts"
 Expect Syntax Error: "conformance/types/members/duplicateStringIndexers.ts"
 Expect Syntax Error: "conformance/types/members/indexSignatures1.ts"
 Expect Syntax Error: "conformance/types/members/objectTypeHidingMembersOfExtendedObject.ts"
@@ -3546,7 +3525,6 @@ Expect Syntax Error: "conformance/types/members/objectTypeHidingMembersOfObjectA
 Expect Syntax Error: "conformance/types/members/objectTypeWithCallSignatureHidingMembersOfFunctionAssignmentCompat.ts"
 Expect Syntax Error: "conformance/types/members/objectTypeWithConstructSignatureAppearsToBeFunctionType.ts"
 Expect Syntax Error: "conformance/types/members/objectTypeWithConstructSignatureHidingMembersOfFunctionAssignmentCompat.ts"
-Expect Syntax Error: "conformance/types/members/objectTypeWithDuplicateNumericProperty.ts"
 Expect Syntax Error: "conformance/types/members/objectTypeWithStringAndNumberIndexSignatureToAny.ts"
 Expect Syntax Error: "conformance/types/members/objectTypeWithStringIndexerHidingObjectIndexer.ts"
 Expect Syntax Error: "conformance/types/members/objectTypeWithStringNamedNumericProperty.ts"
@@ -3584,7 +3562,6 @@ Expect Syntax Error: "conformance/types/objectTypeLiteral/indexSignatures/string
 Expect Syntax Error: "conformance/types/objectTypeLiteral/indexSignatures/stringIndexerConstrainsPropertyDeclarations2.ts"
 Expect Syntax Error: "conformance/types/objectTypeLiteral/methodSignatures/methodSignaturesWithOverloads.ts"
 Expect Syntax Error: "conformance/types/objectTypeLiteral/objectTypeLiteralSyntax2.ts"
-Expect Syntax Error: "conformance/types/objectTypeLiteral/propertySignatures/numericStringNamedPropertyEquivalence.ts"
 Expect Syntax Error: "conformance/types/primitives/boolean/assignFromBooleanInterface.ts"
 Expect Syntax Error: "conformance/types/primitives/boolean/assignFromBooleanInterface2.ts"
 Expect Syntax Error: "conformance/types/primitives/boolean/boolInsteadOfBoolean.ts"
@@ -4833,6 +4810,42 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
   help: Try insert a semicolon here
 
+  × Identifier `a` has already been declared
+   ╭─[compiler/classWithDuplicateIdentifier.ts:2:5]
+ 1 │ class C {
+ 2 │     a(): number { return 0; } // error: duplicate identifier
+   ·     ┬
+   ·     ╰── `a` has already been declared here
+ 3 │     a: number;
+   ·     ┬
+   ·     ╰── It can not be redeclared here
+ 4 │ }
+   ╰────
+
+  × Identifier `b` has already been declared
+   ╭─[compiler/classWithDuplicateIdentifier.ts:6:5]
+ 5 │ class K {
+ 6 │     b: number; // error: duplicate identifier
+   ·     ┬
+   ·     ╰── `b` has already been declared here
+ 7 │     b(): number { return 0; }
+   ·     ┬
+   ·     ╰── It can not be redeclared here
+ 8 │ }
+   ╰────
+
+  × Identifier `c` has already been declared
+    ╭─[compiler/classWithDuplicateIdentifier.ts:10:5]
+  9 │ class D {
+ 10 │     c: number;
+    ·     ┬
+    ·     ╰── `c` has already been declared here
+ 11 │     c: string;
+    ·     ┬
+    ·     ╰── It can not be redeclared here
+ 12 │ }
+    ╰────
+
   × Type parameter list cannot be empty.
    ╭─[compiler/classWithEmptyTypeParameter.ts:1:8]
  1 │ class C<> {
@@ -5873,6 +5886,82 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Identifier `a` has already been declared
+   ╭─[compiler/duplicateClassElements.ts:2:12]
+ 1 │ class a {
+ 2 │     public a;
+   ·            ┬
+   ·            ╰── `a` has already been declared here
+ 3 │     public a;
+   ·            ┬
+   ·            ╰── It can not be redeclared here
+ 4 │     public b() {
+   ╰────
+
+  × Identifier `b` has already been declared
+   ╭─[compiler/duplicateClassElements.ts:4:12]
+ 3 │     public a;
+ 4 │     public b() {
+   ·            ┬
+   ·            ╰── `b` has already been declared here
+ 5 │     }
+ 6 │     public b() {
+   ·            ┬
+   ·            ╰── It can not be redeclared here
+ 7 │     }
+   ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[compiler/duplicateClassElements.ts:8:12]
+  7 │     }
+  8 │     public x;
+    ·            ┬
+    ·            ╰── `x` has already been declared here
+  9 │     get x() {
+    ·         ┬
+    ·         ╰── It can not be redeclared here
+ 10 │         return 10;
+    ╰────
+
+  × Identifier `z` has already been declared
+    ╭─[compiler/duplicateClassElements.ts:21:12]
+ 20 │ 
+ 21 │     public z() {
+    ·            ┬
+    ·            ╰── `z` has already been declared here
+ 22 │     }
+ 23 │     get z() {
+    ·         ┬
+    ·         ╰── It can not be redeclared here
+ 24 │         return "Hello";
+    ╰────
+
+  × Identifier `x2` has already been declared
+    ╭─[compiler/duplicateClassElements.ts:32:9]
+ 31 │     }
+ 32 │     set x2(_x: number) {
+    ·         ─┬
+    ·          ╰── `x2` has already been declared here
+ 33 │     }
+ 34 │     public x2;
+    ·            ─┬
+    ·             ╰── It can not be redeclared here
+ 35 │ 
+    ╰────
+
+  × Identifier `z2` has already been declared
+    ╭─[compiler/duplicateClassElements.ts:39:9]
+ 38 │     }
+ 39 │     set z2(_y: string) {
+    ·         ─┬
+    ·          ╰── `z2` has already been declared here
+ 40 │     }
+ 41 │     public z2() {
+    ·            ─┬
+    ·             ╰── It can not be redeclared here
+ 42 │     }
+    ╰────
+
+  × Identifier `a` has already been declared
    ╭─[compiler/duplicateIdentifierBindingElementInParameterDeclaration1.ts:3:13]
  2 │ 
  3 │ function f0(a, [a, [b]], {b}) { }
@@ -6132,6 +6221,30 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  11 │ function f7(a, func = (a) => { return 1 }){ }  // not error
     ╰────
 
+  × Identifier `a` has already been declared
+   ╭─[compiler/duplicateIdentifierComputedName.ts:2:6]
+ 1 │ class C {
+ 2 │     ["a"]: string;
+   ·      ─┬─
+   ·       ╰── `a` has already been declared here
+ 3 │     ["a"]: string;
+   ·      ─┬─
+   ·       ╰── It can not be redeclared here
+ 4 │ }
+   ╰────
+
+  × Identifier `3` has already been declared
+   ╭─[compiler/duplicateIdentifierDifferentSpelling.ts:2:3]
+ 1 │ class A {
+ 2 │   0b11 = '';
+   ·   ──┬─
+   ·     ╰── `3` has already been declared here
+ 3 │   3 = '';
+   ·   ┬
+   ·   ╰── It can not be redeclared here
+ 4 │ }
+   ╰────
+
   × Identifier `target` has already been declared
    ╭─[compiler/duplicateLabel1.ts:3:1]
  2 │ 
@@ -6360,6 +6473,18 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  18 │ }
     ╰────
 
+  × Identifier `someProp` has already been declared
+    ╭─[compiler/exportEqualsClassRedeclarationError.ts:8:16]
+  7 │ 
+  8 │     static set someProp(value: number) {}
+    ·                ────┬───
+    ·                    ╰── `someProp` has already been declared here
+  9 │     static set someProp(value: number) {}
+    ·                ────┬───
+    ·                    ╰── It can not be redeclared here
+ 10 │ }
+    ╰────
+
   × Expected `}` but found `EOF`
    ╭─[compiler/exportInFunction.ts:2:1]
  2 │     export = 0;
@@ -6454,6 +6579,18 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·  ───
    ╰────
 
+  × Identifier `x` has already been declared
+   ╭─[compiler/fieldAndGetterWithSameName.ts:3:5]
+ 2 │ export class C {
+ 3 │     x: number;
+   ·     ┬
+   ·     ╰── `x` has already been declared here
+ 4 │   get x(): number { return 1; }
+   ·       ┬
+   ·       ╰── It can not be redeclared here
+ 5 │ }
+   ╰────
+
   × TS1108: A 'return' statement can only be used within a function body
    ╭─[compiler/fileWithNextLine3.ts:3:1]
  2 │ // 0.  It should be counted as a space and should not trigger ASI
@@ -6484,6 +6621,18 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·         ╰── It can not be redeclared here
     ╰────
 
+  × Identifier `aaaaa` has already been declared
+   ╭─[compiler/functionAndPropertyNameConflict.ts:2:12]
+ 1 │ class C65 {
+ 2 │     public aaaaa() { }
+   ·            ──┬──
+   ·              ╰── `aaaaa` has already been declared here
+ 3 │     public get aaaaa() {
+   ·                ──┬──
+   ·                  ╰── It can not be redeclared here
+ 4 │         return 1;
+   ╰────
+
   × Identifier `b` has already been declared
    ╭─[compiler/functionCall15.ts:1:25]
  1 │ function foo(a?:string, b?:number, ...b:number[]){}
@@ -6509,6 +6658,18 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  4 │ }
    ╰────
 
+  × Identifier `total` has already been declared
+   ╭─[compiler/functionWithSameNameAsField.ts:2:12]
+ 1 │ class TestProgressBar {
+ 2 │     public total: number;
+   ·            ──┬──
+   ·              ╰── `total` has already been declared here
+ 3 │     public total(total: number) {
+   ·            ──┬──
+   ·              ╰── It can not be redeclared here
+ 4 │         this.total = total;
+   ╰────
+
   × Unexpected token
      ╭─[compiler/functionsMissingReturnStatementsAndExpressions.ts:157:5]
  156 │         throw undefined.
@@ -6529,6 +6690,19 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  6 │     public get Goo(v:string):string {return null;} // error - getters must not have a parameter
    ·                   ──────────
  7 │     public set Goo(v:string):string {} // error - setters must not specify a return type
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[compiler/gettersAndSettersErrors.ts:3:16]
+ 2 │     public get Foo() { return "foo";} // ok
+ 3 │     public set Foo(foo:string) {} // ok
+   ·                ─┬─
+   ·                 ╰── `Foo` has already been declared here
+ 4 │ 
+ 5 │     public Foo = 0; // error - duplicate identifier Foo - confirmed
+   ·            ─┬─
+   ·             ╰── It can not be redeclared here
+ 6 │     public get Goo(v:string):string {return null;} // error - getters must not have a parameter
    ╰────
 
   × Unexpected token
@@ -7650,6 +7824,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  9 │ 
    ╰────
 
+  × Identifier `m1` has already been declared
+   ╭─[compiler/nonMergedDeclarationsAndOverloads.ts:2:5]
+ 1 │ class A {
+ 2 │     m1: string;
+   ·     ─┬
+   ·      ╰── `m1` has already been declared here
+ 3 │     f() {}
+   ╰────
+   ╭─[compiler/nonMergedDeclarationsAndOverloads.ts:6:5]
+ 5 │     m1 (a: number): void;
+ 6 │     m1 (a: any): void {
+   ·     ─┬
+   ·      ╰── It can not be redeclared here
+ 7 │     }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/numberLiteralsWithLeadingZeros.ts:8:3]
  7 │ 
@@ -7674,6 +7864,30 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·       ────────────
  96 │ if (bigZeroOrOne) isOne(bigZeroOrOne);
     ╰────
+
+  × Identifier `0` has already been declared
+   ╭─[compiler/numericClassMembers1.ts:2:3]
+ 1 │ class C234 {
+ 2 │   0 = 1; 
+   ·   ┬
+   ·   ╰── `0` has already been declared here
+ 3 │   0.0 = 2;
+   ·   ─┬─
+   ·    ╰── It can not be redeclared here
+ 4 │ }
+   ╰────
+
+  × Identifier `0` has already been declared
+   ╭─[compiler/numericClassMembers1.ts:7:3]
+ 6 │ class C235 { 
+ 7 │   0.0 = 1;
+   ·   ─┬─
+   ·    ╰── `0` has already been declared here
+ 8 │  '0' = 2;
+   ·  ─┬─
+   ·   ╰── It can not be redeclared here
+ 9 │ }
+   ╰────
 
   × Invalid characters after number
    ╭─[compiler/numericLiteralsWithTrailingDecimalPoints01.ts:4:3]
@@ -7999,6 +8213,20 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
      ·      ────
      ╰────
 
+  × Identifier `C1M5` has already been declared
+    ╭─[compiler/optionalParamArgsTest.ts:31:12]
+ 30 │ 
+ 31 │     public C1M5(C1M5A1:number,C1M5A2:number=0,C1M5A3?:number) { return C1M5A1 + C1M5A2; }
+    ·            ──┬─
+    ·              ╰── `C1M5` has already been declared here
+ 32 │ 
+ 33 │     // Uninitialized parameter makes the initialized one required
+ 34 │     public C1M5(C1M5A1:number,C1M5A2:number=0,C1M5A3:number) { return C1M5A1 + C1M5A2; }
+    ·            ──┬─
+    ·              ╰── It can not be redeclared here
+ 35 │ }
+    ╰────
+
   × Unexpected token
     ╭─[compiler/optionalPropertiesSyntax.ts:11:7]
  10 │     (): any;
@@ -8023,6 +8251,19 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·              ┬
    ·              ╰── `(` expected
  3 │   static test()
+   ╰────
+
+  × Identifier `fnOverload` has already been declared
+   ╭─[compiler/overloadsWithinClasses.ts:3:12]
+ 2 │  
+ 3 │     static fnOverload( ) {}
+   ·            ─────┬────
+   ·                 ╰── `fnOverload` has already been declared here
+ 4 │  
+ 5 │     static fnOverload(foo: string){ } // error
+   ·            ─────┬────
+   ·                 ╰── It can not be redeclared here
+ 6 │  
    ╰────
 
   × A parameter property is only allowed in a constructor implementation.
@@ -8293,6 +8534,19 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·           ┬
    ·           ╰── `,` expected
  9 │ // OK to use `readonly` as a name
+   ╰────
+
+  × Identifier `bar` has already been declared
+   ╭─[compiler/reassignStaticProp.ts:3:12]
+ 2 │  
+ 3 │     static bar = 1;
+   ·            ─┬─
+   ·             ╰── `bar` has already been declared here
+ 4 │  
+ 5 │     static bar:string; // errror - duplicate id
+   ·            ─┬─
+   ·             ╰── It can not be redeclared here
+ 6 │  
    ╰────
 
   × Identifier `e` has already been declared
@@ -10919,54 +11173,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Identifier `foo` has already been declared
-    ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:32:9]
- 31 │     class A_Field_StaticField {
- 32 │         #foo = "foo";
-    ·         ──┬─
-    ·           ╰── `foo` has already been declared here
- 33 │         static #foo = "foo";
-    ·                ──┬─
-    ·                  ╰── It can not be redeclared here
- 34 │     }
-    ╰────
-
-  × Identifier `foo` has already been declared
-    ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:38:9]
- 37 │     class A_Field_StaticMethod {
- 38 │         #foo = "foo";
-    ·         ──┬─
-    ·           ╰── `foo` has already been declared here
- 39 │         static #foo() { }
-    ·                ──┬─
-    ·                  ╰── It can not be redeclared here
- 40 │     }
-    ╰────
-
-  × Identifier `foo` has already been declared
-    ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:44:9]
- 43 │     class A_Field_StaticGetter {
- 44 │         #foo = "foo";
-    ·         ──┬─
-    ·           ╰── `foo` has already been declared here
- 45 │         static get #foo() { return ""}
-    ·                    ──┬─
-    ·                      ╰── It can not be redeclared here
- 46 │     }
-    ╰────
-
-  × Identifier `foo` has already been declared
-    ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:50:9]
- 49 │     class A_Field_StaticSetter {
- 50 │         #foo = "foo";
-    ·         ──┬─
-    ·           ╰── `foo` has already been declared here
- 51 │         static set #foo(value: string) { }
-    ·                    ──┬─
-    ·                      ╰── It can not be redeclared here
- 52 │     }
-    ╰────
-
-  × Identifier `foo` has already been declared
     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:58:9]
  57 │     class A_Method_Field {
  58 │         #foo() { }
@@ -11015,54 +11221,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Identifier `foo` has already been declared
-    ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:82:9]
- 81 │     class A_Method_StaticField {
- 82 │         #foo() { }
-    ·         ──┬─
-    ·           ╰── `foo` has already been declared here
- 83 │         static #foo = "foo";
-    ·                ──┬─
-    ·                  ╰── It can not be redeclared here
- 84 │     }
-    ╰────
-
-  × Identifier `foo` has already been declared
-    ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:88:9]
- 87 │     class A_Method_StaticMethod {
- 88 │         #foo() { }
-    ·         ──┬─
-    ·           ╰── `foo` has already been declared here
- 89 │         static #foo() { }
-    ·                ──┬─
-    ·                  ╰── It can not be redeclared here
- 90 │     }
-    ╰────
-
-  × Identifier `foo` has already been declared
-    ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:94:9]
- 93 │     class A_Method_StaticGetter {
- 94 │         #foo() { }
-    ·         ──┬─
-    ·           ╰── `foo` has already been declared here
- 95 │         static get #foo() { return ""}
-    ·                    ──┬─
-    ·                      ╰── It can not be redeclared here
- 96 │     }
-    ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:100:9]
-  99 │     class A_Method_StaticSetter {
- 100 │         #foo() { }
-     ·         ──┬─
-     ·           ╰── `foo` has already been declared here
- 101 │         static set #foo(value: string) { }
-     ·                    ──┬─
-     ·                      ╰── It can not be redeclared here
- 102 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
      ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:109:13]
  108 │     class A_Getter_Field {
  109 │         get #foo() { return ""}
@@ -11099,54 +11257,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
      ╰────
 
   × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:133:13]
- 132 │     class A_Getter_StaticField {
- 133 │         get #foo() { return ""}
-     ·             ──┬─
-     ·               ╰── `foo` has already been declared here
- 134 │         static #foo() { }
-     ·                ──┬─
-     ·                  ╰── It can not be redeclared here
- 135 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:139:13]
- 138 │     class A_Getter_StaticMethod {
- 139 │         get #foo() { return ""}
-     ·             ──┬─
-     ·               ╰── `foo` has already been declared here
- 140 │         static #foo() { }
-     ·                ──┬─
-     ·                  ╰── It can not be redeclared here
- 141 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:145:13]
- 144 │     class A_Getter_StaticGetter {
- 145 │         get #foo() { return ""}
-     ·             ──┬─
-     ·               ╰── `foo` has already been declared here
- 146 │         static get #foo() { return ""}
-     ·                    ──┬─
-     ·                      ╰── It can not be redeclared here
- 147 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:151:13]
- 150 │     class A_Getter_StaticSetter {
- 151 │         get #foo() { return ""}
-     ·             ──┬─
-     ·               ╰── `foo` has already been declared here
- 152 │         static set #foo(value: string) { }
-     ·                    ──┬─
-     ·                      ╰── It can not be redeclared here
- 153 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
      ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:159:13]
  158 │     class A_Setter_Field {
  159 │         set #foo(value: string) { }
@@ -11180,102 +11290,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
      ·             ──┬─
      ·               ╰── It can not be redeclared here
  179 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:183:13]
- 182 │     class A_Setter_StaticField {
- 183 │         set #foo(value: string) { }
-     ·             ──┬─
-     ·               ╰── `foo` has already been declared here
- 184 │         static #foo = "foo";
-     ·                ──┬─
-     ·                  ╰── It can not be redeclared here
- 185 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:189:13]
- 188 │     class A_Setter_StaticMethod {
- 189 │         set #foo(value: string) { }
-     ·             ──┬─
-     ·               ╰── `foo` has already been declared here
- 190 │         static #foo() { }
-     ·                ──┬─
-     ·                  ╰── It can not be redeclared here
- 191 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:195:13]
- 194 │     class A_Setter_StaticGetter {
- 195 │         set #foo(value: string) { }
-     ·             ──┬─
-     ·               ╰── `foo` has already been declared here
- 196 │         static get #foo() { return ""}
-     ·                    ──┬─
-     ·                      ╰── It can not be redeclared here
- 197 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:201:13]
- 200 │     class A_Setter_StaticSetter {
- 201 │         set #foo(value: string) { }
-     ·             ──┬─
-     ·               ╰── `foo` has already been declared here
- 202 │         static set #foo(value: string) { }
-     ·                    ──┬─
-     ·                      ╰── It can not be redeclared here
- 203 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:209:16]
- 208 │     class A_StaticField_Field {
- 209 │         static #foo = "foo";
-     ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
- 210 │         #foo = "foo";
-     ·         ──┬─
-     ·           ╰── It can not be redeclared here
- 211 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:215:16]
- 214 │     class A_StaticField_Method {
- 215 │         static #foo = "foo";
-     ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
- 216 │         #foo() { }
-     ·         ──┬─
-     ·           ╰── It can not be redeclared here
- 217 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:221:16]
- 220 │     class A_StaticField_Getter {
- 221 │         static #foo = "foo";
-     ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
- 222 │         get #foo() { return ""}
-     ·             ──┬─
-     ·               ╰── It can not be redeclared here
- 223 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:227:16]
- 226 │     class A_StaticField_Setter {
- 227 │         static #foo = "foo";
-     ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
- 228 │         set #foo(value: string) { }
-     ·             ──┬─
-     ·               ╰── It can not be redeclared here
- 229 │     }
      ╰────
 
   × Identifier `foo` has already been declared
@@ -11327,54 +11341,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
      ╰────
 
   × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:259:16]
- 258 │     class A_StaticMethod_Field {
- 259 │         static #foo() { }
-     ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
- 260 │         #foo = "foo";
-     ·         ──┬─
-     ·           ╰── It can not be redeclared here
- 261 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:265:16]
- 264 │     class A_StaticMethod_Method {
- 265 │         static #foo() { }
-     ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
- 266 │         #foo() { }
-     ·         ──┬─
-     ·           ╰── It can not be redeclared here
- 267 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:271:16]
- 270 │     class A_StaticMethod_Getter {
- 271 │         static #foo() { }
-     ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
- 272 │         get #foo() { return ""}
-     ·             ──┬─
-     ·               ╰── It can not be redeclared here
- 273 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:277:16]
- 276 │     class A_StaticMethod_Setter {
- 277 │         static #foo() { }
-     ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
- 278 │         set #foo(value: string) { }
-     ·             ──┬─
-     ·               ╰── It can not be redeclared here
- 279 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
      ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:283:16]
  282 │     class A_StaticMethod_StaticField {
  283 │         static #foo() { }
@@ -11423,54 +11389,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
      ╰────
 
   × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:310:20]
- 309 │     class A_StaticGetter_Field {
- 310 │         static get #foo() { return ""}
-     ·                    ──┬─
-     ·                      ╰── `foo` has already been declared here
- 311 │         #foo = "foo";
-     ·         ──┬─
-     ·           ╰── It can not be redeclared here
- 312 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:316:20]
- 315 │     class A_StaticGetter_Method {
- 316 │         static get #foo() { return ""}
-     ·                    ──┬─
-     ·                      ╰── `foo` has already been declared here
- 317 │         #foo() { }
-     ·         ──┬─
-     ·           ╰── It can not be redeclared here
- 318 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:322:20]
- 321 │     class A_StaticGetter_Getter {
- 322 │         static get #foo() { return ""}
-     ·                    ──┬─
-     ·                      ╰── `foo` has already been declared here
- 323 │         get #foo() { return ""}
-     ·             ──┬─
-     ·               ╰── It can not be redeclared here
- 324 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:328:20]
- 327 │     class A_StaticGetter_Setter {
- 328 │         static get #foo() { return ""}
-     ·                    ──┬─
-     ·                      ╰── `foo` has already been declared here
- 329 │         set #foo(value: string) { }
-     ·             ──┬─
-     ·               ╰── It can not be redeclared here
- 330 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
      ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:334:20]
  333 │     class A_StaticGetter_StaticField {
  334 │         static get #foo() { return ""}
@@ -11504,54 +11422,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
      ·                    ──┬─
      ·                      ╰── It can not be redeclared here
  348 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:359:20]
- 358 │     class A_StaticSetter_Field {
- 359 │         static set #foo(value: string) { }
-     ·                    ──┬─
-     ·                      ╰── `foo` has already been declared here
- 360 │         #foo = "foo";
-     ·         ──┬─
-     ·           ╰── It can not be redeclared here
- 361 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:365:20]
- 364 │     class A_StaticSetter_Method {
- 365 │         static set #foo(value: string) { }
-     ·                    ──┬─
-     ·                      ╰── `foo` has already been declared here
- 366 │         #foo() { }
-     ·         ──┬─
-     ·           ╰── It can not be redeclared here
- 367 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:372:20]
- 371 │     class A_StaticSetter_Getter {
- 372 │         static set #foo(value: string) { }
-     ·                    ──┬─
-     ·                      ╰── `foo` has already been declared here
- 373 │         get #foo() { return ""}
-     ·             ──┬─
-     ·               ╰── It can not be redeclared here
- 374 │     }
-     ╰────
-
-  × Identifier `foo` has already been declared
-     ╭─[conformance/classes/members/privateNames/privateNameDuplicateField.ts:378:20]
- 377 │     class A_StaticSetter_Setter {
- 378 │         static set #foo(value: string) { }
-     ·                    ──┬─
-     ·                      ╰── `foo` has already been declared here
- 379 │         set #foo(value: string) { }
-     ·             ──┬─
-     ·               ╰── It can not be redeclared here
- 380 │     }
      ╰────
 
   × Identifier `foo` has already been declared
@@ -11935,18 +11805,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·       ────
    ╰────
 
-  × Identifier `foo` has already been declared
-   ╭─[conformance/classes/members/privateNames/privateNamesUnique-3.ts:4:5]
- 3 │ class A {
- 4 │     #foo = 1;
-   ·     ──┬─
-   ·       ╰── `foo` has already been declared here
- 5 │     static #foo = true; // error (duplicate)
-   ·            ──┬─
-   ·              ╰── It can not be redeclared here
- 6 │                         // because static and instance private names
-   ╰────
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/classes/nestedClassDeclaration.ts:5:10]
  4 │     x: string;
@@ -11956,12 +11814,87 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × Identifier `accessor` has already been declared
+    ╭─[conformance/classes/propertyMemberDeclarations/autoAccessor11.ts:7:12]
+  6 │ 
+  7 │     static accessor
+    ·            ────┬───
+    ·                ╰── `accessor` has already been declared here
+  8 │     b
+  9 │ 
+ 10 │     static
+ 11 │     accessor
+    ·     ────┬───
+    ·         ╰── It can not be redeclared here
+ 12 │     c
+    ╰────
+
   × Unexpected token
     ╭─[conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:13:15]
  12 │     accessor static h: any;
  13 │     accessor i() {}
     ·               ─
  14 │     accessor get j() { return false; }
+    ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[conformance/classes/propertyMemberDeclarations/propertyAndAccessorWithSameName.ts:2:5]
+ 1 │ class C {
+ 2 │     x: number;
+   ·     ┬
+   ·     ╰── `x` has already been declared here
+ 3 │     get x() { // error
+   ·         ┬
+   ·         ╰── It can not be redeclared here
+ 4 │         return 1;
+   ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[conformance/classes/propertyMemberDeclarations/propertyAndAccessorWithSameName.ts:9:5]
+  8 │ class D {
+  9 │     x: number;
+    ·     ┬
+    ·     ╰── `x` has already been declared here
+ 10 │     set x(v) { } // error
+    ·         ┬
+    ·         ╰── It can not be redeclared here
+ 11 │ }
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[conformance/classes/propertyMemberDeclarations/propertyAndAccessorWithSameName.ts:14:13]
+ 13 │ class E {
+ 14 │     private x: number;
+    ·             ┬
+    ·             ╰── `x` has already been declared here
+ 15 │     get x() { // error
+    ·         ┬
+    ·         ╰── It can not be redeclared here
+ 16 │         return 1;
+    ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[conformance/classes/propertyMemberDeclarations/propertyAndFunctionWithSameName.ts:2:5]
+ 1 │ class C {
+ 2 │     x: number;
+   ·     ┬
+   ·     ╰── `x` has already been declared here
+ 3 │     x() { // error
+   ·     ┬
+   ·     ╰── It can not be redeclared here
+ 4 │         return 1;
+   ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[conformance/classes/propertyMemberDeclarations/propertyAndFunctionWithSameName.ts:9:5]
+  8 │ class D {
+  9 │     x: number;
+    ·     ┬
+    ·     ╰── `x` has already been declared here
+ 10 │     x(v) { } // error
+    ·     ┬
+    ·     ╰── It can not be redeclared here
+ 11 │ }
     ╰────
 
   × Classes can't have a field named 'constructor'
@@ -11978,6 +11911,54 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │     static prototype: C; // error
    ·            ─────────
  4 │ }
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[conformance/classes/propertyMemberDeclarations/twoAccessorsWithSameName.ts:3:9]
+ 2 │ class C {
+ 3 │     get x() { return 1; }
+   ·         ┬
+   ·         ╰── `x` has already been declared here
+ 4 │     get x() { return 1; } // error
+   ·         ┬
+   ·         ╰── It can not be redeclared here
+ 5 │ }
+   ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[conformance/classes/propertyMemberDeclarations/twoAccessorsWithSameName.ts:8:9]
+  7 │ class D {
+  8 │     set x(v) {  }
+    ·         ┬
+    ·         ╰── `x` has already been declared here
+  9 │     set x(v) {  } // error
+    ·         ┬
+    ·         ╰── It can not be redeclared here
+ 10 │ }
+    ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[conformance/classes/propertyMemberDeclarations/twoAccessorsWithSameName2.ts:2:16]
+ 1 │ class C {
+ 2 │     static get x() { return 1; }
+   ·                ┬
+   ·                ╰── `x` has already been declared here
+ 3 │     static get x() { return 1; } // error
+   ·                ┬
+   ·                ╰── It can not be redeclared here
+ 4 │ }
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[conformance/classes/propertyMemberDeclarations/twoAccessorsWithSameName2.ts:7:16]
+ 6 │ class D {
+ 7 │     static set x(v) {  }
+   ·                ┬
+   ·                ╰── `x` has already been declared here
+ 8 │     static set x(v) {  } // error
+   ·                ┬
+   ·                ╰── It can not be redeclared here
+ 9 │ }
    ╰────
 
   × Unexpected token
@@ -12429,6 +12410,30 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                 ──
  7 │     set [[0, 1]](v) { }
    ╰────
+
+  × Identifier `` has already been declared
+    ╭─[conformance/es6/computedProperties/computedPropertyNames40_ES5.ts:9:6]
+  8 │     // Computed properties
+  9 │     [""]() { return new Foo }
+    ·      ─┬
+    ·       ╰── `` has already been declared here
+ 10 │     [""]() { return new Foo2 }
+    ·      ─┬
+    ·       ╰── It can not be redeclared here
+ 11 │ }
+    ╰────
+
+  × Identifier `` has already been declared
+    ╭─[conformance/es6/computedProperties/computedPropertyNames40_ES6.ts:9:6]
+  8 │     // Computed properties
+  9 │     [""]() { return new Foo }
+    ·      ─┬
+    ·       ╰── `` has already been declared here
+ 10 │     [""]() { return new Foo2 }
+    ·      ─┬
+    ·       ╰── It can not be redeclared here
+ 11 │ }
+    ╰────
 
   × A 'set' accessor must have exactly one parameter.
     ╭─[conformance/es6/computedProperties/computedPropertyNames49_ES5.ts:10:16]
@@ -17182,6 +17187,62 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × Identifier `public` has already been declared
+   ╭─[conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclarationAmbiguities1.ts:2:3]
+ 1 │ class C {
+ 2 │   public() {}
+   ·   ───┬──
+   ·      ╰── `public` has already been declared here
+ 3 │   static() {}
+ 4 │ 
+ 5 │   public public() {}
+   ·          ───┬──
+   ·             ╰── It can not be redeclared here
+ 6 │   public static() {}
+   ╰────
+
+  × Identifier `static` has already been declared
+   ╭─[conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclarationAmbiguities1.ts:3:3]
+ 2 │   public() {}
+ 3 │   static() {}
+   ·   ───┬──
+   ·      ╰── `static` has already been declared here
+ 4 │ 
+ 5 │   public public() {}
+ 6 │   public static() {}
+   ·          ───┬──
+   ·             ╰── It can not be redeclared here
+ 7 │ 
+   ╰────
+
+  × Identifier `public` has already been declared
+    ╭─[conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclarationAmbiguities1.ts:8:17]
+  7 │ 
+  8 │   public static public() {}
+    ·                 ───┬──
+    ·                    ╰── `public` has already been declared here
+  9 │   public static static() {}
+ 10 │   
+ 11 │   static public() {}
+    ·          ───┬──
+    ·             ╰── It can not be redeclared here
+ 12 │   static static() {}
+    ╰────
+
+  × Identifier `static` has already been declared
+    ╭─[conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclarationAmbiguities1.ts:9:17]
+  8 │   public static public() {}
+  9 │   public static static() {}
+    ·                 ───┬──
+    ·                    ╰── `static` has already been declared here
+ 10 │   
+ 11 │   static public() {}
+ 12 │   static static() {}
+    ·          ───┬──
+    ·             ╰── It can not be redeclared here
+ 13 │ }
+    ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration4.ts:2:9]
  1 │ class C {
@@ -19295,6 +19356,78 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  11 │ }
     ╰────
 
+  × Identifier `foo` has already been declared
+    ╭─[conformance/types/members/duplicatePropertyNames.ts:19:5]
+ 18 │ class C {
+ 19 │     foo: string;
+    ·     ─┬─
+    ·      ╰── `foo` has already been declared here
+ 20 │     foo: string;
+    ·     ─┬─
+    ·      ╰── It can not be redeclared here
+ 21 │ 
+    ╰────
+
+  × Identifier `bar` has already been declared
+    ╭─[conformance/types/members/duplicatePropertyNames.ts:22:5]
+ 21 │ 
+ 22 │     bar(x) { }
+    ·     ─┬─
+    ·      ╰── `bar` has already been declared here
+ 23 │     bar(x) { }
+    ·     ─┬─
+    ·      ╰── It can not be redeclared here
+ 24 │ 
+    ╰────
+
+  × Identifier `baz` has already been declared
+    ╭─[conformance/types/members/duplicatePropertyNames.ts:25:5]
+ 24 │ 
+ 25 │     baz = () => { }
+    ·     ─┬─
+    ·      ╰── `baz` has already been declared here
+ 26 │     baz = () => { }
+    ·     ─┬─
+    ·      ╰── It can not be redeclared here
+ 27 │ }
+    ╰────
+
+  × Identifier `1` has already been declared
+   ╭─[conformance/types/members/objectTypeWithDuplicateNumericProperty.ts:5:5]
+ 4 │ class C {
+ 5 │     1;
+   ·     ┬
+   ·     ╰── `1` has already been declared here
+ 6 │     1.0;
+   ·     ─┬─
+   ·      ╰── It can not be redeclared here
+ 7 │     1.;
+   ╰────
+
+  × Identifier `1` has already been declared
+   ╭─[conformance/types/members/objectTypeWithDuplicateNumericProperty.ts:6:5]
+ 5 │     1;
+ 6 │     1.0;
+   ·     ─┬─
+   ·      ╰── `1` has already been declared here
+ 7 │     1.;
+   ·     ─┬
+   ·      ╰── It can not be redeclared here
+ 8 │     1.00;
+   ╰────
+
+  × Identifier `1` has already been declared
+   ╭─[conformance/types/members/objectTypeWithDuplicateNumericProperty.ts:7:5]
+ 6 │     1.0;
+ 7 │     1.;
+   ·     ─┬
+   ·      ╰── `1` has already been declared here
+ 8 │     1.00;
+   ·     ──┬─
+   ·       ╰── It can not be redeclared here
+ 9 │ }
+   ╰────
+
   × Expected `,` but found `Identifier`
     ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:12:19]
  11 │ var f6 = function (private x: string, public y: number) { }
@@ -19862,6 +19995,19 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·     ╰── `,` expected
  21 │ }
     ╰────
+
+  × Identifier `1` has already been declared
+   ╭─[conformance/types/objectTypeLiteral/propertySignatures/numericStringNamedPropertyEquivalence.ts:4:5]
+ 3 │ class C {
+ 4 │     "1": number;
+   ·     ─┬─
+   ·      ╰── `1` has already been declared here
+ 5 │     "1.0": number; // not a duplicate
+ 6 │     1.0: number;
+   ·     ─┬─
+   ·      ╰── It can not be redeclared here
+ 7 │ }
+   ╰────
 
   × Expected `,` but found `string`
     ╭─[conformance/types/objectTypeLiteral/propertySignatures/stringNamedPropertyDuplicates.ts:20:5]

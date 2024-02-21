@@ -1,5 +1,5 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, syntax_directed_operations::PrivateBoundIdentifiers};
+use oxc_ast::ast::*;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -382,65 +382,13 @@ impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
     }
 }
 
-pub struct PrivateBoundIdentifierMeta {
-    span: Span,
-    r#static: bool,
-    kind: Option<MethodDefinitionKind>,
-}
-
 pub struct ClassElements<'a> {
     pub elements: Vec<'a, ClassElement<'a>>,
-
-    /// <https://tc39.es/ecma262/#sec-static-semantics-privateboundidentifiers>
-    pub private_bound_identifiers: FxHashMap<Atom, PrivateBoundIdentifierMeta>,
 }
 
 impl<'a> ClassElements<'a> {
     pub(crate) fn new(p: &ParserImpl<'a>) -> Self {
-        Self { elements: p.ast.new_vec(), private_bound_identifiers: FxHashMap::default() }
-    }
-
-    fn detect_private_name_conflict(
-        &self,
-        p: &mut ParserImpl,
-        private_ident: &PrivateIdentifier,
-        r#static: bool,
-        kind: Option<MethodDefinitionKind>,
-    ) {
-        if let Some(existed) = self.private_bound_identifiers.get(&private_ident.name) {
-            if !(r#static == existed.r#static
-                && match existed.kind {
-                    Some(MethodDefinitionKind::Get) => {
-                        kind.as_ref().map_or(false, |kind| *kind == MethodDefinitionKind::Set)
-                    }
-                    Some(MethodDefinitionKind::Set) => {
-                        kind.as_ref().map_or(false, |kind| *kind == MethodDefinitionKind::Get)
-                    }
-                    _ => false,
-                })
-            {
-                p.error(Redeclaration(
-                    private_ident.name.clone(),
-                    existed.span,
-                    private_ident.span,
-                ));
-            }
-        }
-    }
-
-    fn on_declare_private_property(
-        &mut self,
-        p: &mut ParserImpl,
-        private_ident: &PrivateIdentifier,
-        r#static: bool,
-        kind: Option<MethodDefinitionKind>,
-    ) {
-        self.detect_private_name_conflict(p, private_ident, r#static, kind);
-
-        self.private_bound_identifiers.insert(
-            private_ident.name.clone(),
-            PrivateBoundIdentifierMeta { r#static, kind, span: private_ident.span },
-        );
+        Self { elements: p.ast.new_vec() }
     }
 }
 
@@ -462,15 +410,6 @@ impl<'a> NormalList<'a> for ClassElements<'a> {
             return Ok(());
         }
         let element = p.parse_class_element()?;
-
-        if let Some(private_ident) = element.private_bound_identifiers() {
-            self.on_declare_private_property(
-                p,
-                &private_ident,
-                element.r#static(),
-                element.method_definition_kind(),
-            );
-        }
 
         self.elements.push(element);
         Ok(())

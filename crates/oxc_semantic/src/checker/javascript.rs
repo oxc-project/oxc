@@ -26,7 +26,10 @@ impl EarlyErrorJavaScript {
         let kind = node.kind();
 
         match kind {
-            AstKind::Program(_) => check_labeled_statement(ctx),
+            AstKind::Program(_) => {
+                check_labeled_statement(ctx);
+                check_duplicate_class_elements(ctx);
+            }
             AstKind::BindingIdentifier(ident) => {
                 check_identifier(&ident.name, ident.span, node, ctx);
                 check_binding_identifier(ident, node, ctx);
@@ -100,6 +103,42 @@ impl EarlyErrorJavaScript {
     pub fn check_module_record(ctx: &SemanticBuilder<'_>) {
         check_module_record(ctx);
     }
+}
+
+fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
+    let classes = &ctx.class_table_builder.classes;
+    classes.iter_enumerated().for_each(|(class_id, _)| {
+        let mut defined_elements = FxHashMap::default();
+        let elements = &classes.elements[class_id];
+        for (element_id, element) in elements.iter_enumerated() {
+            if let Some(prev_element_id) = defined_elements.insert(&element.name, element_id) {
+                let prev_element = &elements[prev_element_id];
+
+                let mut is_duplicate = element.is_private == prev_element.is_private
+                    && if element.kind.is_setter_or_getter()
+                        && prev_element.kind.is_setter_or_getter()
+                    {
+                        element.kind == prev_element.kind
+                            || element.r#static != prev_element.r#static
+                    } else {
+                        true
+                    };
+
+                is_duplicate = if ctx.source_type.is_typescript() {
+                    element.r#static == prev_element.r#static && is_duplicate
+                } else {
+                    // * It is a Syntax Error if PrivateBoundIdentifiers of ClassElementList contains any duplicate entries,
+                    // unless the name is used once for a getter and once for a setter and in no other entries,
+                    // and the getter and setter are either both static or both non-static.
+                    element.is_private && is_duplicate
+                };
+
+                if is_duplicate {
+                    ctx.error(Redeclaration(element.name.clone(), prev_element.span, element.span));
+                }
+            }
+        }
+    });
 }
 
 fn check_module_record(ctx: &SemanticBuilder<'_>) {
