@@ -45,7 +45,7 @@ impl Rule for NumberArgOutOfRange {
         };
 
         if let Some(member) = expr.callee.get_member_expr() {
-            if let Some(Argument::Expression(Expression::NumberLiteral(literal))) =
+            if let Some(Argument::Expression(Expression::NumericLiteral(literal))) =
                 expr.arguments.first()
             {
                 let value = literal.value;

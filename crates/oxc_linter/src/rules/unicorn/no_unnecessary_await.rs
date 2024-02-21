@@ -85,7 +85,7 @@ fn not_promise(expr: &Expression) -> bool {
         | Expression::JSXFragment(_)
         | Expression::BooleanLiteral(_)
         | Expression::NullLiteral(_)
-        | Expression::NumberLiteral(_)
+        | Expression::NumericLiteral(_)
         | Expression::BigintLiteral(_)
         | Expression::RegExpLiteral(_)
         | Expression::StringLiteral(_)

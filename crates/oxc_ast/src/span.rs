@@ -34,7 +34,7 @@ impl<'a> GetSpan for Expression<'a> {
         match self {
             Self::BooleanLiteral(e) => e.span,
             Self::NullLiteral(e) => e.span,
-            Self::NumberLiteral(e) => e.span,
+            Self::NumericLiteral(e) => e.span,
             Self::BigintLiteral(e) => e.span,
             Self::RegExpLiteral(e) => e.span,
             Self::StringLiteral(e) => e.span,

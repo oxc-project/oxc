@@ -76,7 +76,7 @@ pub enum TSEnumMemberName<'a> {
     // Invalid Grammar `enum E { [computed] }`
     ComputedPropertyName(Expression<'a>),
     // Invalid Grammar `enum E { 1 }`
-    NumberLiteral(NumberLiteral<'a>),
+    NumericLiteral(NumericLiteral<'a>),
 }
 
 #[derive(Debug, Hash)]
@@ -103,7 +103,7 @@ pub struct TSLiteralType<'a> {
 pub enum TSLiteral<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>),
     NullLiteral(Box<'a, NullLiteral>),
-    NumberLiteral(Box<'a, NumberLiteral<'a>>),
+    NumericLiteral(Box<'a, NumericLiteral<'a>>),
     BigintLiteral(Box<'a, BigintLiteral>),
     RegExpLiteral(Box<'a, RegExpLiteral>),
     StringLiteral(Box<'a, StringLiteral>),

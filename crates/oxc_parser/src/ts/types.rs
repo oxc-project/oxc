@@ -703,7 +703,7 @@ impl<'a> ParserImpl<'a> {
             match expression {
                 Expression::BooleanLiteral(literal) => TSLiteral::BooleanLiteral(literal),
                 Expression::NullLiteral(literal) => TSLiteral::NullLiteral(literal),
-                Expression::NumberLiteral(literal) => TSLiteral::NumberLiteral(literal),
+                Expression::NumericLiteral(literal) => TSLiteral::NumericLiteral(literal),
                 Expression::BigintLiteral(literal) => TSLiteral::BigintLiteral(literal),
                 Expression::RegExpLiteral(literal) => TSLiteral::RegExpLiteral(literal),
                 Expression::StringLiteral(literal) => TSLiteral::StringLiteral(literal),

@@ -6,7 +6,7 @@ use oxc_semantic::ReferenceFlag;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
 
 use oxc_ast::ast::{
-    ArrayExpressionElement, BinaryExpression, Expression, NumberLiteral, ObjectProperty,
+    ArrayExpressionElement, BinaryExpression, Expression, NumericLiteral, ObjectProperty,
     ObjectPropertyKind, PropertyKey, SpreadElement, UnaryExpression,
 };
 
@@ -107,7 +107,7 @@ pub trait CheckForStateChange<'a, 'b> {
 impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
     fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
         match self {
-            Self::NumberLiteral(_)
+            Self::NumericLiteral(_)
             | Self::BooleanLiteral(_)
             | Self::StringLiteral(_)
             | Self::BigintLiteral(_)
@@ -334,7 +334,7 @@ pub fn get_string_bigint_value(raw_string: &str) -> Option<BigInt> {
 /// This method does not consider whether `expr` may have side effects.
 pub fn get_number_value(expr: &Expression) -> Option<NumberValue> {
     match expr {
-        Expression::NumberLiteral(number_literal) => {
+        Expression::NumericLiteral(number_literal) => {
             Some(NumberValue::Number(number_literal.value))
         }
         Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
@@ -343,7 +343,7 @@ pub fn get_number_value(expr: &Expression) -> Option<NumberValue> {
             UnaryOperator::BitwiseNot => get_number_value(&unary_expr.argument).map(|value| {
                 match value {
                     NumberValue::Number(num) => {
-                        NumberValue::Number(f64::from(!NumberLiteral::ecmascript_to_int32(num)))
+                        NumberValue::Number(f64::from(!NumericLiteral::ecmascript_to_int32(num)))
                     }
                     // ~Infinity -> -1
                     // ~-Infinity -> -1
@@ -382,7 +382,7 @@ pub fn get_number_value(expr: &Expression) -> Option<NumberValue> {
 #[allow(clippy::cast_possible_truncation)]
 pub fn get_bigint_value(expr: &Expression) -> Option<BigInt> {
     match expr {
-        Expression::NumberLiteral(number_literal) => {
+        Expression::NumericLiteral(number_literal) => {
             let value = number_literal.value;
             if value.abs() < 2_f64.powi(53) && is_exact_int64(value) {
                 Some(BigInt::from(value as i64))
@@ -467,7 +467,7 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
         | Expression::ObjectExpression(_) => Some(true),
         Expression::NullLiteral(_) => Some(false),
         Expression::BooleanLiteral(boolean_literal) => Some(boolean_literal.value),
-        Expression::NumberLiteral(number_literal) => Some(number_literal.value != 0.0),
+        Expression::NumericLiteral(number_literal) => Some(number_literal.value != 0.0),
         Expression::BigintLiteral(big_int_literal) => Some(!big_int_literal.is_zero()),
         Expression::StringLiteral(string_literal) => Some(!string_literal.value.is_empty()),
         Expression::TemplateLiteral(template_literal) => {
@@ -580,7 +580,7 @@ pub fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
                 None
             }
         }
-        Expression::NumberLiteral(number_literal) => {
+        Expression::NumericLiteral(number_literal) => {
             Some(Cow::Owned(number_literal.value.to_string()))
         }
         Expression::BigintLiteral(big_int_literal) => {

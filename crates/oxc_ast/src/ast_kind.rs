@@ -45,7 +45,7 @@ pub enum AstKind<'a> {
     LabelIdentifier(&'a LabelIdentifier),
     PrivateIdentifier(&'a PrivateIdentifier),
 
-    NumberLiteral(&'a NumberLiteral<'a>),
+    NumericLiteral(&'a NumericLiteral<'a>),
     StringLiteral(&'a StringLiteral),
     BooleanLiteral(&'a BooleanLiteral),
     NullLiteral(&'a NullLiteral),
@@ -232,7 +232,7 @@ impl<'a> AstKind<'a> {
     pub fn is_literal(self) -> bool {
         matches!(
             self,
-            Self::NumberLiteral(_)
+            Self::NumericLiteral(_)
                 | Self::StringLiteral(_)
                 | Self::BooleanLiteral(_)
                 | Self::NullLiteral(_)
@@ -280,7 +280,7 @@ impl<'a> AstKind<'a> {
         match e {
             Expression::BooleanLiteral(e) => Self::BooleanLiteral(e),
             Expression::NullLiteral(e) => Self::NullLiteral(e),
-            Expression::NumberLiteral(e) => Self::NumberLiteral(e),
+            Expression::NumericLiteral(e) => Self::NumericLiteral(e),
             Expression::BigintLiteral(e) => Self::BigintLiteral(e),
             Expression::RegExpLiteral(e) => Self::RegExpLiteral(e),
             Expression::StringLiteral(e) => Self::StringLiteral(e),
@@ -365,7 +365,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::LabelIdentifier(x) => x.span,
             Self::PrivateIdentifier(x) => x.span,
 
-            Self::NumberLiteral(x) => x.span,
+            Self::NumericLiteral(x) => x.span,
             Self::StringLiteral(x) => x.span,
             Self::BooleanLiteral(x) => x.span,
             Self::NullLiteral(x) => x.span,
@@ -541,8 +541,8 @@ impl<'a> AstKind<'a> {
             Self::LabelIdentifier(x) => format!("LabelIdentifier({})", x.name).into(),
             Self::PrivateIdentifier(x) => format!("PrivateIdentifier({})", x.name).into(),
 
-            Self::NumberLiteral(n) => format!("NumberLiteral({})", n.value).into(),
-            Self::StringLiteral(s) => format!("NumberLiteral({})", s.value).into(),
+            Self::NumericLiteral(n) => format!("NumericLiteral({})", n.value).into(),
+            Self::StringLiteral(s) => format!("NumericLiteral({})", s.value).into(),
             Self::BooleanLiteral(b) => format!("BooleanLiteral({})", b.value).into(),
             Self::NullLiteral(_) => "NullLiteral".into(),
             Self::BigintLiteral(b) => format!("BigintLiteral({})", b.raw).into(),

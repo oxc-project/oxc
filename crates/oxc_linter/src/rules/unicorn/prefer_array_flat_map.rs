@@ -59,7 +59,7 @@ impl Rule for PreferArrayFlatMap {
         }
 
         if let Some(first_arg) = flat_call_expr.arguments.first() {
-            if let Argument::Expression(Expression::NumberLiteral(number_lit)) = first_arg {
+            if let Argument::Expression(Expression::NumericLiteral(number_lit)) = first_arg {
                 if number_lit.raw != "1" {
                     return;
                 }

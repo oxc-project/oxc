@@ -105,8 +105,8 @@ fn check_and_report(
                 Expression::NullLiteral(_) => Some(null_literal.span),
                 _ => None,
             },
-            TSLiteral::NumberLiteral(number_literal) => match initial_value_expression {
-                Expression::NumberLiteral(initial_number) => {
+            TSLiteral::NumericLiteral(number_literal) => match initial_value_expression {
+                Expression::NumericLiteral(initial_number) => {
                     if (number_literal.value - initial_number.value).abs() < f64::EPSILON {
                         Some(number_literal.span)
                     } else {

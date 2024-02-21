@@ -916,7 +916,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
         match self {
             Self::BooleanLiteral(lit) => lit.gen(p, ctx),
             Self::NullLiteral(lit) => lit.gen(p, ctx),
-            Self::NumberLiteral(lit) => lit.gen(p, ctx),
+            Self::NumericLiteral(lit) => lit.gen(p, ctx),
             Self::BigintLiteral(lit) => lit.gen(p, ctx),
             Self::RegExpLiteral(lit) => lit.gen(p, ctx),
             Self::StringLiteral(lit) => lit.gen(p, ctx),
@@ -1029,7 +1029,7 @@ fn need_space_before_dot<const MINIFY: bool>(bytes: &[u8], p: &mut Codegen<{ MIN
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for NumberLiteral<'a> {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for NumericLiteral<'a> {
     #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         if self.value != f64::INFINITY && (MINIFY || self.raw.is_empty()) {

@@ -546,7 +546,7 @@ pub trait VisitMut<'a>: Sized {
             Expression::BigintLiteral(lit) => self.visit_bigint_literal(lit),
             Expression::BooleanLiteral(lit) => self.visit_boolean_literal(lit),
             Expression::NullLiteral(lit) => self.visit_null_literal(lit),
-            Expression::NumberLiteral(lit) => self.visit_number_literal(lit),
+            Expression::NumericLiteral(lit) => self.visit_number_literal(lit),
             Expression::RegExpLiteral(lit) => self.visit_reg_expr_literal(lit),
             Expression::StringLiteral(lit) => self.visit_string_literal(lit),
             Expression::TemplateLiteral(lit) => self.visit_template_literal(lit),
@@ -1256,8 +1256,8 @@ pub trait VisitMut<'a>: Sized {
 
     /* ----------  Literal ---------- */
 
-    fn visit_number_literal(&mut self, lit: &mut NumberLiteral<'a>) {
-        let kind = AstKind::NumberLiteral(self.alloc(lit));
+    fn visit_number_literal(&mut self, lit: &mut NumericLiteral<'a>) {
+        let kind = AstKind::NumericLiteral(self.alloc(lit));
         self.enter_node(kind);
         self.leave_node(kind);
     }
@@ -1791,7 +1791,7 @@ pub trait VisitMut<'a>: Sized {
             TSLiteral::BigintLiteral(lit) => self.visit_bigint_literal(lit),
             TSLiteral::BooleanLiteral(lit) => self.visit_boolean_literal(lit),
             TSLiteral::NullLiteral(lit) => self.visit_null_literal(lit),
-            TSLiteral::NumberLiteral(lit) => self.visit_number_literal(lit),
+            TSLiteral::NumericLiteral(lit) => self.visit_number_literal(lit),
             TSLiteral::RegExpLiteral(lit) => self.visit_reg_expr_literal(lit),
             TSLiteral::StringLiteral(lit) => self.visit_string_literal(lit),
             TSLiteral::TemplateLiteral(lit) => self.visit_template_literal(lit),
