@@ -3,9 +3,9 @@ use std::str::FromStr;
 /// Prettier Options
 ///
 /// References
-/// * https://prettier.io/docs/en/options
-/// * https://github.com/prettier/prettier/blob/main/src/main/core-options.evaluate.js
-/// * https://github.com/prettier/prettier/blob/main/src/language-js/options.js
+/// * <https://prettier.io/docs/en/options>
+/// * <https://github.com/prettier/prettier/blob/main/src/main/core-options.evaluate.js>
+/// * <https://github.com/prettier/prettier/blob/main/src/language-js/options.js>
 #[derive(Debug, Clone, Copy)]
 pub struct PrettierOptions {
     /* Global Options */
