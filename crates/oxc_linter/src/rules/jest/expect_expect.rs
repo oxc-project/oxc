@@ -162,7 +162,7 @@ fn check_assert_function_used<'a>(
                 return check_statements(&body.statements, assert_function_names, ctx);
             }
         }
-        Expression::ArrowExpression(arrow_expr) => {
+        Expression::ArrowFunctionExpression(arrow_expr) => {
             let body = &arrow_expr.body;
             return check_statements(&body.statements, assert_function_names, ctx);
         }

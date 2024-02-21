@@ -55,7 +55,8 @@ impl Rule for NoUnreadableIife {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
-        let Expression::ArrowExpression(arrow_expr) = &call_expr.callee.without_parenthesized()
+        let Expression::ArrowFunctionExpression(arrow_expr) =
+            &call_expr.callee.without_parenthesized()
         else {
             return;
         };

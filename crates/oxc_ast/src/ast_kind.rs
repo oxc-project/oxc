@@ -57,7 +57,7 @@ pub enum AstKind<'a> {
     Super(&'a Super),
 
     ArrayExpression(&'a ArrayExpression<'a>),
-    ArrowExpression(&'a ArrowExpression<'a>),
+    ArrowFunctionExpression(&'a ArrowFunctionExpression<'a>),
     AssignmentExpression(&'a AssignmentExpression<'a>),
     AwaitExpression(&'a AwaitExpression<'a>),
     BinaryExpression(&'a BinaryExpression<'a>),
@@ -243,7 +243,7 @@ impl<'a> AstKind<'a> {
     }
 
     pub fn is_function_like(self) -> bool {
-        matches!(self, Self::Function(_) | Self::ArrowExpression(_))
+        matches!(self, Self::Function(_) | Self::ArrowFunctionExpression(_))
     }
 
     pub fn identifier_name(self) -> Option<Atom> {
@@ -289,7 +289,7 @@ impl<'a> AstKind<'a> {
             Expression::MetaProperty(e) => Self::MetaProperty(e),
             Expression::Super(e) => Self::Super(e),
             Expression::ArrayExpression(e) => Self::ArrayExpression(e),
-            Expression::ArrowExpression(e) => Self::ArrowExpression(e),
+            Expression::ArrowFunctionExpression(e) => Self::ArrowFunctionExpression(e),
             Expression::AssignmentExpression(e) => Self::AssignmentExpression(e),
             Expression::AwaitExpression(e) => Self::AwaitExpression(e),
             Expression::BinaryExpression(e) => Self::BinaryExpression(e),
@@ -377,7 +377,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::Super(x) => x.span,
 
             Self::ArrayExpression(x) => x.span,
-            Self::ArrowExpression(x) => x.span,
+            Self::ArrowFunctionExpression(x) => x.span,
             Self::AssignmentExpression(x) => x.span,
             Self::AwaitExpression(x) => x.span,
             Self::BinaryExpression(x) => x.span,
@@ -557,7 +557,7 @@ impl<'a> AstKind<'a> {
             Self::Super(_) => "Super".into(),
 
             Self::ArrayExpression(_) => "ArrayExpression".into(),
-            Self::ArrowExpression(_) => "ArrowExpression".into(),
+            Self::ArrowFunctionExpression(_) => "ArrowFunctionExpression".into(),
             Self::AssignmentExpression(_) => "AssignmentExpression".into(),
             Self::AwaitExpression(_) => "AwaitExpression".into(),
             Self::BinaryExpression(b) => format!("BinaryExpression{}", b.operator.as_str()).into(),

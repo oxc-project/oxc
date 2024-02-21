@@ -190,7 +190,7 @@ fn should_expand_first_arg<'a>(arguments: &Vec<'a, Argument<'a>>) -> bool {
 
     let first_check = match first_arg {
         Expression::FunctionExpression(_) => true,
-        Expression::ArrowExpression(arrow) => !arrow.expression,
+        Expression::ArrowFunctionExpression(arrow) => !arrow.expression,
         _ => false,
     };
 
@@ -198,7 +198,7 @@ fn should_expand_first_arg<'a>(arguments: &Vec<'a, Argument<'a>>) -> bool {
         && !matches!(
             second_arg,
             Expression::FunctionExpression(_)
-                | Expression::ArrowExpression(_)
+                | Expression::ArrowFunctionExpression(_)
                 | Expression::ConditionalExpression(_)
         )
         && is_hopefully_short_call_argument(second_arg)
@@ -215,7 +215,7 @@ fn should_expand_last_arg(args: &Vec<'_, Argument<'_>>) -> bool {
         && (args.len() != 2
             || !matches!(
                 penultimate_arg,
-                Some(Argument::Expression(Expression::ArrowExpression(_)))
+                Some(Argument::Expression(Expression::ArrowFunctionExpression(_)))
             )
             || !matches!(last_arg, Expression::ArrayExpression(_)))
 }
@@ -354,7 +354,7 @@ fn could_expand_arg(arg: &Expression, arrow_chain_recursion: bool) -> bool {
         Expression::ArrayExpression(expr) => expr.elements.len() > 0,
         Expression::BinaryExpression(expr) => could_expand_arg(&expr.left, arrow_chain_recursion),
         Expression::FunctionExpression(_) => true,
-        Expression::ArrowExpression(expr) => {
+        Expression::ArrowFunctionExpression(expr) => {
             if !expr.expression {
                 return true;
             }

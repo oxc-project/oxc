@@ -62,7 +62,7 @@ pub(super) fn print_function_parameters<'a>(
     params: &FormalParameters<'a>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    let is_arrow_function = matches!(p.parent_kind(), AstKind::ArrowExpression(_));
+    let is_arrow_function = matches!(p.parent_kind(), AstKind::ArrowFunctionExpression(_));
     let need_parens =
         !is_arrow_function || p.options.arrow_parens.is_always() || params.items.len() != 1;
     if need_parens {

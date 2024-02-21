@@ -58,7 +58,7 @@ pub enum Expression<'a> {
     Super(Box<'a, Super>),
 
     ArrayExpression(Box<'a, ArrayExpression<'a>>),
-    ArrowExpression(Box<'a, ArrowExpression<'a>>),
+    ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>),
     AssignmentExpression(Box<'a, AssignmentExpression<'a>>),
     AwaitExpression(Box<'a, AwaitExpression<'a>>),
     BinaryExpression(Box<'a, BinaryExpression<'a>>),
@@ -238,7 +238,7 @@ impl<'a> Expression<'a> {
     }
 
     pub fn is_function(&self) -> bool {
-        matches!(self, Expression::FunctionExpression(_) | Expression::ArrowExpression(_))
+        matches!(self, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
     }
 
     pub fn is_call_expression(&self) -> bool {
@@ -1852,7 +1852,7 @@ impl<'a> FunctionBody<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct ArrowExpression<'a> {
+pub struct ArrowFunctionExpression<'a> {
     pub span: Span,
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     pub expression: bool,
@@ -1865,8 +1865,8 @@ pub struct ArrowExpression<'a> {
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
-impl<'a> ArrowExpression<'a> {
-    /// Get expression part of `ArrowExpression`: `() => expression_part`.
+impl<'a> ArrowFunctionExpression<'a> {
+    /// Get expression part of `ArrowFunctionExpression`: `() => expression_part`.
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         if self.expression {
             if let Statement::ExpressionStatement(expr_stmt) = &self.body.statements[0] {

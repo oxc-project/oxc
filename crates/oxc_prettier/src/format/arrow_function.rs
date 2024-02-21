@@ -7,7 +7,7 @@ use crate::{
 
 pub(super) fn print_arrow_function<'a>(
     p: &mut Prettier<'a>,
-    expr: &ArrowExpression<'a>,
+    expr: &ArrowFunctionExpression<'a>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
 

@@ -80,7 +80,7 @@ impl<'a> Prettier<'a> {
                 false
             }
             AstKind::AssignmentExpression(assign_expr) => match parent_kind {
-                AstKind::ArrowExpression(arrow_expr)
+                AstKind::ArrowFunctionExpression(arrow_expr)
                     if arrow_expr
                         .get_expression()
                         .is_some_and(|e| e.span() == assign_expr.span) =>
@@ -168,7 +168,7 @@ impl<'a> Prettier<'a> {
                 AstKind::TaggedTemplateExpression(_) => true,
                 _ => false,
             },
-            AstKind::ArrowExpression(e) => match parent_kind {
+            AstKind::ArrowFunctionExpression(e) => match parent_kind {
                 AstKind::CallExpression(call_expr) => call_expr.callee.span() == e.span,
                 AstKind::NewExpression(new_expr) => new_expr.callee.span() == e.span,
                 AstKind::MemberExpression(member_expr) => member_expr.object().span() == e.span,
@@ -196,7 +196,7 @@ impl<'a> Prettier<'a> {
             AstKind::Class(class) => {
                 if let Some(h) = &class.super_class {
                     match kind {
-                        AstKind::ArrowExpression(e) if e.span == h.span() => return true,
+                        AstKind::ArrowFunctionExpression(e) if e.span == h.span() => return true,
                         AstKind::AssignmentExpression(e) if e.span == h.span() => return true,
                         AstKind::AwaitExpression(e) if e.span == h.span() => return true,
                         AstKind::BinaryExpression(e) if e.span == h.span() => return true,
@@ -245,7 +245,7 @@ impl<'a> Prettier<'a> {
         match self.parent_kind() {
             AstKind::ReturnStatement(_) | AstKind::ForStatement(_) => false,
             AstKind::ExpressionStatement(expr) => expr.expression.span() != span,
-            AstKind::ArrowExpression(expr) => expr.body.span != span,
+            AstKind::ArrowFunctionExpression(expr) => expr.body.span != span,
             _ => true,
         }
     }
@@ -253,7 +253,7 @@ impl<'a> Prettier<'a> {
     fn check_object_expression(&self, obj_expr: &ObjectExpression<'a>) -> bool {
         let mut arrow_expr = None;
         for kind in self.stack.iter().rev() {
-            if let AstKind::ArrowExpression(e) = kind {
+            if let AstKind::ArrowFunctionExpression(e) = kind {
                 e.get_expression();
                 arrow_expr = Some(e);
                 break;

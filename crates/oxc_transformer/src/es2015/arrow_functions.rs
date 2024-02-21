@@ -109,7 +109,7 @@ impl<'a> ArrowFunctions<'a> {
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
-        if let Expression::ArrowExpression(arrow_expr) = expr {
+        if let Expression::ArrowFunctionExpression(arrow_expr) = expr {
             let mut body = self.ast.copy(&arrow_expr.body);
 
             if arrow_expr.expression {

@@ -59,7 +59,7 @@ impl Rule for GetterReturn {
             AstKind::Function(func) if !func.is_typescript_syntax() => {
                 self.run_diagnostic(node, ctx, func.span);
             }
-            AstKind::ArrowExpression(expr) => {
+            AstKind::ArrowFunctionExpression(expr) => {
                 self.run_diagnostic(node, ctx, expr.span);
             }
             _ => {}

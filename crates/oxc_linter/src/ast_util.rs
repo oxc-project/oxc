@@ -77,7 +77,7 @@ pub trait IsConstant<'a, 'b> {
 impl<'a, 'b> IsConstant<'a, 'b> for Expression<'a> {
     fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
         match self {
-            Self::ArrowExpression(_)
+            Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
             | Self::ClassExpression(_)
             | Self::ObjectExpression(_) => true,
@@ -202,7 +202,7 @@ impl<'a> IsPrivate for PropertyDefinition<'a> {
     }
 }
 
-/// Return the innermost `Function` or `ArrowExpression` Node
+/// Return the innermost `Function` or `ArrowFunctionExpression` Node
 /// enclosing the specified node
 pub fn get_enclosing_function<'a, 'b>(
     node: &'b AstNode<'a>,
@@ -213,7 +213,8 @@ pub fn get_enclosing_function<'a, 'b>(
         if matches!(current_node.kind(), AstKind::Program(_)) {
             return None;
         }
-        if matches!(current_node.kind(), AstKind::Function(_) | AstKind::ArrowExpression(_)) {
+        if matches!(current_node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
+        {
             return Some(current_node);
         }
         current_node = ctx.nodes().parent_node(current_node.id()).unwrap();

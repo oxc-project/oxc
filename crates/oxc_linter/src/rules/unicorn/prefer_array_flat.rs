@@ -83,7 +83,7 @@ fn check_array_flat_map_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintConte
         return;
     };
 
-    let Expression::ArrowExpression(first_argument) = first_argument else {
+    let Expression::ArrowFunctionExpression(first_argument) = first_argument else {
         return;
     };
 
@@ -112,7 +112,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     if !is_method_call(call_expr, None, Some(&["reduce"]), Some(2), Some(2)) {
         return;
     }
-    let Argument::Expression(Expression::ArrowExpression(first_argument)) =
+    let Argument::Expression(Expression::ArrowFunctionExpression(first_argument)) =
         call_expr.arguments.first().unwrap()
     else {
         return;

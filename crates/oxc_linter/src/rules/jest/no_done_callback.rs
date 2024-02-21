@@ -135,7 +135,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
                     ctx.diagnostic(NoDoneCallbackDiagnostic::NoDoneCallback(span));
                 }
-                Expression::ArrowExpression(arrow_expr) => {
+                Expression::ArrowFunctionExpression(arrow_expr) => {
                     if arrow_expr.params.parameters_count() != 1 + callback_arg_index {
                         return;
                     }

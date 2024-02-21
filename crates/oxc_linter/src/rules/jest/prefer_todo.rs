@@ -120,7 +120,7 @@ fn is_string_type(arg: &Argument) -> bool {
 
 fn is_empty_function(expr: &CallExpression) -> bool {
     match &expr.arguments[1] {
-        Argument::Expression(Expression::ArrowExpression(arrow)) => arrow.body.is_empty(),
+        Argument::Expression(Expression::ArrowFunctionExpression(arrow)) => arrow.body.is_empty(),
         Argument::Expression(Expression::FunctionExpression(func)) => {
             let Some(func_body) = &func.body else {
                 return false;

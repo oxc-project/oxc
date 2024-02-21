@@ -79,7 +79,7 @@ fn check_call_expression<'a>(
             continue;
         };
         match arg_expr {
-            Expression::ArrowExpression(arrow_expr) => {
+            Expression::ArrowFunctionExpression(arrow_expr) => {
                 check_test_return_statement(&arrow_expr.body, ctx);
             }
             Expression::FunctionExpression(func_expr) => {

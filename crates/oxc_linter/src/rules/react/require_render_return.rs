@@ -72,7 +72,7 @@ impl Rule for RequireRenderReturn {
                         ClassElement::PropertyDefinition(pd)
                             if pd.key.is_specific_static_name("render") =>
                         {
-                            if let Some(Expression::ArrowExpression(ref ae)) = pd.value {
+                            if let Some(Expression::ArrowFunctionExpression(ref ae)) = pd.value {
                                 Some((&ae.body, ae.expression))
                             } else {
                                 None

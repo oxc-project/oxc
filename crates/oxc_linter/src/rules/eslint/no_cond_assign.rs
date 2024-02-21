@@ -78,7 +78,7 @@ impl Rule for NoCondAssign {
                             Self::emit_diagnostic(ctx, expr);
                         }
                         AstKind::Function(_)
-                        | AstKind::ArrowExpression(_)
+                        | AstKind::ArrowFunctionExpression(_)
                         | AstKind::Program(_) => break,
                         _ => {}
                     }

@@ -114,7 +114,7 @@ fn get_function_like_node<'a, 'b>(
     };
 
     match fnx.kind() {
-        AstKind::ArrowExpression(arrow_expr) => Some((arrow_expr.r#async, parent)),
+        AstKind::ArrowFunctionExpression(arrow_expr) => Some((arrow_expr.r#async, parent)),
         AstKind::Function(func) => Some((func.r#async, parent)),
         _ => None,
     }

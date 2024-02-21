@@ -927,7 +927,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
             Self::ArrayExpression(expr) => expr.gen(p, ctx),
             Self::ObjectExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::FunctionExpression(expr) => expr.gen(p, ctx),
-            Self::ArrowExpression(expr) => expr.gen_expr(p, precedence, ctx),
+            Self::ArrowFunctionExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::YieldExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::UpdateExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::UnaryExpression(expr) => expr.gen_expr(p, precedence, ctx),
@@ -1465,7 +1465,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyKey<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ArrowExpression<'a> {
+impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ArrowFunctionExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         p.wrap(precedence > Precedence::Assign, |p| {
             if self.r#async {

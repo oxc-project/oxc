@@ -90,7 +90,7 @@ fn is_in_array_or_iter<'a, 'b>(
         };
 
         match parent.kind() {
-            AstKind::ArrowExpression(arrow_expr) => {
+            AstKind::ArrowFunctionExpression(arrow_expr) => {
                 let is_arrow_expr_statement = matches!(
                     arrow_expr.body.statements.first(),
                     Some(Statement::ExpressionStatement(_))

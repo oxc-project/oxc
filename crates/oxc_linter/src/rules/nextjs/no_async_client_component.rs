@@ -99,7 +99,7 @@ impl Rule for NoAsyncClientComponent {
                         {
                             // `binding_ident.name` MUST be > 0 chars
                             if binding_ident.name.chars().next().unwrap().is_uppercase() {
-                                if let Some(Expression::ArrowExpression(arrow_expr)) =
+                                if let Some(Expression::ArrowFunctionExpression(arrow_expr)) =
                                     &var_declarator.init
                                 {
                                     if arrow_expr.r#async {

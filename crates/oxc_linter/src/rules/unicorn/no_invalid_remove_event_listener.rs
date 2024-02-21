@@ -81,7 +81,7 @@ impl Rule for NoInvalidRemoveEventListener {
         if !matches!(
             listener,
             Expression::FunctionExpression(_)
-                | Expression::ArrowExpression(_)
+                | Expression::ArrowFunctionExpression(_)
                 | Expression::CallExpression(_)
         ) {
             return;
@@ -106,7 +106,7 @@ impl Rule for NoInvalidRemoveEventListener {
                 Expression::FunctionExpression(func_expr) => {
                     Span::new(func_expr.span.start, func_expr.params.span.end)
                 }
-                Expression::ArrowExpression(arrow_expr) => {
+                Expression::ArrowFunctionExpression(arrow_expr) => {
                     Span::new(arrow_expr.span.start, arrow_expr.body.span.start)
                 }
                 Expression::CallExpression(_) => listener_span,
