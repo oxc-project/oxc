@@ -182,7 +182,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
             Self::TSSymbolKeyword(_) => {
                 p.print_str(b"symbol");
             }
-            Self::TSThisKeyword(_) => {
+            Self::TSThisType(_) => {
                 p.print_str(b"this");
             }
             Self::TSUndefinedKeyword(_) => {

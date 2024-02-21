@@ -125,7 +125,7 @@ pub enum TSType<'a> {
     TSObjectKeyword(Box<'a, TSObjectKeyword>),
     TSStringKeyword(Box<'a, TSStringKeyword>),
     TSSymbolKeyword(Box<'a, TSSymbolKeyword>),
-    TSThisKeyword(Box<'a, TSThisKeyword>),
+    TSThisType(Box<'a, TSThisType>),
     TSUndefinedKeyword(Box<'a, TSUndefinedKeyword>),
     TSUnknownKeyword(Box<'a, TSUnknownKeyword>),
     TSVoidKeyword(Box<'a, TSVoidKeyword>),
@@ -380,7 +380,7 @@ pub struct TSSymbolKeyword {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct TSThisKeyword {
+pub struct TSThisType {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
 }
@@ -692,7 +692,7 @@ pub struct TSTypePredicate<'a> {
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum TSTypePredicateName {
     Identifier(IdentifierName),
-    This(TSThisKeyword),
+    This(TSThisType),
 }
 
 #[derive(Debug, Hash)]

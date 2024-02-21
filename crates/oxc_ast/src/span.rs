@@ -344,7 +344,7 @@ impl<'a> GetSpan for TSType<'a> {
             Self::TSBooleanKeyword(t) => t.span,
             Self::TSSymbolKeyword(t) => t.span,
             Self::TSBigIntKeyword(t) => t.span,
-            Self::TSThisKeyword(t) => t.span,
+            Self::TSThisType(t) => t.span,
             Self::TSVoidKeyword(t) => t.span,
             Self::TSObjectKeyword(t) => t.span,
             Self::JSDocNullableType(t) => t.span,
