@@ -1,9 +1,9 @@
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_parser::Kind;
 use oxc_syntax::{
     identifier::{LS, PS},
+    keyword::is_keyword,
     operator::{BinaryOperator, UnaryOperator},
     precedence::{GetPrecedence, Precedence},
     NumberBase,
@@ -1660,24 +1660,22 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for AssignmentExpression<'a> {
         let identifier_is_keyword = match &self.left {
             AssignmentTarget::SimpleAssignmentTarget(assignment) => match assignment {
                 SimpleAssignmentTarget::AssignmentTargetIdentifier(target) => {
-                    Kind::match_keyword(target.name.as_str()).is_all_keyword()
+                    is_keyword(target.name.as_str())
                 }
                 SimpleAssignmentTarget::MemberAssignmentTarget(target) => {
                     let target = &**target;
                     match target {
                         MemberExpression::ComputedMemberExpression(expression) => {
                             match &expression.object {
-                                Expression::Identifier(ident) => {
-                                    Kind::match_keyword(ident.name.as_str()).is_all_keyword()
-                                }
+                                Expression::Identifier(ident) => is_keyword(ident.name.as_str()),
                                 _ => false,
                             }
                         }
                         MemberExpression::StaticMemberExpression(expression) => {
-                            Kind::match_keyword(expression.property.name.as_str()).is_all_keyword()
+                            is_keyword(expression.property.name.as_str())
                         }
                         MemberExpression::PrivateFieldExpression(expression) => {
-                            Kind::match_keyword(expression.field.name.as_str()).is_all_keyword()
+                            is_keyword(expression.field.name.as_str())
                         }
                     }
                 }
