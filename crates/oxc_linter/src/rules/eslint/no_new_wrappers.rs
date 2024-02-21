@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// var stringObject = new String('Hello world');
     /// ```
     NoNewWrappers,
-    correctness
+    pedantic
 );
 
 impl Rule for NoNewWrappers {
