@@ -345,7 +345,7 @@ fn is_simple_type(ts_type: &TSType) -> bool {
         | TSType::TSArrayType(_)
         | TSType::TSUndefinedKeyword(_)
         | TSType::TSQualifiedName(_)
-        | TSType::TSThisKeyword(_) => true,
+        | TSType::TSThisType(_) => true,
         TSType::TSTypeReference(node) => {
             let type_name = TSTypeName::get_first_name(&node.type_name);
             if type_name.name.as_str() == "Array" {
@@ -395,7 +395,7 @@ fn get_ts_element_type_span(ts_type: &TSType) -> Option<Span> {
         TSType::TSUnknownKeyword(t) => Some(t.span),
         TSType::TSVoidKeyword(t) => Some(t.span),
         TSType::TSNullKeyword(t) => Some(t.span),
-        TSType::TSThisKeyword(t) => Some(t.span),
+        TSType::TSThisType(t) => Some(t.span),
         TSType::TSUndefinedKeyword(t) => Some(t.span),
 
         TSType::TSArrayType(t) => Some(t.span),

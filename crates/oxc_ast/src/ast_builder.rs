@@ -1545,7 +1545,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn ts_this_keyword(&self, span: Span) -> TSType<'a> {
-        TSType::TSThisKeyword(self.alloc(TSThisKeyword { span }))
+        TSType::TSThisType(self.alloc(TSThisType { span }))
     }
 
     pub fn ts_any_keyword(&self, span: Span) -> TSType<'a> {

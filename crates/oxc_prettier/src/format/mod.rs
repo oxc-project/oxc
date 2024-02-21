@@ -662,7 +662,7 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSObjectKeyword(v) => v.format(p),
             TSType::TSStringKeyword(v) => v.format(p),
             TSType::TSSymbolKeyword(v) => v.format(p),
-            TSType::TSThisKeyword(v) => v.format(p),
+            TSType::TSThisType(v) => v.format(p),
             TSType::TSUndefinedKeyword(v) => v.format(p),
             TSType::TSUnknownKeyword(v) => v.format(p),
             TSType::TSVoidKeyword(v) => v.format(p),
@@ -745,7 +745,7 @@ impl<'a> Format<'a> for TSSymbolKeyword {
     }
 }
 
-impl<'a> Format<'a> for TSThisKeyword {
+impl<'a> Format<'a> for TSThisType {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         Doc::Str("this")
     }
