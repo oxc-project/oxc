@@ -870,7 +870,7 @@ impl<'a> Format<'a> for TSTypeLiteral<'a> {
     }
 }
 
-impl<'a> Format<'a> for TSTypeOperatorType<'a> {
+impl<'a> Format<'a> for TSTypeOperator<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }

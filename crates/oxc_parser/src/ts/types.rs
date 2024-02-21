@@ -304,9 +304,9 @@ impl<'a> ParserImpl<'a> {
         }
 
         let operator = match self.cur_kind() {
-            Kind::KeyOf => Some(TSTypeOperator::Keyof),
-            Kind::Unique => Some(TSTypeOperator::Unique),
-            Kind::Readonly => Some(TSTypeOperator::Readonly),
+            Kind::KeyOf => Some(TSTypeOperatorOperator::Keyof),
+            Kind::Unique => Some(TSTypeOperatorOperator::Unique),
+            Kind::Readonly => Some(TSTypeOperatorOperator::Readonly),
             _ => None,
         };
 
