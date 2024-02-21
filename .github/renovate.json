@@ -5,29 +5,26 @@
   "ignorePaths": [
     "crates/oxc_linter/fixtures/**"
   ],
+  "assignees": ["@Boshen"],
   "packageRules": [
     {
       "groupName": "github-actions",
-      "matchManagers": ["github-actions"],
-      "assignees": ["@Boshen"]
+      "matchManagers": ["github-actions"]
     },
     {
       "groupName": "rust crates",
       "matchManagers": ["cargo"],
-      "assignees": ["@Boshen"],
       "ignoreDeps": ["textwrap", "owo-colors", "syn", "miette", "ureq"]
     },
     {
       "groupName": "website npm packages",
       "matchFileNames": ["website/package.json"],
-      "matchManagers": ["npm"],
-      "assignees": ["@Boshen"]
+      "matchManagers": ["npm"]
     },
     {
       "groupName": "vscode npm packages",
       "matchFileNames": ["editors/vscode/package.json"],
       "matchManagers": ["npm"],
-      "assignees": ["@Boshen"],
       "ignoreDeps": ["@types/vscode"]
     },
     {
