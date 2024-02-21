@@ -891,7 +891,7 @@ impl<'a> ParserImpl<'a> {
         let parameter_name = if self.at(Kind::This) {
             let span = self.start_span();
             self.bump_any();
-            TSTypePredicateName::This(TSThisKeyword { span: self.end_span(span) })
+            TSTypePredicateName::This(TSThisType { span: self.end_span(span) })
         } else {
             TSTypePredicateName::Identifier(self.parse_identifier_name()?)
         };
