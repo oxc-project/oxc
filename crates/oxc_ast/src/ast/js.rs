@@ -46,7 +46,7 @@ impl<'a> Program<'a> {
 pub enum Expression<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>),
     NullLiteral(Box<'a, NullLiteral>),
-    NumberLiteral(Box<'a, NumberLiteral<'a>>),
+    NumericLiteral(Box<'a, NumericLiteral<'a>>),
     BigintLiteral(Box<'a, BigintLiteral>),
     RegExpLiteral(Box<'a, RegExpLiteral>),
     StringLiteral(Box<'a, StringLiteral>),
@@ -112,7 +112,7 @@ impl<'a> Expression<'a> {
             self,
             Self::BooleanLiteral(_)
                 | Self::NullLiteral(_)
-                | Self::NumberLiteral(_)
+                | Self::NumericLiteral(_)
                 | Self::BigintLiteral(_)
                 | Self::RegExpLiteral(_)
                 | Self::StringLiteral(_)
@@ -149,7 +149,7 @@ impl<'a> Expression<'a> {
     pub fn is_void_0(&self) -> bool {
         match self {
             Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void => {
-                matches!(&expr.argument, Self::NumberLiteral(lit) if lit.value == 0.0)
+                matches!(&expr.argument, Self::NumericLiteral(lit) if lit.value == 0.0)
             }
             _ => false,
         }
@@ -157,16 +157,16 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given expr is a `0`
     pub fn is_number_0(&self) -> bool {
-        matches!(self, Self::NumberLiteral(lit) if lit.value == 0.0)
+        matches!(self, Self::NumericLiteral(lit) if lit.value == 0.0)
     }
 
     pub fn is_number(&self, val: f64) -> bool {
-        matches!(self, Self::NumberLiteral(lit) if (lit.value - val).abs() < f64::EPSILON)
+        matches!(self, Self::NumericLiteral(lit) if (lit.value - val).abs() < f64::EPSILON)
     }
 
     /// Determines whether the given numeral literal's raw value is exactly val
     pub fn is_specific_raw_number_literal(&self, val: &str) -> bool {
-        matches!(self, Self::NumberLiteral(lit) if lit.raw == val)
+        matches!(self, Self::NumericLiteral(lit) if lit.raw == val)
     }
 
     /// Determines whether the given expr evaluate to `undefined`
@@ -260,7 +260,7 @@ impl<'a> Expression<'a> {
         match self {
             Self::BooleanLiteral(lit) => Some(lit.value),
             Self::NullLiteral(_) => Some(false),
-            Self::NumberLiteral(lit) => Some(lit.value != 0.0),
+            Self::NumericLiteral(lit) => Some(lit.value != 0.0),
             Self::BigintLiteral(lit) => Some(!lit.is_zero()),
             Self::RegExpLiteral(_) => Some(true),
             Self::StringLiteral(lit) => Some(!lit.value.is_empty()),
@@ -283,7 +283,7 @@ impl<'a> Expression<'a> {
         match self {
             Self::BooleanLiteral(_)
             | Self::NullLiteral(_)
-            | Self::NumberLiteral(_)
+            | Self::NumericLiteral(_)
             | Self::BigintLiteral(_)
             | Self::RegExpLiteral(_)
             | Self::StringLiteral(_) => true,
@@ -470,7 +470,7 @@ impl<'a> PropertyKey<'a> {
             Self::Expression(expr) => match expr {
                 Expression::StringLiteral(lit) => Some(lit.value.clone()),
                 Expression::RegExpLiteral(lit) => Some(Atom::from(lit.regex.to_string())),
-                Expression::NumberLiteral(lit) => Some(Atom::from(lit.value.to_string())),
+                Expression::NumericLiteral(lit) => Some(Atom::from(lit.value.to_string())),
                 Expression::BigintLiteral(lit) => Some(lit.raw.clone()),
                 Expression::NullLiteral(_) => Some("null".into()),
                 Expression::TemplateLiteral(lit) => {

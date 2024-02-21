@@ -88,7 +88,7 @@ fn get_kind_from_key(key: &PropertyKey) -> MethodKind {
         PropertyKey::PrivateIdentifier(_) => MethodKind::Private,
         PropertyKey::Expression(expr) => match expr {
             Expression::StringLiteral(_) => MethodKind::Normal,
-            Expression::NumberLiteral(_)
+            Expression::NumericLiteral(_)
             | Expression::BigintLiteral(_)
             | Expression::TemplateLiteral(_)
             | Expression::RegExpLiteral(_)

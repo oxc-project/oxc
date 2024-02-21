@@ -212,7 +212,7 @@ fn choose_layout<'a>(
                 Expression::TemplateLiteral(_)
                     | Expression::TaggedTemplateExpression(_)
                     | Expression::BooleanLiteral(_)
-                    | Expression::NumberLiteral(_)
+                    | Expression::NumericLiteral(_)
                     | Expression::ClassExpression(_)
             ))
     {

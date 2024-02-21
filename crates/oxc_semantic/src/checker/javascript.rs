@@ -40,7 +40,7 @@ impl EarlyErrorJavaScript {
             }
             AstKind::LabelIdentifier(ident) => check_identifier(&ident.name, ident.span, node, ctx),
             AstKind::PrivateIdentifier(ident) => check_private_identifier_outside_class(ident, ctx),
-            AstKind::NumberLiteral(lit) => check_number_literal(lit, ctx),
+            AstKind::NumericLiteral(lit) => check_number_literal(lit, ctx),
             AstKind::StringLiteral(lit) => check_string_literal(lit, ctx),
             AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
 
@@ -361,7 +361,7 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
 #[diagnostic(help("for octal literals use the '0o' prefix instead"))]
 struct LegacyOctal(#[label] Span);
 
-fn check_number_literal(lit: &NumberLiteral, ctx: &SemanticBuilder<'_>) {
+fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
     // NumericLiteral :: LegacyOctalIntegerLiteral
     // DecimalIntegerLiteral :: NonOctalDecimalIntegerLiteral
     // * It is a Syntax Error if the source text matched by this production is strict mode code.

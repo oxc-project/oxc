@@ -90,7 +90,7 @@ impl BadMinMaxFunc {
                 }
 
                 let number_args = arguments.iter().filter_map(|arg| {
-                    if let Argument::Expression(Expression::NumberLiteral(literal)) = arg {
+                    if let Argument::Expression(Expression::NumericLiteral(literal)) = arg {
                         Some(literal.value)
                     } else {
                         None

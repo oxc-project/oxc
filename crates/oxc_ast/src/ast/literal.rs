@@ -57,7 +57,7 @@ impl NullLiteral {
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct NumberLiteral<'a> {
+pub struct NumericLiteral<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub value: f64,
@@ -67,7 +67,7 @@ pub struct NumberLiteral<'a> {
     pub base: NumberBase,
 }
 
-impl<'a> NumberLiteral<'a> {
+impl<'a> NumericLiteral<'a> {
     pub fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
         Self { span, value, raw, base }
     }
@@ -82,7 +82,7 @@ impl<'a> NumberLiteral<'a> {
             return int32_value;
         }
 
-        // NaN, Infinity if not included in our NumberLiteral, so we just skip step 2.
+        // NaN, Infinity if not included in our NumericLiteral, so we just skip step 2.
 
         // step 3
         let pos_int = num.signum() * num.abs().floor();
@@ -99,7 +99,7 @@ impl<'a> NumberLiteral<'a> {
     }
 }
 
-impl<'a> Hash for NumberLiteral<'a> {
+impl<'a> Hash for NumericLiteral<'a> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.base.hash(state);
         self.raw.hash(state);
