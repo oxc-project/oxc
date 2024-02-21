@@ -1651,7 +1651,7 @@ pub trait Visit<'a>: Sized {
         }
     }
 
-    fn visit_ts_type_operator_type(&mut self, ty: &TSTypeOperatorType<'a>) {
+    fn visit_ts_type_operator_type(&mut self, ty: &TSTypeOperator<'a>) {
         self.visit_ts_type(&ty.type_annotation);
     }
 

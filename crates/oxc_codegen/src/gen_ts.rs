@@ -206,13 +206,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
             }
             Self::TSTypeOperatorType(decl) => {
                 match decl.operator {
-                    TSTypeOperator::Keyof => {
+                    TSTypeOperatorOperator::Keyof => {
                         p.print_str(b"keyof ");
                     }
-                    TSTypeOperator::Unique => {
+                    TSTypeOperatorOperator::Unique => {
                         p.print_str(b"unique ");
                     }
-                    TSTypeOperator::Readonly => {
+                    TSTypeOperatorOperator::Readonly => {
                         p.print_str(b"readonly ");
                     }
                 }
