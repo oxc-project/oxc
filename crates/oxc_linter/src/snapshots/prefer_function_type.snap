@@ -1,0 +1,173 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 150
+expression: prefer_function_type
+---
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:1:17]
+ 1 │ interface Foo { (): string; }
+   ·                 ───────────
+   ╰────
+  help: The function type form `() => string` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:1:47]
+ 1 │ export default interface Foo { /** comment */ (): string; }
+   ·                                               ───────────
+   ╰────
+  help: The function type form `() => string` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:4:11]
+ 3 │           // comment
+ 4 │           (): string;
+   ·           ───────────
+ 5 │         }
+   ╰────
+  help: The function type form `() => string` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:1:39]
+ 1 │ export interface Foo { /** comment */ (): string; }
+   ·                                       ───────────
+   ╰────
+  help: The function type form `() => string` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:4:11]
+ 3 │           // comment
+ 4 │           (): string;
+   ·           ───────────
+ 5 │         }
+   ╰────
+  help: The function type form `() => string` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:2:43]
+ 1 │ 
+ 2 │         function foo(bar: { /* comment */ (s: string): number } | undefined): number {
+   ·                                           ───────────────────
+ 3 │           return bar('hello');
+   ╰────
+  help: The function type form `(s: string) => number` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:3:11]
+ 2 │         type Foo = {
+ 3 │           (): string;
+   ·           ───────────
+ 4 │         };
+   ╰────
+  help: The function type form `() => string` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:2:29]
+ 1 │ 
+ 2 │         function foo(bar: { (s: string): number }): number {
+   ·                             ───────────────────
+ 3 │           return bar('hello');
+   ╰────
+  help: The function type form `(s: string) => number` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:2:29]
+ 1 │ 
+ 2 │         function foo(bar: { (s: string): number } | undefined): number {
+   ·                             ───────────────────
+ 3 │           return bar('hello');
+   ╰────
+  help: The function type form `(s: string) => number` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:3:11]
+ 2 │         interface Foo extends Function {
+ 3 │           (): void;
+   ·           ─────────
+ 4 │         }
+   ╰────
+  help: The function type form `() => void` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:3:11]
+ 2 │         interface Foo<T> {
+ 3 │           (bar: T): string;
+   ·           ─────────────────
+ 4 │         }
+   ╰────
+  help: The function type form `(bar: T) => string` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:3:11]
+ 2 │         interface Foo<T> {
+ 3 │           (this: T): void;
+   ·           ────────────────
+ 4 │         }
+   ╰────
+  help: The function type form `(this: T) => void` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:2:25]
+ 1 │ 
+ 2 │         type Foo<T> = { (this: string): T };
+   ·                         ─────────────────
+ 3 │               
+   ╰────
+  help: The function type form `(this: string) => T` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:3:11]
+ 2 │         interface Foo {
+ 3 │           (arg: this): void;
+   ·           ──────────────────
+ 4 │         }
+   ╰────
+  help: The function type form `(arg: this) => void` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:3:11]
+ 2 │         interface Foo {
+ 3 │           (arg: number): this | undefined;
+   ·           ────────────────────────────────
+ 4 │         }
+   ╰────
+  help: The function type form `(arg: number) => this | undefined` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+    ╭─[prefer_function_type.tsx:4:11]
+  3 │             interface Foo {
+  4 │ ╭─▶           (): {
+  5 │ │               a: {
+  6 │ │                 nested: this;
+  7 │ │               };
+  8 │ │               between: this;
+  9 │ │               b: {
+ 10 │ │                 nested: string;
+ 11 │ │               };
+ 12 │ ╰─▶           };
+ 13 │             }
+    ╰────
+  help: The function type form `() => {
+                    a: {
+                      nested: this;
+                    };
+                    between: this;
+                    b: {
+                      nested: string;
+                    };
+                  }` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:1:17]
+ 1 │ type X = {} | { (): void; }
+   ·                 ─────────
+   ╰────
+  help: The function type form `() => void` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:1:17]
+ 1 │ type X = {} & { (): void; };
+   ·                 ─────────
+   ╰────
+  help: The function type form `() => void` is generally preferred when possible for being more succinct.
+
