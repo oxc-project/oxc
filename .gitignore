@@ -26,3 +26,6 @@ tasks/coverage/babel/
 tasks/coverage/test262/
 tasks/coverage/typescript/
 tasks/prettier_conformance/prettier/
+
+# Ignore the failures directory, which is used to store the results of the codegen coverage tests
+tasks/coverage/failures/

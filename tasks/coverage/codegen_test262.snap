@@ -1,21 +1,3 @@
 codegen_test262 Summary:
 AST Parsed     : 45836/45836 (100.00%)
-Positive Passed: 45818/45836 (99.96%)
-Typescript failed: "language/module-code/eval-export-dflt-cls-anon-semi.js"
-Typescript failed: "language/module-code/eval-export-dflt-cls-anon.js"
-Typescript failed: "language/module-code/eval-export-dflt-cls-name-meth.js"
-Typescript failed: "language/module-code/eval-export-dflt-cls-named-semi.js"
-Typescript failed: "language/module-code/eval-export-dflt-cls-named.js"
-Typescript failed: "language/module-code/instn-named-bndng-dflt-cls.js"
-Typescript failed: "language/module-code/top-level-await/syntax/export-dft-class-decl-await-expr-array-literal.js"
-Typescript failed: "language/module-code/top-level-await/syntax/export-dft-class-decl-await-expr-func-expression.js"
-Typescript failed: "language/module-code/top-level-await/syntax/export-dft-class-decl-await-expr-identifier.js"
-Typescript failed: "language/module-code/top-level-await/syntax/export-dft-class-decl-await-expr-literal-number.js"
-Typescript failed: "language/module-code/top-level-await/syntax/export-dft-class-decl-await-expr-literal-string.js"
-Typescript failed: "language/module-code/top-level-await/syntax/export-dft-class-decl-await-expr-nested.js"
-Typescript failed: "language/module-code/top-level-await/syntax/export-dft-class-decl-await-expr-new-expr.js"
-Typescript failed: "language/module-code/top-level-await/syntax/export-dft-class-decl-await-expr-null.js"
-Typescript failed: "language/module-code/top-level-await/syntax/export-dft-class-decl-await-expr-obj-literal.js"
-Typescript failed: "language/module-code/top-level-await/syntax/export-dft-class-decl-await-expr-regexp.js"
-Typescript failed: "language/module-code/top-level-await/syntax/export-dft-class-decl-await-expr-template-literal.js"
-Typescript failed: "language/module-code/top-level-await/syntax/export-dft-class-decl-await-expr-this.js"
+Positive Passed: 45836/45836 (100.00%)

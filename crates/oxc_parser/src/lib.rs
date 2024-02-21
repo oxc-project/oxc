@@ -79,6 +79,8 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
+pub use crate::lexer::Kind; // re-export for codegen
+
 use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, AstBuilder, Trivias};
@@ -86,7 +88,7 @@ use oxc_diagnostics::{Error, Result};
 use oxc_span::{ModuleKind, SourceType, Span};
 
 use crate::{
-    lexer::{Kind, Lexer, Token},
+    lexer::{Lexer, Token},
     state::ParserState,
 };
 
