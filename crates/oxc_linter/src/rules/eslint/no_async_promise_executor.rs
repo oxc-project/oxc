@@ -59,7 +59,7 @@ impl Rule for NoAsyncPromiseExecutor {
             return;
         };
         let mut span = match expression.get_inner_expression() {
-            Expression::ArrowExpression(arrow) if arrow.r#async => arrow.span,
+            Expression::ArrowFunctionExpression(arrow) if arrow.r#async => arrow.span,
             Expression::FunctionExpression(func) if func.r#async => func.span,
 
             _ => return,

@@ -76,7 +76,7 @@ impl Rule for NoUnnecessaryAwait {
 fn not_promise(expr: &Expression) -> bool {
     match expr {
         Expression::ArrayExpression(_)
-        | Expression::ArrowExpression(_)
+        | Expression::ArrowFunctionExpression(_)
         | Expression::AwaitExpression(_)
         | Expression::BinaryExpression(_)
         | Expression::ClassExpression(_)

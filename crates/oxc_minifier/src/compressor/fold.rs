@@ -565,7 +565,7 @@ impl<'a> Compressor<'a> {
     ) -> Option<Expression<'a>> {
         if argument.is_literal_value(true) {
             let type_name = match argument {
-                Expression::FunctionExpression(_) | Expression::ArrowExpression(_) => {
+                Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
                     Some("function")
                 }
                 Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => Some("string"),

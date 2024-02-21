@@ -412,7 +412,7 @@ impl<'a> AstBuilder<'a> {
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> Expression<'a> {
-        Expression::ArrowExpression(self.alloc(ArrowExpression {
+        Expression::ArrowFunctionExpression(self.alloc(ArrowFunctionExpression {
             span,
             expression,
             r#async,

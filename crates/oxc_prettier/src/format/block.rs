@@ -30,7 +30,7 @@ pub(super) fn print_block<'a>(
             && !(matches!(
                 parent,
                 AstKind::FunctionBody(_)
-                    | AstKind::ArrowExpression(_)
+                    | AstKind::ArrowFunctionExpression(_)
                     | AstKind::ObjectExpression(_)
                     | AstKind::Function(_)
                     | AstKind::ForStatement(_)

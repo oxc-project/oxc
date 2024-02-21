@@ -64,7 +64,7 @@ impl Rule for NoThisBeforeSuper {
         let mut basic_blocks_with_local_violations = HashMap::<NodeIndex, Vec<AstNodeId>>::new();
         for node in semantic.nodes().iter() {
             match node.kind() {
-                AstKind::Function(_) | AstKind::ArrowExpression(_) => {
+                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                     if Self::is_wanted_node(node, ctx) {
                         wanted_nodes.push(node);
                     }

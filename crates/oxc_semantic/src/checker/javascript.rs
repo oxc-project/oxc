@@ -444,7 +444,7 @@ fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
 
     if matches!(ctx.nodes.kind(ctx.scope.get_node_id(ctx.current_scope_id)),
         AstKind::Function(Function { params, .. })
-        | AstKind::ArrowExpression(ArrowExpression { params, .. }) 
+        | AstKind::ArrowFunctionExpression(ArrowFunctionExpression { params, .. }) 
         if !params.is_simple_parameter_list())
     {
         ctx.error(IllegalUseStrict(directive.span));
@@ -1146,7 +1146,9 @@ fn is_in_formal_parameters<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) ->
     for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
             AstKind::FormalParameter(_) => return true,
-            AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowExpression(_) => break,
+            AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
+                break
+            }
             _ => {}
         }
     }

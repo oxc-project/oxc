@@ -70,7 +70,7 @@ impl Rule for PreferDomNodeRemove {
         if matches!(
             expr,
             Expression::ArrayExpression(_)
-                | Expression::ArrowExpression(_)
+                | Expression::ArrowFunctionExpression(_)
                 | Expression::ClassExpression(_)
                 | Expression::FunctionExpression(_)
                 | Expression::ObjectExpression(_)
