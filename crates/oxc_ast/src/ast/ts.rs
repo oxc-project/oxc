@@ -144,7 +144,7 @@ pub enum TSType<'a> {
     TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>),
     TSTupleType(Box<'a, TSTupleType<'a>>),
     TSTypeLiteral(Box<'a, TSTypeLiteral<'a>>),
-    TSTypeOperatorType(Box<'a, TSTypeOperatorType<'a>>),
+    TSTypeOperatorType(Box<'a, TSTypeOperator<'a>>),
     TSTypePredicate(Box<'a, TSTypePredicate<'a>>),
     TSTypeQuery(Box<'a, TSTypeQuery<'a>>),
     TSTypeReference(Box<'a, TSTypeReference<'a>>),
@@ -205,17 +205,17 @@ pub struct TSIntersectionType<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct TSTypeOperatorType<'a> {
+pub struct TSTypeOperator<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub operator: TSTypeOperator,
+    pub operator: TSTypeOperatorOperator,
     pub type_annotation: TSType<'a>,
 }
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "lowercase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub enum TSTypeOperator {
+pub enum TSTypeOperatorOperator {
     Keyof,
     Unique,
     Readonly,

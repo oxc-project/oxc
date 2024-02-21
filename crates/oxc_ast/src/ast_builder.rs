@@ -1226,14 +1226,10 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_operator_type(
         &self,
         span: Span,
-        operator: TSTypeOperator,
+        operator: TSTypeOperatorOperator,
         type_annotation: TSType<'a>,
     ) -> TSType<'a> {
-        TSType::TSTypeOperatorType(self.alloc(TSTypeOperatorType {
-            span,
-            operator,
-            type_annotation,
-        }))
+        TSType::TSTypeOperatorType(self.alloc(TSTypeOperator { span, operator, type_annotation }))
     }
 
     pub fn ts_array_type(&self, span: Span, element_type: TSType<'a>) -> TSType<'a> {

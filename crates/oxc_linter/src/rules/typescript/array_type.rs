@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{TSType, TSTypeName, TSTypeOperator, TSTypeReference},
+    ast::{TSType, TSTypeName, TSTypeOperatorOperator, TSTypeReference},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -148,7 +148,7 @@ fn check(
     }
 
     if let TSType::TSTypeOperatorType(ts_operator_type) = &type_annotation {
-        if matches!(&ts_operator_type.operator, TSTypeOperator::Readonly) {
+        if matches!(&ts_operator_type.operator, TSTypeOperatorOperator::Readonly) {
             if let TSType::TSArrayType(array_type) = &ts_operator_type.type_annotation {
                 check_and_report_error_generic(
                     readonly_config,
