@@ -70,7 +70,7 @@ impl Rule for PreferMathTrunc {
                 UnaryOperator::BitwiseNot.as_str()
             }
             AstKind::BinaryExpression(bin_expr) => {
-                let Expression::NumberLiteral(right_num_lit) = &bin_expr.right else {
+                let Expression::NumericLiteral(right_num_lit) = &bin_expr.right else {
                     return;
                 };
                 if right_num_lit.value != 0.0 {
@@ -90,7 +90,7 @@ impl Rule for PreferMathTrunc {
                 bin_expr.operator.as_str()
             }
             AstKind::AssignmentExpression(assignment_expr) => {
-                let Expression::NumberLiteral(right_num_lit) = &assignment_expr.right else {
+                let Expression::NumericLiteral(right_num_lit) = &assignment_expr.right else {
                     return;
                 };
 

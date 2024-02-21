@@ -126,7 +126,7 @@ impl<'a> From<&Expression<'a>> for Ty {
             Expression::BigintLiteral(_) => Self::BigInt,
             Expression::BooleanLiteral(_) => Self::Boolean,
             Expression::NullLiteral(_) => Self::Null,
-            Expression::NumberLiteral(_) => Self::Number,
+            Expression::NumericLiteral(_) => Self::Number,
             Expression::StringLiteral(_) => Self::Str,
             Expression::ObjectExpression(_)
             | Expression::ArrayExpression(_)
@@ -569,7 +569,7 @@ impl<'a> Compressor<'a> {
                     Some("function")
                 }
                 Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => Some("string"),
-                Expression::NumberLiteral(_) => Some("number"),
+                Expression::NumericLiteral(_) => Some("number"),
                 Expression::BooleanLiteral(_) => Some("boolean"),
                 Expression::NullLiteral(_)
                 | Expression::ObjectExpression(_)
@@ -605,7 +605,7 @@ impl<'a> Compressor<'a> {
                 // !100n -> false
                 // after this, it will be compressed to !1 or !0 in `compress_boolean`
                 UnaryOperator::LogicalNot => match &unary_expr.argument {
-                    Expression::NumberLiteral(number_literal) => {
+                    Expression::NumericLiteral(number_literal) => {
                         let value = number_literal.value;
                         // Don't fold !0 and !1 back to false.
                         if value == 0_f64 || (value - 1_f64).abs() < f64::EPSILON {
@@ -624,7 +624,7 @@ impl<'a> Compressor<'a> {
                 // NaN -> NaN
                 // +Infinity -> Infinity
                 UnaryOperator::UnaryPlus => match &unary_expr.argument {
-                    Expression::NumberLiteral(number_literal) => {
+                    Expression::NumericLiteral(number_literal) => {
                         let literal = self.ast.number_literal(
                             unary_expr.span,
                             number_literal.value,
@@ -660,10 +660,10 @@ impl<'a> Compressor<'a> {
                         }
                     }
                 },
-                // -4 -> -4, fold UnaryExpression -4 to NumberLiteral -4
+                // -4 -> -4, fold UnaryExpression -4 to NumericLiteral -4
                 // -NaN -> NaN
                 UnaryOperator::UnaryNegation => match &unary_expr.argument {
-                    Expression::NumberLiteral(number_literal) => {
+                    Expression::NumericLiteral(number_literal) => {
                         let value = -number_literal.value;
                         let raw = self.ast.new_str(value.to_string().as_str());
                         let literal = self.ast.number_literal(
@@ -691,10 +691,10 @@ impl<'a> Compressor<'a> {
                 // ~10 -> -11
                 // ~NaN -> -1
                 UnaryOperator::BitwiseNot => match &unary_expr.argument {
-                    Expression::NumberLiteral(number_literal) => {
+                    Expression::NumericLiteral(number_literal) => {
                         if number_literal.value.fract() == 0.0 {
                             let int_value =
-                                NumberLiteral::ecmascript_to_int32(number_literal.value);
+                                NumericLiteral::ecmascript_to_int32(number_literal.value);
                             let literal = self.ast.number_literal(
                                 unary_expr.span,
                                 f64::from(!int_value),
@@ -757,7 +757,7 @@ impl<'a> Compressor<'a> {
     /// void x -> void 0
     fn try_reduce_void(&mut self, unary_expr: &UnaryExpression<'a>) -> Option<Expression<'a>> {
         let can_replace = match &unary_expr.argument {
-            Expression::NumberLiteral(number_literal) => number_literal.value != 0_f64,
+            Expression::NumericLiteral(number_literal) => number_literal.value != 0_f64,
             _ => !unary_expr.may_have_side_effects(),
         };
 
@@ -801,7 +801,7 @@ impl<'a> Compressor<'a> {
             }
 
             let right_val_int = right_val as i32;
-            let bits = NumberLiteral::ecmascript_to_int32(left_val);
+            let bits = NumericLiteral::ecmascript_to_int32(left_val);
 
             let result_val: f64 = match op {
                 BinaryOperator::ShiftLeft => f64::from(bits << right_val_int),

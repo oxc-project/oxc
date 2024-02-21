@@ -2,7 +2,7 @@
 use std::cmp::Ordering;
 
 use oxc_ast::{
-    ast::{Expression, NumberLiteral},
+    ast::{Expression, NumericLiteral},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -170,15 +170,15 @@ impl Rule for ConstComparisons {
 // Flip yoda conditionals, turnings expressions like `42 < x` into `x > 42`
 fn comparison_to_const<'a, 'b>(
     expr: &'b Expression<'a>,
-) -> Option<(CmpOp, &'b Expression<'a>, &'b NumberLiteral<'a>, Span)> {
+) -> Option<(CmpOp, &'b Expression<'a>, &'b NumericLiteral<'a>, Span)> {
     if let Expression::BinaryExpression(bin_expr) = expr {
         if let Ok(cmp_op) = CmpOp::try_from(bin_expr.operator) {
             match (&bin_expr.left.without_parenthesized(), &bin_expr.right.without_parenthesized())
             {
-                (Expression::NumberLiteral(lit), _) => {
+                (Expression::NumericLiteral(lit), _) => {
                     return Some((cmp_op.reverse(), &bin_expr.right, lit, bin_expr.span));
                 }
-                (_, Expression::NumberLiteral(lit)) => {
+                (_, Expression::NumericLiteral(lit)) => {
                     return Some((cmp_op, &bin_expr.left, lit, bin_expr.span));
                 }
                 _ => {}
@@ -191,7 +191,7 @@ fn comparison_to_const<'a, 'b>(
 
 fn all_and_comparison_to_const<'a, 'b>(
     expr: &'b Expression<'a>,
-) -> Box<dyn Iterator<Item = (CmpOp, &'b Expression<'a>, &'b NumberLiteral<'a>, Span)> + 'b> {
+) -> Box<dyn Iterator<Item = (CmpOp, &'b Expression<'a>, &'b NumericLiteral<'a>, Span)> + 'b> {
     match expr {
         Expression::LogicalExpression(logical_expr)
             if logical_expr.operator == LogicalOperator::And =>

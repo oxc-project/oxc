@@ -54,7 +54,7 @@ impl<'a> Prettier<'a> {
     fn check_kind(&self, kind: AstKind<'a>) -> bool {
         let parent_kind = self.parent_kind();
         match kind {
-            AstKind::NumberLiteral(literal) => {
+            AstKind::NumericLiteral(literal) => {
                 matches!(parent_kind, AstKind::MemberExpression(e) if e.object().span() == literal.span)
             }
             AstKind::SequenceExpression(e) => self.check_sequence_expression(e.span),

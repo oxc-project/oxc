@@ -78,7 +78,7 @@ declare_oxc_lint!(
     pedantic
 );
 fn is_literal(expr: &Expression, value: f64) -> bool {
-    matches!(expr, Expression::NumberLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
+    matches!(expr, Expression::NumericLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
 }
 fn is_compare_left(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> bool {
     matches!(
@@ -279,7 +279,7 @@ impl Rule for ExplicitLengthCheck {
                         operator, right, ..
                     })) if *operator == LogicalOperator::And
                         || (*operator == LogicalOperator::Or
-                            && !matches!(right, Expression::NumberLiteral(_))) =>
+                            && !matches!(right, Expression::NumericLiteral(_))) =>
                     {
                         self.report(ctx, ancestor, is_negative, static_member_expr, false);
                     }

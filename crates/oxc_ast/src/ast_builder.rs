@@ -127,8 +127,8 @@ impl<'a> AstBuilder<'a> {
         value: f64,
         raw: &'a str,
         base: NumberBase,
-    ) -> NumberLiteral<'a> {
-        NumberLiteral { span, value, raw, base }
+    ) -> NumericLiteral<'a> {
+        NumericLiteral { span, value, raw, base }
     }
 
     pub fn boolean_literal(&self, span: Span, value: bool) -> BooleanLiteral {
@@ -186,8 +186,8 @@ impl<'a> AstBuilder<'a> {
         Expression::RegExpLiteral(self.alloc(literal))
     }
 
-    pub fn literal_number_expression(&self, literal: NumberLiteral<'a>) -> Expression<'a> {
-        Expression::NumberLiteral(self.alloc(literal))
+    pub fn literal_number_expression(&self, literal: NumericLiteral<'a>) -> Expression<'a> {
+        Expression::NumericLiteral(self.alloc(literal))
     }
 
     pub fn literal_bigint_expression(&self, literal: BigintLiteral) -> Expression<'a> {

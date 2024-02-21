@@ -178,7 +178,7 @@ pub fn is_same_reference(left: &Expression, right: &Expression, ctx: &LintContex
         (Expression::StringLiteral(left_str), Expression::StringLiteral(right_str)) => {
             return left_str.value == right_str.value
         }
-        (Expression::NumberLiteral(left_num), Expression::NumberLiteral(right_num)) => {
+        (Expression::NumericLiteral(left_num), Expression::NumericLiteral(right_num)) => {
             return left_num.raw == right_num.raw
         }
         (Expression::RegExpLiteral(left_regexp), Expression::RegExpLiteral(right_regexp)) => {

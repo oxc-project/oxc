@@ -77,7 +77,7 @@ impl Rule for PreferArraySome {
                     return;
                 }
 
-                let Expression::NumberLiteral(right_num_lit) = &bin_expr.right else { return };
+                let Expression::NumericLiteral(right_num_lit) = &bin_expr.right else { return };
 
                 if right_num_lit.raw != "0" {
                     return;

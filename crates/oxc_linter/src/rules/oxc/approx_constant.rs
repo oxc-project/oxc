@@ -37,7 +37,7 @@ declare_oxc_lint!(
 
 impl Rule for ApproxConstant {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::NumberLiteral(number_literal) = node.kind() else {
+        let AstKind::NumericLiteral(number_literal) = node.kind() else {
             return;
         };
 

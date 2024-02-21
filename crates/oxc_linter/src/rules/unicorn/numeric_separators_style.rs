@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use oxc_ast::{
-    ast::{BigintLiteral, NumberLiteral},
+    ast::{BigintLiteral, NumericLiteral},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -90,7 +90,7 @@ declare_oxc_lint!(
 impl Rule for NumericSeparatorsStyle {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::NumberLiteral(number) => {
+            AstKind::NumericLiteral(number) => {
                 if self.only_if_contains_separator && !number.raw.contains('_') {
                     return;
                 }
@@ -151,7 +151,7 @@ impl Rule for NumericSeparatorsStyle {
 }
 
 impl NumericSeparatorsStyle {
-    fn format_number(&self, number: &NumberLiteral) -> String {
+    fn format_number(&self, number: &NumericLiteral) -> String {
         use oxc_syntax::NumberBase;
 
         match number.base {

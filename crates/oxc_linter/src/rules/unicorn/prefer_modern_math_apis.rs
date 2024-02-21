@@ -243,7 +243,7 @@ fn is_pow_2_expression(expression: &Expression, ctx: &LintContext<'_>) -> bool {
     if let Expression::BinaryExpression(bin_expr) = expression.without_parenthesized() {
         match bin_expr.operator {
             BinaryOperator::Exponential => {
-                if let Expression::NumberLiteral(number_lit) =
+                if let Expression::NumericLiteral(number_lit) =
                     &bin_expr.right.without_parenthesized()
                 {
                     (number_lit.value - 2_f64).abs() < f64::EPSILON

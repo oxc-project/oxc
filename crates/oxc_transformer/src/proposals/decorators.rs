@@ -749,7 +749,7 @@ impl<'a> Decorators<'a> {
         decorator_elements
             .push(ArrayExpressionElement::Expression(self.ast.copy(&decorator.expression)));
         decorator_elements.push(ArrayExpressionElement::Expression(
-            self.ast.literal_number_expression(NumberLiteral::new(
+            self.ast.literal_number_expression(NumericLiteral::new(
                 SPAN,
                 0f64,
                 self.ast.new_str(flag.to_string().as_str()),

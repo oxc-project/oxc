@@ -48,7 +48,7 @@ impl Rule for NoDuplicateEnumValues {
         for enum_member in &enum_body.members {
             let Some(initializer) = &enum_member.initializer else { continue };
             match initializer {
-                Expression::NumberLiteral(num) => {
+                Expression::NumericLiteral(num) => {
                     if let Some((_, old_span)) =
                         seen_number_values.iter().find(|(v, _)| *v == num.value)
                     {

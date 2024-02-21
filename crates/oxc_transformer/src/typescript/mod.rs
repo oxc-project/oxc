@@ -320,7 +320,7 @@ impl<'a> TypeScript<'a> {
         members: &mut Vec<'a, TSEnumMember<'a>>,
         enum_name: &Atom,
     ) -> Vec<'a, Statement<'a>> {
-        let mut default_init = self.ast.literal_number_expression(NumberLiteral {
+        let mut default_init = self.ast.literal_number_expression(NumericLiteral {
             span: SPAN,
             value: 0.0,
             raw: "0",
@@ -333,7 +333,7 @@ impl<'a> TypeScript<'a> {
                 TSEnumMemberName::Identifier(id) => (&id.name, id.span),
                 TSEnumMemberName::StringLiteral(str) => (&str.value, str.span),
                 TSEnumMemberName::ComputedPropertyName(..)
-                | TSEnumMemberName::NumberLiteral(..) => unreachable!(),
+                | TSEnumMemberName::NumericLiteral(..) => unreachable!(),
             };
 
             let mut init =
@@ -415,7 +415,7 @@ impl<'a> TypeScript<'a> {
 
             // 1 + Foo["x"]
             default_init = {
-                let one = self.ast.literal_number_expression(NumberLiteral {
+                let one = self.ast.literal_number_expression(NumericLiteral {
                     span: SPAN,
                     value: 1.0,
                     raw: "1",

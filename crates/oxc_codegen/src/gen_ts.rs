@@ -292,7 +292,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSLiteral<'a> {
         match self {
             Self::BooleanLiteral(decl) => decl.gen(p, ctx),
             Self::NullLiteral(decl) => decl.gen(p, ctx),
-            Self::NumberLiteral(decl) => decl.gen(p, ctx),
+            Self::NumericLiteral(decl) => decl.gen(p, ctx),
             Self::BigintLiteral(decl) => decl.gen(p, ctx),
             Self::RegExpLiteral(decl) => decl.gen(p, ctx),
             Self::StringLiteral(decl) => decl.gen(p, ctx),
@@ -622,7 +622,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumMember<'a> {
                 decl.gen_expr(p, Precedence::lowest(), ctx);
                 p.print_str(b"]");
             }
-            TSEnumMemberName::NumberLiteral(decl) => decl.gen(p, ctx),
+            TSEnumMemberName::NumericLiteral(decl) => decl.gen(p, ctx),
         }
     }
 }

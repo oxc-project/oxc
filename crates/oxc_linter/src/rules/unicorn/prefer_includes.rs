@@ -79,7 +79,7 @@ impl Rule for PreferIncludes {
 
         if matches!(bin_expr.operator, BinaryOperator::GreaterEqualThan | BinaryOperator::LessThan)
         {
-            let Expression::NumberLiteral(num_lit) = bin_expr.right.without_parenthesized() else {
+            let Expression::NumericLiteral(num_lit) = bin_expr.right.without_parenthesized() else {
                 return;
             };
 
@@ -102,7 +102,7 @@ fn is_negative_one(expr: &Expression) -> bool {
         return false;
     }
 
-    let Expression::NumberLiteral(num_lit) = unary_expr.argument.without_parenthesized() else {
+    let Expression::NumericLiteral(num_lit) = unary_expr.argument.without_parenthesized() else {
         return false;
     };
 

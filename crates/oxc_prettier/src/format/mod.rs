@@ -827,7 +827,7 @@ impl<'a> Format<'a> for TSLiteralType<'a> {
         match &self.literal {
             TSLiteral::BooleanLiteral(v) => v.format(p),
             TSLiteral::NullLiteral(v) => v.format(p),
-            TSLiteral::NumberLiteral(v) => v.format(p),
+            TSLiteral::NumericLiteral(v) => v.format(p),
             TSLiteral::BigintLiteral(v) => v.format(p),
             TSLiteral::RegExpLiteral(v) => v.format(p),
             TSLiteral::StringLiteral(v) => v.format(p),
@@ -1185,7 +1185,7 @@ impl<'a> Format<'a> for Expression<'a> {
         match self {
             Self::BooleanLiteral(lit) => lit.format(p),
             Self::NullLiteral(lit) => lit.format(p),
-            Self::NumberLiteral(lit) => lit.format(p),
+            Self::NumericLiteral(lit) => lit.format(p),
             Self::BigintLiteral(lit) => lit.format(p),
             Self::RegExpLiteral(lit) => lit.format(p),
             Self::StringLiteral(lit) => lit.format(p),
@@ -1263,9 +1263,9 @@ impl<'a> Format<'a> for NullLiteral {
     }
 }
 
-impl<'a> Format<'a> for NumberLiteral<'a> {
+impl<'a> Format<'a> for NumericLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, NumberLiteral, {
+        wrap!(p, self, NumericLiteral, {
             // See https://github.com/prettier/prettier/blob/main/src/utils/print-number.js
             // Perf: the regexes from prettier code above are ported to manual search for performance reasons.
             let raw = self.span.source_text(p.source_text);
@@ -1605,7 +1605,7 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                             ))
                         }
                     }
-                    Expression::NumberLiteral(literal) => {
+                    Expression::NumericLiteral(literal) => {
                         if need_quote {
                             Doc::Str(string::print_string(p, literal.raw, p.options.single_quote))
                         } else {

@@ -119,7 +119,7 @@ fn is_mistype_option_fallback(node: &AstNode) -> bool {
 
 fn is_numeric_expr(expr: &Expression, is_outer_most: bool) -> bool {
     match expr {
-        Expression::NumberLiteral(_)
+        Expression::NumericLiteral(_)
         | Expression::NullLiteral(_)
         // TODO: handle type inference
         | Expression::Identifier(_) => true,

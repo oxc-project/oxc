@@ -82,7 +82,7 @@ impl VisitMut<'_> for SpecParser {
                                     options.single_quote = literal.value;
                                 }
                             }
-                            Expression::NumberLiteral(literal) => match name.as_str() {
+                            Expression::NumericLiteral(literal) => match name.as_str() {
                                 "printWidth" => options.print_width = literal.value as usize,
                                 "tabWidth" => options.tab_width = literal.value as usize,
                                 _ => {}

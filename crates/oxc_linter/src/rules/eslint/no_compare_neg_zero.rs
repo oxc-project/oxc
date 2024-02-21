@@ -65,7 +65,7 @@ fn is_neg_zero(expr: &Expression) -> bool {
         return false;
     }
     match &unary.argument {
-        Expression::NumberLiteral(number) => number.value == 0.0,
+        Expression::NumericLiteral(number) => number.value == 0.0,
         Expression::BigintLiteral(bigint) => bigint.is_zero(),
         _ => false,
     }
