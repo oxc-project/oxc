@@ -113,7 +113,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                     diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
                 }
             }
-            Expression::ArrowExpression(arrow_expr) => {
+            Expression::ArrowFunctionExpression(arrow_expr) => {
                 if arrow_expr.r#async {
                     diagnostic(ctx, arrow_expr.span, Message::NoAsyncDescribeCallback);
                 }

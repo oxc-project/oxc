@@ -148,7 +148,7 @@ impl CatchErrorName {
 
         let expr = expr.without_parenthesized();
 
-        if let Expression::ArrowExpression(arrow_expr) = expr {
+        if let Expression::ArrowFunctionExpression(arrow_expr) = expr {
             if let Some(arg0) = arrow_expr.params.items.first() {
                 if let BindingPatternKind::BindingIdentifier(v) = &arg0.pattern.kind {
                     if self.is_name_allowed(&v.name) {

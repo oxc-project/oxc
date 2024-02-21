@@ -52,7 +52,7 @@ pub struct SemanticBuilder<'a> {
     pub current_node_flags: NodeFlags,
     pub current_symbol_flags: SymbolFlags,
     pub current_scope_id: ScopeId,
-    /// Stores current `AstKind::Function` and `AstKind::ArrowExpression` during AST visit
+    /// Stores current `AstKind::Function` and `AstKind::ArrowFunctionExpression` during AST visit
     pub function_stack: Vec<AstNodeId>,
     // To make a namespace/module value like
     // we need the to know the modules we are inside
@@ -1591,8 +1591,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
     }
 
-    fn visit_arrow_expression(&mut self, expr: &ArrowExpression<'a>) {
-        let kind = AstKind::ArrowExpression(self.alloc(expr));
+    fn visit_arrow_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
+        let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow);
 
         /* cfg */
@@ -1656,7 +1656,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.add_current_node_id_to_current_scope();
                 self.make_all_namespaces_valuelike();
             }
-            AstKind::ArrowExpression(_) => {
+            AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.push(self.current_node_id);
                 self.add_current_node_id_to_current_scope();
                 self.make_all_namespaces_valuelike();
@@ -1780,7 +1780,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.label_builder.leave_function_or_static_block();
                 self.function_stack.pop();
             }
-            AstKind::ArrowExpression(_) => {
+            AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.pop();
             }
             AstKind::TSModuleBlock(_) => {

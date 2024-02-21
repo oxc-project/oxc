@@ -162,11 +162,11 @@ fn choose_layout<'a>(
     if should_use_chain_formatting {
         if !is_tail {
             return Layout::Chain;
-        } else if let Expression::ArrowExpression(arrow_expr) = right_expr {
+        } else if let Expression::ArrowFunctionExpression(arrow_expr) = right_expr {
             if let Some(Statement::ExpressionStatement(expr_stmt)) =
                 arrow_expr.body.statements.first()
             {
-                if let Expression::ArrowExpression(_) = expr_stmt.expression {
+                if let Expression::ArrowFunctionExpression(_) = expr_stmt.expression {
                     return Layout::ChainTailArrowChain;
                 }
             }
@@ -279,7 +279,7 @@ fn has_complex_type_annotation(expr: &AssignmentLikeNode) -> bool {
 fn is_arrow_function_variable_declarator(expr: &AssignmentLikeNode) -> bool {
     match expr {
         AssignmentLikeNode::VariableDeclarator(variable_declarator) => {
-            if let Some(Expression::ArrowExpression(_)) = &variable_declarator.init {
+            if let Some(Expression::ArrowFunctionExpression(_)) = &variable_declarator.init {
                 return true;
             }
             false

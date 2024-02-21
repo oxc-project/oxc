@@ -1196,7 +1196,7 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::ArrayExpression(expr) => expr.format(p),
             Self::ObjectExpression(expr) => expr.format(p),
             Self::FunctionExpression(expr) => expr.format(p),
-            Self::ArrowExpression(expr) => expr.format(p),
+            Self::ArrowFunctionExpression(expr) => expr.format(p),
             Self::YieldExpression(expr) => expr.format(p),
             Self::UpdateExpression(expr) => expr.format(p),
             Self::UnaryExpression(expr) => expr.format(p),
@@ -1622,9 +1622,9 @@ impl<'a> Format<'a> for PropertyKey<'a> {
     }
 }
 
-impl<'a> Format<'a> for ArrowExpression<'a> {
+impl<'a> Format<'a> for ArrowFunctionExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, ArrowExpression, { arrow_function::print_arrow_function(p, self) })
+        wrap!(p, self, ArrowFunctionExpression, { arrow_function::print_arrow_function(p, self) })
     }
 }
 

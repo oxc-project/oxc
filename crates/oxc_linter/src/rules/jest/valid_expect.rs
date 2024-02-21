@@ -249,7 +249,7 @@ fn is_acceptable_return_node<'a, 'b>(
                 let Some(parent) = ctx.nodes().parent_node(node.id()) else { return false };
                 node = parent;
             }
-            AstKind::ArrowExpression(arrow_expr) => return arrow_expr.expression,
+            AstKind::ArrowFunctionExpression(arrow_expr) => return arrow_expr.expression,
             AstKind::AwaitExpression(_) => return true,
             _ => return false,
         }

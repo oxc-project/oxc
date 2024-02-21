@@ -174,7 +174,7 @@ fn is_correct_place_to_call_expect<'a>(
                 };
             }
         }
-        AstKind::ArrowExpression(_) => {
+        AstKind::ArrowFunctionExpression(_) => {
             let grandparent = ctx.nodes().parent_node(parent.id())?;
             // `test('foo', () => expect(1).toBe(1))`
             // `const foo = () => expect(1).toBe(1)`

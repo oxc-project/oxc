@@ -30,7 +30,7 @@ pub trait IsLiteralValue<'a, 'b> {
 impl<'a, 'b> IsLiteralValue<'a, 'b> for Expression<'a> {
     fn is_literal_value(&self, include_functions: bool) -> bool {
         match self {
-            Self::FunctionExpression(_) | Self::ArrowExpression(_) => include_functions,
+            Self::FunctionExpression(_) | Self::ArrowFunctionExpression(_) => include_functions,
             Self::ArrayExpression(expr) => {
                 expr.elements.iter().all(|element| element.is_literal_value(include_functions))
             }
@@ -460,7 +460,7 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
     match expr {
         Expression::RegExpLiteral(_)
         | Expression::ArrayExpression(_)
-        | Expression::ArrowExpression(_)
+        | Expression::ArrowFunctionExpression(_)
         | Expression::ClassExpression(_)
         | Expression::FunctionExpression(_)
         | Expression::NewExpression(_)
