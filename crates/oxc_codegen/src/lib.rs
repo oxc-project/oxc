@@ -13,13 +13,13 @@ mod gen;
 mod gen_ts;
 mod operator;
 
-use std::str::from_utf8_unchecked;
+use std::{str::from_utf8_unchecked, sync::Arc, vec};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_span::{Atom, Span};
+use oxc_span::Atom;
 use oxc_syntax::{
-    identifier::is_identifier_part,
+    identifier::{is_identifier_part, LS, PS},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
     symbol::SymbolId,
@@ -33,9 +33,17 @@ pub use crate::{
 };
 // use crate::mangler::Mangler;
 
+#[derive(Debug)]
+pub struct LineOffsetTable {
+    columns: Option<Vec<u32>>,
+    byte_offset_to_first: u32,
+    byte_offset_to_start_of_line: usize,
+}
+
 #[derive(Debug, Default, Clone, Copy)]
 pub struct CodegenOptions {
     pub enable_typescript: bool,
+    pub sourcemap: bool,
 }
 
 pub struct Codegen<const MINIFY: bool> {
@@ -63,7 +71,14 @@ pub struct Codegen<const MINIFY: bool> {
     /// Track the current indentation level
     indentation: u8,
 
+    // sourcemap
+    last_generated_update: usize,
+    line_offset_tables: Vec<LineOffsetTable>,
     sourcemap_builder: SourceMapBuilder,
+    // original_line: u32,
+    // original_column: u32,
+    generated_line: u32,
+    generated_column: u32,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -74,10 +89,10 @@ pub enum Separator {
 }
 
 impl<const MINIFY: bool> Codegen<MINIFY> {
-    pub fn new(source_len: usize, options: CodegenOptions) -> Self {
+    pub fn new(source: Arc<&str>, options: CodegenOptions) -> Self {
         // Initialize the output code buffer to reduce memory reallocation.
         // Minification will reduce by at least half of the original size.
-        let capacity = if MINIFY { source_len / 2 } else { source_len };
+        let capacity = if MINIFY { source.len() / 2 } else { source.len() };
         Self {
             options,
             // mangler: None,
@@ -91,7 +106,13 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
             indentation: 0,
-            sourcemap_builder: SourceMapBuilder::new(None)
+            last_generated_update: 0,
+            line_offset_tables: Self::generate_line_offset_tables(source),
+            sourcemap_builder: SourceMapBuilder::new(None),
+            // original_line: 0,
+            // original_column: 0,
+            generated_line: 0,
+            generated_column: 0,
         }
     }
 
@@ -107,6 +128,10 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     pub fn into_code(self) -> String {
         // SAFETY: criteria of `from_utf8_unchecked`.are met.
         unsafe { String::from_utf8_unchecked(self.code) }
+    }
+
+    pub fn sourcemap(self) -> sourcemap::SourceMap {
+        self.sourcemap_builder.into_sourcemap()
     }
 
     fn code(&self) -> &Vec<u8> {
@@ -404,10 +429,125 @@ fn choose_quote(s: &str) -> char {
     }
 
     fn add_source_mapping(&mut self, start: u32) {
-        self.sourcemap_builder.add(dst_line, dst_col, src_line, src_col, None, None);
+        self.internal_add_source_mapping(start, None);
     }
 
     fn add_source_mapping_for_name(&mut self, start: u32, name: &str) {
-        self.sourcemap_builder.add(dst_line, dst_col, src_line, src_col, None, Some(name));
+        self.internal_add_source_mapping(start, Some(name));
+    }
+
+    fn internal_add_source_mapping(&mut self, start: u32, name: Option<&str>) {
+        if self.options.sourcemap && self.last_generated_update == self.code.len() {
+            return;
+        }
+        let (original_line, original_column) = self.search_original_line_and_column(start);
+        self.update_generated_line_and_column();
+        self.sourcemap_builder.add(self.generated_line, self.generated_column, original_line, original_column, None, name);
+    }
+
+    fn search_original_line_and_column(&self, start: u32) -> (u32, u32) {
+        let original_line = self.line_offset_tables.binary_search_by(|table| table.byte_offset_to_start_of_line.cmp(&(start as usize))).unwrap_or_default();
+        let line = &self.line_offset_tables[original_line];
+        let mut original_column = start - line.byte_offset_to_start_of_line as u32;
+        if original_column >= line.byte_offset_to_first {
+            if let Some(cols) = &line.columns {
+                original_column = cols[original_column as usize - line.byte_offset_to_first as usize];
+            }
+        }
+        (original_line as u32, original_column)
+    }
+
+    fn update_generated_line_and_column(&mut self) {
+        let s = unsafe {
+            std::str::from_utf8_unchecked(&self.code[self.last_generated_update..])
+        };
+        for (i, ch) in s.chars().enumerate() {
+            match ch {
+                '\r' | '\n' | LS | PS => {
+                    // Handle Windows-specific "\r\n" newlines
+                    if ch == '\r' && s.chars().nth(i + 1) == Some('\n') {
+                        continue;
+                    }
+
+                    self.generated_line += 1;
+                    self.generated_column = 0;
+                },
+                _ => {
+                    if ch as u32 <= 0xFF {
+                        self.generated_column += 1;
+                    } else {
+                        self.generated_column += 2;
+                    }
+                }
+            }
+        }
+        self.last_generated_update = self.code.len();
+    }
+
+    fn generate_line_offset_tables(content: Arc<&str>) -> Vec<LineOffsetTable> {
+        let mut tables = vec![];
+        let mut columns = None;
+        let mut column = 0;
+        let mut column_byte_offset = 0 ;
+        let mut line_byte_offset = 0;
+        let mut byte_offset_to_first = 0;
+        for (i, ch) in content.chars().enumerate() {
+            // Mark the start of the next line
+            if column == 0 {
+                line_byte_offset = i;
+            }
+
+            // Start the mapping if this character is non-ASCII
+            if !ch.is_ascii() && columns.is_none() {
+                column_byte_offset = i - line_byte_offset;
+                byte_offset_to_first = column_byte_offset as u32;
+                columns = Some(vec![]);
+            }
+
+            // Update the per-byte column offsets
+            if let Some(columns) = &mut columns {
+                for _ in column_byte_offset..(i - line_byte_offset) {
+                    columns.push(column);
+                }
+            }
+
+            match ch {
+                '\r' | '\n' | LS | PS => {
+                    // Handle Windows-specific "\r\n" newlines
+                    if ch == '\r' && content.chars().nth(i + 1) == Some('\n') {
+                        column += 1;
+                        continue;
+                    }
+
+                    tables.push(LineOffsetTable { columns, byte_offset_to_first, byte_offset_to_start_of_line: line_byte_offset });
+                    column = 0;
+                    columns = None;
+                    byte_offset_to_first = 0;
+                    column_byte_offset = 0;
+                },
+                _ => {
+                    if ch as u32 <= 0xFF {
+                        column += 1;
+                    } else {
+                        column += 2;
+                    }
+                }
+            }
+        }
+        // Mark the start of the next line
+        if column == 0 {
+            line_byte_offset = content.len();
+        }
+
+        // Do one last update for the column at the end of the file
+        if let Some(columns) = &mut columns {
+            for _ in column_byte_offset..(content.len() - line_byte_offset) {
+                columns.push(column);
+            }
+        }
+
+        tables.push(LineOffsetTable { columns, byte_offset_to_first, byte_offset_to_start_of_line: line_byte_offset });
+
+        tables
     }
 }

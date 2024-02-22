@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::{path::{Path, PathBuf}, sync::Arc};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
@@ -100,5 +100,5 @@ fn minify(source_text: &str, source_type: SourceType, options: MinifierOptions) 
     let program = Parser::new(&allocator, source_text, source_type).parse().program;
     let program = allocator.alloc(program);
     Minifier::new(options).build(&allocator, program);
-    Codegen::<true>::new(source_text.len(), CodegenOptions::default()).build(program)
+    Codegen::<true>::new(Arc::new(source_text), CodegenOptions::default()).build(program)
 }

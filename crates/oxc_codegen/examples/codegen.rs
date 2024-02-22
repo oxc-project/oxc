@@ -1,4 +1,4 @@
-use std::{env, path::Path};
+use std::{env, path::Path, sync::Arc};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
@@ -29,12 +29,12 @@ fn main() -> std::io::Result<()> {
     println!("{source_text}");
 
     let codegen_options = CodegenOptions::default();
-    let printed = Codegen::<false>::new(source_text.len(), codegen_options).build(&ret.program);
+    let printed = Codegen::<false>::new(Arc::new(&source_text), codegen_options).build(&ret.program);
     println!("Printed:");
     println!("{printed}");
 
     let ret = Parser::new(&allocator, &printed, source_type).parse();
-    let minified = Codegen::<true>::new(source_text.len(), codegen_options).build(&ret.program);
+    let minified = Codegen::<true>::new(Arc::new(&source_text), codegen_options).build(&ret.program);
     println!("Minified:");
     println!("{minified}");
 
