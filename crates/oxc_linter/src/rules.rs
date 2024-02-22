@@ -10,11 +10,14 @@ mod import {
     pub mod default;
     pub mod export;
     pub mod named;
+    pub mod namespace;
     pub mod no_amd;
     pub mod no_cycle;
+    pub mod no_deprecated;
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
     pub mod no_self_import;
+    pub mod no_unused_modules;
 }
 
 mod deepscan {
@@ -545,13 +548,16 @@ oxc_macros::declare_all_lint_rules! {
     react_perf::jsx_no_new_function_as_prop,
     react_perf::jsx_no_new_object_as_prop,
     import::default,
-    import::no_named_as_default_member,
-    import::no_named_as_default,
-    import::named,
-    import::no_cycle,
-    import::no_self_import,
-    import::no_amd,
     import::export,
+    import::named,
+    import::namespace,
+    import::no_amd,
+    import::no_cycle,
+    import::no_deprecated,
+    import::no_named_as_default,
+    import::no_named_as_default_member,
+    import::no_self_import,
+    import::no_unused_modules,
     jsx_a11y::alt_text,
     jsx_a11y::anchor_has_content,
     jsx_a11y::anchor_is_valid,
