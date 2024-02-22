@@ -17,13 +17,14 @@ use std::str::from_utf8_unchecked;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_span::Atom;
+use oxc_span::{Atom, Span};
 use oxc_syntax::{
     identifier::is_identifier_part,
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
     symbol::SymbolId,
 };
+use sourcemap::SourceMapBuilder;
 
 pub use crate::{
     context::Context,
@@ -61,6 +62,8 @@ pub struct Codegen<const MINIFY: bool> {
 
     /// Track the current indentation level
     indentation: u8,
+
+    sourcemap_builder: SourceMapBuilder,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -88,6 +91,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
             indentation: 0,
+            sourcemap_builder: SourceMapBuilder::new(None)
         }
     }
 
@@ -234,10 +238,12 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     }
 
     fn print_block1(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
+        self.add_source_mapping(stmt.span.start);
         self.print_block_start();
         self.print_directives_and_statements_with_semicolon_order(None, &stmt.body, ctx, true);
         self.print_block_end();
         self.needs_semicolon = false;
+        self.add_source_mapping(stmt.span.end);
     }
 
     fn print_block<T: Gen<MINIFY>>(&mut self, items: &[T], separator: Separator, ctx: Context) {
@@ -274,7 +280,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         }
     }
 
-    fn print_symbol(&mut self, _symbol_id: Option<SymbolId>, fallback: &Atom) {
+    fn print_symbol(&mut self, start: u32, _symbol_id: Option<SymbolId>, fallback: &Atom) {
         // if let Some(mangler) = &self.mangler {
         // if let Some(symbol_id) = symbol_id {
         // let name = mangler.get_symbol_name(symbol_id);
@@ -282,6 +288,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         // return;
         // }
         // }
+        self.add_source_mapping_for_name(start, &fallback);
         self.print_str(fallback.as_bytes());
     }
 
@@ -394,5 +401,13 @@ fn choose_quote(s: &str) -> char {
         '"'
     } else {
         '\''
+    }
+
+    fn add_source_mapping(&mut self, start: u32) {
+        self.sourcemap_builder.add(dst_line, dst_col, src_line, src_col, None, None);
+    }
+
+    fn add_source_mapping_for_name(&mut self, start: u32, name: &str) {
+        self.sourcemap_builder.add(dst_line, dst_col, src_line, src_col, None, Some(name));
     }
 }
