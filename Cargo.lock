@@ -1379,6 +1379,7 @@ dependencies = [
  "oxc_prettier",
  "oxc_span",
  "rayon",
+ "rustc-hash",
  "tracing-subscriber",
 ]
 

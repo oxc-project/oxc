@@ -256,6 +256,25 @@ mod test {
     }
 
     #[test]
+    fn ignore_pattern_overrides_explicit_args() {
+        let args = &["--ignore-pattern", "fixtures/linter/*.js", "fixtures/linter/nan.js"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 0);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn ignore_pattern_no_ignore() {
+        let args =
+            &["--ignore-pattern", "fixtures/linter/*.js", "--no-ignore", "fixtures/linter/nan.js"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 1);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
     fn filter_allow_all() {
         let args = &["-A", "all", "fixtures/linter"];
         let result = test(args);
