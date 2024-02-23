@@ -611,6 +611,20 @@ impl<'a> AstBuilder<'a> {
         })
     }
 
+    pub fn private_in_expression(
+        &self,
+        span: Span,
+        left: PrivateIdentifier,
+        right: Expression<'a>,
+    ) -> Expression<'a> {
+        Expression::PrivateInExpression(self.alloc(PrivateInExpression {
+            span,
+            left,
+            operator: BinaryOperator::In,
+            right,
+        }))
+    }
+
     pub fn private_field_expression(
         &self,
         span: Span,
