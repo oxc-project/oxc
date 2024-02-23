@@ -563,9 +563,9 @@ impl<'a> SourcePosition<'a> {
     /// returns Some((cow_bytes, actual_length)) if the peeked bytes is not EOF.
     #[inline]
     pub(super) unsafe fn peek_n_with_padding<const N: usize>(
-        &self,
+        self,
         end_addr: usize,
-    ) -> Option<(Cow<'_, [u8; N]>, usize)> {
+    ) -> Option<(Cow<'a, [u8; N]>, usize)> {
         const PADDING: u8 = u8::MAX;
         let remaining_len = end_addr - self.ptr as usize;
         if remaining_len == 0 {

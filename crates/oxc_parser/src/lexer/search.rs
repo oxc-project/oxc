@@ -28,11 +28,11 @@ impl SimdByteMatchTable {
 
     /// Test a value against this `ByteMatchTable`.
     #[inline]
-    pub fn matches(
+    pub fn matches<'a>(
         &self,
-        data: &[u8; SEARCH_BATCH_SIZE],
+        data: &'a [u8; SEARCH_BATCH_SIZE],
         actual_len: usize,
-    ) -> Option<(usize, u8)> {
+    ) -> impl Iterator<Item = (usize, u8)> + 'a {
         self.0.matches(data, actual_len)
     }
 }
@@ -254,17 +254,94 @@ impl SafeByteMatchTable {
 
     /// Returns the position of matched first delimiter and the matched first byte.
     #[inline]
-    pub fn matches(
-        &self,
-        data: &[u8; SEARCH_BATCH_SIZE],
+    pub fn matches<'a>(
+        &'a self,
+        data: &'a [u8; SEARCH_BATCH_SIZE],
         actual_len: usize,
-    ) -> Option<(usize, u8)> {
-        for (i, &b) in data[..actual_len].iter().enumerate() {
-            if self.0[b as usize] {
+    ) -> impl Iterator<Item = (usize, u8)> + 'a {
+        SafeByteMatchTableIter { table: self, data, actual_len, offset: 0 }
+    }
+}
+
+struct SafeByteMatchTableIter<'a> {
+    table: &'a SafeByteMatchTable,
+    data: &'a [u8; SEARCH_BATCH_SIZE],
+    actual_len: usize,
+    offset: usize,
+}
+
+impl Iterator for SafeByteMatchTableIter<'_> {
+    type Item = (usize, u8);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        for (i, &b) in self.data[self.offset..self.actual_len].iter().enumerate() {
+            self.offset += 1;
+            if self.table.0[b as usize] {
                 return Some((i, b));
             }
         }
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::SafeByteMatchTable;
+    use crate::lexer::{source::Source, UniquePromise};
+
+    const SEARCH_BATCH_SIZE: usize = 16;
+    #[test]
+    fn neon_find_non_ascii() {
+        let table = seq_macro::seq!(b in 0u8..=255 {
+            SafeByteMatchTable::new([#(!(b.is_ascii_alphanumeric() || b == b'_' || b == b'$'),)*])
+        });
+        let data = [
+            "AAAAAAAA\"\rAAAAAA",
+            "AAAAAAAAAAAAAAA\"",
+            "AAAAAAAAAAAAAAAA",
+            "AAAAAAAA",
+            "AAAAAAAA\r",
+            "AAAAAAAAAAAAAAA\r",
+        ]
+        .map(|x| Source::new(x, UniquePromise::new_for_tests()));
+        let expected = [
+            (vec![Some((8, b'"')), Some((0, b'\r')), None], SEARCH_BATCH_SIZE),
+            (vec![Some((15, b'"')), None], SEARCH_BATCH_SIZE),
+            (vec![None], SEARCH_BATCH_SIZE),
+            (vec![None], 8),
+            (vec![Some((8, b'\r')), None], 9),
+            (vec![Some((15, b'\r')), None], SEARCH_BATCH_SIZE),
+        ];
+
+        for (idx, d) in data.into_iter().enumerate() {
+            let pos = d.position();
+            let (data, actual_len) =
+                unsafe { pos.peek_n_with_padding::<SEARCH_BATCH_SIZE>(d.end_addr()) }.unwrap();
+            let mut result = table.matches(&data, actual_len);
+            for val in &expected[idx].0 {
+                assert_eq!(result.next(), *val);
+            }
+            assert_eq!(actual_len, expected[idx].1);
+        }
+    }
+
+    #[test]
+    fn neon_find_single_quote_string() {
+        let table = seq_macro::seq!(b in 0u8..=255 {
+            // find non ascii
+            SafeByteMatchTable::new([#(matches!(b, b'\'' | b'\r' | b'\n' | b'\\'),)*])
+        });
+        let s1 = String::from(138u8 as char);
+        let data = [&s1].map(|x| Source::new(x, UniquePromise::new_for_tests()));
+        let expected = [(None, 2)];
+
+        for (idx, d) in data.into_iter().enumerate() {
+            let pos = d.position();
+            let (data, actual_len) =
+                unsafe { pos.peek_n_with_padding::<SEARCH_BATCH_SIZE>(d.end_addr()) }.unwrap();
+            let mut result = table.matches(&data, actual_len);
+            assert_eq!((result.next(), actual_len), expected[idx]);
+        }
     }
 }
 
@@ -554,11 +631,14 @@ macro_rules! byte_search {
                 $lexer.source.end_addr(),
             )
         } {
-            if let Some((pos, b)) = $table.matches(&data, actual_len) {
+            let mut iter = $table.matches(&data, actual_len);
+            let mut remaining = actual_len;
+            while let Some((offset, b)) = iter.next() {
                 // Advance the $pos with the batch matched pos
                 // SAFETY: `pos` is not at end of source, so safe to advance `pos` bytes.
                 // See above about UTF-8 character boundaries invariant.
-                $pos = unsafe { $pos.add(pos) };
+                $pos = unsafe { $pos.add(offset) };
+                remaining -= offset;
                 // SAFETY: `$pos` cannot go out of bounds in this loop (see above).
                 let $match_byte = b;
                 // Found match.
@@ -570,6 +650,7 @@ macro_rules! byte_search {
                         // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
                         // See above about UTF-8 character boundaries invariant.
                         $pos = unsafe { $pos.add(1) };
+                        remaining -= 1;
                         continue;
                     }
                 }
@@ -585,7 +666,7 @@ macro_rules! byte_search {
             // No match - continue searching
             // SAFETY: `$pos` cannot go out of bounds in this loop (see above).
             // Also see above about UTF-8 character boundaries invariant.
-            $pos = unsafe { $pos.add(actual_len) };
+            $pos = unsafe { $pos.add(remaining) };
         }
 
         // EOF.

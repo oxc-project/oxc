@@ -61,8 +61,12 @@ impl MatchTable {
     }
 
     #[inline]
-    pub fn matches(&self, data: &[u8; ALIGNMENT], actual_len: usize) -> Option<(usize, u8)> {
-        self.table.matches(data, actual_len)
+    pub fn matches<'a>(
+        &self,
+        seg: &'a [u8; ALIGNMENT],
+        actual_len: usize,
+    ) -> impl Iterator<Item = (usize, u8)> + 'a {
+        self.table.matches(seg, actual_len)
     }
 }
 

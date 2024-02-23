@@ -18,24 +18,27 @@ impl MatchTable {
         Self { table, arf, reverse }
     }
 
+    // return a iterator of (position, byte) for lazy evaluation
     #[inline]
-    pub fn matches(&self, data: &[u8; ALIGNMENT], actual_len: usize) -> Option<(usize, u8)> {
-        let ptr = data.as_ptr();
+    pub fn matches<'a>(
+        &self,
+        seg: &'a [u8; ALIGNMENT],
+        actual_len: usize,
+    ) -> impl Iterator<Item = (usize, u8)> + 'a {
         // SAFETY:
         // data is aligned and has ALIGNMENT bytes
-        unsafe { self.match_delimiters(ptr) }.map(|pos| (pos, data[pos])).and_then(|(pos, b)| {
-            if pos >= actual_len {
-                None
-            } else {
-                Some((pos, b))
-            }
-        })
+        unsafe { self.match_delimiters(seg, actual_len) }
     }
 
     // same with avx2, but neon doesn't have a _mm256_movemask_epi8 instruction
     // so, we need to use a different approach(offsetz)
     #[inline]
-    unsafe fn match_delimiters(&self, ptr: *const u8) -> Option<usize> {
+    unsafe fn match_delimiters<'a>(
+        &self,
+        seg: &'a [u8; ALIGNMENT],
+        actual_len: usize,
+    ) -> MatchTableIter<'a> {
+        let ptr = seg.as_ptr();
         let data = vld1q_u8(ptr);
         let col_idx = vandq_u8(data, vdupq_n_u8(0x8F));
         let col = vqtbl1q_u8(vld1q_u8(self.table.as_ptr()), col_idx);
@@ -43,39 +46,76 @@ impl MatchTable {
         let row = vqtbl1q_u8(vld1q_u8(self.arf.as_ptr()), row_idx);
         let tmp = vandq_u8(col, row);
         let result = vceqq_u8(tmp, row);
-        offsetz(result, self.reverse)
+        offsetz(result, seg, self.reverse, actual_len)
+    }
+}
+
+struct MatchTableIter<'a> {
+    seg: &'a [u8; ALIGNMENT],
+    low: [u8; 8],
+    high: [u8; 8],
+    low_upper: usize,
+    high_upper: usize,
+    pos: Option<usize>, // the last position of the matched byte
+}
+
+impl<'a> Iterator for MatchTableIter<'a> {
+    type Item = (usize, u8);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut start = match self.pos {
+            Some(pos) => pos + 1,
+            None => 0,
+        };
+        let mut offset = 0;
+        // lookup at low 8 bytes
+        while start < self.low_upper {
+            let b = self.low[start];
+            let found = self.seg[start];
+            if b != 0 {
+                self.pos = Some(start);
+                return Some((offset, found));
+            }
+            offset += 1;
+            start += 1;
+        }
+        // lookup at high 8 bytes
+        while start < self.high_upper {
+            let b = self.high[start - 8];
+            let found = self.seg[start];
+            if b != 0 {
+                self.pos = Some(start);
+                return Some((offset, found));
+            }
+            offset += 1;
+            start += 1;
+        }
+        // reach the end of the segment data
+        None
     }
 }
 
 #[inline]
-unsafe fn offsetz(x: uint8x16_t, reverse: bool) -> Option<usize> {
-    #[inline]
-    fn clz(x: u64) -> usize {
-        // perf: rust will unroll this loop
-        // and it's much faster than rbit + clz so voila
-        for (i, b) in x.to_ne_bytes().into_iter().enumerate() {
-            if b != 0 {
-                return i;
-            }
-        }
-        8 // Technically not reachable since zero-guarded
-    }
-
+unsafe fn offsetz(
+    x: uint8x16_t,
+    seg: &[u8; ALIGNMENT],
+    reverse: bool,
+    actual_len: usize,
+) -> MatchTableIter<'_> {
     let x = if reverse { vmvnq_u8(x) } else { x };
     // Extract two u64
     let x = vreinterpretq_u64_u8(x);
     // Extract to general purpose registers to perform clz
     let low: u64 = vgetq_lane_u64::<0>(x);
     let high: u64 = vgetq_lane_u64::<1>(x);
-    let pos = if low != 0 {
-        clz(low)
-    } else if high != 0 {
-        8 + clz(high)
-    } else {
-        // all zero means no match
-        return None;
-    };
-    Some(pos)
+    MatchTableIter {
+        seg,
+        low: low.to_ne_bytes(),
+        high: high.to_ne_bytes(),
+        pos: None,
+        low_upper: 8.min(actual_len),
+        high_upper: 16.min(actual_len),
+    }
 }
 
 #[cfg(test)]
@@ -85,33 +125,35 @@ mod tests {
     #[test]
     fn neon_find_non_ascii() {
         let table = seq_macro::seq!(b in 0u8..=255 {
-            // find non ascii
-            MatchTable::new([#(b.is_ascii_alphanumeric() || b == b'_' || b == b'$',)*], true)
+            MatchTable::new([#(!(b.is_ascii_alphanumeric() || b == b'_' || b == b'$'),)*], true)
         });
         let data = [
             "AAAAAAAA\"\rAAAAAA",
             "AAAAAAAAAAAAAAA\"",
             "AAAAAAAAAAAAAAAA",
             "AAAAAAAA",
-            "AAAAAAAA\"\rAAAAAA",
+            "AAAAAAAA\r",
             "AAAAAAAAAAAAAAA\r",
         ]
         .map(|x| Source::new(x, UniquePromise::new_for_tests()));
         let expected = [
-            (Some((8, b'"')), ALIGNMENT),
-            (Some((15, b'"')), ALIGNMENT),
-            (None, ALIGNMENT),
-            (None, 8),
-            (Some((8, b'\"')), ALIGNMENT),
-            (Some((15, b'\r')), ALIGNMENT),
+            (vec![Some((8, b'"')), Some((0, b'\r')), None], ALIGNMENT),
+            (vec![Some((15, b'"')), None], ALIGNMENT),
+            (vec![None], ALIGNMENT),
+            (vec![None], 8),
+            (vec![Some((8, b'\r')), None], 9),
+            (vec![Some((15, b'\r')), None], ALIGNMENT),
         ];
 
         for (idx, d) in data.into_iter().enumerate() {
             let pos = d.position();
             let (data, actual_len) =
                 unsafe { pos.peek_n_with_padding::<ALIGNMENT>(d.end_addr()) }.unwrap();
-            let result = table.matches(&data, actual_len);
-            assert_eq!((result, actual_len), expected[idx]);
+            let mut result = table.matches(&data, actual_len);
+            for val in &expected[idx].0 {
+                assert_eq!(result.next(), *val);
+            }
+            assert_eq!(actual_len, expected[idx].1);
         }
     }
 
@@ -129,8 +171,8 @@ mod tests {
             let pos = d.position();
             let (data, actual_len) =
                 unsafe { pos.peek_n_with_padding::<ALIGNMENT>(d.end_addr()) }.unwrap();
-            let result = table.matches(&data, actual_len);
-            assert_eq!((result, actual_len), expected[idx]);
+            let mut result = table.matches(&data, actual_len);
+            assert_eq!((result.next(), actual_len), expected[idx]);
         }
     }
 }

@@ -26,8 +26,9 @@ fn is_identifier_start_ascii_byte(data: Option<(Cow<[u8; SEARCH_BATCH_SIZE]>, us
         Some(data) => data,
         None => return false,
     };
-    match ASCII_ID_START_TABLE.matches(data.0.as_ref(), data.1) {
-        Some((pos, _)) => pos == 0,
+    let mut iter = ASCII_ID_START_TABLE.matches(data.0.as_ref(), data.1);
+    match iter.next() {
+        Some((offset, _)) => offset == 0,
         None => false,
     }
 }
