@@ -1,0 +1,108 @@
+use oxc_diagnostics::{
+    miette::{self, Diagnostic},
+    thiserror::Error,
+};
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+
+use crate::{context::LintContext, rule::Rule};
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("eslint-plugin-import(no-unresolved): Ensure imports point to a file/module that can be resolved")]
+#[diagnostic(severity(warning))]
+struct NoUnresolvedDiagnostic(#[label] pub Span);
+
+/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-unresolved.md>
+#[derive(Debug, Default, Clone)]
+pub struct NoUnresolved;
+
+declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// Ensures an imported module can be resolved to a module on the local filesystem.
+    NoUnresolved,
+    nursery
+);
+
+impl Rule for NoUnresolved {
+    fn run_once(&self, ctx: &LintContext<'_>) {
+        let module_record = ctx.semantic().module_record();
+
+        for (specifier, spans) in &module_record.requested_modules {
+            if !module_record.loaded_modules.contains_key(specifier) {
+                for span in spans {
+                    ctx.diagnostic(NoUnresolvedDiagnostic(*span));
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn test() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        // TODO: handle malformed file?
+        // r#"import "./malformed.js""#,
+        r#"import foo from "./bar";"#,
+        r"import bar from './bar.js';",
+        r"import {someThing} from './test-module';",
+        // TODO: exclude nodejs builtin modules
+        // r#"import fs from 'fs';"#,
+        r"import('fs');",
+        r"import('fs');",
+        r#"import * as foo from "a""#,
+        r#"export { foo } from "./bar""#,
+        r#"export * from "./bar""#,
+        r"let foo; export { foo }",
+        r#"export * as bar from "./bar""#,
+        // parser: parsers.BABEL_OLD
+        // r#"export bar from "./bar""#,
+        r#"import foo from "./jsx/MyUnCoolComponent.jsx""#,
+        r#"var foo = require("./bar")"#,
+        r#"require("./bar")"#,
+        r#"require("./does-not-exist")"#,
+        r#"require("./does-not-exist")"#,
+        r#"require(["./bar"], function (bar) {})"#,
+        r#"define(["./bar"], function (bar) {})"#,
+        r#"require(["./does-not-exist"], function (bar) {})"#,
+        r#"define(["require", "exports", "module"], function (r, e, m) { })"#,
+        r#"require(["./does-not-exist"])"#,
+        r#"define(["./does-not-exist"], function (bar) {})"#,
+        r#"require("./does-not-exist", "another arg")"#,
+        r#"proxyquire("./does-not-exist")"#,
+        r#"(function() {})("./does-not-exist")"#,
+        r"define([0, foo], function (bar) {})",
+        r"require(0)",
+        r"require(foo)",
+    ];
+
+    let fail = vec![
+        r#"import reallyfake from "./reallyfake/module""#,
+        r"import bar from './baz';",
+        r"import bar from './baz';",
+        r"import bar from './empty-folder';",
+        r"import { DEEP } from 'in-alternate-root';",
+        // TODO: dynamic import
+        // r#"import('in-alternate-root').then(function({DEEP}) {});"#,
+        r#"export { foo } from "./does-not-exist""#,
+        r#"export * from "./does-not-exist""#,
+        // TODO: dynamic import
+        // r#"import('in-alternate-root').then(function({DEEP}) {});"#,
+        r#"export * as bar from "./does-not-exist""#,
+        r#"export bar from "./does-not-exist""#,
+        r#"var bar = require("./baz")"#,
+        // TODO: require expression
+        // r#"require("./baz")"#,
+        // TODO: amd
+        // r#"require(["./baz"], function (bar) {})"#,
+        // r#"define(["./baz"], function (bar) {})"#,
+        // r#"define(["./baz", "./bar", "./does-not-exist"], function (bar) {})"#,
+    ];
+
+    Tester::new(NoUnresolved::NAME, pass, fail)
+        .change_rule_path("index.js")
+        .with_import_plugin(true)
+        .test_and_snapshot();
+}
