@@ -1,4 +1,4 @@
-Passed: 344/1369
+Passed: 346/1369
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -911,7 +911,7 @@ Passed: 344/1369
 * spread-transform/transform-to-babel-extend/input.js
 * spread-transform/transform-to-object-assign/input.js
 
-# babel-plugin-proposal-decorators (20/190)
+# babel-plugin-proposal-decorators (22/190)
 * 2018-09-transformation/async-generator-method/input.js
 * 2018-09-transformation/class-decorators-yield-await/input.js
 * 2021-12-accessors/context-name/input.js
@@ -1033,7 +1033,6 @@ Passed: 344/1369
 * 2023-05-getters--to-es2015/public/input.js
 * 2023-05-getters--to-es2015/static-private/input.js
 * 2023-05-getters--to-es2015/static-public/input.js
-* 2023-05-getters-and-setters/private/input.js
 * 2023-05-getters-and-setters--to-es2015/private/input.js
 * 2023-05-getters-and-setters--to-es2015/public/input.js
 * 2023-05-getters-and-setters--to-es2015/static-private/input.js
@@ -1071,7 +1070,6 @@ Passed: 344/1369
 * 2023-05-ordering/initializers-and-static-blocks/input.js
 * 2023-05-ordering--to-es2015/initializers-and-static-blocks/input.js
 * 2023-05-setters/context-name/input.js
-* 2023-05-setters/private/input.js
 * 2023-05-setters--to-es2015/context-name/input.js
 * 2023-05-setters--to-es2015/private/input.js
 * 2023-05-setters--to-es2015/public/input.js
