@@ -14,7 +14,7 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, FailedToOpenFileError};
 use oxc_parser::Parser;
-use oxc_resolver::{ResolveOptions, Resolver};
+use oxc_resolver::Resolver;
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 
@@ -117,27 +117,34 @@ pub struct Runtime {
     /// All paths to lint
     paths: FxHashSet<Box<Path>>,
     linter: Linter,
-    resolver: Resolver,
+    resolver: Option<Resolver>,
     module_map: ModuleMap,
     cache_state: CacheState,
 }
 
 impl Runtime {
     fn new(cwd: Box<Path>, paths: &[Box<Path>], linter: Linter) -> Self {
+        let resolver = linter.options().import_plugin.then(Self::get_resolver);
         Self {
             cwd,
             paths: paths.iter().cloned().collect(),
             linter,
-            resolver: Self::resolver(),
+            resolver,
             module_map: ModuleMap::default(),
             cache_state: CacheState::default(),
         }
     }
 
-    fn resolver() -> Resolver {
+    fn get_resolver() -> Resolver {
+        use oxc_resolver::{ResolveOptions, TsconfigOptions, TsconfigReferences};
+        let tsconfig_path = std::env::current_dir().map(|p| p.join("tsconfig.json")).ok();
+        let tsconfig = tsconfig_path
+            .filter(|p| p.exists())
+            .map(|p| TsconfigOptions { config_file: p, references: TsconfigReferences::Auto });
         Resolver::new(ResolveOptions {
             extensions: VALID_EXTENSIONS.iter().map(|ext| format!(".{ext}")).collect(),
             condition_names: vec!["require".into(), "module".into()],
+            tsconfig,
             ..ResolveOptions::default()
         })
     }
@@ -257,7 +264,7 @@ impl Runtime {
                 .requested_modules
                 .keys()
                 .par_bridge()
-                .map_with(&self.resolver, |resolver, specifier| {
+                .map_with(self.resolver.as_ref().unwrap(), |resolver, specifier| {
                     resolver.resolve(dir, specifier).ok().map(|r| (specifier, r))
                 })
                 .flatten()
