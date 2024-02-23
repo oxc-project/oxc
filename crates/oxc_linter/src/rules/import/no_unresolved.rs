@@ -1,8 +1,11 @@
+use std::path::{Component, Path};
+
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_resolver::NODEJS_BUILTINS;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
@@ -29,10 +32,21 @@ impl Rule for NoUnresolved {
         let module_record = ctx.semantic().module_record();
 
         for (specifier, spans) in &module_record.requested_modules {
-            if !module_record.loaded_modules.contains_key(specifier) {
-                for span in spans {
-                    ctx.diagnostic(NoUnresolvedDiagnostic(*span));
-                }
+            if module_record.loaded_modules.contains_key(specifier) {
+                continue;
+            }
+            // skip node.js builtin modules
+            if specifier.starts_with("node:")
+                || (Path::new(specifier.as_str())
+                    .components()
+                    .next()
+                    .is_some_and(|c| matches!(c, Component::Normal(_)))
+                    && NODEJS_BUILTINS.binary_search(&specifier.as_str()).is_ok())
+            {
+                continue;
+            }
+            for span in spans {
+                ctx.diagnostic(NoUnresolvedDiagnostic(*span));
             }
         }
     }
@@ -48,8 +62,8 @@ fn test() {
         r#"import foo from "./bar";"#,
         r"import bar from './bar.js';",
         r"import {someThing} from './test-module';",
-        // TODO: exclude nodejs builtin modules
-        // r#"import fs from 'fs';"#,
+        r"import fs from 'fs';",
+        r"import fs from 'node:fs';",
         r"import('fs');",
         r"import('fs');",
         r#"import * as foo from "a""#,

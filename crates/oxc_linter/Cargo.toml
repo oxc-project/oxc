@@ -29,7 +29,7 @@ oxc_semantic    = { workspace = true }
 oxc_syntax      = { workspace = true }
 oxc_codegen     = { workspace = true }
 oxc_index       = { workspace = true }
-oxc_resolver    = { version = "1.5.1" }
+oxc_resolver    = { version = "1.5.2" }
 
 rayon         = { workspace = true }
 lazy_static   = { workspace = true }                        # used in oxc_macros
