@@ -21,7 +21,7 @@ impl MatchTable {
     // return a iterator of (position, byte) for lazy evaluation
     #[inline]
     pub fn matches<'a>(
-        &self,
+        &'a self,
         seg: &'a [u8; ALIGNMENT],
         actual_len: usize,
     ) -> impl Iterator<Item = (usize, u8)> + 'a {
@@ -34,7 +34,7 @@ impl MatchTable {
     // so, we need to use a different approach(offsetz)
     #[inline]
     unsafe fn match_delimiters<'a>(
-        &self,
+        &'a self,
         seg: &'a [u8; ALIGNMENT],
         actual_len: usize,
     ) -> MatchTableIter<'a> {

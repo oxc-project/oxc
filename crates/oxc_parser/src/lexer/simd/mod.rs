@@ -62,7 +62,7 @@ impl MatchTable {
 
     #[inline]
     pub fn matches<'a>(
-        &self,
+        &'a self,
         seg: &'a [u8; ALIGNMENT],
         actual_len: usize,
     ) -> impl Iterator<Item = (usize, u8)> + 'a {

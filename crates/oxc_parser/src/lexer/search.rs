@@ -29,7 +29,7 @@ impl SimdByteMatchTable {
     /// Test a value against this `ByteMatchTable`.
     #[inline]
     pub fn matches<'a>(
-        &self,
+        &'a self,
         data: &'a [u8; SEARCH_BATCH_SIZE],
         actual_len: usize,
     ) -> impl Iterator<Item = (usize, u8)> + 'a {

@@ -31,23 +31,25 @@ impl MatchTable {
 
     // match 16 bytes at a time, return the position of the first found delimiter
     #[inline]
-    pub fn matches(&self, data: &[u8; ALIGNMENT], actual_len: usize) -> Option<(usize, u8)> {
-        let ptr = data.as_ptr();
+    pub fn matches<'a>(
+        &'a self,
+        seg: &'a [u8; ALIGNMENT],
+        actual_len: usize,
+    ) -> impl Iterator<Item = (usize, u8)> + 'a {
         // SAFETY:
         // data is aligned and has ALIGNMENT bytes
-        unsafe { self.match_delimiters(ptr) }.map(|pos| (pos, data[pos])).and_then(|(pos, b)| {
-            if pos >= actual_len {
-                None
-            } else {
-                Some((pos, b))
-            }
-        })
+        unsafe { self.match_delimiters(seg, actual_len) }
     }
 
     // match 16 bytes at a time, return the position of the first found delimiter
     #[inline]
-    #[allow(overflowing_literals, clippy::cast_sign_loss)]
-    unsafe fn match_delimiters(&self, ptr: *const u8) -> Option<usize> {
+    #[allow(overflowing_literals, clippy::cast_sign_loss, clippy::cast_possible_truncation)]
+    unsafe fn match_delimiters<'a>(
+        &'a self,
+        seg: &'a [u8; ALIGNMENT],
+        actual_len: usize,
+    ) -> MatchTableIter<'a> {
+        let ptr = seg.as_ptr();
         let data = _mm_lddqu_si128(ptr.cast());
         // lower 4 bits of each byte in data are the column index
         // get the table column of each data byte
@@ -66,12 +68,91 @@ impl MatchTable {
         // if the byte is unmatched, the corresponding location in `r` is 1, opposite the bit is 0
         let r = _mm_movemask_epi8(v) as u16;
         // unmatched bits are 1, so we need to count the trailing ones(little-endian)
-        let unmatched = if self.reverse { r.trailing_zeros() } else { r.trailing_ones() } as usize;
-        // reach the end of the segment, so no delimiter found
-        if unmatched == ALIGNMENT {
-            None
-        } else {
-            Some(unmatched)
+        let data_bits = if self.reverse { !r } else { r };
+        MatchTableIter { seg, data_bits, actual_len, pos: 0 }
+    }
+}
+
+struct MatchTableIter<'a> {
+    seg: &'a [u8; ALIGNMENT],
+    data_bits: u16, // each bit represents a byte in the segment
+    actual_len: usize,
+    pos: usize, // the last position of the matched byte
+}
+
+impl<'a> Iterator for MatchTableIter<'a> {
+    type Item = (usize, u8);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        for i in self.pos..self.actual_len {
+            let mask = 1 << i;
+            // check if the byte is a zero
+            if self.data_bits & mask == 0 {
+                let offset = i - self.pos;
+                // set next pos
+                self.pos = i + 1;
+                return Some((offset, self.seg[i]));
+            }
+        }
+        None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{MatchTable, ALIGNMENT};
+    use crate::lexer::{source::Source, UniquePromise};
+    #[test]
+    fn neon_find_non_ascii() {
+        let table = seq_macro::seq!(b in 0u8..=255 {
+            MatchTable::new([#(!(b.is_ascii_alphanumeric() || b == b'_' || b == b'$'),)*], true)
+        });
+        let data = [
+            "AAAAAAAA\"\rAAAAAA",
+            "AAAAAAAAAAAAAAA\"",
+            "AAAAAAAAAAAAAAAA",
+            "AAAAAAAA",
+            "AAAAAAAA\r",
+            "AAAAAAAAAAAAAAA\r",
+        ]
+        .map(|x| Source::new(x, UniquePromise::new_for_tests()));
+        let expected = [
+            (vec![Some((8, b'"')), Some((0, b'\r')), None], ALIGNMENT),
+            (vec![Some((15, b'"')), None], ALIGNMENT),
+            (vec![None], ALIGNMENT),
+            (vec![None], 8),
+            (vec![Some((8, b'\r')), None], 9),
+            (vec![Some((15, b'\r')), None], ALIGNMENT),
+        ];
+
+        for (idx, d) in data.into_iter().enumerate() {
+            let pos = d.position();
+            let (data, actual_len) =
+                unsafe { pos.peek_n_with_padding::<ALIGNMENT>(d.end_addr()) }.unwrap();
+            let mut result = table.matches(&data, actual_len);
+            for val in &expected[idx].0 {
+                assert_eq!(result.next(), *val);
+            }
+            assert_eq!(actual_len, expected[idx].1);
+        }
+    }
+
+    #[test]
+    fn neon_find_single_quote_string() {
+        let table = seq_macro::seq!(b in 0u8..=255 {
+            // find non ascii
+            MatchTable::new([#(matches!(b, b'\'' | b'\r' | b'\n' | b'\\'),)*], false)
+        });
+        let s1 = String::from(138u8 as char);
+        let data = [&s1].map(|x| Source::new(x, UniquePromise::new_for_tests()));
+        let expected = [(None, 2)];
+
+        for (idx, d) in data.into_iter().enumerate() {
+            let pos = d.position();
+            let (data, actual_len) =
+                unsafe { pos.peek_n_with_padding::<ALIGNMENT>(d.end_addr()) }.unwrap();
+            let mut result = table.matches(&data, actual_len);
+            assert_eq!((result.next(), actual_len), expected[idx]);
         }
     }
 }
