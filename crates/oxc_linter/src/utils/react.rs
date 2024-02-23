@@ -15,6 +15,10 @@ pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
         return member_expr.static_property_name() == Some("createElement");
     }
 
+    if let Some(ident) = call_expr.callee.get_identifier_reference() {
+        return ident.name == "createElement";
+    }
+
     false
 }
 
