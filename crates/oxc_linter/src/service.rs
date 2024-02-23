@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    ffi::OsStr,
     fs,
     path::Path,
     rc::Rc,
@@ -103,7 +104,13 @@ enum CacheStateEntry {
 }
 
 /// Keyed by canonicalized path
-type ModuleMap = DashMap<Box<Path>, Arc<ModuleRecord>>;
+type ModuleMap = DashMap<Box<Path>, ModuleState>;
+
+#[derive(Clone)]
+enum ModuleState {
+    Resolved(Arc<ModuleRecord>),
+    Ignored,
+}
 
 pub struct Runtime {
     cwd: Box<Path>,
@@ -138,10 +145,6 @@ impl Runtime {
         path: &Path,
         ext: &str,
     ) -> Option<Result<(SourceType, String), Error>> {
-        let read_file = |path: &Path| -> Result<String, Error> {
-            fs::read_to_string(path)
-                .map_err(|e| Error::new(FailedToOpenFileError(path.to_path_buf(), e)))
-        };
         let source_type = SourceType::from_path(path);
         let not_supported_yet =
             source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXT.contains(&ext));
@@ -149,27 +152,33 @@ impl Runtime {
             return None;
         }
         let source_type = source_type.unwrap_or_default();
-        let source_text = match read_file(path) {
-            Ok(source_text) => source_text,
-            Err(e) => {
-                return Some(Err(e));
-            }
-        };
-
-        Some(Ok((source_type, source_text)))
+        let file_result = fs::read_to_string(path)
+            .map_err(|e| Error::new(FailedToOpenFileError(path.to_path_buf(), e)));
+        Some(match file_result {
+            Ok(source_text) => Ok((source_type, source_text)),
+            Err(e) => Err(e),
+        })
     }
 
     fn process_path(&self, path: &Path, tx_error: &DiagnosticSender) {
         if self.init_cache_state(path) {
             return;
         }
-        let Some(ext) = path.extension().and_then(std::ffi::OsStr::to_str) else {
+
+        let Some(ext) = path.extension().and_then(OsStr::to_str) else {
+            self.ignore_path(path);
             return;
         };
-        let Some(source_type_and_text) = Self::get_source_type_and_text(path, ext) else { return };
+
+        let Some(source_type_and_text) = Self::get_source_type_and_text(path, ext) else {
+            self.ignore_path(path);
+            return;
+        };
+
         let (source_type, source_text) = match source_type_and_text {
             Ok(source_text) => source_text,
             Err(e) => {
+                self.ignore_path(path);
                 tx_error.send(Some((path.to_path_buf(), vec![e]))).unwrap();
                 return;
             }
@@ -181,6 +190,7 @@ impl Runtime {
             sources.unwrap_or_else(|| vec![JavaScriptSource::new(&source_text, source_type, 0)]);
 
         if sources.is_empty() {
+            self.ignore_path(path);
             return;
         }
 
@@ -234,8 +244,10 @@ impl Runtime {
         let module_record = semantic_builder.module_record();
 
         if self.linter.options().import_plugin {
-            self.module_map
-                .insert(path.to_path_buf().into_boxed_path(), Arc::clone(&module_record));
+            self.module_map.insert(
+                path.to_path_buf().into_boxed_path(),
+                ModuleState::Resolved(Arc::clone(&module_record)),
+            );
             self.update_cache_state(path);
 
             // Retrieve all dependency modules from this module.
@@ -251,10 +263,14 @@ impl Runtime {
                 .for_each_with(tx_error, |tx_error, (specifier, resolution)| {
                     let path = resolution.path();
                     self.process_path(path, tx_error);
-                    if let Some(target_module_record) = self.module_map.get(path) {
-                        module_record
-                            .loaded_modules
-                            .insert(specifier.clone(), Arc::clone(&target_module_record));
+                    if let Some(target_module_record_ref) = self.module_map.get(path) {
+                        if let ModuleState::Resolved(target_module_record) =
+                            target_module_record_ref.value()
+                        {
+                            module_record
+                                .loaded_modules
+                                .insert(specifier.clone(), Arc::clone(target_module_record));
+                        }
                     }
                 });
 
@@ -327,6 +343,13 @@ impl Runtime {
             } else {
                 *state = CacheStateEntry::PendingStore(new);
             }
+        }
+    }
+
+    fn ignore_path(&self, path: &Path) {
+        if self.linter.options().import_plugin {
+            self.module_map.insert(path.to_path_buf().into_boxed_path(), ModuleState::Ignored);
+            self.update_cache_state(path);
         }
     }
 }
