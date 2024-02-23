@@ -117,7 +117,7 @@ impl<'a> Decorators<'a> {
         Atom::from(format!("_{name}{}", if *uid == 1 { String::new() } else { uid.to_string() }))
     }
 
-    pub fn get_call_with_this(&self, name: Atom) -> Statement<'a> {
+    pub fn get_call_with_this(&self, name: Atom) -> Expression<'a> {
         self.get_call_with_arguments(
             name,
             self.ast.new_vec_single(Argument::Expression(self.ast.this_expression(SPAN))),
@@ -128,16 +128,13 @@ impl<'a> Decorators<'a> {
         &self,
         name: Atom,
         arguments: Vec<'a, Argument<'a>>,
-    ) -> Statement<'a> {
-        self.ast.expression_statement(
+    ) -> Expression<'a> {
+        self.ast.call_expression(
             SPAN,
-            self.ast.call_expression(
-                SPAN,
-                self.ast.identifier_reference_expression(IdentifierReference::new(SPAN, name)),
-                arguments,
-                false,
-                None,
-            ),
+            self.ast.identifier_reference_expression(IdentifierReference::new(SPAN, name)),
+            arguments,
+            false,
+            None,
         )
     }
 
@@ -429,6 +426,9 @@ impl<'a> Decorators<'a> {
                                     "v".into(),
                                 )),
                             ));
+
+                            let is_setter = def.kind == MethodDefinitionKind::Set;
+
                             def.value = self.ast.function(
                                 def.value.r#type,
                                 def.value.span,
@@ -439,27 +439,39 @@ impl<'a> Decorators<'a> {
                                 self.ast.formal_parameters(
                                     SPAN,
                                     FormalParameterKind::FormalParameter,
-                                    self.ast.new_vec_single(self.ast.formal_parameter(
-                                        SPAN,
-                                        self.ast.binding_pattern(
-                                            self.ast.binding_pattern_identifier(
-                                                BindingIdentifier::new(SPAN, "v".into()),
+                                    if is_setter {
+                                        self.ast.new_vec_single(self.ast.formal_parameter(
+                                            SPAN,
+                                            self.ast.binding_pattern(
+                                                self.ast.binding_pattern_identifier(
+                                                    BindingIdentifier::new(SPAN, "v".into()),
+                                                ),
+                                                None,
+                                                false,
                                             ),
                                             None,
                                             false,
-                                        ),
-                                        None,
-                                        false,
-                                        self.ast.new_vec(),
-                                    )),
+                                            self.ast.new_vec(),
+                                        ))
+                                    } else {
+                                        self.ast.new_vec()
+                                    },
                                     None,
                                 ),
                                 Some(self.ast.function_body(
                                     SPAN,
                                     self.ast.new_vec(),
-                                    self.ast.new_vec_single(
-                                        self.get_call_with_arguments(name.clone(), arguments),
-                                    ),
+                                    self.ast.new_vec_single(if is_setter {
+                                        self.ast.expression_statement(
+                                            SPAN,
+                                            self.get_call_with_arguments(name.clone(), arguments),
+                                        )
+                                    } else {
+                                        self.ast.return_statement(
+                                            SPAN,
+                                            Some(self.get_call_with_this(name.clone())),
+                                        )
+                                    }),
                                 )),
                                 self.ast.copy(&def.value.type_parameters),
                                 self.ast.copy(&def.value.return_type),
@@ -527,7 +539,7 @@ impl<'a> Decorators<'a> {
                 ) {
                     if let ClassElement::MethodDefinition(def) = constructor_element {
                         if let Some(body) = &mut def.value.body {
-                            body.statements.insert(0, self.get_call_with_this(name));
+                            body.statements.insert(0, self.ast.expression_statement(SPAN, self.get_call_with_this(name)));
                         }
                     } else {
                         unreachable!();
@@ -554,7 +566,9 @@ impl<'a> Decorators<'a> {
                                 Some(self.ast.function_body(
                                     SPAN,
                                     self.ast.new_vec(),
-                                    self.ast.new_vec_single(self.get_call_with_this(name)),
+                                    self.ast.new_vec_single(
+                                        self.ast.expression_statement(SPAN, self.get_call_with_this(name))
+                                    ),
                                 )),
                                 None,
                                 None,
