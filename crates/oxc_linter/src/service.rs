@@ -137,6 +137,7 @@ impl Runtime {
     fn resolver() -> Resolver {
         Resolver::new(ResolveOptions {
             extensions: VALID_EXTENSIONS.iter().map(|ext| format!(".{ext}")).collect(),
+            condition_names: vec!["require".into(), "module".into()],
             ..ResolveOptions::default()
         })
     }

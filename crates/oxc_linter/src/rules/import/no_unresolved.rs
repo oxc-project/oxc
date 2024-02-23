@@ -6,6 +6,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_resolver::NODEJS_BUILTINS;
+use oxc_span::SourceType;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
@@ -35,9 +36,16 @@ impl Rule for NoUnresolved {
             if module_record.loaded_modules.contains_key(specifier) {
                 continue;
             }
+            let specifier_path = Path::new(specifier.as_str());
+            // skip if the extension is not supported
+            if specifier_path.extension().is_some()
+                && SourceType::from_path(specifier_path).is_err()
+            {
+                continue;
+            }
             // skip node.js builtin modules
             if specifier.starts_with("node:")
-                || (Path::new(specifier.as_str())
+                || (specifier_path
                     .components()
                     .next()
                     .is_some_and(|c| matches!(c, Component::Normal(_)))
@@ -90,6 +98,8 @@ fn test() {
         r"define([0, foo], function (bar) {})",
         r"require(0)",
         r"require(foo)",
+        // Unsupported extensions
+        r#"import "./test.png""#,
     ];
 
     let fail = vec![
