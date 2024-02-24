@@ -68,7 +68,7 @@ impl<'a> JSDocBuilder<'a> {
     // - Intuitive TypeScript-like attaching strategy
     // - Provide `get_one` or `get_all` APIs for each use case
     //
-    // Of cource, this can be changed in the future.
+    // Of course, this can be changed in the future.
     pub fn retrieve_attached_jsdoc(&mut self, kind: &AstKind<'a>) -> bool {
         // This may be diffed compare to TypeScript's `canHaveJSDoc()`, should adjust if needed
         if !(kind.is_statement()
@@ -120,7 +120,7 @@ impl<'a> JSDocBuilder<'a> {
             return None;
         }
 
-        // Shold remove the very first `*`?
+        // Should remove the very first `*`?
         Some(JSDocComment::new(comment_content))
     }
 }

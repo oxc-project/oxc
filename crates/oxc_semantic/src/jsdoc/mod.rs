@@ -38,7 +38,7 @@ impl<'a> JSDoc<'a> {
             return None;
         };
 
-        // If flaged, at least 1 JSDoc is attached
+        // If flagged, at least 1 JSDoc is attached
         jsdocs.first().cloned()
     }
 
