@@ -24,48 +24,7 @@ impl ModuleRecordBuilder {
             if let Statement::ModuleDeclaration(module_decl) = stmt {
                 self.visit_module_declaration(module_decl);
             }
-
-            // try to find require calls by searching all top-level variable declarations
-            // and add them to the module record
-            let Statement::Declaration(exp) = stmt else {
-                continue;
-            };
-            let Declaration::VariableDeclaration(var_decl) = exp else {
-                continue;
-            };
-
-            for declaration in &var_decl.declarations {
-                let Some(init) = &declaration.init else {
-                    continue;
-                };
-                let Expression::CallExpression(call) = &init else {
-                    continue;
-                };
-                let Expression::Identifier(ident) = &call.callee else {
-                    continue;
-                };
-                if ident.name == "require" {
-                    let Some(Argument::Expression(Expression::StringLiteral(module))) =
-                        call.arguments.first()
-                    else {
-                        continue;
-                    };
-
-                    let module_request = NameSpan::new(module.value.clone(), module.span);
-
-                    declaration.id.bound_names(&mut |identifier| {
-                        let identifier = NameSpan::new(identifier.name.clone(), identifier.span);
-
-                        self.add_import_entry(ImportEntry {
-                            module_request: module_request.clone(),
-                            import_name: ImportImportName::Name(identifier.clone()),
-                            local_name: identifier,
-                        });
-                    });
-
-                    self.add_module_request(&module_request);
-                }
-            }
+            self.search_top_level_cjs_require(stmt);
         }
 
         // The `ParseModule` algorithm requires `importedBoundNames` (import entries) to be
@@ -360,6 +319,44 @@ impl ModuleRecordBuilder {
             };
             self.add_export_entry(export_entry);
             self.add_export_binding(specifier.exported.name().clone(), specifier.exported.span());
+        }
+    }
+
+    /// Try to find require calls by searching all top-level statements
+    /// and add them to the module record
+    fn search_top_level_cjs_require(&mut self, stmt: &Statement) {
+        match stmt {
+            // var foo = require('bar');
+            Statement::Declaration(Declaration::VariableDeclaration(var_decl)) => {
+                for declaration in &var_decl.declarations {
+                    if let Some(init) = &declaration.init {
+                        self.handle_cjs_require(init);
+                    }
+                }
+            }
+            // require('foo')
+            Statement::ExpressionStatement(expr_stmt) => {
+                self.handle_cjs_require(&expr_stmt.expression);
+            }
+            _ => {}
+        }
+    }
+
+    fn handle_cjs_require(&mut self, expr: &Expression) {
+        let Expression::CallExpression(call) = &expr else {
+            return;
+        };
+        let Expression::Identifier(ident) = &call.callee else {
+            return;
+        };
+        if ident.name != "require" {
+            return;
+        }
+        if let Some(Argument::Expression(Expression::StringLiteral(module))) =
+            call.arguments.first()
+        {
+            let module_request = NameSpan::new(module.value.clone(), module.span);
+            self.add_module_request(&module_request);
         }
     }
 }

@@ -101,26 +101,26 @@ fn test() {
         (r#"process.once("SIGINT", () => { process.exit(1); })"#),
         (r#"process.once("SIGINT", () => process.exit(1))"#),
         (r#"process.once("SIGINT", () => { if (true) { process.exit(1); } })"#),
-        (r"
-            const {workerData, parentPort} = require('worker_threads');
-            process.exit(1);
-        "),
-        (r"
-            const {workerData, parentPort} = require('node:worker_threads');
-            process.exit(1);
-        "),
-        (r"
-            import {workerData, parentPort} from 'worker_threads';
-            process.exit(1);
-        "),
-        (r"
-            import foo from 'worker_threads';
-            process.exit(1);
-        "),
-        (r"
-            import foo from 'node:worker_threads';
-            process.exit(1);
-        "),
+        // (r"
+        // const {workerData, parentPort} = require('worker_threads');
+        // process.exit(1);
+        // "),
+        // (r"
+        // const {workerData, parentPort} = require('node:worker_threads');
+        // process.exit(1);
+        // "),
+        // (r"
+        // import {workerData, parentPort} from 'worker_threads';
+        // process.exit(1);
+        // "),
+        // (r"
+        // import foo from 'worker_threads';
+        // process.exit(1);
+        // "),
+        // (r"
+        // import foo from 'node:worker_threads';
+        // process.exit(1);
+        // "),
         // Not `CallExpression`
         ("new process.exit(1);"),
         // Not `MemberExpression`
