@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::rc::Rc;
 
-use oxc_ast::{AstKind, TriviasMap};
+use oxc_ast::{AstKind, Comment, TriviasMap};
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
@@ -10,7 +10,7 @@ use super::{JSDoc, JSDocComment};
 pub struct JSDocBuilder<'a> {
     source_text: &'a str,
     trivias: Rc<TriviasMap>,
-    docs: BTreeMap<Span, Vec<JSDocComment<'a>>>,
+    attached_docs: BTreeMap<Span, Vec<JSDocComment<'a>>>,
     leading_comments_seen: FxHashSet<u32>,
 }
 
@@ -19,14 +19,21 @@ impl<'a> JSDocBuilder<'a> {
         Self {
             source_text,
             trivias: Rc::clone(trivias),
-            docs: BTreeMap::default(),
+            attached_docs: BTreeMap::default(),
             leading_comments_seen: FxHashSet::default(),
         }
     }
 
     pub fn build(self) -> JSDoc<'a> {
-        // TODO: Correct JSDoc for EOF
-        JSDoc::new(self.docs)
+        let not_attached_docs = self
+            .trivias
+            .comments()
+            .iter()
+            .filter(|(start, _)| !self.leading_comments_seen.contains(start))
+            .filter_map(|(start, comment)| self.parse_if_jsdoc_comment(*start, *comment))
+            .collect::<Vec<_>>();
+
+        JSDoc::new(self.attached_docs, not_attached_docs)
     }
 
     // この紐づけ処理は、Semanticのビルドにあわせて行われる。
@@ -75,30 +82,37 @@ impl<'a> JSDocBuilder<'a> {
         // 2. Filter and parse JSDoc comments only
         let leading_jsdoc_comments = leading_comments
             .iter()
-            .filter(|(_, comment)| comment.is_multi_line())
-            .filter_map(|(start, comment)| {
-                let comment_span = Span::new(**start, comment.end());
-                // Inside of marker: /*_CONTENT_*/
-                let comment_content = comment_span.source_text(self.source_text);
-                // Should start with "*": /**_CONTENT_*/
-                if !comment_content.starts_with('*') {
-                    return None;
-                }
-                Some(comment_content)
-            })
-            .map(|comment_content| {
-                // Shold remove the very first `*`?
-                JSDocComment::new(comment_content)
-            })
+            .filter_map(|(start, comment)| self.parse_if_jsdoc_comment(**start, **comment))
             .collect::<Vec<_>>();
 
         // 3. Save and return `true` to mark JSDoc flag
         if !leading_jsdoc_comments.is_empty() {
-            self.docs.insert(span, leading_jsdoc_comments);
+            self.attached_docs.insert(span, leading_jsdoc_comments);
             return true;
         }
 
         false
+    }
+
+    fn parse_if_jsdoc_comment(
+        &self,
+        span_start: u32,
+        comment: Comment,
+    ) -> Option<JSDocComment<'a>> {
+        if !comment.is_multi_line() {
+            return None;
+        }
+
+        let comment_span = Span::new(span_start, comment.end());
+        // Inside of marker: /*_CONTENT_*/
+        let comment_content = comment_span.source_text(self.source_text);
+        // Should start with "*": /**_CONTENT_*/
+        if !comment_content.starts_with('*') {
+            return None;
+        }
+
+        // Shold remove the very first `*`?
+        Some(JSDocComment::new(comment_content))
     }
 }
 

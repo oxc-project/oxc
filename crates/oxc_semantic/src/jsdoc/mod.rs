@@ -14,7 +14,8 @@ mod parser;
 #[derive(Debug)]
 pub struct JSDoc<'a> {
     /// JSDocs by Span
-    docs: BTreeMap<Span, Vec<JSDocComment<'a>>>,
+    attached: BTreeMap<Span, Vec<JSDocComment<'a>>>,
+    not_attached: Vec<JSDocComment<'a>>,
 }
 
 #[derive(Debug, Clone)]
@@ -25,8 +26,11 @@ pub struct JSDocComment<'a> {
 }
 
 impl<'a> JSDoc<'a> {
-    pub fn new(docs: BTreeMap<Span, Vec<JSDocComment<'a>>>) -> Self {
-        Self { docs }
+    pub fn new(
+        attached: BTreeMap<Span, Vec<JSDocComment<'a>>>,
+        not_attached: Vec<JSDocComment<'a>>,
+    ) -> Self {
+        Self { attached, not_attached }
     }
 
     pub fn get_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<Vec<JSDocComment<'a>>> {
@@ -38,11 +42,11 @@ impl<'a> JSDoc<'a> {
     }
 
     pub fn get_by_span<'b>(&'b self, span: Span) -> Option<Vec<JSDocComment<'a>>> {
-        self.docs.get(&span).cloned()
+        self.attached.get(&span).cloned()
     }
 
     pub fn iter_all<'b>(&'b self) -> impl Iterator<Item = &JSDocComment<'a>> + 'b {
-        self.docs.iter().flat_map(|(_, comments)| comments)
+        self.attached.values().flatten().chain(self.not_attached.iter())
     }
 }
 
