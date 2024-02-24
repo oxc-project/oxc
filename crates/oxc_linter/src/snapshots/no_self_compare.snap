@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_self_compare
 ---
-
   ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
    ╭─[no_self_compare.tsx:1:5]
  1 │ if (x === x) { }
@@ -107,4 +106,3 @@ expression: no_self_compare
    ·                           ───────────     ───────────
    ╰────
   help: If you are testing for NaN, you can use Number.isNaN function.
-

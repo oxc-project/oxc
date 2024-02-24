@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_unresolved
 ---
-
   ⚠ eslint-plugin-import(no-unresolved): Ensure imports point to a file/module that can be resolved
    ╭─[index.js:1:24]
  1 │ import reallyfake from "./reallyfake/module"
@@ -62,4 +61,3 @@ expression: no_unresolved
  1 │ var bar = require("./baz")
    ·                   ───────
    ╰────
-

@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_useless_catch
 ---
-
   ⚠ eslint(no-useless-catch): Unnecessary try/catch wrapper
    ╭─[no_useless_catch.tsx:4:18]
  3 │           foo();
@@ -64,4 +63,3 @@ expression: no_useless_catch
    ·                 ╰── and re-thrown here
  7 │           }
    ╰────
-

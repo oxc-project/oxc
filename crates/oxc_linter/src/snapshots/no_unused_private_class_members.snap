@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_unused_private_class_members
 ---
-
   ⚠ eslint(no-unused-private-class-members): 'unusedMember' is defined but never used.
    ╭─[no_unused_private_class_members.tsx:2:17]
  1 │ class Foo {
@@ -162,4 +161,3 @@ expression: no_unused_private_class_members
    ·                 ──────────────────────────────
  3 │             
    ╰────
-

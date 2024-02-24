@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: valid_title
 ---
-
   ⚠ eslint-plugin-jest(valid-title): "correct is not allowed in test title"
    ╭─[valid_title.tsx:1:6]
  1 │ test('the correct way to properly handle all things', () => {});
@@ -569,4 +568,3 @@ expression: valid_title
  4 │                 })
    ╰────
   help: "The function name has already contains the prefix, try remove the duplicate prefix"
-

@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_useless_escape
 ---
-
   ⚠ eslint(no-useless-escape): Unnecessary escape character '#'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = /\#/;
@@ -386,4 +385,3 @@ expression: no_useless_escape
  1 │ var stringLiteralWithNextLine = `line 1\line 2`;
    ·                                        ─
    ╰────
-

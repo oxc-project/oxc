@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_mocks_import
 ---
-
   ⚠ eslint-plugin-jest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.
    ╭─[no_mocks_import.tsx:1:9]
  1 │ require('./__mocks__')
@@ -51,4 +50,3 @@ expression: no_mocks_import
    ·                   ───────────────────
    ╰────
   help: Instead use `jest.mock` and import from the original module path.
-

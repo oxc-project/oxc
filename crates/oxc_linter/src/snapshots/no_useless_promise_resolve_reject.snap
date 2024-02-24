@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_useless_promise_resolve_reject
 ---
-
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `return Promise.reject(error)`.
    ╭─[no_useless_promise_resolve_reject.tsx:4:28]
  3 │                 if (foo > 4) {
@@ -453,4 +452,3 @@ expression: no_useless_promise_resolve_reject
    ·                                             ───────────────────
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
-

@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_new_array
 ---
-
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:15]
  1 │ const array = new Array(1)
@@ -394,4 +393,3 @@ expression: no_new_array
    ·               ─────────────────
    ╰────
   help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
-

@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_node_protocol
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
    ╭─[prefer_node_protocol.tsx:1:16]
  1 │ import fs from "fs";
@@ -99,4 +98,3 @@ expression: prefer_node_protocol
    ·              ───────────────
    ╰────
   help: Prefer `node:assert/strict` over `assert/strict`.
-

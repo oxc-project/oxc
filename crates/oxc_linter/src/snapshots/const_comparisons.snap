@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: const_comparisons
 ---
-
   ⚠ oxc(const-comparisons): Unexpected constant comparison
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code <= 400 && status_code > 500;
@@ -236,4 +235,3 @@ expression: const_comparisons
    ·         ╰── This will always evaluate to true.
    ╰────
   help: if `status_code < 500` evaluates to true, `status_code <= 500` will always evaluate to true as well
-

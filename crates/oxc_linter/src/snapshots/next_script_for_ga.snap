@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: next_script_for_ga
 ---
-
   ⚠ eslint-plugin-next(next-script-for-ga): Prefer `next/script` component when using the inline script for Google Analytics.
    ╭─[next_script_for_ga.tsx:7:30]
  6 │                             <h1>Hello title</h1>
@@ -47,4 +46,3 @@ expression: next_script_for_ga
  19 │                           </div>
     ╰────
   help: See https://nextjs.org/docs/messages/next-script-for-ga
-

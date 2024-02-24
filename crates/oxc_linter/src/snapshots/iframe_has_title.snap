@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: iframe_has_title
 ---
-
   ⚠ eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element.
    ╭─[iframe_has_title.tsx:1:2]
  1 │ <iframe />
@@ -72,4 +71,3 @@ expression: iframe_has_title
    ·  ────────────
    ╰────
   help: Provide title property for iframe element.
-

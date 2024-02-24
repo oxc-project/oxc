@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_thenable
 ---
-
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.
    ╭─[no_thenable.tsx:1:14]
  1 │ const foo = {then: 1}
@@ -611,4 +610,3 @@ expression: no_thenable
    ·                           ────
    ╰────
   help: If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems
-

@@ -143,7 +143,7 @@ impl Runtime {
             .map(|p| TsconfigOptions { config_file: p, references: TsconfigReferences::Auto });
         Resolver::new(ResolveOptions {
             extensions: VALID_EXTENSIONS.iter().map(|ext| format!(".{ext}")).collect(),
-            condition_names: vec!["require".into(), "module".into()],
+            condition_names: vec!["module".into(), "require".into()],
             tsconfig,
             ..ResolveOptions::default()
         })

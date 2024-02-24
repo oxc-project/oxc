@@ -3,7 +3,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule};
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-import(default): No default export found in imported module {0:?}")]
 #[diagnostic(severity(warning), help("does {0:?} have the default export?"))]
-struct DefaultDiagnostic(Atom, #[label] pub Span);
+struct DefaultDiagnostic(String, #[label] pub Span);
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/default.md>
 #[derive(Debug, Default, Clone)]
@@ -50,7 +50,7 @@ impl Rule for Default {
                 && !remote_module_record_ref.exported_bindings.contains_key("default")
             {
                 ctx.diagnostic(DefaultDiagnostic(
-                    specifier.clone(),
+                    specifier.to_string(),
                     import_entry.module_request.span(),
                 ));
             }

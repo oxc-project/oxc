@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_nested_ternary
 ---
-
   ⚠ eslint-plugin-unicorn(no-nested-ternary): Unexpected deeply nested ternary expression.
    ╭─[no_nested_ternary.tsx:1:47]
  1 │ const foo = i > 5 ? true : (i < 100 ? true : (i < 1000 ? true : false));
@@ -67,4 +66,3 @@ expression: no_nested_ternary
  11 │                     )
     ╰────
   help: Avoid nesting ternary expressions for more than one level.
-
