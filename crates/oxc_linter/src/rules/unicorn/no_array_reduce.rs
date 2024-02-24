@@ -104,7 +104,7 @@ fn is_simple_operation(node: &CallExpression) -> bool {
     };
     let function_body = match callback_arg {
         // `array.reduce((accumulator, element) => accumulator + element)`
-        Expression::ArrowExpression(callback) => &callback.body,
+        Expression::ArrowFunctionExpression(callback) => &callback.body,
         Expression::FunctionExpression(callback) => {
             let Some(body) = &callback.body else {
                 return false;

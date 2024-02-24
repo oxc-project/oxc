@@ -29,17 +29,30 @@ pub struct Decorators<'a> {
 bitflags! {
     #[derive(Debug, Clone, Copy)]
     pub struct DecoratorFlags: u8 {
-        const Field = 0;
-        const Accessor = 1;
-        const Method = 2;
-        const Getter = 3;
-        const Setter = 4;
-        const Static = 8;
-        const DecoratorsHaveThis = 16;
+        // flag is 0
+        const Field = 1 << 0;
+        // flag is 1
+        const Accessor = 1 << 1;
+        // flag is 2
+        const Method = 1 << 2;
+        // flag is 3
+        const Getter = 1 << 3;
+        // flag is 4
+        const Setter = 1 << 4;
+        // flag is 8
+        const Static = 1 << 5;
+        // flag is 16
+        const DecoratorsHaveThis = 1 << 6;
     }
 }
 
 impl DecoratorFlags {
+    pub fn is_setter(self) -> bool {
+        self.contains(Self::Setter)
+    }
+    pub fn is_static(self) -> bool {
+        self.contains(Self::Static)
+    }
     pub fn get_flag_by_kind(kind: MethodDefinitionKind) -> Self {
         match kind {
             MethodDefinitionKind::Method => Self::Method,
@@ -47,6 +60,28 @@ impl DecoratorFlags {
             MethodDefinitionKind::Set => Self::Setter,
             MethodDefinitionKind::Constructor => unreachable!(),
         }
+    }
+    pub fn to_value(self) -> u8 {
+        if self.contains(DecoratorFlags::DecoratorsHaveThis) {
+            return 16;
+        }
+        let mut value: u8 = 0;
+        if self.contains(DecoratorFlags::Accessor) {
+            value += 1;
+        }
+        if self.contains(DecoratorFlags::Method) {
+            value += 2;
+        }
+        if self.contains(DecoratorFlags::Getter) {
+            value += 3;
+        }
+        if self.contains(DecoratorFlags::Setter) {
+            value += 4;
+        }
+        if self.contains(DecoratorFlags::Static) {
+            value += 8;
+        }
+        value
     }
 }
 
@@ -117,16 +152,24 @@ impl<'a> Decorators<'a> {
         Atom::from(format!("_{name}{}", if *uid == 1 { String::new() } else { uid.to_string() }))
     }
 
-    pub fn get_call_with_this(&self, name: Atom) -> Statement<'a> {
-        self.ast.expression_statement(
+    pub fn get_call_with_this(&self, name: Atom) -> Expression<'a> {
+        self.get_call_with_arguments(
+            name,
+            self.ast.new_vec_single(Argument::Expression(self.ast.this_expression(SPAN))),
+        )
+    }
+
+    pub fn get_call_with_arguments(
+        &self,
+        name: Atom,
+        arguments: Vec<'a, Argument<'a>>,
+    ) -> Expression<'a> {
+        self.ast.call_expression(
             SPAN,
-            self.ast.call_expression(
-                SPAN,
-                self.ast.identifier_reference_expression(IdentifierReference::new(SPAN, name)),
-                self.ast.new_vec_single(Argument::Expression(self.ast.this_expression(SPAN))),
-                false,
-                None,
-            ),
+            self.ast.identifier_reference_expression(IdentifierReference::new(SPAN, name)),
+            arguments,
+            false,
+            None,
         )
     }
 
@@ -289,6 +332,8 @@ impl<'a> Decorators<'a> {
         let mut c_elements = self.ast.new_vec();
         let mut e_elements = self.ast.new_vec();
 
+        let mut private_in_expressions = self.ast.new_vec();
+
         let mut init_static_name = None;
 
         // insert member decorators
@@ -373,6 +418,7 @@ impl<'a> Decorators<'a> {
             let mut is_proto = false;
             let mut is_static = false;
 
+            let mut name = Atom::new_inline("");
             class.body.body.iter_mut().for_each(|element| {
                 if !element.has_decorator() {
                     return;
@@ -384,17 +430,141 @@ impl<'a> Decorators<'a> {
                         } else {
                             is_proto = true;
                         }
-                        let mut flag = DecoratorFlags::get_flag_by_kind(def.kind).bits();
+                        let mut flag = DecoratorFlags::get_flag_by_kind(def.kind);
                         if def.r#static {
-                            flag += DecoratorFlags::Static.bits();
+                            flag |= DecoratorFlags::Static;
                         }
 
                         def.decorators.iter().for_each(|decorator| {
                             member_decorators_vec.push(ArrayExpressionElement::Expression(
-                                self.get_decorator_info(&def.key, flag, decorator),
+                                self.get_decorator_info(
+                                    &def.key,
+                                    Some(self.ast.copy(&def.value)),
+                                    flag,
+                                    decorator,
+                                ),
                             ));
                         });
+
                         def.decorators.clear();
+
+                        if def.key.is_private_identifier() {
+                            {
+                                if flag.is_setter() && !flag.is_static() {
+                                    // _ => #a in _;
+                                    private_in_expressions.push(self.ast.arrow_expression(
+                                        SPAN,
+                                        true,
+                                        false,
+                                        self.ast.formal_parameters(
+                                            SPAN,
+                                            FormalParameterKind::ArrowFormalParameters,
+                                            self.ast.new_vec_single(self.ast.formal_parameter(
+                                                SPAN,
+                                                self.ast.binding_pattern(
+                                                    self.ast.binding_pattern_identifier(
+                                                        BindingIdentifier::new(SPAN, "_".into()),
+                                                    ),
+                                                    None,
+                                                    false,
+                                                ),
+                                                None,
+                                                false,
+                                                self.ast.new_vec(),
+                                            )),
+                                            None,
+                                        ),
+                                        self.ast.function_body(
+                                            SPAN,
+                                            self.ast.new_vec(),
+                                            self.ast.new_vec_single(self.ast.expression_statement(
+                                                SPAN,
+                                                self.ast.private_in_expression(
+                                                    SPAN,
+                                                    PrivateIdentifier::new(
+                                                        SPAN,
+                                                        def.key.private_name().unwrap(),
+                                                    ),
+                                                    self.ast.identifier_reference_expression(
+                                                        IdentifierReference::new(SPAN, "_".into()),
+                                                    ),
+                                                ),
+                                            )),
+                                        ),
+                                        None,
+                                        None,
+                                    ));
+                                }
+                            }
+
+                            name = self.get_unique_name(&if def.computed {
+                                "init_computedKey".into()
+                            } else {
+                                format!("call_{}", def.key.name().unwrap()).into()
+                            });
+
+                            let mut arguments = self.ast.new_vec_with_capacity(2);
+                            arguments.push(Argument::Expression(self.ast.this_expression(SPAN)));
+                            arguments.push(Argument::Expression(
+                                self.ast.identifier_reference_expression(IdentifierReference::new(
+                                    SPAN,
+                                    "v".into(),
+                                )),
+                            ));
+
+                            let is_setter = def.kind == MethodDefinitionKind::Set;
+
+                            def.value = self.ast.function(
+                                def.value.r#type,
+                                def.value.span,
+                                self.ast.copy(&def.value.id),
+                                def.value.generator,
+                                def.value.r#async,
+                                self.ast.copy(&def.value.this_param),
+                                self.ast.formal_parameters(
+                                    SPAN,
+                                    FormalParameterKind::FormalParameter,
+                                    if is_setter {
+                                        self.ast.new_vec_single(self.ast.formal_parameter(
+                                            SPAN,
+                                            self.ast.binding_pattern(
+                                                self.ast.binding_pattern_identifier(
+                                                    BindingIdentifier::new(SPAN, "v".into()),
+                                                ),
+                                                None,
+                                                false,
+                                            ),
+                                            None,
+                                            false,
+                                            self.ast.new_vec(),
+                                        ))
+                                    } else {
+                                        self.ast.new_vec()
+                                    },
+                                    None,
+                                ),
+                                Some(self.ast.function_body(
+                                    SPAN,
+                                    self.ast.new_vec(),
+                                    self.ast.new_vec_single(if is_setter {
+                                        self.ast.expression_statement(
+                                            SPAN,
+                                            self.get_call_with_arguments(name.clone(), arguments),
+                                        )
+                                    } else {
+                                        self.ast.return_statement(
+                                            SPAN,
+                                            Some(self.get_call_with_this(name.clone())),
+                                        )
+                                    }),
+                                )),
+                                self.ast.copy(&def.value.type_parameters),
+                                self.ast.copy(&def.value.return_type),
+                                self.ast.copy(&def.value.modifiers),
+                            );
+                        } else {
+                            return;
+                        }
                     }
                     ClassElement::PropertyDefinition(def) => {
                         let flag = if def.r#static {
@@ -403,18 +573,15 @@ impl<'a> Decorators<'a> {
                             DecoratorFlags::Field
                         };
 
-                        let init_name = self.get_unique_name(&if def.computed {
+                        name = self.get_unique_name(&if def.computed {
                             "init_computedKey".into()
                         } else {
                             format!("init_{}", def.key.name().unwrap()).into()
                         });
 
-                        e_elements
-                            .push(self.get_assignment_target_maybe_default(init_name.clone()));
-
                         def.decorators.iter().for_each(|decorator| {
                             member_decorators_vec.push(ArrayExpressionElement::Expression(
-                                self.get_decorator_info(&def.key, flag.bits(), decorator),
+                                self.get_decorator_info(&def.key, None, flag, decorator),
                             ));
                         });
                         def.decorators.clear();
@@ -431,17 +598,18 @@ impl<'a> Decorators<'a> {
                             SPAN,
                             self.ast.identifier_reference_expression(IdentifierReference::new(
                                 SPAN,
-                                init_name.clone(),
+                                name.clone(),
                             )),
                             arguments,
                             false,
                             None,
                         ));
-
-                        declarations.push(self.get_variable_declarator(init_name));
                     }
-                    _ => {}
+                    _ => return,
                 }
+
+                e_elements.push(self.get_assignment_target_maybe_default(name.clone()));
+                declarations.push(self.get_variable_declarator(name.clone()));
             });
 
             if is_proto {
@@ -456,7 +624,7 @@ impl<'a> Decorators<'a> {
                 ) {
                     if let ClassElement::MethodDefinition(def) = constructor_element {
                         if let Some(body) = &mut def.value.body {
-                            body.statements.insert(0, self.get_call_with_this(name));
+                            body.statements.insert(0, self.ast.expression_statement(SPAN, self.get_call_with_this(name)));
                         }
                     } else {
                         unreachable!();
@@ -483,7 +651,9 @@ impl<'a> Decorators<'a> {
                                 Some(self.ast.function_body(
                                     SPAN,
                                     self.ast.new_vec(),
-                                    self.ast.new_vec_single(self.get_call_with_this(name)),
+                                    self.ast.new_vec_single(
+                                        self.ast.expression_statement(SPAN, self.get_call_with_this(name))
+                                    ),
                                 )),
                                 None,
                                 None,
@@ -545,6 +715,15 @@ impl<'a> Decorators<'a> {
                 None,
             )));
             arguments.push(class_decorators_argument);
+            if !private_in_expressions.is_empty() {
+                // classDecsHaveThis
+                arguments.push(Argument::Expression(self.ast.literal_number_expression(
+                    // TODO: use correct number instead of `0`
+                    self.ast.number_literal(SPAN, 0f64, "0", oxc_syntax::NumberBase::Decimal),
+                )));
+                // instanceBrand
+                arguments.extend(private_in_expressions.into_iter().map(Argument::Expression));
+            }
 
             let mut call_expr = self.ast.call_expression(SPAN, callee, arguments, false, None);
 
@@ -668,7 +847,8 @@ impl<'a> Decorators<'a> {
     fn get_decorator_info(
         &self,
         key: &PropertyKey<'a>,
-        flag: u8,
+        value: Option<Box<'a, Function<'a>>>,
+        flag: DecoratorFlags,
         decorator: &Decorator<'a>,
     ) -> Expression<'a> {
         let name = key.name();
@@ -677,10 +857,10 @@ impl<'a> Decorators<'a> {
         decorator_elements
             .push(ArrayExpressionElement::Expression(self.ast.copy(&decorator.expression)));
         decorator_elements.push(ArrayExpressionElement::Expression(
-            self.ast.literal_number_expression(NumberLiteral::new(
+            self.ast.literal_number_expression(NumericLiteral::new(
                 SPAN,
                 0f64,
-                self.ast.new_str(flag.to_string().as_str()),
+                self.ast.new_str(flag.to_value().to_string().as_str()),
                 oxc_syntax::NumberBase::Decimal,
             )),
         ));
@@ -690,9 +870,13 @@ impl<'a> Decorators<'a> {
             ));
 
             if key.is_private_identifier() {
-                // (o) => o.#a
-                let mut items =
-                    self.ast.new_vec_single(self.ast.formal_parameter(
+                if let Some(value) = value {
+                    decorator_elements.push(ArrayExpressionElement::Expression(
+                        Expression::FunctionExpression(value),
+                    ));
+                } else {
+                    // o => o.#a
+                    let mut items = self.ast.new_vec_single(self.ast.formal_parameter(
                         SPAN,
                         self.ast.binding_pattern(
                             self.ast.binding_pattern_identifier(BindingIdentifier::new(
@@ -706,64 +890,21 @@ impl<'a> Decorators<'a> {
                         false,
                         self.ast.new_vec(),
                     ));
-                let private_field = self.ast.private_field(
-                    SPAN,
-                    self.ast.identifier_reference_expression(IdentifierReference::new(
+                    let private_field = self.ast.private_field(
                         SPAN,
-                        "o".into(),
-                    )),
-                    PrivateIdentifier::new(SPAN, name),
-                    false,
-                );
-                let params = self.ast.formal_parameters(
-                    SPAN,
-                    FormalParameterKind::ArrowFormalParameters,
-                    self.ast.copy(&items),
-                    None,
-                );
-                decorator_elements.push(ArrayExpressionElement::Expression(
-                    self.ast.arrow_expression(
-                        SPAN,
-                        true,
-                        false,
-                        params,
-                        self.ast.function_body(
+                        self.ast.identifier_reference_expression(IdentifierReference::new(
                             SPAN,
-                            self.ast.new_vec(),
-                            self.ast.new_vec_single(self.ast.expression_statement(
-                                SPAN,
-                                self.ast.member_expression(self.ast.copy(&private_field)),
-                            )),
-                        ),
-                        None,
-                        None,
-                    ),
-                ));
-
-                {
-                    // (o, v) => o.#a = v
-                    items.push(self.ast.formal_parameter(
-                        SPAN,
-                        self.ast.binding_pattern(
-                            self.ast.binding_pattern_identifier(BindingIdentifier::new(
-                                SPAN,
-                                "v".into(),
-                            )),
-                            None,
-                            false,
-                        ),
-                        None,
+                            "o".into(),
+                        )),
+                        PrivateIdentifier::new(SPAN, name),
                         false,
-                        self.ast.new_vec(),
-                    ));
-
+                    );
                     let params = self.ast.formal_parameters(
                         SPAN,
                         FormalParameterKind::ArrowFormalParameters,
-                        items,
+                        self.ast.copy(&items),
                         None,
                     );
-
                     decorator_elements.push(ArrayExpressionElement::Expression(
                         self.ast.arrow_expression(
                             SPAN,
@@ -775,22 +916,66 @@ impl<'a> Decorators<'a> {
                                 self.ast.new_vec(),
                                 self.ast.new_vec_single(self.ast.expression_statement(
                                     SPAN,
-                                    self.ast.assignment_expression(
-                                        SPAN,
-                                        AssignmentOperator::Assign,
-                                        self.ast.simple_assignment_target_member_expression(
-                                            private_field,
-                                        ),
-                                        self.ast.identifier_reference_expression(
-                                            IdentifierReference::new(SPAN, "v".into()),
-                                        ),
-                                    ),
+                                    self.ast.member_expression(self.ast.copy(&private_field)),
                                 )),
                             ),
                             None,
                             None,
                         ),
                     ));
+
+                    {
+                        // (o, v) => o.#a = v
+                        items.push(self.ast.formal_parameter(
+                            SPAN,
+                            self.ast.binding_pattern(
+                                self.ast.binding_pattern_identifier(BindingIdentifier::new(
+                                    SPAN,
+                                    "v".into(),
+                                )),
+                                None,
+                                false,
+                            ),
+                            None,
+                            false,
+                            self.ast.new_vec(),
+                        ));
+
+                        let params = self.ast.formal_parameters(
+                            SPAN,
+                            FormalParameterKind::ArrowFormalParameters,
+                            items,
+                            None,
+                        );
+
+                        decorator_elements.push(ArrayExpressionElement::Expression(
+                            self.ast.arrow_expression(
+                                SPAN,
+                                true,
+                                false,
+                                params,
+                                self.ast.function_body(
+                                    SPAN,
+                                    self.ast.new_vec(),
+                                    self.ast.new_vec_single(self.ast.expression_statement(
+                                        SPAN,
+                                        self.ast.assignment_expression(
+                                            SPAN,
+                                            AssignmentOperator::Assign,
+                                            self.ast.simple_assignment_target_member_expression(
+                                                private_field,
+                                            ),
+                                            self.ast.identifier_reference_expression(
+                                                IdentifierReference::new(SPAN, "v".into()),
+                                            ),
+                                        ),
+                                    )),
+                                ),
+                                None,
+                                None,
+                            ),
+                        ));
+                    }
                 }
             }
         }

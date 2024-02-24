@@ -270,7 +270,7 @@ impl<'a> ParserImpl<'a> {
         NullLiteral { span: self.end_span(span) }
     }
 
-    pub(crate) fn parse_literal_number(&mut self) -> Result<NumberLiteral<'a>> {
+    pub(crate) fn parse_literal_number(&mut self) -> Result<NumericLiteral<'a>> {
         let span = self.start_span();
         let token = self.cur_token();
         let src = self.cur_src();
@@ -296,7 +296,7 @@ impl<'a> ParserImpl<'a> {
             _ => return Err(self.unexpected()),
         };
         self.bump_any();
-        Ok(NumberLiteral::new(self.end_span(span), value, src, base))
+        Ok(NumericLiteral::new(self.end_span(span), value, src, base))
     }
 
     pub(crate) fn parse_literal_bigint(&mut self) -> Result<BigintLiteral> {

@@ -1,4 +1,4 @@
-use oxc_ast::ast::NumberLiteral;
+use oxc_ast::ast::NumericLiteral;
 use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -40,7 +40,7 @@ declare_oxc_lint!(
 impl Rule for NoLossOfPrecision {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::NumberLiteral(node) if Self::lose_precision(node) => {
+            AstKind::NumericLiteral(node) if Self::lose_precision(node) => {
                 ctx.diagnostic(NoLossOfPrecisionDiagnostic(node.span));
             }
             _ => {}
@@ -186,7 +186,7 @@ impl<'a> RawNum<'a> {
 }
 
 impl NoLossOfPrecision {
-    fn get_raw<'a>(node: &'a NumberLiteral) -> Cow<'a, str> {
+    fn get_raw<'a>(node: &'a NumericLiteral) -> Cow<'a, str> {
         if node.raw.contains('_') {
             Cow::Owned(node.raw.replace('_', ""))
         } else {
@@ -194,7 +194,7 @@ impl NoLossOfPrecision {
         }
     }
 
-    fn not_base_ten_loses_precision(node: &'_ NumberLiteral) -> bool {
+    fn not_base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {
         let raw = Self::get_raw(node).to_uppercase();
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         // AST always store number as f64, need a cast to format in bin/oct/hex
@@ -209,7 +209,7 @@ impl NoLossOfPrecision {
         !raw.ends_with(&suffix.to_uppercase())
     }
 
-    fn base_ten_loses_precision(node: &'_ NumberLiteral) -> bool {
+    fn base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {
         let raw = Self::get_raw(node);
         let Some(raw) = Self::normalize(&raw) else { return true };
 
@@ -229,7 +229,7 @@ impl NoLossOfPrecision {
         Some(RawNum::new(num)?.normalize())
     }
 
-    pub fn lose_precision(node: &'_ NumberLiteral) -> bool {
+    pub fn lose_precision(node: &'_ NumericLiteral) -> bool {
         if node.base.is_base_10() {
             Self::base_ten_loses_precision(node)
         } else {

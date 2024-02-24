@@ -179,7 +179,7 @@ jobs:
           docs: true
 
       - name: Run doc
-        run: RUSTDOCFLAGS='-D warnings' cargo doc -p oxc
+        run: RUSTDOCFLAGS='-D warnings' cargo doc
 
   test:
     name: Test

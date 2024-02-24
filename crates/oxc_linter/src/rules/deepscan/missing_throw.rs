@@ -53,7 +53,9 @@ impl MissingThrow {
             for node_id in node_ancestors {
                 match ctx.nodes().kind(node_id) {
                     // ignore arrow `const foo = () => new Error()`
-                    AstKind::ArrowExpression(arrow_expr) if arrow_expr.expression => return false,
+                    AstKind::ArrowFunctionExpression(arrow_expr) if arrow_expr.expression => {
+                        return false
+                    }
                     AstKind::ArrayExpression(_) | AstKind::Function(_) => break,
                     _ => {}
                 }

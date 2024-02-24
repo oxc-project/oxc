@@ -54,7 +54,7 @@ impl<'a> ParserImpl<'a> {
             }
             Kind::Str => Ok(TSEnumMemberName::StringLiteral(self.parse_literal_string()?)),
             kind if kind.is_number() => {
-                Ok(TSEnumMemberName::NumberLiteral(self.parse_literal_number()?))
+                Ok(TSEnumMemberName::NumericLiteral(self.parse_literal_number()?))
             }
             _ => Ok(TSEnumMemberName::Identifier(self.parse_identifier_name()?)),
         }

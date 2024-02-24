@@ -1,18 +1,20 @@
 use std::{
     cell::Cell,
-    io::{BufWriter, Write},
     path::{Path, PathBuf},
-    sync::mpsc,
-    sync::Arc,
+    sync::{mpsc, Arc},
 };
 
-use crate::{miette::NamedSource, Error, GraphicalReportHandler, MinifiedFileError, Severity};
+use crate::{
+    miette::NamedSource, reporter::DiagnosticReporter, Error, MinifiedFileError, Severity,
+};
 
 pub type DiagnosticTuple = (PathBuf, Vec<Error>);
 pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;
 pub type DiagnosticReceiver = mpsc::Receiver<Option<DiagnosticTuple>>;
 
 pub struct DiagnosticService {
+    reporter: DiagnosticReporter,
+
     /// Disable reporting on warnings, only errors are reported
     quiet: bool,
 
@@ -34,6 +36,7 @@ impl Default for DiagnosticService {
     fn default() -> Self {
         let (sender, receiver) = mpsc::channel();
         Self {
+            reporter: DiagnosticReporter::new_graphical(),
             quiet: false,
             max_warnings: None,
             warnings_count: Cell::new(0),
@@ -45,6 +48,10 @@ impl Default for DiagnosticService {
 }
 
 impl DiagnosticService {
+    pub fn set_json_reporter(&mut self) {
+        self.reporter = DiagnosticReporter::new_json();
+    }
+
     #[must_use]
     pub fn with_quiet(mut self, yes: bool) -> Self {
         self.quiet = yes;
@@ -89,10 +96,7 @@ impl DiagnosticService {
     /// # Panics
     ///
     /// * When the writer fails to write
-    pub fn run(&self) {
-        let mut buf_writer = BufWriter::new(std::io::stdout());
-        let handler = GraphicalReportHandler::new();
-
+    pub fn run(&mut self) {
         while let Ok(Some((path, diagnostics))) = self.receiver.recv() {
             let mut output = String::new();
             for diagnostic in diagnostics {
@@ -115,20 +119,20 @@ impl DiagnosticService {
                     }
                 }
 
-                let mut err = String::new();
-                handler.render_report(&mut err, diagnostic.as_ref()).unwrap();
-                // Skip large output and print only once
-                if err.lines().any(|line| line.len() >= 400) {
-                    let minified_diagnostic = Error::new(MinifiedFileError(path.clone()));
-                    err = format!("{minified_diagnostic:?}");
-                    output = err;
-                    break;
+                if let Some(mut err_str) = self.reporter.render_error(diagnostic) {
+                    // Skip large output and print only once
+                    if err_str.lines().any(|line| line.len() >= 400) {
+                        let minified_diagnostic = Error::new(MinifiedFileError(path.clone()));
+                        err_str = format!("{minified_diagnostic:?}");
+                        output = err_str;
+                        break;
+                    }
+                    output.push_str(&err_str);
                 }
-                output.push_str(&err);
             }
-            buf_writer.write_all(output.as_bytes()).unwrap();
+            self.reporter.render_diagnostics(output.as_bytes());
         }
 
-        buf_writer.flush().unwrap();
+        self.reporter.finish();
     }
 }

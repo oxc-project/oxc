@@ -546,7 +546,7 @@ pub trait VisitMut<'a>: Sized {
             Expression::BigintLiteral(lit) => self.visit_bigint_literal(lit),
             Expression::BooleanLiteral(lit) => self.visit_boolean_literal(lit),
             Expression::NullLiteral(lit) => self.visit_null_literal(lit),
-            Expression::NumberLiteral(lit) => self.visit_number_literal(lit),
+            Expression::NumericLiteral(lit) => self.visit_number_literal(lit),
             Expression::RegExpLiteral(lit) => self.visit_reg_expr_literal(lit),
             Expression::StringLiteral(lit) => self.visit_string_literal(lit),
             Expression::TemplateLiteral(lit) => self.visit_template_literal(lit),
@@ -555,7 +555,7 @@ pub trait VisitMut<'a>: Sized {
             Expression::MetaProperty(meta) => self.visit_meta_property(meta),
 
             Expression::ArrayExpression(expr) => self.visit_array_expression(expr),
-            Expression::ArrowExpression(expr) => self.visit_arrow_expression(expr),
+            Expression::ArrowFunctionExpression(expr) => self.visit_arrow_expression(expr),
             Expression::AssignmentExpression(expr) => self.visit_assignment_expression(expr),
             Expression::AwaitExpression(expr) => self.visit_await_expression(expr),
             Expression::BinaryExpression(expr) => self.visit_binary_expression(expr),
@@ -659,8 +659,8 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_arrow_expression(&mut self, expr: &mut ArrowExpression<'a>) {
-        let kind = AstKind::ArrowExpression(self.alloc(expr));
+    fn visit_arrow_expression(&mut self, expr: &mut ArrowFunctionExpression<'a>) {
+        let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow);
         self.enter_node(kind);
         self.visit_formal_parameters(&mut expr.params);
@@ -1256,8 +1256,8 @@ pub trait VisitMut<'a>: Sized {
 
     /* ----------  Literal ---------- */
 
-    fn visit_number_literal(&mut self, lit: &mut NumberLiteral<'a>) {
-        let kind = AstKind::NumberLiteral(self.alloc(lit));
+    fn visit_number_literal(&mut self, lit: &mut NumericLiteral<'a>) {
+        let kind = AstKind::NumericLiteral(self.alloc(lit));
         self.enter_node(kind);
         self.leave_node(kind);
     }
@@ -1649,7 +1649,7 @@ pub trait VisitMut<'a>: Sized {
         }
     }
 
-    fn visit_ts_type_operator_type(&mut self, ty: &mut TSTypeOperatorType<'a>) {
+    fn visit_ts_type_operator_type(&mut self, ty: &mut TSTypeOperator<'a>) {
         self.visit_ts_type(&mut ty.type_annotation);
     }
 
@@ -1791,7 +1791,7 @@ pub trait VisitMut<'a>: Sized {
             TSLiteral::BigintLiteral(lit) => self.visit_bigint_literal(lit),
             TSLiteral::BooleanLiteral(lit) => self.visit_boolean_literal(lit),
             TSLiteral::NullLiteral(lit) => self.visit_null_literal(lit),
-            TSLiteral::NumberLiteral(lit) => self.visit_number_literal(lit),
+            TSLiteral::NumericLiteral(lit) => self.visit_number_literal(lit),
             TSLiteral::RegExpLiteral(lit) => self.visit_reg_expr_literal(lit),
             TSLiteral::StringLiteral(lit) => self.visit_string_literal(lit),
             TSLiteral::TemplateLiteral(lit) => self.visit_template_literal(lit),

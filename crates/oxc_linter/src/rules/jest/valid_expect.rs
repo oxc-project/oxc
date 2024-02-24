@@ -249,7 +249,7 @@ fn is_acceptable_return_node<'a, 'b>(
                 let Some(parent) = ctx.nodes().parent_node(node.id()) else { return false };
                 node = parent;
             }
-            AstKind::ArrowExpression(arrow_expr) => return arrow_expr.expression,
+            AstKind::ArrowFunctionExpression(arrow_expr) => return arrow_expr.expression,
             AstKind::AwaitExpression(_) => return true,
             _ => return false,
         }
@@ -384,7 +384,6 @@ impl Message {
     }
 }
 
-#[ignore]
 #[test]
 fn test_1() {
     use crate::tester::Tester;
@@ -394,7 +393,7 @@ fn test_1() {
     ];
     let fail = vec![];
 
-    Tester::new(ValidExpect::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(ValidExpect::NAME, pass, fail).with_jest_plugin(true).test();
 }
 
 #[test]

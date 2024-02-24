@@ -26,7 +26,10 @@ impl EarlyErrorJavaScript {
         let kind = node.kind();
 
         match kind {
-            AstKind::Program(_) => check_labeled_statement(ctx),
+            AstKind::Program(_) => {
+                check_labeled_statement(ctx);
+                check_duplicate_class_elements(ctx);
+            }
             AstKind::BindingIdentifier(ident) => {
                 check_identifier(&ident.name, ident.span, node, ctx);
                 check_binding_identifier(ident, node, ctx);
@@ -37,7 +40,7 @@ impl EarlyErrorJavaScript {
             }
             AstKind::LabelIdentifier(ident) => check_identifier(&ident.name, ident.span, node, ctx),
             AstKind::PrivateIdentifier(ident) => check_private_identifier_outside_class(ident, ctx),
-            AstKind::NumberLiteral(lit) => check_number_literal(lit, ctx),
+            AstKind::NumericLiteral(lit) => check_number_literal(lit, ctx),
             AstKind::StringLiteral(lit) => check_string_literal(lit, ctx),
             AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
 
@@ -100,6 +103,42 @@ impl EarlyErrorJavaScript {
     pub fn check_module_record(ctx: &SemanticBuilder<'_>) {
         check_module_record(ctx);
     }
+}
+
+fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
+    let classes = &ctx.class_table_builder.classes;
+    classes.iter_enumerated().for_each(|(class_id, _)| {
+        let mut defined_elements = FxHashMap::default();
+        let elements = &classes.elements[class_id];
+        for (element_id, element) in elements.iter_enumerated() {
+            if let Some(prev_element_id) = defined_elements.insert(&element.name, element_id) {
+                let prev_element = &elements[prev_element_id];
+
+                let mut is_duplicate = element.is_private == prev_element.is_private
+                    && if element.kind.is_setter_or_getter()
+                        && prev_element.kind.is_setter_or_getter()
+                    {
+                        element.kind == prev_element.kind
+                            || element.r#static != prev_element.r#static
+                    } else {
+                        true
+                    };
+
+                is_duplicate = if ctx.source_type.is_typescript() {
+                    element.r#static == prev_element.r#static && is_duplicate
+                } else {
+                    // * It is a Syntax Error if PrivateBoundIdentifiers of ClassElementList contains any duplicate entries,
+                    // unless the name is used once for a getter and once for a setter and in no other entries,
+                    // and the getter and setter are either both static or both non-static.
+                    element.is_private && is_duplicate
+                };
+
+                if is_duplicate {
+                    ctx.error(Redeclaration(element.name.clone(), prev_element.span, element.span));
+                }
+            }
+        }
+    });
 }
 
 fn check_module_record(ctx: &SemanticBuilder<'_>) {
@@ -322,7 +361,7 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
 #[diagnostic(help("for octal literals use the '0o' prefix instead"))]
 struct LegacyOctal(#[label] Span);
 
-fn check_number_literal(lit: &NumberLiteral, ctx: &SemanticBuilder<'_>) {
+fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
     // NumericLiteral :: LegacyOctalIntegerLiteral
     // DecimalIntegerLiteral :: NonOctalDecimalIntegerLiteral
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
@@ -405,7 +444,7 @@ fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
 
     if matches!(ctx.nodes.kind(ctx.scope.get_node_id(ctx.current_scope_id)),
         AstKind::Function(Function { params, .. })
-        | AstKind::ArrowExpression(ArrowExpression { params, .. }) 
+        | AstKind::ArrowFunctionExpression(ArrowFunctionExpression { params, .. }) 
         if !params.is_simple_parameter_list())
     {
         ctx.error(IllegalUseStrict(directive.span));
@@ -1107,7 +1146,9 @@ fn is_in_formal_parameters<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) ->
     for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
             AstKind::FormalParameter(_) => return true,
-            AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowExpression(_) => break,
+            AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
+                break
+            }
             _ => {}
         }
     }

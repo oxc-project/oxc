@@ -76,7 +76,7 @@ impl Rule for NoUnnecessaryAwait {
 fn not_promise(expr: &Expression) -> bool {
     match expr {
         Expression::ArrayExpression(_)
-        | Expression::ArrowExpression(_)
+        | Expression::ArrowFunctionExpression(_)
         | Expression::AwaitExpression(_)
         | Expression::BinaryExpression(_)
         | Expression::ClassExpression(_)
@@ -85,7 +85,7 @@ fn not_promise(expr: &Expression) -> bool {
         | Expression::JSXFragment(_)
         | Expression::BooleanLiteral(_)
         | Expression::NullLiteral(_)
-        | Expression::NumberLiteral(_)
+        | Expression::NumericLiteral(_)
         | Expression::BigintLiteral(_)
         | Expression::RegExpLiteral(_)
         | Expression::StringLiteral(_)

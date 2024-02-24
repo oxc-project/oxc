@@ -19,7 +19,7 @@ pub(crate) fn minify(
     let program = Parser::new(&allocator, source_text, source_type).parse().program;
     let program = allocator.alloc(program);
     Minifier::new(options).build(&allocator, program);
-    Codegen::<true>::new(source_text.len(), CodegenOptions).build(program)
+    Codegen::<true>::new(source_text.len(), CodegenOptions::default()).build(program)
 }
 
 pub(crate) fn test(source_text: &str, expected: &str) {

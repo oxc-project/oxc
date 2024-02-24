@@ -662,7 +662,7 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSObjectKeyword(v) => v.format(p),
             TSType::TSStringKeyword(v) => v.format(p),
             TSType::TSSymbolKeyword(v) => v.format(p),
-            TSType::TSThisKeyword(v) => v.format(p),
+            TSType::TSThisType(v) => v.format(p),
             TSType::TSUndefinedKeyword(v) => v.format(p),
             TSType::TSUnknownKeyword(v) => v.format(p),
             TSType::TSVoidKeyword(v) => v.format(p),
@@ -745,7 +745,7 @@ impl<'a> Format<'a> for TSSymbolKeyword {
     }
 }
 
-impl<'a> Format<'a> for TSThisKeyword {
+impl<'a> Format<'a> for TSThisType {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         Doc::Str("this")
     }
@@ -827,7 +827,7 @@ impl<'a> Format<'a> for TSLiteralType<'a> {
         match &self.literal {
             TSLiteral::BooleanLiteral(v) => v.format(p),
             TSLiteral::NullLiteral(v) => v.format(p),
-            TSLiteral::NumberLiteral(v) => v.format(p),
+            TSLiteral::NumericLiteral(v) => v.format(p),
             TSLiteral::BigintLiteral(v) => v.format(p),
             TSLiteral::RegExpLiteral(v) => v.format(p),
             TSLiteral::StringLiteral(v) => v.format(p),
@@ -870,7 +870,7 @@ impl<'a> Format<'a> for TSTypeLiteral<'a> {
     }
 }
 
-impl<'a> Format<'a> for TSTypeOperatorType<'a> {
+impl<'a> Format<'a> for TSTypeOperator<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
@@ -1185,7 +1185,7 @@ impl<'a> Format<'a> for Expression<'a> {
         match self {
             Self::BooleanLiteral(lit) => lit.format(p),
             Self::NullLiteral(lit) => lit.format(p),
-            Self::NumberLiteral(lit) => lit.format(p),
+            Self::NumericLiteral(lit) => lit.format(p),
             Self::BigintLiteral(lit) => lit.format(p),
             Self::RegExpLiteral(lit) => lit.format(p),
             Self::StringLiteral(lit) => lit.format(p),
@@ -1196,7 +1196,7 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::ArrayExpression(expr) => expr.format(p),
             Self::ObjectExpression(expr) => expr.format(p),
             Self::FunctionExpression(expr) => expr.format(p),
-            Self::ArrowExpression(expr) => expr.format(p),
+            Self::ArrowFunctionExpression(expr) => expr.format(p),
             Self::YieldExpression(expr) => expr.format(p),
             Self::UpdateExpression(expr) => expr.format(p),
             Self::UnaryExpression(expr) => expr.format(p),
@@ -1263,9 +1263,9 @@ impl<'a> Format<'a> for NullLiteral {
     }
 }
 
-impl<'a> Format<'a> for NumberLiteral<'a> {
+impl<'a> Format<'a> for NumericLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, NumberLiteral, {
+        wrap!(p, self, NumericLiteral, {
             // See https://github.com/prettier/prettier/blob/main/src/utils/print-number.js
             // Perf: the regexes from prettier code above are ported to manual search for performance reasons.
             let raw = self.span.source_text(p.source_text);
@@ -1605,7 +1605,7 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                             ))
                         }
                     }
-                    Expression::NumberLiteral(literal) => {
+                    Expression::NumericLiteral(literal) => {
                         if need_quote {
                             Doc::Str(string::print_string(p, literal.raw, p.options.single_quote))
                         } else {
@@ -1622,9 +1622,9 @@ impl<'a> Format<'a> for PropertyKey<'a> {
     }
 }
 
-impl<'a> Format<'a> for ArrowExpression<'a> {
+impl<'a> Format<'a> for ArrowFunctionExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, ArrowExpression, { arrow_function::print_arrow_function(p, self) })
+        wrap!(p, self, ArrowFunctionExpression, { arrow_function::print_arrow_function(p, self) })
     }
 }
 

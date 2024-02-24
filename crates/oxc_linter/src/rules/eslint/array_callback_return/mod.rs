@@ -85,7 +85,9 @@ impl Rule for ArrayCallbackReturn {
         let (function_body, always_explicit_return) = match node.kind() {
             // Async, generator, and single expression arrow functions
             // always have explicit return value
-            AstKind::ArrowExpression(arrow) => (&arrow.body, arrow.r#async || arrow.expression),
+            AstKind::ArrowFunctionExpression(arrow) => {
+                (&arrow.body, arrow.r#async || arrow.expression)
+            }
             AstKind::Function(function) => {
                 if let Some(body) = &function.body {
                     (body, function.r#async || function.generator)
@@ -136,7 +138,7 @@ impl Rule for ArrayCallbackReturn {
 }
 
 /// Code ported from [eslint](https://github.com/eslint/eslint/blob/main/lib/rules/array-callback-return.js)
-/// We're currently on a `Function` or `ArrowExpression`, findout if it is an argument
+/// We're currently on a `Function` or `ArrowFunctionExpression`, findout if it is an argument
 /// to the target array methods we're interested in.
 pub fn get_array_method_name<'a>(
     node: &AstNode<'a>,

@@ -12,6 +12,7 @@ use crate::{
     js::list::{ArrayPatternList, ObjectPatternProperties},
     lexer::Kind,
     list::{NormalList, SeparatedList},
+    ts::list::TSImportAttributeList,
     Context, ParserImpl,
 };
 
@@ -303,9 +304,9 @@ impl<'a> ParserImpl<'a> {
         }
 
         let operator = match self.cur_kind() {
-            Kind::KeyOf => Some(TSTypeOperator::Keyof),
-            Kind::Unique => Some(TSTypeOperator::Unique),
-            Kind::Readonly => Some(TSTypeOperator::Readonly),
+            Kind::KeyOf => Some(TSTypeOperatorOperator::Keyof),
+            Kind::Unique => Some(TSTypeOperatorOperator::Unique),
+            Kind::Readonly => Some(TSTypeOperatorOperator::Readonly),
             _ => None,
         };
 
@@ -702,7 +703,7 @@ impl<'a> ParserImpl<'a> {
             match expression {
                 Expression::BooleanLiteral(literal) => TSLiteral::BooleanLiteral(literal),
                 Expression::NullLiteral(literal) => TSLiteral::NullLiteral(literal),
-                Expression::NumberLiteral(literal) => TSLiteral::NumberLiteral(literal),
+                Expression::NumericLiteral(literal) => TSLiteral::NumericLiteral(literal),
                 Expression::BigintLiteral(literal) => TSLiteral::BigintLiteral(literal),
                 Expression::RegExpLiteral(literal) => TSLiteral::RegExpLiteral(literal),
                 Expression::StringLiteral(literal) => TSLiteral::StringLiteral(literal),
@@ -763,6 +764,8 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Import)?;
         self.expect(Kind::LParen)?;
         let argument = self.parse_ts_type()?;
+        let attributes =
+            if self.eat(Kind::Comma) { Some(self.parse_ts_import_attributes()?) } else { None };
         self.expect(Kind::RParen)?;
 
         let qualifier = if self.eat(Kind::Dot) { Some(self.parse_ts_type_name()?) } else { None };
@@ -774,8 +777,20 @@ impl<'a> ParserImpl<'a> {
             is_type_of,
             argument,
             qualifier,
+            attributes,
             type_parameters,
         ))
+    }
+
+    fn parse_ts_import_attributes(&mut self) -> Result<TSImportAttributes<'a>> {
+        let span = self.start_span();
+        // { with:
+        self.expect(Kind::LCurly)?;
+        self.expect(Kind::With)?;
+        self.expect(Kind::Colon)?;
+        let elements = TSImportAttributeList::parse(self)?.elements;
+        self.expect(Kind::RCurly)?;
+        Ok(TSImportAttributes { span, elements })
     }
 
     fn parse_ts_constructor_type(&mut self) -> Result<TSType<'a>> {
@@ -876,7 +891,7 @@ impl<'a> ParserImpl<'a> {
         let parameter_name = if self.at(Kind::This) {
             let span = self.start_span();
             self.bump_any();
-            TSTypePredicateName::This(TSThisKeyword { span: self.end_span(span) })
+            TSTypePredicateName::This(TSThisType { span: self.end_span(span) })
         } else {
             TSTypePredicateName::Identifier(self.parse_identifier_name()?)
         };

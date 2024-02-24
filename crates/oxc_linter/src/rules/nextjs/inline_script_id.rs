@@ -1,8 +1,5 @@
 use oxc_ast::{
-    ast::{
-        Expression, ImportDeclarationSpecifier, JSXAttributeItem, JSXAttributeName,
-        ModuleDeclaration, ObjectPropertyKind, PropertyKey,
-    },
+    ast::{Expression, JSXAttributeItem, JSXAttributeName, ObjectPropertyKind, PropertyKey},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -39,8 +36,10 @@ declare_oxc_lint!(
 
 impl Rule for InlineScriptId {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import_decl)) =
-            node.kind()
+        let AstKind::ImportDefaultSpecifier(specifier) = node.kind() else {
+            return;
+        };
+        let Some(AstKind::ImportDeclaration(import_decl)) = ctx.nodes().parent_kind(node.id())
         else {
             return;
         };
@@ -49,23 +48,8 @@ impl Rule for InlineScriptId {
             return;
         }
 
-        let Some(import_specifiers) = &import_decl.specifiers else { return };
-
-        // find default import
-        let Some(default_import) = import_specifiers.iter().find_map(|import_specifier| {
-            let ImportDeclarationSpecifier::ImportDefaultSpecifier(import_default_specifier) =
-                import_specifier
-            else {
-                return None;
-            };
-
-            Some(import_default_specifier)
-        }) else {
-            return;
-        };
-
         'references_loop: for reference in
-            ctx.semantic().symbol_references(default_import.local.symbol_id.get().unwrap())
+            ctx.semantic().symbol_references(specifier.local.symbol_id.get().unwrap())
         {
             let node = ctx.nodes().get_node(reference.node_id());
 

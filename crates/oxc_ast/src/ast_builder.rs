@@ -127,8 +127,8 @@ impl<'a> AstBuilder<'a> {
         value: f64,
         raw: &'a str,
         base: NumberBase,
-    ) -> NumberLiteral<'a> {
-        NumberLiteral { span, value, raw, base }
+    ) -> NumericLiteral<'a> {
+        NumericLiteral { span, value, raw, base }
     }
 
     pub fn boolean_literal(&self, span: Span, value: bool) -> BooleanLiteral {
@@ -186,8 +186,8 @@ impl<'a> AstBuilder<'a> {
         Expression::RegExpLiteral(self.alloc(literal))
     }
 
-    pub fn literal_number_expression(&self, literal: NumberLiteral<'a>) -> Expression<'a> {
-        Expression::NumberLiteral(self.alloc(literal))
+    pub fn literal_number_expression(&self, literal: NumericLiteral<'a>) -> Expression<'a> {
+        Expression::NumericLiteral(self.alloc(literal))
     }
 
     pub fn literal_bigint_expression(&self, literal: BigintLiteral) -> Expression<'a> {
@@ -412,7 +412,7 @@ impl<'a> AstBuilder<'a> {
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> Expression<'a> {
-        Expression::ArrowExpression(self.alloc(ArrowExpression {
+        Expression::ArrowFunctionExpression(self.alloc(ArrowFunctionExpression {
             span,
             expression,
             r#async,
@@ -609,6 +609,20 @@ impl<'a> AstBuilder<'a> {
             field,
             optional,
         })
+    }
+
+    pub fn private_in_expression(
+        &self,
+        span: Span,
+        left: PrivateIdentifier,
+        right: Expression<'a>,
+    ) -> Expression<'a> {
+        Expression::PrivateInExpression(self.alloc(PrivateInExpression {
+            span,
+            left,
+            operator: BinaryOperator::In,
+            right,
+        }))
     }
 
     pub fn private_field_expression(
@@ -1226,14 +1240,10 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_operator_type(
         &self,
         span: Span,
-        operator: TSTypeOperator,
+        operator: TSTypeOperatorOperator,
         type_annotation: TSType<'a>,
     ) -> TSType<'a> {
-        TSType::TSTypeOperatorType(self.alloc(TSTypeOperatorType {
-            span,
-            operator,
-            type_annotation,
-        }))
+        TSType::TSTypeOperatorType(self.alloc(TSTypeOperator { span, operator, type_annotation }))
     }
 
     pub fn ts_array_type(&self, span: Span, element_type: TSType<'a>) -> TSType<'a> {
@@ -1545,7 +1555,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn ts_this_keyword(&self, span: Span) -> TSType<'a> {
-        TSType::TSThisKeyword(self.alloc(TSThisKeyword { span }))
+        TSType::TSThisType(self.alloc(TSThisType { span }))
     }
 
     pub fn ts_any_keyword(&self, span: Span) -> TSType<'a> {
@@ -1652,6 +1662,7 @@ impl<'a> AstBuilder<'a> {
         is_type_of: bool,
         argument: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
+        attributes: Option<TSImportAttributes<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> TSType<'a> {
         TSType::TSImportType(self.alloc(TSImportType {
@@ -1659,6 +1670,7 @@ impl<'a> AstBuilder<'a> {
             is_type_of,
             argument,
             qualifier,
+            attributes,
             type_parameters,
         }))
     }

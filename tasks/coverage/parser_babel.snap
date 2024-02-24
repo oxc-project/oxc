@@ -1,6 +1,6 @@
 parser_babel Summary:
 AST Parsed     : 2090/2096 (99.71%)
-Positive Passed: 2086/2096 (99.52%)
+Positive Passed: 2083/2096 (99.38%)
 Negative Passed: 1361/1500 (90.73%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
@@ -177,6 +177,44 @@ Expect to Parse: "typescript/class/constructor-with-modifier-names/input.ts"
    ·        ╰── it cannot be redeclared here
  4 │ }
    ╰────
+Expect to Parse: "typescript/class/declare/input.ts"
+
+  × Identifier `x` has already been declared
+   ╭─[typescript/class/declare/input.ts:3:5]
+ 2 │     [x: string]: any;
+ 3 │     x;
+   ·     ┬
+   ·     ╰── `x` has already been declared here
+ 4 │     x: number;
+   ·     ┬
+   ·     ╰── It can not be redeclared here
+ 5 │     f();
+   ╰────
+Expect to Parse: "typescript/class/modifiers-override/input.ts"
+
+  × Identifier `show` has already been declared
+   ╭─[typescript/class/modifiers-override/input.ts:2:12]
+ 1 │ class MyClass extends BaseClass {
+ 2 │   override show() {}
+   ·            ──┬─
+   ·              ╰── `show` has already been declared here
+ 3 │   public override show() {}
+   ·                   ──┬─
+   ·                     ╰── It can not be redeclared here
+ 4 │   override size = 5;
+   ╰────
+
+  × Identifier `size` has already been declared
+   ╭─[typescript/class/modifiers-override/input.ts:4:12]
+ 3 │   public override show() {}
+ 4 │   override size = 5;
+   ·            ──┬─
+   ·              ╰── `size` has already been declared here
+ 5 │   override readonly size = 5;
+   ·                     ──┬─
+   ·                       ╰── It can not be redeclared here
+ 6 │ 
+   ╰────
 Expect to Parse: "typescript/class/parameter-properties/input.ts"
 
   × A required parameter cannot follow an optional parameter.
@@ -185,6 +223,67 @@ Expect to Parse: "typescript/class/parameter-properties/input.ts"
  7 │         public readonly pur,
    ·         ───────────────────
  8 │         // Also works on AssignmentPattern
+   ╰────
+Expect to Parse: "typescript/class/properties/input.ts"
+
+  × Identifier `x` has already been declared
+   ╭─[typescript/class/properties/input.ts:2:5]
+ 1 │ class C {
+ 2 │     x;
+   ·     ┬
+   ·     ╰── `x` has already been declared here
+ 3 │     x?;
+   ·     ┬
+   ·     ╰── It can not be redeclared here
+ 4 │     x: number;
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[typescript/class/properties/input.ts:3:5]
+ 2 │     x;
+ 3 │     x?;
+   ·     ┬
+   ·     ╰── `x` has already been declared here
+ 4 │     x: number;
+   ·     ┬
+   ·     ╰── It can not be redeclared here
+ 5 │     x: number = 1;
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[typescript/class/properties/input.ts:4:5]
+ 3 │     x?;
+ 4 │     x: number;
+   ·     ┬
+   ·     ╰── `x` has already been declared here
+ 5 │     x: number = 1;
+   ·     ┬
+   ·     ╰── It can not be redeclared here
+ 6 │     x!;
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[typescript/class/properties/input.ts:5:5]
+ 4 │     x: number;
+ 5 │     x: number = 1;
+   ·     ┬
+   ·     ╰── `x` has already been declared here
+ 6 │     x!;
+   ·     ┬
+   ·     ╰── It can not be redeclared here
+ 7 │     x!: number;
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[typescript/class/properties/input.ts:6:5]
+ 5 │     x: number = 1;
+ 6 │     x!;
+   ·     ┬
+   ·     ╰── `x` has already been declared here
+ 7 │     x!: number;
+   ·     ┬
+   ·     ╰── It can not be redeclared here
+ 8 │ }
    ╰────
 Expect to Parse: "typescript/function/declare-pattern-parameters/input.ts"
 
