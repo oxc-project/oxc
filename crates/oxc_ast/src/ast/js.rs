@@ -665,11 +665,7 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    pub fn through_optional_is_specific_member_access(
-        &'a self,
-        object: &str,
-        property: &str,
-    ) -> bool {
+    pub fn through_optional_is_specific_member_access(&self, object: &str, property: &str) -> bool {
         let object_matches = match self.object().without_parenthesized() {
             Expression::ChainExpression(x) => match &x.expression {
                 ChainElement::CallExpression(_) => false,
@@ -686,7 +682,7 @@ impl<'a> MemberExpression<'a> {
     }
 
     /// Whether it is a static member access `object.property`
-    pub fn is_specific_member_access(&'a self, object: &str, property: &str) -> bool {
+    pub fn is_specific_member_access(&self, object: &str, property: &str) -> bool {
         self.object().is_specific_id(object)
             && self.static_property_name().is_some_and(|p| p == property)
     }
