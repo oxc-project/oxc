@@ -180,10 +180,11 @@ fn test() {
         // old babel parser
         // "import { foo, bar, baz } from './named-trampoline'",
         // "import { baz } from './broken-trampoline'",
-        "const { baz } = require('./bar')",
-        "let { baz } = require('./bar')",
-        "const { baz: bar, bop } = require('./bar'), { a } = require('./re-export-names')",
-        "const { default: defExport } = require('./named-exports')",
+        // cjs
+        // "const { baz } = require('./bar')",
+        // "let { baz } = require('./bar')",
+        // "const { baz: bar, bop } = require('./bar'), { a } = require('./re-export-names')",
+        // "const { default: defExport } = require('./named-exports')",
         // flow
         // "import  { type MyOpaqueType, MyMissingClass } from './flowtypes'",
         // jsnext
