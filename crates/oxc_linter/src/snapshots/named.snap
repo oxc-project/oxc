@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 148
 expression: named
 ---
 
@@ -99,48 +100,6 @@ expression: named
  1 │ export bar2, { bar } from './bar'
    ·        ────
    ╰────
-
-  ⚠ eslint-plugin-import(named): named import "baz" not found
-   ╭─[index.js:1:9]
- 1 │ const { baz } = require('./bar')
-   ·         ───
-   ╰────
-  help: does "./bar" have the export "baz"?
-
-  ⚠ eslint-plugin-import(named): named import "baz" not found
-   ╭─[index.js:1:7]
- 1 │ let { baz } = require('./bar')
-   ·       ───
-   ╰────
-  help: does "./bar" have the export "baz"?
-
-  ⚠ eslint-plugin-import(named): named import "bar" not found
-   ╭─[index.js:1:14]
- 1 │ const { baz: bar, bop } = require('./bar'), { a } = require('./re-export-names')
-   ·              ───
-   ╰────
-  help: does "./bar" have the export "bar"?
-
-  ⚠ eslint-plugin-import(named): named import "bop" not found
-   ╭─[index.js:1:19]
- 1 │ const { baz: bar, bop } = require('./bar'), { a } = require('./re-export-names')
-   ·                   ───
-   ╰────
-  help: does "./bar" have the export "bop"?
-
-  ⚠ eslint-plugin-import(named): named import "a" not found
-   ╭─[index.js:1:47]
- 1 │ const { baz: bar, bop } = require('./bar'), { a } = require('./re-export-names')
-   ·                                               ─
-   ╰────
-  help: does "./re-export-names" have the export "a"?
-
-  ⚠ eslint-plugin-import(named): named import "defExport" not found
-   ╭─[index.js:1:18]
- 1 │ const { default: defExport } = require('./named-exports')
-   ·                  ─────────
-   ╰────
-  help: does "./named-exports" have the export "defExport"?
 
   ⚠ eslint-plugin-import(named): named import "baz" not found
    ╭─[index.js:1:10]
