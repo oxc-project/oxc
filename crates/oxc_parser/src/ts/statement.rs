@@ -250,6 +250,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_namespace_or_module_declaration_body(
         &mut self,
         span: Span,
+        kind: TSModuleDeclarationKind,
         modifiers: Modifiers<'a>,
     ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
         let id = match self.cur_kind() {
@@ -260,7 +261,7 @@ impl<'a> ParserImpl<'a> {
         let body = if self.eat(Kind::Dot) {
             let span = self.start_span();
             let decl =
-                self.parse_ts_namespace_or_module_declaration_body(span, Modifiers::empty())?;
+                self.parse_ts_namespace_or_module_declaration_body(span, kind, Modifiers::empty())?;
             TSModuleDeclarationBody::TSModuleDeclaration(decl)
         } else {
             let block = self.parse_ts_module_block()?;
@@ -268,24 +269,7 @@ impl<'a> ParserImpl<'a> {
             TSModuleDeclarationBody::TSModuleBlock(block)
         };
 
-        Ok(self.ast.ts_module_declaration(self.end_span(span), id, body, modifiers))
-    }
-
-    pub(crate) fn parse_ts_namespace_or_module_declaration(
-        &mut self,
-        modifiers: Modifiers<'a>,
-    ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
-        let span = self.start_span();
-        self.expect(Kind::Namespace).or_else(|_| self.expect(Kind::Module))?;
-        self.parse_ts_namespace_or_module_declaration_body(span, modifiers)
-    }
-
-    pub(crate) fn parse_ts_global_declaration(
-        &mut self,
-        start_span: Span,
-        modifiers: Modifiers<'a>,
-    ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
-        self.parse_ts_namespace_or_module_declaration_body(start_span, modifiers)
+        Ok(self.ast.ts_module_declaration(self.end_span(span), id, body, kind, modifiers))
     }
 
     /** ----------------------- declare --------------------- */
@@ -308,18 +292,25 @@ impl<'a> ParserImpl<'a> {
         modifiers: Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
         match self.cur_kind() {
-            Kind::Namespace | Kind::Module => self
-                .parse_ts_namespace_or_module_declaration(modifiers)
-                .map(Declaration::TSModuleDeclaration),
+            Kind::Namespace => {
+                let kind = TSModuleDeclarationKind::Namespace;
+                let span = self.start_span();
+                self.bump_any();
+                self.parse_ts_namespace_or_module_declaration_body(span, kind, modifiers)
+                    .map(Declaration::TSModuleDeclaration)
+            }
+            Kind::Module => {
+                let kind = TSModuleDeclarationKind::Module;
+                let span = self.start_span();
+                self.bump_any();
+                self.parse_ts_namespace_or_module_declaration_body(span, kind, modifiers)
+                    .map(Declaration::TSModuleDeclaration)
+            }
             Kind::Global => {
-                let decl = if self.peek_at(Kind::LCurly) {
-                    // valid syntax for
-                    // declare global { }
-                    self.parse_ts_namespace_or_module_declaration_body(start_span, modifiers)
-                } else {
-                    self.parse_ts_global_declaration(start_span, modifiers)
-                }?;
-                Ok(Declaration::TSModuleDeclaration(decl))
+                // declare global { }
+                let kind = TSModuleDeclarationKind::Global;
+                self.parse_ts_namespace_or_module_declaration_body(start_span, kind, modifiers)
+                    .map(Declaration::TSModuleDeclaration)
             }
             Kind::Type => self.parse_ts_type_alias_declaration(start_span, modifiers),
             Kind::Enum => self.parse_ts_enum_declaration(start_span, modifiers),
