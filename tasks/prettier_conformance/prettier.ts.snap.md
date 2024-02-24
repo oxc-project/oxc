@@ -1,4 +1,4 @@
-ts compatibility: 20/528 (3.79%)
+ts compatibility: 22/528 (4.17%)
 
 # Failed
 
@@ -598,9 +598,6 @@ ts compatibility: 20/528 (3.79%)
 * last-argument-expansion/edge_case.ts
 * last-argument-expansion/forward-ref.tsx
 
-### literal
-* literal/multiline.ts
-
 ### mapped-type
 * mapped-type/intersection.ts
 * mapped-type/issue-11098.ts
@@ -758,7 +755,6 @@ ts compatibility: 20/528 (3.79%)
 * tsx/url.tsx
 
 ### tuple
-* tuple/dangling-comments.ts
 * tuple/trailing-comma-for-empty-tuples.ts
 * tuple/trailing-comma-trailing-rest.ts
 * tuple/trailing-comma.ts

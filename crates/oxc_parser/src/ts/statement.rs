@@ -111,6 +111,7 @@ impl<'a> ParserImpl<'a> {
         let annotation = self.parse_ts_type()?;
 
         self.asi()?;
+        let span = self.end_span(span);
         Ok(self.ast.ts_type_alias_declaration(span, id, annotation, params, modifiers))
     }
 
