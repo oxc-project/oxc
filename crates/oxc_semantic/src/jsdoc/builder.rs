@@ -36,32 +36,41 @@ impl<'a> JSDocBuilder<'a> {
         JSDoc::new(self.attached_docs, not_attached_docs)
     }
 
-    // この紐づけ処理は、Semanticのビルドにあわせて行われる。
-    // つまり、各ユースケース（たとえばoxlintにおける各ルールの実行）よりも、"前"のタイミング。
+    // This process is done in conjunction with the `semantic.build()`.
+    // This means that it's done "before" each use case (e.g. execute rule in oxlint) runs.
     //
-    // もしルール側の設定などで、動的にこのロジックを変えたい場合、
-    // - そもそもここで事前に紐づけるのを諦め、各ルール側で毎回探すようにするか
-    // - ここでより広く緩く（パフォーマンス影響があるため慎重に）紐づけておき、あとから絞り込めるようにする
-    // このいずれかが必要になる。
+    // If you need to control this attaching logic (e.g. by rule configurations), one of these would be necessary.
+    // - 1. Give up pre-attaching here and leave it for use cases
+    // - 2. Attach it more broadly(= loosely) here (may cause performance impact), so that it can be narrowed down later
     //
-    // そして、「どのノードに対して、JSDocをアタッチするか？」について、特定のSpecがあるわけではない。
-    // それぞれの実装が、それぞれのユースケースにあわせて決めている。
-    // たとえば、TypeScriptの場合、その対象はかなり広く定義されている。
+    // Since there is no reliable spec for JSDoc, there are some naive topics to consider:
+    //
+    // Q. Which node to attach JSDoc to?
+    // A. Each implementation decides according to its own use case.
+    //
+    // For example, TypeScript tries to target quite broadly nodes.
     // > https://github.com/microsoft/TypeScript/blob/d04e3489b0d8e6bc9a8a9396a633632a5a467328/src/compiler/utilities.ts#L4195
-    // `eslint-plugin-jsdoc`の場合、その対象はルールの設定で自由に変えることができる。（デフォルトは関数に関するもののみ）
+    //
+    // In case of `eslint-plugin-jsdoc`, its targets can be freely changed by rule configurations!
+    // (But, default is only about function related nodes.)
     // > https://github.com/gajus/eslint-plugin-jsdoc/blob/e948bee821e964a92fbabc01574eca226e9e1252/src/iterateJsdoc.js#L2517-L2536
     //
-    // また、そのノードに対して「どのようにJSDocをアタッチするか？」についても、同様に実装依存である。
-    // TypeScriptの場合（特定のASTノード、および`endOfFileToken`が、`jsDoc`プロパティを保持）、複数の`JSDocComment`がアタッチされる。
-    // `eslint-plugin-jsdoc`の場合、`jsdoccomment`というライブラリが、一部の例外処理と共に、単一のコメントのみを取得している。
-    // > https://github.com/es-joy/jsdoccomment/blob/6aae5ea306015096e3d58cd22257e5222c54e3b4/src/jsdoccomment.js#L283
+    // Q. How do we attach JSDoc to that node?
+    // A. Also depends on the implementation.
     //
-    // OXC Semanticとして、どう振る舞うべきかは悩ましいが、現状の実装としては、
-    // - TypeScriptライクな直感的なアタッチ
-    // - 用途に応じて、単一のJSDocを取得するか、すべてのJSDocを取得するか選ぶ
-    // というハイブリッドな形になっている。
+    // In the case of TypeScript (they have specific AST node for JSDoc and an `endOfFileToken`),
+    // some AST nodes have the `jsDoc` property and multiple `JSDocComment`s are attached.
+    //
+    // In the case of `eslint-plugin-jsdoc` (`@es-joy/jsdoccomment` is used)
+    // tries to get a only single nearest comment, with some exception handling.
+    //
+    // It is hard to say how we should behave as OXC Semantic, but the current implementation is,
+    // - Intuitive TypeScript-like attaching strategy
+    // - Provide `get_one` or `get_all` APIs for each use case
+    //
+    // Of cource, this can be changed in the future.
     pub fn retrieve_attached_jsdoc(&mut self, kind: &AstKind<'a>) -> bool {
-        // This is not enough compare to TypeScript's `canHaveJSDoc()`, should expand if needed
+        // This may be diffed compare to TypeScript's `canHaveJSDoc()`, should adjust if needed
         if !(kind.is_statement()
             || kind.is_declaration()
             || matches!(kind, AstKind::ParenthesizedExpression(_)))
@@ -149,7 +158,7 @@ mod test {
         let semantic = build_semantic(allocator, source_text, source_type);
         let start = source_text.find(symbol).unwrap_or(0) as u32;
         let span = Span::new(start, start + symbol.len() as u32);
-        semantic.jsdoc().get_by_span(span)
+        semantic.jsdoc().get_all_by_span(span)
     }
 
     fn test_jsdoc_found(source_text: &str, symbol: &str, source_type: Option<SourceType>) {
