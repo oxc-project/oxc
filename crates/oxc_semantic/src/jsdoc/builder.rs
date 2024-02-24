@@ -206,6 +206,8 @@ mod test {
             ),
             (
                 "/** test */
+
+
                 function foo() {}",
                 "function foo() {}",
             ),
@@ -262,7 +264,9 @@ mod test {
         let semantic = build_semantic(
             &allocator,
             r"
+            // noop
             /** 1. ; */
+            // noop
             ;
             /** 2. class X {} *//** 3. class X {} */
             class X {
@@ -270,10 +274,15 @@ mod test {
                 foo = /** 5. () */ (() => {});
             }
 
-            /** Not attached! */
+            /** 6. let x; */
+            /* noop */
+
+            let x;
+
+            /** 7. Not attached but collected! */
             ",
             Some(SourceType::default()),
         );
-        assert_eq!(semantic.jsdoc().iter_all().count(), 6);
+        assert_eq!(semantic.jsdoc().iter_all().count(), 7);
     }
 }
