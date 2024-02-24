@@ -39,7 +39,8 @@ impl<'a> JSDoc<'a> {
         };
 
         // If flagged, at least 1 JSDoc is attached
-        jsdocs.first().cloned()
+        // If multiple JSDocs are attached, return the last = nearest
+        jsdocs.last().cloned()
     }
 
     pub fn get_all_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<Vec<JSDocComment<'a>>> {
