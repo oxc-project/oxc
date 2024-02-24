@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: jsx_no_jsx_as_prop
 ---
-
   ⚠ eslint-plugin-react-perf(jsx-no-jsx-as-prop): JSX attribute values should not contain other JSX.
    ╭─[jsx_no_jsx_as_prop.tsx:1:12]
  1 │ <Item jsx={<SubItem />} />
@@ -30,4 +29,3 @@ expression: jsx_no_jsx_as_prop
    ·                                                                             ───────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
-

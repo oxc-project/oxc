@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_includes
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
    ╭─[prefer_includes.tsx:1:10]
  1 │ 'foobar'.indexOf('foo') !== -1
@@ -68,4 +67,3 @@ expression: prefer_includes
  1 │ foo.indexOf(bar, 1) !== -1
    ·     ───────
    ╰────
-

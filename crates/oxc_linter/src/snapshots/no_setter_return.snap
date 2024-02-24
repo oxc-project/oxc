@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_setter_return
 ---
-
   × eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.tsx:1:16]
  1 │ ({ set a(val){ return val + 1; } })
@@ -254,4 +253,3 @@ expression: no_setter_return
  1 │ return; ({ set a(val) { return 1; } }); return 2;
    ·                         ─────────
    ╰────
-

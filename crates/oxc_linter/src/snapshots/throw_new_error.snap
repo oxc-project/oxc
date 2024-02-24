@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: throw_new_error
 ---
-
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
  1 │ throw Error()
@@ -156,4 +155,3 @@ expression: throw_new_error
    ·       ─────────────────────────────
    ╰────
   help: While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
-

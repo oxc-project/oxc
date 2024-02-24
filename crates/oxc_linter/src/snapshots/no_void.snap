@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_void
 ---
-
   ⚠ eslint(no-void): Disallow `void` operators
    ╭─[no_void.tsx:1:1]
  1 │ void 0
@@ -44,4 +43,3 @@ expression: no_void
    ·           ────
    ╰────
   help: Expected 'undefined' and instead saw 'void'.
-

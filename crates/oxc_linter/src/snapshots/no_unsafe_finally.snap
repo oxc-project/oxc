@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_unsafe_finally
 ---
-
   ⚠ eslint(no-unsafe-finally): Unsafe finally block
    ╭─[no_unsafe_finally.tsx:7:2]
  6 │  } finally { 
@@ -248,4 +247,3 @@ expression: no_unsafe_finally
    ·                                                                                                  ────────
    ╰────
   help: Control flow inside try or catch blocks will be overwritten by this statement
-

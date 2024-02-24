@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_spread
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
    ╭─[prefer_spread.tsx:1:11]
  1 │ const x = Array.from(set);
@@ -765,4 +764,3 @@ expression: prefer_spread
    ·                  ──────────────
    ╰────
   help: The spread operator (`...`) is more concise and readable.
-

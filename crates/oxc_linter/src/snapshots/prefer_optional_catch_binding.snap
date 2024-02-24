@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_optional_catch_binding
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
    ╭─[prefer_optional_catch_binding.tsx:1:15]
  1 │ try {} catch (_) {}
@@ -57,4 +56,3 @@ expression: prefer_optional_catch_binding
  1 │ try {} catch ({cause: {message}}) {}
    ·               ──────────────────
    ╰────
-

@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_ts_expect_error
 ---
-
   ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
    ╭─[prefer_ts_expect_error.tsx:1:1]
  1 │ // @ts-ignore
@@ -66,4 +65,3 @@ expression: prefer_ts_expect_error
  4 │             
    ╰────
   help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
-

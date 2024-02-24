@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_return_await
 ---
-
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
    ╭─[no_return_await.tsx:3:12]
  2 │ async function foo() {
@@ -301,4 +300,3 @@ expression: no_return_await
  4 │ 5;
    ╰────
   help: Remove redundant `await`.
-

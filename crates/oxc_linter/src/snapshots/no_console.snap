@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_console
 ---
-
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:9]
  1 │ console.log()
@@ -80,4 +79,3 @@ expression: no_console
  1 │ console.warn(foo)
    ·         ────
    ╰────
-

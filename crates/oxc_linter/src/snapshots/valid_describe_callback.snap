@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: valid_describe_callback
 ---
-
   ⚠ eslint-plugin-jest(valid-describe-callback): "Describe requires name and callback arguments"
    ╭─[valid_describe_callback.tsx:1:1]
  1 │ describe.each()()
@@ -258,4 +257,3 @@ expression: valid_describe_callback
    ·                 ────────────────────────
    ╰────
   help: "Remove argument(s) of describe callback"
-

@@ -645,7 +645,7 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    pub fn static_property_info(&'a self) -> Option<(Span, &'a str)> {
+    pub fn static_property_info(&self) -> Option<(Span, &str)> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
                 Expression::StringLiteral(lit) => Some((lit.span, &lit.value)),

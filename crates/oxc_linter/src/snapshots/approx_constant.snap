@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: approx_constant
 ---
-
   ⚠ oxc(approx-constant): Approximate value of `PI` found.
    ╭─[approx_constant.tsx:1:29]
  1 │ const getArea = (radius) => 3.141 * radius * radius;
@@ -65,4 +64,3 @@ expression: approx_constant
    ·             ────────
    ╰────
   help: Use `Math.SQRT2` instead
-

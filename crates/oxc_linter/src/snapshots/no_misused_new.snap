@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_misused_new
 ---
-
   ⚠ typescript-eslint(no-misused-new): Interfaces cannot be constructed, only classes.
    ╭─[no_misused_new.tsx:1:15]
  1 │ interface I { new (): I; constructor(): void;}
@@ -51,4 +50,3 @@ expression: no_misused_new
    ·               ───────────
    ╰────
   help: Consider removing this method from your interface.
-

@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: empty_brace_spaces
 ---
-
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
  1 │ { }
@@ -916,4 +915,3 @@ expression: empty_brace_spaces
    ·            ───────
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
-

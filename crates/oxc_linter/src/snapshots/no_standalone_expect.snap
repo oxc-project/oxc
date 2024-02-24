@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_standalone_expect
 ---
-
   ⚠ eslint-plugin-jest(no-standalone-expect): Expect must be inside of a test block.
    ╭─[no_standalone_expect.tsx:1:29]
  1 │ (() => {})('testing', () => expect(true).toBe(false))
@@ -142,4 +141,3 @@ expression: no_standalone_expect
  4 │             
    ╰────
   help: Did you forget to wrap `expect` in a `test` or `it` block?
-

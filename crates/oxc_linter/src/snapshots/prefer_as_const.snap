@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_as_const
 ---
-
   ⚠ typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
    ╭─[prefer_as_const.tsx:1:9]
  1 │ let []: 'bar' = 'bar';
@@ -37,4 +36,3 @@ expression: prefer_as_const
    ·                  ─
    ╰────
   help: You should use `as const` instead of type annotation.
-

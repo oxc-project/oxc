@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_identical_title
 ---
-
   ⚠ eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.
    ╭─[no_identical_title.tsx:4:20]
  3 │                 it('works', () => {});
@@ -110,4 +109,3 @@ expression: no_identical_title
  5 │               });
    ╰────
   help: Change the title of test.
-

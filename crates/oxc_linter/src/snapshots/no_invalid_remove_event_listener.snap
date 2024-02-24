@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_invalid_remove_event_listener
 ---
-
   ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
    ╭─[no_invalid_remove_event_listener.tsx:1:8]
  1 │ window.removeEventListener("scroll", handler.bind(abc))
@@ -132,4 +131,3 @@ expression: no_invalid_remove_event_listener
  3 │             // $ExpectType GliderEvent<undefined>
    ╰────
   help: The listener argument should be a function reference.
-

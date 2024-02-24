@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_string_trim_start_end
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `trimLeft` over `trimStart`
    ╭─[prefer_string_trim_start_end.tsx:1:5]
  1 │ foo.trimLeft()
@@ -44,4 +43,3 @@ expression: prefer_string_trim_start_end
    ·      ────────
    ╰────
   help: Replace with `trimLeft`
-

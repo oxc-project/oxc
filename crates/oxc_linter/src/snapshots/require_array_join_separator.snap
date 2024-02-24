@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: require_array_join_separator
 ---
-
   ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
    ╭─[require_array_join_separator.tsx:1:9]
  1 │ foo.join()
@@ -51,4 +50,3 @@ expression: require_array_join_separator
    ·          ──
    ╰────
   help: Missing the separator argument.
-

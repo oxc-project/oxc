@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_prototype_methods
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.push`.
    ╭─[prefer_prototype_methods.tsx:1:13]
  1 │ const foo = [].push.apply(bar, elements);
@@ -140,4 +139,3 @@ expression: prefer_prototype_methods
  1 │ const foo = [].findLast.call(bar)
    ·             ───────────
    ╰────
-

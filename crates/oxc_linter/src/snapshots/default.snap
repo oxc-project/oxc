@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: default
 ---
-
   ⚠ eslint-plugin-import(default): No default export found in imported module "./named-exports"
    ╭─[index.js:1:17]
  1 │ import baz from "./named-exports"
@@ -41,4 +40,3 @@ expression: default
    ·                    ──────────────
    ╰────
   help: does "./typescript" have the default export?
-

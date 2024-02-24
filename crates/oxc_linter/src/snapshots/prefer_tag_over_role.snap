@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_tag_over_role
 ---
-
   ⚠ eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
    ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="checkbox" />
@@ -72,4 +71,3 @@ expression: prefer_tag_over_role
    ·      ─────────────
    ╰────
   help: Replace HTML elements with `role` attribute `banner` to corresponding semantic HTML tag `header`.
-

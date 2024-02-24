@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_string_replace_all
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
  1 │ foo.replace(/a/g, bar)
@@ -236,4 +235,3 @@ expression: prefer_string_replace_all
  1 │ "Hello world".replaceAll(/world/g, 'world!');
    ·               ──────────
    ╰────
-

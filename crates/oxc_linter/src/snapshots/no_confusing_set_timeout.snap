@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_confusing_set_timeout
 ---
-
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
     ╭─[no_confusing_set_timeout.tsx:10:17]
   9 │                 });
@@ -182,4 +181,3 @@ expression: no_confusing_set_timeout
  6 │                 
    ╰────
   help: `jest.setTimeout` should be placed before any other jest methods
-

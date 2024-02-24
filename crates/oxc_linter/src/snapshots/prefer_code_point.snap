@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_code_point
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-code-point): Prefer `codePointAt` over `charCodeAt`
    ╭─[prefer_code_point.tsx:1:8]
  1 │ string.charCodeAt(index)
@@ -30,4 +29,3 @@ expression: prefer_code_point
    ·                 ────────────
    ╰────
   help: Unicode is better supported in `fromCodePoint` than `fromCharCode`
-

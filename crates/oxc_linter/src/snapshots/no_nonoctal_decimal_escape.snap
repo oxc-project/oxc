@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_nonoctal_decimal_escape
 ---
-
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:2]
  1 │ '\8'
@@ -645,4 +644,3 @@ expression: no_nonoctal_decimal_escape
    ·       ──
    ╰────
   help: Replace '\8' with '\\8' to include the actual backslash character.
-

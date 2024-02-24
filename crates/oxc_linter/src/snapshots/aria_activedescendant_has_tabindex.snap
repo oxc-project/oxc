@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: aria_activedescendant_has_tabindex
 ---
-
   ⚠ eslint-plugin-jsx-a11y(aria-activedescendant-has-tabindex): Enforce elements with aria-activedescendant are tabbable.
    ╭─[aria_activedescendant_has_tabindex.tsx:1:2]
  1 │ <div aria-activedescendant={someID} />;
@@ -16,4 +15,3 @@ expression: aria_activedescendant_has_tabindex
    ·  ───────────────
    ╰────
   help: An element that manages focus with `aria-activedescendant` must have a tabindex.
-

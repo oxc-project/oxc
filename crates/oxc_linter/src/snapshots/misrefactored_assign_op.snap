@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: misrefactored_assign_op
 ---
-
   ⚠ oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation
    ╭─[misrefactored_assign_op.tsx:1:1]
  1 │ a += a + 1;
@@ -72,4 +71,3 @@ expression: misrefactored_assign_op
    · ──────────
    ╰────
   help: Did you mean `a *= a`?
-

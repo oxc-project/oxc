@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_process_exit
 ---
-
   ⚠ eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.
    ╭─[no_process_exit.tsx:1:1]
  1 │ process.exit();
@@ -150,4 +149,3 @@ expression: no_process_exit
    ·                                         ───────────────
    ╰────
   help: Only use `process.exit()` in CLI apps. Throw an error instead.
-

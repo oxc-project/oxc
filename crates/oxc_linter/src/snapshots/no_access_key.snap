@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_access_key
 ---
-
   ⚠ eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.
    ╭─[no_access_key.tsx:1:6]
  1 │ <div accesskey="h" />
@@ -79,4 +78,3 @@ expression: no_access_key
    ·      ──────────────────────────────────────
    ╰────
   help: Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.
-

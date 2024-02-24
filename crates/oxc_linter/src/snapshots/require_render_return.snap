@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: require_render_return
 ---
-
   ⚠ eslint-plugin-react(require-render-return): Your render method should have a return statement
    ╭─[require_render_return.tsx:4:42]
  3 │                       displayName: 'Hello',
@@ -42,4 +41,3 @@ expression: require_render_return
  6 │                         }
    ╰────
   help: When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the return statement is missing.
-

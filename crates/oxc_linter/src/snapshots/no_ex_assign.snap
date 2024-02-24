@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_ex_assign
 ---
-
   ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
    ╭─[no_ex_assign.tsx:1:21]
  1 │ try { } catch (e) { e = 10; }
@@ -37,4 +36,3 @@ expression: no_ex_assign
    ·                             ───────
    ╰────
   help: If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.
-

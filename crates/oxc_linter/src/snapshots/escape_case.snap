@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: escape_case
 ---
-
   ⚠ eslint-plugin-unicorn(escape-case): Use uppercase characters for the value of the escape sequence.
    ╭─[escape_case.tsx:1:13]
  1 │ const foo = "\xAab\xaab\xAAb\uAaAab\uaaaab\uAAAAb\u{AaAa}b\u{aaaa}b\u{AAAA}";
@@ -50,4 +49,3 @@ expression: escape_case
  1 │ const foo = new RegExp("/\u{1d306}/", "u")
    ·                        ─────────────
    ╰────
-

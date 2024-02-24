@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: role_supports_aria_props
 ---
-
   ⚠ eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute aria-checked is not supported by the role link. This role is implicit on the element a.
    ╭─[role_supports_aria_props.tsx:1:13]
  1 │ <a href="/" aria-checked />
@@ -254,4 +253,3 @@ expression: role_supports_aria_props
    ·                ────────────
    ╰────
   help: Try to remove invalid attribute aria-checked.
-

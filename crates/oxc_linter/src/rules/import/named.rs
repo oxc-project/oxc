@@ -3,7 +3,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 use oxc_syntax::module_record::{ExportImportName, ImportImportName};
 
 use crate::{context::LintContext, rule::Rule};
@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule};
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-import(named): named import {0:?} not found")]
 #[diagnostic(severity(warning), help("does {1:?} have the export {0:?}?"))]
-struct NamedDiagnostic(Atom, Atom, #[label] pub Span);
+struct NamedDiagnostic(String, String, #[label] pub Span);
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/named.md>
 #[derive(Debug, Default, Clone)]
@@ -56,8 +56,8 @@ impl Rule for Named {
                 continue;
             }
             ctx.diagnostic(NamedDiagnostic(
-                import_name.name().clone(),
-                specifier.clone(),
+                import_name.name().to_string(),
+                specifier.to_string(),
                 import_name.span(),
             ));
         }
@@ -80,8 +80,8 @@ impl Rule for Named {
                 continue;
             }
             ctx.diagnostic(NamedDiagnostic(
-                import_name.name().clone(),
-                specifier.clone(),
+                import_name.name().to_string(),
+                specifier.to_string(),
                 import_name.span(),
             ));
         }
@@ -164,6 +164,8 @@ fn test() {
         // "import { foo } from './export-all'",
         // TypeScript export assignment
         "import x from './typescript-export-assign-object'",
+        // oxc
+        "import { foo, bar } from './oxc_named'",
     ];
 
     let fail = vec![
@@ -198,6 +200,8 @@ fn test() {
         // Export assignment cannot be used when targeting ECMAScript modules. Consider using 'export default' or another module format instead.
         "import { NotExported } from './typescript-export-assign-object'",
         "import { FooBar } from './typescript-export-assign-object'",
+        // oxc
+        "import { baz, quaz } from './oxc_named'",
     ];
 
     Tester::new(Named::NAME, pass, fail)

@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_string_slice
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:5]
  1 │ foo.substr()
@@ -302,4 +301,3 @@ expression: prefer_string_slice
  1 │ foo.substring((10, bar))
    ·     ─────────
    ╰────
-

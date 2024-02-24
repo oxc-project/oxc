@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_unnecessary_await
 ---
-
   ⚠ eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values
    ╭─[no_unnecessary_await.tsx:1:1]
  1 │ await []
@@ -247,4 +246,3 @@ expression: no_unnecessary_await
    · ─────
    ╰────
   help: consider to remove the `await`
-

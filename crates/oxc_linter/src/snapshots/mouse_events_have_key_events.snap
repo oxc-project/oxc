@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: mouse_events_have_key_events
 ---
-
   ⚠ eslint-plugin-jsx-a11y(mouse-events-have-key-events): onMouseOver must be accompanied by onFocus for accessibility.
    ╭─[mouse_events_have_key_events.tsx:1:6]
  1 │ <div onMouseOver={() => void 0} />;
@@ -100,4 +99,3 @@ expression: mouse_events_have_key_events
    ·      ─────────────────────────
    ╰────
   help: Try to add onBlur.
-

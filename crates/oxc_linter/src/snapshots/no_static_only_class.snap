@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_static_only_class
 ---
-
   ⚠ eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.
    ╭─[no_static_only_class.tsx:1:1]
  1 │ class A { static a() {}; }
@@ -72,4 +71,3 @@ expression: no_static_only_class
    · ─────────────────────────
    ╰────
   help: A class with only static members could just be an object instead.
-

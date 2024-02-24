@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_async_client_component
 ---
-
   ⚠ eslint-plugin-next(no-async-client-component): Prevent client components from being async functions.
    ╭─[no_async_client_component.tsx:4:49]
  3 │             
@@ -47,4 +46,3 @@ expression: no_async_client_component
  5 │                     return '123'
    ╰────
   help: See: https://nextjs.org/docs/messages/no-async-client-component
-

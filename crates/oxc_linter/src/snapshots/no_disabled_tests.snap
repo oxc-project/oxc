@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_disabled_tests
 ---
-
   ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test suite"
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ describe.skip('foo', function () {})
@@ -184,4 +183,3 @@ expression: no_disabled_tests
    ·                                      ─────────────────
    ╰────
   help: "Add function argument"
-

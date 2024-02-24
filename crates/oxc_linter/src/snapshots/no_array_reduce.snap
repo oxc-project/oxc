@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_array_reduce
 ---
-
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
    ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduce((str, item) => str += item, "")
@@ -312,4 +311,3 @@ expression: no_array_reduce
  3 │                     return (total / item) * 100;
    ╰────
   help: Refactor your code to use `for` loops instead.
-

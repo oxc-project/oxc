@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_loss_of_precision
 ---
-
   ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
    ╭─[no_loss_of_precision.tsx:1:9]
  1 │ var x = 9007199254740993
@@ -242,4 +241,3 @@ expression: no_loss_of_precision
  1 │ var x = 1e18_446_744_073_709_551_615
    ·         ────────────────────────────
    ╰────
-

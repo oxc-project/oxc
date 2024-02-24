@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_obj_calls
 ---
-
   ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
    ╭─[no_obj_calls.tsx:1:14]
  1 │ let newObj = new JSON();
@@ -135,4 +134,3 @@ expression: no_obj_calls
    ·                          ───────
    ╰────
   help: m is not a function.
-

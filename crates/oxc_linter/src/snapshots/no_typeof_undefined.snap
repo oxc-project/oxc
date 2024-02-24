@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_typeof_undefined
 ---
-
   ⚠ eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.
    ╭─[no_typeof_undefined.tsx:1:1]
  1 │ typeof a.b === "undefined"
@@ -104,4 +103,3 @@ expression: no_typeof_undefined
  1 │ typeof foo === "undefined"
    · ──────────────────────────
    ╰────
-

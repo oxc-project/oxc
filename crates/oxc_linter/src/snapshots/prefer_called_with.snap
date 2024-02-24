@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_called_with
 ---
-
   ⚠ eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
    ╭─[prefer_called_with.tsx:1:12]
  1 │ expect(fn).toBeCalled();
@@ -23,4 +22,3 @@ expression: prefer_called_with
    ·            ────────────────
    ╰────
   help: Prefer toHaveBeenCalledWith(/* expected args */)
-

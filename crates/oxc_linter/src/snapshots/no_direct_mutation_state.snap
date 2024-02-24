@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_direct_mutation_state
 ---
-
   ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
    ╭─[no_direct_mutation_state.tsx:5:23]
  4 │                     componentWillMount() {
@@ -155,4 +154,3 @@ expression: no_direct_mutation_state
  5 │             }
    ╰────
   help: calling setState() afterwards may replace the mutation you made.
-

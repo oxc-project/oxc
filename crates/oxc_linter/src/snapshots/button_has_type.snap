@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: button_has_type
 ---
-
   ⚠ eslint-plugin-react(button-has-type): `button` elements must have an explicit `type` attribute.
    ╭─[button_has_type.tsx:1:2]
  1 │ <button/>
@@ -198,4 +197,3 @@ expression: button_has_type
    ·                                                                                ─────────────
    ╰────
   help: Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.
-

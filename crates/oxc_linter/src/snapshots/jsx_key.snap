@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: jsx_key
 ---
-
   ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in array.
    ╭─[jsx_key.tsx:1:3]
  1 │ [<App />];
@@ -326,4 +325,3 @@ expression: jsx_key
  8 │                         <Text foo bar baz qux onClick={() => onClickHandler()} onPointerDown={() => onPointerDownHandler()} onMouseDown={() => onMouseDownHandler()} />
    ╰────
   help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
-

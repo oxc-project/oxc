@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_dom_node_append
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:6]
  1 │ node.appendChild(child);
@@ -142,4 +141,3 @@ expression: prefer_dom_node_append
    ·             ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
-

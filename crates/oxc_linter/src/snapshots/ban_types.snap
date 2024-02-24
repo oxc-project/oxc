@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: ban_types
 ---
-
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:1:8]
  1 │ let a: String;
@@ -234,4 +233,3 @@ expression: ban_types
  4 │ }
    ╰────
   help: The `Function` type accepts any function-like value
-

@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: explicit_length_check
 ---
-
   ⚠ eslint-plugin-unicorn(explicit-length-check): Use `.length > 0` when checking length is not zero.
    ╭─[explicit_length_check.tsx:1:11]
  1 │ const x = foo.length || bar()
@@ -70,4 +69,3 @@ expression: explicit_length_check
  1 │ let foo = arr.length ? 'non-empty' : 'empty'
    ·           ──────────
    ╰────
-
