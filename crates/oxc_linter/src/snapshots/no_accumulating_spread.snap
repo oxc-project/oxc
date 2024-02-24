@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_accumulating_spread
 ---
-
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()
    ╭─[no_accumulating_spread.tsx:1:18]
  1 │ Object.keys(obj).reduce((acc, key) => ({ ...acc, [key]: obj[key] }), {})
@@ -315,4 +314,3 @@ expression: no_accumulating_spread
    ╰────
   help: It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
-

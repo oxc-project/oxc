@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_date_now
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().getTime()`
    ╭─[prefer_date_now.tsx:1:12]
  1 │ const ts = new Date().getTime();
@@ -184,4 +183,3 @@ expression: prefer_date_now
    ·                       ────────
    ╰────
   help: Change to `Date.now()`.
-

@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_string_starts_ends_with
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
    ╭─[prefer_string_starts_ends_with.tsx:1:1]
  1 │ /^foo/.test(bar)
@@ -248,4 +247,3 @@ expression: prefer_string_starts_ends_with
  1 │ const a = /^你/.test('a');
    ·           ──────────
    ╰────
-

@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_query_selector
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
    ╭─[prefer_query_selector.tsx:1:10]
  1 │ document.getElementById("foo");
@@ -163,4 +162,3 @@ expression: prefer_query_selector
    ·   ──────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
-

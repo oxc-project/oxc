@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_useless_length_check
 ---
-
   ⚠ eslint-plugin-unicorn(no-useless-length-check)
    ╭─[no_useless_length_check.tsx:1:1]
  1 │ array.length === 0 || array.every(Boolean)
@@ -191,4 +190,3 @@ expression: no_useless_length_check
    · ──────────────────
    ╰────
   help: The empty check is useless as `Array#every()` returns `true` for an empty array.
-

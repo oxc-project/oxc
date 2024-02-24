@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_extra_boolean_cast
 ---
-
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
  1 │ if (!!foo) {}
@@ -2494,4 +2493,3 @@ expression: no_extra_boolean_cast
    ·      ─────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
-

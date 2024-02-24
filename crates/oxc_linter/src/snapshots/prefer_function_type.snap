@@ -1,9 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 150
 expression: prefer_function_type
 ---
-
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:1:17]
  1 │ interface Foo { (): string; }
@@ -170,4 +168,3 @@ expression: prefer_function_type
    ·                 ─────────
    ╰────
   help: The function type form `() => void` is generally preferred when possible for being more succinct.
-

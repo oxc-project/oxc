@@ -21,10 +21,17 @@ impl ModuleRecordBuilder {
         // This avoids additional checks on TypeScript `TsModuleBlock` which
         // also has `ModuleDeclaration`s.
         for stmt in &program.body {
-            if let Statement::ModuleDeclaration(module_decl) = stmt {
-                self.visit_module_declaration(module_decl);
+            match stmt {
+                Statement::ModuleDeclaration(module_decl) => {
+                    self.visit_module_declaration(module_decl);
+                }
+                Statement::ExpressionStatement(expr_stmt) => {
+                    self.handle_cjs_export(&expr_stmt.expression);
+                }
+                stmt => {
+                    self.search_top_level_cjs_require(stmt);
+                }
             }
-            self.search_top_level_cjs_require(stmt);
         }
 
         // The `ParseModule` algorithm requires `importedBoundNames` (import entries) to be
@@ -358,5 +365,23 @@ impl ModuleRecordBuilder {
             let module_request = NameSpan::new(module.value.clone(), module.span);
             self.add_module_request(&module_request);
         }
+    }
+
+    // Add export binding `foo` of `
+    // * exports.foo = bar`
+    // * module.exports.foo = bar`
+    fn handle_cjs_export(&mut self, expr: &Expression) {
+        let Expression::AssignmentExpression(assign_expr) = expr else { return };
+        let AssignmentTarget::SimpleAssignmentTarget(target) = &assign_expr.left else { return };
+        let SimpleAssignmentTarget::MemberAssignmentTarget(member_expr) = target else { return };
+        match member_expr.object() {
+            Expression::Identifier(ident) if ident.name == "exports" => {}
+            Expression::MemberExpression(member_expr)
+                if matches!(member_expr.object(), Expression::Identifier(ident) if ident.name == "module")
+                    && member_expr.static_property_name() == Some("exports") => {}
+            _ => return,
+        }
+        let Some((span, name)) = member_expr.static_property_info() else { return };
+        self.add_export_binding(name.into(), span);
     }
 }

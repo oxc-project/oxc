@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_empty_character_class
 ---
-
   ⚠ eslint(no-empty-character-class): Empty character class
    ╭─[no_empty_character_class.tsx:1:11]
  1 │ var foo = /^abc[]/;
@@ -58,4 +57,3 @@ expression: no_empty_character_class
    ·           ──────
    ╰────
   help: Try to remove empty character class `[]` in regexp literal
-

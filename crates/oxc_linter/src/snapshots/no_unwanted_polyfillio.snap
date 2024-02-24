@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_unwanted_polyfillio
 ---
-
   ⚠ eslint-plugin-next(no-unwanted-polyfillio): No duplicate polyfills from Polyfill.io are allowed. WeakSet, Promise, Promise.prototype.finally, es2015, es5, es6 are already shipped with Next.js.
    ╭─[no_unwanted_polyfillio.tsx:8:35]
  7 │                           <h1>Hello title</h1>
@@ -38,4 +37,3 @@ expression: no_unwanted_polyfillio
  9 │                           </div>
    ╰────
   help: See https://nextjs.org/docs/messages/no-unwanted-polyfillio
-

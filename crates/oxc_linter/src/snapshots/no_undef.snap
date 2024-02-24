@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_undef
 ---
-
   ⚠ eslint(no-undef): Disallow the use of undeclared variables
    ╭─[no_undef.tsx:1:1]
  1 │ a = 1;
@@ -191,4 +190,3 @@ expression: no_undef
    ·                               ─
    ╰────
   help: 'a' is not defined.
-

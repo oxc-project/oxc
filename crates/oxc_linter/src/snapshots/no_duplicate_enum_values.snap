@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_duplicate_enum_values
 ---
-
   ⚠ typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values
    ╭─[no_duplicate_enum_values.tsx:3:19]
  2 │             enum E {
@@ -46,4 +45,3 @@ expression: no_duplicate_enum_values
  7 │             }
    ╰────
   help: Duplicate values can lead to bugs that are hard to track down
-

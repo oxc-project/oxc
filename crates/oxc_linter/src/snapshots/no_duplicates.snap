@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_duplicates
 ---
-
   ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
    ╭─[index.ts:1:19]
  1 │ import { x } from './foo'; import { y } from './foo'
@@ -357,4 +356,3 @@ expression: no_duplicates
     ·            ─
  13 │         }
     ╰────
-

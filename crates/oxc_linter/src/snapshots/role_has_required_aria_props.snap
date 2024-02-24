@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: role_has_required_aria_props
 ---
-
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `slider` role is missing required aria props `aria-valuenow`.
    ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='slider' />
@@ -268,4 +267,3 @@ expression: role_has_required_aria_props
    ·              ───────────────
    ╰────
   help: Add missing aria props `aria-expanded` to the element with `combobox` role.
-

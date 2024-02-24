@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_explicit_any
 ---
-
   ⚠ typescript-eslint(no-explicit-any): Unexpected any. Specify a different type.
    ╭─[no_explicit_any.tsx:1:15]
  1 │ const number: any = 1
@@ -301,4 +300,3 @@ expression: no_explicit_any
    ·            ───
    ╰────
   help: Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.
-

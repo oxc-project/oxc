@@ -242,6 +242,10 @@ impl ExportLocalName {
     }
 }
 
+pub struct FunctionMeta {
+    pub deprecated: bool,
+}
+
 #[cfg(test)]
 mod test {
     use super::{ExportExportName, ExportLocalName, ImportImportName, NameSpan};

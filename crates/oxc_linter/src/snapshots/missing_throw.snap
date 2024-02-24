@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: missing_throw
 ---
-
   ⚠ deepscan(missing-throw): Missing throw
    ╭─[missing_throw.tsx:1:18]
  1 │ function foo() { new Error() }
@@ -16,4 +15,3 @@ expression: missing_throw
    ·                     ───────────
    ╰────
   help: The `throw` keyword seems to be missing in front of this 'new' expression
-

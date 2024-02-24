@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_namespace
 ---
-
   ⚠ typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.
    ╭─[no_namespace.tsx:1:1]
  1 │ module foo {}
@@ -295,4 +294,3 @@ expression: no_namespace
  4 │                 export declare namespace C {}
    ╰────
   help: Replace the namespace with an ES2015 module or use `declare module`
-

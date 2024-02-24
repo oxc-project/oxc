@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: autocomplete_valid
 ---
-
   ⚠ eslint-plugin-jsx-a11y(autocomplete-valid): `foo` is not a valid value for autocomplete.
    ╭─[autocomplete_valid.tsx:1:20]
  1 │ <input type='text' autocomplete='foo' />;
@@ -44,4 +43,3 @@ expression: autocomplete_valid
    ·                    ──────────────────
    ╰────
   help: Change `baz` to a valid value for autocomplete.
-
