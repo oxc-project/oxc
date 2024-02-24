@@ -2,14 +2,14 @@ use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::Error;
-use oxc_semantic::{AstNodes, JSDocComment, ScopeTree, Semantic, SymbolTable};
+use oxc_semantic::{AstNodes, JSDoc, ScopeTree, Semantic, SymbolTable};
 use oxc_span::SourceType;
 
 use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{Fix, Message},
     javascript_globals::GLOBALS,
-    AstNode, ESLintEnv, ESLintSettings,
+    ESLintEnv, ESLintSettings,
 };
 
 pub struct LintContext<'a> {
@@ -155,7 +155,7 @@ impl<'a> LintContext<'a> {
     }
 
     /* JSDoc */
-    pub fn jsdoc(&self, node: &AstNode<'a>) -> Option<JSDocComment<'a>> {
-        self.semantic().jsdoc().get_by_node(node)
+    pub fn jsdoc(&self) -> &JSDoc<'a> {
+        self.semantic().jsdoc()
     }
 }

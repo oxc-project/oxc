@@ -204,9 +204,10 @@ impl<'a> SemanticBuilder<'a> {
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
         let mut flags = self.current_node_flags;
-        if self.jsdoc.retrieve_jsdoc_comment(kind) {
+        if self.jsdoc.retrieve_attached_jsdoc(&kind) {
             flags |= NodeFlags::JSDoc;
         }
+
         let ast_node = AstNode::new(kind, self.current_scope_id, self.cfg.current_node_ix, flags);
         let parent_node_id =
             if matches!(kind, AstKind::Program(_)) { None } else { Some(self.current_node_id) };

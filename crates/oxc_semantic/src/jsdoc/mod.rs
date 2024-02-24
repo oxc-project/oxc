@@ -14,7 +14,8 @@ mod parser;
 #[derive(Debug)]
 pub struct JSDoc<'a> {
     /// JSDocs by Span
-    docs: BTreeMap<Span, JSDocComment<'a>>,
+    attached: BTreeMap<Span, Vec<JSDocComment<'a>>>,
+    not_attached: Vec<JSDocComment<'a>>,
 }
 
 #[derive(Debug, Clone)]
@@ -25,20 +26,37 @@ pub struct JSDocComment<'a> {
 }
 
 impl<'a> JSDoc<'a> {
-    pub fn new(docs: BTreeMap<Span, JSDocComment<'a>>) -> Self {
-        Self { docs }
+    pub fn new(
+        attached: BTreeMap<Span, Vec<JSDocComment<'a>>>,
+        not_attached: Vec<JSDocComment<'a>>,
+    ) -> Self {
+        Self { attached, not_attached }
     }
 
-    pub fn get_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<JSDocComment<'a>> {
+    pub fn get_one_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<JSDocComment<'a>> {
+        let Some(jsdocs) = self.get_all_by_node(node) else {
+            return None;
+        };
+
+        // If flagged, at least 1 JSDoc is attached
+        jsdocs.first().cloned()
+    }
+
+    pub fn get_all_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<Vec<JSDocComment<'a>>> {
         if !node.flags().has_jsdoc() {
             return None;
         }
+
         let span = node.kind().span();
-        self.get_by_span(span)
+        self.get_all_by_span(span)
     }
 
-    pub fn get_by_span<'b>(&'b self, span: Span) -> Option<JSDocComment<'a>> {
-        self.docs.get(&span).cloned()
+    pub fn get_all_by_span<'b>(&'b self, span: Span) -> Option<Vec<JSDocComment<'a>>> {
+        self.attached.get(&span).cloned()
+    }
+
+    pub fn iter_all<'b>(&'b self) -> impl Iterator<Item = &JSDocComment<'a>> + 'b {
+        self.attached.values().flatten().chain(self.not_attached.iter())
     }
 }
 
