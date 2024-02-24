@@ -130,6 +130,7 @@ mod test {
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
     use oxc_span::{SourceType, Span};
+    use pretty_assertions::assert_eq;
 
     use crate::{jsdoc::JSDocComment, Semantic, SemanticBuilder};
 
@@ -256,6 +257,36 @@ mod test {
         for (source_text, target) in source_texts {
             test_jsdoc_found(source_text, target, Some(source_type));
         }
+    }
+
+    #[test]
+    fn get_all() {
+        let allocator = Allocator::default();
+        let source_text = r"
+            /**c0*/
+            function foo() {}
+
+            /**c1*/
+            /* noop */
+            /**c2*/
+            // noop
+            /**c3*/
+            const x = () => {};
+        ";
+        let symbol = "const x = () => {};";
+        let jsdocs = get_jsdoc(&allocator, source_text, symbol, None);
+
+        assert!(jsdocs.is_some());
+        let jsdocs = jsdocs.unwrap();
+        assert_eq!(jsdocs.len(), 3);
+
+        // Should be [farthest, ..., nearest]
+        let mut iter = jsdocs.iter();
+        let c1 = iter.next().unwrap();
+        assert!(c1.comment.contains("c1"));
+        let _c2 = iter.next().unwrap();
+        let c3 = iter.next().unwrap();
+        assert!(c3.comment.contains("c3"));
     }
 
     #[test]
