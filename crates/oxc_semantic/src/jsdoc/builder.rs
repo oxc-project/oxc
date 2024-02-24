@@ -130,7 +130,6 @@ mod test {
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
     use oxc_span::{SourceType, Span};
-    use pretty_assertions::assert_eq;
 
     use crate::{jsdoc::JSDocComment, Semantic, SemanticBuilder};
 
@@ -260,7 +259,7 @@ mod test {
     }
 
     #[test]
-    fn get_all() {
+    fn get_all_by_span_order() {
         let allocator = Allocator::default();
         let source_text = r"
             /**c0*/
