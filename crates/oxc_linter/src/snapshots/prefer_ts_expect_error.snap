@@ -1,0 +1,69 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_ts_expect_error
+---
+
+  ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
+   ╭─[prefer_ts_expect_error.tsx:1:1]
+ 1 │ // @ts-ignore
+   · ─────────────
+   ╰────
+  help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+
+  ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
+   ╭─[prefer_ts_expect_error.tsx:1:1]
+ 1 │ // @ts-ignore: Suppress next line
+   · ─────────────────────────────────
+   ╰────
+  help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+
+  ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
+   ╭─[prefer_ts_expect_error.tsx:1:1]
+ 1 │ ///@ts-ignore: Suppress next line
+   · ─────────────────────────────────
+   ╰────
+  help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+
+  ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
+   ╭─[prefer_ts_expect_error.tsx:3:1]
+ 2 │ if (false) {
+ 3 │ // @ts-ignore: Unreachable code error
+   · ─────────────────────────────────────
+ 4 │ console.log('hello');
+   ╰────
+  help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+
+  ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
+   ╭─[prefer_ts_expect_error.tsx:1:1]
+ 1 │ /* @ts-ignore */
+   · ────────────────
+   ╰────
+  help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+
+  ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
+   ╭─[prefer_ts_expect_error.tsx:2:1]
+ 1 │     
+ 2 │ ╭─▶ /**
+ 3 │ │   * Explaining comment
+ 4 │ │   *
+ 5 │ ╰─▶ * @ts-ignore */
+ 6 │             
+   ╰────
+  help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+
+  ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
+   ╭─[prefer_ts_expect_error.tsx:1:1]
+ 1 │ /* @ts-ignore in a single block */
+   · ──────────────────────────────────
+   ╰────
+  help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+
+  ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
+   ╭─[prefer_ts_expect_error.tsx:2:1]
+ 1 │     
+ 2 │ ╭─▶ /*
+ 3 │ ╰─▶ // @ts-ignore in a block with single line comments */
+ 4 │             
+   ╰────
+  help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+
