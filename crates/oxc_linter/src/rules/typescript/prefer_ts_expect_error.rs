@@ -1,6 +1,3 @@
-use lazy_static::lazy_static;
-use regex::Regex;
-
 use oxc_ast::Comment;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -49,7 +46,7 @@ declare_oxc_lint!(
     /// const multiLine: number = 'value';
     /// ```
     PreferTsExpectError,
-    correctness
+    pedantic
 );
 
 impl Rule for PreferTsExpectError {
@@ -103,20 +100,12 @@ fn is_valid_ts_ignore_present(comment: Comment, raw: &str) -> bool {
 }
 
 fn test_single_line_comment(line: &str) -> bool {
-    lazy_static! {
-        static ref TS_IGNORE_SINGLE_LINE_REGEX: Regex = Regex::new(r"^\s*/?\s*@ts-ignore").unwrap();
-    }
-
-    TS_IGNORE_SINGLE_LINE_REGEX.is_match(line)
+    line.trim_start_matches(|c: char| c.is_whitespace() || c == '/').starts_with("@ts-ignore")
 }
 
 fn test_multi_line_comment(line: &str) -> bool {
-    lazy_static! {
-        static ref TS_IGNORE_MULTI_LINE_REGEX: Regex =
-            Regex::new(r"^\s*(?:\/|\*)*\s*@ts-ignore").unwrap();
-    }
-
-    TS_IGNORE_MULTI_LINE_REGEX.is_match(line)
+    line.trim_start_matches(|c: char| c.is_whitespace() || c == '/' || c == '*')
+        .starts_with("@ts-ignore")
 }
 
 #[test]
