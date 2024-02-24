@@ -33,15 +33,25 @@ impl<'a> JSDoc<'a> {
         Self { attached, not_attached }
     }
 
-    pub fn get_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<Vec<JSDocComment<'a>>> {
+    pub fn get_one_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<JSDocComment<'a>> {
+        let Some(jsdocs) = self.get_all_by_node(node) else {
+            return None;
+        };
+
+        // If flaged, at least 1 JSDoc is attached
+        jsdocs.first().cloned()
+    }
+
+    pub fn get_all_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<Vec<JSDocComment<'a>>> {
         if !node.flags().has_jsdoc() {
             return None;
         }
+
         let span = node.kind().span();
-        self.get_by_span(span)
+        self.get_all_by_span(span)
     }
 
-    pub fn get_by_span<'b>(&'b self, span: Span) -> Option<Vec<JSDocComment<'a>>> {
+    pub fn get_all_by_span<'b>(&'b self, span: Span) -> Option<Vec<JSDocComment<'a>>> {
         self.attached.get(&span).cloned()
     }
 
