@@ -367,21 +367,34 @@ impl ModuleRecordBuilder {
         }
     }
 
-    // Add export binding `foo` of `
-    // * exports.foo = bar`
-    // * module.exports.foo = bar`
+    // Add export binding for
+    // * exports.foo = bar
+    // * module.exports.foo = bar
+    // * module.exports = foo
     fn handle_cjs_export(&mut self, expr: &Expression) {
         let Expression::AssignmentExpression(assign_expr) = expr else { return };
         let AssignmentTarget::SimpleAssignmentTarget(target) = &assign_expr.left else { return };
         let SimpleAssignmentTarget::MemberAssignmentTarget(member_expr) = target else { return };
         match member_expr.object() {
-            Expression::Identifier(ident) if ident.name == "exports" => {}
-            Expression::MemberExpression(member_expr)
-                if matches!(member_expr.object(), Expression::Identifier(ident) if ident.name == "module")
-                    && member_expr.static_property_name() == Some("exports") => {}
-            _ => return,
+            // exports.foo = bar
+            Expression::Identifier(ident) if ident.name == "exports" => {
+                let Some((span, name)) = member_expr.static_property_info() else { return };
+                self.add_export_binding(name.into(), span);
+            }
+            // module.exports = {}
+            Expression::Identifier(_)
+                if member_expr.is_specific_member_access("module", "exports") =>
+            {
+                self.add_default_export(assign_expr.right.span());
+            }
+            // module.exports.foo = bar
+            Expression::MemberExpression(inner_member_expr)
+                if inner_member_expr.is_specific_member_access("module", "exports") =>
+            {
+                let Some((span, name)) = member_expr.static_property_info() else { return };
+                self.add_export_binding(name.into(), span);
+            }
+            _ => {}
         }
-        let Some((span, name)) = member_expr.static_property_info() else { return };
-        self.add_export_binding(name.into(), span);
     }
 }
