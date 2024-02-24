@@ -258,7 +258,7 @@ mod test {
         assert!(!ImportImportName::NamespaceObject.is_default());
         assert!(ImportImportName::Default(Span::new(0, 0)).is_default());
 
-        assert!(!ImportImportName::Name(name).is_namespace_object());
+        assert!(!ImportImportName::Name(name.clone()).is_namespace_object());
         assert!(ImportImportName::NamespaceObject.is_namespace_object());
         assert!(!ImportImportName::Default(Span::new(0, 0)).is_namespace_object());
     }

@@ -257,9 +257,6 @@ impl ModuleRecordBuilder {
             ..ExportEntry::default()
         };
         self.add_export_entry(export_entry);
-        if let Some(id) = id {
-            self.add_export_binding(id.name.clone(), id.span);
-        }
     }
 
     fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration) {
