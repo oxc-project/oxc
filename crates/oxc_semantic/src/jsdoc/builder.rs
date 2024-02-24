@@ -259,6 +259,36 @@ mod test {
     }
 
     #[test]
+    fn get_all_by_span_order() {
+        let allocator = Allocator::default();
+        let source_text = r"
+            /**c0*/
+            function foo() {}
+
+            /**c1*/
+            /* noop */
+            /**c2*/
+            // noop
+            /**c3*/
+            const x = () => {};
+        ";
+        let symbol = "const x = () => {};";
+        let jsdocs = get_jsdoc(&allocator, source_text, symbol, None);
+
+        assert!(jsdocs.is_some());
+        let jsdocs = jsdocs.unwrap();
+        assert_eq!(jsdocs.len(), 3);
+
+        // Should be [farthest, ..., nearest]
+        let mut iter = jsdocs.iter();
+        let c1 = iter.next().unwrap();
+        assert!(c1.comment.contains("c1"));
+        let _c2 = iter.next().unwrap();
+        let c3 = iter.next().unwrap();
+        assert!(c3.comment.contains("c3"));
+    }
+
+    #[test]
     fn get_all_jsdoc() {
         let allocator = Allocator::default();
         let semantic = build_semantic(
