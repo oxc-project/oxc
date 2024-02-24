@@ -1212,9 +1212,10 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: TSModuleDeclarationName,
         body: TSModuleDeclarationBody<'a>,
+        kind: TSModuleDeclarationKind,
         modifiers: Modifiers<'a>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        self.alloc(TSModuleDeclaration { span, id, body, modifiers })
+        self.alloc(TSModuleDeclaration { span, id, body, kind, modifiers })
     }
 
     pub fn ts_type_annotation(

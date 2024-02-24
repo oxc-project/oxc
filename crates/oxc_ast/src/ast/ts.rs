@@ -703,8 +703,27 @@ pub struct TSModuleDeclaration<'a> {
     pub span: Span,
     pub id: TSModuleDeclarationName,
     pub body: TSModuleDeclarationBody<'a>,
+    /// The keyword used to define this module declaration
+    /// ```text
+    /// namespace Foo {}
+    /// ^^^^^^^^^
+    /// module 'foo' {}
+    /// ^^^^^^
+    /// declare global {}
+    ///         ^^^^^^
+    /// ```
+    pub kind: TSModuleDeclarationKind,
     /// Valid Modifiers: `declare`, `export`
     pub modifiers: Modifiers<'a>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "lowercase"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+pub enum TSModuleDeclarationKind {
+    Global,
+    Module,
+    Namespace,
 }
 
 #[derive(Debug, Hash)]
