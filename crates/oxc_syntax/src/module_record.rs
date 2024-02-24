@@ -1,6 +1,6 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 
-use std::{hash::BuildHasherDefault, path::PathBuf, sync::Arc};
+use std::{fmt, hash::BuildHasherDefault, path::PathBuf, sync::Arc};
 
 use dashmap::DashMap;
 use indexmap::IndexMap;
@@ -69,6 +69,32 @@ pub struct ModuleRecord {
 impl ModuleRecord {
     pub fn new(resolved_absolute_path: PathBuf) -> Self {
         Self { resolved_absolute_path, ..Self::default() }
+    }
+}
+
+impl fmt::Debug for ModuleRecord {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+        // recursively formatting loaded modules can crash when the module graph is cyclic
+        let loaded_modules = self
+            .loaded_modules
+            .iter()
+            .map(|entry| (entry.key().to_string()))
+            .reduce(|acc, key| format!("{acc}, {key}"))
+            .unwrap_or_default();
+        let loaded_modules = format!("{{ {loaded_modules} }}");
+        f.debug_struct("ModuleRecord")
+            .field("resolved_absolute_path", &self.resolved_absolute_path)
+            .field("requested_modules", &self.requested_modules)
+            .field("loaded_modules", &loaded_modules)
+            .field("import_entries", &self.import_entries)
+            .field("local_export_entries", &self.local_export_entries)
+            .field("indirect_export_entries", &self.indirect_export_entries)
+            .field("star_export_entries", &self.star_export_entries)
+            .field("exported_bindings", &self.exported_bindings)
+            .field("exported_bindings_duplicated", &self.exported_bindings_duplicated)
+            .field("export_default", &self.export_default)
+            .field("export_default_duplicated", &self.export_default_duplicated)
+            .finish()
     }
 }
 
