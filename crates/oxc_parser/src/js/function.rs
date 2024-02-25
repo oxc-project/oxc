@@ -250,7 +250,7 @@ impl<'a> ParserImpl<'a> {
         };
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
-        Ok(self.ast.arrow_expression(
+        Ok(self.ast.arrow_function_expression(
             self.end_span(span),
             expression,
             r#async,
@@ -515,7 +515,7 @@ impl<'a> ParserImpl<'a> {
 
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
-        Ok(self.ast.arrow_expression(
+        Ok(self.ast.arrow_function_expression(
             self.end_span(span),
             expression,
             r#async,
