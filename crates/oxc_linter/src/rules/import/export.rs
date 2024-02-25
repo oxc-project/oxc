@@ -6,7 +6,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ModuleRecord;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{context::LintContext, rule::Rule};
@@ -15,10 +15,10 @@ use crate::{context::LintContext, rule::Rule};
 enum ExportDiagnostic {
     #[error("eslint-plugin-import(export): Multiple exports of name '{1}'.")]
     #[diagnostic(severity(warning))]
-    MultipleNamedExport(#[label] Span, Atom),
+    MultipleNamedExport(#[label] Span, CompactString),
     #[error("eslint-plugin-import(export): No named exports found in module '{1}'")]
     #[diagnostic(severity(warning))]
-    NoNamedExport(#[label] Span, Atom),
+    NoNamedExport(#[label] Span, CompactString),
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/export.md>
@@ -84,7 +84,7 @@ impl Rule for Export {
 
 fn walk_exported_recursive(
     module_record: &ModuleRecord,
-    result: &mut FxHashSet<Atom>,
+    result: &mut FxHashSet<CompactString>,
     visited: &mut FxHashSet<PathBuf>,
 ) {
     let path = &module_record.resolved_absolute_path;

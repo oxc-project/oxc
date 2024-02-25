@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -12,7 +12,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-undef): Disallow the use of undeclared variables")]
 #[diagnostic(severity(warning), help("'{0}' is not defined."))]
-struct NoUndefDiagnostic(Atom, #[label] pub Span);
+struct NoUndefDiagnostic(CompactString, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUndef {

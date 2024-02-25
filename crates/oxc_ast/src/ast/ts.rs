@@ -27,7 +27,7 @@ export interface TSAbstractMethodDefinition extends Omit<MethodDefinition, 'type
 pub struct TSThisParameter<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub this: IdentifierName,
+    pub this: IdentifierName<'a>,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
@@ -40,7 +40,7 @@ pub struct TSThisParameter<'a> {
 pub struct TSEnumDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub id: BindingIdentifier,
+    pub id: BindingIdentifier<'a>,
     pub members: Vec<'a, TSEnumMember<'a>>,
     /// Valid Modifiers: `const`, `export`, `declare`
     pub modifiers: Modifiers<'a>,
@@ -60,8 +60,8 @@ pub struct TSEnumMember<'a> {
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum TSEnumMemberName<'a> {
-    Identifier(IdentifierName),
-    StringLiteral(StringLiteral),
+    Identifier(IdentifierName<'a>),
+    StringLiteral(StringLiteral<'a>),
     // Invalid Grammar `enum E { [computed] }`
     ComputedPropertyName(Expression<'a>),
     // Invalid Grammar `enum E { 1 }`
@@ -93,9 +93,9 @@ pub enum TSLiteral<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>),
     NullLiteral(Box<'a, NullLiteral>),
     NumericLiteral(Box<'a, NumericLiteral<'a>>),
-    BigintLiteral(Box<'a, BigintLiteral>),
-    RegExpLiteral(Box<'a, RegExpLiteral>),
-    StringLiteral(Box<'a, StringLiteral>),
+    BigintLiteral(Box<'a, BigintLiteral<'a>>),
+    RegExpLiteral(Box<'a, RegExpLiteral<'a>>),
+    StringLiteral(Box<'a, StringLiteral<'a>>),
     TemplateLiteral(Box<'a, TemplateLiteral<'a>>),
     UnaryExpression(Box<'a, UnaryExpression<'a>>),
 }
@@ -254,7 +254,7 @@ pub struct TSNamedTupleMember<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub element_type: TSType<'a>,
-    pub label: IdentifierName,
+    pub label: IdentifierName<'a>,
     pub optional: bool,
 }
 
@@ -410,12 +410,12 @@ pub struct TSTypeReference<'a> {
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum TSTypeName<'a> {
-    IdentifierReference(Box<'a, IdentifierReference>),
+    IdentifierReference(Box<'a, IdentifierReference<'a>>),
     QualifiedName(Box<'a, TSQualifiedName<'a>>),
 }
 
 impl<'a> TSTypeName<'a> {
-    pub fn get_first_name(name: &TSTypeName) -> IdentifierReference {
+    pub fn get_first_name(name: &TSTypeName<'a>) -> IdentifierReference<'a> {
         match name {
             TSTypeName::IdentifierReference(name) => (*name).clone(),
             TSTypeName::QualifiedName(name) => TSTypeName::get_first_name(&name.left),
@@ -456,7 +456,7 @@ pub struct TSQualifiedName<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub left: TSTypeName<'a>,
-    pub right: IdentifierName,
+    pub right: IdentifierName<'a>,
 }
 
 #[derive(Debug, Hash)]
@@ -474,7 +474,7 @@ pub struct TSTypeParameterInstantiation<'a> {
 pub struct TSTypeParameter<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub name: BindingIdentifier,
+    pub name: BindingIdentifier<'a>,
     pub constraint: Option<TSType<'a>>,
     pub default: Option<TSType<'a>>,
     pub r#in: bool,
@@ -497,7 +497,7 @@ pub struct TSTypeParameterDeclaration<'a> {
 pub struct TSTypeAliasDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub id: BindingIdentifier,
+    pub id: BindingIdentifier<'a>,
     pub type_annotation: TSType<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     /// Valid Modifiers: `declare`, `export`
@@ -546,7 +546,7 @@ pub struct TSClassImplements<'a> {
 pub struct TSInterfaceDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub id: BindingIdentifier,
+    pub id: BindingIdentifier<'a>,
     pub body: Box<'a, TSInterfaceBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub extends: Option<Vec<'a, Box<'a, TSInterfaceHeritage<'a>>>>,
@@ -651,7 +651,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
 pub struct TSIndexSignatureName<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub name: Atom,
+    pub name: Atom<'a>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
 }
 
@@ -671,7 +671,7 @@ pub struct TSInterfaceHeritage<'a> {
 pub struct TSTypePredicate<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub parameter_name: TSTypePredicateName,
+    pub parameter_name: TSTypePredicateName<'a>,
     pub asserts: bool,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
@@ -679,8 +679,8 @@ pub struct TSTypePredicate<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged, rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub enum TSTypePredicateName {
-    Identifier(IdentifierName),
+pub enum TSTypePredicateName<'a> {
+    Identifier(IdentifierName<'a>),
     This(TSThisType),
 }
 
@@ -690,7 +690,7 @@ pub enum TSTypePredicateName {
 pub struct TSModuleDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub id: TSModuleDeclarationName,
+    pub id: TSModuleDeclarationName<'a>,
     pub body: TSModuleDeclarationBody<'a>,
     /// The keyword used to define this module declaration
     /// ```text
@@ -718,13 +718,13 @@ pub enum TSModuleDeclarationKind {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub enum TSModuleDeclarationName {
-    Identifier(IdentifierName),
-    StringLiteral(StringLiteral),
+pub enum TSModuleDeclarationName<'a> {
+    Identifier(IdentifierName<'a>),
+    StringLiteral(StringLiteral<'a>),
 }
 
-impl TSModuleDeclarationName {
-    pub fn name(&self) -> &Atom {
+impl<'a> TSModuleDeclarationName<'a> {
+    pub fn name(&self) -> &Atom<'a> {
         match self {
             Self::Identifier(ident) => &ident.name,
             Self::StringLiteral(lit) => &lit.value,
@@ -805,16 +805,16 @@ pub struct TSImportAttributes<'a> {
 pub struct TSImportAttribute<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub name: TSImportAttributeName,
+    pub name: TSImportAttributeName<'a>,
     pub value: Expression<'a>,
 }
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub enum TSImportAttributeName {
-    Identifier(IdentifierName),
-    StringLiteral(StringLiteral),
+pub enum TSImportAttributeName<'a> {
+    Identifier(IdentifierName<'a>),
+    StringLiteral(StringLiteral<'a>),
 }
 
 #[derive(Debug, Hash)]
@@ -872,7 +872,7 @@ pub enum TSMappedTypeModifierOperator {
 pub struct TSTemplateLiteralType<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub quasis: Vec<'a, TemplateElement>,
+    pub quasis: Vec<'a, TemplateElement<'a>>,
     pub types: Vec<'a, TSType<'a>>,
 }
 
@@ -912,7 +912,7 @@ pub struct TSTypeAssertion<'a> {
 pub struct TSImportEqualsDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub id: BindingIdentifier,
+    pub id: BindingIdentifier<'a>,
     pub module_reference: Box<'a, TSModuleReference<'a>>,
     pub is_export: bool,
     pub import_kind: ImportOrExportKind,
@@ -923,16 +923,16 @@ pub struct TSImportEqualsDeclaration<'a> {
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum TSModuleReference<'a> {
     TypeName(TSTypeName<'a>),
-    ExternalModuleReference(TSExternalModuleReference),
+    ExternalModuleReference(TSExternalModuleReference<'a>),
 }
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct TSExternalModuleReference {
+pub struct TSExternalModuleReference<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub expression: StringLiteral,
+    pub expression: StringLiteral<'a>,
 }
 
 #[derive(Debug, Hash)]
@@ -1030,10 +1030,10 @@ pub struct TSExportAssignment<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct TSNamespaceExportDeclaration {
+pub struct TSNamespaceExportDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub id: IdentifierName,
+    pub id: IdentifierName<'a>,
 }
 
 #[derive(Debug, Hash)]

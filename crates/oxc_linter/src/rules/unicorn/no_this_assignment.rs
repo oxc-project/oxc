@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -17,7 +17,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
     severity(warning),
     help("Reference `this` directly instead of assigning it to a variable.")
 )]
-struct NoThisAssignmentDiagnostic(#[label] pub Span, Atom);
+struct NoThisAssignmentDiagnostic(#[label] pub Span, CompactString);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoThisAssignment;
@@ -78,7 +78,7 @@ impl Rule for NoThisAssignment {
 
                 ctx.diagnostic(NoThisAssignmentDiagnostic(
                     variable_decl.span,
-                    binding_ident.name.clone(),
+                    binding_ident.name.to_compact_string(),
                 ));
             }
             AstKind::AssignmentExpression(assignment_expr) => {
@@ -103,7 +103,7 @@ impl Rule for NoThisAssignment {
 
                 ctx.diagnostic(NoThisAssignmentDiagnostic(
                     assignment_expr.span,
-                    ident.name.clone(),
+                    ident.name.to_compact_string(),
                 ));
             }
             _ => {}

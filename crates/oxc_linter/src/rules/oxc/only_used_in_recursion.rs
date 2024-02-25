@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{CompactString, GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -19,7 +19,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
         "Remove the argument and its usage. Alternatively, use the argument in the function body."
     )
 )]
-struct OnlyUsedInRecursionDiagnostic(#[label] pub Span, pub Atom);
+struct OnlyUsedInRecursionDiagnostic(#[label] pub Span, pub CompactString);
 
 #[derive(Debug, Default, Clone)]
 pub struct OnlyUsedInRecursion;
@@ -79,7 +79,10 @@ impl Rule for OnlyUsedInRecursion {
             let BindingPatternKind::BindingIdentifier(arg) = &arg.pattern.kind else { continue };
 
             if is_argument_only_used_in_recursion(function_id, arg, arg_index, ctx) {
-                ctx.diagnostic(OnlyUsedInRecursionDiagnostic(arg.span, arg.name.clone()));
+                ctx.diagnostic(OnlyUsedInRecursionDiagnostic(
+                    arg.span,
+                    arg.name.to_compact_string(),
+                ));
             }
         }
     }

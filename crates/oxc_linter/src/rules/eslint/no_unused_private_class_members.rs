@@ -6,7 +6,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodeId, AstNodes};
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 use oxc_syntax::class::ElementKind;
 
 use crate::{context::LintContext, rule::Rule};
@@ -14,7 +14,7 @@ use crate::{context::LintContext, rule::Rule};
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-unused-private-class-members): '{0}' is defined but never used.")]
 #[diagnostic(severity(warning))]
-struct NoUnusedPrivateClassMembersDiagnostic(Atom, #[label] pub Span);
+struct NoUnusedPrivateClassMembersDiagnostic(CompactString, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnusedPrivateClassMembers;
@@ -179,7 +179,7 @@ fn test() {
 			}",
         r"class C {
 			    #usedMember;
-			
+
 			    foo() {
 			        bar(this.#usedMember += 1);
 			    }
@@ -192,11 +192,11 @@ fn test() {
 			}",
         r"class C {
 			    #usedInOuterClass;
-			
+
 			    foo() {
 			        return class {};
 			    }
-			
+
 			    bar() {
 			        return this.#usedInOuterClass;
 			    }
@@ -205,7 +205,7 @@ fn test() {
 			    #usedInForInLoop;
 			    method() {
 			        for (const bar in this.#usedInForInLoop) {
-			
+
 			        }
 			    }
 			}",
@@ -213,7 +213,7 @@ fn test() {
 			    #usedInForOfLoop;
 			    method() {
 			        for (const bar of this.#usedInForOfLoop) {
-			
+
 			        }
 			    }
 			}",
@@ -237,7 +237,7 @@ fn test() {
 			}",
         r"class C {
 			    #usedInObjectAssignment;
-			
+
 			    method() {
 			        ({ [this.#usedInObjectAssignment]: a } = foo);
 			    }
@@ -330,18 +330,18 @@ fn test() {
 			}",
         r"class C {
 			    #usedOnlyInIncrement;
-			
+
 			    foo() {
 			        this.#usedOnlyInIncrement++;
 			    }
 			}",
         r"class C {
 			    #unusedInOuterClass;
-			
+
 			    foo() {
 			        return class {
 			            #unusedInOuterClass;
-			
+
 			            bar() {
 			                return this.#unusedInOuterClass;
 			            }
@@ -350,21 +350,21 @@ fn test() {
 			}",
         r"class C {
 			    #unusedOnlyInSecondNestedClass;
-			
+
 			    foo() {
 			        return class {
 			            #unusedOnlyInSecondNestedClass;
-			
+
 			            bar() {
 			                return this.#unusedOnlyInSecondNestedClass;
 			            }
 			        };
 			    }
-			
+
 			    baz() {
 			        return this.#unusedOnlyInSecondNestedClass;
 			    }
-			
+
 			    bar() {
 			        return class {
 			            #unusedOnlyInSecondNestedClass;
@@ -390,7 +390,7 @@ fn test() {
 			    #unusedForInLoop;
 			    method() {
 			        for (this.#unusedForInLoop in bar) {
-			
+
 			        }
 			    }
 			}",
@@ -398,7 +398,7 @@ fn test() {
 			    #unusedForOfLoop;
 			    method() {
 			        for (this.#unusedForOfLoop of bar) {
-			
+
 			        }
 			    }
 			}",
@@ -428,15 +428,15 @@ fn test() {
 			}",
         r"class C {
 			    #usedOnlyInTheSecondInnerClass;
-			
+
 			    method(a) {
 			        return class {
 			            #usedOnlyInTheSecondInnerClass;
-			
+
 			            method2(b) {
 			                foo = b.#usedOnlyInTheSecondInnerClass;
 			            }
-			
+
 			            method3(b) {
 			                foo = b.#usedOnlyInTheSecondInnerClass;
 			            }

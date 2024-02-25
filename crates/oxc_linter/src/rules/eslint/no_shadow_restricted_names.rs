@@ -7,14 +7,14 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, CompactString, Span};
 
 use crate::{context::LintContext, globals::PRE_DEFINE_VAR, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.")]
 #[diagnostic(severity(warning), help("Shadowing of global properties '{0}'."))]
-struct NoShadowRestrictedNamesDiagnostic(Atom, #[label] pub Span);
+struct NoShadowRestrictedNamesDiagnostic(CompactString, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoShadowRestrictedNames;
@@ -41,7 +41,7 @@ declare_oxc_lint!(
     correctness
 );
 
-fn binding_pattern_is_global_obj(pat: &BindingPattern) -> Option<(Atom, Span)> {
+fn binding_pattern_is_global_obj<'a>(pat: &BindingPattern<'a>) -> Option<(Atom<'a>, Span)> {
     match &pat.kind {
         oxc_ast::ast::BindingPatternKind::BindingIdentifier(boxed_bind_identifier) => {
             if PRE_DEFINE_VAR.contains_key(boxed_bind_identifier.name.as_str()) {
@@ -79,9 +79,9 @@ fn binding_pattern_is_global_obj(pat: &BindingPattern) -> Option<(Atom, Span)> {
 }
 
 #[inline]
-fn check_and_diagnostic(atom: Atom, span: Span, ctx: &LintContext) {
-    if PRE_DEFINE_VAR.contains_key(atom.as_str()) {
-        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(atom, span));
+fn check_and_diagnostic(s: &str, span: Span, ctx: &LintContext) {
+    if PRE_DEFINE_VAR.contains_key(s) {
+        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(s.into(), span));
     }
 }
 
@@ -94,7 +94,10 @@ impl Rule for NoShadowRestrictedNames {
                 AstKind::VariableDeclarator(decl) => {
                     if let Some((atom, span)) = binding_pattern_is_global_obj(&decl.id) {
                         if atom.as_str() != "undefined" || decl.init.is_some() {
-                            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(atom, span));
+                            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
+                                atom.to_compact_string(),
+                                span,
+                            ));
                         } else {
                             nearest_span = Some(span);
                         }
@@ -109,7 +112,7 @@ impl Rule for NoShadowRestrictedNames {
                             ) if ati.name == "undefined" => {
                                 if let Some(span) = nearest_span {
                                     ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
-                                        ati.name.clone(),
+                                        ati.name.to_compact_string(),
                                         span,
                                     ));
                                 }
@@ -120,23 +123,29 @@ impl Rule for NoShadowRestrictedNames {
                 }
                 AstKind::Function(function) => {
                     if let Some(bind_ident) = function.id.as_ref() {
-                        check_and_diagnostic(bind_ident.name.clone(), bind_ident.span, ctx);
+                        check_and_diagnostic(bind_ident.name.as_str(), bind_ident.span, ctx);
                     }
                 }
                 AstKind::FormalParameter(param) => {
                     if let Some(value) = binding_pattern_is_global_obj(&param.pattern) {
-                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(value.0, value.1));
+                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
+                            value.0.to_compact_string(),
+                            value.1,
+                        ));
                     }
                 }
                 AstKind::Class(class_decl) => {
                     if let Some(bind_ident) = class_decl.id.as_ref() {
-                        check_and_diagnostic(bind_ident.name.clone(), bind_ident.span, ctx);
+                        check_and_diagnostic(bind_ident.name.as_str(), bind_ident.span, ctx);
                     }
                 }
                 AstKind::CatchClause(catch_clause) => {
                     if let Some(param) = catch_clause.param.as_ref() {
                         if let Some(value) = binding_pattern_is_global_obj(param) {
-                            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(value.0, value.1));
+                            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
+                                value.0.to_compact_string(),
+                                value.1,
+                            ));
                         }
                     }
                 }

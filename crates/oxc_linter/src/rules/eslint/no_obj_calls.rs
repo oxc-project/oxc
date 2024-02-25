@@ -8,7 +8,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeId};
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -18,7 +18,7 @@ const NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Ref
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-obj-calls): Disallow calling some global objects as functions")]
 #[diagnostic(severity(warning), help("{0} is not a function."))]
-struct NoObjCallsDiagnostic(Atom, #[label] pub Span);
+struct NoObjCallsDiagnostic(CompactString, #[label] pub Span);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NoObjCalls;
@@ -46,8 +46,8 @@ declare_oxc_lint! {
     /// let json = JSON();
     /// let newJson = new JSON();
     ///
-    /// let atomics = Atomics();
-    /// let newAtomics = new Atomics();
+    /// let atomics = CompactStringics();
+    /// let newCompactStringics = new CompactStringics();
     ///
     /// let intl = Intl();
     /// let newIntl = new Intl();
@@ -58,32 +58,34 @@ declare_oxc_lint! {
     /// // Good
     /// let area = r => 2 * Math.PI * r * r;
     /// let object = JSON.parse("{}");
-    /// let first = Atomics.load(sharedArray, 0);
+    /// let first = CompactStringics.load(sharedArray, 0);
     /// let segmenterFrom = Intl.Segmenter("fr", { granularity: "word" });
     /// ```
     NoObjCalls,
     correctness,
 }
 
-fn is_global_obj(str: &Atom) -> bool {
-    NON_CALLABLE_GLOBALS.iter().any(|&n| str == &n)
+fn is_global_obj(s: &str) -> bool {
+    NON_CALLABLE_GLOBALS.contains(&s)
 }
 
-fn global_this_member(expr: &oxc_allocator::Box<'_, MemberExpression<'_>>) -> Option<Atom> {
+fn global_this_member<'a>(
+    expr: &'a oxc_allocator::Box<'_, MemberExpression<'_>>,
+) -> Option<&'a str> {
     if expr.object().is_specific_id(GLOBAL_THIS) {
-        expr.static_property_name().map(std::convert::Into::into)
+        expr.static_property_name()
     } else {
         None
     }
 }
 
 fn resolve_global_binding<'a, 'b: 'a>(
-    ident: &oxc_allocator::Box<'a, IdentifierReference>,
+    ident: &'a oxc_allocator::Box<'a, IdentifierReference<'a>>,
     scope_id: ScopeId,
     ctx: &LintContext<'a>,
-) -> Option<Atom> {
+) -> Option<&'a str> {
     if ctx.semantic().is_reference_to_global_variable(ident) {
-        Some(ident.name.clone())
+        Some(ident.name.as_str())
     } else {
         let scope = ctx.scopes();
         let nodes = ctx.nodes();
@@ -102,7 +104,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
                 match decl.kind() {
                     AstKind::VariableDeclarator(parent_decl) => {
                         if !parent_decl.id.kind.is_binding_identifier() {
-                            return Some(ident.name.clone());
+                            return Some(ident.name.as_str());
                         }
                         match &parent_decl.init {
                             // handles "let a = JSON; let b = a; a();"
@@ -138,8 +140,8 @@ impl Rule for NoObjCalls {
                 if let Some(top_level_reference) =
                     resolve_global_binding(ident, node.scope_id(), ctx)
                 {
-                    if is_global_obj(&top_level_reference) {
-                        ctx.diagnostic(NoObjCallsDiagnostic(ident.name.clone(), span));
+                    if is_global_obj(top_level_reference) {
+                        ctx.diagnostic(NoObjCallsDiagnostic(ident.name.to_compact_string(), span));
                     }
                 }
             }
@@ -147,8 +149,8 @@ impl Rule for NoObjCalls {
             Expression::MemberExpression(expr) => {
                 // handle new globalThis.Math(), globalThis.Math(), etc
                 if let Some(global_member) = global_this_member(expr) {
-                    if is_global_obj(&global_member) {
-                        ctx.diagnostic(NoObjCallsDiagnostic(global_member, span));
+                    if is_global_obj(global_member) {
+                        ctx.diagnostic(NoObjCallsDiagnostic(global_member.into(), span));
                     }
                 }
             }
@@ -169,7 +171,7 @@ fn test() {
         ("let m = foo.Math();", None),
         ("JSON.parse(\"{}\")", None),
         ("Math.PI * 2 * (r * r)", None),
-        ("bar.Atomic(foo)", None),
+        ("bar.Atomics(foo)", None),
         // reference test cases
         (
             "let j = JSON;

@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
@@ -15,7 +15,7 @@ use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, Ast
 enum PreferStringReplaceAllDiagnostic {
     #[error("eslint-plugin-unicorn(prefer-string-replace-all): This pattern can be replaced with `{1}`.")]
     #[diagnostic(severity(warning))]
-    StringLiteral(#[label] Span, Atom),
+    StringLiteral(#[label] Span, CompactString),
     #[error("eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.")]
     #[diagnostic(severity(warning))]
     UseReplaceAll(#[label] Span),
@@ -99,7 +99,7 @@ fn is_reg_exp_with_global_flag<'a>(expr: &'a Expression<'a>) -> bool {
     false
 }
 
-fn get_pattern_replacement<'a>(expr: &'a Expression<'a>) -> Option<Atom> {
+fn get_pattern_replacement<'a>(expr: &'a Expression<'a>) -> Option<CompactString> {
     let Expression::RegExpLiteral(reg_exp_literal) = expr else { return None };
 
     if !reg_exp_literal.regex.flags.contains(RegExpFlags::G) {
@@ -110,7 +110,7 @@ fn get_pattern_replacement<'a>(expr: &'a Expression<'a>) -> Option<Atom> {
         return None;
     }
 
-    Some(reg_exp_literal.regex.pattern.clone())
+    Some(reg_exp_literal.regex.pattern.to_compact_string())
 }
 
 fn is_simple_string(str: &str) -> bool {

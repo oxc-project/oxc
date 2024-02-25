@@ -79,13 +79,13 @@ impl<'a> Format<'a> for Program<'a> {
     }
 }
 
-impl<'a> Format<'a> for Hashbang {
+impl<'a> Format<'a> for Hashbang<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         Doc::Str(self.span.source_text(p.source_text))
     }
 }
 
-impl<'a> Format<'a> for Directive {
+impl<'a> Format<'a> for Directive<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(Doc::Str(string::print_string(
@@ -332,7 +332,7 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
     }
 }
 
-impl<'a> Format<'a> for ContinueStatement {
+impl<'a> Format<'a> for ContinueStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(ss!("continue"));
@@ -346,7 +346,7 @@ impl<'a> Format<'a> for ContinueStatement {
     }
 }
 
-impl<'a> Format<'a> for BreakStatement {
+impl<'a> Format<'a> for BreakStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(ss!("break"));
@@ -970,7 +970,7 @@ impl<'a> Format<'a> for TSTypeName<'a> {
     }
 }
 
-impl<'a> Format<'a> for TSExternalModuleReference {
+impl<'a> Format<'a> for TSExternalModuleReference<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         array!(p, ss!("require("), format!(p, self.expression), ss!(")"))
     }
@@ -1058,7 +1058,7 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
     }
 }
 
-impl<'a> Format<'a> for ImportDeclarationSpecifier {
+impl<'a> Format<'a> for ImportDeclarationSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::ImportSpecifier(specifier) => specifier.format(p),
@@ -1068,7 +1068,7 @@ impl<'a> Format<'a> for ImportDeclarationSpecifier {
     }
 }
 
-impl<'a> Format<'a> for ImportSpecifier {
+impl<'a> Format<'a> for ImportSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         if self.imported.span() == self.local.span {
             self.local.format(p)
@@ -1078,25 +1078,25 @@ impl<'a> Format<'a> for ImportSpecifier {
     }
 }
 
-impl<'a> Format<'a> for ImportDefaultSpecifier {
+impl<'a> Format<'a> for ImportDefaultSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         self.local.format(p)
     }
 }
 
-impl<'a> Format<'a> for ImportNamespaceSpecifier {
+impl<'a> Format<'a> for ImportNamespaceSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         array!(p, ss!("* as "), self.local.format(p))
     }
 }
 
-impl<'a> Format<'a> for Option<Vec<'a, ImportAttribute>> {
+impl<'a> Format<'a> for Option<Vec<'a, ImportAttribute<'a>>> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
 }
 
-impl<'a> Format<'a> for ImportAttribute {
+impl<'a> Format<'a> for ImportAttribute<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
@@ -1126,13 +1126,13 @@ impl<'a> Format<'a> for TSExportAssignment<'a> {
     }
 }
 
-impl<'a> Format<'a> for TSNamespaceExportDeclaration {
+impl<'a> Format<'a> for TSNamespaceExportDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
 }
 
-impl<'a> Format<'a> for ExportSpecifier {
+impl<'a> Format<'a> for ExportSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         if self.exported.span() == self.local.span() {
             self.local.format(p)
@@ -1142,7 +1142,7 @@ impl<'a> Format<'a> for ExportSpecifier {
     }
 }
 
-impl<'a> Format<'a> for ModuleExportName {
+impl<'a> Format<'a> for ModuleExportName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::Identifier(ident) => ident.format(p),
@@ -1227,25 +1227,25 @@ impl<'a> Format<'a> for Expression<'a> {
     }
 }
 
-impl<'a> Format<'a> for IdentifierReference {
+impl<'a> Format<'a> for IdentifierReference<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, IdentifierReference, { p.str(self.name.as_str()) })
     }
 }
 
-impl<'a> Format<'a> for IdentifierName {
+impl<'a> Format<'a> for IdentifierName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         p.str(self.name.as_str())
     }
 }
 
-impl<'a> Format<'a> for BindingIdentifier {
+impl<'a> Format<'a> for BindingIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, BindingIdentifier, { p.str(self.name.as_str()) })
     }
 }
 
-impl<'a> Format<'a> for LabelIdentifier {
+impl<'a> Format<'a> for LabelIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         p.str(self.name.as_str())
     }
@@ -1336,7 +1336,7 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
     }
 }
 
-impl<'a> Format<'a> for BigintLiteral {
+impl<'a> Format<'a> for BigintLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let text = self.span.source_text(p.source_text);
         // Perf: avoid a memory allocation from `to_ascii_lowercase`.
@@ -1348,7 +1348,7 @@ impl<'a> Format<'a> for BigintLiteral {
     }
 }
 
-impl<'a> Format<'a> for RegExpLiteral {
+impl<'a> Format<'a> for RegExpLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(ss!("/"));
@@ -1359,7 +1359,7 @@ impl<'a> Format<'a> for RegExpLiteral {
     }
 }
 
-impl<'a> Format<'a> for StringLiteral {
+impl<'a> Format<'a> for StringLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, StringLiteral, {
             let raw = &p.source_text[(self.span.start + 1) as usize..(self.span.end - 1) as usize];
@@ -1871,7 +1871,7 @@ impl<'a> Format<'a> for TemplateLiteral<'a> {
     }
 }
 
-impl<'a> Format<'a> for TemplateElement {
+impl<'a> Format<'a> for TemplateElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         // TODO: `replaceEndOfLine`
         p.str(self.value.raw.as_str())
@@ -1941,7 +1941,7 @@ impl<'a> Format<'a> for NewExpression<'a> {
     }
 }
 
-impl<'a> Format<'a> for MetaProperty {
+impl<'a> Format<'a> for MetaProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         array![p, format!(p, self.meta), ss!("."), format!(p, self.property)]
     }
@@ -1973,7 +1973,7 @@ impl<'a> Format<'a> for ClassElement<'a> {
     }
 }
 
-impl<'a> Format<'a> for JSXIdentifier {
+impl<'a> Format<'a> for JSXIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
@@ -1997,7 +1997,7 @@ impl<'a> Format<'a> for JSXElementName<'a> {
     }
 }
 
-impl<'a> Format<'a> for JSXNamespacedName {
+impl<'a> Format<'a> for JSXNamespacedName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
@@ -2081,7 +2081,7 @@ impl<'a> Format<'a> for JSXClosingFragment {
     }
 }
 
-impl<'a> Format<'a> for JSXText {
+impl<'a> Format<'a> for JSXText<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
@@ -2133,7 +2133,7 @@ impl<'a> Format<'a> for AccessorProperty<'a> {
     }
 }
 
-impl<'a> Format<'a> for PrivateIdentifier {
+impl<'a> Format<'a> for PrivateIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(ss!("#"));

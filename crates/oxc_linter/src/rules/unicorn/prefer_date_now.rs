@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{CompactString, GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -21,7 +21,7 @@ enum PreferDateNowDiagnostic {
 
     #[error("eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().{1}()`")]
     #[diagnostic(severity(warning), help("Change to `Date.now()`."))]
-    PreferDateNowOverMethods(#[label] Span, Atom),
+    PreferDateNowOverMethods(#[label] Span, CompactString),
 
     #[error(
         "eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `Number(new Date())`"

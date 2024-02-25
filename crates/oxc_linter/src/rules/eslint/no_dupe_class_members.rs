@@ -3,7 +3,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule};
@@ -17,7 +17,7 @@ use crate::{context::LintContext, rule::Rule};
     )
 )]
 struct NoDupeClassMembersDiagnostic(
-    Atom, /*Class member name */
+    CompactString, /*Class member name */
     #[label("{0:?} is previously declared here")] pub Span,
     #[label("{0:?} is re-declared here")] pub Span,
 );

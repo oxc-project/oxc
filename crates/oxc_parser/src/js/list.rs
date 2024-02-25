@@ -5,7 +5,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
     Result,
 };
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{Atom, CompactString, GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -19,7 +19,7 @@ use crate::{
 #[error("Identifier `{0}` has already been declared")]
 #[diagnostic()]
 struct Redeclaration(
-    pub Atom,
+    pub CompactString,
     #[label("`{0}` has already been declared here")] pub Span,
     #[label("It can not be redeclared here")] pub Span,
 );
@@ -290,8 +290,8 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
 
 /// [Assert Entries](https://tc39.es/proposal-import-assertions)
 pub struct AssertEntries<'a> {
-    pub elements: Vec<'a, ImportAttribute>,
-    keys: FxHashMap<Atom, Span>,
+    pub elements: Vec<'a, ImportAttribute<'a>>,
+    keys: FxHashMap<Atom<'a>, Span>,
 }
 
 impl<'a> SeparatedList<'a> for AssertEntries<'a> {
@@ -315,7 +315,7 @@ impl<'a> SeparatedList<'a> for AssertEntries<'a> {
         };
 
         if let Some(old_span) = self.keys.get(&key.as_atom()) {
-            p.error(Redeclaration(key.as_atom(), *old_span, key.span()));
+            p.error(Redeclaration(key.as_atom().into_compact_string(), *old_span, key.span()));
         } else {
             self.keys.insert(key.as_atom(), key.span());
         }
@@ -329,7 +329,7 @@ impl<'a> SeparatedList<'a> for AssertEntries<'a> {
 }
 
 pub struct ExportNamedSpecifiers<'a> {
-    pub elements: Vec<'a, ExportSpecifier>,
+    pub elements: Vec<'a, ExportSpecifier<'a>>,
 }
 
 impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
@@ -443,7 +443,7 @@ impl<'a> NormalList<'a> for SwitchCases<'a> {
 }
 
 pub struct ImportSpecifierList<'a> {
-    pub import_specifiers: Vec<'a, ImportDeclarationSpecifier>,
+    pub import_specifiers: Vec<'a, ImportDeclarationSpecifier<'a>>,
 }
 
 impl<'a> SeparatedList<'a> for ImportSpecifierList<'a> {

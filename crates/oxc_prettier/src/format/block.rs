@@ -9,7 +9,7 @@ use crate::{
 pub(super) fn print_block<'a>(
     p: &mut Prettier<'a>,
     stmts: &[Statement<'a>],
-    directives: Option<&[Directive]>,
+    directives: Option<&[Directive<'a>]>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
     parts.push(ss!("{"));
@@ -52,7 +52,7 @@ pub(super) fn print_block<'a>(
 pub(super) fn print_block_body<'a>(
     p: &mut Prettier<'a>,
     stmts: &[Statement<'a>],
-    directives: Option<&[Directive]>,
+    directives: Option<&[Directive<'a>]>,
     remove_last_statement_hardline: bool,
     is_root: bool,
 ) -> Option<Doc<'a>> {

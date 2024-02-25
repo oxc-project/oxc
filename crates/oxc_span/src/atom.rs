@@ -7,6 +7,7 @@ use std::{
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
 
+use compact_str::CompactString;
 use inlinable_string::inline_string::{InlineString, INLINE_STRING_CAPACITY};
 
 const BASE54_CHARS: &[u8; 64] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_0123456789";
@@ -18,22 +19,22 @@ const BASE54_CHARS: &[u8; 64] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST
 #[allow(dead_code)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type Atom = string;
+export type CompactString = string;
 "#;
 
 /// An inlinable string for oxc_allocator.
 ///
-/// SAFETY: It is unsafe to use this string after the allocator is dropped.
-///
+/// Use [CompactString] with [Atom::to_compact_string()] for the lifetimeless form.
 #[derive(Clone, Eq, Hash)]
-pub struct Atom(AtomImpl);
+pub struct Atom<'a>(AtomImpl<'a>);
 
 /// Immutable Inlinable String
 ///
 /// https://github.com/fitzgen/inlinable_string/blob/master/src/lib.rs
 #[derive(Clone, Eq, PartialEq)]
-enum AtomImpl {
+enum AtomImpl<'a> {
     /// A arena heap-allocated string.
-    Arena(&'static str),
+    Arena(&'a str),
     /// A heap-allocated string.
     Heap(Box<str>),
     /// A small string stored inline.
@@ -41,7 +42,7 @@ enum AtomImpl {
 }
 
 #[cfg(feature = "serde")]
-impl Serialize for Atom {
+impl<'a> Serialize for Atom<'a> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -50,7 +51,7 @@ impl Serialize for Atom {
     }
 }
 
-impl Atom {
+impl<'a> Atom<'a> {
     pub fn new_inline(s: &str) -> Self {
         Self(AtomImpl::Inline(InlineString::from(s)))
     }
@@ -70,6 +71,22 @@ impl Atom {
             AtomImpl::Arena(s) => String::from(s),
             AtomImpl::Heap(s) => s.to_string(),
             AtomImpl::Inline(s) => s.to_string(),
+        }
+    }
+
+    pub fn into_compact_string(self) -> CompactString {
+        match self.0 {
+            AtomImpl::Arena(s) => CompactString::new(s),
+            AtomImpl::Heap(s) => CompactString::new(s),
+            AtomImpl::Inline(s) => CompactString::new(s),
+        }
+    }
+
+    pub fn to_compact_string(&self) -> CompactString {
+        match &self.0 {
+            AtomImpl::Arena(s) => CompactString::new(s),
+            AtomImpl::Heap(s) => CompactString::new(s),
+            AtomImpl::Inline(s) => CompactString::new(s),
         }
     }
 
@@ -95,18 +112,17 @@ impl Atom {
     }
 }
 
-impl<'a> From<&'a str> for Atom {
+impl<'a> From<&'a str> for Atom<'a> {
     fn from(s: &'a str) -> Self {
         if s.len() <= INLINE_STRING_CAPACITY {
             Self(AtomImpl::Inline(InlineString::from(s)))
         } else {
-            // SAFETY: It is unsafe to use this string after the allocator is dropped.
-            Self(AtomImpl::Arena(unsafe { std::mem::transmute(s) }))
+            Self(AtomImpl::Arena(s))
         }
     }
 }
 
-impl From<String> for Atom {
+impl<'a> From<String> for Atom<'a> {
     fn from(s: String) -> Self {
         if s.len() <= INLINE_STRING_CAPACITY {
             Self(AtomImpl::Inline(InlineString::from(s.as_str())))
@@ -116,7 +132,7 @@ impl From<String> for Atom {
     }
 }
 
-impl From<Cow<'_, str>> for Atom {
+impl<'a> From<Cow<'_, str>> for Atom<'a> {
     fn from(s: Cow<'_, str>) -> Self {
         if s.len() <= INLINE_STRING_CAPACITY {
             Self(AtomImpl::Inline(InlineString::from(s.borrow())))
@@ -126,7 +142,7 @@ impl From<Cow<'_, str>> for Atom {
     }
 }
 
-impl Deref for Atom {
+impl<'a> Deref for Atom<'a> {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
@@ -134,33 +150,33 @@ impl Deref for Atom {
     }
 }
 
-impl AsRef<str> for Atom {
+impl<'a> AsRef<str> for Atom<'a> {
     #[inline]
     fn as_ref(&self) -> &str {
         self.as_str()
     }
 }
 
-impl Borrow<str> for Atom {
+impl<'a> Borrow<str> for Atom<'a> {
     #[inline]
     fn borrow(&self) -> &str {
         self.as_str()
     }
 }
 
-impl<T: AsRef<str>> PartialEq<T> for Atom {
+impl<'a, T: AsRef<str>> PartialEq<T> for Atom<'a> {
     fn eq(&self, other: &T) -> bool {
         self.as_str() == other.as_ref()
     }
 }
 
-impl PartialEq<Atom> for &str {
-    fn eq(&self, other: &Atom) -> bool {
+impl<'a> PartialEq<Atom<'a>> for &str {
+    fn eq(&self, other: &Atom<'a>) -> bool {
         *self == other.as_str()
     }
 }
 
-impl hash::Hash for AtomImpl {
+impl<'a> hash::Hash for AtomImpl<'a> {
     #[inline]
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
         match self {
@@ -171,13 +187,13 @@ impl hash::Hash for AtomImpl {
     }
 }
 
-impl fmt::Debug for Atom {
+impl<'a> fmt::Debug for Atom<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Debug::fmt(self.as_str(), f)
     }
 }
 
-impl fmt::Display for Atom {
+impl<'a> fmt::Display for Atom<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(self.as_str(), f)
     }

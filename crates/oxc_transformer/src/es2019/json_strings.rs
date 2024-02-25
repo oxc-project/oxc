@@ -1,4 +1,6 @@
-use oxc_ast::ast::*;
+use std::rc::Rc;
+
+use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::Atom;
 use oxc_syntax::identifier::{LS, PS};
 
@@ -9,17 +11,19 @@ use crate::options::{TransformOptions, TransformTarget};
 /// References:
 /// * <https://babeljs.io/docs/babel-plugin-transform-json-strings>
 /// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-json-strings>
-pub struct JsonStrings;
+pub struct JsonStrings<'a> {
+    ast: Rc<AstBuilder<'a>>,
+}
 
-impl JsonStrings {
-    pub fn new(options: &TransformOptions) -> Option<Self> {
-        (options.target < TransformTarget::ES2019 || options.json_strings).then(|| Self {})
+impl<'a> JsonStrings<'a> {
+    pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
+        (options.target < TransformTarget::ES2019 || options.json_strings).then(|| Self { ast })
     }
 
     // Allow `U+2028` and `U+2029` in string literals
     // <https://tc39.es/proposal-json-superset>
     // <https://github.com/tc39/proposal-json-superset>
-    fn normalize_str(str: &str) -> Option<Atom> {
+    fn normalize_str(&self, str: &str) -> Option<Atom<'a>> {
         if !str.contains(LS) && !str.contains(PS) {
             return None;
         }
@@ -33,7 +37,7 @@ impl JsonStrings {
             }
             is_escaped = !is_escaped && matches!(c, '\\');
         }
-        Some(buf.into())
+        Some(self.ast.new_atom(&buf))
     }
 
     #[allow(clippy::unused_self)]
@@ -48,8 +52,8 @@ impl JsonStrings {
     }
 
     #[allow(clippy::unused_self)]
-    pub fn transform_directive(&mut self, directive: &mut Directive) {
-        if let Some(value) = Self::normalize_str(directive.directive.as_str()) {
+    pub fn transform_directive(&mut self, directive: &mut Directive<'a>) {
+        if let Some(value) = self.normalize_str(directive.directive.as_str()) {
             directive.directive = value;
         }
     }

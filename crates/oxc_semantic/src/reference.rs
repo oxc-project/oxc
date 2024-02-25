@@ -1,4 +1,4 @@
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
@@ -12,7 +12,7 @@ pub use oxc_syntax::reference::{ReferenceFlag, ReferenceId};
 pub struct Reference {
     span: Span,
     /// The name of the identifier that was referred to
-    name: Atom,
+    name: CompactString,
     node_id: AstNodeId,
     symbol_id: Option<SymbolId>,
     /// Describes how this referenced is used by other AST nodes. References can
@@ -21,7 +21,7 @@ pub struct Reference {
 }
 
 impl Reference {
-    pub fn new(span: Span, name: Atom, node_id: AstNodeId, flag: ReferenceFlag) -> Self {
+    pub fn new(span: Span, name: CompactString, node_id: AstNodeId, flag: ReferenceFlag) -> Self {
         Self { span, name, node_id, symbol_id: None, flag }
     }
 
@@ -29,7 +29,7 @@ impl Reference {
         self.span
     }
 
-    pub fn name(&self) -> &Atom {
+    pub fn name(&self) -> &CompactString {
         &self.name
     }
 

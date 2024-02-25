@@ -11,3 +11,4 @@ pub use crate::{
     source_type::{Language, LanguageVariant, ModuleKind, SourceType, VALID_EXTENSIONS},
     span::{GetSpan, Span, SPAN},
 };
+pub use compact_str::CompactString;
