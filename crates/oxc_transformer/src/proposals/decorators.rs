@@ -452,48 +452,59 @@ impl<'a> Decorators<'a> {
                             {
                                 if flag.is_setter() && !flag.is_static() {
                                     // _ => #a in _;
-                                    private_in_expressions.push(self.ast.arrow_expression(
-                                        SPAN,
-                                        true,
-                                        false,
-                                        self.ast.formal_parameters(
+                                    private_in_expressions.push(
+                                        self.ast.arrow_function_expression(
                                             SPAN,
-                                            FormalParameterKind::ArrowFormalParameters,
-                                            self.ast.new_vec_single(self.ast.formal_parameter(
+                                            true,
+                                            false,
+                                            self.ast.formal_parameters(
                                                 SPAN,
-                                                self.ast.binding_pattern(
-                                                    self.ast.binding_pattern_identifier(
-                                                        BindingIdentifier::new(SPAN, "_".into()),
+                                                FormalParameterKind::ArrowFormalParameters,
+                                                self.ast.new_vec_single(self.ast.formal_parameter(
+                                                    SPAN,
+                                                    self.ast.binding_pattern(
+                                                        self.ast.binding_pattern_identifier(
+                                                            BindingIdentifier::new(
+                                                                SPAN,
+                                                                "_".into(),
+                                                            ),
+                                                        ),
+                                                        None,
+                                                        false,
                                                     ),
                                                     None,
                                                     false,
-                                                ),
+                                                    self.ast.new_vec(),
+                                                )),
                                                 None,
-                                                false,
+                                            ),
+                                            self.ast.function_body(
+                                                SPAN,
                                                 self.ast.new_vec(),
-                                            )),
+                                                self.ast.new_vec_single(
+                                                    self.ast.expression_statement(
+                                                        SPAN,
+                                                        self.ast.private_in_expression(
+                                                            SPAN,
+                                                            PrivateIdentifier::new(
+                                                                SPAN,
+                                                                def.key.private_name().unwrap(),
+                                                            ),
+                                                            self.ast
+                                                                .identifier_reference_expression(
+                                                                    IdentifierReference::new(
+                                                                        SPAN,
+                                                                        "_".into(),
+                                                                    ),
+                                                                ),
+                                                        ),
+                                                    ),
+                                                ),
+                                            ),
+                                            None,
                                             None,
                                         ),
-                                        self.ast.function_body(
-                                            SPAN,
-                                            self.ast.new_vec(),
-                                            self.ast.new_vec_single(self.ast.expression_statement(
-                                                SPAN,
-                                                self.ast.private_in_expression(
-                                                    SPAN,
-                                                    PrivateIdentifier::new(
-                                                        SPAN,
-                                                        def.key.private_name().unwrap(),
-                                                    ),
-                                                    self.ast.identifier_reference_expression(
-                                                        IdentifierReference::new(SPAN, "_".into()),
-                                                    ),
-                                                ),
-                                            )),
-                                        ),
-                                        None,
-                                        None,
-                                    ));
+                                    );
                                 }
                             }
 
@@ -906,7 +917,7 @@ impl<'a> Decorators<'a> {
                         None,
                     );
                     decorator_elements.push(ArrayExpressionElement::Expression(
-                        self.ast.arrow_expression(
+                        self.ast.arrow_function_expression(
                             SPAN,
                             true,
                             false,
@@ -949,7 +960,7 @@ impl<'a> Decorators<'a> {
                         );
 
                         decorator_elements.push(ArrayExpressionElement::Expression(
-                            self.ast.arrow_expression(
+                            self.ast.arrow_function_expression(
                                 SPAN,
                                 true,
                                 false,

@@ -84,7 +84,7 @@ impl<'a> ClassStaticBlock<'a> {
                     let function_body =
                         self.ast.function_body(SPAN, self.ast.new_vec(), statements);
 
-                    let callee = self.ast.arrow_expression(
+                    let callee = self.ast.arrow_function_expression(
                         SPAN,
                         false,
                         false,

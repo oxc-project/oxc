@@ -535,7 +535,8 @@ impl<'a> TypeScript<'a> {
         let statements = self.transform_ts_enum_members(&mut decl.body.members, &enum_name);
         let body = self.ast.function_body(decl.body.span, self.ast.new_vec(), statements);
 
-        let callee = self.ast.arrow_expression(SPAN, false, false, params, body, None, None);
+        let callee =
+            self.ast.arrow_function_expression(SPAN, false, false, params, body, None, None);
 
         // })(Foo || {});
         let mut arguments = self.ast.new_vec();

@@ -402,7 +402,7 @@ impl<'a> AstBuilder<'a> {
         Expression::ArrayExpression(self.alloc(ArrayExpression { span, elements, trailing_comma }))
     }
 
-    pub fn arrow_expression(
+    pub fn arrow_function_expression(
         &self,
         span: Span,
         expression: bool,
