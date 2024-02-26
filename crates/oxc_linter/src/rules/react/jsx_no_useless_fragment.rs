@@ -56,10 +56,13 @@ declare_oxc_lint!(
 
 impl Rule for JsxNoUselessFragment {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_expressions =
-            value.get("allowExpressions").and_then(serde_json::Value::as_bool).unwrap_or(false);
+        let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
 
-        Self { allow_expressions }
+        Self {
+            allow_expressions: value
+                .and_then(|val| val.get("allowExpressions").and_then(serde_json::Value::as_bool))
+                .unwrap_or(true),
+        }
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -224,15 +227,16 @@ fn test() {
         (r"<Fragment key={item.id}>{item.value}</Fragment>", None),
         (r"<Fooo content={<>eeee ee eeeeeee eeeeeeee</>} />", None),
         (r"<>{foos.map(foo => foo)}</>", None),
-        (r"<>{moo}</>", Some(json!({ "allowExpressions": true }))),
+        (r"<>{moo}</>", Some(json!([{ "allowExpressions": true }]))),
         (
             r"
         <>
             {moo}
         </>
         ",
-            Some(json!({ "allowExpressions": true })),
+            Some(json!([{ "allowExpressions": true }])),
         ),
+        (r"{1 && <>{1}</>}", Some(json!(["warn", {"allowExpressions": true}]))),
     ];
 
     let fail = vec![
