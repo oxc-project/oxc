@@ -68,7 +68,7 @@ impl<'a> Binder for VariableDeclarator<'a> {
                 builder.declare_symbol_on_scope(span, name, current_scope_id, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
             for scope_id in &var_scope_ids {
-                builder.scope.add_binding(*scope_id, name.clone(), symbol_id);
+                builder.scope.add_binding(*scope_id, name.to_compact_string(), symbol_id);
             }
         });
     }
@@ -280,19 +280,19 @@ fn declare_symbol_for_import_specifier(ident: &BindingIdentifier, builder: &mut 
     ident.symbol_id.set(Some(symbol_id));
 }
 
-impl Binder for ImportSpecifier {
+impl<'a> Binder for ImportSpecifier<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         declare_symbol_for_import_specifier(&self.local, builder);
     }
 }
 
-impl Binder for ImportDefaultSpecifier {
+impl<'a> Binder for ImportDefaultSpecifier<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         declare_symbol_for_import_specifier(&self.local, builder);
     }
 }
 
-impl Binder for ImportNamespaceSpecifier {
+impl<'a> Binder for ImportNamespaceSpecifier<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         declare_symbol_for_import_specifier(&self.local, builder);
     }

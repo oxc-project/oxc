@@ -4,14 +4,14 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `{1}` over `{2}`")]
 #[diagnostic(severity(warning), help("Replace with `{1}`"))]
-struct PreferStringTrimStartEndDiagnostic(#[label] pub Span, Atom, &'static str);
+struct PreferStringTrimStartEndDiagnostic(#[label] pub Span, CompactString, &'static str);
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferStringTrimStartEnd;
@@ -67,7 +67,7 @@ impl Rule for PreferStringTrimStartEnd {
 
         ctx.diagnostic(PreferStringTrimStartEndDiagnostic(
             span,
-            name.clone(),
+            name.to_compact_string(),
             get_replacement(name.as_str()),
         ));
     }

@@ -14,14 +14,14 @@ use std::rc::Rc;
 pub struct NewTarget<'a> {
     ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
-    kinds: Vec<'a, NewTargetKind>,
+    kinds: Vec<'a, NewTargetKind<'a>>,
 }
 
 #[derive(Debug)]
-enum NewTargetKind {
+enum NewTargetKind<'a> {
     Method,
     Constructor,
-    Function(Option<Atom>),
+    Function(Option<Atom<'a>>),
 }
 
 impl<'a> VisitMut<'a> for NewTarget<'a> {
@@ -52,7 +52,7 @@ impl<'a> NewTarget<'a> {
         })
     }
 
-    fn get_kind(&self, kind: AstKind<'a>) -> Option<NewTargetKind> {
+    fn get_kind(&self, kind: AstKind<'a>) -> Option<NewTargetKind<'a>> {
         match kind {
             AstKind::MethodDefinition(def) => match def.kind {
                 MethodDefinitionKind::Get
@@ -97,9 +97,9 @@ impl<'a> NewTarget<'a> {
                         NewTargetKind::Function(name) => {
                             // TODO packages/babel-helper-create-class-features-plugin/src/fields.ts#L192 unshadow
                             // It will mutate previous ast node, it is difficult at now.
-                            let id = name
-                                .clone()
-                                .unwrap_or_else(|| self.ctx.scopes().generate_uid("target"));
+                            let id = name.clone().unwrap_or_else(|| {
+                                self.ast.new_atom(self.ctx.scopes().generate_uid("target").as_str())
+                            });
                             let test = self.ast.binary_expression(
                                 SPAN,
                                 self.ast.this_expression(SPAN),

@@ -120,7 +120,7 @@ fn filter_and_process_jest_result<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
-) -> Option<(Span, &'a Atom, JestFnKind, AstNodeId)> {
+) -> Option<(Span, &'a Atom<'a>, JestFnKind, AstNodeId)> {
     let Some(result) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
         return None;
     };

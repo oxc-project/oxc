@@ -8,7 +8,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::VariableInfo;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -16,7 +16,7 @@ use crate::{context::LintContext, rule::Rule};
 #[error("eslint(no-redeclare): '{0}' is already defined.")]
 #[diagnostic(severity(warning))]
 struct NoRedeclareDiagnostic(
-    Atom,
+    CompactString,
     #[label("'{0}' is already defined.")] pub Span,
     #[label("It can not be redeclare here.")] pub Span,
 );
@@ -25,7 +25,7 @@ struct NoRedeclareDiagnostic(
 #[error("eslint(no-redeclare): '{0}' is already defined as a built-in global variable.")]
 #[diagnostic(severity(warning))]
 struct NoRedeclareAsBuiltiInDiagnostic(
-    Atom,
+    CompactString,
     #[label("'{0}' is already defined as a built-in global variable.")] pub Span,
 );
 
@@ -33,7 +33,7 @@ struct NoRedeclareAsBuiltiInDiagnostic(
 #[error("eslint(no-redeclare): '{0}' is already defined by a variable declaration.")]
 #[diagnostic(severity(warning))]
 struct NoRedeclareBySyntaxDiagnostic(
-    Atom,
+    CompactString,
     #[label("'{0}' is already defined by a variable declaration.")] pub Span,
     #[label("It cannot be redeclared here.")] pub Span,
 );
@@ -81,14 +81,14 @@ impl Rule for NoRedeclare {
             match ctx.nodes().kind(decl) {
                 AstKind::VariableDeclarator(var) => {
                     if let BindingPatternKind::BindingIdentifier(ident) = &var.id.kind {
-                        if *symbol_table.get_name(variable.symbol_id) == ident.name {
+                        if symbol_table.get_name(variable.symbol_id) == ident.name.as_str() {
                             self.report_diagnostic(ctx, variable, ident);
                         }
                     }
                 }
                 AstKind::FormalParameter(param) => {
                     if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
-                        if *symbol_table.get_name(variable.symbol_id) == ident.name {
+                        if symbol_table.get_name(variable.symbol_id) == ident.name.as_str() {
                             self.report_diagnostic(ctx, variable, ident);
                         }
                     }
@@ -107,9 +107,16 @@ impl NoRedeclare {
         ident: &BindingIdentifier,
     ) {
         if self.built_in_globals && ctx.env_contains_var(&ident.name) {
-            ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(ident.name.clone(), ident.span));
+            ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(
+                ident.name.to_compact_string(),
+                ident.span,
+            ));
         } else if variable.span != ident.span {
-            ctx.diagnostic(NoRedeclareDiagnostic(ident.name.clone(), ident.span, variable.span));
+            ctx.diagnostic(NoRedeclareDiagnostic(
+                ident.name.to_compact_string(),
+                ident.span,
+                variable.span,
+            ));
         }
     }
 }

@@ -4,14 +4,14 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-unused-labels): Disallow unused labels")]
 #[diagnostic(severity(warning), help("'{0}:' is defined but never used."))]
-struct NoUnusedLabelsDiagnostic(Atom, #[label] pub Span);
+struct NoUnusedLabelsDiagnostic(CompactString, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnusedLabels;
@@ -51,7 +51,7 @@ impl Rule for NoUnusedLabels {
                 // TODO: Ignore fix where comments exist between label and statement
                 // e.g. A: /* Comment */ function foo(){}
                 ctx.diagnostic_with_fix(
-                    NoUnusedLabelsDiagnostic(stmt.label.name.clone(), stmt.label.span),
+                    NoUnusedLabelsDiagnostic(stmt.label.name.to_compact_string(), stmt.label.span),
                     || Fix::delete(stmt.label.span),
                 );
             }

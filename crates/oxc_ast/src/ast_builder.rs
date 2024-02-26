@@ -56,6 +56,11 @@ impl<'a> AstBuilder<'a> {
         String::from_str_in(value, self.allocator).into_bump_str()
     }
 
+    #[inline]
+    pub fn new_atom(&self, value: &str) -> Atom<'a> {
+        Atom::from(String::from_str_in(value, self.allocator).into_bump_str())
+    }
+
     pub fn copy<T>(&self, src: &T) -> T {
         // SAFETY:
         // This should be safe as long as `src` is an reference from the allocator.
@@ -104,7 +109,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         source_type: SourceType,
         directives: Vec<'a, Directive>,
-        hashbang: Option<Hashbang>,
+        hashbang: Option<Hashbang<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
         Program { span, source_type, directives, hashbang, body }
@@ -135,7 +140,7 @@ impl<'a> AstBuilder<'a> {
         BooleanLiteral { span, value }
     }
 
-    pub fn bigint_literal(&self, span: Span, raw: Atom, base: BigintBase) -> BigintLiteral {
+    pub fn bigint_literal(&self, span: Span, raw: Atom<'a>, base: BigintBase) -> BigintLiteral<'a> {
         BigintLiteral { span, raw, base }
     }
 
@@ -152,12 +157,16 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         tail: bool,
-        value: TemplateElementValue,
-    ) -> TemplateElement {
+        value: TemplateElementValue<'a>,
+    ) -> TemplateElement<'a> {
         TemplateElement { span, tail, value }
     }
 
-    pub fn template_element_value(&self, raw: Atom, cooked: Option<Atom>) -> TemplateElementValue {
+    pub fn template_element_value(
+        &self,
+        raw: Atom<'a>,
+        cooked: Option<Atom<'a>>,
+    ) -> TemplateElementValue<'a> {
         TemplateElementValue { raw, cooked }
     }
 
@@ -166,11 +175,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         pattern: &'a str,
         flags: RegExpFlags,
-    ) -> RegExpLiteral {
+    ) -> RegExpLiteral<'a> {
         RegExpLiteral { span, value: EmptyObject, regex: RegExp { pattern: pattern.into(), flags } }
     }
 
-    pub fn literal_string_expression(&self, literal: StringLiteral) -> Expression<'a> {
+    pub fn literal_string_expression(&self, literal: StringLiteral<'a>) -> Expression<'a> {
         Expression::StringLiteral(self.alloc(literal))
     }
 
@@ -182,7 +191,7 @@ impl<'a> AstBuilder<'a> {
         Expression::NullLiteral(self.alloc(literal))
     }
 
-    pub fn literal_regexp_expression(&self, literal: RegExpLiteral) -> Expression<'a> {
+    pub fn literal_regexp_expression(&self, literal: RegExpLiteral<'a>) -> Expression<'a> {
         Expression::RegExpLiteral(self.alloc(literal))
     }
 
@@ -190,7 +199,7 @@ impl<'a> AstBuilder<'a> {
         Expression::NumericLiteral(self.alloc(literal))
     }
 
-    pub fn literal_bigint_expression(&self, literal: BigintLiteral) -> Expression<'a> {
+    pub fn literal_bigint_expression(&self, literal: BigintLiteral<'a>) -> Expression<'a> {
         Expression::BigintLiteral(self.alloc(literal))
     }
 
@@ -198,17 +207,25 @@ impl<'a> AstBuilder<'a> {
         Expression::TemplateLiteral(self.alloc(literal))
     }
 
-    pub fn identifier_reference_expression(&self, ident: IdentifierReference) -> Expression<'a> {
+    pub fn identifier_reference_expression(
+        &self,
+        ident: IdentifierReference<'a>,
+    ) -> Expression<'a> {
         Expression::Identifier(self.alloc(ident))
     }
 
     /* ---------- Statements ---------- */
 
-    pub fn directive(&self, span: Span, expression: StringLiteral, directive: Atom) -> Directive {
+    pub fn directive(
+        &self,
+        span: Span,
+        expression: StringLiteral<'a>,
+        directive: Atom<'a>,
+    ) -> Directive<'a> {
         Directive { span, expression, directive }
     }
 
-    pub fn hashbang(&self, span: Span, value: Atom) -> Hashbang {
+    pub fn hashbang(&self, span: Span, value: Atom<'a>) -> Hashbang<'a> {
         Hashbang { span, value }
     }
 
@@ -222,11 +239,15 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    pub fn break_statement(&self, span: Span, label: Option<LabelIdentifier>) -> Statement<'a> {
+    pub fn break_statement(&self, span: Span, label: Option<LabelIdentifier<'a>>) -> Statement<'a> {
         Statement::BreakStatement(self.alloc(BreakStatement { span, label }))
     }
 
-    pub fn continue_statement(&self, span: Span, label: Option<LabelIdentifier>) -> Statement<'a> {
+    pub fn continue_statement(
+        &self,
+        span: Span,
+        label: Option<LabelIdentifier<'a>>,
+    ) -> Statement<'a> {
         Statement::ContinueStatement(self.alloc(ContinueStatement { span, label }))
     }
 
@@ -309,7 +330,7 @@ impl<'a> AstBuilder<'a> {
     pub fn labeled_statement(
         &self,
         span: Span,
-        label: LabelIdentifier,
+        label: LabelIdentifier<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
         Statement::LabeledStatement(self.alloc(LabeledStatement { span, label, body }))
@@ -387,8 +408,8 @@ impl<'a> AstBuilder<'a> {
     pub fn meta_property(
         &self,
         span: Span,
-        meta: IdentifierName,
-        property: IdentifierName,
+        meta: IdentifierName<'a>,
+        property: IdentifierName<'a>,
     ) -> Expression<'a> {
         Expression::MetaProperty(self.alloc(MetaProperty { span, meta, property }))
     }
@@ -449,7 +470,7 @@ impl<'a> AstBuilder<'a> {
 
     pub fn simple_assignment_target_identifier(
         &self,
-        ident: IdentifierReference,
+        ident: IdentifierReference<'a>,
     ) -> AssignmentTarget<'a> {
         AssignmentTarget::SimpleAssignmentTarget(
             SimpleAssignmentTarget::AssignmentTargetIdentifier(self.alloc(ident)),
@@ -575,7 +596,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         object: Expression<'a>,
-        property: IdentifierName,
+        property: IdentifierName<'a>,
         optional: bool, // for optional chaining
     ) -> MemberExpression<'a> {
         MemberExpression::StaticMemberExpression(StaticMemberExpression {
@@ -590,7 +611,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         object: Expression<'a>,
-        property: IdentifierName,
+        property: IdentifierName<'a>,
         optional: bool, // for optional chaining
     ) -> Expression<'a> {
         self.member_expression(self.static_member(span, object, property, optional))
@@ -600,7 +621,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         object: Expression<'a>,
-        field: PrivateIdentifier,
+        field: PrivateIdentifier<'a>,
         optional: bool,
     ) -> MemberExpression<'a> {
         MemberExpression::PrivateFieldExpression(PrivateFieldExpression {
@@ -614,7 +635,7 @@ impl<'a> AstBuilder<'a> {
     pub fn private_in_expression(
         &self,
         span: Span,
-        left: PrivateIdentifier,
+        left: PrivateIdentifier<'a>,
         right: Expression<'a>,
     ) -> Expression<'a> {
         Expression::PrivateInExpression(self.alloc(PrivateInExpression {
@@ -629,7 +650,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         object: Expression<'a>,
-        field: PrivateIdentifier,
+        field: PrivateIdentifier<'a>,
         optional: bool,
     ) -> Expression<'a> {
         self.member_expression(self.private_field(span, object, field, optional))
@@ -783,7 +804,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_this_parameter(
         &self,
         span: Span,
-        this: IdentifierName,
+        this: IdentifierName<'a>,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> TSThisParameter<'a> {
         TSThisParameter { span, this, type_annotation }
@@ -793,7 +814,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         r#type: FunctionType,
         span: Span,
-        id: Option<BindingIdentifier>,
+        id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         this_param: Option<TSThisParameter<'a>>,
@@ -833,7 +854,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         r#type: ClassType,
         span: Span,
-        id: Option<BindingIdentifier>,
+        id: Option<BindingIdentifier<'a>>,
         super_class: Option<Expression<'a>>,
         body: Box<'a, ClassBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -979,7 +1000,7 @@ impl<'a> AstBuilder<'a> {
 
     pub fn binding_pattern_identifier(
         &self,
-        identifier: BindingIdentifier,
+        identifier: BindingIdentifier<'a>,
     ) -> BindingPatternKind<'a> {
         BindingPatternKind::BindingIdentifier(self.alloc(identifier))
     }
@@ -1043,7 +1064,7 @@ impl<'a> AstBuilder<'a> {
         self.alloc(BindingRestElement { span, argument })
     }
 
-    pub fn property_key_identifier(&self, ident: IdentifierName) -> PropertyKey<'a> {
+    pub fn property_key_identifier(&self, ident: IdentifierName<'a>) -> PropertyKey<'a> {
         PropertyKey::Identifier(self.alloc(ident))
     }
 
@@ -1061,7 +1082,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         specifiers: Option<Vec<'a, ImportDeclarationSpecifier>>,
-        source: StringLiteral,
+        source: StringLiteral<'a>,
         with_clause: Option<WithClause<'a>>,
         import_kind: ImportOrExportKind,
     ) -> Box<'a, ImportDeclaration<'a>> {
@@ -1071,8 +1092,8 @@ impl<'a> AstBuilder<'a> {
     pub fn export_all_declaration(
         &self,
         span: Span,
-        exported: Option<ModuleExportName>,
-        source: StringLiteral,
+        exported: Option<ModuleExportName<'a>>,
+        source: StringLiteral<'a>,
         with_clause: Option<WithClause<'a>>,
         export_kind: ImportOrExportKind,
     ) -> Box<'a, ExportAllDeclaration<'a>> {
@@ -1083,7 +1104,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         declaration: ExportDefaultDeclarationKind<'a>,
-        exported: ModuleExportName,
+        exported: ModuleExportName<'a>,
     ) -> Box<'a, ExportDefaultDeclaration<'a>> {
         self.alloc(ExportDefaultDeclaration { span, declaration, exported })
     }
@@ -1093,7 +1114,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         declaration: Option<Declaration<'a>>,
         specifiers: Vec<'a, ExportSpecifier>,
-        source: Option<StringLiteral>,
+        source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
         self.alloc(ExportNamedDeclaration { span, declaration, specifiers, source, export_kind })
@@ -1150,9 +1171,9 @@ impl<'a> AstBuilder<'a> {
     pub fn jsx_namespaced_name(
         &self,
         span: Span,
-        namespace: JSXIdentifier,
-        property: JSXIdentifier,
-    ) -> Box<'a, JSXNamespacedName> {
+        namespace: JSXIdentifier<'a>,
+        property: JSXIdentifier<'a>,
+    ) -> Box<'a, JSXNamespacedName<'a>> {
         self.alloc(JSXNamespacedName { span, namespace, property })
     }
 
@@ -1160,7 +1181,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         object: JSXMemberExpressionObject<'a>,
-        property: JSXIdentifier,
+        property: JSXIdentifier<'a>,
     ) -> Box<'a, JSXMemberExpression<'a>> {
         self.alloc(JSXMemberExpression { span, object, property })
     }
@@ -1198,11 +1219,11 @@ impl<'a> AstBuilder<'a> {
         self.alloc(JSXSpreadAttribute { span, argument })
     }
 
-    pub fn jsx_identifier(&self, span: Span, name: Atom) -> JSXIdentifier {
+    pub fn jsx_identifier(&self, span: Span, name: Atom<'a>) -> JSXIdentifier<'a> {
         JSXIdentifier { span, name }
     }
 
-    pub fn jsx_text(&self, span: Span, value: Atom) -> JSXText {
+    pub fn jsx_text(&self, span: Span, value: Atom<'a>) -> JSXText<'a> {
         JSXText { span, value }
     }
 
@@ -1210,7 +1231,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_module_declaration(
         &self,
         span: Span,
-        id: TSModuleDeclarationName,
+        id: TSModuleDeclarationName<'a>,
         body: TSModuleDeclarationBody<'a>,
         kind: TSModuleDeclarationKind,
         modifiers: Modifiers<'a>,
@@ -1297,7 +1318,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_parameter(
         &self,
         span: Span,
-        name: BindingIdentifier,
+        name: BindingIdentifier<'a>,
         constraint: Option<TSType<'a>>,
         default: Option<TSType<'a>>,
         r#in: bool,
@@ -1482,7 +1503,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_import_equals_declaration(
         &self,
         span: Span,
-        id: BindingIdentifier,
+        id: BindingIdentifier<'a>,
         module_reference: TSModuleReference<'a>,
         is_export: bool,
         import_kind: ImportOrExportKind,
@@ -1499,7 +1520,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_interface_declaration(
         &self,
         span: Span,
-        id: BindingIdentifier,
+        id: BindingIdentifier<'a>,
         body: Box<'a, TSInterfaceBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         extends: Option<Vec<'a, Box<'a, TSInterfaceHeritage<'a>>>>,
@@ -1518,7 +1539,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_alias_declaration(
         &self,
         span: Span,
-        id: BindingIdentifier,
+        id: BindingIdentifier<'a>,
         type_annotation: TSType<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         modifiers: Modifiers<'a>,
@@ -1535,7 +1556,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_enum_declaration(
         &self,
         span: Span,
-        id: BindingIdentifier,
+        id: BindingIdentifier<'a>,
         members: Vec<'a, TSEnumMember<'a>>,
         modifiers: Modifiers<'a>,
     ) -> Declaration<'a> {
@@ -1606,7 +1627,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_template_literal_type(
         &self,
         span: Span,
-        quasis: Vec<'a, TemplateElement>,
+        quasis: Vec<'a, TemplateElement<'a>>,
         types: Vec<'a, TSType<'a>>,
     ) -> TSType<'a> {
         TSType::TSTemplateLiteralType(self.alloc(TSTemplateLiteralType { span, quasis, types }))
@@ -1721,7 +1742,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_predicate(
         &self,
         span: Span,
-        parameter_name: TSTypePredicateName,
+        parameter_name: TSTypePredicateName<'a>,
         asserts: bool,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> TSType<'a> {

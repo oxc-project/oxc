@@ -12,7 +12,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
@@ -58,7 +58,7 @@ impl Rule for NoNamedAsDefaultMember {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.semantic().module_record();
 
-        let mut has_members_map: HashMap<SymbolId, (Ref<'_, Atom, _, _>, Atom)> =
+        let mut has_members_map: HashMap<SymbolId, (Ref<'_, CompactString, _, _>, CompactString)> =
             HashMap::default();
         for import_entry in &module_record.import_entries {
             let ImportImportName::Default(_) = import_entry.import_name else {
@@ -73,7 +73,7 @@ impl Rule for NoNamedAsDefaultMember {
             if !remote_module_record_ref.exported_bindings.is_empty() {
                 has_members_map.insert(
                     ctx.symbols().get_symbol_id_from_span(&import_entry.local_name.span()).unwrap(),
-                    (remote_module_record_ref, import_entry.module_request.name().to_owned()),
+                    (remote_module_record_ref, import_entry.module_request.name().clone()),
                 );
             }
         }
@@ -82,7 +82,7 @@ impl Rule for NoNamedAsDefaultMember {
             return;
         };
         let get_external_module_name_if_has_entry =
-            |ident: &IdentifierReference, entry_name: &Atom| {
+            |ident: &IdentifierReference, entry_name: &str| {
                 get_symbol_id_from_ident(ctx, ident)
                     .and_then(|symbol_id| has_members_map.get(&symbol_id))
                     .and_then(|it| {
@@ -101,9 +101,7 @@ impl Rule for NoNamedAsDefaultMember {
             let Some(prop_str) = member_expr.static_property_name() else {
                 return;
             };
-            if let Some(module_name) =
-                get_external_module_name_if_has_entry(ident, &Atom::from(prop_str))
-            {
+            if let Some(module_name) = get_external_module_name_if_has_entry(ident, prop_str) {
                 ctx.diagnostic(NoNamedAsDefaultMemberDignostic(
                     match member_expr {
                         MemberExpression::ComputedMemberExpression(it) => it.span,

@@ -24,9 +24,9 @@ pub struct TypeScript<'a> {
     ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
     verbatim_module_syntax: bool,
-    export_name_set: FxHashSet<Atom>,
+    export_name_set: FxHashSet<Atom<'a>>,
     options: TypescriptOptions,
-    namespace_arg_names: FxHashMap<Atom, usize>,
+    namespace_arg_names: FxHashMap<Atom<'a>, usize>,
 }
 
 impl<'a> TypeScript<'a> {
@@ -318,7 +318,7 @@ impl<'a> TypeScript<'a> {
     fn transform_ts_enum_members(
         &self,
         members: &mut Vec<'a, TSEnumMember<'a>>,
-        enum_name: &Atom,
+        enum_name: &Atom<'a>,
     ) -> Vec<'a, Statement<'a>> {
         let mut default_init = self.ast.literal_number_expression(NumericLiteral {
             span: SPAN,
@@ -668,7 +668,7 @@ impl<'a> TypeScript<'a> {
         }
     }
 
-    fn get_namespace_arg_name(&mut self, name: &Atom) -> Atom {
+    fn get_namespace_arg_name(&mut self, name: &Atom<'a>) -> Atom<'a> {
         let count = self.namespace_arg_names.entry(name.clone()).or_insert(0);
         *count += 1;
         format!("_{name}{}", if *count > 1 { count.to_string() } else { String::new() }).into()

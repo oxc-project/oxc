@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -14,7 +14,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 )]
 #[diagnostic(severity(warning), help("Remove the unnecessary {1:?} constraint"))]
 struct NoUnnecessaryTypeConstraintDiagnostic(
-    Atom,
+    CompactString,
     &'static str,
     #[label] pub Span,
     #[label] pub Span,
@@ -60,7 +60,7 @@ impl Rule for NoUnnecessaryTypeConstraint {
                         _ => continue,
                     };
                     ctx.diagnostic(NoUnnecessaryTypeConstraintDiagnostic(
-                        param.name.name.clone(),
+                        param.name.name.to_compact_string(),
                         value,
                         param.name.span,
                         ty_span,

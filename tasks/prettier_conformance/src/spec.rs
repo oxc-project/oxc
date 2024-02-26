@@ -9,11 +9,11 @@ use oxc_ast::{
 };
 use oxc_parser::Parser;
 use oxc_prettier::{ArrowParens, EndOfLine, PrettierOptions, QuoteProps, TrailingComma};
-use oxc_span::{Atom, GetSpan, SourceType};
+use oxc_span::{GetSpan, SourceType};
 
 #[derive(Default)]
 pub struct SpecParser {
-    pub calls: Vec<(PrettierOptions, Vec<(Atom, String)>)>,
+    pub calls: Vec<(PrettierOptions, Vec<(String, String)>)>,
     source_text: String,
 }
 
@@ -39,7 +39,7 @@ impl VisitMut<'_> for SpecParser {
             return;
         }
         let mut parsers = vec![];
-        let mut snapshot_options = vec![];
+        let mut snapshot_options: Vec<(String, String)> = vec![];
         let mut options = PrettierOptions::default();
 
         if let Some(argument) = expr.arguments.get(1) {
@@ -110,7 +110,7 @@ impl VisitMut<'_> for SpecParser {
                         };
                         if name != "errors" {
                             snapshot_options.push((
-                                name,
+                                name.to_string(),
                                 obj_prop.value.span().source_text(&self.source_text).to_string(),
                             ));
                         }
@@ -120,7 +120,7 @@ impl VisitMut<'_> for SpecParser {
         }
 
         snapshot_options.push((
-            "parsers".into(),
+            "parsers".to_string(),
             format!(
                 "[{}]",
                 parsers.iter().map(|p| format!("\"{p}\"")).collect::<Vec<_>>().join(", ")
@@ -128,7 +128,7 @@ impl VisitMut<'_> for SpecParser {
         ));
 
         if !snapshot_options.iter().any(|item| item.0 == "printWidth") {
-            snapshot_options.push(("printWidth".into(), "80".into()));
+            snapshot_options.push(("printWidth".to_string(), "80".into()));
         }
 
         snapshot_options.sort_by(|a, b| a.0.cmp(&b.0));

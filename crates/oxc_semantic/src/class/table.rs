@@ -1,5 +1,5 @@
 use oxc_index::IndexVec;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, CompactString, Span};
 use oxc_syntax::class::{ClassId, ElementId, ElementKind};
 use rustc_hash::FxHashMap;
 
@@ -7,7 +7,7 @@ use crate::node::AstNodeId;
 
 #[derive(Debug)]
 pub struct Element {
-    pub name: Atom,
+    pub name: CompactString,
     pub span: Span,
     pub is_private: bool,
     pub r#static: bool,
@@ -16,7 +16,7 @@ pub struct Element {
 
 impl Element {
     pub fn new(
-        name: Atom,
+        name: CompactString,
         span: Span,
         r#static: bool,
         is_private: bool,
@@ -29,13 +29,18 @@ impl Element {
 #[derive(Debug)]
 pub struct PrivateIdentifierReference {
     pub id: AstNodeId,
-    pub name: Atom,
+    pub name: CompactString,
     pub span: Span,
     pub element_ids: Vec<ElementId>,
 }
 
 impl PrivateIdentifierReference {
-    pub fn new(id: AstNodeId, name: Atom, span: Span, element_ids: Vec<ElementId>) -> Self {
+    pub fn new(
+        id: AstNodeId,
+        name: CompactString,
+        span: Span,
+        element_ids: Vec<ElementId>,
+    ) -> Self {
         Self { id, name, span, element_ids }
     }
 }
@@ -93,8 +98,8 @@ impl ClassTable {
         element_ids
     }
 
-    pub fn has_private_definition(&self, class_id: ClassId, name: &Atom) -> bool {
-        self.elements[class_id].iter().any(|p| p.is_private && p.name == *name)
+    pub fn has_private_definition(&self, class_id: ClassId, name: &str) -> bool {
+        self.elements[class_id].iter().any(|p| p.is_private && p.name == name)
     }
 
     pub fn declare_class(&mut self, parent_id: Option<ClassId>, ast_node_id: AstNodeId) -> ClassId {

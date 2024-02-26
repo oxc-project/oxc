@@ -127,7 +127,7 @@ impl<'a> Semantic<'a> {
         let AstKind::IdentifierReference(id) = reference_node.kind() else {
             return false;
         };
-        self.scopes().root_unresolved_references().contains_key(&id.name)
+        self.scopes().root_unresolved_references().contains_key(id.name.as_str())
     }
 
     /// Find which scope a symbol is declared in
@@ -145,7 +145,7 @@ impl<'a> Semantic<'a> {
     }
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
-        self.scopes().root_unresolved_references().contains_key(&ident.name)
+        self.scopes().root_unresolved_references().contains_key(ident.name.as_str())
     }
 
     pub fn redeclare_variables(&self) -> &Vec<VariableInfo> {
@@ -212,7 +212,7 @@ mod tests {
         let top_level_a = semantic
             .scopes()
             .iter_bindings()
-            .find(|(_scope_id, _symbol_id, name)| name == &Atom::from("Fn"))
+            .find(|(_scope_id, _symbol_id, name)| name.as_str() == "Fn")
             .unwrap();
         assert_eq!(semantic.symbols.get_scope_id(top_level_a.1), top_level_a.0);
     }

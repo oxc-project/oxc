@@ -8,7 +8,7 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
-use oxc_span::{Atom, GetSpan, Span, SPAN};
+use oxc_span::{Atom, CompactString, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
     xml_entities::XML_ENTITIES,
@@ -58,7 +58,7 @@ pub struct ReactJsx<'a> {
     import_fragment: bool,
     import_create_element: bool,
     require_jsx_runtime: bool,
-    jsx_runtime_importer: Atom,
+    jsx_runtime_importer: CompactString,
     pub babel_8_breaking: Option<bool>,
     default_runtime: ReactJsxRuntime,
 }
@@ -129,9 +129,9 @@ impl<'a> ReactJsx<'a> {
 
         let jsx_runtime_importer =
             if jsx_options.import_source == "react" || default_runtime.is_classic() {
-                Atom::new_inline("react/jsx-runtime")
+                CompactString::from("react/jsx-runtime")
             } else {
-                Atom::from(format!("{}/jsx-runtime", jsx_options.import_source))
+                CompactString::from(format!("{}/jsx-runtime", jsx_options.import_source))
             };
         Some(Self {
             ast,
@@ -209,8 +209,8 @@ impl<'a> ReactJsx<'a> {
         program.body.splice(index..index, imports);
     }
 
-    fn new_string_literal(name: &str) -> StringLiteral {
-        StringLiteral::new(SPAN, name.into())
+    fn new_string_literal(&self, name: &str) -> StringLiteral<'a> {
+        StringLiteral::new(SPAN, self.ast.new_atom(name))
     }
 
     fn add_import<'b>(
@@ -242,7 +242,7 @@ impl<'a> ReactJsx<'a> {
             self.require_jsx_runtime = true;
             self.add_require_statement(
                 "_reactJsxRuntime",
-                Self::new_string_literal(self.jsx_runtime_importer.as_str()),
+                self.new_string_literal(self.jsx_runtime_importer.as_str()),
                 false,
             );
         }
@@ -256,7 +256,7 @@ impl<'a> ReactJsx<'a> {
             self.add_import_statement(
                 "jsx",
                 "_jsx",
-                Self::new_string_literal(self.jsx_runtime_importer.as_str()),
+                self.new_string_literal(self.jsx_runtime_importer.as_str()),
             );
         }
     }
@@ -266,7 +266,7 @@ impl<'a> ReactJsx<'a> {
             self.add_require_jsx_runtime();
         } else if !self.import_jsxs {
             self.import_jsxs = true;
-            let source = Self::new_string_literal(self.jsx_runtime_importer.as_str());
+            let source = self.new_string_literal(self.jsx_runtime_importer.as_str());
             self.add_import_statement("jsxs", "_jsxs", source);
         }
     }
@@ -276,7 +276,7 @@ impl<'a> ReactJsx<'a> {
             self.add_require_jsx_runtime();
         } else if !self.import_fragment {
             self.import_fragment = true;
-            let source = Self::new_string_literal(self.jsx_runtime_importer.as_str());
+            let source = self.new_string_literal(self.jsx_runtime_importer.as_str());
             self.add_import_statement("Fragment", "_Fragment", source);
             self.add_import_jsx();
         }
@@ -289,22 +289,25 @@ impl<'a> ReactJsx<'a> {
             if self.ctx.source_type().is_script() {
                 self.add_require_statement(
                     "_react",
-                    Self::new_string_literal(self.options.import_source.as_ref()),
+                    self.new_string_literal(self.options.import_source.as_ref()),
                     true,
                 );
             } else {
-                let source = Self::new_string_literal(self.options.import_source.as_ref());
+                let source = self.new_string_literal(self.options.import_source.as_ref());
                 self.add_import_statement("createElement", "_createElement", source);
             }
         }
     }
 
-    fn add_import_statement(&mut self, imported: &str, local: &str, source: StringLiteral) {
+    fn add_import_statement(&mut self, imported: &str, local: &str, source: StringLiteral<'a>) {
         let mut specifiers = self.ast.new_vec_with_capacity(1);
         specifiers.push(ImportDeclarationSpecifier::ImportSpecifier(ImportSpecifier {
             span: SPAN,
-            imported: ModuleExportName::Identifier(IdentifierName::new(SPAN, imported.into())),
-            local: BindingIdentifier::new(SPAN, local.into()),
+            imported: ModuleExportName::Identifier(IdentifierName::new(
+                SPAN,
+                self.ast.new_atom(imported),
+            )),
+            local: BindingIdentifier::new(SPAN, self.ast.new_atom(local)),
             import_kind: ImportOrExportKind::Value,
         }));
         let import_statement = self.ast.import_declaration(
@@ -319,7 +322,12 @@ impl<'a> ReactJsx<'a> {
         self.imports.push(decl);
     }
 
-    fn add_require_statement(&mut self, variable_name: &str, source: StringLiteral, front: bool) {
+    fn add_require_statement(
+        &mut self,
+        variable_name: &str,
+        source: StringLiteral<'a>,
+        front: bool,
+    ) {
         let callee = self
             .ast
             .identifier_reference_expression(IdentifierReference::new(SPAN, "require".into()));
@@ -328,7 +336,10 @@ impl<'a> ReactJsx<'a> {
             .new_vec_single(Argument::Expression(self.ast.literal_string_expression(source)));
         let init = self.ast.call_expression(SPAN, callee, arguments, false, None);
         let id = self.ast.binding_pattern(
-            self.ast.binding_pattern_identifier(BindingIdentifier::new(SPAN, variable_name.into())),
+            self.ast.binding_pattern_identifier(BindingIdentifier::new(
+                SPAN,
+                self.ast.new_atom(variable_name),
+            )),
             None,
             false,
         );
@@ -486,8 +497,8 @@ impl<'a> ReactJsx<'a> {
         object_ident_name: &str,
         property_name: &str,
     ) -> Expression<'a> {
-        let property = IdentifierName::new(SPAN, property_name.into());
-        let ident = IdentifierReference::new(SPAN, object_ident_name.into());
+        let property = IdentifierName::new(SPAN, self.ast.new_atom(property_name));
+        let ident = IdentifierReference::new(SPAN, self.ast.new_atom(object_ident_name));
         let object = self.ast.identifier_reference_expression(ident);
         self.ast.static_member_expression(SPAN, object, property, false)
     }
@@ -499,7 +510,7 @@ impl<'a> ReactJsx<'a> {
         let property = callee.next();
         property.map_or_else(
             || {
-                let ident = IdentifierReference::new(SPAN, member.into());
+                let ident = IdentifierReference::new(SPAN, self.ast.new_atom(member));
                 self.ast.identifier_reference_expression(ident)
             },
             |property_name| self.get_static_member_expression(member, property_name),

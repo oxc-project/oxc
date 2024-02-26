@@ -65,7 +65,7 @@ impl ClassTableBuilder {
                 self.classes.add_element(
                     class_id,
                     Element::new(
-                        name,
+                        name.to_compact_string(),
                         property.key.span(),
                         property.r#static,
                         is_private,
@@ -86,7 +86,7 @@ impl ClassTableBuilder {
                 self.classes.add_element(
                     class_id,
                     Element::new(
-                        name,
+                        name.to_compact_string(),
                         property.key.span(),
                         property.r#static,
                         is_private,
@@ -112,7 +112,7 @@ impl ClassTableBuilder {
 
                     let reference = PrivateIdentifierReference::new(
                         current_node_id,
-                        ident.name.clone(),
+                        ident.name.to_compact_string(),
                         ident.span,
                         element_ids,
                     );
@@ -134,7 +134,7 @@ impl ClassTableBuilder {
                 self.classes.add_element(
                     class_id,
                     Element::new(
-                        name,
+                        name.to_compact_string(),
                         method.key.span(),
                         method.r#static,
                         is_private,

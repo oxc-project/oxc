@@ -79,9 +79,9 @@ pub struct JSXClosingFragment {
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum JSXElementName<'a> {
     /// `<Apple />`
-    Identifier(JSXIdentifier),
+    Identifier(JSXIdentifier<'a>),
     /// `<Apple:Orange />`
-    NamespacedName(Box<'a, JSXNamespacedName>),
+    NamespacedName(Box<'a, JSXNamespacedName<'a>>),
     /// `<Apple.Orange />`
     MemberExpression(Box<'a, JSXMemberExpression<'a>>),
 }
@@ -90,14 +90,14 @@ pub enum JSXElementName<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct JSXNamespacedName {
+pub struct JSXNamespacedName<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub namespace: JSXIdentifier,
-    pub property: JSXIdentifier,
+    pub namespace: JSXIdentifier<'a>,
+    pub property: JSXIdentifier<'a>,
 }
 
-impl std::fmt::Display for JSXNamespacedName {
+impl<'a> std::fmt::Display for JSXNamespacedName<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}:{}", self.namespace.name, self.property.name)
     }
@@ -111,7 +111,7 @@ pub struct JSXMemberExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub object: JSXMemberExpressionObject<'a>,
-    pub property: JSXIdentifier,
+    pub property: JSXIdentifier<'a>,
 }
 
 impl<'a> JSXMemberExpression<'a> {
@@ -127,7 +127,7 @@ impl<'a> JSXMemberExpression<'a> {
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum JSXMemberExpressionObject<'a> {
-    Identifier(JSXIdentifier),
+    Identifier(JSXIdentifier<'a>),
     MemberExpression(Box<'a, JSXMemberExpression<'a>>),
 }
 
@@ -199,8 +199,8 @@ pub struct JSXSpreadAttribute<'a> {
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum JSXAttributeName<'a> {
-    Identifier(JSXIdentifier),
-    NamespacedName(Box<'a, JSXNamespacedName>),
+    Identifier(JSXIdentifier<'a>),
+    NamespacedName(Box<'a, JSXNamespacedName<'a>>),
 }
 
 /// JSX Attribute Value
@@ -208,7 +208,7 @@ pub enum JSXAttributeName<'a> {
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum JSXAttributeValue<'a> {
-    StringLiteral(StringLiteral),
+    StringLiteral(StringLiteral<'a>),
     ExpressionContainer(JSXExpressionContainer<'a>),
     Element(Box<'a, JSXElement<'a>>),
     Fragment(Box<'a, JSXFragment<'a>>),
@@ -217,10 +217,10 @@ pub enum JSXAttributeValue<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct JSXIdentifier {
+pub struct JSXIdentifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub name: Atom,
+    pub name: Atom<'a>,
 }
 
 // 1.4 JSX Children
@@ -230,7 +230,7 @@ pub struct JSXIdentifier {
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum JSXChild<'a> {
-    Text(JSXText),
+    Text(JSXText<'a>),
     Element(Box<'a, JSXElement<'a>>),
     Fragment(Box<'a, JSXFragment<'a>>),
     ExpressionContainer(JSXExpressionContainer<'a>),
@@ -249,8 +249,8 @@ pub struct JSXSpreadChild<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct JSXText {
+pub struct JSXText<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub value: Atom,
+    pub value: Atom<'a>,
 }

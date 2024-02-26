@@ -271,13 +271,13 @@ fn is_valid_jest_call(members: &[Cow<str>]) -> bool {
 
 fn resolve_to_jest_fn<'a>(
     call_expr: &'a CallExpression<'a>,
-    original: Option<&'a Atom>,
+    original: Option<&'a Atom<'a>>,
 ) -> Option<ResolvedJestFn<'a>> {
     let ident = resolve_first_ident(&call_expr.callee)?;
     Some(ResolvedJestFn { local: &ident.name, original })
 }
 
-fn resolve_first_ident<'a>(expr: &'a Expression) -> Option<&'a IdentifierReference> {
+fn resolve_first_ident<'a>(expr: &'a Expression<'a>) -> Option<&'a IdentifierReference<'a>> {
     match expr {
         Expression::Identifier(ident) => Some(ident),
         Expression::MemberExpression(member_expr) => resolve_first_ident(member_expr.object()),
@@ -333,8 +333,8 @@ impl<'a> ParsedExpectFnCall<'a> {
 }
 
 struct ResolvedJestFn<'a> {
-    pub local: &'a Atom,
-    pub original: Option<&'a Atom>,
+    pub local: &'a Atom<'a>,
+    pub original: Option<&'a Atom<'a>>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -388,7 +388,7 @@ impl<'a> KnownMemberExpressionProperty<'a> {
 
 pub enum MemberExpressionElement<'a> {
     Expression(&'a Expression<'a>),
-    IdentName(&'a IdentifierName),
+    IdentName(&'a IdentifierName<'a>),
 }
 
 impl<'a> MemberExpressionElement<'a> {

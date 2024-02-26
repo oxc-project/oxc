@@ -1,4 +1,4 @@
-use oxc_span::Atom;
+use oxc_span::CompactString;
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
@@ -14,8 +14,8 @@ pub enum Register {
 
 #[derive(Debug, Clone)]
 pub enum ObjectPropertyAccessBy {
-    PrivateProperty(Atom),
-    Property(Atom),
+    PrivateProperty(CompactString),
+    Property(CompactString),
     Expression(Register),
 }
 
@@ -139,8 +139,8 @@ pub struct ControlFlowGraph {
     pub basic_blocks_with_continues: Vec<Vec<NodeIndex>>,
     // node indexes of the basic blocks of switch case conditions
     pub switch_case_conditions: Vec<Vec<NodeIndex>>,
-    pub next_label: Option<Atom>,
-    pub label_to_ast_node_ix: Vec<(Atom, AstNodeId)>,
+    pub next_label: Option<CompactString>,
+    pub label_to_ast_node_ix: Vec<(CompactString, AstNodeId)>,
     pub ast_node_to_break_continue: Vec<(AstNodeId, usize, Option<usize>)>,
     pub after_throw_block: Option<NodeIndex>,
 }

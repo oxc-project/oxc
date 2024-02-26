@@ -72,7 +72,7 @@ pub struct Transformer<'a> {
     // es2020
     es2020_nullish_coalescing_operators: Option<NullishCoalescingOperator<'a>>,
     // es2019
-    es2019_json_strings: Option<JsonStrings>,
+    es2019_json_strings: Option<JsonStrings<'a>>,
     es2019_optional_catch_binding: Option<OptionalCatchBinding<'a>>,
     // es2016
     es2016_exponentiation_operator: Option<ExponentiationOperator<'a>>,
@@ -114,7 +114,7 @@ impl<'a> Transformer<'a> {
             // es2020
             es2020_nullish_coalescing_operators: NullishCoalescingOperator::new(Rc::clone(&ast), ctx.clone(), &options),
             // es2019
-            es2019_json_strings: JsonStrings::new(&options),
+            es2019_json_strings: JsonStrings::new(Rc::clone(&ast), &options),
             es2019_optional_catch_binding: OptionalCatchBinding::new(Rc::clone(&ast), &options),
             // es2016
             es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), ctx.clone(), &options),
@@ -302,7 +302,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.leave_node(kind);
     }
 
-    fn visit_directive(&mut self, directive: &mut Directive) {
+    fn visit_directive(&mut self, directive: &mut Directive<'a>) {
         self.es2019_json_strings
             .as_mut()
             .map(|t: &mut JsonStrings| t.transform_directive(directive));

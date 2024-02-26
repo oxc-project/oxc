@@ -87,7 +87,7 @@ pub trait VisitMut<'a>: Sized {
         self.leave_scope();
     }
 
-    fn visit_break_statement(&mut self, stmt: &mut BreakStatement) {
+    fn visit_break_statement(&mut self, stmt: &mut BreakStatement<'a>) {
         let kind = AstKind::BreakStatement(self.alloc(stmt));
         self.enter_node(kind);
         if let Some(break_target) = &mut stmt.label {
@@ -96,7 +96,7 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_continue_statement(&mut self, stmt: &mut ContinueStatement) {
+    fn visit_continue_statement(&mut self, stmt: &mut ContinueStatement<'a>) {
         let kind = AstKind::ContinueStatement(self.alloc(stmt));
         self.enter_node(kind);
         if let Some(continue_target) = &mut stmt.label {
@@ -320,7 +320,7 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_directive(&mut self, directive: &mut Directive) {
+    fn visit_directive(&mut self, directive: &mut Directive<'a>) {
         let kind = AstKind::Directive(self.alloc(directive));
         self.enter_node(kind);
         self.visit_string_literal(&mut directive.expression);
@@ -595,7 +595,7 @@ pub trait VisitMut<'a>: Sized {
         }
     }
 
-    fn visit_meta_property(&mut self, meta: &mut MetaProperty) {
+    fn visit_meta_property(&mut self, meta: &mut MetaProperty<'a>) {
         let kind = AstKind::MetaProperty(self.alloc(meta));
         self.enter_node(kind);
         self.leave_node(kind);
@@ -1052,7 +1052,7 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_jsx_identifier(&mut self, ident: &mut JSXIdentifier) {
+    fn visit_jsx_identifier(&mut self, ident: &mut JSXIdentifier<'a>) {
         let kind = AstKind::JSXIdentifier(self.alloc(ident));
         self.enter_node(kind);
         self.leave_node(kind);
@@ -1078,7 +1078,7 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_jsx_namespaced_name(&mut self, name: &mut JSXNamespacedName) {
+    fn visit_jsx_namespaced_name(&mut self, name: &mut JSXNamespacedName<'a>) {
         let kind = AstKind::JSXNamespacedName(self.alloc(name));
         self.enter_node(kind);
         self.visit_jsx_identifier(&mut name.namespace);
@@ -1156,13 +1156,13 @@ pub trait VisitMut<'a>: Sized {
         self.visit_expression(&mut child.expression);
     }
 
-    fn visit_jsx_text(&mut self, child: &JSXText) {
+    fn visit_jsx_text(&mut self, child: &JSXText<'a>) {
         let kind = AstKind::JSXText(self.alloc(child));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    /* ----------  Pattern ---------- */
+    /*<'a> ----------  Pattern ---------- */
 
     fn visit_binding_pattern(&mut self, pat: &mut BindingPattern<'a>) {
         match &mut pat.kind {
@@ -1178,7 +1178,7 @@ pub trait VisitMut<'a>: Sized {
         }
     }
 
-    fn visit_binding_identifier(&mut self, ident: &mut BindingIdentifier) {
+    fn visit_binding_identifier(&mut self, ident: &mut BindingIdentifier<'a>) {
         let kind = AstKind::BindingIdentifier(self.alloc(ident));
         self.enter_node(kind);
         self.leave_node(kind);
@@ -1230,25 +1230,25 @@ pub trait VisitMut<'a>: Sized {
 
     /* ----------  Identifier ---------- */
 
-    fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference) {
+    fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
         let kind = AstKind::IdentifierReference(self.alloc(ident));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_private_identifier(&mut self, ident: &mut PrivateIdentifier) {
+    fn visit_private_identifier(&mut self, ident: &mut PrivateIdentifier<'a>) {
         let kind = AstKind::PrivateIdentifier(self.alloc(ident));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_label_identifier(&mut self, ident: &mut LabelIdentifier) {
+    fn visit_label_identifier(&mut self, ident: &mut LabelIdentifier<'a>) {
         let kind = AstKind::LabelIdentifier(self.alloc(ident));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_identifier_name(&mut self, ident: &mut IdentifierName) {
+    fn visit_identifier_name(&mut self, ident: &mut IdentifierName<'a>) {
         let kind = AstKind::IdentifierName(self.alloc(ident));
         self.enter_node(kind);
         self.leave_node(kind);
@@ -1274,13 +1274,13 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_bigint_literal(&mut self, lit: &mut BigintLiteral) {
+    fn visit_bigint_literal(&mut self, lit: &mut BigintLiteral<'a>) {
         let kind = AstKind::BigintLiteral(self.alloc(lit));
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_string_literal(&mut self, lit: &mut StringLiteral) {
+    fn visit_string_literal(&mut self, lit: &mut StringLiteral<'a>) {
         let kind = AstKind::StringLiteral(self.alloc(lit));
         self.enter_node(kind);
         self.leave_node(kind);
@@ -1298,7 +1298,7 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_reg_expr_literal(&mut self, lit: &mut RegExpLiteral) {
+    fn visit_reg_expr_literal(&mut self, lit: &mut RegExpLiteral<'a>) {
         let kind = AstKind::RegExpLiteral(self.alloc(lit));
         self.enter_node(kind);
         self.leave_node(kind);
@@ -1345,7 +1345,10 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_import_declaration_specifier(&mut self, specifier: &mut ImportDeclarationSpecifier) {
+    fn visit_import_declaration_specifier(
+        &mut self,
+        specifier: &mut ImportDeclarationSpecifier<'a>,
+    ) {
         match specifier {
             ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                 self.visit_import_specifier(specifier);
@@ -1359,7 +1362,7 @@ pub trait VisitMut<'a>: Sized {
         }
     }
 
-    fn visit_import_specifier(&mut self, specifier: &mut ImportSpecifier) {
+    fn visit_import_specifier(&mut self, specifier: &mut ImportSpecifier<'a>) {
         let kind = AstKind::ImportSpecifier(self.alloc(specifier));
         self.enter_node(kind);
         // TODO: imported
@@ -1367,14 +1370,14 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_import_default_specifier(&mut self, specifier: &mut ImportDefaultSpecifier) {
+    fn visit_import_default_specifier(&mut self, specifier: &mut ImportDefaultSpecifier<'a>) {
         let kind = AstKind::ImportDefaultSpecifier(self.alloc(specifier));
         self.enter_node(kind);
         self.visit_binding_identifier(&mut specifier.local);
         self.leave_node(kind);
     }
 
-    fn visit_import_name_specifier(&mut self, specifier: &mut ImportNamespaceSpecifier) {
+    fn visit_import_name_specifier(&mut self, specifier: &mut ImportNamespaceSpecifier<'a>) {
         let kind = AstKind::ImportNamespaceSpecifier(self.alloc(specifier));
         self.enter_node(kind);
         self.visit_binding_identifier(&mut specifier.local);
@@ -1488,7 +1491,10 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_ts_external_module_reference(&mut self, reference: &mut TSExternalModuleReference) {
+    fn visit_ts_external_module_reference(
+        &mut self,
+        reference: &mut TSExternalModuleReference<'a>,
+    ) {
         let kind = AstKind::TSExternalModuleReference(self.alloc(reference));
         self.enter_node(kind);
         self.visit_string_literal(&mut reference.expression);

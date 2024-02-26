@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{CompactString, GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -19,7 +19,7 @@ use crate::{
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jest(no-test-prefixes): Use {0:?} instead.")]
 #[diagnostic(severity(warning))]
-struct NoTestPrefixesDiagnostic(Atom, #[label] pub Span);
+struct NoTestPrefixesDiagnostic(CompactString, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoTestPrefixes;
@@ -91,7 +91,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     });
 }
 
-fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> Atom {
+fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> CompactString {
     let ParsedGeneralJestFnCall { members, name, .. } = jest_fn_call;
 
     let preferred_modifier = if name.starts_with('f') { "only" } else { "skip" };
@@ -103,9 +103,9 @@ fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> Atom {
     let name_slice = &name[1..];
 
     if member_names.is_empty() {
-        Atom::from(format!("{name_slice}.{preferred_modifier}"))
+        CompactString::from(format!("{name_slice}.{preferred_modifier}"))
     } else {
-        Atom::from(format!("{name_slice}.{preferred_modifier}.{member_names}"))
+        CompactString::from(format!("{name_slice}.{preferred_modifier}.{member_names}"))
     }
 }
 

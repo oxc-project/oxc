@@ -134,7 +134,7 @@ pub fn parse_expect_jest_fn_call<'a>(
 
 pub struct PossibleJestNode<'a, 'b> {
     pub node: &'b AstNode<'a>,
-    pub original: Option<&'a Atom>, // if this node is imported from 'jest/globals', this field will be Some(original_name), otherwise None
+    pub original: Option<&'a Atom<'a>>, // if this node is imported from 'jest/globals', this field will be Some(original_name), otherwise None
 }
 
 /// Collect all possible Jest fn Call Expression,
@@ -193,7 +193,7 @@ pub fn collect_possible_jest_call_node<'a, 'b>(
 
 fn collect_ids_referenced_to_import<'a, 'b>(
     ctx: &'b LintContext<'a>,
-) -> Vec<(ReferenceId, Option<&'a Atom>)> {
+) -> Vec<(ReferenceId, Option<&'a Atom<'a>>)> {
     ctx.symbols()
         .resolved_references
         .iter_enumerated()
@@ -220,14 +220,17 @@ fn collect_ids_referenced_to_import<'a, 'b>(
             None
         })
         .flatten()
-        .collect::<Vec<(ReferenceId, Option<&'a Atom>)>>()
+        .collect::<Vec<(ReferenceId, Option<&'a Atom<'a>>)>>()
 }
 
 /// Find name in the Import Declaration, not use name because of lifetime not long enough.
-fn find_original_name<'a>(import_decl: &'a ImportDeclaration<'a>, name: &Atom) -> Option<&'a Atom> {
+fn find_original_name<'a>(
+    import_decl: &'a ImportDeclaration<'a>,
+    name: &str,
+) -> Option<&'a Atom<'a>> {
     import_decl.specifiers.iter().flatten().find_map(|specifier| match specifier {
         ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
-            if import_specifier.local.name.as_str() == name.as_str() {
+            if import_specifier.local.name.as_str() == name {
                 return Some(import_specifier.imported.name());
             }
             None

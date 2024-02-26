@@ -109,15 +109,15 @@ impl<'a> Hash for NumericLiteral<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct BigintLiteral {
+pub struct BigintLiteral<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub raw: Atom,
+    pub raw: Atom<'a>,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub base: BigintBase,
 }
 
-impl BigintLiteral {
+impl<'a> BigintLiteral<'a> {
     pub fn is_zero(&self) -> bool {
         self.raw == "0n"
     }
@@ -126,24 +126,24 @@ impl BigintLiteral {
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct RegExpLiteral {
+pub struct RegExpLiteral<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     // valid regex is printed as {}
     // invalid regex is printed as null, which we can't implement yet
     pub value: EmptyObject,
-    pub regex: RegExp,
+    pub regex: RegExp<'a>,
 }
 
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct RegExp {
-    pub pattern: Atom,
+pub struct RegExp<'a> {
+    pub pattern: Atom<'a>,
     pub flags: RegExpFlags,
 }
 
-impl fmt::Display for RegExp {
+impl<'a> fmt::Display for RegExp<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "/{}/{}", self.pattern, self.flags)
     }
@@ -238,14 +238,14 @@ pub struct EmptyObject;
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct StringLiteral {
+pub struct StringLiteral<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub value: Atom,
+    pub value: Atom<'a>,
 }
 
-impl StringLiteral {
-    pub fn new(span: Span, value: Atom) -> Self {
+impl<'a> StringLiteral<'a> {
+    pub fn new(span: Span, value: Atom<'a>) -> Self {
         Self { span, value }
     }
 
