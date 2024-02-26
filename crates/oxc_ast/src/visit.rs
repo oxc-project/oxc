@@ -248,14 +248,14 @@ pub trait Visit<'a>: Sized {
 
     fn visit_switch_statement(&mut self, stmt: &SwitchStatement<'a>) {
         let kind = AstKind::SwitchStatement(self.alloc(stmt));
-        self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
         self.visit_expression(&stmt.discriminant);
+        self.enter_scope(ScopeFlags::empty());
         for case in &stmt.cases {
             self.visit_switch_case(case);
         }
-        self.leave_node(kind);
         self.leave_scope();
+        self.leave_node(kind);
     }
 
     fn visit_switch_case(&mut self, case: &SwitchCase<'a>) {
