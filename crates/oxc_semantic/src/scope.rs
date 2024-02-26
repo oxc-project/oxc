@@ -3,7 +3,7 @@ use std::hash::BuildHasherDefault;
 use indexmap::IndexMap;
 use oxc_ast::{ast::Expression, syntax_directed_operations::GatherNodeParts};
 use oxc_index::IndexVec;
-use oxc_span::Atom;
+use oxc_span::CompactString;
 pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use rustc_hash::{FxHashMap, FxHasher};
 
@@ -11,8 +11,8 @@ use crate::{reference::ReferenceId, symbol::SymbolId, AstNodeId};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
-type Bindings = FxIndexMap<Atom, SymbolId>;
-type UnresolvedReferences = FxHashMap<Atom, Vec<ReferenceId>>;
+type Bindings = FxIndexMap<CompactString, SymbolId>;
+type UnresolvedReferences = FxHashMap<CompactString, Vec<ReferenceId>>;
 
 /// Scope Tree
 ///
@@ -100,15 +100,15 @@ impl ScopeTree {
     }
 
     /// Get a variable binding by name that was declared in the top-level scope
-    pub fn get_root_binding(&self, name: &Atom) -> Option<SymbolId> {
+    pub fn get_root_binding(&self, name: &str) -> Option<SymbolId> {
         self.get_binding(self.root_scope_id(), name)
     }
 
-    pub fn has_binding(&self, scope_id: ScopeId, name: &Atom) -> bool {
+    pub fn has_binding(&self, scope_id: ScopeId, name: &str) -> bool {
         self.bindings[scope_id].get(name).is_some()
     }
 
-    pub fn get_binding(&self, scope_id: ScopeId, name: &Atom) -> Option<SymbolId> {
+    pub fn get_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
         self.bindings[scope_id].get(name).copied()
     }
 
@@ -120,9 +120,11 @@ impl ScopeTree {
         self.node_ids[&scope_id]
     }
 
-    pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, SymbolId, Atom)> + '_ {
+    pub fn iter_bindings(
+        &self,
+    ) -> impl Iterator<Item = (ScopeId, SymbolId, &'_ CompactString)> + '_ {
         self.bindings.iter_enumerated().flat_map(|(scope_id, bindings)| {
-            bindings.iter().map(move |(name, symbol_id)| (scope_id, *symbol_id, name.clone()))
+            bindings.iter().map(move |(name, symbol_id)| (scope_id, *symbol_id, name))
         })
     }
 
@@ -147,14 +149,14 @@ impl ScopeTree {
         self.node_ids.insert(scope_id, node_id);
     }
 
-    pub fn add_binding(&mut self, scope_id: ScopeId, name: Atom, symbol_id: SymbolId) {
+    pub fn add_binding(&mut self, scope_id: ScopeId, name: CompactString, symbol_id: SymbolId) {
         self.bindings[scope_id].insert(name, symbol_id);
     }
 
     pub(crate) fn add_unresolved_reference(
         &mut self,
         scope_id: ScopeId,
-        name: Atom,
+        name: CompactString,
         reference_id: ReferenceId,
     ) {
         self.unresolved_references[scope_id].entry(name).or_default().push(reference_id);
@@ -163,7 +165,7 @@ impl ScopeTree {
     pub(crate) fn extend_unresolved_reference(
         &mut self,
         scope_id: ScopeId,
-        name: Atom,
+        name: CompactString,
         reference_ids: Vec<ReferenceId>,
     ) {
         self.unresolved_references[scope_id].entry(name).or_default().extend(reference_ids);
@@ -178,7 +180,7 @@ impl ScopeTree {
 
     // TODO:
     // <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L543>
-    pub fn generate_uid_based_on_node(&self, expr: &Expression) -> Atom {
+    pub fn generate_uid_based_on_node(&self, expr: &Expression) -> CompactString {
         let mut parts = std::vec::Vec::with_capacity(1);
         expr.gather(&mut |part| parts.push(part));
         let name = parts.join("$");
@@ -187,7 +189,7 @@ impl ScopeTree {
     }
 
     // <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L495>
-    pub fn generate_uid(&self, name: &str) -> Atom {
+    pub fn generate_uid(&self, name: &str) -> CompactString {
         for i in 0.. {
             let name = Self::internal_generate_uid(name, i);
             if !self.has_binding(ScopeId::new(0), &name) {
@@ -198,7 +200,7 @@ impl ScopeTree {
     }
 
     // <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L523>
-    fn internal_generate_uid(name: &str, i: i32) -> Atom {
-        Atom::from(if i > 1 { format!("_{name}{i}") } else { format!("_{name}") })
+    fn internal_generate_uid(name: &str, i: i32) -> CompactString {
+        CompactString::from(if i > 1 { format!("_{name}{i}") } else { format!("_{name}") })
     }
 }

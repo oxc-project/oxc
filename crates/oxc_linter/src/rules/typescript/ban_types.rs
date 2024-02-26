@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -12,7 +12,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 pub enum BanTypesDiagnostic {
     #[error("typescript-eslint(ban-types): Do not use {0:?} as a type. Use \"{1}\" instead")]
     #[diagnostic(severity(warning))]
-    Type(Atom, String, #[label] Span),
+    Type(CompactString, String, #[label] Span),
 
     #[error("typescript-eslint(ban-types): Prefer explicitly define the object shape")]
     #[diagnostic(severity(warning), help("This type means \"any non-nullish value\", which is slightly better than 'unknown', but it's still a broad type"))]
@@ -63,7 +63,7 @@ impl Rule for BanTypes {
                 match name.as_str() {
                     "String" | "Boolean" | "Number" | "Symbol" | "BigInt" => {
                         ctx.diagnostic(BanTypesDiagnostic::Type(
-                            name.clone(),
+                            name.to_compact_string(),
                             name.to_lowercase(),
                             typ.span,
                         ));

@@ -8,14 +8,14 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `{1}` over `{2}`.")]
 #[diagnostic(severity(warning))]
-struct TextEncodingIdentifierCaseDiagnostic(#[label] pub Span, pub &'static str, pub Atom);
+struct TextEncodingIdentifierCaseDiagnostic(#[label] pub Span, pub &'static str, pub CompactString);
 
 #[derive(Debug, Default, Clone)]
 pub struct TextEncodingIdentifierCase;
@@ -52,36 +52,37 @@ declare_oxc_lint!(
 
 impl Rule for TextEncodingIdentifierCase {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (str, span) = match node.kind() {
+        let (s, span) = match node.kind() {
             AstKind::StringLiteral(string_lit) => (&string_lit.value, string_lit.span),
             AstKind::JSXText(jsx_text) => (&jsx_text.value, jsx_text.span),
             _ => {
                 return;
             }
         };
+        let s = s.as_str();
 
-        if str.as_str() == "utf-8" && is_jsx_meta_elem_with_charset_attr(node.id(), ctx) {
+        if s == "utf-8" && is_jsx_meta_elem_with_charset_attr(node.id(), ctx) {
             return;
         }
 
-        let Some(replacement) = get_replacement(str) else {
+        let Some(replacement) = get_replacement(s) else {
             return;
         };
 
-        if replacement == str.as_str() {
+        if replacement == s {
             return;
         }
 
-        ctx.diagnostic(TextEncodingIdentifierCaseDiagnostic(span, replacement, str.clone()));
+        ctx.diagnostic(TextEncodingIdentifierCaseDiagnostic(span, replacement, s.into()));
     }
 }
 
-fn get_replacement(node: &Atom) -> Option<&'static str> {
-    if !matches!(node.as_str().len(), 4 | 5) {
+fn get_replacement(node: &str) -> Option<&'static str> {
+    if !matches!(node.len(), 4 | 5) {
         return None;
     }
 
-    let node_lower = node.as_str().to_ascii_lowercase();
+    let node_lower = node.to_ascii_lowercase();
 
     if node_lower == "utf-8" || node_lower == "utf8" {
         return Some("utf8");

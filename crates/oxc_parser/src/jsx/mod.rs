@@ -153,7 +153,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_jsx_member_expression(
         &mut self,
         span: Span,
-        object: JSXIdentifier,
+        object: JSXIdentifier<'a>,
     ) -> Result<Box<'a, JSXMemberExpression<'a>>> {
         let mut span = span;
         let mut object = JSXMemberExpressionObject::Identifier(object);
@@ -353,7 +353,7 @@ impl<'a> ParserImpl<'a> {
     ///   `IdentifierStart`
     ///   `JSXIdentifier` `IdentifierPart`
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
-    fn parse_jsx_identifier(&mut self) -> Result<JSXIdentifier> {
+    fn parse_jsx_identifier(&mut self) -> Result<JSXIdentifier<'a>> {
         let span = self.start_span();
         if !self.at(Kind::Ident) && !self.cur_kind().is_all_keyword() {
             return Err(self.unexpected());
@@ -366,7 +366,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.jsx_identifier(span, name.into()))
     }
 
-    fn parse_jsx_text(&mut self) -> JSXText {
+    fn parse_jsx_text(&mut self) -> JSXText<'a> {
         let span = self.start_span();
         let value = Atom::from(self.cur_string());
         self.bump_any();

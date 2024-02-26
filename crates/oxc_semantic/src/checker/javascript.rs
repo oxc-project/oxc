@@ -8,7 +8,7 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
 };
-use oxc_span::{Atom, GetSpan, ModuleKind, Span};
+use oxc_span::{Atom, CompactString, GetSpan, ModuleKind, Span};
 use oxc_syntax::{
     module_record::ExportLocalName,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
@@ -145,13 +145,13 @@ fn check_module_record(ctx: &SemanticBuilder<'_>) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Export '{0}' is not defined")]
     #[diagnostic()]
-    struct UndefinedExport(Atom, #[label] Span);
+    struct UndefinedExport(CompactString, #[label] Span);
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("Duplicated export '{0}'")]
     #[diagnostic()]
     struct DuplicateExport(
-        Atom,
+        CompactString,
         #[label("Export has already been declared here")] Span,
         #[label("It cannot be redeclared here")] Span,
     );
@@ -172,7 +172,9 @@ fn check_module_record(ctx: &SemanticBuilder<'_>) {
             ExportLocalName::Name(name_span) => Some(name_span),
             _ => None,
         })
-        .filter(|name_span| ctx.scope.get_binding(ctx.current_scope_id, name_span.name()).is_none())
+        .filter(|name_span| {
+            ctx.scope.get_binding(ctx.current_scope_id, name_span.name().as_ref()).is_none()
+        })
         .for_each(|name_span| {
             ctx.error(UndefinedExport(name_span.name().clone(), name_span.span()));
         });
@@ -205,7 +207,7 @@ struct ClassStaticBlockAwait(#[label] Span);
 #[derive(Debug, Error, Diagnostic)]
 #[error("The keyword '{0}' is reserved")]
 #[diagnostic()]
-struct ReservedKeyword(Atom, #[label] Span);
+struct ReservedKeyword(CompactString, #[label] Span);
 
 pub const STRICT_MODE_NAMES: Set<&'static str> = phf_set! {
     "implements",
@@ -227,7 +229,7 @@ fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &Seman
     if *name == "await" {
         // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
         if ctx.source_type.is_module() {
-            return ctx.error(ReservedKeyword(name.clone(), span));
+            return ctx.error(ReservedKeyword(name.to_compact_string(), span));
         }
         // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
         if ctx.scope.get_flags(node.scope_id()).is_class_static_block() {
@@ -237,14 +239,14 @@ fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &Seman
 
     // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
     if ctx.strict_mode() && STRICT_MODE_NAMES.contains(name.as_str()) {
-        ctx.error(ReservedKeyword(name.clone(), span));
+        ctx.error(ReservedKeyword(name.to_compact_string(), span));
     }
 }
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Cannot assign to '{0}' in strict mode")]
 #[diagnostic()]
-struct UnexpectedIdentifierAssign(Atom, #[label] Span);
+struct UnexpectedIdentifierAssign(CompactString, #[label] Span);
 
 fn check_binding_identifier<'a>(
     ident: &BindingIdentifier,
@@ -254,7 +256,7 @@ fn check_binding_identifier<'a>(
     let strict_mode = ctx.strict_mode();
     // It is a Diagnostic if the StringValue of a BindingIdentifier is "eval" or "arguments" within strict mode code.
     if strict_mode && matches!(ident.name.as_str(), "eval" | "arguments") {
-        return ctx.error(UnexpectedIdentifierAssign(ident.name.clone(), ident.span));
+        return ctx.error(UnexpectedIdentifierAssign(ident.name.to_compact_string(), ident.span));
     }
 
     // LexicalDeclaration : LetOrConst BindingList ;
@@ -296,7 +298,10 @@ fn check_identifier_reference<'a>(
         for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
             match ctx.nodes.kind(node_id) {
                 AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_) => {
-                    return ctx.error(UnexpectedIdentifierAssign(ident.name.clone(), ident.span));
+                    return ctx.error(UnexpectedIdentifierAssign(
+                        ident.name.to_compact_string(),
+                        ident.span,
+                    ));
                 }
                 AstKind::MemberExpression(_) => break,
                 _ => {}
@@ -331,8 +336,8 @@ fn check_private_identifier_outside_class(ident: &PrivateIdentifier, ctx: &Seman
         #[derive(Debug, Error, Diagnostic)]
         #[error("Private identifier '#{0}' is not allowed outside class bodies")]
         #[diagnostic()]
-        struct PrivateNotInClass(Atom, #[label] Span);
-        ctx.error(PrivateNotInClass(ident.name.clone(), ident.span));
+        struct PrivateNotInClass(CompactString, #[label] Span);
+        ctx.error(PrivateNotInClass(ident.name.to_compact_string(), ident.span));
     }
 }
 
@@ -349,7 +354,7 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
                 #[derive(Debug, Error, Diagnostic)]
                 #[error("Private field '{0}' must be declared in an enclosing class")]
                 #[diagnostic()]
-                struct PrivateFieldUndeclared(Atom, #[label] Span);
+                struct PrivateFieldUndeclared(CompactString, #[label] Span);
                 ctx.error(PrivateFieldUndeclared(reference.name.clone(), reference.span));
             }
         });
@@ -444,7 +449,7 @@ fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
 
     if matches!(ctx.nodes.kind(ctx.scope.get_node_id(ctx.current_scope_id)),
         AstKind::Function(Function { params, .. })
-        | AstKind::ArrowFunctionExpression(ArrowFunctionExpression { params, .. }) 
+        | AstKind::ArrowFunctionExpression(ArrowFunctionExpression { params, .. })
         if !params.is_simple_parameter_list())
     {
         ctx.error(IllegalUseStrict(directive.span));

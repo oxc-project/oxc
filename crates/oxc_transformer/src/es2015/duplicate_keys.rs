@@ -64,7 +64,7 @@ impl<'a> DuplicateKeys<'a> {
 
                 if is_duplicate {
                     obj_property.computed = true;
-                    let string_literal = StringLiteral::new(SPAN, name.as_str().into());
+                    let string_literal = StringLiteral::new(SPAN, name.clone());
                     let expr = self.ast.literal_string_expression(string_literal);
                     obj_property.key = PropertyKey::Expression(expr);
                 }

@@ -111,7 +111,7 @@ impl<'a> FunctionName<'a> {
     fn transform_expression(
         &mut self,
         expr: &mut Expression<'a>,
-        mut id: BindingIdentifier,
+        mut id: BindingIdentifier<'a>,
         scope_id: Option<ScopeId>,
     ) {
         // function () {} -> function name() {}

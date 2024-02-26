@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, CompactString, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -20,7 +20,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
     severity(warning),
     help("Remove one of the props, or rename them so each prop is distinct.")
 )]
-struct JsxNoDuplicatePropsDiagnostic(Atom, #[label] pub Span, #[label] pub Span);
+struct JsxNoDuplicatePropsDiagnostic(CompactString, #[label] pub Span, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct JsxNoDuplicateProps;
@@ -63,7 +63,7 @@ impl Rule for JsxNoDuplicateProps {
 
             if let Some(old_span) = props.insert(ident.name.clone(), ident.span) {
                 ctx.diagnostic(JsxNoDuplicatePropsDiagnostic(
-                    ident.name.clone(),
+                    ident.name.to_compact_string(),
                     old_span,
                     ident.span,
                 ));

@@ -3,14 +3,14 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-import(namespace): ")]
 #[diagnostic(severity(warning), help(""))]
-struct NoUnusedModulesDiagnostic(Atom, #[label] pub Span);
+struct NoUnusedModulesDiagnostic(CompactString, #[label] pub Span);
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/namespace.md>
 #[derive(Debug, Default, Clone)]

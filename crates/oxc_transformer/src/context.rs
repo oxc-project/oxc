@@ -7,7 +7,7 @@ use std::{
 use oxc_ast::AstBuilder;
 use oxc_diagnostics::Error;
 use oxc_semantic::{ScopeId, ScopeTree, Semantic, SymbolId, SymbolTable};
-use oxc_span::{Atom, SourceType};
+use oxc_span::{CompactString, SourceType};
 
 #[derive(Clone)]
 pub struct TransformerCtx<'a> {
@@ -37,7 +37,7 @@ impl<'a> TransformerCtx<'a> {
         RefMut::map(self.semantic.borrow_mut(), |semantic| semantic.scopes_mut())
     }
 
-    pub fn add_binding(&self, name: Atom) {
+    pub fn add_binding(&self, name: CompactString) {
         // TODO: use the correct scope and symbol id
         self.scopes_mut().add_binding(ScopeId::new(0), name, SymbolId::new(0));
     }

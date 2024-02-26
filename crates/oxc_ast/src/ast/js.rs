@@ -22,8 +22,8 @@ pub struct Program<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub source_type: SourceType,
-    pub directives: Vec<'a, Directive>,
-    pub hashbang: Option<Hashbang>,
+    pub directives: Vec<'a, Directive<'a>>,
+    pub hashbang: Option<Hashbang<'a>>,
     pub body: Vec<'a, Statement<'a>>,
 }
 
@@ -47,14 +47,14 @@ pub enum Expression<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>),
     NullLiteral(Box<'a, NullLiteral>),
     NumericLiteral(Box<'a, NumericLiteral<'a>>),
-    BigintLiteral(Box<'a, BigintLiteral>),
-    RegExpLiteral(Box<'a, RegExpLiteral>),
-    StringLiteral(Box<'a, StringLiteral>),
+    BigintLiteral(Box<'a, BigintLiteral<'a>>),
+    RegExpLiteral(Box<'a, RegExpLiteral<'a>>),
+    StringLiteral(Box<'a, StringLiteral<'a>>),
     TemplateLiteral(Box<'a, TemplateLiteral<'a>>),
 
-    Identifier(Box<'a, IdentifierReference>),
+    Identifier(Box<'a, IdentifierReference<'a>>),
 
-    MetaProperty(Box<'a, MetaProperty>),
+    MetaProperty(Box<'a, MetaProperty<'a>>),
     Super(Box<'a, Super>),
 
     ArrayExpression(Box<'a, ArrayExpression<'a>>),
@@ -301,14 +301,14 @@ impl<'a> Expression<'a> {
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct IdentifierName {
+pub struct IdentifierName<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub name: Atom,
+    pub name: Atom<'a>,
 }
 
-impl IdentifierName {
-    pub fn new(span: Span, name: Atom) -> Self {
+impl<'a> IdentifierName<'a> {
+    pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name }
     }
 }
@@ -317,23 +317,23 @@ impl IdentifierName {
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct IdentifierReference {
+pub struct IdentifierReference<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub name: Atom,
+    pub name: Atom<'a>,
     pub reference_id: Cell<Option<ReferenceId>>,
     pub reference_flag: ReferenceFlag,
 }
 
-impl Hash for IdentifierReference {
+impl<'a> Hash for IdentifierReference<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.span.hash(state);
         self.name.hash(state);
     }
 }
 
-impl IdentifierReference {
-    pub fn new(span: Span, name: Atom) -> Self {
+impl<'a> IdentifierReference<'a> {
+    pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name, reference_id: Cell::default(), reference_flag: ReferenceFlag::default() }
     }
 }
@@ -342,22 +342,22 @@ impl IdentifierReference {
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct BindingIdentifier {
+pub struct BindingIdentifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub name: Atom,
+    pub name: Atom<'a>,
     pub symbol_id: Cell<Option<SymbolId>>,
 }
 
-impl Hash for BindingIdentifier {
+impl<'a> Hash for BindingIdentifier<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.span.hash(state);
         self.name.hash(state);
     }
 }
 
-impl BindingIdentifier {
-    pub fn new(span: Span, name: Atom) -> Self {
+impl<'a> BindingIdentifier<'a> {
+    pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name, symbol_id: Cell::default() }
     }
 }
@@ -366,10 +366,10 @@ impl BindingIdentifier {
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct LabelIdentifier {
+pub struct LabelIdentifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub name: Atom,
+    pub name: Atom<'a>,
 }
 
 /// This Expression
@@ -457,13 +457,13 @@ pub struct ObjectProperty<'a> {
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum PropertyKey<'a> {
-    Identifier(Box<'a, IdentifierName>),
-    PrivateIdentifier(Box<'a, PrivateIdentifier>),
+    Identifier(Box<'a, IdentifierName<'a>>),
+    PrivateIdentifier(Box<'a, PrivateIdentifier<'a>>),
     Expression(Expression<'a>),
 }
 
 impl<'a> PropertyKey<'a> {
-    pub fn static_name(&self) -> Option<Atom> {
+    pub fn static_name(&self) -> Option<Atom<'a>> {
         match self {
             Self::Identifier(ident) => Some(ident.name.clone()),
             Self::PrivateIdentifier(_) => None,
@@ -493,14 +493,14 @@ impl<'a> PropertyKey<'a> {
         matches!(self, Self::PrivateIdentifier(_))
     }
 
-    pub fn private_name(&self) -> Option<Atom> {
+    pub fn private_name(&self) -> Option<Atom<'a>> {
         match self {
             Self::PrivateIdentifier(ident) => Some(ident.name.clone()),
             _ => None,
         }
     }
 
-    pub fn name(&self) -> Option<Atom> {
+    pub fn name(&self) -> Option<Atom<'a>> {
         if self.is_private_identifier() {
             self.private_name()
         } else {
@@ -541,7 +541,7 @@ pub enum PropertyKind {
 pub struct TemplateLiteral<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub quasis: Vec<'a, TemplateElement>,
+    pub quasis: Vec<'a, TemplateElement<'a>>,
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
@@ -551,7 +551,7 @@ impl<'a> TemplateLiteral<'a> {
     }
 
     /// Get single quasi from `template`
-    pub fn quasi(&self) -> Option<&Atom> {
+    pub fn quasi(&self) -> Option<&Atom<'a>> {
         self.quasis.first().and_then(|quasi| quasi.value.cooked.as_ref())
     }
 }
@@ -570,27 +570,27 @@ pub struct TaggedTemplateExpression<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct TemplateElement {
+pub struct TemplateElement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub tail: bool,
-    pub value: TemplateElementValue,
+    pub value: TemplateElementValue<'a>,
 }
 
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/impatient-js/ch_template-literals.html#template-strings-cooked-vs-raw)
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct TemplateElementValue {
+pub struct TemplateElementValue<'a> {
     /// A raw interpretation where backslashes do not have special meaning.
     /// For example, \t produces two characters – a backslash and a t.
     /// This interpretation of the template strings is stored in property .raw of the first argument (an Array).
-    pub raw: Atom,
+    pub raw: Atom<'a>,
     /// A cooked interpretation where backslashes have special meaning.
     /// For example, \t produces a tab character.
     /// This interpretation of the template strings is stored as an Array in the first argument.
     /// cooked = None when template literal has invalid escape sequence
-    pub cooked: Option<Atom>,
+    pub cooked: Option<Atom<'a>>,
 }
 
 /// <https://tc39.es/ecma262/#prod-MemberExpression>
@@ -708,7 +708,7 @@ pub struct StaticMemberExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub object: Expression<'a>,
-    pub property: IdentifierName,
+    pub property: IdentifierName<'a>,
     pub optional: bool, // for optional chaining
 }
 
@@ -720,7 +720,7 @@ pub struct PrivateFieldExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub object: Expression<'a>,
-    pub field: PrivateIdentifier,
+    pub field: PrivateIdentifier<'a>,
     pub optional: bool, // for optional chaining
 }
 
@@ -794,11 +794,11 @@ pub struct NewExpression<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct MetaProperty {
+pub struct MetaProperty<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub meta: IdentifierName,
-    pub property: IdentifierName,
+    pub meta: IdentifierName<'a>,
+    pub property: IdentifierName<'a>,
 }
 
 /// Spread Element
@@ -868,7 +868,7 @@ pub struct BinaryExpression<'a> {
 pub struct PrivateInExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub left: PrivateIdentifier,
+    pub left: PrivateIdentifier<'a>,
     pub operator: BinaryOperator, // BinaryOperator::In
     pub right: Expression<'a>,
 }
@@ -939,7 +939,7 @@ impl<'a> AssignmentTarget<'a> {
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum SimpleAssignmentTarget<'a> {
-    AssignmentTargetIdentifier(Box<'a, IdentifierReference>),
+    AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>>),
     MemberAssignmentTarget(Box<'a, MemberExpression<'a>>),
     TSAsExpression(Box<'a, TSAsExpression<'a>>),
     TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>),
@@ -1058,7 +1058,7 @@ pub enum AssignmentTargetProperty<'a> {
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub binding: IdentifierReference,
+    pub binding: IdentifierReference<'a>,
     pub init: Option<Expression<'a>>,
 }
 
@@ -1135,8 +1135,8 @@ pub struct ParenthesizedExpression<'a> {
 pub enum Statement<'a> {
     // Statements
     BlockStatement(Box<'a, BlockStatement<'a>>),
-    BreakStatement(Box<'a, BreakStatement>),
-    ContinueStatement(Box<'a, ContinueStatement>),
+    BreakStatement(Box<'a, BreakStatement<'a>>),
+    ContinueStatement(Box<'a, ContinueStatement<'a>>),
     DebuggerStatement(Box<'a, DebuggerStatement>),
     DoWhileStatement(Box<'a, DoWhileStatement<'a>>),
     EmptyStatement(Box<'a, EmptyStatement>),
@@ -1174,24 +1174,24 @@ impl<'a> Statement<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct Directive {
+pub struct Directive<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub expression: StringLiteral,
+    pub expression: StringLiteral<'a>,
     /// A Use Strict Directive is an ExpressionStatement in a Directive Prologue whose StringLiteral is either of the exact code point sequences "use strict" or 'use strict'.
     /// A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
     /// <https://tc39.es/ecma262/#sec-directive-prologues-and-the-use-strict-directive>
-    pub directive: Atom,
+    pub directive: Atom<'a>,
 }
 
 /// Hashbang
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct Hashbang {
+pub struct Hashbang<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub value: Atom,
+    pub value: Atom<'a>,
 }
 
 /// Block Statement
@@ -1463,20 +1463,20 @@ impl<'a> ForStatementLeft<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct ContinueStatement {
+pub struct ContinueStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub label: Option<LabelIdentifier>,
+    pub label: Option<LabelIdentifier<'a>>,
 }
 
 /// Break Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct BreakStatement {
+pub struct BreakStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub label: Option<LabelIdentifier>,
+    pub label: Option<LabelIdentifier<'a>>,
 }
 
 /// Return Statement
@@ -1534,7 +1534,7 @@ impl<'a> SwitchCase<'a> {
 pub struct LabeledStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub label: LabelIdentifier,
+    pub label: LabelIdentifier<'a>,
     pub body: Statement<'a>,
 }
 
@@ -1601,7 +1601,7 @@ impl<'a> BindingPattern<'a> {
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum BindingPatternKind<'a> {
     /// `const a = 1`
-    BindingIdentifier(Box<'a, BindingIdentifier>),
+    BindingIdentifier(Box<'a, BindingIdentifier<'a>>),
     /// `const {a} = 1`
     ObjectPattern(Box<'a, ObjectPattern<'a>>),
     /// `const [a] = 1`
@@ -1705,7 +1705,7 @@ pub struct Function<'a> {
     pub r#type: FunctionType,
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub id: Option<BindingIdentifier>,
+    pub id: Option<BindingIdentifier<'a>>,
     pub generator: bool,
     pub r#async: bool,
     /// Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
@@ -1834,7 +1834,7 @@ impl<'a> FormalParameters<'a> {
 pub struct FunctionBody<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub directives: Vec<'a, Directive>,
+    pub directives: Vec<'a, Directive<'a>>,
     pub statements: Vec<'a, Statement<'a>>,
 }
 
@@ -1893,7 +1893,7 @@ pub struct Class<'a> {
     pub r#type: ClassType,
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub id: Option<BindingIdentifier>,
+    pub id: Option<BindingIdentifier<'a>>,
     pub super_class: Option<Expression<'a>>,
     pub body: Box<'a, ClassBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -2126,14 +2126,14 @@ impl MethodDefinitionKind {
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct PrivateIdentifier {
+pub struct PrivateIdentifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub name: Atom,
+    pub name: Atom<'a>,
 }
 
-impl PrivateIdentifier {
-    pub fn new(span: Span, name: Atom) -> Self {
+impl<'a> PrivateIdentifier<'a> {
+    pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name }
     }
 }
@@ -2165,7 +2165,7 @@ pub enum ModuleDeclaration<'a> {
     /// export = 5;
     TSExportAssignment(Box<'a, TSExportAssignment<'a>>),
     /// export as namespace React;
-    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration>),
+    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>),
 }
 
 impl<'a> ModuleDeclaration<'a> {
@@ -2188,7 +2188,7 @@ impl<'a> ModuleDeclaration<'a> {
         matches!(self, Self::ExportDefaultDeclaration(_))
     }
 
-    pub fn source(&self) -> Option<&StringLiteral> {
+    pub fn source(&self) -> Option<&StringLiteral<'a>> {
         match self {
             Self::ImportDeclaration(decl) => Some(&decl.source),
             Self::ExportAllDeclaration(decl) => Some(&decl.source),
@@ -2230,8 +2230,8 @@ pub struct ImportDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
-    pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier>>,
-    pub source: StringLiteral,
+    pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
+    pub source: StringLiteral<'a>,
     /// Some(vec![]) for empty assertion
     pub with_clause: Option<WithClause<'a>>,
     /// `import type { foo } from 'bar'`
@@ -2241,14 +2241,14 @@ pub struct ImportDeclaration<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub enum ImportDeclarationSpecifier {
+pub enum ImportDeclarationSpecifier<'a> {
     /// import {imported} from "source"
     /// import {imported as local} from "source"
-    ImportSpecifier(ImportSpecifier),
+    ImportSpecifier(ImportSpecifier<'a>),
     /// import local from "source"
-    ImportDefaultSpecifier(ImportDefaultSpecifier),
+    ImportDefaultSpecifier(ImportDefaultSpecifier<'a>),
     /// import * as local from "source"
-    ImportNamespaceSpecifier(ImportNamespaceSpecifier),
+    ImportNamespaceSpecifier(ImportNamespaceSpecifier<'a>),
 }
 
 // import {imported} from "source"
@@ -2256,11 +2256,11 @@ pub enum ImportDeclarationSpecifier {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct ImportSpecifier {
+pub struct ImportSpecifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub imported: ModuleExportName,
-    pub local: BindingIdentifier,
+    pub imported: ModuleExportName<'a>,
+    pub local: BindingIdentifier<'a>,
     pub import_kind: ImportOrExportKind,
 }
 
@@ -2268,20 +2268,20 @@ pub struct ImportSpecifier {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct ImportDefaultSpecifier {
+pub struct ImportDefaultSpecifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub local: BindingIdentifier,
+    pub local: BindingIdentifier<'a>,
 }
 
 // import * as local from "source"
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct ImportNamespaceSpecifier {
+pub struct ImportNamespaceSpecifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub local: BindingIdentifier,
+    pub local: BindingIdentifier<'a>,
 }
 
 #[derive(Debug, Hash)]
@@ -2290,30 +2290,30 @@ pub struct ImportNamespaceSpecifier {
 pub struct WithClause<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub attributes_keyword: IdentifierName, // `with` or `assert`
-    pub with_entries: Vec<'a, ImportAttribute>,
+    pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
+    pub with_entries: Vec<'a, ImportAttribute<'a>>,
 }
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct ImportAttribute {
+pub struct ImportAttribute<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub key: ImportAttributeKey,
-    pub value: StringLiteral,
+    pub key: ImportAttributeKey<'a>,
+    pub value: StringLiteral<'a>,
 }
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub enum ImportAttributeKey {
-    Identifier(IdentifierName),
-    StringLiteral(StringLiteral),
+pub enum ImportAttributeKey<'a> {
+    Identifier(IdentifierName<'a>),
+    StringLiteral(StringLiteral<'a>),
 }
 
-impl ImportAttributeKey {
-    pub fn as_atom(&self) -> Atom {
+impl<'a> ImportAttributeKey<'a> {
+    pub fn as_atom(&self) -> Atom<'a> {
         match self {
             Self::Identifier(identifier) => identifier.name.clone(),
             Self::StringLiteral(literal) => literal.value.clone(),
@@ -2328,8 +2328,8 @@ pub struct ExportNamedDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub declaration: Option<Declaration<'a>>,
-    pub specifiers: Vec<'a, ExportSpecifier>,
-    pub source: Option<StringLiteral>,
+    pub specifiers: Vec<'a, ExportSpecifier<'a>>,
+    pub source: Option<StringLiteral<'a>>,
     /// `export type { foo }`
     pub export_kind: ImportOrExportKind,
 }
@@ -2352,7 +2352,7 @@ pub struct ExportDefaultDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub declaration: ExportDefaultDeclarationKind<'a>,
-    pub exported: ModuleExportName, // `default`
+    pub exported: ModuleExportName<'a>, // `default`
 }
 
 impl<'a> ExportDefaultDeclaration<'a> {
@@ -2367,8 +2367,8 @@ impl<'a> ExportDefaultDeclaration<'a> {
 pub struct ExportAllDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub exported: Option<ModuleExportName>,
-    pub source: StringLiteral,
+    pub exported: Option<ModuleExportName<'a>>,
+    pub source: StringLiteral<'a>,
     pub with_clause: Option<WithClause<'a>>, // Some(vec![]) for empty assertion
     pub export_kind: ImportOrExportKind,     // `export type *`
 }
@@ -2382,16 +2382,16 @@ impl<'a> ExportAllDeclaration<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct ExportSpecifier {
+pub struct ExportSpecifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub local: ModuleExportName,
-    pub exported: ModuleExportName,
+    pub local: ModuleExportName<'a>,
+    pub exported: ModuleExportName<'a>,
     pub export_kind: ImportOrExportKind, // `export type *`
 }
 
-impl ExportSpecifier {
-    pub fn new(span: Span, local: ModuleExportName, exported: ModuleExportName) -> Self {
+impl<'a> ExportSpecifier<'a> {
+    pub fn new(span: Span, local: ModuleExportName<'a>, exported: ModuleExportName<'a>) -> Self {
         Self { span, local, exported, export_kind: ImportOrExportKind::Value }
     }
 }
@@ -2437,12 +2437,12 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub enum ModuleExportName {
-    Identifier(IdentifierName),
-    StringLiteral(StringLiteral),
+pub enum ModuleExportName<'a> {
+    Identifier(IdentifierName<'a>),
+    StringLiteral(StringLiteral<'a>),
 }
 
-impl fmt::Display for ModuleExportName {
+impl<'a> fmt::Display for ModuleExportName<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = match self {
             Self::Identifier(identifier) => identifier.name.to_string(),
@@ -2452,8 +2452,8 @@ impl fmt::Display for ModuleExportName {
     }
 }
 
-impl ModuleExportName {
-    pub fn name(&self) -> &Atom {
+impl<'a> ModuleExportName<'a> {
+    pub fn name(&self) -> &Atom<'a> {
         match self {
             Self::Identifier(identifier) => &identifier.name,
             Self::StringLiteral(literal) => &literal.value,

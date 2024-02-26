@@ -1,6 +1,6 @@
 use oxc_ast::ast::Expression;
 use oxc_index::IndexVec;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, CompactString, Span};
 pub use oxc_syntax::{
     scope::ScopeId,
     symbol::{SymbolFlags, SymbolId},
@@ -31,7 +31,7 @@ export type IndexVec<I, T> = Array<T>;
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct SymbolTable {
     pub spans: IndexVec<SymbolId, Span>,
-    pub names: IndexVec<SymbolId, Atom>,
+    pub names: IndexVec<SymbolId, CompactString>,
     pub flags: IndexVec<SymbolId, SymbolFlags>,
     pub scope_ids: IndexVec<SymbolId, ScopeId>,
     /// Pointer to the AST Node where this symbol is declared
@@ -63,21 +63,25 @@ impl SymbolTable {
             .find_map(|(symbol, inner_span)| if inner_span == span { Some(symbol) } else { None })
     }
 
-    pub fn get_symbol_id_from_name(&self, name: &Atom) -> Option<SymbolId> {
-        self.names
-            .iter_enumerated()
-            .find_map(|(symbol, inner_name)| if inner_name == name { Some(symbol) } else { None })
+    pub fn get_symbol_id_from_name(&self, name: &str) -> Option<SymbolId> {
+        self.names.iter_enumerated().find_map(|(symbol, inner_name)| {
+            if inner_name.as_str() == name {
+                Some(symbol)
+            } else {
+                None
+            }
+        })
     }
 
     pub fn get_span(&self, symbol_id: SymbolId) -> Span {
         self.spans[symbol_id]
     }
 
-    pub fn get_name(&self, symbol_id: SymbolId) -> &Atom {
+    pub fn get_name(&self, symbol_id: SymbolId) -> &str {
         &self.names[symbol_id]
     }
 
-    pub fn set_name(&mut self, symbol_id: SymbolId, name: Atom) {
+    pub fn set_name(&mut self, symbol_id: SymbolId, name: CompactString) {
         self.names[symbol_id] = name;
     }
 
@@ -113,7 +117,7 @@ impl SymbolTable {
         scope_id: ScopeId,
     ) -> SymbolId {
         _ = self.spans.push(span);
-        _ = self.names.push(name);
+        _ = self.names.push(name.into_compact_string());
         _ = self.flags.push(flag);
         _ = self.scope_ids.push(scope_id);
         self.resolved_references.push(vec![])

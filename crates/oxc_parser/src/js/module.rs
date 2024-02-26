@@ -73,7 +73,7 @@ impl<'a> ParserImpl<'a> {
     // Full Syntax: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax>
     fn parse_import_declaration_specifiers(
         &mut self,
-    ) -> Result<Vec<'a, ImportDeclarationSpecifier>> {
+    ) -> Result<Vec<'a, ImportDeclarationSpecifier<'a>>> {
         let mut specifiers = self.ast.new_vec();
         // import defaultExport from "module-name";
         if self.cur_kind().is_binding_identifier() {
@@ -104,7 +104,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     // import default from "module-name"
-    fn parse_import_default_specifier(&mut self) -> Result<ImportDeclarationSpecifier> {
+    fn parse_import_default_specifier(&mut self) -> Result<ImportDeclarationSpecifier<'a>> {
         let span = self.start_span();
         let local = self.parse_binding_identifier()?;
         Ok(ImportDeclarationSpecifier::ImportDefaultSpecifier(ImportDefaultSpecifier {
@@ -114,7 +114,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     // import * as name from "module-name"
-    fn parse_import_namespace_specifier(&mut self) -> Result<ImportDeclarationSpecifier> {
+    fn parse_import_namespace_specifier(&mut self) -> Result<ImportDeclarationSpecifier<'a>> {
         let span = self.start_span();
         self.bump_any(); // advance `*`
         self.expect(Kind::As)?;
@@ -126,7 +126,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     // import { export1 , export2 as alias2 , [...] } from "module-name";
-    fn parse_import_specifiers(&mut self) -> Result<Vec<'a, ImportDeclarationSpecifier>> {
+    fn parse_import_specifiers(&mut self) -> Result<Vec<'a, ImportDeclarationSpecifier<'a>>> {
         let ctx = self.ctx;
         self.ctx = Context::default();
         let specifiers = ImportSpecifierList::parse(self)?.import_specifiers;
@@ -167,7 +167,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_export_namespace(
         &mut self,
-    ) -> Result<Box<'a, TSNamespaceExportDeclaration>> {
+    ) -> Result<Box<'a, TSNamespaceExportDeclaration<'a>>> {
         let span = self.start_span();
         self.expect(Kind::As)?;
         self.expect(Kind::Namespace)?;
@@ -377,7 +377,7 @@ impl<'a> ParserImpl<'a> {
     // ImportSpecifier :
     //   ImportedBinding
     //   ModuleExportName as ImportedBinding
-    pub(crate) fn parse_import_specifier(&mut self) -> Result<ImportSpecifier> {
+    pub(crate) fn parse_import_specifier(&mut self) -> Result<ImportSpecifier<'a>> {
         let specifier_span = self.start_span();
         let peek_kind = self.peek_kind();
         let mut import_kind = ImportOrExportKind::Value;
@@ -414,7 +414,7 @@ impl<'a> ParserImpl<'a> {
     // ModuleExportName :
     //   IdentifierName
     //   StringLiteral
-    pub(crate) fn parse_module_export_name(&mut self) -> Result<ModuleExportName> {
+    pub(crate) fn parse_module_export_name(&mut self) -> Result<ModuleExportName<'a>> {
         match self.cur_kind() {
             Kind::Str => {
                 let literal = self.parse_literal_string()?;

@@ -7,7 +7,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodeId, ReferenceId};
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -236,7 +236,7 @@ fn is_jest_fn_call<'a>(
     parse_jest_fn_call(call_expr, possible_jest_node, ctx).is_some()
 }
 
-fn is_jest_call(name: &Atom) -> bool {
+fn is_jest_call(name: &str) -> bool {
     // handle "jest" | "Jest" | "JEST" | "JEst" to "jest", For example:
     //
     // import { jest as Jest } from "@jest/globals";

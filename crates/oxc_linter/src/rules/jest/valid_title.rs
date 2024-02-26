@@ -9,7 +9,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{CompactString, GetSpan, Span};
 use regex::Regex;
 
 use crate::{
@@ -24,7 +24,7 @@ use crate::{
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jest(valid-title): {0:?}")]
 #[diagnostic(severity(warning), help("{1:?}"))]
-struct ValidTitleDiagnostic(Atom, &'static str, #[label] pub Span);
+struct ValidTitleDiagnostic(CompactString, &'static str, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct ValidTitle(Box<ValidTitleConfig>);
@@ -293,7 +293,7 @@ fn validate_title(
         if let Some(matched) = disallowed_words_reg.find(title) {
             let error = format!("{} is not allowed in test title", matched.as_str());
             ctx.diagnostic(ValidTitleDiagnostic(
-                Atom::from(error),
+                CompactString::from(error),
                 "It is included in the `disallowedWords` of your config file, try to remove it from your title",
                 span,
             ));
@@ -325,8 +325,8 @@ fn validate_title(
         if !regex.is_match(title) {
             let raw_pattern = regex.as_str();
             let message = message.as_ref().map_or_else(
-                || Atom::from(format!("{un_prefixed_name} should match {raw_pattern}")),
-                |message| Atom::from(message.as_str()),
+                || CompactString::from(format!("{un_prefixed_name} should match {raw_pattern}")),
+                |message| CompactString::from(message.as_str()),
             );
             ctx.diagnostic(ValidTitleDiagnostic(
                 message,
@@ -340,8 +340,12 @@ fn validate_title(
         if regex.is_match(title) {
             let raw_pattern = regex.as_str();
             let message = message.as_ref().map_or_else(
-                || Atom::from(format!("{un_prefixed_name} should not match {raw_pattern}")),
-                |message| Atom::from(message.as_str()),
+                || {
+                    CompactString::from(format!(
+                        "{un_prefixed_name} should not match {raw_pattern}"
+                    ))
+                },
+                |message| CompactString::from(message.as_str()),
             );
 
             ctx.diagnostic(ValidTitleDiagnostic(
@@ -382,7 +386,7 @@ impl Message {
     }
     fn diagnostic(&self, ctx: &LintContext, span: Span) {
         let (error, help) = self.detail();
-        ctx.diagnostic(ValidTitleDiagnostic(Atom::from(error), help, span));
+        ctx.diagnostic(ValidTitleDiagnostic(CompactString::from(error), help, span));
     }
 }
 

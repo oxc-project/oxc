@@ -13,11 +13,11 @@ pub struct Mangler {
 }
 
 impl Mangler {
-    pub fn get_symbol_name(&self, symbol_id: SymbolId) -> &Atom {
+    pub fn get_symbol_name(&self, symbol_id: SymbolId) -> &str {
         self.symbol_table.get_name(symbol_id)
     }
 
-    pub fn get_reference_name(&self, reference_id: ReferenceId) -> Option<&Atom> {
+    pub fn get_reference_name(&self, reference_id: ReferenceId) -> Option<&str> {
         let symbol_id = self.symbol_table.get_reference(reference_id).symbol_id()?;
         Some(self.symbol_table.get_name(symbol_id))
     }
@@ -171,7 +171,7 @@ impl ManglerBuilder {
             // rename the variables
             for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
                 for symbol_id in &symbol_to_rename.symbol_ids {
-                    symbol_table.set_name(*symbol_id, new_name.clone());
+                    symbol_table.set_name(*symbol_id, new_name.to_compact_string());
                 }
             }
         }

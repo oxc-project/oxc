@@ -60,14 +60,14 @@ fn print_directives_and_statements<const MINIFY: bool>(
     );
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for Hashbang {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for Hashbang<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.print_str(b"#!");
         p.print_str(self.value.as_bytes());
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for Directive {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for Directive<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
         // So here should print original `directive` value, the `expression` value is escaped str.
@@ -344,7 +344,7 @@ impl<const MINIFY: bool> Gen<MINIFY> for EmptyStatement {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for ContinueStatement {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for ContinueStatement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_indent();
         p.print_str(b"continue");
@@ -356,7 +356,7 @@ impl<const MINIFY: bool> Gen<MINIFY> for ContinueStatement {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for BreakStatement {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for BreakStatement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_indent();
         p.print_str(b"break");
@@ -797,7 +797,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for WithClause<'a> {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for ImportAttribute {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportAttribute<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match &self.key {
             ImportAttributeKey::Identifier(identifier) => {
@@ -838,7 +838,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for ExportSpecifier {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportSpecifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.local.gen(p, ctx);
         if self.local.name() != self.exported.name() {
@@ -848,7 +848,7 @@ impl<const MINIFY: bool> Gen<MINIFY> for ExportSpecifier {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for ModuleExportName {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for ModuleExportName<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
             Self::Identifier(identifier) => {
@@ -977,7 +977,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSAsExpression<'a> {
         }
     }
 }
-impl<const MINIFY: bool> Gen<MINIFY> for IdentifierReference {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierReference<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         // if let Some(mangler) = &p.mangler {
         // if let Some(reference_id) = self.reference_id.get() {
@@ -991,19 +991,19 @@ impl<const MINIFY: bool> Gen<MINIFY> for IdentifierReference {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for IdentifierName {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierName<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.print_str(self.name.as_bytes());
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for BindingIdentifier {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingIdentifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.print_symbol(self.symbol_id.get(), &self.name);
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for LabelIdentifier {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for LabelIdentifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.print_str(self.name.as_bytes());
     }
@@ -1130,7 +1130,7 @@ fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIF
     result
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for BigintLiteral {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for BigintLiteral<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         if self.raw.contains('_') {
             p.print_str(self.raw.replace('_', "").as_bytes());
@@ -1140,7 +1140,7 @@ impl<const MINIFY: bool> Gen<MINIFY> for BigintLiteral {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for RegExpLiteral {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for RegExpLiteral<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         let last = p.peek_nth(0);
         // Avoid forming a single-line comment or "</script" sequence
@@ -1238,7 +1238,7 @@ fn print_unquoted_str<const MINIFY: bool>(s: &str, quote: char, p: &mut Codegen<
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for StringLiteral {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for StringLiteral<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         let s = self.value.as_str();
         p.wrap_quote(s, |p, quote| {
@@ -1920,7 +1920,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for MetaProperty {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for MetaProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.meta.gen(p, ctx);
         p.print(b'.');
@@ -1988,7 +1988,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ClassElement<'a> {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for JSXIdentifier {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXIdentifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.print_str(self.name.as_bytes());
     }
@@ -2021,7 +2021,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXElementName<'a> {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for JSXNamespacedName {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXNamespacedName<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.namespace.gen(p, ctx);
         p.print(b':');
@@ -2145,7 +2145,7 @@ impl<const MINIFY: bool> Gen<MINIFY> for JSXClosingFragment {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for JSXText {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXText<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.print_str(self.value.as_bytes());
     }
@@ -2306,7 +2306,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AccessorProperty<'a> {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for PrivateIdentifier {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for PrivateIdentifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.print(b'#');
         p.print_str(self.name.as_bytes());

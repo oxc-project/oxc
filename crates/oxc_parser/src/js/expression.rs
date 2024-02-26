@@ -50,7 +50,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.identifier_reference_expression(ident))
     }
 
-    pub(crate) fn parse_identifier_reference(&mut self) -> Result<IdentifierReference> {
+    pub(crate) fn parse_identifier_reference(&mut self) -> Result<IdentifierReference<'a>> {
         // allow `await` and `yield`, let semantic analysis report error
         if !self.cur_kind().is_identifier_reference(false, false) {
             return Err(self.unexpected());
@@ -61,7 +61,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// `BindingIdentifier` : Identifier
-    pub(crate) fn parse_binding_identifier(&mut self) -> Result<BindingIdentifier> {
+    pub(crate) fn parse_binding_identifier(&mut self) -> Result<BindingIdentifier<'a>> {
         if !self.cur_kind().is_binding_identifier() {
             return Err(self.unexpected());
         }
@@ -70,7 +70,7 @@ impl<'a> ParserImpl<'a> {
         Ok(BindingIdentifier { span, name, symbol_id: Cell::default() })
     }
 
-    pub(crate) fn parse_label_identifier(&mut self) -> Result<LabelIdentifier> {
+    pub(crate) fn parse_label_identifier(&mut self) -> Result<LabelIdentifier<'a>> {
         if !self.cur_kind().is_label_identifier(self.ctx.has_yield(), self.ctx.has_await()) {
             return Err(self.unexpected());
         }
@@ -79,7 +79,7 @@ impl<'a> ParserImpl<'a> {
         Ok(LabelIdentifier { span, name })
     }
 
-    pub(crate) fn parse_identifier_name(&mut self) -> Result<IdentifierName> {
+    pub(crate) fn parse_identifier_name(&mut self) -> Result<IdentifierName<'a>> {
         if !self.cur_kind().is_identifier_name() {
             return Err(self.unexpected());
         }
@@ -88,12 +88,12 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Parse keyword kind as identifier
-    pub(crate) fn parse_keyword_identifier(&mut self, kind: Kind) -> IdentifierName {
+    pub(crate) fn parse_keyword_identifier(&mut self, kind: Kind) -> IdentifierName<'a> {
         let (span, name) = self.parse_identifier_kind(kind);
         IdentifierName { span, name }
     }
 
-    pub(crate) fn parse_identifier_kind(&mut self, kind: Kind) -> (Span, Atom) {
+    pub(crate) fn parse_identifier_kind(&mut self, kind: Kind) -> (Span, Atom<'a>) {
         let span = self.start_span();
         let name = self.cur_string();
         self.bump_remap(kind);
@@ -115,7 +115,7 @@ impl<'a> ParserImpl<'a> {
     /// `PrivateIdentifier` ::
     ///     # `IdentifierName`
     /// # Panics
-    pub(crate) fn parse_private_identifier(&mut self) -> PrivateIdentifier {
+    pub(crate) fn parse_private_identifier(&mut self) -> PrivateIdentifier<'a> {
         let span = self.start_span();
         let name = Atom::from(self.cur_string());
         self.bump_any();
@@ -299,7 +299,7 @@ impl<'a> ParserImpl<'a> {
         Ok(NumericLiteral::new(self.end_span(span), value, src, base))
     }
 
-    pub(crate) fn parse_literal_bigint(&mut self) -> Result<BigintLiteral> {
+    pub(crate) fn parse_literal_bigint(&mut self) -> Result<BigintLiteral<'a>> {
         let span = self.start_span();
         let base = match self.cur_kind() {
             Kind::Decimal => BigintBase::Decimal,
@@ -317,7 +317,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.bigint_literal(self.end_span(span), Atom::from(raw), base))
     }
 
-    pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral {
+    pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral<'a> {
         let span = self.start_span();
 
         // split out pattern
@@ -329,7 +329,7 @@ impl<'a> ParserImpl<'a> {
         self.ast.reg_exp_literal(self.end_span(span), pattern, flags)
     }
 
-    pub(crate) fn parse_literal_string(&mut self) -> Result<StringLiteral> {
+    pub(crate) fn parse_literal_string(&mut self) -> Result<StringLiteral<'a>> {
         if !self.at(Kind::Str) {
             return Err(self.unexpected());
         }
@@ -427,7 +427,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.tagged_template_expression(span, lhs, quasi, type_parameters))
     }
 
-    pub(crate) fn parse_template_element(&mut self, tagged: bool) -> TemplateElement {
+    pub(crate) fn parse_template_element(&mut self, tagged: bool) -> TemplateElement<'a> {
         let span = self.start_span();
         let cur_kind = self.cur_kind();
         let end_offset: u32 = match cur_kind {
@@ -467,7 +467,11 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Section 13.3 Meta Property
-    fn parse_meta_property(&mut self, span: Span, meta: IdentifierName) -> Result<Expression<'a>> {
+    fn parse_meta_property(
+        &mut self,
+        span: Span,
+        meta: IdentifierName<'a>,
+    ) -> Result<Expression<'a>> {
         self.bump_any(); // bump `.`
         let property = match self.cur_kind() {
             Kind::Meta => self.parse_keyword_identifier(Kind::Meta),

@@ -5,7 +5,7 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, TriviasMap, Visit};
 use oxc_diagnostics::Error;
-use oxc_span::{Atom, SourceType, Span};
+use oxc_span::{Atom, CompactString, SourceType, Span};
 use oxc_syntax::{
     module_record::{ExportLocalName, ModuleRecord},
     operator::AssignmentOperator,
@@ -263,7 +263,7 @@ impl<'a> SemanticBuilder<'a> {
         let includes = includes | self.current_symbol_flags;
         let symbol_id = self.symbols.create_symbol(span, name.clone(), includes, scope_id);
         self.symbols.add_declaration(self.current_node_id);
-        self.scope.add_binding(scope_id, name.clone(), symbol_id);
+        self.scope.add_binding(scope_id, name.to_compact_string(), symbol_id);
         symbol_id
     }
 
@@ -288,7 +288,7 @@ impl<'a> SemanticBuilder<'a> {
         let symbol_id = self.scope.get_binding(scope_id, name)?;
         if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
-            self.error(Redeclaration(name.clone(), symbol_span, span));
+            self.error(Redeclaration(name.to_compact_string(), symbol_span, span));
         }
         Some(symbol_id)
     }
@@ -296,7 +296,11 @@ impl<'a> SemanticBuilder<'a> {
     pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
         let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
-        self.scope.add_unresolved_reference(self.current_scope_id, reference_name, reference_id);
+        self.scope.add_unresolved_reference(
+            self.current_scope_id,
+            CompactString::new(reference_name),
+            reference_id,
+        );
         reference_id
     }
 
@@ -312,7 +316,7 @@ impl<'a> SemanticBuilder<'a> {
         let symbol_id =
             self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
         self.symbols.add_declaration(self.current_node_id);
-        self.scope.get_bindings_mut(scope_id).insert(name.clone(), symbol_id);
+        self.scope.get_bindings_mut(scope_id).insert(name.to_compact_string(), symbol_id);
         symbol_id
     }
 
@@ -321,7 +325,7 @@ impl<'a> SemanticBuilder<'a> {
             .scope
             .unresolved_references_mut(self.current_scope_id)
             .drain()
-            .collect::<Vec<(Atom, Vec<ReferenceId>)>>();
+            .collect::<Vec<(_, Vec<_>)>>();
 
         let parent_scope_id =
             self.scope.get_parent_id(self.current_scope_id).unwrap_or(self.current_scope_id);
@@ -465,7 +469,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
     }
 
-    fn visit_break_statement(&mut self, stmt: &BreakStatement) {
+    fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
         let kind = AstKind::BreakStatement(self.alloc(stmt));
         self.enter_node(kind);
 
@@ -517,7 +521,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
-    fn visit_continue_statement(&mut self, stmt: &ContinueStatement) {
+    fn visit_continue_statement(&mut self, stmt: &ContinueStatement<'a>) {
         let kind = AstKind::ContinueStatement(self.alloc(stmt));
         self.enter_node(kind);
 
@@ -1041,7 +1045,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_label_identifier(&stmt.label);
 
         /* cfg */
-        self.cfg.next_label = Some(stmt.label.name.clone());
+        self.cfg.next_label = Some(stmt.label.name.to_compact_string());
         /* cfg */
 
         self.visit_statement(&stmt.body);
@@ -1714,7 +1718,7 @@ impl<'a> SemanticBuilder<'a> {
                 let symbol_id = self
                     .scope
                     .get_bindings(self.current_scope_id)
-                    .get(module_declaration.id.name());
+                    .get(module_declaration.id.name().as_str());
                 self.namespace_stack.push(*symbol_id.unwrap());
                 self.in_type_definition = true;
             }
@@ -1851,7 +1855,8 @@ impl<'a> SemanticBuilder<'a> {
 
     fn reference_identifier(&mut self, ident: &IdentifierReference) {
         let flag = self.resolve_reference_usages();
-        let reference = Reference::new(ident.span, ident.name.clone(), self.current_node_id, flag);
+        let reference =
+            Reference::new(ident.span, ident.name.to_compact_string(), self.current_node_id, flag);
         let reference_id = self.declare_reference(reference);
         ident.reference_id.set(Some(reference_id));
     }
@@ -1883,7 +1888,7 @@ impl<'a> SemanticBuilder<'a> {
             } {
                 let reference = Reference::new(
                     ident.span,
-                    ident.name.clone(),
+                    ident.name.to_compact_string(),
                     self.current_node_id,
                     ReferenceFlag::read(),
                 );

@@ -7,12 +7,12 @@ use crate::ast::*;
 #[derive(Debug, Clone, Copy)]
 pub enum AstKind<'a> {
     Program(&'a Program<'a>),
-    Directive(&'a Directive),
-    Hashbang(&'a Hashbang),
+    Directive(&'a Directive<'a>),
+    Hashbang(&'a Hashbang<'a>),
 
     BlockStatement(&'a BlockStatement<'a>),
-    BreakStatement(&'a BreakStatement),
-    ContinueStatement(&'a ContinueStatement),
+    BreakStatement(&'a BreakStatement<'a>),
+    ContinueStatement(&'a ContinueStatement<'a>),
     DebuggerStatement(&'a DebuggerStatement),
     DoWhileStatement(&'a DoWhileStatement<'a>),
     EmptyStatement(&'a EmptyStatement),
@@ -39,21 +39,21 @@ pub enum AstKind<'a> {
 
     UsingDeclaration(&'a UsingDeclaration<'a>),
 
-    IdentifierName(&'a IdentifierName),
-    IdentifierReference(&'a IdentifierReference),
-    BindingIdentifier(&'a BindingIdentifier),
-    LabelIdentifier(&'a LabelIdentifier),
-    PrivateIdentifier(&'a PrivateIdentifier),
+    IdentifierName(&'a IdentifierName<'a>),
+    IdentifierReference(&'a IdentifierReference<'a>),
+    BindingIdentifier(&'a BindingIdentifier<'a>),
+    LabelIdentifier(&'a LabelIdentifier<'a>),
+    PrivateIdentifier(&'a PrivateIdentifier<'a>),
 
     NumericLiteral(&'a NumericLiteral<'a>),
-    StringLiteral(&'a StringLiteral),
+    StringLiteral(&'a StringLiteral<'a>),
     BooleanLiteral(&'a BooleanLiteral),
     NullLiteral(&'a NullLiteral),
-    BigintLiteral(&'a BigintLiteral),
-    RegExpLiteral(&'a RegExpLiteral),
+    BigintLiteral(&'a BigintLiteral<'a>),
+    RegExpLiteral(&'a RegExpLiteral<'a>),
     TemplateLiteral(&'a TemplateLiteral<'a>),
 
-    MetaProperty(&'a MetaProperty),
+    MetaProperty(&'a MetaProperty<'a>),
     Super(&'a Super),
 
     ArrayExpression(&'a ArrayExpression<'a>),
@@ -110,9 +110,9 @@ pub enum AstKind<'a> {
 
     ModuleDeclaration(&'a ModuleDeclaration<'a>),
     ImportDeclaration(&'a ImportDeclaration<'a>),
-    ImportSpecifier(&'a ImportSpecifier),
-    ImportDefaultSpecifier(&'a ImportDefaultSpecifier),
-    ImportNamespaceSpecifier(&'a ImportNamespaceSpecifier),
+    ImportSpecifier(&'a ImportSpecifier<'a>),
+    ImportDefaultSpecifier(&'a ImportDefaultSpecifier<'a>),
+    ImportNamespaceSpecifier(&'a ImportNamespaceSpecifier<'a>),
     ExportDefaultDeclaration(&'a ExportDefaultDeclaration<'a>),
     ExportNamedDeclaration(&'a ExportNamedDeclaration<'a>),
     ExportAllDeclaration(&'a ExportAllDeclaration<'a>),
@@ -127,11 +127,11 @@ pub enum AstKind<'a> {
     JSXExpressionContainer(&'a JSXExpressionContainer<'a>),
     JSXAttributeItem(&'a JSXAttributeItem<'a>),
     JSXSpreadAttribute(&'a JSXSpreadAttribute<'a>),
-    JSXText(&'a JSXText),
-    JSXIdentifier(&'a JSXIdentifier),
+    JSXText(&'a JSXText<'a>),
+    JSXIdentifier(&'a JSXIdentifier<'a>),
     JSXMemberExpression(&'a JSXMemberExpression<'a>),
     JSXMemberExpressionObject(&'a JSXMemberExpressionObject<'a>),
-    JSXNamespacedName(&'a JSXNamespacedName),
+    JSXNamespacedName(&'a JSXNamespacedName<'a>),
 
     // TypeScript
     TSModuleBlock(&'a TSModuleBlock<'a>),
@@ -159,7 +159,7 @@ pub enum AstKind<'a> {
 
     TSImportEqualsDeclaration(&'a TSImportEqualsDeclaration<'a>),
     TSTypeName(&'a TSTypeName<'a>),
-    TSExternalModuleReference(&'a TSExternalModuleReference),
+    TSExternalModuleReference(&'a TSExternalModuleReference<'a>),
     TSQualifiedName(&'a TSQualifiedName<'a>),
 
     TSInterfaceDeclaration(&'a TSInterfaceDeclaration<'a>),
@@ -245,7 +245,7 @@ impl<'a> AstKind<'a> {
         matches!(self, Self::Function(_) | Self::ArrowFunctionExpression(_))
     }
 
-    pub fn identifier_name(self) -> Option<Atom> {
+    pub fn identifier_name(self) -> Option<Atom<'a>> {
         match self {
             Self::BindingIdentifier(ident) => Some(ident.name.clone()),
             Self::IdentifierReference(ident) => Some(ident.name.clone()),

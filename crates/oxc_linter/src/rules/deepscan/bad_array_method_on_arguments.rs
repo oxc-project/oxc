@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -19,7 +19,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
         "The 'arguments' object does not have '{0}()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead."
     )
 )]
-struct BadArrayMethodOnArgumentsDiagnostic(Atom, #[label] pub Span);
+struct BadArrayMethodOnArgumentsDiagnostic(CompactString, #[label] pub Span);
 
 /// `https://deepscan.io/docs/rules/bad-array-method-on-arguments`
 #[derive(Debug, Default, Clone)]
@@ -61,7 +61,7 @@ impl Rule for BadArrayMethodOnArguments {
             MemberExpression::StaticMemberExpression(expr) => {
                 if ARRAY_METHODS.binary_search(&expr.property.name.as_str()).is_ok() {
                     ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                        expr.property.name.clone(),
+                        expr.property.name.to_compact_string(),
                         expr.span,
                     ));
                 }
@@ -71,7 +71,7 @@ impl Rule for BadArrayMethodOnArguments {
                     Expression::StringLiteral(name) => {
                         if ARRAY_METHODS.binary_search(&name.value.as_str()).is_ok() {
                             ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                                name.value.clone(),
+                                name.value.to_compact_string(),
                                 expr.span,
                             ));
                         }
@@ -86,7 +86,7 @@ impl Rule for BadArrayMethodOnArguments {
                             {
                                 if ARRAY_METHODS.binary_search(&name).is_ok() {
                                     ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                                        Atom::from(name),
+                                        CompactString::from(name),
                                         expr.span,
                                     ));
                                 }

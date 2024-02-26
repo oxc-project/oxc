@@ -76,7 +76,7 @@ impl<'a> GetSpan for Expression<'a> {
     }
 }
 
-impl GetSpan for Directive {
+impl<'a> GetSpan for Directive<'a> {
     fn span(&self) -> Span {
         self.span
     }
@@ -144,7 +144,7 @@ impl<'a> GetSpan for MemberExpression<'a> {
     }
 }
 
-impl GetSpan for ImportAttributeKey {
+impl<'a> GetSpan for ImportAttributeKey<'a> {
     fn span(&self) -> Span {
         match self {
             Self::Identifier(identifier) => identifier.span,
@@ -153,7 +153,7 @@ impl GetSpan for ImportAttributeKey {
     }
 }
 
-impl GetSpan for ModuleExportName {
+impl<'a> GetSpan for ModuleExportName<'a> {
     fn span(&self) -> Span {
         match self {
             Self::Identifier(identifier) => identifier.span,
@@ -191,7 +191,7 @@ impl<'a> GetSpan for Declaration<'a> {
     }
 }
 
-impl GetSpan for TSModuleDeclarationName {
+impl<'a> GetSpan for TSModuleDeclarationName<'a> {
     fn span(&self) -> Span {
         match self {
             Self::Identifier(ident) => ident.span,
@@ -365,7 +365,7 @@ impl<'a> GetSpan for ExportDefaultDeclarationKind<'a> {
     }
 }
 
-impl GetSpan for ImportDeclarationSpecifier {
+impl<'a> GetSpan for ImportDeclarationSpecifier<'a> {
     fn span(&self) -> Span {
         match self {
             Self::ImportSpecifier(specifier) => specifier.span,

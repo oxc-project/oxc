@@ -8,22 +8,22 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, CompactString, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(catch-error-name): The catch parameter {0:?} should be named {1:?}")]
 #[diagnostic(severity(warning))]
-struct CatchErrorNameDiagnostic(Atom, Atom, #[label] pub Span);
+struct CatchErrorNameDiagnostic(CompactString, CompactString, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct CatchErrorName(Box<CatchErrorNameConfig>);
 
 #[derive(Debug, Clone)]
 pub struct CatchErrorNameConfig {
-    ignore: Vec<Atom>,
-    name: Atom,
+    ignore: Vec<CompactString>,
+    name: CompactString,
 }
 
 impl std::ops::Deref for CatchErrorName {
@@ -36,7 +36,7 @@ impl std::ops::Deref for CatchErrorName {
 
 impl Default for CatchErrorNameConfig {
     fn default() -> Self {
-        Self { ignore: vec![], name: Atom::new_inline("error") }
+        Self { ignore: vec![], name: CompactString::new_inline("error") }
     }
 }
 
@@ -69,10 +69,10 @@ impl Rule for CatchErrorName {
             .iter()
             .map(serde_json::Value::as_str)
             .filter(std::option::Option::is_some)
-            .map(|x| Atom::from(x.unwrap().to_string()))
-            .collect::<Vec<Atom>>();
+            .map(|x| CompactString::from(x.unwrap()))
+            .collect::<Vec<CompactString>>();
 
-        let allowed_name = Atom::from(
+        let allowed_name = CompactString::from(
             value
                 .get(0)
                 .and_then(|v| v.get("name"))
@@ -96,7 +96,7 @@ impl Rule for CatchErrorName {
                     if binding_ident.name.starts_with('_') {
                         if symbol_has_references(binding_ident.symbol_id.get(), ctx) {
                             ctx.diagnostic(CatchErrorNameDiagnostic(
-                                binding_ident.name.clone(),
+                                binding_ident.name.to_compact_string(),
                                 self.name.clone(),
                                 binding_ident.span,
                             ));
@@ -105,7 +105,7 @@ impl Rule for CatchErrorName {
                     }
 
                     ctx.diagnostic(CatchErrorNameDiagnostic(
-                        binding_ident.name.clone(),
+                        binding_ident.name.to_compact_string(),
                         self.name.clone(),
                         binding_ident.span,
                     ));
@@ -137,7 +137,7 @@ impl Rule for CatchErrorName {
 
 impl CatchErrorName {
     fn is_name_allowed(&self, name: &Atom) -> bool {
-        self.name == name || self.ignore.contains(name)
+        self.name == name || self.ignore.iter().any(|s| s.as_str() == name.as_str())
     }
     fn check_function_arguments(
         &self,
@@ -158,7 +158,7 @@ impl CatchErrorName {
                     if v.name.starts_with('_') {
                         if symbol_has_references(v.symbol_id.get(), ctx) {
                             ctx.diagnostic(CatchErrorNameDiagnostic(
-                                v.name.clone(),
+                                v.name.to_compact_string(),
                                 self.name.clone(),
                                 v.span,
                             ));
@@ -168,7 +168,7 @@ impl CatchErrorName {
                     }
 
                     return Some(CatchErrorNameDiagnostic(
-                        v.name.clone(),
+                        v.name.to_compact_string(),
                         self.name.clone(),
                         v.span,
                     ));
@@ -186,7 +186,7 @@ impl CatchErrorName {
                     if binding_ident.name.starts_with('_') {
                         if symbol_has_references(binding_ident.symbol_id.get(), ctx) {
                             ctx.diagnostic(CatchErrorNameDiagnostic(
-                                binding_ident.name.clone(),
+                                binding_ident.name.to_compact_string(),
                                 self.name.clone(),
                                 binding_ident.span,
                             ));
@@ -196,7 +196,7 @@ impl CatchErrorName {
                     }
 
                     return Some(CatchErrorNameDiagnostic(
-                        binding_ident.name.clone(),
+                        binding_ident.name.to_compact_string(),
                         self.name.clone(),
                         binding_ident.span,
                     ));

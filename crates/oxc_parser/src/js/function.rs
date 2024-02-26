@@ -80,7 +80,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_function(
         &mut self,
         span: Span,
-        id: Option<BindingIdentifier>,
+        id: Option<BindingIdentifier<'a>>,
         r#async: bool,
         generator: bool,
         func_kind: FunctionKind,
@@ -329,7 +329,7 @@ impl<'a> ParserImpl<'a> {
         kind: FunctionKind,
         r#async: bool,
         generator: bool,
-    ) -> Option<BindingIdentifier> {
+    ) -> Option<BindingIdentifier<'a>> {
         let ctx = self.ctx;
         if kind.is_expression() {
             self.ctx = self.ctx.and_await(r#async).and_yield(generator);

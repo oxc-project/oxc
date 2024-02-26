@@ -89,11 +89,11 @@ fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>)
     }
 }
 
-fn check_duplicate_bound_names<T: BoundNames>(bound_names: &T, ctx: &SemanticBuilder<'_>) {
-    let mut idents: FxHashMap<Atom, Span> = FxHashMap::default();
+fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &SemanticBuilder<'_>) {
+    let mut idents: FxHashMap<Atom<'a>, Span> = FxHashMap::default();
     bound_names.bound_names(&mut |ident| {
         if let Some(old_span) = idents.insert(ident.name.clone(), ident.span) {
-            ctx.error(Redeclaration(ident.name.clone(), old_span, ident.span));
+            ctx.error(Redeclaration(ident.name.to_compact_string(), old_span, ident.span));
         }
     });
 }

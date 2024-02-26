@@ -41,7 +41,7 @@ impl<'a> VisitMut<'a> for ArrowFunctions<'a> {
         self.nodes.pop();
     }
 
-    fn visit_jsx_identifier(&mut self, ident: &mut JSXIdentifier) {
+    fn visit_jsx_identifier(&mut self, ident: &mut JSXIdentifier<'a>) {
         let parent_kind = self.nodes.last().unwrap();
         let parent_parent_kind = self.nodes[self.nodes.len() - 2];
         if ident.name == "this"
@@ -69,9 +69,9 @@ impl<'a> ArrowFunctions<'a> {
         })
     }
 
-    fn get_this_name(&self) -> Atom {
+    fn get_this_name(&self) -> Atom<'a> {
         let uid = if self.uid == 1 { String::new() } else { self.uid.to_string() };
-        format!("_this{uid}",).into()
+        self.ast.new_atom(&format!("_this{uid}"))
     }
 
     pub fn transform_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {

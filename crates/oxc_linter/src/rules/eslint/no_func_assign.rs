@@ -5,14 +5,14 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-func-assign): '{0}' is a function.")]
 #[diagnostic(severity(warning))]
-struct NoFuncAssignDiagnostic(Atom, #[label("{0} is re-assigned here")] pub Span);
+struct NoFuncAssignDiagnostic(CompactString, #[label("{0} is re-assigned here")] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoFuncAssign;
@@ -42,7 +42,7 @@ impl Rule for NoFuncAssign {
             for reference in symbol_table.get_resolved_references(symbol_id) {
                 if reference.is_write() {
                     ctx.diagnostic(NoFuncAssignDiagnostic(
-                        symbol_table.get_name(symbol_id).clone(),
+                        symbol_table.get_name(symbol_id).into(),
                         reference.span(),
                     ));
                 }

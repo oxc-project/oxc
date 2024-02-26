@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -17,7 +17,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
     severity(warning),
     help("The first argument of 'Number.prototype.{0}' should be a number between {1} and {2}")
 )]
-struct NumberArgOutOfRangeDiagnostic(Atom, usize, usize, #[label] pub Span);
+struct NumberArgOutOfRangeDiagnostic(CompactString, usize, usize, #[label] pub Span);
 
 /// `https://deepscan.io/docs/rules/number-arg-out-of-range`
 #[derive(Debug, Default, Clone)]
@@ -52,19 +52,19 @@ impl Rule for NumberArgOutOfRange {
                 match member.static_property_name() {
                     Some(name @ "toString") => {
                         if !(2.0_f64..=36.0_f64).contains(&value) {
-                            let name = Atom::from(name);
+                            let name = CompactString::from(name);
                             ctx.diagnostic(NumberArgOutOfRangeDiagnostic(name, 2, 36, expr.span));
                         }
                     }
                     Some(name @ ("toFixed" | "toExponential")) => {
                         if !(0.0_f64..=20.0_f64).contains(&value) {
-                            let name = Atom::from(name);
+                            let name = CompactString::from(name);
                             ctx.diagnostic(NumberArgOutOfRangeDiagnostic(name, 0, 20, expr.span));
                         }
                     }
                     Some(name @ "toPrecision") => {
                         if !(1.0_f64..=21.0_f64).contains(&value) {
-                            let name = Atom::from(name);
+                            let name = CompactString::from(name);
                             ctx.diagnostic(NumberArgOutOfRangeDiagnostic(name, 1, 21, expr.span));
                         }
                     }

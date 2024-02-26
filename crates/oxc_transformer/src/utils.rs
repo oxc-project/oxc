@@ -25,12 +25,13 @@ pub trait CreateVars<'a> {
         stmts.insert(0, stmt);
     }
 
-    fn create_new_var(&mut self, expr: &Expression<'a>) -> IdentifierReference {
+    fn create_new_var(&mut self, expr: &Expression<'a>) -> IdentifierReference<'a> {
         let name = self.ctx().scopes().generate_uid_based_on_node(expr);
         self.ctx().add_binding(name.clone());
 
         // Add `var name` to scope
         // TODO: hookup symbol id
+        let name = self.ctx().ast.new_atom(name.as_str());
         let binding_identifier = BindingIdentifier::new(Span::default(), name.clone());
         let binding_pattern_kind = self.ctx().ast.binding_pattern_identifier(binding_identifier);
         let binding = self.ctx().ast.binding_pattern(binding_pattern_kind, None, false);
@@ -43,7 +44,10 @@ pub trait CreateVars<'a> {
 
     /// Possibly generate a memoised identifier if it is not static and has consequences.
     /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L578>
-    fn maybe_generate_memoised(&mut self, expr: &Expression<'a>) -> Option<IdentifierReference> {
+    fn maybe_generate_memoised(
+        &mut self,
+        expr: &Expression<'a>,
+    ) -> Option<IdentifierReference<'a>> {
         if self.ctx().symbols().is_static(expr) {
             None
         } else {

@@ -53,13 +53,13 @@ impl<'a> RegexpFlags<'a> {
     // `/regex/flags` -> `new RegExp('regex', 'flags')`
     pub fn transform_expression(&self, expr: &mut Expression<'a>) {
         let Expression::RegExpLiteral(literal) = expr else { return };
-        let regex = &literal.regex;
+        let regex = literal.regex.clone();
         if regex.flags.intersection(self.transform_flags).is_empty() {
             return;
         }
         let ident = IdentifierReference::new(SPAN, Atom::from("RegExp"));
         let callee = self.ast.identifier_reference_expression(ident);
-        let pattern = StringLiteral::new(SPAN, Atom::from(regex.pattern.as_str()));
+        let pattern = StringLiteral::new(SPAN, regex.pattern.clone());
         let flags = StringLiteral::new(SPAN, Atom::from(regex.flags.to_string()));
         let pattern_literal = self.ast.literal_string_expression(pattern);
         let flags_literal = self.ast.literal_string_expression(flags);

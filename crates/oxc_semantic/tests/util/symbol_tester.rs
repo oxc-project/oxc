@@ -39,8 +39,11 @@ impl<'a> SymbolTester<'a> {
         semantic: Semantic<'a>,
         target: &str,
     ) -> Self {
-        let symbols_with_target_name: Vec<_> =
-            semantic.scopes().iter_bindings().filter(|(_, _, name)| name == &target).collect();
+        let symbols_with_target_name: Vec<_> = semantic
+            .scopes()
+            .iter_bindings()
+            .filter(|(_, _, name)| name.as_str() == target)
+            .collect();
         let data = match symbols_with_target_name.len() {
             0 => Err(miette!("Could not find declaration for {target}")),
             1 => Ok(symbols_with_target_name.iter().map(|(_, symbol_id, _)| *symbol_id).next().unwrap()),
@@ -139,7 +142,7 @@ impl<'a> SymbolTester<'a> {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let binding = Atom::from(self.target_symbol_name.clone());
-                if self.semantic.module_record().exported_bindings.contains_key(&binding)
+                if self.semantic.module_record().exported_bindings.contains_key(binding.as_str())
                     && self.semantic.scopes().get_root_binding(&binding) == Some(symbol_id)
                 {
                     Ok(symbol_id)

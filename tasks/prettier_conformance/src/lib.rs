@@ -12,7 +12,7 @@ use walkdir::WalkDir;
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_prettier::{Prettier, PrettierOptions};
-use oxc_span::{Atom, SourceType};
+use oxc_span::SourceType;
 use oxc_tasks_common::project_root;
 
 use crate::{
@@ -257,7 +257,7 @@ impl TestRunner {
         path: &Path,
         input: &str,
         prettier_options: PrettierOptions,
-        snapshot_options: &[(Atom, String)],
+        snapshot_options: &[(String, String)],
         snap_content: &str,
     ) -> String {
         let filename = path.file_name().unwrap().to_string_lossy();

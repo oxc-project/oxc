@@ -25,7 +25,7 @@ impl<'a> ClassStaticBlock<'a> {
             return;
         }
 
-        let private_names: HashSet<Atom> = class_body
+        let private_names: HashSet<Atom<'a>> = class_body
             .body
             .iter()
             .filter_map(ClassElement::property_key)
@@ -107,7 +107,7 @@ impl<'a> ClassStaticBlock<'a> {
     }
 }
 
-fn generate_uid(deny_list: &HashSet<Atom>, i: &mut u32) -> Atom {
+fn generate_uid<'a>(deny_list: &HashSet<Atom<'a>>, i: &mut u32) -> Atom<'a> {
     *i += 1;
 
     let mut uid: Atom = if *i == 1 { "_".to_string() } else { format!("_{i}") }.into();

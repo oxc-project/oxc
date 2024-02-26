@@ -8,7 +8,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{Atom, CompactString, GetSpan, Span};
 use regex::{Matches, Regex};
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
@@ -19,7 +19,7 @@ use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, Ast
     severity(warning),
     help("Unexpected control character(s) in regular expression: \"{0}\"")
 )]
-struct NoControlRegexDiagnostic(Atom, #[label] pub Span);
+struct NoControlRegexDiagnostic(CompactString, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoControlRegex;
@@ -72,7 +72,7 @@ impl Rule for NoControlRegex {
         if let Some(RegexPatternData { pattern, flags, span }) = regex_pattern(node) {
             let mut violations: Vec<&str> = Vec::new();
 
-            for matched_ctl_pattern in control_patterns(pattern) {
+            for matched_ctl_pattern in control_patterns(pattern.as_str()) {
                 let ctl = matched_ctl_pattern.as_str();
 
                 // check for an even number of backslashes, since these will
@@ -144,7 +144,7 @@ impl Rule for NoControlRegex {
 struct RegexPatternData<'a> {
     /// A regex pattern, either from a literal (`/foo/`) a RegExp constructor
     /// (`new RegExp("foo")`), or a RegExp function call (`RegExp("foo"))
-    pattern: &'a Atom,
+    pattern: &'a Atom<'a>,
     /// Regex flags, if found. It's possible for this to be `Some` but have
     /// no flags.
     ///
@@ -236,14 +236,14 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
     }
 }
 
-fn control_patterns(pattern: &Atom) -> Matches<'static, '_> {
+fn control_patterns(pattern: &str) -> Matches<'static, '_> {
     lazy_static! {
         static ref CTL_PAT: Regex = Regex::new(
             r"([\x00-\x1f]|(?:\\x\w{2})|(?:\\u\w{4})|(?:\\u\{\w{1,4}\}))"
             // r"((?:\\x\w{2}))"
         ).unwrap();
     }
-    CTL_PAT.find_iter(pattern.as_str())
+    CTL_PAT.find_iter(pattern)
 }
 
 #[cfg(test)]

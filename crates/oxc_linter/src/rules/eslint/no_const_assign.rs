@@ -4,7 +4,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -12,7 +12,7 @@ use crate::{context::LintContext, rule::Rule};
 #[error("eslint(no-const-assign): Unexpected re-assignment of const variable {0}")]
 #[diagnostic(severity(warning))]
 struct NoConstAssignDiagnostic(
-    Atom,
+    CompactString,
     #[label("{0} is declared here as const")] pub Span,
     #[label("{0} is re-assigned here")] pub Span,
 );
@@ -44,7 +44,7 @@ impl Rule for NoConstAssign {
             for reference in symbol_table.get_resolved_references(symbol_id) {
                 if reference.is_write() {
                     ctx.diagnostic(NoConstAssignDiagnostic(
-                        symbol_table.get_name(symbol_id).clone(),
+                        symbol_table.get_name(symbol_id).into(),
                         symbol_table.get_span(symbol_id),
                         reference.span(),
                     ));

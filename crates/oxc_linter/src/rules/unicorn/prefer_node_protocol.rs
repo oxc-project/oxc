@@ -77,14 +77,14 @@ impl Rule for PreferNodeProtocol {
 fn get_static_require_arg<'a>(
     ctx: &LintContext<'a>,
     call: &CallExpression<'a>,
-) -> Option<(Atom, Span)> {
+) -> Option<(Atom<'a>, Span)> {
     let Expression::Identifier(ref id) = call.callee else { return None };
     match call.arguments.as_slice() {
         [Argument::Expression(Expression::StringLiteral(str))] if id.name == "require" => ctx
             .semantic()
             .scopes()
             .root_unresolved_references()
-            .contains_key(&id.name)
+            .contains_key(id.name.as_str())
             .then(|| (str.value.clone(), str.span)),
         _ => None,
     }

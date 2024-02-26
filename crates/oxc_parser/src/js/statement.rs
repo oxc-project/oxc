@@ -14,7 +14,7 @@ impl<'a> ParserImpl<'a> {
     // Section 12
     // The InputElementHashbangOrRegExp goal is used at the start of a Script
     // or Module.
-    pub(crate) fn parse_hashbang(&mut self) -> Option<Hashbang> {
+    pub(crate) fn parse_hashbang(&mut self) -> Option<Hashbang<'a>> {
         if self.cur_kind() == Kind::HashbangComment {
             let span = self.start_span();
             self.bump_any();
@@ -33,7 +33,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_directives_and_statements(
         &mut self,
         is_top_level: bool,
-    ) -> Result<(Vec<'a, Directive>, Vec<'a, Statement<'a>>)> {
+    ) -> Result<(Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>)> {
         let mut directives = self.ast.new_vec();
         let mut statements = self.ast.new_vec();
 

@@ -10,7 +10,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactString, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{
@@ -24,12 +24,12 @@ use crate::{
 enum ExplicitLengthCheckDiagnostic {
     #[error("eslint-plugin-unicorn(explicit-length-check): Use `.{1} {2}` when checking {1} is not zero.")]
     #[diagnostic(severity(warning))]
-    NoneZero(#[label] Span, Atom, Atom, #[help] Option<String>),
+    NoneZero(#[label] Span, CompactString, CompactString, #[help] Option<String>),
     #[error(
         "eslint-plugin-unicorn(explicit-length-check): Use `.{1} {2}` when checking {1} is zero."
     )]
     #[diagnostic(severity(warning))]
-    Zero(#[label] Span, Atom, Atom, #[help] Option<String>),
+    Zero(#[label] Span, CompactString, CompactString, #[help] Option<String>),
 }
 #[derive(Debug, Default, Clone)]
 enum NonZero {
@@ -218,7 +218,7 @@ impl ExplicitLengthCheck {
         let diagnostic = if is_zero_length_check {
             ExplicitLengthCheckDiagnostic::Zero(
                 span,
-                property.clone(),
+                property.to_compact_string(),
                 check_code.into(),
                 if auto_fix {
                     None
@@ -229,7 +229,7 @@ impl ExplicitLengthCheck {
         } else {
             ExplicitLengthCheckDiagnostic::NoneZero(
                 span,
-                property.clone(),
+                property.to_compact_string(),
                 check_code.into(),
                 if auto_fix {
                     None
