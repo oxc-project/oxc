@@ -6,7 +6,10 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 use oxc_ast::{ast::*, AstKind, Trivias, TriviasMap, Visit};
 use oxc_diagnostics::Error;
 use oxc_span::{Atom, SourceType, Span};
-use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
+use oxc_syntax::{
+    module_record::{ExportLocalName, ModuleRecord},
+    operator::AssignmentOperator,
+};
 
 use crate::{
     binder::Binder,
@@ -337,6 +340,22 @@ impl<'a> SemanticBuilder<'a> {
 
     pub fn add_redeclared_variables(&mut self, variable: VariableInfo) {
         self.redeclare_variables.variables.push(variable);
+    }
+
+    fn add_export_flag_for_export_identifier(&mut self) {
+        self.module_record.local_export_entries.iter().for_each(|entry| match &entry.local_name {
+            ExportLocalName::Name(name_span) => {
+                if let Some(symbol_id) = self.scope.get_root_binding(name_span.name()) {
+                    self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+                }
+            }
+            ExportLocalName::Default(span) => {
+                if let Some(symbol_id) = self.symbols.get_symbol_id_from_span(span) {
+                    self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+                }
+            }
+            ExportLocalName::Null => {}
+        });
     }
 }
 
@@ -1766,6 +1785,9 @@ impl<'a> SemanticBuilder<'a> {
     #[allow(clippy::single_match)]
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
+            AstKind::Program(_) => {
+                self.add_export_flag_for_export_identifier();
+            }
             AstKind::Class(_) => {
                 self.current_node_flags -= NodeFlags::Class;
                 self.class_table_builder.pop_class();
