@@ -8,10 +8,10 @@ use convert_case::{Case, Casing};
 use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{
-        Argument, ArrayExpressionElement, CallExpression, Expression, ExpressionStatement,
-        MemberExpression, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
-        PropertyKey, Statement, StaticMemberExpression, StringLiteral, TaggedTemplateExpression,
-        TemplateLiteral,
+        Argument, ArrayExpressionElement, CallExpression, ExportDefaultDeclarationKind, Expression,
+        ExpressionStatement, MemberExpression, ModuleDeclaration, ObjectExpression, ObjectProperty,
+        ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression, StringLiteral,
+        TaggedTemplateExpression, TemplateLiteral,
     },
     Visit,
 };
@@ -293,8 +293,20 @@ impl<'a> Visit<'a> for State<'a> {
     }
 
     fn visit_statement(&mut self, stmt: &Statement<'a>) {
-        if let Statement::ExpressionStatement(expr_stmt) = stmt {
-            self.visit_expression_statement(expr_stmt);
+        match stmt {
+            Statement::ExpressionStatement(expr_stmt) => self.visit_expression_statement(expr_stmt),
+            // for eslint-plugin-jsdoc
+            Statement::ModuleDeclaration(mod_decl) => {
+                if let ModuleDeclaration::ExportDefaultDeclaration(export_decl) = &mod_decl.0 {
+                    if let ExportDefaultDeclarationKind::Expression(Expression::ObjectExpression(
+                        obj_expr,
+                    )) = &export_decl.declaration
+                    {
+                        self.visit_object_expression(obj_expr);
+                    }
+                }
+            }
+            _ => {}
         }
     }
 
@@ -521,6 +533,11 @@ fn main() {
 
             let pass_cases = state.pass_cases();
             let fail_cases = state.fail_cases();
+            println!(
+                "File parsed and {} pass cases, {} fail cases are found",
+                pass_cases.len(),
+                fail_cases.len()
+            );
 
             let pass_has_config = pass_cases.iter().any(|case| case.config.is_some());
             let fail_has_config = fail_cases.iter().any(|case| case.config.is_some());
