@@ -17,13 +17,16 @@ fn main() -> Result<(), String> {
     let source_type = SourceType::from_path(path).unwrap();
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
+    println!("AST:");
+    println!("{}", serde_json::to_string_pretty(&ret.program).unwrap());
+
     if ret.errors.is_empty() {
-        println!("{}", serde_json::to_string_pretty(&ret.program).unwrap());
         println!("Parsed Successfully.");
     } else {
         for error in ret.errors {
             let error = error.with_source_code(source_text.clone());
             println!("{error:?}");
+            println!("Parsed with Errors.");
         }
     }
 
