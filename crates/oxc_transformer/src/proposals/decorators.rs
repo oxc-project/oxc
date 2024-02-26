@@ -47,9 +47,6 @@ bitflags! {
 }
 
 impl DecoratorFlags {
-    pub fn is_setter(self) -> bool {
-        self.contains(Self::Setter)
-    }
     pub fn is_static(self) -> bool {
         self.contains(Self::Static)
     }
@@ -332,7 +329,7 @@ impl<'a> Decorators<'a> {
         let mut c_elements = self.ast.new_vec();
         let mut e_elements = self.ast.new_vec();
 
-        let mut private_in_expressions = self.ast.new_vec();
+        let mut private_in_expression = None;
 
         let mut init_static_name = None;
 
@@ -450,9 +447,9 @@ impl<'a> Decorators<'a> {
 
                         if def.key.is_private_identifier() {
                             {
-                                if flag.is_setter() && !flag.is_static() {
+                                if !flag.is_static() && private_in_expression.is_none() {
                                     // _ => #a in _;
-                                    private_in_expressions.push(
+                                    private_in_expression = Some(
                                         self.ast.arrow_function_expression(
                                             SPAN,
                                             true,
@@ -726,14 +723,14 @@ impl<'a> Decorators<'a> {
                 None,
             )));
             arguments.push(class_decorators_argument);
-            if !private_in_expressions.is_empty() {
+            if let Some(private_in_expression) = private_in_expression {
                 // classDecsHaveThis
                 arguments.push(Argument::Expression(self.ast.literal_number_expression(
                     // TODO: use correct number instead of `0`
                     self.ast.number_literal(SPAN, 0f64, "0", oxc_syntax::NumberBase::Decimal),
                 )));
                 // instanceBrand
-                arguments.extend(private_in_expressions.into_iter().map(Argument::Expression));
+                arguments.push(Argument::Expression(private_in_expression));
             }
 
             let mut call_expr = self.ast.call_expression(SPAN, callee, arguments, false, None);
