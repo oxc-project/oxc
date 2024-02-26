@@ -606,7 +606,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumDeclaration<'a> {
         self.id.gen(p, ctx);
         p.print_space_before_identifier();
         p.print_block_start();
-        p.print_list(&self.body.members, ctx);
+        p.print_list(&self.members, ctx);
         p.print_block_end();
         p.print_hard_space();
     }

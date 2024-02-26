@@ -41,20 +41,9 @@ pub struct TSEnumDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub id: BindingIdentifier,
-    pub body: TSEnumBody<'a>,
+    pub members: Vec<'a, TSEnumMember<'a>>,
     /// Valid Modifiers: `const`, `export`, `declare`
     pub modifiers: Modifiers<'a>,
-}
-/// Enum Body
-///
-/// A scope must be created on the enum body so this abstraction exists
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct TSEnumBody<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub span: Span,
-    pub members: Vec<'a, TSEnumMember<'a>>,
 }
 
 #[derive(Debug, Hash)]
@@ -203,7 +192,7 @@ pub struct TSIntersectionType<'a> {
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/keyof-types.html>
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct TSTypeOperator<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1058,7 +1047,7 @@ pub struct TSInstantiationExpression<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum ImportOrExportKind {
     Value,
