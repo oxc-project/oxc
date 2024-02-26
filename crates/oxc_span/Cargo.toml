@@ -20,8 +20,7 @@ doctest = false
 
 [dependencies]
 miette           = { workspace = true }
-inlinable_string = "0.1.15"
-compact_str      = { version = "0.7.1", features = ["serde"] }
+compact_str      = { version = "0.7.1" }
 
 tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
@@ -30,5 +29,5 @@ serde = { workspace = true, features = ["derive"], optional = true }
 
 [features]
 default = []
-serde   = ["dep:serde", "inlinable_string/serde"]
+serde   = ["dep:serde", "compact_str/serde"]
 wasm    = ["dep:tsify", "dep:wasm-bindgen"]
