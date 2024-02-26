@@ -1,6 +1,7 @@
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 use oxc_syntax::{
     identifier::{LS, PS},
     keyword::is_keyword,
@@ -109,7 +110,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ExpressionStatement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        p.add_source_mapping(self.span.start);
         p.print_indent();
         p.start_of_stmt = p.code_len();
         p.print_expression(&self.expression);
@@ -146,10 +146,10 @@ fn print_if<const MINIFY: bool>(
             p.print_block1(block, ctx);
         }
         stmt if wrap_to_avoid_ambiguous_else(stmt) => {
-            p.print_block_start();
+            p.print_block_start(stmt.span().start);
             stmt.gen(p, ctx);
             p.needs_semicolon = false;
-            p.print_block_end();
+            p.print_block_end(stmt.span().end);
         }
         stmt => {
             stmt.gen(p, ctx);
@@ -387,12 +387,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SwitchStatement<'a> {
         p.print(b'(');
         p.print_expression(&self.discriminant);
         p.print(b')');
-        p.print_block_start();
+        p.print_block_start(self.span.start);
         for case in &self.cases {
             p.add_source_mapping(case.span.start);
             case.gen(p, ctx);
         }
-        p.print_block_end();
+        p.print_block_end(self.span.end);
         p.print_soft_newline();
         p.needs_semicolon = false;
     }
@@ -683,6 +683,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for FunctionBody<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.print_block_start(self.span.start);
+        print_directives_and_statements_with_semicolon_order(
+            p,
+            &self.directives,
         p.print_block_start();
         p.print_directives_and_statements_with_semicolon_order(
             Some(&self.directives),
@@ -690,7 +694,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for FunctionBody<'a> {
             ctx,
             true,
         );
-        p.print_block_end();
+        p.print_block_end(self.span.end);
         p.needs_semicolon = false;
     }
 }
@@ -707,7 +711,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for FormalParameter<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for FormalParameters<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        p.add_source_mapping(self.span.start);
         p.print_list(&self.items, ctx);
         if let Some(rest) = &self.rest {
             if !self.items.is_empty() {
@@ -817,7 +820,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for WithClause<'a> {
         p.add_source_mapping(self.span.start);
         self.attributes_keyword.gen(p, ctx);
         p.print_soft_space();
-        p.print_block(&self.with_entries, Separator::Comma, ctx);
+        p.print_block(&self.with_entries, Separator::Comma, ctx, self.span);
     }
 }
 
@@ -1549,6 +1552,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ArrowFunctionExpression<'a> {
                     type_parameters.gen(p, ctx);
                 }
             }
+            if !nowrap {
+                p.add_source_mapping(self.span.start);
+            }
             p.wrap(!nowrap, |p| {
                 self.params.gen(p, ctx);
             });
@@ -2030,8 +2036,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
                 super_class.gen_expr(p, Precedence::Call, Context::default());
             }
             p.print_soft_space();
-            p.print_block_start();
-            p.add_source_mapping(self.body.span.start);
+            p.print_block_start(self.span.start);
             for item in &self.body.body {
                 if !p.options.enable_typescript && item.is_typescript_syntax() {
                     continue;
@@ -2049,9 +2054,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
                 }
                 p.print_soft_newline();
             }
-            p.print_block_end();
+            p.print_block_end(self.span.end);
             p.needs_semicolon = false;
-            p.add_source_mapping(self.span.end);
         });
     }
 }
@@ -2270,12 +2274,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for StaticBlock<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_str(b"static");
-        p.print_block_start();
+        p.print_block_start(self.span.start);
         for stmt in &self.body {
             p.print_semicolon_if_needed();
             stmt.gen(p, ctx);
         }
-        p.print_block_end();
+        p.print_block_end(self.span.end);
         p.needs_semicolon = false;
     }
 }

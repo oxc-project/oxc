@@ -1,4 +1,3 @@
-use std::sync::Arc;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
@@ -10,7 +9,7 @@ fn test(source_text: &str, expected: &str) {
     let source_type = SourceType::default().with_module(true);
     let program = Parser::new(&allocator, source_text, source_type).parse().program;
     let program = allocator.alloc(program);
-    let result = Codegen::<false>::new(Arc::new(source_text), CodegenOptions::default()).build(program);
+    let result = Codegen::<false>::new(source_text.len(), CodegenOptions::default()).build(program);
     assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
 }
 
@@ -23,7 +22,7 @@ fn test_ts(source_text: &str, expected: &str, is_typescript_definition: bool) {
     let program = Parser::new(&allocator, source_text, source_type).parse().program;
     let program = allocator.alloc(program);
     let result =
-        Codegen::<false>::new(Arc::new(source_text), CodegenOptions { enable_typescript: true, sourcemap: false })
+        Codegen::<false>::new(source_text.len(), CodegenOptions { enable_typescript: true, sourcemap: false })
             .build(program);
     assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
 }

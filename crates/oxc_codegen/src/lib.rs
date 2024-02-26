@@ -13,18 +13,18 @@ mod gen;
 mod gen_ts;
 mod operator;
 
-use std::{str::from_utf8_unchecked, sync::Arc, vec};
+use std::{str::from_utf8_unchecked, vec};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_span::Atom;
+use oxc_span::{Atom, Span};
 use oxc_syntax::{
     identifier::{is_identifier_part, LS, PS},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
     symbol::SymbolId,
 };
-use sourcemap::SourceMapBuilder;
+use sourcemap::{SourceMapBuilder, SourceMap};
 
 pub use crate::{
     context::Context,
@@ -72,6 +72,7 @@ pub struct Codegen<const MINIFY: bool> {
     indentation: u8,
 
     // sourcemap
+    source_id: u32,
     last_generated_update: usize,
     line_offset_tables: Vec<LineOffsetTable>,
     sourcemap_builder: SourceMapBuilder,
@@ -89,10 +90,10 @@ pub enum Separator {
 }
 
 impl<const MINIFY: bool> Codegen<MINIFY> {
-    pub fn new(source: Arc<&str>, options: CodegenOptions) -> Self {
+    pub fn new(source_len: usize, options: CodegenOptions) -> Self {
         // Initialize the output code buffer to reduce memory reallocation.
         // Minification will reduce by at least half of the original size.
-        let capacity = if MINIFY { source.len() / 2 } else { source.len() };
+        let capacity = if MINIFY { source_len / 2 } else { source_len };
         Self {
             options,
             // mangler: None,
@@ -106,8 +107,9 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
             indentation: 0,
+            source_id: 0,
             last_generated_update: 0,
-            line_offset_tables: Self::generate_line_offset_tables(source),
+            line_offset_tables: vec![],
             sourcemap_builder: SourceMapBuilder::new(None),
             // original_line: 0,
             // original_column: 0,
@@ -130,8 +132,13 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         unsafe { String::from_utf8_unchecked(self.code) }
     }
 
-    pub fn sourcemap(self) -> sourcemap::SourceMap {
-        self.sourcemap_builder.into_sourcemap()
+    pub fn build_with_sourcemap(mut self, program: &Program<'_>, source: &str, source_name: &str) -> (String, SourceMap) {
+        self.line_offset_tables = Self::generate_line_offset_tables(source);
+        self.source_id = self.sourcemap_builder.add_source( source_name); 
+        self.sourcemap_builder.set_source_contents(self.source_id, Some(source));
+        program.gen(&mut self, Context::default());
+        let sourcemap_builder = std::mem::replace(&mut self.sourcemap_builder, SourceMapBuilder::new(None));
+        (self.into_code(), sourcemap_builder.into_sourcemap())
     }
 
     fn code(&self) -> &Vec<u8> {
@@ -250,15 +257,17 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         }
     }
 
-    fn print_block_start(&mut self) {
+    fn print_block_start(&mut self, position: u32) {
+        self.add_source_mapping(position);
         self.print(b'{');
         self.print_soft_newline();
         self.indent();
     }
 
-    fn print_block_end(&mut self) {
+    fn print_block_end(&mut self, position: u32) {
         self.dedent();
         self.print_indent();
+        self.add_source_mapping(position);
         self.print(b'}');
     }
 
@@ -267,14 +276,19 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         self.print_block_start();
         self.print_directives_and_statements_with_semicolon_order(None, &stmt.body, ctx, true);
         self.print_block_end();
+        self.print_block_start(stmt.span.start);
+        for item in &stmt.body {
+            self.print_semicolon_if_needed();
+            item.gen(self, ctx);
+        }
+        self.print_block_end(stmt.span.end);
         self.needs_semicolon = false;
-        self.add_source_mapping(stmt.span.end);
     }
 
-    fn print_block<T: Gen<MINIFY>>(&mut self, items: &[T], separator: Separator, ctx: Context) {
-        self.print_block_start();
+    fn print_block<T: Gen<MINIFY>>(&mut self, items: &[T], separator: Separator, ctx: Context, span: Span) {
+        self.print_block_start(span.start);
         self.print_sequence(items, separator, ctx);
-        self.print_block_end();
+        self.print_block_end(span.end);
     }
 
     fn print_list<T: Gen<MINIFY>>(&mut self, items: &[T], ctx: Context) {
@@ -442,7 +456,8 @@ fn choose_quote(s: &str) -> char {
         }
         let (original_line, original_column) = self.search_original_line_and_column(start);
         self.update_generated_line_and_column();
-        self.sourcemap_builder.add(self.generated_line, self.generated_column, original_line, original_column, None, name);
+        let name_id = name.map(|s| self.sourcemap_builder.add_name(s));
+        self.sourcemap_builder.add_raw(self.generated_line, self.generated_column, original_line, original_column, Some(self.source_id), name_id);
     }
 
     fn search_original_line_and_column(&self, start: u32) -> (u32, u32) {
@@ -465,12 +480,14 @@ fn choose_quote(s: &str) -> char {
             match ch {
                 '\r' | '\n' | LS | PS => {
                     // Handle Windows-specific "\r\n" newlines
-                    if ch == '\r' && s.chars().nth(i + 1) == Some('\n') {
+                    if ch == '\r' && self.code[self.last_generated_update + i + 1] == b'\n' {
                         continue;
                     }
-
                     self.generated_line += 1;
                     self.generated_column = 0;
+                },
+                '\t' => {
+                    self.generated_column += 4;
                 },
                 _ => {
                     if ch as u32 <= 0xFF {
@@ -484,7 +501,7 @@ fn choose_quote(s: &str) -> char {
         self.last_generated_update = self.code.len();
     }
 
-    fn generate_line_offset_tables(content: Arc<&str>) -> Vec<LineOffsetTable> {
+    fn generate_line_offset_tables(content: &str) -> Vec<LineOffsetTable> {
         let mut tables = vec![];
         let mut columns = None;
         let mut column = 0;

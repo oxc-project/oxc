@@ -1,4 +1,4 @@
-use std::{path::{Path, PathBuf}, sync::Arc};
+use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
