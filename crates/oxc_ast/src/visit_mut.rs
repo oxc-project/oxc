@@ -1423,22 +1423,15 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_enum_body(&mut self, body: &mut TSEnumBody<'a>) {
-        let kind = AstKind::TSEnumBody(self.alloc(body));
-        self.enter_scope(ScopeFlags::empty());
-        self.enter_node(kind);
-        for member in body.members.iter_mut() {
-            self.visit_enum_member(member);
-        }
-        self.leave_node(kind);
-        self.leave_scope();
-    }
-
     fn visit_enum(&mut self, decl: &mut TSEnumDeclaration<'a>) {
         let kind = AstKind::TSEnumDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.visit_binding_identifier(&mut decl.id);
-        self.visit_enum_body(&mut decl.body);
+        self.enter_scope(ScopeFlags::empty());
+        for member in decl.members.iter_mut() {
+            self.visit_enum_member(member);
+        }
+        self.leave_scope();
         self.leave_node(kind);
     }
 

@@ -532,8 +532,8 @@ impl<'a> TypeScript<'a> {
 
         // Foo[Foo["X"] = 0] = "X";
         let enum_name = decl.id.name.clone();
-        let statements = self.transform_ts_enum_members(&mut decl.body.members, &enum_name);
-        let body = self.ast.function_body(decl.body.span, self.ast.new_vec(), statements);
+        let statements = self.transform_ts_enum_members(&mut decl.members, &enum_name);
+        let body = self.ast.function_body(decl.span, self.ast.new_vec(), statements);
 
         let callee =
             self.ast.arrow_function_expression(SPAN, false, false, params, body, None, None);

@@ -42,7 +42,7 @@ declare_oxc_lint!(
 impl Rule for NoDuplicateEnumValues {
     #[allow(clippy::float_cmp)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TSEnumBody(enum_body) = node.kind() else { return };
+        let AstKind::TSEnumDeclaration(enum_body) = node.kind() else { return };
         let mut seen_number_values: Vec<(f64, Span)> = vec![];
         let mut seen_string_values: FxHashMap<&Atom, Span> = FxHashMap::default();
         for enum_member in &enum_body.members {
