@@ -557,7 +557,7 @@ impl<'a> TemplateLiteral<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct TaggedTemplateExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -780,7 +780,7 @@ impl<'a> CallExpression<'a> {
 
 /// New Expression
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct NewExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1849,6 +1849,7 @@ impl<'a> FunctionBody<'a> {
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct ArrowFunctionExpression<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     pub expression: bool,

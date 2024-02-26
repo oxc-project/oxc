@@ -19,7 +19,7 @@ export interface ParseResult {
 }
 export interface Comment {
   type: string
-  value: string
+  value: 'Line' | 'Block'
   start: number
   end: number
 }
