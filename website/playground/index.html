@@ -46,6 +46,16 @@
             <span>Oxc</span>
           </a>
           <div>
+            <label>
+              File
+              <select id="file-type-select" style="margin-left: 4px">
+                <option value="js">js</option>
+                <option value="ts">ts</option>
+                <option value="jsx">jsx</option>
+                <option value="tsx" selected>tsx</option>
+                <option value="d.ts">d.ts</option>
+              </select>
+            </label>
             <label id="syntax">Syntax Check<input id="syntax-checkbox" type="checkbox" checked></label>
             <label id="lint">Lint<input id="lint-checkbox" type="checkbox" checked></label>
           </div>

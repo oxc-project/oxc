@@ -144,6 +144,7 @@ class Playground {
     this.linterOptions = new OxcLinterOptions();
     this.minifierOptions = new OxcMinifierOptions();
 
+    this.parserOptions.sourceFilename = "test.tsx";
     this.runOptions.syntax = true;
     this.runOptions.lint = true;
 
@@ -626,6 +627,15 @@ async function main() {
     playground.updateView("codegen");
   };
 
+
+  document.getElementById("file-type-select").onchange = function (e) {
+    playground.parserOptions.sourceFilename= `test.${e.target.value}`;
+    // Need to repaint the editor to clear the rendered linter diagnostics
+    const sourceText = playground.oxc.sourceText;
+    playground.updateEditorText(playground.editor, "");
+    playground.updateView();
+    playground.updateEditorText(playground.editor, sourceText);
+  };
 
   document.getElementById("syntax").onchange = function () {
     const checked = document.getElementById("syntax-checkbox").checked;

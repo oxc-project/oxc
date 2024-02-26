@@ -125,7 +125,9 @@ impl Oxc {
 
         let allocator = Allocator::default();
         let source_text = &self.source_text;
-        let path = PathBuf::from("test.tsx");
+        let path = PathBuf::from(
+            parser_options.source_filename.clone().unwrap_or_else(|| "test.tsx".to_string()),
+        );
         let source_type = SourceType::from_path(&path).unwrap_or_default();
 
         let ret = Parser::new(&allocator, source_text, source_type)
