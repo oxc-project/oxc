@@ -51,10 +51,7 @@ declare_oxc_lint!(
 
 impl Rule for NoConsoleSpaces {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let call_expr = match node.kind() {
-            AstKind::CallExpression(call_expr) => call_expr,
-            _ => return,
-        };
+        let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
         if !is_method_call(
             call_expr,

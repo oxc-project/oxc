@@ -25,7 +25,8 @@ impl<'a> Instanceof<'a> {
         ctx: TransformerCtx<'a>,
         options: &TransformOptions,
     ) -> Option<Self> {
-        (options.target < TransformTarget::ES2015 || options.instanceof).then(|| Self { ast, ctx })
+        (options.target < TransformTarget::ES2015 || options.instanceof)
+            .then_some(Self { ast, ctx })
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {

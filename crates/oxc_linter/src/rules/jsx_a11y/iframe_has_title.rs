@@ -77,9 +77,7 @@ impl Rule for IframeHasTitle {
             return;
         }
 
-        let alt_prop = if let Some(prop) = has_jsx_prop_lowercase(jsx_el, "title") {
-            prop
-        } else {
+        let Some(alt_prop) = has_jsx_prop_lowercase(jsx_el, "title") else {
             ctx.diagnostic(IframeHasTitleDiagnostic(iden.span));
             return;
         };

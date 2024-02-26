@@ -66,10 +66,7 @@ impl Rule for NoCssTags {
             }
         }
 
-        let (rel_attr, href_attr) = match (rel_attr, href_attr) {
-            (Some(rel_attr), Some(href_attr)) => (rel_attr, href_attr),
-            _ => return,
-        };
+        let (Some(rel_attr), Some(href_attr)) = (rel_attr, href_attr) else { return };
 
         let Some(rel_prop_value) = get_string_literal_prop_value(rel_attr) else { return };
         let Some(href_prop_value) = get_string_literal_prop_value(href_attr) else { return };
@@ -88,7 +85,7 @@ fn test() {
 
     let pass = vec![
         r"import {Head} from 'next/document';
-			
+
 			      export class Blah extends Head {
 			        render() {
 			          return (
@@ -136,7 +133,7 @@ fn test() {
     let fail = vec![
         r#"
 			      import {Head} from 'next/document';
-			
+
 			        export class Blah extends Head {
 			          render() {
 			            return (

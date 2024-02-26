@@ -17,7 +17,7 @@ pub struct ShorthandProperties<'a> {
 impl<'a> ShorthandProperties<'a> {
     pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
         (options.target < TransformTarget::ES2015 || options.shorthand_properties)
-            .then(|| Self { ast })
+            .then_some(Self { ast })
     }
 
     pub fn transform_object_property<'b>(&mut self, obj_prop: &'b mut ObjectProperty<'a>) {

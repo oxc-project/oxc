@@ -187,17 +187,15 @@ impl Rule for AutocompleteValid {
                 return;
             }
 
-            let autocomplete_prop = match has_jsx_prop_lowercase(jsx_el, "autocomplete") {
-                Some(autocomplete_prop) => autocomplete_prop,
-                None => return,
+            let Some(autocomplete_prop) = has_jsx_prop_lowercase(jsx_el, "autocomplete") else {
+                return;
             };
             let attr = match autocomplete_prop {
                 JSXAttributeItem::Attribute(attr) => attr,
                 JSXAttributeItem::SpreadAttribute(_) => return,
             };
-            let autocomplete_values = match &attr.value {
-                Some(JSXAttributeValue::StringLiteral(autocomplete_values)) => autocomplete_values,
-                _ => return,
+            let Some(JSXAttributeValue::StringLiteral(autocomplete_values)) = &attr.value else {
+                return;
             };
             let value = autocomplete_values.value.to_string();
             if !is_valid_autocomplete_value(&value) {
