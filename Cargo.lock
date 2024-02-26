@@ -822,15 +822,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "inlinable_string"
-version = "0.1.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8fae54786f62fb2918dcfae3d568594e50eb9b5c25bf04371af6fe7516452fb"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "insta"
 version = "1.35.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1669,7 +1660,6 @@ name = "oxc_span"
 version = "0.8.0"
 dependencies = [
  "compact_str",
- "inlinable_string",
  "miette",
  "serde",
  "tsify",

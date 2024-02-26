@@ -8,7 +8,6 @@ use std::{
 use serde::{Serialize, Serializer};
 
 use compact_str::CompactString;
-use inlinable_string::inline_string::{InlineString, INLINE_STRING_CAPACITY};
 
 const BASE54_CHARS: &[u8; 64] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_0123456789";
 
@@ -29,16 +28,10 @@ export type CompactString = string;
 pub struct Atom<'a>(AtomImpl<'a>);
 
 /// Immutable Inlinable String
-///
-/// https://github.com/fitzgen/inlinable_string/blob/master/src/lib.rs
 #[derive(Clone, Eq, PartialEq)]
 enum AtomImpl<'a> {
-    /// A arena heap-allocated string.
     Arena(&'a str),
-    /// A heap-allocated string.
-    Heap(Box<str>),
-    /// A small string stored inline.
-    Inline(InlineString),
+    Compact(CompactString),
 }
 
 #[cfg(feature = "serde")]
@@ -52,16 +45,11 @@ impl<'a> Serialize for Atom<'a> {
 }
 
 impl<'a> Atom<'a> {
-    pub fn new_inline(s: &str) -> Self {
-        Self(AtomImpl::Inline(InlineString::from(s)))
-    }
-
     #[inline]
     pub fn as_str(&self) -> &str {
         match &self.0 {
             AtomImpl::Arena(s) => s,
-            AtomImpl::Heap(s) => s,
-            AtomImpl::Inline(s) => s.as_ref(),
+            AtomImpl::Compact(s) => s.as_ref(),
         }
     }
 
@@ -69,24 +57,23 @@ impl<'a> Atom<'a> {
     pub fn into_string(self) -> String {
         match self.0 {
             AtomImpl::Arena(s) => String::from(s),
-            AtomImpl::Heap(s) => s.to_string(),
-            AtomImpl::Inline(s) => s.to_string(),
+            AtomImpl::Compact(s) => s.to_string(),
         }
     }
 
+    #[inline]
     pub fn into_compact_string(self) -> CompactString {
         match self.0 {
             AtomImpl::Arena(s) => CompactString::new(s),
-            AtomImpl::Heap(s) => CompactString::new(s),
-            AtomImpl::Inline(s) => CompactString::new(s),
+            AtomImpl::Compact(s) => s,
         }
     }
 
+    #[inline]
     pub fn to_compact_string(&self) -> CompactString {
         match &self.0 {
             AtomImpl::Arena(s) => CompactString::new(s),
-            AtomImpl::Heap(s) => CompactString::new(s),
-            AtomImpl::Inline(s) => CompactString::new(s),
+            AtomImpl::Compact(s) => s.clone(),
         }
     }
 
@@ -108,37 +95,25 @@ impl<'a> Atom<'a> {
             ret.push(BASE54_CHARS[num % base] as char);
             num /= base;
         }
-        Self(AtomImpl::Heap(ret.into_boxed_str()))
+        Self(AtomImpl::Compact(CompactString::new(ret)))
     }
 }
 
 impl<'a> From<&'a str> for Atom<'a> {
     fn from(s: &'a str) -> Self {
-        if s.len() <= INLINE_STRING_CAPACITY {
-            Self(AtomImpl::Inline(InlineString::from(s)))
-        } else {
-            Self(AtomImpl::Arena(s))
-        }
+        Self(AtomImpl::Arena(s))
     }
 }
 
 impl<'a> From<String> for Atom<'a> {
     fn from(s: String) -> Self {
-        if s.len() <= INLINE_STRING_CAPACITY {
-            Self(AtomImpl::Inline(InlineString::from(s.as_str())))
-        } else {
-            Self(AtomImpl::Heap(s.into_boxed_str()))
-        }
+        Self(AtomImpl::Compact(CompactString::from(s)))
     }
 }
 
 impl<'a> From<Cow<'_, str>> for Atom<'a> {
     fn from(s: Cow<'_, str>) -> Self {
-        if s.len() <= INLINE_STRING_CAPACITY {
-            Self(AtomImpl::Inline(InlineString::from(s.borrow())))
-        } else {
-            Self(AtomImpl::Heap(s.into()))
-        }
+        Self(AtomImpl::Compact(CompactString::from(s)))
     }
 }
 
@@ -151,14 +126,12 @@ impl<'a> Deref for Atom<'a> {
 }
 
 impl<'a> AsRef<str> for Atom<'a> {
-    #[inline]
     fn as_ref(&self) -> &str {
         self.as_str()
     }
 }
 
 impl<'a> Borrow<str> for Atom<'a> {
-    #[inline]
     fn borrow(&self) -> &str {
         self.as_str()
     }
@@ -177,12 +150,10 @@ impl<'a> PartialEq<Atom<'a>> for &str {
 }
 
 impl<'a> hash::Hash for AtomImpl<'a> {
-    #[inline]
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
         match self {
             Self::Arena(s) => s.hash(hasher),
-            Self::Heap(s) => s.hash(hasher),
-            Self::Inline(s) => s.hash(hasher),
+            Self::Compact(s) => s.hash(hasher),
         }
     }
 }

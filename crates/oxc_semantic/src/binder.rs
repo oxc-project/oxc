@@ -345,7 +345,7 @@ impl<'a> Binder for TSEnumMember<'a> {
         let name = match &self.id {
             TSEnumMemberName::Identifier(id) => id.name.clone(),
             TSEnumMemberName::StringLiteral(s) => s.value.clone(),
-            TSEnumMemberName::NumericLiteral(n) => Atom::new_inline(&n.value.to_string()),
+            TSEnumMemberName::NumericLiteral(n) => Atom::from(n.value.to_string()),
             TSEnumMemberName::ComputedPropertyName(_) => panic!("TODO: implement"),
         };
         builder.declare_symbol(
