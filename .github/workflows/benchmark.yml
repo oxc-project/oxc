@@ -31,14 +31,14 @@ jobs:
       - name: Checkout Branch
         uses: actions/checkout@v4
         with:
-          progress: false
+          show-progress: false
           persist-credentials: false
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
         with:
           shared-key: 'benchmark'
-          save-cache: ${{ github.ref_name == 'main' }}
+          # save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Install codspeed
         uses: taiki-e/install-action@v2
