@@ -18,7 +18,7 @@ pub struct DuplicateKeys<'a> {
 
 impl<'a> DuplicateKeys<'a> {
     pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
-        (options.target < TransformTarget::ES2015 || options.duplicate_keys).then(|| Self { ast })
+        (options.target < TransformTarget::ES2015 || options.duplicate_keys).then_some(Self { ast })
     }
 
     pub fn transform_object_expression<'b>(&mut self, obj_expr: &'b mut ObjectExpression<'a>) {

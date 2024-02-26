@@ -45,7 +45,7 @@ impl<'a> NewTarget<'a> {
         options: &TransformOptions,
     ) -> Option<Self> {
         let kinds = ast.new_vec();
-        (options.target < TransformTarget::ES2015 || options.new_target).then(|| Self {
+        (options.target < TransformTarget::ES2015 || options.new_target).then_some(Self {
             ast,
             ctx,
             kinds,

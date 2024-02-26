@@ -63,7 +63,7 @@ impl<'a> Lexer<'a> {
         if !has_escape {
             return;
         }
-        self.escaped_templates.insert(self.token.start, is_valid_escape_sequence.then(|| s));
+        self.escaped_templates.insert(self.token.start, is_valid_escape_sequence.then_some(s));
         self.token.escaped = true;
     }
 

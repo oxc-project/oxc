@@ -30,7 +30,7 @@ impl<'a> FunctionName<'a> {
         ctx: TransformerCtx<'a>,
         options: &TransformOptions,
     ) -> Option<Self> {
-        (options.target < TransformTarget::ES2015 || options.function_name).then(|| Self {
+        (options.target < TransformTarget::ES2015 || options.function_name).then_some(Self {
             _ast: ast,
             ctx,
             // TODO hook up the plugin

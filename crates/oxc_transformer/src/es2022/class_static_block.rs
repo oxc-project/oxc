@@ -17,7 +17,7 @@ pub struct ClassStaticBlock<'a> {
 impl<'a> ClassStaticBlock<'a> {
     pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
         (options.target < TransformTarget::ES2022 || options.class_static_block)
-            .then(|| Self { ast })
+            .then_some(Self { ast })
     }
 
     pub fn transform_class_body<'b>(&mut self, class_body: &'b mut ClassBody<'a>) {

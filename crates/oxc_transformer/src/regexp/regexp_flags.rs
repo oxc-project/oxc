@@ -22,7 +22,7 @@ pub struct RegexpFlags<'a> {
 impl<'a> RegexpFlags<'a> {
     pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
         let transform_flags = Self::from_transform_target(options);
-        (!transform_flags.is_empty()).then(|| Self { ast, transform_flags })
+        (!transform_flags.is_empty()).then_some(Self { ast, transform_flags })
     }
 
     fn from_transform_target(options: &TransformOptions) -> RegExpFlags {
