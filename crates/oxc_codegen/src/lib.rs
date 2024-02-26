@@ -37,7 +37,7 @@ pub use crate::{
 pub struct LineOffsetTable {
     columns: Option<Vec<u32>>,
     byte_offset_to_first: u32,
-    byte_offset_to_start_of_line: usize,
+    byte_offset_to_start_of_line: u32,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -456,14 +456,16 @@ fn choose_quote(s: &str) -> char {
         }
         let (original_line, original_column) = self.search_original_line_and_column(start);
         self.update_generated_line_and_column();
+        // println!("span {}, {:?} => {:?}", start, (original_line, original_column), (self.generated_line, self.generated_column));
         let name_id = name.map(|s| self.sourcemap_builder.add_name(s));
         self.sourcemap_builder.add_raw(self.generated_line, self.generated_column, original_line, original_column, Some(self.source_id), name_id);
     }
 
     fn search_original_line_and_column(&self, start: u32) -> (u32, u32) {
-        let original_line = self.line_offset_tables.binary_search_by(|table| table.byte_offset_to_start_of_line.cmp(&(start as usize))).unwrap_or_default();
+        let result = self.line_offset_tables.partition_point( |table| table.byte_offset_to_start_of_line <= start);
+        let original_line = if result > 0 { result - 1 } else { 0 };
         let line = &self.line_offset_tables[original_line];
-        let mut original_column = start - line.byte_offset_to_start_of_line as u32;
+        let mut original_column = start - line.byte_offset_to_start_of_line;
         if original_column >= line.byte_offset_to_first {
             if let Some(cols) = &line.columns {
                 original_column = cols[original_column as usize - line.byte_offset_to_first as usize];
@@ -476,6 +478,7 @@ fn choose_quote(s: &str) -> char {
         let s = unsafe {
             std::str::from_utf8_unchecked(&self.code[self.last_generated_update..])
         };
+        // println!("\n---- {:?}", s);
         for (i, ch) in s.chars().enumerate() {
             match ch {
                 '\r' | '\n' | LS | PS => {
@@ -536,7 +539,7 @@ fn choose_quote(s: &str) -> char {
                         continue;
                     }
 
-                    tables.push(LineOffsetTable { columns, byte_offset_to_first, byte_offset_to_start_of_line: line_byte_offset });
+                    tables.push(LineOffsetTable { columns, byte_offset_to_first, byte_offset_to_start_of_line: line_byte_offset as u32 });
                     column = 0;
                     columns = None;
                     byte_offset_to_first = 0;
@@ -563,7 +566,9 @@ fn choose_quote(s: &str) -> char {
             }
         }
 
-        tables.push(LineOffsetTable { columns, byte_offset_to_first, byte_offset_to_start_of_line: line_byte_offset });
+        tables.push(LineOffsetTable { columns, byte_offset_to_first, byte_offset_to_start_of_line: line_byte_offset as u32});
+
+        // dbg!(&tables);
 
         tables
     }

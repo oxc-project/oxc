@@ -42,8 +42,8 @@ impl<T: Case> Suite<T> for SourcemapSuite<T> {
         !path.contains("input.js") 
     }
 
-    fn run_coverage(&self, _name: &str, _args: &crate::AppArgs) {
-        let path = project_root().join("tasks/coverage/sourcemap.snap");
+    fn run_coverage(&self, name: &str, _args: &crate::AppArgs) {
+        let path = project_root().join(format!("tasks/coverage/{}.snap", name));
         let mut file = File::create(path).unwrap();
 
         let mut tests = self

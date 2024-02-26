@@ -110,6 +110,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ExpressionStatement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+        p.add_source_mapping(self.span.start);
         p.print_indent();
         p.start_of_stmt = p.code_len();
         p.print_expression(&self.expression);
@@ -1017,7 +1018,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierReference<'a> {
         // }
         // }
         // }
-        p.add_source_mapping_for_name(self.span.start, &self.name);
+        p.add_source_mapping(self.span.start);
         p.print_str(self.name.as_bytes());
     }
 }
@@ -2036,7 +2037,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
                 super_class.gen_expr(p, Precedence::Call, Context::default());
             }
             p.print_soft_space();
-            p.print_block_start(self.span.start);
+            p.print_block_start(self.body.span.start);
             for item in &self.body.body {
                 if !p.options.enable_typescript && item.is_typescript_syntax() {
                     continue;
@@ -2054,7 +2055,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
                 }
                 p.print_soft_newline();
             }
-            p.print_block_end(self.span.end);
+            p.print_block_end(self.body.span.end);
             p.needs_semicolon = false;
         });
     }
@@ -2272,7 +2273,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXFragment<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for StaticBlock<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        p.add_source_mapping(self.span.start);
         p.print_str(b"static");
         p.print_block_start(self.span.start);
         for stmt in &self.body {
