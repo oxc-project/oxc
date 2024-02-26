@@ -46,19 +46,7 @@ jobs:
           tool: cargo-codspeed
 
       - name: Build Benchmark
-        env:
-          RUSTFLAGS: "-C debuginfo=2 -C strip=none -g --cfg codspeed"
-        shell: bash
-        run: |
-          cargo build --release -p oxc_benchmark --features codspeed --bench lexer --bench parser --bench transformer --bench semantic --bench linter --bench minifier
-          mkdir -p target/codspeed/oxc_benchmark/
-          mv target/release/deps/lexer-* target/codspeed/oxc_benchmark
-          mv target/release/deps/parser-* target/codspeed/oxc_benchmark
-          mv target/release/deps/transformer-* target/codspeed/oxc_benchmark
-          mv target/release/deps/semantic-* target/codspeed/oxc_benchmark
-          mv target/release/deps/linter-* target/codspeed/oxc_benchmark
-          mv target/release/deps/minifier-* target/codspeed/oxc_benchmark
-          rm -rf target/codspeed/oxc_benchmark/*.d
+        run: cargo codspeed build --features codspeed -p oxc_benchmark
 
       - name: Run benchmark
         uses: CodSpeedHQ/action@v2
