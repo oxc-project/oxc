@@ -86,7 +86,7 @@ oxc_language_server = { path = "crates/oxc_language_server" }
 assert-unchecked          = { version = "0.1.2" }
 bpaf                      = { version = "0.9.9" }
 bitflags                  = { version = "2.4.2" }
-bumpalo                   = { version = "3.15.0" }
+bumpalo                   = { version = "3.15.3" }
 convert_case              = { version = "0.6.0" }
 criterion                 = { version = "0.5.1", default-features = false }
 crossbeam-channel         = { version = "0.5.11" }
@@ -112,8 +112,8 @@ rustc-hash                = { version = "1.1.0", default-features = false, featu
 ryu-js                    = { version = "1.0.0" }
 ropey                     = { version = "1.6.1" }
 seq-macro                 = { version = "0.3.5" }
-serde                     = { version = "1.0.196" }
-serde_json                = { version = "1.0.113" }
+serde                     = { version = "1.0.197" }
+serde_json                = { version = "1.0.114" }
 syn                       = { version = "=1.0.109" }
 thiserror                 = { version = "1.0.57" }
 tokio                     = { version = "1" }
@@ -135,7 +135,7 @@ mime_guess                = { version = "2.0.4" }
 language-tags             = { version = "0.3.2" }
 tsify                     = { version = "0.4.5" }
 wasm-bindgen              = { version = "0.2" }
-serde-wasm-bindgen        = { version = "0.6.3" }
+serde-wasm-bindgen        = { version = "0.6.4" }
 
 [profile.release.package.oxc_wasm]
 opt-level = 'z'
