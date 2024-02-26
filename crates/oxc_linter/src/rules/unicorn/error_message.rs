@@ -84,14 +84,11 @@ impl Rule for ErrorMessage {
 
         let message_argument = args.get(message_argument_idx);
 
-        let arg = match message_argument {
-            Some(v) => v,
-            None => {
-                return ctx.diagnostic(ErrorMessageDiagnostic::MissingMessage(
-                    constructor_name.to_compact_string(),
-                    span,
-                ))
-            }
+        let Some(arg) = message_argument else {
+            return ctx.diagnostic(ErrorMessageDiagnostic::MissingMessage(
+                constructor_name.to_compact_string(),
+                span,
+            ));
         };
 
         let arg = match arg {

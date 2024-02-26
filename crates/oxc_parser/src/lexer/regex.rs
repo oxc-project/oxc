@@ -60,9 +60,7 @@ impl<'a> Lexer<'a> {
 
         while let Some(ch @ ('$' | '_' | 'a'..='z' | 'A'..='Z' | '0'..='9')) = self.peek() {
             self.consume_char();
-            let flag = if let Ok(flag) = RegExpFlags::try_from(ch) {
-                flag
-            } else {
+            let Ok(flag) = RegExpFlags::try_from(ch) else {
                 self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
                 continue;
             };

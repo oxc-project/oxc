@@ -17,7 +17,7 @@ pub struct TemplateLiterals<'a> {
 impl<'a> TemplateLiterals<'a> {
     pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
         (options.target < TransformTarget::ES2015 || options.template_literals)
-            .then(|| Self { ast })
+            .then_some(Self { ast })
     }
 
     pub fn transform_expression<'b>(&mut self, expr: &'b mut Expression<'a>) {
