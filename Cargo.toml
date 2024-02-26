@@ -12,7 +12,7 @@ homepage     = "https://oxc-project.github.io"
 keywords     = ["JavaScript", "TypeScript", "parser", "linter", "minifier"]
 license      = "MIT"
 repository   = "https://github.com/oxc-project/oxc"
-rust-version = "1.60"
+rust-version = "1.74"
 
 [workspace.lints.rust]
 
