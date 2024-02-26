@@ -1105,9 +1105,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_switch_statement(&mut self, stmt: &SwitchStatement<'a>) {
         let kind = AstKind::SwitchStatement(self.alloc(stmt));
-        self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
         self.visit_expression(&stmt.discriminant);
+        self.enter_scope(ScopeFlags::empty());
 
         /* cfg */
         let discriminant_graph_ix = self.cfg.current_node_ix;
@@ -1170,8 +1170,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         );
         /* cfg */
 
-        self.leave_node(kind);
         self.leave_scope();
+        self.leave_node(kind);
     }
 
     fn visit_switch_case(&mut self, case: &SwitchCase<'a>) {
