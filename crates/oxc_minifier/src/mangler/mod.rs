@@ -1,9 +1,8 @@
 use itertools::Itertools;
-#[allow(clippy::wildcard_imports)]
-use oxc_ast::ast::*;
+use oxc_ast::ast::Program;
 use oxc_index::{index_vec, IndexVec};
 use oxc_semantic::{ReferenceId, SemanticBuilder, SymbolId, SymbolTable};
-use oxc_span::Atom;
+use oxc_span::CompactString;
 
 type Slot = usize;
 
@@ -123,7 +122,7 @@ impl ManglerBuilder {
         let mut count = 0;
         for _ in 0..total_number_of_slots {
             names.push(loop {
-                let name = Atom::base54(count);
+                let name = base54(count);
                 count += 1;
                 // Do not mangle keywords and unresolved references
                 if !is_keyword(&name) && !unresolved_references.iter().any(|n| **n == name) {
@@ -148,7 +147,8 @@ impl ManglerBuilder {
 
         let mut freq_iter = frequencies.iter();
         // 2. "N number of vars are going to be assigned names of the same length"
-        for (_, slice_of_same_len_strings_group) in &names.into_iter().group_by(|a| a.len()) {
+        for (_, slice_of_same_len_strings_group) in &names.into_iter().group_by(CompactString::len)
+        {
             // 1. "The most frequent vars get the shorter names"
             // (freq_iter is sorted by frequency from highest to lowest,
             //  so taking means take the N most frequent symbols remaining)
@@ -171,7 +171,7 @@ impl ManglerBuilder {
             // rename the variables
             for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
                 for symbol_id in &symbol_to_rename.symbol_ids {
-                    symbol_table.set_name(*symbol_id, new_name.to_compact_string());
+                    symbol_table.set_name(*symbol_id, new_name.clone());
                 }
             }
         }
@@ -213,4 +213,27 @@ fn is_keyword(s: &str) -> bool {
             | "let" | "new" | "out" | "set" | "try" | "var" | "case" | "else"
             | "enum" | "from" | "meta" | "null" | "this" | "true" | "type"
             | "void" | "with")
+}
+
+const BASE54_CHARS: &[u8; 64] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_0123456789";
+
+/// Get the shortest mangled name for a given n.
+/// Code adapted from [terser](https://github.com/terser/terser/blob/8b966d687395ab493d2c6286cc9dd38650324c11/lib/scope.js#L1041-L1051)
+fn base54(n: usize) -> CompactString {
+    let mut num = n;
+    // Base 54 at first because these are the usable first characters in JavaScript identifiers
+    // <https://tc39.es/ecma262/#prod-IdentifierStart>
+    let base = 54usize;
+    let mut ret = String::new();
+    ret.push(BASE54_CHARS[num % base] as char);
+    num /= base;
+    // Base 64 for the rest because after the first character we can also use 0-9 too
+    // <https://tc39.es/ecma262/#prod-IdentifierPart>
+    let base = 64usize;
+    while num > 0 {
+        num -= 1;
+        ret.push(BASE54_CHARS[num % base] as char);
+        num /= base;
+    }
+    CompactString::new(ret)
 }
