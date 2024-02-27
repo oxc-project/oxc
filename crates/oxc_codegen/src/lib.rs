@@ -43,7 +43,6 @@ pub struct LineOffsetTable {
 #[derive(Debug, Default, Clone, Copy)]
 pub struct CodegenOptions {
     pub enable_typescript: bool,
-    pub sourcemap: bool,
 }
 
 pub struct Codegen<const MINIFY: bool> {
@@ -72,6 +71,7 @@ pub struct Codegen<const MINIFY: bool> {
     indentation: u8,
 
     // sourcemap
+    enable_sourcemap: bool,
     source_id: u32,
     last_generated_update: usize,
     last_position: Option<u32>,
@@ -106,6 +106,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
             indentation: 0,
+            enable_sourcemap: false,
             source_id: 0,
             last_generated_update: 0,
             last_position: None,
@@ -136,7 +137,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         source: &str,
         source_name: &str,
     ) -> (String, SourceMap) {
-        self.options.sourcemap = true;
+        self.enable_sourcemap = true;
         self.line_offset_tables = Self::generate_line_offset_tables(source);
         self.source_id = self.sourcemap_builder.add_source(source_name);
         self.sourcemap_builder.set_source_contents(self.source_id, Some(source));
@@ -277,11 +278,8 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     }
 
     fn print_block1(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
-        self.add_source_mapping(stmt.span.start);
-        self.print_block_start();
-        self.print_directives_and_statements_with_semicolon_order(None, &stmt.body, ctx, true);
-        self.print_block_end();
         self.print_block_start(stmt.span.start);
+        self.print_directives_and_statements_with_semicolon_order(None, &stmt.body, ctx, true);
         for item in &stmt.body {
             self.print_semicolon_if_needed();
             item.gen(self, ctx);
@@ -434,89 +432,6 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             }
         }
     }
-}
-
-fn choose_quote(s: &str) -> char {
-    let mut single_cost = 0;
-    let mut double_cost = 0;
-    for c in s.chars() {
-        match c {
-            '\'' => single_cost += 1,
-            '"' => double_cost += 1,
-            _ => {}
-        }
-    }
-
-    if single_cost > double_cost {
-        '"'
-    } else {
-        '\''
-    }
-
-    fn wrap_quote<F: FnMut(&mut Self, char)>(&mut self, s: &str, mut f: F) {
-        let quote = choose_quote(s);
-        self.print(quote as u8);
-        f(self, quote);
-        self.print(quote as u8);
-    }
-
-    fn print_directives_and_statements_with_semicolon_order(
-        &mut self,
-        directives: Option<&[Directive]>,
-        statements: &[Statement<'_>],
-        ctx: Context,
-        print_semicolon_first: bool,
-    ) {
-        if let Some(directives) = directives {
-            if directives.is_empty() {
-                if let Some(Statement::ExpressionStatement(s)) = statements.first() {
-                    if matches!(s.expression.get_inner_expression(), Expression::StringLiteral(_)) {
-                        self.print_semicolon();
-                    }
-                }
-            } else {
-                for directive in directives {
-                    directive.gen(self, ctx);
-                }
-                self.print_soft_newline();
-            }
-        }
-        for stmt in statements {
-            if let Statement::Declaration(decl) = stmt {
-                if decl.is_typescript_syntax()
-                    && !self.options.enable_typescript
-                    && !matches!(decl, Declaration::TSEnumDeclaration(_))
-                {
-                    continue;
-                }
-            }
-            if print_semicolon_first {
-                self.print_semicolon_if_needed();
-                stmt.gen(self, ctx);
-            } else {
-                stmt.gen(self, ctx);
-                self.print_semicolon_if_needed();
-            }
-        }
-    }
-}
-
-fn choose_quote(s: &str) -> char {
-    let mut single_cost = 0;
-    let mut double_cost = 0;
-    for c in s.chars() {
-        match c {
-            '\'' => single_cost += 1,
-            '"' => double_cost += 1,
-            _ => {}
-        }
-    }
-
-    if single_cost > double_cost {
-        '"'
-    } else {
-        '\''
-    }
 
     fn add_source_mapping(&mut self, position: u32) {
         self.internal_add_source_mapping(position, None);
@@ -527,7 +442,7 @@ fn choose_quote(s: &str) -> char {
     }
 
     fn internal_add_source_mapping(&mut self, position: u32, name: Option<&str>) {
-        if self.options.sourcemap {
+        if self.enable_sourcemap {
             if matches!(self.last_position, Some(last_position) if last_position == position) {
                 return;
             }
@@ -664,5 +579,23 @@ fn choose_quote(s: &str) -> char {
         // dbg!(&tables);
 
         tables
+    }
+}
+
+fn choose_quote(s: &str) -> char {
+    let mut single_cost = 0;
+    let mut double_cost = 0;
+    for c in s.chars() {
+        match c {
+            '\'' => single_cost += 1,
+            '"' => double_cost += 1,
+            _ => {}
+        }
+    }
+
+    if single_cost > double_cost {
+        '"'
+    } else {
+        '\''
     }
 }
