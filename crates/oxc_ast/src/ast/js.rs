@@ -2285,7 +2285,7 @@ pub struct ImportNamespaceSpecifier<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct WithClause<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -2322,7 +2322,7 @@ impl<'a> ImportAttributeKey<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct ExportNamedDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -2362,7 +2362,7 @@ impl<'a> ExportDefaultDeclaration<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct ExportAllDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -2380,7 +2380,7 @@ impl<'a> ExportAllDeclaration<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct ExportSpecifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
