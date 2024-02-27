@@ -142,9 +142,9 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         self.source_id = self.sourcemap_builder.add_source(source_name);
         self.sourcemap_builder.set_source_contents(self.source_id, Some(source));
         program.gen(&mut self, Context::default());
-        let sourcemap_builder =
-            std::mem::replace(&mut self.sourcemap_builder, SourceMapBuilder::new(None));
-        (self.into_code(), sourcemap_builder.into_sourcemap())
+        let code = std::mem::take(&mut self.code);
+        // SAFETY: criteria of `from_utf8_unchecked`.are met.
+        (unsafe { String::from_utf8_unchecked(code) }, self.sourcemap_builder.into_sourcemap())
     }
 
     fn code(&self) -> &Vec<u8> {
@@ -474,8 +474,8 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         (original_line as u32, original_column as u32)
     }
 
-    #[allow(clippy::undocumented_unsafe_blocks)]
     fn update_generated_line_and_column(&mut self) {
+        // SAFETY: criteria of `from_utf8_unchecked`.are met.
         let s = unsafe { std::str::from_utf8_unchecked(&self.code[self.last_generated_update..]) };
         // println!("\n---- {:?}", s);
         for (i, ch) in s.chars().enumerate() {
