@@ -1,13 +1,15 @@
-use std::{fs::File, path::{Path, PathBuf}};
-use base64::{prelude::BASE64_STANDARD, Engine};
-use oxc_tasks_common::project_root;
-use oxc_span::SourceType;
-use std::io::Write;
 use crate::suite::{Case, Suite, TestResult};
+use base64::{prelude::BASE64_STANDARD, Engine};
+use oxc_span::SourceType;
+use oxc_tasks_common::project_root;
+use std::io::Write;
+use std::{
+    fs::File,
+    path::{Path, PathBuf},
+};
 
-
-static FIXTURES_PATH: &str = "tasks/coverage/babel/packages/babel-generator/test/fixtures/sourcemaps";
-
+static FIXTURES_PATH: &str =
+    "tasks/coverage/babel/packages/babel-generator/test/fixtures/sourcemaps";
 
 pub struct SourcemapSuite<T: Case> {
     test_root: PathBuf,
@@ -39,17 +41,14 @@ impl<T: Case> Suite<T> for SourcemapSuite<T> {
 
     fn skip_test_path(&self, path: &Path) -> bool {
         let path = path.to_string_lossy();
-        !path.contains("input.js") 
+        !path.contains("input.js")
     }
 
     fn run_coverage(&self, name: &str, _args: &crate::AppArgs) {
         let path = project_root().join(format!("tasks/coverage/{}.snap", name));
         let mut file = File::create(path).unwrap();
 
-        let mut tests = self
-            .get_test_cases()
-            .iter()
-            .collect::<Vec<_>>();
+        let mut tests = self.get_test_cases().iter().collect::<Vec<_>>();
         tests.sort_by_key(|case| case.path());
 
         for case in tests {
@@ -75,7 +74,6 @@ impl<T: Case> Suite<T> for SourcemapSuite<T> {
     }
 }
 
-
 pub struct SourcemapCase {
     path: PathBuf,
     code: String,
@@ -89,15 +87,15 @@ impl SourcemapCase {
     }
 
     fn create_visualizer_url(code: &str, map: &str) -> String {
-        let hash = BASE64_STANDARD.encode(format!("{}\0{}{}\0{}", code.len(), code, map.len(), map));
+        let hash =
+            BASE64_STANDARD.encode(format!("{}\0{}{}\0{}", code.len(), code, map.len(), map));
         format!("https://evanw.github.io/source-map-visualization/#{}", hash)
     }
 }
 
 impl Case for SourcemapCase {
     fn new(path: PathBuf, code: String) -> Self {
-        let source_type = SourceType::from_path(&path)
-            .unwrap();
+        let source_type = SourceType::from_path(&path).unwrap();
         Self { path, code, source_type, result: TestResult::ToBeRun }
     }
 
@@ -131,7 +129,8 @@ impl Case for SourcemapCase {
         }
 
         let codegen_options = oxc_codegen::CodegenOptions::default();
-        let (content, map) = oxc_codegen::Codegen::<false>::new(source_text.len(), codegen_options).build_with_sourcemap(&ret.program, source_text, "");
+        let (content, map) = oxc_codegen::Codegen::<false>::new(source_text.len(), codegen_options)
+            .build_with_sourcemap(&ret.program, source_text, "");
         let mut buff = vec![];
         map.to_writer(&mut buff).unwrap();
 

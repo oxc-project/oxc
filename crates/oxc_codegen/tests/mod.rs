@@ -1,4 +1,3 @@
-
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::Parser;
@@ -21,9 +20,11 @@ fn test_ts(source_text: &str, expected: &str, is_typescript_definition: bool) {
         .with_module(true);
     let program = Parser::new(&allocator, source_text, source_type).parse().program;
     let program = allocator.alloc(program);
-    let result =
-        Codegen::<false>::new(source_text.len(), CodegenOptions { enable_typescript: true, sourcemap: false })
-            .build(program);
+    let result = Codegen::<false>::new(
+        source_text.len(),
+        CodegenOptions { enable_typescript: true, sourcemap: false },
+    )
+    .build(program);
     assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
 }
 

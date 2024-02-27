@@ -35,7 +35,7 @@ pub enum TestResult {
     CorrectError(String, /* panicked */ bool),
     RuntimeError(String),
     CodegenError(/* reason */ &'static str),
-    Snapshot(String)
+    Snapshot(String),
 }
 
 pub struct CoverageReport<'a, T> {

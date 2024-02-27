@@ -4,10 +4,10 @@ mod minifier;
 mod misc;
 mod prettier;
 mod runtime;
+mod sourcemap;
 mod suite;
 mod test262;
 mod typescript;
-mod sourcemap;
 
 use std::{fs, path::PathBuf, process::Command, time::Duration};
 

@@ -24,7 +24,7 @@ use oxc_syntax::{
     precedence::Precedence,
     symbol::SymbolId,
 };
-use sourcemap::{SourceMapBuilder, SourceMap};
+use sourcemap::{SourceMap, SourceMapBuilder};
 
 pub use crate::{
     context::Context,
@@ -35,9 +35,9 @@ pub use crate::{
 
 #[derive(Debug)]
 pub struct LineOffsetTable {
-    columns: Option<Vec<u32>>,
-    byte_offset_to_first: u32,
-    byte_offset_to_start_of_line: u32,
+    columns: Option<Vec<usize>>,
+    byte_offset_to_first: usize,
+    byte_offset_to_start_of_line: usize,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -130,13 +130,19 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         unsafe { String::from_utf8_unchecked(self.code) }
     }
 
-    pub fn build_with_sourcemap(mut self, program: &Program<'_>, source: &str, source_name: &str) -> (String, SourceMap) {
+    pub fn build_with_sourcemap(
+        mut self,
+        program: &Program<'_>,
+        source: &str,
+        source_name: &str,
+    ) -> (String, SourceMap) {
         self.options.sourcemap = true;
         self.line_offset_tables = Self::generate_line_offset_tables(source);
-        self.source_id = self.sourcemap_builder.add_source( source_name); 
+        self.source_id = self.sourcemap_builder.add_source(source_name);
         self.sourcemap_builder.set_source_contents(self.source_id, Some(source));
         program.gen(&mut self, Context::default());
-        let sourcemap_builder = std::mem::replace(&mut self.sourcemap_builder, SourceMapBuilder::new(None));
+        let sourcemap_builder =
+            std::mem::replace(&mut self.sourcemap_builder, SourceMapBuilder::new(None));
         (self.into_code(), sourcemap_builder.into_sourcemap())
     }
 
@@ -284,7 +290,13 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         self.needs_semicolon = false;
     }
 
-    fn print_block<T: Gen<MINIFY>>(&mut self, items: &[T], separator: Separator, ctx: Context, span: Span) {
+    fn print_block<T: Gen<MINIFY>>(
+        &mut self,
+        items: &[T],
+        separator: Separator,
+        ctx: Context,
+        span: Span,
+    ) {
         self.print_block_start(span.start);
         self.print_sequence(items, separator, ctx);
         self.print_block_end(span.end);
@@ -326,7 +338,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         // return;
         // }
         // }
-        self.add_source_mapping_for_name(start, &fallback);
+        self.add_source_mapping_for_name(start, fallback);
         self.print_str(fallback.as_bytes());
     }
 
@@ -515,7 +527,7 @@ fn choose_quote(s: &str) -> char {
     }
 
     fn internal_add_source_mapping(&mut self, position: u32, name: Option<&str>) {
-        if self.options.sourcemap  {
+        if self.options.sourcemap {
             if matches!(self.last_position, Some(last_position) if last_position == position) {
                 return;
             }
@@ -523,28 +535,37 @@ fn choose_quote(s: &str) -> char {
             self.update_generated_line_and_column();
             // println!("span {}, {:?} => {:?}", position, (original_line, original_column), (self.generated_line, self.generated_column));
             let name_id = name.map(|s| self.sourcemap_builder.add_name(s));
-            self.sourcemap_builder.add_raw(self.generated_line, self.generated_column, original_line, original_column, Some(self.source_id), name_id);
+            self.sourcemap_builder.add_raw(
+                self.generated_line,
+                self.generated_column,
+                original_line,
+                original_column,
+                Some(self.source_id),
+                name_id,
+            );
             self.last_position = Some(position);
         }
     }
 
     fn search_original_line_and_column(&self, position: u32) -> (u32, u32) {
-        let result = self.line_offset_tables.partition_point( |table| table.byte_offset_to_start_of_line <= position);
+        let result = self
+            .line_offset_tables
+            .partition_point(|table| table.byte_offset_to_start_of_line <= position as usize);
         let original_line = if result > 0 { result - 1 } else { 0 };
         let line = &self.line_offset_tables[original_line];
-        let mut original_column = position - line.byte_offset_to_start_of_line;
+        let mut original_column = (position as usize) - line.byte_offset_to_start_of_line;
         if original_column >= line.byte_offset_to_first {
             if let Some(cols) = &line.columns {
-                original_column = cols[original_column as usize - line.byte_offset_to_first as usize];
+                original_column =
+                    cols[original_column - line.byte_offset_to_first];
             }
         }
-        (original_line as u32, original_column)
+        (original_line as u32, original_column as u32)
     }
 
+    #[allow(clippy::undocumented_unsafe_blocks)]
     fn update_generated_line_and_column(&mut self) {
-        let s = unsafe {
-            std::str::from_utf8_unchecked(&self.code[self.last_generated_update..])
-        };
+        let s = unsafe { std::str::from_utf8_unchecked(&self.code[self.last_generated_update..]) };
         // println!("\n---- {:?}", s);
         for (i, ch) in s.chars().enumerate() {
             match ch {
@@ -555,7 +576,7 @@ fn choose_quote(s: &str) -> char {
                     }
                     self.generated_line += 1;
                     self.generated_column = 0;
-                },
+                }
                 _ => {
                     if ch as u32 <= 0xFF {
                         self.generated_column += 1;
@@ -572,7 +593,7 @@ fn choose_quote(s: &str) -> char {
         let mut tables = vec![];
         let mut columns = None;
         let mut column = 0;
-        let mut column_byte_offset = 0 ;
+        let mut column_byte_offset = 0;
         let mut line_byte_offset = 0;
         let mut byte_offset_to_first = 0;
         for (i, ch) in content.chars().enumerate() {
@@ -584,7 +605,7 @@ fn choose_quote(s: &str) -> char {
             // Start the mapping if this character is non-ASCII
             if !ch.is_ascii() && columns.is_none() {
                 column_byte_offset = i - line_byte_offset;
-                byte_offset_to_first = column_byte_offset as u32;
+                byte_offset_to_first = column_byte_offset;
                 columns = Some(vec![]);
             }
 
@@ -603,12 +624,16 @@ fn choose_quote(s: &str) -> char {
                         continue;
                     }
 
-                    tables.push(LineOffsetTable { columns, byte_offset_to_first, byte_offset_to_start_of_line: line_byte_offset as u32 });
+                    tables.push(LineOffsetTable {
+                        columns,
+                        byte_offset_to_first,
+                        byte_offset_to_start_of_line: line_byte_offset,
+                    });
                     column = 0;
                     columns = None;
                     byte_offset_to_first = 0;
                     column_byte_offset = 0;
-                },
+                }
                 _ => {
                     if ch as u32 <= 0xFF {
                         column += 1;
@@ -630,7 +655,11 @@ fn choose_quote(s: &str) -> char {
             }
         }
 
-        tables.push(LineOffsetTable { columns, byte_offset_to_first, byte_offset_to_start_of_line: line_byte_offset as u32});
+        tables.push(LineOffsetTable {
+            columns,
+            byte_offset_to_first,
+            byte_offset_to_start_of_line: line_byte_offset,
+        });
 
         // dbg!(&tables);
 

@@ -2306,11 +2306,11 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
             MethodDefinitionKind::Get => {
                 p.add_source_mapping(self.span.start);
                 p.print_str(b"get ");
-            },
+            }
             MethodDefinitionKind::Set => {
                 p.add_source_mapping(self.span.start);
                 p.print_str(b"set ");
-            },
+            }
         }
 
         if self.value.r#async {
