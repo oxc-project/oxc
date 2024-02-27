@@ -611,6 +611,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclaration<'a> {
         if p.options.enable_typescript && self.modifiers.contains(ModifierKind::Declare) {
             p.print_str(b"declare ");
         }
+        p.add_source_mapping(self.span.start);
         p.print_str(match self.kind {
             VariableDeclarationKind::Const => b"const",
             VariableDeclarationKind::Let => b"let",
@@ -1018,7 +1019,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierReference<'a> {
         // }
         // }
         // }
-        p.add_source_mapping(self.span.start);
+        p.add_source_mapping_for_name(self.span.start, &self.name);
         p.print_str(self.name.as_bytes());
     }
 }
@@ -2273,6 +2274,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXFragment<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for StaticBlock<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.add_source_mapping(self.span.start);
         p.print_str(b"static");
         p.print_block_start(self.span.start);
         for stmt in &self.body {

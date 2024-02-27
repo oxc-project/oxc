@@ -3,7 +3,7 @@ use base64::{prelude::BASE64_STANDARD, Engine};
 use oxc_tasks_common::project_root;
 use oxc_span::SourceType;
 use std::io::Write;
-use crate::{codegen, suite::{Case, Suite, TestResult}};
+use crate::suite::{Case, Suite, TestResult};
 
 
 static FIXTURES_PATH: &str = "tasks/coverage/babel/packages/babel-generator/test/fixtures/sourcemaps";
@@ -112,13 +112,6 @@ impl Case for SourcemapCase {
     fn test_result(&self) -> &TestResult {
         &self.result
     }
-
-    // fn should_fail(&self) -> bool {
-    // }
-
-    // fn skip_test_case(&self) -> bool {
-        
-    // }
 
     fn run(&mut self) {
         let source_type = self.source_type();

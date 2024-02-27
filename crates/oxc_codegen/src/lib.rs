@@ -74,10 +74,9 @@ pub struct Codegen<const MINIFY: bool> {
     // sourcemap
     source_id: u32,
     last_generated_update: usize,
+    last_position: Option<u32>,
     line_offset_tables: Vec<LineOffsetTable>,
     sourcemap_builder: SourceMapBuilder,
-    // original_line: u32,
-    // original_column: u32,
     generated_line: u32,
     generated_column: u32,
 }
@@ -109,10 +108,9 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             indentation: 0,
             source_id: 0,
             last_generated_update: 0,
+            last_position: None,
             line_offset_tables: vec![],
             sourcemap_builder: SourceMapBuilder::new(None),
-            // original_line: 0,
-            // original_column: 0,
             generated_line: 0,
             generated_column: 0,
         }
@@ -133,6 +131,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     }
 
     pub fn build_with_sourcemap(mut self, program: &Program<'_>, source: &str, source_name: &str) -> (String, SourceMap) {
+        self.options.sourcemap = true;
         self.line_offset_tables = Self::generate_line_offset_tables(source);
         self.source_id = self.sourcemap_builder.add_source( source_name); 
         self.sourcemap_builder.set_source_contents(self.source_id, Some(source));
@@ -442,30 +441,98 @@ fn choose_quote(s: &str) -> char {
         '\''
     }
 
-    fn add_source_mapping(&mut self, start: u32) {
-        self.internal_add_source_mapping(start, None);
+    fn wrap_quote<F: FnMut(&mut Self, char)>(&mut self, s: &str, mut f: F) {
+        let quote = choose_quote(s);
+        self.print(quote as u8);
+        f(self, quote);
+        self.print(quote as u8);
     }
 
-    fn add_source_mapping_for_name(&mut self, start: u32, name: &str) {
-        self.internal_add_source_mapping(start, Some(name));
-    }
-
-    fn internal_add_source_mapping(&mut self, start: u32, name: Option<&str>) {
-        if self.options.sourcemap && self.last_generated_update == self.code.len() {
-            return;
+    fn print_directives_and_statements_with_semicolon_order(
+        &mut self,
+        directives: Option<&[Directive]>,
+        statements: &[Statement<'_>],
+        ctx: Context,
+        print_semicolon_first: bool,
+    ) {
+        if let Some(directives) = directives {
+            if directives.is_empty() {
+                if let Some(Statement::ExpressionStatement(s)) = statements.first() {
+                    if matches!(s.expression.get_inner_expression(), Expression::StringLiteral(_)) {
+                        self.print_semicolon();
+                    }
+                }
+            } else {
+                for directive in directives {
+                    directive.gen(self, ctx);
+                }
+                self.print_soft_newline();
+            }
         }
-        let (original_line, original_column) = self.search_original_line_and_column(start);
-        self.update_generated_line_and_column();
-        // println!("span {}, {:?} => {:?}", start, (original_line, original_column), (self.generated_line, self.generated_column));
-        let name_id = name.map(|s| self.sourcemap_builder.add_name(s));
-        self.sourcemap_builder.add_raw(self.generated_line, self.generated_column, original_line, original_column, Some(self.source_id), name_id);
+        for stmt in statements {
+            if let Statement::Declaration(decl) = stmt {
+                if decl.is_typescript_syntax()
+                    && !self.options.enable_typescript
+                    && !matches!(decl, Declaration::TSEnumDeclaration(_))
+                {
+                    continue;
+                }
+            }
+            if print_semicolon_first {
+                self.print_semicolon_if_needed();
+                stmt.gen(self, ctx);
+            } else {
+                stmt.gen(self, ctx);
+                self.print_semicolon_if_needed();
+            }
+        }
+    }
+}
+
+fn choose_quote(s: &str) -> char {
+    let mut single_cost = 0;
+    let mut double_cost = 0;
+    for c in s.chars() {
+        match c {
+            '\'' => single_cost += 1,
+            '"' => double_cost += 1,
+            _ => {}
+        }
     }
 
-    fn search_original_line_and_column(&self, start: u32) -> (u32, u32) {
-        let result = self.line_offset_tables.partition_point( |table| table.byte_offset_to_start_of_line <= start);
+    if single_cost > double_cost {
+        '"'
+    } else {
+        '\''
+    }
+
+    fn add_source_mapping(&mut self, position: u32) {
+        self.internal_add_source_mapping(position, None);
+    }
+
+    fn add_source_mapping_for_name(&mut self, position: u32, name: &str) {
+        self.internal_add_source_mapping(position, Some(name));
+    }
+
+    fn internal_add_source_mapping(&mut self, position: u32, name: Option<&str>) {
+        if self.options.sourcemap  {
+            if matches!(self.last_position, Some(last_position) if last_position == position) {
+                return;
+            }
+            let (original_line, original_column) = self.search_original_line_and_column(position);
+            self.update_generated_line_and_column();
+            // println!("span {}, {:?} => {:?}", position, (original_line, original_column), (self.generated_line, self.generated_column));
+            let name_id = name.map(|s| self.sourcemap_builder.add_name(s));
+            self.sourcemap_builder.add_raw(self.generated_line, self.generated_column, original_line, original_column, Some(self.source_id), name_id);
+            self.last_position = Some(position);
+        }
+    }
+
+    fn search_original_line_and_column(&self, position: u32) -> (u32, u32) {
+        let result = self.line_offset_tables.partition_point( |table| table.byte_offset_to_start_of_line <= position);
         let original_line = if result > 0 { result - 1 } else { 0 };
         let line = &self.line_offset_tables[original_line];
-        let mut original_column = start - line.byte_offset_to_start_of_line;
+        let mut original_column = position - line.byte_offset_to_start_of_line;
         if original_column >= line.byte_offset_to_first {
             if let Some(cols) = &line.columns {
                 original_column = cols[original_column as usize - line.byte_offset_to_first as usize];
@@ -488,9 +555,6 @@ fn choose_quote(s: &str) -> char {
                     }
                     self.generated_line += 1;
                     self.generated_column = 0;
-                },
-                '\t' => {
-                    self.generated_column += 4;
                 },
                 _ => {
                     if ch as u32 <= 0xFF {
