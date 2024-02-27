@@ -2,7 +2,9 @@ use ignore::gitignore::Gitignore;
 use std::{env, io::BufWriter, time::Instant, vec::Vec};
 
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
-use oxc_linter::{partial_loader::LINT_PARTIAL_LOADER_EXT, LintOptions, LintService, Linter};
+use oxc_linter::{
+    partial_loader::LINT_PARTIAL_LOADER_EXT, LintOptions, LintService, LintServiceOptions, Linter,
+};
 use oxc_span::VALID_EXTENSIONS;
 
 use crate::{
@@ -37,6 +39,7 @@ impl Runner for LintRunner {
             fix_options,
             enable_plugins,
             config,
+            tsconfig,
             output_options,
             ..
         } = self.options;
@@ -110,7 +113,8 @@ impl Runner for LintRunner {
             }
         };
 
-        let lint_service = LintService::new(cwd, &paths, linter);
+        let options = LintServiceOptions { cwd, paths, tsconfig };
+        let lint_service = LintService::new(linter, options);
         let mut diagnostic_service =
             Self::get_diagnostic_service(&warning_options, &output_options);
 
