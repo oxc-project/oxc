@@ -122,8 +122,9 @@ impl Case for SourcemapCase {
         }
 
         let codegen_options = oxc_codegen::CodegenOptions::default();
-        let (content, map) = oxc_codegen::Codegen::<false>::new(source_text.len(), codegen_options)
-            .build_with_sourcemap(&ret.program, source_text, "");
+        let mut codegen = oxc_codegen::Codegen::<false>::new(source_text.len(), codegen_options);
+        let content = codegen.with_sourcemap(source_text, "").build(&ret.program);
+        let map = codegen.into_sourcemap();
         let mut buff = vec![];
         map.to_writer(&mut buff).unwrap();
 
