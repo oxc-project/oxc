@@ -1,5 +1,5 @@
 use std::cell::OnceCell;
-use super::jsdoc_tag::{JSDocParser, JSDocTag};
+use super::jsdoc_tag::{JSDocTagParser, JSDocTag};
 
 #[derive(Debug, Clone)]
 pub struct JSDoc<'a> {
@@ -19,6 +19,6 @@ impl<'a> JSDoc<'a> {
     }
 
     pub fn tags<'b>(&'b self) -> &'b Vec<JSDocTag<'a>> {
-        self.tags.get_or_init(|| JSDocParser::new(self.comment_raw).parse())
+        self.tags.get_or_init(|| JSDocTagParser::new(self.comment_raw).parse())
     }
 }

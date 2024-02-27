@@ -72,12 +72,12 @@ impl<'a> JSDocTag<'a> {
 }
 
 #[derive(Debug)]
-pub struct JSDocParser<'a> {
+pub struct JSDocTagParser<'a> {
     source_text: &'a str,
     current: usize,
 }
 
-impl<'a> JSDocParser<'a> {
+impl<'a> JSDocTagParser<'a> {
     pub fn new(source_text: &'a str) -> Self {
         Self { source_text, current: 0 }
     }
@@ -186,8 +186,8 @@ impl<'a> JSDocParser<'a> {
 
 #[cfg(test)]
 mod test {
-    use super::JSDocParser;
-    use crate::jsdoc::parser::{JSDocTag, JSDocTagKind, Param, ParamType, ParamTypeKind};
+    use super::JSDocTagParser;
+    use super::{JSDocTag, JSDocTagKind, Param, ParamType, ParamTypeKind};
 
     #[test]
     fn deduces_correct_param_kind() {
@@ -205,7 +205,7 @@ mod test {
     fn parses_single_line_jsdoc() {
         let source = "/** @deprecated */";
 
-        let tags = JSDocParser::new(source).parse();
+        let tags = JSDocTagParser::new(source).parse();
         assert_eq!(tags.len(), 1);
         assert_eq!(tags, vec![JSDocTag { kind: JSDocTagKind::Deprecated, description: "" }]);
     }
@@ -216,7 +216,7 @@ mod test {
         */
         ";
 
-        let tags = JSDocParser::new(source).parse();
+        let tags = JSDocTagParser::new(source).parse();
         assert_eq!(tags.len(), 1);
         assert_eq!(tags, vec![JSDocTag { kind: JSDocTagKind::Deprecated, description: "" }]);
     }
@@ -229,7 +229,7 @@ mod test {
         */
        ";
 
-        let tags = JSDocParser::new(source).parse();
+        let tags = JSDocTagParser::new(source).parse();
         assert_eq!(tags.len(), 2);
         assert_eq!(
             tags,
@@ -251,7 +251,7 @@ mod test {
         */
        ";
 
-        let tags = JSDocParser::new(source).parse();
+        let tags = JSDocTagParser::new(source).parse();
         assert_eq!(tags.len(), 2);
         assert_eq!(
             tags,
@@ -274,7 +274,7 @@ mod test {
         */
        ";
 
-        let tags = JSDocParser::new(source).parse();
+        let tags = JSDocTagParser::new(source).parse();
         assert_eq!(tags.len(), 3);
         assert_eq!(
             tags,
