@@ -1,16 +1,16 @@
 use std::collections::BTreeMap;
 use std::rc::Rc;
 
+use crate::AstNode;
+use super::parser::JSDoc;
 use oxc_ast::{AstKind, Comment, TriviasMap};
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
-use super::{JSDoc, JSDocComment};
-
 pub struct JSDocBuilder<'a> {
     source_text: &'a str,
     trivias: Rc<TriviasMap>,
-    attached_docs: BTreeMap<Span, Vec<JSDocComment<'a>>>,
+    attached_docs: BTreeMap<Span, Vec<JSDoc<'a>>>,
     leading_comments_seen: FxHashSet<u32>,
 }
 
@@ -24,7 +24,7 @@ impl<'a> JSDocBuilder<'a> {
         }
     }
 
-    pub fn build(self) -> JSDoc<'a> {
+    pub fn build(self) -> JSDocBuilderReturn<'a> {
         let not_attached_docs = self
             .trivias
             .comments()
@@ -33,7 +33,7 @@ impl<'a> JSDocBuilder<'a> {
             .filter_map(|(start, comment)| self.parse_if_jsdoc_comment(*start, *comment))
             .collect::<Vec<_>>();
 
-        JSDoc::new(self.attached_docs, not_attached_docs)
+        JSDocBuilderReturn::new(self.attached_docs, not_attached_docs)
     }
 
     // This process is done in conjunction with the `semantic.build()`.
@@ -107,7 +107,7 @@ impl<'a> JSDocBuilder<'a> {
         &self,
         span_start: u32,
         comment: Comment,
-    ) -> Option<JSDocComment<'a>> {
+    ) -> Option<JSDoc<'a>> {
         if !comment.is_multi_line() {
             return None;
         }
@@ -121,7 +121,50 @@ impl<'a> JSDocBuilder<'a> {
         }
 
         // Should remove the very first `*`?
-        Some(JSDocComment::new(comment_content))
+        Some(JSDoc::new(comment_content))
+    }
+}
+
+#[derive(Debug)]
+pub struct JSDocBuilderReturn<'a> {
+    /// JSDocs by Span
+    attached: BTreeMap<Span, Vec<JSDoc<'a>>>,
+    not_attached: Vec<JSDoc<'a>>,
+}
+
+impl<'a> JSDocBuilderReturn<'a> {
+    pub fn new(
+        attached: BTreeMap<Span, Vec<JSDoc<'a>>>,
+        not_attached: Vec<JSDoc<'a>>,
+    ) -> Self {
+        Self { attached, not_attached }
+    }
+
+    pub fn get_one_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<JSDoc<'a>> {
+        let Some(jsdocs) = self.get_all_by_node(node) else {
+            return None;
+        };
+
+        // If flagged, at least 1 JSDoc is attached
+        // If multiple JSDocs are attached, return the last = nearest
+        jsdocs.last().cloned()
+    }
+
+    pub fn get_all_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<Vec<JSDoc<'a>>> {
+        if !node.flags().has_jsdoc() {
+            return None;
+        }
+
+        let span = node.kind().span();
+        self.get_all_by_span(span)
+    }
+
+    pub fn get_all_by_span<'b>(&'b self, span: Span) -> Option<Vec<JSDoc<'a>>> {
+        self.attached.get(&span).cloned()
+    }
+
+    pub fn iter_all<'b>(&'b self) -> impl Iterator<Item = &JSDoc<'a>> + 'b {
+        self.attached.values().flatten().chain(self.not_attached.iter())
     }
 }
 
@@ -131,7 +174,8 @@ mod test {
     use oxc_parser::Parser;
     use oxc_span::{SourceType, Span};
 
-    use crate::{jsdoc::JSDocComment, Semantic, SemanticBuilder};
+    use crate::{Semantic, SemanticBuilder};
+    use super::JSDoc;
 
     fn build_semantic<'a>(
         allocator: &'a Allocator,
@@ -154,7 +198,7 @@ mod test {
         source_text: &'a str,
         symbol: &'a str,
         source_type: Option<SourceType>,
-    ) -> Option<Vec<JSDocComment<'a>>> {
+    ) -> Option<Vec<JSDoc<'a>>> {
         let semantic = build_semantic(allocator, source_text, source_type);
         let start = source_text.find(symbol).unwrap_or(0) as u32;
         let span = Span::new(start, start + symbol.len() as u32);
@@ -282,10 +326,10 @@ mod test {
         // Should be [farthest, ..., nearest]
         let mut iter = jsdocs.iter();
         let c1 = iter.next().unwrap();
-        assert!(c1.comment.contains("c1"));
+        assert!(c1.comment().contains("c1"));
         let _c2 = iter.next().unwrap();
         let c3 = iter.next().unwrap();
-        assert!(c3.comment.contains("c3"));
+        assert!(c3.comment().contains("c3"));
     }
 
     #[test]
