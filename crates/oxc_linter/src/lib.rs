@@ -33,7 +33,7 @@ use crate::{
 pub use crate::{
     context::LintContext,
     options::{AllowWarnDeny, LintOptions},
-    service::LintService,
+    service::{LintService, LintServiceOptions},
 };
 use oxc_semantic::AstNode;
 

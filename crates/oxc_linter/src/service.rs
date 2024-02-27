@@ -2,7 +2,7 @@ use std::{
     collections::HashMap,
     ffi::OsStr,
     fs,
-    path::Path,
+    path::{Path, PathBuf},
     rc::Rc,
     sync::{Arc, Condvar, Mutex},
 };
@@ -23,20 +23,31 @@ use crate::{
     Fixer, LintContext, Linter, Message,
 };
 
+pub struct LintServiceOptions {
+    /// Current working directory
+    pub cwd: Box<Path>,
+
+    /// All paths to lint
+    pub paths: Vec<Box<Path>>,
+
+    /// TypeScript `tsconfig.json` path for reading path alias and project references
+    pub tsconfig: Option<PathBuf>,
+}
+
 #[derive(Clone)]
 pub struct LintService {
     runtime: Arc<Runtime>,
 }
 
 impl LintService {
-    pub fn new(cwd: Box<Path>, paths: &[Box<Path>], linter: Linter) -> Self {
-        let runtime = Arc::new(Runtime::new(cwd, paths, linter));
+    pub fn new(linter: Linter, options: LintServiceOptions) -> Self {
+        let runtime = Arc::new(Runtime::new(linter, options));
         Self { runtime }
     }
 
     #[cfg(test)]
-    pub(crate) fn from_linter(cwd: Box<Path>, paths: &[Box<Path>], linter: Linter) -> Self {
-        let runtime = Arc::new(Runtime::new(cwd, paths, linter));
+    pub(crate) fn from_linter(linter: Linter, options: LintServiceOptions) -> Self {
+        let runtime = Arc::new(Runtime::new(linter, options));
         Self { runtime }
     }
 
@@ -123,11 +134,11 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    fn new(cwd: Box<Path>, paths: &[Box<Path>], linter: Linter) -> Self {
-        let resolver = linter.options().import_plugin.then(Self::get_resolver);
+    fn new(linter: Linter, options: LintServiceOptions) -> Self {
+        let resolver = linter.options().import_plugin.then(|| Self::get_resolver(options.tsconfig));
         Self {
-            cwd,
-            paths: paths.iter().cloned().collect(),
+            cwd: options.cwd,
+            paths: options.paths.iter().cloned().collect(),
             linter,
             resolver,
             module_map: ModuleMap::default(),
@@ -135,12 +146,19 @@ impl Runtime {
         }
     }
 
-    fn get_resolver() -> Resolver {
+    fn get_resolver(tsconfig: Option<PathBuf>) -> Resolver {
         use oxc_resolver::{ResolveOptions, TsconfigOptions, TsconfigReferences};
-        let tsconfig_path = std::env::current_dir().map(|p| p.join("tsconfig.json")).ok();
-        let tsconfig = tsconfig_path
-            .filter(|p| p.exists())
-            .map(|p| TsconfigOptions { config_file: p, references: TsconfigReferences::Auto });
+        let tsconfig = if let Some(path) = tsconfig {
+            if path.is_file() {
+                Some(TsconfigOptions { config_file: path, references: TsconfigReferences::Auto })
+            } else {
+                // TODO: crates/oxc_cli/src/lint/mod.rs
+                eprintln!("Tsconfig {path:?} is not a file");
+                None
+            }
+        } else {
+            None
+        };
         Resolver::new(ResolveOptions {
             extensions: VALID_EXTENSIONS.iter().map(|ext| format!(".{ext}")).collect(),
             condition_names: vec!["module".into(), "require".into()],
