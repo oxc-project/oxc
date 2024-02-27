@@ -547,6 +547,7 @@ fn choose_quote(s: &str) -> char {
         }
     }
 
+    #[allow(clippy::cast_possible_truncation)]
     fn search_original_line_and_column(&self, position: u32) -> (u32, u32) {
         let result = self
             .line_offset_tables
@@ -556,8 +557,7 @@ fn choose_quote(s: &str) -> char {
         let mut original_column = (position as usize) - line.byte_offset_to_start_of_line;
         if original_column >= line.byte_offset_to_first {
             if let Some(cols) = &line.columns {
-                original_column =
-                    cols[original_column - line.byte_offset_to_first];
+                original_column = cols[original_column - line.byte_offset_to_first];
             }
         }
         (original_line as u32, original_column as u32)

@@ -45,7 +45,7 @@ impl<T: Case> Suite<T> for SourcemapSuite<T> {
     }
 
     fn run_coverage(&self, name: &str, _args: &crate::AppArgs) {
-        let path = project_root().join(format!("tasks/coverage/{}.snap", name));
+        let path = project_root().join(format!("tasks/coverage/{name}.snap"));
         let mut file = File::create(path).unwrap();
 
         let mut tests = self.get_test_cases().iter().collect::<Vec<_>>();
@@ -55,21 +55,14 @@ impl<T: Case> Suite<T> for SourcemapSuite<T> {
             let result = case.test_result();
             let path = case.path().to_string_lossy();
             let result = match result {
-                TestResult::Snapshot(snapshot) => {
-                    let snapshot = snapshot.trim();
-                    let snapshot = snapshot.replace("\r\n", "\n");
-                    snapshot
-                }
-                TestResult::ParseError(error, _) => {
-                    let error = error.trim();
-                    error.to_string()
-                }
+                TestResult::Snapshot(snapshot) => snapshot,
+                TestResult::ParseError(error, _) => error,
                 _ => {
                     unreachable!()
                 }
             };
-            writeln!(file, "- {}", path).unwrap();
-            writeln!(file, "{}\n\n", result).unwrap();
+            writeln!(file, "- {path}").unwrap();
+            writeln!(file, "{result}\n\n").unwrap();
         }
     }
 }
@@ -89,7 +82,7 @@ impl SourcemapCase {
     fn create_visualizer_url(code: &str, map: &str) -> String {
         let hash =
             BASE64_STANDARD.encode(format!("{}\0{}{}\0{}", code.len(), code, map.len(), map));
-        format!("https://evanw.github.io/source-map-visualization/#{}", hash)
+        format!("https://evanw.github.io/source-map-visualization/#{hash}")
     }
 }
 
@@ -122,7 +115,7 @@ impl Case for SourcemapCase {
         let ret = oxc_parser::Parser::new(&allocator, source_text, source_type).parse();
 
         if !ret.errors.is_empty() {
-            for error in ret.errors {
+            if let Some(error) = ret.errors.into_iter().next() {
                 let error = error.with_source_code(source_text.to_string());
                 return TestResult::ParseError(error.to_string(), false);
             }
@@ -135,7 +128,7 @@ impl Case for SourcemapCase {
         map.to_writer(&mut buff).unwrap();
 
         let mut result = String::from_utf8(buff).unwrap();
-        result.push_str("\n");
+        result.push('\n');
         result.push_str(Self::create_visualizer_url(&content, &result).as_str());
 
         TestResult::Snapshot(result)
