@@ -146,7 +146,7 @@ impl<'a> SemanticBuilder<'a> {
     pub fn build_module_record(
         mut self,
         resolved_absolute_path: PathBuf,
-        program: &'a Program<'a>,
+        program: &Program<'a>,
     ) -> Self {
         let mut module_record_builder = ModuleRecordBuilder::new(resolved_absolute_path);
         module_record_builder.visit(program);

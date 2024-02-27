@@ -189,7 +189,10 @@ impl Oxc {
         if run_options.transform() {
             // FIXME: this should not be duplicated with the linter semantic,
             // we need to fix the API so symbols and scopes can be shared.
-            let semantic = SemanticBuilder::new(source_text, source_type).build(program).semantic;
+            let semantic = SemanticBuilder::new(source_text, source_type)
+                .build_module_record(PathBuf::new(), program)
+                .build(program)
+                .semantic;
             let options =
                 TransformOptions { target: TransformTarget::ES2015, ..TransformOptions::default() };
             let result =
