@@ -299,7 +299,7 @@ impl<'a> Expression<'a> {
 
 /// Identifier Name
 #[derive(Debug, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Identifier"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct IdentifierName<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -315,13 +315,15 @@ impl<'a> IdentifierName<'a> {
 
 /// Identifier Reference
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Identifier"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct IdentifierReference<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom<'a>,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub reference_id: Cell<Option<ReferenceId>>,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub reference_flag: ReferenceFlag,
 }
 
@@ -340,12 +342,13 @@ impl<'a> IdentifierReference<'a> {
 
 /// Binding Identifier
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Identifier"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct BindingIdentifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom<'a>,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub symbol_id: Cell<Option<SymbolId>>,
 }
 
@@ -364,7 +367,7 @@ impl<'a> BindingIdentifier<'a> {
 
 /// Label Identifier
 #[derive(Debug, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Identifier"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct LabelIdentifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
