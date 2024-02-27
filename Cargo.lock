@@ -1385,6 +1385,7 @@ dependencies = [
 name = "oxc_codegen"
 version = "0.8.0"
 dependencies = [
+ "base64",
  "bitflags 2.4.2",
  "oxc_allocator",
  "oxc_ast",
@@ -1398,7 +1399,6 @@ dependencies = [
 name = "oxc_coverage"
 version = "0.0.0"
 dependencies = [
- "base64",
  "console",
  "encoding_rs",
  "encoding_rs_io",

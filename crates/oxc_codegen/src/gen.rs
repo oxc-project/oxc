@@ -1444,6 +1444,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPropertyKind<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         if let Expression::FunctionExpression(func) = &self.value {
+            p.add_source_mapping(self.span.start);
             let is_accessor = match &self.kind {
                 PropertyKind::Init => false,
                 PropertyKind::Get => {
@@ -1459,21 +1460,17 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
             };
             if self.method || is_accessor {
                 if func.r#async {
-                    p.add_source_mapping(self.span.start);
                     p.print_str(b"async ");
                 }
                 if func.generator {
-                    p.add_source_mapping(self.span.start);
                     p.print_str(b"*");
                 }
                 if self.computed {
-                    p.add_source_mapping(self.span.start);
                     p.print(b'[');
                 }
                 self.key.gen(p, ctx);
                 if self.computed {
                     p.print(b']');
-                    p.add_source_mapping(self.span.end);
                 }
                 if p.options.enable_typescript {
                     if let Some(type_parameters) = &func.type_parameters {
@@ -1490,7 +1487,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
             }
         }
         if self.computed {
-            p.add_source_mapping(self.span.start);
             p.print(b'[');
         }
         if !self.shorthand {
@@ -1498,7 +1494,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
         }
         if self.computed {
             p.print(b']');
-            p.add_source_mapping(self.span.end);
         }
         if !self.shorthand {
             p.print_colon();
@@ -2272,6 +2267,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for StaticBlock<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if !p.options.enable_typescript && self.value.is_typescript_syntax() {
+            return;
+        }
+        p.add_source_mapping(self.span.start);
         self.decorators.gen(p, ctx);
 
         if p.options.enable_typescript
@@ -2281,39 +2280,32 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
         }
 
         if self.r#static {
-            p.add_source_mapping(self.span.start);
             p.print_str(b"static ");
         }
 
         match &self.kind {
             MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
             MethodDefinitionKind::Get => {
-                p.add_source_mapping(self.span.start);
                 p.print_str(b"get ");
             }
             MethodDefinitionKind::Set => {
-                p.add_source_mapping(self.span.start);
                 p.print_str(b"set ");
             }
         }
 
         if self.value.r#async {
-            p.add_source_mapping(self.span.start);
             p.print_str(b"async ");
         }
 
         if self.value.generator {
-            p.add_source_mapping(self.span.start);
             p.print_str(b"*");
         }
 
         if self.computed {
-            p.add_source_mapping(self.span.start);
             p.print(b'[');
         }
         self.key.gen(p, ctx);
         if self.computed {
-            p.add_source_mapping(self.span.end);
             p.print(b']');
         }
         p.print(b'(');
@@ -2337,6 +2329,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.add_source_mapping(self.span.start);
         self.decorators.gen(p, ctx);
         if p.options.enable_typescript {
             if self.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition {
@@ -2357,16 +2350,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
             }
         }
         if self.r#static {
-            p.add_source_mapping(self.span.start);
             p.print_str(b"static ");
         }
         if self.computed {
-            p.add_source_mapping(self.span.start);
             p.print(b'[');
         }
         self.key.gen(p, ctx);
         if self.computed {
-            p.add_source_mapping(self.span.end);
             p.print(b']');
         }
         if p.options.enable_typescript {
@@ -2385,18 +2375,16 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for AccessorProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.add_source_mapping(self.span.start);
         if self.r#static {
-            p.add_source_mapping(self.span.start);
             p.print_str(b"static ");
         }
         p.print_str(b"accessor ");
         if self.computed {
-            p.add_source_mapping(self.span.start);
             p.print(b'[');
         }
         self.key.gen(p, ctx);
         if self.computed {
-            p.add_source_mapping(self.span.end);
             p.print(b']');
         }
         if let Some(value) = &self.value {
@@ -2453,8 +2441,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPattern<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.add_source_mapping(self.span.start);
         if self.computed {
-            p.add_source_mapping(self.span.start);
             p.print(b'[');
         }
         if !self.shorthand {
@@ -2462,7 +2450,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingProperty<'a> {
         }
         if self.computed {
             p.print(b']');
-            p.add_source_mapping(self.span.end);
         }
         if !self.shorthand {
             p.print_colon();

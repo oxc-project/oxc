@@ -1,5 +1,4 @@
 use crate::suite::{Case, Suite, TestResult};
-use base64::{prelude::BASE64_STANDARD, Engine};
 use oxc_span::SourceType;
 use oxc_tasks_common::project_root;
 use std::io::Write;
@@ -79,10 +78,58 @@ impl SourcemapCase {
         self.source_type
     }
 
-    fn create_visualizer_url(code: &str, map: &str) -> String {
-        let hash =
-            BASE64_STANDARD.encode(format!("{}\0{}{}\0{}", code.len(), code, map.len(), map));
-        format!("https://evanw.github.io/source-map-visualization/#{hash}")
+    fn create_visualizer_text(
+        source: &str,
+        output: &str,
+        tokens: &[(u32, u32, u32, u32)],
+    ) -> String {
+        let source_lines = source.lines().collect::<Vec<_>>();
+        let output_lines = output.lines().collect::<Vec<_>>();
+        let mut s = String::new();
+
+        tokens.iter().reduce(|pre, cur| {
+            s.push_str(&format!(
+                "({}:{}-{}:{}) {:?}",
+                pre.0,
+                pre.1,
+                cur.0,
+                cur.1,
+                Self::str_slice(&source_lines, (pre.0, pre.1), (cur.0, cur.1))
+            ));
+            s.push_str(" --> ");
+            s.push_str(&format!(
+                "({}:{}-{}:{}) {:?}",
+                pre.2,
+                pre.3,
+                cur.2,
+                cur.3,
+                Self::str_slice(&output_lines, (pre.2, pre.3), (cur.2, cur.3))
+            ));
+            s.push('\n');
+            cur
+        });
+
+        s
+    }
+
+    fn str_slice(str: &[&str], start: (u32, u32), end: (u32, u32)) -> String {
+        if start.0 == end.0 {
+            return str[start.0 as usize][start.1 as usize..end.1 as usize].to_string();
+        }
+
+        let mut s = String::new();
+
+        for i in start.0..end.0 {
+            if i == start.0 {
+                s.push_str(&str[i as usize][start.1 as usize..]);
+            } else if i == end.0 {
+                s.push_str(&str[i as usize][..end.1 as usize]);
+            } else {
+                s.push_str(str[i as usize]);
+            }
+        }
+
+        s
     }
 }
 
@@ -125,12 +172,20 @@ impl Case for SourcemapCase {
         let mut codegen = oxc_codegen::Codegen::<false>::new(source_text.len(), codegen_options);
         let content = codegen.with_sourcemap(source_text, "").build(&ret.program);
         let map = codegen.into_sourcemap();
-        let mut buff = vec![];
-        map.to_writer(&mut buff).unwrap();
+        let tokens = map
+            .tokens()
+            .map(|token| {
+                (
+                    token.get_src_line(),
+                    token.get_src_col(),
+                    token.get_dst_line(),
+                    token.get_dst_col(),
+                )
+            })
+            .collect::<Vec<_>>();
 
-        let mut result = String::from_utf8(buff).unwrap();
-        result.push('\n');
-        result.push_str(Self::create_visualizer_url(&content, &result).as_str());
+        let mut result = String::new();
+        result.push_str(Self::create_visualizer_text(source_text, &content, &tokens).as_str());
 
         TestResult::Snapshot(result)
     }
