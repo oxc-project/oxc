@@ -1,4 +1,6 @@
 mod builder;
+mod finder;
 mod parser;
 
-pub use builder::{JSDocBuilderReturn, JSDocBuilder};
+pub use finder::JSDocFinder;
+pub use builder::JSDocBuilder;
