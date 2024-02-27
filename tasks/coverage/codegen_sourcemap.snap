@@ -47,7 +47,7 @@ Invalid Character `[`
 
 - string-literal-newline/input.js
 {"version":3,"sources":[""],"sourcesContent":["\"before\\\nafter\";\n\n\"before\\\n\\\nafter\";\n"],"names":[],"mappings":"AAAA;OAGA"}
-https://evanw.github.io/source-map-visualization/#MzQAJ2JlZm9yZVwKYWZ0ZXInOydiZWZvcmVcClwKYWZ0ZXInOzEzNQB7InZlcnNpb24iOjMsInNvdXJjZXMiOlsiIl0sInNvdXJjZXNDb250ZW50IjpbIlwiYmVmb3JlXFxcbmFmdGVyXCI7XG5cblwiYmVmb3JlXFxcblxcXG5hZnRlclwiO1xuIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBO09BR0EifQo=
+https://evanw.github.io/source-map-visualization/#MzUAJ2JlZm9yZVwKYWZ0ZXInOydiZWZvcmVcClwKYWZ0ZXInOwoxMzUAeyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIiJdLCJzb3VyY2VzQ29udGVudCI6WyJcImJlZm9yZVxcXG5hZnRlclwiO1xuXG5cImJlZm9yZVxcXG5cXFxuYWZ0ZXJcIjtcbiJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQTtPQUdBIn0K
 
 
 - template-literal-newline/input.js
