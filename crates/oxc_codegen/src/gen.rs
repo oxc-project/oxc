@@ -1286,8 +1286,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for StringLiteral<'a> {
 
 impl<const MINIFY: bool> Gen<MINIFY> for ThisExpression {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        p.print_space_before_identifier();
         p.add_source_mapping(self.span.start);
+        p.print_space_before_identifier();
         p.print_str(b"this");
     }
 }
@@ -1474,11 +1474,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
                 if self.computed {
                     p.print(b']');
                     p.add_source_mapping(self.span.end);
-                }
-                if p.options.enable_typescript {
-                    if let Some(type_parameters) = &func.type_parameters {
-                        type_parameters.gen(p, ctx);
-                    }
                 }
                 if p.options.enable_typescript {
                     if let Some(type_parameters) = &func.type_parameters {

@@ -280,10 +280,6 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     fn print_block1(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
         self.print_block_start(stmt.span.start);
         self.print_directives_and_statements_with_semicolon_order(None, &stmt.body, ctx, true);
-        for item in &stmt.body {
-            self.print_semicolon_if_needed();
-            item.gen(self, ctx);
-        }
         self.print_block_end(stmt.span.end);
         self.needs_semicolon = false;
     }
