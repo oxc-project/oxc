@@ -33,7 +33,7 @@
       #divider { width: 4px; background: #444; }
       #divider:hover { background: #666; cursor: col-resize; }
     </style>
-    <script type="module" crossorigin src="https://oxc-project.github.io/oxc/assets/playground-Cv8wGTgF.js"></script>
+    <script type="module" crossorigin src="https://oxc-project.github.io/oxc/assets/playground-Cb2bs527.js"></script>
     <link rel="modulepreload" crossorigin href="https://oxc-project.github.io/oxc/assets/modulepreload-polyfill-B5Qt9EMX.js">
   </head>
   <body>
@@ -47,6 +47,16 @@
             <span>Oxc</span>
           </a>
           <div>
+            <label>
+              File
+              <select id="file-type-select" style="margin-left: 4px">
+                <option value="js">js</option>
+                <option value="ts">ts</option>
+                <option value="jsx">jsx</option>
+                <option value="tsx" selected>tsx</option>
+                <option value="d.ts">d.ts</option>
+              </select>
+            </label>
             <label id="syntax">Syntax Check<input id="syntax-checkbox" type="checkbox" checked></label>
             <label id="lint">Lint<input id="lint-checkbox" type="checkbox" checked></label>
           </div>
