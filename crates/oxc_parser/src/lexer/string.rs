@@ -51,16 +51,15 @@ macro_rules! handle_string_literal {
                             handle_string_literal_escape!($lexer, $delimiter, $table, after_opening_quote)
                         })
                     },
-                    b'\r' | b'\n' => {
-                        // This is impossible in valid JS, so cold path
+                    _ => {
+                        // Line break. This is impossible in valid JS, so cold path.
                         cold_branch(|| {
+                            debug_assert!(matches!(next_byte, b'\r' | b'\n'));
                             $lexer.consume_char();
                             $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
                             Kind::Undetermined
                         })
-                    },
-                    // SAFETY: Macro user guarantees `$table` does not match any other bytes
-                    _ => assert_unchecked::unreachable_unchecked!()
+                    }
                 }
             },
             handle_eof: || {
