@@ -22,7 +22,7 @@ export interface TSAbstractMethodDefinition extends Omit<MethodDefinition, 'type
 "#;
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct TSThisParameter<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -810,7 +810,7 @@ pub struct TSImportAttribute<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum TSImportAttributeName<'a> {
     Identifier(IdentifierName<'a>),
