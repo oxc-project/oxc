@@ -10,8 +10,6 @@ use oxc_syntax::{
     NumberBase,
 };
 
-use crate::choose_quote;
-
 use super::{Codegen, Context, Operator, Separator};
 
 pub trait Gen<const MINIFY: bool> {
@@ -1069,46 +1067,45 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for NumericLiteral<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         if self.value != f64::INFINITY && (MINIFY || self.raw.is_empty()) {
             p.add_source_mapping(self.span.start);
-            if MINIFY || self.raw.is_empty() {
-                p.print_space_before_identifier();
-                let abs_value = self.value.abs();
+            p.print_space_before_identifier();
+            let abs_value = self.value.abs();
 
-                if self.value.is_sign_negative() {
-                    p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
-                    p.print_str(b"-");
-                }
+            if self.value.is_sign_negative() {
+                p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
+                p.print_str(b"-");
+            }
 
-                let result = if self.base == NumberBase::Float {
-                    print_non_negative_float(abs_value, p)
-                } else {
-                    let value = abs_value as u64;
-                    // If integers less than 1000, we know that exponential notation will always be longer than
-                    // the integer representation. This is not the case for 1000 which is "1e3".
-                    if value < 1000 {
-                        format!("{value}")
-                    } else if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
-                        let hex = format!("{value:#x}");
-                        let result = print_non_negative_float(abs_value, p);
-                        if hex.len() < result.len() {
-                            hex
-                        } else {
-                            result
-                        }
-                    } else {
-                        print_non_negative_float(abs_value, p)
-                    }
-                };
-                let bytes = result.as_bytes();
-                p.print_str(bytes);
-                need_space_before_dot(bytes, p);
+            let result = if self.base == NumberBase::Float {
+                print_non_negative_float(abs_value, p)
             } else {
-                let bytes = self.raw.as_bytes();
-                p.print_str(bytes);
-                need_space_before_dot(bytes, p);
+                let value = abs_value as u64;
+                // If integers less than 1000, we know that exponential notation will always be longer than
+                // the integer representation. This is not the case for 1000 which is "1e3".
+                if value < 1000 {
+                    format!("{value}")
+                } else if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
+                    let hex = format!("{value:#x}");
+                    let result = print_non_negative_float(abs_value, p);
+                    if hex.len() < result.len() {
+                        hex
+                    } else {
+                        result
+                    }
+                } else {
+                    print_non_negative_float(abs_value, p)
+                }
             };
-        }
+            let bytes = result.as_bytes();
+            p.print_str(bytes);
+            need_space_before_dot(bytes, p);
+        } else {
+            let bytes = self.raw.as_bytes();
+            p.print_str(bytes);
+            need_space_before_dot(bytes, p);
+        };
     }
 }
+
 // TODO: refactor this with less allocations
 fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIFY }>) -> String {
     let mut result = value.to_string();
@@ -1279,16 +1276,11 @@ fn print_unquoted_str<const MINIFY: bool>(s: &str, quote: char, p: &mut Codegen<
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for StringLiteral<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+        p.add_source_mapping(self.span.start);
         let s = self.value.as_str();
         p.wrap_quote(s, |p, quote| {
             print_unquoted_str(s, quote, p);
         });
-        p.add_source_mapping(self.span.start);
-        let s = &self.value.as_str();
-        let quote = choose_quote(s);
-        p.print(quote as u8);
-        print_unquoted_str(s, quote, p);
-        p.print(quote as u8);
     }
 }
 
