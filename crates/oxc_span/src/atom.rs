@@ -22,12 +22,8 @@ export type CompactString = string;
 /// An inlinable string for oxc_allocator.
 ///
 /// Use [CompactString] with [Atom::to_compact_string()] for the lifetimeless form.
-#[derive(Clone, Eq, Hash)]
-pub struct Atom<'a>(AtomImpl<'a>);
-
-/// Immutable Inlinable String
-#[derive(Clone, Eq, PartialEq)]
-enum AtomImpl<'a> {
+#[derive(Clone, Eq)]
+pub enum Atom<'a> {
     Arena(&'a str),
     Compact(CompactString),
 }
@@ -45,52 +41,52 @@ impl<'a> Serialize for Atom<'a> {
 impl<'a> Atom<'a> {
     #[inline]
     pub fn as_str(&self) -> &str {
-        match &self.0 {
-            AtomImpl::Arena(s) => s,
-            AtomImpl::Compact(s) => s.as_ref(),
+        match self {
+            Self::Arena(s) => s,
+            Self::Compact(s) => s.as_ref(),
         }
     }
 
     #[inline]
     pub fn into_string(self) -> String {
-        match self.0 {
-            AtomImpl::Arena(s) => String::from(s),
-            AtomImpl::Compact(s) => s.to_string(),
+        match self {
+            Self::Arena(s) => String::from(s),
+            Self::Compact(s) => s.to_string(),
         }
     }
 
     #[inline]
     pub fn into_compact_string(self) -> CompactString {
-        match self.0 {
-            AtomImpl::Arena(s) => CompactString::new(s),
-            AtomImpl::Compact(s) => s,
+        match self {
+            Self::Arena(s) => CompactString::new(s),
+            Self::Compact(s) => s,
         }
     }
 
     #[inline]
     pub fn to_compact_string(&self) -> CompactString {
-        match &self.0 {
-            AtomImpl::Arena(s) => CompactString::new(s),
-            AtomImpl::Compact(s) => s.clone(),
+        match &self {
+            Self::Arena(s) => CompactString::new(s),
+            Self::Compact(s) => s.clone(),
         }
     }
 }
 
 impl<'a> From<&'a str> for Atom<'a> {
     fn from(s: &'a str) -> Self {
-        Self(AtomImpl::Arena(s))
+        Self::Arena(s)
     }
 }
 
 impl<'a> From<String> for Atom<'a> {
     fn from(s: String) -> Self {
-        Self(AtomImpl::Compact(CompactString::from(s)))
+        Self::Compact(CompactString::from(s))
     }
 }
 
 impl<'a> From<Cow<'_, str>> for Atom<'a> {
     fn from(s: Cow<'_, str>) -> Self {
-        Self(AtomImpl::Compact(CompactString::from(s)))
+        Self::Compact(CompactString::from(s))
     }
 }
 
@@ -126,7 +122,7 @@ impl<'a> PartialEq<Atom<'a>> for &str {
     }
 }
 
-impl<'a> hash::Hash for AtomImpl<'a> {
+impl<'a> hash::Hash for Atom<'a> {
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
         match self {
             Self::Arena(s) => s.hash(hasher),
