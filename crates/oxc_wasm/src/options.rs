@@ -112,11 +112,14 @@ impl OxcRunOptions {
     }
 }
 
-#[wasm_bindgen]
-#[derive(Default, Clone, Copy)]
+#[wasm_bindgen(getter_with_clone)]
+#[derive(Default, Clone)]
 pub struct OxcParserOptions {
     #[wasm_bindgen(js_name = allowReturnOutsideFunction)]
     pub allow_return_outside_function: bool,
+
+    #[wasm_bindgen(js_name = sourceFilename)]
+    pub source_filename: Option<String>,
 }
 
 #[wasm_bindgen]
