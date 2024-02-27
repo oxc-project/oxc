@@ -120,7 +120,7 @@ impl<'a> JSDocBuilder<'a> {
             return None;
         }
 
-        // Should remove the very first `*`?
+        // TODO: Remove the very first `*`
         Some(JSDoc::new(comment_content))
     }
 }
