@@ -11,16 +11,6 @@ use serde::Serialize;
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
-#[cfg_attr(
-    all(feature = "serde", feature = "wasm"),
-    wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
-)]
-#[allow(dead_code)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export interface TSAbstractPropertyDefinition extends Omit<PropertyDefinition, 'type'> {}
-export interface TSAbstractMethodDefinition extends Omit<MethodDefinition, 'type'> {}
-"#;
-
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
@@ -502,20 +492,6 @@ pub struct TSTypeAliasDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     /// Valid Modifiers: `declare`, `export`
     pub modifiers: Modifiers<'a>,
-}
-
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-pub struct TSAbstractMethodDefinition<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub method_definition: MethodDefinition<'a>,
-}
-
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-pub struct TSAbstractPropertyDefinition<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub property_definition: PropertyDefinition<'a>,
 }
 
 #[derive(Debug, Hash, Clone, PartialEq, Eq, Copy)]

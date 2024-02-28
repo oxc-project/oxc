@@ -12,12 +12,6 @@ impl<'a> PrivateBoundIdentifiers for ClassElement<'a> {
             ClassElement::MethodDefinition(def) => def.private_bound_identifiers(),
             ClassElement::PropertyDefinition(def) => def.private_bound_identifiers(),
             ClassElement::AccessorProperty(def) => def.private_bound_identifiers(),
-            ClassElement::TSAbstractMethodDefinition(def) => {
-                def.method_definition.private_bound_identifiers()
-            }
-            ClassElement::TSAbstractPropertyDefinition(def) => {
-                def.property_definition.private_bound_identifiers()
-            }
         }
     }
 }

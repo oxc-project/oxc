@@ -74,16 +74,6 @@ impl Rule for NoStaticOnlyClass {
                         return true;
                     }
                 }
-                oxc_ast::ast::ClassElement::TSAbstractMethodDefinition(v) => {
-                    if v.method_definition.accessibility.is_some() {
-                        return true;
-                    }
-                }
-                oxc_ast::ast::ClassElement::TSAbstractPropertyDefinition(v) => {
-                    if v.property_definition.accessibility.is_some() {
-                        return true;
-                    }
-                }
                 oxc_ast::ast::ClassElement::AccessorProperty(_)
                 | oxc_ast::ast::ClassElement::StaticBlock(_)
                 | oxc_ast::ast::ClassElement::TSIndexSignature(_) => {}

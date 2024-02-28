@@ -1966,8 +1966,6 @@ impl<'a> Format<'a> for ClassElement<'a> {
             ClassElement::MethodDefinition(c) => c.format(p),
             ClassElement::PropertyDefinition(c) => c.format(p),
             ClassElement::AccessorProperty(c) => c.format(p),
-            ClassElement::TSAbstractMethodDefinition(c) => c.format(p),
-            ClassElement::TSAbstractPropertyDefinition(c) => c.format(p),
             ClassElement::TSIndexSignature(c) => c.format(p),
         }
     }
@@ -2219,18 +2217,6 @@ impl<'a> Format<'a> for RegExpFlags {
             string.push('y');
         }
         p.str(&string.iter().collect::<String>())
-    }
-}
-
-impl<'a> Format<'a> for TSAbstractMethodDefinition<'a> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
-    }
-}
-
-impl<'a> Format<'a> for TSAbstractPropertyDefinition<'a> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
     }
 }
 

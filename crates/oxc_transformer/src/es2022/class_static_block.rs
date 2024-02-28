@@ -102,7 +102,9 @@ impl<'a> ClassStaticBlock<'a> {
                 }
             };
 
-            *element = self.ast.class_property(SPAN, key, value, false, true, self.ast.new_vec());
+            let r#type = PropertyDefinitionType::PropertyDefinition;
+            *element =
+                self.ast.class_property(r#type, SPAN, key, value, false, true, self.ast.new_vec());
         }
     }
 }

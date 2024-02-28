@@ -117,8 +117,6 @@ impl<'a> GetSpan for ClassElement<'a> {
             Self::MethodDefinition(def) => def.span,
             Self::PropertyDefinition(def) => def.span,
             Self::AccessorProperty(def) => def.span,
-            Self::TSAbstractMethodDefinition(def) => def.method_definition.span,
-            Self::TSAbstractPropertyDefinition(def) => def.property_definition.span,
             Self::TSIndexSignature(sig) => sig.span,
         }
     }

@@ -646,27 +646,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSConstructorType<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSAbstractPropertyDefinition<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if !p.options.enable_typescript {
-            return;
-        }
-
-        p.print_str(b"abstract ");
-        self.property_definition.gen(p, ctx);
-    }
-}
-
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSAbstractMethodDefinition<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if !p.options.enable_typescript {
-            return;
-        }
-        p.print_str(b"abstract ");
-        self.method_definition.gen(p, ctx);
-    }
-}
-
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportEqualsDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         if !p.options.enable_typescript {

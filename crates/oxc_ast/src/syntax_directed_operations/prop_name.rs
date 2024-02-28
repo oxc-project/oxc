@@ -43,9 +43,7 @@ impl<'a> PropName for ClassElement<'a> {
     fn prop_name(&self) -> Option<(&str, Span)> {
         match self {
             ClassElement::MethodDefinition(def) => def.prop_name(),
-            ClassElement::TSAbstractMethodDefinition(def) => def.method_definition.prop_name(),
             ClassElement::PropertyDefinition(def) => def.prop_name(),
-            ClassElement::TSAbstractPropertyDefinition(def) => def.property_definition.prop_name(),
             _ => None,
         }
     }
