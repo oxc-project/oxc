@@ -57,6 +57,10 @@ pub struct LintOptions {
     #[bpaf(long, short, argument("PATH"))]
     pub config: Option<PathBuf>,
 
+    /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
+    #[bpaf(argument("PATH"))]
+    pub tsconfig: Option<PathBuf>,
+
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
