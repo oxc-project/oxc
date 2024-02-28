@@ -66,6 +66,9 @@ pub struct JSDocTagParser<'a> {
     current: usize,
 }
 
+// Refs: `parseJSDocCommentWorker()` and `doJSDocScan()` from TypeScript
+// https://github.com/microsoft/TypeScript/blob/df8d755c1d76eaf0a8f1c1046a46061b53315718/src/compiler/parser.ts#L8814
+
 // TODO: Parse multiline descriptions
 // ```
 // /**
@@ -144,6 +147,7 @@ impl<'a> JSDocTagParser<'a> {
         tags
     }
 
+    // See also https://jsdoc.app/#block-tags
     fn parse_tag(&mut self, comment: &'a str) -> JSDocTag<'a> {
         let tag = self.take_until(comment, |c| c == ' ' || c == '\n');
         match tag {

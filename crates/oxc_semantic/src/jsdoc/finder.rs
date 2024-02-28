@@ -10,6 +10,9 @@ pub struct JSDocFinder<'a> {
     not_attached: Vec<JSDoc<'a>>,
 }
 
+// NOTE: We may need to provide `get_jsdoc_comments(node)`, and also `get_jsdoc_tags(node)`.
+// But, how to get parent here...? Leave it to utils/jsdoc?
+// Refs: https://github.com/microsoft/TypeScript/issues/7393#issuecomment-413285773
 impl<'a> JSDocFinder<'a> {
     pub fn new(attached: BTreeMap<Span, Vec<JSDoc<'a>>>, not_attached: Vec<JSDoc<'a>>) -> Self {
         Self { attached, not_attached }
