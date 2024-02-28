@@ -55,6 +55,9 @@ impl<'a> JSDocBuilder<'a> {
     // (But, default is only about function related nodes.)
     // > https://github.com/gajus/eslint-plugin-jsdoc/blob/e948bee821e964a92fbabc01574eca226e9e1252/src/iterateJsdoc.js#L2517-L2536
     //
+    // `eslint-plugin-import` does the similar but more casual way.
+    // > https://github.com/import-js/eslint-plugin-import/blob/df751e0d004aacc34f975477163fb221485a85f6/src/ExportMap.js#L211
+    //
     // Q. How do we attach JSDoc to that node?
     // A. Also depends on the implementation.
     //
@@ -70,6 +73,7 @@ impl<'a> JSDocBuilder<'a> {
     //
     // Of course, this can be changed in the future.
     pub fn retrieve_attached_jsdoc(&mut self, kind: &AstKind<'a>) -> bool {
+        // For perf reasons, we should limit the target nodes to attach JSDoc
         // This may be diffed compare to TypeScript's `canHaveJSDoc()`, should adjust if needed
         if !(kind.is_statement()
             || kind.is_declaration()
@@ -116,8 +120,8 @@ impl<'a> JSDocBuilder<'a> {
             return None;
         }
 
-        // TODO: Remove the very first `*`
-        Some(JSDoc::new(comment_content))
+        // Remove the very first `*`
+        Some(JSDoc::new(&comment_content[1..]))
     }
 }
 
@@ -184,6 +188,7 @@ mod test {
             ("/** test */ ; function foo() {}", "function foo() {}"),
             ("/** test */ function foo1() {} function foo() {}", "function foo() {}"),
             ("function foo() {} /** test */", "function foo() {}"),
+            ("/** test */ (() => {})", "() => {}"),
         ];
         for (source_text, target) in source_texts {
             test_jsdoc_not_found(source_text, target);
@@ -233,6 +238,9 @@ mod test {
                 "function foo() {}",
             ),
             ("/** foo1 */ function foo1() {} /** test */ function foo() {}", "function foo() {}"),
+            ("/** test */ 1", "1"),
+            ("/** test */ (1)", "(1)"),
+            ("/** test */ (() => {})", "(() => {})"),
         ];
         for (source_text, target) in source_texts {
             test_jsdoc_found(source_text, target, None);
@@ -305,6 +313,8 @@ mod test {
             /* noop */
 
             let x;
+
+            /**/ // noop and noop
 
             /** 7. Not attached but collected! */
             ",

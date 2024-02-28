@@ -77,7 +77,7 @@ pub struct JSDocTagParser<'a> {
 //  */
 // ```
 // This should be "descripti~\n~on and more"
-
+// TODO: `@` can only appear at the start of a line
 // TODO: tag_name() -> &str for Unknown
 
 impl<'a> JSDocTagParser<'a> {
