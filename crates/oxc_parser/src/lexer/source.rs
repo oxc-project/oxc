@@ -207,7 +207,7 @@ impl<'a> Source<'a> {
     /// Get string slice from a `SourcePosition` up to the current position of `Source`,
     /// without checks.
     ///
-    /// SAFETY:
+    /// # SAFETY
     /// `pos` must not be after current position of `Source`.
     /// This is always the case if both:
     /// 1. `Source::set_position` has not been called since `pos` was created.
@@ -215,32 +215,61 @@ impl<'a> Source<'a> {
     #[inline]
     pub(super) unsafe fn str_from_pos_to_current_unchecked(&self, pos: SourcePosition) -> &'a str {
         // SAFETY: Caller guarantees `pos` is not after current position of `Source`.
-        // `SourcePosition`s can only be created from a `Source`.
-        // `Source::new` takes a `UniquePromise`, which guarantees that it's the only `Source`
-        // in existence on this thread. `Source` is not `Sync` or `Send`, so no possibility another
-        // `Source` originated on another thread can "jump" onto this one.
-        // This is sufficient to guarantee that any `SourcePosition` that parser/lexer holds must be
-        // from this `Source`, therefore `pos.ptr` and `self.ptr` must both be within the same allocation
-        // and derived from the same original pointer.
-        // Invariants of `Source` and `SourcePosition` types guarantee that both are positioned
-        // on UTF-8 character boundaries. So slicing source text between these 2 points will always
-        // yield a valid UTF-8 string.
-        debug_assert!(pos.ptr <= self.ptr);
-        let len = self.ptr as usize - pos.addr();
-        let slice = slice::from_raw_parts(pos.ptr, len);
-        std::str::from_utf8_unchecked(slice)
+        // `self.ptr` is always a valid `SourcePosition` due to invariants of `Source`.
+        self.str_between_positions_unchecked(pos, SourcePosition::new(self.ptr))
+    }
+
+    /// Get string slice from current position of `Source` up to a `SourcePosition`, without checks.
+    ///
+    /// # SAFETY
+    /// `pos` must not be before current position of `Source`.
+    /// This is always the case if both:
+    /// 1. `Source::set_position` has not been called since `pos` was created.
+    /// 2. `pos` has not been moved backwards with `SourcePosition::sub`.
+    #[inline]
+    pub(super) unsafe fn str_from_current_to_pos_unchecked(&self, pos: SourcePosition) -> &'a str {
+        // SAFETY: Caller guarantees `pos` is not before current position of `Source`.
+        // `self.ptr` is always a valid `SourcePosition` due to invariants of `Source`.
+        self.str_between_positions_unchecked(SourcePosition::new(self.ptr), pos)
     }
 
     /// Get string slice from a `SourcePosition` up to the end of `Source`.
     #[inline]
     pub(super) fn str_from_pos_to_end(&self, pos: SourcePosition) -> &'a str {
         // SAFETY: Invariants of `SourcePosition` is that it cannot be after end of `Source`,
-        // and always on a UTF-8 character boundary
-        unsafe {
-            let len = self.end as usize - pos.addr();
-            let slice = slice::from_raw_parts(pos.ptr, len);
-            std::str::from_utf8_unchecked(slice)
-        }
+        // and always on a UTF-8 character boundary.
+        // `self.end` is always a valid `SourcePosition` due to invariants of `Source`.
+        unsafe { self.str_between_positions_unchecked(pos, SourcePosition::new(self.end)) }
+    }
+
+    /// Get string slice of source between 2 `SourcePosition`s, without checks.
+    ///
+    /// # SAFETY
+    /// `start` must not be after `end`.
+    #[inline]
+    pub(super) unsafe fn str_between_positions_unchecked(
+        &self,
+        start: SourcePosition,
+        end: SourcePosition,
+    ) -> &'a str {
+        debug_assert!(start.ptr <= end.ptr);
+        debug_assert!(start.ptr >= self.start);
+        debug_assert!(end.ptr <= self.end);
+
+        // SAFETY: Caller guarantees `start` is not after `end`.
+        // `SourcePosition`s can only be created from a `Source`.
+        // `Source::new` takes a `UniquePromise`, which guarantees that it's the only `Source`
+        // in existence on this thread. `Source` is not `Sync` or `Send`, so no possibility another
+        // `Source` originated on another thread can "jump" onto this one.
+        // This is sufficient to guarantee that any `SourcePosition` that parser/lexer holds must be
+        // from this `Source`, therefore `start.ptr` and `end.ptr` must both be within the same
+        // allocation, and derived from the same original pointer.
+        // Invariants of `Source` and `SourcePosition` types guarantee that both are positioned
+        // on UTF-8 character boundaries. So slicing source text between these 2 points will always
+        // yield a valid UTF-8 string.
+        let len = end.addr() - start.addr();
+        let slice = slice::from_raw_parts(start.ptr, len);
+        std::str::from_utf8_unchecked(slice)
     }
 
     /// Get current position in source, relative to start of source.

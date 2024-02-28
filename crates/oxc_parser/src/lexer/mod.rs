@@ -19,7 +19,6 @@ mod regex;
 mod search;
 mod source;
 mod string;
-mod string_builder;
 mod template;
 mod token;
 mod trivia_builder;
@@ -38,7 +37,6 @@ use oxc_span::{SourceType, Span};
 use self::{
     byte_handlers::handle_byte,
     source::{Source, SourcePosition},
-    string_builder::AutoCow,
     trivia_builder::TriviaBuilder,
 };
 pub use self::{
