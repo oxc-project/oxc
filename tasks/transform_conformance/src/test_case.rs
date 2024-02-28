@@ -165,8 +165,10 @@ pub trait TestCase {
 
         let semantic = SemanticBuilder::new(&source_text, source_type)
             .with_trivias(ret.trivias)
+            .build_module_record(PathBuf::new(), &ret.program)
             .build(&ret.program)
             .semantic;
+
         let transformed_program = allocator.alloc(ret.program);
 
         let result = Transformer::new(&allocator, source_type, semantic, self.transform_options())
@@ -231,6 +233,7 @@ impl TestCase for ConformanceTestCase {
         let ret = Parser::new(&allocator, &input, source_type).parse();
         let semantic = SemanticBuilder::new(&input, source_type)
             .with_trivias(ret.trivias)
+            .build_module_record(PathBuf::new(), &ret.program)
             .build(&ret.program)
             .semantic;
         let program = allocator.alloc(ret.program);
