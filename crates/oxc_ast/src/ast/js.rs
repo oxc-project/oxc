@@ -1701,6 +1701,7 @@ pub struct BindingRestElement<'a> {
 /// Function Definitions
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct Function<'a> {
     pub r#type: FunctionType,
     #[cfg_attr(feature = "serde", serde(flatten))]
