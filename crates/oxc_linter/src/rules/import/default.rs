@@ -47,7 +47,9 @@ impl Rule for Default {
             let Some(remote_module_record_ref) = module_record.loaded_modules.get(specifier) else {
                 continue;
             };
-
+            if remote_module_record_ref.not_esm {
+                continue;
+            }
             if remote_module_record_ref.export_default.is_none()
                 && !remote_module_record_ref.exported_bindings.contains_key("default")
             {

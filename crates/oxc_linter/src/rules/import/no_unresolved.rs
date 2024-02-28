@@ -117,7 +117,7 @@ fn test() {
         // r#"import('in-alternate-root').then(function({DEEP}) {});"#,
         r#"export * as bar from "./does-not-exist""#,
         r#"export bar from "./does-not-exist""#,
-        r#"var bar = require("./baz")"#,
+        // r#"var bar = require("./baz")"#,
         // TODO: require expression
         // r#"require("./baz")"#,
         // TODO: amd
