@@ -312,7 +312,7 @@ impl<'a> Lexer<'a> {
         self.finish_next(kind)
     }
 
-    /// Save template string
+    /// Save escaped template string
     fn save_template_string(&mut self, is_valid_escape_sequence: bool, s: &'a str) {
         self.escaped_templates.insert(self.token.start, is_valid_escape_sequence.then_some(s));
         self.token.escaped = true;

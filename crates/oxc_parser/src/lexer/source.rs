@@ -252,9 +252,14 @@ impl<'a> Source<'a> {
         start: SourcePosition,
         end: SourcePosition,
     ) -> &'a str {
+        // Check `start` and `end` are both within bounds of `Source`
         debug_assert!(start.ptr <= end.ptr);
         debug_assert!(start.ptr >= self.start);
         debug_assert!(end.ptr <= self.end);
+        // Check `start` and `end` are both on UTF-8 character boundaries.
+        // SAFETY: `start` and `end` are valid to read from if they're not at EOF.
+        debug_assert!(start.ptr == self.end || !is_utf8_cont_byte(start.read()));
+        debug_assert!(end.ptr == self.end || !is_utf8_cont_byte(end.read()));
 
         // SAFETY: Caller guarantees `start` is not after `end`.
         // `SourcePosition`s can only be created from a `Source`.
