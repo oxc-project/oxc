@@ -17,7 +17,14 @@ pub struct SourcemapSuite<T: Case> {
 
 impl<T: Case> SourcemapSuite<T> {
     pub fn new() -> Self {
-        Self { test_root: project_root().join(FIXTURES_PATH), test_cases: TestFiles::complicated().files().iter().map(|file| T::new(file.file_name.clone().into(), file.source_text.clone())).collect::<Vec<_>>() }
+        Self {
+            test_root: project_root().join(FIXTURES_PATH),
+            test_cases: TestFiles::complicated()
+                .files()
+                .iter()
+                .map(|file| T::new(file.file_name.clone().into(), file.source_text.clone()))
+                .collect::<Vec<_>>(),
+        }
     }
 }
 
@@ -80,7 +87,7 @@ impl SourcemapCase {
 
     fn generate_line_utf16_tables(content: &str) -> Vec<Vec<u16>> {
         let mut tables = vec![];
-        let mut line_byte_offset= 0;
+        let mut line_byte_offset = 0;
         for (i, ch) in content.char_indices() {
             match ch {
                 '\r' | '\n' | '\u{2028}' | '\u{2029}' => {
@@ -132,9 +139,10 @@ impl SourcemapCase {
         s
     }
 
-    fn str_slice_by_token(buff: &Vec<Vec<u16>>, start: (u32, u32), end: (u32, u32)) -> String {
+    fn str_slice_by_token(buff: &[Vec<u16>], start: (u32, u32), end: (u32, u32)) -> String {
         if start.0 == end.0 {
-            return String::from_utf16(&buff[start.0 as usize][start.1 as usize..end.1 as usize]).unwrap();
+            return String::from_utf16(&buff[start.0 as usize][start.1 as usize..end.1 as usize])
+                .unwrap();
         }
 
         let mut s = String::new();
@@ -146,7 +154,7 @@ impl SourcemapCase {
             } else if i == end.0 {
                 s.push_str(&String::from_utf16(&slice[..end.1 as usize]).unwrap());
             } else {
-                s.push_str(&String::from_utf16(&slice).unwrap());
+                s.push_str(&String::from_utf16(slice).unwrap());
             }
         }
 

@@ -132,7 +132,7 @@ impl SourcemapBuilder {
 
             // Update the per-byte column offsets
             if let Some(columns) = &mut columns {
-                for _ in column_byte_offset..(i - line_byte_offset + 1) {
+                for _ in column_byte_offset..=(i - line_byte_offset) {
                     columns.push(column);
                 }
             }
@@ -168,7 +168,7 @@ impl SourcemapBuilder {
 
         // Do one last update for the column at the end of the file
         if let Some(columns) = &mut columns {
-            for _ in column_byte_offset..(content.len() - line_byte_offset + 1) {
+            for _ in column_byte_offset..=(content.len() - line_byte_offset) {
                 columns.push(column);
             }
         }

@@ -1,4 +1,3 @@
-
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use oxc_codegen::{Codegen, CodegenOptions};
@@ -17,10 +16,10 @@ fn bench_codegen_sourcemap(criterion: &mut Criterion) {
             b.iter_with_large_drop(|| {
                 let allocator = Allocator::default();
                 let program = Parser::new(&allocator, source_text, source_type).parse().program;
-                
+
                 let codegen_options = CodegenOptions::default();
                 let mut codegen = Codegen::<false>::new(source_text.len(), codegen_options);
-                codegen.with_sourcemap(&source_text, "").build(&program);
+                codegen.with_sourcemap(source_text, "").build(&program);
                 codegen.into_sourcemap();
             });
         });
