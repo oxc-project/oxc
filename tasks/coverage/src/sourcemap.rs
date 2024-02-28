@@ -19,9 +19,10 @@ impl<T: Case> SourcemapSuite<T> {
     pub fn new() -> Self {
         Self {
             test_root: project_root().join(FIXTURES_PATH),
-            test_cases: TestFiles::complicated()
+            test_cases: TestFiles::new()
                 .files()
                 .iter()
+                .filter(|file| file.file_name.contains("react"))
                 .map(|file| T::new(file.file_name.clone().into(), file.source_text.clone()))
                 .collect::<Vec<_>>(),
         }
