@@ -482,12 +482,6 @@ pub trait VisitMut<'a>: Sized {
             ClassElement::MethodDefinition(def) => self.visit_method_definition(def),
             ClassElement::PropertyDefinition(def) => self.visit_property_definition(def),
             ClassElement::AccessorProperty(_def) => { /* TODO */ }
-            ClassElement::TSAbstractMethodDefinition(def) => {
-                self.visit_method_definition(&mut def.method_definition);
-            }
-            ClassElement::TSAbstractPropertyDefinition(def) => {
-                self.visit_property_definition(&mut def.property_definition);
-            }
             ClassElement::TSIndexSignature(_def) => {}
         }
     }

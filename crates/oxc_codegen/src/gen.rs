@@ -1981,8 +1981,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ClassElement<'a> {
             Self::MethodDefinition(elem) => elem.gen(p, ctx),
             Self::PropertyDefinition(elem) => elem.gen(p, ctx),
             Self::AccessorProperty(elem) => elem.gen(p, ctx),
-            Self::TSAbstractMethodDefinition(elem) => elem.gen(p, ctx),
-            Self::TSAbstractPropertyDefinition(elem) => elem.gen(p, ctx),
             Self::TSIndexSignature(elem) => elem.gen(p, ctx),
         }
     }
@@ -2195,10 +2193,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for StaticBlock<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if !p.options.enable_typescript && self.value.is_typescript_syntax() {
-            return;
-        }
         self.decorators.gen(p, ctx);
+
+        if p.options.enable_typescript
+            && self.r#type == MethodDefinitionType::TSAbstractMethodDefinition
+        {
+            p.print_str(b"abstract ");
+        }
 
         if self.r#static {
             p.print_str(b"static ");
@@ -2248,6 +2249,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.decorators.gen(p, ctx);
         if p.options.enable_typescript {
+            if self.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition {
+                p.print_str(b"abstract ");
+            }
             if let Some(accessibility) = &self.accessibility {
                 match accessibility {
                     TSAccessibility::Private => {
