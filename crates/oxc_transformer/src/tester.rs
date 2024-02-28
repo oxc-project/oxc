@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::Error;
@@ -31,8 +33,13 @@ impl Tester {
 
     fn transform(&self, source_text: &str) -> Result<std::string::String, std::vec::Vec<Error>> {
         let program = Parser::new(&self.allocator, source_text, self.source_type).parse().program;
-        let semantic = SemanticBuilder::new(source_text, self.source_type).build(&program).semantic;
+        let semantic = SemanticBuilder::new(source_text, self.source_type)
+            .build_module_record(PathBuf::new(), &program)
+            .build(&program)
+            .semantic;
+
         let program = self.allocator.alloc(program);
+
         Transformer::new(&self.allocator, self.source_type, semantic, self.options.clone())
             .build(program)
             .map(move |()| {
