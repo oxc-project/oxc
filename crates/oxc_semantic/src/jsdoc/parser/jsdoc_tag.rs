@@ -44,19 +44,8 @@ pub struct Param<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JSDocTagKind<'a> {
     Deprecated,
-    Param(Param<'a>),
-}
-
-impl<'a> FromStr for JSDocTagKind<'a> {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "deprecated" => Ok(Self::Deprecated),
-            "param" => Ok(Self::Param(Param::default())),
-            _ => Err(()),
-        }
-    }
+    Parameter(Param<'a>),
+    Unknown,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -76,6 +65,17 @@ pub struct JSDocTagParser<'a> {
     source_text: &'a str,
     current: usize,
 }
+
+// TODO: Parse multiline descriptions
+// ```
+// /**
+//  * @param {string} a - descripti~
+//  *   ~on and more
+//  */
+// ```
+// This should be "descripti~\n~on and more"
+
+// TODO: tag_name() -> &str for Unknown
 
 impl<'a> JSDocTagParser<'a> {
     pub fn new(source_text: &'a str) -> Self {
@@ -129,8 +129,10 @@ impl<'a> JSDocTagParser<'a> {
             match c {
                 '@' => {
                     self.current += 1;
-                    let Some(tag) = self.parse_tag(comment) else { break };
+
+                    let tag = self.parse_tag(comment);
                     self.current += tag.description.len();
+
                     tags.push(tag);
                 }
                 _ => {
@@ -142,21 +144,30 @@ impl<'a> JSDocTagParser<'a> {
         tags
     }
 
-    fn parse_tag(&mut self, comment: &'a str) -> Option<JSDocTag<'a>> {
+    fn parse_tag(&mut self, comment: &'a str) -> JSDocTag<'a> {
         let tag = self.take_until(comment, |c| c == ' ' || c == '\n');
-        JSDocTagKind::from_str(tag).map_or(None, |kind| match kind {
-            JSDocTagKind::Deprecated => Some(self.parse_deprecated_tag(comment)),
-            JSDocTagKind::Param { .. } => Some(self.parse_param_tag(comment)),
-        })
+        match tag {
+            "deprecated" => self.parse_deprecated_tag(comment),
+            "arg" | "argument" | "param" => self.parse_parameter_tag(comment),
+            _ => self.parse_unknown_tag(comment),
+        }
     }
 
+    // @deprecated [<some text>]
+    // https://jsdoc.app/tags-deprecated
     fn parse_deprecated_tag(&mut self, comment: &'a str) -> JSDocTag<'a> {
         self.skip_whitespace(comment);
+
         let description = self.take_until(comment, |c| c == '\n' || c == '*');
         JSDocTag { kind: JSDocTagKind::Deprecated, description }
     }
 
-    fn parse_param_tag(&mut self, comment: &'a str) -> JSDocTag<'a> {
+    // @param name
+    // @param {type} name
+    // @param {type} name description
+    // @param {type} name - description
+    // https://jsdoc.app/tags-param
+    fn parse_parameter_tag(&mut self, comment: &'a str) -> JSDocTag<'a> {
         self.skip_whitespace(comment);
 
         let mut r#type = None;
@@ -180,7 +191,15 @@ impl<'a> JSDocTagParser<'a> {
 
         let description = self.take_until(comment, |c| c == '\n' || c == '*');
 
-        JSDocTag { kind: JSDocTagKind::Param(Param { name, r#type }), description }
+        JSDocTag { kind: JSDocTagKind::Parameter(Param { name, r#type }), description }
+    }
+
+    // Valid tag but not supported yet, trully unknown tag
+    fn parse_unknown_tag(&mut self, comment: &'a str) -> JSDocTag<'a> {
+        self.skip_whitespace(comment);
+
+        let description = self.take_until(comment, |c| c == '\n' || c == '*');
+        JSDocTag { kind: JSDocTagKind::Unknown, description }
     }
 }
 
@@ -235,7 +254,7 @@ mod test {
             tags,
             vec![
                 JSDocTag {
-                    kind: JSDocTagKind::Param(Param { name: "a", r#type: None }),
+                    kind: JSDocTagKind::Parameter(Param { name: "a", r#type: None }),
                     description: ""
                 },
                 JSDocTag { kind: JSDocTagKind::Deprecated, description: "" },
@@ -257,7 +276,7 @@ mod test {
             tags,
             vec![
                 JSDocTag {
-                    kind: JSDocTagKind::Param(Param { name: "a", r#type: None }),
+                    kind: JSDocTagKind::Parameter(Param { name: "a", r#type: None }),
                     description: ""
                 },
                 JSDocTag { kind: JSDocTagKind::Deprecated, description: "since version 1.0" },
@@ -280,21 +299,21 @@ mod test {
             tags,
             vec![
                 JSDocTag {
-                    kind: JSDocTagKind::Param(Param {
+                    kind: JSDocTagKind::Parameter(Param {
                         name: "a",
                         r#type: Some(ParamType { value: "string" })
                     }),
                     description: ""
                 },
                 JSDocTag {
-                    kind: JSDocTagKind::Param(Param {
+                    kind: JSDocTagKind::Parameter(Param {
                         name: "b",
                         r#type: Some(ParamType { value: "string" })
                     }),
                     description: ""
                 },
                 JSDocTag {
-                    kind: JSDocTagKind::Param(Param {
+                    kind: JSDocTagKind::Parameter(Param {
                         name: "c",
                         r#type: Some(ParamType { value: "string" })
                     }),

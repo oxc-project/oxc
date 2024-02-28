@@ -1,5 +1,5 @@
+use super::jsdoc_tag::{JSDocTag, JSDocTagParser};
 use std::cell::OnceCell;
-use super::jsdoc_tag::{JSDocTagParser, JSDocTag};
 
 #[derive(Debug, Clone)]
 pub struct JSDoc<'a> {
