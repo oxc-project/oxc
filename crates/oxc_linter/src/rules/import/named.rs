@@ -51,6 +51,9 @@ impl Rule for Named {
                 continue;
             };
             let remote_module_record = remote_module_record_ref.value();
+            if remote_module_record.not_esm {
+                continue;
+            }
             // Check remote bindings
             if remote_module_record.exported_bindings.contains_key(import_name.name()) {
                 continue;
@@ -164,8 +167,6 @@ fn test() {
         // "import { foo } from './export-all'",
         // TypeScript export assignment
         "import x from './typescript-export-assign-object'",
-        // oxc
-        "import { foo, bar } from './oxc_named'",
     ];
 
     let fail = vec![
@@ -200,8 +201,6 @@ fn test() {
         // Export assignment cannot be used when targeting ECMAScript modules. Consider using 'export default' or another module format instead.
         "import { NotExported } from './typescript-export-assign-object'",
         "import { FooBar } from './typescript-export-assign-object'",
-        // oxc
-        "import { baz, quaz } from './oxc_named'",
     ];
 
     Tester::new(Named::NAME, pass, fail)

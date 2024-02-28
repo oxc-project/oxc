@@ -8,13 +8,18 @@ use rustc_hash::{FxHashMap, FxHasher};
 
 use oxc_span::{CompactString, Span};
 
-/// Module Record
+/// ESM Module Record
+///
+/// All data inside this data structure are for ESM, no commonjs data is allowed.
 ///
 /// See
 /// * <https://tc39.es/ecma262/#table-additional-fields-of-source-text-module-records>
 /// * <https://tc39.es/ecma262/#cyclic-module-record>
 #[derive(Default)]
 pub struct ModuleRecord {
+    /// This module has no import / export statements
+    pub not_esm: bool,
+
     /// Resolved absolute path to this module record
     pub resolved_absolute_path: PathBuf,
 
@@ -84,6 +89,7 @@ impl fmt::Debug for ModuleRecord {
             .unwrap_or_default();
         let loaded_modules = format!("{{ {loaded_modules} }}");
         f.debug_struct("ModuleRecord")
+            .field("not_esm", &self.not_esm)
             .field("resolved_absolute_path", &self.resolved_absolute_path)
             .field("requested_modules", &self.requested_modules)
             .field("loaded_modules", &loaded_modules)

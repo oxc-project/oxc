@@ -55,9 +55,3 @@ expression: no_unresolved
  1 │ export bar from "./does-not-exist"
    ·        ───
    ╰────
-
-  ⚠ eslint-plugin-import(no-unresolved): Ensure imports point to a file/module that can be resolved
-   ╭─[index.js:1:19]
- 1 │ var bar = require("./baz")
-   ·                   ───────
-   ╰────
