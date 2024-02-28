@@ -1948,8 +1948,6 @@ pub enum ClassElement<'a> {
     MethodDefinition(Box<'a, MethodDefinition<'a>>),
     PropertyDefinition(Box<'a, PropertyDefinition<'a>>),
     AccessorProperty(Box<'a, AccessorProperty<'a>>),
-    TSAbstractMethodDefinition(Box<'a, TSAbstractMethodDefinition<'a>>),
-    TSAbstractPropertyDefinition(Box<'a, TSAbstractPropertyDefinition<'a>>),
     TSIndexSignature(Box<'a, TSIndexSignature<'a>>),
 }
 
@@ -1960,8 +1958,6 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(def) => def.r#static,
             Self::PropertyDefinition(def) => def.r#static,
             Self::AccessorProperty(def) => def.r#static,
-            Self::TSAbstractMethodDefinition(def) => def.method_definition.r#static,
-            Self::TSAbstractPropertyDefinition(def) => def.property_definition.r#static,
         }
     }
 
@@ -1971,8 +1967,6 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(def) => def.computed,
             Self::PropertyDefinition(def) => def.computed,
             Self::AccessorProperty(def) => def.computed,
-            Self::TSAbstractMethodDefinition(def) => def.method_definition.computed,
-            Self::TSAbstractPropertyDefinition(def) => def.property_definition.computed,
         }
     }
 
@@ -1981,8 +1975,6 @@ impl<'a> ClassElement<'a> {
             Self::StaticBlock(_) | Self::TSIndexSignature(_) | Self::AccessorProperty(_) => None,
             Self::MethodDefinition(def) => def.accessibility,
             Self::PropertyDefinition(def) => def.accessibility,
-            Self::TSAbstractMethodDefinition(def) => def.method_definition.accessibility,
-            Self::TSAbstractPropertyDefinition(def) => def.property_definition.accessibility,
         }
     }
 
@@ -1993,8 +1985,6 @@ impl<'a> ClassElement<'a> {
             | Self::PropertyDefinition(_)
             | Self::AccessorProperty(_) => None,
             Self::MethodDefinition(def) => Some(def.kind),
-            Self::TSAbstractMethodDefinition(def) => Some(def.method_definition.kind),
-            Self::TSAbstractPropertyDefinition(_def) => None,
         }
     }
 
@@ -2004,8 +1994,6 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(def) => Some(&def.key),
             Self::PropertyDefinition(def) => Some(&def.key),
             Self::AccessorProperty(def) => Some(&def.key),
-            Self::TSAbstractMethodDefinition(def) => Some(&def.method_definition.key),
-            Self::TSAbstractPropertyDefinition(def) => Some(&def.property_definition.key),
         }
     }
 
@@ -2015,18 +2003,11 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(def) => def.key.static_name(),
             Self::PropertyDefinition(def) => def.key.static_name(),
             Self::AccessorProperty(def) => def.key.static_name(),
-            Self::TSAbstractMethodDefinition(_def) => None,
-            Self::TSAbstractPropertyDefinition(_def) => None,
         }
     }
 
     pub fn is_property(&self) -> bool {
-        matches!(
-            self,
-            Self::PropertyDefinition(_)
-                | Self::AccessorProperty(_)
-                | Self::TSAbstractPropertyDefinition(_)
-        )
+        matches!(self, Self::PropertyDefinition(_) | Self::AccessorProperty(_))
     }
 
     pub fn is_ts_empty_body_function(&self) -> bool {
@@ -2034,20 +2015,18 @@ impl<'a> ClassElement<'a> {
             Self::PropertyDefinition(_)
             | Self::StaticBlock(_)
             | Self::AccessorProperty(_)
-            | Self::TSAbstractPropertyDefinition(_)
             | Self::TSIndexSignature(_) => false,
             Self::MethodDefinition(method) => method.value.body.is_none(),
-            Self::TSAbstractMethodDefinition(_) => true,
         }
     }
 
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
-            Self::TSIndexSignature(_)
-            | Self::TSAbstractMethodDefinition(_)
-            | Self::TSAbstractPropertyDefinition(_) => true,
+            Self::TSIndexSignature(_) => true,
             Self::MethodDefinition(method) => method.value.is_typescript_syntax(),
-            Self::PropertyDefinition(property) => property.declare,
+            Self::PropertyDefinition(property) => {
+                property.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition
+            }
             _ => false,
         }
     }
@@ -2057,18 +2036,16 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(method) => !method.decorators.is_empty(),
             Self::PropertyDefinition(property) => !property.decorators.is_empty(),
             Self::AccessorProperty(property) => !property.decorators.is_empty(),
-            Self::StaticBlock(_)
-            | Self::TSIndexSignature(_)
-            | Self::TSAbstractMethodDefinition(_)
-            | Self::TSAbstractPropertyDefinition(_) => false,
+            Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
         }
     }
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct MethodDefinition<'a> {
+    pub r#type: MethodDefinitionType,
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub key: PropertyKey<'a>,
@@ -2082,10 +2059,19 @@ pub struct MethodDefinition<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+pub enum MethodDefinitionType {
+    MethodDefinition,
+    TSAbstractMethodDefinition,
+}
+
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct PropertyDefinition<'a> {
+    pub r#type: PropertyDefinitionType,
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub key: PropertyKey<'a>,
@@ -2100,6 +2086,14 @@ pub struct PropertyDefinition<'a> {
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub accessibility: Option<TSAccessibility>,
     pub decorators: Vec<'a, Decorator<'a>>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+pub enum PropertyDefinitionType {
+    PropertyDefinition,
+    TSAbstractPropertyDefinition,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

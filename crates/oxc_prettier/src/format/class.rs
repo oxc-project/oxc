@@ -219,9 +219,6 @@ fn should_print_semicolon_after_class_property<'a>(
 
     match next_node {
         ClassElement::PropertyDefinition(property_definition) => property_definition.computed,
-        ClassElement::TSAbstractPropertyDefinition(property_definition) => {
-            property_definition.0.property_definition.computed
-        }
         ClassElement::StaticBlock(_) => false,
         ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => true,
         ClassElement::MethodDefinition(method_definition) => {
@@ -237,24 +234,6 @@ fn should_print_semicolon_after_class_property<'a>(
             let is_generator = method_definition.value.generator;
 
             if method_definition.computed || is_generator {
-                return true;
-            }
-
-            false
-        }
-        ClassElement::TSAbstractMethodDefinition(ts_abstract_method_definition) => {
-            let is_async = ts_abstract_method_definition.method_definition.value.r#async;
-
-            if is_async
-                || ts_abstract_method_definition.method_definition.kind == MethodDefinitionKind::Get
-                || ts_abstract_method_definition.method_definition.kind == MethodDefinitionKind::Set
-            {
-                return false;
-            }
-
-            let is_generator = ts_abstract_method_definition.method_definition.value.generator;
-
-            if ts_abstract_method_definition.method_definition.computed || is_generator {
                 return true;
             }
 
