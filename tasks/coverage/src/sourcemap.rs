@@ -1,6 +1,6 @@
 use crate::suite::{Case, Suite, TestResult};
 use oxc_span::SourceType;
-use oxc_tasks_common::project_root;
+use oxc_tasks_common::{project_root, TestFiles};
 use std::io::Write;
 use std::{
     fs::File,
@@ -17,7 +17,7 @@ pub struct SourcemapSuite<T: Case> {
 
 impl<T: Case> SourcemapSuite<T> {
     pub fn new() -> Self {
-        Self { test_root: project_root().join(FIXTURES_PATH), test_cases: vec![] }
+        Self { test_root: project_root().join(FIXTURES_PATH), test_cases: TestFiles::complicated().files().iter().map(|file| T::new(file.file_name.clone().into(), file.source_text.clone())).collect::<Vec<_>>() }
     }
 }
 
@@ -27,7 +27,7 @@ impl<T: Case> Suite<T> for SourcemapSuite<T> {
     }
 
     fn save_test_cases(&mut self, tests: Vec<T>) {
-        self.test_cases = tests;
+        self.test_cases.extend(tests);
     }
 
     fn get_test_cases(&self) -> &Vec<T> {
@@ -78,13 +78,33 @@ impl SourcemapCase {
         self.source_type
     }
 
+    fn generate_line_utf16_tables(content: &str) -> Vec<Vec<u16>> {
+        let mut tables = vec![];
+        let mut line_byte_offset= 0;
+        for (i, ch) in content.char_indices() {
+            match ch {
+                '\r' | '\n' | '\u{2028}' | '\u{2029}' => {
+                    // Handle Windows-specific "\r\n" newlines
+                    if ch == '\r' && content.chars().nth(i + 1) == Some('\n') {
+                        continue;
+                    }
+                    tables.push(content[line_byte_offset..i].encode_utf16().collect::<Vec<_>>());
+                    line_byte_offset = i;
+                }
+                _ => {}
+            }
+        }
+        tables.push(content[line_byte_offset..].encode_utf16().collect::<Vec<_>>());
+        tables
+    }
+
     fn create_visualizer_text(
         source: &str,
         output: &str,
         tokens: &[(u32, u32, u32, u32)],
     ) -> String {
-        let source_lines = source.lines().collect::<Vec<_>>();
-        let output_lines = output.lines().collect::<Vec<_>>();
+        let source_lines = Self::generate_line_utf16_tables(source);
+        let output_lines = Self::generate_line_utf16_tables(output);
         let mut s = String::new();
 
         tokens.iter().reduce(|pre, cur| {
@@ -94,7 +114,7 @@ impl SourcemapCase {
                 pre.1,
                 cur.0,
                 cur.1,
-                Self::str_slice(&source_lines, (pre.0, pre.1), (cur.0, cur.1))
+                Self::str_slice_by_token(&source_lines, (pre.0, pre.1), (cur.0, cur.1))
             ));
             s.push_str(" --> ");
             s.push_str(&format!(
@@ -103,7 +123,7 @@ impl SourcemapCase {
                 pre.3,
                 cur.2,
                 cur.3,
-                Self::str_slice(&output_lines, (pre.2, pre.3), (cur.2, cur.3))
+                Self::str_slice_by_token(&output_lines, (pre.2, pre.3), (cur.2, cur.3))
             ));
             s.push('\n');
             cur
@@ -112,20 +132,21 @@ impl SourcemapCase {
         s
     }
 
-    fn str_slice(str: &[&str], start: (u32, u32), end: (u32, u32)) -> String {
+    fn str_slice_by_token(buff: &Vec<Vec<u16>>, start: (u32, u32), end: (u32, u32)) -> String {
         if start.0 == end.0 {
-            return str[start.0 as usize][start.1 as usize..end.1 as usize].to_string();
+            return String::from_utf16(&buff[start.0 as usize][start.1 as usize..end.1 as usize]).unwrap();
         }
 
         let mut s = String::new();
 
         for i in start.0..end.0 {
+            let slice = &buff[i as usize];
             if i == start.0 {
-                s.push_str(&str[i as usize][start.1 as usize..]);
+                s.push_str(&String::from_utf16(&slice[start.1 as usize..]).unwrap());
             } else if i == end.0 {
-                s.push_str(&str[i as usize][..end.1 as usize]);
+                s.push_str(&String::from_utf16(&slice[..end.1 as usize]).unwrap());
             } else {
-                s.push_str(str[i as usize]);
+                s.push_str(&String::from_utf16(&slice).unwrap());
             }
         }
 

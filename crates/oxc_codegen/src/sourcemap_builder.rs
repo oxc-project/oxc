@@ -53,7 +53,7 @@ impl SourcemapBuilder {
 
     pub fn add_source_mapping(&mut self, output: &Vec<u8>, position: u32, name: Option<&str>) {
         if self.enable_sourcemap {
-            if matches!(self.last_position, Some(last_position) if last_position == position) {
+            if matches!(self.last_position, Some(last_position) if last_position >= position) {
                 return;
             }
             let (original_line, original_column) = self.search_original_line_and_column(position);
@@ -87,10 +87,11 @@ impl SourcemapBuilder {
         (original_line as u32, original_column as u32)
     }
 
+    #[allow(clippy::cast_possible_truncation)]
     fn update_generated_line_and_column(&mut self, output: &Vec<u8>) {
         // SAFETY: criteria of `from_utf8_unchecked`.are met.
         let s = unsafe { std::str::from_utf8_unchecked(&output[self.last_generated_update..]) };
-        for (i, ch) in s.chars().enumerate() {
+        for (i, ch) in s.char_indices() {
             match ch {
                 '\r' | '\n' | LS | PS => {
                     // Handle Windows-specific "\r\n" newlines
@@ -101,11 +102,8 @@ impl SourcemapBuilder {
                     self.generated_column = 0;
                 }
                 _ => {
-                    if ch as u32 <= 0xFF {
-                        self.generated_column += 1;
-                    } else {
-                        self.generated_column += 2;
-                    }
+                    // Mozilla's "source-map" library counts columns using UTF-16 code units
+                    self.generated_column += ch.len_utf16() as u32;
                 }
             }
         }
@@ -119,7 +117,7 @@ impl SourcemapBuilder {
         let mut column_byte_offset = 0;
         let mut line_byte_offset = 0;
         let mut byte_offset_to_first = 0;
-        for (i, ch) in content.chars().enumerate() {
+        for (i, ch) in content.char_indices() {
             // Mark the start of the next line
             if column == 0 {
                 line_byte_offset = i;
@@ -134,7 +132,7 @@ impl SourcemapBuilder {
 
             // Update the per-byte column offsets
             if let Some(columns) = &mut columns {
-                for _ in column_byte_offset..(i - line_byte_offset) {
+                for _ in column_byte_offset..(i - line_byte_offset + 1) {
                     columns.push(column);
                 }
             }
@@ -158,11 +156,8 @@ impl SourcemapBuilder {
                     column_byte_offset = 0;
                 }
                 _ => {
-                    if ch as u32 <= 0xFF {
-                        column += 1;
-                    } else {
-                        column += 2;
-                    }
+                    // Mozilla's "source-map" library counts columns using UTF-16 code units
+                    column += ch.len_utf16();
                 }
             }
         }
@@ -173,7 +168,7 @@ impl SourcemapBuilder {
 
         // Do one last update for the column at the end of the file
         if let Some(columns) = &mut columns {
-            for _ in column_byte_offset..(content.len() - line_byte_offset) {
+            for _ in column_byte_offset..(content.len() - line_byte_offset + 1) {
                 columns.push(column);
             }
         }

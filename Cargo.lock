@@ -1352,6 +1352,7 @@ dependencies = [
  "codspeed-criterion-compat",
  "criterion",
  "oxc_allocator",
+ "oxc_codegen",
  "oxc_linter",
  "oxc_minifier",
  "oxc_parser",
