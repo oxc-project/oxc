@@ -25,6 +25,13 @@ static SINGLE_QUOTE_STRING_END_TABLE: SafeByteMatchTable =
 /// `$table` must only match `$delimiter`, '\', '\r' or '\n'.
 macro_rules! handle_string_literal {
     ($lexer:ident, $delimiter:expr, $table:ident) => {{
+        debug_assert!($delimiter.is_ascii());
+
+        if $lexer.context == LexerContext::JsxAttributeValue {
+            // SAFETY: Caller guarantees `$delimiter` is ASCII, and next char is ASCII
+            return $lexer.read_jsx_string_literal($delimiter);
+        }
+
         // Skip opening quote.
         // SAFETY: Caller guarantees next byte is ASCII, so safe to advance past it.
         let after_opening_quote = $lexer.source.position().add(1);
@@ -157,30 +164,18 @@ impl<'a> Lexer<'a> {
     /// # SAFETY
     /// Next character must be `"`.
     pub(super) unsafe fn read_string_literal_double_quote(&mut self) -> Kind {
-        if self.context == LexerContext::JsxAttributeValue {
-            // SAFETY: Caller guarantees next char is `"`
-            self.source.next_byte_unchecked();
-            self.read_jsx_string_literal('"')
-        } else {
-            // SAFETY: Caller guarantees next char is `"`, which is ASCII.
-            // b'"' is an ASCII byte. `DOUBLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
-            unsafe { handle_string_literal!(self, b'"', DOUBLE_QUOTE_STRING_END_TABLE) }
-        }
+        // SAFETY: Caller guarantees next char is `"`, which is ASCII.
+        // b'"' is an ASCII byte. `DOUBLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
+        unsafe { handle_string_literal!(self, b'"', DOUBLE_QUOTE_STRING_END_TABLE) }
     }
 
     /// Read string literal delimited with `'`.
     /// # SAFETY
     /// Next character must be `'`.
     pub(super) unsafe fn read_string_literal_single_quote(&mut self) -> Kind {
-        if self.context == LexerContext::JsxAttributeValue {
-            // SAFETY: Caller guarantees next char is `'`
-            self.source.next_byte_unchecked();
-            self.read_jsx_string_literal('\'')
-        } else {
-            // SAFETY: Caller guarantees next char is `"`, which is ASCII.
-            // b'\'' is an ASCII byte. `SINGLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
-            unsafe { handle_string_literal!(self, b'\'', SINGLE_QUOTE_STRING_END_TABLE) }
-        }
+        // SAFETY: Caller guarantees next char is `'`, which is ASCII.
+        // b'\'' is an ASCII byte. `SINGLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
+        unsafe { handle_string_literal!(self, b'\'', SINGLE_QUOTE_STRING_END_TABLE) }
     }
 
     /// Save the string if it is escaped

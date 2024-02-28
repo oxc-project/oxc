@@ -1,6 +1,7 @@
-use super::{AutoCow, Kind, Lexer, Token};
+use super::{Kind, Lexer, Token};
 use crate::diagnostics;
 
+use memchr::memchr;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 impl<'a> Lexer<'a> {
@@ -14,25 +15,29 @@ impl<'a> Lexer<'a> {
     ///   `JSXStringCharacter` but not '
     /// `JSXStringCharacter` ::
     ///   `SourceCharacter` but not one of `HTMLCharacterReference`
-    pub(super) fn read_jsx_string_literal(&mut self, delimiter: char) -> Kind {
-        let mut builder = AutoCow::new(self);
-        loop {
-            match self.next_char() {
-                Some(c @ ('"' | '\'')) => {
-                    if c == delimiter {
-                        self.save_string(builder.has_escape(), builder.finish_without_push(self));
-                        return Kind::Str;
-                    }
-                    builder.push_matching(c);
-                }
-                Some(other) => {
-                    builder.push_matching(other);
-                }
-                None => {
-                    self.error(diagnostics::UnterminatedString(self.unterminated_range()));
-                    return Kind::Undetermined;
-                }
-            }
+
+    /// Read JSX string literal.
+    /// # SAFETY
+    /// * `delimiter` must be an ASCII character.
+    /// * Next char in `lexer.source` must be ASCII.
+    pub(super) unsafe fn read_jsx_string_literal(&mut self, delimiter: u8) -> Kind {
+        // Skip opening quote
+        debug_assert!(delimiter.is_ascii());
+        // SAFETY: Caller guarantees next byte is ASCII, so `.add(1)` is a UTF-8 char boundary
+        let after_opening_quote = self.source.position().add(1);
+        let remaining = self.source.str_from_pos_to_end(after_opening_quote);
+
+        let len = memchr(delimiter, remaining.as_bytes());
+        if let Some(len) = len {
+            // SAFETY: `after_opening_quote` + `len` is position of delimiter.
+            // Caller guarantees delimiter is ASCII, so 1 byte after it is a UTF-8 char boundary.
+            let after_closing_quote = after_opening_quote.add(len + 1);
+            self.source.set_position(after_closing_quote);
+            Kind::Str
+        } else {
+            self.source.advance_to_end();
+            self.error(diagnostics::UnterminatedString(self.unterminated_range()));
+            Kind::Undetermined
         }
     }
 
