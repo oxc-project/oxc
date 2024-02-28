@@ -194,7 +194,7 @@ impl<'a> JSDocTagParser<'a> {
         JSDocTag { kind: JSDocTagKind::Parameter(Param { name, r#type }), description }
     }
 
-    // Valid tag but not supported yet, trully unknown tag
+    // Valid tag but not supported yet, truly unknown tag
     fn parse_unknown_tag(&mut self, comment: &'a str) -> JSDocTag<'a> {
         self.skip_whitespace(comment);
 
