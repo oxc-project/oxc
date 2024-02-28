@@ -108,47 +108,19 @@ impl<'a> TypeScript<'a> {
     /// downstream tools that this file is in ESM.
     pub fn transform_program(&mut self, program: &mut Program<'a>) {
         let mut export_type_names = FxHashSet::default();
-        let mut export_names = FxHashSet::default();
 
-        // Collect export names
+        // // Collect export names
         program.body.iter().for_each(|stmt| {
             if let Statement::ModuleDeclaration(module_decl) = stmt {
-                match &**module_decl {
-                    ModuleDeclaration::ExportNamedDeclaration(decl) => {
-                        decl.specifiers.iter().for_each(|specifier| {
-                            let name = specifier.exported.name();
-                            if self.is_import_binding_only(name) {
-                                let is_value =
-                                    decl.export_kind.is_value() && specifier.export_kind.is_value();
-                                if is_value {
-                                    export_names.insert(name.clone());
-                                } else {
-                                    export_type_names.insert(name.clone());
-                                }
-                            }
-                        });
-                    }
-                    ModuleDeclaration::ExportDefaultDeclaration(decl) => {
-                        let name = decl.exported.name();
-                        if self.is_import_binding_only(name) {
-                            export_names.insert(decl.exported.name().clone());
+                if let ModuleDeclaration::ExportNamedDeclaration(decl) = &**module_decl {
+                    decl.specifiers.iter().for_each(|specifier| {
+                        let name = specifier.exported.name();
+                        if self.is_import_binding_only(name)
+                            && (decl.export_kind.is_type() || specifier.export_kind.is_type())
+                        {
+                            export_type_names.insert(name.clone());
                         }
-                    }
-                    ModuleDeclaration::ExportAllDeclaration(decl) => {
-                        if let Some(exported) = &decl.exported {
-                            let name = exported.name();
-                            if self.is_import_binding_only(name) {
-                                let is_value =
-                                    decl.export_kind.is_value() && decl.export_kind.is_value();
-                                if is_value {
-                                    export_names.insert(name.clone());
-                                } else {
-                                    export_type_names.insert(name.clone());
-                                }
-                            }
-                        }
-                    }
-                    _ => {}
+                    });
                 }
             }
         });
@@ -209,7 +181,6 @@ impl<'a> TypeScript<'a> {
                                     }
 
                                     self.has_value_references(&s.local.name)
-                                        || export_names.contains(&s.local.name)
                                 }
                                 ImportDeclarationSpecifier::ImportDefaultSpecifier(s)
                                     if !self.verbatim_module_syntax =>
@@ -222,9 +193,7 @@ impl<'a> TypeScript<'a> {
                                     if self.options.only_remove_type_imports {
                                         return true;
                                     }
-
                                     self.has_value_references(&s.local.name)
-                                        || export_names.contains(&s.local.name)
                                 }
                                 ImportDeclarationSpecifier::ImportNamespaceSpecifier(s)
                                     if !self.verbatim_module_syntax =>
@@ -235,10 +204,6 @@ impl<'a> TypeScript<'a> {
 
                                     if self.options.only_remove_type_imports {
                                         return true;
-                                    }
-
-                                    if export_names.contains(&s.local.name) {
-                                        return false;
                                     }
 
                                     self.has_value_references(&s.local.name)
@@ -308,7 +273,8 @@ impl<'a> TypeScript<'a> {
             .scopes()
             .get_binding(root_scope_id, name)
             .map(|symbol_id| {
-                self.ctx.symbols().get_resolved_references(symbol_id).any(|x| !x.is_type())
+                self.ctx.symbols().get_flag(symbol_id).is_export()
+                    || self.ctx.symbols().get_resolved_references(symbol_id).any(|x| !x.is_type())
             })
             .unwrap_or_default()
     }
