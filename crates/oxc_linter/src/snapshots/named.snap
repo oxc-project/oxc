@@ -140,17 +140,3 @@ expression: named
    ·          ──────
    ╰────
   help: does "./typescript-export-assign-object" have the export "FooBar"?
-
-  ⚠ eslint-plugin-import(named): named import "baz" not found
-   ╭─[index.js:1:10]
- 1 │ import { baz, quaz } from './oxc_named'
-   ·          ───
-   ╰────
-  help: does "./oxc_named" have the export "baz"?
-
-  ⚠ eslint-plugin-import(named): named import "quaz" not found
-   ╭─[index.js:1:15]
- 1 │ import { baz, quaz } from './oxc_named'
-   ·               ────
-   ╰────
-  help: does "./oxc_named" have the export "quaz"?

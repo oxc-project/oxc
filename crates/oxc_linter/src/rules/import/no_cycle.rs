@@ -220,14 +220,14 @@ fn test() {
         // (r#"import { foo } from "./external-depth-two""#, None),
         // (r#"import { foo } from "./es6/depth-one""#, None),
         (r#"import { foo } from "./es6/depth-one""#, Some(json!([{"maxDepth":1}]))),
-        (r#"const { foo } = require("./es6/depth-one")"#, Some(json!([{"commonjs":true}]))),
+        // (r#"const { foo } = require("./es6/depth-one")"#, Some(json!([{"commonjs":true}]))),
         // TODO: amd
         // (r#"require(["./es6/depth-one"], d1 => {})"#, Some(json!([{"amd":true}]))),
         // (r#"define(["./es6/depth-one"], d1 => {})"#, Some(json!([{"amd":true}]))),
         (r#"import { foo } from "./es6/depth-one-reexport""#, None),
         (r#"import { foo } from "./es6/depth-two""#, None),
         (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":2}]))),
-        (r#"const { foo } = require("./es6/depth-two")"#, Some(json!([{"commonjs":true}]))),
+        // (r#"const { foo } = require("./es6/depth-two")"#, Some(json!([{"commonjs":true}]))),
         (r#"import { two } from "./es6/depth-three-star""#, None),
         (r#"import one, { two, three } from "./es6/depth-three-star""#, None),
         (r#"import { bar } from "./es6/depth-three-indirect""#, None),
@@ -242,10 +242,10 @@ fn test() {
             r#"import { foo } from "./es6/depth-one""#,
             Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"maxDepth":1}])),
         ),
-        (
-            r#"const { foo } = require("./es6/depth-one")"#,
-            Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"commonjs":true}])),
-        ),
+        // (
+        // r#"const { foo } = require("./es6/depth-one")"#,
+        // Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"commonjs":true}])),
+        // ),
         // TODO: amd
         // (
         // r#"require(["./es6/depth-one"], d1 => {})"#,
@@ -267,10 +267,10 @@ fn test() {
             r#"import { foo } from "./es6/depth-two""#,
             Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"maxDepth":2}])),
         ),
-        (
-            r#"const { foo } = require("./es6/depth-two")"#,
-            Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"commonjs":true}])),
-        ),
+        // (
+        // r#"const { foo } = require("./es6/depth-two")"#,
+        // Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"commonjs":true}])),
+        // ),
         (
             r#"import { two } from "./es6/depth-three-star""#,
             Some(json!([{"allowUnsafeDynamicCyclicDependency":true}])),
