@@ -109,9 +109,10 @@ impl<'a> Source<'a> {
         // SAFETY: `start` and `end` are created from a `&str` in `Source::new`,
         // so guaranteed to be start and end of a valid UTF-8 string
         unsafe {
-            let len = self.end as usize - self.start as usize;
-            let slice = slice::from_raw_parts(self.start, len);
-            str::from_utf8_unchecked(slice)
+            self.str_between_positions_unchecked(
+                SourcePosition::new(self.start),
+                SourcePosition::new(self.end),
+            )
         }
     }
 
@@ -125,10 +126,10 @@ impl<'a> Source<'a> {
         // Invariant of `Source` is that `ptr` is always on a UTF-8 character boundary,
         // so slice from `ptr` to `end` will always be a valid UTF-8 string.
         unsafe {
-            let len = self.end as usize - self.ptr as usize;
-            let slice = slice::from_raw_parts(self.ptr, len);
-            debug_assert!(slice.is_empty() || !is_utf8_cont_byte(slice[0]));
-            str::from_utf8_unchecked(slice)
+            self.str_between_positions_unchecked(
+                SourcePosition::new(self.ptr),
+                SourcePosition::new(self.end),
+            )
         }
     }
 
@@ -192,6 +193,7 @@ impl<'a> Source<'a> {
         self.ptr = pos.ptr;
     }
 
+    /// Advance `Source`'s cursor to end.
     #[inline]
     pub(super) fn advance_to_end(&mut self) {
         self.ptr = self.end;
@@ -204,8 +206,7 @@ impl<'a> Source<'a> {
         unsafe { self.str_from_pos_to_current_unchecked(pos) }
     }
 
-    /// Get string slice from a `SourcePosition` up to the current position of `Source`,
-    /// without checks.
+    /// Get string slice from a `SourcePosition` up to current position of `Source`, without checks.
     ///
     /// # SAFETY
     /// `pos` must not be after current position of `Source`.
@@ -252,12 +253,13 @@ impl<'a> Source<'a> {
         start: SourcePosition,
         end: SourcePosition,
     ) -> &'a str {
-        // Check `start` and `end` are both within bounds of `Source`
+        // Check `start` is not after `end`
         debug_assert!(start.ptr <= end.ptr);
+        // Check `start` and `end` are within bounds of `Source`
         debug_assert!(start.ptr >= self.start);
         debug_assert!(end.ptr <= self.end);
-        // Check `start` and `end` are both on UTF-8 character boundaries.
-        // SAFETY: `start` and `end` are valid to read from if they're not at EOF.
+        // Check `start` and `end` are on UTF-8 character boundaries.
+        // SAFETY: Above assertions ensure `start` and `end` are valid to read from if not at EOF.
         debug_assert!(start.ptr == self.end || !is_utf8_cont_byte(start.read()));
         debug_assert!(end.ptr == self.end || !is_utf8_cont_byte(end.read()));
 
@@ -301,7 +303,7 @@ impl<'a> Source<'a> {
     /// * Moving back `n` bytes would not place current position on a UTF-8 character boundary.
     #[inline]
     pub(super) fn back(&mut self, n: usize) {
-        // This assertion is essential to ensure safety of `pos.read()` call below.
+        // This assertion is essential to ensure safety of `new_pos.read()` call below.
         // Without this check, calling `back(0)` on an empty `Source` would cause reading
         // out of bounds.
         // Compiler should remove this assertion when inlining this function,
