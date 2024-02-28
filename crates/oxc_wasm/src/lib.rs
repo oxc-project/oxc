@@ -203,7 +203,10 @@ impl Oxc {
         }
 
         if run_options.scope() || run_options.symbol() {
-            let semantic = SemanticBuilder::new(source_text, source_type).build(program).semantic;
+            let semantic = SemanticBuilder::new(source_text, source_type)
+                .build_module_record(PathBuf::new(), program)
+                .build(program)
+                .semantic;
             if run_options.scope() {
                 self.scope_text = Self::get_scope_text(&semantic);
             } else if run_options.symbol() {
