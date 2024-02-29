@@ -112,7 +112,7 @@ macro_rules! handle_string_literal_escape {
                         // `Source`'s invariant temporarily, but the guarantees of `SafeByteMatchTable`
                         // mean `!table.matches(b)` on this branch prevents exiting this loop until
                         // `source` is positioned on a UTF-8 character boundary again.
-                        unsafe { $lexer.source.next_byte_unchecked() };
+                        $lexer.source.next_byte_unchecked();
                         continue;
                     }
                     b if b == $delimiter => {
@@ -132,16 +132,15 @@ macro_rules! handle_string_literal_escape {
                         str.push_str(chunk);
                         continue 'outer;
                     }
-                    b'\r' | b'\n' => {
-                        // This is impossible in valid JS, so cold path
+                    _  => {
+                        // Line break. This is impossible in valid JS, so cold path.
                         return cold_branch(|| {
+                            debug_assert!(matches!(b, b'\r' | b'\n'));
                             $lexer.consume_char();
                             $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
                             Kind::Undetermined
                         });
                     }
-                    // SAFETY: Caller guarantees `table` does not match any other bytes
-                    _ => assert_unchecked::unreachable_unchecked!(),
                 }
             }
 
