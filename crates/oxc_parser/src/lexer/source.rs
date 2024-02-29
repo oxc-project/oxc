@@ -218,6 +218,20 @@ impl<'a> Source<'a> {
         self.str_between_positions_unchecked(pos, SourcePosition::new(self.ptr))
     }
 
+    /// Get string slice from current position of `Source` up to a `SourcePosition`, without checks.
+    ///
+    /// # SAFETY
+    /// `pos` must not be before current position of `Source`.
+    /// This is always the case if both:
+    /// 1. `Source::set_position` has not been called since `pos` was created.
+    /// 2. `pos` has not been moved backwards with `SourcePosition::sub`.
+    #[inline]
+    pub(super) unsafe fn str_from_current_to_pos_unchecked(&self, pos: SourcePosition) -> &'a str {
+        // SAFETY: Caller guarantees `pos` is not before current position of `Source`.
+        // `self.ptr` is always a valid `SourcePosition` due to invariants of `Source`.
+        self.str_between_positions_unchecked(SourcePosition::new(self.ptr), pos)
+    }
+
     /// Get string slice from a `SourcePosition` up to the end of `Source`.
     #[inline]
     pub(super) fn str_from_pos_to_end(&self, pos: SourcePosition) -> &'a str {
