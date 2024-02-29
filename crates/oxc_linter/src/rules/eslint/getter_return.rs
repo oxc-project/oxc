@@ -401,7 +401,6 @@ fn test() {
                     case 2: return 2;
                     default: return 3;
                  }
-
                  throw new Error('test')
             }
         }", None),
@@ -418,8 +417,7 @@ fn test() {
         ("const originalClearTimeout = targetWindow.clearTimeout;
         Object.defineProperty(targetWindow, 'vscodeOriginalClearTimeout', { get: () => originalClearTimeout });
         ", None),
-        (
-            "class T {
+        ("class T {
             get width(): number | undefined {
                 const val = undefined
                 if (!val) {
@@ -428,9 +426,8 @@ fn test() {
 
                 return val * val;
             }
-        }",
-            None,
-        ),
+        }", None),
+        ("function fn(): void { console.log('test') }", None)
     ];
 
     let fail = vec![
