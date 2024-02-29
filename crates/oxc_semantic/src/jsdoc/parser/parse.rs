@@ -13,7 +13,7 @@ pub struct JSDocParser<'a> {
 impl<'a> JSDocParser<'a> {
     /// source_text: Inside of /**HERE*/, NOT includes `/**` and `*/`
     pub fn new(source_text: &'a str) -> Self {
-        // The begining and end of the comment can be trimmed
+        // Outer spaces can be trimmed
         Self { source_text: source_text.trim(), current: 0 }
     }
 
@@ -53,6 +53,7 @@ impl<'a> JSDocParser<'a> {
     fn parse_tag(&mut self) -> JSDocTag<'a> {
         let tag_name = self.take_until(|c| c == ' ' || c == '\n' || c == '@');
         match tag_name {
+            // TODO: Add more tags
             "arg" | "argument" | "param" => self.parse_parameter_tag(),
             "deprecated" => self.parse_simple_tag(JSDocTagKind::Deprecated),
             _ => self.parse_simple_tag(JSDocTagKind::Unknown(tag_name)),
