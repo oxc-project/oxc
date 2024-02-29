@@ -13,7 +13,7 @@ pub struct JSDocParser<'a> {
 impl<'a> JSDocParser<'a> {
     /// source_text: Inside of /**HERE*/, NOT includes `/**` and `*/`
     pub fn new(source_text: &'a str) -> Self {
-        // The beggining and end of the comment can be trimmed
+        // The begining and end of the comment can be trimmed
         Self { source_text: source_text.trim(), current: 0 }
     }
 
