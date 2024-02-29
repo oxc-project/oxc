@@ -19,7 +19,7 @@ pub use petgraph;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 use class::ClassTable;
-pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
+pub use jsdoc::JSDocFinder;
 use oxc_ast::{ast::IdentifierReference, AstKind, TriviasMap};
 use oxc_span::SourceType;
 pub use oxc_syntax::{
@@ -60,7 +60,7 @@ pub struct Semantic<'a> {
 
     module_record: Arc<ModuleRecord>,
 
-    jsdoc: JSDoc<'a>,
+    jsdoc: JSDocFinder<'a>,
 
     unused_labels: FxHashSet<AstNodeId>,
 
@@ -102,7 +102,7 @@ impl<'a> Semantic<'a> {
         &self.trivias
     }
 
-    pub fn jsdoc(&self) -> &JSDoc<'a> {
+    pub fn jsdoc(&self) -> &JSDocFinder<'a> {
         &self.jsdoc
     }
 
