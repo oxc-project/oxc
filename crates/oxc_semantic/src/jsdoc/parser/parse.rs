@@ -8,8 +8,8 @@ pub struct JSDocParser<'a> {
     current: usize,
 }
 
-// // Refs: `parseJSDocCommentWorker()` and `doJSDocScan()` from TypeScript
-// // https://github.com/microsoft/TypeScript/blob/df8d755c1d76eaf0a8f1c1046a46061b53315718/src/compiler/parser.ts#L8814
+// Refs: `parseJSDocCommentWorker()` and `doJSDocScan()` from TypeScript
+// https://github.com/microsoft/TypeScript/blob/df8d755c1d76eaf0a8f1c1046a46061b53315718/src/compiler/parser.ts#L8814
 impl<'a> JSDocParser<'a> {
     /// source_text: Inside of /**HERE*/, NOT includes `/**` and `*/`
     pub fn new(source_text: &'a str) -> Self {
@@ -99,6 +99,10 @@ impl<'a> JSDocParser<'a> {
         let comment = utils::trim_multiline_comment(comment);
         JSDocTag { kind: JSDocTagKind::Parameter(param), comment }
     }
+
+    //
+    // Parser utils
+    //
 
     fn skip_whitespace(&mut self) {
         while let Some(c) = self.source_text.chars().nth(self.current) {
