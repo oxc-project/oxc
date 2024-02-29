@@ -1,24 +1,27 @@
-use super::jsdoc_tag::{JSDocTag, JSDocTagParser};
+use super::jsdoc_tag::JSDocTag;
+use super::parse::JSDocParser;
 use std::cell::OnceCell;
 
 #[derive(Debug, Clone)]
 pub struct JSDoc<'a> {
-    comment_raw: &'a str,
-    /// Cached JSDocTags
-    tags: OnceCell<Vec<JSDocTag<'a>>>,
+    raw: &'a str,
+    /// Cached+parsed JSDoc comment and tags
+    cached: OnceCell<(String, Vec<JSDocTag<'a>>)>,
 }
 
 impl<'a> JSDoc<'a> {
-    pub fn new(comment_raw: &'a str) -> JSDoc<'a> {
-        Self { comment_raw, tags: OnceCell::new() }
+    /// comment_content: Inside of /**HERE*/, not include `/**` and `*/`
+    pub fn new(comment_content: &'a str) -> JSDoc<'a> {
+        Self { raw: comment_content, cached: OnceCell::new() }
     }
 
-    pub fn comment(&'a self) -> &'a str {
-        // TODO: parse from start, until `@` or `*/
-        self.comment_raw
+    pub fn comment(&self) -> &str {
+        let cache = self.cached.get_or_init(|| JSDocParser::new(self.raw).parse());
+        &cache.0
     }
 
     pub fn tags<'b>(&'b self) -> &'b Vec<JSDocTag<'a>> {
-        self.tags.get_or_init(|| JSDocTagParser::new(self.comment_raw).parse())
+        let cache = self.cached.get_or_init(|| JSDocParser::new(self.raw).parse());
+        &cache.1
     }
 }
