@@ -1,16 +1,27 @@
+use oxc_ast::{ast::JSXElementName, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactString, Span};
+use oxc_span::{CompactString, GetSpan, Span};
+use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-import(namespace): ")]
-#[diagnostic(severity(warning), help(""))]
-struct NamespaceDiagnostic(CompactString, #[label] pub Span);
+enum NamespaceDiagnostic {
+    #[error("eslint-plugin-import(namespace): {1:?} not found in imported namespace {2:?}.")]
+    #[diagnostic(severity(warning))]
+    NoExport(#[label] Span, CompactString, CompactString),
+    #[error("eslint-plugin-import(namespace): Unable to validate computed reference to imported namespace {1:?}
+    .")]
+    #[diagnostic(severity(warning))]
+    ComputedReference(#[label] Span, CompactString),
+    #[error("eslint-plugin-import(namespace): Assignment to member of namespace {1:?}.'")]
+    #[diagnostic(severity(warning))]
+    Assignment(#[label] Span, CompactString),
+}
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/namespace.md>
 #[derive(Debug, Default, Clone)]
@@ -18,13 +29,83 @@ pub struct Namespace;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// TODO
+    /// Enforces names exist at the time they are dereferenced, when imported as a full namespace (i.e. import * as foo from './foo'; foo.bar(); will report if bar is not exported by ./foo.).
+    /// Will report at the import declaration if there are no exported names found.
+    /// Also, will report for computed references (i.e. foo["bar"]()).
+    /// Reports on assignment to a member of an imported namespace.
     Namespace,
     nursery
 );
 
 impl Rule for Namespace {
-    fn run_once(&self, _ctx: &LintContext<'_>) {}
+    fn run_once(&self, ctx: &LintContext<'_>) {
+        ctx.semantic().module_record().import_entries.iter().for_each(|entry| {
+            if !matches!(entry.import_name, ImportImportName::NamespaceObject) {
+                return;
+            }
+            let source = entry.module_request.name();
+            let module_record = ctx.semantic().module_record();
+            let Some(module) = module_record.loaded_modules.get(source) else {
+                return;
+            };
+
+            if module.not_esm {
+                return;
+            }
+
+            let Some(symbol_id) =
+                ctx.semantic().symbols().get_symbol_id_from_span(&entry.local_name.span())
+            else {
+                return;
+            };
+
+            let check_binding_exported = |name: &str, span| {
+                if module.exported_bindings.get(name).is_some() {
+                    return;
+                }
+                ctx.diagnostic(NamespaceDiagnostic::NoExport(span, name.into(), source.clone()));
+            };
+
+            ctx.symbols().get_resolved_references(symbol_id).for_each(|reference| {
+                if let Some(node) = ctx.nodes().parent_node(reference.node_id()) {
+                    let name = entry.local_name.name();
+
+                    match node.kind() {
+                        AstKind::MemberExpression(member) => {
+                            if matches!(
+                                ctx.nodes().parent_kind(node.id()),
+                                Some(AstKind::SimpleAssignmentTarget(_))
+                            ) {
+                                ctx.diagnostic(NamespaceDiagnostic::Assignment(
+                                    member.span(),
+                                    name.clone(),
+                                ));
+                            };
+
+                            // TODO: Support allow_computed option
+                            if member.is_computed() {
+                                return ctx.diagnostic(NamespaceDiagnostic::ComputedReference(
+                                    member.span(),
+                                    name.clone(),
+                                ));
+                            }
+
+                            if let Some((span, name)) = member.static_property_info() {
+                                check_binding_exported(name, span);
+                            }
+                        }
+
+                        AstKind::JSXOpeningElement(element) => {
+                            if let JSXElementName::MemberExpression(expr) = &element.name {
+                                check_binding_exported(&expr.property.name, expr.property.span);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            });
+        });
+    }
 }
 
 #[test]
@@ -33,11 +114,11 @@ fn test() {
 
     let pass = vec![
         r#"import "./malformed.js""#,
-        // r#"import * as foo from './empty-folder';"#,
-        // r#"import * as names from "./named-exports"; console.log((names.b).c);"#,
-        // r#"import * as names from "./named-exports"; console.log(names.a);"#,
+        r"import * as foo from './empty-folder';",
+        r#"import * as names from "./named-exports"; console.log((names.b).c);"#,
+        r#"import * as names from "./named-exports"; console.log(names.a);"#,
         // r#"import * as names from "./re-export-names"; console.log(names.foo);"#,
-        // r#"import * as elements from './jsx';"#,
+        r"import * as elements from './jsx';",
         // r#"import * as foo from "./jsx/re-export.js";
         // console.log(foo.jsxFoo);"#,
         // r#"import * as foo from "./jsx/bar/index.js";
@@ -118,10 +199,10 @@ fn test() {
     ];
 
     let fail = vec![
-        // r#"import * as names from './named-exports'; console.log(names.c)"#,
-        // r#"import * as names from './named-exports'; console.log(names['a']);"#,
-        // r#"import * as foo from './bar'; foo.foo = 'y';"#,
-        // r#"import * as foo from './bar'; foo.x = 'y';"#,
+        r"import * as names from './named-exports'; console.log(names.c)",
+        r"import * as names from './named-exports'; console.log(names['a']);",
+        r"import * as foo from './bar'; foo.foo = 'y';",
+        r"import * as foo from './bar'; foo.x = 'y';",
         // r#"import * as names from "./named-exports"; const { c } = names"#,
         // r#"import * as names from "./named-exports"; function b() { const { c } = names }"#,
         // r#"import * as names from "./named-exports"; const { c: d } = names"#,
@@ -129,10 +210,10 @@ fn test() {
         // r#"import * as Endpoints from "./issue-195/Endpoints"; console.log(Endpoints.Foo)"#,
         // r#"import * as namespace from './malformed.js';"#,
         // r#"import b from './deep/default'; console.log(b.e)"#,
-        // r#"console.log(names.c); import * as names from './named-exports';"#,
-        // r#"function x() { console.log(names.c) } import * as names from './named-exports';"#,
+        r"console.log(names.c); import * as names from './named-exports';",
+        r"function x() { console.log(names.c) } import * as names from './named-exports';",
         // r#"import * as ree from "./re-export"; console.log(ree.default)"#,
-        // r#"import * as Names from "./named-exports"; const Foo = <Names.e/>"#,
+        r#"import * as Names from "./named-exports"; const Foo = <Names.e/>"#,
         // r#"import { "b" as b } from "./deep/a"; console.log(b.e)"#,
         // r#"import { "b" as b } from "./deep/a"; console.log(b.c.e)"#,
         // r#"import * as a from "./deep/a"; console.log(a.b.e)"#,
