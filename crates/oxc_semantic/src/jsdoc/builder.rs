@@ -1,16 +1,16 @@
 use std::collections::BTreeMap;
 use std::rc::Rc;
 
+use super::parser::JSDoc;
+use crate::jsdoc::JSDocFinder;
 use oxc_ast::{AstKind, Comment, TriviasMap};
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
-use super::{JSDoc, JSDocComment};
-
 pub struct JSDocBuilder<'a> {
     source_text: &'a str,
     trivias: Rc<TriviasMap>,
-    attached_docs: BTreeMap<Span, Vec<JSDocComment<'a>>>,
+    attached_docs: BTreeMap<Span, Vec<JSDoc<'a>>>,
     leading_comments_seen: FxHashSet<u32>,
 }
 
@@ -24,7 +24,7 @@ impl<'a> JSDocBuilder<'a> {
         }
     }
 
-    pub fn build(self) -> JSDoc<'a> {
+    pub fn build(self) -> JSDocFinder<'a> {
         let not_attached_docs = self
             .trivias
             .comments()
@@ -33,7 +33,7 @@ impl<'a> JSDocBuilder<'a> {
             .filter_map(|(start, comment)| self.parse_if_jsdoc_comment(*start, *comment))
             .collect::<Vec<_>>();
 
-        JSDoc::new(self.attached_docs, not_attached_docs)
+        JSDocFinder::new(self.attached_docs, not_attached_docs)
     }
 
     // This process is done in conjunction with the `semantic.build()`.
@@ -55,6 +55,9 @@ impl<'a> JSDocBuilder<'a> {
     // (But, default is only about function related nodes.)
     // > https://github.com/gajus/eslint-plugin-jsdoc/blob/e948bee821e964a92fbabc01574eca226e9e1252/src/iterateJsdoc.js#L2517-L2536
     //
+    // `eslint-plugin-import` does the similar but more casual way.
+    // > https://github.com/import-js/eslint-plugin-import/blob/df751e0d004aacc34f975477163fb221485a85f6/src/ExportMap.js#L211
+    //
     // Q. How do we attach JSDoc to that node?
     // A. Also depends on the implementation.
     //
@@ -70,6 +73,7 @@ impl<'a> JSDocBuilder<'a> {
     //
     // Of course, this can be changed in the future.
     pub fn retrieve_attached_jsdoc(&mut self, kind: &AstKind<'a>) -> bool {
+        // For perf reasons, we should limit the target nodes to attach JSDoc
         // This may be diffed compare to TypeScript's `canHaveJSDoc()`, should adjust if needed
         if !(kind.is_statement()
             || kind.is_declaration()
@@ -103,11 +107,7 @@ impl<'a> JSDocBuilder<'a> {
         false
     }
 
-    fn parse_if_jsdoc_comment(
-        &self,
-        span_start: u32,
-        comment: Comment,
-    ) -> Option<JSDocComment<'a>> {
+    fn parse_if_jsdoc_comment(&self, span_start: u32, comment: Comment) -> Option<JSDoc<'a>> {
         if !comment.is_multi_line() {
             return None;
         }
@@ -120,8 +120,8 @@ impl<'a> JSDocBuilder<'a> {
             return None;
         }
 
-        // Should remove the very first `*`?
-        Some(JSDocComment::new(comment_content))
+        // Remove the very first `*`
+        Some(JSDoc::new(&comment_content[1..]))
     }
 }
 
@@ -131,7 +131,8 @@ mod test {
     use oxc_parser::Parser;
     use oxc_span::{SourceType, Span};
 
-    use crate::{jsdoc::JSDocComment, Semantic, SemanticBuilder};
+    use super::JSDoc;
+    use crate::{Semantic, SemanticBuilder};
 
     fn build_semantic<'a>(
         allocator: &'a Allocator,
@@ -154,7 +155,7 @@ mod test {
         source_text: &'a str,
         symbol: &'a str,
         source_type: Option<SourceType>,
-    ) -> Option<Vec<JSDocComment<'a>>> {
+    ) -> Option<Vec<JSDoc<'a>>> {
         let semantic = build_semantic(allocator, source_text, source_type);
         let start = source_text.find(symbol).unwrap_or(0) as u32;
         let span = Span::new(start, start + symbol.len() as u32);
@@ -187,6 +188,7 @@ mod test {
             ("/** test */ ; function foo() {}", "function foo() {}"),
             ("/** test */ function foo1() {} function foo() {}", "function foo() {}"),
             ("function foo() {} /** test */", "function foo() {}"),
+            ("/** test */ (() => {})", "() => {}"),
         ];
         for (source_text, target) in source_texts {
             test_jsdoc_not_found(source_text, target);
@@ -236,6 +238,9 @@ mod test {
                 "function foo() {}",
             ),
             ("/** foo1 */ function foo1() {} /** test */ function foo() {}", "function foo() {}"),
+            ("/** test */ 1", "1"),
+            ("/** test */ (1)", "(1)"),
+            ("/** test */ (() => {})", "(() => {})"),
         ];
         for (source_text, target) in source_texts {
             test_jsdoc_found(source_text, target, None);
@@ -282,10 +287,10 @@ mod test {
         // Should be [farthest, ..., nearest]
         let mut iter = jsdocs.iter();
         let c1 = iter.next().unwrap();
-        assert!(c1.comment.contains("c1"));
+        assert!(c1.comment().contains("c1"));
         let _c2 = iter.next().unwrap();
         let c3 = iter.next().unwrap();
-        assert!(c3.comment.contains("c3"));
+        assert!(c3.comment().contains("c3"));
     }
 
     #[test]
@@ -308,6 +313,8 @@ mod test {
             /* noop */
 
             let x;
+
+            /**/ // noop and noop
 
             /** 7. Not attached but collected! */
             ",
