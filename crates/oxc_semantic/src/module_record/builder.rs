@@ -18,19 +18,13 @@ impl ModuleRecordBuilder {
     }
 
     pub fn visit(&mut self, program: &Program) {
+        self.module_record.not_esm = true;
         // This avoids additional checks on TypeScript `TsModuleBlock` which
         // also has `ModuleDeclaration`s.
         for stmt in &program.body {
-            match stmt {
-                Statement::ModuleDeclaration(module_decl) => {
-                    self.visit_module_declaration(module_decl);
-                }
-                Statement::ExpressionStatement(expr_stmt) => {
-                    self.handle_cjs_export(&expr_stmt.expression);
-                }
-                stmt => {
-                    self.search_top_level_cjs_require(stmt);
-                }
+            if let Statement::ModuleDeclaration(module_decl) = stmt {
+                self.module_record.not_esm = false;
+                self.visit_module_declaration(module_decl);
             }
         }
 
@@ -343,75 +337,6 @@ impl ModuleRecordBuilder {
                 specifier.exported.name().to_compact_string(),
                 specifier.exported.span(),
             );
-        }
-    }
-
-    /// Try to find require calls by searching all top-level statements
-    /// and add them to the module record
-    fn search_top_level_cjs_require(&mut self, stmt: &Statement) {
-        match stmt {
-            // var foo = require('bar');
-            Statement::Declaration(Declaration::VariableDeclaration(var_decl)) => {
-                for declaration in &var_decl.declarations {
-                    if let Some(init) = &declaration.init {
-                        self.handle_cjs_require(init);
-                    }
-                }
-            }
-            // require('foo')
-            Statement::ExpressionStatement(expr_stmt) => {
-                self.handle_cjs_require(&expr_stmt.expression);
-            }
-            _ => {}
-        }
-    }
-
-    fn handle_cjs_require(&mut self, expr: &Expression) {
-        let Expression::CallExpression(call) = &expr else {
-            return;
-        };
-        let Expression::Identifier(ident) = &call.callee else {
-            return;
-        };
-        if ident.name != "require" {
-            return;
-        }
-        if let Some(Argument::Expression(Expression::StringLiteral(module))) =
-            call.arguments.first()
-        {
-            let module_request = NameSpan::new(module.value.to_compact_string(), module.span);
-            self.add_module_request(&module_request);
-        }
-    }
-
-    // Add export binding for
-    // * exports.foo = bar
-    // * module.exports.foo = bar
-    // * module.exports = foo
-    fn handle_cjs_export(&mut self, expr: &Expression) {
-        let Expression::AssignmentExpression(assign_expr) = expr else { return };
-        let AssignmentTarget::SimpleAssignmentTarget(target) = &assign_expr.left else { return };
-        let SimpleAssignmentTarget::MemberAssignmentTarget(member_expr) = target else { return };
-        match member_expr.object() {
-            // exports.foo = bar
-            Expression::Identifier(ident) if ident.name == "exports" => {
-                let Some((span, name)) = member_expr.static_property_info() else { return };
-                self.add_export_binding(name.into(), span);
-            }
-            // module.exports = {}
-            Expression::Identifier(_)
-                if member_expr.is_specific_member_access("module", "exports") =>
-            {
-                self.add_default_export(assign_expr.right.span());
-            }
-            // module.exports.foo = bar
-            Expression::MemberExpression(inner_member_expr)
-                if inner_member_expr.is_specific_member_access("module", "exports") =>
-            {
-                let Some((span, name)) = member_expr.static_property_info() else { return };
-                self.add_export_binding(name.into(), span);
-            }
-            _ => {}
         }
     }
 }

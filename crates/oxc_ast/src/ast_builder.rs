@@ -895,6 +895,7 @@ impl<'a> AstBuilder<'a> {
 
     pub fn class_property(
         &self,
+        r#type: PropertyDefinitionType,
         span: Span,
         key: PropertyKey<'a>,
         value: Option<Expression<'a>>,
@@ -903,6 +904,7 @@ impl<'a> AstBuilder<'a> {
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         ClassElement::PropertyDefinition(self.alloc(PropertyDefinition {
+            r#type,
             span,
             key,
             value,
@@ -921,6 +923,7 @@ impl<'a> AstBuilder<'a> {
 
     pub fn class_constructor(&self, span: Span, value: Box<'a, Function<'a>>) -> ClassElement<'a> {
         ClassElement::MethodDefinition(self.alloc(MethodDefinition {
+            r#type: MethodDefinitionType::MethodDefinition,
             span,
             key: self.property_key_expression(self.identifier_reference_expression(
                 IdentifierReference::new(SPAN, "constructor".into()),
