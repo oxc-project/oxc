@@ -137,6 +137,17 @@ impl<'a> TSType<'a> {
     pub fn is_const_type_reference(&self) -> bool {
         matches!(self, TSType::TSTypeReference(reference) if reference.type_name.is_const())
     }
+
+    /// Check if type maybe `undefined`
+    pub fn is_maybe_undefined(&self) -> bool {
+        match self {
+            TSType::TSUndefinedKeyword(_) => true,
+            TSType::TSUnionType(un) => {
+                un.types.iter().any(|t| matches!(t, TSType::TSUndefinedKeyword(_)))
+            }
+            _ => false,
+        }
+    }
 }
 
 /// `SomeType extends OtherType ? TrueType : FalseType;`
