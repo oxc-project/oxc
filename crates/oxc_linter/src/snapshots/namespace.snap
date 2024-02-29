@@ -2,4 +2,51 @@
 source: crates/oxc_linter/src/tester.rs
 expression: namespace
 ---
+  ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
+   ╭─[index.js:1:61]
+ 1 │ import * as names from './named-exports'; console.log(names.c)
+   ·                                                             ─
+   ╰────
 
+  ⚠ eslint-plugin-import(namespace): Unable to validate computed reference to imported namespace "names"
+  │     .
+   ╭─[index.js:1:55]
+ 1 │ import * as names from './named-exports'; console.log(names['a']);
+   ·                                                       ──────────
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): Assignment to member of namespace "foo".'
+   ╭─[index.js:1:31]
+ 1 │ import * as foo from './bar'; foo.foo = 'y';
+   ·                               ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): Assignment to member of namespace "foo".'
+   ╭─[index.js:1:31]
+ 1 │ import * as foo from './bar'; foo.x = 'y';
+   ·                               ─────
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "x" not found in imported namespace "./bar".
+   ╭─[index.js:1:35]
+ 1 │ import * as foo from './bar'; foo.x = 'y';
+   ·                                   ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
+   ╭─[index.js:1:19]
+ 1 │ console.log(names.c); import * as names from './named-exports';
+   ·                   ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
+   ╭─[index.js:1:34]
+ 1 │ function x() { console.log(names.c) } import * as names from './named-exports';
+   ·                                  ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "e" not found in imported namespace "./named-exports".
+   ╭─[index.js:1:62]
+ 1 │ import * as Names from "./named-exports"; const Foo = <Names.e/>
+   ·                                                              ─
+   ╰────
