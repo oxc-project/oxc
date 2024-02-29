@@ -186,7 +186,7 @@ impl<'a> ReactJsx<'a> {
     }
 
     pub fn add_react_jsx_runtime_imports(&mut self, program: &mut Program<'a>) {
-        if self.default_runtime.is_classic() {
+        if self.default_runtime.is_classic() | self.default_runtime.is_mixed() {
             if self.options.import_source != "react" {
                 self.ctx.error(ImportSourceCannotBeSet);
             }
@@ -219,7 +219,7 @@ impl<'a> ReactJsx<'a> {
         has_key_after_props_spread: bool,
         need_jsxs: bool,
     ) {
-        if self.default_runtime.is_classic() {
+        if self.default_runtime.is_classic() || self.default_runtime.is_mixed() {
             return;
         }
         match e {
@@ -369,6 +369,7 @@ impl<'a> ReactJsx<'a> {
     fn transform_jsx<'b>(&mut self, e: &JSXElementOrFragment<'a, 'b>) -> Expression<'a> {
         let is_classic = self.default_runtime.is_classic();
         let is_automatic = self.default_runtime.is_automatic();
+        let is_mixed = self.default_runtime.is_mixed();
         let has_key_after_props_spread = e.has_key_after_props_spread();
 
         // TODO: compute the correct capacity for both runtimes
@@ -418,7 +419,7 @@ impl<'a> ReactJsx<'a> {
                         }
                         // In automatic mode, extract the key before spread prop,
                         // and add it to the third argument later.
-                        if is_automatic && !has_key_after_props_spread {
+                        if (is_automatic || is_mixed) && !has_key_after_props_spread {
                             key_prop = attr.value.as_ref();
                             continue;
                         }
@@ -434,8 +435,8 @@ impl<'a> ReactJsx<'a> {
 
         let children = e.children();
 
-        // Append children to object properties in automatic mode
-        if is_automatic {
+        // Append children to object properties in automatic and mixed mode
+        if is_automatic || is_mixed {
             let allocator = self.ast.allocator;
             let mut children = Vec::from_iter_in(
                 children.iter().filter_map(|child| self.transform_jsx_child(child)),
@@ -465,12 +466,12 @@ impl<'a> ReactJsx<'a> {
 
         self.add_import(e, has_key_after_props_spread, need_jsxs);
 
-        if !properties.is_empty() || is_automatic {
+        if !properties.is_empty() || is_automatic || is_mixed {
             let object_expression = self.ast.object_expression(SPAN, properties, None);
             arguments.push(Argument::Expression(object_expression));
         }
 
-        if is_automatic && key_prop.is_some() {
+        if (is_automatic || is_mixed) && key_prop.is_some() {
             arguments.push(Argument::Expression(self.transform_jsx_attribute_value(key_prop)));
         }
 
@@ -523,7 +524,7 @@ impl<'a> ReactJsx<'a> {
         jsxs: bool,
     ) -> Expression<'a> {
         match self.default_runtime {
-            ReactJsxRuntime::Classic => {
+            ReactJsxRuntime::Classic | ReactJsxRuntime::Mixed => {
                 if self.options.pragma == "React.createElement" {
                     let object = self.get_react_references();
                     let property = IdentifierName::new(SPAN, "createElement".into());
@@ -564,7 +565,7 @@ impl<'a> ReactJsx<'a> {
 
     fn get_fragment(&mut self) -> Expression<'a> {
         match self.default_runtime {
-            ReactJsxRuntime::Classic => {
+            ReactJsxRuntime::Classic | ReactJsxRuntime::Mixed => {
                 if self.options.pragma_frag == "React.Fragment" {
                     let object = self.get_react_references();
                     let property = IdentifierName::new(SPAN, "Fragment".into());

@@ -82,6 +82,8 @@ pub enum ReactJsxRuntime {
     Classic,
     /// Auto imports the functions that JSX transpiles to (default).
     Automatic,
+    /// Mixed, everything is like automatic but with `pragma` and `pragma_frag` support without imports.
+    Mixed,
 }
 
 impl ReactJsxRuntime {
@@ -91,6 +93,10 @@ impl ReactJsxRuntime {
 
     pub fn is_automatic(&self) -> bool {
         matches!(self, Self::Automatic)
+    }
+
+    pub fn is_mixed(&self) -> bool {
+        matches!(self, Self::Mixed)
     }
 }
 
