@@ -28,26 +28,27 @@ impl<'a> Lexer<'a> {
     ///   where a `RegularExpressionLiteral` is permitted
     /// Which means the parser needs to re-tokenize on `PrimaryExpression`,
     /// `RegularExpressionLiteral` only appear on the right hand side of `PrimaryExpression`
-    pub(crate) fn next_regex(&mut self, kind: Kind) -> (Token, u32, RegExpFlags) {
-        self.token.start = self.offset()
-            - match kind {
-                Kind::Slash => 1,
-                Kind::SlashEq => 2,
-                _ => unreachable!(),
-            };
-        let (pattern_end, flags) = self.read_regex();
+    pub(crate) fn next_regex(&mut self, kind: Kind) -> (Token, &'a str, RegExpFlags) {
+        if kind == Kind::SlashEq {
+            self.source.back(1);
+        }
+
+        self.token.start = self.offset() - 1;
+        let (pattern, flags) = self.read_regex();
         self.lookahead.clear();
         let token = self.finish_next(Kind::RegExp);
-        (token, pattern_end, flags)
+        (token, pattern, flags)
     }
 
     /// 12.9.5 Regular Expression Literals
-    fn read_regex(&mut self) -> (u32, RegExpFlags) {
+    fn read_regex(&mut self) -> (&'a str, RegExpFlags) {
+        let start = self.source.position();
         let mut in_character_class = false;
 
         byte_search! {
             lexer: self,
             table: REGEX_END_TABLE,
+            start: start,
             continue_if: (next_byte, pos) {
                 // Match found. Decide whether to continue searching.
                 match next_byte {
@@ -55,11 +56,12 @@ impl<'a> Lexer<'a> {
                         if in_character_class {
                             true
                         } else {
-                            let pattern_end = self.source.offset_of(pos);
+                            // SAFETY: Search only proceeds forwards, so `start` cannot be after `pos`
+                            let pattern = unsafe { self.source.str_between_positions_unchecked(start, pos) };
                             // SAFETY: Next byte is `/`, so `pos + 1` is UTF-8 char boundary
                             self.source.set_position(unsafe { pos.add(1) });
                             let flags = self.read_regex_flags();
-                            return (pattern_end, flags);
+                            return (pattern, flags);
                         }
                     },
                     b'[' => {
@@ -138,7 +140,9 @@ impl<'a> Lexer<'a> {
 
         // Line break found (legal end is handled above)
         self.error(diagnostics::UnterminatedRegExp(self.unterminated_range()));
-        (self.offset(), RegExpFlags::empty())
+        // SAFETY: `self.source` only advances during search, so `start` cannot be after current position
+        let pattern = unsafe { self.source.str_from_pos_to_current_unchecked(start) };
+        (pattern, RegExpFlags::empty())
     }
 
     /// Read regex flags.

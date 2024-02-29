@@ -207,10 +207,10 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Tell lexer to read a regex
-    pub(crate) fn read_regex(&mut self) -> (u32, RegExpFlags) {
-        let (token, pattern_end, flags) = self.lexer.next_regex(self.cur_kind());
+    pub(crate) fn read_regex(&mut self) -> (&'a str, RegExpFlags) {
+        let (token, pattern, flags) = self.lexer.next_regex(self.cur_kind());
         self.token = token;
-        (pattern_end, flags)
+        (pattern, flags)
     }
 
     /// Tell lexer to read a template substitution tail

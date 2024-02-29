@@ -319,12 +319,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral<'a> {
         let span = self.start_span();
-
-        // split out pattern
-        let (pattern_end, flags) = self.read_regex();
-        let pattern_start = self.cur_token().start + 1; // +1 to exclude `/`
-        let pattern = &self.source_text[pattern_start as usize..pattern_end as usize];
-
+        let (pattern, flags) = self.read_regex();
         self.bump_any();
         self.ast.reg_exp_literal(self.end_span(span), pattern, flags)
     }
