@@ -29,7 +29,7 @@ impl<'a> Lexer<'a> {
         byte_search! {
             lexer: self,
             table: TEMPLATE_LITERAL_TABLE,
-            continue_if: |next_byte, pos| {
+            continue_if: (next_byte, pos) {
                 match next_byte {
                     b'$' => {
                         // SAFETY: Next byte is `$` which is ASCII, so after it is a UTF-8 char boundary
@@ -73,14 +73,13 @@ impl<'a> Lexer<'a> {
                     }
                 }
             },
-            handle_match: |_next_byte| {
-                ret
-            },
-            handle_eof: || {
+            handle_eof: {
                 self.error(diagnostics::UnterminatedString(self.unterminated_range()));
-                Kind::Undetermined
+                return Kind::Undetermined;
             },
         };
+
+        ret
     }
 
     /// Consume rest of template literal after a `\r` is found.
@@ -195,7 +194,7 @@ impl<'a> Lexer<'a> {
             lexer: self,
             table: TEMPLATE_LITERAL_TABLE,
             start: pos,
-            continue_if: |next_byte, pos| {
+            continue_if: (next_byte, pos) {
                 if next_byte == b'$' {
                     // SAFETY: Next byte is `$` which is ASCII, so after it is a UTF-8 char boundary
                     let after_dollar = pos.add(1);
@@ -295,18 +294,15 @@ impl<'a> Lexer<'a> {
                     }
                 }
             },
-            handle_match: |_next_byte| {
-                self.save_template_string(
-                    is_valid_escape_sequence,
-                    str.into_bump_str(),
-                );
-                ret
-            },
-            handle_eof: || {
+            handle_eof: {
                 self.error(diagnostics::UnterminatedString(self.unterminated_range()));
-                Kind::Undetermined
+                return Kind::Undetermined;
             },
         };
+
+        self.save_template_string(is_valid_escape_sequence, str.into_bump_str());
+
+        ret
     }
 
     /// Re-tokenize the current `}` token for `TemplateSubstitutionTail`
