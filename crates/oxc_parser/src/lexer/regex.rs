@@ -1,7 +1,25 @@
-use super::{Kind, Lexer, RegExpFlags, Token};
+use super::{
+    cold_branch,
+    search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
+    Kind, Lexer, RegExpFlags, Token,
+};
 use crate::diagnostics;
 
-use oxc_syntax::identifier::is_line_terminator;
+// Irregular line breaks - '\u{2028}' (LS) and '\u{2029}' (PS)
+const LS_OR_PS_FIRST: u8 = 0xE2;
+const LS_BYTES_2_AND_3: [u8; 2] = [0x80, 0xA8];
+const PS_BYTES_2_AND_3: [u8; 2] = [0x80, 0xA9];
+
+static REGEX_END_TABLE: SafeByteMatchTable = safe_byte_match_table!(|b| matches!(
+    b,
+    b'/' | b'[' | b']' | b'\\' | b'\r' | b'\n' | LS_OR_PS_FIRST
+));
+
+static LINE_BREAK_TABLE: SafeByteMatchTable =
+    safe_byte_match_table!(|b| matches!(b, b'\r' | b'\n' | LS_OR_PS_FIRST));
+
+static MAYBE_REGEX_FLAG_TABLE: SafeByteMatchTable =
+    safe_byte_match_table!(|b| b.is_ascii_alphanumeric() || matches!(b, b'$' | b'_'));
 
 impl<'a> Lexer<'a> {
     /// Re-tokenize the current `/` or `/=` and return `RegExp`
@@ -25,52 +43,128 @@ impl<'a> Lexer<'a> {
 
     /// 12.9.5 Regular Expression Literals
     fn read_regex(&mut self) -> (u32, RegExpFlags) {
-        let mut in_escape = false;
         let mut in_character_class = false;
-        loop {
-            match self.next_char() {
-                None => {
-                    self.error(diagnostics::UnterminatedRegExp(self.unterminated_range()));
-                    return (self.offset(), RegExpFlags::empty());
-                }
-                Some(c) if is_line_terminator(c) => {
-                    self.error(diagnostics::UnterminatedRegExp(self.unterminated_range()));
-                    #[allow(clippy::cast_possible_truncation)]
-                    let pattern_end = self.offset() - c.len_utf8() as u32;
-                    return (pattern_end, RegExpFlags::empty());
-                }
-                Some(c) => {
-                    if in_escape {
-                        in_escape = false;
-                    } else if c == '/' && !in_character_class {
-                        break;
-                    } else if c == '[' {
+
+        byte_search! {
+            lexer: self,
+            table: REGEX_END_TABLE,
+            continue_if: (next_byte, pos) {
+                // Match found. Decide whether to continue searching.
+                match next_byte {
+                    b'/' => {
+                        if in_character_class {
+                            true
+                        } else {
+                            let pattern_end = self.source.offset_of(pos);
+                            // SAFETY: Next byte is `/`, so `pos + 1` is UTF-8 char boundary
+                            self.source.set_position(unsafe { pos.add(1) });
+                            let flags = self.read_regex_flags();
+                            return (pattern_end, flags);
+                        }
+                    },
+                    b'[' => {
                         in_character_class = true;
-                    } else if c == '\\' {
-                        in_escape = true;
-                    } else if c == ']' {
-                        in_character_class = false;
+                        true
                     }
+                    b']' => {
+                        in_character_class = false;
+                        true
+                    }
+                    b'\\' => {
+                        // SAFETY: Next byte is `\` which is ASCII, so +1 byte is a UTF-8 char boundary
+                        let after_backslash = unsafe { pos.add(1) };
+                        if after_backslash.addr() < self.source.end_addr() {
+                            // SAFETY: Have checked not at EOF, so safe to read a byte
+                            if LINE_BREAK_TABLE.matches(unsafe { after_backslash.read() }) {
+                                // `\r`, `\n`, or first byte of PS/LS after backslash.
+                                // Continue search, so that if it is a line break (at present could be
+                                // some other Unicode char starting with same byte as PS/LS),
+                                // then next turn of search will raise an error.
+                                // If it's not a line break, search will continue.
+                                // Line breaks are illegal in valid JS, and Unicode chars are rare,
+                                // so cold branch.
+                                cold_branch(|| true)
+                            } else {
+                                // Skip next byte.
+                                // Macro will already advance 1 byte, so this advances 2 bytes total,
+                                // past the `\` and the next byte. This may place `pos` in middle of
+                                // a multi-byte Unicode character, but `REGEX_END_TABLE` doesn't match
+                                // any UTF-8 continuation characters, so in this case `pos` will end up
+                                // on a UTF-8 char boundary again after next turn of the search.
+                                pos = after_backslash;
+                                true
+                            }
+                        } else {
+                            // This is last byte in file. Continue to `handle_eof`.
+                            // This is illegal in valid JS, so mark this branch cold.
+                            cold_branch(|| true)
+                        }
+                    },
+                    _ => cold_branch(|| {
+                        // Likely line break.
+                        // Line breaks are illegal in valid JS, and Unicode is also rare, so cold branch.
+                        // SAFETY: This may place `pos` in middle of a UTF-8 char, but if so that's
+                        // fixed below.
+                        pos = unsafe { pos.add(1) };
+                        if next_byte == LS_OR_PS_FIRST {
+                            // SAFETY: Next byte is `0xE2` which is always 1st byte of a 3-byte UTF-8 char.
+                            // So safe to read 2 bytes (we already skipped the `0xE2` byte).
+                            let next2 = unsafe { pos.read2() };
+                            if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
+                                // Irregular line break. Consume it and stop searching.
+                                // SAFETY: Irregular line breaks are 3-byte chars. We consumed 1 byte already.
+                                pos = unsafe { pos.add(2) };
+                                false
+                            } else {
+                                // Some other Unicode char beginning with `0xE2`, not a line break.
+                                // Skip 3 bytes (already skipped 1, and macro skips 1 more, so skip 1 more
+                                // here to make 3), and continue searching.
+                                // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
+                                // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
+                                pos = unsafe { pos.add(1) };
+                                true
+                            }
+                        } else {
+                            // Regular line break. Stop searching, so fall through to `handle_match`
+                            // which raises an error. Already consumed the line break.
+                            debug_assert!(matches!(next_byte, b'\r' | b'\n'));
+                            false
+                        }
+                    })
                 }
-            }
-        }
+            },
+            handle_eof: 0, // Fall through to below
+        };
 
-        let pattern_end = self.offset() - 1; // -1 to exclude `/`
+        // Line break found (legal end is handled above)
+        self.error(diagnostics::UnterminatedRegExp(self.unterminated_range()));
+        (self.offset(), RegExpFlags::empty())
+    }
+
+    /// Read regex flags.
+    #[inline]
+    fn read_regex_flags(&mut self) -> RegExpFlags {
         let mut flags = RegExpFlags::empty();
+        while let Some(b) = self.source.peek_byte() {
+            if !MAYBE_REGEX_FLAG_TABLE.matches(b) {
+                break;
+            }
 
-        while let Some(ch @ ('$' | '_' | 'a'..='z' | 'A'..='Z' | '0'..='9')) = self.peek() {
-            self.consume_char();
-            let Ok(flag) = RegExpFlags::try_from(ch) else {
-                self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
+            // SAFETY: `MAYBE_REGEX_FLAG_TABLE` only matches ASCII bytes, so consuming 1 byte
+            // will leave `source` on a UTF-8 char boundary
+            unsafe { self.source.next_byte_unchecked() };
+
+            let Ok(flag) = RegExpFlags::try_from(b as char) else {
+                self.error(diagnostics::RegExpFlag(b as char, self.current_offset()));
                 continue;
             };
             if flags.contains(flag) {
-                self.error(diagnostics::RegExpFlagTwice(ch, self.current_offset()));
+                self.error(diagnostics::RegExpFlagTwice(b as char, self.current_offset()));
                 continue;
             }
             flags |= flag;
         }
 
-        (pattern_end, flags)
+        flags
     }
 }
