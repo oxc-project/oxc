@@ -106,12 +106,14 @@ impl<'a> Source<'a> {
     /// Get entire source text as `&str`.
     #[inline]
     pub(super) fn whole(&self) -> &'a str {
-        // SAFETY: `start` and `end` are created from a `&str` in `Source::new`,
-        // so guaranteed to be start and end of a valid UTF-8 string
+        // SAFETY:
+        // `start` and `end` are created from a `&str` in `Source::new`, so `start` cannot be after `end`.
+        // `start` and `end` are by definition on UTF-8 char boundaries.
         unsafe {
-            let len = self.end as usize - self.start as usize;
-            let slice = slice::from_raw_parts(self.start, len);
-            str::from_utf8_unchecked(slice)
+            self.str_between_positions_unchecked(
+                SourcePosition::new(self.start),
+                SourcePosition::new(self.end),
+            )
         }
     }
 
@@ -119,16 +121,13 @@ impl<'a> Source<'a> {
     #[inline]
     pub(super) fn remaining(&self) -> &'a str {
         // SAFETY:
-        // `start` and `end` are created from a `&str` in `Source::new` so span a single allocation.
-        // Invariant of `Source` is that `ptr` is always >= `start` and <= `end`,
-        // so a slice spanning `ptr` to `end` will always be part of of a single allocation.
-        // Invariant of `Source` is that `ptr` is always on a UTF-8 character boundary,
-        // so slice from `ptr` to `end` will always be a valid UTF-8 string.
+        // Invariant of `Source` is that `ptr` is always <= `end`, and is on a UTF-8 char boundary.
+        // `end` is pointer to end of original `&str`, so be definition a UTF-8 char boundary.
         unsafe {
-            let len = self.end as usize - self.ptr as usize;
-            let slice = slice::from_raw_parts(self.ptr, len);
-            debug_assert!(slice.is_empty() || !is_utf8_cont_byte(slice[0]));
-            str::from_utf8_unchecked(slice)
+            self.str_between_positions_unchecked(
+                SourcePosition::new(self.ptr),
+                SourcePosition::new(self.end),
+            )
         }
     }
 
@@ -192,6 +191,7 @@ impl<'a> Source<'a> {
         self.ptr = pos.ptr;
     }
 
+    /// Advance `Source`'s cursor to end.
     #[inline]
     pub(super) fn advance_to_end(&mut self) {
         self.ptr = self.end;
@@ -204,10 +204,9 @@ impl<'a> Source<'a> {
         unsafe { self.str_from_pos_to_current_unchecked(pos) }
     }
 
-    /// Get string slice from a `SourcePosition` up to the current position of `Source`,
-    /// without checks.
+    /// Get string slice from a `SourcePosition` up to current position of `Source`, without checks.
     ///
-    /// SAFETY:
+    /// # SAFETY
     /// `pos` must not be after current position of `Source`.
     /// This is always the case if both:
     /// 1. `Source::set_position` has not been called since `pos` was created.
@@ -215,32 +214,53 @@ impl<'a> Source<'a> {
     #[inline]
     pub(super) unsafe fn str_from_pos_to_current_unchecked(&self, pos: SourcePosition) -> &'a str {
         // SAFETY: Caller guarantees `pos` is not after current position of `Source`.
-        // `SourcePosition`s can only be created from a `Source`.
-        // `Source::new` takes a `UniquePromise`, which guarantees that it's the only `Source`
-        // in existence on this thread. `Source` is not `Sync` or `Send`, so no possibility another
-        // `Source` originated on another thread can "jump" onto this one.
-        // This is sufficient to guarantee that any `SourcePosition` that parser/lexer holds must be
-        // from this `Source`, therefore `pos.ptr` and `self.ptr` must both be within the same allocation
-        // and derived from the same original pointer.
-        // Invariants of `Source` and `SourcePosition` types guarantee that both are positioned
-        // on UTF-8 character boundaries. So slicing source text between these 2 points will always
-        // yield a valid UTF-8 string.
-        debug_assert!(pos.ptr <= self.ptr);
-        let len = self.ptr as usize - pos.addr();
-        let slice = slice::from_raw_parts(pos.ptr, len);
-        std::str::from_utf8_unchecked(slice)
+        // `self.ptr` is always a valid `SourcePosition` due to invariants of `Source`.
+        self.str_between_positions_unchecked(pos, SourcePosition::new(self.ptr))
     }
 
     /// Get string slice from a `SourcePosition` up to the end of `Source`.
     #[inline]
     pub(super) fn str_from_pos_to_end(&self, pos: SourcePosition) -> &'a str {
         // SAFETY: Invariants of `SourcePosition` is that it cannot be after end of `Source`,
-        // and always on a UTF-8 character boundary
-        unsafe {
-            let len = self.end as usize - pos.addr();
-            let slice = slice::from_raw_parts(pos.ptr, len);
-            std::str::from_utf8_unchecked(slice)
-        }
+        // and always on a UTF-8 character boundary.
+        // `self.end` is always a valid `SourcePosition` due to invariants of `Source`.
+        unsafe { self.str_between_positions_unchecked(pos, SourcePosition::new(self.end)) }
+    }
+
+    /// Get string slice of source between 2 `SourcePosition`s, without checks.
+    ///
+    /// # SAFETY
+    /// `start` must not be after `end`.
+    #[inline]
+    pub(super) unsafe fn str_between_positions_unchecked(
+        &self,
+        start: SourcePosition,
+        end: SourcePosition,
+    ) -> &'a str {
+        // Check `start` is not after `end`
+        debug_assert!(start.ptr <= end.ptr);
+        // Check `start` and `end` are within bounds of `Source`
+        debug_assert!(start.ptr >= self.start);
+        debug_assert!(end.ptr <= self.end);
+        // Check `start` and `end` are on UTF-8 character boundaries.
+        // SAFETY: Above assertions ensure `start` and `end` are valid to read from if not at EOF.
+        debug_assert!(start.ptr == self.end || !is_utf8_cont_byte(start.read()));
+        debug_assert!(end.ptr == self.end || !is_utf8_cont_byte(end.read()));
+
+        // SAFETY: Caller guarantees `start` is not after `end`.
+        // `SourcePosition`s can only be created from a `Source`.
+        // `Source::new` takes a `UniquePromise`, which guarantees that it's the only `Source`
+        // in existence on this thread. `Source` is not `Sync` or `Send`, so no possibility another
+        // `Source` originated on another thread can "jump" onto this one.
+        // This is sufficient to guarantee that any `SourcePosition` that parser/lexer holds must be
+        // from this `Source`, therefore `start.ptr` and `end.ptr` must both be within the same
+        // allocation, and derived from the same original pointer.
+        // Invariants of `Source` and `SourcePosition` types guarantee that both are positioned
+        // on UTF-8 character boundaries. So slicing source text between these 2 points will always
+        // yield a valid UTF-8 string.
+        let len = end.addr() - start.addr();
+        let slice = slice::from_raw_parts(start.ptr, len);
+        std::str::from_utf8_unchecked(slice)
     }
 
     /// Get current position in source, relative to start of source.
@@ -267,7 +287,7 @@ impl<'a> Source<'a> {
     /// * Moving back `n` bytes would not place current position on a UTF-8 character boundary.
     #[inline]
     pub(super) fn back(&mut self, n: usize) {
-        // This assertion is essential to ensure safety of `pos.read()` call below.
+        // This assertion is essential to ensure safety of `new_pos.read()` call below.
         // Without this check, calling `back(0)` on an empty `Source` would cause reading
         // out of bounds.
         // Compiler should remove this assertion when inlining this function,
