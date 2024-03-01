@@ -199,8 +199,7 @@ impl<'a> AstKind<'a> {
     pub fn is_declaration(self) -> bool {
         matches!(self, Self::Function(func) if func.is_declaration())
         || matches!(self, Self::Class(class) if class.is_declaration())
-        || matches!(self, 
-            | Self::VariableDeclaration(_)
+        || matches!(self, Self::VariableDeclaration(_)
             | Self::PropertyDefinition(_) | Self::MethodDefinition(_)
             | Self::ModuleDeclaration(_) | Self::ImportDeclaration(_)
             | Self::ExportAllDeclaration(_) | Self::ExportNamedDeclaration(_) | Self::ExportDefaultDeclaration(_)
