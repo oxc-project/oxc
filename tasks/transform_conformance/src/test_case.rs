@@ -160,7 +160,11 @@ pub trait TestCase {
     fn transform(&self, path: &Path) -> Result<String, Vec<Error>> {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
-        let source_type = SourceType::from_path(path).unwrap();
+
+        let source_type = SourceType::from_path(path)
+            .unwrap()
+            .with_typescript(self.transform_options().typescript.is_some());
+
         let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
         let semantic = SemanticBuilder::new(&source_text, source_type)
@@ -216,13 +220,16 @@ impl TestCase for ConformanceTestCase {
             .as_ref()
             .is_some_and(|path| path.extension().and_then(std::ffi::OsStr::to_str) == Some("js"));
 
-        let source_type = SourceType::from_path(&self.path).unwrap().with_script(
-            if self.options.source_type.is_some() {
+        let transform_options = self.transform_options();
+
+        let source_type = SourceType::from_path(&self.path)
+            .unwrap()
+            .with_script(if self.options.source_type.is_some() {
                 !self.options.is_module()
             } else {
                 input_is_js && output_is_js
-            },
-        );
+            })
+            .with_typescript(transform_options.typescript.is_some());
 
         if filtered {
             println!("input_path: {:?}", &self.path);
@@ -237,7 +244,6 @@ impl TestCase for ConformanceTestCase {
             .build(&ret.program)
             .semantic;
         let program = allocator.alloc(ret.program);
-        let transform_options = self.transform_options();
         let transformer =
             Transformer::new(&allocator, source_type, semantic, transform_options.clone());
 

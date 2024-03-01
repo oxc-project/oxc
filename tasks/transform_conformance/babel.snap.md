@@ -1,4 +1,4 @@
-Passed: 347/1369
+Passed: 349/1369
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -832,7 +832,7 @@ Passed: 347/1369
 * general/function-duplicate-name/input.js
 * general/object/input.js
 
-# babel-plugin-transform-typescript (93/158)
+# babel-plugin-transform-typescript (95/158)
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
 * class/accessor-allowDeclareFields-false/input.ts
@@ -847,13 +847,11 @@ Passed: 347/1369
 * class/parameter-properties-with-super/input.ts
 * class/private-method-override-transform-private/input.ts
 * class/transform-properties-declare-wrong-order/input.ts
-* declarations/nested-namespace/input.mjs
 * exports/declared-types/input.ts
 * exports/export-const-enums/input.ts
 * exports/export-type-star-from/input.ts
 * exports/export=/input.ts
 * exports/export=-to-cjs/input.ts
-* function/overloads-exports/input.mjs
 * imports/elide-injected/input.ts
 * imports/enum-id/input.ts
 * imports/enum-value/input.ts
