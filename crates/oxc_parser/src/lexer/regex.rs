@@ -15,9 +15,6 @@ static REGEX_END_TABLE: SafeByteMatchTable = safe_byte_match_table!(|b| matches!
     b'/' | b'[' | b']' | b'\\' | b'\r' | b'\n' | LS_OR_PS_FIRST
 ));
 
-static MAYBE_REGEX_FLAG_TABLE: SafeByteMatchTable =
-    safe_byte_match_table!(|b| b.is_ascii_alphanumeric() || matches!(b, b'$' | b'_'));
-
 impl<'a> Lexer<'a> {
     /// Re-tokenize the current `/` or `/=` and return `RegExp`
     /// See Section 12:
@@ -144,7 +141,7 @@ impl<'a> Lexer<'a> {
     fn read_regex_flags(&mut self) -> RegExpFlags {
         let mut flags = RegExpFlags::empty();
         while let Some(b) = self.source.peek_byte() {
-            if !MAYBE_REGEX_FLAG_TABLE.matches(b) {
+            if !b.is_ascii_alphanumeric() && !matches!(b, b'$' | b'_') {
                 break;
             }
 
