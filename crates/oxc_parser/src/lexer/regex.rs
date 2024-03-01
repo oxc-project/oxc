@@ -149,7 +149,7 @@ impl<'a> Lexer<'a> {
             // will leave `source` on a UTF-8 char boundary
             unsafe { self.source.next_byte_unchecked() };
 
-            let Ok(flag) = RegExpFlags::try_from(b as char) else {
+            let Ok(flag) = RegExpFlags::try_from(b) else {
                 self.error(diagnostics::RegExpFlag(b as char, self.current_offset()));
                 continue;
             };
