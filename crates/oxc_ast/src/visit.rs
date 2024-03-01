@@ -1044,6 +1044,11 @@ pub trait Visit<'a>: Sized {
     fn visit_jsx_element_name(&mut self, name: &JSXElementName<'a>) {
         let kind = AstKind::JSXElementName(self.alloc(name));
         self.enter_node(kind);
+        match name {
+            JSXElementName::Identifier(ident) => self.visit_jsx_identifier(ident),
+            JSXElementName::NamespacedName(expr) => self.visit_jsx_namespaced_name(expr),
+            JSXElementName::MemberExpression(expr) => self.visit_jsx_member_expression(expr),
+        }
         self.leave_node(kind);
     }
 
