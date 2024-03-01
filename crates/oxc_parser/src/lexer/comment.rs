@@ -69,11 +69,11 @@ impl<'a> Lexer<'a> {
                     })
                 }
             },
-            handle_match: |_next_byte, _start| {
+            handle_match: |_next_byte| {
                 self.token.is_on_new_line = true;
                 Kind::Skip
             },
-            handle_eof: |_start| {
+            handle_eof: || {
                 self.trivia_builder.add_single_line_comment(self.token.start, self.offset());
                 Kind::Skip
             },
@@ -139,11 +139,11 @@ impl<'a> Lexer<'a> {
                     return self.skip_multi_line_comment_after_line_break(after_line_break);
                 }
             },
-            handle_match: |_next_byte, _start| {
+            handle_match: |_next_byte| {
                 self.trivia_builder.add_multi_line_comment(self.token.start, self.offset());
                 Kind::Skip
             },
-            handle_eof: |_start| {
+            handle_eof: || {
                 self.error(diagnostics::UnterminatedMultiLineComment(self.unterminated_range()));
                 Kind::Eof
             },
