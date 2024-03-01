@@ -1748,6 +1748,9 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
             }
+            AstKind::JSXIdentifier(ident) => {
+                self.reference_jsx_identifier(ident);
+            }
             AstKind::UpdateExpression(_) => {
                 if self.is_not_expression_statement_parent() {
                     self.current_reference_flag |= ReferenceFlag::Read;
@@ -1766,9 +1769,6 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::AssignmentTarget(_) => {
                 self.current_reference_flag |= ReferenceFlag::Write;
-            }
-            AstKind::JSXElementName(elem) => {
-                self.reference_jsx_element_name(elem);
             }
             AstKind::LabeledStatement(stmt) => {
                 self.label_builder.enter(stmt, self.current_node_id);
@@ -1872,29 +1872,23 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn reference_jsx_element_name(&mut self, elem: &JSXElementName) {
-        if matches!(
-            self.nodes.parent_kind(self.current_node_id),
-            Some(AstKind::JSXOpeningElement(_))
-        ) {
-            if let Some(ident) = match elem {
-                JSXElementName::Identifier(ident)
-                    if ident.name.chars().next().is_some_and(char::is_uppercase) =>
-                {
-                    Some(ident)
+    fn reference_jsx_identifier(&mut self, ident: &JSXIdentifier) {
+        match self.nodes.parent_kind(self.current_node_id) {
+            Some(AstKind::JSXElementName(_)) => {
+                if !ident.name.chars().next().is_some_and(char::is_uppercase) {
+                    return;
                 }
-                JSXElementName::MemberExpression(expr) => Some(expr.get_object_identifier()),
-                _ => None,
-            } {
-                let reference = Reference::new(
-                    ident.span,
-                    ident.name.to_compact_string(),
-                    self.current_node_id,
-                    ReferenceFlag::read(),
-                );
-                self.declare_reference(reference);
             }
+            Some(AstKind::JSXMemberExpressionObject(_)) => {}
+            _ => return,
         }
+        let reference = Reference::new(
+            ident.span,
+            ident.name.to_compact_string(),
+            self.current_node_id,
+            ReferenceFlag::read(),
+        );
+        self.declare_reference(reference);
     }
 
     fn is_not_expression_statement_parent(&self) -> bool {
