@@ -209,8 +209,8 @@ impl GetterReturn {
                 // ```js
                 // const fn = () => 1;
                 // ```
-                if let AstKind::ArrowFunctionExpression(afe) = node.kind() {
-                    if afe.expression {
+                if let AstKind::ArrowFunctionExpression(arrow_expr) = node.kind() {
+                    if arrow_expr.expression {
                         return (DefinitelyReturnsOrThrowsOrUnreachable::Yes, false);
                     }
                 }
