@@ -1,3 +1,5 @@
+use oxc_index::const_assert_eq;
+
 use super::{
     cold_branch,
     search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
@@ -14,6 +16,74 @@ static REGEX_END_TABLE: SafeByteMatchTable = safe_byte_match_table!(|b| matches!
     b,
     b'/' | b'[' | b']' | b'\\' | b'\r' | b'\n' | LS_OR_PS_FIRST
 ));
+
+#[derive(Clone, Copy, PartialEq)]
+#[repr(u8)]
+enum FlagMatch {
+    FlagG = 0,
+    FlagI = 1,
+    FlagM = 2,
+    FlagS = 3,
+    FlagU = 4,
+    FlagY = 5,
+    FlagD = 6,
+    FlagV = 7,
+    AsciiId = 8,
+    End = 9,
+}
+
+const_assert_eq!(1u8 << (FlagMatch::FlagG as u8), RegExpFlags::G.bits());
+const_assert_eq!(1u8 << (FlagMatch::FlagI as u8), RegExpFlags::I.bits());
+const_assert_eq!(1u8 << (FlagMatch::FlagM as u8), RegExpFlags::M.bits());
+const_assert_eq!(1u8 << (FlagMatch::FlagS as u8), RegExpFlags::S.bits());
+const_assert_eq!(1u8 << (FlagMatch::FlagU as u8), RegExpFlags::U.bits());
+const_assert_eq!(1u8 << (FlagMatch::FlagY as u8), RegExpFlags::Y.bits());
+const_assert_eq!(1u8 << (FlagMatch::FlagD as u8), RegExpFlags::D.bits());
+const_assert_eq!(1u8 << (FlagMatch::FlagV as u8), RegExpFlags::V.bits());
+
+#[repr(C, align(64))]
+struct FlagMatchTable([FlagMatch; 256]);
+
+static FLAG_MATCH_TABLE: FlagMatchTable = {
+    let mut table = FlagMatchTable([FlagMatch::End; 256]);
+    let mut b = 0u8;
+    loop {
+        table.0[b as usize] = match b {
+            b'g' => FlagMatch::FlagG,
+            b'i' => FlagMatch::FlagI,
+            b'm' => FlagMatch::FlagM,
+            b's' => FlagMatch::FlagS,
+            b'u' => FlagMatch::FlagU,
+            b'y' => FlagMatch::FlagY,
+            b'd' => FlagMatch::FlagD,
+            b'v' => FlagMatch::FlagV,
+            _ => {
+                if b.is_ascii_alphanumeric() || matches!(b, b'$' | b'_') {
+                    FlagMatch::AsciiId
+                } else {
+                    FlagMatch::End
+                }
+            }
+        };
+        if b == 255 {
+            break;
+        }
+        b += 1;
+    }
+    table
+};
+
+impl FlagMatch {
+    #[inline]
+    fn from_byte(b: u8) -> Self {
+        FLAG_MATCH_TABLE.0[b as usize]
+    }
+
+    #[inline]
+    fn as_flags(self) -> RegExpFlags {
+        RegExpFlags::from_bits(1u8 << (self as u8)).unwrap()
+    }
+}
 
 impl<'a> Lexer<'a> {
     /// Re-tokenize the current `/` or `/=` and return `RegExp`
@@ -141,18 +211,21 @@ impl<'a> Lexer<'a> {
     fn read_regex_flags(&mut self) -> RegExpFlags {
         let mut flags = RegExpFlags::empty();
         while let Some(b) = self.source.peek_byte() {
-            if !b.is_ascii_alphanumeric() && !matches!(b, b'$' | b'_') {
+            let maybe_flag = FlagMatch::from_byte(b);
+            if maybe_flag == FlagMatch::End {
                 break;
             }
 
-            // SAFETY: `MAYBE_REGEX_FLAG_TABLE` only matches ASCII bytes, so consuming 1 byte
+            // SAFETY: `FlagMatch::End` covers all Unicode bytes, so consuming 1 byte
             // will leave `source` on a UTF-8 char boundary
             unsafe { self.source.next_byte_unchecked() };
 
-            let Ok(flag) = RegExpFlags::try_from(b) else {
+            if maybe_flag == FlagMatch::AsciiId {
                 self.error(diagnostics::RegExpFlag(b as char, self.current_offset()));
                 continue;
-            };
+            }
+
+            let flag = maybe_flag.as_flags();
             if flags.contains(flag) {
                 self.error(diagnostics::RegExpFlagTwice(b as char, self.current_offset()));
                 continue;
