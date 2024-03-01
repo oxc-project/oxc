@@ -27,7 +27,7 @@ impl<'a> Lexer<'a> {
         byte_search! {
             lexer: self,
             table: LINE_BREAK_TABLE,
-            continue_if: |next_byte, pos| {
+            continue_if: (next_byte, pos) {
                 // Match found. Decide whether to continue searching.
                 // If this is end of comment, create trivia, and advance `pos` to after line break.
                 // Do that here rather than in `handle_match`, to avoid branching twice on value of
@@ -69,15 +69,14 @@ impl<'a> Lexer<'a> {
                     })
                 }
             },
-            handle_match: |_next_byte| {
-                self.token.is_on_new_line = true;
-                Kind::Skip
-            },
-            handle_eof: || {
+            handle_eof: {
                 self.trivia_builder.add_single_line_comment(self.token.start, self.offset());
-                Kind::Skip
+                return Kind::Skip;
             },
         };
+
+        self.token.is_on_new_line = true;
+        Kind::Skip
     }
 
     /// Section 12.4 Multi Line Comment
@@ -90,7 +89,7 @@ impl<'a> Lexer<'a> {
         byte_search! {
             lexer: self,
             table: MULTILINE_COMMENT_START_TABLE,
-            continue_if: |next_byte, pos| {
+            continue_if: (next_byte, pos) {
                 // Match found. Decide whether to continue searching.
                 if next_byte == b'*' {
                     // SAFETY: Next byte is `*` (ASCII) so after it is UTF-8 char boundary
@@ -145,15 +144,14 @@ impl<'a> Lexer<'a> {
                     return self.skip_multi_line_comment_after_line_break(after_line_break);
                 }
             },
-            handle_match: |_next_byte| {
-                self.trivia_builder.add_multi_line_comment(self.token.start, self.offset());
-                Kind::Skip
-            },
-            handle_eof: || {
+            handle_eof: {
                 self.error(diagnostics::UnterminatedMultiLineComment(self.unterminated_range()));
-                Kind::Eof
+                return Kind::Eof;
             },
         };
+
+        self.trivia_builder.add_multi_line_comment(self.token.start, self.offset());
+        Kind::Skip
     }
 
     fn skip_multi_line_comment_after_line_break(&mut self, pos: SourcePosition) -> Kind {

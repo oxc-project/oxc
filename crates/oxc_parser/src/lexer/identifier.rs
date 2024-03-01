@@ -54,45 +54,44 @@ impl<'a> Lexer<'a> {
         let after_first = self.source.position().add(1);
 
         // Consume bytes which are part of identifier
-        byte_search! {
+        let next_byte = byte_search! {
             lexer: self,
             table: NOT_ASCII_ID_CONTINUE_TABLE,
             start: after_first,
-            handle_match: |next_byte| {
-                // Found a matching byte.
-                // Either end of identifier found, or a Unicode char, or `\` escape.
-                // Handle uncommon cases in cold branches to keep the common ASCII path
-                // as fast as possible.
-                if !next_byte.is_ascii() {
-                    return cold_branch(|| {
-                        // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-                        // makes `start_pos` `source`'s position as it was at start of this function
-                        let start_pos = unsafe { after_first.sub(1) };
-                        &self.identifier_tail_unicode(start_pos)[1..]
-                    });
-                }
-                if next_byte == b'\\' {
-                    return cold_branch(|| {
-                        // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-                        // makes `start_pos` `source`'s position as it was at start of this function
-                        let start_pos = unsafe { after_first.sub(1) };
-                        &self.identifier_backslash(start_pos, false)[1..]
-                    });
-                }
-
-                // Return identifier minus its first char.
-                // SAFETY: `after_first` was position of `lexer.source` at start of this search.
-                // Searching only proceeds in forwards direction, so `lexer.source.position()`
-                // cannot be before `after_first`.
-                unsafe { self.source.str_from_pos_to_current_unchecked(after_first) }
-            },
-            handle_eof: || {
+            handle_eof: {
                 // Return identifier minus its first char.
                 // SAFETY: `lexer.source` is positioned at EOF, so there is no valid value
                 // of `after_first` which could be after current position.
-                unsafe { self.source.str_from_pos_to_current_unchecked(after_first) }
+                return unsafe { self.source.str_from_pos_to_current_unchecked(after_first) };
             },
         };
+
+        // Found a matching byte.
+        // Either end of identifier found, or a Unicode char, or `\` escape.
+        // Handle uncommon cases in cold branches to keep the common ASCII path
+        // as fast as possible.
+        if !next_byte.is_ascii() {
+            return cold_branch(|| {
+                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+                // makes `start_pos` `source`'s position as it was at start of this function
+                let start_pos = unsafe { after_first.sub(1) };
+                &self.identifier_tail_unicode(start_pos)[1..]
+            });
+        }
+        if next_byte == b'\\' {
+            return cold_branch(|| {
+                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+                // makes `start_pos` `source`'s position as it was at start of this function
+                let start_pos = unsafe { after_first.sub(1) };
+                &self.identifier_backslash(start_pos, false)[1..]
+            });
+        }
+
+        // Return identifier minus its first char.
+        // SAFETY: `after_first` was position of `lexer.source` at start of this search.
+        // Searching only proceeds in forwards direction, so `lexer.source.position()`
+        // cannot be before `after_first`.
+        unsafe { self.source.str_from_pos_to_current_unchecked(after_first) }
     }
 
     /// Handle rest of identifier after first byte of a multi-byte Unicode char found.
@@ -233,40 +232,39 @@ impl<'a> Lexer<'a> {
         let after_first = unsafe { start_pos.add(1) };
 
         // Consume bytes which are part of identifier
-        byte_search! {
+        let next_byte = byte_search! {
             lexer: self,
             table: NOT_ASCII_ID_CONTINUE_TABLE,
             start: after_first,
-            handle_match: |next_byte| {
-                // Found a matching byte.
-                // Either end of identifier found, or a Unicode char, or `\` escape.
-                // Handle uncommon cases in cold branches to keep the common ASCII path
-                // as fast as possible.
-                if !next_byte.is_ascii() {
-                    return cold_branch(|| {
-                        // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-                        // makes `start_pos` `source`'s position as it was at start of this function
-                        let start_pos = unsafe { after_first.sub(1) };
-                        self.identifier_tail_unicode(start_pos);
-                        Kind::PrivateIdentifier
-                    });
-                }
-                if next_byte == b'\\' {
-                    return cold_branch(|| {
-                        // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-                        // makes `start_pos` `source`'s position as it was at start of this function
-                        let start_pos = unsafe { after_first.sub(1) };
-                        self.identifier_backslash(start_pos, false);
-                        Kind::PrivateIdentifier
-                    });
-                }
-
-                Kind::PrivateIdentifier
-            },
-            handle_eof: || {
-                Kind::PrivateIdentifier
+            handle_eof: {
+                return Kind::PrivateIdentifier;
             },
         };
+
+        // Found a matching byte.
+        // Either end of identifier found, or a Unicode char, or `\` escape.
+        // Handle uncommon cases in cold branches to keep the common ASCII path
+        // as fast as possible.
+        if !next_byte.is_ascii() {
+            return cold_branch(|| {
+                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+                // makes `start_pos` `source`'s position as it was at start of this function
+                let start_pos = unsafe { after_first.sub(1) };
+                self.identifier_tail_unicode(start_pos);
+                Kind::PrivateIdentifier
+            });
+        }
+        if next_byte == b'\\' {
+            return cold_branch(|| {
+                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+                // makes `start_pos` `source`'s position as it was at start of this function
+                let start_pos = unsafe { after_first.sub(1) };
+                self.identifier_backslash(start_pos, false);
+                Kind::PrivateIdentifier
+            });
+        }
+
+        Kind::PrivateIdentifier
     }
 
     /// Handle private identifier whose first byte is not an ASCII identifier start byte.
