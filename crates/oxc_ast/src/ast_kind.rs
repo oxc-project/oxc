@@ -192,7 +192,7 @@ impl<'a> AstKind<'a> {
                     | Self::DebuggerStatement(_) | Self::EmptyStatement(_) | Self::ExpressionStatement(_)
                     | Self::LabeledStatement(_) | Self::ReturnStatement(_) | Self::SwitchStatement(_)
                     | Self::ThrowStatement(_) | Self::TryStatement(_) | Self::WithStatement(_)
-                    | Self::IfStatement(_) | Self::VariableDeclaration(_))
+                    | Self::IfStatement(_))
     }
 
     #[rustfmt::skip]
