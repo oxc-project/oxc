@@ -199,9 +199,15 @@ impl<'a> AstKind<'a> {
     pub fn is_declaration(self) -> bool {
         matches!(self, Self::Function(func) if func.is_declaration())
         || matches!(self, Self::Class(class) if class.is_declaration())
-        || matches!(self, Self::ModuleDeclaration(_) | Self::TSEnumDeclaration(_) | Self::TSModuleDeclaration(_)
-            | Self::VariableDeclaration(_) | Self::TSInterfaceDeclaration(_)
-            | Self::TSTypeAliasDeclaration(_) | Self::TSImportEqualsDeclaration(_) | Self::PropertyDefinition(_)
+        || matches!(self, 
+            | Self::VariableDeclaration(_)
+            | Self::PropertyDefinition(_) | Self::MethodDefinition(_)
+            | Self::ModuleDeclaration(_) | Self::ImportDeclaration(_)
+            | Self::ExportAllDeclaration(_) | Self::ExportNamedDeclaration(_) | Self::ExportDefaultDeclaration(_)
+            | Self::UsingDeclaration(_)
+            | Self::TSTypeParameterDeclaration(_)
+            | Self::TSInterfaceDeclaration(_) | Self::TSTypeAliasDeclaration(_) | Self::TSEnumDeclaration(_)
+            | Self::TSModuleDeclaration(_) | Self::TSImportEqualsDeclaration(_)
         )
     }
 
