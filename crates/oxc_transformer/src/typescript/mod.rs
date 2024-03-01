@@ -728,4 +728,62 @@ impl<'a> TypeScript<'a> {
         let expr = self.ast.call_expression(SPAN, callee, arguments, false, None);
         self.ast.expression_statement(SPAN, expr)
     }
+
+    /// Transform constructor method
+    /// ```typescript
+    ///
+    /// constructor(public x) {
+    ///   super();
+    /// }
+    /// // to
+    /// constructor(x) {
+    ///   super();
+    ///   this.x = x;
+    /// }
+    /// ```
+    pub fn transform_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
+        if !def.kind.is_constructor() {
+            return;
+        }
+
+        let mut params_name = vec![];
+        def.value.params.items.iter().for_each(|param| {
+            if !param.accessibility.is_some_and(|a| matches!(a, TSAccessibility::Public)) {
+                return;
+            }
+            match &param.pattern.kind {
+                BindingPatternKind::BindingIdentifier(ident) => {
+                    params_name.push(ident.name.clone());
+                }
+                BindingPatternKind::AssignmentPattern(pattern) => {
+                    if let BindingPatternKind::BindingIdentifier(ident) = &pattern.left.kind {
+                        params_name.push(ident.name.clone());
+                    }
+                }
+                _ => {}
+            }
+        });
+
+        let Some(body) = &mut def.value.body else {
+            return;
+        };
+
+        for name in params_name {
+            // TODO: We should push it before the super call
+            body.statements.push(self.ast.expression_statement(
+                SPAN,
+                self.ast.assignment_expression(
+                    SPAN,
+                    AssignmentOperator::Assign,
+                    self.ast.simple_assignment_target_member_expression(self.ast.static_member(
+                        SPAN,
+                        self.ast.this_expression(SPAN),
+                        IdentifierName::new(SPAN, name.clone()),
+                        false,
+                    )),
+                    self.ast.identifier_reference_expression(IdentifierReference::new(SPAN, name)),
+                ),
+            ));
+        }
+    }
 }

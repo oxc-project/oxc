@@ -313,4 +313,25 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
             .as_mut()
             .map(|t: &mut JsonStrings| t.transform_string_literal(lit));
     }
+
+    fn visit_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
+        let kind = AstKind::MethodDefinition(self.alloc(def));
+        self.enter_node(kind);
+
+        self.typescript.as_mut().map(|t| t.transform_method_definition(def));
+
+        for decorator in def.decorators.iter_mut() {
+            self.visit_decorator(decorator);
+        }
+
+        let flags = match def.kind {
+            MethodDefinitionKind::Get => ScopeFlags::GetAccessor,
+            MethodDefinitionKind::Set => ScopeFlags::SetAccessor,
+            MethodDefinitionKind::Constructor => ScopeFlags::Constructor,
+            MethodDefinitionKind::Method => ScopeFlags::empty(),
+        };
+        self.visit_property_key(&mut def.key);
+        self.visit_function(&mut def.value, Some(flags));
+        self.leave_node(kind);
+    }
 }
