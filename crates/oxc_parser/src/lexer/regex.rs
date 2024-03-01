@@ -15,9 +15,6 @@ static REGEX_END_TABLE: SafeByteMatchTable = safe_byte_match_table!(|b| matches!
     b'/' | b'[' | b']' | b'\\' | b'\r' | b'\n' | LS_OR_PS_FIRST
 ));
 
-static LINE_BREAK_TABLE: SafeByteMatchTable =
-    safe_byte_match_table!(|b| matches!(b, b'\r' | b'\n' | LS_OR_PS_FIRST));
-
 static MAYBE_REGEX_FLAG_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| b.is_ascii_alphanumeric() || matches!(b, b'$' | b'_'));
 
@@ -75,7 +72,8 @@ impl<'a> Lexer<'a> {
                         let after_backslash = unsafe { pos.add(1) };
                         if after_backslash.addr() < self.source.end_addr() {
                             // SAFETY: Have checked not at EOF, so safe to read a byte
-                            if LINE_BREAK_TABLE.matches(unsafe { after_backslash.read() }) {
+                            let after_backslash_byte = unsafe { after_backslash.read() };
+                            if matches!(after_backslash_byte, b'\r' | b'\n' | LS_OR_PS_FIRST) {
                                 // `\r`, `\n`, or first byte of PS/LS after backslash.
                                 // Continue search, so that if it is a line break (at present could be
                                 // some other Unicode char starting with same byte as PS/LS),
