@@ -1,7 +1,7 @@
 use super::{Kind, Lexer, Token};
 use crate::diagnostics;
 
-use memchr::memchr;
+use memchr::{memchr, memchr2};
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 impl<'a> Lexer<'a> {
@@ -71,17 +71,18 @@ impl<'a> Lexer<'a> {
                 Kind::LCurly
             }
             Some(_) => {
-                loop {
-                    // The tokens `{`, `<`, `>` and `}` cannot appear in a jsx text.
-                    // The TypeScript compiler raises the error "Unexpected token. Did you mean `{'>'}` or `&gt;`?".
-                    // Where as the Babel compiler does not raise any errors.
-                    // The following check omits `>` and `}` so that more Babel tests can be passed.
-                    if self.peek().is_some_and(|c| c == '{' || c == '<') {
-                        break;
-                    }
-                    if self.next_char().is_none() {
-                        break;
-                    }
+                // The tokens `{`, `<`, `>` and `}` cannot appear in JSX text.
+                // The TypeScript compiler raises the error "Unexpected token. Did you mean `{'>'}` or `&gt;`?".
+                // Where as the Babel compiler does not raise any errors.
+                // The following check omits `>` and `}` so that more Babel tests can be passed.
+                let len = memchr2(b'{', b'<', self.remaining().as_bytes());
+                if let Some(len) = len {
+                    // SAFETY: `memchr2` guarantees `len` will be offset from current position
+                    // of a `{` or `<` byte. So must be a valid UTF-8 boundary, and within bounds of source.
+                    let end = unsafe { self.source.position().add(len) };
+                    self.source.set_position(end);
+                } else {
+                    self.source.advance_to_end();
                 }
                 Kind::JSXText
             }
