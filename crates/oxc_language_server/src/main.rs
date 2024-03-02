@@ -44,6 +44,7 @@ enum Run {
     OnType,
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 struct Options {
     run: Run,
     enable: bool,
