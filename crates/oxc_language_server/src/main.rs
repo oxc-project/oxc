@@ -44,6 +44,7 @@ enum Run {
     OnType,
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 struct Options {
     run: Run,
     enable: bool,
@@ -128,6 +129,7 @@ impl LanguageServer for Backend {
     }
 
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
+        debug!("{:?}", &params.settings);
         let changed_options =
             if let Ok(options) = serde_json::from_value::<Options>(params.settings) {
                 options
