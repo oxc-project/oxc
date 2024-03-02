@@ -21,6 +21,14 @@ export interface BindingIdentifier extends Span { type: "Identifier", name: Atom
 export interface IdentifierReference extends Span { type: "Identifier", name: Atom }
 export interface IdentifierName extends Span { type: "Identifier", name: Atom }
 export interface LabelIdentifier extends Span { type: "Identifier", name: Atom }
+export interface AssignmentTargetRest extends Span { type: "RestElement", target: AssignmentTarget }
+export interface BindingRestElement extends Span { type: "RestElement", argument: BindingPattern }
+export interface FormalParameterRest extends Span {
+    type: "RestElement",
+    argument: BindingPatternKind,
+    typeAnnotation?: TSTypeAnnotation,
+    optional: boolean,
+}
 "#;
 
 #[derive(Debug, Hash)]
@@ -970,13 +978,18 @@ pub enum AssignmentTargetPattern<'a> {
     ObjectAssignmentTarget(Box<'a, ObjectAssignmentTarget<'a>>),
 }
 
+// See serializer in serialize.rs
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ArrayAssignmentTarget<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[cfg_attr(feature = "wasm", serde(flatten))]
     pub span: Span,
+    #[cfg_attr(
+        feature = "wasm",
+        tsify(type = "Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>")
+    )]
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
+    #[cfg_attr(feature = "wasm", serde(skip))]
     pub rest: Option<AssignmentTargetRest<'a>>,
     pub trailing_comma: Option<Span>,
 }
@@ -990,13 +1003,18 @@ impl<'a> ArrayAssignmentTarget<'a> {
     }
 }
 
+// See serializer in serialize.rs
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ObjectAssignmentTarget<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[cfg_attr(feature = "wasm", serde(flatten))]
     pub span: Span,
+    #[cfg_attr(
+        feature = "wasm",
+        tsify(type = "Array<AssignmentTargetProperty | AssignmentTargetRest>")
+    )]
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
+    #[cfg_attr(feature = "wasm", serde(skip))]
     pub rest: Option<AssignmentTargetRest<'a>>,
 }
 
@@ -1018,11 +1036,11 @@ impl<'a> ObjectAssignmentTarget<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "RestElement"))]
 pub struct AssignmentTargetRest<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
+    #[cfg_attr(feature = "serde", serde(rename = "argument"))]
     pub target: AssignmentTarget<'a>,
 }
 
@@ -1623,6 +1641,7 @@ impl<'a> BindingPattern<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum BindingPatternKind<'a> {
     /// `const a = 1`
     BindingIdentifier(Box<'a, BindingIdentifier<'a>>),
@@ -1661,13 +1680,15 @@ pub struct AssignmentPattern<'a> {
     pub right: Expression<'a>,
 }
 
+// See serializer in serialize.rs
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ObjectPattern<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[cfg_attr(feature = "wasm", serde(flatten))]
     pub span: Span,
+    #[cfg_attr(feature = "wasm", tsify(type = "Array<BindingProperty | BindingRestElement>"))]
     pub properties: Vec<'a, BindingProperty<'a>>,
+    #[cfg_attr(feature = "wasm", serde(skip))]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
@@ -1693,13 +1714,18 @@ pub struct BindingProperty<'a> {
     pub computed: bool,
 }
 
+// See serializer in serialize.rs
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ArrayPattern<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[cfg_attr(feature = "wasm", serde(flatten))]
     pub span: Span,
+    #[cfg_attr(
+        feature = "wasm",
+        tsify(type = "Array<BindingPattern | BindingRestElement | null>")
+    )]
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
+    #[cfg_attr(feature = "wasm", serde(skip))]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
@@ -1714,8 +1740,7 @@ impl<'a> ArrayPattern<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "RestElement"))]
 pub struct BindingRestElement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1799,14 +1824,16 @@ pub enum FunctionType {
 }
 
 /// <https://tc39.es/ecma262/#prod-FormalParameters>
+// See serializer in serialize.rs
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct FormalParameters<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[cfg_attr(feature = "wasm", serde(flatten))]
     pub span: Span,
     pub kind: FormalParameterKind,
+    #[cfg_attr(feature = "wasm", tsify(type = "Array<FormalParameter | FormalParameterRest>"))]
     pub items: Vec<'a, FormalParameter<'a>>,
+    #[cfg_attr(feature = "wasm", serde(skip))]
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
