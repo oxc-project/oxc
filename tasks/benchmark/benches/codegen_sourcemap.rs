@@ -13,10 +13,10 @@ fn bench_codegen_sourcemap(criterion: &mut Criterion) {
         let source_type = SourceType::from_path(&file.file_name).unwrap();
 
         group.bench_with_input(id, &file.source_text, |b, source_text| {
-            let allocator = Allocator::default();
-            let program = Parser::new(&allocator, source_text, source_type).parse().program;
-            let codegen_options = CodegenOptions::default();
             b.iter_with_large_drop(|| {
+                let allocator = Allocator::default();
+                let program = Parser::new(&allocator, source_text, source_type).parse().program;
+                let codegen_options = CodegenOptions::default();
                 let mut codegen = Codegen::<false>::new(source_text.len(), codegen_options);
                 codegen.with_sourcemap(source_text, "").build(&program);
                 codegen.into_sourcemap();
