@@ -152,6 +152,7 @@ mod jest {
     pub mod no_test_return_statement;
     pub mod prefer_called_with;
     pub mod prefer_equality_matcher;
+    pub mod prefer_to_have_length;
     pub mod prefer_todo;
     pub mod require_to_throw_message;
     pub mod valid_describe_callback;
@@ -448,6 +449,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_test_return_statement,
     jest::prefer_called_with,
     jest::prefer_equality_matcher,
+    jest::prefer_to_have_length,
     jest::prefer_todo,
     jest::require_to_throw_message,
     jest::valid_describe_callback,

@@ -22,12 +22,12 @@ use crate::{
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.")]
 #[diagnostic(severity(warning))]
-pub struct EmptyTest(#[label] pub Span);
+struct EmptyTest(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.")]
 #[diagnostic(severity(warning))]
-struct UmImplementedTestDiagnostic(#[label] pub Span);
+struct UnImplementedTestDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferTodo;
@@ -82,7 +82,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
         if counts == 1 && !filter_todo_case(call_expr) {
             let (content, span) = get_fix_content(call_expr);
-            ctx.diagnostic_with_fix(UmImplementedTestDiagnostic(span), || Fix::new(content, span));
+            ctx.diagnostic_with_fix(UnImplementedTestDiagnostic(span), || Fix::new(content, span));
         }
 
         if counts > 1 && is_empty_function(call_expr) {
