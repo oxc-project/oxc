@@ -1365,11 +1365,13 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         parameters: Vec<'a, Box<'a, TSIndexSignatureName<'a>>>,
         type_annotation: Box<'a, TSTypeAnnotation<'a>>,
+        readonly: bool,
     ) -> TSSignature<'a> {
         TSSignature::TSIndexSignature(self.alloc(TSIndexSignature {
             span,
             parameters,
             type_annotation,
+            readonly,
         }))
     }
 

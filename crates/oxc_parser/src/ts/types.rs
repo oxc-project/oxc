@@ -1077,8 +1077,11 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_index_signature_member(&mut self) -> Result<TSSignature<'a>> {
         let span = self.start_span();
+        let mut readonly = false;
         while self.is_nth_at_modifier(0, false) {
-            if !self.eat(Kind::Readonly) {
+            if self.eat(Kind::Readonly) {
+                readonly = true;
+            } else {
                 return Err(self.unexpected());
             }
         }
@@ -1093,7 +1096,12 @@ impl<'a> ParserImpl<'a> {
         if let Some(type_annotation) = type_annotation {
             self.bump(Kind::Comma);
             self.bump(Kind::Semicolon);
-            Ok(self.ast.ts_index_signature(self.end_span(span), parameters, type_annotation))
+            Ok(self.ast.ts_index_signature(
+                self.end_span(span),
+                parameters,
+                type_annotation,
+                readonly,
+            ))
         } else {
             Err(self.unexpected())
         }
