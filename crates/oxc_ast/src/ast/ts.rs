@@ -582,6 +582,7 @@ pub struct TSIndexSignature<'a> {
     pub span: Span,
     pub parameters: Vec<'a, Box<'a, TSIndexSignatureName<'a>>>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
+    pub readonly: bool,
 }
 
 #[derive(Debug, Hash)]
