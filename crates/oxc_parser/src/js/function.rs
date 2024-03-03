@@ -227,6 +227,7 @@ impl<'a> ParserImpl<'a> {
             pattern,
             None,
             false,
+            false,
             AstBuilder::new_vec(&self.ast),
         );
         let params = self.ast.formal_parameters(
