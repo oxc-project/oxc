@@ -119,7 +119,6 @@ impl SourcemapBuilder {
         let mut tables = vec![];
         let mut columns = None;
         let mut column = 0;
-        let mut column_byte_offset = 0;
         let mut line_byte_offset = 0;
         let mut byte_offset_to_first = 0;
         for (i, ch) in content.char_indices() {
@@ -130,14 +129,13 @@ impl SourcemapBuilder {
 
             // Start the mapping if this character is non-ASCII
             if !ch.is_ascii() && columns.is_none() {
-                column_byte_offset = i - line_byte_offset;
-                byte_offset_to_first = column_byte_offset;
+                byte_offset_to_first = i - line_byte_offset;
                 columns = Some(vec![]);
             }
 
             // Update the per-byte column offsets
             if let Some(columns) = &mut columns {
-                for _ in column_byte_offset..=(i - line_byte_offset) {
+                for _ in 0..ch.len_utf8() {
                     columns.push(column);
                 }
             }
@@ -158,7 +156,6 @@ impl SourcemapBuilder {
                     column = 0;
                     columns = None;
                     byte_offset_to_first = 0;
-                    column_byte_offset = 0;
                 }
                 _ => {
                     // Mozilla's "source-map" library counts columns using UTF-16 code units
@@ -173,9 +170,7 @@ impl SourcemapBuilder {
 
         // Do one last update for the column at the end of the file
         if let Some(columns) = &mut columns {
-            for _ in column_byte_offset..=(content.len() - line_byte_offset) {
-                columns.push(column);
-            }
+            columns.push(column);
         }
 
         tables.push(LineOffsetTable {
@@ -185,5 +180,59 @@ impl SourcemapBuilder {
         });
 
         tables
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn ascii() {
+        assert_mapping("", &[(0, 0, 0)]);
+        assert_mapping("a", &[(0, 0, 0), (1, 0, 1)]);
+        assert_mapping("\n", &[(0, 0, 0), (1, 1, 0)]);
+        assert_mapping("a\n", &[(0, 0, 0), (1, 0, 1), (2, 1, 0)]);
+        assert_mapping("\na", &[(0, 0, 0), (1, 1, 0), (2, 1, 1)]);
+        assert_mapping(
+            "ab\ncd\n\nef",
+            &[
+                (0, 0, 0),
+                (1, 0, 1),
+                (2, 0, 2),
+                (3, 1, 0),
+                (4, 1, 1),
+                (5, 1, 2),
+                (6, 2, 0),
+                (7, 3, 0),
+                (8, 3, 1),
+                (9, 3, 2),
+            ],
+        );
+    }
+
+    #[test]
+    fn unicode() {
+        assert_mapping("Ö", &[(0, 0, 0), (2, 0, 1)]);
+        assert_mapping("ÖÖ", &[(0, 0, 0), (2, 0, 1), (4, 0, 2)]);
+        assert_mapping("Ö\n", &[(0, 0, 0), (2, 0, 1), (3, 1, 0)]);
+        assert_mapping("ÖÖ\n", &[(0, 0, 0), (2, 0, 1), (4, 0, 2), (5, 1, 0)]);
+        assert_mapping("\nÖ", &[(0, 0, 0), (1, 1, 0), (3, 1, 1)]);
+        assert_mapping("\nÖÖ", &[(0, 0, 0), (1, 1, 0), (3, 1, 1), (5, 1, 2)]);
+        assert_mapping("Ö\nÖ", &[(0, 0, 0), (2, 0, 1), (3, 1, 0), (5, 1, 1)]);
+        assert_mapping("\nÖÖ\n", &[(0, 0, 0), (1, 1, 0), (3, 1, 1), (5, 1, 2), (6, 2, 0)]);
+    }
+
+    fn assert_mapping(source: &str, mappings: &[(u32, u32, u32)]) {
+        let mut builder = SourcemapBuilder::default();
+        builder.with_source_and_name(source, "x.js");
+        for (position, expected_line, expected_col) in mappings.iter().copied() {
+            let (line, col) = builder.search_original_line_and_column(position);
+            assert_eq!(
+                builder.search_original_line_and_column(position),
+                (expected_line, expected_col),
+                "Incorrect mapping for '{source}' - position {position} = line {line}, column {col}"
+            );
+        }
     }
 }
