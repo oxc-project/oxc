@@ -1870,7 +1870,10 @@ pub trait Visit<'a>: Sized {
     fn visit_ts_type_query(&mut self, ty: &TSTypeQuery<'a>) {
         let kind = AstKind::TSTypeQuery(self.alloc(ty));
         self.enter_node(kind);
-        self.visit_ts_type_name(&ty.expr_name);
+        match &ty.expr_name {
+            TSTypeQueryExprName::TSTypeName(name) => self.visit_ts_type_name(name),
+            TSTypeQueryExprName::TSImportType(_import) => {} // TODO
+        }
         if let Some(type_parameters) = &ty.type_parameters {
             self.visit_ts_type_parameter_instantiation(type_parameters);
         }
