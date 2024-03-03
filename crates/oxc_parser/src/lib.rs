@@ -122,6 +122,13 @@ pub struct ParserReturn<'a> {
 #[derive(Clone, Copy)]
 struct ParserOptions {
     pub allow_return_outside_function: bool,
+    /// Emit `ParenthesizedExpression` in AST.
+    ///
+    /// If this option is true, parenthesized expressions are represented by
+    /// (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
+    /// containing the expression inside parentheses.
+    ///
+    /// Default: true
     pub preserve_parens: bool,
 }
 
