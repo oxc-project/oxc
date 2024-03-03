@@ -105,16 +105,22 @@ impl<'a> ParserImpl<'a> {
             return Err(self.unexpected());
         }
 
-        let function_type = if body.is_none() {
-            FunctionType::TSDeclareFunction
-        } else {
-            match func_kind {
-                FunctionKind::Declaration { .. } | FunctionKind::DefaultExport => {
+        let function_type = match func_kind {
+            FunctionKind::Declaration { .. } | FunctionKind::DefaultExport => {
+                if body.is_none() {
+                    FunctionType::TSDeclareFunction
+                } else {
                     FunctionType::FunctionDeclaration
                 }
-                FunctionKind::Expression { .. } => FunctionType::FunctionExpression,
-                FunctionKind::TSDeclaration { .. } => FunctionType::TSDeclareFunction,
             }
+            FunctionKind::Expression { .. } => {
+                if body.is_none() {
+                    FunctionType::TSEmptyBodyFunctionExpression
+                } else {
+                    FunctionType::FunctionExpression
+                }
+            }
+            FunctionKind::TSDeclaration { .. } => FunctionType::TSDeclareFunction,
         };
 
         if FunctionType::TSDeclareFunction == function_type {
