@@ -1326,7 +1326,6 @@ Expect Syntax Error: "compiler/objectLiteralFreshnessWithSpread.ts"
 Expect Syntax Error: "compiler/objectLiteralFunctionArgContextualTyping.ts"
 Expect Syntax Error: "compiler/objectLiteralFunctionArgContextualTyping2.ts"
 Expect Syntax Error: "compiler/objectLiteralIndexerErrors.ts"
-Expect Syntax Error: "compiler/objectLiteralMemberWithoutBlock1.ts"
 Expect Syntax Error: "compiler/objectLiteralParameterResolution.ts"
 Expect Syntax Error: "compiler/objectLiteralPropertyImplicitlyAny.ts"
 Expect Syntax Error: "compiler/objectLiteralReferencingInternalProperties.ts"
@@ -3550,6 +3549,7 @@ Expect Syntax Error: "conformance/types/nonPrimitive/nonPrimitiveUnionIntersecti
 Expect Syntax Error: "conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts"
 Expect Syntax Error: "conformance/types/objectTypeLiteral/callSignatures/callSignaturesThatDifferOnlyByReturnType2.ts"
 Expect Syntax Error: "conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithParameterInitializers.ts"
+Expect Syntax Error: "conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithParameterInitializers2.ts"
 Expect Syntax Error: "conformance/types/objectTypeLiteral/callSignatures/specializedSignatureIsNotSubtypeOfNonSpecializedSignature.ts"
 Expect Syntax Error: "conformance/types/objectTypeLiteral/callSignatures/stringLiteralTypesInImplementationSignatures2.ts"
 Expect Syntax Error: "conformance/types/objectTypeLiteral/callSignatures/typeParameterUsedAsTypeParameterConstraint4.ts"
@@ -7939,6 +7939,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  1 │ var v = { foo?() { } }
    ·              ┬
    ·              ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `;`
+   ╭─[compiler/objectLiteralMemberWithoutBlock1.ts:1:16]
+ 1 │ var v = { foo(); }
+   ·                ┬
+   ·                ╰── `,` expected
    ╰────
 
   × Expected `,` but found `;`
@@ -19576,15 +19583,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·            ╰── `x` has already been declared here
  38 │ }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithParameterInitializers2.ts:20:15]
- 19 │ var b = {
- 20 │     foo(x = 1), // error
-    ·               ▲
- 21 │     foo(x = 1) { }, // error
-    ╰────
-  help: Try insert a semicolon here
 
   × A parameter property is only allowed in a constructor implementation.
     ╭─[conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts:16:10]
