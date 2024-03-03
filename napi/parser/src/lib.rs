@@ -23,6 +23,14 @@ pub struct ParserOptions {
     #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
     pub source_type: Option<String>,
     pub source_filename: Option<String>,
+    /// Emit `ParenthesizedExpression` in AST.
+    ///
+    /// If this option is true, parenthesized expressions are represented by
+    /// (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
+    /// containing the expression inside parentheses.
+    ///
+    /// Default: true
+    pub preserve_parens: Option<bool>,
 }
 
 #[napi(object)]
@@ -56,7 +64,9 @@ fn parse<'a>(
         Some("module") => source_type.with_module(true),
         _ => source_type,
     };
-    Parser::new(allocator, source_text, source_type).parse()
+    Parser::new(allocator, source_text, source_type)
+        .preserve_parens(options.preserve_parens.unwrap_or(true))
+        .parse()
 }
 
 /// Parse without returning anything.
