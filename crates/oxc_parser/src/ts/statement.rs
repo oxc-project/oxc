@@ -75,15 +75,6 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn parse_ts_mapped_type_annotation(&mut self) -> Result<Option<TSType<'a>>> {
-        if self.at(Kind::Colon) {
-            self.bump_any(); // bump ':'
-            Ok(Some(self.parse_ts_type()?))
-        } else {
-            Ok(None)
-        }
-    }
-
     pub(crate) fn parse_ts_variable_annotation(
         &mut self,
     ) -> Result<(Option<Box<'a, TSTypeAnnotation<'a>>>, bool)> {
