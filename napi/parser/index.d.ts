@@ -11,6 +11,16 @@
 export interface ParserOptions {
   sourceType?: 'script' | 'module' | 'unambiguous' | undefined
   sourceFilename?: string
+  /**
+   * Emit `ParenthesizedExpression` in AST.
+   *
+   * If this option is true, parenthesized expressions are represented by
+   * (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
+   * containing the expression inside parentheses.
+   *
+   * Default: true
+   */
+  preserveParens?: boolean
 }
 export interface ParseResult {
   program: string
