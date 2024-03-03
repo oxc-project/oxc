@@ -23,8 +23,9 @@ oxc_ast       = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_syntax    = { workspace = true }
-
-bitflags = { workspace = true }
+sourcemap     = { version = "7.0.1" }
+bitflags      = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }
+base64     = "0.21.7"

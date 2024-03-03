@@ -8,7 +8,6 @@ on:
       - '**/*.rs'
       - 'Cargo.lock'
       - '.github/workflows/benchmark.yml'
-      - '!crates/oxc_codegen'
   push:
     branches:
       - main
@@ -17,7 +16,6 @@ on:
       - '**/*.rs'
       - 'Cargo.lock'
       - '.github/workflows/benchmark.yml'
-      - '!crates/oxc_codegen'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -50,7 +48,7 @@ jobs:
           RUSTFLAGS: "-C debuginfo=2 -C strip=none -g --cfg codspeed"
         shell: bash
         run: |
-          cargo build --release -p oxc_benchmark --features codspeed --bench lexer --bench parser --bench transformer --bench semantic --bench linter --bench minifier
+          cargo build --release -p oxc_benchmark --features codspeed --bench lexer --bench parser --bench transformer --bench semantic --bench linter --bench minifier --bench codegen_sourcemap
           mkdir -p target/codspeed/oxc_benchmark/
           mv target/release/deps/lexer-* target/codspeed/oxc_benchmark
           mv target/release/deps/parser-* target/codspeed/oxc_benchmark
@@ -58,6 +56,7 @@ jobs:
           mv target/release/deps/semantic-* target/codspeed/oxc_benchmark
           mv target/release/deps/linter-* target/codspeed/oxc_benchmark
           mv target/release/deps/minifier-* target/codspeed/oxc_benchmark
+          mv target/release/deps/codegen_sourcemap-* target/codspeed/oxc_benchmark
           rm -rf target/codspeed/oxc_benchmark/*.d
 
       - name: Run benchmark
