@@ -487,7 +487,7 @@ impl<'a> TypeScript<'a> {
         let mut params = self.ast.new_vec();
 
         // ((Foo) => {
-        params.push(self.ast.formal_parameter(SPAN, id, None, false, self.ast.new_vec()));
+        params.push(self.ast.formal_parameter(SPAN, id, None, false, false, self.ast.new_vec()));
 
         let params = self.ast.formal_parameters(
             SPAN,
@@ -679,6 +679,7 @@ impl<'a> TypeScript<'a> {
                         false,
                     ),
                     None,
+                    false,
                     false,
                     self.ast.new_vec(),
                 )),
