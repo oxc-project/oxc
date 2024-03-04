@@ -143,7 +143,7 @@ impl SourcemapBuilder {
             match ch {
                 '\r' | '\n' | LS | PS => {
                     // Handle Windows-specific "\r\n" newlines
-                    if ch == '\r' && content.chars().nth(i + 1) == Some('\n') {
+                    if ch == '\r' && content.as_bytes().get(i + 1) == Some(&b'\n') {
                         column += 1;
                         continue;
                     }
@@ -209,6 +209,14 @@ mod test {
                 (9, 3, 2),
             ],
         );
+
+        assert_mapping("\r", &[(0, 0, 0), (1, 1, 0)]);
+        assert_mapping("\r\r", &[(0, 0, 0), (1, 1, 0), (2, 2, 0)]);
+        assert_mapping("a\ra", &[(0, 0, 0), (1, 0, 1), (2, 1, 0), (3, 1, 1)]);
+
+        assert_mapping("\r\n", &[(0, 0, 0), (1, 0, 1), (2, 1, 0)]);
+        assert_mapping("\r\n\r\n", &[(0, 0, 0), (1, 0, 1), (2, 1, 0), (3, 1, 1), (4, 2, 0)]);
+        assert_mapping("a\r\na", &[(0, 0, 0), (1, 0, 1), (2, 0, 2), (3, 1, 0), (4, 1, 1)]);
     }
 
     #[test]
@@ -221,6 +229,8 @@ mod test {
         assert_mapping("\nÖÖ", &[(0, 0, 0), (1, 1, 0), (3, 1, 1), (5, 1, 2)]);
         assert_mapping("Ö\nÖ", &[(0, 0, 0), (2, 0, 1), (3, 1, 0), (5, 1, 1)]);
         assert_mapping("\nÖÖ\n", &[(0, 0, 0), (1, 1, 0), (3, 1, 1), (5, 1, 2), (6, 2, 0)]);
+        assert_mapping("Ö\ra", &[(0, 0, 0), (2, 0, 1), (3, 1, 0), (4, 1, 1)]);
+        assert_mapping("Ö\r\na", &[(0, 0, 0), (2, 0, 1), (3, 0, 2), (4, 1, 0), (5, 1, 1)]);
     }
 
     fn assert_mapping(source: &str, mappings: &[(u32, u32, u32)]) {
