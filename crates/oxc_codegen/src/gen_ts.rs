@@ -143,12 +143,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
                 decl.literal.gen(p, ctx);
             }
             Self::TSImportType(decl) => {
-                if decl.is_type_of {
-                    p.print_str(b"typeof ");
-                }
-                p.print_str(b"import(");
-                decl.argument.gen(p, ctx);
-                p.print_str(b")");
+                decl.gen(p, ctx);
             }
             Self::TSQualifiedName(decl) => {
                 decl.left.gen(p, ctx);
@@ -447,6 +442,23 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeQuery<'a> {
         if let Some(type_params) = &self.type_parameters {
             type_params.gen(p, ctx);
         }
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeQueryExprName<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        match self {
+            Self::TSTypeName(decl) => decl.gen(p, ctx),
+            Self::TSImportType(decl) => decl.gen(p, ctx),
+        }
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportType<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.print_str(b"import(");
+        self.argument.gen(p, ctx);
+        p.print_str(b")");
     }
 }
 

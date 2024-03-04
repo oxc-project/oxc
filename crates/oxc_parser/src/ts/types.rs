@@ -392,14 +392,17 @@ impl<'a> ParserImpl<'a> {
             Kind::NoSubstitutionTemplate | Kind::TemplateHead => {
                 self.parse_ts_template_literal_type(false)
             }
-            Kind::Typeof => {
-                if self.peek_at(Kind::Import) {
-                    self.parse_ts_import_type()
-                } else {
-                    self.parse_ts_typeof_type()
-                }
+            Kind::Typeof => self.parse_ts_typeof_type(),
+            Kind::Import => {
+                let node = self.parse_ts_import_type()?;
+                Ok(self.ast.ts_import_type(
+                    node.span,
+                    node.argument,
+                    node.qualifier,
+                    node.attributes,
+                    node.type_parameters,
+                ))
             }
-            Kind::Import => self.parse_ts_import_type(),
             Kind::Minus if self.peek_kind().is_number() => self.parse_ts_literal_type(),
             Kind::Question => self.parse_js_doc_unknown_or_nullable_type(),
             // null should not be parsed as a literal type
@@ -759,14 +762,17 @@ impl<'a> ParserImpl<'a> {
     fn parse_ts_typeof_type(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
         self.expect(Kind::Typeof)?;
-        let expr_name = self.parse_ts_type_name()?;
+        let expr_name: TSTypeQueryExprName = if self.at(Kind::Import) {
+            TSTypeQueryExprName::TSImportType(self.parse_ts_import_type()?)
+        } else {
+            TSTypeQueryExprName::TSTypeName(self.parse_ts_type_name()?)
+        };
         let type_parameters = self.parse_ts_type_arguments()?;
         Ok(self.ast.ts_type_query_type(self.end_span(span), expr_name, type_parameters))
     }
 
-    fn parse_ts_import_type(&mut self) -> Result<TSType<'a>> {
+    fn parse_ts_import_type(&mut self) -> Result<TSImportType<'a>> {
         let span = self.start_span();
-        let is_type_of = self.eat(Kind::Typeof);
         self.expect(Kind::Import)?;
         self.expect(Kind::LParen)?;
         let argument = self.parse_ts_type()?;
@@ -778,14 +784,13 @@ impl<'a> ParserImpl<'a> {
 
         let type_parameters = self.parse_ts_type_arguments()?;
 
-        Ok(self.ast.ts_import_type(
-            self.end_span(span),
-            is_type_of,
+        Ok(TSImportType {
+            span: self.end_span(span),
             argument,
             qualifier,
             attributes,
             type_parameters,
-        ))
+        })
     }
 
     fn parse_ts_import_attributes(&mut self) -> Result<TSImportAttributes<'a>> {

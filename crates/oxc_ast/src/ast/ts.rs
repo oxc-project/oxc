@@ -761,8 +761,16 @@ pub struct TSInferType<'a> {
 pub struct TSTypeQuery<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub expr_name: TSTypeName<'a>,
+    pub expr_name: TSTypeQueryExprName<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+}
+
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+pub enum TSTypeQueryExprName<'a> {
+    TSTypeName(TSTypeName<'a>),
+    TSImportType(TSImportType<'a>),
 }
 
 #[derive(Debug, Hash)]
@@ -771,7 +779,6 @@ pub struct TSTypeQuery<'a> {
 pub struct TSImportType<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub is_type_of: bool,
     pub argument: TSType<'a>,
     pub qualifier: Option<TSTypeName<'a>>,
     pub attributes: Option<TSImportAttributes<'a>>,
