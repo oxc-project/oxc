@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -85,30 +85,32 @@ impl PreferToHaveLength {
                 let Expression::CallExpression(expr_call_expr) = mem_expr.object() else {
                     return;
                 };
-                dbg!(mem_expr);
                 match &mem_expr.0 {
                     MemberExpression::ComputedMemberExpression(_) => Self::check_and_fix(
+                        call_expr,
                         expr_call_expr,
                         &parsed_expect_call,
-                        call_expr,
                         Some("ComputedMember"),
+                        mem_expr.static_property_name(),
                         ctx,
                     ),
                     MemberExpression::StaticMemberExpression(_) => Self::check_and_fix(
+                        call_expr,
                         expr_call_expr,
                         &parsed_expect_call,
-                        call_expr,
                         Some("StaticMember"),
+                        mem_expr.static_property_name(),
                         ctx,
                     ),
-                    _ => (),
+                    MemberExpression::PrivateFieldExpression(_) => (),
                 };
             }
             Expression::CallExpression(expr_call_expr) => {
                 Self::check_and_fix(
+                    call_expr,
                     expr_call_expr,
                     &parsed_expect_call,
-                    call_expr,
+                    None,
                     None,
                     ctx,
                 );
@@ -118,10 +120,11 @@ impl PreferToHaveLength {
     }
 
     fn check_and_fix<'a>(
+        call_expr: &CallExpression<'a>,
         expr_call_expr: &CallExpression<'a>,
         parsed_expect_call: &ParsedExpectFnCall<'a>,
-        call_expr: &CallExpression<'a>,
         kind: Option<&str>,
+        property_name: Option<&str>,
         ctx: &LintContext<'a>,
     ) {
         let Some(argument) = expr_call_expr.arguments.first() else {
@@ -145,10 +148,14 @@ impl PreferToHaveLength {
             return;
         }
 
-        let code = Self::build_code(expr_call_expr, static_mem_expr, call_expr, kind, ctx);
-
         ctx.diagnostic_with_fix(UseToHaveLength(matcher.span), || {
-            Fix::new(code, Span { start: 0, end: call_expr.span.end })
+            let code = Self::build_code(static_mem_expr, kind, property_name, ctx);
+            let end = if call_expr.arguments.len() > 0 {
+                call_expr.arguments.first().unwrap().span().start
+            } else {
+                matcher.span.end
+            };
+            Fix::new(code, Span { start: 0, end: end - 1 })
         });
     }
 
@@ -156,44 +163,35 @@ impl PreferToHaveLength {
         matcher_name == "toBe" || matcher_name == "toEqual" || matcher_name == "toStrictEqual"
     }
 
-    fn build_code<'a>(
-        expr_call_expr: &CallExpression<'a>,
+    fn build_code(
         mem_expr: &MemberExpression,
-        call_expr: &CallExpression<'a>,
         kind: Option<&str>,
-        ctx: &LintContext<'a>,
+        property_name: Option<&str>,
+        ctx: &LintContext<'_>,
     ) -> String {
         let mut formatter = ctx.codegen();
-
         let Expression::Identifier(prop_ident) = mem_expr.object() else {
             return formatter.into_code();
         };
 
-        if let Expression::Identifier(ident) = &expr_call_expr.callee {
-            formatter.print_str(ident.name.as_bytes());
-            formatter.print_str(b"(");
-            formatter.print_str(prop_ident.name.as_bytes());
-            formatter.print_str(b")");
-        }
+        formatter.print_str(b"expect(");
+        formatter.print_str(prop_ident.name.as_bytes());
+        formatter.print_str(b")");
 
         if let Some(kind_val) = kind {
             if kind_val == "ComputedMember" {
-                formatter.print_str(b"[\"not\"]");
+                let property = property_name.unwrap();
+                formatter.print_str(b"[\"");
+                formatter.print_str(property.as_bytes());
+                formatter.print_str(b"\"]");
             } else if kind_val == "StaticMember" {
-                formatter.print_str(b".not");
+                formatter.print_str(b".");
+                let property = property_name.unwrap();
+                formatter.print_str(property.as_bytes());
             }
         }
 
-        formatter.print_str(b".toHaveLength(");
-
-        if call_expr.arguments.len() > 0 {
-            formatter.print_str(call_expr.span.source_text(ctx.source_text()).as_bytes());
-        }
-        // if parsed_expect_call.args.len() > 0 {
-        //     // formatter.print_str(parsed_expect_call.args.s);
-        // }
-
-        formatter.print_str(b")");
+        formatter.print_str(b".toHaveLength");
         formatter.into_code()
     }
 }
@@ -204,54 +202,53 @@ fn tests() {
 
     let pass = vec![
         ("expect.hasAssertions", None),
-        // ("expect.hasAssertions()", None),
-        // ("expect(files).toHaveLength(1);", None),
-        // ("expect(files.name).toBe('file');", None),
-        // ("expect(files[`name`]).toBe('file');", None),
-        // ("expect(users[0]?.permissions?.length).toBe(1);", None),
-        // ("expect(result).toBe(true);", None),
-        ("expect(user.getUserName(5)).resolves.not.toEqual('Paul')", None),
-        // ("expect(user.getUserName(5)).rejects.toEqual('Paul')", None),
-        // ("expect(a);", None),
+        ("expect.hasAssertions()", None),
+        ("expect(files).toHaveLength(1);", None),
+        ("expect(files.name).toBe('file');", None),
+        ("expect(files[`name`]).toBe('file');", None),
+        ("expect(users[0]?.permissions?.length).toBe(1);", None),
+        ("expect(result).toBe(true);", None),
+        ("expect(user.getUserName(5)).resolves.toEqual('Paul')", None),
+        ("expect(user.getUserName(5)).rejects.toEqual('Paul')", None),
+        ("expect(a);", None),
     ];
 
     let fail = vec![
-        // ("expect(files[\"length\"]).toBe(1);", None),
-        // ("expect(files[\"length\"]).toBe(1,);", None),
-        // ("expect(files[\"length\"])[\"not\"].toBe(1);", None),
-        // ("expect(files[\"length\"])[\"toBe\"](1);", None),
-        // ("expect(files[\"length\"]).not[\"toBe\"](1);", None),
-        // ("expect(files[\"length\"])[\"not\"][\"toBe\"](1);", None),
-        // ("expect(files.length).toBe(1);", None),
-        // ("expect(files.length).toEqual(1);", None),
-        // ("expect(files.length).toStrictEqual(1);", None),
-        // ("expect(files.length).not.toStrictEqual(1);", None),
+        ("expect(files[\"length\"]).toBe(1);", None),
+        ("expect(files[\"length\"]).toBe(1,);", None),
+        ("expect(files[\"length\"])[\"not\"].toBe(1);", None),
+        ("expect(files[\"length\"])[\"toBe\"](1);", None),
+        ("expect(files[\"length\"]).not[\"toBe\"](1);", None),
+        ("expect(files[\"length\"])[\"not\"][\"toBe\"](1);", None),
+        ("expect(files.length).toBe(1);", None),
+        ("expect(files.length).toEqual(1);", None),
+        ("expect(files.length).toStrictEqual(1);", None),
+        ("expect(files.length).not.toStrictEqual(1);", None),
     ];
 
     let fix = vec![
-        // ("expect(files[\"length\"]).not.toBe(1);", "expect(files).not.toHaveLength(1);", None),
+        ("expect(files[\"length\"]).not.toBe(1);", "expect(files).not.toHaveLength(1);", None),
         (
-            "expect(files[\"length\"]).resolves.not.toBe(1,);",
-            "expect(files)['resolve'].toHaveLength(1,);",
-            None
+            "expect(files[\"length\"])[\"resolves\"].toBe(1,);",
+            "expect(files)[\"resolves\"].toHaveLength(1,);",
+            None,
         ),
-        // ("expect(files[\"length\"]).toBe(1,);", "expect(files).toHaveLength(1);", None),
-        // (
-        //     "expect(files[\"length\"])[\"not\"].toBe(1);",
-        //     "expect(files)[\"not\"].toHaveLength(1);",
-        //     None,
-        // ),
-        // ("expect(files[\"length\"])[\"toBe\"](1);", "expect(files).toHaveLength(1);", None),
-        // ("expect(files[\"length\"]).not[\"toBe\"](1);", "expect(files).not.toHaveLength(1);", None),
-        // (
-        //     "expect(files[\"length\"])[\"not\"][\"toBe\"](1);",
-        //     "expect(files)[\"not\"].toHaveLength(1);",
-        //     None,
-        // ),
-        // ("expect(files.length).toBe(1);", "expect(files).toHaveLength(1);", None),
-        // ("expect(files.length).toEqual(1);", "expect(files).toHaveLength(1);", None),
-        // ("expect(files.length).toStrictEqual(1);", "expect(files).toHaveLength(1);", None),
-        // ("expect(files.length).not.toStrictEqual(1);", "expect(files).not.toHaveLength(1);", None),
+        (
+            "expect(files[\"length\"])[\"not\"].toBe(1);",
+            "expect(files)[\"not\"].toHaveLength(1);",
+            None,
+        ),
+        ("expect(files[\"length\"])[\"toBe\"](1);", "expect(files).toHaveLength(1);", None),
+        ("expect(files[\"length\"]).not[\"toBe\"](1);", "expect(files).not.toHaveLength(1);", None),
+        (
+            "expect(files[\"length\"])[\"not\"][\"toBe\"](1);",
+            "expect(files)[\"not\"].toHaveLength(1);",
+            None,
+        ),
+        ("expect(files.length).toBe(1);", "expect(files).toHaveLength(1);", None),
+        ("expect(files.length).toEqual(1);", "expect(files).toHaveLength(1);", None),
+        ("expect(files.length).toStrictEqual(1);", "expect(files).toHaveLength(1);", None),
+        ("expect(files.length).not.toStrictEqual(1);", "expect(files).not.toHaveLength(1);", None),
     ];
 
     Tester::new(PreferToHaveLength::NAME, pass, fail)
