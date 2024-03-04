@@ -94,7 +94,9 @@ impl Rule for NoNamespace {
                 Span::new(declaration.span.start + i as u32, declaration.span.start + i as u32 + 9)
             }),
         };
-        ctx.diagnostic(NoNamespaceDiagnostic(span.unwrap()));
+        if let Some(span) = span {
+            ctx.diagnostic(NoNamespaceDiagnostic(span));
+        }
     }
 }
 
