@@ -76,7 +76,7 @@ impl PreferStrictEqual {
                         .replace(matcher_name.to_string().as_str(), "toStrictEqual")
                         .as_bytes(),
                 );
-                Fix::new(formatter.into_code(), matcher.span)
+                Fix::new(formatter.into_source_text(), matcher.span)
             });
         }
     }
