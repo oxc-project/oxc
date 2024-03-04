@@ -28,4 +28,4 @@ bitflags      = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }
-base64     = "0.22.0"
+base64     = "0.21.7"
