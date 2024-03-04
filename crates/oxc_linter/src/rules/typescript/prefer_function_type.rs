@@ -371,7 +371,9 @@ impl Rule for PreferFunctionType {
                         union_type.types.iter().for_each(|ts_type| {
                             if let TSType::TSTypeLiteral(literal) = ts_type {
                                 let body = &literal.members;
-                                check_member(&body[0], node, ctx);
+                                if body.len() == 1 {
+                                    check_member(&body[0], node, ctx);
+                                }
                             }
                         });
                     }
@@ -450,6 +452,7 @@ fn test() {
           (): void;
         }
             ",
+        "let foo: number | {};",
     ];
 
     let fail = vec![
