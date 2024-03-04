@@ -171,7 +171,7 @@ impl PreferToHaveLength {
     ) -> String {
         let mut formatter = ctx.codegen();
         let Expression::Identifier(prop_ident) = mem_expr.object() else {
-            return formatter.into_code();
+            return formatter.into_source_text();
         };
 
         formatter.print_str(b"expect(");
