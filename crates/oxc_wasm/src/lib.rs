@@ -68,21 +68,17 @@ pub struct Oxc {
     serializer: serde_wasm_bindgen::Serializer,
 }
 
-#[wasm_bindgen(getter_with_clone)]
 #[derive(Clone, Tsify, Serialize)]
+#[tsify(into_wasm_abi)]
 pub struct Comment {
-    #[wasm_bindgen]
     pub r#type: CommentType,
-    #[wasm_bindgen]
     pub value: String,
-    #[wasm_bindgen]
     pub start: u32,
-    #[wasm_bindgen]
     pub end: u32,
 }
 
-#[wasm_bindgen]
 #[derive(Clone, Copy, Tsify, Serialize)]
+#[tsify(into_wasm_abi)]
 pub enum CommentType {
     Line,
     Block,
