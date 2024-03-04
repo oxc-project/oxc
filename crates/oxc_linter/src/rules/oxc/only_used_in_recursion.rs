@@ -67,7 +67,7 @@ impl Rule for OnlyUsedInRecursion {
 
         let Some(function_id) = &function.id else { return };
 
-        if function.body.is_none() {
+        if function.is_typescript_syntax() {
             return;
         }
 
@@ -233,6 +233,8 @@ fn test() {
             return _get(target, property, receiver || target);
         }
         "#,
+        "function foo() {}
+        declare function foo() {}",
     ];
 
     let fail = vec![

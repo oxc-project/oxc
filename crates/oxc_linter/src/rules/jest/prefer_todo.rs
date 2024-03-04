@@ -187,7 +187,7 @@ fn build_code(expr: &CallExpression, ctx: &LintContext) -> (String, Span) {
         formatter.print(b')');
     }
 
-    (formatter.into_code(), expr.span)
+    (formatter.into_source_text(), expr.span)
 }
 
 #[test]

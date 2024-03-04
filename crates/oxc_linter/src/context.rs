@@ -2,7 +2,7 @@ use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::Error;
-use oxc_semantic::{AstNodes, JSDoc, ScopeTree, Semantic, SymbolTable};
+use oxc_semantic::{AstNodes, JSDocFinder, ScopeTree, Semantic, SymbolTable};
 use oxc_span::SourceType;
 
 use crate::{
@@ -151,11 +151,11 @@ impl<'a> LintContext<'a> {
 
     #[allow(clippy::unused_self)]
     pub fn codegen(&self) -> Codegen<false> {
-        Codegen::<false>::new(0, CodegenOptions::default())
+        Codegen::<false>::new("", CodegenOptions::default())
     }
 
     /* JSDoc */
-    pub fn jsdoc(&self) -> &JSDoc<'a> {
+    pub fn jsdoc(&self) -> &JSDocFinder<'a> {
         self.semantic().jsdoc()
     }
 }

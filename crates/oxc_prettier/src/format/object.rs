@@ -99,7 +99,6 @@ pub(super) fn print_object_properties<'a>(
                 ObjectLike::Expression(_) => {}
                 ObjectLike::AssignmentTarget(target) => {
                     if let Some(rest) = &target.rest {
-                        indent_parts.push(ss!("..."));
                         indent_parts.push(rest.format(p));
                     }
                 }

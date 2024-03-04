@@ -192,7 +192,7 @@ impl PreferToHaveLength {
         }
 
         formatter.print_str(b".toHaveLength");
-        formatter.into_code()
+        formatter.into_source_text()
     }
 }
 

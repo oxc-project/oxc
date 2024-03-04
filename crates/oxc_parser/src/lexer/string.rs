@@ -37,43 +37,38 @@ macro_rules! handle_string_literal {
         let after_opening_quote = $lexer.source.position().add(1);
 
         // Consume bytes which are part of identifier
-        byte_search! {
+        let next_byte = byte_search! {
             lexer: $lexer,
             table: $table,
             start: after_opening_quote,
-            handle_match: |next_byte| {
-                // Found a matching byte.
-                // Either end of string found, or a line break, or `\` escape.
-                match next_byte {
-                    $delimiter => {
-                        // SAFETY: `handle_match` is only called if there's a byte to consume,
-                        // and `next_byte` is the next byte in `lexer.source`.
-                        // Macro user guarantees delimiter is ASCII, so consuming it cannot move
-                        // `lexer.source` off a UTF-8 character boundary.
-                        $lexer.source.next_byte_unchecked();
-                        Kind::Str
-                    },
-                    b'\\' => {
-                        cold_branch(|| {
-                            handle_string_literal_escape!($lexer, $delimiter, $table, after_opening_quote)
-                        })
-                    },
-                    _ => {
-                        // Line break. This is impossible in valid JS, so cold path.
-                        cold_branch(|| {
-                            debug_assert!(matches!(next_byte, b'\r' | b'\n'));
-                            $lexer.consume_char();
-                            $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
-                            Kind::Undetermined
-                        })
-                    }
-                }
-            },
-            handle_eof: || {
+            handle_eof: {
                 $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
-                Kind::Undetermined
+                return Kind::Undetermined;
             },
         };
+
+        // Found a matching byte.
+        // Either end of string found, or a line break, or `\` escape.
+        match next_byte {
+            $delimiter => {
+                // SAFETY: Macro user guarantees delimiter is ASCII, so consuming it cannot move
+                // `lexer.source` off a UTF-8 character boundary.
+                $lexer.source.next_byte_unchecked();
+                Kind::Str
+            }
+            b'\\' => cold_branch(|| {
+                handle_string_literal_escape!($lexer, $delimiter, $table, after_opening_quote)
+            }),
+            _ => {
+                // Line break. This is impossible in valid JS, so cold path.
+                cold_branch(|| {
+                    debug_assert!(matches!(next_byte, b'\r' | b'\n'));
+                    $lexer.consume_char();
+                    $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
+                    Kind::Undetermined
+                })
+            }
+        }
     }};
 }
 
@@ -112,7 +107,7 @@ macro_rules! handle_string_literal_escape {
                         // `Source`'s invariant temporarily, but the guarantees of `SafeByteMatchTable`
                         // mean `!table.matches(b)` on this branch prevents exiting this loop until
                         // `source` is positioned on a UTF-8 character boundary again.
-                        unsafe { $lexer.source.next_byte_unchecked() };
+                        $lexer.source.next_byte_unchecked();
                         continue;
                     }
                     b if b == $delimiter => {
@@ -132,16 +127,15 @@ macro_rules! handle_string_literal_escape {
                         str.push_str(chunk);
                         continue 'outer;
                     }
-                    b'\r' | b'\n' => {
-                        // This is impossible in valid JS, so cold path
+                    _  => {
+                        // Line break. This is impossible in valid JS, so cold path.
                         return cold_branch(|| {
+                            debug_assert!(matches!(b, b'\r' | b'\n'));
                             $lexer.consume_char();
                             $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
                             Kind::Undetermined
                         });
                     }
-                    // SAFETY: Caller guarantees `table` does not match any other bytes
-                    _ => assert_unchecked::unreachable_unchecked!(),
                 }
             }
 

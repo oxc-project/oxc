@@ -948,7 +948,7 @@ pub trait Visit<'a>: Sized {
             self.visit_assignment_target_maybe_default(element);
         }
         if let Some(target) = &target.rest {
-            self.visit_assignment_target(target);
+            self.visit_assignment_target_rest(target);
         }
     }
 
@@ -976,7 +976,7 @@ pub trait Visit<'a>: Sized {
             self.visit_assignment_target_property(property);
         }
         if let Some(target) = &target.rest {
-            self.visit_assignment_target(target);
+            self.visit_assignment_target_rest(target);
         }
     }
 
@@ -1007,6 +1007,10 @@ pub trait Visit<'a>: Sized {
     ) {
         self.visit_property_key(&property.name);
         self.visit_assignment_target_maybe_default(&property.binding);
+    }
+
+    fn visit_assignment_target_rest(&mut self, rest: &AssignmentTargetRest<'a>) {
+        self.visit_assignment_target(&rest.target);
     }
 
     /* ----------  Expression ---------- */
@@ -1044,6 +1048,11 @@ pub trait Visit<'a>: Sized {
     fn visit_jsx_element_name(&mut self, name: &JSXElementName<'a>) {
         let kind = AstKind::JSXElementName(self.alloc(name));
         self.enter_node(kind);
+        match name {
+            JSXElementName::Identifier(ident) => self.visit_jsx_identifier(ident),
+            JSXElementName::NamespacedName(expr) => self.visit_jsx_namespaced_name(expr),
+            JSXElementName::MemberExpression(expr) => self.visit_jsx_member_expression(expr),
+        }
         self.leave_node(kind);
     }
 
@@ -1663,7 +1672,7 @@ pub trait Visit<'a>: Sized {
             self.visit_ts_type(name);
         }
         if let Some(type_annotation) = &ty.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
+            self.visit_ts_type(type_annotation);
         }
     }
 
@@ -1865,7 +1874,10 @@ pub trait Visit<'a>: Sized {
     fn visit_ts_type_query(&mut self, ty: &TSTypeQuery<'a>) {
         let kind = AstKind::TSTypeQuery(self.alloc(ty));
         self.enter_node(kind);
-        self.visit_ts_type_name(&ty.expr_name);
+        match &ty.expr_name {
+            TSTypeQueryExprName::TSTypeName(name) => self.visit_ts_type_name(name),
+            TSTypeQueryExprName::TSImportType(_import) => {} // TODO
+        }
         if let Some(type_parameters) = &ty.type_parameters {
             self.visit_ts_type_parameter_instantiation(type_parameters);
         }

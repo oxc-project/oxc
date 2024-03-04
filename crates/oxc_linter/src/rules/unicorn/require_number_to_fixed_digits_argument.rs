@@ -75,7 +75,7 @@ impl Rule for RequireNumberToFixedDigitsArgument {
                                 formatter.print_str(span_source_code.as_bytes());
                                 formatter.print_str(b"0)");
 
-                                formatter.into_code()
+                                formatter.into_source_text()
                             };
 
                             Fix::new(modified_code, parenthesis_span)

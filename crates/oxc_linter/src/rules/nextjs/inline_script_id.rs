@@ -51,7 +51,7 @@ impl Rule for InlineScriptId {
         'references_loop: for reference in
             ctx.semantic().symbol_references(specifier.local.symbol_id.get().unwrap())
         {
-            let node = ctx.nodes().get_node(reference.node_id());
+            let Some(node) = ctx.nodes().parent_node(reference.node_id()) else { return };
 
             let AstKind::JSXElementName(_) = node.kind() else { continue };
             let parent_node = ctx.nodes().parent_node(node.id()).unwrap();

@@ -108,6 +108,7 @@ impl GetterReturn {
         }
     }
 
+    /// Checks whether it is necessary to check the node
     fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> bool {
         if let Some(parent) = ctx.nodes().parent_node(node.id()) {
             match parent.kind() {
@@ -192,7 +193,7 @@ impl GetterReturn {
                 //
                 // We stop this path on a ::Yes because if it was a ::No,
                 // we would have already returned early before exploring more edges
-                => Some(DefinitelyReturnsOrThrows::Yes),
+                => Some(DefinitelyReturnsOrThrowsOrUnreachable::Yes),
             },
             // We ignore the state going into this rule because we only care whether
             // or not this path definitely returns or throws.
@@ -201,6 +202,29 @@ impl GetterReturn {
             // or No (when we see this, we immediately stop walking). Other rules that require knowing
             // previous such as [`no_this_before_super`] we would want to observe this value.
             &mut |basic_block_id, _state_going_into_this_rule| {
+                // The expression is the equivalent of return.
+                // Therefore, if a function is an expression, it always returns its value.
+                //
+                // Example expression:
+                // ```js
+                // const fn = () => 1;
+                // ```
+                if let AstKind::ArrowFunctionExpression(arrow_expr) = node.kind() {
+                    if arrow_expr.expression {
+                        return (DefinitelyReturnsOrThrowsOrUnreachable::Yes, false);
+                    }
+                }
+
+                // If the signature of function supports the return of the `undefined` value,
+                // you do not need to check this rule
+                if let AstKind::Function(func) = node.kind() {
+                    if let Some(ref ret) = func.return_type {
+                        if ret.type_annotation.is_maybe_undefined() {
+                            return (DefinitelyReturnsOrThrowsOrUnreachable::Yes, false);
+                        }
+                    }
+                }
+
                 // Scan through the values in this basic block.
                 for entry in cfg.basic_block_by_index(*basic_block_id) {
                     match entry {
@@ -230,7 +254,7 @@ impl GetterReturn {
                                     // Return false as the second argument to signify we should
                                     // not continue walking this branch, as we know a return
                                     // is the end of this path.
-                                    return (DefinitelyReturnsOrThrows::No, false);
+                                    return (DefinitelyReturnsOrThrowsOrUnreachable::No, false);
                                 }
                                 // Otherwise, we definitely returned since we assigned
                                 // to the return register.
@@ -238,32 +262,36 @@ impl GetterReturn {
                                 // Return false as the second argument to signify we should
                                 // not continue walking this branch, as we know a return
                                 // is the end of this path.
-                                return (DefinitelyReturnsOrThrows::Yes, false);
+                                return (DefinitelyReturnsOrThrowsOrUnreachable::Yes, false);
                             }
                         }
-                        BasicBlockElement::Throw(_) => {
-                            // Throws are classified as returning.
-                            //
-                            // todo: test with catching...
-                            return (DefinitelyReturnsOrThrows::Yes, false);
-                        }
+                        // Throws are classified as returning.
+                        //
+                        // todo: test with catching...
+                        BasicBlockElement::Throw(_) |
+                        // Although the unreachable code is not returned, it will never be executed.
+                        // There is no point in checking it for return.
+                        //
+                        // An example in such cases:
+                        // ```js
+                        // switch (val) {
+                        //     default: return 1;
+                        // }
+                        // return -1;
+                        // ```
+                        // Make return useless.
                         BasicBlockElement::Unreachable => {
-                            // Unreachable signifies the last element of this basic block and
-                            // this path that will be observed by javascript, therefore if we
-                            // haven't returned yet we won't after this.
-                            //
-                            // Return false as the second argument to signify we should
-                            // not continue walking this branch, as we know a return
-                            // is the end of this path.
-                            return (DefinitelyReturnsOrThrows::No, false);
+
+                            return (DefinitelyReturnsOrThrowsOrUnreachable::Yes, false);
                         }
                     }
                 }
+
                 // Return true as the second argument to signify we should
                 // continue walking this branch, as we haven't seen anything
                 // that will signify to us that this path of the program will
                 // definitely return or throw.
-                (DefinitelyReturnsOrThrows::No, true)
+                (DefinitelyReturnsOrThrowsOrUnreachable::No, true)
             },
         );
 
@@ -271,7 +299,7 @@ impl GetterReturn {
         // codepaths is as simple as seeing if each individual codepath
         // definitely returns or throws.
         let definitely_returns_in_all_codepaths =
-            output.into_iter().all(|y| matches!(y, DefinitelyReturnsOrThrows::Yes));
+            output.into_iter().all(|y| matches!(y, DefinitelyReturnsOrThrowsOrUnreachable::Yes));
 
         // If not, flag it as a diagnostic.
         if !definitely_returns_in_all_codepaths {
@@ -281,7 +309,7 @@ impl GetterReturn {
 }
 
 #[derive(Default, Copy, Clone, Debug)]
-enum DefinitelyReturnsOrThrows {
+enum DefinitelyReturnsOrThrowsOrUnreachable {
     #[default]
     No,
     Yes,
@@ -365,6 +393,41 @@ fn test() {
         ("foo.create(null, { bar: { get() {} } });", None),
         ("var foo = { get willThrowSoValid() { throw MyException() } };", None),
         ("export abstract class Foo { protected abstract get foobar(): number; }", None),
+        ("class T {
+            theme: number;
+            get type(): number {
+                switch (theme) {
+                    case 1: return 1;
+                    case 2: return 2;
+                    default: return 3;
+                 }
+                 throw new Error('test')
+            }
+        }", None),
+        ("class T {
+            theme: number;
+            get type(): number {
+                switch (theme) {
+                    case 1: return 1;
+                    case 2: return 2;
+                    default: return 3;
+                 }
+            }
+        }", None),
+        ("const originalClearTimeout = targetWindow.clearTimeout;
+        Object.defineProperty(targetWindow, 'vscodeOriginalClearTimeout', { get: () => originalClearTimeout });
+        ", None),
+        ("class T {
+            get width(): number | undefined {
+                const val = undefined
+                if (!val) {
+                    return;
+                }
+
+                return val * val;
+            }
+        }", None),
+        ("function fn(): void { console.log('test') }", None)
     ];
 
     let fail = vec![

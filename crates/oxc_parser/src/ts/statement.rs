@@ -34,6 +34,7 @@ impl<'a> ParserImpl<'a> {
 
         let id = self.parse_binding_identifier()?;
         let members = TSEnumMemberList::parse(self)?.members;
+        let span = self.end_span(span);
         Ok(self.ast.ts_enum_declaration(span, id, members, modifiers))
     }
 
@@ -294,16 +295,14 @@ impl<'a> ParserImpl<'a> {
         match self.cur_kind() {
             Kind::Namespace => {
                 let kind = TSModuleDeclarationKind::Namespace;
-                let span = self.start_span();
                 self.bump_any();
-                self.parse_ts_namespace_or_module_declaration_body(span, kind, modifiers)
+                self.parse_ts_namespace_or_module_declaration_body(start_span, kind, modifiers)
                     .map(Declaration::TSModuleDeclaration)
             }
             Kind::Module => {
                 let kind = TSModuleDeclarationKind::Module;
-                let span = self.start_span();
                 self.bump_any();
-                self.parse_ts_namespace_or_module_declaration_body(span, kind, modifiers)
+                self.parse_ts_namespace_or_module_declaration_body(start_span, kind, modifiers)
                     .map(Declaration::TSModuleDeclaration)
             }
             Kind::Global => {
