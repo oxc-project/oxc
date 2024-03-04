@@ -407,6 +407,8 @@ impl<'a> ParserImpl<'a> {
 #[cfg(test)]
 mod test {
 
+    use oxc_ast::CommentKind;
+
     use super::*;
 
     #[test]
@@ -447,6 +449,22 @@ mod test {
             let ret = Parser::new(&allocator, source, source_type).parse();
             assert!(ret.program.directives.is_empty(), "{source}");
             assert_eq!(ret.program.body.len(), body_length, "{source}");
+        }
+    }
+
+    #[test]
+    fn comments() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default().with_typescript(true);
+        let sources = [
+            ("// line comment", CommentKind::SingleLine),
+            ("/* line comment */", CommentKind::MultiLine),
+            ("type Foo = ( /* Require properties which are not generated automatically. */ 'bar')", CommentKind::MultiLine),
+        ];
+        for (source, kind) in sources {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert_eq!(ret.trivias.comments.len(), 1, "{source}");
+            assert_eq!(ret.trivias.comments[0].2, kind, "{source}");
         }
     }
 

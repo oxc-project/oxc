@@ -6,9 +6,27 @@ pub struct TriviaBuilder {
     trivias: Trivias,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct TriviasCheckpoint {
+    comments_len: usize,
+    irregular_whitespaces_len: usize,
+}
+
 impl TriviaBuilder {
     pub fn build(self) -> Trivias {
         self.trivias
+    }
+
+    pub fn checkpoint(&self) -> TriviasCheckpoint {
+        TriviasCheckpoint {
+            comments_len: self.trivias.comments.len(),
+            irregular_whitespaces_len: self.trivias.irregular_whitespaces.len(),
+        }
+    }
+
+    pub fn rewind(&mut self, checkpoint: TriviasCheckpoint) {
+        self.trivias.comments.truncate(checkpoint.comments_len);
+        self.trivias.irregular_whitespaces.truncate(checkpoint.irregular_whitespaces_len);
     }
 
     /// skip leading `//`
