@@ -89,7 +89,7 @@ bitflags                  = { version = "2.4.2" }
 bumpalo                   = { version = "3.15.3" }
 convert_case              = { version = "0.6.0" }
 criterion                 = { version = "0.5.1", default-features = false }
-crossbeam-channel         = { version = "0.5.11" }
+crossbeam-channel         = { version = "0.5.12" }
 dashmap                   = { version = "5.5.3" }
 flate2                    = { version = "1.0.28" }
 futures                   = { version = "0.3.30" }
@@ -106,10 +106,10 @@ pico-args                 = { version = "0.5.0" }
 proc-macro2               = { version = "1.0.78" }
 project-root              = { version = "0.2.2" }
 quote                     = { version = "1.0.35" }
-rayon                     = { version = "1.8.1" }
+rayon                     = { version = "1.9.0" }
 regex                     = { version = "1.10.3" }
 rustc-hash                = { version = "1.1.0", default-features = false, features = ["std"] }
-ryu-js                    = { version = "1.0.0" }
+ryu-js                    = { version = "1.0.1" }
 ropey                     = { version = "1.6.1" }
 seq-macro                 = { version = "0.3.5" }
 serde                     = { version = "1.0.197" }
@@ -119,23 +119,23 @@ thiserror                 = { version = "1.0.57" }
 tokio                     = { version = "1" }
 tower-lsp                 = { version = "0.20.0", features = ["proposed"] }
 unicode-id-start          = { version = "1.1.2" }
-ureq                      = { version = "2.9.1", default-features = false, features = ["tls", "json"] }
+ureq                      = { version = "2.9.6", default-features = false, features = ["tls", "json"] }
 url                       = { version = "2.5.0" }
-walkdir                   = { version = "2.4.0" }
-indexmap                  = { version = "2.2.3" }
+walkdir                   = { version = "2.5.0" }
+indexmap                  = { version = "2.2.5" }
 index_vec                 = { version = "0.1.3" }
 static_assertions         = { version = "1.1.0" }
 stacker                   = { version = "0.1.15" }
 tracing                   = { version = "0.1" }
 tracing-subscriber        = { version = "0.3" }
-insta                     = { version = "1.35.1", features = ["glob"] }
-codspeed-criterion-compat = { version = "2.3.3", default-features = false }
+insta                     = { version = "1.36.1", features = ["glob"] }
+codspeed-criterion-compat = { version = "2.4.0", default-features = false }
 glob                      = { version = "0.3.1" }
 mime_guess                = { version = "2.0.4" }
 language-tags             = { version = "0.3.2" }
 tsify                     = { version = "0.4.5" }
 wasm-bindgen              = { version = "0.2" }
-serde-wasm-bindgen        = { version = "0.6.4" }
+serde-wasm-bindgen        = { version = "0.6.5" }
 
 [profile.release.package.oxc_wasm]
 opt-level = 'z'
