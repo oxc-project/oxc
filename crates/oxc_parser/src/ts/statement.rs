@@ -295,16 +295,14 @@ impl<'a> ParserImpl<'a> {
         match self.cur_kind() {
             Kind::Namespace => {
                 let kind = TSModuleDeclarationKind::Namespace;
-                let span = self.start_span();
                 self.bump_any();
-                self.parse_ts_namespace_or_module_declaration_body(span, kind, modifiers)
+                self.parse_ts_namespace_or_module_declaration_body(start_span, kind, modifiers)
                     .map(Declaration::TSModuleDeclaration)
             }
             Kind::Module => {
                 let kind = TSModuleDeclarationKind::Module;
-                let span = self.start_span();
                 self.bump_any();
-                self.parse_ts_namespace_or_module_declaration_body(span, kind, modifiers)
+                self.parse_ts_namespace_or_module_declaration_body(start_span, kind, modifiers)
                     .map(Declaration::TSModuleDeclaration)
             }
             Kind::Global => {
