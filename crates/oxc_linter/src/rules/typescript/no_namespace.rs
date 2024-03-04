@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{ModifierKind, TSModuleDeclarationName},
+    ast::{ModifierKind, TSModuleDeclarationKind, TSModuleDeclarationName},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -83,15 +83,18 @@ impl Rule for NoNamespace {
             return;
         }
 
-        let start = declaration.span.start;
-        let span = Span::new(start, declaration.span.start + 6); // "module".len()
-        let modifier = span.source_text(ctx.source_text());
-        let span = if modifier == "module" {
-            span
-        } else {
-            Span::new(start, declaration.span.start + 9) // "namespace".len()
+        let declaration_code = declaration.span.source_text(ctx.source_text());
+
+        let span = match declaration.kind {
+            TSModuleDeclarationKind::Global => None, // handled above
+            TSModuleDeclarationKind::Module => declaration_code.find("module").map(|i| {
+                Span::new(declaration.span.start + i as u32, declaration.span.start + i as u32 + 6)
+            }),
+            TSModuleDeclarationKind::Namespace => declaration_code.find("namespace").map(|i| {
+                Span::new(declaration.span.start + i as u32, declaration.span.start + i as u32 + 9)
+            }),
         };
-        ctx.diagnostic(NoNamespaceDiagnostic(span));
+        ctx.diagnostic(NoNamespaceDiagnostic(span.unwrap()));
     }
 }
 
