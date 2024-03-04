@@ -1,7 +1,7 @@
 parser_typescript Summary:
-AST Parsed     : 5239/5243 (99.92%)
-Positive Passed: 5232/5243 (99.79%)
-Negative Passed: 1063/4879 (21.79%)
+AST Parsed     : 5240/5243 (99.94%)
+Positive Passed: 5233/5243 (99.81%)
+Negative Passed: 1061/4879 (21.75%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -2196,6 +2196,8 @@ Expect Syntax Error: "conformance/decorators/class/constructor/decoratorOnClassC
 Expect Syntax Error: "conformance/decorators/class/decoratorChecksFunctionBodies.ts"
 Expect Syntax Error: "conformance/decorators/class/decoratorOnClass8.ts"
 Expect Syntax Error: "conformance/decorators/class/method/decoratorOnClassMethod10.ts"
+Expect Syntax Error: "conformance/decorators/class/method/decoratorOnClassMethod11.ts"
+Expect Syntax Error: "conformance/decorators/class/method/decoratorOnClassMethod12.ts"
 Expect Syntax Error: "conformance/decorators/class/method/decoratorOnClassMethod6.ts"
 Expect Syntax Error: "conformance/decorators/class/method/decoratorOnClassMethod8.ts"
 Expect Syntax Error: "conformance/decorators/class/method/decoratorOnClassMethodOverload1.ts"
@@ -3917,15 +3919,6 @@ Expect to Parse: "conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJ
  68 │ with (_) {
     · ────
  69 │     var y = _;
-    ╰────
-Expect to Parse: "conformance/esDecorators/esDecorators-preservesThis.ts"
-
-  × Unexpected token
-    ╭─[conformance/esDecorators/esDecorators-preservesThis.ts:27:14]
- 26 │         class C {
- 27 │             @super.decorate
-    ·              ─────
- 28 │             method1() { }
     ╰────
 Expect to Parse: "conformance/externalModules/topLevelAwait.2.ts"
 
@@ -12035,22 +12028,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                        ┬
    ·                        ╰── `,` expected
  7 │ }
-   ╰────
-
-  × Unexpected token
-   ╭─[conformance/decorators/class/method/decoratorOnClassMethod11.ts:7:10]
- 6 │ 
- 7 │         @this.decorator
-   ·          ────
- 8 │         method() { }
-   ╰────
-
-  × Unexpected token
-   ╭─[conformance/decorators/class/method/decoratorOnClassMethod12.ts:8:10]
- 7 │     class C extends S {
- 8 │         @super.decorator
-   ·          ─────
- 9 │         method() { }
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
