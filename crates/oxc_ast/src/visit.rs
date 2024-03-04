@@ -948,7 +948,7 @@ pub trait Visit<'a>: Sized {
             self.visit_assignment_target_maybe_default(element);
         }
         if let Some(target) = &target.rest {
-            self.visit_assignment_target(target);
+            self.visit_assignment_target_rest(target);
         }
     }
 
@@ -976,7 +976,7 @@ pub trait Visit<'a>: Sized {
             self.visit_assignment_target_property(property);
         }
         if let Some(target) = &target.rest {
-            self.visit_assignment_target(target);
+            self.visit_assignment_target_rest(target);
         }
     }
 
@@ -1007,6 +1007,10 @@ pub trait Visit<'a>: Sized {
     ) {
         self.visit_property_key(&property.name);
         self.visit_assignment_target_maybe_default(&property.binding);
+    }
+
+    fn visit_assignment_target_rest(&mut self, rest: &AssignmentTargetRest<'a>) {
+        self.visit_assignment_target(&rest.target);
     }
 
     /* ----------  Expression ---------- */
