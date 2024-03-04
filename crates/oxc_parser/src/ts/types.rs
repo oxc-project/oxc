@@ -2,6 +2,7 @@ use bitflags::bitflags;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
+use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
 use super::list::{
@@ -116,9 +117,10 @@ impl<'a> ParserImpl<'a> {
             return self.parse_ts_function_type();
         }
 
+        let left_span = self.start_span();
         let left = self.parse_ts_union_type()?;
 
-        self.parse_ts_conditional_type(left)
+        self.parse_ts_conditional_type(left_span, left)
     }
 
     pub(crate) fn parse_ts_type_parameters(
@@ -209,8 +211,11 @@ impl<'a> ParserImpl<'a> {
         Ok(Some(self.parse_ts_type()?))
     }
 
-    fn parse_ts_conditional_type(&mut self, left: TSType<'a>) -> Result<TSType<'a>> {
-        let span = self.start_span();
+    fn parse_ts_conditional_type(
+        &mut self,
+        left_span: Span,
+        left: TSType<'a>,
+    ) -> Result<TSType<'a>> {
         if !self.ctx.has_disallow_conditional_types()
             && !self.cur_token().is_on_new_line
             && self.eat(Kind::Extends)
@@ -229,7 +234,7 @@ impl<'a> ParserImpl<'a> {
                 self.without_context(Context::DisallowConditionalTypes, Self::parse_ts_type)?;
 
             return Ok(self.ast.ts_conditional_type(
-                self.end_span(span),
+                self.end_span(left_span),
                 left,
                 extends_type,
                 true_type,
@@ -387,17 +392,21 @@ impl<'a> ParserImpl<'a> {
             Kind::NoSubstitutionTemplate | Kind::TemplateHead => {
                 self.parse_ts_template_literal_type(false)
             }
-            Kind::Typeof => {
-                if self.peek_at(Kind::Import) {
-                    self.parse_ts_import_type()
-                } else {
-                    self.parse_ts_typeof_type()
-                }
+            Kind::Typeof => self.parse_ts_typeof_type(),
+            Kind::Import => {
+                let node = self.parse_ts_import_type()?;
+                Ok(self.ast.ts_import_type(
+                    node.span,
+                    node.argument,
+                    node.qualifier,
+                    node.attributes,
+                    node.type_parameters,
+                ))
             }
-            Kind::Import => self.parse_ts_import_type(),
             Kind::Minus if self.peek_kind().is_number() => self.parse_ts_literal_type(),
             Kind::Question => self.parse_js_doc_unknown_or_nullable_type(),
-            kind if kind.is_literal() => self.parse_ts_literal_type(),
+            // null should not be parsed as a literal type
+            kind if kind.is_literal() && kind != Kind::Null => self.parse_ts_literal_type(),
             _ => {
                 if !self.peek_at(Kind::Dot) {
                     let keyword = self.parse_ts_keyword_type();
@@ -656,7 +665,7 @@ impl<'a> ParserImpl<'a> {
             _ => TSMappedTypeModifierOperator::None,
         };
 
-        let type_annotation = self.parse_ts_type_annotation()?;
+        let type_annotation = self.eat(Kind::Colon).then(|| self.parse_ts_type()).transpose()?;
         self.bump(Kind::Semicolon);
         self.expect(Kind::RCurly)?;
 
@@ -753,14 +762,17 @@ impl<'a> ParserImpl<'a> {
     fn parse_ts_typeof_type(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
         self.expect(Kind::Typeof)?;
-        let expr_name = self.parse_ts_type_name()?;
+        let expr_name: TSTypeQueryExprName = if self.at(Kind::Import) {
+            TSTypeQueryExprName::TSImportType(self.parse_ts_import_type()?)
+        } else {
+            TSTypeQueryExprName::TSTypeName(self.parse_ts_type_name()?)
+        };
         let type_parameters = self.parse_ts_type_arguments()?;
         Ok(self.ast.ts_type_query_type(self.end_span(span), expr_name, type_parameters))
     }
 
-    fn parse_ts_import_type(&mut self) -> Result<TSType<'a>> {
+    fn parse_ts_import_type(&mut self) -> Result<TSImportType<'a>> {
         let span = self.start_span();
-        let is_type_of = self.eat(Kind::Typeof);
         self.expect(Kind::Import)?;
         self.expect(Kind::LParen)?;
         let argument = self.parse_ts_type()?;
@@ -772,14 +784,13 @@ impl<'a> ParserImpl<'a> {
 
         let type_parameters = self.parse_ts_type_arguments()?;
 
-        Ok(self.ast.ts_import_type(
-            self.end_span(span),
-            is_type_of,
+        Ok(TSImportType {
+            span: self.end_span(span),
             argument,
             qualifier,
             attributes,
             type_parameters,
-        ))
+        })
     }
 
     fn parse_ts_import_attributes(&mut self) -> Result<TSImportAttributes<'a>> {
@@ -1071,8 +1082,11 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_index_signature_member(&mut self) -> Result<TSSignature<'a>> {
         let span = self.start_span();
+        let mut readonly = false;
         while self.is_nth_at_modifier(0, false) {
-            if !self.eat(Kind::Readonly) {
+            if self.eat(Kind::Readonly) {
+                readonly = true;
+            } else {
                 return Err(self.unexpected());
             }
         }
@@ -1087,7 +1101,12 @@ impl<'a> ParserImpl<'a> {
         if let Some(type_annotation) = type_annotation {
             self.bump(Kind::Comma);
             self.bump(Kind::Semicolon);
-            Ok(self.ast.ts_index_signature(self.end_span(span), parameters, type_annotation))
+            Ok(self.ast.ts_index_signature(
+                self.end_span(span),
+                parameters,
+                type_annotation,
+                readonly,
+            ))
         } else {
             Err(self.unexpected())
         }

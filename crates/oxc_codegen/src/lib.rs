@@ -12,18 +12,20 @@ mod context;
 mod gen;
 mod gen_ts;
 mod operator;
+mod sourcemap_builder;
 
 use std::str::from_utf8_unchecked;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_span::Atom;
+use oxc_span::{Atom, Span};
 use oxc_syntax::{
     identifier::is_identifier_part,
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
     symbol::SymbolId,
 };
+use sourcemap_builder::SourcemapBuilder;
 
 pub use crate::{
     context::Context,
@@ -61,6 +63,9 @@ pub struct Codegen<const MINIFY: bool> {
 
     /// Track the current indentation level
     indentation: u8,
+
+    // sourcemap
+    sourcemap_builder: SourcemapBuilder,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -88,6 +93,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
             indentation: 0,
+            sourcemap_builder: SourcemapBuilder::default(),
         }
     }
 
@@ -95,14 +101,25 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     // self.mangler = Some(mangler);
     // }
 
-    pub fn build(mut self, program: &Program<'_>) -> String {
-        program.gen(&mut self, Context::default());
+    pub fn with_sourcemap(&mut self, source: &str, source_name: &str) -> &mut Self {
+        self.sourcemap_builder
+            .with_enable_sourcemap(true)
+            .with_source_and_name(source, source_name);
+        self
+    }
+
+    pub fn build(&mut self, program: &Program<'_>) -> String {
+        program.gen(self, Context::default());
         self.into_code()
     }
 
-    pub fn into_code(self) -> String {
+    pub fn into_code(&mut self) -> String {
         // SAFETY: criteria of `from_utf8_unchecked`.are met.
-        unsafe { String::from_utf8_unchecked(self.code) }
+        unsafe { String::from_utf8_unchecked(std::mem::take(&mut self.code)) }
+    }
+
+    pub fn into_sourcemap(self) -> sourcemap::SourceMap {
+        self.sourcemap_builder.into_sourcemap()
     }
 
     fn code(&self) -> &Vec<u8> {
@@ -221,29 +238,37 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         }
     }
 
-    fn print_block_start(&mut self) {
+    fn print_block_start(&mut self, position: u32) {
+        self.add_source_mapping(position);
         self.print(b'{');
         self.print_soft_newline();
         self.indent();
     }
 
-    fn print_block_end(&mut self) {
+    fn print_block_end(&mut self, position: u32) {
         self.dedent();
         self.print_indent();
+        self.add_source_mapping(position);
         self.print(b'}');
     }
 
     fn print_block1(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
-        self.print_block_start();
+        self.print_block_start(stmt.span.start);
         self.print_directives_and_statements_with_semicolon_order(None, &stmt.body, ctx, true);
-        self.print_block_end();
+        self.print_block_end(stmt.span.end);
         self.needs_semicolon = false;
     }
 
-    fn print_block<T: Gen<MINIFY>>(&mut self, items: &[T], separator: Separator, ctx: Context) {
-        self.print_block_start();
+    fn print_block<T: Gen<MINIFY>>(
+        &mut self,
+        items: &[T],
+        separator: Separator,
+        ctx: Context,
+        span: Span,
+    ) {
+        self.print_block_start(span.start);
         self.print_sequence(items, separator, ctx);
-        self.print_block_end();
+        self.print_block_end(span.end);
     }
 
     fn print_list<T: Gen<MINIFY>>(&mut self, items: &[T], ctx: Context) {
@@ -274,7 +299,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         }
     }
 
-    fn print_symbol(&mut self, _symbol_id: Option<SymbolId>, fallback: &Atom) {
+    fn print_symbol(&mut self, start: u32, _symbol_id: Option<SymbolId>, fallback: &Atom) {
         // if let Some(mangler) = &self.mangler {
         // if let Some(symbol_id) = symbol_id {
         // let name = mangler.get_symbol_name(symbol_id);
@@ -282,6 +307,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         // return;
         // }
         // }
+        self.add_source_mapping_for_name(start, fallback);
         self.print_str(fallback.as_bytes());
     }
 
@@ -376,6 +402,14 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
                 self.print_semicolon_if_needed();
             }
         }
+    }
+
+    fn add_source_mapping(&mut self, position: u32) {
+        self.sourcemap_builder.add_source_mapping(&self.code, position, None);
+    }
+
+    fn add_source_mapping_for_name(&mut self, position: u32, name: &str) {
+        self.sourcemap_builder.add_source_mapping(&self.code, position, Some(name));
     }
 }
 

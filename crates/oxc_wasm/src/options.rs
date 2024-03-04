@@ -146,6 +146,8 @@ impl OxcLinterOptions {
 #[derive(Default, Clone, Copy)]
 pub struct OxcCodegenOptions {
     pub indentation: u8,
+    #[wasm_bindgen(js_name = enableTypescript)]
+    pub enable_typescript: bool,
 }
 
 #[wasm_bindgen]

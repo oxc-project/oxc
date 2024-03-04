@@ -155,14 +155,14 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_export_assignment_declaration(
         &mut self,
+        start_span: Span,
     ) -> Result<Box<'a, TSExportAssignment<'a>>> {
-        let span = self.start_span();
         self.expect(Kind::Eq)?;
 
         let expression = self.parse_assignment_expression_base()?;
         self.asi()?;
 
-        Ok(self.ast.alloc(TSExportAssignment { span: self.end_span(span), expression }))
+        Ok(self.ast.alloc(TSExportAssignment { span: self.end_span(start_span), expression }))
     }
 
     pub(crate) fn parse_ts_export_namespace(
@@ -185,7 +185,7 @@ impl<'a> ParserImpl<'a> {
 
         let decl = match self.cur_kind() {
             Kind::Eq if self.ts_enabled() => self
-                .parse_ts_export_assignment_declaration()
+                .parse_ts_export_assignment_declaration(span)
                 .map(ModuleDeclaration::TSExportAssignment),
             Kind::As if self.peek_at(Kind::Namespace) && self.ts_enabled() => self
                 .parse_ts_export_namespace()

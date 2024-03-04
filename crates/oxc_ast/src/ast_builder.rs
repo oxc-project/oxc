@@ -796,9 +796,10 @@ impl<'a> AstBuilder<'a> {
         pattern: BindingPattern<'a>,
         accessibility: Option<TSAccessibility>,
         readonly: bool,
+        r#override: bool,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> FormalParameter<'a> {
-        FormalParameter { span, pattern, accessibility, readonly, decorators }
+        FormalParameter { span, pattern, accessibility, readonly, r#override, decorators }
     }
 
     pub fn ts_this_parameter(
@@ -1364,11 +1365,13 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         parameters: Vec<'a, Box<'a, TSIndexSignatureName<'a>>>,
         type_annotation: Box<'a, TSTypeAnnotation<'a>>,
+        readonly: bool,
     ) -> TSSignature<'a> {
         TSSignature::TSIndexSignature(self.alloc(TSIndexSignature {
             span,
             parameters,
             type_annotation,
+            readonly,
         }))
     }
 
@@ -1639,7 +1642,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_query_type(
         &self,
         span: Span,
-        expr_name: TSTypeName<'a>,
+        expr_name: TSTypeQueryExprName<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> TSType<'a> {
         TSType::TSTypeQuery(self.alloc(TSTypeQuery { span, expr_name, type_parameters }))
@@ -1667,7 +1670,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_parameter: Box<'a, TSTypeParameter<'a>>,
         name_type: Option<TSType<'a>>,
-        type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+        type_annotation: Option<TSType<'a>>,
         optional: TSMappedTypeModifierOperator,
         readonly: TSMappedTypeModifierOperator,
     ) -> TSType<'a> {
@@ -1684,7 +1687,6 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_import_type(
         &self,
         span: Span,
-        is_type_of: bool,
         argument: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
         attributes: Option<TSImportAttributes<'a>>,
@@ -1692,7 +1694,6 @@ impl<'a> AstBuilder<'a> {
     ) -> TSType<'a> {
         TSType::TSImportType(self.alloc(TSImportType {
             span,
-            is_type_of,
             argument,
             qualifier,
             attributes,

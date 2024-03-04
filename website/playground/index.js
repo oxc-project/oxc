@@ -363,6 +363,7 @@ class Playground {
     this.currentView = view;
 
     document.getElementById("ir-copy").style.display = "none";
+    document.getElementById("codegen-controls").style.display = "none";
     document.getElementById("duration").style.display = "inline";
     document.getElementById("panel").style.display = "inline";
     this.runOptions.format = false;
@@ -387,6 +388,7 @@ class Playground {
         text = renderSymbols(this.oxc.symbols)
         break;
       case "codegen":
+        document.getElementById("codegen-controls").style.display = "block";
         this.run();
         text = this.oxc.codegenText;
         break;
@@ -606,6 +608,12 @@ async function main() {
   document.getElementById("transform").onchange = function () {
     const checked = document.getElementById("transform-checkbox").checked;
     playground.runOptions.transform = checked;
+    playground.updateView("codegen");
+  };
+
+  document.getElementById("codegen-ts").onchange = function () {
+    const checked = document.getElementById("codegen-ts-checkbox").checked;
+    playground.codegenOptions.enableTypescript = checked;
     playground.updateView("codegen");
   };
 

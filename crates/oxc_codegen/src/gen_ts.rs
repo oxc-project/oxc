@@ -143,12 +143,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
                 decl.literal.gen(p, ctx);
             }
             Self::TSImportType(decl) => {
-                if decl.is_type_of {
-                    p.print_str(b"typeof ");
-                }
-                p.print_str(b"import(");
-                decl.argument.gen(p, ctx);
-                p.print_str(b")");
+                decl.gen(p, ctx);
             }
             Self::TSQualifiedName(decl) => {
                 decl.left.gen(p, ctx);
@@ -450,6 +445,23 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeQuery<'a> {
     }
 }
 
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeQueryExprName<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        match self {
+            Self::TSTypeName(decl) => decl.gen(p, ctx),
+            Self::TSImportType(decl) => decl.gen(p, ctx),
+        }
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportType<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.print_str(b"import(");
+        self.argument.gen(p, ctx);
+        p.print_str(b")");
+    }
+}
+
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeParameterInstantiation<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_str(b"<");
@@ -519,18 +531,18 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
         p.print_hard_space();
         match &self.body {
             TSModuleDeclarationBody::TSModuleDeclaration(body) => {
-                p.print_block_start();
+                p.print_block_start(body.span.start);
                 body.gen(p, ctx);
-                p.print_block_end();
+                p.print_block_end(body.span.end);
             }
             TSModuleDeclarationBody::TSModuleBlock(body) => {
-                p.print_block_start();
+                p.print_block_start(body.span.start);
                 for item in &body.body {
                     p.print_semicolon_if_needed();
                     item.gen(p, ctx);
                 }
                 p.print_semicolon_if_needed();
-                p.print_block_end();
+                p.print_block_end(body.span.end);
             }
         }
         if MINIFY {
@@ -560,14 +572,14 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSInterfaceDeclaration<'a> {
             }
         }
         p.print_soft_space();
-        p.print_block_start();
+        p.print_block_start(self.body.span.start);
         for item in &self.body.body {
             p.print_indent();
             p.print_semicolon_if_needed();
             item.gen(p, ctx);
             p.print_semicolon_after_statement();
         }
-        p.print_block_end();
+        p.print_block_end(self.body.span.end);
         if MINIFY {
             p.print_hard_space();
         }
@@ -605,9 +617,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumDeclaration<'a> {
         p.print_str(b"enum ");
         self.id.gen(p, ctx);
         p.print_space_before_identifier();
-        p.print_block_start();
+        p.print_block_start(self.span.start);
         p.print_list(&self.members, ctx);
-        p.print_block_end();
+        p.print_block_end(self.span.end);
         p.print_hard_space();
     }
 }

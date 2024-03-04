@@ -258,6 +258,7 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
         let modifiers = p.parse_class_element_modifiers(true);
         let accessibility = modifiers.accessibility();
         let readonly = modifiers.readonly();
+        let r#override = modifiers.r#override();
 
         match p.cur_kind() {
             Kind::This if p.ts_enabled() => {
@@ -278,6 +279,7 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
                     pattern,
                     accessibility,
                     readonly,
+                    r#override,
                     decorators,
                 );
                 self.elements.push(formal_parameter);
