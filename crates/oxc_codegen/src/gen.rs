@@ -1800,7 +1800,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayAssignmentTarget<'a> {
                 p.print_comma();
             }
             p.add_source_mapping(self.span.start);
-            p.print_ellipsis();
             target.gen(p, ctx);
         }
         if self.trailing_comma.is_some() {
@@ -1829,7 +1828,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectAssignmentTarget<'a> {
                 p.print_comma();
             }
             p.add_source_mapping(self.span.start);
-            p.print_ellipsis();
             target.gen(p, ctx);
         }
         p.print(b'}');
@@ -1890,6 +1888,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetPropertyProperty<'a
         }
         p.print_colon();
         self.binding.gen(p, ctx);
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetRest<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.print_ellipsis();
+        self.target.gen(p, ctx);
     }
 }
 

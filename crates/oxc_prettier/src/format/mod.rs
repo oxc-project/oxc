@@ -1824,6 +1824,12 @@ impl<'a> Format<'a> for AssignmentTargetPropertyProperty<'a> {
     }
 }
 
+impl<'a> Format<'a> for AssignmentTargetRest<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        array![p, ss!("..."), self.target.format(p)]
+    }
+}
+
 impl<'a> Format<'a> for SequenceExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, SequenceExpression, {

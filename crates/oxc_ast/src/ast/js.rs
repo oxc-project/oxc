@@ -974,7 +974,7 @@ pub struct ArrayAssignmentTarget<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-    pub rest: Option<AssignmentTarget<'a>>,
+    pub rest: Option<AssignmentTargetRest<'a>>,
     pub trailing_comma: Option<Span>,
 }
 
@@ -994,7 +994,7 @@ pub struct ObjectAssignmentTarget<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
-    pub rest: Option<AssignmentTarget<'a>>,
+    pub rest: Option<AssignmentTargetRest<'a>>,
 }
 
 impl<'a> ObjectAssignmentTarget<'a> {
@@ -1005,6 +1005,15 @@ impl<'a> ObjectAssignmentTarget<'a> {
     pub fn len(&self) -> usize {
         self.properties.len() + usize::from(self.rest.is_some())
     }
+}
+
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+pub struct AssignmentTargetRest<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub target: AssignmentTarget<'a>,
 }
 
 #[derive(Debug, Hash)]

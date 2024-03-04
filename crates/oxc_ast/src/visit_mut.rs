@@ -935,7 +935,7 @@ pub trait VisitMut<'a>: Sized {
             self.visit_assignment_target_maybe_default(element);
         }
         if let Some(target) = &mut target.rest {
-            self.visit_assignment_target(target);
+            self.visit_assignment_target_rest(target);
         }
     }
 
@@ -969,7 +969,7 @@ pub trait VisitMut<'a>: Sized {
             self.visit_assignment_target_property(property);
         }
         if let Some(target) = &mut target.rest {
-            self.visit_assignment_target(target);
+            self.visit_assignment_target_rest(target);
         }
     }
 
@@ -1000,6 +1000,10 @@ pub trait VisitMut<'a>: Sized {
     ) {
         self.visit_property_key(&mut property.name);
         self.visit_assignment_target_maybe_default(&mut property.binding);
+    }
+
+    fn visit_assignment_target_rest(&mut self, rest: &mut AssignmentTargetRest<'a>) {
+        self.visit_assignment_target(&mut rest.target);
     }
 
     /* ----------  Expression ---------- */
