@@ -1,5 +1,6 @@
 use crate::{
     context::LintContext,
+    fixer::Fix,
     rule::Rule,
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
@@ -48,7 +49,7 @@ impl Rule for PreferStrictEqual {
 }
 
 impl PreferStrictEqual {
-    pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -66,7 +67,17 @@ impl PreferStrictEqual {
         };
 
         if matcher_name.eq("toEqual") {
-            ctx.diagnostic(UseToStrictEqual(matcher.span));
+            ctx.diagnostic_with_fix(UseToStrictEqual(matcher.span), || {
+                let mut formatter = ctx.codegen();
+                formatter.print_str(
+                    matcher
+                        .span
+                        .source_text(ctx.source_text())
+                        .replace(matcher_name.to_string().as_str(), "toStrictEqual")
+                        .as_bytes(),
+                );
+                Fix::new(formatter.into_code(), matcher.span)
+            });
         }
     }
 }
@@ -87,5 +98,26 @@ fn test() {
         ("expect(something)[\"toEqual\"](somethingElse);", None),
     ];
 
-    Tester::new(PreferStrictEqual::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    let fix = vec![
+        (
+            "expect(something).toEqual(somethingElse);",
+            "expect(something).toStrictEqual(somethingElse);",
+            None,
+        ),
+        (
+            "expect(something).toEqual(somethingElse,);",
+            "expect(something).toStrictEqual(somethingElse,);",
+            None,
+        ),
+        (
+            "expect(something)[\"toEqual\"](somethingElse);",
+            "expect(something)[\"toStrictEqual\"](somethingElse);",
+            None,
+        ),
+    ];
+
+    Tester::new(PreferStrictEqual::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
