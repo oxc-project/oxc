@@ -100,7 +100,8 @@ impl SourcemapBuilder {
             match ch {
                 '\r' | '\n' | LS | PS => {
                     // Handle Windows-specific "\r\n" newlines
-                    if ch == '\r' && output[self.last_generated_update + i + 1] == b'\n' {
+                    if ch == '\r' && output.get(self.last_generated_update + i + 1) == Some(&b'\n')
+                    {
                         continue;
                     }
                     self.generated_line += 1;
@@ -188,7 +189,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn ascii() {
+    fn builder_ascii() {
         assert_mapping("", &[(0, 0, 0)]);
         assert_mapping("a", &[(0, 0, 0), (1, 0, 1)]);
         assert_mapping("\n", &[(0, 0, 0), (1, 1, 0)]);
@@ -220,7 +221,7 @@ mod test {
     }
 
     #[test]
-    fn unicode() {
+    fn builder_unicode() {
         assert_mapping("Ö", &[(0, 0, 0), (2, 0, 1)]);
         assert_mapping("ÖÖ", &[(0, 0, 0), (2, 0, 1), (4, 0, 2)]);
         assert_mapping("Ö\n", &[(0, 0, 0), (2, 0, 1), (3, 1, 0)]);
@@ -244,5 +245,30 @@ mod test {
                 "Incorrect mapping for '{source}' - position {position} = line {line}, column {col}"
             );
         }
+    }
+
+    #[test]
+    fn add_source_mapping() {
+        fn create_mappings(source: &str) {
+            let mut builder = SourcemapBuilder::default();
+            builder.with_enable_sourcemap(true).with_source_and_name(source, "x.js");
+            let output: Vec<u8> = source.as_bytes().into();
+            for (i, _ch) in source.char_indices() {
+                #[allow(clippy::cast_possible_truncation)]
+                builder.add_source_mapping(&output, i as u32, None);
+            }
+        }
+
+        create_mappings("");
+        create_mappings("abc");
+        create_mappings("\n");
+        create_mappings("\r");
+        create_mappings("\r\n");
+        create_mappings("\nabc");
+        create_mappings("abc\n");
+        create_mappings("\rabc");
+        create_mappings("abc\r");
+        create_mappings("\r\nabc");
+        create_mappings("abc\r\n");
     }
 }
