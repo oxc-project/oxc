@@ -4,6 +4,7 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc};
 
 use oxc::{
     allocator::Allocator,
+    ast::{CommentKind, Trivias},
     codegen::{Codegen, CodegenOptions},
     diagnostics::Error,
     minifier::{CompressOptions, Minifier, MinifierOptions},
@@ -26,12 +27,15 @@ use crate::options::{
 #[derive(Default, Tsify)]
 pub struct Oxc {
     source_text: String,
+
     #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "Program")]
     pub ast: JsValue,
+
     #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "Statement[]")]
     pub ir: JsValue,
+
     #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "SymbolTable")]
     pub symbols: JsValue,
@@ -39,22 +43,45 @@ pub struct Oxc {
     #[wasm_bindgen(readonly, skip_typescript, js_name = "scopeText")]
     #[serde(rename = "scopeText")]
     pub scope_text: String,
+
     #[wasm_bindgen(readonly, skip_typescript, js_name = "codegenText")]
     #[serde(rename = "codegenText")]
     pub codegen_text: String,
+
     #[wasm_bindgen(readonly, skip_typescript, js_name = "formattedText")]
     #[serde(rename = "formattedText")]
     pub formatted_text: String,
+
     #[wasm_bindgen(readonly, skip_typescript, js_name = "prettierFormattedText")]
     #[serde(rename = "prettierFormattedText")]
     pub prettier_formatted_text: String,
+
     #[wasm_bindgen(readonly, skip_typescript, js_name = "prettierIrText")]
     #[serde(rename = "prettierIrText")]
     pub prettier_ir_text: String,
 
+    comments: Vec<Comment>,
+
     diagnostics: RefCell<Vec<Error>>,
+
     #[serde(skip)]
     serializer: serde_wasm_bindgen::Serializer,
+}
+
+#[derive(Clone, Tsify, Serialize)]
+#[tsify(into_wasm_abi)]
+pub struct Comment {
+    pub r#type: CommentType,
+    pub value: String,
+    pub start: u32,
+    pub end: u32,
+}
+
+#[derive(Clone, Copy, Tsify, Serialize)]
+#[tsify(into_wasm_abi)]
+pub enum CommentType {
+    Line,
+    Block,
 }
 
 #[derive(Default, Clone, Serialize)]
@@ -110,6 +137,13 @@ impl Oxc {
             .collect::<Vec<_>>())
     }
 
+    /// Returns comments
+    /// # Errors
+    #[wasm_bindgen(js_name = getComments)]
+    pub fn get_comments(&self) -> Result<Vec<JsValue>, serde_wasm_bindgen::Error> {
+        self.comments.iter().map(|c| c.serialize(&self.serializer)).collect()
+    }
+
     /// # Errors
     /// Serde serialization error
     #[wasm_bindgen]
@@ -133,6 +167,8 @@ impl Oxc {
         let ret = Parser::new(&allocator, source_text, source_type)
             .allow_return_outside_function(parser_options.allow_return_outside_function)
             .parse();
+
+        self.comments = self.map_comments(&ret.trivias);
         self.save_diagnostics(ret.errors);
 
         self.ir = format!("{:#?}", ret.program.body).into();
@@ -286,5 +322,22 @@ impl Oxc {
 
     fn save_diagnostics(&self, diagnostics: Vec<Error>) {
         self.diagnostics.borrow_mut().extend(diagnostics);
+    }
+
+    fn map_comments(&self, trivias: &Trivias) -> Vec<Comment> {
+        trivias
+            .comments
+            .iter()
+            .copied()
+            .map(|(start, end, kind)| Comment {
+                r#type: match kind {
+                    CommentKind::SingleLine => CommentType::Line,
+                    CommentKind::MultiLine => CommentType::Block,
+                },
+                value: self.source_text[start as usize..end as usize].to_string(),
+                start,
+                end,
+            })
+            .collect()
     }
 }
