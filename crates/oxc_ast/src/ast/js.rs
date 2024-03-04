@@ -383,7 +383,7 @@ pub struct ThisExpression {
 
 /// <https://tc39.es/ecma262/#prod-ArrayLiteral>
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct ArrayExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -414,7 +414,7 @@ impl<'a> ArrayExpressionElement<'a> {
 
 /// Object Expression
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct ObjectExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -968,7 +968,7 @@ pub enum AssignmentTargetPattern<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct ArrayAssignmentTarget<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1770,6 +1770,8 @@ pub enum FunctionType {
     FunctionDeclaration,
     FunctionExpression,
     TSDeclareFunction,
+    /// <https://github.com/typescript-eslint/typescript-eslint/pull/1289>
+    TSEmptyBodyFunctionExpression,
 }
 
 /// <https://tc39.es/ecma262/#prod-FormalParameters>
@@ -1799,6 +1801,7 @@ pub struct FormalParameter<'a> {
     pub pattern: BindingPattern<'a>,
     pub accessibility: Option<TSAccessibility>,
     pub readonly: bool,
+    pub r#override: bool,
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
@@ -2407,19 +2410,11 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     #[inline]
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
-            ExportDefaultDeclarationKind::FunctionDeclaration(func)
-                if func.is_typescript_syntax() =>
-            {
-                true
-            }
-            ExportDefaultDeclarationKind::ClassDeclaration(class)
-                if class.is_typescript_syntax() =>
-            {
-                true
-            }
+            ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.is_typescript_syntax(),
+            ExportDefaultDeclarationKind::ClassDeclaration(class) => class.is_typescript_syntax(),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
             | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => true,
-            _ => false,
+            ExportDefaultDeclarationKind::Expression(_) => false,
         }
     }
 }

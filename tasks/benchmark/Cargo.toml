@@ -38,6 +38,10 @@ harness = false
 name    = "linter"
 harness = false
 
+[[bench]]
+name    = "codegen_sourcemap"
+harness = false
+
 # Broken
 # [[bench]]
 # name    = "prettier"
@@ -57,6 +61,7 @@ oxc_semantic     = { workspace = true }
 oxc_span         = { workspace = true }
 oxc_tasks_common = { workspace = true }
 oxc_transformer  = { workspace = true }
+oxc_codegen      = { workspace = true }
 
 criterion                 = { workspace = true }
 codspeed-criterion-compat = { workspace = true, optional = true }

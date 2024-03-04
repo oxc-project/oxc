@@ -796,9 +796,10 @@ impl<'a> AstBuilder<'a> {
         pattern: BindingPattern<'a>,
         accessibility: Option<TSAccessibility>,
         readonly: bool,
+        r#override: bool,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> FormalParameter<'a> {
-        FormalParameter { span, pattern, accessibility, readonly, decorators }
+        FormalParameter { span, pattern, accessibility, readonly, r#override, decorators }
     }
 
     pub fn ts_this_parameter(
@@ -1364,11 +1365,13 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         parameters: Vec<'a, Box<'a, TSIndexSignatureName<'a>>>,
         type_annotation: Box<'a, TSTypeAnnotation<'a>>,
+        readonly: bool,
     ) -> TSSignature<'a> {
         TSSignature::TSIndexSignature(self.alloc(TSIndexSignature {
             span,
             parameters,
             type_annotation,
+            readonly,
         }))
     }
 
@@ -1667,7 +1670,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_parameter: Box<'a, TSTypeParameter<'a>>,
         name_type: Option<TSType<'a>>,
-        type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+        type_annotation: Option<TSType<'a>>,
         optional: TSMappedTypeModifierOperator,
         readonly: TSMappedTypeModifierOperator,
     ) -> TSType<'a> {

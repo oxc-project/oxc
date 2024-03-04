@@ -61,7 +61,6 @@ pub struct NumericLiteral<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub value: f64,
-    #[cfg_attr(feature = "serde", serde(skip))]
     pub raw: &'a str,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub base: NumberBase,

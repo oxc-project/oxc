@@ -2,6 +2,7 @@ use bitflags::bitflags;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
+use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
 use super::list::{
@@ -116,9 +117,10 @@ impl<'a> ParserImpl<'a> {
             return self.parse_ts_function_type();
         }
 
+        let left_span = self.start_span();
         let left = self.parse_ts_union_type()?;
 
-        self.parse_ts_conditional_type(left)
+        self.parse_ts_conditional_type(left_span, left)
     }
 
     pub(crate) fn parse_ts_type_parameters(
@@ -209,8 +211,11 @@ impl<'a> ParserImpl<'a> {
         Ok(Some(self.parse_ts_type()?))
     }
 
-    fn parse_ts_conditional_type(&mut self, left: TSType<'a>) -> Result<TSType<'a>> {
-        let span = self.start_span();
+    fn parse_ts_conditional_type(
+        &mut self,
+        left_span: Span,
+        left: TSType<'a>,
+    ) -> Result<TSType<'a>> {
         if !self.ctx.has_disallow_conditional_types()
             && !self.cur_token().is_on_new_line
             && self.eat(Kind::Extends)
@@ -229,7 +234,7 @@ impl<'a> ParserImpl<'a> {
                 self.without_context(Context::DisallowConditionalTypes, Self::parse_ts_type)?;
 
             return Ok(self.ast.ts_conditional_type(
-                self.end_span(span),
+                self.end_span(left_span),
                 left,
                 extends_type,
                 true_type,
@@ -397,7 +402,8 @@ impl<'a> ParserImpl<'a> {
             Kind::Import => self.parse_ts_import_type(),
             Kind::Minus if self.peek_kind().is_number() => self.parse_ts_literal_type(),
             Kind::Question => self.parse_js_doc_unknown_or_nullable_type(),
-            kind if kind.is_literal() => self.parse_ts_literal_type(),
+            // null should not be parsed as a literal type
+            kind if kind.is_literal() && kind != Kind::Null => self.parse_ts_literal_type(),
             _ => {
                 if !self.peek_at(Kind::Dot) {
                     let keyword = self.parse_ts_keyword_type();
@@ -656,7 +662,7 @@ impl<'a> ParserImpl<'a> {
             _ => TSMappedTypeModifierOperator::None,
         };
 
-        let type_annotation = self.parse_ts_type_annotation()?;
+        let type_annotation = self.eat(Kind::Colon).then(|| self.parse_ts_type()).transpose()?;
         self.bump(Kind::Semicolon);
         self.expect(Kind::RCurly)?;
 
@@ -1071,8 +1077,11 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_index_signature_member(&mut self) -> Result<TSSignature<'a>> {
         let span = self.start_span();
+        let mut readonly = false;
         while self.is_nth_at_modifier(0, false) {
-            if !self.eat(Kind::Readonly) {
+            if self.eat(Kind::Readonly) {
+                readonly = true;
+            } else {
                 return Err(self.unexpected());
             }
         }
@@ -1087,7 +1096,12 @@ impl<'a> ParserImpl<'a> {
         if let Some(type_annotation) = type_annotation {
             self.bump(Kind::Comma);
             self.bump(Kind::Semicolon);
-            Ok(self.ast.ts_index_signature(self.end_span(span), parameters, type_annotation))
+            Ok(self.ast.ts_index_signature(
+                self.end_span(span),
+                parameters,
+                type_annotation,
+                readonly,
+            ))
         } else {
             Err(self.unexpected())
         }

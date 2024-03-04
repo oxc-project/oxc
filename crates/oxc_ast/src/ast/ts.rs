@@ -137,6 +137,17 @@ impl<'a> TSType<'a> {
     pub fn is_const_type_reference(&self) -> bool {
         matches!(self, TSType::TSTypeReference(reference) if reference.type_name.is_const())
     }
+
+    /// Check if type maybe `undefined`
+    pub fn is_maybe_undefined(&self) -> bool {
+        match self {
+            TSType::TSUndefinedKeyword(_) => true,
+            TSType::TSUnionType(un) => {
+                un.types.iter().any(|t| matches!(t, TSType::TSUndefinedKeyword(_)))
+            }
+            _ => false,
+        }
+    }
 }
 
 /// `SomeType extends OtherType ? TrueType : FalseType;`
@@ -571,6 +582,7 @@ pub struct TSIndexSignature<'a> {
     pub span: Span,
     pub parameters: Vec<'a, Box<'a, TSIndexSignatureName<'a>>>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
+    pub readonly: bool,
 }
 
 #[derive(Debug, Hash)]
@@ -825,7 +837,7 @@ pub struct TSMappedType<'a> {
     pub span: Span,
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
     pub name_type: Option<TSType<'a>>,
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub type_annotation: Option<TSType<'a>>,
     pub optional: TSMappedTypeModifierOperator,
     pub readonly: TSMappedTypeModifierOperator,
 }
