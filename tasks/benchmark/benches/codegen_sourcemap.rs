@@ -14,11 +14,14 @@ fn bench_codegen_sourcemap(criterion: &mut Criterion) {
         group.bench_with_input(id, &file.source_text, |b, source_text| {
             let allocator = Allocator::default();
             let program = Parser::new(&allocator, source_text, source_type).parse().program;
-            let codegen_options = CodegenOptions::default();
+            let codegen_options = CodegenOptions {
+                enable_source_map: Some(file.file_name.clone()),
+                ..CodegenOptions::default()
+            };
             b.iter_with_large_drop(|| {
-                let mut codegen = Codegen::<false>::new(source_text.len(), codegen_options);
-                codegen.with_sourcemap(source_text, "").build(&program);
-                codegen.into_sourcemap();
+                Codegen::<false>::new(source_text, codegen_options.clone())
+                    .build(&program)
+                    .source_map
             });
         });
     }

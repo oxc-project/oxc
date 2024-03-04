@@ -46,20 +46,15 @@ impl Default for SourcemapBuilder {
 }
 
 impl SourcemapBuilder {
-    pub fn with_enable_sourcemap(&mut self, enable_sourcemap: bool) -> &mut Self {
-        self.enable_sourcemap = enable_sourcemap;
-        self
-    }
-
-    pub fn with_source_and_name(&mut self, source: &str, name: &str) -> &mut Self {
+    pub fn with_name_and_source(&mut self, name: &str, source: &str) {
+        self.enable_sourcemap = true;
         self.line_offset_tables = Self::generate_line_offset_tables(source);
         self.source_id = self.sourcemap_builder.add_source(name);
         self.sourcemap_builder.set_source_contents(self.source_id, Some(source));
-        self
     }
 
-    pub fn into_sourcemap(self) -> sourcemap::SourceMap {
-        self.sourcemap_builder.into_sourcemap()
+    pub fn into_sourcemap(self) -> Option<sourcemap::SourceMap> {
+        self.enable_sourcemap.then(|| self.sourcemap_builder.into_sourcemap())
     }
 
     pub fn add_source_mapping(&mut self, output: &Vec<u8>, position: u32, name: Option<&str>) {
@@ -314,7 +309,7 @@ mod test {
 
     fn assert_mapping(source: &str, mappings: &[(u32, u32, u32)]) {
         let mut builder = SourcemapBuilder::default();
-        builder.with_source_and_name(source, "x.js");
+        builder.with_name_and_source("x.js", source);
         for (position, expected_line, expected_col) in mappings.iter().copied() {
             let (line, col) = builder.search_original_line_and_column(position);
             assert_eq!(
@@ -329,7 +324,7 @@ mod test {
     fn add_source_mapping() {
         fn create_mappings(source: &str, line: u32, column: u32) {
             let mut builder = SourcemapBuilder::default();
-            builder.with_enable_sourcemap(true).with_source_and_name(source, "x.js");
+            builder.with_name_and_source("x.js", source);
             let output: Vec<u8> = source.as_bytes().into();
             for (i, _ch) in source.char_indices() {
                 #[allow(clippy::cast_possible_truncation)]

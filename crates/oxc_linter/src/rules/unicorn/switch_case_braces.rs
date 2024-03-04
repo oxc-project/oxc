@@ -94,7 +94,7 @@ impl Rule for SwitchCaseBraces {
                                     .for_each(|x| x.gen(&mut formatter, Context::default()));
                                 formatter.print(b'}');
 
-                                formatter.into_code()
+                                formatter.into_source_text()
                             };
 
                             Fix::new(modified_code, case.span)

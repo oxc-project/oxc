@@ -31,7 +31,7 @@ impl Tester {
         }
     }
 
-    fn transform(&self, source_text: &str) -> Result<std::string::String, std::vec::Vec<Error>> {
+    fn transform(&self, source_text: &str) -> Result<String, std::vec::Vec<Error>> {
         let program = Parser::new(&self.allocator, source_text, self.source_type).parse().program;
         let semantic = SemanticBuilder::new(source_text, self.source_type)
             .build_module_record(PathBuf::new(), &program)
@@ -41,14 +41,13 @@ impl Tester {
         let program = self.allocator.alloc(program);
 
         Transformer::new(&self.allocator, self.source_type, semantic, self.options.clone())
-            .build(program)
-            .map(move |()| {
-                Codegen::<false>::new(source_text.len(), CodegenOptions::default()).build(program)
-            })
+            .build(program)?;
+
+        Ok(Codegen::<false>::new(source_text, CodegenOptions::default()).build(program).source_text)
     }
 
     fn codegen(&self, source_text: &str) -> String {
         let program = Parser::new(&self.allocator, source_text, self.source_type).parse().program;
-        Codegen::<false>::new(source_text.len(), CodegenOptions::default()).build(&program)
+        Codegen::<false>::new(source_text, CodegenOptions::default()).build(&program).source_text
     }
 }
