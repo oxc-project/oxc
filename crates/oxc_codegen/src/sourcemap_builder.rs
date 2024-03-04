@@ -118,67 +118,103 @@ impl SourcemapBuilder {
 
     fn generate_line_offset_tables(content: &str) -> Vec<LineOffsetTable> {
         let mut tables = vec![];
-        let mut columns = None;
-        let mut column = 0;
+
+        // Process content line-by-line.
+        // For each line, start by assuming line will be entirely ASCII, and read byte-by-byte.
+        // If line is all ASCII, UTF-8 columns and UTF-16 columns are the same,
+        // so no need to create a `columns` Vec. This is the fast path for common case.
+        // If a Unicode character found, read rest of line char-by-char, populating `columns` Vec.
+        // At end of line, go back to top of outer loop, and again assume ASCII for next line.
         let mut line_byte_offset = 0;
-        let mut byte_offset_to_first = 0;
-        for (i, ch) in content.char_indices() {
-            // Mark the start of the next line
-            if column == 0 {
-                line_byte_offset = i;
-            }
+        'lines: loop {
+            tables.push(LineOffsetTable {
+                columns: None,
+                // `usize::MAX` so `original_column >= line.byte_offset_to_first` check in
+                // `search_original_line_and_column` fails if line is all ASCII
+                byte_offset_to_first: usize::MAX,
+                byte_offset_to_start_of_line: line_byte_offset,
+            });
 
-            // Start the mapping if this character is non-ASCII
-            if !ch.is_ascii() && columns.is_none() {
-                byte_offset_to_first = i - line_byte_offset;
-                columns = Some(vec![]);
-            }
-
-            // Update the per-byte column offsets
-            if let Some(columns) = &mut columns {
-                for _ in 0..ch.len_utf8() {
-                    columns.push(column);
-                }
-            }
-
-            match ch {
-                '\r' | '\n' | LS | PS => {
-                    // Handle Windows-specific "\r\n" newlines
-                    if ch == '\r' && content.as_bytes().get(i + 1) == Some(&b'\n') {
-                        column += 1;
+            let remaining = &content.as_bytes()[line_byte_offset..];
+            for (mut byte_offset_from_line_start, b) in remaining.iter().copied().enumerate() {
+                match b {
+                    b'\n' => {
+                        byte_offset_from_line_start += 1;
+                    }
+                    b'\r' => {
+                        byte_offset_from_line_start += 1;
+                        // Handle Windows-specific "\r\n" newlines
+                        if remaining.get(byte_offset_from_line_start) == Some(&b'\n') {
+                            byte_offset_from_line_start += 1;
+                        }
+                    }
+                    _ if b.is_ascii() => {
                         continue;
                     }
+                    _ => {
+                        // Unicode char found.
+                        // Create `columns` Vec, and set `byte_offset_to_first`.
+                        let table = tables.iter_mut().last().unwrap();
+                        table.byte_offset_to_first = byte_offset_from_line_start;
+                        table.columns = Some(vec![]);
+                        let columns = table.columns.as_mut().unwrap();
 
-                    tables.push(LineOffsetTable {
-                        columns,
-                        byte_offset_to_first,
-                        byte_offset_to_start_of_line: line_byte_offset,
-                    });
-                    column = 0;
-                    columns = None;
-                    byte_offset_to_first = 0;
-                }
-                _ => {
-                    // Mozilla's "source-map" library counts columns using UTF-16 code units
-                    column += ch.len_utf16();
-                }
+                        // Loop through rest of line char-by-char.
+                        // `chunk_byte_offset` in this loop is byte offset from start of this 1st
+                        // Unicode char.
+                        let mut column = byte_offset_from_line_start;
+                        line_byte_offset += byte_offset_from_line_start;
+                        let remaining = &content[line_byte_offset..];
+                        for (mut chunk_byte_offset, ch) in remaining.char_indices() {
+                            for _ in 0..ch.len_utf8() {
+                                columns.push(column);
+                            }
+
+                            match ch {
+                                '\r' => {
+                                    // Handle Windows-specific "\r\n" newlines
+                                    chunk_byte_offset += 1;
+                                    if remaining.as_bytes().get(chunk_byte_offset) == Some(&b'\n') {
+                                        chunk_byte_offset += 1;
+                                        columns.push(column + 1);
+                                    }
+                                }
+                                '\n' => {
+                                    chunk_byte_offset += 1;
+                                }
+                                LS | PS => {
+                                    chunk_byte_offset += 3;
+                                }
+                                _ => {
+                                    // Mozilla's "source-map" library counts columns using UTF-16 code units
+                                    column += ch.len_utf16();
+                                    continue;
+                                }
+                            }
+
+                            // Line break found.
+                            // `chunk_byte_offset` is now the offset of *end* of the line break.
+                            line_byte_offset += chunk_byte_offset;
+                            // Revert back to outer loop for next line
+                            continue 'lines;
+                        }
+
+                        // EOF.
+                        // One last column entry for EOF position.
+                        columns.push(column);
+                        break 'lines;
+                    }
+                };
+
+                // Line break found.
+                // `byte_offset_from_line_start` is now the length of line *including* line break.
+                line_byte_offset += byte_offset_from_line_start;
+                continue 'lines;
             }
-        }
-        // Mark the start of the next line
-        if column == 0 {
-            line_byte_offset = content.len();
-        }
 
-        // Do one last update for the column at the end of the file
-        if let Some(columns) = &mut columns {
-            columns.push(column);
+            // EOF
+            break;
         }
-
-        tables.push(LineOffsetTable {
-            columns,
-            byte_offset_to_first,
-            byte_offset_to_start_of_line: line_byte_offset,
-        });
 
         tables
     }
