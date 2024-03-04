@@ -1,5 +1,11 @@
 use oxc_syntax::identifier::{LS, PS};
 
+// Irregular line breaks - '\u{2028}' (LS) and '\u{2029}' (PS)
+const LS_OR_PS_FIRST: u8 = 0xE2;
+const LS_OR_PS_SECOND: u8 = 0x80;
+const LS_THIRD: u8 = 0xA8;
+const PS_THIRD: u8 = 0xA9;
+
 /// Line offset table
 ///
 /// Used for tracking lines and columns from byte offsets via binary search.
@@ -94,25 +100,61 @@ impl SourcemapBuilder {
 
     #[allow(clippy::cast_possible_truncation)]
     fn update_generated_line_and_column(&mut self, output: &Vec<u8>) {
-        // SAFETY: criteria of `from_utf8_unchecked` are met
-        let s = unsafe { std::str::from_utf8_unchecked(&output[self.last_generated_update..]) };
-        for (i, ch) in s.char_indices() {
-            match ch {
-                '\r' | '\n' | LS | PS => {
+        let remaining = &output[self.last_generated_update..];
+
+        // Find last line break
+        let mut line_start_ptr = remaining.as_ptr();
+        let mut last_line_is_ascii = true;
+        let mut iter = remaining.iter();
+        while let Some(&b) = iter.next() {
+            match b {
+                b'\n' => {}
+                b'\r' => {
                     // Handle Windows-specific "\r\n" newlines
-                    if ch == '\r' && output.get(self.last_generated_update + i + 1) == Some(&b'\n')
+                    if iter.clone().next() == Some(&b'\n') {
+                        iter.next();
+                    }
+                }
+                _ if b.is_ascii() => {
+                    continue;
+                }
+                LS_OR_PS_FIRST => {
+                    let next_byte = *iter.next().unwrap();
+                    let next_next_byte = *iter.next().unwrap();
+                    if next_byte != LS_OR_PS_SECOND
+                        || !matches!(next_next_byte, LS_THIRD | PS_THIRD)
                     {
+                        last_line_is_ascii = false;
                         continue;
                     }
-                    self.generated_line += 1;
-                    self.generated_column = 0;
                 }
                 _ => {
-                    // Mozilla's "source-map" library counts columns using UTF-16 code units
-                    self.generated_column += ch.len_utf16() as u32;
+                    // Unicode char
+                    last_line_is_ascii = false;
+                    continue;
                 }
             }
+
+            // Line break found.
+            // `iter` is now positioned after line break.
+            line_start_ptr = iter.as_slice().as_ptr();
+            self.generated_line += 1;
+            self.generated_column = 0;
+            last_line_is_ascii = true;
         }
+
+        // Calculate column
+        self.generated_column += if last_line_is_ascii {
+            // `iter` is now exhausted, so `iter.as_slice().as_ptr()` is pointer to end of `output`
+            (iter.as_slice().as_ptr() as usize - line_start_ptr as usize) as u32
+        } else {
+            let line_byte_offset = line_start_ptr as usize - remaining.as_ptr() as usize;
+            // TODO: It'd be better if could use `from_utf8_unchecked` here, but we'd need to make this
+            // function unsafe and caller guarantees `output` contains a valid UTF-8 string
+            let last_line = std::str::from_utf8(&remaining[line_byte_offset..]).unwrap();
+            // Mozilla's "source-map" library counts columns using UTF-16 code units
+            last_line.encode_utf16().count() as u32
+        };
         self.last_generated_update = output.len();
     }
 
@@ -285,26 +327,38 @@ mod test {
 
     #[test]
     fn add_source_mapping() {
-        fn create_mappings(source: &str) {
+        fn create_mappings(source: &str, line: u32, column: u32) {
             let mut builder = SourcemapBuilder::default();
             builder.with_enable_sourcemap(true).with_source_and_name(source, "x.js");
             let output: Vec<u8> = source.as_bytes().into();
             for (i, _ch) in source.char_indices() {
                 #[allow(clippy::cast_possible_truncation)]
                 builder.add_source_mapping(&output, i as u32, None);
+                assert!(
+                    builder.generated_line == line && builder.generated_column == column,
+                    "Incorrect generated mapping for '{source}' ({:?}) starting at {i} - line {}, column {}",
+                    source.as_bytes(),
+                    builder.generated_line,
+                    builder.generated_column
+                );
+                assert_eq!(builder.last_generated_update, source.len());
             }
         }
 
-        create_mappings("");
-        create_mappings("abc");
-        create_mappings("\n");
-        create_mappings("\r");
-        create_mappings("\r\n");
-        create_mappings("\nabc");
-        create_mappings("abc\n");
-        create_mappings("\rabc");
-        create_mappings("abc\r");
-        create_mappings("\r\nabc");
-        create_mappings("abc\r\n");
+        create_mappings("", 0, 0);
+        create_mappings("abc", 0, 3);
+        create_mappings("\n", 1, 0);
+        create_mappings("\n\n\n", 3, 0);
+        create_mappings("\r", 1, 0);
+        create_mappings("\r\r\r", 3, 0);
+        create_mappings("\r\n", 1, 0);
+        create_mappings("\r\n\r\n\r\n", 3, 0);
+        create_mappings("\nabc", 1, 3);
+        create_mappings("abc\n", 1, 0);
+        create_mappings("\rabc", 1, 3);
+        create_mappings("abc\r", 1, 0);
+        create_mappings("\r\nabc", 1, 3);
+        create_mappings("abc\r\n", 1, 0);
+        create_mappings("ÖÖ\nÖ\nÖÖÖ", 2, 3);
     }
 }
