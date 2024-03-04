@@ -264,18 +264,14 @@ impl Oxc {
             Minifier::new(options).build(&allocator, program);
         }
 
+        let codegen_options = CodegenOptions {
+            enable_typescript: codegen_options.enable_typescript,
+            ..CodegenOptions::default()
+        };
         self.codegen_text = if minifier_options.whitespace() {
-            Codegen::<true>::new(
-                source_text.len(),
-                CodegenOptions { enable_typescript: codegen_options.enable_typescript },
-            )
-            .build(program)
+            Codegen::<true>::new(source_text, codegen_options).build(program).source_text
         } else {
-            Codegen::<false>::new(
-                source_text.len(),
-                CodegenOptions { enable_typescript: codegen_options.enable_typescript },
-            )
-            .build(program)
+            Codegen::<false>::new(source_text, codegen_options).build(program).source_text
         };
 
         Ok(())

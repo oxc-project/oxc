@@ -43,8 +43,9 @@ fn minify(source_text: &str, source_type: SourceType, mangle: bool, whitespace: 
     let options = MinifierOptions { mangle, ..MinifierOptions::default() };
     Minifier::new(options).build(&allocator, program);
     if whitespace {
-        Codegen::<true>::new(source_text.len(), CodegenOptions::default()).build(program)
+        Codegen::<true>::new(source_text, CodegenOptions::default()).build(program)
     } else {
-        Codegen::<false>::new(source_text.len(), CodegenOptions::default()).build(program)
+        Codegen::<false>::new(source_text, CodegenOptions::default()).build(program)
     }
+    .source_text
 }
