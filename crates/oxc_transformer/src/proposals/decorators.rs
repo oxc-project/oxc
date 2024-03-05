@@ -3,7 +3,7 @@ use std::{borrow::Cow, collections::HashMap, rc::Rc};
 use bitflags::bitflags;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{CompactString, SPAN};
+use oxc_span::{Atom, CompactString, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 use serde::Deserialize;
 
@@ -456,62 +456,12 @@ impl<'a> Decorators<'a> {
 
                         if def.key.is_private_identifier() {
                             {
-                                if !flag.is_static() && private_in_expression.is_none() {
+                                if !flag.is_static() {
                                     // _ => #a in _;
-                                    private_in_expression = Some(
-                                        self.ast.arrow_function_expression(
-                                            SPAN,
-                                            true,
-                                            false,
-                                            self.ast.formal_parameters(
-                                                SPAN,
-                                                FormalParameterKind::ArrowFormalParameters,
-                                                self.ast.new_vec_single(self.ast.formal_parameter(
-                                                    SPAN,
-                                                    self.ast.binding_pattern(
-                                                        self.ast.binding_pattern_identifier(
-                                                            BindingIdentifier::new(
-                                                                SPAN,
-                                                                self.ast.new_atom("_"),
-                                                            ),
-                                                        ),
-                                                        None,
-                                                        false,
-                                                    ),
-                                                    None,
-                                                    false,
-                                                    false,
-                                                    self.ast.new_vec(),
-                                                )),
-                                                None,
-                                            ),
-                                            self.ast.function_body(
-                                                SPAN,
-                                                self.ast.new_vec(),
-                                                self.ast.new_vec_single(
-                                                    self.ast.expression_statement(
-                                                        SPAN,
-                                                        self.ast.private_in_expression(
-                                                            SPAN,
-                                                            PrivateIdentifier::new(
-                                                                SPAN,
-                                                                def.key.private_name().unwrap(),
-                                                            ),
-                                                            self.ast
-                                                                .identifier_reference_expression(
-                                                                    IdentifierReference::new(
-                                                                        SPAN,
-                                                                        self.ast.new_atom("_"),
-                                                                    ),
-                                                                ),
-                                                        ),
-                                                    ),
-                                                ),
-                                            ),
-                                            None,
-                                            None,
-                                        ),
-                                    );
+                                    private_in_expression =
+                                        Some(self.get_is_private_function(
+                                            def.key.private_name().unwrap(),
+                                        ));
                                 }
                             }
 
@@ -594,6 +544,13 @@ impl<'a> Decorators<'a> {
                         } else {
                             DecoratorFlags::Field
                         };
+
+                        if def.key.is_private_identifier() && !flag.is_static() {
+                            private_in_expression =
+                                Some(self.get_is_private_function(
+                                    def.key.private_name().unwrap().clone(),
+                                ));
+                        }
 
                         name = self.get_unique_name(&if def.computed {
                             Cow::Borrowed("init_computedKey")
@@ -1009,5 +966,51 @@ impl<'a> Decorators<'a> {
             }
         }
         self.ast.array_expression(SPAN, decorator_elements, None)
+    }
+
+    // _ => #a in _;
+    fn get_is_private_function(&self, name: Atom<'a>) -> Expression<'a> {
+        self.ast.arrow_function_expression(
+            SPAN,
+            true,
+            false,
+            self.ast.formal_parameters(
+                SPAN,
+                FormalParameterKind::ArrowFormalParameters,
+                self.ast.new_vec_single(self.ast.formal_parameter(
+                    SPAN,
+                    self.ast.binding_pattern(
+                        self.ast.binding_pattern_identifier(BindingIdentifier::new(
+                            SPAN,
+                            self.ast.new_atom("_"),
+                        )),
+                        None,
+                        false,
+                    ),
+                    None,
+                    false,
+                    false,
+                    self.ast.new_vec(),
+                )),
+                None,
+            ),
+            self.ast.function_body(
+                SPAN,
+                self.ast.new_vec(),
+                self.ast.new_vec_single(self.ast.expression_statement(
+                    SPAN,
+                    self.ast.private_in_expression(
+                        SPAN,
+                        PrivateIdentifier::new(SPAN, name),
+                        self.ast.identifier_reference_expression(IdentifierReference::new(
+                            SPAN,
+                            self.ast.new_atom("_"),
+                        )),
+                    ),
+                )),
+            ),
+            None,
+            None,
+        )
     }
 }
