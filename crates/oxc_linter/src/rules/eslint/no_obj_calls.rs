@@ -46,8 +46,8 @@ declare_oxc_lint! {
     /// let json = JSON();
     /// let newJson = new JSON();
     ///
-    /// let atomics = CompactStringics();
-    /// let newCompactStringics = new CompactStringics();
+    /// let atomics = Atomics();
+    /// let newAtomics = new Atomics();
     ///
     /// let intl = Intl();
     /// let newIntl = new Intl();
@@ -58,7 +58,7 @@ declare_oxc_lint! {
     /// // Good
     /// let area = r => 2 * Math.PI * r * r;
     /// let object = JSON.parse("{}");
-    /// let first = CompactStringics.load(sharedArray, 0);
+    /// let first = Atomics.load(sharedArray, 0);
     /// let segmenterFrom = Intl.Segmenter("fr", { granularity: "word" });
     /// ```
     NoObjCalls,
