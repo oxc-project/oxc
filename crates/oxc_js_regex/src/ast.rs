@@ -1,7 +1,7 @@
 //! [`@eslint-community/regexpp`](https://github.com/eslint-community/regexpp/blob/2e8f1af992fb12eae46a446253e8fa3f6cede92a/src/ast.ts)
 
 use oxc_allocator::{Box, Vec};
-use oxc_span::{CompactString, Span};
+use oxc_span::{CompactStr, Span};
 
 /// The type which includes all nodes.
 #[derive(Debug)]
@@ -120,7 +120,7 @@ pub struct Group<'a> {
 #[derive(Debug)]
 pub struct CapturingGroup<'a> {
     pub span: Span,
-    pub name: Option<CompactString>,
+    pub name: Option<CompactStr>,
     pub alternatives: Vec<'a, Alternative<'a>>,
     pub references: Vec<'a, Backreference<'a>>,
 }
@@ -267,8 +267,8 @@ pub enum UnicodePropertyCharacterSet<'a> {
 #[derive(Debug)]
 pub struct CharacterUnicodePropertyCharacterSet {
     pub span: Span,
-    pub key: CompactString,
-    pub value: Option<CompactString>,
+    pub key: CompactStr,
+    pub value: Option<CompactStr>,
     pub negate: bool,
 }
 
@@ -276,7 +276,7 @@ pub struct CharacterUnicodePropertyCharacterSet {
 #[derive(Debug)]
 pub struct StringsUnicodePropertyCharacterSet {
     pub span: Span,
-    pub key: CompactString,
+    pub key: CompactStr,
 }
 
 /// The expression character class.
@@ -360,7 +360,7 @@ pub struct Character {
 #[derive(Debug)]
 pub enum BackreferenceRef {
     Number(i32),
-    CompactString(CompactString),
+    CompactStr(CompactStr),
 }
 
 /// The backreference.

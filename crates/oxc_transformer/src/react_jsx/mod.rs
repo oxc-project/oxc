@@ -8,7 +8,7 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
-use oxc_span::{Atom, CompactString, GetSpan, Span, SPAN};
+use oxc_span::{Atom, CompactStr, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
     xml_entities::XML_ENTITIES,
@@ -58,7 +58,7 @@ pub struct ReactJsx<'a> {
     import_fragment: bool,
     import_create_element: bool,
     require_jsx_runtime: bool,
-    jsx_runtime_importer: CompactString,
+    jsx_runtime_importer: CompactStr,
     pub babel_8_breaking: Option<bool>,
     default_runtime: ReactJsxRuntime,
 }
@@ -129,9 +129,9 @@ impl<'a> ReactJsx<'a> {
 
         let jsx_runtime_importer =
             if jsx_options.import_source == "react" || default_runtime.is_classic() {
-                CompactString::from("react/jsx-runtime")
+                CompactStr::from("react/jsx-runtime")
             } else {
-                CompactString::from(format!("{}/jsx-runtime", jsx_options.import_source))
+                CompactStr::from(format!("{}/jsx-runtime", jsx_options.import_source))
             };
         Some(Self {
             ast,

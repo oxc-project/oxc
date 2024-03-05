@@ -11,7 +11,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactString, Span};
+use oxc_span::{CompactStr, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{context::LintContext, rule::Rule};
@@ -120,7 +120,7 @@ impl Rule for NoCycle {
 #[derive(Debug, Default)]
 struct State {
     traversed: HashSet<PathBuf>,
-    stack: Vec<(CompactString, PathBuf)>,
+    stack: Vec<(CompactStr, PathBuf)>,
 }
 
 impl NoCycle {

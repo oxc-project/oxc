@@ -7,14 +7,14 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, CompactString, Span};
+use oxc_span::{Atom, CompactStr, Span};
 
 use crate::{context::LintContext, globals::PRE_DEFINE_VAR, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.")]
 #[diagnostic(severity(warning), help("Shadowing of global properties '{0}'."))]
-struct NoShadowRestrictedNamesDiagnostic(CompactString, #[label] pub Span);
+struct NoShadowRestrictedNamesDiagnostic(CompactStr, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoShadowRestrictedNames;
@@ -95,7 +95,7 @@ impl Rule for NoShadowRestrictedNames {
                     if let Some((atom, span)) = binding_pattern_is_global_obj(&decl.id) {
                         if atom.as_str() != "undefined" || decl.init.is_some() {
                             ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
-                                atom.to_compact_string(),
+                                atom.to_compact_str(),
                                 span,
                             ));
                         } else {
@@ -112,7 +112,7 @@ impl Rule for NoShadowRestrictedNames {
                             ) if ati.name == "undefined" => {
                                 if let Some(span) = nearest_span {
                                     ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
-                                        ati.name.to_compact_string(),
+                                        ati.name.to_compact_str(),
                                         span,
                                     ));
                                 }
@@ -129,7 +129,7 @@ impl Rule for NoShadowRestrictedNames {
                 AstKind::FormalParameter(param) => {
                     if let Some(value) = binding_pattern_is_global_obj(&param.pattern) {
                         ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
-                            value.0.to_compact_string(),
+                            value.0.to_compact_str(),
                             value.1,
                         ));
                     }
@@ -143,7 +143,7 @@ impl Rule for NoShadowRestrictedNames {
                     if let Some(param) = catch_clause.param.as_ref() {
                         if let Some(value) = binding_pattern_is_global_obj(param) {
                             ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
-                                value.0.to_compact_string(),
+                                value.0.to_compact_str(),
                                 value.1,
                             ));
                         }

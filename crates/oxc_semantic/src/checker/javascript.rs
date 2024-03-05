@@ -8,7 +8,7 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
 };
-use oxc_span::{Atom, CompactString, GetSpan, ModuleKind, Span};
+use oxc_span::{Atom, CompactStr, GetSpan, ModuleKind, Span};
 use oxc_syntax::{
     module_record::ExportLocalName,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
@@ -145,13 +145,13 @@ fn check_module_record(ctx: &SemanticBuilder<'_>) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Export '{0}' is not defined")]
     #[diagnostic()]
-    struct UndefinedExport(CompactString, #[label] Span);
+    struct UndefinedExport(CompactStr, #[label] Span);
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("Duplicated export '{0}'")]
     #[diagnostic()]
     struct DuplicateExport(
-        CompactString,
+        CompactStr,
         #[label("Export has already been declared here")] Span,
         #[label("It cannot be redeclared here")] Span,
     );
@@ -207,7 +207,7 @@ struct ClassStaticBlockAwait(#[label] Span);
 #[derive(Debug, Error, Diagnostic)]
 #[error("The keyword '{0}' is reserved")]
 #[diagnostic()]
-struct ReservedKeyword(CompactString, #[label] Span);
+struct ReservedKeyword(CompactStr, #[label] Span);
 
 pub const STRICT_MODE_NAMES: Set<&'static str> = phf_set! {
     "implements",
@@ -229,7 +229,7 @@ fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &Seman
     if *name == "await" {
         // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
         if ctx.source_type.is_module() {
-            return ctx.error(ReservedKeyword(name.to_compact_string(), span));
+            return ctx.error(ReservedKeyword(name.to_compact_str(), span));
         }
         // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
         if ctx.scope.get_flags(node.scope_id()).is_class_static_block() {
@@ -239,14 +239,14 @@ fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &Seman
 
     // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
     if ctx.strict_mode() && STRICT_MODE_NAMES.contains(name.as_str()) {
-        ctx.error(ReservedKeyword(name.to_compact_string(), span));
+        ctx.error(ReservedKeyword(name.to_compact_str(), span));
     }
 }
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Cannot assign to '{0}' in strict mode")]
 #[diagnostic()]
-struct UnexpectedIdentifierAssign(CompactString, #[label] Span);
+struct UnexpectedIdentifierAssign(CompactStr, #[label] Span);
 
 fn check_binding_identifier<'a>(
     ident: &BindingIdentifier,
@@ -256,7 +256,7 @@ fn check_binding_identifier<'a>(
     let strict_mode = ctx.strict_mode();
     // It is a Diagnostic if the StringValue of a BindingIdentifier is "eval" or "arguments" within strict mode code.
     if strict_mode && matches!(ident.name.as_str(), "eval" | "arguments") {
-        return ctx.error(UnexpectedIdentifierAssign(ident.name.to_compact_string(), ident.span));
+        return ctx.error(UnexpectedIdentifierAssign(ident.name.to_compact_str(), ident.span));
     }
 
     // LexicalDeclaration : LetOrConst BindingList ;
@@ -299,7 +299,7 @@ fn check_identifier_reference<'a>(
             match ctx.nodes.kind(node_id) {
                 AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_) => {
                     return ctx.error(UnexpectedIdentifierAssign(
-                        ident.name.to_compact_string(),
+                        ident.name.to_compact_str(),
                         ident.span,
                     ));
                 }
@@ -336,8 +336,8 @@ fn check_private_identifier_outside_class(ident: &PrivateIdentifier, ctx: &Seman
         #[derive(Debug, Error, Diagnostic)]
         #[error("Private identifier '#{0}' is not allowed outside class bodies")]
         #[diagnostic()]
-        struct PrivateNotInClass(CompactString, #[label] Span);
-        ctx.error(PrivateNotInClass(ident.name.to_compact_string(), ident.span));
+        struct PrivateNotInClass(CompactStr, #[label] Span);
+        ctx.error(PrivateNotInClass(ident.name.to_compact_str(), ident.span));
     }
 }
 
@@ -354,7 +354,7 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
                 #[derive(Debug, Error, Diagnostic)]
                 #[error("Private field '{0}' must be declared in an enclosing class")]
                 #[diagnostic()]
-                struct PrivateFieldUndeclared(CompactString, #[label] Span);
+                struct PrivateFieldUndeclared(CompactStr, #[label] Span);
                 ctx.error(PrivateFieldUndeclared(reference.name.clone(), reference.span));
             }
         });

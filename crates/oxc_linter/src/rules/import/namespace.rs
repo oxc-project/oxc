@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactString, GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
@@ -13,14 +13,14 @@ use crate::{context::LintContext, rule::Rule};
 enum NamespaceDiagnostic {
     #[error("eslint-plugin-import(namespace): {1:?} not found in imported namespace {2:?}.")]
     #[diagnostic(severity(warning))]
-    NoExport(#[label] Span, CompactString, CompactString),
+    NoExport(#[label] Span, CompactStr, CompactStr),
     #[error("eslint-plugin-import(namespace): Unable to validate computed reference to imported namespace {1:?}
     .")]
     #[diagnostic(severity(warning))]
-    ComputedReference(#[label] Span, CompactString),
+    ComputedReference(#[label] Span, CompactStr),
     #[error("eslint-plugin-import(namespace): Assignment to member of namespace {1:?}.'")]
     #[diagnostic(severity(warning))]
-    Assignment(#[label] Span, CompactString),
+    Assignment(#[label] Span, CompactStr),
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/namespace.md>

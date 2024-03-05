@@ -68,7 +68,7 @@ impl<'a> Binder for VariableDeclarator<'a> {
                 builder.declare_symbol_on_scope(span, name, current_scope_id, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
             for scope_id in &var_scope_ids {
-                builder.scope.add_binding(*scope_id, name.to_compact_string(), symbol_id);
+                builder.scope.add_binding(*scope_id, name.to_compact_str(), symbol_id);
             }
         });
     }
