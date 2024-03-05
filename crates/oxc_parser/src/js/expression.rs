@@ -102,6 +102,7 @@ impl<'a> ParserImpl<'a> {
         IdentifierName { span, name }
     }
 
+    #[inline]
     pub(crate) fn parse_identifier_kind(&mut self, kind: Kind) -> (Span, Atom<'a>) {
         let span = self.start_span();
         let name = self.cur_string();

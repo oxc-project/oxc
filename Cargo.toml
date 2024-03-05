@@ -146,8 +146,8 @@ opt-level = 'z'
 opt-level     = 3
 lto           = "fat"
 codegen-units = 1
-strip         = "symbols"
-debug         = false
+strip         = false
+debug         = true
 panic         = "abort"   # Let it crash and force ourselves to write safe Rust.
 
 # Use the `--profile release-debug` flag to show symbols in release mode.
