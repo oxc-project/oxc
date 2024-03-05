@@ -109,8 +109,12 @@ impl NoRedeclare {
                 ident.name.to_compact_str(),
                 ident.span,
             ));
-        } else {
-            ctx.diagnostic(NoRedeclareDiagnostic(ident.name.to_compact_str(), ident.span, span));
+        } else if variable.span != ident.span {
+            ctx.diagnostic(NoRedeclareDiagnostic(
+                ident.name.to_compact_string(),
+                ident.span,
+                variable.span,
+            ));
         }
     }
 }
