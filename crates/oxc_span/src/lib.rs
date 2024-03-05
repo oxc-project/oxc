@@ -7,8 +7,7 @@ mod source_type;
 mod span;
 
 pub use crate::{
-    atom::Atom,
+    atom::{Atom, CompactStr, MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN},
     source_type::{Language, LanguageVariant, ModuleKind, SourceType, VALID_EXTENSIONS},
     span::{GetSpan, Span, SPAN},
 };
-pub use compact_str::CompactString as CompactStr;

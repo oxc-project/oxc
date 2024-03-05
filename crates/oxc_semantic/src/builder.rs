@@ -5,7 +5,7 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, TriviasMap, Visit};
 use oxc_diagnostics::Error;
-use oxc_span::{Atom, CompactStr, SourceType, Span};
+use oxc_span::{Atom, SourceType, Span};
 use oxc_syntax::{
     module_record::{ExportLocalName, ModuleRecord},
     operator::AssignmentOperator,
@@ -296,11 +296,7 @@ impl<'a> SemanticBuilder<'a> {
     pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
         let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
-        self.scope.add_unresolved_reference(
-            self.current_scope_id,
-            CompactStr::new(reference_name),
-            reference_id,
-        );
+        self.scope.add_unresolved_reference(self.current_scope_id, reference_name, reference_id);
         reference_id
     }
 
