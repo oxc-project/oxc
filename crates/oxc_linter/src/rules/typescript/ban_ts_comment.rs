@@ -103,7 +103,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     BanTsComment,
-    nursery // since rust regex may not compatible with ECMAScript regex
+    pedantic
 );
 
 impl Rule for BanTsComment {
