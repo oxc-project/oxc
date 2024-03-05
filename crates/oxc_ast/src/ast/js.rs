@@ -12,8 +12,7 @@ use oxc_syntax::{
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-#[allow(clippy::wildcard_imports)]
-use crate::ast::*;
+use super::{jsx::*, literal::*, ts::*};
 
 #[cfg_attr(
     all(feature = "serde", feature = "wasm"),
