@@ -20,13 +20,15 @@ pub struct Span {
     pub start: u32,
     pub end: u32,
     #[allow(unused)]
-    pub utf16_offset: u32,
+    pub utf16_start: u32,
+    #[allow(unused)]
+    pub utf16_end: u32,
 }
 
 impl Span {
     #[inline]
     pub const fn new(start: u32, end: u32) -> Self {
-        Self { start, end, utf16_offset: 0 }
+        Self { start, end, utf16_start: 0, utf16_end: 0 }
     }
 
     pub fn size(&self) -> u32 {
