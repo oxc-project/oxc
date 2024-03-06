@@ -19,12 +19,14 @@ pub const SPAN: Span = Span::new(0, 0);
 pub struct Span {
     pub start: u32,
     pub end: u32,
+    #[allow(unused)]
+    pub utf16_offset: u32,
 }
 
 impl Span {
     #[inline]
     pub const fn new(start: u32, end: u32) -> Self {
-        Self { start, end }
+        Self { start, end, utf16_offset: 0 }
     }
 
     pub fn size(&self) -> u32 {
