@@ -1,6 +1,6 @@
 use oxc_ast::ast::Expression;
 use oxc_index::IndexVec;
-use oxc_span::{Atom, CompactString, Span};
+use oxc_span::{Atom, CompactStr, Span};
 pub use oxc_syntax::{
     scope::ScopeId,
     symbol::{SymbolFlags, SymbolId},
@@ -31,13 +31,14 @@ export type IndexVec<I, T> = Array<T>;
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct SymbolTable {
     pub spans: IndexVec<SymbolId, Span>,
-    pub names: IndexVec<SymbolId, CompactString>,
+    pub names: IndexVec<SymbolId, CompactStr>,
     pub flags: IndexVec<SymbolId, SymbolFlags>,
     pub scope_ids: IndexVec<SymbolId, ScopeId>,
     /// Pointer to the AST Node where this symbol is declared
     pub declarations: IndexVec<SymbolId, AstNodeId>,
     pub resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
     pub references: IndexVec<ReferenceId, Reference>,
+    pub redeclare_variables: IndexVec<SymbolId, Vec<Span>>,
 }
 
 impl SymbolTable {
@@ -81,12 +82,16 @@ impl SymbolTable {
         &self.names[symbol_id]
     }
 
-    pub fn set_name(&mut self, symbol_id: SymbolId, name: CompactString) {
+    pub fn set_name(&mut self, symbol_id: SymbolId, name: CompactStr) {
         self.names[symbol_id] = name;
     }
 
     pub fn get_flag(&self, symbol_id: SymbolId) -> SymbolFlags {
         self.flags[symbol_id]
+    }
+
+    pub fn get_redeclare_variables(&self, symbol_id: SymbolId) -> &Vec<Span> {
+        &self.redeclare_variables[symbol_id]
     }
 
     pub fn union_flag(&mut self, symbol_id: SymbolId, includes: SymbolFlags) {
@@ -117,14 +122,19 @@ impl SymbolTable {
         scope_id: ScopeId,
     ) -> SymbolId {
         _ = self.spans.push(span);
-        _ = self.names.push(name.into_compact_string());
+        _ = self.names.push(name.into_compact_str());
         _ = self.flags.push(flag);
         _ = self.scope_ids.push(scope_id);
-        self.resolved_references.push(vec![])
+        _ = self.resolved_references.push(vec![]);
+        self.redeclare_variables.push(vec![])
     }
 
     pub fn add_declaration(&mut self, node_id: AstNodeId) {
         self.declarations.push(node_id);
+    }
+
+    pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
+        self.redeclare_variables[symbol_id].push(span);
     }
 
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {

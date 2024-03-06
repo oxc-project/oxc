@@ -1,5 +1,5 @@
 use oxc_index::IndexVec;
-use oxc_span::{Atom, CompactString, Span};
+use oxc_span::{Atom, CompactStr, Span};
 use oxc_syntax::class::{ClassId, ElementId, ElementKind};
 use rustc_hash::FxHashMap;
 
@@ -7,7 +7,7 @@ use crate::node::AstNodeId;
 
 #[derive(Debug)]
 pub struct Element {
-    pub name: CompactString,
+    pub name: CompactStr,
     pub span: Span,
     pub is_private: bool,
     pub r#static: bool,
@@ -16,7 +16,7 @@ pub struct Element {
 
 impl Element {
     pub fn new(
-        name: CompactString,
+        name: CompactStr,
         span: Span,
         r#static: bool,
         is_private: bool,
@@ -29,18 +29,13 @@ impl Element {
 #[derive(Debug)]
 pub struct PrivateIdentifierReference {
     pub id: AstNodeId,
-    pub name: CompactString,
+    pub name: CompactStr,
     pub span: Span,
     pub element_ids: Vec<ElementId>,
 }
 
 impl PrivateIdentifierReference {
-    pub fn new(
-        id: AstNodeId,
-        name: CompactString,
-        span: Span,
-        element_ids: Vec<ElementId>,
-    ) -> Self {
+    pub fn new(id: AstNodeId, name: CompactStr, span: Span, element_ids: Vec<ElementId>) -> Self {
         Self { id, name, span, element_ids }
     }
 }

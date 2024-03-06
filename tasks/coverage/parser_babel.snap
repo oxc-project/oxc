@@ -9951,20 +9951,20 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Missing initializer in const declaration
    ╭─[typescript/const/no-initializer/input.ts:1:7]
  1 │ const x: number;
-   ·       ─
+   ·       ─────────
    ╰────
 
   × Missing initializer in const declaration
    ╭─[typescript/const/reserved-word/input.ts:1:7]
  1 │ const b: const;
-   ·       ─
+   ·       ────────
    ╰────
 
   × Missing initializer in destructuring declaration
    ╭─[typescript/declare/destructure-new-line/input.ts:2:7]
  1 │ declare
  2 │ const { x, y }: { x: number, y: number };
-   ·       ────────
+   ·       ──────────────────────────────────
    ╰────
 
   × Unexpected exponentiation expression
@@ -10621,8 +10621,15 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  1 │ type F = ({
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/variable-declarator/definite-assignment-not-allowed/input.ts:1:9]
+  × Missing initializer in destructuring declaration
+   ╭─[typescript/variable-declarator/definite-assignment-not-allowed/input.ts:1:5]
  1 │ let {}! = {};
-   ·         ─
+   ·     ──
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/variable-declarator/definite-assignment-not-allowed/input.ts:1:7]
+ 1 │ let {}! = {};
+   ·       ▲
+   ╰────
+  help: Try insert a semicolon here

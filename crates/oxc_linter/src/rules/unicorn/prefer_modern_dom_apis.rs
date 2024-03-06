@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactString, Span};
+use oxc_span::{CompactStr, Span};
 use phf::phf_map;
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
@@ -15,7 +15,7 @@ use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode}
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `{0}` over `{1}`.")]
 #[diagnostic(severity(warning))]
-struct PreferModernDomApisDiagnostic(pub &'static str, CompactString, #[label] pub Span);
+struct PreferModernDomApisDiagnostic(pub &'static str, CompactStr, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferModernDomApis;
@@ -91,7 +91,7 @@ impl Rule for PreferModernDomApis {
             if let Some(preferred_method) = DISALLOWED_METHODS.get(method) {
                 ctx.diagnostic(PreferModernDomApisDiagnostic(
                     preferred_method,
-                    CompactString::from(method),
+                    CompactStr::from(method),
                     member_expr.property.span,
                 ));
 
@@ -111,7 +111,7 @@ impl Rule for PreferModernDomApis {
                     if lit.value == position {
                         ctx.diagnostic(PreferModernDomApisDiagnostic(
                             replacer,
-                            CompactString::from(method),
+                            CompactStr::from(method),
                             member_expr.property.span,
                         ));
                     }

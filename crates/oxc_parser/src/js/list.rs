@@ -5,7 +5,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
     Result,
 };
-use oxc_span::{Atom, CompactString, GetSpan, Span};
+use oxc_span::{Atom, CompactStr, GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -19,7 +19,7 @@ use crate::{
 #[error("Identifier `{0}` has already been declared")]
 #[diagnostic()]
 struct Redeclaration(
-    pub CompactString,
+    pub CompactStr,
     #[label("`{0}` has already been declared here")] pub Span,
     #[label("It can not be redeclared here")] pub Span,
 );
@@ -160,7 +160,7 @@ impl<'a> SeparatedList<'a> for ArrayPatternList<'a> {
                 }
             }
             _ => {
-                let element = p.parse_binding_pattern()?;
+                let element = p.parse_binding_pattern_with_initializer()?;
                 self.elements.push(Some(element));
             }
         }
@@ -272,7 +272,7 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
                 }
             }
             _ => {
-                let pattern = p.parse_binding_pattern()?;
+                let pattern = p.parse_binding_pattern_with_initializer()?;
                 let decorators = p.state.consume_decorators();
                 let formal_parameter = p.ast.formal_parameter(
                     p.end_span(span),
@@ -317,7 +317,7 @@ impl<'a> SeparatedList<'a> for AssertEntries<'a> {
         };
 
         if let Some(old_span) = self.keys.get(&key.as_atom()) {
-            p.error(Redeclaration(key.as_atom().into_compact_string(), *old_span, key.span()));
+            p.error(Redeclaration(key.as_atom().into_compact_str(), *old_span, key.span()));
         } else {
             self.keys.insert(key.as_atom(), key.span());
         }

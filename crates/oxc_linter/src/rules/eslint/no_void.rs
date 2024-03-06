@@ -63,10 +63,10 @@ impl Rule for NoVoid {
         };
 
         if unary_expr.operator == UnaryOperator::Void {
-            ctx.diagnostic(NoVoidDiagnostic(Span {
-                start: unary_expr.span.start,
-                end: unary_expr.span.start + 4,
-            }));
+            ctx.diagnostic(NoVoidDiagnostic(Span::new(
+                unary_expr.span.start,
+                unary_expr.span.start + 4,
+            )));
         }
     }
 }

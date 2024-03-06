@@ -7,8 +7,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::VariableInfo;
-use oxc_span::{CompactString, Span};
+use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -16,7 +15,7 @@ use crate::{context::LintContext, rule::Rule};
 #[error("eslint(no-redeclare): '{0}' is already defined.")]
 #[diagnostic(severity(warning))]
 struct NoRedeclareDiagnostic(
-    CompactString,
+    CompactStr,
     #[label("'{0}' is already defined.")] pub Span,
     #[label("It can not be redeclare here.")] pub Span,
 );
@@ -25,7 +24,7 @@ struct NoRedeclareDiagnostic(
 #[error("eslint(no-redeclare): '{0}' is already defined as a built-in global variable.")]
 #[diagnostic(severity(warning))]
 struct NoRedeclareAsBuiltiInDiagnostic(
-    CompactString,
+    CompactStr,
     #[label("'{0}' is already defined as a built-in global variable.")] pub Span,
 );
 
@@ -33,7 +32,7 @@ struct NoRedeclareAsBuiltiInDiagnostic(
 #[error("eslint(no-redeclare): '{0}' is already defined by a variable declaration.")]
 #[diagnostic(severity(warning))]
 struct NoRedeclareBySyntaxDiagnostic(
-    CompactString,
+    CompactStr,
     #[label("'{0}' is already defined by a variable declaration.")] pub Span,
     #[label("It cannot be redeclared here.")] pub Span,
 );
@@ -73,23 +72,27 @@ impl Rule for NoRedeclare {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let redeclare_variables = ctx.semantic().redeclare_variables();
         let symbol_table = ctx.semantic().symbols();
 
-        for variable in redeclare_variables {
-            let decl = symbol_table.get_declaration(variable.symbol_id);
+        for symbol_id in ctx.symbols().iter() {
+            let decl = symbol_table.get_declaration(symbol_id);
+            let symbol_name = symbol_table.get_name(symbol_id);
             match ctx.nodes().kind(decl) {
                 AstKind::VariableDeclarator(var) => {
                     if let BindingPatternKind::BindingIdentifier(ident) = &var.id.kind {
-                        if symbol_table.get_name(variable.symbol_id) == ident.name.as_str() {
-                            self.report_diagnostic(ctx, variable, ident);
+                        if symbol_name == ident.name.as_str() {
+                            for span in ctx.symbols().get_redeclare_variables(symbol_id) {
+                                self.report_diagnostic(ctx, *span, ident);
+                            }
                         }
                     }
                 }
                 AstKind::FormalParameter(param) => {
                     if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
-                        if symbol_table.get_name(variable.symbol_id) == ident.name.as_str() {
-                            self.report_diagnostic(ctx, variable, ident);
+                        if symbol_name == ident.name.as_str() {
+                            for span in ctx.symbols().get_redeclare_variables(symbol_id) {
+                                self.report_diagnostic(ctx, *span, ident);
+                            }
                         }
                     }
                 }
@@ -100,23 +103,14 @@ impl Rule for NoRedeclare {
 }
 
 impl NoRedeclare {
-    fn report_diagnostic(
-        &self,
-        ctx: &LintContext,
-        variable: &VariableInfo,
-        ident: &BindingIdentifier,
-    ) {
+    fn report_diagnostic(&self, ctx: &LintContext, span: Span, ident: &BindingIdentifier) {
         if self.built_in_globals && ctx.env_contains_var(&ident.name) {
             ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(
-                ident.name.to_compact_string(),
+                ident.name.to_compact_str(),
                 ident.span,
             ));
-        } else if variable.span != ident.span {
-            ctx.diagnostic(NoRedeclareDiagnostic(
-                ident.name.to_compact_string(),
-                ident.span,
-                variable.span,
-            ));
+        } else {
+            ctx.diagnostic(NoRedeclareDiagnostic(ident.name.to_compact_str(), ident.span, span));
         }
     }
 }

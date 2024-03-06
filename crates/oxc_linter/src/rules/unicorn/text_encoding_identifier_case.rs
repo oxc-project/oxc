@@ -8,14 +8,14 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
-use oxc_span::{CompactString, Span};
+use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `{1}` over `{2}`.")]
 #[diagnostic(severity(warning))]
-struct TextEncodingIdentifierCaseDiagnostic(#[label] pub Span, pub &'static str, pub CompactString);
+struct TextEncodingIdentifierCaseDiagnostic(#[label] pub Span, pub &'static str, pub CompactStr);
 
 #[derive(Debug, Default, Clone)]
 pub struct TextEncodingIdentifierCase;

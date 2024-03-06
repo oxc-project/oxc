@@ -3,7 +3,7 @@ use std::{borrow::Cow, collections::HashMap, rc::Rc};
 use bitflags::bitflags;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{Atom, CompactString, SPAN};
+use oxc_span::{Atom, CompactStr, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 use serde::Deserialize;
 
@@ -23,7 +23,7 @@ pub struct Decorators<'a> {
     top_statements: Vec<'a, Statement<'a>>,
     // Insert to the bottom of the program
     bottom_statements: Vec<'a, Statement<'a>>,
-    uid_map: HashMap<CompactString, u32>,
+    uid_map: HashMap<CompactStr, u32>,
 }
 
 bitflags! {
@@ -146,10 +146,10 @@ impl<'a> Decorators<'a> {
     }
 
     // TODO: use generate_uid of scope to generate unique name
-    pub fn get_unique_name(&mut self, name: &str) -> CompactString {
-        let uid = self.uid_map.entry(CompactString::new(name)).or_insert(0);
+    pub fn get_unique_name(&mut self, name: &str) -> CompactStr {
+        let uid = self.uid_map.entry(CompactStr::new(name)).or_insert(0);
         *uid += 1;
-        CompactString::from(format!(
+        CompactStr::from(format!(
             "_{name}{}",
             if *uid == 1 { String::new() } else { uid.to_string() }
         ))
@@ -324,7 +324,7 @@ impl<'a> Decorators<'a> {
     pub fn transform_class(
         &mut self,
         class: &mut Box<'a, Class<'a>>,
-        class_name: Option<CompactString>,
+        class_name: Option<CompactStr>,
     ) -> Declaration<'a> {
         if self.options.version.is_legacy() {
             return self.transform_class_legacy(class, class_name);
@@ -755,7 +755,7 @@ impl<'a> Decorators<'a> {
     pub fn transform_class_legacy(
         &mut self,
         class: &mut Box<'a, Class<'a>>,
-        class_name: Option<CompactString>,
+        class_name: Option<CompactStr>,
     ) -> Declaration<'a> {
         let class_binding_identifier = &class.id.clone().unwrap_or_else(|| {
             let class_name = class_name.unwrap_or_else(|| self.get_unique_name("class"));

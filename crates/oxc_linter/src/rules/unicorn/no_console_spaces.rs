@@ -138,7 +138,7 @@ fn report_diagnostic(
     };
 
     ctx.diagnostic_with_fix(NoConsoleSpacesDiagnostic(direction, ident.to_string(), span), || {
-        Fix::new(fix, Span { start, end })
+        Fix::new(fix, Span::new(start, end))
     });
 }
 

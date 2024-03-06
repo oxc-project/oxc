@@ -6,7 +6,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodeId, AstNodes};
-use oxc_span::{CompactString, Span};
+use oxc_span::{CompactStr, Span};
 use oxc_syntax::class::ElementKind;
 
 use crate::{context::LintContext, rule::Rule};
@@ -14,7 +14,7 @@ use crate::{context::LintContext, rule::Rule};
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-unused-private-class-members): '{0}' is defined but never used.")]
 #[diagnostic(severity(warning))]
-struct NoUnusedPrivateClassMembersDiagnostic(CompactString, #[label] pub Span);
+struct NoUnusedPrivateClassMembersDiagnostic(CompactStr, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnusedPrivateClassMembers;

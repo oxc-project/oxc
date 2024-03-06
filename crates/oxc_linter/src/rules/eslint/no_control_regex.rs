@@ -8,7 +8,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, CompactString, GetSpan, Span};
+use oxc_span::{Atom, CompactStr, GetSpan, Span};
 use regex::{Matches, Regex};
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
@@ -19,7 +19,7 @@ use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, Ast
     severity(warning),
     help("Unexpected control character(s) in regular expression: \"{0}\"")
 )]
-struct NoControlRegexDiagnostic(CompactString, #[label] pub Span);
+struct NoControlRegexDiagnostic(CompactStr, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoControlRegex;

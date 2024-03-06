@@ -5,14 +5,14 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::{CompactString, Span};
+use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-func-assign): '{0}' is a function.")]
 #[diagnostic(severity(warning))]
-struct NoFuncAssignDiagnostic(CompactString, #[label("{0} is re-assigned here")] pub Span);
+struct NoFuncAssignDiagnostic(CompactStr, #[label("{0} is re-assigned here")] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoFuncAssign;

@@ -103,7 +103,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     BanTsComment,
-    nursery // since rust regex may not compatible with ECMAScript regex
+    pedantic
 );
 
 impl Rule for BanTsComment {
@@ -151,7 +151,7 @@ impl Rule for BanTsComment {
                         if *on {
                             ctx.diagnostic(BanTsCommentDiagnostic::Comment(
                                 directive.to_string(),
-                                Span { start: *start, end: comment.end() },
+                                Span::new(*start, comment.end()),
                             ));
                         }
                     }
@@ -160,7 +160,7 @@ impl Rule for BanTsComment {
                             ctx.diagnostic(BanTsCommentDiagnostic::CommentRequiresDescription(
                                 directive.to_string(),
                                 self.minimum_description_length,
-                                Span { start: *start, end: comment.end() },
+                                Span::new(*start, comment.end()),
                             ));
                         }
 
@@ -170,7 +170,7 @@ impl Rule for BanTsComment {
                                     BanTsCommentDiagnostic::CommentDescriptionNotMatchPattern(
                                         directive.to_string(),
                                         re.to_string(),
-                                        Span { start: *start, end: comment.end() },
+                                        Span::new(*start, comment.end()),
                                     ),
                                 );
                             }

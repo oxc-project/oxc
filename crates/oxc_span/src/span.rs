@@ -15,6 +15,7 @@ pub const SPAN: Span = Span::new(0, 0);
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[non_exhaustive] // disallow struct expression constructor `Span {}`
 pub struct Span {
     pub start: u32,
     pub end: u32,

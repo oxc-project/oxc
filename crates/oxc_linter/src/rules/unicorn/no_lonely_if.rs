@@ -85,8 +85,8 @@ impl Rule for NoLonelyIf {
         };
 
         ctx.diagnostic(NoLonelyIfDiagnostic(
-            Span { start: if_stmt.span.start, end: if_stmt.span.start + 2 },
-            Span { start: parent_if_stmt_span.start, end: parent_if_stmt_span.start + 2 },
+            Span::new(if_stmt.span.start, if_stmt.span.start + 2),
+            Span::new(parent_if_stmt_span.start, parent_if_stmt_span.start + 2),
         ));
     }
 }
