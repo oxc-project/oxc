@@ -531,7 +531,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // advance `catch`
         let param = if self.eat(Kind::LParen) {
-            let pattern = self.parse_binding()?.0;
+            let pattern = self.parse_binding_pattern(false)?;
             self.expect(Kind::RParen)?;
             Some(pattern)
         } else {
