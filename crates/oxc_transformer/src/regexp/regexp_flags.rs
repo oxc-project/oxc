@@ -60,7 +60,7 @@ impl<'a> RegexpFlags<'a> {
         let ident = IdentifierReference::new(SPAN, Atom::from("RegExp"));
         let callee = self.ast.identifier_reference_expression(ident);
         let pattern = StringLiteral::new(SPAN, regex.pattern.clone());
-        let flags = StringLiteral::new(SPAN, Atom::from(regex.flags.to_string()));
+        let flags = StringLiteral::new(SPAN, self.ast.new_atom(&regex.flags.to_string()));
         let pattern_literal = self.ast.literal_string_expression(pattern);
         let flags_literal = self.ast.literal_string_expression(flags);
         let mut arguments = self.ast.new_vec_with_capacity(2);

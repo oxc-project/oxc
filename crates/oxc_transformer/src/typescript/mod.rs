@@ -637,7 +637,10 @@ impl<'a> TypeScript<'a> {
     fn get_namespace_arg_name(&mut self, name: &Atom<'a>) -> Atom<'a> {
         let count = self.namespace_arg_names.entry(name.clone()).or_insert(0);
         *count += 1;
-        format!("_{name}{}", if *count > 1 { count.to_string() } else { String::new() }).into()
+        self.ast.new_atom(&format!(
+            "_{name}{}",
+            if *count > 1 { count.to_string() } else { String::new() }
+        ))
     }
 
     /// ```TypeScript

@@ -547,9 +547,7 @@ impl<'a> Decorators<'a> {
 
                         if def.key.is_private_identifier() && !flag.is_static() {
                             private_in_expression =
-                                Some(self.get_is_private_function(
-                                    def.key.private_name().unwrap().clone(),
-                                ));
+                                Some(self.get_is_private_function(def.key.private_name().unwrap()));
                         }
 
                         name = self.get_unique_name(&if def.computed {
@@ -846,9 +844,10 @@ impl<'a> Decorators<'a> {
             )),
         ));
         if let Some(name) = name {
-            decorator_elements.push(ArrayExpressionElement::Expression(
-                self.ast.literal_string_expression(StringLiteral::new(SPAN, name.clone())),
-            ));
+            decorator_elements
+                .push(ArrayExpressionElement::Expression(self.ast.literal_string_expression(
+                    StringLiteral::new(SPAN, self.ast.new_atom(&name)),
+                )));
 
             if key.is_private_identifier() {
                 if let Some(value) = value {
@@ -878,7 +877,7 @@ impl<'a> Decorators<'a> {
                             SPAN,
                             self.ast.new_atom("o"),
                         )),
-                        PrivateIdentifier::new(SPAN, name),
+                        PrivateIdentifier::new(SPAN, self.ast.new_atom(&name)),
                         false,
                     );
                     let params = self.ast.formal_parameters(
@@ -969,7 +968,7 @@ impl<'a> Decorators<'a> {
     }
 
     // _ => #a in _;
-    fn get_is_private_function(&self, name: Atom<'a>) -> Expression<'a> {
+    fn get_is_private_function(&self, name: &Atom<'a>) -> Expression<'a> {
         self.ast.arrow_function_expression(
             SPAN,
             true,
@@ -1001,7 +1000,7 @@ impl<'a> Decorators<'a> {
                     SPAN,
                     self.ast.private_in_expression(
                         SPAN,
-                        PrivateIdentifier::new(SPAN, name),
+                        PrivateIdentifier::new(SPAN, name.clone()),
                         self.ast.identifier_reference_expression(IdentifierReference::new(
                             SPAN,
                             self.ast.new_atom("_"),
