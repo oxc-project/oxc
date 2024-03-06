@@ -73,12 +73,8 @@ impl<'a> JSDocBuilder<'a> {
     //
     // Of course, this can be changed in the future.
     pub fn retrieve_attached_jsdoc(&mut self, kind: &AstKind<'a>) -> bool {
-        // For perf reasons, we should limit the target nodes to attach JSDoc
-        // This may be diffed compare to TypeScript's `canHaveJSDoc()`, should adjust if needed
-        if !(kind.is_statement()
-            || kind.is_declaration()
-            || matches!(kind, AstKind::ParenthesizedExpression(_)))
-        {
+        // 0. Check if this kind can have JSDoc
+        if !can_have_jsdoc(kind) {
             return false;
         }
 
@@ -86,9 +82,11 @@ impl<'a> JSDocBuilder<'a> {
         let span = kind.span();
         let mut leading_comments = vec![];
         for (start, comment) in self.trivias.comments().range(..span.start) {
-            if !self.leading_comments_seen.contains(start) {
-                leading_comments.push((start, comment));
+            if self.leading_comments_seen.contains(start) {
+                continue;
             }
+
+            leading_comments.push((start, comment));
             self.leading_comments_seen.insert(*start);
         }
 
@@ -123,6 +121,66 @@ impl<'a> JSDocBuilder<'a> {
         // Remove the very first `*`
         Some(JSDoc::new(&comment_content[1..]))
     }
+}
+
+// This list refers to TypeScript's `canHaveJSDoc()`
+// https://github.com/microsoft/TypeScript/blob/353ccb7688351ae33ccf6e0acb913aa30621eaf4/src/compiler/utilities.ts#L4188
+// But we do not have 1:1 counter part, list may be diffed and should be adjusted if needed
+fn can_have_jsdoc(kind: &AstKind) -> bool {
+    if matches!(
+        kind,
+        AstKind::ArrowFunctionExpression(_)
+            | AstKind::BlockStatement(_)
+            | AstKind::BreakStatement(_)
+            | AstKind::ContinueStatement(_)
+            | AstKind::DebuggerStatement(_)
+            | AstKind::DoWhileStatement(_)
+            | AstKind::EmptyStatement(_)
+            | AstKind::ExpressionStatement(_)
+            | AstKind::ForInStatement(_)
+            | AstKind::ForOfStatement(_)
+            | AstKind::ForStatement(_)
+            | AstKind::IfStatement(_)
+            | AstKind::LabeledStatement(_)
+            | AstKind::ReturnStatement(_)
+            | AstKind::SwitchCase(_)
+            | AstKind::SwitchStatement(_)
+            | AstKind::ThrowStatement(_)
+            | AstKind::TryStatement(_)
+            | AstKind::WhileStatement(_)
+            | AstKind::WithStatement(_)
+            | AstKind::ExportAllDeclaration(_)
+            | AstKind::ExportDefaultDeclaration(_)
+            | AstKind::ExportNamedDeclaration(_)
+            | AstKind::ImportDeclaration(_)
+            | AstKind::VariableDeclaration(_)
+            | AstKind::VariableDeclarator(_)
+            | AstKind::BinaryExpression(_)
+            | AstKind::CallExpression(_)
+            | AstKind::ObjectExpression(_)
+            | AstKind::ParenthesizedExpression(_)
+            | AstKind::StaticBlock(_)
+            | AstKind::Class(_)
+            | AstKind::Function(_)
+            | AstKind::FormalParameter(_)
+            | AstKind::IdentifierName(_)
+            | AstKind::MethodDefinition(_)
+            | AstKind::PropertyDefinition(_)
+            | AstKind::ObjectProperty(_)
+            | AstKind::SpreadElement(_)
+            | AstKind::TSEnumDeclaration(_)
+            | AstKind::TSEnumMember(_)
+            | AstKind::TSImportEqualsDeclaration(_)
+            | AstKind::TSInterfaceDeclaration(_)
+            | AstKind::TSMethodSignature(_)
+            | AstKind::TSModuleDeclaration(_)
+            | AstKind::TSTypeAliasDeclaration(_)
+            | AstKind::TSTypeParameter(_)
+    ) {
+        return true;
+    }
+
+    false
 }
 
 #[cfg(test)]
