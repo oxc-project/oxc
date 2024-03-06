@@ -77,7 +77,7 @@ fn get_full_comment(source_text_len: usize, start: u32, end: u32, is_multi_line:
         comment_end += 1;
     }
 
-    Span { start: comment_start, end: comment_end }
+    Span::new(comment_start, comment_end)
 }
 
 #[test]

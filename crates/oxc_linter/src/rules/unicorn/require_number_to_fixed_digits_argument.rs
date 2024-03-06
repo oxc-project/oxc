@@ -58,7 +58,7 @@ impl Rule for RequireNumberToFixedDigitsArgument {
 
             if let Some(property_name) = member.static_property_name() {
                 if property_name == "toFixed" {
-                    let parenthesis_span = Span { start: member.span().end, end: expr.span.end };
+                    let parenthesis_span = Span::new(member.span().end, expr.span.end);
 
                     ctx.diagnostic_with_fix(
                         RequireNumberToFixedDigitsArgumentDiagnostic(parenthesis_span),

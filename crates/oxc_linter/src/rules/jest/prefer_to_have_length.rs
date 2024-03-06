@@ -155,7 +155,7 @@ impl PreferToHaveLength {
             } else {
                 matcher.span.end
             };
-            Fix::new(code, Span { start: call_expr.span.start, end: end - 1 })
+            Fix::new(code, Span::new(call_expr.span.start, end - 1))
         });
     }
 

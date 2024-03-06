@@ -121,12 +121,12 @@ impl Rule for TripleSlashReference {
                 {
                     ctx.diagnostic(TripleSlashReferenceDiagnostic(
                         group2.to_string(),
-                        Span { start: *start - 2, end: comment.end() },
+                        Span::new(*start - 2, comment.end()),
                     ));
                 }
 
                 if group1 == "types" && self.types == TypesOption::PreferImport {
-                    refs_for_import.insert(group2, Span { start: *start - 2, end: comment.end() });
+                    refs_for_import.insert(group2, Span::new(*start - 2, comment.end()));
                 }
             }
         }
