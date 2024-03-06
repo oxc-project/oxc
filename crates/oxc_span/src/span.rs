@@ -28,7 +28,7 @@ pub struct Span {
 impl Span {
     #[inline]
     pub const fn new(start: u32, end: u32) -> Self {
-        Self { start, end, utf16_start: 0, utf16_end: 0 }
+        Self { start, end, utf16_start: start, utf16_end: end }
     }
 
     pub fn size(&self) -> u32 {
