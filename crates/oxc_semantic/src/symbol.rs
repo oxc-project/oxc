@@ -38,6 +38,7 @@ pub struct SymbolTable {
     pub declarations: IndexVec<SymbolId, AstNodeId>,
     pub resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
     pub references: IndexVec<ReferenceId, Reference>,
+    pub redeclare_variables: IndexVec<SymbolId, Vec<Span>>,
 }
 
 impl SymbolTable {
@@ -89,6 +90,10 @@ impl SymbolTable {
         self.flags[symbol_id]
     }
 
+    pub fn get_redeclare_variables(&self, symbol_id: SymbolId) -> &Vec<Span> {
+        &self.redeclare_variables[symbol_id]
+    }
+
     pub fn union_flag(&mut self, symbol_id: SymbolId, includes: SymbolFlags) {
         self.flags[symbol_id] |= includes;
     }
@@ -120,11 +125,16 @@ impl SymbolTable {
         _ = self.names.push(name.into_compact_str());
         _ = self.flags.push(flag);
         _ = self.scope_ids.push(scope_id);
-        self.resolved_references.push(vec![])
+        _ = self.resolved_references.push(vec![]);
+        self.redeclare_variables.push(vec![])
     }
 
     pub fn add_declaration(&mut self, node_id: AstNodeId) {
         self.declarations.push(node_id);
+    }
+
+    pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
+        self.redeclare_variables[symbol_id].push(span);
     }
 
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {

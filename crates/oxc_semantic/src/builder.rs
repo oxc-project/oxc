@@ -29,17 +29,6 @@ use crate::{
     Semantic,
 };
 
-#[derive(Debug, Clone)]
-pub struct VariableInfo {
-    pub span: Span,
-    pub symbol_id: SymbolId,
-}
-
-#[derive(Debug)]
-pub struct RedeclareVariables {
-    pub variables: Vec<VariableInfo>,
-}
-
 pub struct SemanticBuilder<'a> {
     pub source_text: &'a str,
 
@@ -79,8 +68,6 @@ pub struct SemanticBuilder<'a> {
 
     check_syntax_error: bool,
 
-    redeclare_variables: RedeclareVariables,
-
     pub cfg: ControlFlowGraph,
 
     pub class_table_builder: ClassTableBuilder,
@@ -117,7 +104,6 @@ impl<'a> SemanticBuilder<'a> {
             label_builder: LabelBuilder::default(),
             jsdoc: JSDocBuilder::new(source_text, &trivias),
             check_syntax_error: false,
-            redeclare_variables: RedeclareVariables { variables: vec![] },
             cfg: ControlFlowGraph::new(),
             class_table_builder: ClassTableBuilder::new(),
         }
@@ -177,7 +163,6 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::clone(&self.module_record),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.label_builder.unused_node_ids,
-            redeclare_variables: self.redeclare_variables.variables,
             cfg: self.cfg,
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
@@ -195,7 +180,6 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::new(ModuleRecord::default()),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.label_builder.unused_node_ids,
-            redeclare_variables: self.redeclare_variables.variables,
             cfg: self.cfg,
         }
     }
@@ -254,9 +238,7 @@ impl<'a> SemanticBuilder<'a> {
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
             self.symbols.union_flag(symbol_id, includes);
-            if includes.is_function_scoped_declaration() {
-                self.add_redeclared_variables(VariableInfo { span, symbol_id });
-            }
+            self.add_redeclare_variable(symbol_id, span);
             return symbol_id;
         }
 
@@ -338,8 +320,8 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    pub fn add_redeclared_variables(&mut self, variable: VariableInfo) {
-        self.redeclare_variables.variables.push(variable);
+    pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
+        self.symbols.add_redeclare_variable(symbol_id, span);
     }
 
     fn add_export_flag_for_export_identifier(&mut self) {
