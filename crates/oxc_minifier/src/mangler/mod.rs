@@ -234,5 +234,5 @@ fn base54(n: usize) -> CompactStr {
         ret.push(BASE54_CHARS[num % base] as char);
         num /= base;
     }
-    CompactStr::new(ret)
+    CompactStr::new(&ret)
 }

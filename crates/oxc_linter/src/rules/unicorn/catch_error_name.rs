@@ -36,7 +36,7 @@ impl std::ops::Deref for CatchErrorName {
 
 impl Default for CatchErrorNameConfig {
     fn default() -> Self {
-        Self { ignore: vec![], name: CompactStr::new_inline("error") }
+        Self { ignore: vec![], name: CompactStr::new_const("error") }
     }
 }
 
