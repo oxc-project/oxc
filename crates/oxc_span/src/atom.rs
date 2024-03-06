@@ -25,7 +25,6 @@ pub const MAX_INLINE_LEN: usize = 16;
 #[derive(Clone, Eq)]
 pub enum Atom<'a> {
     Arena(&'a str),
-    Compact(CompactString),
 }
 
 #[cfg(feature = "serde")]
@@ -43,7 +42,6 @@ impl<'a> Atom<'a> {
     pub fn as_str(&self) -> &str {
         match self {
             Self::Arena(s) => s,
-            Self::Compact(s) => s.as_ref(),
         }
     }
 
@@ -51,7 +49,6 @@ impl<'a> Atom<'a> {
     pub fn into_string(self) -> String {
         match self {
             Self::Arena(s) => String::from(s),
-            Self::Compact(s) => s.to_string(),
         }
     }
 
@@ -59,7 +56,6 @@ impl<'a> Atom<'a> {
     pub fn into_compact_str(self) -> CompactStr {
         match self {
             Self::Arena(s) => CompactStr::new(s),
-            Self::Compact(s) => CompactStr::from(s),
         }
     }
 
@@ -67,7 +63,6 @@ impl<'a> Atom<'a> {
     pub fn to_compact_str(&self) -> CompactStr {
         match &self {
             Self::Arena(s) => CompactStr::new(s),
-            Self::Compact(s) => CompactStr::from(s.clone()),
         }
     }
 }
@@ -114,7 +109,6 @@ impl<'a> hash::Hash for Atom<'a> {
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
         match self {
             Self::Arena(s) => s.hash(hasher),
-            Self::Compact(s) => s.hash(hasher),
         }
     }
 }
