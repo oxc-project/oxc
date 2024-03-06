@@ -63,6 +63,12 @@ impl<'a> From<&'a str> for Atom<'a> {
     }
 }
 
+impl<'a> From<oxc_allocator::String<'a>> for Atom<'a> {
+    fn from(s: oxc_allocator::String<'a>) -> Self {
+        Self(s.into_bump_str())
+    }
+}
+
 impl<'a> Deref for Atom<'a> {
     type Target = str;
 

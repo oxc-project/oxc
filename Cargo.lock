@@ -1697,6 +1697,7 @@ version = "0.9.0"
 dependencies = [
  "compact_str",
  "miette",
+ "oxc_allocator",
  "serde",
  "tsify",
  "wasm-bindgen",
