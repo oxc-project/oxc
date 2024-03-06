@@ -160,7 +160,7 @@ impl<'a> SeparatedList<'a> for ArrayPatternList<'a> {
                 }
             }
             _ => {
-                let element = p.parse_binding_pattern()?;
+                let element = p.parse_binding_pattern_with_initializer()?;
                 self.elements.push(Some(element));
             }
         }
@@ -272,7 +272,7 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
                 }
             }
             _ => {
-                let pattern = p.parse_binding_pattern()?;
+                let pattern = p.parse_binding_pattern_with_initializer()?;
                 let decorators = p.state.consume_decorators();
                 let formal_parameter = p.ast.formal_parameter(
                     p.end_span(span),

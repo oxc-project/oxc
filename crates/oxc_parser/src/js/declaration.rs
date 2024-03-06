@@ -94,7 +94,28 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<VariableDeclarator<'a>> {
         let span = self.start_span();
 
-        let (id, definite) = self.parse_binding()?;
+        let mut binding_kind = self.parse_binding_pattern_kind()?;
+
+        let (id, definite) = if self.ts_enabled() {
+            // const x!: number = 1
+            //        ^ definite
+            let mut definite = false;
+            if binding_kind.is_binding_identifier()
+                && self.at(Kind::Bang)
+                && !self.cur_token().is_on_new_line
+            {
+                self.eat(Kind::Bang);
+                definite = true;
+            }
+            let optional = self.eat(Kind::Question); // not allowed, but checked in checker/typescript.rs
+            let type_annotation = self.parse_ts_type_annotation()?;
+            if let Some(type_annotation) = &type_annotation {
+                Self::extend_binding_pattern_span_end(type_annotation.span, &mut binding_kind);
+            }
+            (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
+        } else {
+            (self.ast.binding_pattern(binding_kind, None, false), false)
+        };
 
         let init =
             self.eat(Kind::Eq).then(|| self.parse_assignment_expression_base()).transpose()?;

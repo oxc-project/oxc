@@ -69,7 +69,7 @@ expression: no_this_alias
    ╭─[no_this_alias.tsx:4:21]
  3 │               const inConstructor = this;
  4 │               const asThis: this = this;
-   ·                     ──────
+   ·                     ────────────
  5 │ 
    ╰────
   help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.
