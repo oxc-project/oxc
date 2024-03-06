@@ -143,7 +143,7 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
                 return;
             };
 
-            let span = Span { start: spread_elem.span.start, end: spread_elem.span.start + 3 };
+            let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
 
             match node.kind() {
                 AstKind::ObjectExpression(_) => {
@@ -186,7 +186,7 @@ fn check_useless_iterable_to_array<'a>(
         return;
     };
 
-    let span = Span { start: spread_elem.span.start, end: spread_elem.span.start + 3 };
+    let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
 
     let parent = if let AstKind::Argument(_) = parent.kind() {
         let Some(parent) = outermost_paren_parent(parent, ctx) else {
@@ -298,7 +298,7 @@ fn check_useless_array_clone<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintCon
         return;
     };
 
-    let span = Span { start: spread_elem.span.start, end: spread_elem.span.start + 3 };
+    let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
 
     if let Expression::CallExpression(call_expr) = &spread_elem.argument {
         if !(is_method_call(

@@ -227,7 +227,7 @@ fn check_and_report_error_generic(
 
         Fix::new(
             array_type_identifier.to_string() + "<" + type_text + ">",
-            Span { start: type_reference_span.start, end: type_reference_span.end },
+            Span::new(type_reference_span.start, type_reference_span.end),
         )
     });
 }

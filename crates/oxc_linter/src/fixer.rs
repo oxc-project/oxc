@@ -386,8 +386,8 @@ mod test {
     fn sort_no_fix_messages_correctly() {
         let result = get_fix_result(vec![
             create_message(ReplaceId, Some(REPLACE_ID)),
-            Message::new(NoFix2(Span { start: 1, end: 7 }).into(), None),
-            Message::new(NoFix1(Span { start: 1, end: 3 }).into(), None),
+            Message::new(NoFix2(Span::new(1, 7)).into(), None),
+            Message::new(NoFix1(Span::new(1, 3)).into(), None),
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
         assert_eq!(result.messages.len(), 2);
