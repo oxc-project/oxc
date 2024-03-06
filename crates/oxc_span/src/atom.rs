@@ -23,9 +23,7 @@ pub const MAX_INLINE_LEN: usize = 16;
 /// Use [CompactStr] with [Atom::to_compact_str] or [Atom::into_compact_str] for the
 /// lifetimeless form.
 #[derive(Clone, Eq)]
-pub enum Atom<'a> {
-    Arena(&'a str),
-}
+pub struct Atom<'a>(&'a str);
 
 #[cfg(feature = "serde")]
 impl<'a> Serialize for Atom<'a> {
@@ -40,36 +38,28 @@ impl<'a> Serialize for Atom<'a> {
 impl<'a> Atom<'a> {
     #[inline]
     pub fn as_str(&self) -> &str {
-        match self {
-            Self::Arena(s) => s,
-        }
+        self.0
     }
 
     #[inline]
     pub fn into_string(self) -> String {
-        match self {
-            Self::Arena(s) => String::from(s),
-        }
+        String::from(self.as_str())
     }
 
     #[inline]
     pub fn into_compact_str(self) -> CompactStr {
-        match self {
-            Self::Arena(s) => CompactStr::new(s),
-        }
+        CompactStr::new(self.as_str())
     }
 
     #[inline]
     pub fn to_compact_str(&self) -> CompactStr {
-        match &self {
-            Self::Arena(s) => CompactStr::new(s),
-        }
+        CompactStr::new(self.as_str())
     }
 }
 
 impl<'a> From<&'a str> for Atom<'a> {
     fn from(s: &'a str) -> Self {
-        Self::Arena(s)
+        Self(s)
     }
 }
 
@@ -107,9 +97,7 @@ impl<'a> PartialEq<Atom<'a>> for &str {
 
 impl<'a> hash::Hash for Atom<'a> {
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
-        match self {
-            Self::Arena(s) => s.hash(hasher),
-        }
+        self.as_str().hash(hasher);
     }
 }
 
@@ -203,12 +191,6 @@ impl From<&str> for CompactStr {
 impl From<String> for CompactStr {
     fn from(s: String) -> Self {
         Self(CompactString::from(s))
-    }
-}
-
-impl From<CompactString> for CompactStr {
-    fn from(s: CompactString) -> Self {
-        Self(s)
     }
 }
 
