@@ -5,14 +5,14 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactString, Span};
+use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-import(no-amd): Do not use AMD `require` and `define` calls.")]
 #[diagnostic(severity(warning), help("Expected imports instead of AMD {1}()"))]
-struct NoAmdDiagnostic(#[label] pub Span, CompactString);
+struct NoAmdDiagnostic(#[label] pub Span, CompactStr);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAmd;
@@ -56,7 +56,7 @@ impl Rule for NoAmd {
                 {
                     ctx.diagnostic(NoAmdDiagnostic(
                         identifier.span,
-                        identifier.name.to_compact_string(),
+                        identifier.name.to_compact_str(),
                     ));
                 }
             }

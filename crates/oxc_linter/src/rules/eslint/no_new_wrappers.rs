@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactString, Span};
+use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -16,7 +16,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
     severity(warning),
     help("do not use {0} as a constructor, consider removing the new operator.")
 )]
-struct NoNewWrappersDiagnostic(CompactString, #[label] pub Span);
+struct NoNewWrappersDiagnostic(CompactStr, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNewWrappers;
@@ -47,7 +47,7 @@ impl Rule for NoNewWrappers {
         if (ident.name == "String" || ident.name == "Number" || ident.name == "Boolean")
             && ctx.semantic().is_reference_to_global_variable(ident)
         {
-            ctx.diagnostic(NoNewWrappersDiagnostic(ident.name.to_compact_string(), expr.span));
+            ctx.diagnostic(NoNewWrappersDiagnostic(ident.name.to_compact_str(), expr.span));
         }
     }
 }

@@ -16,12 +16,15 @@ use compact_str::CompactString;
 #[allow(dead_code)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type Atom = string;
-export type CompactString = string;
+export type CompactStr = string;
 "#;
 
 /// An inlinable string for oxc_allocator.
 ///
-/// Use [CompactString] with [Atom::to_compact_string()] for the lifetimeless form.
+/// Use [CompactStr] with [Atom::to_compact_str] or [Atom::into_compact_str] for the
+/// lifetimeless form.
+///
+/// [CompactStr]: crate::CompactStr
 #[derive(Clone, Eq)]
 pub enum Atom<'a> {
     Arena(&'a str),
@@ -56,7 +59,7 @@ impl<'a> Atom<'a> {
     }
 
     #[inline]
-    pub fn into_compact_string(self) -> CompactString {
+    pub fn into_compact_str(self) -> CompactString {
         match self {
             Self::Arena(s) => CompactString::new(s),
             Self::Compact(s) => s,
@@ -64,7 +67,7 @@ impl<'a> Atom<'a> {
     }
 
     #[inline]
-    pub fn to_compact_string(&self) -> CompactString {
+    pub fn to_compact_str(&self) -> CompactString {
         match &self {
             Self::Arena(s) => CompactString::new(s),
             Self::Compact(s) => s.clone(),

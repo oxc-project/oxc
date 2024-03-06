@@ -12,7 +12,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::{CompactString, Span};
+use oxc_span::{CompactStr, Span};
 use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
@@ -58,7 +58,7 @@ impl Rule for NoNamedAsDefaultMember {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.semantic().module_record();
 
-        let mut has_members_map: HashMap<SymbolId, (Ref<'_, CompactString, _, _>, CompactString)> =
+        let mut has_members_map: HashMap<SymbolId, (Ref<'_, CompactStr, _, _>, CompactStr)> =
             HashMap::default();
         for import_entry in &module_record.import_entries {
             let ImportImportName::Default(_) = import_entry.import_name else {

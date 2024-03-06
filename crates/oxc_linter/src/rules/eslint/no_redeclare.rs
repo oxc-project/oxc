@@ -8,7 +8,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::VariableInfo;
-use oxc_span::{CompactString, Span};
+use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -16,7 +16,7 @@ use crate::{context::LintContext, rule::Rule};
 #[error("eslint(no-redeclare): '{0}' is already defined.")]
 #[diagnostic(severity(warning))]
 struct NoRedeclareDiagnostic(
-    CompactString,
+    CompactStr,
     #[label("'{0}' is already defined.")] pub Span,
     #[label("It can not be redeclare here.")] pub Span,
 );
@@ -25,7 +25,7 @@ struct NoRedeclareDiagnostic(
 #[error("eslint(no-redeclare): '{0}' is already defined as a built-in global variable.")]
 #[diagnostic(severity(warning))]
 struct NoRedeclareAsBuiltiInDiagnostic(
-    CompactString,
+    CompactStr,
     #[label("'{0}' is already defined as a built-in global variable.")] pub Span,
 );
 
@@ -33,7 +33,7 @@ struct NoRedeclareAsBuiltiInDiagnostic(
 #[error("eslint(no-redeclare): '{0}' is already defined by a variable declaration.")]
 #[diagnostic(severity(warning))]
 struct NoRedeclareBySyntaxDiagnostic(
-    CompactString,
+    CompactStr,
     #[label("'{0}' is already defined by a variable declaration.")] pub Span,
     #[label("It cannot be redeclared here.")] pub Span,
 );
@@ -108,12 +108,12 @@ impl NoRedeclare {
     ) {
         if self.built_in_globals && ctx.env_contains_var(&ident.name) {
             ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(
-                ident.name.to_compact_string(),
+                ident.name.to_compact_str(),
                 ident.span,
             ));
         } else if variable.span != ident.span {
             ctx.diagnostic(NoRedeclareDiagnostic(
-                ident.name.to_compact_string(),
+                ident.name.to_compact_str(),
                 ident.span,
                 variable.span,
             ));
