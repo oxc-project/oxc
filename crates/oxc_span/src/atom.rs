@@ -1,8 +1,4 @@
-use std::{
-    borrow::{Borrow, Cow},
-    fmt, hash,
-    ops::Deref,
-};
+use std::{borrow::Borrow, fmt, hash, ops::Deref};
 
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
@@ -79,18 +75,6 @@ impl<'a> Atom<'a> {
 impl<'a> From<&'a str> for Atom<'a> {
     fn from(s: &'a str) -> Self {
         Self::Arena(s)
-    }
-}
-
-impl<'a> From<String> for Atom<'a> {
-    fn from(s: String) -> Self {
-        Self::Compact(CompactString::from(s))
-    }
-}
-
-impl<'a> From<Cow<'_, str>> for Atom<'a> {
-    fn from(s: Cow<'_, str>) -> Self {
-        Self::Compact(CompactString::from(s))
     }
 }
 

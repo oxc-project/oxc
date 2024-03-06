@@ -1,12 +1,14 @@
 //! Declare symbol for `BindingIdentifier`s
 
+use std::borrow::Cow;
+
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_ast::{
     syntax_directed_operations::{BoundNames, IsSimpleParameterList},
     AstKind,
 };
-use oxc_span::{Atom, SourceType};
+use oxc_span::SourceType;
 
 use crate::{scope::ScopeFlags, symbol::SymbolFlags, SemanticBuilder};
 
@@ -343,9 +345,9 @@ impl<'a> Binder for TSEnumMember<'a> {
             return;
         }
         let name = match &self.id {
-            TSEnumMemberName::Identifier(id) => id.name.clone(),
-            TSEnumMemberName::StringLiteral(s) => s.value.clone(),
-            TSEnumMemberName::NumericLiteral(n) => Atom::from(n.value.to_string()),
+            TSEnumMemberName::Identifier(id) => Cow::Borrowed(id.name.as_str()),
+            TSEnumMemberName::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
+            TSEnumMemberName::NumericLiteral(n) => Cow::Owned(n.value.to_string()),
             TSEnumMemberName::ComputedPropertyName(_) => panic!("TODO: implement"),
         };
         builder.declare_symbol(

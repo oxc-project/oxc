@@ -1,7 +1,7 @@
 use std::{cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, Vec};
-use oxc_span::{Atom, SourceType, Span};
+use oxc_span::{Atom, CompactStr, SourceType, Span};
 use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -212,7 +212,7 @@ impl<'a> Expression<'a> {
         }
     }
 
-    pub fn is_specific_member_access(&'a self, object: &str, property: &str) -> bool {
+    pub fn is_specific_member_access(&self, object: &str, property: &str) -> bool {
         match self.get_inner_expression() {
             Expression::MemberExpression(expr) => expr.is_specific_member_access(object, property),
             Expression::ChainExpression(chain) => {
@@ -466,19 +466,22 @@ pub enum PropertyKey<'a> {
 }
 
 impl<'a> PropertyKey<'a> {
-    pub fn static_name(&self) -> Option<Atom<'a>> {
+    pub fn static_name(&self) -> Option<CompactStr> {
         match self {
-            Self::Identifier(ident) => Some(ident.name.clone()),
+            Self::Identifier(ident) => Some(ident.name.to_compact_str()),
             Self::PrivateIdentifier(_) => None,
             Self::Expression(expr) => match expr {
-                Expression::StringLiteral(lit) => Some(lit.value.clone()),
-                Expression::RegExpLiteral(lit) => Some(Atom::from(lit.regex.to_string())),
-                Expression::NumericLiteral(lit) => Some(Atom::from(lit.value.to_string())),
-                Expression::BigintLiteral(lit) => Some(lit.raw.clone()),
+                Expression::StringLiteral(lit) => Some(lit.value.to_compact_str()),
+                Expression::RegExpLiteral(lit) => Some(lit.regex.to_string().into()),
+                Expression::NumericLiteral(lit) => Some(lit.value.to_string().into()),
+                Expression::BigintLiteral(lit) => Some(lit.raw.to_compact_str()),
                 Expression::NullLiteral(_) => Some("null".into()),
-                Expression::TemplateLiteral(lit) => {
-                    lit.expressions.is_empty().then(|| lit.quasi()).flatten().cloned()
-                }
+                Expression::TemplateLiteral(lit) => lit
+                    .expressions
+                    .is_empty()
+                    .then(|| lit.quasi())
+                    .flatten()
+                    .map(Atom::to_compact_str),
                 _ => None,
             },
         }
@@ -496,16 +499,16 @@ impl<'a> PropertyKey<'a> {
         matches!(self, Self::PrivateIdentifier(_))
     }
 
-    pub fn private_name(&self) -> Option<Atom<'a>> {
+    pub fn private_name(&self) -> Option<&Atom<'a>> {
         match self {
-            Self::PrivateIdentifier(ident) => Some(ident.name.clone()),
+            Self::PrivateIdentifier(ident) => Some(&ident.name),
             _ => None,
         }
     }
 
-    pub fn name(&self) -> Option<Atom<'a>> {
+    pub fn name(&self) -> Option<CompactStr> {
         if self.is_private_identifier() {
-            self.private_name()
+            self.private_name().map(Atom::to_compact_str)
         } else {
             self.static_name()
         }
@@ -758,7 +761,7 @@ impl<'a> CallExpression<'a> {
         }
     }
 
-    pub fn is_symbol_or_symbol_for_call(&'a self) -> bool {
+    pub fn is_symbol_or_symbol_for_call(&self) -> bool {
         // TODO: is 'Symbol' reference to global object
         match &self.callee {
             Expression::Identifier(id) => id.name == "Symbol",
@@ -2017,7 +2020,7 @@ impl<'a> ClassElement<'a> {
         }
     }
 
-    pub fn static_name(&self) -> Option<Atom> {
+    pub fn static_name(&self) -> Option<CompactStr> {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
             Self::MethodDefinition(def) => def.key.static_name(),
