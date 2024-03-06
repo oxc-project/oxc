@@ -163,7 +163,7 @@ fn can_have_jsdoc(kind: &AstKind) -> bool {
             | AstKind::Class(_)
             | AstKind::Function(_)
             | AstKind::FormalParameter(_)
-            | AstKind::IdentifierName(_)
+            // | AstKind::IdentifierName(_)
             | AstKind::MethodDefinition(_)
             | AstKind::PropertyDefinition(_)
             | AstKind::ObjectProperty(_)
