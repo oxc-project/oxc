@@ -8,7 +8,7 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
-use oxc_span::{Atom, CompactStr, GetSpan, Span, SPAN};
+use oxc_span::{CompactStr, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
     xml_entities::XML_ENTITIES,
@@ -596,7 +596,7 @@ impl<'a> ReactJsx<'a> {
                 }
             }
             JSXAttributeName::NamespacedName(name) => {
-                let name = Atom::from(name.to_string());
+                let name = self.ast.new_atom(&name.to_string());
                 let expr = self.ast.literal_string_expression(StringLiteral::new(SPAN, name));
                 self.ast.property_key_expression(expr)
             }
@@ -623,7 +623,7 @@ impl<'a> ReactJsx<'a> {
                     self.ctx.error(NamespaceDoesNotSupport(name.span));
                 }
 
-                let string_literal = StringLiteral::new(SPAN, Atom::from(name.to_string()));
+                let string_literal = StringLiteral::new(SPAN, self.ast.new_atom(&name.to_string()));
                 self.ast.literal_string_expression(string_literal)
             }
         }
@@ -665,7 +665,7 @@ impl<'a> ReactJsx<'a> {
         match value {
             Some(JSXAttributeValue::StringLiteral(s)) => {
                 let jsx_text = Self::decode_entities(s.value.as_str());
-                let literal = StringLiteral::new(s.span, jsx_text.into());
+                let literal = StringLiteral::new(s.span, self.ast.new_atom(&jsx_text));
                 self.ast.literal_string_expression(literal)
             }
             Some(JSXAttributeValue::Element(e)) => {
@@ -718,7 +718,7 @@ impl<'a> ReactJsx<'a> {
 
     fn transform_jsx_text(&self, text: &str) -> Option<Expression<'a>> {
         Self::fixup_whitespace_and_decode_entities(text).map(|s| {
-            let s = StringLiteral::new(SPAN, s.into());
+            let s = StringLiteral::new(SPAN, self.ast.new_atom(&s));
             self.ast.literal_string_expression(s)
         })
     }

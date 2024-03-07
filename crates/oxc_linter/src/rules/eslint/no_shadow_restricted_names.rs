@@ -1,13 +1,10 @@
-use oxc_ast::{
-    ast::{AssignmentTarget, BindingPattern, Expression, SimpleAssignmentTarget},
-    AstKind,
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, CompactStr, Span};
+use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, globals::PRE_DEFINE_VAR, rule::Rule};
 
@@ -41,43 +38,6 @@ declare_oxc_lint!(
     correctness
 );
 
-fn binding_pattern_is_global_obj<'a>(pat: &BindingPattern<'a>) -> Option<(Atom<'a>, Span)> {
-    match &pat.kind {
-        oxc_ast::ast::BindingPatternKind::BindingIdentifier(boxed_bind_identifier) => {
-            if PRE_DEFINE_VAR.contains_key(boxed_bind_identifier.name.as_str()) {
-                return Some((boxed_bind_identifier.name.clone(), boxed_bind_identifier.span));
-            }
-            None
-        }
-        oxc_ast::ast::BindingPatternKind::ObjectPattern(boxed_obj_pat) => {
-            let properties = &boxed_obj_pat.properties;
-            for property in properties {
-                if let Some(value) = binding_pattern_is_global_obj(&property.value) {
-                    return Some(value);
-                }
-            }
-            boxed_obj_pat
-                .rest
-                .as_ref()
-                .and_then(|boxed_rest| binding_pattern_is_global_obj(&boxed_rest.argument))
-        }
-        oxc_ast::ast::BindingPatternKind::ArrayPattern(boxed_arr_pat) => {
-            for element in &boxed_arr_pat.elements {
-                if let Some(value) = element.as_ref().and_then(binding_pattern_is_global_obj) {
-                    return Some(value);
-                }
-            }
-            boxed_arr_pat
-                .rest
-                .as_ref()
-                .and_then(|boxed_rest| binding_pattern_is_global_obj(&boxed_rest.argument))
-        }
-        oxc_ast::ast::BindingPatternKind::AssignmentPattern(boxed_assign_pat) => {
-            binding_pattern_is_global_obj(&boxed_assign_pat.left)
-        }
-    }
-}
-
 #[inline]
 fn check_and_diagnostic(s: &str, span: Span, ctx: &LintContext) {
     if PRE_DEFINE_VAR.contains_key(s) {
@@ -87,71 +47,29 @@ fn check_and_diagnostic(s: &str, span: Span, ctx: &LintContext) {
 
 impl Rule for NoShadowRestrictedNames {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut nearest_span: Option<Span> = None;
-        for node in ctx.nodes().iter() {
-            let kind = node.kind();
-            match kind {
-                AstKind::VariableDeclarator(decl) => {
-                    if let Some((atom, span)) = binding_pattern_is_global_obj(&decl.id) {
-                        if atom.as_str() != "undefined" || decl.init.is_some() {
-                            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
-                                atom.to_compact_str(),
-                                span,
-                            ));
-                        } else {
-                            nearest_span = Some(span);
-                        }
+        ctx.symbols().iter().for_each(|symbol_id| {
+            let name = ctx.symbols().get_name(symbol_id);
+
+            if name == "undefined" {
+                // Allow to declare `undefined` variable but not allow to assign value to it.
+                let node_id = ctx.semantic().symbols().get_declaration(symbol_id);
+                if let AstKind::VariableDeclarator(declarator) = ctx.nodes().kind(node_id) {
+                    if declarator.init.is_none()
+                        && ctx
+                            .symbols()
+                            .get_resolved_references(symbol_id)
+                            .all(|reference| !reference.is_write())
+                    {
+                        return;
                     }
                 }
-                AstKind::ExpressionStatement(expr_stat) => {
-                    if let Expression::AssignmentExpression(assign_expr) = &expr_stat.expression {
-                        let left = &assign_expr.left;
-                        match left {
-                            AssignmentTarget::SimpleAssignmentTarget(
-                                SimpleAssignmentTarget::AssignmentTargetIdentifier(ati),
-                            ) if ati.name == "undefined" => {
-                                if let Some(span) = nearest_span {
-                                    ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
-                                        ati.name.to_compact_str(),
-                                        span,
-                                    ));
-                                }
-                            }
-                            _ => {}
-                        }
-                    }
-                }
-                AstKind::Function(function) => {
-                    if let Some(bind_ident) = function.id.as_ref() {
-                        check_and_diagnostic(bind_ident.name.as_str(), bind_ident.span, ctx);
-                    }
-                }
-                AstKind::FormalParameter(param) => {
-                    if let Some(value) = binding_pattern_is_global_obj(&param.pattern) {
-                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
-                            value.0.to_compact_str(),
-                            value.1,
-                        ));
-                    }
-                }
-                AstKind::Class(class_decl) => {
-                    if let Some(bind_ident) = class_decl.id.as_ref() {
-                        check_and_diagnostic(bind_ident.name.as_str(), bind_ident.span, ctx);
-                    }
-                }
-                AstKind::CatchClause(catch_clause) => {
-                    if let Some(param) = catch_clause.param.as_ref() {
-                        if let Some(value) = binding_pattern_is_global_obj(param) {
-                            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
-                                value.0.to_compact_str(),
-                                value.1,
-                            ));
-                        }
-                    }
-                }
-                _ => {}
             }
-        }
+
+            check_and_diagnostic(name, ctx.symbols().get_span(symbol_id), ctx);
+            for span in ctx.symbols().get_redeclare_variables(symbol_id) {
+                check_and_diagnostic(name, *span, ctx);
+            }
+        });
     }
 }
 

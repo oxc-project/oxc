@@ -5,7 +5,7 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, TriviasMap, Visit};
 use oxc_diagnostics::Error;
-use oxc_span::{Atom, SourceType, Span};
+use oxc_span::{CompactStr, SourceType, Span};
 use oxc_syntax::{
     module_record::{ExportLocalName, ModuleRecord},
     operator::AssignmentOperator,
@@ -231,7 +231,7 @@ impl<'a> SemanticBuilder<'a> {
     pub fn declare_symbol_on_scope(
         &mut self,
         span: Span,
-        name: &Atom,
+        name: &str,
         scope_id: ScopeId,
         includes: SymbolFlags,
         excludes: SymbolFlags,
@@ -243,16 +243,16 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         let includes = includes | self.current_symbol_flags;
-        let symbol_id = self.symbols.create_symbol(span, name.clone(), includes, scope_id);
+        let symbol_id = self.symbols.create_symbol(span, name, includes, scope_id);
         self.symbols.add_declaration(self.current_node_id);
-        self.scope.add_binding(scope_id, name.to_compact_str(), symbol_id);
+        self.scope.add_binding(scope_id, CompactStr::from(name), symbol_id);
         symbol_id
     }
 
     pub fn declare_symbol(
         &mut self,
         span: Span,
-        name: &Atom,
+        name: &str,
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> SymbolId {
@@ -263,14 +263,14 @@ impl<'a> SemanticBuilder<'a> {
         &mut self,
         scope_id: ScopeId,
         span: Span,
-        name: &Atom,
+        name: &str,
         excludes: SymbolFlags,
         report_error: bool,
     ) -> Option<SymbolId> {
         let symbol_id = self.scope.get_binding(scope_id, name)?;
         if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
-            self.error(Redeclaration(name.to_compact_str(), symbol_span, span));
+            self.error(Redeclaration(CompactStr::from(name), symbol_span, span));
         }
         Some(symbol_id)
     }
@@ -285,16 +285,15 @@ impl<'a> SemanticBuilder<'a> {
     /// Declares a `Symbol` for the node, shadowing previous declarations in the same scope.
     pub fn declare_shadow_symbol(
         &mut self,
-        name: &Atom,
+        name: &str,
         span: Span,
         scope_id: ScopeId,
         includes: SymbolFlags,
     ) -> SymbolId {
         let includes = includes | self.current_symbol_flags;
-        let symbol_id =
-            self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
+        let symbol_id = self.symbols.create_symbol(span, name, includes, self.current_scope_id);
         self.symbols.add_declaration(self.current_node_id);
-        self.scope.get_bindings_mut(scope_id).insert(name.to_compact_str(), symbol_id);
+        self.scope.get_bindings_mut(scope_id).insert(CompactStr::from(name), symbol_id);
         symbol_id
     }
 

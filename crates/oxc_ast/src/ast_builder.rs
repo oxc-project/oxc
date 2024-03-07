@@ -468,6 +468,35 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    pub fn array_assignment_target_maybe_default(
+        &self,
+        array: ArrayAssignmentTarget<'a>,
+    ) -> AssignmentTargetMaybeDefault<'a> {
+        AssignmentTargetMaybeDefault::AssignmentTarget(AssignmentTarget::AssignmentTargetPattern(
+            AssignmentTargetPattern::ArrayAssignmentTarget(self.alloc(array)),
+        ))
+    }
+
+    pub fn object_assignment_target(
+        &self,
+        array: ObjectAssignmentTarget<'a>,
+    ) -> AssignmentTarget<'a> {
+        AssignmentTarget::AssignmentTargetPattern(AssignmentTargetPattern::ObjectAssignmentTarget(
+            self.alloc(array),
+        ))
+    }
+
+    pub fn assignment_target_property_property(
+        &self,
+        span: Span,
+        name: PropertyKey<'a>,
+        binding: AssignmentTargetMaybeDefault<'a>,
+    ) -> AssignmentTargetProperty<'a> {
+        AssignmentTargetProperty::AssignmentTargetPropertyProperty(
+            self.alloc(AssignmentTargetPropertyProperty { span, name, binding }),
+        )
+    }
+
     pub fn simple_assignment_target_identifier(
         &self,
         ident: IdentifierReference<'a>,
@@ -1120,8 +1149,16 @@ impl<'a> AstBuilder<'a> {
         specifiers: Vec<'a, ExportSpecifier>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
+        with_clause: Option<WithClause<'a>>,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
-        self.alloc(ExportNamedDeclaration { span, declaration, specifiers, source, export_kind })
+        self.alloc(ExportNamedDeclaration {
+            span,
+            declaration,
+            specifiers,
+            source,
+            export_kind,
+            with_clause,
+        })
     }
 
     /* ---------- JSX ----------------- */

@@ -1,8 +1,4 @@
-use std::{
-    borrow::{Borrow, Cow},
-    fmt, hash,
-    ops::Deref,
-};
+use std::{borrow::Borrow, fmt, hash, ops::Deref};
 
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
@@ -27,10 +23,7 @@ pub const MAX_INLINE_LEN: usize = 16;
 /// Use [CompactStr] with [Atom::to_compact_str] or [Atom::into_compact_str] for the
 /// lifetimeless form.
 #[derive(Clone, Eq)]
-pub enum Atom<'a> {
-    Arena(&'a str),
-    Compact(CompactString),
-}
+pub struct Atom<'a>(&'a str);
 
 #[cfg(feature = "serde")]
 impl<'a> Serialize for Atom<'a> {
@@ -45,52 +38,28 @@ impl<'a> Serialize for Atom<'a> {
 impl<'a> Atom<'a> {
     #[inline]
     pub fn as_str(&self) -> &str {
-        match self {
-            Self::Arena(s) => s,
-            Self::Compact(s) => s.as_ref(),
-        }
+        self.0
     }
 
     #[inline]
     pub fn into_string(self) -> String {
-        match self {
-            Self::Arena(s) => String::from(s),
-            Self::Compact(s) => s.to_string(),
-        }
+        String::from(self.as_str())
     }
 
     #[inline]
     pub fn into_compact_str(self) -> CompactStr {
-        match self {
-            Self::Arena(s) => CompactStr::new(s),
-            Self::Compact(s) => CompactStr::from(s),
-        }
+        CompactStr::new(self.as_str())
     }
 
     #[inline]
     pub fn to_compact_str(&self) -> CompactStr {
-        match &self {
-            Self::Arena(s) => CompactStr::new(s),
-            Self::Compact(s) => CompactStr::from(s.clone()),
-        }
+        CompactStr::new(self.as_str())
     }
 }
 
 impl<'a> From<&'a str> for Atom<'a> {
     fn from(s: &'a str) -> Self {
-        Self::Arena(s)
-    }
-}
-
-impl<'a> From<String> for Atom<'a> {
-    fn from(s: String) -> Self {
-        Self::Compact(CompactString::from(s))
-    }
-}
-
-impl<'a> From<Cow<'_, str>> for Atom<'a> {
-    fn from(s: Cow<'_, str>) -> Self {
-        Self::Compact(CompactString::from(s))
+        Self(s)
     }
 }
 
@@ -128,10 +97,7 @@ impl<'a> PartialEq<Atom<'a>> for &str {
 
 impl<'a> hash::Hash for Atom<'a> {
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
-        match self {
-            Self::Arena(s) => s.hash(hasher),
-            Self::Compact(s) => s.hash(hasher),
-        }
+        self.as_str().hash(hasher);
     }
 }
 
@@ -225,12 +191,6 @@ impl From<&str> for CompactStr {
 impl From<String> for CompactStr {
     fn from(s: String) -> Self {
         Self(CompactString::from(s))
-    }
-}
-
-impl From<CompactString> for CompactStr {
-    fn from(s: CompactString) -> Self {
-        Self(s)
     }
 }
 

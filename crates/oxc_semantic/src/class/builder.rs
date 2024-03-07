@@ -5,7 +5,7 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_span::GetSpan;
+use oxc_span::{Atom, GetSpan};
 use oxc_syntax::class::{ClassId, ElementKind};
 
 use crate::{AstNodeId, AstNodes};
@@ -57,15 +57,14 @@ impl ClassTableBuilder {
 
     pub fn declare_class_accessor(&mut self, property: &AccessorProperty) {
         let is_private = property.key.is_private_identifier();
-        let name =
-            if is_private { property.key.private_name() } else { property.key.static_name() };
+        let name = property.key.name();
 
         if let Some(name) = name {
             if let Some(class_id) = self.current_class_id {
                 self.classes.add_element(
                     class_id,
                     Element::new(
-                        name.to_compact_str(),
+                        name,
                         property.key.span(),
                         property.r#static,
                         is_private,
@@ -78,15 +77,14 @@ impl ClassTableBuilder {
 
     pub fn declare_class_property(&mut self, property: &PropertyDefinition) {
         let is_private = property.key.is_private_identifier();
-        let name =
-            if is_private { property.key.private_name() } else { property.key.static_name() };
+        let name = property.key.name();
 
         if let Some(name) = name {
             if let Some(class_id) = self.current_class_id {
                 self.classes.add_element(
                     class_id,
                     Element::new(
-                        name.to_compact_str(),
+                        name,
                         property.key.span(),
                         property.r#static,
                         is_private,
@@ -127,14 +125,18 @@ impl ClassTableBuilder {
             return;
         }
         let is_private = method.key.is_private_identifier();
-        let name = if is_private { method.key.private_name() } else { method.key.static_name() };
+        let name = if is_private {
+            method.key.private_name().map(Atom::to_compact_str)
+        } else {
+            method.key.static_name()
+        };
 
         if let Some(name) = name {
             if let Some(class_id) = self.current_class_id {
                 self.classes.add_element(
                     class_id,
                     Element::new(
-                        name.to_compact_str(),
+                        name,
                         method.key.span(),
                         method.r#static,
                         is_private,
