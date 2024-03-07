@@ -2216,6 +2216,17 @@ impl<'a> ModuleDeclaration<'a> {
             | Self::TSNamespaceExportDeclaration(_) => None,
         }
     }
+
+    pub fn with_clause(&self) -> Option<&WithClause<'a>> {
+        match self {
+            Self::ImportDeclaration(decl) => decl.with_clause.as_ref(),
+            Self::ExportAllDeclaration(decl) => decl.with_clause.as_ref(),
+            Self::ExportNamedDeclaration(decl) => decl.with_clause.as_ref(),
+            Self::ExportDefaultDeclaration(_)
+            | Self::TSExportAssignment(_)
+            | Self::TSNamespaceExportDeclaration(_) => None,
+        }
+    }
 }
 
 #[derive(Debug, Hash)]
