@@ -2350,6 +2350,8 @@ pub struct ExportNamedDeclaration<'a> {
     pub source: Option<StringLiteral<'a>>,
     /// `export type { foo }`
     pub export_kind: ImportOrExportKind,
+    /// Some(vec![]) for empty assertion
+    pub with_clause: Option<WithClause<'a>>,
 }
 
 impl<'a> ExportNamedDeclaration<'a> {

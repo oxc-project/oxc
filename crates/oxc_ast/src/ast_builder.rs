@@ -1120,8 +1120,16 @@ impl<'a> AstBuilder<'a> {
         specifiers: Vec<'a, ExportSpecifier>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
+        with_clause: Option<WithClause<'a>>,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
-        self.alloc(ExportNamedDeclaration { span, declaration, specifiers, source, export_kind })
+        self.alloc(ExportNamedDeclaration {
+            span,
+            declaration,
+            specifiers,
+            source,
+            export_kind,
+            with_clause,
+        })
     }
 
     /* ---------- JSX ----------------- */
