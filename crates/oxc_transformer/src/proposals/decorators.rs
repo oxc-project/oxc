@@ -230,6 +230,7 @@ impl<'a> Decorators<'a> {
                                                 )),
                                                 None,
                                                 ImportOrExportKind::Value,
+                                                None,
                                             ),
                                         ),
                                     ));
@@ -283,6 +284,7 @@ impl<'a> Decorators<'a> {
                                         )),
                                         None,
                                         ImportOrExportKind::Value,
+                                        None,
                                     ),
                                 ),
                             ));
