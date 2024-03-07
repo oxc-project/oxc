@@ -138,7 +138,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                 || {
                                     Fix::new(
                                         format!("type {type_name} = {suggestion};"),
-                                        Span { start: node_start, end: node_end },
+                                        Span::new(node_start, node_end),
                                     )
                                 },
                             );
@@ -209,7 +209,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                                 &interface_decl.id.name,
                                                 &suggestion
                                             ),
-                                            Span { start: node_start, end: node_end },
+                                            Span::new(node_start, node_end),
                                         );
                                     }
 
@@ -218,7 +218,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                             "type {} = {};",
                                             &interface_decl.id.name, &suggestion
                                         ),
-                                        Span { start: node_start, end: node_end },
+                                        Span::new(node_start, node_end),
                                     )
                                 },
                             );
@@ -238,10 +238,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                             || {
                                                 Fix::new(
                                                     format!("({suggestion})"),
-                                                    Span {
-                                                        start: literal.span.start,
-                                                        end: literal.span.end,
-                                                    },
+                                                    Span::new(literal.span.start, literal.span.end),
                                                 )
                                             },
                                         );
@@ -254,7 +251,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                 || {
                                     Fix::new(
                                         suggestion.to_string(),
-                                        Span { start: literal.span.start, end: literal.span.end },
+                                        Span::new(literal.span.start, literal.span.end),
                                     )
                                 },
                             ),
@@ -280,10 +277,10 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                                 || {
                                                     Fix::new(
                                                         format!("({suggestion})"),
-                                                        Span {
-                                                            start: literal.span.start,
-                                                            end: literal.span.end,
-                                                        },
+                                                        Span::new(
+                                                            literal.span.start,
+                                                            literal.span.end,
+                                                        ),
                                                     )
                                                 },
                                             );
@@ -305,10 +302,10 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                                 || {
                                                     Fix::new(
                                                         format!("({suggestion})"),
-                                                        Span {
-                                                            start: literal.span.start,
-                                                            end: literal.span.end,
-                                                        },
+                                                        Span::new(
+                                                            literal.span.start,
+                                                            literal.span.end,
+                                                        ),
                                                     )
                                                 },
                                             );
@@ -322,7 +319,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                 || {
                                     Fix::new(
                                         suggestion.to_string(),
-                                        Span { start: literal.span.start, end: literal.span.end },
+                                        Span::new(literal.span.start, literal.span.end),
                                     )
                                 },
                             ),
@@ -371,7 +368,9 @@ impl Rule for PreferFunctionType {
                         union_type.types.iter().for_each(|ts_type| {
                             if let TSType::TSTypeLiteral(literal) = ts_type {
                                 let body = &literal.members;
-                                check_member(&body[0], node, ctx);
+                                if body.len() == 1 {
+                                    check_member(&body[0], node, ctx);
+                                }
                             }
                         });
                     }
@@ -450,6 +449,7 @@ fn test() {
           (): void;
         }
             ",
+        "let foo: number | {};",
     ];
 
     let fail = vec![

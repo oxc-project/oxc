@@ -7,30 +7,40 @@ use super::list::{ArrayPatternList, ObjectPatternProperties};
 use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl};
 
 impl<'a> ParserImpl<'a> {
-    /// Destructuring Binding Patterns
-    /// `LexicalBinding`
-    ///     `BindingIdentifier` `Initializer_opt`
-    ///     `BindingPattern` Initializer
-    /// `BindingPattern`:
-    ///     `ObjectBindingPattern`
-    ///     `ArrayBindingPattern`
-    pub(crate) fn parse_binding(&mut self) -> Result<(BindingPattern<'a>, bool)> {
-        let kind = match self.cur_kind() {
+    /// `BindingElement`
+    ///     `SingleNameBinding`
+    ///     `BindingPattern`[?Yield, ?Await] `Initializer`[+In, ?Yield, ?Await]opt
+    pub(super) fn parse_binding_pattern_with_initializer(&mut self) -> Result<BindingPattern<'a>> {
+        let span = self.start_span();
+        let pattern = self.parse_binding_pattern(true)?;
+        self.with_context(Context::In, |p| p.parse_initializer(span, pattern))
+    }
+
+    pub(super) fn parse_binding_pattern(
+        &mut self,
+        allow_question: bool,
+    ) -> Result<BindingPattern<'a>> {
+        let mut kind = self.parse_binding_pattern_kind()?;
+        let optional =
+            if allow_question && self.ts_enabled() { self.eat(Kind::Question) } else { false };
+        let type_annotation = self.parse_ts_type_annotation()?;
+        if let Some(type_annotation) = &type_annotation {
+            Self::extend_binding_pattern_span_end(type_annotation.span, &mut kind);
+        }
+        Ok(self.ast.binding_pattern(kind, type_annotation, optional))
+    }
+
+    pub(super) fn parse_binding_pattern_kind(&mut self) -> Result<BindingPatternKind<'a>> {
+        match self.cur_kind() {
             Kind::LCurly => self.parse_object_binding_pattern(),
             Kind::LBrack => self.parse_array_binding_pattern(),
             _ => self.parse_binding_pattern_identifier(),
-        }?;
-        if self.ts_enabled() {
-            let optional = self.eat(Kind::Question);
-            let (type_annotation, definite) = self.parse_ts_variable_annotation()?;
-            Ok((self.ast.binding_pattern(kind, type_annotation, optional), definite))
-        } else {
-            Ok((self.ast.binding_pattern(kind, None, false), false))
         }
     }
 
     fn parse_binding_pattern_identifier(&mut self) -> Result<BindingPatternKind<'a>> {
-        self.parse_binding_identifier().map(|ident| self.ast.binding_pattern_identifier(ident))
+        let ident = self.parse_binding_identifier()?;
+        Ok(self.ast.binding_pattern_identifier(ident))
     }
 
     /// Section 14.3.3 Object Binding Pattern
@@ -48,10 +58,10 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Section 14.3.3 Binding Rest Property
-    pub(crate) fn parse_rest_element(&mut self) -> Result<Box<'a, BindingRestElement<'a>>> {
+    pub(super) fn parse_rest_element(&mut self) -> Result<Box<'a, BindingRestElement<'a>>> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
-        let argument = self.parse_binding_pattern()?;
+        let argument = self.parse_binding_pattern_with_initializer()?;
         let span = self.end_span(span);
 
         if self.at(Kind::Comma) {
@@ -65,19 +75,10 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.rest_element(span, argument))
     }
 
-    /// `BindingElement`
-    ///     `SingleNameBinding`
-    ///     `BindingPattern`[?Yield, ?Await] `Initializer`[+In, ?Yield, ?Await]opt
-    pub(crate) fn parse_binding_pattern(&mut self) -> Result<BindingPattern<'a>> {
-        let span = self.start_span();
-        let pattern = self.parse_binding()?.0;
-        self.with_context(Context::In, |p| p.parse_initializer(span, pattern))
-    }
-
     /// `BindingProperty`[Yield, Await] :
     ///     `SingleNameBinding`[?Yield, ?Await]
     ///     `PropertyName`[?Yield, ?Await] : `BindingElement`[?Yield, ?Await]
-    pub(crate) fn parse_binding_property(&mut self) -> Result<BindingProperty<'a>> {
+    pub(super) fn parse_binding_property(&mut self) -> Result<BindingProperty<'a>> {
         let span = self.start_span();
 
         let mut shorthand = false;
@@ -101,7 +102,7 @@ impl<'a> ParserImpl<'a> {
             // let { a: b } = c
             //       ^ IdentifierReference
             self.expect(Kind::Colon)?;
-            self.parse_binding_pattern()?
+            self.parse_binding_pattern_with_initializer()?
         };
 
         Ok(self.ast.binding_property(self.end_span(span), key, value, shorthand, computed))
@@ -120,5 +121,15 @@ impl<'a> ParserImpl<'a> {
         } else {
             Ok(left)
         }
+    }
+
+    pub(super) fn extend_binding_pattern_span_end(span: Span, kind: &mut BindingPatternKind<'a>) {
+        let pat_span = match kind {
+            BindingPatternKind::BindingIdentifier(pat) => &mut pat.span,
+            BindingPatternKind::ObjectPattern(pat) => &mut pat.span,
+            BindingPatternKind::ArrayPattern(pat) => &mut pat.span,
+            BindingPatternKind::AssignmentPattern(pat) => &mut pat.span,
+        };
+        pat_span.end = span.end;
     }
 }

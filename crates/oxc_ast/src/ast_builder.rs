@@ -1120,8 +1120,16 @@ impl<'a> AstBuilder<'a> {
         specifiers: Vec<'a, ExportSpecifier>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
+        with_clause: Option<WithClause<'a>>,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
-        self.alloc(ExportNamedDeclaration { span, declaration, specifiers, source, export_kind })
+        self.alloc(ExportNamedDeclaration {
+            span,
+            declaration,
+            specifiers,
+            source,
+            export_kind,
+            with_clause,
+        })
     }
 
     /* ---------- JSX ----------------- */
@@ -1642,7 +1650,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_query_type(
         &self,
         span: Span,
-        expr_name: TSTypeName<'a>,
+        expr_name: TSTypeQueryExprName<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> TSType<'a> {
         TSType::TSTypeQuery(self.alloc(TSTypeQuery { span, expr_name, type_parameters }))
@@ -1687,7 +1695,6 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_import_type(
         &self,
         span: Span,
-        is_type_of: bool,
         argument: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
         attributes: Option<TSImportAttributes<'a>>,
@@ -1695,7 +1702,6 @@ impl<'a> AstBuilder<'a> {
     ) -> TSType<'a> {
         TSType::TSImportType(self.alloc(TSImportType {
             span,
-            is_type_of,
             argument,
             qualifier,
             attributes,

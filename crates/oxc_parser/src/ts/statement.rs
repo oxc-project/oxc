@@ -66,36 +66,16 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_annotation(
         &mut self,
     ) -> Result<Option<Box<'a, TSTypeAnnotation<'a>>>> {
-        if self.at(Kind::Colon) {
-            let span = self.start_span();
-            self.bump_any(); // bump ':'
-            let type_annotation = self.parse_ts_type()?;
-            Ok(Some(self.ast.ts_type_annotation(self.end_span(span), type_annotation)))
-        } else {
-            Ok(None)
+        if !self.ts_enabled() {
+            return Ok(None);
         }
-    }
-
-    pub(crate) fn parse_ts_variable_annotation(
-        &mut self,
-    ) -> Result<(Option<Box<'a, TSTypeAnnotation<'a>>>, bool)> {
-        if !self.at(Kind::Bang) {
-            return Ok((self.parse_ts_type_annotation()?, false));
+        if !self.at(Kind::Colon) {
+            return Ok(None);
         }
-
-        if self.cur_token().is_on_new_line {
-            return Ok((None, false));
-        }
-
         let span = self.start_span();
-        self.bump(Kind::Bang);
-
-        if self.eat(Kind::Colon) {
-            let type_annotation = self.parse_ts_type()?;
-            Ok((Some(self.ast.ts_type_annotation(self.end_span(span), type_annotation)), true))
-        } else {
-            Err(self.unexpected())
-        }
+        self.bump_any(); // bump ':'
+        let type_annotation = self.parse_ts_type()?;
+        Ok(Some(self.ast.ts_type_annotation(self.end_span(span), type_annotation)))
     }
 
     pub(crate) fn parse_ts_type_alias_declaration(
@@ -295,16 +275,14 @@ impl<'a> ParserImpl<'a> {
         match self.cur_kind() {
             Kind::Namespace => {
                 let kind = TSModuleDeclarationKind::Namespace;
-                let span = self.start_span();
                 self.bump_any();
-                self.parse_ts_namespace_or_module_declaration_body(span, kind, modifiers)
+                self.parse_ts_namespace_or_module_declaration_body(start_span, kind, modifiers)
                     .map(Declaration::TSModuleDeclaration)
             }
             Kind::Module => {
                 let kind = TSModuleDeclarationKind::Module;
-                let span = self.start_span();
                 self.bump_any();
-                self.parse_ts_namespace_or_module_declaration_body(span, kind, modifiers)
+                self.parse_ts_namespace_or_module_declaration_body(start_span, kind, modifiers)
                     .map(Declaration::TSModuleDeclaration)
             }
             Kind::Global => {

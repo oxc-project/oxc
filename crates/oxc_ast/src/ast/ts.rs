@@ -8,8 +8,7 @@ use oxc_span::{Atom, GetSpan, Span};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-#[allow(clippy::wildcard_imports)]
-use crate::ast::*;
+use super::{js::*, literal::*};
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
@@ -761,8 +760,16 @@ pub struct TSInferType<'a> {
 pub struct TSTypeQuery<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub expr_name: TSTypeName<'a>,
+    pub expr_name: TSTypeQueryExprName<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+}
+
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+pub enum TSTypeQueryExprName<'a> {
+    TSTypeName(TSTypeName<'a>),
+    TSImportType(TSImportType<'a>),
 }
 
 #[derive(Debug, Hash)]
@@ -771,7 +778,6 @@ pub struct TSTypeQuery<'a> {
 pub struct TSImportType<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub is_type_of: bool,
     pub argument: TSType<'a>,
     pub qualifier: Option<TSTypeName<'a>>,
     pub attributes: Option<TSImportAttributes<'a>>,
@@ -1050,4 +1056,24 @@ impl ImportOrExportKind {
     pub fn is_type(&self) -> bool {
         matches!(self, Self::Type)
     }
+}
+
+// [`JSDoc`](https://github.com/microsoft/TypeScript/blob/54a554d8af2657630307cbfa8a3e4f3946e36507/src/compiler/types.ts#L393)
+
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+pub struct JSDocNullableType<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub type_annotation: TSType<'a>,
+    pub postfix: bool,
+}
+
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+pub struct JSDocUnknownType {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
 }

@@ -123,7 +123,9 @@ impl<'a> ParserImpl<'a> {
             FunctionKind::TSDeclaration { .. } => FunctionType::TSDeclareFunction,
         };
 
-        if FunctionType::TSDeclareFunction == function_type {
+        if FunctionType::TSDeclareFunction == function_type
+            || FunctionType::TSEmptyBodyFunctionExpression == function_type
+        {
             self.asi()?;
         }
 

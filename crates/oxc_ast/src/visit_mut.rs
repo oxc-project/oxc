@@ -935,7 +935,7 @@ pub trait VisitMut<'a>: Sized {
             self.visit_assignment_target_maybe_default(element);
         }
         if let Some(target) = &mut target.rest {
-            self.visit_assignment_target(target);
+            self.visit_assignment_target_rest(target);
         }
     }
 
@@ -969,7 +969,7 @@ pub trait VisitMut<'a>: Sized {
             self.visit_assignment_target_property(property);
         }
         if let Some(target) = &mut target.rest {
-            self.visit_assignment_target(target);
+            self.visit_assignment_target_rest(target);
         }
     }
 
@@ -1000,6 +1000,10 @@ pub trait VisitMut<'a>: Sized {
     ) {
         self.visit_property_key(&mut property.name);
         self.visit_assignment_target_maybe_default(&mut property.binding);
+    }
+
+    fn visit_assignment_target_rest(&mut self, rest: &mut AssignmentTargetRest<'a>) {
+        self.visit_assignment_target(&mut rest.target);
     }
 
     /* ----------  Expression ---------- */
@@ -1872,7 +1876,10 @@ pub trait VisitMut<'a>: Sized {
     fn visit_ts_type_query(&mut self, ty: &mut TSTypeQuery<'a>) {
         let kind = AstKind::TSTypeQuery(self.alloc(ty));
         self.enter_node(kind);
-        self.visit_ts_type_name(&mut ty.expr_name);
+        match &mut ty.expr_name {
+            TSTypeQueryExprName::TSTypeName(name) => self.visit_ts_type_name(name),
+            TSTypeQueryExprName::TSImportType(_import) => {} // TODO
+        }
         if let Some(type_parameters) = &mut ty.type_parameters {
             self.visit_ts_type_parameter_instantiation(type_parameters);
         }

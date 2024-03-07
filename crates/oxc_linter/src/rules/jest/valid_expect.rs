@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactString, GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -21,7 +21,7 @@ use crate::{
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jest(valid-expect): {0:?}")]
 #[diagnostic(severity(warning), help("{1:?}"))]
-struct ValidExpectDiagnostic(CompactString, &'static str, #[label] Span);
+struct ValidExpectDiagnostic(CompactStr, &'static str, #[label] Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct ValidExpect(Box<ValidExpectConfig>);
@@ -142,7 +142,7 @@ impl ValidExpect {
         let Some(Expression::CallExpression(call_expr)) = jest_fn_call.head.parent else { return };
 
         if call_expr.arguments.len() < self.min_args {
-            let error = CompactString::from(format!(
+            let error = CompactStr::from(format!(
                 "Expect takes at most {} argument{} ",
                 self.min_args,
                 if self.min_args > 1 { "s" } else { "" }
@@ -152,7 +152,7 @@ impl ValidExpect {
             return;
         }
         if call_expr.arguments.len() > self.max_args {
-            let error = CompactString::from(format!(
+            let error = CompactStr::from(format!(
                 "Expect requires at least {} argument{} ",
                 self.max_args,
                 if self.max_args > 1 { "s" } else { "" }
@@ -360,26 +360,25 @@ enum Message {
 }
 
 impl Message {
-    fn details(self) -> (CompactString, &'static str) {
+    fn details(self) -> (CompactStr, &'static str) {
         match self {
             Self::MatcherNotFound => (
-                CompactString::from("Expect must have a corresponding matcher call."),
+                CompactStr::from("Expect must have a corresponding matcher call."),
                 "Did you forget add a matcher(e.g. `toBe`, `toBeDefined`)",
             ),
             Self::MatcherNotCalled => (
-                CompactString::from("Matchers must be called to assert."),
+                CompactStr::from("Matchers must be called to assert."),
                 "You need call your matcher, e.g. `expect(true).toBe(true)`.",
             ),
-            Self::ModifierUnknown => (
-                CompactString::from("Expect has an unknown modifier."),
-                "Is it a spelling mistake?",
-            ),
+            Self::ModifierUnknown => {
+                (CompactStr::from("Expect has an unknown modifier."), "Is it a spelling mistake?")
+            }
             Self::AsyncMustBeAwaited => (
-                CompactString::from("Async assertions must be awaited."),
+                CompactStr::from("Async assertions must be awaited."),
                 "Add `await` to your assertion.",
             ),
             Self::PromisesWithAsyncAssertionsMustBeAwaited => (
-                CompactString::from("Promises which return async assertions must be awaited."),
+                CompactStr::from("Promises which return async assertions must be awaited."),
                 "Add `await` to your assertion.",
             ),
         }

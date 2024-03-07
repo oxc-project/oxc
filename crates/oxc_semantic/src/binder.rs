@@ -1,14 +1,16 @@
 //! Declare symbol for `BindingIdentifier`s
 
+use std::borrow::Cow;
+
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_ast::{
     syntax_directed_operations::{BoundNames, IsSimpleParameterList},
     AstKind,
 };
-use oxc_span::{Atom, SourceType};
+use oxc_span::SourceType;
 
-use crate::{scope::ScopeFlags, symbol::SymbolFlags, SemanticBuilder, VariableInfo};
+use crate::{scope::ScopeFlags, symbol::SymbolFlags, SemanticBuilder};
 
 pub trait Binder {
     fn bind(&self, _builder: &mut SemanticBuilder) {}
@@ -59,7 +61,7 @@ impl<'a> Binder for VariableDeclarator<'a> {
                     builder.check_redeclaration(*scope_id, span, name, excludes, true)
                 {
                     ident.symbol_id.set(Some(symbol_id));
-                    builder.add_redeclared_variables(VariableInfo { span: ident.span, symbol_id });
+                    builder.add_redeclare_variable(symbol_id, ident.span);
                     return;
                 }
             }
@@ -68,7 +70,7 @@ impl<'a> Binder for VariableDeclarator<'a> {
                 builder.declare_symbol_on_scope(span, name, current_scope_id, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
             for scope_id in &var_scope_ids {
-                builder.scope.add_binding(*scope_id, name.to_compact_string(), symbol_id);
+                builder.scope.add_binding(*scope_id, name.to_compact_str(), symbol_id);
             }
         });
     }
@@ -343,9 +345,9 @@ impl<'a> Binder for TSEnumMember<'a> {
             return;
         }
         let name = match &self.id {
-            TSEnumMemberName::Identifier(id) => id.name.clone(),
-            TSEnumMemberName::StringLiteral(s) => s.value.clone(),
-            TSEnumMemberName::NumericLiteral(n) => Atom::from(n.value.to_string()),
+            TSEnumMemberName::Identifier(id) => Cow::Borrowed(id.name.as_str()),
+            TSEnumMemberName::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
+            TSEnumMemberName::NumericLiteral(n) => Cow::Owned(n.value.to_string()),
             TSEnumMemberName::ComputedPropertyName(_) => panic!("TODO: implement"),
         };
         builder.declare_symbol(

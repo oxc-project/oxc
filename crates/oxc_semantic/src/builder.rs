@@ -5,7 +5,7 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, TriviasMap, Visit};
 use oxc_diagnostics::Error;
-use oxc_span::{Atom, CompactString, SourceType, Span};
+use oxc_span::{CompactStr, SourceType, Span};
 use oxc_syntax::{
     module_record::{ExportLocalName, ModuleRecord},
     operator::AssignmentOperator,
@@ -28,17 +28,6 @@ use crate::{
     symbol::{SymbolFlags, SymbolId, SymbolTable},
     Semantic,
 };
-
-#[derive(Debug, Clone)]
-pub struct VariableInfo {
-    pub span: Span,
-    pub symbol_id: SymbolId,
-}
-
-#[derive(Debug)]
-pub struct RedeclareVariables {
-    pub variables: Vec<VariableInfo>,
-}
 
 pub struct SemanticBuilder<'a> {
     pub source_text: &'a str,
@@ -79,8 +68,6 @@ pub struct SemanticBuilder<'a> {
 
     check_syntax_error: bool,
 
-    redeclare_variables: RedeclareVariables,
-
     pub cfg: ControlFlowGraph,
 
     pub class_table_builder: ClassTableBuilder,
@@ -117,7 +104,6 @@ impl<'a> SemanticBuilder<'a> {
             label_builder: LabelBuilder::default(),
             jsdoc: JSDocBuilder::new(source_text, &trivias),
             check_syntax_error: false,
-            redeclare_variables: RedeclareVariables { variables: vec![] },
             cfg: ControlFlowGraph::new(),
             class_table_builder: ClassTableBuilder::new(),
         }
@@ -177,7 +163,6 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::clone(&self.module_record),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.label_builder.unused_node_ids,
-            redeclare_variables: self.redeclare_variables.variables,
             cfg: self.cfg,
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
@@ -195,7 +180,6 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::new(ModuleRecord::default()),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.label_builder.unused_node_ids,
-            redeclare_variables: self.redeclare_variables.variables,
             cfg: self.cfg,
         }
     }
@@ -247,30 +231,28 @@ impl<'a> SemanticBuilder<'a> {
     pub fn declare_symbol_on_scope(
         &mut self,
         span: Span,
-        name: &Atom,
+        name: &str,
         scope_id: ScopeId,
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
             self.symbols.union_flag(symbol_id, includes);
-            if includes.is_function_scoped_declaration() {
-                self.add_redeclared_variables(VariableInfo { span, symbol_id });
-            }
+            self.add_redeclare_variable(symbol_id, span);
             return symbol_id;
         }
 
         let includes = includes | self.current_symbol_flags;
-        let symbol_id = self.symbols.create_symbol(span, name.clone(), includes, scope_id);
+        let symbol_id = self.symbols.create_symbol(span, name, includes, scope_id);
         self.symbols.add_declaration(self.current_node_id);
-        self.scope.add_binding(scope_id, name.to_compact_string(), symbol_id);
+        self.scope.add_binding(scope_id, CompactStr::from(name), symbol_id);
         symbol_id
     }
 
     pub fn declare_symbol(
         &mut self,
         span: Span,
-        name: &Atom,
+        name: &str,
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> SymbolId {
@@ -281,14 +263,14 @@ impl<'a> SemanticBuilder<'a> {
         &mut self,
         scope_id: ScopeId,
         span: Span,
-        name: &Atom,
+        name: &str,
         excludes: SymbolFlags,
         report_error: bool,
     ) -> Option<SymbolId> {
         let symbol_id = self.scope.get_binding(scope_id, name)?;
         if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
-            self.error(Redeclaration(name.to_compact_string(), symbol_span, span));
+            self.error(Redeclaration(CompactStr::from(name), symbol_span, span));
         }
         Some(symbol_id)
     }
@@ -296,27 +278,22 @@ impl<'a> SemanticBuilder<'a> {
     pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
         let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
-        self.scope.add_unresolved_reference(
-            self.current_scope_id,
-            CompactString::new(reference_name),
-            reference_id,
-        );
+        self.scope.add_unresolved_reference(self.current_scope_id, reference_name, reference_id);
         reference_id
     }
 
     /// Declares a `Symbol` for the node, shadowing previous declarations in the same scope.
     pub fn declare_shadow_symbol(
         &mut self,
-        name: &Atom,
+        name: &str,
         span: Span,
         scope_id: ScopeId,
         includes: SymbolFlags,
     ) -> SymbolId {
         let includes = includes | self.current_symbol_flags;
-        let symbol_id =
-            self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
+        let symbol_id = self.symbols.create_symbol(span, name, includes, self.current_scope_id);
         self.symbols.add_declaration(self.current_node_id);
-        self.scope.get_bindings_mut(scope_id).insert(name.to_compact_string(), symbol_id);
+        self.scope.get_bindings_mut(scope_id).insert(CompactStr::from(name), symbol_id);
         symbol_id
     }
 
@@ -342,8 +319,8 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    pub fn add_redeclared_variables(&mut self, variable: VariableInfo) {
-        self.redeclare_variables.variables.push(variable);
+    pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
+        self.symbols.add_redeclare_variable(symbol_id, span);
     }
 
     fn add_export_flag_for_export_identifier(&mut self) {
@@ -1045,7 +1022,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_label_identifier(&stmt.label);
 
         /* cfg */
-        self.cfg.next_label = Some(stmt.label.name.to_compact_string());
+        self.cfg.next_label = Some(stmt.label.name.to_compact_str());
         /* cfg */
 
         self.visit_statement(&stmt.body);
@@ -1856,7 +1833,7 @@ impl<'a> SemanticBuilder<'a> {
     fn reference_identifier(&mut self, ident: &IdentifierReference) {
         let flag = self.resolve_reference_usages();
         let reference =
-            Reference::new(ident.span, ident.name.to_compact_string(), self.current_node_id, flag);
+            Reference::new(ident.span, ident.name.to_compact_str(), self.current_node_id, flag);
         let reference_id = self.declare_reference(reference);
         ident.reference_id.set(Some(reference_id));
     }
@@ -1884,7 +1861,7 @@ impl<'a> SemanticBuilder<'a> {
         }
         let reference = Reference::new(
             ident.span,
-            ident.name.to_compact_string(),
+            ident.name.to_compact_str(),
             self.current_node_id,
             ReferenceFlag::read(),
         );

@@ -170,8 +170,6 @@ impl Case for Test262Case {
             // Regex parser is required. See https://github.com/oxc-project/oxc/issues/385#issuecomment-1755566240
             "regexp-v-flag",
             "regexp-unicode-property-escapes",
-            // Stage 3 `https://github.com/tc39/proposal-decorators`
-            "decorators",
         ]
         .iter()
         .any(|feature| self.meta.features.iter().any(|f| **f == **feature))

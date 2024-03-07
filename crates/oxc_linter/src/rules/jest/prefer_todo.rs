@@ -22,12 +22,12 @@ use crate::{
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.")]
 #[diagnostic(severity(warning))]
-pub struct EmptyTest(#[label] pub Span);
+struct EmptyTest(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.")]
 #[diagnostic(severity(warning))]
-struct UmImplementedTestDiagnostic(#[label] pub Span);
+struct UnImplementedTestDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferTodo;
@@ -82,7 +82,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
         if counts == 1 && !filter_todo_case(call_expr) {
             let (content, span) = get_fix_content(call_expr);
-            ctx.diagnostic_with_fix(UmImplementedTestDiagnostic(span), || Fix::new(content, span));
+            ctx.diagnostic_with_fix(UnImplementedTestDiagnostic(span), || Fix::new(content, span));
         }
 
         if counts > 1 && is_empty_function(call_expr) {
@@ -133,9 +133,7 @@ fn is_empty_function(expr: &CallExpression) -> bool {
 
 fn get_fix_content<'a>(expr: &'a CallExpression<'a>) -> (&'a str, Span) {
     match &expr.callee {
-        Expression::Identifier(ident) => {
-            (".todo", Span { start: ident.span.end, end: ident.span.end })
-        }
+        Expression::Identifier(ident) => (".todo", Span::new(ident.span.end, ident.span.end)),
         Expression::MemberExpression(mem_expr) => {
             if let Some((span, _)) = mem_expr.static_property_info() {
                 return ("todo", span);
@@ -187,7 +185,7 @@ fn build_code(expr: &CallExpression, ctx: &LintContext) -> (String, Span) {
         formatter.print(b')');
     }
 
-    (formatter.into_code(), expr.span)
+    (formatter.into_source_text(), expr.span)
 }
 
 #[test]

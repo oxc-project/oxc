@@ -373,7 +373,9 @@ class Playground {
     switch (this.currentView) {
       case "ast":
         this.run();
-        text = JSON.stringify(this.oxc.ast, null, 2);
+        let ast = this.oxc.ast;
+        ast.comments = this.oxc.getComments();
+        text = JSON.stringify(ast, null, 2);
         break;
       case "scope":
         this.runOptions.scope = true;

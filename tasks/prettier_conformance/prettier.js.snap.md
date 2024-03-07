@@ -1,4 +1,4 @@
-js compatibility: 242/562 (43.06%)
+js compatibility: 264/586 (45.05%)
 
 # Failed
 
@@ -258,7 +258,13 @@ js compatibility: 242/562 (43.06%)
 
 ### import
 * import/comments.js
-* import/empty-import.js
+
+### import-assertions
+* import-assertions/empty.js
+
+### import-attributes
+* import-attributes/empty.js
+* import-attributes/keyword-detect.js
 
 ### label
 * label/comment.js

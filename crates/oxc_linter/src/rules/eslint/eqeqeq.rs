@@ -108,7 +108,7 @@ impl Rule for Eqeqeq {
                 || {
                     let start = binary_expr.left.span().end;
                     let end = binary_expr.right.span().start;
-                    Fix::new(preferred_operator_with_padding, Span { start, end })
+                    Fix::new(preferred_operator_with_padding, Span::new(start, end))
                 },
             );
         } else {

@@ -127,8 +127,9 @@ impl TypeScriptFixtures {
 
         result
             .map(|()| {
-                Codegen::<false>::new(source_text.len(), CodegenOptions::default())
+                Codegen::<false>::new(&source_text, CodegenOptions::default())
                     .build(transformed_program)
+                    .source_text
             })
             .map_err(|e| e.iter().map(ToString::to_string).collect())
     }

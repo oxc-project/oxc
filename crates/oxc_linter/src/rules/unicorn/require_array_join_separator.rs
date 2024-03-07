@@ -63,10 +63,10 @@ impl Rule for RequireArrayJoinSeparator {
             && !call_expr.optional
             && !matches!(member_expr, MemberExpression::ComputedMemberExpression(_))
         {
-            ctx.diagnostic(RequireArrayJoinSeparatorDiagnostic(Span {
-                start: member_expr.span().end,
-                end: call_expr.span.end,
-            }));
+            ctx.diagnostic(RequireArrayJoinSeparatorDiagnostic(Span::new(
+                member_expr.span().end,
+                call_expr.span.end,
+            )));
         }
 
         // `[].join.call(foo)` and `Array.prototype.join.call(foo)`
@@ -77,10 +77,10 @@ impl Rule for RequireArrayJoinSeparator {
                 && !call_expr.arguments.iter().any(oxc_ast::ast::Argument::is_spread)
                 && is_array_prototype_property(member_expr_obj, "join")
             {
-                ctx.diagnostic(RequireArrayJoinSeparatorDiagnostic(Span {
-                    start: member_expr.span().end,
-                    end: call_expr.span.end,
-                }));
+                ctx.diagnostic(RequireArrayJoinSeparatorDiagnostic(Span::new(
+                    member_expr.span().end,
+                    call_expr.span.end,
+                )));
             }
         }
     }

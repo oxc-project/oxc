@@ -1,11 +1,16 @@
-use crate::suite::{Case, Suite, TestResult};
-use oxc_span::SourceType;
-use oxc_tasks_common::{project_root, TestFiles};
-use std::io::Write;
 use std::{
     fs::File,
+    io::Write,
     path::{Path, PathBuf},
 };
+
+use oxc_allocator::Allocator;
+use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_parser::Parser;
+use oxc_span::SourceType;
+use oxc_tasks_common::{project_root, TestFiles};
+
+use crate::suite::{Case, Suite, TestResult};
 
 static FIXTURES_PATH: &str =
     "tasks/coverage/babel/packages/babel-generator/test/fixtures/sourcemaps";
@@ -188,8 +193,8 @@ impl Case for SourcemapCase {
 
     fn execute(&mut self, source_type: SourceType) -> TestResult {
         let source_text = self.code();
-        let allocator = oxc_allocator::Allocator::default();
-        let ret = oxc_parser::Parser::new(&allocator, source_text, source_type).parse();
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, source_text, source_type).parse();
 
         if !ret.errors.is_empty() {
             if let Some(error) = ret.errors.into_iter().next() {
@@ -198,10 +203,13 @@ impl Case for SourcemapCase {
             }
         }
 
-        let codegen_options = oxc_codegen::CodegenOptions::default();
-        let mut codegen = oxc_codegen::Codegen::<false>::new(source_text.len(), codegen_options);
-        let content = codegen.with_sourcemap(source_text, "").build(&ret.program);
-        let map = codegen.into_sourcemap();
+        let codegen_options = CodegenOptions {
+            enable_source_map: Some(self.path.to_string_lossy().to_string()),
+            ..CodegenOptions::default()
+        };
+        let codegen_ret = Codegen::<false>::new(source_text, codegen_options).build(&ret.program);
+        let content = codegen_ret.source_text;
+        let map = codegen_ret.source_map.unwrap();
         let tokens = map
             .tokens()
             .map(|token| {

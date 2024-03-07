@@ -34,9 +34,18 @@ pub use crate::{
 };
 // use crate::mangler::Mangler;
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone)]
 pub struct CodegenOptions {
+    /// Pass in the filename to enable source map support.
+    pub enable_source_map: Option<String>,
+
+    /// Enable TypeScript code generation.
     pub enable_typescript: bool,
+}
+
+pub struct CodegenReturn {
+    pub source_text: String,
+    pub source_map: Option<sourcemap::SourceMap>,
 }
 
 pub struct Codegen<const MINIFY: bool> {
@@ -64,7 +73,6 @@ pub struct Codegen<const MINIFY: bool> {
     /// Track the current indentation level
     indentation: u8,
 
-    // sourcemap
     sourcemap_builder: SourcemapBuilder,
 }
 
@@ -76,10 +84,16 @@ pub enum Separator {
 }
 
 impl<const MINIFY: bool> Codegen<MINIFY> {
-    pub fn new(source_len: usize, options: CodegenOptions) -> Self {
+    pub fn new(source_text: &str, options: CodegenOptions) -> Self {
         // Initialize the output code buffer to reduce memory reallocation.
         // Minification will reduce by at least half of the original size.
+        let source_len = source_text.len();
         let capacity = if MINIFY { source_len / 2 } else { source_len };
+
+        let mut sourcemap_builder = SourcemapBuilder::default();
+        if let Some(source_name) = &options.enable_source_map {
+            sourcemap_builder.with_name_and_source(source_name, source_text);
+        }
         Self {
             options,
             // mangler: None,
@@ -93,7 +107,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
             indentation: 0,
-            sourcemap_builder: SourcemapBuilder::default(),
+            sourcemap_builder,
         }
     }
 
@@ -101,25 +115,16 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     // self.mangler = Some(mangler);
     // }
 
-    pub fn with_sourcemap(&mut self, source: &str, source_name: &str) -> &mut Self {
-        self.sourcemap_builder
-            .with_enable_sourcemap(true)
-            .with_source_and_name(source, source_name);
-        self
+    pub fn build(mut self, program: &Program<'_>) -> CodegenReturn {
+        program.gen(&mut self, Context::default());
+        let source_text = self.into_source_text();
+        let source_map = self.sourcemap_builder.into_sourcemap();
+        CodegenReturn { source_text, source_map }
     }
 
-    pub fn build(&mut self, program: &Program<'_>) -> String {
-        program.gen(self, Context::default());
-        self.into_code()
-    }
-
-    pub fn into_code(&mut self) -> String {
-        // SAFETY: criteria of `from_utf8_unchecked`.are met.
+    pub fn into_source_text(&mut self) -> String {
+        // SAFETY: criteria of `from_utf8_unchecked` are met.
         unsafe { String::from_utf8_unchecked(std::mem::take(&mut self.code)) }
-    }
-
-    pub fn into_sourcemap(self) -> sourcemap::SourceMap {
-        self.sourcemap_builder.into_sourcemap()
     }
 
     fn code(&self) -> &Vec<u8> {
@@ -174,7 +179,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     }
 
     fn peek_nth(&self, n: usize) -> Option<char> {
-        // SAFETY: criteria of `from_utf8_unchecked`.are met.
+        // SAFETY: criteria of `from_utf8_unchecked` are met.
         unsafe { from_utf8_unchecked(self.code()) }.chars().nth_back(n)
     }
 

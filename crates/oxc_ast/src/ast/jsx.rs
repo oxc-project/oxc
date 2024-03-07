@@ -5,8 +5,7 @@ use oxc_span::{Atom, Span};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-#[allow(clippy::wildcard_imports)]
-use crate::ast::*;
+use super::{js::*, literal::*, ts::*};
 
 // 1.2 JSX Elements
 

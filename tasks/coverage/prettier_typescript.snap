@@ -1,6 +1,6 @@
 prettier_typescript Summary:
 AST Parsed     : 5243/5243 (100.00%)
-Positive Passed: 2864/5243 (54.63%)
+Positive Passed: 2871/5243 (54.76%)
 Expect to Parse: "compiler/DeclarationErrorsNoEmitOnError.ts"
 Expect to Parse: "compiler/abstractInterfaceIdentifierName.ts"
 Expect to Parse: "compiler/abstractPropertyBasics.ts"
@@ -43,7 +43,6 @@ Expect to Parse: "compiler/arrayLiteralContextualType.ts"
 Expect to Parse: "compiler/arrayTypeInSignatureOfInterfaceAndClass.ts"
 Expect to Parse: "compiler/arrayconcat.ts"
 Expect to Parse: "compiler/arrowFunctionInExpressionStatement2.ts"
-Expect to Parse: "compiler/arrowFunctionParsingDoesNotConfuseParenthesizedObjectForArrowHead.ts"
 Expect to Parse: "compiler/arrowFunctionWithObjectLiteralBody5.ts"
 Expect to Parse: "compiler/arrowFunctionWithObjectLiteralBody6.ts"
 Expect to Parse: "compiler/assertionFunctionsCanNarrowByDiscriminant.ts"
@@ -1762,7 +1761,6 @@ Expect to Parse: "conformance/expressions/unaryOperators/voidOperator/voidOperat
 Expect to Parse: "conformance/expressions/unaryOperators/voidOperator/voidOperatorWithEnumType.ts"
 Expect to Parse: "conformance/expressions/unaryOperators/voidOperator/voidOperatorWithNumberType.ts"
 Expect to Parse: "conformance/expressions/unaryOperators/voidOperator/voidOperatorWithStringType.ts"
-Expect to Parse: "conformance/externalModules/asiPreventsParsingAsAmbientExternalModule01.ts"
 Expect to Parse: "conformance/externalModules/asiPreventsParsingAsAmbientExternalModule02.ts"
 Expect to Parse: "conformance/externalModules/es6/es6modulekindWithES5Target12.ts"
 Expect to Parse: "conformance/externalModules/es6/es6modulekindWithES5Target5.ts"
@@ -1789,10 +1787,7 @@ Expect to Parse: "conformance/interfaces/declarationMerging/mergedInterfacesWith
 Expect to Parse: "conformance/interfaces/declarationMerging/mergedInterfacesWithMultipleBases3.ts"
 Expect to Parse: "conformance/interfaces/declarationMerging/twoMergedInterfacesWithDifferingOverloads.ts"
 Expect to Parse: "conformance/interfaces/declarationMerging/twoMergedInterfacesWithDifferingOverloads2.ts"
-Expect to Parse: "conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface01.ts"
-Expect to Parse: "conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface02.ts"
 Expect to Parse: "conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface03.ts"
-Expect to Parse: "conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface04.ts"
 Expect to Parse: "conformance/interfaces/interfaceDeclarations/derivedInterfaceDoesNotHideBaseSignatures.ts"
 Expect to Parse: "conformance/interfaces/interfaceDeclarations/interfaceExtendsObjectIntersection.ts"
 Expect to Parse: "conformance/interfaces/interfaceDeclarations/interfaceThatHidesBaseProperty.ts"
@@ -1835,8 +1830,6 @@ Expect to Parse: "conformance/internalModules/exportDeclarations/ExportVariableW
 Expect to Parse: "conformance/internalModules/importDeclarations/exportImportAlias.ts"
 Expect to Parse: "conformance/internalModules/importDeclarations/importAliasIdentifiers.ts"
 Expect to Parse: "conformance/internalModules/moduleBody/moduleWithStatementsOfEveryKind.ts"
-Expect to Parse: "conformance/internalModules/moduleDeclarations/asiPreventsParsingAsNamespace01.ts"
-Expect to Parse: "conformance/internalModules/moduleDeclarations/asiPreventsParsingAsNamespace02.ts"
 Expect to Parse: "conformance/internalModules/moduleDeclarations/asiPreventsParsingAsNamespace03.ts"
 Expect to Parse: "conformance/internalModules/moduleDeclarations/asiPreventsParsingAsNamespace05.ts"
 Expect to Parse: "conformance/internalModules/moduleDeclarations/instantiatedModule.ts"

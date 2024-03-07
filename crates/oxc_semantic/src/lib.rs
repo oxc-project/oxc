@@ -30,7 +30,6 @@ pub use oxc_syntax::{
 use rustc_hash::FxHashSet;
 
 pub use crate::{
-    builder::VariableInfo,
     control_flow::{
         print_basic_block, AssignmentValue, BasicBlockElement, BinaryAssignmentValue, BinaryOp,
         CallType, CalleeWithArgumentsAssignmentValue, CollectionAssignmentValue, ControlFlowGraph,
@@ -63,8 +62,6 @@ pub struct Semantic<'a> {
     jsdoc: JSDocFinder<'a>,
 
     unused_labels: FxHashSet<AstNodeId>,
-
-    redeclare_variables: Vec<VariableInfo>,
 
     cfg: ControlFlowGraph,
 }
@@ -146,10 +143,6 @@ impl<'a> Semantic<'a> {
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
         self.scopes().root_unresolved_references().contains_key(ident.name.as_str())
-    }
-
-    pub fn redeclare_variables(&self) -> &Vec<VariableInfo> {
-        &self.redeclare_variables
     }
 }
 

@@ -69,10 +69,8 @@ impl Rule for SwitchCaseBraces {
                             return;
                         };
 
-                        let case_body_span = Span {
-                            start: first_statement.span().start,
-                            end: last_statement.span().end,
-                        };
+                        let case_body_span =
+                            Span::new(first_statement.span().start, last_statement.span().end);
 
                         ctx.diagnostic_with_fix(SwitchCaseBracesDiagnostic(case_body_span), || {
                             use oxc_codegen::{Context, Gen};
@@ -94,7 +92,7 @@ impl Rule for SwitchCaseBraces {
                                     .for_each(|x| x.gen(&mut formatter, Context::default()));
                                 formatter.print(b'}');
 
-                                formatter.into_code()
+                                formatter.into_source_text()
                             };
 
                             Fix::new(modified_code, case.span)

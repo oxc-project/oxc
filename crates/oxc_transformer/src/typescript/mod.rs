@@ -243,6 +243,7 @@ impl<'a> TypeScript<'a> {
                 self.ast.new_vec(),
                 None,
                 ImportOrExportKind::Value,
+                None,
             );
             let export_decl = ModuleDeclaration::ExportNamedDeclaration(empty_export);
             program.body.push(self.ast.module_declaration(export_decl));
@@ -625,6 +626,7 @@ impl<'a> TypeScript<'a> {
                         self.ast.new_vec(),
                         None,
                         ImportOrExportKind::Value,
+                        None,
                     ),
                 ))
             } else {
@@ -637,7 +639,10 @@ impl<'a> TypeScript<'a> {
     fn get_namespace_arg_name(&mut self, name: &Atom<'a>) -> Atom<'a> {
         let count = self.namespace_arg_names.entry(name.clone()).or_insert(0);
         *count += 1;
-        format!("_{name}{}", if *count > 1 { count.to_string() } else { String::new() }).into()
+        self.ast.new_atom(&format!(
+            "_{name}{}",
+            if *count > 1 { count.to_string() } else { String::new() }
+        ))
     }
 
     /// ```TypeScript

@@ -1048,9 +1048,16 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
                 || specifiers.get(1).is_some_and(validate_namespace);
 
             parts.push(module::print_module_specifiers(p, specifiers, is_default, is_namespace));
+            parts.push(ss!(" from"));
         }
-        parts.push(ss!(" from "));
+        parts.push(space!());
         parts.push(self.source.format(p));
+
+        if let Some(with_clause) = &self.with_clause {
+            parts.push(space!());
+            parts.push(with_clause.format(p));
+        }
+
         if let Some(semi) = p.semi() {
             parts.push(semi);
         }
@@ -1090,15 +1097,29 @@ impl<'a> Format<'a> for ImportNamespaceSpecifier<'a> {
     }
 }
 
-impl<'a> Format<'a> for Option<Vec<'a, ImportAttribute<'a>>> {
+impl<'a> Format<'a> for WithClause<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array!(
+            p,
+            self.attributes_keyword.format(p),
+            space!(),
+            object::print_object_properties(p, ObjectLike::WithClause(self))
+        )
     }
 }
 
 impl<'a> Format<'a> for ImportAttribute<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array!(p, self.key.format(p), ss!(": "), self.value.format(p))
+    }
+}
+
+impl<'a> Format<'a> for ImportAttributeKey<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            Self::Identifier(ident) => ident.format(p),
+            Self::StringLiteral(literal) => literal.format(p),
+        }
     }
 }
 
@@ -1821,6 +1842,12 @@ impl<'a> Format<'a> for AssignmentTargetPropertyProperty<'a> {
         parts.push(ss!(": "));
         parts.push(self.binding.format(p));
         Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for AssignmentTargetRest<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        array![p, ss!("..."), self.target.format(p)]
     }
 }
 

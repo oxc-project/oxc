@@ -285,7 +285,7 @@ expression: no_shadow_restricted_names
   ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
    ╭─[no_shadow_restricted_names.tsx:1:14]
  1 │ try {} catch(undefined: undefined) {}
-   ·              ─────────
+   ·              ────────────────────
    ╰────
   help: Shadowing of global properties 'undefined'.
 

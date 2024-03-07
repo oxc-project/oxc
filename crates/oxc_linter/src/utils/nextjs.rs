@@ -1,4 +1,4 @@
-use oxc_span::CompactString;
+use oxc_span::CompactStr;
 
 use crate::LintContext;
 
@@ -11,7 +11,7 @@ pub fn is_document_page(file_path: &str) -> bool {
     page.starts_with("/_document") || page.starts_with("\\_document")
 }
 
-pub fn get_next_script_import_local_name<'a>(ctx: &'a LintContext) -> Option<&'a CompactString> {
+pub fn get_next_script_import_local_name<'a>(ctx: &'a LintContext) -> Option<&'a CompactStr> {
     ctx.semantic().module_record().import_entries.iter().find_map(|entry| {
         if entry.module_request.name().as_str() == "next/script" {
             Some(entry.local_name.name())
