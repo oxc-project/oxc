@@ -158,9 +158,10 @@ impl<'a> JSDocBuilder<'a> {
     }
 }
 
+// TODO:
+// - TS AST
 #[rustfmt::skip]
 fn should_attach_jsdoc(kind: &AstKind) -> bool {
-    println!("{}: {:?}", kind.debug_name(), kind.span());
     matches!(kind,
         // This list comes from oxc_ast/ast_kind.rs
           AstKind::BlockStatement(_)
