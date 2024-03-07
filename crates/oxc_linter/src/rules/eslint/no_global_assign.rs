@@ -3,7 +3,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule};
 #[error("eslint(no-global-assign): Read-only global '{0}' should not be modified.")]
 #[diagnostic(severity(warning))]
 struct NoGlobalAssignDiagnostic(
-    Atom,
+    CompactStr,
     #[label("Read-only global '{0}' should not be modified.")] pub Span,
 );
 
@@ -20,7 +20,7 @@ pub struct NoGlobalAssign(Box<NoGlobalAssignConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoGlobalAssignConfig {
-    excludes: Vec<Atom>,
+    excludes: Vec<CompactStr>,
 }
 
 impl std::ops::Deref for NoGlobalAssign {
@@ -58,8 +58,8 @@ impl Rule for NoGlobalAssign {
                 .iter()
                 .map(serde_json::Value::as_str)
                 .filter(std::option::Option::is_some)
-                .map(|x| Atom::from(x.unwrap().to_string()))
-                .collect::<Vec<Atom>>(),
+                .map(|x| CompactStr::from(x.unwrap()))
+                .collect::<Vec<CompactStr>>(),
         }))
     }
 
@@ -91,6 +91,7 @@ fn test() {
         ("top = 0;", None),
         // ("onload = 0;", None), // env: { browser: true }
         ("require = 0;", None),
+        ("window[parseInt('42', 10)] = 99;", None),
         // ("a = 1", None), // globals: { a: true } },
         // ("/*global a:true*/ a = 1", None),
     ];

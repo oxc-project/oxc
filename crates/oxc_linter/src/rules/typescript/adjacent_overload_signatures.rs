@@ -10,7 +10,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -19,7 +19,11 @@ use crate::{context::LintContext, rule::Rule, AstNode};
     "typescript-eslint(adjacent-overload-signatures): All {0:?} signatures should be adjacent."
 )]
 #[diagnostic(severity(warning))]
-struct AdjacentOverloadSignaturesDiagnostic(Atom, #[label] pub Option<Span>, #[label] pub Span);
+struct AdjacentOverloadSignaturesDiagnostic(
+    CompactStr,
+    #[label] pub Option<Span>,
+    #[label] pub Span,
+);
 
 #[derive(Debug, Default, Clone)]
 pub struct AdjacentOverloadSignatures;
@@ -88,7 +92,7 @@ fn get_kind_from_key(key: &PropertyKey) -> MethodKind {
         PropertyKey::PrivateIdentifier(_) => MethodKind::Private,
         PropertyKey::Expression(expr) => match expr {
             Expression::StringLiteral(_) => MethodKind::Normal,
-            Expression::NumberLiteral(_)
+            Expression::NumericLiteral(_)
             | Expression::BigintLiteral(_)
             | Expression::TemplateLiteral(_)
             | Expression::RegExpLiteral(_)
@@ -100,7 +104,7 @@ fn get_kind_from_key(key: &PropertyKey) -> MethodKind {
 
 #[derive(Debug)]
 struct Method {
-    name: Atom,
+    name: CompactStr,
     r#static: bool,
     call_signature: bool,
     kind: MethodKind,
@@ -148,14 +152,14 @@ impl GetMethod for TSSignature<'_> {
                 span: sig.key.span(),
             }),
             TSSignature::TSCallSignatureDeclaration(sig) => Some(Method {
-                name: Atom::from("call"),
+                name: CompactStr::from("call"),
                 r#static: false,
                 call_signature: true,
                 kind: MethodKind::Normal,
                 span: sig.span,
             }),
             TSSignature::TSConstructSignatureDeclaration(decl) => Some(Method {
-                name: Atom::from("new"),
+                name: CompactStr::from("new"),
                 r#static: false,
                 call_signature: false,
                 kind: MethodKind::Normal,
@@ -179,7 +183,7 @@ impl GetMethod for ModuleDeclaration<'_> {
                             FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction
                         ) {
                             func_decl.id.as_ref().map(|id| Method {
-                                name: id.name.clone(),
+                                name: id.name.to_compact_str(),
                                 r#static: false,
                                 call_signature: false,
                                 kind: MethodKind::Normal,
@@ -195,7 +199,7 @@ impl GetMethod for ModuleDeclaration<'_> {
             ModuleDeclaration::ExportNamedDeclaration(named_decl) => {
                 if let Some(Declaration::FunctionDeclaration(func_decl)) = &named_decl.declaration {
                     return func_decl.id.as_ref().map(|id| Method {
-                        name: id.name.clone(),
+                        name: id.name.to_compact_str(),
                         r#static: false,
                         call_signature: false,
                         kind: MethodKind::Normal,
@@ -218,7 +222,7 @@ impl GetMethod for Declaration<'_> {
                     FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction
                 ) {
                     func_decl.id.as_ref().map(|id| Method {
-                        name: id.name.clone(),
+                        name: id.name.to_compact_str(),
                         r#static: false,
                         call_signature: false,
                         kind: MethodKind::Normal,
@@ -253,7 +257,7 @@ fn check_and_report(methods: &Vec<Option<Method>>, ctx: &LintContext<'_>) {
 
             if index.is_some() && !method.is_same_method(last_method) {
                 let name = if method.r#static {
-                    Atom::from(format!("static {0}", method.name))
+                    CompactStr::from(format!("static {0}", method.name))
                 } else {
                     method.name.clone()
                 };

@@ -53,7 +53,7 @@ fn is_in_tail_call_position<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
     if let Some(parent) = ctx.nodes().parent_node(node.id()) {
         let parent_kind = parent.kind();
         match parent_kind {
-            AstKind::ArrowExpression(arrow_expr) => {
+            AstKind::ArrowFunctionExpression(arrow_expr) => {
                 // async () => { await b(); })
                 // `epxression` property is false
                 return arrow_expr.expression;

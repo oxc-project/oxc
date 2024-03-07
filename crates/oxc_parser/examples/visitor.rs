@@ -10,10 +10,10 @@ use oxc_span::SourceType;
 // run `cargo run -p oxc_parser --example visitor`
 // or `cargo watch -x "run -p oxc_parser --example visitor"`
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);
-    let source_text = std::fs::read_to_string(path).unwrap_or_else(|_| panic!("{name} not found"));
+    let source_text = std::fs::read_to_string(path)?;
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
@@ -28,6 +28,8 @@ fn main() {
     let mut ast_pass = ASTPass::default();
     ast_pass.visit_program(&program);
     println!("{ast_pass:?}");
+
+    Ok(())
 }
 
 #[derive(Debug, Default)]

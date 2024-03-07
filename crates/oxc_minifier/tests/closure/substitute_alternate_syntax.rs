@@ -23,5 +23,5 @@ fn undefined() {
     test("try {} catch(undefined) {}", "try{}catch(undefined){}");
     test("for (undefined in {}) {}", "for(undefined in {}){}");
     test("undefined++", "undefined++;");
-    test("undefined += undefined;", "undefined+=void 0;");
+    test("undefined += undefined;", "(undefined+=void 0);");
 }

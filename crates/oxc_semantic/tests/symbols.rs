@@ -12,13 +12,6 @@ fn test_class_simple() {
         .is_exported()
         .test();
 
-    SemanticTester::js("export default class Foo {};")
-        .has_root_symbol("Foo")
-        .contains_flags(SymbolFlags::Class | SymbolFlags::Export)
-        .has_number_of_references(0)
-        .is_exported()
-        .test();
-
     SemanticTester::js("class Foo {}; let f = new Foo()")
         .has_root_symbol("Foo")
         .has_number_of_reads(1)
@@ -92,4 +85,21 @@ fn test_types_simple() {
         .contains_flags(SymbolFlags::TypeAlias)
         .has_number_of_references(1)
         .test();
+}
+
+#[test]
+fn test_export_flag() {
+    let tester = SemanticTester::js(
+        "
+        const a = 1;
+        export { a, b, c as d };
+        class b {}
+        export default c;
+        function c() {}
+    ",
+    );
+
+    tester.has_root_symbol("a").contains_flags(SymbolFlags::Export).test();
+    tester.has_root_symbol("b").contains_flags(SymbolFlags::Export).test();
+    tester.has_root_symbol("c").contains_flags(SymbolFlags::Export).test();
 }

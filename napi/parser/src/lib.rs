@@ -5,6 +5,7 @@ use std::sync::Arc;
 use flexbuffers::FlexbufferSerializer;
 use napi::bindgen_prelude::Buffer;
 use napi_derive::napi;
+use oxc_ast::CommentKind;
 use serde::Serialize;
 
 use oxc_allocator::Allocator;
@@ -22,12 +23,30 @@ pub struct ParserOptions {
     #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
     pub source_type: Option<String>,
     pub source_filename: Option<String>,
+    /// Emit `ParenthesizedExpression` in AST.
+    ///
+    /// If this option is true, parenthesized expressions are represented by
+    /// (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
+    /// containing the expression inside parentheses.
+    ///
+    /// Default: true
+    pub preserve_parens: Option<bool>,
 }
 
 #[napi(object)]
 pub struct ParseResult {
     pub program: String,
+    pub comments: Vec<Comment>,
     pub errors: Vec<String>,
+}
+
+#[napi(object)]
+pub struct Comment {
+    pub r#type: &'static str,
+    #[napi(ts_type = "'Line' | 'Block'")]
+    pub value: String,
+    pub start: u32,
+    pub end: u32,
 }
 
 fn parse<'a>(
@@ -45,7 +64,9 @@ fn parse<'a>(
         Some("module") => source_type.with_module(true),
         _ => source_type,
     };
-    Parser::new(allocator, source_text, source_type).parse()
+    Parser::new(allocator, source_text, source_type)
+        .preserve_parens(options.preserve_parens.unwrap_or(true))
+        .parse()
 }
 
 /// Parse without returning anything.
@@ -88,7 +109,22 @@ pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseR
             .collect()
     };
 
-    ParseResult { program, errors }
+    let comments = ret
+        .trivias
+        .comments
+        .into_iter()
+        .map(|(start, end, kind)| Comment {
+            r#type: match kind {
+                CommentKind::SingleLine => "Line",
+                CommentKind::MultiLine => "Block",
+            },
+            value: source_text[start as usize..end as usize].to_string(),
+            start,
+            end,
+        })
+        .collect::<Vec<Comment>>();
+
+    ParseResult { program, comments, errors }
 }
 
 /// Returns a binary AST in flexbuffers format.

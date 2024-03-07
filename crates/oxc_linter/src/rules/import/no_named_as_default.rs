@@ -9,8 +9,8 @@ use oxc_syntax::module_record::ImportImportName;
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-import(no-named-as-default): Module {2:?} has named export {1:?}. Using default import as {1:?} can be confusing")]
-#[diagnostic(severity(warning), help("Use another name for default import to avoid confusion"))]
+#[error("eslint-plugin-import(no-named-as-default): Module {2:?} has named export {1:?}")]
+#[diagnostic(severity(warning), help("Using default import as {1:?} can be confusing. Use another name for default import to avoid confusion."))]
 struct NoNamedAsDefaultDiagnostic(#[label] pub Span, String, String);
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-named-as-default-member.md>
@@ -46,14 +46,7 @@ impl Rule for NoNamedAsDefault {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.semantic().module_record();
         for import_entry in &module_record.import_entries {
-            let ImportImportName::Default(import_span) = import_entry.import_name else {
-                continue;
-            };
-            let Some(import_name) = ctx
-                .symbols()
-                .get_symbol_id_from_span(&import_span)
-                .map(|it| ctx.symbols().get_name(it))
-            else {
+            let ImportImportName::Default(import_span) = &import_entry.import_name else {
                 continue;
             };
 
@@ -62,9 +55,10 @@ impl Rule for NoNamedAsDefault {
                 continue;
             };
 
+            let import_name = import_entry.local_name.name();
             if remote_module_record_ref.exported_bindings.contains_key(import_name) {
                 ctx.diagnostic(NoNamedAsDefaultDiagnostic(
-                    import_span,
+                    *import_span,
                     import_name.to_string(),
                     import_entry.module_request.name().to_string(),
                 ));
@@ -81,7 +75,7 @@ fn test() {
         r#"import "./malformed.js""#,
         r#"import bar, { foo } from "./bar";"#,
         r#"import bar, { foo } from "./empty-folder";"#,
-        // TODO: parser error
+        // unsupported syntax
         // r#"export default from "./bar";"#,
         r#"import bar, { foo } from "./export-default-string-and-named""#,
     ];
@@ -89,7 +83,7 @@ fn test() {
     let fail = vec![
         r#"import foo from "./bar";"#,
         r#"import foo, { foo as bar } from "./bar";"#,
-        // TODO: parser error
+        // unsupported syntax
         // r#"export default, { foo as bar } from "./bar";"#,
         // r#"import foo from "./malformed.js""#,
         r#"import foo from "./export-default-string-and-named""#,

@@ -53,7 +53,7 @@ impl Rule for UninvokedArrayCallback {
         }
         if !matches!(
             new_expr.arguments.first(),
-            Some(Argument::Expression(Expression::NumberLiteral(_)))
+            Some(Argument::Expression(Expression::NumericLiteral(_)))
         ) {
             return;
         }

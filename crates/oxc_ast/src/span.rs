@@ -34,7 +34,7 @@ impl<'a> GetSpan for Expression<'a> {
         match self {
             Self::BooleanLiteral(e) => e.span,
             Self::NullLiteral(e) => e.span,
-            Self::NumberLiteral(e) => e.span,
+            Self::NumericLiteral(e) => e.span,
             Self::BigintLiteral(e) => e.span,
             Self::RegExpLiteral(e) => e.span,
             Self::StringLiteral(e) => e.span,
@@ -43,7 +43,7 @@ impl<'a> GetSpan for Expression<'a> {
             Self::MetaProperty(e) => e.span,
             Self::Super(e) => e.span,
             Self::ArrayExpression(e) => e.span,
-            Self::ArrowExpression(e) => e.span,
+            Self::ArrowFunctionExpression(e) => e.span,
             Self::AssignmentExpression(e) => e.span,
             Self::AwaitExpression(e) => e.span,
             Self::BinaryExpression(e) => e.span,
@@ -76,7 +76,7 @@ impl<'a> GetSpan for Expression<'a> {
     }
 }
 
-impl GetSpan for Directive {
+impl<'a> GetSpan for Directive<'a> {
     fn span(&self) -> Span {
         self.span
     }
@@ -117,8 +117,6 @@ impl<'a> GetSpan for ClassElement<'a> {
             Self::MethodDefinition(def) => def.span,
             Self::PropertyDefinition(def) => def.span,
             Self::AccessorProperty(def) => def.span,
-            Self::TSAbstractMethodDefinition(def) => def.method_definition.span,
-            Self::TSAbstractPropertyDefinition(def) => def.property_definition.span,
             Self::TSIndexSignature(sig) => sig.span,
         }
     }
@@ -144,7 +142,7 @@ impl<'a> GetSpan for MemberExpression<'a> {
     }
 }
 
-impl GetSpan for ImportAttributeKey {
+impl<'a> GetSpan for ImportAttributeKey<'a> {
     fn span(&self) -> Span {
         match self {
             Self::Identifier(identifier) => identifier.span,
@@ -153,7 +151,7 @@ impl GetSpan for ImportAttributeKey {
     }
 }
 
-impl GetSpan for ModuleExportName {
+impl<'a> GetSpan for ModuleExportName<'a> {
     fn span(&self) -> Span {
         match self {
             Self::Identifier(identifier) => identifier.span,
@@ -191,7 +189,7 @@ impl<'a> GetSpan for Declaration<'a> {
     }
 }
 
-impl GetSpan for TSModuleDeclarationName {
+impl<'a> GetSpan for TSModuleDeclarationName<'a> {
     fn span(&self) -> Span {
         match self {
             Self::Identifier(ident) => ident.span,
@@ -344,7 +342,7 @@ impl<'a> GetSpan for TSType<'a> {
             Self::TSBooleanKeyword(t) => t.span,
             Self::TSSymbolKeyword(t) => t.span,
             Self::TSBigIntKeyword(t) => t.span,
-            Self::TSThisKeyword(t) => t.span,
+            Self::TSThisType(t) => t.span,
             Self::TSVoidKeyword(t) => t.span,
             Self::TSObjectKeyword(t) => t.span,
             Self::JSDocNullableType(t) => t.span,
@@ -365,7 +363,7 @@ impl<'a> GetSpan for ExportDefaultDeclarationKind<'a> {
     }
 }
 
-impl GetSpan for ImportDeclarationSpecifier {
+impl<'a> GetSpan for ImportDeclarationSpecifier<'a> {
     fn span(&self) -> Span {
         match self {
             Self::ImportSpecifier(specifier) => specifier.span,

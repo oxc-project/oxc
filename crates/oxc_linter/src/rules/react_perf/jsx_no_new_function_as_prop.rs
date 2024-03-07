@@ -71,7 +71,7 @@ fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
 
 fn check_expression(expr: &Expression) -> Option<Span> {
     match expr.without_parenthesized() {
-        Expression::ArrowExpression(expr) => Some(expr.span),
+        Expression::ArrowFunctionExpression(expr) => Some(expr.span),
         Expression::FunctionExpression(expr) => Some(expr.span),
         Expression::CallExpression(expr) => {
             if is_constructor_matching_name(&expr.callee, "Function") {

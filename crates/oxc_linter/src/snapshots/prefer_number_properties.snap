@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_number_properties
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:13]
  1 │ const foo = NaN;
@@ -415,4 +414,3 @@ expression: prefer_number_properties
    ·  ───────────────────
    ╰────
   help: Replace it with `Number.Infinity`
-

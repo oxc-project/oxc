@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: aria_role
 ---
-
   ⚠ eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.
    ╭─[aria_role.tsx:1:11]
  1 │ <div role='foobar' />
@@ -113,4 +112,3 @@ expression: aria_role
    ·                         ────────
    ╰────
   help: Set a valid, non-abstract ARIA role for element with ARIA, `Button` is an invalid aria role
-

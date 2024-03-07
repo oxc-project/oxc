@@ -1,11 +1,11 @@
 use oxc_ast::{
     ast::{
-        AccessorProperty, ClassBody, ClassElement, MethodDefinition, PrivateIdentifier,
-        PropertyDefinition,
+        AccessorProperty, ClassBody, ClassElement, MethodDefinition, MethodDefinitionKind,
+        PrivateIdentifier, PropertyDefinition,
     },
     AstKind,
 };
-use oxc_span::GetSpan;
+use oxc_span::{Atom, GetSpan};
 use oxc_syntax::class::{ClassId, ElementKind};
 
 use crate::{AstNodeId, AstNodes};
@@ -57,14 +57,19 @@ impl ClassTableBuilder {
 
     pub fn declare_class_accessor(&mut self, property: &AccessorProperty) {
         let is_private = property.key.is_private_identifier();
-        let name =
-            if is_private { property.key.private_name() } else { property.key.static_name() };
+        let name = property.key.name();
 
         if let Some(name) = name {
             if let Some(class_id) = self.current_class_id {
                 self.classes.add_element(
                     class_id,
-                    Element::new(name, property.key.span(), is_private, ElementKind::Property),
+                    Element::new(
+                        name,
+                        property.key.span(),
+                        property.r#static,
+                        is_private,
+                        ElementKind::Accessor,
+                    ),
                 );
             }
         }
@@ -72,14 +77,19 @@ impl ClassTableBuilder {
 
     pub fn declare_class_property(&mut self, property: &PropertyDefinition) {
         let is_private = property.key.is_private_identifier();
-        let name =
-            if is_private { property.key.private_name() } else { property.key.static_name() };
+        let name = property.key.name();
 
         if let Some(name) = name {
             if let Some(class_id) = self.current_class_id {
                 self.classes.add_element(
                     class_id,
-                    Element::new(name, property.key.span(), is_private, ElementKind::Property),
+                    Element::new(
+                        name,
+                        property.key.span(),
+                        property.r#static,
+                        is_private,
+                        ElementKind::Property,
+                    ),
                 );
             }
         }
@@ -100,7 +110,7 @@ impl ClassTableBuilder {
 
                     let reference = PrivateIdentifierReference::new(
                         current_node_id,
-                        ident.name.clone(),
+                        ident.name.to_compact_str(),
                         ident.span,
                         element_ids,
                     );
@@ -111,17 +121,35 @@ impl ClassTableBuilder {
     }
 
     pub fn declare_class_method(&mut self, method: &MethodDefinition) {
-        if method.kind.is_constructor() {
+        if method.kind.is_constructor() || method.value.is_typescript_syntax() {
             return;
         }
         let is_private = method.key.is_private_identifier();
-        let name = if is_private { method.key.private_name() } else { method.key.static_name() };
+        let name = if is_private {
+            method.key.private_name().map(Atom::to_compact_str)
+        } else {
+            method.key.static_name()
+        };
 
         if let Some(name) = name {
             if let Some(class_id) = self.current_class_id {
                 self.classes.add_element(
                     class_id,
-                    Element::new(name, method.key.span(), is_private, ElementKind::Method),
+                    Element::new(
+                        name,
+                        method.key.span(),
+                        method.r#static,
+                        is_private,
+                        match method.kind {
+                            MethodDefinitionKind::Method => ElementKind::Method,
+                            MethodDefinitionKind::Get => ElementKind::Method | ElementKind::Getter,
+                            MethodDefinitionKind::Set => ElementKind::Method | ElementKind::Setter,
+                            MethodDefinitionKind::Constructor => {
+                                // Skip constructor
+                                unreachable!()
+                            }
+                        },
+                    ),
                 );
             }
         }

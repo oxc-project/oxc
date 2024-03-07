@@ -1,0 +1,64 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 151
+expression: prefer_to_have_length
+---
+  ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
+   ╭─[prefer_to_have_length.tsx:1:25]
+ 1 │ expect(files["length"]).toBe(1);
+   ·                         ────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
+   ╭─[prefer_to_have_length.tsx:1:25]
+ 1 │ expect(files["length"]).toBe(1,);
+   ·                         ────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
+   ╭─[prefer_to_have_length.tsx:1:32]
+ 1 │ expect(files["length"])["not"].toBe(1);
+   ·                                ────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
+   ╭─[prefer_to_have_length.tsx:1:25]
+ 1 │ expect(files["length"])["toBe"](1);
+   ·                         ──────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
+   ╭─[prefer_to_have_length.tsx:1:29]
+ 1 │ expect(files["length"]).not["toBe"](1);
+   ·                             ──────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
+   ╭─[prefer_to_have_length.tsx:1:32]
+ 1 │ expect(files["length"])["not"]["toBe"](1);
+   ·                                ──────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
+   ╭─[prefer_to_have_length.tsx:1:22]
+ 1 │ expect(files.length).toBe(1);
+   ·                      ────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
+   ╭─[prefer_to_have_length.tsx:1:22]
+ 1 │ expect(files.length).toEqual(1);
+   ·                      ───────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
+   ╭─[prefer_to_have_length.tsx:1:22]
+ 1 │ expect(files.length).toStrictEqual(1);
+   ·                      ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
+   ╭─[prefer_to_have_length.tsx:1:26]
+ 1 │ expect(files.length).not.toStrictEqual(1);
+   ·                          ─────────────
+   ╰────

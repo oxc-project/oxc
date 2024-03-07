@@ -72,7 +72,8 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
             if let Some(method_name) = BadAliasMethodName::from_str(alias.as_ref()) {
                 let (name, canonical_name) = method_name.name_with_canonical();
 
-                let Span { mut start, mut end } = matcher.span;
+                let mut start = matcher.span.start;
+                let mut end = matcher.span.end;
                 // expect(a).not['toThrowError']()
                 // matcher is the node of `toThrowError`, we only what to replace the content in the quotes.
                 if matcher.element.is_string_literal() {
@@ -82,7 +83,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
                 ctx.diagnostic_with_fix(
                     NoAliasMethodsDiagnostic(name, canonical_name, matcher.span),
-                    || Fix::new(canonical_name, Span { start, end }),
+                    || Fix::new(canonical_name, Span::new(start, end)),
                 );
             }
         }

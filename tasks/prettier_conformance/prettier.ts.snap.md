@@ -1,4 +1,4 @@
-ts compatibility: 20/528 (3.79%)
+ts compatibility: 23/528 (4.36%)
 
 # Failed
 
@@ -522,7 +522,6 @@ ts compatibility: 20/528 (3.79%)
 * generic/ungrouped-parameters.ts
 
 ### import-export
-* import-export/empty-import.ts
 * import-export/type-modifier.ts
 
 ### import-require
@@ -597,9 +596,6 @@ ts compatibility: 20/528 (3.79%)
 * last-argument-expansion/decorated-function.tsx
 * last-argument-expansion/edge_case.ts
 * last-argument-expansion/forward-ref.tsx
-
-### literal
-* literal/multiline.ts
 
 ### mapped-type
 * mapped-type/intersection.ts
@@ -758,7 +754,6 @@ ts compatibility: 20/528 (3.79%)
 * tsx/url.tsx
 
 ### tuple
-* tuple/dangling-comments.ts
 * tuple/trailing-comma-for-empty-tuples.ts
 * tuple/trailing-comma-trailing-rest.ts
 * tuple/trailing-comma.ts

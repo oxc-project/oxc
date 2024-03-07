@@ -10,11 +10,16 @@ mod import {
     pub mod default;
     pub mod export;
     pub mod named;
+    pub mod namespace;
     pub mod no_amd;
     pub mod no_cycle;
+    pub mod no_deprecated;
+    pub mod no_duplicates;
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
     pub mod no_self_import;
+    pub mod no_unresolved;
+    pub mod no_unused_modules;
 }
 
 mod deepscan {
@@ -72,6 +77,8 @@ mod eslint {
     pub mod no_loss_of_precision;
     pub mod no_mixed_operators;
     pub mod no_new_symbol;
+    pub mod no_new_wrappers;
+    pub mod no_nonoctal_decimal_escape;
     pub mod no_obj_calls;
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
@@ -116,6 +123,8 @@ mod typescript {
     pub mod no_unsafe_declaration_merging;
     pub mod no_var_requires;
     pub mod prefer_as_const;
+    pub mod prefer_function_type;
+    pub mod prefer_ts_expect_error;
     pub mod triple_slash_reference;
 }
 
@@ -143,6 +152,8 @@ mod jest {
     pub mod no_test_return_statement;
     pub mod prefer_called_with;
     pub mod prefer_equality_matcher;
+    pub mod prefer_strict_equal;
+    pub mod prefer_to_have_length;
     pub mod prefer_todo;
     pub mod require_to_throw_message;
     pub mod valid_describe_callback;
@@ -169,6 +180,7 @@ mod react {
     pub mod no_unknown_property;
     pub mod react_in_jsx_scope;
     pub mod require_render_return;
+    pub mod void_dom_elements_no_children;
 }
 
 mod react_perf {
@@ -203,6 +215,7 @@ mod unicorn {
     pub mod no_new_buffer;
     pub mod no_null;
     pub mod no_object_as_default_parameter;
+    pub mod no_process_exit;
     pub mod no_static_only_class;
     pub mod no_thenable;
     pub mod no_this_assignment;
@@ -373,6 +386,8 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_loss_of_precision,
     eslint::no_mixed_operators,
     eslint::no_new_symbol,
+    eslint::no_new_wrappers,
+    eslint::no_nonoctal_decimal_escape,
     eslint::no_obj_calls,
     eslint::no_prototype_builtins,
     eslint::no_redeclare,
@@ -413,6 +428,8 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_unsafe_declaration_merging,
     typescript::no_var_requires,
     typescript::prefer_as_const,
+    typescript::prefer_function_type,
+    typescript::prefer_ts_expect_error,
     typescript::triple_slash_reference,
     jest::expect_expect,
     jest::max_expects,
@@ -437,6 +454,8 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_test_return_statement,
     jest::prefer_called_with,
     jest::prefer_equality_matcher,
+    jest::prefer_strict_equal,
+    jest::prefer_to_have_length,
     jest::prefer_todo,
     jest::require_to_throw_message,
     jest::valid_describe_callback,
@@ -467,6 +486,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_new_buffer,
     unicorn::no_null,
     unicorn::no_object_as_default_parameter,
+    unicorn::no_process_exit,
     unicorn::no_static_only_class,
     unicorn::no_thenable,
     unicorn::no_this_assignment,
@@ -536,18 +556,24 @@ oxc_macros::declare_all_lint_rules! {
     react::no_is_mounted,
     react::no_unknown_property,
     react::require_render_return,
+    react::void_dom_elements_no_children,
     react_perf::jsx_no_jsx_as_prop,
     react_perf::jsx_no_new_array_as_prop,
     react_perf::jsx_no_new_function_as_prop,
     react_perf::jsx_no_new_object_as_prop,
     import::default,
-    import::no_named_as_default_member,
-    import::no_named_as_default,
-    import::named,
-    import::no_cycle,
-    import::no_self_import,
-    import::no_amd,
     import::export,
+    import::named,
+    import::namespace,
+    import::no_amd,
+    import::no_cycle,
+    import::no_deprecated,
+    import::no_named_as_default,
+    import::no_named_as_default_member,
+    import::no_self_import,
+    import::no_unresolved,
+    import::no_unused_modules,
+    import::no_duplicates,
     jsx_a11y::alt_text,
     jsx_a11y::anchor_has_content,
     jsx_a11y::anchor_is_valid,

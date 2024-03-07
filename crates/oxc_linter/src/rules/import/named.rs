@@ -3,7 +3,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 use oxc_syntax::module_record::{ExportImportName, ImportImportName};
 
 use crate::{context::LintContext, rule::Rule};
@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule};
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-import(named): named import {0:?} not found")]
 #[diagnostic(severity(warning), help("does {1:?} have the export {0:?}?"))]
-struct NamedDiagnostic(Atom, Atom, #[label] pub Span);
+struct NamedDiagnostic(String, String, #[label] pub Span);
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/named.md>
 #[derive(Debug, Default, Clone)]
@@ -51,13 +51,16 @@ impl Rule for Named {
                 continue;
             };
             let remote_module_record = remote_module_record_ref.value();
+            if remote_module_record.not_esm {
+                continue;
+            }
             // Check remote bindings
             if remote_module_record.exported_bindings.contains_key(import_name.name()) {
                 continue;
             }
             ctx.diagnostic(NamedDiagnostic(
-                import_name.name().clone(),
-                specifier.clone(),
+                import_name.name().to_string(),
+                specifier.to_string(),
                 import_name.span(),
             ));
         }
@@ -80,8 +83,8 @@ impl Rule for Named {
                 continue;
             }
             ctx.diagnostic(NamedDiagnostic(
-                import_name.name().clone(),
-                specifier.clone(),
+                import_name.name().to_string(),
+                specifier.to_string(),
                 import_name.span(),
             ));
         }
@@ -180,10 +183,11 @@ fn test() {
         // old babel parser
         // "import { foo, bar, baz } from './named-trampoline'",
         // "import { baz } from './broken-trampoline'",
-        "const { baz } = require('./bar')",
-        "let { baz } = require('./bar')",
-        "const { baz: bar, bop } = require('./bar'), { a } = require('./re-export-names')",
-        "const { default: defExport } = require('./named-exports')",
+        // cjs
+        // "const { baz } = require('./bar')",
+        // "let { baz } = require('./bar')",
+        // "const { baz: bar, bop } = require('./bar'), { a } = require('./re-export-names')",
+        // "const { default: defExport } = require('./named-exports')",
         // flow
         // "import  { type MyOpaqueType, MyMissingClass } from './flowtypes'",
         // jsnext

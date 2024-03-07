@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: expect_expect
 ---
-
   ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
  1 │ it("should fail", () => {});
@@ -120,4 +119,3 @@ expression: expect_expect
  3 │                 const asyncFunction = async () => {
    ╰────
   help: Add assertion(s) in this Test
-

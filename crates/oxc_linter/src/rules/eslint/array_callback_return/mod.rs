@@ -9,7 +9,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use phf::phf_set;
 use serde_json::Value;
 
@@ -28,14 +28,14 @@ enum ArrayCallbackReturnDiagnostic {
         severity(warning),
         help("Array method {0:?} needs to have valid return on all code paths")
     )]
-    ExpectReturn(Atom, #[label] Span),
+    ExpectReturn(CompactStr, #[label] Span),
 
     #[error("eslint(array-callback-return): Unexpected return for array method {0}")]
     #[diagnostic(
         severity(warning),
         help("Array method {0} expects no useless return from the function")
     )]
-    ExpectNoReturn(Atom, #[label] Span),
+    ExpectNoReturn(CompactStr, #[label] Span),
 }
 
 #[derive(Debug, Default, Clone)]
@@ -85,7 +85,9 @@ impl Rule for ArrayCallbackReturn {
         let (function_body, always_explicit_return) = match node.kind() {
             // Async, generator, and single expression arrow functions
             // always have explicit return value
-            AstKind::ArrowExpression(arrow) => (&arrow.body, arrow.r#async || arrow.expression),
+            AstKind::ArrowFunctionExpression(arrow) => {
+                (&arrow.body, arrow.r#async || arrow.expression)
+            }
             AstKind::Function(function) => {
                 if let Some(body) = &function.body {
                     (body, function.r#async || function.generator)
@@ -136,7 +138,7 @@ impl Rule for ArrayCallbackReturn {
 }
 
 /// Code ported from [eslint](https://github.com/eslint/eslint/blob/main/lib/rules/array-callback-return.js)
-/// We're currently on a `Function` or `ArrowExpression`, findout if it is an argument
+/// We're currently on a `Function` or `ArrowFunctionExpression`, findout if it is an argument
 /// to the target array methods we're interested in.
 pub fn get_array_method_name<'a>(
     node: &AstNode<'a>,
@@ -241,10 +243,10 @@ const TARGET_METHODS: phf::Set<&'static str> = phf_set! {
     "toSorted",
 };
 
-fn full_array_method_name(array_method: &'static str) -> Atom {
+fn full_array_method_name(array_method: &'static str) -> CompactStr {
     match array_method {
-        "from" => Atom::from("Array.from"),
-        s => Atom::from(format!("Array.prototype.{s}")),
+        "from" => CompactStr::from("Array.from"),
+        s => CompactStr::from(format!("Array.prototype.{s}")),
     }
 }
 

@@ -67,9 +67,7 @@ vulnerability = "deny"
 unmaintained = "warn"
 # The lint level for crates that have been yanked from their source registry
 yanked = "warn"
-# The lint level for crates with security notices. Note that as of
-# 2019-12-17 there are no security notice advisories in
-# https://github.com/rustsec/advisory-db
+# The lint level for crates with security notices.
 notice = "warn"
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
@@ -107,7 +105,8 @@ allow = [
     "ISC",
     "Unicode-DFS-2016",
     "BSD-3-Clause",
-    "OpenSSL"
+    "OpenSSL",
+    "MPL-2.0",
     #"Apache-2.0 WITH LLVM-exception",
 ]
 # List of explicitly disallowed licenses
@@ -121,8 +120,10 @@ copyleft = "warn"
 # Blanket approval or denial for OSI-approved or FSF Free/Libre licenses
 # * both - The license will be approved if it is both OSI-approved *AND* FSF
 # * either - The license will be approved if it is either OSI-approved *OR* FSF
-# * osi-only - The license will be approved if is OSI-approved *AND NOT* FSF
-# * fsf-only - The license will be approved if is FSF *AND NOT* OSI-approved
+# * osi - The license will be approved if it is OSI approved
+# * fsf - The license will be approved if it is FSF Free
+# * osi-only - The license will be approved if it is OSI-approved *AND NOT* FSF
+# * fsf-only - The license will be approved if it is FSF *AND NOT* OSI-approved
 # * neither - This predicate is ignored and the default lint level is used
 allow-osi-fsf-free = "neither"
 # Lint level used when no other predicates are matched

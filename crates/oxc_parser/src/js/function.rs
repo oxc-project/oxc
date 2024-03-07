@@ -80,7 +80,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_function(
         &mut self,
         span: Span,
-        id: Option<BindingIdentifier>,
+        id: Option<BindingIdentifier<'a>>,
         r#async: bool,
         generator: bool,
         func_kind: FunctionKind,
@@ -105,19 +105,27 @@ impl<'a> ParserImpl<'a> {
             return Err(self.unexpected());
         }
 
-        let function_type = if body.is_none() {
-            FunctionType::TSDeclareFunction
-        } else {
-            match func_kind {
-                FunctionKind::Declaration { .. } | FunctionKind::DefaultExport => {
+        let function_type = match func_kind {
+            FunctionKind::Declaration { .. } | FunctionKind::DefaultExport => {
+                if body.is_none() {
+                    FunctionType::TSDeclareFunction
+                } else {
                     FunctionType::FunctionDeclaration
                 }
-                FunctionKind::Expression { .. } => FunctionType::FunctionExpression,
-                FunctionKind::TSDeclaration { .. } => FunctionType::TSDeclareFunction,
             }
+            FunctionKind::Expression { .. } => {
+                if body.is_none() {
+                    FunctionType::TSEmptyBodyFunctionExpression
+                } else {
+                    FunctionType::FunctionExpression
+                }
+            }
+            FunctionKind::TSDeclaration { .. } => FunctionType::TSDeclareFunction,
         };
 
-        if FunctionType::TSDeclareFunction == function_type {
+        if FunctionType::TSDeclareFunction == function_type
+            || FunctionType::TSEmptyBodyFunctionExpression == function_type
+        {
             self.asi()?;
         }
 
@@ -227,6 +235,7 @@ impl<'a> ParserImpl<'a> {
             pattern,
             None,
             false,
+            false,
             AstBuilder::new_vec(&self.ast),
         );
         let params = self.ast.formal_parameters(
@@ -250,7 +259,7 @@ impl<'a> ParserImpl<'a> {
         };
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
-        Ok(self.ast.arrow_expression(
+        Ok(self.ast.arrow_function_expression(
             self.end_span(span),
             expression,
             r#async,
@@ -329,7 +338,7 @@ impl<'a> ParserImpl<'a> {
         kind: FunctionKind,
         r#async: bool,
         generator: bool,
-    ) -> Option<BindingIdentifier> {
+    ) -> Option<BindingIdentifier<'a>> {
         let ctx = self.ctx;
         if kind.is_expression() {
             self.ctx = self.ctx.and_await(r#async).and_yield(generator);
@@ -515,7 +524,7 @@ impl<'a> ParserImpl<'a> {
 
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
-        Ok(self.ast.arrow_expression(
+        Ok(self.ast.arrow_function_expression(
             self.end_span(span),
             expression,
             r#async,

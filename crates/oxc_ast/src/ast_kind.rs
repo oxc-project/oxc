@@ -7,12 +7,12 @@ use crate::ast::*;
 #[derive(Debug, Clone, Copy)]
 pub enum AstKind<'a> {
     Program(&'a Program<'a>),
-    Directive(&'a Directive),
-    Hashbang(&'a Hashbang),
+    Directive(&'a Directive<'a>),
+    Hashbang(&'a Hashbang<'a>),
 
     BlockStatement(&'a BlockStatement<'a>),
-    BreakStatement(&'a BreakStatement),
-    ContinueStatement(&'a ContinueStatement),
+    BreakStatement(&'a BreakStatement<'a>),
+    ContinueStatement(&'a ContinueStatement<'a>),
     DebuggerStatement(&'a DebuggerStatement),
     DoWhileStatement(&'a DoWhileStatement<'a>),
     EmptyStatement(&'a EmptyStatement),
@@ -39,25 +39,25 @@ pub enum AstKind<'a> {
 
     UsingDeclaration(&'a UsingDeclaration<'a>),
 
-    IdentifierName(&'a IdentifierName),
-    IdentifierReference(&'a IdentifierReference),
-    BindingIdentifier(&'a BindingIdentifier),
-    LabelIdentifier(&'a LabelIdentifier),
-    PrivateIdentifier(&'a PrivateIdentifier),
+    IdentifierName(&'a IdentifierName<'a>),
+    IdentifierReference(&'a IdentifierReference<'a>),
+    BindingIdentifier(&'a BindingIdentifier<'a>),
+    LabelIdentifier(&'a LabelIdentifier<'a>),
+    PrivateIdentifier(&'a PrivateIdentifier<'a>),
 
-    NumberLiteral(&'a NumberLiteral<'a>),
-    StringLiteral(&'a StringLiteral),
+    NumericLiteral(&'a NumericLiteral<'a>),
+    StringLiteral(&'a StringLiteral<'a>),
     BooleanLiteral(&'a BooleanLiteral),
     NullLiteral(&'a NullLiteral),
-    BigintLiteral(&'a BigintLiteral),
-    RegExpLiteral(&'a RegExpLiteral),
+    BigintLiteral(&'a BigintLiteral<'a>),
+    RegExpLiteral(&'a RegExpLiteral<'a>),
     TemplateLiteral(&'a TemplateLiteral<'a>),
 
-    MetaProperty(&'a MetaProperty),
+    MetaProperty(&'a MetaProperty<'a>),
     Super(&'a Super),
 
     ArrayExpression(&'a ArrayExpression<'a>),
-    ArrowExpression(&'a ArrowExpression<'a>),
+    ArrowFunctionExpression(&'a ArrowFunctionExpression<'a>),
     AssignmentExpression(&'a AssignmentExpression<'a>),
     AwaitExpression(&'a AwaitExpression<'a>),
     BinaryExpression(&'a BinaryExpression<'a>),
@@ -110,9 +110,9 @@ pub enum AstKind<'a> {
 
     ModuleDeclaration(&'a ModuleDeclaration<'a>),
     ImportDeclaration(&'a ImportDeclaration<'a>),
-    ImportSpecifier(&'a ImportSpecifier),
-    ImportDefaultSpecifier(&'a ImportDefaultSpecifier),
-    ImportNamespaceSpecifier(&'a ImportNamespaceSpecifier),
+    ImportSpecifier(&'a ImportSpecifier<'a>),
+    ImportDefaultSpecifier(&'a ImportDefaultSpecifier<'a>),
+    ImportNamespaceSpecifier(&'a ImportNamespaceSpecifier<'a>),
     ExportDefaultDeclaration(&'a ExportDefaultDeclaration<'a>),
     ExportNamedDeclaration(&'a ExportNamedDeclaration<'a>),
     ExportAllDeclaration(&'a ExportAllDeclaration<'a>),
@@ -127,11 +127,11 @@ pub enum AstKind<'a> {
     JSXExpressionContainer(&'a JSXExpressionContainer<'a>),
     JSXAttributeItem(&'a JSXAttributeItem<'a>),
     JSXSpreadAttribute(&'a JSXSpreadAttribute<'a>),
-    JSXText(&'a JSXText),
-    JSXIdentifier(&'a JSXIdentifier),
+    JSXText(&'a JSXText<'a>),
+    JSXIdentifier(&'a JSXIdentifier<'a>),
     JSXMemberExpression(&'a JSXMemberExpression<'a>),
     JSXMemberExpressionObject(&'a JSXMemberExpressionObject<'a>),
-    JSXNamespacedName(&'a JSXNamespacedName),
+    JSXNamespacedName(&'a JSXNamespacedName<'a>),
 
     // TypeScript
     TSModuleBlock(&'a TSModuleBlock<'a>),
@@ -156,11 +156,10 @@ pub enum AstKind<'a> {
 
     TSEnumDeclaration(&'a TSEnumDeclaration<'a>),
     TSEnumMember(&'a TSEnumMember<'a>),
-    TSEnumBody(&'a TSEnumBody<'a>),
 
     TSImportEqualsDeclaration(&'a TSImportEqualsDeclaration<'a>),
     TSTypeName(&'a TSTypeName<'a>),
-    TSExternalModuleReference(&'a TSExternalModuleReference),
+    TSExternalModuleReference(&'a TSExternalModuleReference<'a>),
     TSQualifiedName(&'a TSQualifiedName<'a>),
 
     TSInterfaceDeclaration(&'a TSInterfaceDeclaration<'a>),
@@ -232,7 +231,7 @@ impl<'a> AstKind<'a> {
     pub fn is_literal(self) -> bool {
         matches!(
             self,
-            Self::NumberLiteral(_)
+            Self::NumericLiteral(_)
                 | Self::StringLiteral(_)
                 | Self::BooleanLiteral(_)
                 | Self::NullLiteral(_)
@@ -243,10 +242,10 @@ impl<'a> AstKind<'a> {
     }
 
     pub fn is_function_like(self) -> bool {
-        matches!(self, Self::Function(_) | Self::ArrowExpression(_))
+        matches!(self, Self::Function(_) | Self::ArrowFunctionExpression(_))
     }
 
-    pub fn identifier_name(self) -> Option<Atom> {
+    pub fn identifier_name(self) -> Option<Atom<'a>> {
         match self {
             Self::BindingIdentifier(ident) => Some(ident.name.clone()),
             Self::IdentifierReference(ident) => Some(ident.name.clone()),
@@ -280,7 +279,7 @@ impl<'a> AstKind<'a> {
         match e {
             Expression::BooleanLiteral(e) => Self::BooleanLiteral(e),
             Expression::NullLiteral(e) => Self::NullLiteral(e),
-            Expression::NumberLiteral(e) => Self::NumberLiteral(e),
+            Expression::NumericLiteral(e) => Self::NumericLiteral(e),
             Expression::BigintLiteral(e) => Self::BigintLiteral(e),
             Expression::RegExpLiteral(e) => Self::RegExpLiteral(e),
             Expression::StringLiteral(e) => Self::StringLiteral(e),
@@ -289,7 +288,7 @@ impl<'a> AstKind<'a> {
             Expression::MetaProperty(e) => Self::MetaProperty(e),
             Expression::Super(e) => Self::Super(e),
             Expression::ArrayExpression(e) => Self::ArrayExpression(e),
-            Expression::ArrowExpression(e) => Self::ArrowExpression(e),
+            Expression::ArrowFunctionExpression(e) => Self::ArrowFunctionExpression(e),
             Expression::AssignmentExpression(e) => Self::AssignmentExpression(e),
             Expression::AwaitExpression(e) => Self::AwaitExpression(e),
             Expression::BinaryExpression(e) => Self::BinaryExpression(e),
@@ -365,7 +364,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::LabelIdentifier(x) => x.span,
             Self::PrivateIdentifier(x) => x.span,
 
-            Self::NumberLiteral(x) => x.span,
+            Self::NumericLiteral(x) => x.span,
             Self::StringLiteral(x) => x.span,
             Self::BooleanLiteral(x) => x.span,
             Self::NullLiteral(x) => x.span,
@@ -377,7 +376,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::Super(x) => x.span,
 
             Self::ArrayExpression(x) => x.span,
-            Self::ArrowExpression(x) => x.span,
+            Self::ArrowFunctionExpression(x) => x.span,
             Self::AssignmentExpression(x) => x.span,
             Self::AwaitExpression(x) => x.span,
             Self::BinaryExpression(x) => x.span,
@@ -472,7 +471,6 @@ impl<'a> GetSpan for AstKind<'a> {
 
             Self::TSEnumDeclaration(x) => x.span,
             Self::TSEnumMember(x) => x.span,
-            Self::TSEnumBody(x) => x.span,
 
             Self::TSImportEqualsDeclaration(x) => x.span,
             Self::TSTypeName(x) => x.span(),
@@ -541,8 +539,8 @@ impl<'a> AstKind<'a> {
             Self::LabelIdentifier(x) => format!("LabelIdentifier({})", x.name).into(),
             Self::PrivateIdentifier(x) => format!("PrivateIdentifier({})", x.name).into(),
 
-            Self::NumberLiteral(n) => format!("NumberLiteral({})", n.value).into(),
-            Self::StringLiteral(s) => format!("NumberLiteral({})", s.value).into(),
+            Self::NumericLiteral(n) => format!("NumericLiteral({})", n.value).into(),
+            Self::StringLiteral(s) => format!("NumericLiteral({})", s.value).into(),
             Self::BooleanLiteral(b) => format!("BooleanLiteral({})", b.value).into(),
             Self::NullLiteral(_) => "NullLiteral".into(),
             Self::BigintLiteral(b) => format!("BigintLiteral({})", b.raw).into(),
@@ -557,7 +555,7 @@ impl<'a> AstKind<'a> {
             Self::Super(_) => "Super".into(),
 
             Self::ArrayExpression(_) => "ArrayExpression".into(),
-            Self::ArrowExpression(_) => "ArrowExpression".into(),
+            Self::ArrowFunctionExpression(_) => "ArrowFunctionExpression".into(),
             Self::AssignmentExpression(_) => "AssignmentExpression".into(),
             Self::AwaitExpression(_) => "AwaitExpression".into(),
             Self::BinaryExpression(b) => format!("BinaryExpression{}", b.operator.as_str()).into(),
@@ -658,7 +656,6 @@ impl<'a> AstKind<'a> {
             Self::TSInstantiationExpression(_) => "TSInstantiationExpression".into(),
 
             Self::TSEnumDeclaration(decl) => format!("TSEnumDeclaration({})", &decl.id.name).into(),
-            Self::TSEnumBody(_) => "TSEnumBody".into(),
 
             Self::TSEnumMember(_) => "TSEnumMember".into(),
 

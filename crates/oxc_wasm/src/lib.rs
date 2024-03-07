@@ -4,6 +4,7 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc};
 
 use oxc::{
     allocator::Allocator,
+    ast::{CommentKind, Trivias},
     codegen::{Codegen, CodegenOptions},
     diagnostics::Error,
     minifier::{CompressOptions, Minifier, MinifierOptions},
@@ -26,12 +27,15 @@ use crate::options::{
 #[derive(Default, Tsify)]
 pub struct Oxc {
     source_text: String,
+
     #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "Program")]
     pub ast: JsValue,
+
     #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "Statement[]")]
     pub ir: JsValue,
+
     #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "SymbolTable")]
     pub symbols: JsValue,
@@ -39,22 +43,45 @@ pub struct Oxc {
     #[wasm_bindgen(readonly, skip_typescript, js_name = "scopeText")]
     #[serde(rename = "scopeText")]
     pub scope_text: String,
+
     #[wasm_bindgen(readonly, skip_typescript, js_name = "codegenText")]
     #[serde(rename = "codegenText")]
     pub codegen_text: String,
+
     #[wasm_bindgen(readonly, skip_typescript, js_name = "formattedText")]
     #[serde(rename = "formattedText")]
     pub formatted_text: String,
+
     #[wasm_bindgen(readonly, skip_typescript, js_name = "prettierFormattedText")]
     #[serde(rename = "prettierFormattedText")]
     pub prettier_formatted_text: String,
+
     #[wasm_bindgen(readonly, skip_typescript, js_name = "prettierIrText")]
     #[serde(rename = "prettierIrText")]
     pub prettier_ir_text: String,
 
+    comments: Vec<Comment>,
+
     diagnostics: RefCell<Vec<Error>>,
+
     #[serde(skip)]
     serializer: serde_wasm_bindgen::Serializer,
+}
+
+#[derive(Clone, Tsify, Serialize)]
+#[tsify(into_wasm_abi)]
+pub struct Comment {
+    pub r#type: CommentType,
+    pub value: String,
+    pub start: u32,
+    pub end: u32,
+}
+
+#[derive(Clone, Copy, Tsify, Serialize)]
+#[tsify(into_wasm_abi)]
+pub enum CommentType {
+    Line,
+    Block,
 }
 
 #[derive(Default, Clone, Serialize)]
@@ -110,6 +137,13 @@ impl Oxc {
             .collect::<Vec<_>>())
     }
 
+    /// Returns comments
+    /// # Errors
+    #[wasm_bindgen(js_name = getComments)]
+    pub fn get_comments(&self) -> Result<Vec<JsValue>, serde_wasm_bindgen::Error> {
+        self.comments.iter().map(|c| c.serialize(&self.serializer)).collect()
+    }
+
     /// # Errors
     /// Serde serialization error
     #[wasm_bindgen]
@@ -118,19 +152,23 @@ impl Oxc {
         run_options: &OxcRunOptions,
         parser_options: &OxcParserOptions,
         _linter_options: &OxcLinterOptions,
-        _codegen_options: &OxcCodegenOptions,
+        codegen_options: &OxcCodegenOptions,
         minifier_options: &OxcMinifierOptions,
     ) -> Result<(), serde_wasm_bindgen::Error> {
         self.diagnostics = RefCell::default();
 
         let allocator = Allocator::default();
         let source_text = &self.source_text;
-        let path = PathBuf::from("test.tsx");
+        let path = PathBuf::from(
+            parser_options.source_filename.clone().unwrap_or_else(|| "test.tsx".to_string()),
+        );
         let source_type = SourceType::from_path(&path).unwrap_or_default();
 
         let ret = Parser::new(&allocator, source_text, source_type)
             .allow_return_outside_function(parser_options.allow_return_outside_function)
             .parse();
+
+        self.comments = self.map_comments(&ret.trivias);
         self.save_diagnostics(ret.errors);
 
         self.ir = format!("{:#?}", ret.program.body).into();
@@ -187,7 +225,10 @@ impl Oxc {
         if run_options.transform() {
             // FIXME: this should not be duplicated with the linter semantic,
             // we need to fix the API so symbols and scopes can be shared.
-            let semantic = SemanticBuilder::new(source_text, source_type).build(program).semantic;
+            let semantic = SemanticBuilder::new(source_text, source_type)
+                .build_module_record(PathBuf::new(), program)
+                .build(program)
+                .semantic;
             let options =
                 TransformOptions { target: TransformTarget::ES2015, ..TransformOptions::default() };
             let result =
@@ -198,7 +239,10 @@ impl Oxc {
         }
 
         if run_options.scope() || run_options.symbol() {
-            let semantic = SemanticBuilder::new(source_text, source_type).build(program).semantic;
+            let semantic = SemanticBuilder::new(source_text, source_type)
+                .build_module_record(PathBuf::new(), program)
+                .build(program)
+                .semantic;
             if run_options.scope() {
                 self.scope_text = Self::get_scope_text(&semantic);
             } else if run_options.symbol() {
@@ -220,10 +264,14 @@ impl Oxc {
             Minifier::new(options).build(&allocator, program);
         }
 
+        let codegen_options = CodegenOptions {
+            enable_typescript: codegen_options.enable_typescript,
+            ..CodegenOptions::default()
+        };
         self.codegen_text = if minifier_options.whitespace() {
-            Codegen::<true>::new(source_text.len(), CodegenOptions).build(program)
+            Codegen::<true>::new(source_text, codegen_options).build(program).source_text
         } else {
-            Codegen::<false>::new(source_text.len(), CodegenOptions).build(program)
+            Codegen::<false>::new(source_text, codegen_options).build(program).source_text
         };
 
         Ok(())
@@ -270,5 +318,22 @@ impl Oxc {
 
     fn save_diagnostics(&self, diagnostics: Vec<Error>) {
         self.diagnostics.borrow_mut().extend(diagnostics);
+    }
+
+    fn map_comments(&self, trivias: &Trivias) -> Vec<Comment> {
+        trivias
+            .comments
+            .iter()
+            .copied()
+            .map(|(start, end, kind)| Comment {
+                r#type: match kind {
+                    CommentKind::SingleLine => CommentType::Line,
+                    CommentKind::MultiLine => CommentType::Block,
+                },
+                value: self.source_text[start as usize..end as usize].to_string(),
+                start,
+                end,
+            })
+            .collect()
     }
 }

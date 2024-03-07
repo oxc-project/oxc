@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: number_literal_case
 ---
-
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
    ╭─[number_literal_case.tsx:1:14]
  1 │ const foo = 0B10
@@ -123,4 +122,3 @@ expression: number_literal_case
    ·                                     ────────────
    ╰────
   help: Use lowercase for the number literal prefix `0x` and uppercase for hexadecimal digits.
-

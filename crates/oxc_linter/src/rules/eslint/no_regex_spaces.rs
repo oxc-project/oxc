@@ -80,7 +80,7 @@ impl NoRegexSpaces {
             let start = literal.span.start + u32::try_from(idx_start).unwrap() + 1;
             let end = literal.span.start + u32::try_from(idx_end).unwrap() + 2;
 
-            return Some(Span { start, end });
+            return Some(Span::new(start, end));
         }
 
         None
@@ -104,7 +104,7 @@ impl NoRegexSpaces {
                 let start = pattern.span.start + u32::try_from(idx_start).unwrap() + 1;
                 let end = pattern.span.start + u32::try_from(idx_end).unwrap() + 2;
 
-                return Some(Span { start, end });
+                return Some(Span::new(start, end));
             }
         }
 

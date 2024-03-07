@@ -54,10 +54,10 @@ impl Rule for NoUnescapedEntities {
                 if let Some(escapes) = DEFAULTS.get(&char) {
                     #[allow(clippy::cast_possible_truncation)]
                     ctx.diagnostic(NoUnescapedEntitiesDiagnostic(
-                        Span {
-                            start: jsx_text.span.start + i as u32,
-                            end: jsx_text.span.start + i as u32 + 1,
-                        },
+                        Span::new(
+                            jsx_text.span.start + i as u32,
+                            jsx_text.span.start + i as u32 + 1,
+                        ),
                         char,
                         escapes.join(" or "),
                     ));

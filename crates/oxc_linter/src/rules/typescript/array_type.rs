@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{TSType, TSTypeName, TSTypeOperator, TSTypeReference},
+    ast::{TSType, TSTypeName, TSTypeOperatorOperator, TSTypeReference},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -148,7 +148,7 @@ fn check(
     }
 
     if let TSType::TSTypeOperatorType(ts_operator_type) = &type_annotation {
-        if matches!(&ts_operator_type.operator, TSTypeOperator::Readonly) {
+        if matches!(&ts_operator_type.operator, TSTypeOperatorOperator::Readonly) {
             if let TSType::TSArrayType(array_type) = &ts_operator_type.type_annotation {
                 check_and_report_error_generic(
                     readonly_config,
@@ -227,7 +227,7 @@ fn check_and_report_error_generic(
 
         Fix::new(
             array_type_identifier.to_string() + "<" + type_text + ">",
-            Span { start: type_reference_span.start, end: type_reference_span.end },
+            Span::new(type_reference_span.start, type_reference_span.end),
         )
     });
 }
@@ -345,7 +345,7 @@ fn is_simple_type(ts_type: &TSType) -> bool {
         | TSType::TSArrayType(_)
         | TSType::TSUndefinedKeyword(_)
         | TSType::TSQualifiedName(_)
-        | TSType::TSThisKeyword(_) => true,
+        | TSType::TSThisType(_) => true,
         TSType::TSTypeReference(node) => {
             let type_name = TSTypeName::get_first_name(&node.type_name);
             if type_name.name.as_str() == "Array" {
@@ -395,7 +395,7 @@ fn get_ts_element_type_span(ts_type: &TSType) -> Option<Span> {
         TSType::TSUnknownKeyword(t) => Some(t.span),
         TSType::TSVoidKeyword(t) => Some(t.span),
         TSType::TSNullKeyword(t) => Some(t.span),
-        TSType::TSThisKeyword(t) => Some(t.span),
+        TSType::TSThisType(t) => Some(t.span),
         TSType::TSUndefinedKeyword(t) => Some(t.span),
 
         TSType::TSArrayType(t) => Some(t.span),

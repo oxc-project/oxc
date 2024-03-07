@@ -24,8 +24,8 @@ impl<'a> ParserImpl<'a> {
         Span::new(token.start, 0)
     }
 
-    pub(crate) fn end_span(&self, span: Span) -> Span {
-        let mut span = span;
+    #[inline]
+    pub(crate) fn end_span(&self, mut span: Span) -> Span {
         span.end = self.prev_token_end;
         span
     }

@@ -3,7 +3,7 @@
 use std::{collections::HashSet, rc::Rc};
 
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{Atom, SPAN};
+use oxc_span::{CompactStr, SPAN};
 
 use crate::options::{TransformOptions, TransformTarget};
 
@@ -18,13 +18,13 @@ pub struct DuplicateKeys<'a> {
 
 impl<'a> DuplicateKeys<'a> {
     pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
-        (options.target < TransformTarget::ES2015 || options.duplicate_keys).then(|| Self { ast })
+        (options.target < TransformTarget::ES2015 || options.duplicate_keys).then_some(Self { ast })
     }
 
     pub fn transform_object_expression<'b>(&mut self, obj_expr: &'b mut ObjectExpression<'a>) {
-        let mut visited_data: HashSet<Atom> = HashSet::new();
-        let mut visited_getters: HashSet<Atom> = HashSet::new();
-        let mut visited_setters: HashSet<Atom> = HashSet::new();
+        let mut visited_data: HashSet<CompactStr> = HashSet::new();
+        let mut visited_getters: HashSet<CompactStr> = HashSet::new();
+        let mut visited_setters: HashSet<CompactStr> = HashSet::new();
 
         for property in obj_expr.properties.iter_mut() {
             let ObjectPropertyKind::ObjectProperty(obj_property) = property else {
@@ -64,7 +64,7 @@ impl<'a> DuplicateKeys<'a> {
 
                 if is_duplicate {
                     obj_property.computed = true;
-                    let string_literal = StringLiteral::new(SPAN, name.as_str().into());
+                    let string_literal = StringLiteral::new(SPAN, self.ast.new_atom(name));
                     let expr = self.ast.literal_string_expression(string_literal);
                     obj_property.key = PropertyKey::Expression(expr);
                 }

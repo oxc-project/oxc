@@ -25,49 +25,50 @@ static SINGLE_QUOTE_STRING_END_TABLE: SafeByteMatchTable =
 /// `$table` must only match `$delimiter`, '\', '\r' or '\n'.
 macro_rules! handle_string_literal {
     ($lexer:ident, $delimiter:expr, $table:ident) => {{
+        debug_assert!($delimiter.is_ascii());
+
+        if $lexer.context == LexerContext::JsxAttributeValue {
+            // SAFETY: Caller guarantees `$delimiter` is ASCII, and next char is ASCII
+            return $lexer.read_jsx_string_literal($delimiter);
+        }
+
         // Skip opening quote.
         // SAFETY: Caller guarantees next byte is ASCII, so safe to advance past it.
         let after_opening_quote = $lexer.source.position().add(1);
 
         // Consume bytes which are part of identifier
-        byte_search! {
+        let next_byte = byte_search! {
             lexer: $lexer,
             table: $table,
             start: after_opening_quote,
-            handle_match: |next_byte| {
-                // Found a matching byte.
-                // Either end of string found, or a line break, or `\` escape.
-                match next_byte {
-                    $delimiter => {
-                        // SAFETY: `handle_match` is only called if there's a byte to consume,
-                        // and `next_byte` is the next byte in `lexer.source`.
-                        // Macro user guarantees delimiter is ASCII, so consuming it cannot move
-                        // `lexer.source` off a UTF-8 character boundary.
-                        $lexer.source.next_byte_unchecked();
-                        Kind::Str
-                    },
-                    b'\\' => {
-                        cold_branch(|| {
-                            handle_string_literal_escape!($lexer, $delimiter, $table, after_opening_quote)
-                        })
-                    },
-                    b'\r' | b'\n' => {
-                        // This is impossible in valid JS, so cold path
-                        cold_branch(|| {
-                            $lexer.consume_char();
-                            $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
-                            Kind::Undetermined
-                        })
-                    },
-                    // SAFETY: Macro user guarantees `$table` does not match any other bytes
-                    _ => assert_unchecked::unreachable_unchecked!()
-                }
-            },
-            handle_eof: || {
+            handle_eof: {
                 $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
-                Kind::Undetermined
+                return Kind::Undetermined;
             },
         };
+
+        // Found a matching byte.
+        // Either end of string found, or a line break, or `\` escape.
+        match next_byte {
+            $delimiter => {
+                // SAFETY: Macro user guarantees delimiter is ASCII, so consuming it cannot move
+                // `lexer.source` off a UTF-8 character boundary.
+                $lexer.source.next_byte_unchecked();
+                Kind::Str
+            }
+            b'\\' => cold_branch(|| {
+                handle_string_literal_escape!($lexer, $delimiter, $table, after_opening_quote)
+            }),
+            _ => {
+                // Line break. This is impossible in valid JS, so cold path.
+                cold_branch(|| {
+                    debug_assert!(matches!(next_byte, b'\r' | b'\n'));
+                    $lexer.consume_char();
+                    $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
+                    Kind::Undetermined
+                })
+            }
+        }
     }};
 }
 
@@ -81,8 +82,6 @@ macro_rules! handle_string_literal_escape {
         let mut str = String::with_capacity_in(capacity, $lexer.allocator);
 
         // Push chunk before `\` into `str`.
-        // `bumpalo::collections::string::String::push_str` is currently expensive due to
-        // inefficiency in bumpalo's implementation. But best we have right now.
         str.push_str(so_far);
 
         'outer: loop {
@@ -108,7 +107,7 @@ macro_rules! handle_string_literal_escape {
                         // `Source`'s invariant temporarily, but the guarantees of `SafeByteMatchTable`
                         // mean `!table.matches(b)` on this branch prevents exiting this loop until
                         // `source` is positioned on a UTF-8 character boundary again.
-                        unsafe { $lexer.source.next_byte_unchecked() };
+                        $lexer.source.next_byte_unchecked();
                         continue;
                     }
                     b if b == $delimiter => {
@@ -128,16 +127,15 @@ macro_rules! handle_string_literal_escape {
                         str.push_str(chunk);
                         continue 'outer;
                     }
-                    b'\r' | b'\n' => {
-                        // This is impossible in valid JS, so cold path
+                    _  => {
+                        // Line break. This is impossible in valid JS, so cold path.
                         return cold_branch(|| {
+                            debug_assert!(matches!(b, b'\r' | b'\n'));
                             $lexer.consume_char();
                             $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
                             Kind::Undetermined
                         });
                     }
-                    // SAFETY: Caller guarantees `table` does not match any other bytes
-                    _ => assert_unchecked::unreachable_unchecked!(),
                 }
             }
 
@@ -160,30 +158,18 @@ impl<'a> Lexer<'a> {
     /// # SAFETY
     /// Next character must be `"`.
     pub(super) unsafe fn read_string_literal_double_quote(&mut self) -> Kind {
-        if self.context == LexerContext::JsxAttributeValue {
-            // SAFETY: Caller guarantees next char is `"`
-            self.source.next_byte_unchecked();
-            self.read_jsx_string_literal('"')
-        } else {
-            // SAFETY: Caller guarantees next char is `"`, which is ASCII.
-            // b'"' is an ASCII byte. `DOUBLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
-            unsafe { handle_string_literal!(self, b'"', DOUBLE_QUOTE_STRING_END_TABLE) }
-        }
+        // SAFETY: Caller guarantees next char is `"`, which is ASCII.
+        // b'"' is an ASCII byte. `DOUBLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
+        unsafe { handle_string_literal!(self, b'"', DOUBLE_QUOTE_STRING_END_TABLE) }
     }
 
     /// Read string literal delimited with `'`.
     /// # SAFETY
     /// Next character must be `'`.
     pub(super) unsafe fn read_string_literal_single_quote(&mut self) -> Kind {
-        if self.context == LexerContext::JsxAttributeValue {
-            // SAFETY: Caller guarantees next char is `'`
-            self.source.next_byte_unchecked();
-            self.read_jsx_string_literal('\'')
-        } else {
-            // SAFETY: Caller guarantees next char is `"`, which is ASCII.
-            // b'\'' is an ASCII byte. `SINGLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
-            unsafe { handle_string_literal!(self, b'\'', SINGLE_QUOTE_STRING_END_TABLE) }
-        }
+        // SAFETY: Caller guarantees next char is `'`, which is ASCII.
+        // b'\'' is an ASCII byte. `SINGLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
+        unsafe { handle_string_literal!(self, b'\'', SINGLE_QUOTE_STRING_END_TABLE) }
     }
 
     /// Save the string if it is escaped

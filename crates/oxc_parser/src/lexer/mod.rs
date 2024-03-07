@@ -19,7 +19,6 @@ mod regex;
 mod search;
 mod source;
 mod string;
-mod string_builder;
 mod template;
 mod token;
 mod trivia_builder;
@@ -38,8 +37,7 @@ use oxc_span::{SourceType, Span};
 use self::{
     byte_handlers::handle_byte,
     source::{Source, SourcePosition},
-    string_builder::AutoCow,
-    trivia_builder::TriviaBuilder,
+    trivia_builder::{TriviaBuilder, TriviasCheckpoint},
 };
 pub use self::{
     kind::Kind,
@@ -56,6 +54,8 @@ pub struct LexerCheckpoint<'a> {
     token: Token,
 
     errors_pos: usize,
+
+    trivias: TriviasCheckpoint,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -155,12 +155,14 @@ impl<'a> Lexer<'a> {
             position: self.source.position(),
             token: self.token,
             errors_pos: self.errors.len(),
+            trivias: self.trivia_builder.checkpoint(),
         }
     }
 
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
     pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
         self.errors.truncate(checkpoint.errors_pos);
+        self.trivia_builder.rewind(checkpoint.trivias);
         self.source.set_position(checkpoint.position);
         self.token = checkpoint.token;
         self.lookahead.clear();
@@ -295,9 +297,7 @@ impl<'a> Lexer<'a> {
             let offset = self.offset();
             self.token.start = offset;
 
-            let byte = if let Some(byte) = self.source.peek_byte() {
-                byte
-            } else {
+            let Some(byte) = self.source.peek_byte() else {
                 return Kind::Eof;
             };
 

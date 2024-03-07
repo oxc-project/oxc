@@ -1,4 +1,4 @@
-use std::{collections::HashSet, rc::Rc};
+use std::{borrow::Cow, collections::HashSet, rc::Rc};
 
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, SPAN};
@@ -17,7 +17,7 @@ pub struct ClassStaticBlock<'a> {
 impl<'a> ClassStaticBlock<'a> {
     pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
         (options.target < TransformTarget::ES2022 || options.class_static_block)
-            .then(|| Self { ast })
+            .then_some(Self { ast })
     }
 
     pub fn transform_class_body<'b>(&mut self, class_body: &'b mut ClassBody<'a>) {
@@ -25,11 +25,12 @@ impl<'a> ClassStaticBlock<'a> {
             return;
         }
 
-        let private_names: HashSet<Atom> = class_body
+        let private_names: HashSet<Atom<'a>> = class_body
             .body
             .iter()
             .filter_map(ClassElement::property_key)
             .filter_map(PropertyKey::private_name)
+            .cloned()
             .collect();
 
         let mut i = 0;
@@ -38,7 +39,7 @@ impl<'a> ClassStaticBlock<'a> {
                 continue;
             };
 
-            let static_block_private_id = generate_uid(&private_names, &mut i);
+            let static_block_private_id = self.generate_uid(&private_names, &mut i);
             let key =
                 PropertyKey::PrivateIdentifier(self.ast.alloc(PrivateIdentifier {
                     span: SPAN,
@@ -84,7 +85,7 @@ impl<'a> ClassStaticBlock<'a> {
                     let function_body =
                         self.ast.function_body(SPAN, self.ast.new_vec(), statements);
 
-                    let callee = self.ast.arrow_expression(
+                    let callee = self.ast.arrow_function_expression(
                         SPAN,
                         false,
                         false,
@@ -102,19 +103,21 @@ impl<'a> ClassStaticBlock<'a> {
                 }
             };
 
-            *element = self.ast.class_property(SPAN, key, value, false, true, self.ast.new_vec());
+            let r#type = PropertyDefinitionType::PropertyDefinition;
+            *element =
+                self.ast.class_property(r#type, SPAN, key, value, false, true, self.ast.new_vec());
         }
     }
-}
 
-fn generate_uid(deny_list: &HashSet<Atom>, i: &mut u32) -> Atom {
-    *i += 1;
-
-    let mut uid: Atom = if *i == 1 { "_".to_string() } else { format!("_{i}") }.into();
-    while deny_list.contains(&uid) {
+    fn generate_uid(&self, deny_list: &HashSet<Atom<'a>>, i: &mut u32) -> Atom<'a> {
         *i += 1;
-        uid = format!("_{i}").into();
-    }
 
-    uid
+        let mut uid = if *i == 1 { Cow::Borrowed("_") } else { Cow::Owned(format!("_{i}")) };
+        while deny_list.iter().any(|id| id.as_str() == uid.as_ref()) {
+            *i += 1;
+            uid = format!("_{i}").into();
+        }
+
+        self.ast.new_atom(&uid)
+    }
 }

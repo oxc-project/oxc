@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{ObjectAssignmentTarget, ObjectExpression, ObjectPattern},
+    ast::{ObjectAssignmentTarget, ObjectExpression, ObjectPattern, WithClause},
     AstKind,
 };
 use oxc_span::Span;
@@ -16,6 +16,7 @@ pub enum ObjectLike<'a, 'b> {
     Expression(&'b ObjectExpression<'a>),
     AssignmentTarget(&'b ObjectAssignmentTarget<'a>),
     Pattern(&'b ObjectPattern<'a>),
+    WithClause(&'b WithClause<'a>),
 }
 
 impl<'a, 'b> ObjectLike<'a, 'b> {
@@ -24,6 +25,7 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
             Self::Expression(expr) => expr.properties.len(),
             Self::AssignmentTarget(target) => target.properties.len(),
             Self::Pattern(object) => object.properties.len(),
+            Self::WithClause(attributes) => attributes.with_entries.len(),
         }
     }
 
@@ -32,6 +34,7 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
             Self::Expression(expr) => false,
             Self::AssignmentTarget(target) => target.rest.is_some(),
             Self::Pattern(object) => object.rest.is_some(),
+            Self::WithClause(_) => false,
         }
     }
 
@@ -40,6 +43,7 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
             Self::Expression(object) => object.properties.is_empty(),
             Self::AssignmentTarget(object) => object.is_empty(),
             Self::Pattern(object) => object.is_empty(),
+            Self::WithClause(attributes) => attributes.with_entries.is_empty(),
         }
     }
 
@@ -52,6 +56,7 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
             Self::Expression(object) => object.span,
             Self::AssignmentTarget(object) => object.span,
             Self::Pattern(object) => object.span,
+            Self::WithClause(attributes) => attributes.span,
         }
     }
 
@@ -64,6 +69,9 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
                 Box::new(object.properties.iter().map(|prop| prop.format(p)))
             }
             Self::Pattern(object) => Box::new(object.properties.iter().map(|prop| prop.format(p))),
+            Self::WithClause(attributes) => {
+                Box::new(attributes.with_entries.iter().map(|entry| entry.format(p)))
+            }
         }
     }
 }
@@ -96,10 +104,9 @@ pub(super) fn print_object_properties<'a>(
                 indent_parts.push(line!());
             }
             match object {
-                ObjectLike::Expression(_) => {}
+                ObjectLike::Expression(_) | ObjectLike::WithClause(_) => {}
                 ObjectLike::AssignmentTarget(target) => {
                     if let Some(rest) = &target.rest {
-                        indent_parts.push(ss!("..."));
                         indent_parts.push(rest.format(p));
                     }
                 }
@@ -116,6 +123,7 @@ pub(super) fn print_object_properties<'a>(
                 ObjectLike::Expression(expr) => true,
                 ObjectLike::AssignmentTarget(target) => true,
                 ObjectLike::Pattern(pattern) => pattern.rest.is_none(),
+                ObjectLike::WithClause(_) => true,
             }
         {
             parts.push(if_break!(p, ",", "", None));

@@ -70,7 +70,7 @@ declare_oxc_lint!(
 impl Rule for NumberLiteralCase {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (raw_literal, raw_span) = match node.kind() {
-            AstKind::NumberLiteral(number) => (number.raw, number.span),
+            AstKind::NumericLiteral(number) => (number.raw, number.span),
             AstKind::BigintLiteral(number) => {
                 let span = number.span;
                 (span.source_text(ctx.source_text()), span)
@@ -92,7 +92,7 @@ fn check_number_literal(
     if number_literal.starts_with("0B") || number_literal.starts_with("0O") {
         return Some((
             NumberLiteralCaseDiagnostic::UppercasePrefix(
-                Span { start: raw_span.start + 1, end: raw_span.start + 2 },
+                Span::new(raw_span.start + 1, raw_span.start + 2),
                 if number_literal.starts_with("0B") { "0b" } else { "0o" },
             ),
             number_literal.to_lowercase(),
@@ -112,7 +112,7 @@ fn check_number_literal(
         if has_uppercase_prefix {
             return Some((
                 NumberLiteralCaseDiagnostic::UppercasePrefix(
-                    Span { start: raw_span.start + 1, end: raw_span.start + 2 },
+                    Span::new(raw_span.start + 1, raw_span.start + 2),
                     "0x",
                 ),
                 "0x".to_owned() + &number_literal[2..],
@@ -120,10 +120,10 @@ fn check_number_literal(
         }
         if has_lowercase_digits {
             return Some((
-                NumberLiteralCaseDiagnostic::LowercaseHexadecimalDigits(Span {
-                    start: raw_span.start + 2,
-                    end: raw_span.end,
-                }),
+                NumberLiteralCaseDiagnostic::LowercaseHexadecimalDigits(Span::new(
+                    raw_span.start + 2,
+                    raw_span.end,
+                )),
                 "0x".to_owned() + &digits_to_uppercase(&number_literal[2..]),
             ));
         }
@@ -132,10 +132,10 @@ fn check_number_literal(
     if let Some(index) = number_literal.find('E') {
         let char_position = raw_span.start + index as u32;
         return Some((
-            NumberLiteralCaseDiagnostic::UppercaseExponentialNotation(Span {
-                start: char_position,
-                end: char_position + 1,
-            }),
+            NumberLiteralCaseDiagnostic::UppercaseExponentialNotation(Span::new(
+                char_position,
+                char_position + 1,
+            )),
             number_literal.to_lowercase(),
         ));
     }

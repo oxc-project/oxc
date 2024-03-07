@@ -50,12 +50,12 @@ impl<'a, 'b> Array<'a, 'b> {
                     };
 
                     match expr {
-                        Expression::NumberLiteral(_) => true,
+                        Expression::NumericLiteral(_) => true,
                         Expression::UnaryExpression(unary_expr) => {
                             matches!(
                                 unary_expr.operator,
                                 UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation
-                            ) && matches!(unary_expr.argument, Expression::NumberLiteral(_))
+                            ) && matches!(unary_expr.argument, Expression::NumericLiteral(_))
                         }
                         _ => false,
                     }
@@ -197,7 +197,6 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<
             if let Some(rest) = &array_pat.rest {
                 parts.push(ss!(","));
                 parts.push(line!());
-                parts.push(ss!("..."));
                 parts.push(rest.format(p));
             }
         }

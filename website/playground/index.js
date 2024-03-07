@@ -144,6 +144,7 @@ class Playground {
     this.linterOptions = new OxcLinterOptions();
     this.minifierOptions = new OxcMinifierOptions();
 
+    this.parserOptions.sourceFilename = "test.tsx";
     this.runOptions.syntax = true;
     this.runOptions.lint = true;
 
@@ -362,6 +363,7 @@ class Playground {
     this.currentView = view;
 
     document.getElementById("ir-copy").style.display = "none";
+    document.getElementById("codegen-controls").style.display = "none";
     document.getElementById("duration").style.display = "inline";
     document.getElementById("panel").style.display = "inline";
     this.runOptions.format = false;
@@ -371,7 +373,9 @@ class Playground {
     switch (this.currentView) {
       case "ast":
         this.run();
-        text = JSON.stringify(this.oxc.ast, null, 2);
+        let ast = this.oxc.ast;
+        ast.comments = this.oxc.getComments();
+        text = JSON.stringify(ast, null, 2);
         break;
       case "scope":
         this.runOptions.scope = true;
@@ -386,6 +390,7 @@ class Playground {
         text = renderSymbols(this.oxc.symbols)
         break;
       case "codegen":
+        document.getElementById("codegen-controls").style.display = "block";
         this.run();
         text = this.oxc.codegenText;
         break;
@@ -608,6 +613,12 @@ async function main() {
     playground.updateView("codegen");
   };
 
+  document.getElementById("codegen-ts").onchange = function () {
+    const checked = document.getElementById("codegen-ts-checkbox").checked;
+    playground.codegenOptions.enableTypescript = checked;
+    playground.updateView("codegen");
+  };
+
   document.getElementById("whitespace").onchange = function () {
     const checked = document.getElementById("whitespace-checkbox").checked;
     playground.minifierOptions.whitespace = checked;
@@ -626,6 +637,15 @@ async function main() {
     playground.updateView("codegen");
   };
 
+
+  document.getElementById("file-type-select").onchange = function (e) {
+    playground.parserOptions.sourceFilename= `test.${e.target.value}`;
+    // Need to repaint the editor to clear the rendered linter diagnostics
+    const sourceText = playground.oxc.sourceText;
+    playground.updateEditorText(playground.editor, "");
+    playground.updateView();
+    playground.updateEditorText(playground.editor, sourceText);
+  };
 
   document.getElementById("syntax").onchange = function () {
     const checked = document.getElementById("syntax-checkbox").checked;

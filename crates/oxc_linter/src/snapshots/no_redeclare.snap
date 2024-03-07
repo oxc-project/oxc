@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_redeclare
 ---
-
   ⚠ eslint(no-redeclare): 'b' is already defined.
    ╭─[no_redeclare.tsx:1:27]
  1 │ switch(foo) { case a: var b = 3;
@@ -172,4 +171,3 @@ expression: no_redeclare
    ·          │  ╰── It can not be redeclare here.
    ·          ╰── 'a' is already defined.
    ╰────
-

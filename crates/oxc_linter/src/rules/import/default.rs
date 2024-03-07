@@ -3,7 +3,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule};
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-import(default): No default export found in imported module {0:?}")]
 #[diagnostic(severity(warning), help("does {0:?} have the default export?"))]
-struct DefaultDiagnostic(Atom, #[label] pub Span);
+struct DefaultDiagnostic(String, #[label] pub Span);
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/default.md>
 #[derive(Debug, Default, Clone)]
@@ -39,20 +39,21 @@ impl Rule for Default {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.semantic().module_record();
         for import_entry in &module_record.import_entries {
-            let ImportImportName::Default(_) = import_entry.import_name else { continue };
+            let ImportImportName::Default(default_span) = import_entry.import_name else {
+                continue;
+            };
 
             let specifier = import_entry.module_request.name();
             let Some(remote_module_record_ref) = module_record.loaded_modules.get(specifier) else {
                 continue;
             };
-
+            if remote_module_record_ref.not_esm {
+                continue;
+            }
             if remote_module_record_ref.export_default.is_none()
                 && !remote_module_record_ref.exported_bindings.contains_key("default")
             {
-                ctx.diagnostic(DefaultDiagnostic(
-                    specifier.clone(),
-                    import_entry.module_request.span(),
-                ));
+                ctx.diagnostic(DefaultDiagnostic(specifier.to_string(), default_span));
             }
         }
     }
@@ -72,9 +73,7 @@ fn test() {
         r#"import CoolClass from "./default-class""#,
         r#"import bar, { baz } from "./default-export""#,
         r#"import crypto from "crypto""#,
-        // TODO: module.exports
-        // r#"import common from "./common""#,
-
+        r#"import common from "./common""#,
         // No longer valid syntax
         // r#"export bar from "./bar""#,
         // r#"export bar, { foo } from "./bar""#,

@@ -112,11 +112,14 @@ impl OxcRunOptions {
     }
 }
 
-#[wasm_bindgen]
-#[derive(Default, Clone, Copy)]
+#[wasm_bindgen(getter_with_clone)]
+#[derive(Default, Clone)]
 pub struct OxcParserOptions {
     #[wasm_bindgen(js_name = allowReturnOutsideFunction)]
     pub allow_return_outside_function: bool,
+
+    #[wasm_bindgen(js_name = sourceFilename)]
+    pub source_filename: Option<String>,
 }
 
 #[wasm_bindgen]
@@ -143,6 +146,8 @@ impl OxcLinterOptions {
 #[derive(Default, Clone, Copy)]
 pub struct OxcCodegenOptions {
     pub indentation: u8,
+    #[wasm_bindgen(js_name = enableTypescript)]
+    pub enable_typescript: bool,
 }
 
 #[wasm_bindgen]

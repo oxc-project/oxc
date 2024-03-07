@@ -34,6 +34,7 @@ impl<'a> ParserImpl<'a> {
 
         let id = self.parse_binding_identifier()?;
         let members = TSEnumMemberList::parse(self)?.members;
+        let span = self.end_span(span);
         Ok(self.ast.ts_enum_declaration(span, id, members, modifiers))
     }
 
@@ -54,7 +55,7 @@ impl<'a> ParserImpl<'a> {
             }
             Kind::Str => Ok(TSEnumMemberName::StringLiteral(self.parse_literal_string()?)),
             kind if kind.is_number() => {
-                Ok(TSEnumMemberName::NumberLiteral(self.parse_literal_number()?))
+                Ok(TSEnumMemberName::NumericLiteral(self.parse_literal_number()?))
             }
             _ => Ok(TSEnumMemberName::Identifier(self.parse_identifier_name()?)),
         }
@@ -65,36 +66,16 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_annotation(
         &mut self,
     ) -> Result<Option<Box<'a, TSTypeAnnotation<'a>>>> {
-        if self.at(Kind::Colon) {
-            let span = self.start_span();
-            self.bump_any(); // bump ':'
-            let type_annotation = self.parse_ts_type()?;
-            Ok(Some(self.ast.ts_type_annotation(self.end_span(span), type_annotation)))
-        } else {
-            Ok(None)
+        if !self.ts_enabled() {
+            return Ok(None);
         }
-    }
-
-    pub(crate) fn parse_ts_variable_annotation(
-        &mut self,
-    ) -> Result<(Option<Box<'a, TSTypeAnnotation<'a>>>, bool)> {
-        if !self.at(Kind::Bang) {
-            return Ok((self.parse_ts_type_annotation()?, false));
+        if !self.at(Kind::Colon) {
+            return Ok(None);
         }
-
-        if self.cur_token().is_on_new_line {
-            return Ok((None, false));
-        }
-
         let span = self.start_span();
-        self.bump(Kind::Bang);
-
-        if self.eat(Kind::Colon) {
-            let type_annotation = self.parse_ts_type()?;
-            Ok((Some(self.ast.ts_type_annotation(self.end_span(span), type_annotation)), true))
-        } else {
-            Err(self.unexpected())
-        }
+        self.bump_any(); // bump ':'
+        let type_annotation = self.parse_ts_type()?;
+        Ok(Some(self.ast.ts_type_annotation(self.end_span(span), type_annotation)))
     }
 
     pub(crate) fn parse_ts_type_alias_declaration(
@@ -111,6 +92,7 @@ impl<'a> ParserImpl<'a> {
         let annotation = self.parse_ts_type()?;
 
         self.asi()?;
+        let span = self.end_span(span);
         Ok(self.ast.ts_type_alias_declaration(span, id, annotation, params, modifiers))
     }
 
@@ -249,6 +231,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_namespace_or_module_declaration_body(
         &mut self,
         span: Span,
+        kind: TSModuleDeclarationKind,
         modifiers: Modifiers<'a>,
     ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
         let id = match self.cur_kind() {
@@ -259,7 +242,7 @@ impl<'a> ParserImpl<'a> {
         let body = if self.eat(Kind::Dot) {
             let span = self.start_span();
             let decl =
-                self.parse_ts_namespace_or_module_declaration_body(span, Modifiers::empty())?;
+                self.parse_ts_namespace_or_module_declaration_body(span, kind, Modifiers::empty())?;
             TSModuleDeclarationBody::TSModuleDeclaration(decl)
         } else {
             let block = self.parse_ts_module_block()?;
@@ -267,24 +250,7 @@ impl<'a> ParserImpl<'a> {
             TSModuleDeclarationBody::TSModuleBlock(block)
         };
 
-        Ok(self.ast.ts_module_declaration(self.end_span(span), id, body, modifiers))
-    }
-
-    pub(crate) fn parse_ts_namespace_or_module_declaration(
-        &mut self,
-        modifiers: Modifiers<'a>,
-    ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
-        let span = self.start_span();
-        self.expect(Kind::Namespace).or_else(|_| self.expect(Kind::Module))?;
-        self.parse_ts_namespace_or_module_declaration_body(span, modifiers)
-    }
-
-    pub(crate) fn parse_ts_global_declaration(
-        &mut self,
-        start_span: Span,
-        modifiers: Modifiers<'a>,
-    ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
-        self.parse_ts_namespace_or_module_declaration_body(start_span, modifiers)
+        Ok(self.ast.ts_module_declaration(self.end_span(span), id, body, kind, modifiers))
     }
 
     /** ----------------------- declare --------------------- */
@@ -307,18 +273,23 @@ impl<'a> ParserImpl<'a> {
         modifiers: Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
         match self.cur_kind() {
-            Kind::Namespace | Kind::Module => self
-                .parse_ts_namespace_or_module_declaration(modifiers)
-                .map(Declaration::TSModuleDeclaration),
+            Kind::Namespace => {
+                let kind = TSModuleDeclarationKind::Namespace;
+                self.bump_any();
+                self.parse_ts_namespace_or_module_declaration_body(start_span, kind, modifiers)
+                    .map(Declaration::TSModuleDeclaration)
+            }
+            Kind::Module => {
+                let kind = TSModuleDeclarationKind::Module;
+                self.bump_any();
+                self.parse_ts_namespace_or_module_declaration_body(start_span, kind, modifiers)
+                    .map(Declaration::TSModuleDeclaration)
+            }
             Kind::Global => {
-                let decl = if self.peek_at(Kind::LCurly) {
-                    // valid syntax for
-                    // declare global { }
-                    self.parse_ts_namespace_or_module_declaration_body(start_span, modifiers)
-                } else {
-                    self.parse_ts_global_declaration(start_span, modifiers)
-                }?;
-                Ok(Declaration::TSModuleDeclaration(decl))
+                // declare global { }
+                let kind = TSModuleDeclarationKind::Global;
+                self.parse_ts_namespace_or_module_declaration_body(start_span, kind, modifiers)
+                    .map(Declaration::TSModuleDeclaration)
             }
             Kind::Type => self.parse_ts_type_alias_declaration(start_span, modifiers),
             Kind::Enum => self.parse_ts_enum_declaration(start_span, modifiers),

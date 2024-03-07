@@ -24,9 +24,9 @@ pub struct TypeScript<'a> {
     ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
     verbatim_module_syntax: bool,
-    export_name_set: FxHashSet<Atom>,
+    export_name_set: FxHashSet<Atom<'a>>,
     options: TypescriptOptions,
-    namespace_arg_names: FxHashMap<Atom, usize>,
+    namespace_arg_names: FxHashMap<Atom<'a>, usize>,
 }
 
 impl<'a> TypeScript<'a> {
@@ -108,47 +108,19 @@ impl<'a> TypeScript<'a> {
     /// downstream tools that this file is in ESM.
     pub fn transform_program(&mut self, program: &mut Program<'a>) {
         let mut export_type_names = FxHashSet::default();
-        let mut export_names = FxHashSet::default();
 
-        // Collect export names
+        // // Collect export names
         program.body.iter().for_each(|stmt| {
             if let Statement::ModuleDeclaration(module_decl) = stmt {
-                match &**module_decl {
-                    ModuleDeclaration::ExportNamedDeclaration(decl) => {
-                        decl.specifiers.iter().for_each(|specifier| {
-                            let name = specifier.exported.name();
-                            if self.is_import_binding_only(name) {
-                                let is_value =
-                                    decl.export_kind.is_value() && specifier.export_kind.is_value();
-                                if is_value {
-                                    export_names.insert(name.clone());
-                                } else {
-                                    export_type_names.insert(name.clone());
-                                }
-                            }
-                        });
-                    }
-                    ModuleDeclaration::ExportDefaultDeclaration(decl) => {
-                        let name = decl.exported.name();
-                        if self.is_import_binding_only(name) {
-                            export_names.insert(decl.exported.name().clone());
+                if let ModuleDeclaration::ExportNamedDeclaration(decl) = &**module_decl {
+                    decl.specifiers.iter().for_each(|specifier| {
+                        let name = specifier.exported.name();
+                        if self.is_import_binding_only(name)
+                            && (decl.export_kind.is_type() || specifier.export_kind.is_type())
+                        {
+                            export_type_names.insert(name.clone());
                         }
-                    }
-                    ModuleDeclaration::ExportAllDeclaration(decl) => {
-                        if let Some(exported) = &decl.exported {
-                            let name = exported.name();
-                            if self.is_import_binding_only(name) {
-                                let is_value =
-                                    decl.export_kind.is_value() && decl.export_kind.is_value();
-                                if is_value {
-                                    export_names.insert(name.clone());
-                                } else {
-                                    export_type_names.insert(name.clone());
-                                }
-                            }
-                        }
-                    }
-                    _ => {}
+                    });
                 }
             }
         });
@@ -209,7 +181,6 @@ impl<'a> TypeScript<'a> {
                                     }
 
                                     self.has_value_references(&s.local.name)
-                                        || export_names.contains(&s.local.name)
                                 }
                                 ImportDeclarationSpecifier::ImportDefaultSpecifier(s)
                                     if !self.verbatim_module_syntax =>
@@ -222,9 +193,7 @@ impl<'a> TypeScript<'a> {
                                     if self.options.only_remove_type_imports {
                                         return true;
                                     }
-
                                     self.has_value_references(&s.local.name)
-                                        || export_names.contains(&s.local.name)
                                 }
                                 ImportDeclarationSpecifier::ImportNamespaceSpecifier(s)
                                     if !self.verbatim_module_syntax =>
@@ -235,10 +204,6 @@ impl<'a> TypeScript<'a> {
 
                                     if self.options.only_remove_type_imports {
                                         return true;
-                                    }
-
-                                    if export_names.contains(&s.local.name) {
-                                        return false;
                                     }
 
                                     self.has_value_references(&s.local.name)
@@ -278,6 +243,7 @@ impl<'a> TypeScript<'a> {
                 self.ast.new_vec(),
                 None,
                 ImportOrExportKind::Value,
+                None,
             );
             let export_decl = ModuleDeclaration::ExportNamedDeclaration(empty_export);
             program.body.push(self.ast.module_declaration(export_decl));
@@ -308,7 +274,8 @@ impl<'a> TypeScript<'a> {
             .scopes()
             .get_binding(root_scope_id, name)
             .map(|symbol_id| {
-                self.ctx.symbols().get_resolved_references(symbol_id).any(|x| !x.is_type())
+                self.ctx.symbols().get_flag(symbol_id).is_export()
+                    || self.ctx.symbols().get_resolved_references(symbol_id).any(|x| !x.is_type())
             })
             .unwrap_or_default()
     }
@@ -318,9 +285,9 @@ impl<'a> TypeScript<'a> {
     fn transform_ts_enum_members(
         &self,
         members: &mut Vec<'a, TSEnumMember<'a>>,
-        enum_name: &Atom,
+        enum_name: &Atom<'a>,
     ) -> Vec<'a, Statement<'a>> {
-        let mut default_init = self.ast.literal_number_expression(NumberLiteral {
+        let mut default_init = self.ast.literal_number_expression(NumericLiteral {
             span: SPAN,
             value: 0.0,
             raw: "0",
@@ -333,7 +300,7 @@ impl<'a> TypeScript<'a> {
                 TSEnumMemberName::Identifier(id) => (&id.name, id.span),
                 TSEnumMemberName::StringLiteral(str) => (&str.value, str.span),
                 TSEnumMemberName::ComputedPropertyName(..)
-                | TSEnumMemberName::NumberLiteral(..) => unreachable!(),
+                | TSEnumMemberName::NumericLiteral(..) => unreachable!(),
             };
 
             let mut init =
@@ -415,7 +382,7 @@ impl<'a> TypeScript<'a> {
 
             // 1 + Foo["x"]
             default_init = {
-                let one = self.ast.literal_number_expression(NumberLiteral {
+                let one = self.ast.literal_number_expression(NumericLiteral {
                     span: SPAN,
                     value: 1.0,
                     raw: "1",
@@ -521,7 +488,7 @@ impl<'a> TypeScript<'a> {
         let mut params = self.ast.new_vec();
 
         // ((Foo) => {
-        params.push(self.ast.formal_parameter(SPAN, id, None, false, self.ast.new_vec()));
+        params.push(self.ast.formal_parameter(SPAN, id, None, false, false, self.ast.new_vec()));
 
         let params = self.ast.formal_parameters(
             SPAN,
@@ -532,10 +499,11 @@ impl<'a> TypeScript<'a> {
 
         // Foo[Foo["X"] = 0] = "X";
         let enum_name = decl.id.name.clone();
-        let statements = self.transform_ts_enum_members(&mut decl.body.members, &enum_name);
-        let body = self.ast.function_body(decl.body.span, self.ast.new_vec(), statements);
+        let statements = self.transform_ts_enum_members(&mut decl.members, &enum_name);
+        let body = self.ast.function_body(decl.span, self.ast.new_vec(), statements);
 
-        let callee = self.ast.arrow_expression(SPAN, false, false, params, body, None, None);
+        let callee =
+            self.ast.arrow_function_expression(SPAN, false, false, params, body, None, None);
 
         // })(Foo || {});
         let mut arguments = self.ast.new_vec();
@@ -658,6 +626,7 @@ impl<'a> TypeScript<'a> {
                         self.ast.new_vec(),
                         None,
                         ImportOrExportKind::Value,
+                        None,
                     ),
                 ))
             } else {
@@ -667,10 +636,13 @@ impl<'a> TypeScript<'a> {
         }
     }
 
-    fn get_namespace_arg_name(&mut self, name: &Atom) -> Atom {
+    fn get_namespace_arg_name(&mut self, name: &Atom<'a>) -> Atom<'a> {
         let count = self.namespace_arg_names.entry(name.clone()).or_insert(0);
         *count += 1;
-        format!("_{name}{}", if *count > 1 { count.to_string() } else { String::new() }).into()
+        self.ast.new_atom(&format!(
+            "_{name}{}",
+            if *count > 1 { count.to_string() } else { String::new() }
+        ))
     }
 
     /// ```TypeScript
@@ -712,6 +684,7 @@ impl<'a> TypeScript<'a> {
                         false,
                     ),
                     None,
+                    false,
                     false,
                     self.ast.new_vec(),
                 )),
@@ -760,5 +733,63 @@ impl<'a> TypeScript<'a> {
         };
         let expr = self.ast.call_expression(SPAN, callee, arguments, false, None);
         self.ast.expression_statement(SPAN, expr)
+    }
+
+    /// Transform constructor method
+    /// ```typescript
+    ///
+    /// constructor(public x) {
+    ///   super();
+    /// }
+    /// // to
+    /// constructor(x) {
+    ///   super();
+    ///   this.x = x;
+    /// }
+    /// ```
+    pub fn transform_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
+        if !def.kind.is_constructor() {
+            return;
+        }
+
+        let mut params_name = vec![];
+        def.value.params.items.iter().for_each(|param| {
+            if !param.accessibility.is_some_and(|a| matches!(a, TSAccessibility::Public)) {
+                return;
+            }
+            match &param.pattern.kind {
+                BindingPatternKind::BindingIdentifier(ident) => {
+                    params_name.push(ident.name.clone());
+                }
+                BindingPatternKind::AssignmentPattern(pattern) => {
+                    if let BindingPatternKind::BindingIdentifier(ident) = &pattern.left.kind {
+                        params_name.push(ident.name.clone());
+                    }
+                }
+                _ => {}
+            }
+        });
+
+        let Some(body) = &mut def.value.body else {
+            return;
+        };
+
+        for name in params_name {
+            // TODO: We should push it before the super call
+            body.statements.push(self.ast.expression_statement(
+                SPAN,
+                self.ast.assignment_expression(
+                    SPAN,
+                    AssignmentOperator::Assign,
+                    self.ast.simple_assignment_target_member_expression(self.ast.static_member(
+                        SPAN,
+                        self.ast.this_expression(SPAN),
+                        IdentifierName::new(SPAN, name.clone()),
+                        false,
+                    )),
+                    self.ast.identifier_reference_expression(IdentifierReference::new(SPAN, name)),
+                ),
+            ));
+        }
     }
 }

@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -15,7 +15,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 #[diagnostic(severity(warning))]
 pub enum ErrorMessageDiagnostic {
     #[error("eslint-plugin-unicorn(error-message): Pass a message to the {0:1} constructor.")]
-    MissingMessage(Atom, #[label] Span),
+    MissingMessage(CompactStr, #[label] Span),
     #[error("eslint-plugin-unicorn(error-message): Error message should not be an empty string.")]
     EmptyMessage(#[label] Span),
     #[error("eslint-plugin-unicorn(error-message): Error message should be a string.")]
@@ -84,14 +84,11 @@ impl Rule for ErrorMessage {
 
         let message_argument = args.get(message_argument_idx);
 
-        let arg = match message_argument {
-            Some(v) => v,
-            None => {
-                return ctx.diagnostic(ErrorMessageDiagnostic::MissingMessage(
-                    constructor_name.clone(),
-                    span,
-                ))
-            }
+        let Some(arg) = message_argument else {
+            return ctx.diagnostic(ErrorMessageDiagnostic::MissingMessage(
+                constructor_name.to_compact_str(),
+                span,
+            ));
         };
 
         let arg = match arg {

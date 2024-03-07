@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_var
 ---
-
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
  1 │ var foo = bar;
@@ -345,4 +344,3 @@ expression: no_var
    ·                                   ───
    ╰────
   help: Replace var with let or const
-

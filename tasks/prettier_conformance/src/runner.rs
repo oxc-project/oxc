@@ -186,7 +186,7 @@ impl TestRunner {
         path: &Path,
         input: &str,
         prettier_options: PrettierOptions,
-        snapshot_options: &[(Atom, String)],
+        snapshot_options: &[(String, String)],
         snap_content: &str,
     ) -> String {
         let filename = path.file_name().unwrap().to_string_lossy();

@@ -1,7 +1,7 @@
 use std::{cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, Vec};
-use oxc_span::{Atom, SourceType, Span};
+use oxc_span::{Atom, CompactStr, SourceType, Span};
 use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -12,8 +12,19 @@ use oxc_syntax::{
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-#[allow(clippy::wildcard_imports)]
-use crate::ast::*;
+use super::{jsx::*, literal::*, ts::*};
+
+#[cfg_attr(
+    all(feature = "serde", feature = "wasm"),
+    wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
+)]
+#[allow(dead_code)]
+const TS_APPEND_CONTENT: &'static str = r#"
+export interface BindingIdentifier extends Span { type: "Identifier", name: Atom }
+export interface IdentifierReference extends Span { type: "Identifier", name: Atom }
+export interface IdentifierName extends Span { type: "Identifier", name: Atom }
+export interface LabelIdentifier extends Span { type: "Identifier", name: Atom }
+"#;
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
@@ -22,8 +33,8 @@ pub struct Program<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub source_type: SourceType,
-    pub directives: Vec<'a, Directive>,
-    pub hashbang: Option<Hashbang>,
+    pub directives: Vec<'a, Directive<'a>>,
+    pub hashbang: Option<Hashbang<'a>>,
     pub body: Vec<'a, Statement<'a>>,
 }
 
@@ -46,19 +57,19 @@ impl<'a> Program<'a> {
 pub enum Expression<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>),
     NullLiteral(Box<'a, NullLiteral>),
-    NumberLiteral(Box<'a, NumberLiteral<'a>>),
-    BigintLiteral(Box<'a, BigintLiteral>),
-    RegExpLiteral(Box<'a, RegExpLiteral>),
-    StringLiteral(Box<'a, StringLiteral>),
+    NumericLiteral(Box<'a, NumericLiteral<'a>>),
+    BigintLiteral(Box<'a, BigintLiteral<'a>>),
+    RegExpLiteral(Box<'a, RegExpLiteral<'a>>),
+    StringLiteral(Box<'a, StringLiteral<'a>>),
     TemplateLiteral(Box<'a, TemplateLiteral<'a>>),
 
-    Identifier(Box<'a, IdentifierReference>),
+    Identifier(Box<'a, IdentifierReference<'a>>),
 
-    MetaProperty(Box<'a, MetaProperty>),
+    MetaProperty(Box<'a, MetaProperty<'a>>),
     Super(Box<'a, Super>),
 
     ArrayExpression(Box<'a, ArrayExpression<'a>>),
-    ArrowExpression(Box<'a, ArrowExpression<'a>>),
+    ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>),
     AssignmentExpression(Box<'a, AssignmentExpression<'a>>),
     AwaitExpression(Box<'a, AwaitExpression<'a>>),
     BinaryExpression(Box<'a, BinaryExpression<'a>>),
@@ -112,7 +123,7 @@ impl<'a> Expression<'a> {
             self,
             Self::BooleanLiteral(_)
                 | Self::NullLiteral(_)
-                | Self::NumberLiteral(_)
+                | Self::NumericLiteral(_)
                 | Self::BigintLiteral(_)
                 | Self::RegExpLiteral(_)
                 | Self::StringLiteral(_)
@@ -149,7 +160,7 @@ impl<'a> Expression<'a> {
     pub fn is_void_0(&self) -> bool {
         match self {
             Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void => {
-                matches!(&expr.argument, Self::NumberLiteral(lit) if lit.value == 0.0)
+                matches!(&expr.argument, Self::NumericLiteral(lit) if lit.value == 0.0)
             }
             _ => false,
         }
@@ -157,16 +168,16 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given expr is a `0`
     pub fn is_number_0(&self) -> bool {
-        matches!(self, Self::NumberLiteral(lit) if lit.value == 0.0)
+        matches!(self, Self::NumericLiteral(lit) if lit.value == 0.0)
     }
 
     pub fn is_number(&self, val: f64) -> bool {
-        matches!(self, Self::NumberLiteral(lit) if (lit.value - val).abs() < f64::EPSILON)
+        matches!(self, Self::NumericLiteral(lit) if (lit.value - val).abs() < f64::EPSILON)
     }
 
     /// Determines whether the given numeral literal's raw value is exactly val
     pub fn is_specific_raw_number_literal(&self, val: &str) -> bool {
-        matches!(self, Self::NumberLiteral(lit) if lit.raw == val)
+        matches!(self, Self::NumericLiteral(lit) if lit.raw == val)
     }
 
     /// Determines whether the given expr evaluate to `undefined`
@@ -201,7 +212,7 @@ impl<'a> Expression<'a> {
         }
     }
 
-    pub fn is_specific_member_access(&'a self, object: &str, property: &str) -> bool {
+    pub fn is_specific_member_access(&self, object: &str, property: &str) -> bool {
         match self.get_inner_expression() {
             Expression::MemberExpression(expr) => expr.is_specific_member_access(object, property),
             Expression::ChainExpression(chain) => {
@@ -238,7 +249,7 @@ impl<'a> Expression<'a> {
     }
 
     pub fn is_function(&self) -> bool {
-        matches!(self, Expression::FunctionExpression(_) | Expression::ArrowExpression(_))
+        matches!(self, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
     }
 
     pub fn is_call_expression(&self) -> bool {
@@ -260,7 +271,7 @@ impl<'a> Expression<'a> {
         match self {
             Self::BooleanLiteral(lit) => Some(lit.value),
             Self::NullLiteral(_) => Some(false),
-            Self::NumberLiteral(lit) => Some(lit.value != 0.0),
+            Self::NumericLiteral(lit) => Some(lit.value != 0.0),
             Self::BigintLiteral(lit) => Some(!lit.is_zero()),
             Self::RegExpLiteral(_) => Some(true),
             Self::StringLiteral(lit) => Some(!lit.value.is_empty()),
@@ -283,7 +294,7 @@ impl<'a> Expression<'a> {
         match self {
             Self::BooleanLiteral(_)
             | Self::NullLiteral(_)
-            | Self::NumberLiteral(_)
+            | Self::NumericLiteral(_)
             | Self::BigintLiteral(_)
             | Self::RegExpLiteral(_)
             | Self::StringLiteral(_) => true,
@@ -298,78 +309,70 @@ impl<'a> Expression<'a> {
 }
 
 /// Identifier Name
+// See serializer in serialize.rs
 #[derive(Debug, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct IdentifierName {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+pub struct IdentifierName<'a> {
     pub span: Span,
-    pub name: Atom,
+    pub name: Atom<'a>,
 }
 
-impl IdentifierName {
-    pub fn new(span: Span, name: Atom) -> Self {
+impl<'a> IdentifierName<'a> {
+    pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name }
     }
 }
 
 /// Identifier Reference
+// See serializer in serialize.rs
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct IdentifierReference {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+pub struct IdentifierReference<'a> {
     pub span: Span,
-    pub name: Atom,
+    pub name: Atom<'a>,
     pub reference_id: Cell<Option<ReferenceId>>,
     pub reference_flag: ReferenceFlag,
 }
 
-impl Hash for IdentifierReference {
+impl<'a> Hash for IdentifierReference<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.span.hash(state);
         self.name.hash(state);
     }
 }
 
-impl IdentifierReference {
-    pub fn new(span: Span, name: Atom) -> Self {
+impl<'a> IdentifierReference<'a> {
+    pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name, reference_id: Cell::default(), reference_flag: ReferenceFlag::default() }
     }
 }
 
 /// Binding Identifier
+// See serializer in serialize.rs
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct BindingIdentifier {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+pub struct BindingIdentifier<'a> {
     pub span: Span,
-    pub name: Atom,
+    pub name: Atom<'a>,
     pub symbol_id: Cell<Option<SymbolId>>,
 }
 
-impl Hash for BindingIdentifier {
+impl<'a> Hash for BindingIdentifier<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.span.hash(state);
         self.name.hash(state);
     }
 }
 
-impl BindingIdentifier {
-    pub fn new(span: Span, name: Atom) -> Self {
+impl<'a> BindingIdentifier<'a> {
+    pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name, symbol_id: Cell::default() }
     }
 }
 
 /// Label Identifier
+// See serializer in serialize.rs
 #[derive(Debug, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct LabelIdentifier {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+pub struct LabelIdentifier<'a> {
     pub span: Span,
-    pub name: Atom,
+    pub name: Atom<'a>,
 }
 
 /// This Expression
@@ -383,7 +386,7 @@ pub struct ThisExpression {
 
 /// <https://tc39.es/ecma262/#prod-ArrayLiteral>
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct ArrayExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -414,7 +417,7 @@ impl<'a> ArrayExpressionElement<'a> {
 
 /// Object Expression
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct ObjectExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -457,25 +460,28 @@ pub struct ObjectProperty<'a> {
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum PropertyKey<'a> {
-    Identifier(Box<'a, IdentifierName>),
-    PrivateIdentifier(Box<'a, PrivateIdentifier>),
+    Identifier(Box<'a, IdentifierName<'a>>),
+    PrivateIdentifier(Box<'a, PrivateIdentifier<'a>>),
     Expression(Expression<'a>),
 }
 
 impl<'a> PropertyKey<'a> {
-    pub fn static_name(&self) -> Option<Atom> {
+    pub fn static_name(&self) -> Option<CompactStr> {
         match self {
-            Self::Identifier(ident) => Some(ident.name.clone()),
+            Self::Identifier(ident) => Some(ident.name.to_compact_str()),
             Self::PrivateIdentifier(_) => None,
             Self::Expression(expr) => match expr {
-                Expression::StringLiteral(lit) => Some(lit.value.clone()),
-                Expression::RegExpLiteral(lit) => Some(Atom::from(lit.regex.to_string())),
-                Expression::NumberLiteral(lit) => Some(Atom::from(lit.value.to_string())),
-                Expression::BigintLiteral(lit) => Some(lit.raw.clone()),
+                Expression::StringLiteral(lit) => Some(lit.value.to_compact_str()),
+                Expression::RegExpLiteral(lit) => Some(lit.regex.to_string().into()),
+                Expression::NumericLiteral(lit) => Some(lit.value.to_string().into()),
+                Expression::BigintLiteral(lit) => Some(lit.raw.to_compact_str()),
                 Expression::NullLiteral(_) => Some("null".into()),
-                Expression::TemplateLiteral(lit) => {
-                    lit.expressions.is_empty().then(|| lit.quasi()).flatten().cloned()
-                }
+                Expression::TemplateLiteral(lit) => lit
+                    .expressions
+                    .is_empty()
+                    .then(|| lit.quasi())
+                    .flatten()
+                    .map(Atom::to_compact_str),
                 _ => None,
             },
         }
@@ -493,16 +499,16 @@ impl<'a> PropertyKey<'a> {
         matches!(self, Self::PrivateIdentifier(_))
     }
 
-    pub fn private_name(&self) -> Option<Atom> {
+    pub fn private_name(&self) -> Option<&Atom<'a>> {
         match self {
-            Self::PrivateIdentifier(ident) => Some(ident.name.clone()),
+            Self::PrivateIdentifier(ident) => Some(&ident.name),
             _ => None,
         }
     }
 
-    pub fn name(&self) -> Option<Atom> {
+    pub fn name(&self) -> Option<CompactStr> {
         if self.is_private_identifier() {
-            self.private_name()
+            self.private_name().map(Atom::to_compact_str)
         } else {
             self.static_name()
         }
@@ -541,7 +547,7 @@ pub enum PropertyKind {
 pub struct TemplateLiteral<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub quasis: Vec<'a, TemplateElement>,
+    pub quasis: Vec<'a, TemplateElement<'a>>,
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
@@ -551,13 +557,13 @@ impl<'a> TemplateLiteral<'a> {
     }
 
     /// Get single quasi from `template`
-    pub fn quasi(&self) -> Option<&Atom> {
+    pub fn quasi(&self) -> Option<&Atom<'a>> {
         self.quasis.first().and_then(|quasi| quasi.value.cooked.as_ref())
     }
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct TaggedTemplateExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -570,27 +576,27 @@ pub struct TaggedTemplateExpression<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct TemplateElement {
+pub struct TemplateElement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub tail: bool,
-    pub value: TemplateElementValue,
+    pub value: TemplateElementValue<'a>,
 }
 
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/impatient-js/ch_template-literals.html#template-strings-cooked-vs-raw)
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct TemplateElementValue {
+pub struct TemplateElementValue<'a> {
     /// A raw interpretation where backslashes do not have special meaning.
     /// For example, \t produces two characters – a backslash and a t.
     /// This interpretation of the template strings is stored in property .raw of the first argument (an Array).
-    pub raw: Atom,
+    pub raw: Atom<'a>,
     /// A cooked interpretation where backslashes have special meaning.
     /// For example, \t produces a tab character.
     /// This interpretation of the template strings is stored as an Array in the first argument.
     /// cooked = None when template literal has invalid escape sequence
-    pub cooked: Option<Atom>,
+    pub cooked: Option<Atom<'a>>,
 }
 
 /// <https://tc39.es/ecma262/#prod-MemberExpression>
@@ -645,7 +651,7 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    pub fn static_property_info(&'a self) -> Option<(Span, &'a str)> {
+    pub fn static_property_info(&self) -> Option<(Span, &str)> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
                 Expression::StringLiteral(lit) => Some((lit.span, &lit.value)),
@@ -665,11 +671,7 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    pub fn through_optional_is_specific_member_access(
-        &'a self,
-        object: &str,
-        property: &str,
-    ) -> bool {
+    pub fn through_optional_is_specific_member_access(&self, object: &str, property: &str) -> bool {
         let object_matches = match self.object().without_parenthesized() {
             Expression::ChainExpression(x) => match &x.expression {
                 ChainElement::CallExpression(_) => false,
@@ -686,7 +688,7 @@ impl<'a> MemberExpression<'a> {
     }
 
     /// Whether it is a static member access `object.property`
-    pub fn is_specific_member_access(&'a self, object: &str, property: &str) -> bool {
+    pub fn is_specific_member_access(&self, object: &str, property: &str) -> bool {
         self.object().is_specific_id(object)
             && self.static_property_name().is_some_and(|p| p == property)
     }
@@ -712,7 +714,7 @@ pub struct StaticMemberExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub object: Expression<'a>,
-    pub property: IdentifierName,
+    pub property: IdentifierName<'a>,
     pub optional: bool, // for optional chaining
 }
 
@@ -724,7 +726,7 @@ pub struct PrivateFieldExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub object: Expression<'a>,
-    pub field: PrivateIdentifier,
+    pub field: PrivateIdentifier<'a>,
     pub optional: bool, // for optional chaining
 }
 
@@ -759,7 +761,7 @@ impl<'a> CallExpression<'a> {
         }
     }
 
-    pub fn is_symbol_or_symbol_for_call(&'a self) -> bool {
+    pub fn is_symbol_or_symbol_for_call(&self) -> bool {
         // TODO: is 'Symbol' reference to global object
         match &self.callee {
             Expression::Identifier(id) => id.name == "Symbol",
@@ -784,7 +786,7 @@ impl<'a> CallExpression<'a> {
 
 /// New Expression
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct NewExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -798,11 +800,11 @@ pub struct NewExpression<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct MetaProperty {
+pub struct MetaProperty<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub meta: IdentifierName,
-    pub property: IdentifierName,
+    pub meta: IdentifierName<'a>,
+    pub property: IdentifierName<'a>,
 }
 
 /// Spread Element
@@ -872,7 +874,7 @@ pub struct BinaryExpression<'a> {
 pub struct PrivateInExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub left: PrivateIdentifier,
+    pub left: PrivateIdentifier<'a>,
     pub operator: BinaryOperator, // BinaryOperator::In
     pub right: Expression<'a>,
 }
@@ -943,7 +945,7 @@ impl<'a> AssignmentTarget<'a> {
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum SimpleAssignmentTarget<'a> {
-    AssignmentTargetIdentifier(Box<'a, IdentifierReference>),
+    AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>>),
     MemberAssignmentTarget(Box<'a, MemberExpression<'a>>),
     TSAsExpression(Box<'a, TSAsExpression<'a>>),
     TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>),
@@ -972,13 +974,13 @@ pub enum AssignmentTargetPattern<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct ArrayAssignmentTarget<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-    pub rest: Option<AssignmentTarget<'a>>,
+    pub rest: Option<AssignmentTargetRest<'a>>,
     pub trailing_comma: Option<Span>,
 }
 
@@ -998,7 +1000,7 @@ pub struct ObjectAssignmentTarget<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
-    pub rest: Option<AssignmentTarget<'a>>,
+    pub rest: Option<AssignmentTargetRest<'a>>,
 }
 
 impl<'a> ObjectAssignmentTarget<'a> {
@@ -1009,6 +1011,15 @@ impl<'a> ObjectAssignmentTarget<'a> {
     pub fn len(&self) -> usize {
         self.properties.len() + usize::from(self.rest.is_some())
     }
+}
+
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+pub struct AssignmentTargetRest<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub target: AssignmentTarget<'a>,
 }
 
 #[derive(Debug, Hash)]
@@ -1062,7 +1073,7 @@ pub enum AssignmentTargetProperty<'a> {
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub binding: IdentifierReference,
+    pub binding: IdentifierReference<'a>,
     pub init: Option<Expression<'a>>,
 }
 
@@ -1139,8 +1150,8 @@ pub struct ParenthesizedExpression<'a> {
 pub enum Statement<'a> {
     // Statements
     BlockStatement(Box<'a, BlockStatement<'a>>),
-    BreakStatement(Box<'a, BreakStatement>),
-    ContinueStatement(Box<'a, ContinueStatement>),
+    BreakStatement(Box<'a, BreakStatement<'a>>),
+    ContinueStatement(Box<'a, ContinueStatement<'a>>),
     DebuggerStatement(Box<'a, DebuggerStatement>),
     DoWhileStatement(Box<'a, DoWhileStatement<'a>>),
     EmptyStatement(Box<'a, EmptyStatement>),
@@ -1178,24 +1189,24 @@ impl<'a> Statement<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct Directive {
+pub struct Directive<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub expression: StringLiteral,
+    pub expression: StringLiteral<'a>,
     /// A Use Strict Directive is an ExpressionStatement in a Directive Prologue whose StringLiteral is either of the exact code point sequences "use strict" or 'use strict'.
     /// A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
     /// <https://tc39.es/ecma262/#sec-directive-prologues-and-the-use-strict-directive>
-    pub directive: Atom,
+    pub directive: Atom<'a>,
 }
 
 /// Hashbang
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct Hashbang {
+pub struct Hashbang<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub value: Atom,
+    pub value: Atom<'a>,
 }
 
 /// Block Statement
@@ -1467,20 +1478,20 @@ impl<'a> ForStatementLeft<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct ContinueStatement {
+pub struct ContinueStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub label: Option<LabelIdentifier>,
+    pub label: Option<LabelIdentifier<'a>>,
 }
 
 /// Break Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct BreakStatement {
+pub struct BreakStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub label: Option<LabelIdentifier>,
+    pub label: Option<LabelIdentifier<'a>>,
 }
 
 /// Return Statement
@@ -1538,7 +1549,7 @@ impl<'a> SwitchCase<'a> {
 pub struct LabeledStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub label: LabelIdentifier,
+    pub label: LabelIdentifier<'a>,
     pub body: Statement<'a>,
 }
 
@@ -1586,9 +1597,15 @@ pub struct DebuggerStatement {
 /// Destructuring Binding Patterns
 /// * <https://tc39.es/ecma262/#prod-BindingPattern>
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct BindingPattern<'a> {
+    // Flatten the attributes because estree has no `BindingPattern`
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[cfg_attr(
+        all(feature = "serde", feature = "wasm"),
+        tsify(type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)")
+    )]
     pub kind: BindingPatternKind<'a>,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub optional: bool,
@@ -1602,10 +1619,9 @@ impl<'a> BindingPattern<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub enum BindingPatternKind<'a> {
     /// `const a = 1`
-    BindingIdentifier(Box<'a, BindingIdentifier>),
+    BindingIdentifier(Box<'a, BindingIdentifier<'a>>),
     /// `const {a} = 1`
     ObjectPattern(Box<'a, ObjectPattern<'a>>),
     /// `const [a] = 1`
@@ -1705,11 +1721,12 @@ pub struct BindingRestElement<'a> {
 /// Function Definitions
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct Function<'a> {
     pub r#type: FunctionType,
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub id: Option<BindingIdentifier>,
+    pub id: Option<BindingIdentifier<'a>>,
     pub generator: bool,
     pub r#async: bool,
     /// Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
@@ -1773,6 +1790,8 @@ pub enum FunctionType {
     FunctionDeclaration,
     FunctionExpression,
     TSDeclareFunction,
+    /// <https://github.com/typescript-eslint/typescript-eslint/pull/1289>
+    TSEmptyBodyFunctionExpression,
 }
 
 /// <https://tc39.es/ecma262/#prod-FormalParameters>
@@ -1802,6 +1821,7 @@ pub struct FormalParameter<'a> {
     pub pattern: BindingPattern<'a>,
     pub accessibility: Option<TSAccessibility>,
     pub readonly: bool,
+    pub r#override: bool,
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
@@ -1838,7 +1858,7 @@ impl<'a> FormalParameters<'a> {
 pub struct FunctionBody<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub directives: Vec<'a, Directive>,
+    pub directives: Vec<'a, Directive<'a>>,
     pub statements: Vec<'a, Statement<'a>>,
 }
 
@@ -1852,7 +1872,8 @@ impl<'a> FunctionBody<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct ArrowExpression<'a> {
+pub struct ArrowFunctionExpression<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     pub expression: bool,
@@ -1865,8 +1886,8 @@ pub struct ArrowExpression<'a> {
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
-impl<'a> ArrowExpression<'a> {
-    /// Get expression part of `ArrowExpression`: `() => expression_part`.
+impl<'a> ArrowFunctionExpression<'a> {
+    /// Get expression part of `ArrowFunctionExpression`: `() => expression_part`.
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         if self.expression {
             if let Statement::ExpressionStatement(expr_stmt) = &self.body.statements[0] {
@@ -1896,7 +1917,7 @@ pub struct Class<'a> {
     pub r#type: ClassType,
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub id: Option<BindingIdentifier>,
+    pub id: Option<BindingIdentifier<'a>>,
     pub super_class: Option<Expression<'a>>,
     pub body: Box<'a, ClassBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1950,8 +1971,6 @@ pub enum ClassElement<'a> {
     MethodDefinition(Box<'a, MethodDefinition<'a>>),
     PropertyDefinition(Box<'a, PropertyDefinition<'a>>),
     AccessorProperty(Box<'a, AccessorProperty<'a>>),
-    TSAbstractMethodDefinition(Box<'a, TSAbstractMethodDefinition<'a>>),
-    TSAbstractPropertyDefinition(Box<'a, TSAbstractPropertyDefinition<'a>>),
     TSIndexSignature(Box<'a, TSIndexSignature<'a>>),
 }
 
@@ -1962,8 +1981,6 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(def) => def.r#static,
             Self::PropertyDefinition(def) => def.r#static,
             Self::AccessorProperty(def) => def.r#static,
-            Self::TSAbstractMethodDefinition(def) => def.method_definition.r#static,
-            Self::TSAbstractPropertyDefinition(def) => def.property_definition.r#static,
         }
     }
 
@@ -1973,8 +1990,6 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(def) => def.computed,
             Self::PropertyDefinition(def) => def.computed,
             Self::AccessorProperty(def) => def.computed,
-            Self::TSAbstractMethodDefinition(def) => def.method_definition.computed,
-            Self::TSAbstractPropertyDefinition(def) => def.property_definition.computed,
         }
     }
 
@@ -1983,8 +1998,6 @@ impl<'a> ClassElement<'a> {
             Self::StaticBlock(_) | Self::TSIndexSignature(_) | Self::AccessorProperty(_) => None,
             Self::MethodDefinition(def) => def.accessibility,
             Self::PropertyDefinition(def) => def.accessibility,
-            Self::TSAbstractMethodDefinition(def) => def.method_definition.accessibility,
-            Self::TSAbstractPropertyDefinition(def) => def.property_definition.accessibility,
         }
     }
 
@@ -1995,8 +2008,6 @@ impl<'a> ClassElement<'a> {
             | Self::PropertyDefinition(_)
             | Self::AccessorProperty(_) => None,
             Self::MethodDefinition(def) => Some(def.kind),
-            Self::TSAbstractMethodDefinition(def) => Some(def.method_definition.kind),
-            Self::TSAbstractPropertyDefinition(_def) => None,
         }
     }
 
@@ -2006,29 +2017,20 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(def) => Some(&def.key),
             Self::PropertyDefinition(def) => Some(&def.key),
             Self::AccessorProperty(def) => Some(&def.key),
-            Self::TSAbstractMethodDefinition(def) => Some(&def.method_definition.key),
-            Self::TSAbstractPropertyDefinition(def) => Some(&def.property_definition.key),
         }
     }
 
-    pub fn static_name(&self) -> Option<Atom> {
+    pub fn static_name(&self) -> Option<CompactStr> {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
             Self::MethodDefinition(def) => def.key.static_name(),
             Self::PropertyDefinition(def) => def.key.static_name(),
             Self::AccessorProperty(def) => def.key.static_name(),
-            Self::TSAbstractMethodDefinition(_def) => None,
-            Self::TSAbstractPropertyDefinition(_def) => None,
         }
     }
 
     pub fn is_property(&self) -> bool {
-        matches!(
-            self,
-            Self::PropertyDefinition(_)
-                | Self::AccessorProperty(_)
-                | Self::TSAbstractPropertyDefinition(_)
-        )
+        matches!(self, Self::PropertyDefinition(_) | Self::AccessorProperty(_))
     }
 
     pub fn is_ts_empty_body_function(&self) -> bool {
@@ -2036,20 +2038,18 @@ impl<'a> ClassElement<'a> {
             Self::PropertyDefinition(_)
             | Self::StaticBlock(_)
             | Self::AccessorProperty(_)
-            | Self::TSAbstractPropertyDefinition(_)
             | Self::TSIndexSignature(_) => false,
             Self::MethodDefinition(method) => method.value.body.is_none(),
-            Self::TSAbstractMethodDefinition(_) => true,
         }
     }
 
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
-            Self::TSIndexSignature(_)
-            | Self::TSAbstractMethodDefinition(_)
-            | Self::TSAbstractPropertyDefinition(_) => true,
+            Self::TSIndexSignature(_) => true,
             Self::MethodDefinition(method) => method.value.is_typescript_syntax(),
-            Self::PropertyDefinition(property) => property.declare,
+            Self::PropertyDefinition(property) => {
+                property.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition
+            }
             _ => false,
         }
     }
@@ -2059,18 +2059,16 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(method) => !method.decorators.is_empty(),
             Self::PropertyDefinition(property) => !property.decorators.is_empty(),
             Self::AccessorProperty(property) => !property.decorators.is_empty(),
-            Self::StaticBlock(_)
-            | Self::TSIndexSignature(_)
-            | Self::TSAbstractMethodDefinition(_)
-            | Self::TSAbstractPropertyDefinition(_) => false,
+            Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
         }
     }
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct MethodDefinition<'a> {
+    pub r#type: MethodDefinitionType,
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub key: PropertyKey<'a>,
@@ -2084,10 +2082,19 @@ pub struct MethodDefinition<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+pub enum MethodDefinitionType {
+    MethodDefinition,
+    TSAbstractMethodDefinition,
+}
+
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct PropertyDefinition<'a> {
+    pub r#type: PropertyDefinitionType,
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub key: PropertyKey<'a>,
@@ -2102,6 +2109,14 @@ pub struct PropertyDefinition<'a> {
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub accessibility: Option<TSAccessibility>,
     pub decorators: Vec<'a, Decorator<'a>>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+pub enum PropertyDefinitionType {
+    PropertyDefinition,
+    TSAbstractPropertyDefinition,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -2129,14 +2144,14 @@ impl MethodDefinitionKind {
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct PrivateIdentifier {
+pub struct PrivateIdentifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub name: Atom,
+    pub name: Atom<'a>,
 }
 
-impl PrivateIdentifier {
-    pub fn new(span: Span, name: Atom) -> Self {
+impl<'a> PrivateIdentifier<'a> {
+    pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name }
     }
 }
@@ -2168,7 +2183,7 @@ pub enum ModuleDeclaration<'a> {
     /// export = 5;
     TSExportAssignment(Box<'a, TSExportAssignment<'a>>),
     /// export as namespace React;
-    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration>),
+    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>),
 }
 
 impl<'a> ModuleDeclaration<'a> {
@@ -2191,11 +2206,22 @@ impl<'a> ModuleDeclaration<'a> {
         matches!(self, Self::ExportDefaultDeclaration(_))
     }
 
-    pub fn source(&self) -> Option<&StringLiteral> {
+    pub fn source(&self) -> Option<&StringLiteral<'a>> {
         match self {
             Self::ImportDeclaration(decl) => Some(&decl.source),
             Self::ExportAllDeclaration(decl) => Some(&decl.source),
             Self::ExportNamedDeclaration(decl) => decl.source.as_ref(),
+            Self::ExportDefaultDeclaration(_)
+            | Self::TSExportAssignment(_)
+            | Self::TSNamespaceExportDeclaration(_) => None,
+        }
+    }
+
+    pub fn with_clause(&self) -> Option<&WithClause<'a>> {
+        match self {
+            Self::ImportDeclaration(decl) => decl.with_clause.as_ref(),
+            Self::ExportAllDeclaration(decl) => decl.with_clause.as_ref(),
+            Self::ExportNamedDeclaration(decl) => decl.with_clause.as_ref(),
             Self::ExportDefaultDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => None,
@@ -2233,8 +2259,8 @@ pub struct ImportDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
-    pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier>>,
-    pub source: StringLiteral,
+    pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
+    pub source: StringLiteral<'a>,
     /// Some(vec![]) for empty assertion
     pub with_clause: Option<WithClause<'a>>,
     /// `import type { foo } from 'bar'`
@@ -2244,14 +2270,14 @@ pub struct ImportDeclaration<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub enum ImportDeclarationSpecifier {
+pub enum ImportDeclarationSpecifier<'a> {
     /// import {imported} from "source"
     /// import {imported as local} from "source"
-    ImportSpecifier(ImportSpecifier),
+    ImportSpecifier(ImportSpecifier<'a>),
     /// import local from "source"
-    ImportDefaultSpecifier(ImportDefaultSpecifier),
+    ImportDefaultSpecifier(ImportDefaultSpecifier<'a>),
     /// import * as local from "source"
-    ImportNamespaceSpecifier(ImportNamespaceSpecifier),
+    ImportNamespaceSpecifier(ImportNamespaceSpecifier<'a>),
 }
 
 // import {imported} from "source"
@@ -2259,11 +2285,11 @@ pub enum ImportDeclarationSpecifier {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct ImportSpecifier {
+pub struct ImportSpecifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub imported: ModuleExportName,
-    pub local: BindingIdentifier,
+    pub imported: ModuleExportName<'a>,
+    pub local: BindingIdentifier<'a>,
     pub import_kind: ImportOrExportKind,
 }
 
@@ -2271,52 +2297,52 @@ pub struct ImportSpecifier {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct ImportDefaultSpecifier {
+pub struct ImportDefaultSpecifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub local: BindingIdentifier,
+    pub local: BindingIdentifier<'a>,
 }
 
 // import * as local from "source"
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct ImportNamespaceSpecifier {
+pub struct ImportNamespaceSpecifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub local: BindingIdentifier,
+    pub local: BindingIdentifier<'a>,
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct WithClause<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub attributes_keyword: IdentifierName, // `with` or `assert`
-    pub with_entries: Vec<'a, ImportAttribute>,
+    pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
+    pub with_entries: Vec<'a, ImportAttribute<'a>>,
 }
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct ImportAttribute {
+pub struct ImportAttribute<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub key: ImportAttributeKey,
-    pub value: StringLiteral,
+    pub key: ImportAttributeKey<'a>,
+    pub value: StringLiteral<'a>,
 }
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub enum ImportAttributeKey {
-    Identifier(IdentifierName),
-    StringLiteral(StringLiteral),
+pub enum ImportAttributeKey<'a> {
+    Identifier(IdentifierName<'a>),
+    StringLiteral(StringLiteral<'a>),
 }
 
-impl ImportAttributeKey {
-    pub fn as_atom(&self) -> Atom {
+impl<'a> ImportAttributeKey<'a> {
+    pub fn as_atom(&self) -> Atom<'a> {
         match self {
             Self::Identifier(identifier) => identifier.name.clone(),
             Self::StringLiteral(literal) => literal.value.clone(),
@@ -2325,16 +2351,18 @@ impl ImportAttributeKey {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct ExportNamedDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub declaration: Option<Declaration<'a>>,
-    pub specifiers: Vec<'a, ExportSpecifier>,
-    pub source: Option<StringLiteral>,
+    pub specifiers: Vec<'a, ExportSpecifier<'a>>,
+    pub source: Option<StringLiteral<'a>>,
     /// `export type { foo }`
     pub export_kind: ImportOrExportKind,
+    /// Some(vec![]) for empty assertion
+    pub with_clause: Option<WithClause<'a>>,
 }
 
 impl<'a> ExportNamedDeclaration<'a> {
@@ -2355,7 +2383,7 @@ pub struct ExportDefaultDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub declaration: ExportDefaultDeclarationKind<'a>,
-    pub exported: ModuleExportName, // `default`
+    pub exported: ModuleExportName<'a>, // `default`
 }
 
 impl<'a> ExportDefaultDeclaration<'a> {
@@ -2365,13 +2393,13 @@ impl<'a> ExportDefaultDeclaration<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
 pub struct ExportAllDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub exported: Option<ModuleExportName>,
-    pub source: StringLiteral,
+    pub exported: Option<ModuleExportName<'a>>,
+    pub source: StringLiteral<'a>,
     pub with_clause: Option<WithClause<'a>>, // Some(vec![]) for empty assertion
     pub export_kind: ImportOrExportKind,     // `export type *`
 }
@@ -2383,18 +2411,18 @@ impl<'a> ExportAllDeclaration<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct ExportSpecifier {
+pub struct ExportSpecifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub local: ModuleExportName,
-    pub exported: ModuleExportName,
+    pub local: ModuleExportName<'a>,
+    pub exported: ModuleExportName<'a>,
     pub export_kind: ImportOrExportKind, // `export type *`
 }
 
-impl ExportSpecifier {
-    pub fn new(span: Span, local: ModuleExportName, exported: ModuleExportName) -> Self {
+impl<'a> ExportSpecifier<'a> {
+    pub fn new(span: Span, local: ModuleExportName<'a>, exported: ModuleExportName<'a>) -> Self {
         Self { span, local, exported, export_kind: ImportOrExportKind::Value }
     }
 }
@@ -2415,19 +2443,11 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     #[inline]
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
-            ExportDefaultDeclarationKind::FunctionDeclaration(func)
-                if func.is_typescript_syntax() =>
-            {
-                true
-            }
-            ExportDefaultDeclarationKind::ClassDeclaration(class)
-                if class.is_typescript_syntax() =>
-            {
-                true
-            }
+            ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.is_typescript_syntax(),
+            ExportDefaultDeclarationKind::ClassDeclaration(class) => class.is_typescript_syntax(),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
             | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => true,
-            _ => false,
+            ExportDefaultDeclarationKind::Expression(_) => false,
         }
     }
 }
@@ -2440,12 +2460,12 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub enum ModuleExportName {
-    Identifier(IdentifierName),
-    StringLiteral(StringLiteral),
+pub enum ModuleExportName<'a> {
+    Identifier(IdentifierName<'a>),
+    StringLiteral(StringLiteral<'a>),
 }
 
-impl fmt::Display for ModuleExportName {
+impl<'a> fmt::Display for ModuleExportName<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = match self {
             Self::Identifier(identifier) => identifier.name.to_string(),
@@ -2455,8 +2475,8 @@ impl fmt::Display for ModuleExportName {
     }
 }
 
-impl ModuleExportName {
-    pub fn name(&self) -> &Atom {
+impl<'a> ModuleExportName<'a> {
+    pub fn name(&self) -> &Atom<'a> {
         match self {
             Self::Identifier(identifier) => &identifier.name,
             Self::StringLiteral(literal) => &literal.value,

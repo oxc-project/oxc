@@ -3,6 +3,7 @@
 pub mod assumptions;
 pub mod class;
 pub mod identifier;
+pub mod keyword;
 pub mod module_record;
 pub mod node;
 pub mod operator;

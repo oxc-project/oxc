@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_eval
 ---
-
   ⚠ eslint(no-eval): eval can be harmful.
    ╭─[no_eval.tsx:1:1]
  1 │ eval(foo)
@@ -122,4 +121,3 @@ expression: no_eval
  1 │ (window?.eval)('foo')
    ·          ────
    ╰────
-
