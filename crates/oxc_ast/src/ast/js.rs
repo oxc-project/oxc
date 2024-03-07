@@ -14,11 +14,8 @@ use serde::Serialize;
 
 use super::{jsx::*, literal::*, ts::*};
 
-#[cfg_attr(
-    all(feature = "serde", feature = "wasm"),
-    wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
-)]
-#[allow(dead_code)]
+#[cfg(all(feature = "serde", feature = "wasm"))]
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export interface BindingIdentifier extends Span { type: "Identifier", name: Atom }
 export interface IdentifierReference extends Span { type: "Identifier", name: Atom }
