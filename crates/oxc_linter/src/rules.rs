@@ -316,6 +316,10 @@ mod nextjs {
     pub mod no_unwanted_polyfillio;
 }
 
+mod react_hooks {
+    pub mod exhaustive_deps;
+}
+
 oxc_macros::declare_all_lint_rules! {
     deepscan::bad_array_method_on_arguments,
     deepscan::bad_bitwise_operator,
@@ -594,4 +598,5 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_document_import_in_page,
     nextjs::no_unwanted_polyfillio,
     nextjs::no_before_interactive_script_outside_document,
+    react_hooks::exhaustive_deps
 }
