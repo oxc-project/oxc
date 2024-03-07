@@ -1048,8 +1048,9 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
                 || specifiers.get(1).is_some_and(validate_namespace);
 
             parts.push(module::print_module_specifiers(p, specifiers, is_default, is_namespace));
+            parts.push(ss!(" from"));
         }
-        parts.push(ss!(" from "));
+        parts.push(space!());
         parts.push(self.source.format(p));
 
         if let Some(with_clause) = &self.with_clause {
