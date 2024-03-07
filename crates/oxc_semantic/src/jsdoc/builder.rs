@@ -36,51 +36,88 @@ impl<'a> JSDocBuilder<'a> {
         JSDocFinder::new(self.attached_docs, not_attached_docs)
     }
 
-    // This process is done in conjunction with the `semantic.build()`.
-    // This means that it's done "before" each use case (e.g. execute rule in oxlint) runs.
+    // ## Current architecture
     //
-    // If you need to control this attaching logic (e.g. by rule configurations), one of these would be necessary.
-    // - 1. Give up pre-attaching here and leave it for use cases
-    // - 2. Attach it more broadly(= loosely) here (may cause performance impact), so that it can be narrowed down later
+    // - 1) At semantic build time, flag the node if it has 1 or more JSDoc comments
+    // - 2) At runtime (usecases like oxlint), reference that flag from the visited node
     //
-    // Since there is no reliable spec for JSDoc, there are some naive topics to consider:
+    // Basically, this speeds up the runtime usecases, but there is a trade-off.
     //
-    // Q. Which node to attach JSDoc to?
-    // A. Each implementation decides according to its own use case.
+    // ## Only certain nodes can have a JSDoc
     //
-    // For example, TypeScript tries to target quite broadly nodes.
-    // > https://github.com/microsoft/TypeScript/blob/d04e3489b0d8e6bc9a8a9396a633632a5a467328/src/compiler/utilities.ts#L4195
+    // For perf reasons, not every node is checked.
+    // The benchmark says that perf actually drops by -3~4% if we check every kind.
     //
-    // In case of `eslint-plugin-jsdoc`, its targets can be freely changed by rule configurations!
-    // (But, default is only about function related nodes.)
-    // > https://github.com/gajus/eslint-plugin-jsdoc/blob/e948bee821e964a92fbabc01574eca226e9e1252/src/iterateJsdoc.js#L2517-L2536
+    // This means that some JSDoc comments may not be parsed as originally written.
+    // (In the first place, comments can be written anywhere,
+    //  although some may already be inconsistent when converted to AST).
     //
-    // `eslint-plugin-import` does the similar but more casual way.
-    // > https://github.com/import-js/eslint-plugin-import/blob/df751e0d004aacc34f975477163fb221485a85f6/src/ExportMap.js#L211
+    // Check the `should_attach_jsdoc()` function below to see which nodes are listed.
     //
-    // Q. How do we attach JSDoc to that node?
-    // A. Also depends on the implementation.
+    // ## Usecase matters
     //
-    // In the case of TypeScript (they have specific AST node for JSDoc and an `endOfFileToken`),
-    // some AST nodes have the `jsDoc` property and multiple `JSDocComment`s are attached.
+    // "Where to write comments and what meaning you want them to have" depends entirely on the usecase.
     //
-    // In the case of `eslint-plugin-jsdoc` (`@es-joy/jsdoccomment` is used)
-    // tries to get a only single nearest comment, with some exception handling.
+    // Consider the following common example and some usecases.
     //
-    // It is hard to say how we should behave as OXC Semantic, but the current implementation is,
-    // - Intuitive TypeScript-like attaching strategy
-    // - Provide `get_one` or `get_all` APIs for each use case
+    // ```js
+    // /** @param {string} x */
+    // function foo(x) {}
+    // ```
     //
-    // Of course, this can be changed in the future.
+    // In the current implementation, this JSDoc is attached to the `FunctionDeclaration'.
+    //
+    // - How to validate parameter `x` should have `@param` JSDoc?
+    //
+    // In this plugin-jsdoc usecase,
+    //  visit `FunctionDeclaration`, find `params.items`, get attached JSDoc, and ... OK.
+    //
+    // Then how about this?
+    //
+    // ```js
+    // /** @param {string} x */
+    // const bar = (x) => {}
+    // ```
+    //
+    // We might want to validate this by visiting `ArrowFunctionExpression`.
+    // But this JSDoc will be attached to the `VariableDeclaration'.
+    //
+    // More examples...
+    //
+    // ```js
+    // /** @param {string} x */
+    // const a = ((x) => {}), // extra `ParenthesizedExpression`
+    //   /** @param {string} x */
+    //   b = (x) => {} // `VariableDeclarator` has JSDoc
+    // ```
+    //
+    // So we need extra work to find+ask parent (or sibling?) node until desired JSDoc is found.
+    //
+    // - How to get type information when visiting `FormalParameter`(or its `Identifier`)?
+    //
+    // This is another example, but it's also necessary to find+ask parent.
+    //
+    // Anyway, extra work at runtime seems to be necessary in many cases,
+    //  especially for `JSDoc.tags` related things.
+    //
+    // ## To make the runtime logic consistent
+    //
+    // The semantic side needs to be versatile and intuitive.
+    // And we also want to avoid having 2 tuning points.
+    //
+    // Therefore, the `should_attach_jsdoc()` function and its candidates should be carefully listed.
+    //
+    // As many as possible should be listed,
+    //  as long as they are reasonable to check and do not affect performance...!
     pub fn retrieve_attached_jsdoc(&mut self, kind: &AstKind<'a>) -> bool {
-        // 0. Check if this kind can have JSDoc
         if !should_attach_jsdoc(kind) {
             return false;
         }
 
-        // 1. Retrieve every kind of leading comments for this node
         let span = kind.span();
         let mut leading_comments = vec![];
+        // May be better to set range start for perf?
+        // But once I tried, coverage tests start failing...
         for (start, comment) in self.trivias.comments().range(..span.start) {
             if self.leading_comments_seen.contains(start) {
                 continue;
@@ -90,13 +127,11 @@ impl<'a> JSDocBuilder<'a> {
             self.leading_comments_seen.insert(*start);
         }
 
-        // 2. Filter and parse JSDoc comments only
         let leading_jsdoc_comments = leading_comments
             .iter()
             .filter_map(|(start, comment)| self.parse_if_jsdoc_comment(**start, **comment))
             .collect::<Vec<_>>();
 
-        // 3. Save and return `true` to mark JSDoc flag
         if !leading_jsdoc_comments.is_empty() {
             self.attached_docs.insert(span, leading_jsdoc_comments);
             return true;
@@ -111,9 +146,9 @@ impl<'a> JSDocBuilder<'a> {
         }
 
         let comment_span = Span::new(span_start, comment.end());
-        // Inside of marker: /*_CONTENT_*/
+        // Inside of marker: /*CONTENT*/ => CONTENT
         let comment_content = comment_span.source_text(self.source_text);
-        // Should start with "*": /**_CONTENT_*/
+        // Should start with "*"
         if !comment_content.starts_with('*') {
             return None;
         }
@@ -125,8 +160,9 @@ impl<'a> JSDocBuilder<'a> {
 
 #[rustfmt::skip]
 fn should_attach_jsdoc(kind: &AstKind) -> bool {
+    println!("{}: {:?}", kind.debug_name(), kind.span());
     matches!(kind,
-        // This list(and order) comes from oxc_ast/ast_kind.rs
+        // This list comes from oxc_ast/ast_kind.rs
           AstKind::BlockStatement(_)
         | AstKind::BreakStatement(_)
         | AstKind::ContinueStatement(_)
@@ -151,6 +187,7 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
         | AstKind::FinallyClause(_)
 
         | AstKind::VariableDeclaration(_)
+        | AstKind::VariableDeclarator(_)
 
         | AstKind::UsingDeclaration(_)
 
@@ -160,17 +197,21 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
         | AstKind::ObjectProperty(_)
 
         | AstKind::Function(_)
+        | AstKind::FormalParameter(_)
 
         | AstKind::Class(_)
         | AstKind::MethodDefinition(_)
         | AstKind::PropertyDefinition(_)
         | AstKind::StaticBlock(_)
 
+        | AstKind::Decorator(_)
+
         | AstKind::ExportAllDeclaration(_)
         | AstKind::ExportDefaultDeclaration(_)
         | AstKind::ExportNamedDeclaration(_)
         | AstKind::ImportDeclaration(_)
         | AstKind::ModuleDeclaration(_)
+
         // Maybe JSX, TS related kinds should be added?
     )
 }
