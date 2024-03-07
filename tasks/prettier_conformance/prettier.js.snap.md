@@ -1,4 +1,4 @@
-js compatibility: 258/586 (44.03%)
+js compatibility: 264/586 (45.05%)
 
 # Failed
 
@@ -261,20 +261,10 @@ js compatibility: 258/586 (44.03%)
 
 ### import-assertions
 * import-assertions/empty.js
-* import-assertions/re-export.js
-
-### import-assertions/bracket-spacing
-* import-assertions/bracket-spacing/empty.js
-* import-assertions/bracket-spacing/re-export.js
 
 ### import-attributes
 * import-attributes/empty.js
 * import-attributes/keyword-detect.js
-* import-attributes/re-export.js
-
-### import-attributes/bracket-spacing
-* import-attributes/bracket-spacing/empty.js
-* import-attributes/bracket-spacing/re-export.js
 
 ### label
 * label/comment.js
