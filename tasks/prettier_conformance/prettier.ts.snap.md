@@ -1,4 +1,4 @@
-ts compatibility: 22/528 (4.17%)
+ts compatibility: 23/528 (4.36%)
 
 # Failed
 
@@ -522,7 +522,6 @@ ts compatibility: 22/528 (4.17%)
 * generic/ungrouped-parameters.ts
 
 ### import-export
-* import-export/empty-import.ts
 * import-export/type-modifier.ts
 
 ### import-require
