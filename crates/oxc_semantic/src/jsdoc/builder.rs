@@ -158,12 +158,17 @@ impl<'a> JSDocBuilder<'a> {
     }
 }
 
-// TODO:
-// - TS AST
+// As noted above, only certain nodes can have JSDoc comments.
+//
+// Should add as many kinds as possible without affecting performance.
+// It's a bit hard to explain, but theoretically the more outer ones should be listed.
+//
+// From a linter point of view, basically only declarations are needed.
+// Other kinds, such as statements, act as tie-breakers between them.
 #[rustfmt::skip]
 fn should_attach_jsdoc(kind: &AstKind) -> bool {
     matches!(kind,
-        // This list comes from oxc_ast/ast_kind.rs
+        // This list order comes from oxc_ast/ast_kind.rs
           AstKind::BlockStatement(_)
         | AstKind::BreakStatement(_)
         | AstKind::ContinueStatement(_)
@@ -193,6 +198,7 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
         | AstKind::UsingDeclaration(_)
 
         | AstKind::ArrowFunctionExpression(_)
+        | AstKind::ObjectExpression(_)
         | AstKind::ParenthesizedExpression(_)
 
         | AstKind::ObjectProperty(_)
