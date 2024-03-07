@@ -12,7 +12,7 @@ pub const JS_IGNORE_TESTS: &[&str] = &[
     "js/explicit-resource-management",
     "js/export-default/escaped",
     "js/export-default/export-default-from",
-    "js/import-assertions",
+    // "js/import-assertions",
     // "js/import-attributes",
     "js/import-reflection",
     "js/module-blocks",
