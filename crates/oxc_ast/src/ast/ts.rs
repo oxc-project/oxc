@@ -947,6 +947,27 @@ pub struct Decorator<'a> {
     pub expression: Expression<'a>,
 }
 
+impl<'a> Decorator<'a> {
+    /// Get the name of the decorator
+    /// ```ts
+    /// @decorator
+    /// @decorator.a.b
+    /// @decorator(xx)
+    /// @decorator.a.b(xx)
+    /// The name of the decorator is `decorator`
+    /// ```
+    pub fn name(&self) -> Option<&str> {
+        match &self.expression {
+            Expression::Identifier(ident) => Some(&ident.name),
+            Expression::MemberExpression(member) => member.static_property_name(),
+            Expression::CallExpression(call) => {
+                call.callee.get_member_expr().map(|member| member.static_property_name())?
+            }
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 #[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]

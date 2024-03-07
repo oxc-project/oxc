@@ -1004,6 +1004,13 @@ pub struct ObjectAssignmentTarget<'a> {
 }
 
 impl<'a> ObjectAssignmentTarget<'a> {
+    pub fn new_with_properties(
+        span: Span,
+        properties: Vec<'a, AssignmentTargetProperty<'a>>,
+    ) -> Self {
+        Self { span, properties, rest: None }
+    }
+
     pub fn is_empty(&self) -> bool {
         self.properties.is_empty() && self.rest.is_none()
     }
