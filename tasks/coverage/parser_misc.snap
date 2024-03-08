@@ -4,7 +4,7 @@ Positive Passed: 12/12 (100.00%)
 Negative Passed: 8/8 (100.00%)
 
   × Unexpected token
-   ╭─[fail/oxc-169.js:1:1]
+   ╭─[fail/oxc-169.js:2:1]
  1 │ 1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>
    ╰────
 

@@ -3,16 +3,20 @@
 #![allow(clippy::nursery)]
 #![allow(dead_code)]
 
-/// origin file: https://github.com/zkat/miette/blob/78fe18e6990feacc8bdaeeb10e1439a12c111e6e/src/handlers/theme.rs
-use is_terminal::IsTerminal;
-use owo_colors::{style, Style};
+/// origin file: https://github.com/zkat/miette/blob/75fea0935e495d0215518c80d32dd820910982e3/src/handlers/theme.rs
+use std::io::IsTerminal;
+
+use miette::ThemeCharacters;
+use owo_colors::Style;
 
 /**
 Theme used by [`GraphicalReportHandler`](crate::GraphicalReportHandler) to
-render fancy [`Diagnostic`](miette::Diagnostic) reports.
+render fancy [`Diagnostic`](crate::Diagnostic) reports.
+
 A theme consists of two things: the set of characters to be used for drawing,
 and the
 [`owo_colors::Style`](https://docs.rs/owo-colors/latest/owo_colors/struct.Style.html)s to be used to paint various items.
+
 You can create your own custom graphical theme using this type, or you can use
 one of the predefined ones using the methods below.
 */
@@ -32,6 +36,12 @@ impl GraphicalTheme {
 
     /// Graphical theme that draws using both ansi colors and unicode
     /// characters.
+    ///
+    /// Note that full rgb colors aren't enabled by default because they're
+    /// an accessibility hazard, especially in the context of terminal themes
+    /// that can change the background color and make hardcoded colors illegible.
+    /// Such themes typically remap ansi codes properly, treating them more
+    /// like CSS classes than specific colors.
     pub fn unicode() -> Self {
         Self { characters: ThemeCharacters::unicode(), styles: ThemeStyles::rgb() }
     }
@@ -44,9 +54,7 @@ impl GraphicalTheme {
 
     /// A "basic" graphical theme that skips colors and unicode characters and
     /// just does monochrome ascii art. If you want a completely non-graphical
-    /// rendering of your `Diagnostic`s, check out
-    /// [miette::NarratableReportHandler], or write your own
-    /// [miette::ReportHandler]!
+    /// rendering of your [`Diagnostic`](crate::Diagnostic)s
     pub fn none() -> Self {
         Self { characters: ThemeCharacters::ascii(), styles: ThemeStyles::none() }
     }
@@ -65,7 +73,8 @@ impl Default for GraphicalTheme {
 }
 
 /**
-Styles for various parts of graphical rendering for the [crate::GraphicalReportHandler].
+Styles for various parts of graphical rendering for the
+[`GraphicalReportHandler`](crate::GraphicalReportHandler).
 */
 #[derive(Debug, Clone)]
 pub struct ThemeStyles {
@@ -84,6 +93,10 @@ pub struct ThemeStyles {
     /// Styles to cycle through (using `.iter().cycle()`), to render the lines
     /// and text for diagnostic highlights.
     pub highlights: Vec<Style>,
+}
+
+fn style() -> Style {
+    Style::new()
 }
 
 impl ThemeStyles {
@@ -112,7 +125,7 @@ impl ThemeStyles {
             warning: style().yellow(),
             advice: style().cyan(),
             help: style().cyan(),
-            link: style().bold(),
+            link: style().cyan().underline().bold(),
             linum: style().dimmed(),
             highlights: vec![
                 style().magenta().bold(),
@@ -132,127 +145,6 @@ impl ThemeStyles {
             link: style(),
             linum: style(),
             highlights: vec![style()],
-        }
-    }
-}
-
-// ----------------------------------------
-// Most of these characters were taken from
-// https://github.com/zesterer/ariadne/blob/e3cb394cb56ecda116a0a1caecd385a49e7f6662/src/draw.rs
-
-/// Characters to be used when drawing when using
-/// [crate::GraphicalReportHandler].
-#[allow(missing_docs)]
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct ThemeCharacters {
-    pub hbar: char,
-    pub vbar: char,
-    pub xbar: char,
-    pub vbar_break: char,
-
-    pub uarrow: char,
-    pub rarrow: char,
-
-    pub ltop: char,
-    pub mtop: char,
-    pub rtop: char,
-    pub lbot: char,
-    pub rbot: char,
-    pub mbot: char,
-
-    pub lbox: char,
-    pub rbox: char,
-
-    pub lcross: char,
-    pub rcross: char,
-
-    pub underbar: char,
-    pub underline: char,
-
-    pub error: String,
-    pub warning: String,
-    pub advice: String,
-}
-
-impl ThemeCharacters {
-    /// Fancy unicode-based graphical elements.
-    pub fn unicode() -> Self {
-        Self {
-            hbar: '─',
-            vbar: '│',
-            xbar: '┼',
-            vbar_break: '·',
-            uarrow: '▲',
-            rarrow: '▶',
-            ltop: '╭',
-            mtop: '┬',
-            rtop: '╮',
-            lbot: '╰',
-            mbot: '┴',
-            rbot: '╯',
-            lbox: '[',
-            rbox: ']',
-            lcross: '├',
-            rcross: '┤',
-            underbar: '┬',
-            underline: '─',
-            error: "×".into(),
-            warning: "⚠".into(),
-            advice: "☞".into(),
-        }
-    }
-
-    /// Emoji-heavy unicode characters.
-    pub fn emoji() -> Self {
-        Self {
-            hbar: '─',
-            vbar: '│',
-            xbar: '┼',
-            vbar_break: '·',
-            uarrow: '▲',
-            rarrow: '▶',
-            ltop: '╭',
-            mtop: '┬',
-            rtop: '╮',
-            lbot: '╰',
-            mbot: '┴',
-            rbot: '╯',
-            lbox: '[',
-            rbox: ']',
-            lcross: '├',
-            rcross: '┤',
-            underbar: '┬',
-            underline: '─',
-            error: "💥".into(),
-            warning: "⚠️".into(),
-            advice: "💡".into(),
-        }
-    }
-
-    /// ASCII-art-based graphical elements. Works well on older terminals.
-    pub fn ascii() -> Self {
-        Self {
-            hbar: '-',
-            vbar: '|',
-            xbar: '+',
-            vbar_break: ':',
-            uarrow: '^',
-            rarrow: '>',
-            ltop: ',',
-            mtop: 'v',
-            rtop: '.',
-            lbot: '`',
-            mbot: '^',
-            rbot: '\'',
-            lbox: '[',
-            rbox: ']',
-            lcross: '|',
-            rcross: '|',
-            underbar: '|',
-            underline: '^',
-            error: "x".into(),
-            warning: "!".into(),
-            advice: ">".into(),
         }
     }
 }

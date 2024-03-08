@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 expression: triple_slash_reference
 ---
   ⚠ typescript-eslint(triple-slash-reference): Do not use a triple slash reference for foo, use `import` style instead.
-   ╭─[triple_slash_reference.tsx:2:13]
+   ╭─[triple_slash_reference.tsx:2:4]
  1 │ 
  2 │             /// <reference types="foo" />
    ·             ─────────────────────────────
@@ -12,7 +12,7 @@ expression: triple_slash_reference
   help: Use of triple-slash reference type directives is generally discouraged in favor of ECMAScript Module imports.
 
   ⚠ typescript-eslint(triple-slash-reference): Do not use a triple slash reference for foo, use `import` style instead.
-   ╭─[triple_slash_reference.tsx:2:13]
+   ╭─[triple_slash_reference.tsx:2:10]
  1 │ 
  2 │             /// <reference types="foo" />
    ·             ─────────────────────────────

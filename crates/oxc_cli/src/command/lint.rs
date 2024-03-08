@@ -66,6 +66,7 @@ pub struct LintOptions {
     pub paths: Vec<PathBuf>,
 }
 
+#[allow(clippy::ptr_arg)]
 fn validate_paths(paths: &Vec<PathBuf>) -> bool {
     if paths.is_empty() {
         true
