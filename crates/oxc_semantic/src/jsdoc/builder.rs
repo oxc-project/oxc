@@ -38,7 +38,7 @@ impl<'a> JSDocBuilder<'a> {
 
     // ## Current architecture
     //
-    // - 1) At semantic build time, flag the node if it has 1 or more JSDoc comments
+    // - 1) At semantic build time, visit each node and flag it if 1 or more JSDoc comments found
     // - 2) At runtime (usecases like oxlint), reference that flag from the visited node
     //
     // Basically, this speeds up the runtime usecases, but there is a trade-off.
@@ -50,7 +50,7 @@ impl<'a> JSDocBuilder<'a> {
     //
     // This means that some JSDoc comments may not be parsed as originally written.
     // (In the first place, comments can be written anywhere,
-    //  although some may already be inconsistent when converted to AST).
+    //  although some may already be inconsistent when converted from Token to AST nodes).
     //
     // Check the `should_attach_jsdoc()` function below to see which nodes are listed.
     //
@@ -102,13 +102,12 @@ impl<'a> JSDocBuilder<'a> {
     //
     // ## To make the runtime logic consistent
     //
-    // The semantic side needs to be versatile and intuitive.
+    // The semantic side needs to be versatile, intuitive and expectable.
     // And we also want to avoid having 2 tuning points.
     //
     // Therefore, the `should_attach_jsdoc()` function and its candidates should be carefully listed.
     //
-    // As many as possible should be listed,
-    //  as long as they are reasonable to check and do not affect performance...!
+    // As many reasonable types as possible should be listed, as long as it does not affect performance...!
     pub fn retrieve_attached_jsdoc(&mut self, kind: &AstKind<'a>) -> bool {
         if !should_attach_jsdoc(kind) {
             return false;
@@ -159,8 +158,8 @@ impl<'a> JSDocBuilder<'a> {
 }
 
 // As noted above, only certain nodes can have JSDoc comments.
+// But as many kinds as possible should be added, without affecting performance.
 //
-// Should add as many kinds as possible without affecting performance.
 // It's a bit hard to explain, but theoretically the more outer ones should be listed.
 //
 // From a linter point of view, basically only declarations are needed.
