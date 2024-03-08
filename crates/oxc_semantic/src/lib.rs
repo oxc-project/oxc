@@ -19,7 +19,7 @@ pub use petgraph;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 use class::ClassTable;
-pub use jsdoc::JSDocFinder;
+pub use jsdoc::{JSDocFinder, JSDocTag};
 use oxc_ast::{ast::IdentifierReference, AstKind, TriviasMap};
 use oxc_span::SourceType;
 pub use oxc_syntax::{

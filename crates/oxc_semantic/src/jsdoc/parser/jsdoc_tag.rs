@@ -49,12 +49,16 @@ pub struct Param<'a> {
 // Structs
 //
 
-// See https://github.com/microsoft/TypeScript/blob/2d70b57df4b64a3daef252abb014562e6ccc8f3c/src/compiler/types.ts#L397
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JSDocTagKind<'a> {
-    Deprecated,           // JSDocDeprecatedTag
-    Parameter(Param<'a>), // JSDocParameterTag
-    Unknown(&'a str),     // JSDocTag
+    Access,
+    Deprecated,
+    Package,
+    Parameter(Param<'a>),
+    Private,
+    Protected,
+    Public,
+    Unknown(&'a str),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -66,14 +70,15 @@ pub struct JSDocTag<'a> {
 impl<'a> JSDocTag<'a> {
     pub fn tag_name(&self) -> &'a str {
         match self.kind {
+            JSDocTagKind::Access => "access",
             JSDocTagKind::Deprecated => "deprecated",
+            JSDocTagKind::Package => "package",
             JSDocTagKind::Parameter(_) => "param",
+            JSDocTagKind::Private => "private",
+            JSDocTagKind::Protected => "protected",
+            JSDocTagKind::Public => "public",
             JSDocTagKind::Unknown(tag_name) => tag_name,
         }
-    }
-
-    pub fn is_deprecated(&self) -> bool {
-        self.kind == JSDocTagKind::Deprecated
     }
 }
 

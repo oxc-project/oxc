@@ -54,6 +54,11 @@ impl<'a> JSDocParser<'a> {
         let tag_name = self.take_until(|c| c == ' ' || c == '\n' || c == '@');
         match tag_name {
             // TODO: Add more tags
+            "access" => self.parse_simple_tag(JSDocTagKind::Access),
+            "package" => self.parse_simple_tag(JSDocTagKind::Package),
+            "private" => self.parse_simple_tag(JSDocTagKind::Private),
+            "protected" => self.parse_simple_tag(JSDocTagKind::Protected),
+            "public" => self.parse_simple_tag(JSDocTagKind::Public),
             "arg" | "argument" | "param" => self.parse_parameter_tag(),
             "deprecated" => self.parse_simple_tag(JSDocTagKind::Deprecated),
             _ => self.parse_simple_tag(JSDocTagKind::Unknown(tag_name)),

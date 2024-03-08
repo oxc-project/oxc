@@ -24,4 +24,7 @@ impl<'a> JSDoc<'a> {
         let cache = self.cached.get_or_init(|| JSDocParser::new(self.raw).parse());
         &cache.1
     }
+
+    // Should implement here...? Or leave it to usecases?
+    // fn has_deprecated_tag(&self) -> bool {}
 }
