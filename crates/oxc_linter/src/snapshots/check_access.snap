@@ -1,0 +1,93 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: check_access
+---
+  ⚠ eslint-plugin-jsdoc(check-access): TODO
+   ╭─[check_access.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                       /**
+ 3 │                        * @access foo
+   ╰────
+  help: TODO
+
+  ⚠ eslint-plugin-jsdoc(check-access): TODO
+   ╭─[check_access.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                       /**
+ 3 │                        * @access foo
+   ╰────
+  help: TODO
+
+  ⚠ eslint-plugin-jsdoc(check-access): TODO
+   ╭─[check_access.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                       /**
+ 3 │                        * @access
+   ╰────
+  help: TODO
+
+  ⚠ eslint-plugin-jsdoc(check-access): TODO
+   ╭─[check_access.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                   class MyClass {
+ 3 │                     /**
+   ╰────
+  help: TODO
+
+  ⚠ eslint-plugin-jsdoc(check-access): TODO
+   ╭─[check_access.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                       /**
+ 3 │                        * @access public
+   ╰────
+  help: TODO
+
+  ⚠ eslint-plugin-jsdoc(check-access): TODO
+   ╭─[check_access.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                       /**
+ 3 │                        * @access public
+   ╰────
+  help: TODO
+
+  ⚠ eslint-plugin-jsdoc(check-access): TODO
+   ╭─[check_access.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                       /**
+ 3 │                        * @access public
+   ╰────
+  help: TODO
+
+  ⚠ eslint-plugin-jsdoc(check-access): TODO
+   ╭─[check_access.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                       /**
+ 3 │                        * @public
+   ╰────
+  help: TODO
+
+  ⚠ eslint-plugin-jsdoc(check-access): TODO
+   ╭─[check_access.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                       /**
+ 3 │                        * @public
+   ╰────
+  help: TODO
+
+  ⚠ eslint-plugin-jsdoc(check-access): TODO
+   ╭─[check_access.tsx:1:1]
+ 1 │ 
+   · ▲
+ 2 │                       /**
+ 3 │                        * @public
+   ╰────
+  help: TODO
