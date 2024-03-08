@@ -10,6 +10,7 @@ use oxc_syntax::{
     module_record::{ExportLocalName, ModuleRecord},
     operator::AssignmentOperator,
 };
+use rustc_hash::FxHashSet;
 
 use crate::{
     binder::Binder,
@@ -54,6 +55,9 @@ pub struct SemanticBuilder<'a> {
     /// If true, the current node is in the type definition
     in_type_definition: bool,
     current_reference_flag: ReferenceFlag,
+
+    is_inside_parameters: bool,
+    parameters_bindings: Vec<FxHashSet<&'a str>>,
 
     // builders
     pub nodes: AstNodes<'a>,
@@ -100,6 +104,8 @@ impl<'a> SemanticBuilder<'a> {
             nodes: AstNodes::default(),
             scope,
             symbols: SymbolTable::default(),
+            is_inside_parameters: false,
+            parameters_bindings: vec![],
             module_record: Arc::new(ModuleRecord::default()),
             label_builder: LabelBuilder::default(),
             jsdoc: JSDocBuilder::new(source_text, &trivias),
@@ -278,7 +284,18 @@ impl<'a> SemanticBuilder<'a> {
     pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
         let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
-        self.scope.add_unresolved_reference(self.current_scope_id, reference_name, reference_id);
+        let scope_id = if self.is_inside_parameters
+            && self
+                .parameters_bindings
+                .last()
+                .is_some_and(|bindings| !bindings.contains(reference_name.as_str()))
+        {
+            self.scope.get_parent_id(self.current_scope_id).unwrap_or(self.current_scope_id)
+        } else {
+            self.current_scope_id
+        };
+
+        self.scope.add_unresolved_reference(scope_id, reference_name, reference_id);
         reference_id
     }
 
@@ -1516,7 +1533,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(ident) = &func.id {
             self.visit_binding_identifier(ident);
         }
-        self.visit_formal_parameters(&func.params);
+
+        self.process_parameters(|builder| {
+            builder.visit_formal_parameters(&func.params);
+        });
+
         if let Some(body) = &func.body {
             self.visit_function_body(body);
         }
@@ -1628,6 +1649,22 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
         self.leave_scope();
     }
+
+    fn visit_catch_clause(&mut self, clause: &CatchClause<'a>) {
+        let kind = AstKind::CatchClause(self.alloc(clause));
+        self.enter_scope(ScopeFlags::empty());
+        self.enter_node(kind);
+
+        self.process_parameters(|builder| {
+            if let Some(param) = &clause.param {
+                builder.visit_binding_pattern(param);
+            }
+        });
+
+        self.visit_statements(&clause.body.body);
+        self.leave_node(kind);
+        self.leave_scope();
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -1650,6 +1687,13 @@ impl<'a> SemanticBuilder<'a> {
                 self.make_all_namespaces_valuelike();
             }
             AstKind::StaticBlock(_) => self.label_builder.enter_function_or_static_block(),
+            AstKind::BindingIdentifier(ident) => {
+                if self.is_inside_parameters {
+                    if let Some(bindings) = self.parameters_bindings.last_mut() {
+                        bindings.insert(&ident.name);
+                    }
+                }
+            }
             AstKind::Function(func) => {
                 self.function_stack.push(self.current_node_id);
                 func.bind(self);
@@ -1877,5 +1921,16 @@ impl<'a> SemanticBuilder<'a> {
             };
         }
         false
+    }
+
+    fn process_parameters<F>(&mut self, cb: F)
+    where
+        F: FnOnce(&mut SemanticBuilder<'a>),
+    {
+        self.is_inside_parameters = true;
+        self.parameters_bindings.push(FxHashSet::default());
+        cb(self);
+        self.parameters_bindings.pop();
+        self.is_inside_parameters = false;
     }
 }
