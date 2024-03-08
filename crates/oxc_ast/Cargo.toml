@@ -36,4 +36,4 @@ wasm-bindgen = { workspace = true, optional = true }
 [features]
 default = []
 serde   = ["dep:serde", "dep:serde_json", "dep:ryu-js", "oxc_span/serde", "oxc_syntax/serde"]
-wasm    = ["dep:tsify", "dep:wasm-bindgen"]
+wasm    = ["serde", "dep:tsify", "dep:wasm-bindgen"]

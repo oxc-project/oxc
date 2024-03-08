@@ -14,7 +14,7 @@ use serde::Serialize;
 
 use super::{jsx::*, literal::*, ts::*};
 
-#[cfg(all(feature = "serde", feature = "wasm"))]
+#[cfg(feature = "wasm")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export interface BindingIdentifier extends Span { type: "Identifier", name: Atom }
@@ -25,7 +25,7 @@ export interface LabelIdentifier extends Span { type: "Identifier", name: Atom }
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct Program<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -50,7 +50,7 @@ impl<'a> Program<'a> {
 /// Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum Expression<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>),
     NullLiteral(Box<'a, NullLiteral>),
@@ -375,7 +375,7 @@ pub struct LabelIdentifier<'a> {
 /// This Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ThisExpression {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -384,7 +384,7 @@ pub struct ThisExpression {
 /// <https://tc39.es/ecma262/#prod-ArrayLiteral>
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ArrayExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -397,7 +397,7 @@ pub struct ArrayExpression<'a> {
 /// Array Expression Element
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum ArrayExpressionElement<'a> {
     SpreadElement(Box<'a, SpreadElement<'a>>),
     Expression(Expression<'a>),
@@ -415,7 +415,7 @@ impl<'a> ArrayExpressionElement<'a> {
 /// Object Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ObjectExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -432,7 +432,7 @@ impl<'a> ObjectExpression<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum ObjectPropertyKind<'a> {
     ObjectProperty(Box<'a, ObjectProperty<'a>>),
     SpreadProperty(Box<'a, SpreadElement<'a>>),
@@ -440,7 +440,7 @@ pub enum ObjectPropertyKind<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ObjectProperty<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -455,7 +455,7 @@ pub struct ObjectProperty<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum PropertyKey<'a> {
     Identifier(Box<'a, IdentifierName<'a>>),
     PrivateIdentifier(Box<'a, PrivateIdentifier<'a>>),
@@ -528,7 +528,7 @@ impl<'a> PropertyKey<'a> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "lowercase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum PropertyKind {
     Init,
     Get,
@@ -540,7 +540,7 @@ pub enum PropertyKind {
 /// This is interpreted by interleaving the expression elements in between the quasi elements.
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct TemplateLiteral<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -561,7 +561,7 @@ impl<'a> TemplateLiteral<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct TaggedTemplateExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -572,7 +572,7 @@ pub struct TaggedTemplateExpression<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct TemplateElement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -583,7 +583,7 @@ pub struct TemplateElement<'a> {
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/impatient-js/ch_template-literals.html#template-strings-cooked-vs-raw)
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct TemplateElementValue<'a> {
     /// A raw interpretation where backslashes do not have special meaning.
     /// For example, \t produces two characters – a backslash and a t.
@@ -599,7 +599,7 @@ pub struct TemplateElementValue<'a> {
 /// <https://tc39.es/ecma262/#prod-MemberExpression>
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum MemberExpression<'a> {
     /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
     ComputedMemberExpression(ComputedMemberExpression<'a>),
@@ -694,7 +694,7 @@ impl<'a> MemberExpression<'a> {
 /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ComputedMemberExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -706,7 +706,7 @@ pub struct ComputedMemberExpression<'a> {
 /// `MemberExpression[?Yield, ?Await] . IdentifierName`
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct StaticMemberExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -718,7 +718,7 @@ pub struct StaticMemberExpression<'a> {
 /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct PrivateFieldExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -730,7 +730,7 @@ pub struct PrivateFieldExpression<'a> {
 /// Call Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct CallExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -784,7 +784,7 @@ impl<'a> CallExpression<'a> {
 /// New Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct NewExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -796,7 +796,7 @@ pub struct NewExpression<'a> {
 /// Meta Property `new.target` | `import.meta`
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct MetaProperty<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -807,7 +807,7 @@ pub struct MetaProperty<'a> {
 /// Spread Element
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct SpreadElement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -817,7 +817,7 @@ pub struct SpreadElement<'a> {
 /// Argument
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum Argument<'a> {
     SpreadElement(Box<'a, SpreadElement<'a>>),
     Expression(Expression<'a>),
@@ -832,7 +832,7 @@ impl Argument<'_> {
 /// Update Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct UpdateExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -844,7 +844,7 @@ pub struct UpdateExpression<'a> {
 /// Unary Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct UnaryExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -855,7 +855,7 @@ pub struct UnaryExpression<'a> {
 /// Binary Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct BinaryExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -867,7 +867,7 @@ pub struct BinaryExpression<'a> {
 /// Private Identifier in Shift Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct PrivateInExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -879,7 +879,7 @@ pub struct PrivateInExpression<'a> {
 /// Binary Logical Operators
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct LogicalExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -891,7 +891,7 @@ pub struct LogicalExpression<'a> {
 /// Conditional Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ConditionalExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -903,7 +903,7 @@ pub struct ConditionalExpression<'a> {
 /// Assignment Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct AssignmentExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -915,7 +915,7 @@ pub struct AssignmentExpression<'a> {
 /// Destructuring Assignment
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum AssignmentTarget<'a> {
     SimpleAssignmentTarget(SimpleAssignmentTarget<'a>),
     AssignmentTargetPattern(AssignmentTargetPattern<'a>),
@@ -940,7 +940,7 @@ impl<'a> AssignmentTarget<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum SimpleAssignmentTarget<'a> {
     AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>>),
     MemberAssignmentTarget(Box<'a, MemberExpression<'a>>),
@@ -964,7 +964,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum AssignmentTargetPattern<'a> {
     ArrayAssignmentTarget(Box<'a, ArrayAssignmentTarget<'a>>),
     ObjectAssignmentTarget(Box<'a, ObjectAssignmentTarget<'a>>),
@@ -972,7 +972,7 @@ pub enum AssignmentTargetPattern<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ArrayAssignmentTarget<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -992,7 +992,7 @@ impl<'a> ArrayAssignmentTarget<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ObjectAssignmentTarget<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1019,7 +1019,7 @@ impl<'a> ObjectAssignmentTarget<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct AssignmentTargetRest<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1028,7 +1028,7 @@ pub struct AssignmentTargetRest<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum AssignmentTargetMaybeDefault<'a> {
     AssignmentTarget(AssignmentTarget<'a>),
     AssignmentTargetWithDefault(Box<'a, AssignmentTargetWithDefault<'a>>),
@@ -1054,7 +1054,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct AssignmentTargetWithDefault<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1064,7 +1064,7 @@ pub struct AssignmentTargetWithDefault<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum AssignmentTargetProperty<'a> {
     AssignmentTargetPropertyIdentifier(Box<'a, AssignmentTargetPropertyIdentifier<'a>>),
     AssignmentTargetPropertyProperty(Box<'a, AssignmentTargetPropertyProperty<'a>>),
@@ -1073,7 +1073,7 @@ pub enum AssignmentTargetProperty<'a> {
 /// Assignment Property - Identifier Reference
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1084,7 +1084,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 /// Assignment Property - Property Name
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct AssignmentTargetPropertyProperty<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1095,7 +1095,7 @@ pub struct AssignmentTargetPropertyProperty<'a> {
 /// Sequence Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct SequenceExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1104,7 +1104,7 @@ pub struct SequenceExpression<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct Super {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1113,7 +1113,7 @@ pub struct Super {
 /// Await Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct AwaitExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1122,7 +1122,7 @@ pub struct AwaitExpression<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ChainExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1131,7 +1131,7 @@ pub struct ChainExpression<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum ChainElement<'a> {
     CallExpression(Box<'a, CallExpression<'a>>),
     MemberExpression(Box<'a, MemberExpression<'a>>),
@@ -1140,7 +1140,7 @@ pub enum ChainElement<'a> {
 /// Parenthesized Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ParenthesizedExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1150,7 +1150,7 @@ pub struct ParenthesizedExpression<'a> {
 /// Statements
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum Statement<'a> {
     // Statements
     BlockStatement(Box<'a, BlockStatement<'a>>),
@@ -1192,7 +1192,7 @@ impl<'a> Statement<'a> {
 /// Directive Prologue
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct Directive<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1206,7 +1206,7 @@ pub struct Directive<'a> {
 /// Hashbang
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct Hashbang<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1216,7 +1216,7 @@ pub struct Hashbang<'a> {
 /// Block Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct BlockStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1226,7 +1226,7 @@ pub struct BlockStatement<'a> {
 /// Declarations and the Variable Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum Declaration<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
     FunctionDeclaration(Box<'a, Function<'a>>),
@@ -1266,7 +1266,7 @@ impl<'a> Declaration<'a> {
 /// Variable Declaration
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct VariableDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1284,7 +1284,7 @@ impl<'a> VariableDeclaration<'a> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "lowercase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum VariableDeclarationKind {
     Var,
     Const,
@@ -1322,7 +1322,7 @@ impl fmt::Display for VariableDeclarationKind {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct VariableDeclarator<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1337,7 +1337,7 @@ pub struct VariableDeclarator<'a> {
 /// * <https://github.com/tc39/proposal-explicit-resource-management>
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct UsingDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1349,7 +1349,7 @@ pub struct UsingDeclaration<'a> {
 /// Empty Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct EmptyStatement {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1358,7 +1358,7 @@ pub struct EmptyStatement {
 /// Expression Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ExpressionStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1368,7 +1368,7 @@ pub struct ExpressionStatement<'a> {
 /// If Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct IfStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1380,7 +1380,7 @@ pub struct IfStatement<'a> {
 /// Do-While Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct DoWhileStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1391,7 +1391,7 @@ pub struct DoWhileStatement<'a> {
 /// While Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct WhileStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1402,7 +1402,7 @@ pub struct WhileStatement<'a> {
 /// For Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ForStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1414,7 +1414,7 @@ pub struct ForStatement<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum ForStatementInit<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
     Expression(Expression<'a>),
@@ -1439,7 +1439,7 @@ impl<'a> ForStatementInit<'a> {
 /// For-In Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ForInStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1451,7 +1451,7 @@ pub struct ForInStatement<'a> {
 /// For-Of Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ForOfStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1463,7 +1463,7 @@ pub struct ForOfStatement<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum ForStatementLeft<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
     AssignmentTarget(AssignmentTarget<'a>),
@@ -1481,7 +1481,7 @@ impl<'a> ForStatementLeft<'a> {
 /// Continue Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ContinueStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1491,7 +1491,7 @@ pub struct ContinueStatement<'a> {
 /// Break Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct BreakStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1501,7 +1501,7 @@ pub struct BreakStatement<'a> {
 /// Return Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ReturnStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1511,7 +1511,7 @@ pub struct ReturnStatement<'a> {
 /// With Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct WithStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1522,7 +1522,7 @@ pub struct WithStatement<'a> {
 /// Switch Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct SwitchStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1532,7 +1532,7 @@ pub struct SwitchStatement<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct SwitchCase<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1549,7 +1549,7 @@ impl<'a> SwitchCase<'a> {
 /// Labelled Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct LabeledStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1560,7 +1560,7 @@ pub struct LabeledStatement<'a> {
 /// Throw Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ThrowStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1570,7 +1570,7 @@ pub struct ThrowStatement<'a> {
 /// Try Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct TryStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1581,7 +1581,7 @@ pub struct TryStatement<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct CatchClause<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1592,7 +1592,7 @@ pub struct CatchClause<'a> {
 /// Debugger Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct DebuggerStatement {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1602,12 +1602,12 @@ pub struct DebuggerStatement {
 /// * <https://tc39.es/ecma262/#prod-BindingPattern>
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct BindingPattern<'a> {
     // Flatten the attributes because estree has no `BindingPattern`
     #[cfg_attr(feature = "serde", serde(flatten))]
     #[cfg_attr(
-        all(feature = "serde", feature = "wasm"),
+        feature = "wasm",
         tsify(type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)")
     )]
     pub kind: BindingPatternKind<'a>,
@@ -1653,7 +1653,7 @@ impl<'a> BindingPatternKind<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct AssignmentPattern<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1663,7 +1663,7 @@ pub struct AssignmentPattern<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ObjectPattern<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1683,7 +1683,7 @@ impl<'a> ObjectPattern<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct BindingProperty<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1695,7 +1695,7 @@ pub struct BindingProperty<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ArrayPattern<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1715,7 +1715,7 @@ impl<'a> ArrayPattern<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct BindingRestElement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1725,7 +1725,7 @@ pub struct BindingRestElement<'a> {
 /// Function Definitions
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct Function<'a> {
     pub r#type: FunctionType,
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1789,7 +1789,7 @@ impl<'a> Function<'a> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum FunctionType {
     FunctionDeclaration,
     FunctionExpression,
@@ -1801,7 +1801,7 @@ pub enum FunctionType {
 /// <https://tc39.es/ecma262/#prod-FormalParameters>
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct FormalParameters<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1818,7 +1818,7 @@ impl<'a> FormalParameters<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct FormalParameter<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1831,7 +1831,7 @@ pub struct FormalParameter<'a> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
     FormalParameter,
@@ -1858,7 +1858,7 @@ impl<'a> FormalParameters<'a> {
 /// <https://tc39.es/ecma262/#prod-FunctionBody>
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct FunctionBody<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1875,7 +1875,7 @@ impl<'a> FunctionBody<'a> {
 /// Arrow Function Definitions
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ArrowFunctionExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1905,7 +1905,7 @@ impl<'a> ArrowFunctionExpression<'a> {
 /// Generator Function Definitions
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct YieldExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1916,7 +1916,7 @@ pub struct YieldExpression<'a> {
 /// Class Definitions
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct Class<'a> {
     pub r#type: ClassType,
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1952,7 +1952,7 @@ impl<'a> Class<'a> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum ClassType {
     ClassDeclaration,
     ClassExpression,
@@ -1960,7 +1960,7 @@ pub enum ClassType {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ClassBody<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -1969,7 +1969,7 @@ pub struct ClassBody<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum ClassElement<'a> {
     StaticBlock(Box<'a, StaticBlock<'a>>),
     MethodDefinition(Box<'a, MethodDefinition<'a>>),
@@ -2070,7 +2070,7 @@ impl<'a> ClassElement<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct MethodDefinition<'a> {
     pub r#type: MethodDefinitionType,
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -2088,7 +2088,7 @@ pub struct MethodDefinition<'a> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum MethodDefinitionType {
     MethodDefinition,
     TSAbstractMethodDefinition,
@@ -2096,7 +2096,7 @@ pub enum MethodDefinitionType {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct PropertyDefinition<'a> {
     pub r#type: PropertyDefinitionType,
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -2117,7 +2117,7 @@ pub struct PropertyDefinition<'a> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum PropertyDefinitionType {
     PropertyDefinition,
     TSAbstractPropertyDefinition,
@@ -2125,7 +2125,7 @@ pub enum PropertyDefinitionType {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "lowercase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum MethodDefinitionKind {
     Constructor,
     Method,
@@ -2147,7 +2147,7 @@ impl MethodDefinitionKind {
 
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct PrivateIdentifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -2162,7 +2162,7 @@ impl<'a> PrivateIdentifier<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct StaticBlock<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -2171,7 +2171,7 @@ pub struct StaticBlock<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum ModuleDeclaration<'a> {
     /// import hello from './world.js';
     /// import * as t from './world.js';
@@ -2235,7 +2235,7 @@ impl<'a> ModuleDeclaration<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct AccessorProperty<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -2248,7 +2248,7 @@ pub struct AccessorProperty<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ImportExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -2258,7 +2258,7 @@ pub struct ImportExpression<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ImportDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -2273,7 +2273,7 @@ pub struct ImportDeclaration<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum ImportDeclarationSpecifier<'a> {
     /// import {imported} from "source"
     /// import {imported as local} from "source"
@@ -2288,7 +2288,7 @@ pub enum ImportDeclarationSpecifier<'a> {
 // import {imported as local} from "source"
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ImportSpecifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -2300,7 +2300,7 @@ pub struct ImportSpecifier<'a> {
 // import local from "source"
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ImportDefaultSpecifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -2310,7 +2310,7 @@ pub struct ImportDefaultSpecifier<'a> {
 // import * as local from "source"
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ImportNamespaceSpecifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -2319,7 +2319,7 @@ pub struct ImportNamespaceSpecifier<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct WithClause<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -2329,7 +2329,7 @@ pub struct WithClause<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ImportAttribute<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -2339,7 +2339,7 @@ pub struct ImportAttribute<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum ImportAttributeKey<'a> {
     Identifier(IdentifierName<'a>),
     StringLiteral(StringLiteral<'a>),
@@ -2356,7 +2356,7 @@ impl<'a> ImportAttributeKey<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ExportNamedDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -2382,7 +2382,7 @@ impl<'a> ExportNamedDeclaration<'a> {
 /// export default AssignmentExpression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ExportDefaultDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -2398,7 +2398,7 @@ impl<'a> ExportDefaultDeclaration<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ExportAllDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -2416,7 +2416,7 @@ impl<'a> ExportAllDeclaration<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct ExportSpecifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -2433,7 +2433,7 @@ impl<'a> ExportSpecifier<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum ExportDefaultDeclarationKind<'a> {
     Expression(Expression<'a>),
     FunctionDeclaration(Box<'a, Function<'a>>),
@@ -2463,7 +2463,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
 /// * <https://github.com/tc39/ecma262/pull/2154>
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub enum ModuleExportName<'a> {
     Identifier(IdentifierName<'a>),
     StringLiteral(StringLiteral<'a>),

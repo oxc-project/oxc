@@ -35,4 +35,4 @@ wasm-bindgen = { workspace = true, optional = true }
 [features]
 default = []
 serde   = ["dep:serde", "bitflags/serde", "oxc_index/serde"]
-wasm    = ["dep:tsify", "dep:wasm-bindgen"]
+wasm    = ["serde", "dep:tsify", "dep:wasm-bindgen"]
