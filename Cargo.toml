@@ -38,6 +38,7 @@ rc_mutex                        = "warn"
 rest_pat_in_fully_bound_structs = "warn"
 unnecessary_safety_comment      = "warn"
 undocumented_unsafe_blocks      = "warn"
+infinite_loop                   = "warn"
 # I want to write the best Rust code so pedantic is enabled.
 # We should only disable rules globally if they are either false positives, chaotic, or does not make sense.
 pedantic = { level = "warn", priority = -1 }
