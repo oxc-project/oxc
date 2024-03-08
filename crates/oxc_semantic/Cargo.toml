@@ -50,4 +50,4 @@ rustc-hash        = { workspace = true }
 [features]
 default = []
 serde   = ["dep:serde", "oxc_span/serde", "oxc_syntax/serde"]
-wasm    = ["dep:tsify", "dep:wasm-bindgen"]
+wasm    = ["serde", "dep:tsify", "dep:wasm-bindgen"]
