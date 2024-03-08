@@ -89,7 +89,7 @@ expression: no_duplicate_case
   ⚠ eslint(no-duplicate-case): Disallow duplicate case labels
    ╭─[no_duplicate_case.tsx:1:54]
  1 │ ╭─▶ var a = 1, p = {p: {p1: 1, p2: 1}}; switch (a) {case p.p.p1: break; case p. p // comment
-   · ││                                                     ──────
+   · │                                                        ──────
  2 │ ╰─▶  .p1: break; default: break;}
    ╰────
   help: Remove the duplicated case
@@ -115,7 +115,7 @@ expression: no_duplicate_case
   ⚠ eslint(no-duplicate-case): Disallow duplicate case labels
    ╭─[no_duplicate_case.tsx:1:54]
  1 │ ╭─▶ var a = 1, p = {p: {p1: 1, p2: 1}}; switch (a) {case p.p.p1: break; case p. p // comment
-   · ││                                                     ──────
+   · │                                                        ──────
  2 │ ╰─▶  .p1: break; case p .p
  3 │     /* comment */
    ╰────

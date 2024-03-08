@@ -161,7 +161,7 @@ Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
 Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
 
   × Expected `<` but found `EOF`
-   ╭─[typescript/arrow-function/generic-tsx-babel-7/input.ts:2:1]
+   ╭─[typescript/arrow-function/generic-tsx-babel-7/input.ts:3:1]
  2 │ <T>(a: T): T => a;
    ╰────
 Expect to Parse: "typescript/class/constructor-with-modifier-names/input.ts"
@@ -1032,7 +1032,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   help: Try insert a semicolon here
 
   × Expected `}` but found `EOF`
-   ╭─[core/uncategorised/345/input.js:1:1]
+   ╭─[core/uncategorised/345/input.js:1:2]
  1 │ {
    ╰────
 
@@ -1061,7 +1061,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected end of file
-   ╭─[core/uncategorised/349/input.js:1:1]
+   ╭─[core/uncategorised/349/input.js:1:3]
  1 │ 3e
    ╰────
 
@@ -1072,7 +1072,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected end of file
-   ╭─[core/uncategorised/350/input.js:1:1]
+   ╭─[core/uncategorised/350/input.js:1:4]
  1 │ 3e+
    ╰────
 
@@ -1083,7 +1083,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected end of file
-   ╭─[core/uncategorised/351/input.js:1:1]
+   ╭─[core/uncategorised/351/input.js:1:4]
  1 │ 3e-
    ╰────
 
@@ -1106,7 +1106,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected end of file
-   ╭─[core/uncategorised/354/input.js:1:1]
+   ╭─[core/uncategorised/354/input.js:1:3]
  1 │ 0x
    ╰────
 
@@ -1136,12 +1136,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Invalid Character `\`
-   ╭─[core/uncategorised/362/input.js:1:1]
+   ╭─[core/uncategorised/362/input.js:1:8]
  1 │ x\u005c
    ╰────
 
   × Invalid Character `*`
-   ╭─[core/uncategorised/363/input.js:1:1]
+   ╭─[core/uncategorised/363/input.js:1:8]
  1 │ x\u002a
    ╰────
 
@@ -1219,27 +1219,27 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `]` but found `EOF`
-   ╭─[core/uncategorised/375/input.js:1:1]
+   ╭─[core/uncategorised/375/input.js:1:2]
  1 │ [
    ╰────
 
   × Unexpected token
-   ╭─[core/uncategorised/376/input.js:1:1]
+   ╭─[core/uncategorised/376/input.js:1:3]
  1 │ [,
    ╰────
 
   × Expected `}` but found `EOF`
-   ╭─[core/uncategorised/377/input.js:1:1]
+   ╭─[core/uncategorised/377/input.js:1:6]
  1 │ 1 + {
    ╰────
 
   × Expected `}` but found `EOF`
-   ╭─[core/uncategorised/378/input.js:1:1]
+   ╭─[core/uncategorised/378/input.js:2:1]
  1 │ 1 + { t:t
    ╰────
 
   × Unexpected token
-   ╭─[core/uncategorised/379/input.js:1:1]
+   ╭─[core/uncategorised/379/input.js:1:11]
  1 │ 1 + { t:t,
    ╰────
 
@@ -1251,7 +1251,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[core/uncategorised/380/input.js:1:1]
+   ╭─[core/uncategorised/380/input.js:2:2]
  1 │ var x = /
  2 │ /
    ╰────
@@ -1281,12 +1281,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `)` but found `EOF`
-   ╭─[core/uncategorised/385/input.js:1:1]
+   ╭─[core/uncategorised/385/input.js:1:6]
  1 │ 1 + (
    ╰────
 
   × Expected `}` but found `EOF`
-   ╭─[core/uncategorised/386/input.js:3:1]
+   ╭─[core/uncategorised/386/input.js:4:2]
  3 │ 
  4 │ {
    ╰────
@@ -1464,7 +1464,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[core/uncategorised/413/input.js:1:1]
+   ╭─[core/uncategorised/413/input.js:1:6]
  1 │ throw
    ╰────
 
@@ -1500,37 +1500,37 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[core/uncategorised/419/input.js:1:1]
+   ╭─[core/uncategorised/419/input.js:1:10]
  1 │ if(false)
    ╰────
 
   × Unexpected token
-   ╭─[core/uncategorised/420/input.js:1:1]
+   ╭─[core/uncategorised/420/input.js:1:25]
  1 │ if(false) doThis(); else
    ╰────
 
   × Unexpected token
-   ╭─[core/uncategorised/421/input.js:1:1]
+   ╭─[core/uncategorised/421/input.js:1:3]
  1 │ do
    ╰────
 
   × Unexpected token
-   ╭─[core/uncategorised/422/input.js:1:1]
+   ╭─[core/uncategorised/422/input.js:1:13]
  1 │ while(false)
    ╰────
 
   × Unexpected token
-   ╭─[core/uncategorised/423/input.js:1:1]
+   ╭─[core/uncategorised/423/input.js:1:8]
  1 │ for(;;)
    ╰────
 
   × Unexpected token
-   ╭─[core/uncategorised/424/input.js:1:1]
+   ╭─[core/uncategorised/424/input.js:1:8]
  1 │ with(x)
    ╰────
 
   × Missing catch or finally clause
-   ╭─[core/uncategorised/425/input.js:1:1]
+   ╭─[core/uncategorised/425/input.js:1:8]
  1 │ try { }
    ╰────
 
@@ -1600,7 +1600,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[core/uncategorised/436/input.js:1:1]
+   ╭─[core/uncategorised/436/input.js:2:1]
  1 │ ]
    · ─
    ╰────
@@ -1613,7 +1613,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[core/uncategorised/438/input.js:2:1]
+   ╭─[core/uncategorised/438/input.js:3:1]
  2 │ ]
    · ─
    ╰────
@@ -1626,7 +1626,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[core/uncategorised/440/input.js:2:1]
+   ╭─[core/uncategorised/440/input.js:3:1]
  2 │ ]
    · ─
    ╰────
@@ -1639,7 +1639,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[core/uncategorised/441/input.js:1:1]
+   ╭─[core/uncategorised/441/input.js:2:2]
  1 │ /a\
  2 │ /
    ╰────
@@ -1659,7 +1659,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[core/uncategorised/444/input.js:2:3]
+   ╭─[core/uncategorised/444/input.js:3:3]
  2 │ */]
    ·   ─
    ╰────
@@ -1678,7 +1678,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Invalid Character `\`
-   ╭─[core/uncategorised/447/input.js:1:1]
+   ╭─[core/uncategorised/447/input.js:1:7]
  1 │ \u005c
    ╰────
 
@@ -1689,7 +1689,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Invalid Character ` `
-   ╭─[core/uncategorised/449/input.js:1:1]
+   ╭─[core/uncategorised/449/input.js:1:7]
  1 │ \u0000
    ╰────
 
@@ -3501,7 +3501,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected end of file
-   ╭─[es2015/uncategorised/198/input.js:1:1]
+   ╭─[es2015/uncategorised/198/input.js:1:3]
  1 │ 0o
    ╰────
 
@@ -3524,7 +3524,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected end of file
-   ╭─[es2015/uncategorised/202/input.js:1:1]
+   ╭─[es2015/uncategorised/202/input.js:1:3]
  1 │ 0O
    ╰────
 
@@ -3547,7 +3547,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected end of file
-   ╭─[es2015/uncategorised/206/input.js:1:1]
+   ╭─[es2015/uncategorised/206/input.js:1:3]
  1 │ 0b
    ╰────
 
@@ -3576,7 +3576,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected end of file
-   ╭─[es2015/uncategorised/211/input.js:1:1]
+   ╭─[es2015/uncategorised/211/input.js:1:3]
  1 │ 0B
    ╰────
 
@@ -3738,12 +3738,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `from` but found `EOF`
-   ╭─[es2015/uncategorised/237/input.js:1:1]
+   ╭─[es2015/uncategorised/237/input.js:1:11]
  1 │ import foo
    ╰────
 
   × Expected `from` but found `EOF`
-   ╭─[es2015/uncategorised/238/input.js:1:1]
+   ╭─[es2015/uncategorised/238/input.js:1:20]
  1 │ import { foo, bar }
    ╰────
 
@@ -3865,7 +3865,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `$}` but found `EOF`
-   ╭─[es2015/uncategorised/266/input.js:1:1]
+   ╭─[es2015/uncategorised/266/input.js:1:19]
  1 │ `hello ${10 `test`
    ╰────
 
@@ -3906,7 +3906,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[es2015/uncategorised/278/input.js:1:1]
+   ╭─[es2015/uncategorised/278/input.js:1:24]
  1 │ function f(a, ...b = 0)
    ╰────
 
@@ -3982,7 +3982,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `}` but found `EOF`
-   ╭─[es2015/uncategorised/295/input.js:1:1]
+   ╭─[es2015/uncategorised/295/input.js:2:1]
  1 │ switch (cond) { case 10: let a = 20;
    ╰────
 
@@ -4320,7 +4320,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   help: Try insert a semicolon here
 
   × Expected `from` but found `EOF`
-   ╭─[es2015/uncategorised/84/input.js:1:1]
+   ╭─[es2015/uncategorised/84/input.js:1:9]
  1 │ export *
    ╰────
 
@@ -7048,7 +7048,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `from` but found `EOF`
-   ╭─[esprima/es2015-export-declaration/invalid-export-batch-missing-from-clause/input.js:1:1]
+   ╭─[esprima/es2015-export-declaration/invalid-export-batch-missing-from-clause/input.js:2:1]
  1 │ export *
    ╰────
 
@@ -7291,7 +7291,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `from` but found `EOF`
-   ╭─[esprima/es2015-import-declaration/invalid-import-default-missing-module-specifier/input.js:1:1]
+   ╭─[esprima/es2015-import-declaration/invalid-import-default-missing-module-specifier/input.js:2:1]
  1 │ import foo
    ╰────
 
@@ -7309,7 +7309,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `from` but found `EOF`
-   ╭─[esprima/es2015-import-declaration/invalid-import-missing-module-specifier/input.js:1:1]
+   ╭─[esprima/es2015-import-declaration/invalid-import-missing-module-specifier/input.js:2:1]
  1 │ import { foo, bar }
    ╰────
 
@@ -7335,7 +7335,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `from` but found `EOF`
-   ╭─[esprima/es2015-import-declaration/invalid-import-named-as-missing-from/input.js:1:1]
+   ╭─[esprima/es2015-import-declaration/invalid-import-named-as-missing-from/input.js:2:1]
  1 │ import {default as foo}
    ╰────
 
@@ -7552,7 +7552,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `$}` but found `EOF`
-   ╭─[esprima/es2015-template-literals/unclosed-nested/input.js:1:1]
+   ╭─[esprima/es2015-template-literals/unclosed-nested/input.js:2:1]
  1 │ `hello ${10 `test`
    ╰────
 
@@ -7812,7 +7812,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   help: \8 and \9 are not allowed in strict mode
 
   × Expected `}` but found `EOF`
-   ╭─[esprima/invalid-syntax/migrated_0000/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0000/input.js:2:1]
  1 │ {
    ╰────
 
@@ -8085,7 +8085,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0040/input.js:2:1]
+   ╭─[esprima/invalid-syntax/migrated_0040/input.js:3:1]
  2 │ /
    ╰────
 
@@ -8232,27 +8232,27 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `]` but found `EOF`
-   ╭─[esprima/invalid-syntax/migrated_0057/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0057/input.js:2:1]
  1 │ [
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0058/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0058/input.js:2:1]
  1 │ [,
    ╰────
 
   × Expected `}` but found `EOF`
-   ╭─[esprima/invalid-syntax/migrated_0059/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0059/input.js:2:1]
  1 │ 1 + {
    ╰────
 
   × Expected `}` but found `EOF`
-   ╭─[esprima/invalid-syntax/migrated_0060/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0060/input.js:2:1]
  1 │ 1 + { t:t
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0061/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0061/input.js:2:1]
  1 │ 1 + { t:t,
    ╰────
 
@@ -8264,7 +8264,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0062/input.js:2:1]
+   ╭─[esprima/invalid-syntax/migrated_0062/input.js:3:1]
  2 │ /
    ╰────
 
@@ -8306,12 +8306,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `)` but found `EOF`
-   ╭─[esprima/invalid-syntax/migrated_0068/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0068/input.js:2:1]
  1 │ 1 + (
    ╰────
 
   × Expected `}` but found `EOF`
-   ╭─[esprima/invalid-syntax/migrated_0069/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0069/input.js:2:1]
  1 │ {
    ╰────
 
@@ -8403,7 +8403,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `}` but found `EOF`
-   ╭─[esprima/invalid-syntax/migrated_0084/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0084/input.js:2:1]
  1 │ ({get
    ╰────
 
@@ -8573,7 +8573,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0120/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0120/input.js:2:1]
  1 │ throw
    ╰────
 
@@ -8591,7 +8591,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0122/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0122/input.js:2:1]
  1 │ throw
    ╰────
 
@@ -8621,32 +8621,32 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0127/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0127/input.js:2:1]
  1 │ if(false)
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0128/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0128/input.js:2:1]
  1 │ if(false) doThis(); else
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0129/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0129/input.js:2:1]
  1 │ do
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0130/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0130/input.js:2:1]
  1 │ while(false)
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0131/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0131/input.js:2:1]
  1 │ for(;;)
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0132/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0132/input.js:2:1]
  1 │ with(x)
    ╰────
 
@@ -8796,7 +8796,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0156/input.js:2:1]
+   ╭─[esprima/invalid-syntax/migrated_0156/input.js:3:1]
  2 │ ]
    · ─
    ╰────
@@ -8809,7 +8809,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0157/input.js:2:1]
+   ╭─[esprima/invalid-syntax/migrated_0157/input.js:3:1]
  2 │ /
    ╰────
 
@@ -8828,7 +8828,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0160/input.js:2:3]
+   ╭─[esprima/invalid-syntax/migrated_0160/input.js:3:3]
  2 │ */]
    ·   ─
    ╰────
@@ -9408,22 +9408,22 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0252/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0252/input.js:2:1]
  1 │ var
    ╰────
 
   × Unexpected token
-   ╭─[esprima/invalid-syntax/migrated_0254/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0254/input.js:2:1]
  1 │ const
    ╰────
 
   × Expected `}` but found `EOF`
-   ╭─[esprima/invalid-syntax/migrated_0255/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0255/input.js:2:1]
  1 │ { ;  ;
    ╰────
 
   × Expected `}` but found `EOF`
-   ╭─[esprima/invalid-syntax/migrated_0256/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0256/input.js:2:1]
  1 │ function t() { ;  ;
    ╰────
 
@@ -9447,12 +9447,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `{` but found `EOF`
-   ╭─[esprima/invalid-syntax/migrated_0261/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0261/input.js:2:1]
  1 │ class
    ╰────
 
   × Expected `{` but found `EOF`
-   ╭─[esprima/invalid-syntax/migrated_0262/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0262/input.js:2:1]
  1 │ class
    ╰────
 
@@ -9471,12 +9471,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `{` but found `EOF`
-   ╭─[esprima/invalid-syntax/migrated_0265/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0265/input.js:2:1]
  1 │ class A
    ╰────
 
   × Expected `}` but found `EOF`
-   ╭─[esprima/invalid-syntax/migrated_0266/input.js:1:1]
+   ╭─[esprima/invalid-syntax/migrated_0266/input.js:2:1]
  1 │ class A {
    ╰────
 
@@ -9740,7 +9740,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `=>` but found `EOF`
-   ╭─[typescript/async-call/with-optional-parameter/input.ts:1:1]
+   ╭─[typescript/async-call/with-optional-parameter/input.ts:1:10]
  1 │ async(x?)
    ╰────
 
@@ -9841,7 +9841,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
 
   × Expected `{` but found `EOF`
-   ╭─[typescript/class/extends-empty/input.ts:2:1]
+   ╭─[typescript/class/extends-empty/input.ts:3:1]
  2 │ }
    ╰────
 
@@ -10602,22 +10602,22 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
     ╰────
 
   × Expected `)` but found `EOF`
-   ╭─[typescript/types-arrow-function/invalid-incomplete-array-like/input.ts:1:1]
+   ╭─[typescript/types-arrow-function/invalid-incomplete-array-like/input.ts:2:1]
  1 │ type F = ([
    ╰────
 
   × Expected `)` but found `EOF`
-   ╭─[typescript/types-arrow-function/invalid-incomplete-object-like/input.ts:1:1]
+   ╭─[typescript/types-arrow-function/invalid-incomplete-object-like/input.ts:2:1]
  1 │ type F = ({
    ╰────
 
   × Expected `)` but found `EOF`
-   ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-array-like/input.ts:1:1]
+   ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-array-like/input.ts:2:1]
  1 │ type F = ([
    ╰────
 
   × Expected `)` but found `EOF`
-   ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-object-like/input.ts:1:1]
+   ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-object-like/input.ts:2:1]
  1 │ type F = ({
    ╰────
 
