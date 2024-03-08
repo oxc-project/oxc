@@ -169,7 +169,6 @@ impl<'a> JSDocBuilder<'a> {
 // Other kinds, such as statements, act as tie-breakers between them.
 #[rustfmt::skip]
 fn should_attach_jsdoc(kind: &AstKind) -> bool {
-    println!("kind = {}", kind.debug_name());
     matches!(kind,
         // This list order comes from oxc_ast/ast_kind.rs
           AstKind::BlockStatement(_)
