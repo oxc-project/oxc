@@ -36,69 +36,104 @@ impl<'a> JSDocBuilder<'a> {
         JSDocFinder::new(self.attached_docs, not_attached_docs)
     }
 
-    // This process is done in conjunction with the `semantic.build()`.
-    // This means that it's done "before" each use case (e.g. execute rule in oxlint) runs.
+    // ## Current architecture
     //
-    // If you need to control this attaching logic (e.g. by rule configurations), one of these would be necessary.
-    // - 1. Give up pre-attaching here and leave it for use cases
-    // - 2. Attach it more broadly(= loosely) here (may cause performance impact), so that it can be narrowed down later
+    // - 1) At semantic build time, visit each node and flag it if 1 or more JSDoc comments found
+    // - 2) At runtime (usecases like oxlint), reference that flag from the visited node
     //
-    // Since there is no reliable spec for JSDoc, there are some naive topics to consider:
+    // Basically, this speeds up the runtime usecases, but there is a trade-off.
     //
-    // Q. Which node to attach JSDoc to?
-    // A. Each implementation decides according to its own use case.
+    // ## Only certain nodes can have a JSDoc
     //
-    // For example, TypeScript tries to target quite broadly nodes.
-    // > https://github.com/microsoft/TypeScript/blob/d04e3489b0d8e6bc9a8a9396a633632a5a467328/src/compiler/utilities.ts#L4195
+    // For perf reasons, not every node is checked.
+    // The benchmark says that perf actually drops by -3~4% if we check every kind.
     //
-    // In case of `eslint-plugin-jsdoc`, its targets can be freely changed by rule configurations!
-    // (But, default is only about function related nodes.)
-    // > https://github.com/gajus/eslint-plugin-jsdoc/blob/e948bee821e964a92fbabc01574eca226e9e1252/src/iterateJsdoc.js#L2517-L2536
+    // This means that some JSDoc comments may not be parsed as originally written.
+    // (In the first place, comments can be written anywhere,
+    //  although some may already be inconsistent when converted from Token to AST nodes).
     //
-    // `eslint-plugin-import` does the similar but more casual way.
-    // > https://github.com/import-js/eslint-plugin-import/blob/df751e0d004aacc34f975477163fb221485a85f6/src/ExportMap.js#L211
+    // Check the `should_attach_jsdoc()` function below to see which nodes are listed.
     //
-    // Q. How do we attach JSDoc to that node?
-    // A. Also depends on the implementation.
+    // ## Usecase matters
     //
-    // In the case of TypeScript (they have specific AST node for JSDoc and an `endOfFileToken`),
-    // some AST nodes have the `jsDoc` property and multiple `JSDocComment`s are attached.
+    // "Where to write comments and what meaning you want them to have" depends entirely on the usecase.
     //
-    // In the case of `eslint-plugin-jsdoc` (`@es-joy/jsdoccomment` is used)
-    // tries to get a only single nearest comment, with some exception handling.
+    // Consider the following common example and some usecases.
     //
-    // It is hard to say how we should behave as OXC Semantic, but the current implementation is,
-    // - Intuitive TypeScript-like attaching strategy
-    // - Provide `get_one` or `get_all` APIs for each use case
+    // ```js
+    // /** @param {string} x */
+    // function foo(x) {}
+    // ```
     //
-    // Of course, this can be changed in the future.
+    // In the current implementation, this JSDoc is attached to the `FunctionDeclaration'.
+    //
+    // - How to validate parameter `x` should have `@param` JSDoc?
+    //
+    // In this plugin-jsdoc usecase,
+    //  visit `FunctionDeclaration`, find `params.items`, get attached JSDoc, and ... OK.
+    //
+    // Then how about this?
+    //
+    // ```js
+    // /** @param {string} x */
+    // const bar = (x) => {}
+    // ```
+    //
+    // We might want to validate this by visiting `ArrowFunctionExpression`.
+    // But this JSDoc will be attached to the `VariableDeclaration'.
+    //
+    // More examples...
+    //
+    // ```js
+    // /** @param {string} x */
+    // const a = ((x) => {}), // extra `ParenthesizedExpression`
+    //   /** @param {string} x */
+    //   b = (x) => {} // `VariableDeclarator` has JSDoc
+    // ```
+    //
+    // So we need extra work to find+ask parent (or sibling?) node until desired JSDoc is found.
+    //
+    // - How to get type information when visiting `FormalParameter`(or its `Identifier`)?
+    //
+    // This is another example, but it's also necessary to find+ask parent.
+    //
+    // Anyway, extra work at runtime seems to be necessary in many cases,
+    //  especially for `JSDoc.tags` related things.
+    //
+    // ## To make the runtime logic consistent
+    //
+    // The semantic side needs to be versatile, intuitive and expectable.
+    // And we also want to avoid having 2 tuning points.
+    //
+    // Therefore, the `should_attach_jsdoc()` function and its candidates should be carefully listed.
+    //
+    // As many reasonable types as possible should be listed, as long as it does not affect performance...!
+    //
+    // If one day we want to add a performance-affecting kind,
+    // we might as well give up pre-flagging architecture itself?
     pub fn retrieve_attached_jsdoc(&mut self, kind: &AstKind<'a>) -> bool {
-        // For perf reasons, we should limit the target nodes to attach JSDoc
-        // This may be diffed compare to TypeScript's `canHaveJSDoc()`, should adjust if needed
-        if !(kind.is_statement()
-            || kind.is_declaration()
-            || matches!(kind, AstKind::ParenthesizedExpression(_)))
-        {
+        if !should_attach_jsdoc(kind) {
             return false;
         }
 
-        // 1. Retrieve every kind of leading comments for this node
         let span = kind.span();
         let mut leading_comments = vec![];
+        // May be better to set range start for perf?
+        // But once I tried, coverage tests start failing...
         for (start, comment) in self.trivias.comments().range(..span.start) {
-            if !self.leading_comments_seen.contains(start) {
-                leading_comments.push((start, comment));
+            if self.leading_comments_seen.contains(start) {
+                continue;
             }
+
+            leading_comments.push((start, comment));
             self.leading_comments_seen.insert(*start);
         }
 
-        // 2. Filter and parse JSDoc comments only
         let leading_jsdoc_comments = leading_comments
             .iter()
             .filter_map(|(start, comment)| self.parse_if_jsdoc_comment(**start, **comment))
             .collect::<Vec<_>>();
 
-        // 3. Save and return `true` to mark JSDoc flag
         if !leading_jsdoc_comments.is_empty() {
             self.attached_docs.insert(span, leading_jsdoc_comments);
             return true;
@@ -113,9 +148,9 @@ impl<'a> JSDocBuilder<'a> {
         }
 
         let comment_span = Span::new(span_start, comment.end());
-        // Inside of marker: /*_CONTENT_*/
+        // Inside of marker: /*CONTENT*/ => CONTENT
         let comment_content = comment_span.source_text(self.source_text);
-        // Should start with "*": /**_CONTENT_*/
+        // Should start with "*"
         if !comment_content.starts_with('*') {
             return None;
         }
@@ -123,6 +158,74 @@ impl<'a> JSDocBuilder<'a> {
         // Remove the very first `*`
         Some(JSDoc::new(&comment_content[1..]))
     }
+}
+
+// As noted above, only certain nodes can have JSDoc comments.
+// But as many kinds as possible should be added, without affecting performance.
+//
+// It's a bit hard to explain, but theoretically the more outer ones should be listed.
+//
+// From a linter point of view, basically only declarations are needed.
+// Other kinds, such as statements, act as tie-breakers between them.
+#[rustfmt::skip]
+fn should_attach_jsdoc(kind: &AstKind) -> bool {
+    matches!(kind,
+        // This list order comes from oxc_ast/ast_kind.rs
+          AstKind::BlockStatement(_)
+        | AstKind::BreakStatement(_)
+        | AstKind::ContinueStatement(_)
+        | AstKind::DebuggerStatement(_)
+        | AstKind::DoWhileStatement(_)
+        | AstKind::EmptyStatement(_)
+        | AstKind::ExpressionStatement(_)
+        | AstKind::ForInStatement(_)
+        | AstKind::ForOfStatement(_)
+        | AstKind::ForStatement(_)
+        | AstKind::IfStatement(_)
+        | AstKind::LabeledStatement(_)
+        | AstKind::ReturnStatement(_)
+        | AstKind::SwitchStatement(_)
+        | AstKind::ThrowStatement(_)
+        | AstKind::TryStatement(_)
+        | AstKind::WhileStatement(_)
+        | AstKind::WithStatement(_)
+
+        | AstKind::SwitchCase(_)
+        | AstKind::CatchClause(_)
+        | AstKind::FinallyClause(_)
+
+        | AstKind::VariableDeclaration(_)
+        | AstKind::VariableDeclarator(_)
+
+        | AstKind::UsingDeclaration(_)
+
+        // This is slow
+        // | AstKind::IdentifierName(_)
+
+        | AstKind::ArrowFunctionExpression(_)
+        | AstKind::ObjectExpression(_)
+        | AstKind::ParenthesizedExpression(_)
+
+        | AstKind::ObjectProperty(_)
+
+        | AstKind::Function(_)
+        | AstKind::FormalParameter(_)
+
+        | AstKind::Class(_)
+        | AstKind::MethodDefinition(_)
+        | AstKind::PropertyDefinition(_)
+        | AstKind::StaticBlock(_)
+
+        | AstKind::Decorator(_)
+
+        | AstKind::ExportAllDeclaration(_)
+        | AstKind::ExportDefaultDeclaration(_)
+        | AstKind::ExportNamedDeclaration(_)
+        | AstKind::ImportDeclaration(_)
+        | AstKind::ModuleDeclaration(_)
+
+        // Maybe JSX, TS related kinds should be added?
+    )
 }
 
 #[cfg(test)]
@@ -149,46 +252,62 @@ mod test {
         semantic
     }
 
-    #[allow(clippy::cast_possible_truncation)]
-    fn get_jsdoc<'a>(
+    fn get_jsdocs<'a>(
         allocator: &'a Allocator,
         source_text: &'a str,
         symbol: &'a str,
         source_type: Option<SourceType>,
     ) -> Option<Vec<JSDoc<'a>>> {
         let semantic = build_semantic(allocator, source_text, source_type);
-        let start = source_text.find(symbol).unwrap_or(0) as u32;
-        let span = Span::new(start, start + symbol.len() as u32);
+        let start = u32::try_from(source_text.find(symbol).unwrap_or(0)).unwrap();
+        let span = Span::new(start, start + u32::try_from(symbol.len()).unwrap());
         semantic.jsdoc().get_all_by_span(span)
     }
 
     fn test_jsdoc_found(source_text: &str, symbol: &str, source_type: Option<SourceType>) {
         let allocator = Allocator::default();
         assert!(
-            get_jsdoc(&allocator, source_text, symbol, source_type).is_some(),
-            "{symbol} not found in {source_text}"
+            get_jsdocs(&allocator, source_text, symbol, source_type).is_some(),
+            "JSDoc should found for\n  {symbol} \nin\n  {source_text}"
         );
     }
 
     fn test_jsdoc_not_found(source_text: &str, symbol: &str) {
         let allocator = Allocator::default();
         assert!(
-            get_jsdoc(&allocator, source_text, symbol, None).is_none(),
-            "{symbol} found in {source_text}"
+            get_jsdocs(&allocator, source_text, symbol, None).is_none(),
+            "JSDoc should NOT found for\n  {symbol} \nin\n  {source_text}"
         );
     }
 
     #[test]
     fn not_found() {
         let source_texts = [
-            ("function foo() {}", "function foo() {}"),
-            ("// test", "function foo() {}"),
-            ("function foo() {}", "function foo() {}"),
-            ("/* test */function foo() {}", "function foo() {}"),
-            ("/** test */ ; function foo() {}", "function foo() {}"),
-            ("/** test */ function foo1() {} function foo() {}", "function foo() {}"),
-            ("function foo() {} /** test */", "function foo() {}"),
-            ("/** test */ (() => {})", "() => {}"),
+            ("function f1() {}", "function f1() {}"),
+            ("// test", "function f2() {}"),
+            ("/* test */function f3() {}", "function f3() {}"),
+            ("/** for 4a */ ; function f4a() {} function f4b() {}", "function f4b() {}"),
+            ("function f4a() {} /** for 4b */ ; function f4b() {} ", "function f4a() {}"),
+            ("function f5() {} /** test */", "function f5() {}"),
+            (
+                "/** for o */
+                const o = {
+                    f6() {}
+                };",
+                "f6() {}",
+            ),
+            ("/** for () */ (() => {})", "() => {}"),
+            ("/** for ; */ ; let v1;", "let v1;"),
+            ("/** for let v2 */ let v2 = () => {};", "() => {}"),
+            ("/** for if */ if (true) { let v3; })", "let v3;"),
+            (
+                "class C1 {
+                    /** for m1 */
+                    m1() {}
+                    m2() {}
+                }",
+                "m2() {}",
+            ),
         ];
         for (source_text, target) in source_texts {
             test_jsdoc_not_found(source_text, target);
@@ -198,49 +317,71 @@ mod test {
     #[test]
     fn found() {
         let source_texts = [
-            ("/** test */function foo() {}", "function foo() {}"),
-            ("/*** test */function foo() {}", "function foo() {}"),
+            ("/** test */function f1() {}", "function f1() {}"),
+            ("/*** test */function f2() {}", "function f2() {}"),
             (
                 "
             /** test */
-        function foo() {}",
-                "function foo() {}",
+        function f3() {}",
+                "function f3() {}",
             ),
             (
                 "/** test */
 
 
-                function foo() {}",
-                "function foo() {}",
+                function f4() {}",
+                "function f4() {}",
             ),
             (
                 "/**
              * test
              * */
-            function foo() {}",
-                "function foo() {}",
+            function f5() {}",
+                "function f5() {}",
             ),
             (
                 "/** test */
-            function foo() {}",
-                "function foo() {}",
+                // ---
+                function f6() {}",
+                "function f6() {}",
             ),
             (
                 "/** test */
-            // noop
-            function foo() {}",
-                "function foo() {}",
+                /* -- */
+                function f7() {}",
+                "function f7() {}",
             ),
             (
                 "/** test */
-            /*noop*/
-            function foo() {}",
-                "function foo() {}",
+                /** test2 */
+                function f8() {}",
+                "function f8() {}",
             ),
-            ("/** foo1 */ function foo1() {} /** test */ function foo() {}", "function foo() {}"),
-            ("/** test */ 1", "1"),
-            ("/** test */ (1)", "(1)"),
+            (
+                "/** test */ /** test2 */
+                function f9() {}",
+                "function f9() {}",
+            ),
+            (
+                "/** for f10 */ function f10() {} /** for f11 */ function f11() {}",
+                "function f11() {}",
+            ),
+            (
+                "const o = {
+                    /** for f12 */
+                    f12() {}
+                };",
+                "f12() {}",
+            ),
             ("/** test */ (() => {})", "(() => {})"),
+            ("/** test */ let v1 = 1", "let v1 = 1"),
+            ("let v2a = 1, /** for v2b */ v2b = 2", "v2b = 2"),
+            ("/** for v3a */ const v3a = 1, v3b = 2;", "const v3a = 1, v3b = 2;"),
+            ("/** test */ export const e1 = 1;", "export const e1 = 1;"),
+            ("/** test */ export default {};", "export default {};"),
+            ("/** test */ import 'i1'", "import 'i1'"),
+            ("/** test */ import I from 'i2'", "import I from 'i2'"),
+            ("/** test */ import { I } from 'i3'", "import { I } from 'i3'"),
         ];
         for (source_text, target) in source_texts {
             test_jsdoc_found(source_text, target, None);
@@ -278,7 +419,7 @@ mod test {
             const x = () => {};
         ";
         let symbol = "const x = () => {};";
-        let jsdocs = get_jsdoc(&allocator, source_text, symbol, None);
+        let jsdocs = get_jsdocs(&allocator, source_text, symbol, None);
 
         assert!(jsdocs.is_some());
         let jsdocs = jsdocs.unwrap();
@@ -287,10 +428,11 @@ mod test {
         // Should be [farthest, ..., nearest]
         let mut iter = jsdocs.iter();
         let c1 = iter.next().unwrap();
-        assert!(c1.comment().contains("c1"));
-        let _c2 = iter.next().unwrap();
+        assert_eq!(c1.comment(), "c1");
+        let c2 = iter.next().unwrap();
+        assert_eq!(c2.comment(), "c2");
         let c3 = iter.next().unwrap();
-        assert!(c3.comment().contains("c3"));
+        assert_eq!(c3.comment(), "c3");
     }
 
     #[test]
