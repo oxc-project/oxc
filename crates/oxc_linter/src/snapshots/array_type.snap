@@ -357,7 +357,7 @@ expression: array_type
    ╰────
 
   × Expected `<` but found `EOF`
-   ╭─[array_type.tsx:1:1]
+   ╭─[array_type.tsx:1:40]
  1 │ let y: string[] = <Array<string>>['2'];
    ╰────
 
@@ -420,7 +420,7 @@ expression: array_type
    ╰────
 
   × Expected `<` but found `EOF`
-   ╭─[array_type.tsx:1:1]
+   ╭─[array_type.tsx:1:40]
  1 │ let y: string[] = <Array<string>>['2'];
    ╰────
 
@@ -501,7 +501,7 @@ expression: array_type
    ╰────
 
   × Expected `<` but found `EOF`
-   ╭─[array_type.tsx:1:1]
+   ╭─[array_type.tsx:1:40]
  1 │ let y: string[] = <Array<string>>['2'];
    ╰────
 

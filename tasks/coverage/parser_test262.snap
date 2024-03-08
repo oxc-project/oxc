@@ -341,12 +341,12 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Unexpected token
-    ╭─[language/asi/S7.9_A9_T6.js:17:1]
+    ╭─[language/asi/S7.9_A9_T6.js:18:1]
  17 │ while (false)
     ╰────
 
   × Unexpected token
-    ╭─[language/asi/S7.9_A9_T7.js:18:1]
+    ╭─[language/asi/S7.9_A9_T7.js:19:1]
  18 │ while (false)
     ╰────
 
@@ -11001,8 +11001,8 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  24 │     
  25 │ ╭─▶ var C = class {
  26 │ │     constructor() {
- 27 │ │╭▶     super();
-    · ││    ─────
+ 27 │ │       super();
+    · │       ─────
  28 │ │     }
  29 │ ├─▶ };
     · ╰──── class does not have `extends`
@@ -16335,8 +16335,8 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  18 │     
  19 │ ╭─▶ class C {
  20 │ │     constructor () {
- 21 │ │╭▶     super()?.a;
-    · ││    ─────
+ 21 │ │       super()?.a;
+    · │       ─────
  22 │ │     }
  23 │ ├─▶ }
     · ╰──── class does not have `extends`
@@ -16450,7 +16450,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Unexpected token
-    ╭─[language/expressions/postfix-decrement/line-terminator-line-separator.js:16:5]
+    ╭─[language/expressions/postfix-decrement/line-terminator-line-separator.js:16:7]
  15 │ 
  16 │ x --;
     ·     ─
@@ -16458,7 +16458,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Unexpected token
-    ╭─[language/expressions/postfix-decrement/line-terminator-paragraph-separator.js:16:5]
+    ╭─[language/expressions/postfix-decrement/line-terminator-paragraph-separator.js:16:7]
  15 │ 
  16 │ x --;
     ·     ─
@@ -16533,7 +16533,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Unexpected token
-    ╭─[language/expressions/postfix-increment/line-terminator-line-separator.js:16:5]
+    ╭─[language/expressions/postfix-increment/line-terminator-line-separator.js:16:7]
  15 │ 
  16 │ x ++;
     ·     ─
@@ -16541,7 +16541,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Unexpected token
-    ╭─[language/expressions/postfix-increment/line-terminator-paragraph-separator.js:16:5]
+    ╭─[language/expressions/postfix-increment/line-terminator-paragraph-separator.js:16:7]
  15 │ 
  16 │ x ++;
     ·     ─
@@ -18217,7 +18217,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/line-terminators/invalid-comment-single-cr.js:16:8]
+    ╭─[language/line-terminators/invalid-comment-single-cr.js:17:6]
  16 │ // this text is not included in the single-line comment that precedes it
     ·        ─
     ╰────
@@ -18232,14 +18232,14 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
   help: Try insert a semicolon here
 
   × Unexpected token
-    ╭─[language/line-terminators/invalid-comment-single-ls.js:17:20]
+    ╭─[language/line-terminators/invalid-comment-single-ls.js:17:22]
  16 │ 
  17 │ // single line LS> ??? (invalid)
     ·                    ──
     ╰────
 
   × Unexpected token
-    ╭─[language/line-terminators/invalid-comment-single-ps.js:15:20]
+    ╭─[language/line-terminators/invalid-comment-single-ps.js:15:22]
  14 │ 
  15 │ // single line PS> ??? (invalid)
     ·                    ──
@@ -18253,7 +18253,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Unexpected token
-    ╭─[language/line-terminators/invalid-regexp-cr.js:18:1]
+    ╭─[language/line-terminators/invalid-regexp-cr.js:19:1]
  18 │ /
     ╰────
 
@@ -18266,7 +18266,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Unexpected token
-    ╭─[language/line-terminators/invalid-regexp-lf.js:18:1]
+    ╭─[language/line-terminators/invalid-regexp-lf.js:19:1]
  18 │ /
     ╰────
 
@@ -18278,7 +18278,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Unexpected token
-    ╭─[language/line-terminators/invalid-regexp-ls.js:17:1]
+    ╭─[language/line-terminators/invalid-regexp-ls.js:18:1]
  17 │ / /
     ╰────
 
@@ -18290,7 +18290,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Unexpected token
-    ╭─[language/line-terminators/invalid-regexp-ps.js:17:1]
+    ╭─[language/line-terminators/invalid-regexp-ps.js:18:1]
  17 │ / /
     ╰────
 
@@ -19682,7 +19682,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × An export name cannot include a unicode lone surrogate
-    ╭─[language/module-code/export-expname-from-as-unpaired-surrogate.js:21:17]
+    ╭─[language/module-code/export-expname-from-as-unpaired-surrogate.js:21:19]
  20 │ 
  21 │ export { "☿" as "\uD83D" } from "./export-expname_FIXTURE.js";
     ·                 ────────
@@ -21805,7 +21805,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Use of undefined label
-    ╭─[language/statements/break/S12.8_A8_T1.js:19:11]
+    ╭─[language/statements/break/S12.8_A8_T1.js:19:8]
  18 │ } catch(e){
  19 │     break LABEL2;
     ·           ───┬──
@@ -21814,7 +21814,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Illegal break statement
-    ╭─[language/statements/break/S12.8_A8_T2.js:19:5]
+    ╭─[language/statements/break/S12.8_A8_T2.js:19:2]
  18 │ } catch(e){
  19 │     break;
     ·     ──────
@@ -26533,8 +26533,8 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  24 │     
  25 │ ╭─▶ class C {
  26 │ │     constructor() {
- 27 │ │╭▶     super();
-    · ││    ─────
+ 27 │ │       super();
+    · │       ─────
  28 │ │     }
  29 │ ├─▶ }
     · ╰──── class does not have `extends`
@@ -28718,7 +28718,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Use of undefined label
-    ╭─[language/statements/continue/S12.7_A8_T1.js:19:14]
+    ╭─[language/statements/continue/S12.7_A8_T1.js:19:11]
  18 │ } catch(e){
  19 │     continue LABEL2;
     ·              ───┬──
@@ -28727,7 +28727,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Illegal continue statement: no surrounding iteration statement
-    ╭─[language/statements/continue/S12.7_A8_T2.js:17:5]
+    ╭─[language/statements/continue/S12.7_A8_T2.js:17:2]
  16 │ } catch(e){
  17 │     continue;
     ·     ─────────
@@ -31596,7 +31596,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Expected `}` but found `EOF`
-    ╭─[language/statements/function/invalid-function-body-1.js:17:1]
+    ╭─[language/statements/function/invalid-function-body-1.js:18:1]
  17 │ function __func(){/ ABC}
     ╰────
 
@@ -33114,7 +33114,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Unexpected token
-    ╭─[language/statements/switch/S12.11_A3_T5.js:19:5]
+    ╭─[language/statements/switch/S12.11_A3_T5.js:19:4]
  18 │   switch(value) {
  19 │     result =2;
     ·     ──────
@@ -33689,7 +33689,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Expected `{` but found `EOF`
-    ╭─[language/statements/try/S12.14_A16_T1.js:18:1]
+    ╭─[language/statements/try/S12.14_A16_T1.js:19:1]
  18 │ try
     ╰────
 
