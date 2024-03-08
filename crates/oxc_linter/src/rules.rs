@@ -329,7 +329,7 @@ mod nextjs {
     pub mod no_unwanted_polyfillio;
 }
 
-/// https://github.com/gajus/eslint-plugin-jsdoc
+/// <https://github.com/gajus/eslint-plugin-jsdoc>
 mod jsdoc {
     pub mod check_access;
 }
