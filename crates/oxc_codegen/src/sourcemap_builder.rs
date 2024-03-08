@@ -57,7 +57,7 @@ impl SourcemapBuilder {
         self.enable_sourcemap.then(|| self.sourcemap_builder.into_sourcemap())
     }
 
-    pub fn add_source_mapping(&mut self, output: &Vec<u8>, position: u32, name: Option<&str>) {
+    pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&str>) {
         if self.enable_sourcemap {
             if matches!(self.last_position, Some(last_position) if last_position >= position) {
                 return;
@@ -94,7 +94,7 @@ impl SourcemapBuilder {
     }
 
     #[allow(clippy::cast_possible_truncation)]
-    fn update_generated_line_and_column(&mut self, output: &Vec<u8>) {
+    fn update_generated_line_and_column(&mut self, output: &[u8]) {
         let remaining = &output[self.last_generated_update..];
 
         // Find last line break
