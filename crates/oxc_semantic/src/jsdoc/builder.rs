@@ -108,6 +108,9 @@ impl<'a> JSDocBuilder<'a> {
     // Therefore, the `should_attach_jsdoc()` function and its candidates should be carefully listed.
     //
     // As many reasonable types as possible should be listed, as long as it does not affect performance...!
+    //
+    // If one day we want to add a performance-affecting kind,
+    // we might as well give up pre-flagging architecture itself?
     pub fn retrieve_attached_jsdoc(&mut self, kind: &AstKind<'a>) -> bool {
         if !should_attach_jsdoc(kind) {
             return false;
@@ -166,6 +169,7 @@ impl<'a> JSDocBuilder<'a> {
 // Other kinds, such as statements, act as tie-breakers between them.
 #[rustfmt::skip]
 fn should_attach_jsdoc(kind: &AstKind) -> bool {
+    println!("kind = {}", kind.debug_name());
     matches!(kind,
         // This list order comes from oxc_ast/ast_kind.rs
           AstKind::BlockStatement(_)
@@ -195,6 +199,9 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
         | AstKind::VariableDeclarator(_)
 
         | AstKind::UsingDeclaration(_)
+
+        // This is slow
+        // | AstKind::IdentifierName(_)
 
         | AstKind::ArrowFunctionExpression(_)
         | AstKind::ObjectExpression(_)
@@ -246,46 +253,62 @@ mod test {
         semantic
     }
 
-    #[allow(clippy::cast_possible_truncation)]
-    fn get_jsdoc<'a>(
+    fn get_jsdocs<'a>(
         allocator: &'a Allocator,
         source_text: &'a str,
         symbol: &'a str,
         source_type: Option<SourceType>,
     ) -> Option<Vec<JSDoc<'a>>> {
         let semantic = build_semantic(allocator, source_text, source_type);
-        let start = source_text.find(symbol).unwrap_or(0) as u32;
-        let span = Span::new(start, start + symbol.len() as u32);
+        let start = u32::try_from(source_text.find(symbol).unwrap_or(0)).unwrap();
+        let span = Span::new(start, start + u32::try_from(symbol.len()).unwrap());
         semantic.jsdoc().get_all_by_span(span)
     }
 
     fn test_jsdoc_found(source_text: &str, symbol: &str, source_type: Option<SourceType>) {
         let allocator = Allocator::default();
         assert!(
-            get_jsdoc(&allocator, source_text, symbol, source_type).is_some(),
-            "{symbol} not found in {source_text}"
+            get_jsdocs(&allocator, source_text, symbol, source_type).is_some(),
+            "JSDoc should found for\n  {symbol} \nin\n  {source_text}"
         );
     }
 
     fn test_jsdoc_not_found(source_text: &str, symbol: &str) {
         let allocator = Allocator::default();
         assert!(
-            get_jsdoc(&allocator, source_text, symbol, None).is_none(),
-            "{symbol} found in {source_text}"
+            get_jsdocs(&allocator, source_text, symbol, None).is_none(),
+            "JSDoc should NOT found for\n  {symbol} \nin\n  {source_text}"
         );
     }
 
     #[test]
     fn not_found() {
         let source_texts = [
-            ("function foo() {}", "function foo() {}"),
-            ("// test", "function foo() {}"),
-            ("function foo() {}", "function foo() {}"),
-            ("/* test */function foo() {}", "function foo() {}"),
-            ("/** test */ ; function foo() {}", "function foo() {}"),
-            ("/** test */ function foo1() {} function foo() {}", "function foo() {}"),
-            ("function foo() {} /** test */", "function foo() {}"),
-            ("/** test */ (() => {})", "() => {}"),
+            ("function f1() {}", "function f1() {}"),
+            ("// test", "function f2() {}"),
+            ("/* test */function f3() {}", "function f3() {}"),
+            ("/** for 4a */ ; function f4a() {} function f4b() {}", "function f4b() {}"),
+            ("function f4a() {} /** for 4b */ ; function f4b() {} ", "function f4a() {}"),
+            ("function f5() {} /** test */", "function f5() {}"),
+            (
+                "/** for o */
+                const o = {
+                    f6() {}
+                };",
+                "f6() {}",
+            ),
+            ("/** for () */ (() => {})", "() => {}"),
+            ("/** for ; */ ; let v1;", "let v1;"),
+            ("/** for let v2 */ let v2 = () => {};", "() => {}"),
+            ("/** for if */ if (true) { let v3; })", "let v3;"),
+            (
+                "class C1 {
+                    /** for m1 */
+                    m1() {}
+                    m2() {}
+                }",
+                "m2() {}",
+            ),
         ];
         for (source_text, target) in source_texts {
             test_jsdoc_not_found(source_text, target);
@@ -295,49 +318,71 @@ mod test {
     #[test]
     fn found() {
         let source_texts = [
-            ("/** test */function foo() {}", "function foo() {}"),
-            ("/*** test */function foo() {}", "function foo() {}"),
+            ("/** test */function f1() {}", "function f1() {}"),
+            ("/*** test */function f2() {}", "function f2() {}"),
             (
                 "
             /** test */
-        function foo() {}",
-                "function foo() {}",
+        function f3() {}",
+                "function f3() {}",
             ),
             (
                 "/** test */
 
 
-                function foo() {}",
-                "function foo() {}",
+                function f4() {}",
+                "function f4() {}",
             ),
             (
                 "/**
              * test
              * */
-            function foo() {}",
-                "function foo() {}",
+            function f5() {}",
+                "function f5() {}",
             ),
             (
                 "/** test */
-            function foo() {}",
-                "function foo() {}",
+                // ---
+                function f6() {}",
+                "function f6() {}",
             ),
             (
                 "/** test */
-            // noop
-            function foo() {}",
-                "function foo() {}",
+                /* -- */
+                function f7() {}",
+                "function f7() {}",
             ),
             (
                 "/** test */
-            /*noop*/
-            function foo() {}",
-                "function foo() {}",
+                /** test2 */
+                function f8() {}",
+                "function f8() {}",
             ),
-            ("/** foo1 */ function foo1() {} /** test */ function foo() {}", "function foo() {}"),
-            ("/** test */ 1", "1"),
-            ("/** test */ (1)", "(1)"),
+            (
+                "/** test */ /** test2 */
+                function f9() {}",
+                "function f9() {}",
+            ),
+            (
+                "/** for f10 */ function f10() {} /** for f11 */ function f11() {}",
+                "function f11() {}",
+            ),
+            (
+                "const o = {
+                    /** for f12 */
+                    f12() {}
+                };",
+                "f12() {}",
+            ),
             ("/** test */ (() => {})", "(() => {})"),
+            ("/** test */ let v1 = 1", "let v1 = 1"),
+            ("let v2a = 1, /** for v2b */ v2b = 2", "v2b = 2"),
+            ("/** for v3a */ const v3a = 1, v3b = 2;", "const v3a = 1, v3b = 2;"),
+            ("/** test */ export const e1 = 1;", "export const e1 = 1;"),
+            ("/** test */ export default {};", "export default {};"),
+            ("/** test */ import 'i1'", "import 'i1'"),
+            ("/** test */ import I from 'i2'", "import I from 'i2'"),
+            ("/** test */ import { I } from 'i3'", "import { I } from 'i3'"),
         ];
         for (source_text, target) in source_texts {
             test_jsdoc_found(source_text, target, None);
@@ -375,7 +420,7 @@ mod test {
             const x = () => {};
         ";
         let symbol = "const x = () => {};";
-        let jsdocs = get_jsdoc(&allocator, source_text, symbol, None);
+        let jsdocs = get_jsdocs(&allocator, source_text, symbol, None);
 
         assert!(jsdocs.is_some());
         let jsdocs = jsdocs.unwrap();
@@ -384,10 +429,11 @@ mod test {
         // Should be [farthest, ..., nearest]
         let mut iter = jsdocs.iter();
         let c1 = iter.next().unwrap();
-        assert!(c1.comment().contains("c1"));
-        let _c2 = iter.next().unwrap();
+        assert_eq!(c1.comment(), "c1");
+        let c2 = iter.next().unwrap();
+        assert_eq!(c2.comment(), "c2");
         let c3 = iter.next().unwrap();
-        assert!(c3.comment().contains("c3"));
+        assert_eq!(c3.comment(), "c3");
     }
 
     #[test]
