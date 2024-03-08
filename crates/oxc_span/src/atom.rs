@@ -5,11 +5,8 @@ use serde::{Serialize, Serializer};
 
 use compact_str::CompactString;
 
-#[cfg_attr(
-    all(feature = "serde", feature = "wasm"),
-    wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
-)]
-#[allow(dead_code)]
+#[cfg(feature = "wasm")]
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type Atom = string;
 export type CompactStr = string;

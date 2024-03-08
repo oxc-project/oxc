@@ -14,11 +14,8 @@ use crate::{
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-#[cfg_attr(
-    all(feature = "serde", feature = "wasm"),
-    wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
-)]
-#[allow(dead_code)]
+#[cfg(feature = "wasm")]
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type IndexVec<I, T> = Array<T>;
 "#;
@@ -28,7 +25,7 @@ export type IndexVec<I, T> = Array<T>;
 /// `SoA` (Struct of Arrays) for memory efficiency.
 #[derive(Debug, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 pub struct SymbolTable {
     pub spans: IndexVec<SymbolId, Span>,
     pub names: IndexVec<SymbolId, CompactStr>,
