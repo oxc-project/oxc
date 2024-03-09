@@ -227,13 +227,15 @@ impl<'a, 'b, E, R> ElementsAndRest<'a, 'b, E, R> {
 
 impl<'a, 'b, E: Serialize, R: Serialize> Serialize for ElementsAndRest<'a, 'b, E, R> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut seq = serializer.serialize_seq(Some(self.elements.len() + 1))?;
-        for element in self.elements {
-            seq.serialize_element(element)?;
-        }
         if let Some(rest) = self.rest {
+            let mut seq = serializer.serialize_seq(Some(self.elements.len() + 1))?;
+            for element in self.elements {
+                seq.serialize_element(element)?;
+            }
             seq.serialize_element(rest)?;
+            seq.end()
+        } else {
+            self.elements.serialize(serializer)
         }
-        seq.end()
     }
 }
