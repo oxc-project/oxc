@@ -84,6 +84,9 @@ oxc_prettier       = { path = "crates/oxc_prettier" }
 oxc_tasks_common    = { path = "tasks/common" }
 oxc_language_server = { path = "crates/oxc_language_server" }
 
+napi        = { version = "2" }
+napi-derive = { version = "2" }
+
 assert-unchecked          = { version = "0.1.2" }
 bpaf                      = { version = "0.9.9" }
 bitflags                  = { version = "2.4.2" }

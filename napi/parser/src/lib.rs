@@ -1,18 +1,22 @@
 #![allow(clippy::trailing_empty_array)]
 
+mod module_lexer;
+
 use std::sync::Arc;
 
 use flexbuffers::FlexbufferSerializer;
 use napi::bindgen_prelude::Buffer;
 use napi_derive::napi;
-use oxc_ast::CommentKind;
 use serde::Serialize;
 
 use oxc_allocator::Allocator;
 pub use oxc_ast::ast::Program;
+use oxc_ast::CommentKind;
 use oxc_diagnostics::miette::NamedSource;
 use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
+
+pub use crate::module_lexer::*;
 
 /// Babel Parser Options
 ///
@@ -129,6 +133,7 @@ pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseR
 
 /// Returns a binary AST in flexbuffers format.
 /// This is a POC API. Error handling is not done yet.
+///
 /// # Panics
 ///
 /// * File extension is invalid

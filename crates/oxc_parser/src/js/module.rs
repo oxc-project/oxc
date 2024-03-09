@@ -136,7 +136,6 @@ impl<'a> ParserImpl<'a> {
 
     /// [Import Attributes](https://tc39.es/proposal-import-attributes)
     fn parse_import_attributes(&mut self) -> Result<Option<WithClause<'a>>> {
-        let span = self.start_span();
         let attributes_keyword = match self.cur_kind() {
             Kind::Assert if !self.cur_token().is_on_new_line => self.parse_identifier_name()?,
             Kind::With => self.parse_identifier_name()?,
@@ -144,7 +143,7 @@ impl<'a> ParserImpl<'a> {
                 return Ok(None);
             }
         };
-
+        let span = self.start_span();
         let ctx = self.ctx;
         self.ctx = Context::default();
         let with_entries = AssertEntries::parse(self)?.elements;
