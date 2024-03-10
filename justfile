@@ -117,6 +117,9 @@ new-react-perf-rule name:
 new-n-rule name:
     cargo run -p rulegen {{name}} n
 
+new-tree-shaking-rule name:
+    cargo run -p rulegen {{name}} tree-shaking
+
 # Upgrade all Rust dependencies
 upgrade:
   cargo upgrade --incompatible
