@@ -233,10 +233,11 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // bump `{`
         let expr = match self.cur_kind() {
             // {} empty
-            Kind::RCurly => {
-                let span = self.start_span();
-                JSXExpression::EmptyExpression(self.ast.jsx_empty_expression(self.end_span(span)))
-            }
+            Kind::RCurly => JSXExpression::EmptyExpression(
+                self.ast
+                    // Handle comment between curly braces (ex. `{/* comment */}`)
+                    .jsx_empty_expression(Span::new(self.prev_token_end, self.cur_token().start)),
+            ),
             // {expr}
             _ => self.parse_jsx_assignment_expression().map(JSXExpression::Expression)?,
         };
