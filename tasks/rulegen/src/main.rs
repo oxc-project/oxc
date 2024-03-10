@@ -91,12 +91,17 @@ impl<'a> TestCase<'a> {
                     || "None".to_string(),
                     |settings| format!("Some(serde_json::json!({settings}))"),
                 );
-                if need_settings {
-                    format!("(r#\"{code}\"#, {config}, {settings})")
-                } else if need_config {
-                    format!("(r#\"{code}\"#, {config})")
+                let code_str = if code.contains('"') {
+                    format!("r#\"{}\"#", code.replace("\\\"", "\""))
                 } else {
-                    format!("r#\"{code}\"#")
+                    format!("\"{code}\"")
+                };
+                if need_settings {
+                    format!("({code_str}, {config}, {settings})")
+                } else if need_config {
+                    format!("({code_str}, {config})")
+                } else {
+                    code_str.to_string()
                 }
             })
             .unwrap_or_default()
