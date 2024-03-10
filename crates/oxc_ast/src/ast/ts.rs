@@ -10,6 +10,16 @@ use serde::Serialize;
 
 use super::{js::*, literal::*};
 
+#[cfg(feature = "wasm")]
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = r#"
+export interface TSIndexSignatureName extends Span {
+    type: "Identifier",
+    name: Atom,
+    typeAnnotation: TSTypeAnnotation,
+}
+"#;
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
@@ -634,8 +644,11 @@ pub struct TSConstructSignatureDeclaration<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize),
+    serde(tag = "type", rename = "Identifier", rename_all = "camelCase")
+)]
 pub struct TSIndexSignatureName<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
