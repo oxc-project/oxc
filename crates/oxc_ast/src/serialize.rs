@@ -1,17 +1,16 @@
 use serde::{
-    ser::{SerializeSeq, SerializeStruct, Serializer},
+    ser::{SerializeSeq, Serializer},
     Serialize,
 };
 
 use crate::ast::{
     ArrayAssignmentTarget, ArrayPattern, AssignmentTargetMaybeDefault, AssignmentTargetProperty,
-    AssignmentTargetRest, BindingIdentifier, BindingPattern, BindingPatternKind, BindingProperty,
-    BindingRestElement, FormalParameter, FormalParameterKind, FormalParameters, IdentifierName,
-    IdentifierReference, LabelIdentifier, ObjectAssignmentTarget, ObjectPattern, Program,
-    RegExpFlags, TSTypeAnnotation,
+    AssignmentTargetRest, BindingPattern, BindingPatternKind, BindingProperty, BindingRestElement,
+    FormalParameter, FormalParameterKind, FormalParameters, ObjectAssignmentTarget, ObjectPattern,
+    Program, RegExpFlags, TSTypeAnnotation,
 };
 use oxc_allocator::{Box, Vec};
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 
 pub struct EcmaFormatter;
 
@@ -43,58 +42,6 @@ impl Serialize for RegExpFlags {
         S: Serializer,
     {
         serializer.serialize_str(&self.to_string())
-    }
-}
-
-/// Serialize `BindingIdentifier`, `IdentifierReference`, `IdentifierName` and `LabelIdentifier`
-/// to be estree compatible with the `type` set to "Identifier".
-fn serialize_identifier<S: Serializer>(
-    serializer: S,
-    struct_name: &'static str,
-    span: Span,
-    name: &Atom,
-) -> Result<S::Ok, S::Error> {
-    let mut state = serializer.serialize_struct(struct_name, 4)?;
-    state.serialize_field("type", "Identifier")?;
-    state.serialize_field("start", &span.start)?;
-    state.serialize_field("end", &span.end)?;
-    state.serialize_field("name", name)?;
-    state.end()
-}
-
-impl<'a> Serialize for BindingIdentifier<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serialize_identifier(serializer, "BindingIdentifier", self.span, &self.name)
-    }
-}
-
-impl<'a> Serialize for IdentifierReference<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serialize_identifier(serializer, "IdentifierReference", self.span, &self.name)
-    }
-}
-
-impl<'a> Serialize for IdentifierName<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serialize_identifier(serializer, "IdentifierName", self.span, &self.name)
-    }
-}
-
-impl<'a> Serialize for LabelIdentifier<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serialize_identifier(serializer, "LabelIdentifier", self.span, &self.name)
     }
 }
 
@@ -227,13 +174,15 @@ impl<'a, 'b, E, R> ElementsAndRest<'a, 'b, E, R> {
 
 impl<'a, 'b, E: Serialize, R: Serialize> Serialize for ElementsAndRest<'a, 'b, E, R> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut seq = serializer.serialize_seq(Some(self.elements.len() + 1))?;
-        for element in self.elements {
-            seq.serialize_element(element)?;
-        }
         if let Some(rest) = self.rest {
+            let mut seq = serializer.serialize_seq(Some(self.elements.len() + 1))?;
+            for element in self.elements {
+                seq.serialize_element(element)?;
+            }
             seq.serialize_element(rest)?;
+            seq.end()
+        } else {
+            self.elements.serialize(serializer)
         }
-        seq.end()
     }
 }

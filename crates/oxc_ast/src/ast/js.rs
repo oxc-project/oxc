@@ -63,7 +63,7 @@ pub enum Expression<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>),
     NullLiteral(Box<'a, NullLiteral>),
     NumericLiteral(Box<'a, NumericLiteral<'a>>),
-    BigintLiteral(Box<'a, BigintLiteral<'a>>),
+    BigintLiteral(Box<'a, BigIntLiteral<'a>>),
     RegExpLiteral(Box<'a, RegExpLiteral<'a>>),
     StringLiteral(Box<'a, StringLiteral<'a>>),
     TemplateLiteral(Box<'a, TemplateLiteral<'a>>),
@@ -314,9 +314,10 @@ impl<'a> Expression<'a> {
 }
 
 /// Identifier Name
-// See serializer in serialize.rs
 #[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Identifier"))]
 pub struct IdentifierName<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom<'a>,
 }
@@ -328,12 +329,15 @@ impl<'a> IdentifierName<'a> {
 }
 
 /// Identifier Reference
-// See serializer in serialize.rs
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Identifier"))]
 pub struct IdentifierReference<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom<'a>,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub reference_id: Cell<Option<ReferenceId>>,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub reference_flag: ReferenceFlag,
 }
 
@@ -351,11 +355,13 @@ impl<'a> IdentifierReference<'a> {
 }
 
 /// Binding Identifier
-// See serializer in serialize.rs
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Identifier"))]
 pub struct BindingIdentifier<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom<'a>,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub symbol_id: Cell<Option<SymbolId>>,
 }
 
@@ -373,9 +379,10 @@ impl<'a> BindingIdentifier<'a> {
 }
 
 /// Label Identifier
-// See serializer in serialize.rs
 #[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Identifier"))]
 pub struct LabelIdentifier<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom<'a>,
 }

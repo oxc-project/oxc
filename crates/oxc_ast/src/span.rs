@@ -323,6 +323,7 @@ impl<'a> GetSpan for TSType<'a> {
             Self::TSArrayType(t) => t.span,
             Self::TSIntersectionType(t) => t.span,
             Self::TSMappedType(t) => t.span,
+            Self::TSNamedTupleMember(t) => t.span,
             Self::TSInferType(t) => t.span,
             Self::TSConstructorType(t) => t.span,
             Self::TSIndexedAccessType(t) => t.span,

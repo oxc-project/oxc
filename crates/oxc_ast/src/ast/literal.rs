@@ -108,7 +108,7 @@ impl<'a> Hash for NumericLiteral<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
-pub struct BigintLiteral<'a> {
+pub struct BigIntLiteral<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub raw: Atom<'a>,
@@ -116,7 +116,7 @@ pub struct BigintLiteral<'a> {
     pub base: BigintBase,
 }
 
-impl<'a> BigintLiteral<'a> {
+impl<'a> BigIntLiteral<'a> {
     pub fn is_zero(&self) -> bool {
         self.raw == "0n"
     }

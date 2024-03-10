@@ -82,7 +82,7 @@ pub enum TSLiteral<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>),
     NullLiteral(Box<'a, NullLiteral>),
     NumericLiteral(Box<'a, NumericLiteral<'a>>),
-    BigintLiteral(Box<'a, BigintLiteral<'a>>),
+    BigintLiteral(Box<'a, BigIntLiteral<'a>>),
     RegExpLiteral(Box<'a, RegExpLiteral<'a>>),
     StringLiteral(Box<'a, StringLiteral<'a>>),
     TemplateLiteral(Box<'a, TemplateLiteral<'a>>),
@@ -118,6 +118,7 @@ pub enum TSType<'a> {
     TSIntersectionType(Box<'a, TSIntersectionType<'a>>),
     TSLiteralType(Box<'a, TSLiteralType<'a>>),
     TSMappedType(Box<'a, TSMappedType<'a>>),
+    TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>),
     TSQualifiedName(Box<'a, TSQualifiedName<'a>>),
     TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>),
     TSTupleType(Box<'a, TSTupleType<'a>>),
@@ -908,7 +909,6 @@ pub struct TSImportEqualsDeclaration<'a> {
     pub span: Span,
     pub id: BindingIdentifier<'a>,
     pub module_reference: Box<'a, TSModuleReference<'a>>,
-    pub is_export: bool,
     pub import_kind: ImportOrExportKind,
 }
 

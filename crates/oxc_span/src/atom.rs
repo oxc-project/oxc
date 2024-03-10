@@ -92,6 +92,12 @@ impl<'a> PartialEq<Atom<'a>> for &str {
     }
 }
 
+impl<'a> PartialEq<str> for Atom<'a> {
+    fn eq(&self, other: &str) -> bool {
+        self.as_str() == other
+    }
+}
+
 impl<'a> hash::Hash for Atom<'a> {
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
         self.as_str().hash(hasher);

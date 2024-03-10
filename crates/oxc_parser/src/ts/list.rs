@@ -52,7 +52,23 @@ impl<'a> SeparatedList<'a> for TSTupleElementList<'a> {
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let span = p.start_span();
         if p.is_at_named_tuple_element() {
-            let _is_rest = p.eat(Kind::Dot3);
+            if p.eat(Kind::Dot3) {
+                let member_span = p.start_span();
+                let label = p.parse_identifier_name()?;
+                p.expect(Kind::Colon)?;
+                let element_type = p.parse_ts_type()?;
+                self.elements.push(TSTupleElement::TSRestType(p.ast.alloc(TSRestType {
+                    span: p.end_span(span),
+                    type_annotation: TSType::TSNamedTupleMember(p.ast.alloc(TSNamedTupleMember {
+                        span: p.end_span(member_span),
+                        element_type,
+                        label,
+                        optional: false, // A tuple member cannot be both optional and rest. (TS5085)
+                    })),
+                })));
+                return Ok(());
+            }
+
             let label = p.parse_identifier_name()?;
             let optional = p.eat(Kind::Question);
             p.expect(Kind::Colon)?;

@@ -310,7 +310,7 @@ impl<'a> ParserImpl<'a> {
         Ok(NumericLiteral::new(self.end_span(span), value, src, base))
     }
 
-    pub(crate) fn parse_literal_bigint(&mut self) -> Result<BigintLiteral<'a>> {
+    pub(crate) fn parse_literal_bigint(&mut self) -> Result<BigIntLiteral<'a>> {
         let span = self.start_span();
         let base = match self.cur_kind() {
             Kind::Decimal => BigintBase::Decimal,
