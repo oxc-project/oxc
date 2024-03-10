@@ -330,6 +330,10 @@ mod nextjs {
     pub mod no_unwanted_polyfillio;
 }
 
+mod tree_shaking {
+    pub mod no_side_effects_in_initialization;
+}
+
 oxc_macros::declare_all_lint_rules! {
     deepscan::bad_array_method_on_arguments,
     deepscan::bad_bitwise_operator,
@@ -622,4 +626,5 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_document_import_in_page,
     nextjs::no_unwanted_polyfillio,
     nextjs::no_before_interactive_script_outside_document,
+    tree_shaking::no_side_effects_in_initialization,
 }
