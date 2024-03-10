@@ -139,6 +139,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
                 p.print_semicolon_if_needed();
                 p.print_str(b"}");
             }
+            Self::TSNamedTupleMember(decl) => {
+                decl.gen(p, ctx);
+            }
             Self::TSLiteralType(decl) => {
                 decl.literal.gen(p, ctx);
             }
@@ -507,12 +510,18 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTupleElement<'a> {
                 ts_type.type_annotation.gen(p, ctx);
             }
             TSTupleElement::TSNamedTupleMember(ts_type) => {
-                ts_type.label.gen(p, ctx);
-                p.print_str(b":");
-                p.print_soft_space();
-                ts_type.element_type.gen(p, ctx);
+                ts_type.gen(p, ctx);
             }
         }
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSNamedTupleMember<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        self.label.gen(p, ctx);
+        p.print_str(b":");
+        p.print_soft_space();
+        self.element_type.gen(p, ctx);
     }
 }
 

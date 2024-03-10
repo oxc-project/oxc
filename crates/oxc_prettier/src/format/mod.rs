@@ -676,6 +676,7 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSIntersectionType(v) => v.format(p),
             TSType::TSLiteralType(v) => v.format(p),
             TSType::TSMappedType(v) => v.format(p),
+            TSType::TSNamedTupleMember(v) => v.format(p),
             TSType::TSQualifiedName(v) => v.format(p),
             TSType::TSTemplateLiteralType(v) => v.format(p),
             TSType::TSTupleType(v) => v.format(p),
@@ -838,6 +839,12 @@ impl<'a> Format<'a> for TSLiteralType<'a> {
 }
 
 impl<'a> Format<'a> for TSMappedType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for TSNamedTupleMember<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
