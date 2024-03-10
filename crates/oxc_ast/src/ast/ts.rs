@@ -908,7 +908,6 @@ pub struct TSImportEqualsDeclaration<'a> {
     pub span: Span,
     pub id: BindingIdentifier<'a>,
     pub module_reference: Box<'a, TSModuleReference<'a>>,
-    pub is_export: bool,
     pub import_kind: ImportOrExportKind,
 }
 
