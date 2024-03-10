@@ -43,7 +43,9 @@ impl Rule for ExhaustiveDeps {
 fn is_hook_call(node: &AstNode) -> bool {
     let AstKind::CallExpression(call_expr) = node.kind() else { return false };
     let Some(ident) = call_expr.callee.get_identifier_reference() else { return false };
+    let func_arg = &call_expr.arguments[0];
 
+    dbg!(func_arg);
     println!("function name {:?}", ident.name);
     true
 }
@@ -67,11 +69,11 @@ fn test() {
     ];
 
     let fail = vec![
-        // r"function MyComponent(props) {
-        //     useCallback(() => {
-        //       console.log(props.foo?.toString());
-        //     }, []);
-        //   }",
+        r"function MyComponent(props) {
+            useCallback(() => {
+              console.log(props.foo?.toString());
+            }, []);
+          }",
     ];
 
     // let pass = vec![
