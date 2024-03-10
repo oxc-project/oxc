@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use oxc_ast::{
-    ast::{BigintLiteral, NumericLiteral},
+    ast::{BigIntLiteral, NumericLiteral},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -162,7 +162,7 @@ impl NumericSeparatorsStyle {
         }
     }
 
-    fn format_bigint(&self, number: &BigintLiteral, raw: &str) -> String {
+    fn format_bigint(&self, number: &BigIntLiteral, raw: &str) -> String {
         use oxc_syntax::BigintBase;
 
         let raw_without_bigint_n_suffix = &raw[..raw.len() - 1];

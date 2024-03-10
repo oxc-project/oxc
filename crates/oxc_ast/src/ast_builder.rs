@@ -140,8 +140,8 @@ impl<'a> AstBuilder<'a> {
         BooleanLiteral { span, value }
     }
 
-    pub fn bigint_literal(&self, span: Span, raw: Atom<'a>, base: BigintBase) -> BigintLiteral<'a> {
-        BigintLiteral { span, raw, base }
+    pub fn bigint_literal(&self, span: Span, raw: Atom<'a>, base: BigintBase) -> BigIntLiteral<'a> {
+        BigIntLiteral { span, raw, base }
     }
 
     pub fn template_literal(
@@ -199,7 +199,7 @@ impl<'a> AstBuilder<'a> {
         Expression::NumericLiteral(self.alloc(literal))
     }
 
-    pub fn literal_bigint_expression(&self, literal: BigintLiteral<'a>) -> Expression<'a> {
+    pub fn literal_bigint_expression(&self, literal: BigIntLiteral<'a>) -> Expression<'a> {
         Expression::BigintLiteral(self.alloc(literal))
     }
 
