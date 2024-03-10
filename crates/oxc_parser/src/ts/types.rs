@@ -834,8 +834,8 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let type_parameters = self.parse_ts_type_parameters()?;
         let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature)?;
-        self.expect(Kind::Arrow)?;
         let return_type_span = self.start_span();
+        self.expect(Kind::Arrow)?;
         let return_type = self.parse_ts_return_type()?;
         let return_type = self.ast.ts_type_annotation(self.end_span(return_type_span), return_type);
         Ok(self.ast.ts_function_type(
