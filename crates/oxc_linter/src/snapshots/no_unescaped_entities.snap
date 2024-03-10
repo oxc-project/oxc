@@ -47,7 +47,7 @@ expression: no_unescaped_entities
    ╰────
 
   ⚠ eslint-plugin-react(no-unescaped-entities): `"` can be escaped with &quot; or &ldquo; or &#34; or &rdquo;
-   ╭─[no_unescaped_entities.tsx:1:14]
+   ╭─[no_unescaped_entities.tsx:1:16]
  1 │ <script>测试 " 测试</script>
    ·              ─
    ╰────

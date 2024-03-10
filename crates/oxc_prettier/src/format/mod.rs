@@ -676,6 +676,7 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSIntersectionType(v) => v.format(p),
             TSType::TSLiteralType(v) => v.format(p),
             TSType::TSMappedType(v) => v.format(p),
+            TSType::TSNamedTupleMember(v) => v.format(p),
             TSType::TSQualifiedName(v) => v.format(p),
             TSType::TSTemplateLiteralType(v) => v.format(p),
             TSType::TSTupleType(v) => v.format(p),
@@ -843,6 +844,12 @@ impl<'a> Format<'a> for TSMappedType<'a> {
     }
 }
 
+impl<'a> Format<'a> for TSNamedTupleMember<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
 impl<'a> Format<'a> for TSQualifiedName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
@@ -933,10 +940,6 @@ impl<'a> Format<'a> for TSModuleDeclaration<'a> {
 impl<'a> Format<'a> for TSImportEqualsDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-
-        if self.is_export {
-            parts.push(ss!("export "));
-        }
 
         parts.push(ss!("import "));
 
@@ -1357,7 +1360,7 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
     }
 }
 
-impl<'a> Format<'a> for BigintLiteral<'a> {
+impl<'a> Format<'a> for BigIntLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let text = self.span.source_text(p.source_text);
         // Perf: avoid a memory allocation from `to_ascii_lowercase`.

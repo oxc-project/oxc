@@ -49,7 +49,7 @@ pub enum AstKind<'a> {
     StringLiteral(&'a StringLiteral<'a>),
     BooleanLiteral(&'a BooleanLiteral),
     NullLiteral(&'a NullLiteral),
-    BigintLiteral(&'a BigintLiteral<'a>),
+    BigintLiteral(&'a BigIntLiteral<'a>),
     RegExpLiteral(&'a RegExpLiteral<'a>),
     TemplateLiteral(&'a TemplateLiteral<'a>),
 

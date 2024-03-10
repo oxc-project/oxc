@@ -345,31 +345,31 @@ expression: no_useless_escape
    ╰────
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '）'
-   ╭─[no_useless_escape.tsx:1:18]
+   ╭─[no_useless_escape.tsx:1:19]
  1 │ var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;
    ·                  ───
    ╰────
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '（'
-   ╭─[no_useless_escape.tsx:1:21]
+   ╭─[no_useless_escape.tsx:1:23]
  1 │ var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;
    ·                     ───
    ╰────
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '）'
-   ╭─[no_useless_escape.tsx:1:27]
+   ╭─[no_useless_escape.tsx:1:30]
  1 │ var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;
    ·                           ───
    ╰────
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character ')'
-   ╭─[no_useless_escape.tsx:1:37]
+   ╭─[no_useless_escape.tsx:1:41]
  1 │ var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;
    ·                                     ──
    ╰────
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character ')'
-   ╭─[no_useless_escape.tsx:1:39]
+   ╭─[no_useless_escape.tsx:1:43]
  1 │ var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;
    ·                                       ──
    ╰────

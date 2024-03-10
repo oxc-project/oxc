@@ -238,8 +238,7 @@ impl Tester {
 
         let handler = GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
         for diagnostic in result {
-            let diagnostic = diagnostic.error.with_source_code(source_text.to_string());
-            let diagnostic = diagnostic.with_source_code(NamedSource::new(
+            let diagnostic = diagnostic.error.with_source_code(NamedSource::new(
                 diagnostic_path.clone(),
                 source_text.to_string(),
             ));

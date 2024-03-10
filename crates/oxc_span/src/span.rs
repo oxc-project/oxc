@@ -14,7 +14,7 @@ pub const SPAN: Span = Span::new(0, 0);
 /// NOTE: `u32` is sufficient for "all" reasonable programs. Larger than u32 is a 4GB JS file.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
 #[non_exhaustive] // disallow struct expression constructor `Span {}`
 pub struct Span {
     pub start: u32,
@@ -50,7 +50,7 @@ impl Hash for Span {
 
 impl From<Span> for SourceSpan {
     fn from(val: Span) -> Self {
-        Self::new(SourceOffset::from(val.start as usize), SourceOffset::from(val.size() as usize))
+        Self::new(SourceOffset::from(val.start as usize), val.size() as usize)
     }
 }
 

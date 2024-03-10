@@ -30,4 +30,4 @@ serde = { workspace = true, features = ["derive"], optional = true }
 [features]
 default = []
 serde   = ["dep:serde", "compact_str/serde"]
-wasm    = ["dep:tsify", "dep:wasm-bindgen"]
+wasm    = ["serde", "dep:tsify", "dep:wasm-bindgen"]

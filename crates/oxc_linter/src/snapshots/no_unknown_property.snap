@@ -297,7 +297,7 @@ expression: no_unknown_property
   help: Property 'webkitdirectory' is only allowed on: input
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
-   ╭─[no_unknown_property.tsx:2:42]
+   ╭─[no_unknown_property.tsx:2:33]
  1 │ 
  2 │                     <div className="App" data-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash-crash:c="customValue">
    ·                                          ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────

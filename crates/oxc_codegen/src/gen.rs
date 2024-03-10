@@ -1164,7 +1164,7 @@ fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIF
     result
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for BigintLiteral<'a> {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for BigIntLiteral<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         if self.raw.contains('_') {
