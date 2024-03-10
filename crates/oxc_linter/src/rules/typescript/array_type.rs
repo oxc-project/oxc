@@ -408,6 +408,7 @@ fn get_ts_element_type_span(ts_type: &TSType) -> Option<Span> {
         TSType::TSIntersectionType(t) => Some(t.span),
         TSType::TSLiteralType(t) => Some(t.span),
         TSType::TSMappedType(t) => Some(t.span),
+        TSType::TSNamedTupleMember(t) => Some(t.span),
         TSType::TSQualifiedName(t) => Some(t.span),
         TSType::TSTemplateLiteralType(t) => Some(t.span),
         TSType::TSTupleType(t) => Some(t.span),

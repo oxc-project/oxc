@@ -118,6 +118,7 @@ pub enum TSType<'a> {
     TSIntersectionType(Box<'a, TSIntersectionType<'a>>),
     TSLiteralType(Box<'a, TSLiteralType<'a>>),
     TSMappedType(Box<'a, TSMappedType<'a>>),
+    TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>),
     TSQualifiedName(Box<'a, TSQualifiedName<'a>>),
     TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>),
     TSTupleType(Box<'a, TSTupleType<'a>>),
