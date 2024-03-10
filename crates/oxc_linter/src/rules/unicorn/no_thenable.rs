@@ -244,7 +244,7 @@ fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span
             }
         }
         Expression::TemplateLiteral(lit) => {
-            lit.quasi().and_then(|quasi| if quasi == &"then" { Some(lit.span) } else { None })
+            lit.quasi().and_then(|quasi| if quasi == "then" { Some(lit.span) } else { None })
         }
         Expression::Identifier(ident) => {
             let tab = ctx.semantic().symbols();

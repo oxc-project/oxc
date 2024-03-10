@@ -29,7 +29,7 @@ expression: no_empty_file
   help: Delete this file or add some code to it.
 
   ⚠ eslint-plugin-unicorn(no-empty-file): Empty files are not allowed.
-   ╭─[no_empty_file.tsx:0:1]
+   ╭─[no_empty_file.tsx:1:1]
  0 │ 
    · ▲
    ╰────

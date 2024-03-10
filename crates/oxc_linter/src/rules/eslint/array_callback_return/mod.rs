@@ -9,7 +9,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactString, GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use phf::phf_set;
 use serde_json::Value;
 
@@ -28,14 +28,14 @@ enum ArrayCallbackReturnDiagnostic {
         severity(warning),
         help("Array method {0:?} needs to have valid return on all code paths")
     )]
-    ExpectReturn(CompactString, #[label] Span),
+    ExpectReturn(CompactStr, #[label] Span),
 
     #[error("eslint(array-callback-return): Unexpected return for array method {0}")]
     #[diagnostic(
         severity(warning),
         help("Array method {0} expects no useless return from the function")
     )]
-    ExpectNoReturn(CompactString, #[label] Span),
+    ExpectNoReturn(CompactStr, #[label] Span),
 }
 
 #[derive(Debug, Default, Clone)]
@@ -243,10 +243,10 @@ const TARGET_METHODS: phf::Set<&'static str> = phf_set! {
     "toSorted",
 };
 
-fn full_array_method_name(array_method: &'static str) -> CompactString {
+fn full_array_method_name(array_method: &'static str) -> CompactStr {
     match array_method {
-        "from" => CompactString::from("Array.from"),
-        s => CompactString::from(format!("Array.prototype.{s}")),
+        "from" => CompactStr::from("Array.from"),
+        s => CompactStr::from(format!("Array.prototype.{s}")),
     }
 }
 

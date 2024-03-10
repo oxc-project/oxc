@@ -256,7 +256,7 @@ impl Oxc {
             let options = MinifierOptions {
                 mangle: minifier_options.mangle(),
                 compress: if minifier_options.compress() {
-                    CompressOptions::all_true()
+                    CompressOptions::default()
                 } else {
                     CompressOptions::all_false()
                 },

@@ -101,14 +101,14 @@ expression: no_nonoctal_decimal_escape
   help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:4]
+   ╭─[no_nonoctal_decimal_escape.tsx:1:6]
  1 │ '👍\8'
    ·    ──
    ╰────
   help: Replace '\8' with '8'. This maintains the current functionality.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:4]
+   ╭─[no_nonoctal_decimal_escape.tsx:1:6]
  1 │ '👍\8'
    ·    ──
    ╰────
@@ -178,7 +178,7 @@ expression: no_nonoctal_decimal_escape
   help: Replace '\8' with '\\8' to include the actual backslash character.
 
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
-   ╭─[no_nonoctal_decimal_escape.tsx:1:5]
+   ╭─[no_nonoctal_decimal_escape.tsx:1:7]
  1 │ '\👍\8'
    ·     ──
    ╰────

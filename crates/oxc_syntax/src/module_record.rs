@@ -6,7 +6,7 @@ use dashmap::DashMap;
 use indexmap::IndexMap;
 use rustc_hash::{FxHashMap, FxHasher};
 
-use oxc_span::{CompactString, Span};
+use oxc_span::{CompactStr, Span};
 
 /// ESM Module Record
 ///
@@ -32,13 +32,13 @@ pub struct ModuleRecord {
     ///   import ModuleSpecifier
     ///   export ExportFromClause FromClause
     /// Keyed by ModuleSpecifier, valued by all node occurrences
-    pub requested_modules: IndexMap<CompactString, Vec<Span>, BuildHasherDefault<FxHasher>>,
+    pub requested_modules: IndexMap<CompactStr, Vec<Span>, BuildHasherDefault<FxHasher>>,
 
     /// `[[LoadedModules]]`
     ///
     /// A map from the specifier strings used by the module represented by this record to request the importation of a module to the resolved Module Record.
     /// The list does not contain two different Records with the same `[[Specifier]]`.
-    pub loaded_modules: DashMap<CompactString, Arc<ModuleRecord>, BuildHasherDefault<FxHasher>>,
+    pub loaded_modules: DashMap<CompactStr, Arc<ModuleRecord>, BuildHasherDefault<FxHasher>>,
 
     /// `[[ImportEntries]]`
     ///
@@ -65,7 +65,7 @@ pub struct ModuleRecord {
     /// not including export * as namespace declarations.
     pub star_export_entries: Vec<ExportEntry>,
 
-    pub exported_bindings: FxHashMap<CompactString, Span>,
+    pub exported_bindings: FxHashMap<CompactStr, Span>,
     pub exported_bindings_duplicated: Vec<NameSpan>,
 
     pub export_default: Option<Span>,
@@ -107,16 +107,16 @@ impl fmt::Debug for ModuleRecord {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NameSpan {
-    name: CompactString,
+    name: CompactStr,
     span: Span,
 }
 
 impl NameSpan {
-    pub fn new(name: CompactString, span: Span) -> Self {
+    pub fn new(name: CompactStr, span: Span) -> Self {
         Self { name, span }
     }
 
-    pub fn name(&self) -> &CompactString {
+    pub fn name(&self) -> &CompactStr {
         &self.name
     }
 

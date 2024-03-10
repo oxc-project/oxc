@@ -122,7 +122,7 @@ fn check_and_report(
                 ctx.diagnostic_with_fix(PreferAsConstDiagnostic(span), || {
                     let start = span.start;
                     let end = span.end;
-                    Fix::new("const", Span { start, end })
+                    Fix::new("const", Span::new(start, end))
                 });
             } else {
                 ctx.diagnostic(PreferAsConstDiagnostic(span));

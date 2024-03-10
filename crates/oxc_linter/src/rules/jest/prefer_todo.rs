@@ -133,9 +133,7 @@ fn is_empty_function(expr: &CallExpression) -> bool {
 
 fn get_fix_content<'a>(expr: &'a CallExpression<'a>) -> (&'a str, Span) {
     match &expr.callee {
-        Expression::Identifier(ident) => {
-            (".todo", Span { start: ident.span.end, end: ident.span.end })
-        }
+        Expression::Identifier(ident) => (".todo", Span::new(ident.span.end, ident.span.end)),
         Expression::MemberExpression(mem_expr) => {
             if let Some((span, _)) = mem_expr.static_property_info() {
                 return ("todo", span);

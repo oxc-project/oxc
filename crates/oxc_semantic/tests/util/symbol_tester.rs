@@ -141,7 +141,7 @@ impl<'a> SymbolTester<'a> {
     pub fn is_exported(mut self) -> Self {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
-                let binding = Atom::from(self.target_symbol_name.clone());
+                let binding = self.target_symbol_name.clone();
                 if self.semantic.module_record().exported_bindings.contains_key(binding.as_str())
                     && self.semantic.scopes().get_root_binding(&binding) == Some(symbol_id)
                 {

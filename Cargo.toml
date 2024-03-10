@@ -38,6 +38,7 @@ rc_mutex                        = "warn"
 rest_pat_in_fully_bound_structs = "warn"
 unnecessary_safety_comment      = "warn"
 undocumented_unsafe_blocks      = "warn"
+infinite_loop                   = "warn"
 # I want to write the best Rust code so pedantic is enabled.
 # We should only disable rules globally if they are either false positives, chaotic, or does not make sense.
 pedantic = { level = "warn", priority = -1 }
@@ -83,6 +84,9 @@ oxc_prettier       = { path = "crates/oxc_prettier" }
 oxc_tasks_common    = { path = "tasks/common" }
 oxc_language_server = { path = "crates/oxc_language_server" }
 
+napi        = { version = "2" }
+napi-derive = { version = "2" }
+
 assert-unchecked          = { version = "0.1.2" }
 bpaf                      = { version = "0.9.9" }
 bitflags                  = { version = "2.4.2" }
@@ -97,7 +101,7 @@ ignore                    = { version = "0.4.22" }
 itertools                 = { version = "0.12.1" }
 jemallocator              = { version = "0.5.4" }
 lazy_static               = { version = "1.4.0" }
-miette                    = { version = "5.10.0", features = ["fancy-no-backtrace"] }
+miette                    = { version = "7.2.0", features = ["fancy-no-syscall"] }
 mimalloc                  = { version = "0.1.39" }
 num-bigint                = { version = "0.4.4" }
 num-traits                = { version = "0.2.18" }

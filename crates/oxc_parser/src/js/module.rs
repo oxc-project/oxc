@@ -42,7 +42,7 @@ impl<'a> ParserImpl<'a> {
                     && self.peek_kind().is_binding_identifier()
                     && self.nth_at(2, Kind::Eq)))
         {
-            let decl = self.parse_ts_import_equals_declaration(span, false)?;
+            let decl = self.parse_ts_import_equals_declaration(span)?;
             return Ok(Statement::Declaration(decl));
         }
 
@@ -136,7 +136,6 @@ impl<'a> ParserImpl<'a> {
 
     /// [Import Attributes](https://tc39.es/proposal-import-attributes)
     fn parse_import_attributes(&mut self) -> Result<Option<WithClause<'a>>> {
-        let span = self.start_span();
         let attributes_keyword = match self.cur_kind() {
             Kind::Assert if !self.cur_token().is_on_new_line => self.parse_identifier_name()?,
             Kind::With => self.parse_identifier_name()?,
@@ -144,7 +143,7 @@ impl<'a> ParserImpl<'a> {
                 return Ok(None);
             }
         };
-
+        let span = self.start_span();
         let ctx = self.ctx;
         self.ctx = Context::default();
         let with_entries = AssertEntries::parse(self)?.elements;
@@ -234,11 +233,11 @@ impl<'a> ParserImpl<'a> {
         let specifiers = ExportNamedSpecifiers::parse(self)?.elements;
         self.ctx = ctx;
 
-        let source = if self.eat(Kind::From) && self.cur_kind().is_literal() {
+        let (source, with_clause) = if self.eat(Kind::From) && self.cur_kind().is_literal() {
             let source = self.parse_literal_string()?;
-            Some(source)
+            (Some(source), self.parse_import_attributes()?)
         } else {
-            None
+            (None, None)
         };
 
         // ExportDeclaration : export NamedExports ;
@@ -274,7 +273,14 @@ impl<'a> ParserImpl<'a> {
 
         self.asi()?;
         let span = self.end_span(span);
-        Ok(self.ast.export_named_declaration(span, None, specifiers, source, export_kind))
+        Ok(self.ast.export_named_declaration(
+            span,
+            None,
+            specifiers,
+            source,
+            export_kind,
+            with_clause,
+        ))
     }
 
     // export Declaration
@@ -300,6 +306,7 @@ impl<'a> ParserImpl<'a> {
             self.ast.new_vec(),
             None,
             ImportOrExportKind::Value,
+            None,
         ))
     }
 

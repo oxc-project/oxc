@@ -140,8 +140,8 @@ impl<'a> AstBuilder<'a> {
         BooleanLiteral { span, value }
     }
 
-    pub fn bigint_literal(&self, span: Span, raw: Atom<'a>, base: BigintBase) -> BigintLiteral<'a> {
-        BigintLiteral { span, raw, base }
+    pub fn bigint_literal(&self, span: Span, raw: Atom<'a>, base: BigintBase) -> BigIntLiteral<'a> {
+        BigIntLiteral { span, raw, base }
     }
 
     pub fn template_literal(
@@ -199,7 +199,7 @@ impl<'a> AstBuilder<'a> {
         Expression::NumericLiteral(self.alloc(literal))
     }
 
-    pub fn literal_bigint_expression(&self, literal: BigintLiteral<'a>) -> Expression<'a> {
+    pub fn literal_bigint_expression(&self, literal: BigIntLiteral<'a>) -> Expression<'a> {
         Expression::BigintLiteral(self.alloc(literal))
     }
 
@@ -466,6 +466,35 @@ impl<'a> AstBuilder<'a> {
         AssignmentTarget::AssignmentTargetPattern(AssignmentTargetPattern::ArrayAssignmentTarget(
             self.alloc(array),
         ))
+    }
+
+    pub fn array_assignment_target_maybe_default(
+        &self,
+        array: ArrayAssignmentTarget<'a>,
+    ) -> AssignmentTargetMaybeDefault<'a> {
+        AssignmentTargetMaybeDefault::AssignmentTarget(AssignmentTarget::AssignmentTargetPattern(
+            AssignmentTargetPattern::ArrayAssignmentTarget(self.alloc(array)),
+        ))
+    }
+
+    pub fn object_assignment_target(
+        &self,
+        array: ObjectAssignmentTarget<'a>,
+    ) -> AssignmentTarget<'a> {
+        AssignmentTarget::AssignmentTargetPattern(AssignmentTargetPattern::ObjectAssignmentTarget(
+            self.alloc(array),
+        ))
+    }
+
+    pub fn assignment_target_property_property(
+        &self,
+        span: Span,
+        name: PropertyKey<'a>,
+        binding: AssignmentTargetMaybeDefault<'a>,
+    ) -> AssignmentTargetProperty<'a> {
+        AssignmentTargetProperty::AssignmentTargetPropertyProperty(
+            self.alloc(AssignmentTargetPropertyProperty { span, name, binding }),
+        )
     }
 
     pub fn simple_assignment_target_identifier(
@@ -1120,8 +1149,16 @@ impl<'a> AstBuilder<'a> {
         specifiers: Vec<'a, ExportSpecifier>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
+        with_clause: Option<WithClause<'a>>,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
-        self.alloc(ExportNamedDeclaration { span, declaration, specifiers, source, export_kind })
+        self.alloc(ExportNamedDeclaration {
+            span,
+            declaration,
+            specifiers,
+            source,
+            export_kind,
+            with_clause,
+        })
     }
 
     /* ---------- JSX ----------------- */
@@ -1511,14 +1548,12 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: BindingIdentifier<'a>,
         module_reference: TSModuleReference<'a>,
-        is_export: bool,
         import_kind: ImportOrExportKind,
     ) -> Declaration<'a> {
         Declaration::TSImportEqualsDeclaration(self.alloc(TSImportEqualsDeclaration {
             span,
             id,
             module_reference: self.alloc(module_reference),
-            is_export,
             import_kind,
         }))
     }

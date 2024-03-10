@@ -273,7 +273,7 @@ expression: new_for_builtins
    ╰────
 
   ⚠ eslint-plugin-unicorn(new-for-builtins): Use `new Array()` instead of `Array()`
-    ╭─[new_for_builtins.tsx:13:24]
+    ╭─[new_for_builtins.tsx:13:12]
  12 │                 }
  13 │                 return Array()
     ·                        ───────
@@ -281,7 +281,7 @@ expression: new_for_builtins
     ╰────
 
   ⚠ eslint-plugin-unicorn(new-for-builtins): Use `new Map()` instead of `Map()`
-    ╭─[new_for_builtins.tsx:19:24]
+    ╭─[new_for_builtins.tsx:19:12]
  18 │                 }
  19 │                 return Map()
     ·                        ─────

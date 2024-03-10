@@ -676,6 +676,7 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSIntersectionType(v) => v.format(p),
             TSType::TSLiteralType(v) => v.format(p),
             TSType::TSMappedType(v) => v.format(p),
+            TSType::TSNamedTupleMember(v) => v.format(p),
             TSType::TSQualifiedName(v) => v.format(p),
             TSType::TSTemplateLiteralType(v) => v.format(p),
             TSType::TSTupleType(v) => v.format(p),
@@ -843,6 +844,12 @@ impl<'a> Format<'a> for TSMappedType<'a> {
     }
 }
 
+impl<'a> Format<'a> for TSNamedTupleMember<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
 impl<'a> Format<'a> for TSQualifiedName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
@@ -933,10 +940,6 @@ impl<'a> Format<'a> for TSModuleDeclaration<'a> {
 impl<'a> Format<'a> for TSImportEqualsDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-
-        if self.is_export {
-            parts.push(ss!("export "));
-        }
 
         parts.push(ss!("import "));
 
@@ -1048,9 +1051,16 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
                 || specifiers.get(1).is_some_and(validate_namespace);
 
             parts.push(module::print_module_specifiers(p, specifiers, is_default, is_namespace));
+            parts.push(ss!(" from"));
         }
-        parts.push(ss!(" from "));
+        parts.push(space!());
         parts.push(self.source.format(p));
+
+        if let Some(with_clause) = &self.with_clause {
+            parts.push(space!());
+            parts.push(with_clause.format(p));
+        }
+
         if let Some(semi) = p.semi() {
             parts.push(semi);
         }
@@ -1090,15 +1100,29 @@ impl<'a> Format<'a> for ImportNamespaceSpecifier<'a> {
     }
 }
 
-impl<'a> Format<'a> for Option<Vec<'a, ImportAttribute<'a>>> {
+impl<'a> Format<'a> for WithClause<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array!(
+            p,
+            self.attributes_keyword.format(p),
+            space!(),
+            object::print_object_properties(p, ObjectLike::WithClause(self))
+        )
     }
 }
 
 impl<'a> Format<'a> for ImportAttribute<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array!(p, self.key.format(p), ss!(": "), self.value.format(p))
+    }
+}
+
+impl<'a> Format<'a> for ImportAttributeKey<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            Self::Identifier(ident) => ident.format(p),
+            Self::StringLiteral(literal) => literal.format(p),
+        }
     }
 }
 
@@ -1336,7 +1360,7 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
     }
 }
 
-impl<'a> Format<'a> for BigintLiteral<'a> {
+impl<'a> Format<'a> for BigIntLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let text = self.span.source_text(p.source_text);
         // Perf: avoid a memory allocation from `to_ascii_lowercase`.

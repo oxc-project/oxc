@@ -4,7 +4,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::{CompactString, Span};
+use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -12,7 +12,7 @@ use crate::{context::LintContext, rule::Rule};
 #[error("eslint(no-const-assign): Unexpected re-assignment of const variable {0}")]
 #[diagnostic(severity(warning))]
 struct NoConstAssignDiagnostic(
-    CompactString,
+    CompactStr,
     #[label("{0} is declared here as const")] pub Span,
     #[label("{0} is re-assigned here")] pub Span,
 );

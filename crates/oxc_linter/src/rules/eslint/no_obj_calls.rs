@@ -8,7 +8,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeId};
-use oxc_span::{CompactString, Span};
+use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -18,7 +18,7 @@ const NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Ref
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-obj-calls): Disallow calling some global objects as functions")]
 #[diagnostic(severity(warning), help("{0} is not a function."))]
-struct NoObjCallsDiagnostic(CompactString, #[label] pub Span);
+struct NoObjCallsDiagnostic(CompactStr, #[label] pub Span);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NoObjCalls;
@@ -46,8 +46,8 @@ declare_oxc_lint! {
     /// let json = JSON();
     /// let newJson = new JSON();
     ///
-    /// let atomics = CompactStringics();
-    /// let newCompactStringics = new CompactStringics();
+    /// let atomics = Atomics();
+    /// let newAtomics = new Atomics();
     ///
     /// let intl = Intl();
     /// let newIntl = new Intl();
@@ -58,7 +58,7 @@ declare_oxc_lint! {
     /// // Good
     /// let area = r => 2 * Math.PI * r * r;
     /// let object = JSON.parse("{}");
-    /// let first = CompactStringics.load(sharedArray, 0);
+    /// let first = Atomics.load(sharedArray, 0);
     /// let segmenterFrom = Intl.Segmenter("fr", { granularity: "word" });
     /// ```
     NoObjCalls,
@@ -141,7 +141,7 @@ impl Rule for NoObjCalls {
                     resolve_global_binding(ident, node.scope_id(), ctx)
                 {
                     if is_global_obj(top_level_reference) {
-                        ctx.diagnostic(NoObjCallsDiagnostic(ident.name.to_compact_string(), span));
+                        ctx.diagnostic(NoObjCallsDiagnostic(ident.name.to_compact_str(), span));
                     }
                 }
             }
