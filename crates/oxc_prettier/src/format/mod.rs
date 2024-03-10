@@ -934,10 +934,6 @@ impl<'a> Format<'a> for TSImportEqualsDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
 
-        if self.is_export {
-            parts.push(ss!("export "));
-        }
-
         parts.push(ss!("import "));
 
         if self.import_kind == ImportOrExportKind::Type {

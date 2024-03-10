@@ -42,7 +42,7 @@ impl<'a> ParserImpl<'a> {
                     && self.peek_kind().is_binding_identifier()
                     && self.nth_at(2, Kind::Eq)))
         {
-            let decl = self.parse_ts_import_equals_declaration(span, false)?;
+            let decl = self.parse_ts_import_equals_declaration(span)?;
             return Ok(Statement::Declaration(decl));
         }
 

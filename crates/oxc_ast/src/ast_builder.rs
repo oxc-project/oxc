@@ -1548,14 +1548,12 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: BindingIdentifier<'a>,
         module_reference: TSModuleReference<'a>,
-        is_export: bool,
         import_kind: ImportOrExportKind,
     ) -> Declaration<'a> {
         Declaration::TSImportEqualsDeclaration(self.alloc(TSImportEqualsDeclaration {
             span,
             id,
             module_reference: self.alloc(module_reference),
-            is_export,
             import_kind,
         }))
     }
