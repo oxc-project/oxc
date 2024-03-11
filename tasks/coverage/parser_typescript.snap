@@ -15205,7 +15205,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/es7/trailingCommasInBindingPatterns.ts:4:7]
  3 │ let c, d;
  4 │ ([...c,] = []);
-   ·       ▲
+   ·       ─
  5 │ ({...d,} = {});
    ╰────
 
