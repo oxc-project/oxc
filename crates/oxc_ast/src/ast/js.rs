@@ -1027,6 +1027,7 @@ pub enum AssignmentTargetPattern<'a> {
 // See serializer in serialize.rs
 #[derive(Debug, Hash, SerAttrs)]
 #[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct ArrayAssignmentTarget<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -1049,6 +1050,7 @@ impl<'a> ArrayAssignmentTarget<'a> {
 // See serializer in serialize.rs
 #[derive(Debug, Hash, SerAttrs)]
 #[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct ObjectAssignmentTarget<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -1765,6 +1767,7 @@ pub struct AssignmentPattern<'a> {
 // See serializer in serialize.rs
 #[derive(Debug, Hash, SerAttrs)]
 #[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct ObjectPattern<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -1800,6 +1803,7 @@ pub struct BindingProperty<'a> {
 // See serializer in serialize.rs
 #[derive(Debug, Hash, SerAttrs)]
 #[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct ArrayPattern<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -1909,6 +1913,7 @@ pub enum FunctionType {
 // See serializer in serialize.rs
 #[derive(Debug, Hash, SerAttrs)]
 #[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct FormalParameters<'a> {
     #[serde(flatten)]
     pub span: Span,
