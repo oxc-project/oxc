@@ -110,7 +110,7 @@ impl PreferSpyOn {
         }
 
         ctx.diagnostic_with_fix(
-            UseJestSpyOn(Span { start: call_expr.span.start, end: first_fn_member.span.end }),
+            UseJestSpyOn(Span::new(call_expr.span.start, first_fn_member.span.end)),
             || {
                 let (end, has_mock_implementation) = if jest_fn_call.members.len() > 1 {
                     let mut has_mock_implementation = false;
@@ -131,7 +131,7 @@ impl PreferSpyOn {
                 };
                 let content =
                     Self::build_code(call_expr, left_assign, has_mock_implementation, ctx);
-                Fix::new(content, Span { start: assign_expr.span.start, end })
+                Fix::new(content, Span::new(assign_expr.span.start, end))
             },
         );
     }
