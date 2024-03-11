@@ -50,7 +50,9 @@ impl<'a> SeparatedList<'a> for ObjectExpressionProperties<'a> {
         }?;
 
         if p.at(Kind::Comma) && p.peek_at(self.close()) {
-            self.trailing_comma = Some(p.end_span(p.start_span()));
+            let span = p.start_span();
+            p.bump_any();
+            self.trailing_comma = Some(p.end_span(span));
         }
 
         self.elements.push(element);
@@ -121,7 +123,9 @@ impl<'a> SeparatedList<'a> for ArrayExpressionList<'a> {
         };
 
         if p.at(Kind::Comma) && p.peek_at(self.close()) {
-            self.trailing_comma = Some(p.end_span(p.start_span()));
+            let span = p.start_span();
+            p.bump_any();
+            self.trailing_comma = Some(p.end_span(span));
         }
 
         self.elements.push(element?);
