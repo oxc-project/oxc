@@ -60,7 +60,22 @@ impl Rule for Namespace {
             };
 
             let check_binding_exported = |name: &str, span| {
-                if module.exported_bindings.get(name).is_some() {
+                if module.exported_bindings.contains_key(name)
+                    || module.star_export_entries.iter().any(|entry| {
+                        entry.module_request.as_ref().is_some_and(|name_span| {
+                            module
+                                .exported_bindings_from_star_export
+                                .get(
+                                    &module
+                                        .loaded_modules
+                                        .get(name_span.name())
+                                        .unwrap()
+                                        .resolved_absolute_path,
+                                )
+                                .is_some_and(|bindings| bindings.contains(&CompactStr::from(name)))
+                        })
+                    })
+                {
                     return;
                 }
                 ctx.diagnostic(NamespaceDiagnostic::NoExport(span, name.into(), source.clone()));
@@ -119,16 +134,16 @@ fn test() {
         r"import * as foo from './empty-folder';",
         r#"import * as names from "./named-exports"; console.log((names.b).c);"#,
         r#"import * as names from "./named-exports"; console.log(names.a);"#,
-        // r#"import * as names from "./re-export-names"; console.log(names.foo);"#,
+        r#"import * as names from "./re-export-names"; console.log(names.foo);"#,
         r"import * as elements from './jsx';",
-        // r#"import * as foo from "./jsx/re-export.js";
+        r#"import * as foo from "./jsx/re-export.js";
         // console.log(foo.jsxFoo);"#,
-        // r#"import * as foo from "./jsx/bar/index.js";
+        r#"import * as foo from "./jsx/bar/index.js";
         // console.log(foo.Baz1);
         // console.log(foo.Baz2);
         // console.log(foo.Qux1);
         // console.log(foo.Qux2);"#,
-        // r#"import * as foo from './common';"#,
+        r"import * as foo from './common';",
         // r#"import * as names from "./named-exports"; const { a } = names"#,
         // r#"import * as names from "./named-exports"; const { d: c } = names"#,
         // r#"import * as names from "./named-exports";
@@ -214,7 +229,7 @@ fn test() {
         // r#"import b from './deep/default'; console.log(b.e)"#,
         r"console.log(names.c); import * as names from './named-exports';",
         r"function x() { console.log(names.c) } import * as names from './named-exports';",
-        // r#"import * as ree from "./re-export"; console.log(ree.default)"#,
+        r#"import * as ree from "./re-export"; console.log(ree.default)"#,
         r#"import * as Names from "./named-exports"; const Foo = <Names.e/>"#,
         // r#"import { "b" as b } from "./deep/a"; console.log(b.e)"#,
         // r#"import { "b" as b } from "./deep/a"; console.log(b.c.e)"#,
