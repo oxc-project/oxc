@@ -31,13 +31,12 @@ pub struct SourceType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SerAttrs)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(feature = "wasm", derive(Tsify))]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "lowercase")]
 pub enum Language {
     JavaScript,
-    #[serde(rename_all = "camelCase")]
-    TypeScript {
-        is_definition_file: bool,
-    },
+    TypeScript,
+    #[serde(rename = "typescriptDefinition")]
+    TypeScriptDefinition,
 }
 
 /// Script or Module
@@ -91,15 +90,15 @@ impl SourceType {
     }
 
     pub fn is_javascript(self) -> bool {
-        matches!(self.language, Language::JavaScript)
+        self.language == Language::JavaScript
     }
 
     pub fn is_typescript(self) -> bool {
-        matches!(self.language, Language::TypeScript { .. })
+        matches!(self.language, Language::TypeScript | Language::TypeScriptDefinition)
     }
 
     pub fn is_typescript_definition(self) -> bool {
-        matches!(self.language, Language::TypeScript { is_definition_file: true })
+        self.language == Language::TypeScriptDefinition
     }
 
     pub fn is_jsx(self) -> bool {
@@ -131,7 +130,7 @@ impl SourceType {
     #[must_use]
     pub fn with_typescript(mut self, yes: bool) -> Self {
         if yes {
-            self.language = Language::TypeScript { is_definition_file: false };
+            self.language = Language::TypeScript;
         }
         self
     }
@@ -139,7 +138,7 @@ impl SourceType {
     #[must_use]
     pub fn with_typescript_definition(mut self, yes: bool) -> Self {
         if yes {
-            self.language = Language::TypeScript { is_definition_file: true };
+            self.language = Language::TypeScriptDefinition;
         }
         self
     }
@@ -182,14 +181,15 @@ impl SourceType {
                 )
             })?;
 
-        let is_definition_file = file_name.ends_with(".d.ts")
-            || file_name.ends_with(".d.mts")
-            || file_name.ends_with(".d.cts");
-
         let language = match extension {
             "js" | "mjs" | "cjs" | "jsx" => Language::JavaScript,
-            "ts" | "mts" | "cts" | "tsx" => Language::TypeScript { is_definition_file },
-            _ => unreachable!(),
+            "ts" if file_name.ends_with(".d.ts") => Language::TypeScriptDefinition,
+            "mts" if file_name.ends_with(".d.mts") => Language::TypeScriptDefinition,
+            "cts" if file_name.ends_with(".d.cts") => Language::TypeScriptDefinition,
+            _ => {
+                debug_assert!(matches!(extension, "ts" | "mts" | "cts" | "tsx"));
+                Language::TypeScript
+            }
         };
 
         let variant = match extension {
