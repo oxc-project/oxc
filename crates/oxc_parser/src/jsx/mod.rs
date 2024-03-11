@@ -232,21 +232,20 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // bump `{`
 
-        // let expr_span = self.start_span();
         let expr = if self.eat(Kind::RCurly) {
+            // Handle comment between curly braces (ex. `{/* comment */}`)
+            //                                            ^^^^^^^^^^^^^ span
             let span = self.end_span(span);
             JSXExpression::EmptyExpression(
-                // Handle comment between curly braces (ex. `{/* comment */}`)
-                //                                            ^^^^^^^^^^^^^ span
                 self.ast.jsx_empty_expression(Span::new(span.start + 1, span.end - 1)),
             )
         } else {
             let expr = self.parse_jsx_assignment_expression().map(JSXExpression::Expression)?;
             if in_jsx_child {
-                self.expect_jsx_child(Kind::RCurly)?;
+                self.expect_jsx_child(Kind::RCurly)
             } else {
-                self.expect(Kind::RCurly)?;
-            }
+                self.expect(Kind::RCurly)
+            }?;
             expr
         };
 
