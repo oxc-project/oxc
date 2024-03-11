@@ -231,21 +231,25 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<JSXExpressionContainer<'a>> {
         let span = self.start_span();
         self.bump_any(); // bump `{`
-        let expr = match self.cur_kind() {
-            // {} empty
-            Kind::RCurly => JSXExpression::EmptyExpression(
-                self.ast
-                    // Handle comment between curly braces (ex. `{/* comment */}`)
-                    .jsx_empty_expression(Span::new(self.prev_token_end, self.cur_token().start)),
-            ),
-            // {expr}
-            _ => self.parse_jsx_assignment_expression().map(JSXExpression::Expression)?,
-        };
-        if in_jsx_child {
-            self.expect_jsx_child(Kind::RCurly)?;
+
+        // let expr_span = self.start_span();
+        let expr = if self.eat(Kind::RCurly) {
+            let span = self.end_span(span);
+            JSXExpression::EmptyExpression(
+                // Handle comment between curly braces (ex. `{/* comment */}`)
+                //                                            ^^^^^^^^^^^^^ span
+                self.ast.jsx_empty_expression(Span::new(span.start + 1, span.end - 1)),
+            )
         } else {
-            self.expect(Kind::RCurly)?;
-        }
+            let expr = self.parse_jsx_assignment_expression().map(JSXExpression::Expression)?;
+            if in_jsx_child {
+                self.expect_jsx_child(Kind::RCurly)?;
+            } else {
+                self.expect(Kind::RCurly)?;
+            }
+            expr
+        };
+
         Ok(self.ast.jsx_expression_container(self.end_span(span), expr))
     }
 
