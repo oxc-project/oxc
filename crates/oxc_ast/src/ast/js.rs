@@ -23,7 +23,7 @@ export interface BindingIdentifier extends Span { type: "Identifier", name: Atom
 export interface IdentifierReference extends Span { type: "Identifier", name: Atom }
 export interface IdentifierName extends Span { type: "Identifier", name: Atom }
 export interface LabelIdentifier extends Span { type: "Identifier", name: Atom }
-export interface AssignmentTargetRest extends Span { type: "RestElement", target: AssignmentTarget }
+export interface AssignmentTargetRest extends Span { type: "RestElement", argument: AssignmentTarget }
 export interface BindingRestElement extends Span { type: "RestElement", argument: BindingPattern }
 export interface FormalParameterRest extends Span {
     type: "RestElement",
