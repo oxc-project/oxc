@@ -1,6 +1,6 @@
 parser_babel Summary:
 AST Parsed     : 2090/2096 (99.71%)
-Positive Passed: 2080/2096 (99.24%)
+Positive Passed: 2083/2096 (99.38%)
 Negative Passed: 1362/1500 (90.80%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
@@ -140,9 +140,6 @@ Expect Syntax Error: "typescript/types/read-only-3/input.ts"
 Expect Syntax Error: "typescript/types/read-only-4/input.ts"
 Expect Syntax Error: "typescript/types/tuple-optional-invalid/input.ts"
 Expect Syntax Error: "typescript/types/tuple-required-after-labeled-optional/input.ts"
-Duplicated comments " 3 ": "comments/basic/nested-parentheses/input.js"
-Duplicated comments " 1 ": "comments/basic/object-method/input.js"
-Duplicated comments " 3 ": "comments/basic/sequence-expression/input.js"
 Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
 
   × Unexpected new.target expression
