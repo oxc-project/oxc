@@ -168,10 +168,9 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                         let comments = ctx
                                             .semantic()
                                             .trivias()
-                                            .comments()
-                                            .range(node_start..node_end)
+                                            .comments_range(node_start..node_end)
                                             .map(|(start, comment)| {
-                                                (*comment, Span::new(*start, comment.end()))
+                                                (*comment, Span::new(*start, comment.end))
                                             });
 
                                         let comments_text = {
@@ -180,7 +179,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                                 let comment = &source_code
                                                     [span.start as usize..span.end as usize];
 
-                                                match comment_interface.kind() {
+                                                match comment_interface.kind {
                                                     CommentKind::SingleLine => {
                                                         let single_line_comment: String =
                                                             format!("//{comment}\n");
