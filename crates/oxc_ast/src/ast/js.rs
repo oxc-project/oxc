@@ -1027,7 +1027,7 @@ pub enum AssignmentTargetPattern<'a> {
 // See serializer in serialize.rs
 #[derive(Debug, Hash, SerAttrs)]
 #[cfg_attr(feature = "wasm", derive(Tsify))]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "camelCase")]
 pub struct ArrayAssignmentTarget<'a> {
     #[serde(flatten)]
     pub span: Span,
