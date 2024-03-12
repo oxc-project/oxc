@@ -146,8 +146,6 @@ impl<'a> JSDocParser<'a> {
 
 #[cfg(test)]
 mod test {
-    use pretty_assertions::assert_eq;
-
     use super::JSDocParser;
     use super::{JSDocTag, JSDocTagKind};
     use super::{Param, ParamType};
