@@ -34,11 +34,25 @@ impl Rule for ExhaustiveDeps {
     fn run_once(&self, ctx: &LintContext) {
         ctx.semantic().nodes().iter().for_each(|node| {
             if is_hook_call(node) {
-                println!("hook");
+                dbg!(ctx.semantic().scopes());
             }
         });
     }
 }
+
+// TODO: register vars in component scope?
+// TODO: how to detect whether a func is a component?
+// for each var access in hook, check if access is either:
+// - valid (ref, const, etc)
+// - listed as a dependency in dependencies array
+
+// Check the declared dependencies for this reactive hook. If there is no
+// second argument then the reactive callback will re-run on every render.
+// So no need to check for dependency inclusion.
+
+// struct ReactHookCall {
+//     name: string,
+// }
 
 fn is_hook_call(node: &AstNode) -> bool {
     let AstKind::CallExpression(call_expr) = node.kind() else { return false };
