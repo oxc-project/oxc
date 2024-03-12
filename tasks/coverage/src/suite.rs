@@ -12,17 +12,18 @@ use console::Style;
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use futures::future::join_all;
+use rayon::prelude::*;
+use similar::{ChangeTag, TextDiff};
+use tokio::runtime::Runtime;
+use walkdir::WalkDir;
+
 use oxc_allocator::Allocator;
 use oxc_ast::Trivias;
 use oxc_diagnostics::{miette::NamedSource, GraphicalReportHandler, GraphicalTheme};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
+use oxc_span::{SourceType, Span};
 use oxc_tasks_common::normalize_path;
-use rayon::prelude::*;
-use similar::{ChangeTag, TextDiff};
-use tokio::runtime::Runtime;
-use walkdir::WalkDir;
 
 use crate::{project_root, AppArgs};
 
@@ -435,11 +436,11 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     }
 
     fn check_comments(&self, trivias: &Trivias) -> Option<TestResult> {
-        let mut uniq: HashSet<(u32, u32)> = HashSet::new();
-        for (start, end, _) in &trivias.comments {
-            if !uniq.insert((*start, *end)) {
+        let mut uniq: HashSet<Span> = HashSet::new();
+        for (_, span) in trivias.comments() {
+            if !uniq.insert(span) {
                 return Some(TestResult::DuplicatedComments(
-                    self.code()[*start as usize..*end as usize].to_string(),
+                    span.source_text(self.code()).to_string(),
                 ));
             }
         }

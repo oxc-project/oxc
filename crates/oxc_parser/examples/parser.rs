@@ -21,12 +21,8 @@ fn main() -> Result<(), String> {
     println!("{}", serde_json::to_string_pretty(&ret.program).unwrap());
 
     println!("Comments:");
-    let comments = ret
-        .trivias
-        .comments
-        .into_iter()
-        .map(|(start, end, _)| &source_text[start as usize..end as usize])
-        .collect::<Vec<_>>();
+    let comments =
+        ret.trivias.comments().map(|(_, span)| span.source_text(&source_text)).collect::<Vec<_>>();
     println!("{comments:?}");
 
     if ret.errors.is_empty() {

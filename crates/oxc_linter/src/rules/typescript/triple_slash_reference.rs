@@ -109,11 +109,10 @@ impl Rule for TripleSlashReference {
         // We don't need to iterate over all comments since Triple-slash directives are only valid at the top of their containing file.
         // We are trying to get the first statement start potioin, falling back to the program end if statement does not exist
         let comments_range_end = program.body.first().map_or(program.span.end, |v| v.span().start);
-        let comments = ctx.semantic().trivias().comments();
         let mut refs_for_import = HashMap::new();
 
-        for (start, comment) in comments.range(0..comments_range_end) {
-            let raw = &ctx.semantic().source_text()[*start as usize..comment.end() as usize];
+        for (start, comment) in ctx.semantic().trivias().comments_range(0..comments_range_end) {
+            let raw = &ctx.semantic().source_text()[*start as usize..comment.end as usize];
             if let Some((group1, group2)) = get_attr_key_and_value(raw) {
                 if (group1 == "types" && self.types == TypesOption::Never)
                     || (group1 == "path" && self.path == PathOption::Never)
@@ -121,12 +120,12 @@ impl Rule for TripleSlashReference {
                 {
                     ctx.diagnostic(TripleSlashReferenceDiagnostic(
                         group2.to_string(),
-                        Span::new(*start - 2, comment.end()),
+                        Span::new(*start - 2, comment.end),
                     ));
                 }
 
                 if group1 == "types" && self.types == TypesOption::PreferImport {
-                    refs_for_import.insert(group2, Span::new(*start - 2, comment.end()));
+                    refs_for_import.insert(group2, Span::new(*start - 2, comment.end));
                 }
             }
         }
