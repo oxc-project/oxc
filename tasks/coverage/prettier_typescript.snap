@@ -1,6 +1,6 @@
 prettier_typescript Summary:
 AST Parsed     : 5243/5243 (100.00%)
-Positive Passed: 2871/5243 (54.76%)
+Positive Passed: 2872/5243 (54.78%)
 Expect to Parse: "compiler/DeclarationErrorsNoEmitOnError.ts"
 Expect to Parse: "compiler/abstractInterfaceIdentifierName.ts"
 Expect to Parse: "compiler/abstractPropertyBasics.ts"
@@ -72,7 +72,6 @@ Expect to Parse: "compiler/augmentedTypesModules3b.ts"
 Expect to Parse: "compiler/augmentedTypesModules4.ts"
 Expect to Parse: "compiler/autonumberingInEnums.ts"
 Expect to Parse: "compiler/avoidCycleWithVoidExpressionReturnedFromArrow.ts"
-Expect to Parse: "compiler/awaitExpressionInnerCommentEmit.ts"
 Expect to Parse: "compiler/awaitUnionPromise.ts"
 Expect to Parse: "compiler/awaitedTypeCrash.ts"
 Expect to Parse: "compiler/awaitedTypeJQuery.ts"
