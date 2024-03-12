@@ -16187,14 +16187,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  13 │ <test2 -data={32} />;
     ╰────
 
-  × Invalid characters after number
-    ╭─[conformance/jsx/tsxAttributeInvalidNames.tsx:12:10]
- 11 │ // Invalid names
- 12 │ <test1 32data={32} />;
-    ·          ────
- 13 │ <test2 -data={32} />;
-    ╰────
-
   × Unexpected token
    ╭─[conformance/jsx/tsxErrorRecovery1.tsx:7:20]
  6 │ function foo() {
