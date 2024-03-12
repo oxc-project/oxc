@@ -362,8 +362,8 @@ impl<'a> ParserImpl<'a> {
         if !self.at(Kind::Ident) && !self.cur_kind().is_all_keyword() {
             return Err(self.unexpected());
         }
-        // we are at a valid normal Ident or Keyword, let's keep on lexing for `-`
-        self.re_lex_jsx_identifier();
+        // Currently at a valid normal Ident or Keyword, keep on lexing for `-` in `<component-name />`
+        self.continue_lex_jsx_identifier();
         self.bump_any();
         let span = self.end_span(span);
         let name = span.source_text(self.source_text);
