@@ -142,7 +142,7 @@ pub struct RegExpLiteral<'a> {
     pub regex: RegExp<'a>,
 }
 
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone, Hash, SerAttrs)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(feature = "wasm", derive(Tsify))]
 pub struct RegExp<'a> {
@@ -234,7 +234,7 @@ impl fmt::Display for RegExpFlags {
     }
 }
 
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone, Hash, SerAttrs)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(feature = "wasm", derive(Tsify))]
 pub struct EmptyObject;
