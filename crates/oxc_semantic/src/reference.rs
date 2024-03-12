@@ -1,14 +1,18 @@
+use oxc_macros::SerAttrs;
 use oxc_span::{CompactStr, Span};
 #[cfg(feature = "serde")]
 use serde::Serialize;
+#[cfg(feature = "wasm")]
+use tsify::Tsify;
 
 use crate::{symbol::SymbolId, AstNodeId};
 
 pub use oxc_syntax::reference::{ReferenceFlag, ReferenceId};
 
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Clone, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(rename_all = "camelCase")]
 pub struct Reference {
     span: Span,
     /// The name of the identifier that was referred to

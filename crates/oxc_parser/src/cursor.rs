@@ -27,6 +27,7 @@ impl<'a> ParserImpl<'a> {
     #[inline]
     pub(crate) fn end_span(&self, mut span: Span) -> Span {
         span.end = self.prev_token_end;
+        debug_assert!(span.end >= span.start);
         span
     }
 

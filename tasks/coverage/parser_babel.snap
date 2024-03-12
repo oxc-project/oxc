@@ -2214,19 +2214,19 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Unexpected trailing comma after rest element
    ╭─[es2015/array-rest-spread/comma-after-rest/input.js:1:6]
  1 │ [...a,] = [];
-   ·      ▲
+   ·      ─
    ╰────
 
   × Unexpected trailing comma after rest element
    ╭─[es2015/array-rest-spread/comma-after-spread-for-in/input.js:1:11]
  1 │ for ([...a,] in []);
-   ·           ▲
+   ·           ─
    ╰────
 
   × Unexpected trailing comma after rest element
    ╭─[es2015/array-rest-spread/comma-after-spread-nested/input.js:1:7]
  1 │ [[...a,]] = [];
-   ·       ▲
+   ·       ─
    ╰────
 
   × Spread must be last element

@@ -2423,7 +2423,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/assignment/dstr/array-rest-before-elision.js:23:9]
  22 │ 
  23 │ 0, [...x,] = [];
-    ·         ▲
+    ·         ─
     ╰────
 
   × Spread must be last element
@@ -2437,7 +2437,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/assignment/dstr/array-rest-elision-invalid.js:23:9]
  22 │ 
  23 │ 0, [...x,] = [];
-    ·         ▲
+    ·         ─
     ╰────
 
   × Cannot assign to this expression
@@ -30252,7 +30252,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/for-in/dstr/array-rest-before-elision.js:32:11]
  31 │ 
  32 │ for ([...x,] in [[]]) ;
-    ·           ▲
+    ·           ─
     ╰────
 
   × Unexpected token
@@ -30266,7 +30266,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/for-in/dstr/array-rest-elision-invalid.js:32:11]
  31 │ 
  32 │ for ([...x,] in [[]]) ;
-    ·           ▲
+    ·           ─
     ╰────
 
   × Unexpected token
@@ -30758,7 +30758,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/for-of/dstr/array-rest-before-elision.js:32:11]
  31 │ 
  32 │ for ([...x,] of [[]]) ;
-    ·           ▲
+    ·           ─
     ╰────
 
   × Unexpected token
@@ -30772,7 +30772,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/for-of/dstr/array-rest-elision-invalid.js:32:11]
  31 │ 
  32 │ for ([...x,] of [[]]) ;
-    ·           ▲
+    ·           ─
     ╰────
 
   × Unexpected token
