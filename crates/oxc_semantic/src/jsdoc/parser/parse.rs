@@ -143,6 +143,8 @@ impl<'a> JSDocParser<'a> {
 
 #[cfg(test)]
 mod test {
+    use pretty_assertions::assert_eq;
+
     use super::JSDocParser;
     use super::{JSDocTag, JSDocTagKind};
     use super::{Param, ParamType};
@@ -174,12 +176,23 @@ mod test {
         assert_eq!(
             parse_from_full_text(
                 "/** 
-this is comment
+this is
+comment
 @x
 */"
             )
             .0,
-            "this is comment"
+            "this is\ncomment"
+        );
+        assert_eq!(
+            parse_from_full_text(
+                "/** 
+　　　　　　　　　* 日本語とか
+　　　　　　　　　* multibyte文字はどう？
+                  */"
+            )
+            .0,
+            "日本語とか\nmultibyte文字はどう？"
         );
     }
 
@@ -444,5 +457,55 @@ comment */"
                 },
             ]
         );
+    }
+
+    fn parses_practical_with_multibyte() {
+        let jsdoc = parse_from_full_text(
+            "/**
+              * flat tree data on expanded state
+              *
+              * @export
+              * @template T
+              * @param {*} data : table data
+              * @param {string} childrenColumnName : 指定树形结构的列名
+              * @param {Set<Key>} expandedKeys : 展开的行对应的keys
+              * @param {GetRowKey<T>} getRowKey  : 获取当前rowKey的方法
+              * @returns flattened data
+              */",
+        );
+        assert_eq!(jsdoc.0, "flat tree data on expanded state");
+        // assert_eq!(
+        //     jsdoc.1,
+        //     vec![
+        //         JSDocTag {
+        //             kind: JSDocTagKind::Parameter(Param {
+        //                 name: "a",
+        //                 r#type: Some(ParamType { value: "boolean" })
+        //             }),
+        //             comment: String::new(),
+        //         },
+        //         JSDocTag {
+        //             kind: JSDocTagKind::Parameter(Param {
+        //                 name: "b",
+        //                 r#type: Some(ParamType { value: "string" })
+        //             }),
+        //             comment: String::new(),
+        //         },
+        //         JSDocTag {
+        //             kind: JSDocTagKind::Parameter(Param {
+        //                 name: "c",
+        //                 r#type: Some(ParamType { value: "string" })
+        //             }),
+        //             comment: "comment".to_string(),
+        //         },
+        //         JSDocTag {
+        //             kind: JSDocTagKind::Parameter(Param {
+        //                 name: "d",
+        //                 r#type: Some(ParamType { value: "Num" })
+        //             }),
+        //             comment: "comment2".to_string(),
+        //         },
+        //     ]
+        // );
     }
 }
