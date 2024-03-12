@@ -1,6 +1,6 @@
 parser_typescript Summary:
 AST Parsed     : 5240/5243 (99.94%)
-Positive Passed: 5233/5243 (99.81%)
+Positive Passed: 5231/5243 (99.77%)
 Negative Passed: 1062/4879 (21.77%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
@@ -2697,7 +2697,7 @@ Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardOfFormTypeOfEq
 Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardOfFormTypeOfNotEqualHasNoEffect.ts"
 Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardOfFormTypeOfOther.ts"
 Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsDefeat.ts"
-Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsInIfStatement.ts"
+Duplicated comments " change value of x": "conformance/expressions/typeGuards/typeGuardsInIfStatement.ts"
 Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsWithAny.ts"
 Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsWithInstanceOf.ts"
 Expect Syntax Error: "conformance/expressions/typeGuards/typeGuardsWithInstanceOfByConstructorSignature.ts"
@@ -3819,6 +3819,7 @@ Expect Syntax Error: "conformance/types/unknown/unknownControlFlow.ts"
 Expect Syntax Error: "conformance/types/unknown/unknownType1.ts"
 Expect Syntax Error: "conformance/types/unknown/unknownType2.ts"
 Expect Syntax Error: "conformance/types/witness/witness.ts"
+Duplicated comments "comment2": "compiler/awaitExpressionInnerCommentEmit.ts"
 Expect to Parse: "compiler/bom-utf16be.ts"
 
   × Invalid Character `￾`
@@ -3853,6 +3854,7 @@ Expect to Parse: "compiler/emitBundleWithShebangAndPrologueDirectives1.ts"
    ·  ─
  7 │ "use strict"
    ╰────
+Duplicated comments " must be identifier?": "compiler/jsxNestedWithinTernaryParsesCorrectly.tsx"
 Expect to Parse: "compiler/withStatementInternalComments.ts"
 
   × 'with' statements are not allowed

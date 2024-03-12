@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     fs::{self, File},
     io::{stdout, Read, Write},
     panic::UnwindSafe,
@@ -12,6 +13,7 @@ use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use futures::future::join_all;
 use oxc_allocator::Allocator;
+use oxc_ast::Trivias;
 use oxc_diagnostics::{miette::NamedSource, GraphicalReportHandler, GraphicalTheme};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -35,6 +37,7 @@ pub enum TestResult {
     CorrectError(String, /* panicked */ bool),
     RuntimeError(String),
     CodegenError(/* reason */ &'static str),
+    DuplicatedComments(String),
     Snapshot(String),
 }
 
@@ -315,6 +318,9 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         let parser_ret = Parser::new(&allocator, source_text, source_type)
             .allow_return_outside_function(self.allow_return_outside_function())
             .parse();
+        if let Some(res) = self.check_comments(&parser_ret.trivias) {
+            return res;
+        }
 
         // Make sure serialization doesn't crash for ast and hir, also for code coverage.
         let _json = parser_ret.program.to_json();
@@ -390,6 +396,15 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             TestResult::Snapshot(snapshot) => {
                 writer.write_all(snapshot.as_bytes())?;
             }
+            TestResult::DuplicatedComments(comment) => {
+                writer.write_all(
+                    format!(
+                        "Duplicated comments \"{comment}\": {:?}\n",
+                        normalize_path(self.path())
+                    )
+                    .as_bytes(),
+                )?;
+            }
             TestResult::Passed | TestResult::ToBeRun | TestResult::CorrectError(..) => {}
         }
         Ok(())
@@ -416,6 +431,18 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     }
 
     fn check_semantic(&self, _semantic: &oxc_semantic::Semantic<'_>) -> Option<TestResult> {
+        None
+    }
+
+    fn check_comments(&self, trivias: &Trivias) -> Option<TestResult> {
+        let mut uniq: HashSet<(u32, u32)> = HashSet::new();
+        for (start, end, _) in &trivias.comments {
+            if !uniq.insert((*start, *end)) {
+                return Some(TestResult::DuplicatedComments(
+                    self.code()[*start as usize..*end as usize].to_string(),
+                ));
+            }
+        }
         None
     }
 }
