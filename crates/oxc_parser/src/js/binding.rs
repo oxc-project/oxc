@@ -61,7 +61,21 @@ impl<'a> ParserImpl<'a> {
     pub(super) fn parse_rest_element(&mut self) -> Result<Box<'a, BindingRestElement<'a>>> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
-        let argument = self.parse_binding_pattern_with_initializer()?;
+        let init_span = self.start_span();
+
+        let kind = self.parse_binding_pattern_kind()?;
+        // Rest element does not allow `?`, checked in checker/typescript.rs
+        if self.at(Kind::Question) && self.ts_enabled() {
+            let span = self.cur_token().span();
+            self.bump_any();
+            self.error(diagnostics::ARestParameterCannotBeOptional(span));
+        }
+        // The span is not extended to its type_annotation
+        let type_annotation = self.parse_ts_type_annotation()?;
+        let pattern = self.ast.binding_pattern(kind, type_annotation, false);
+        // Rest element does not allow `= initializer`, .
+        let argument =
+            self.with_context(Context::In, |p| p.parse_initializer(init_span, pattern))?;
         let span = self.end_span(span);
 
         if self.at(Kind::Comma) {
