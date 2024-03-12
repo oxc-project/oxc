@@ -34,6 +34,30 @@ expression: namespace
    ╰────
 
   ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
+   ╭─[index.js:1:51]
+ 1 │ import * as names from "./named-exports"; const { c } = names
+   ·                                                   ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
+   ╭─[index.js:1:66]
+ 1 │ import * as names from "./named-exports"; function b() { const { c } = names }
+   ·                                                                  ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
+   ╭─[index.js:1:51]
+ 1 │ import * as names from "./named-exports"; const { c: d } = names
+   ·                                                   ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
+   ╭─[index.js:1:51]
+ 1 │ import * as names from "./named-exports"; const { c: { d } } = names
+   ·                                                   ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
    ╭─[index.js:1:19]
  1 │ console.log(names.c); import * as names from './named-exports';
    ·                   ─
