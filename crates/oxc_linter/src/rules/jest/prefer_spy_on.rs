@@ -118,7 +118,8 @@ impl PreferSpyOn {
                         .members
                         .iter()
                         .filter(|member| member.is_name_equal("mockImplementation"))
-                        .count() > 0;
+                        .count()
+                        > 0;
 
                     (second.span.start - 1, has_mock_implementation)
                 } else {
@@ -168,10 +169,8 @@ impl PreferSpyOn {
 
         formatter.print_str(b".mockImplementation(");
 
-        if let Some(argument) = Self::get_jest_fn_call(call_expr) {
-            if let Argument::Expression(expr) = argument {
-                formatter.print_expression(expr);
-            }
+        if let Some(Argument::Expression(expr)) = Self::get_jest_fn_call(call_expr) {
+            formatter.print_expression(expr);
         }
 
         formatter.print(b')');
@@ -193,13 +192,13 @@ impl PreferSpyOn {
                 None
             }
             Expression::CallExpression(call_expr) => Self::get_jest_fn_call(call_expr),
-            _ => None
+            _ => None,
         }
     }
 
     fn find_mem_expr<'a>(mem_expr: &'a MemberExpression<'a>) -> Option<&'a CallExpression<'a>> {
         match mem_expr.object() {
-            Expression::CallExpression(call_expr) => Some(&call_expr),
+            Expression::CallExpression(call_expr) => Some(call_expr),
             Expression::MemberExpression(mem_expr) => Self::find_mem_expr(mem_expr),
             _ => None,
         }
