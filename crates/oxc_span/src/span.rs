@@ -1,6 +1,7 @@
 use std::hash::{Hash, Hasher};
 
 use miette::{SourceOffset, SourceSpan};
+use oxc_macros::SerAttrs;
 #[cfg(feature = "serde")]
 use serde::Serialize;
 #[cfg(feature = "wasm")]
@@ -14,7 +15,7 @@ pub const SPAN: Span = Span::new(0, 0);
 /// See the [`text-size`](https://docs.rs/text-size) crate for details.
 /// Utility methods can be copied from the `text-size` crate if they are needed.
 /// NOTE: `u32` is sufficient for "all" reasonable programs. Larger than u32 is a 4GB JS file.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, SerAttrs)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(feature = "wasm", derive(Tsify))]
 #[non_exhaustive] // disallow struct expression constructor `Span {}`
