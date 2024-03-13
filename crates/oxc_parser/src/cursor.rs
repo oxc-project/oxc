@@ -221,9 +221,11 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    /// Tell lexer to re-read a jsx identifier
-    pub(crate) fn re_lex_jsx_identifier(&mut self) {
-        self.token = self.lexer.next_jsx_identifier(self.cur_token().start);
+    /// Tell lexer to continue reading jsx identifier if the lexer character position is at `-` for `<component-name>`
+    pub(crate) fn continue_lex_jsx_identifier(&mut self) {
+        if let Some(token) = self.lexer.continue_lex_jsx_identifier() {
+            self.token = token;
+        }
     }
 
     pub(crate) fn re_lex_right_angle(&mut self) -> Kind {

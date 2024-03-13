@@ -20,7 +20,7 @@ pub use petgraph;
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 use class::ClassTable;
 pub use jsdoc::JSDocFinder;
-use oxc_ast::{ast::IdentifierReference, AstKind, TriviasMap};
+use oxc_ast::{ast::IdentifierReference, AstKind, Trivias};
 use oxc_span::SourceType;
 pub use oxc_syntax::{
     module_record::ModuleRecord,
@@ -55,7 +55,7 @@ pub struct Semantic<'a> {
 
     classes: ClassTable,
 
-    trivias: Rc<TriviasMap>,
+    trivias: Rc<Trivias>,
 
     module_record: Arc<ModuleRecord>,
 
@@ -95,7 +95,7 @@ impl<'a> Semantic<'a> {
         &mut self.scopes
     }
 
-    pub fn trivias(&self) -> &TriviasMap {
+    pub fn trivias(&self) -> &Trivias {
         &self.trivias
     }
 

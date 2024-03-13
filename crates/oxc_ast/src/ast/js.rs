@@ -1027,7 +1027,7 @@ pub enum AssignmentTargetPattern<'a> {
 // See serializer in serialize.rs
 #[derive(Debug, Hash, SerAttrs)]
 #[cfg_attr(feature = "wasm", derive(Tsify))]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "camelCase")]
 pub struct ArrayAssignmentTarget<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -1898,7 +1898,7 @@ impl<'a> Function<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SerAttrs)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(feature = "wasm", derive(Tsify))]
 pub enum FunctionType {
@@ -2069,7 +2069,7 @@ impl<'a> Class<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SerAttrs)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(feature = "wasm", derive(Tsify))]
 pub enum ClassType {
@@ -2208,7 +2208,7 @@ pub struct MethodDefinition<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SerAttrs)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(feature = "wasm", derive(Tsify))]
 pub enum MethodDefinitionType {
@@ -2238,7 +2238,7 @@ pub struct PropertyDefinition<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SerAttrs)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(feature = "wasm", derive(Tsify))]
 pub enum PropertyDefinitionType {

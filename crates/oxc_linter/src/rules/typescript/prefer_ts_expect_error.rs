@@ -1,4 +1,4 @@
-use oxc_ast::Comment;
+use oxc_ast::CommentKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -53,15 +53,15 @@ impl Rule for PreferTsExpectError {
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.semantic().trivias().comments();
 
-        for (start, &comment) in comments {
-            let raw = &ctx.semantic().source_text()[*start as usize..comment.end() as usize];
+        for (kind, span) in comments {
+            let raw = span.source_text(ctx.semantic().source_text());
 
-            if !is_valid_ts_ignore_present(comment, raw) {
+            if !is_valid_ts_ignore_present(kind, raw) {
                 continue;
             }
 
-            if comment.is_single_line() {
-                let comment_span = Span::new(*start - 2, comment.end());
+            if kind.is_single_line() {
+                let comment_span = Span::new(span.start - 2, span.end);
                 ctx.diagnostic_with_fix(PreferTsExpectErrorDiagnostic(comment_span), || {
                     Fix::new(
                         format!("//{}", raw.replace("@ts-ignore", "@ts-expect-error")),
@@ -69,7 +69,7 @@ impl Rule for PreferTsExpectError {
                     )
                 });
             } else {
-                let comment_span = Span::new(*start - 2, comment.end() + 2);
+                let comment_span = Span::new(span.start - 2, span.end + 2);
                 ctx.diagnostic_with_fix(PreferTsExpectErrorDiagnostic(comment_span), || {
                     Fix::new(
                         format!("/*{}*/", raw.replace("@ts-ignore", "@ts-expect-error")),
@@ -81,7 +81,7 @@ impl Rule for PreferTsExpectError {
     }
 }
 
-fn get_last_comment_line(comment: Comment, raw: &str) -> String {
+fn get_last_comment_line(comment: CommentKind, raw: &str) -> String {
     if comment.is_single_line() {
         return String::from(raw);
     }
@@ -89,7 +89,7 @@ fn get_last_comment_line(comment: Comment, raw: &str) -> String {
     return String::from(raw.lines().last().unwrap_or(raw));
 }
 
-fn is_valid_ts_ignore_present(comment: Comment, raw: &str) -> bool {
+fn is_valid_ts_ignore_present(comment: CommentKind, raw: &str) -> bool {
     let line = get_last_comment_line(comment, raw);
 
     if comment.is_single_line() {

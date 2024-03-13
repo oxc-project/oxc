@@ -3,7 +3,7 @@
 use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, AstKind, Trivias, TriviasMap, Visit};
+use oxc_ast::{ast::*, AstKind, Trivias, Visit};
 use oxc_diagnostics::Error;
 use oxc_span::{CompactStr, SourceType, Span};
 use oxc_syntax::{
@@ -34,7 +34,7 @@ pub struct SemanticBuilder<'a> {
 
     pub source_type: SourceType,
 
-    trivias: Rc<TriviasMap>,
+    trivias: Rc<Trivias>,
 
     /// Semantic early errors such as redeclaration errors.
     errors: RefCell<Vec<Error>>,
@@ -83,7 +83,7 @@ impl<'a> SemanticBuilder<'a> {
         let scope = ScopeTree::default();
         let current_scope_id = scope.root_scope_id();
 
-        let trivias = Rc::new(TriviasMap::default());
+        let trivias = Rc::new(Trivias::default());
         Self {
             source_text,
             source_type,
@@ -111,7 +111,7 @@ impl<'a> SemanticBuilder<'a> {
 
     #[must_use]
     pub fn with_trivias(mut self, trivias: Trivias) -> Self {
-        self.trivias = Rc::new(TriviasMap::from(trivias));
+        self.trivias = Rc::new(trivias);
         self.jsdoc = JSDocBuilder::new(self.source_text, &self.trivias);
         self
     }

@@ -23,7 +23,7 @@ oxc_ast       = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_syntax    = { workspace = true }
-sourcemap     = { version = "7.0.1" }
+sourcemap     = { version = "7.1.1" }
 bitflags      = { workspace = true }
 
 [dev-dependencies]
