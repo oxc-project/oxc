@@ -52,7 +52,7 @@ pub struct Prettier<'a> {
     options: PrettierOptions,
 
     /// A stack of comments that will be carefully placed in the right places.
-    trivias: Peekable<vec::IntoIter<(u32, u32, CommentKind)>>,
+    trivias: Peekable<vec::IntoIter<(CommentKind, Span)>>,
 
     /// The stack of AST Nodes
     /// See <https://github.com/prettier/prettier/blob/main/src/common/ast-path.js>
@@ -73,14 +73,14 @@ impl<'a> Prettier<'a> {
     pub fn new(
         allocator: &'a Allocator,
         source_text: &'a str,
-        trivias: Trivias,
+        trivias: &Trivias,
         options: PrettierOptions,
     ) -> Self {
         Self {
             allocator,
             source_text,
             options,
-            trivias: trivias.comments.into_iter().peekable(),
+            trivias: trivias.comments().collect::<Vec<_>>().into_iter().peekable(),
             stack: vec![],
             group_id_builder: GroupIdBuilder::default(),
             args: PrettierArgs::default(),

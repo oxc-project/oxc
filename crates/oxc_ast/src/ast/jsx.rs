@@ -1,20 +1,24 @@
 //! [JSX](https://facebook.github.io/jsx)
 
 use oxc_allocator::{Box, Vec};
+use oxc_macros::SerAttrs;
 use oxc_span::{Atom, Span};
 #[cfg(feature = "serde")]
 use serde::Serialize;
+#[cfg(feature = "wasm")]
+use tsify::Tsify;
 
 use super::{js::*, literal::*, ts::*};
 
 // 1.2 JSX Elements
 
 /// JSX Element
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type", rename_all = "camelCase")]
 pub struct JSXElement<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub opening_element: Box<'a, JSXOpeningElement<'a>>,
     pub closing_element: Option<Box<'a, JSXClosingElement<'a>>>,
@@ -22,11 +26,12 @@ pub struct JSXElement<'a> {
 }
 
 /// JSX Opening Element
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type", rename_all = "camelCase")]
 pub struct JSXOpeningElement<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub self_closing: bool,
     pub name: JSXElementName<'a>,
@@ -35,47 +40,52 @@ pub struct JSXOpeningElement<'a> {
 }
 
 /// JSX Closing Element
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct JSXClosingElement<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub name: JSXElementName<'a>,
 }
 
 /// JSX Fragment
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type", rename_all = "camelCase")]
 pub struct JSXFragment<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub opening_fragment: JSXOpeningFragment,
     pub closing_fragment: JSXClosingFragment,
     pub children: Vec<'a, JSXChild<'a>>,
 }
 
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct JSXOpeningFragment {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
 }
 
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct JSXClosingFragment {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
 }
 
 /// JSX Element Name
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(untagged)]
 pub enum JSXElementName<'a> {
     /// `<Apple />`
     Identifier(JSXIdentifier<'a>),
@@ -86,11 +96,12 @@ pub enum JSXElementName<'a> {
 }
 
 /// JSX Namespaced Name
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct JSXNamespacedName<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub namespace: JSXIdentifier<'a>,
     pub property: JSXIdentifier<'a>,
@@ -103,11 +114,12 @@ impl<'a> std::fmt::Display for JSXNamespacedName<'a> {
 }
 
 /// JSX Member Expression
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct JSXMemberExpression<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub object: JSXMemberExpressionObject<'a>,
     pub property: JSXIdentifier<'a>,
@@ -122,56 +134,62 @@ impl<'a> JSXMemberExpression<'a> {
     }
 }
 
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(untagged)]
 pub enum JSXMemberExpressionObject<'a> {
     Identifier(JSXIdentifier<'a>),
     MemberExpression(Box<'a, JSXMemberExpression<'a>>),
 }
 
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct JSXExpressionContainer<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub expression: JSXExpression<'a>,
 }
 
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(untagged)]
 pub enum JSXExpression<'a> {
     Expression(Expression<'a>),
     EmptyExpression(JSXEmptyExpression),
 }
 
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct JSXEmptyExpression {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
 }
 
 // 1.3 JSX Attributes
 
 /// JSX Attributes
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(untagged)]
 pub enum JSXAttributeItem<'a> {
     Attribute(Box<'a, JSXAttribute<'a>>),
     SpreadAttribute(Box<'a, JSXSpreadAttribute<'a>>),
 }
 
 /// JSX Attribute
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct JSXAttribute<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub name: JSXAttributeName<'a>,
     pub value: Option<JSXAttributeValue<'a>>,
@@ -184,28 +202,31 @@ impl<'a> JSXAttribute<'a> {
 }
 
 /// JSX Spread Attribute
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct JSXSpreadAttribute<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub argument: Expression<'a>,
 }
 
 /// JSX Attribute Name
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(untagged)]
 pub enum JSXAttributeName<'a> {
     Identifier(JSXIdentifier<'a>),
     NamespacedName(Box<'a, JSXNamespacedName<'a>>),
 }
 
 /// JSX Attribute Value
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(untagged)]
 pub enum JSXAttributeValue<'a> {
     StringLiteral(StringLiteral<'a>),
     ExpressionContainer(JSXExpressionContainer<'a>),
@@ -213,11 +234,12 @@ pub enum JSXAttributeValue<'a> {
     Fragment(Box<'a, JSXFragment<'a>>),
 }
 
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct JSXIdentifier<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub name: Atom<'a>,
 }
@@ -225,9 +247,10 @@ pub struct JSXIdentifier<'a> {
 // 1.4 JSX Children
 
 /// JSX Child
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(untagged)]
 pub enum JSXChild<'a> {
     Text(JSXText<'a>),
     Element(Box<'a, JSXElement<'a>>),
@@ -236,20 +259,22 @@ pub enum JSXChild<'a> {
     Spread(JSXSpreadChild<'a>),
 }
 
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct JSXSpreadChild<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub expression: Expression<'a>,
 }
 
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Hash, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(tag = "type")]
 pub struct JSXText<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub value: Atom<'a>,
 }

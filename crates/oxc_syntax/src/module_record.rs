@@ -65,10 +65,21 @@ pub struct ModuleRecord {
     /// not including export * as namespace declarations.
     pub star_export_entries: Vec<ExportEntry>,
 
+    /// Local exported bindings
     pub exported_bindings: FxHashMap<CompactStr, Span>,
+
+    /// Local duplicated exported bindings, for diagnostics
     pub exported_bindings_duplicated: Vec<NameSpan>,
 
+    /// Reexported bindings from `export * from 'specifier'`
+    /// Keyed by resolved path
+    pub exported_bindings_from_star_export: DashMap<PathBuf, Vec<CompactStr>>,
+
+    /// `export default name`
+    ///         ^^^^^^^ span
     pub export_default: Option<Span>,
+
+    /// Duplicated span of `export default` for diagnostics
     pub export_default_duplicated: Vec<Span>,
 }
 
@@ -99,6 +110,7 @@ impl fmt::Debug for ModuleRecord {
             .field("star_export_entries", &self.star_export_entries)
             .field("exported_bindings", &self.exported_bindings)
             .field("exported_bindings_duplicated", &self.exported_bindings_duplicated)
+            .field("exported_bindings_from_star_export", &self.exported_bindings_from_star_export)
             .field("export_default", &self.export_default)
             .field("export_default_duplicated", &self.export_default_duplicated)
             .finish()

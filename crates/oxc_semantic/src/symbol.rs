@@ -1,5 +1,6 @@
 use oxc_ast::ast::Expression;
 use oxc_index::IndexVec;
+use oxc_macros::SerAttrs;
 use oxc_span::{Atom, CompactStr, Span};
 pub use oxc_syntax::{
     scope::ScopeId,
@@ -13,6 +14,8 @@ use crate::{
 
 #[cfg(feature = "serde")]
 use serde::Serialize;
+#[cfg(feature = "wasm")]
+use tsify::Tsify;
 
 #[cfg(feature = "wasm")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -23,9 +26,10 @@ export type IndexVec<I, T> = Array<T>;
 /// Symbol Table
 ///
 /// `SoA` (Struct of Arrays) for memory efficiency.
-#[derive(Debug, Default)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[derive(Debug, Default, SerAttrs)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[serde(rename_all = "camelCase")]
 pub struct SymbolTable {
     pub spans: IndexVec<SymbolId, Span>,
     pub names: IndexVec<SymbolId, CompactStr>,

@@ -115,16 +115,15 @@ pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseR
 
     let comments = ret
         .trivias
-        .comments
-        .into_iter()
-        .map(|(start, end, kind)| Comment {
+        .comments()
+        .map(|(kind, span)| Comment {
             r#type: match kind {
                 CommentKind::SingleLine => "Line",
                 CommentKind::MultiLine => "Block",
             },
-            value: source_text[start as usize..end as usize].to_string(),
-            start,
-            end,
+            value: span.source_text(&source_text).to_string(),
+            start: span.start,
+            end: span.end,
         })
         .collect::<Vec<Comment>>();
 

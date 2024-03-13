@@ -1,5 +1,7 @@
 //! Common code for JavaScript Syntax
 
+use oxc_macros::SerAttrs;
+
 pub mod assumptions;
 pub mod class;
 pub mod identifier;
@@ -13,7 +15,7 @@ pub mod scope;
 pub mod symbol;
 pub mod xml_entities;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, SerAttrs)]
 pub enum NumberBase {
     Float,
     Decimal,
@@ -28,7 +30,7 @@ impl NumberBase {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, SerAttrs)]
 pub enum BigintBase {
     Decimal,
     Binary,
