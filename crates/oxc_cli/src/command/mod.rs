@@ -78,3 +78,18 @@ mod misc_options {
         assert_eq!(options.threads, Some(4));
     }
 }
+
+/// Prettier Options
+#[derive(Debug, Clone, Bpaf)]
+pub struct PrettierOptions {
+    pub table_imports: bool
+}
+
+impl PrettierOptions {
+    pub fn into_options(self) -> oxc_prettier::PrettierOptions {
+        oxc_prettier::PrettierOptions {
+            table_imports: self.table_imports,
+            ..oxc_prettier::PrettierOptions::default()
+        }
+    }
+}

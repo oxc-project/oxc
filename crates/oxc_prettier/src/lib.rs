@@ -92,7 +92,7 @@ impl<'a> Prettier<'a> {
     }
 
     pub fn build(mut self, program: &Program<'a>) -> String {
-        self.ctx = Analysis::for_program(program);;
+        self.ctx = Analysis::for_program(program);
         let doc = program.format(&mut self);
         Printer::new(doc, self.source_text, self.options, self.allocator).build()
     }

@@ -4,7 +4,7 @@ use bpaf::Bpaf;
 
 use super::{
     ignore::{ignore_options, IgnoreOptions},
-    misc_options, CliCommand, MiscOptions, VERSION,
+    misc_options, CliCommand, MiscOptions, PrettierOptions, prettier_options, VERSION,
 };
 
 /// Formatter for the JavaScript Oxidation Compiler
@@ -28,6 +28,9 @@ pub struct FormatOptions {
 
     #[bpaf(external)]
     pub ignore_options: IgnoreOptions,
+
+    #[bpaf(external)]
+    pub prettier_options: PrettierOptions,
 
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many)]
