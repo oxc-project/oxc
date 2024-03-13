@@ -1035,9 +1035,31 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(ss!("import"));
-        if self.import_kind.is_type() {
+
+        let one_type_specifier = {
+            if let Some(specifiers) = &self.specifiers {
+                if specifiers.len() == 1 {
+                    specifiers.first().is_some_and(|it| {
+                        matches!(
+	                        it,
+	                        ImportDeclarationSpecifier::ImportSpecifier(import)
+	                          if import.import_kind.is_type()
+                        )
+                    })
+                } else {
+                    false
+                }
+            } else {
+                false
+            }
+        };
+
+        p.import_inner_type = !one_type_specifier;
+
+        if self.import_kind.is_type() || one_type_specifier {
             parts.push(ss!(" type"));
         }
+
         if let Some(specifiers) = &self.specifiers {
             let is_default = specifiers.first().is_some_and(|x| {
                 matches!(x, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
@@ -1081,7 +1103,11 @@ impl<'a> Format<'a> for ImportDeclarationSpecifier<'a> {
 impl<'a> Format<'a> for ImportSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         if self.imported.span() == self.local.span {
-            self.local.format(p)
+            if self.import_kind.is_type() && p.import_inner_type {
+                array![p, ss!("type "), self.local.format(p)]
+            } else {
+                self.local.format(p)
+            }
         } else {
             array![p, self.imported.format(p), ss!(" as "), self.local.format(p)]
         }

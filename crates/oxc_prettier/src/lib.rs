@@ -60,6 +60,8 @@ pub struct Prettier<'a> {
 
     group_id_builder: GroupIdBuilder,
     args: PrettierArgs,
+
+    import_inner_type: bool,
 }
 
 impl<'a> DocBuilder<'a> for Prettier<'a> {
@@ -84,6 +86,7 @@ impl<'a> Prettier<'a> {
             stack: vec![],
             group_id_builder: GroupIdBuilder::default(),
             args: PrettierArgs::default(),
+            import_inner_type: false,
         }
     }
 
