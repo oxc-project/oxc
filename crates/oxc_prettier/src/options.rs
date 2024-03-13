@@ -60,6 +60,10 @@ pub struct PrettierOptions {
     /// Include parentheses around a sole arrow function parameter.
     /// Default: [ArrowParens::Always]
     pub arrow_parens: ArrowParens,
+
+    /// Split imports by specifiers and prints imports with table-like layout
+    /// Default: false
+    pub table_imports: bool,
 }
 
 impl Default for PrettierOptions {
@@ -77,6 +81,7 @@ impl Default for PrettierOptions {
             bracket_spacing: true,
             bracket_same_line: false,
             arrow_parens: ArrowParens::default(),
+            table_imports: false,
         }
     }
 }

@@ -13,6 +13,7 @@ mod needs_parens;
 mod options;
 mod printer;
 mod utils;
+mod analyzer;
 
 use std::{iter::Peekable, vec};
 
@@ -21,7 +22,7 @@ use oxc_ast::{ast::Program, AstKind, CommentKind, Trivias};
 use oxc_span::Span;
 use oxc_syntax::identifier::is_line_terminator;
 
-use crate::{doc::Doc, doc::DocBuilder, format::Format, printer::Printer};
+use crate::{doc::Doc, doc::DocBuilder, format::Format, printer::Printer, analyzer::Analysis};
 
 pub use crate::options::{ArrowParens, EndOfLine, PrettierOptions, QuoteProps, TrailingComma};
 
@@ -60,6 +61,8 @@ pub struct Prettier<'a> {
 
     group_id_builder: GroupIdBuilder,
     args: PrettierArgs,
+
+    ctx: Analysis,
 }
 
 impl<'a> DocBuilder<'a> for Prettier<'a> {
@@ -84,10 +87,12 @@ impl<'a> Prettier<'a> {
             stack: vec![],
             group_id_builder: GroupIdBuilder::default(),
             args: PrettierArgs::default(),
+            ctx: Analysis::default(),
         }
     }
 
     pub fn build(mut self, program: &Program<'a>) -> String {
+        self.ctx = Analysis::for_program(program);;
         let doc = program.format(&mut self);
         Printer::new(doc, self.source_text, self.options, self.allocator).build()
     }

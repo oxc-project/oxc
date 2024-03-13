@@ -1034,37 +1034,27 @@ impl<'a> Format<'a> for FormalParameter<'a> {
 impl<'a> Format<'a> for ImportDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-        parts.push(ss!("import"));
-        if self.import_kind.is_type() {
-            parts.push(ss!(" type"));
-        }
-        if let Some(specifiers) = &self.specifiers {
-            let is_default = specifiers.first().is_some_and(|x| {
-                matches!(x, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
-            });
 
-            let validate_namespace = |x: &ImportDeclarationSpecifier| {
-                matches!(x, ImportDeclarationSpecifier::ImportNamespaceSpecifier(_))
-            };
+        if p.options.table_imports {
+            if let Some(specifiers) = &self.specifiers {
+                for (idx, specifier) in specifiers.iter().enumerate() {
+                    parts.push(module::print_import_declaration_with_single_specifier(
+                        p,
+                        self.import_kind,
+                        specifier,
+                        &self.source,
+                        &self.with_clause,
+                    ));
 
-            let is_namespace = specifiers.first().is_some_and(validate_namespace)
-                || specifiers.get(1).is_some_and(validate_namespace);
-
-            parts.push(module::print_module_specifiers(p, specifiers, is_default, is_namespace));
-            parts.push(ss!(" from"));
-        }
-        parts.push(space!());
-        parts.push(self.source.format(p));
-
-        if let Some(with_clause) = &self.with_clause {
-            parts.push(space!());
-            parts.push(with_clause.format(p));
+                    if idx < specifiers.len() - 1 {
+                        parts.push(line!());
+                    }
+                }
+                return Doc::Array(parts)
+            }
         }
 
-        if let Some(semi) = p.semi() {
-            parts.push(semi);
-        }
-        Doc::Array(parts)
+        module::print_import_declaration(p, self)
     }
 }
 

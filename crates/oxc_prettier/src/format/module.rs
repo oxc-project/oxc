@@ -6,6 +6,7 @@ use oxc_ast::ast::*;
 use crate::{
     doc::{Doc, DocBuilder, Separator},
     group, if_break, indent, line, softline, space, ss, Format, Prettier,
+    analyzer::table_imports::{specifier_length, specifiers_length}
 };
 
 pub(super) fn print_export_declaration<'a>(
@@ -129,5 +130,128 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
         }
     }
 
+    Doc::Array(parts)
+}
+
+static SPACES: &str = "                                                                                                                                ";
+
+fn print_import_kw<'a>(p: &mut Prettier<'a>, import_kind: ImportOrExportKind, specifier_kind: Option<ImportOrExportKind>) -> Doc<'a> {
+		let mut parts = p.vec();
+    parts.push(ss!("import"));
+    if import_kind.is_type() || specifier_kind.is_some_and(|it| it.is_type()) {
+        parts.push(ss!(" type"));
+    } else if p.options.table_imports && p.ctx.ti.typ {
+        parts.push(ss!("     "));
+    }
+
+		Doc::Array(parts)
+}
+
+fn is_braceless_specifier(specifier: &ImportDeclarationSpecifier) -> bool {
+	matches!(specifier, ImportDeclarationSpecifier::ImportDefaultSpecifier(_) | ImportDeclarationSpecifier::ImportNamespaceSpecifier(_))
+}
+
+fn print_rest_import_parts<'a>(
+	p: &mut Prettier<'a>,
+	source: &StringLiteral<'a>,
+	with_clause: &Option<WithClause<'a>>,
+) -> Doc<'a> {
+	let mut parts = p.vec();
+	parts.push(space!());
+	parts.push(source.format(p));
+
+	if let Some(with_clause) = &with_clause {
+		parts.push(space!());
+		parts.push(with_clause.format(p));
+	}
+
+	if let Some(semi) = p.semi() {
+		parts.push(semi);
+	}
+
+	Doc::Array(parts)
+}
+
+pub fn print_import_declaration_with_single_specifier<'a>(
+    p: &mut Prettier<'a>,
+    import_kind: ImportOrExportKind,
+    specifier: &ImportDeclarationSpecifier<'a>,
+    source: &StringLiteral<'a>,
+    with_clause: &Option<WithClause<'a>>,
+) -> Doc<'a> {
+	let mut parts = p.vec();
+	let specifier_kind = if let ImportDeclarationSpecifier::ImportSpecifier(it) = specifier {
+		Some(it.import_kind)
+	} else {
+		None
+	};
+	parts.push(print_import_kw(p, import_kind, specifier_kind));
+	parts.push(space!());
+
+	let braceless = is_braceless_specifier(specifier);
+
+	if !braceless {
+		parts.push(ss!("{"));
+		if p.options.bracket_spacing {
+			parts.push(space!());
+		}
+	}
+	parts.push(specifier.format(p));
+	if !braceless {
+		if p.options.bracket_spacing {
+			parts.push(space!());
+		}
+		parts.push(ss!("}"));
+	}
+
+	if p.options.table_imports {
+		let mut gap = p.ctx.ti.gap - specifier_length(specifier);
+
+		if is_braceless_specifier(specifier) && p.options.bracket_spacing {
+			gap += 2;
+		}
+
+		parts.push(ss!(&SPACES[..gap]));
+	}
+
+	parts.push(ss!(" from"));
+	parts.push(print_rest_import_parts(p, source, with_clause));
+
+	Doc::Array(parts)
+}
+
+pub fn print_import_declaration<'a>(p: &mut Prettier<'a>, decl: &ImportDeclaration<'a>) -> Doc<'a> {
+    let mut parts = p.vec();
+		parts.push(print_import_kw(p, decl.import_kind, None));
+    if let Some(specifiers) = &decl.specifiers {
+        let is_default = specifiers.first().is_some_and(|x| {
+            matches!(x, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
+        });
+
+        let validate_namespace = |x: &ImportDeclarationSpecifier| {
+            matches!(x, ImportDeclarationSpecifier::ImportNamespaceSpecifier(_))
+        };
+
+        let is_namespace = specifiers.first().is_some_and(validate_namespace)
+          || specifiers.get(1).is_some_and(validate_namespace);
+
+        parts.push(print_module_specifiers(p, specifiers, is_default, is_namespace));
+        if p.options.table_imports {
+            let mut gap = p.ctx.ti.gap.saturating_sub(specifiers_length(specifiers));
+
+            for (idx, specifier) in specifiers.iter().enumerate() {
+	            if is_braceless_specifier(specifier) && p.options.bracket_spacing {
+		            gap += 2;
+	            }
+            }
+
+            parts.push(ss!(&SPACES[..gap]));
+        }
+        parts.push(ss!(" from"));
+    } else if p.options.table_imports {
+      parts.push(ss!(&SPACES[..p.ctx.ti.gap + 4 + 4  /* `from` keyword length + spaces */]));
+    }
+
+    parts.push(print_rest_import_parts(p, &decl.source, &decl.with_clause));
     Doc::Array(parts)
 }
