@@ -2,7 +2,7 @@ use super::{Kind, Lexer, Token};
 use crate::diagnostics;
 
 use memchr::{memchr, memchr2};
-use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
+use oxc_syntax::identifier::is_identifier_part;
 
 impl<'a> Lexer<'a> {
     /// `JSXDoubleStringCharacters` ::
@@ -47,13 +47,6 @@ impl<'a> Lexer<'a> {
         self.finish_next(kind)
     }
 
-    /// Expand the current token for `JSXIdentifier`
-    pub(crate) fn next_jsx_identifier(&mut self, start_offset: u32) -> Token {
-        let kind = self.read_jsx_identifier(start_offset);
-        self.lookahead.clear();
-        self.finish_next(kind)
-    }
-
     /// [`JSXChild`](https://facebook.github.io/jsx/#prod-JSXChild)
     /// `JSXChild` :
     /// `JSXText`
@@ -90,25 +83,28 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    /// Expand the current `Ident` token for `JSXIdentifier`
+    ///
+    /// The current character is at `Ident`, continue reading for `JSXIdentifier` if it has a `-`
+    ///
     /// `JSXIdentifier` :
     ///   `IdentifierStart`
     ///   `JSXIdentifier` `IdentifierPart`
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
-    fn read_jsx_identifier(&mut self, _start_offset: u32) -> Kind {
+    pub(crate) fn continue_lex_jsx_identifier(&mut self) -> Option<Token> {
+        if self.peek() != Some('-') {
+            return None;
+        }
+        self.consume_char();
         while let Some(c) = self.peek() {
-            if c == '-' || is_identifier_start(c) {
+            if c == '-' || is_identifier_part(c) {
                 self.consume_char();
-                while let Some(c) = self.peek() {
-                    if is_identifier_part(c) {
-                        self.consume_char();
-                    } else {
-                        break;
-                    }
-                }
             } else {
                 break;
             }
         }
-        Kind::Ident
+        // Clear the current lookahead `Minus` Token
+        self.lookahead.clear();
+        Some(self.finish_next(Kind::Ident))
     }
 }

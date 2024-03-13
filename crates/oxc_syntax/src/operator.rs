@@ -1,43 +1,47 @@
+use oxc_macros::SerAttrs;
+
 #[cfg(feature = "serde")]
 use serde::Serialize;
+#[cfg(feature = "wasm")]
+use tsify::Tsify;
 
 use crate::precedence::{GetPrecedence, Precedence};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SerAttrs)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
 pub enum AssignmentOperator {
-    #[cfg_attr(feature = "serde", serde(rename = "="))]
+    #[serde(rename = "=")]
     Assign,
-    #[cfg_attr(feature = "serde", serde(rename = "+="))]
+    #[serde(rename = "+=")]
     Addition,
-    #[cfg_attr(feature = "serde", serde(rename = "-="))]
+    #[serde(rename = "-=")]
     Subtraction,
-    #[cfg_attr(feature = "serde", serde(rename = "*="))]
+    #[serde(rename = "*=")]
     Multiplication,
-    #[cfg_attr(feature = "serde", serde(rename = "/="))]
+    #[serde(rename = "/=")]
     Division,
-    #[cfg_attr(feature = "serde", serde(rename = "%="))]
+    #[serde(rename = "%=")]
     Remainder,
-    #[cfg_attr(feature = "serde", serde(rename = "<<="))]
+    #[serde(rename = "<<=")]
     ShiftLeft,
-    #[cfg_attr(feature = "serde", serde(rename = ">>="))]
+    #[serde(rename = ">>=")]
     ShiftRight,
-    #[cfg_attr(feature = "serde", serde(rename = ">>>="))]
+    #[serde(rename = ">>>=")]
     ShiftRightZeroFill,
-    #[cfg_attr(feature = "serde", serde(rename = "|="))]
+    #[serde(rename = "|=")]
     BitwiseOR,
-    #[cfg_attr(feature = "serde", serde(rename = "^="))]
+    #[serde(rename = "^=")]
     BitwiseXOR,
-    #[cfg_attr(feature = "serde", serde(rename = "&="))]
+    #[serde(rename = "&=")]
     BitwiseAnd,
-    #[cfg_attr(feature = "serde", serde(rename = "&&="))]
+    #[serde(rename = "&&=")]
     LogicalAnd,
-    #[cfg_attr(feature = "serde", serde(rename = "||="))]
+    #[serde(rename = "||=")]
     LogicalOr,
-    #[cfg_attr(feature = "serde", serde(rename = "??="))]
+    #[serde(rename = "??=")]
     LogicalNullish,
-    #[cfg_attr(feature = "serde", serde(rename = "**="))]
+    #[serde(rename = "**=")]
     Exponential,
 }
 
@@ -82,53 +86,53 @@ impl AssignmentOperator {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SerAttrs)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
 pub enum BinaryOperator {
-    #[cfg_attr(feature = "serde", serde(rename = "=="))]
+    #[serde(rename = "==")]
     Equality,
-    #[cfg_attr(feature = "serde", serde(rename = "!="))]
+    #[serde(rename = "!=")]
     Inequality,
-    #[cfg_attr(feature = "serde", serde(rename = "==="))]
+    #[serde(rename = "===")]
     StrictEquality,
-    #[cfg_attr(feature = "serde", serde(rename = "!=="))]
+    #[serde(rename = "!==")]
     StrictInequality,
-    #[cfg_attr(feature = "serde", serde(rename = "<"))]
+    #[serde(rename = "<")]
     LessThan,
-    #[cfg_attr(feature = "serde", serde(rename = "<="))]
+    #[serde(rename = "<=")]
     LessEqualThan,
-    #[cfg_attr(feature = "serde", serde(rename = ">"))]
+    #[serde(rename = ">")]
     GreaterThan,
-    #[cfg_attr(feature = "serde", serde(rename = ">="))]
+    #[serde(rename = ">=")]
     GreaterEqualThan,
-    #[cfg_attr(feature = "serde", serde(rename = "<<"))]
+    #[serde(rename = "<<")]
     ShiftLeft,
-    #[cfg_attr(feature = "serde", serde(rename = ">>"))]
+    #[serde(rename = ">>")]
     ShiftRight,
-    #[cfg_attr(feature = "serde", serde(rename = ">>>"))]
+    #[serde(rename = ">>>")]
     ShiftRightZeroFill,
-    #[cfg_attr(feature = "serde", serde(rename = "+"))]
+    #[serde(rename = "+")]
     Addition,
-    #[cfg_attr(feature = "serde", serde(rename = "-"))]
+    #[serde(rename = "-")]
     Subtraction,
-    #[cfg_attr(feature = "serde", serde(rename = "*"))]
+    #[serde(rename = "*")]
     Multiplication,
-    #[cfg_attr(feature = "serde", serde(rename = "/"))]
+    #[serde(rename = "/")]
     Division,
-    #[cfg_attr(feature = "serde", serde(rename = "%"))]
+    #[serde(rename = "%")]
     Remainder,
-    #[cfg_attr(feature = "serde", serde(rename = "|"))]
+    #[serde(rename = "|")]
     BitwiseOR,
-    #[cfg_attr(feature = "serde", serde(rename = "^"))]
+    #[serde(rename = "^")]
     BitwiseXOR,
-    #[cfg_attr(feature = "serde", serde(rename = "&"))]
+    #[serde(rename = "&")]
     BitwiseAnd,
-    #[cfg_attr(feature = "serde", serde(rename = "in"))]
+    #[serde(rename = "in")]
     In,
-    #[cfg_attr(feature = "serde", serde(rename = "instanceof"))]
+    #[serde(rename = "instanceof")]
     Instanceof,
-    #[cfg_attr(feature = "serde", serde(rename = "**"))]
+    #[serde(rename = "**")]
     Exponential,
 }
 
@@ -269,15 +273,15 @@ impl GetPrecedence for BinaryOperator {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SerAttrs)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
 pub enum LogicalOperator {
-    #[cfg_attr(feature = "serde", serde(rename = "||"))]
+    #[serde(rename = "||")]
     Or,
-    #[cfg_attr(feature = "serde", serde(rename = "&&"))]
+    #[serde(rename = "&&")]
     And,
-    #[cfg_attr(feature = "serde", serde(rename = "??"))]
+    #[serde(rename = "??")]
     Coalesce,
 }
 
@@ -301,23 +305,23 @@ impl GetPrecedence for LogicalOperator {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SerAttrs)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
 pub enum UnaryOperator {
-    #[cfg_attr(feature = "serde", serde(rename = "-"))]
+    #[serde(rename = "-")]
     UnaryNegation,
-    #[cfg_attr(feature = "serde", serde(rename = "+"))]
+    #[serde(rename = "+")]
     UnaryPlus,
-    #[cfg_attr(feature = "serde", serde(rename = "!"))]
+    #[serde(rename = "!")]
     LogicalNot,
-    #[cfg_attr(feature = "serde", serde(rename = "~"))]
+    #[serde(rename = "~")]
     BitwiseNot,
-    #[cfg_attr(feature = "serde", serde(rename = "typeof"))]
+    #[serde(rename = "typeof")]
     Typeof,
-    #[cfg_attr(feature = "serde", serde(rename = "void"))]
+    #[serde(rename = "void")]
     Void,
-    #[cfg_attr(feature = "serde", serde(rename = "delete"))]
+    #[serde(rename = "delete")]
     Delete,
 }
 
@@ -347,13 +351,13 @@ impl UnaryOperator {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SerAttrs)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
+#[cfg_attr(feature = "wasm", derive(Tsify))]
 pub enum UpdateOperator {
-    #[cfg_attr(feature = "serde", serde(rename = "++"))]
+    #[serde(rename = "++")]
     Increment,
-    #[cfg_attr(feature = "serde", serde(rename = "--"))]
+    #[serde(rename = "--")]
     Decrement,
 }
 

@@ -1,7 +1,7 @@
 parser_typescript Summary:
 AST Parsed     : 5240/5243 (99.94%)
 Positive Passed: 5233/5243 (99.81%)
-Negative Passed: 1060/4879 (21.73%)
+Negative Passed: 1062/4879 (21.77%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -3175,7 +3175,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/ModuleDeclarations/parserMo
 Expect Syntax Error: "conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration3.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration4.d.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration5.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList11.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList14.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList15.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList16.ts"
@@ -3183,7 +3182,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParame
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList7.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList8.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList9.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Protected/Protected1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Protected/Protected2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Protected/Protected4.ts"
@@ -6544,6 +6542,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
   help: Try insert a semicolon here
 
+  × A rest parameter cannot be optional
+   ╭─[compiler/fatarrowfunctionsOptionalArgsErrors1.ts:2:8]
+ 1 │ (arg1?, arg2) => 101;
+ 2 │ (...arg?) => 102;
+   ·        ─
+ 3 │ (...arg) => 103;
+   ╰────
+
   × A required parameter cannot follow an optional parameter.
    ╭─[compiler/fatarrowfunctionsOptionalArgsErrors1.ts:1:9]
  1 │ (arg1?, arg2) => 101;
@@ -6630,8 +6636,8 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Identifier `b` has already been declared
    ╭─[compiler/functionCall15.ts:1:25]
  1 │ function foo(a?:string, b?:number, ...b:number[]){}
-   ·                         ────┬────     ─────┬────
-   ·                             │              ╰── It can not be redeclared here
+   ·                         ────┬────     ┬
+   ·                             │         ╰── It can not be redeclared here
    ·                             ╰── `b` has already been declared here
    ╰────
 
@@ -8608,6 +8614,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/restArgMissingName.ts:1:18]
  1 │ function sum (...) {} 
    ·                  ─
+   ╰────
+
+  × A rest parameter cannot be optional
+   ╭─[compiler/restParamAsOptional.ts:1:16]
+ 1 │ function f(...x?) { }
+   ·                ─
+ 2 │ function f2(...x = []) { }
    ╰────
 
   × A rest parameter cannot have an initializer
@@ -12489,6 +12502,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  8 │ a0([1, 2, [["world"]], "string"]);  // Error
    ╰────
 
+  × A rest parameter cannot be optional
+    ╭─[conformance/es6/destructuring/destructuringParameterDeclaration4.ts:14:17]
+ 13 │ function a2(...a: someArray) { }  // Error, rest parameter must be array type
+ 14 │ function a3(...b?) { }            // Error, can't be optional
+    ·                 ─
+ 15 │ function a4(...b = [1,2,3]) { }   // Error, can't have initializer
+    ╰────
+
   × A rest parameter cannot have an initializer
     ╭─[conformance/es6/destructuring/destructuringParameterDeclaration4.ts:15:16]
  14 │ function a3(...b?) { }            // Error, can't be optional
@@ -15205,7 +15226,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/es7/trailingCommasInBindingPatterns.ts:4:7]
  3 │ let c, d;
  4 │ ([...c,] = []);
-   ·       ▲
+   ·       ─
  5 │ ({...d,} = {});
    ╰────
 
@@ -16156,14 +16177,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  14 │     <
     ·     ─
  15 │ </div>;
-    ╰────
-
-  × Invalid characters after number
-    ╭─[conformance/jsx/tsxAttributeInvalidNames.tsx:12:10]
- 11 │ // Invalid names
- 12 │ <test1 32data={32} />;
-    ·          ────
- 13 │ <test2 -data={32} />;
     ╰────
 
   × Invalid characters after number
@@ -17267,6 +17280,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ }
    ╰────
 
+  × A rest parameter cannot be optional
+   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList11.ts:1:8]
+ 1 │ (...arg?) => 102;
+   ·        ─
+   ╰────
+
   × A parameter property is only allowed in a constructor implementation.
    ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList13.ts:2:10]
  1 │ interface I {
@@ -17305,6 +17324,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                          ┬
    ·                          ╰── `)` expected
  3 │   }
+   ╰────
+
+  × A rest parameter cannot be optional
+   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList9.ts:2:14]
+ 1 │ class C {
+ 2 │    foo(...bar?) { }
+   ·              ─
+ 3 │ }
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

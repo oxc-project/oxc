@@ -301,7 +301,7 @@ impl<'a> ParserImpl<'a> {
                 .map(Declaration::ClassDeclaration),
             Kind::Import => {
                 self.bump_any();
-                self.parse_ts_import_equals_declaration(start_span, true)
+                self.parse_ts_import_equals_declaration(start_span)
             }
             kind if kind.is_variable_declaration() => self
                 .parse_variable_declaration(
@@ -357,7 +357,6 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_import_equals_declaration(
         &mut self,
         span: Span,
-        is_export: bool,
     ) -> Result<Declaration<'a>> {
         let import_kind = if !self.peek_at(Kind::Eq) && self.eat(Kind::Type) {
             ImportOrExportKind::Type
@@ -388,7 +387,6 @@ impl<'a> ParserImpl<'a> {
             self.end_span(span),
             id,
             module_reference,
-            is_export,
             import_kind,
         ))
     }

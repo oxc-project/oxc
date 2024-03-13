@@ -201,7 +201,7 @@ impl Oxc {
                 .preserve_parens(false)
                 .parse();
             let printed =
-                Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
+                Prettier::new(&allocator, source_text, &ret.trivias, PrettierOptions::default())
                     .build(&ret.program);
             self.prettier_formatted_text = printed;
         }
@@ -212,12 +212,12 @@ impl Oxc {
                 .preserve_parens(false)
                 .parse();
             let prettier_doc =
-                Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
+                Prettier::new(&allocator, source_text, &ret.trivias, PrettierOptions::default())
                     .doc(&ret.program)
                     .to_string();
             self.prettier_ir_text = {
                 let ret = Parser::new(&allocator, &prettier_doc, SourceType::default()).parse();
-                Prettier::new(&allocator, &prettier_doc, ret.trivias, PrettierOptions::default())
+                Prettier::new(&allocator, &prettier_doc, &ret.trivias, PrettierOptions::default())
                     .build(&ret.program)
             };
         }
@@ -256,7 +256,7 @@ impl Oxc {
             let options = MinifierOptions {
                 mangle: minifier_options.mangle(),
                 compress: if minifier_options.compress() {
-                    CompressOptions::all_true()
+                    CompressOptions::default()
                 } else {
                     CompressOptions::all_false()
                 },
@@ -322,17 +322,15 @@ impl Oxc {
 
     fn map_comments(&self, trivias: &Trivias) -> Vec<Comment> {
         trivias
-            .comments
-            .iter()
-            .copied()
-            .map(|(start, end, kind)| Comment {
+            .comments()
+            .map(|(kind, span)| Comment {
                 r#type: match kind {
                     CommentKind::SingleLine => CommentType::Line,
                     CommentKind::MultiLine => CommentType::Block,
                 },
-                value: self.source_text[start as usize..end as usize].to_string(),
-                start,
-                end,
+                value: span.source_text(&self.source_text).to_string(),
+                start: span.start,
+                end: span.end,
             })
             .collect()
     }

@@ -98,6 +98,7 @@ mod eslint {
     pub mod no_unused_private_class_members;
     pub mod no_useless_catch;
     pub mod no_useless_escape;
+    pub mod no_useless_rename;
     pub mod no_var;
     pub mod no_void;
     pub mod require_yield;
@@ -152,6 +153,7 @@ mod jest {
     pub mod no_test_return_statement;
     pub mod prefer_called_with;
     pub mod prefer_equality_matcher;
+    pub mod prefer_spy_on;
     pub mod prefer_strict_equal;
     pub mod prefer_to_have_length;
     pub mod prefer_todo;
@@ -334,6 +336,10 @@ mod jsdoc {
     pub mod check_access;
 }
 
+mod tree_shaking {
+    pub mod no_side_effects_in_initialization;
+}
+
 oxc_macros::declare_all_lint_rules! {
     deepscan::bad_array_method_on_arguments,
     deepscan::bad_bitwise_operator,
@@ -407,6 +413,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_unused_private_class_members,
     eslint::no_useless_catch,
     eslint::no_useless_escape,
+    eslint::no_useless_rename,
     eslint::no_var,
     eslint::no_void,
     eslint::require_yield,
@@ -455,6 +462,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_test_return_statement,
     jest::prefer_called_with,
     jest::prefer_equality_matcher,
+    jest::prefer_spy_on,
     jest::prefer_strict_equal,
     jest::prefer_to_have_length,
     jest::prefer_todo,
@@ -626,4 +634,5 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_unwanted_polyfillio,
     nextjs::no_before_interactive_script_outside_document,
     jsdoc::check_access,
+    tree_shaking::no_side_effects_in_initialization,
 }

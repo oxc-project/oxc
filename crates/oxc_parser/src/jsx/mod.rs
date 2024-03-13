@@ -231,20 +231,24 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<JSXExpressionContainer<'a>> {
         let span = self.start_span();
         self.bump_any(); // bump `{`
-        let expr = match self.cur_kind() {
-            // {} empty
-            Kind::RCurly => {
-                let span = self.start_span();
-                JSXExpression::EmptyExpression(self.ast.jsx_empty_expression(self.end_span(span)))
-            }
-            // {expr}
-            _ => self.parse_jsx_assignment_expression().map(JSXExpression::Expression)?,
-        };
-        if in_jsx_child {
-            self.expect_jsx_child(Kind::RCurly)?;
+
+        let expr = if self.eat(Kind::RCurly) {
+            // Handle comment between curly braces (ex. `{/* comment */}`)
+            //                                            ^^^^^^^^^^^^^ span
+            let span = self.end_span(span);
+            JSXExpression::EmptyExpression(
+                self.ast.jsx_empty_expression(Span::new(span.start + 1, span.end - 1)),
+            )
         } else {
-            self.expect(Kind::RCurly)?;
-        }
+            let expr = self.parse_jsx_assignment_expression().map(JSXExpression::Expression)?;
+            if in_jsx_child {
+                self.expect_jsx_child(Kind::RCurly)
+            } else {
+                self.expect(Kind::RCurly)
+            }?;
+            expr
+        };
+
         Ok(self.ast.jsx_expression_container(self.end_span(span), expr))
     }
 
@@ -358,8 +362,8 @@ impl<'a> ParserImpl<'a> {
         if !self.at(Kind::Ident) && !self.cur_kind().is_all_keyword() {
             return Err(self.unexpected());
         }
-        // we are at a valid normal Ident or Keyword, let's keep on lexing for `-`
-        self.re_lex_jsx_identifier();
+        // Currently at a valid normal Ident or Keyword, keep on lexing for `-` in `<component-name />`
+        self.continue_lex_jsx_identifier();
         self.bump_any();
         let span = self.end_span(span);
         let name = span.source_text(self.source_text);

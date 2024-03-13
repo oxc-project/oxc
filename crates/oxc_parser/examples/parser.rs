@@ -20,6 +20,11 @@ fn main() -> Result<(), String> {
     println!("AST:");
     println!("{}", serde_json::to_string_pretty(&ret.program).unwrap());
 
+    println!("Comments:");
+    let comments =
+        ret.trivias.comments().map(|(_, span)| span.source_text(&source_text)).collect::<Vec<_>>();
+    println!("{comments:?}");
+
     if ret.errors.is_empty() {
         println!("Parsed Successfully.");
     } else {
