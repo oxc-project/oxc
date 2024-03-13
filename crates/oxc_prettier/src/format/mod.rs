@@ -1102,14 +1102,16 @@ impl<'a> Format<'a> for ImportDeclarationSpecifier<'a> {
 
 impl<'a> Format<'a> for ImportSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        if self.imported.span() == self.local.span {
-            if self.import_kind.is_type() && p.import_inner_type {
-                array![p, ss!("type "), self.local.format(p)]
-            } else {
-                self.local.format(p)
-            }
+        let typed = if self.import_kind.is_type() && p.import_inner_type {
+            ss!("type ")
         } else {
-            array![p, self.imported.format(p), ss!(" as "), self.local.format(p)]
+            ss!("")
+        };
+
+        if self.imported.span() == self.local.span {
+            array![p, typed, self.local.format(p)]
+        } else {
+            array![p, typed, self.imported.format(p), ss!(" as "), self.local.format(p)]
         }
     }
 }
