@@ -35,7 +35,7 @@ impl<'a> JSDocParser<'a> {
         let mut tags = vec![];
 
         // Let's start with the first `@`
-        while let Some((_, c)) = self.source_text[self.current..].char_indices().next() {
+        while let Some(c) = self.source_text[self.current..].chars().next() {
             match c {
                 '@' => {
                     self.current += c.len_utf8();
@@ -105,7 +105,7 @@ impl<'a> JSDocParser<'a> {
     // Parser utils
     //
     fn skip_whitespace(&mut self) {
-        while let Some((_, c)) = self.source_text[self.current..].char_indices().next() {
+        while let Some(c) = self.source_text[self.current..].chars().next() {
             if c != ' ' {
                 break;
             }
@@ -114,13 +114,13 @@ impl<'a> JSDocParser<'a> {
     }
 
     fn advance(&mut self) {
-        if let Some((_, ch)) = self.source_text[self.current..].char_indices().next() {
-            self.current += ch.len_utf8();
+        if let Some(c) = self.source_text[self.current..].chars().next() {
+            self.current += c.len_utf8();
         }
     }
 
     fn at(&mut self, c: char) -> bool {
-        if let Some((_, ch)) = self.source_text[self.current..].char_indices().next() {
+        if let Some(ch) = self.source_text[self.current..].chars().next() {
             if ch == c {
                 self.advance();
                 true
@@ -134,7 +134,7 @@ impl<'a> JSDocParser<'a> {
 
     fn take_until(&mut self, predicate: fn(char) -> bool) -> &'a str {
         let start = self.current;
-        while let Some((_, c)) = self.source_text[self.current..].char_indices().next() {
+        while let Some(c) = self.source_text[self.current..].chars().next() {
             if predicate(c) {
                 break;
             }
@@ -176,7 +176,7 @@ mod test {
 
         assert_eq!(
             parse_from_full_text(
-                "/** 
+                "/**
 this is
 comment
 @x
@@ -187,7 +187,7 @@ comment
         );
         assert_eq!(
             parse_from_full_text(
-                "/** 
+                "/**
 　　　　　　　　　* 日本語とか
 　　　　　　　　　* multibyte文字はどう？
                   */"
@@ -408,7 +408,7 @@ comment */"
 comment */"
             ),
             parse_from_full_text(
-                "/** 
+                "/**
                   * @param {str} name
                   * comment
                   */"
