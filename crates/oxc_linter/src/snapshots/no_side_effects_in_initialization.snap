@@ -2,4 +2,20 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_side_effects_in_initialization
 ---
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of assignment to `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:1]
+ 1 │ ext = 1
+   · ───
+   ╰────
 
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of assignment to `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:1]
+ 1 │ ext += 1
+   · ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:1]
+ 1 │ ext.x = 1
+   · ───
+   ╰────
