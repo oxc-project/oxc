@@ -414,6 +414,7 @@ pub struct ThisExpression {
 pub struct ArrayExpression<'a> {
     #[serde(flatten)]
     pub span: Span,
+    #[tsify(type = "Array<SpreadElement | Expression | null>")]
     pub elements: Vec<'a, ArrayExpressionElement<'a>>,
     /// Array trailing comma
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
@@ -423,13 +424,14 @@ pub struct ArrayExpression<'a> {
 /// Array Expression Element
 #[derive(Debug, Hash, SerAttrs)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(Tsify))]
 #[serde(untagged)]
 pub enum ArrayExpressionElement<'a> {
     SpreadElement(Box<'a, SpreadElement<'a>>),
     Expression(Expression<'a>),
     /// Array hole for sparse arrays
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
+    // Serialize as `null`. `serialize_elision` in serialize.rs.
+    #[serde(serialize_with = "ArrayExpressionElement::serialize_elision")]
     Elision(Span),
 }
 
