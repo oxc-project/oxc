@@ -482,7 +482,7 @@ pub trait VisitMut<'a>: Sized {
             ClassElement::MethodDefinition(def) => self.visit_method_definition(def),
             ClassElement::PropertyDefinition(def) => self.visit_property_definition(def),
             ClassElement::AccessorProperty(_def) => { /* TODO */ }
-            ClassElement::TSIndexSignature(_def) => {}
+            ClassElement::TSIndexSignature(sig) => self.visit_ts_index_signature(sig),
         }
     }
 
@@ -1339,8 +1339,28 @@ pub trait VisitMut<'a>: Sized {
             }
         }
         self.visit_string_literal(&mut decl.source);
-        // TODO: assertions
+        if let Some(with_clause) = &mut decl.with_clause {
+            self.visit_with_clause(with_clause);
+        }
         self.leave_node(kind);
+    }
+
+    fn visit_with_clause(&mut self, with_clause: &mut WithClause<'a>) {
+        for attribute in with_clause.with_entries.iter_mut() {
+            self.visit_import_attribute(attribute);
+        }
+    }
+
+    fn visit_import_attribute(&mut self, attribute: &mut ImportAttribute<'a>) {
+        self.visit_import_attribute_key(&mut attribute.key);
+        self.visit_string_literal(&mut attribute.value);
+    }
+
+    fn visit_import_attribute_key(&mut self, key: &mut ImportAttributeKey<'a>) {
+        match key {
+            ImportAttributeKey::Identifier(ident) => self.visit_identifier_name(ident),
+            ImportAttributeKey::StringLiteral(ident) => self.visit_string_literal(ident),
+        }
     }
 
     fn visit_import_declaration_specifier(
@@ -1878,11 +1898,45 @@ pub trait VisitMut<'a>: Sized {
         self.enter_node(kind);
         match &mut ty.expr_name {
             TSTypeQueryExprName::TSTypeName(name) => self.visit_ts_type_name(name),
-            TSTypeQueryExprName::TSImportType(_import) => {} // TODO
+            TSTypeQueryExprName::TSImportType(import) => self.visit_ts_import_type(import),
         }
         if let Some(type_parameters) = &mut ty.type_parameters {
             self.visit_ts_type_parameter_instantiation(type_parameters);
         }
         self.leave_node(kind);
+    }
+
+    fn visit_ts_import_type(&mut self, ty: &mut TSImportType<'a>) {
+        let kind = AstKind::TSImportType(self.alloc(ty));
+        self.enter_node(kind);
+        self.visit_ts_type(&mut ty.argument);
+        if let Some(name) = &mut ty.qualifier {
+            self.visit_ts_type_name(name);
+        }
+        if let Some(attrs) = &mut ty.attributes {
+            self.visit_ts_import_attributes(attrs);
+        }
+        if let Some(type_parameter) = &mut ty.type_parameters {
+            self.visit_ts_type_parameter_instantiation(type_parameter);
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_import_attributes(&mut self, attributes: &mut TSImportAttributes<'a>) {
+        for element in attributes.elements.iter_mut() {
+            self.visit_ts_import_attribute(element);
+        }
+    }
+
+    fn visit_ts_import_attribute(&mut self, attribute: &mut TSImportAttribute<'a>) {
+        self.visit_ts_import_attribute_name(&mut attribute.name);
+        self.visit_expression(&mut attribute.value);
+    }
+
+    fn visit_ts_import_attribute_name(&mut self, name: &mut TSImportAttributeName<'a>) {
+        match name {
+            TSImportAttributeName::Identifier(ident) => self.visit_identifier_name(ident),
+            TSImportAttributeName::StringLiteral(ident) => self.visit_string_literal(ident),
+        }
     }
 }
