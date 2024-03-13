@@ -14,8 +14,8 @@ use crate::{
     fixer::Fix,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_expect_jest_fn_call, ParsedExpectFnCall,
-        PossibleJestNode,
+        collect_possible_jest_call_node, is_equality_matcher, parse_expect_jest_fn_call,
+        ParsedExpectFnCall, PossibleJestNode,
     },
 };
 
@@ -140,11 +140,8 @@ impl PreferToHaveLength {
         let Some(matcher) = parsed_expect_call.matcher() else {
             return;
         };
-        let Some(matcher_name) = matcher.name() else {
-            return;
-        };
 
-        if expect_property_name != "length" || !Self::is_equality_matcher(&matcher_name) {
+        if expect_property_name != "length" || !is_equality_matcher(matcher) {
             return;
         }
 
@@ -157,10 +154,6 @@ impl PreferToHaveLength {
             };
             Fix::new(code, Span::new(call_expr.span.start, end - 1))
         });
-    }
-
-    fn is_equality_matcher(matcher_name: &str) -> bool {
-        matcher_name == "toBe" || matcher_name == "toEqual" || matcher_name == "toStrictEqual"
     }
 
     fn build_code(

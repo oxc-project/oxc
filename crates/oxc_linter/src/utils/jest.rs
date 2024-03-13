@@ -2,7 +2,8 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     ast::{
-        CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier, TemplateLiteral,
+        Argument, CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier,
+        TemplateLiteral,
     },
     AstKind,
 };
@@ -289,6 +290,35 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
 fn is_pure_string(template_literal: &TemplateLiteral) -> bool {
     template_literal.expressions.is_empty() && template_literal.quasis.len() == 1
 }
+
+pub fn is_equality_matcher(matcher: &KnownMemberExpressionProperty) -> bool {
+    matcher.is_name_equal("toBe")
+        || matcher.is_name_equal("toEqual")
+        || matcher.is_name_equal("toStrictEqual")
+}
+
+fn follow_type_assertion_chain<'a>(expr: &'a Expression<'a>) -> &'a Expression<'a> {
+    match expr {
+        Expression::TSAsExpression(ts_as_expr) => {
+            follow_type_assertion_chain(&ts_as_expr.expression)
+        }
+        Expression::TSTypeAssertion(ts_type) => follow_type_assertion_chain(&ts_type.expression),
+        _ => expr,
+    }
+}
+
+pub fn get_first_matcher_arg<'a>(
+    jest_expect_fn_call: &ParsedExpectFnCall<'a>,
+) -> &'a Expression<'a> {
+    let first_arg = jest_expect_fn_call.args.first().unwrap();
+    let expression = match first_arg {
+        Argument::SpreadElement(spread_ele) => &spread_ele.argument,
+        Argument::Expression(expr) => expr,
+    };
+
+    follow_type_assertion_chain(expression)
+}
+
 #[cfg(test)]
 mod test {
     use crate::LintContext;
