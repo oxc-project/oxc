@@ -139,10 +139,10 @@ impl Rule for BanTsComment {
 
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.semantic().trivias().comments();
-        for (start, comment) in comments {
-            let raw = &ctx.semantic().source_text()[*start as usize..comment.end() as usize];
+        for (kind, span) in comments {
+            let raw = span.source_text(ctx.semantic().source_text());
 
-            if let Some(captures) = find_ts_comment_directive(raw, comment.is_single_line()) {
+            if let Some(captures) = find_ts_comment_directive(raw, kind.is_single_line()) {
                 // safe to unwrap, if capture success, it can always capture one of the four directives
                 let (directive, description) = (captures.0, captures.1.trim());
 
@@ -151,7 +151,7 @@ impl Rule for BanTsComment {
                         if *on {
                             ctx.diagnostic(BanTsCommentDiagnostic::Comment(
                                 directive.to_string(),
-                                Span::new(*start, comment.end()),
+                                span,
                             ));
                         }
                     }
@@ -160,7 +160,7 @@ impl Rule for BanTsComment {
                             ctx.diagnostic(BanTsCommentDiagnostic::CommentRequiresDescription(
                                 directive.to_string(),
                                 self.minimum_description_length,
-                                Span::new(*start, comment.end()),
+                                span,
                             ));
                         }
 
@@ -170,7 +170,7 @@ impl Rule for BanTsComment {
                                     BanTsCommentDiagnostic::CommentDescriptionNotMatchPattern(
                                         directive.to_string(),
                                         re.to_string(),
-                                        Span::new(*start, comment.end()),
+                                        span,
                                     ),
                                 );
                             }

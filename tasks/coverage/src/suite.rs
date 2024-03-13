@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     fs::{self, File},
     io::{stdout, Read, Write},
     panic::UnwindSafe,
@@ -11,16 +12,18 @@ use console::Style;
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use futures::future::join_all;
-use oxc_allocator::Allocator;
-use oxc_diagnostics::{miette::NamedSource, GraphicalReportHandler, GraphicalTheme};
-use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
-use oxc_tasks_common::normalize_path;
 use rayon::prelude::*;
 use similar::{ChangeTag, TextDiff};
 use tokio::runtime::Runtime;
 use walkdir::WalkDir;
+
+use oxc_allocator::Allocator;
+use oxc_ast::Trivias;
+use oxc_diagnostics::{miette::NamedSource, GraphicalReportHandler, GraphicalTheme};
+use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
+use oxc_span::{SourceType, Span};
+use oxc_tasks_common::normalize_path;
 
 use crate::{project_root, AppArgs};
 
@@ -35,6 +38,7 @@ pub enum TestResult {
     CorrectError(String, /* panicked */ bool),
     RuntimeError(String),
     CodegenError(/* reason */ &'static str),
+    DuplicatedComments(String),
     Snapshot(String),
 }
 
@@ -315,6 +319,9 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         let parser_ret = Parser::new(&allocator, source_text, source_type)
             .allow_return_outside_function(self.allow_return_outside_function())
             .parse();
+        if let Some(res) = self.check_comments(&parser_ret.trivias) {
+            return res;
+        }
 
         // Make sure serialization doesn't crash for ast and hir, also for code coverage.
         let _json = parser_ret.program.to_json();
@@ -390,6 +397,15 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             TestResult::Snapshot(snapshot) => {
                 writer.write_all(snapshot.as_bytes())?;
             }
+            TestResult::DuplicatedComments(comment) => {
+                writer.write_all(
+                    format!(
+                        "Duplicated comments \"{comment}\": {:?}\n",
+                        normalize_path(self.path())
+                    )
+                    .as_bytes(),
+                )?;
+            }
             TestResult::Passed | TestResult::ToBeRun | TestResult::CorrectError(..) => {}
         }
         Ok(())
@@ -416,6 +432,18 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     }
 
     fn check_semantic(&self, _semantic: &oxc_semantic::Semantic<'_>) -> Option<TestResult> {
+        None
+    }
+
+    fn check_comments(&self, trivias: &Trivias) -> Option<TestResult> {
+        let mut uniq: HashSet<Span> = HashSet::new();
+        for (_, span) in trivias.comments() {
+            if !uniq.insert(span) {
+                return Some(TestResult::DuplicatedComments(
+                    span.source_text(self.code()).to_string(),
+                ));
+            }
+        }
         None
     }
 }

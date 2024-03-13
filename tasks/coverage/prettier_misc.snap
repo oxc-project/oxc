@@ -1,8 +1,9 @@
 prettier_misc Summary:
-AST Parsed     : 12/12 (100.00%)
-Positive Passed: 7/12 (58.33%)
+AST Parsed     : 14/14 (100.00%)
+Positive Passed: 8/14 (57.14%)
 Expect to Parse: "pass/oxc-1740.tsx"
 Expect to Parse: "pass/oxc-2087.ts"
 Expect to Parse: "pass/oxc-2394.ts"
+Expect to Parse: "pass/oxc-2674.tsx"
 Expect to Parse: "pass/swc-1627.js"
 Expect to Parse: "pass/swc-8243.tsx"

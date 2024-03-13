@@ -45,6 +45,12 @@ expression: namespace
    ·                                  ─
    ╰────
 
+  ⚠ eslint-plugin-import(namespace): "default" not found in imported namespace "./re-export".
+   ╭─[index.js:1:53]
+ 1 │ import * as ree from "./re-export"; console.log(ree.default)
+   ·                                                     ───────
+   ╰────
+
   ⚠ eslint-plugin-import(namespace): "e" not found in imported namespace "./named-exports".
    ╭─[index.js:1:62]
  1 │ import * as Names from "./named-exports"; const Foo = <Names.e/>

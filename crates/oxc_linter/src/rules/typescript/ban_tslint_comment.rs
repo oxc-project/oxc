@@ -39,16 +39,12 @@ impl Rule for BanTslintComment {
         let comments = ctx.semantic().trivias().comments();
         let source_text_len = ctx.semantic().source_text().len();
 
-        for (start, comment) in comments {
-            let raw = &ctx.semantic().source_text()[*start as usize..comment.end() as usize];
+        for (kind, span) in comments {
+            let raw = span.source_text(ctx.semantic().source_text());
 
             if is_tslint_comment_directive(raw) {
-                let comment_span = get_full_comment(
-                    source_text_len,
-                    *start,
-                    comment.end(),
-                    comment.is_multi_line(),
-                );
+                let comment_span =
+                    get_full_comment(source_text_len, span.start, span.end, kind.is_multi_line());
 
                 ctx.diagnostic_with_fix(
                     BanTslintCommentDiagnostic(raw.trim().to_string(), comment_span),
