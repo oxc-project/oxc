@@ -2175,12 +2175,17 @@ impl<'a> Format<'a> for PrivateIdentifier<'a> {
 
 impl<'a> Format<'a> for BindingPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        match self.kind {
+        let mut parts = p.vec();
+        parts.push(match self.kind {
             BindingPatternKind::BindingIdentifier(ref ident) => ident.format(p),
             BindingPatternKind::ObjectPattern(ref pattern) => pattern.format(p),
             BindingPatternKind::ArrayPattern(ref pattern) => pattern.format(p),
             BindingPatternKind::AssignmentPattern(ref pattern) => pattern.format(p),
+        });
+        if let Some(typ) = &self.type_annotation {
+            parts.push(array![p, ss!(": "), typ.type_annotation.format(p)]);
         }
+        Doc::Array(parts)
     }
 }
 
