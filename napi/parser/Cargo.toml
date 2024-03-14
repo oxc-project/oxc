@@ -40,4 +40,4 @@ napi-derive = { workspace = true }
 napi-build = "2"
 
 [package.metadata.cargo-machete]
-ignored = ["napi"]
+ignored = ["napi_build"]
