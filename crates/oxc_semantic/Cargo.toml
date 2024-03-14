@@ -25,10 +25,8 @@ oxc_syntax      = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_index       = { workspace = true }
 oxc_allocator   = { workspace = true }
-oxc_macros      = { workspace = true }
 
 indexmap   = { workspace = true }
-itertools  = { workspace = true }
 phf        = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 serde      = { workspace = true, features = ["derive"], optional = true }
@@ -40,15 +38,14 @@ wasm-bindgen = { workspace = true, optional = true }
 [dev-dependencies]
 oxc_parser = { workspace = true }
 
+itertools         = { workspace = true }
 bitflags          = { workspace = true }
 indexmap          = { workspace = true }
 insta             = { workspace = true }
-itertools         = { workspace = true }
 phf               = { workspace = true, features = ["macros"] }
-pretty_assertions = "1.4.0"
 rustc-hash        = { workspace = true }
+pretty_assertions = "1.4.0"
 
 [features]
-default = []
-serde   = ["dep:serde", "oxc_span/serde", "oxc_syntax/serde"]
-wasm    = ["serde", "dep:tsify", "dep:wasm-bindgen"]
+default   = []
+serialize = ["dep:serde", "oxc_span/serialize", "oxc_syntax/serialize", "dep:tsify", "dep:wasm-bindgen"]

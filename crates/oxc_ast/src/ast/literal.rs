@@ -6,20 +6,18 @@ use std::{
 };
 
 use bitflags::bitflags;
-use oxc_macros::SerAttrs;
 use oxc_span::{Atom, Span};
 use oxc_syntax::{BigintBase, NumberBase};
-#[cfg(feature = "serde")]
+#[cfg(feature = "serialize")]
 use serde::Serialize;
-#[cfg(feature = "wasm")]
+#[cfg(feature = "serialize")]
 use tsify::Tsify;
 
-#[derive(Debug, Clone, Hash, SerAttrs)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(Tsify))]
-#[serde(tag = "type")]
+#[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct BooleanLiteral {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub value: bool,
 }
@@ -38,12 +36,11 @@ impl BooleanLiteral {
     }
 }
 
-#[derive(Debug, Clone, SerAttrs)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(Tsify))]
-#[serde(tag = "type")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct NullLiteral {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
 }
 
@@ -59,16 +56,15 @@ impl NullLiteral {
     }
 }
 
-#[derive(Debug, Clone, SerAttrs)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(Tsify))]
-#[serde(tag = "type")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct NumericLiteral<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub value: f64,
     pub raw: &'a str,
-    #[serde(skip)]
+    #[cfg_attr(feature = "serialize", serde(skip))]
     pub base: NumberBase,
 }
 
@@ -87,7 +83,7 @@ impl<'a> NumericLiteral<'a> {
             return int32_value;
         }
 
-        // NaN, Infinity if not included in our NumericLiteral, so we just skip step 2.
+        // NaN, Infinity if not included in our NumericLiteral, so we just serde(skip) step 2.
 
         // step 3
         let pos_int = num.signum() * num.abs().floor();
@@ -111,15 +107,14 @@ impl<'a> Hash for NumericLiteral<'a> {
     }
 }
 
-#[derive(Debug, Hash, SerAttrs)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(Tsify))]
-#[serde(tag = "type")]
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct BigIntLiteral<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub raw: Atom<'a>,
-    #[serde(skip)]
+    #[cfg_attr(feature = "serialize", serde(skip))]
     pub base: BigintBase,
 }
 
@@ -129,12 +124,11 @@ impl<'a> BigIntLiteral<'a> {
     }
 }
 
-#[derive(Debug, Clone, Hash, SerAttrs)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(Tsify))]
-#[serde(tag = "type")]
+#[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct RegExpLiteral<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     // valid regex is printed as {}
     // invalid regex is printed as null, which we can't implement yet
@@ -142,9 +136,8 @@ pub struct RegExpLiteral<'a> {
     pub regex: RegExp<'a>,
 }
 
-#[derive(Debug, Clone, Hash, SerAttrs)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct RegExp<'a> {
     pub pattern: Atom<'a>,
     pub flags: RegExpFlags,
@@ -171,7 +164,7 @@ bitflags! {
     }
 }
 
-#[cfg(feature = "wasm")]
+#[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type RegExpFlags = {
@@ -234,17 +227,15 @@ impl fmt::Display for RegExpFlags {
     }
 }
 
-#[derive(Debug, Clone, Hash, SerAttrs)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(Tsify))]
+#[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct EmptyObject;
 
-#[derive(Debug, Clone, Hash, SerAttrs)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(Tsify))]
-#[serde(tag = "type")]
+#[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct StringLiteral<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub value: Atom<'a>,
 }

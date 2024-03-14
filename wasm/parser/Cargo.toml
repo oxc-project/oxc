@@ -21,7 +21,7 @@ test       = false
 doctest    = false
 
 [dependencies]
-oxc = { workspace = true, features = ["serde", "wasm"] }
+oxc = { workspace = true, features = ["serialize"] }
 serde        = { workspace = true, features = ["derive"] }
 
 wasm-bindgen       = { workspace = true }

@@ -9,7 +9,7 @@
 //! ## Cargo Features
 //! * `"serde"` enables support for serde serialization
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serialize")]
 mod serialize;
 
 pub mod ast;
