@@ -1,6 +1,10 @@
-use self::{jsx_a11y::ESLintSettingsJSXA11y, next::ESLintSettingsNext, react::ESLintSettingsReact};
+use self::{
+    jsdoc::JSDocPluginSettings, jsx_a11y::JSXA11yPluginSettings, next::NextPluginSettings,
+    react::ReactPluginSettings,
+};
 use serde::Deserialize;
 
+mod jsdoc;
 mod jsx_a11y;
 mod next;
 mod react;
@@ -15,11 +19,13 @@ mod react;
 pub struct ESLintSettings {
     #[serde(default)]
     #[serde(rename = "jsx-a11y")]
-    pub jsx_a11y: ESLintSettingsJSXA11y,
+    pub jsx_a11y: JSXA11yPluginSettings,
     #[serde(default)]
-    pub next: ESLintSettingsNext,
+    pub next: NextPluginSettings,
     #[serde(default)]
-    pub react: ESLintSettingsReact,
+    pub react: ReactPluginSettings,
+    #[serde(default)]
+    pub jsdoc: JSDocPluginSettings,
 }
 
 #[cfg(test)]
