@@ -155,6 +155,7 @@ mod jest {
     pub mod prefer_equality_matcher;
     pub mod prefer_spy_on;
     pub mod prefer_strict_equal;
+    pub mod prefer_to_be;
     pub mod prefer_to_have_length;
     pub mod prefer_todo;
     pub mod require_to_throw_message;
@@ -459,6 +460,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_equality_matcher,
     jest::prefer_spy_on,
     jest::prefer_strict_equal,
+    jest::prefer_to_be,
     jest::prefer_to_have_length,
     jest::prefer_todo,
     jest::require_to_throw_message,
