@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{CallExpression, Expression, MemberExpression},
+    ast::{Argument, CallExpression, Expression, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -14,9 +14,8 @@ use crate::{
     fixer::Fix,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_first_matcher_arg, is_equality_matcher,
-        parse_expect_jest_fn_call, KnownMemberExpressionProperty, ParsedExpectFnCall,
-        PossibleJestNode,
+        collect_possible_jest_call_node, is_equality_matcher, parse_expect_jest_fn_call,
+        KnownMemberExpressionProperty, ParsedExpectFnCall, PossibleJestNode,
     },
 };
 
@@ -72,6 +71,15 @@ declare_oxc_lint!(
     style,
 );
 
+#[derive(Clone, Debug, PartialEq)]
+enum PreferToBeKind {
+    Defined,
+    NaN,
+    Null,
+    ToBe,
+    Undefined,
+}
+
 impl Rule for PreferToBe {
     fn run_once(&self, ctx: &LintContext) {
         for possible_jest_node in &collect_possible_jest_call_node(ctx) {
@@ -104,10 +112,22 @@ impl PreferToBe {
 
         if has_not_modifier {
             if matcher.is_name_equal("toBeUndefined") {
-                Self::check_and_fix("Defined", call_expr, matcher, &jest_expect_fn_call, ctx);
+                Self::check_and_fix(
+                    &PreferToBeKind::Defined,
+                    call_expr,
+                    matcher,
+                    &jest_expect_fn_call,
+                    ctx,
+                );
                 return;
             } else if matcher.is_name_equal("toBeDefined") {
-                Self::check_and_fix("Undefined", call_expr, matcher, &jest_expect_fn_call, ctx);
+                Self::check_and_fix(
+                    &PreferToBeKind::Undefined,
+                    call_expr,
+                    matcher,
+                    &jest_expect_fn_call,
+                    ctx,
+                );
                 return;
             }
         }
@@ -116,26 +136,48 @@ impl PreferToBe {
             return;
         }
 
-        let first_matcher_arg = get_first_matcher_arg(&jest_expect_fn_call);
+        let Some(Argument::Expression(arg_expr)) = jest_expect_fn_call.args.first() else {
+            return;
+        };
+        let first_matcher_arg = arg_expr.get_inner_expression();
 
         if first_matcher_arg.is_undefined() {
-            let kind = if has_not_modifier { "Defined" } else { "Undefined" };
-            Self::check_and_fix(kind, call_expr, matcher, &jest_expect_fn_call, ctx);
+            let kind =
+                if has_not_modifier { PreferToBeKind::Defined } else { PreferToBeKind::Undefined };
+            Self::check_and_fix(&kind, call_expr, matcher, &jest_expect_fn_call, ctx);
             return;
         }
 
         if first_matcher_arg.is_nan() {
-            Self::check_and_fix("NaN", call_expr, matcher, &jest_expect_fn_call, ctx);
+            Self::check_and_fix(
+                &PreferToBeKind::NaN,
+                call_expr,
+                matcher,
+                &jest_expect_fn_call,
+                ctx,
+            );
             return;
         }
 
         if first_matcher_arg.is_null() {
-            Self::check_and_fix("Null", call_expr, matcher, &jest_expect_fn_call, ctx);
+            Self::check_and_fix(
+                &PreferToBeKind::Null,
+                call_expr,
+                matcher,
+                &jest_expect_fn_call,
+                ctx,
+            );
             return;
         }
 
         if Self::should_use_tobe(first_matcher_arg) && !matcher.is_name_equal("toBe") {
-            Self::check_and_fix("", call_expr, matcher, &jest_expect_fn_call, ctx);
+            Self::check_and_fix(
+                &PreferToBeKind::ToBe,
+                call_expr,
+                matcher,
+                &jest_expect_fn_call,
+                ctx,
+            );
         }
     }
 
@@ -164,7 +206,7 @@ impl PreferToBe {
     }
 
     fn check_and_fix(
-        kind: &str,
+        kind: &PreferToBeKind,
         call_expr: &CallExpression,
         matcher: &KnownMemberExpressionProperty,
         jest_expect_fn_call: &ParsedExpectFnCall,
@@ -179,7 +221,7 @@ impl PreferToBe {
         let modifiers = jest_expect_fn_call.modifiers();
         let maybe_not_modifier = modifiers.iter().find(|modifier| modifier.is_name_equal("not"));
 
-        if kind == "Undefined" {
+        if kind == &PreferToBeKind::Undefined {
             ctx.diagnostic_with_fix(PreferToBeDiagnostic::UseToBeUndefined(span), || {
                 let new_matcher =
                     if is_cmp_mem_expr { "[\"toBeUndefined\"]()" } else { "toBeUndefined()" };
@@ -189,7 +231,7 @@ impl PreferToBe {
                     Fix::new(new_matcher.to_string(), Span::new(span.start, end))
                 }
             });
-        } else if kind == "Defined" {
+        } else if kind == &PreferToBeKind::Defined {
             ctx.diagnostic_with_fix(PreferToBeDiagnostic::UseToBeDefined(span), || {
                 let (new_matcher, start) = if is_cmp_mem_expr {
                     ("[\"toBeDefined\"]()", modifiers.first().unwrap().span.end)
@@ -199,12 +241,12 @@ impl PreferToBe {
 
                 Fix::new(new_matcher.to_string(), Span::new(start, end))
             });
-        } else if kind == "Null" {
+        } else if kind == &PreferToBeKind::Null {
             ctx.diagnostic_with_fix(PreferToBeDiagnostic::UseToBeNull(span), || {
                 let new_matcher = if is_cmp_mem_expr { "\"toBeNull\"]()" } else { "toBeNull()" };
                 Fix::new(new_matcher.to_string(), Span::new(span.start, end))
             });
-        } else if kind == "NaN" {
+        } else if kind == &PreferToBeKind::NaN {
             ctx.diagnostic_with_fix(PreferToBeDiagnostic::UseToBeNaN(span), || {
                 let new_matcher = if is_cmp_mem_expr { "\"toBeNaN\"]()" } else { "toBeNaN()" };
                 Fix::new(new_matcher.to_string(), Span::new(span.start, end))
