@@ -2,13 +2,13 @@ use serde::Deserialize;
 
 /// https://nextjs.org/docs/pages/building-your-application/configuring/eslint#eslint-plugin
 #[derive(Debug, Deserialize, Default)]
-pub struct ESLintSettingsNext {
+pub struct NextPluginSettings {
     #[serde(default)]
     #[serde(rename = "rootDir")]
     root_dir: OneOrMany<String>,
 }
 
-impl ESLintSettingsNext {
+impl NextPluginSettings {
     pub fn get_root_dirs(&self) -> Vec<String> {
         match &self.root_dir {
             OneOrMany::One(val) => vec![val.clone()],

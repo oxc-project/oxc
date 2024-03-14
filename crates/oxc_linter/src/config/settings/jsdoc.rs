@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 /// https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md
 #[derive(Debug, Deserialize, Default)]
-pub struct ESLintSettingsJSDoc {
+pub struct JSDocPluginSettings {
     /// For all rules but NOT apply to `check-access` and `empty-tags` rule
     #[serde(default, rename = "ignorePrivate")]
     pub ignore_private: bool,
@@ -71,7 +71,7 @@ pub struct ESLintSettingsJSDoc {
     // }[]
 }
 
-impl ESLintSettingsJSDoc {
+impl JSDocPluginSettings {
     pub fn is_blocked_tag_name(&self, tag_name: &str) -> Option<String> {
         match self.tag_name_preference.get(tag_name) {
             Some(TagNamePreference::FalseOnly(_)) => Some(format!("Unexpected tag `@{tag_name}`")),
@@ -133,12 +133,12 @@ enum TagNamePreference {
 
 #[cfg(test)]
 mod test {
-    use super::ESLintSettingsJSDoc;
+    use super::JSDocPluginSettings;
     use serde::Deserialize;
 
     #[test]
     fn parse_defaults() {
-        let settings = ESLintSettingsJSDoc::deserialize(&serde_json::json!({})).unwrap();
+        let settings = JSDocPluginSettings::deserialize(&serde_json::json!({})).unwrap();
 
         assert!(!settings.ignore_private);
         assert!(!settings.ignore_internal);
@@ -151,7 +151,7 @@ mod test {
 
     #[test]
     fn parse_bools() {
-        let settings = ESLintSettingsJSDoc::deserialize(&serde_json::json!({
+        let settings = JSDocPluginSettings::deserialize(&serde_json::json!({
             "ignorePrivate": true,
             "ignoreInternal": true,
         }))
@@ -164,13 +164,13 @@ mod test {
 
     #[test]
     fn resolve_tag_name() {
-        let settings = ESLintSettingsJSDoc::deserialize(&serde_json::json!({})).unwrap();
+        let settings = JSDocPluginSettings::deserialize(&serde_json::json!({})).unwrap();
         assert_eq!(settings.resolve_tag_name("foo"), "foo".to_string());
         assert_eq!(settings.resolve_tag_name("virtual"), "abstract".to_string());
         assert_eq!(settings.resolve_tag_name("fileoverview"), "file".to_string());
         assert_eq!(settings.resolve_tag_name("overview"), "file".to_string());
 
-        let settings = ESLintSettingsJSDoc::deserialize(&serde_json::json!({
+        let settings = JSDocPluginSettings::deserialize(&serde_json::json!({
             "tagNamePreference": {
                 "foo": "bar",
                 "virtual": "overridedefault",
@@ -189,10 +189,10 @@ mod test {
 
     #[test]
     fn is_blocked_tag_name() {
-        let settings = ESLintSettingsJSDoc::deserialize(&serde_json::json!({})).unwrap();
+        let settings = JSDocPluginSettings::deserialize(&serde_json::json!({})).unwrap();
         assert_eq!(settings.is_blocked_tag_name("foo"), None);
 
-        let settings = ESLintSettingsJSDoc::deserialize(&serde_json::json!({
+        let settings = JSDocPluginSettings::deserialize(&serde_json::json!({
             "tagNamePreference": {
                 "foo": false,
                 "bar": { "message": "do not use bar" },
