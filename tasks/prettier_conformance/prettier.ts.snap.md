@@ -1,9 +1,6 @@
-ts compatibility: 39/527 (7.40%)
+ts compatibility: 41/527 (7.78%)
 
 # Failed
-
-### abstract-construct-types
-* abstract-construct-types/abstract-construct-types.ts
 
 ### abstract-property
 * abstract-property/semicolon.ts
@@ -248,9 +245,6 @@ ts compatibility: 39/527 (7.40%)
 
 ### conformance/types/constKeyword
 * conformance/types/constKeyword/constKeyword.ts
-
-### conformance/types/constructorType
-* conformance/types/constructorType/cunstructorType.ts
 
 ### conformance/types/enumDeclaration
 * conformance/types/enumDeclaration/enumDeclaration.ts

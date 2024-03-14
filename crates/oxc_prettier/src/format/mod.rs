@@ -784,7 +784,14 @@ impl<'a> Format<'a> for TSConditionalType<'a> {
 
 impl<'a> Format<'a> for TSConstructorType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+        if self.r#abstract {
+            parts.push(ss!("abstract "));
+        }
+        parts.push(ss!("new "));
+        parts.push(self.params.format(p));
+        parts.push(array![p, ss!(" => "), self.return_type.type_annotation.format(p)]);
+        Doc::Array(parts)
     }
 }
 
