@@ -23,5 +23,5 @@ index_vec         = { workspace = true }
 static_assertions = { workspace = true }
 
 [features]
-default = []
-serde   = ["index_vec/serde"]
+default   = []
+serialize = ["index_vec/serde"]
