@@ -1359,6 +1359,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for CallExpression<'a> {
             p.print(b'(');
             p.print_list(&self.arguments, ctx);
             p.print(b')');
+            p.add_source_mapping(self.span.end);
         });
     }
 }

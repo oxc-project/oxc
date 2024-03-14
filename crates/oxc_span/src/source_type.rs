@@ -1,17 +1,14 @@
 use std::path::Path;
 
-use oxc_macros::SerAttrs;
-
-#[cfg(feature = "serde")]
+#[cfg(feature = "serialize")]
 use serde::Serialize;
-#[cfg(feature = "wasm")]
+#[cfg(feature = "serialize")]
 use tsify::Tsify;
 
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SerAttrs)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(Tsify))]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
     language: Language,
@@ -28,32 +25,29 @@ pub struct SourceType {
 }
 
 /// JavaScript or TypeScript
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SerAttrs)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(Tsify))]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum Language {
     JavaScript,
     TypeScript,
-    #[serde(rename = "typescriptDefinition")]
+    #[cfg_attr(feature = "serialize", serde(rename = "typescriptDefinition"))]
     TypeScriptDefinition,
 }
 
 /// Script or Module
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SerAttrs)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(Tsify))]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub enum ModuleKind {
     Script,
     Module,
 }
 
 /// JSX for JavaScript and TypeScript
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SerAttrs)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(feature = "wasm", derive(Tsify))]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub enum LanguageVariant {
     Standard,
     Jsx,

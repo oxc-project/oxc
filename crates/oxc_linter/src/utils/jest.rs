@@ -289,6 +289,13 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
 fn is_pure_string(template_literal: &TemplateLiteral) -> bool {
     template_literal.expressions.is_empty() && template_literal.quasis.len() == 1
 }
+
+pub fn is_equality_matcher(matcher: &KnownMemberExpressionProperty) -> bool {
+    matcher.is_name_equal("toBe")
+        || matcher.is_name_equal("toEqual")
+        || matcher.is_name_equal("toStrictEqual")
+}
+
 #[cfg(test)]
 mod test {
     use crate::LintContext;

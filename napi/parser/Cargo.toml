@@ -21,11 +21,11 @@ test       = false
 doctest    = false
 
 [dependencies]
-oxc_allocator   = { workspace = true }
-oxc_parser      = { workspace = true }
-oxc_ast         = { workspace = true, features = ["serde"] }
-oxc_span        = { workspace = true }
-oxc_diagnostics = { workspace = true }
+oxc_allocator    = { workspace = true }
+oxc_parser       = { workspace = true }
+oxc_ast          = { workspace = true, features = ["serialize"] }
+oxc_span         = { workspace = true }
+oxc_diagnostics  = { workspace = true }
 oxc_module_lexer = { path = "../../crates/oxc_module_lexer" }
 
 serde       = { workspace = true }
@@ -40,4 +40,4 @@ napi-derive = { workspace = true }
 napi-build = "2"
 
 [package.metadata.cargo-machete]
-ignored = ["napi"]
+ignored = ["napi_build"]
