@@ -39,12 +39,10 @@ wasm-bindgen = { workspace = true, optional = true }
 oxc_parser = { workspace = true }
 
 itertools         = { workspace = true }
-bitflags          = { workspace = true }
 indexmap          = { workspace = true }
 insta             = { workspace = true }
 phf               = { workspace = true, features = ["macros"] }
 rustc-hash        = { workspace = true }
-pretty_assertions = "1.4.0"
 
 [features]
 default   = []
