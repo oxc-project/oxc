@@ -24,6 +24,15 @@ expression: check_access
    ╭─[check_access.tsx:1:1]
  1 │ 
    · ▲
+ 2 │                               /**
+ 3 │                                * @accessLevel foo
+   ╰────
+  help: TODO
+
+  ⚠ eslint-plugin-jsdoc(check-access): TODO
+   ╭─[check_access.tsx:1:1]
+ 1 │ 
+   · ▲
  2 │                       /**
  3 │                        * @access
    ╰────

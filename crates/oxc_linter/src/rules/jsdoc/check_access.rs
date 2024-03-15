@@ -3,9 +3,9 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::JSDocTag;
 use oxc_span::Span;
 use phf::phf_set;
+use rustc_hash::FxHashSet;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -40,50 +40,39 @@ const ACCESS_LEVELS: phf::Set<&'static str> = phf_set! {
 
 // TODO: Diagnostic message
 // TODO: Diagnostic span, how to get it?
-// TODO: Fixer?
-// TODO: Check all tests are surely covered
 
 impl Rule for CheckAccess {
     fn run_once(&self, ctx: &LintContext) {
+        let settings = &ctx.settings().jsdoc;
+        let resolved_access_tag_name = settings.resolve_tag_name("access");
+
+        let mut access_related_tag_names = FxHashSet::default();
+        access_related_tag_names.insert(resolved_access_tag_name.to_string());
+        for level in &ACCESS_LEVELS {
+            access_related_tag_names.insert(settings.resolve_tag_name(level));
+        }
+
         for jsdoc in ctx.semantic().jsdoc().iter_all() {
-            let tags = jsdoc.tags();
+            let mut access_related_tags_count = 0;
+            for tag in jsdoc.tags() {
+                let tag_name = tag.tag_name();
 
-            if has_multiple_tags(tags) {
-                ctx.diagnostic(CheckAccessDiagnostic(Span::default()));
-            }
-            if has_invalid_access_tag(tags) {
-                ctx.diagnostic(CheckAccessDiagnostic(Span::default()));
+                if access_related_tag_names.contains(tag_name) {
+                    access_related_tags_count += 1;
+                }
+
+                // Has valid access level?
+                if tag_name == resolved_access_tag_name && !ACCESS_LEVELS.contains(&tag.comment) {
+                    ctx.diagnostic(CheckAccessDiagnostic(Span::default()));
+                }
+
+                // Has redundant access level?
+                if 1 < access_related_tags_count {
+                    ctx.diagnostic(CheckAccessDiagnostic(Span::default()));
+                }
             }
         }
     }
-}
-
-fn has_multiple_tags(tags: &[JSDocTag]) -> bool {
-    1 < tags
-        .iter()
-        .map(JSDocTag::tag_name)
-        // TODO: Apply settings.tag_name_preference here
-        .filter(|tag_name| *tag_name == "access" || ACCESS_LEVELS.contains(tag_name))
-        .count()
-}
-
-fn has_invalid_access_tag(tags: &[JSDocTag]) -> bool {
-    // TODO: Before hand, need to update settings.rs
-    // https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md
-    // Too many settings there and looks complicated...
-    //
-    // TODO: Apply settings.tag_name_preference here
-    // https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md#alias-preference
-    let resolved_access_tag_name = "access";
-    let access_tags = tags.iter().filter(|tag| tag.tag_name() == resolved_access_tag_name);
-
-    for access_tag in access_tags {
-        if !ACCESS_LEVELS.contains(access_tag.comment.as_str()) {
-            return true;
-        }
-    }
-
-    false
 }
 
 #[test]
@@ -213,24 +202,24 @@ fn test() {
               },
             })),
         ),
-        // (
-        //     r"
-        // 			          /**
-        // 			           * @accessLevel foo
-        // 			           */
-        // 			          function quux (foo) {
+        (
+            r"
+        			          /**
+        			           * @accessLevel foo
+        			           */
+        			          function quux (foo) {
 
-        // 			          }
-        // 			      ",
-        //     None,
-        //     Some(serde_json::json!({
-        //       "jsdoc": {
-        //         "tagNamePreference": {
-        //           "access": "accessLevel",
-        //         },
-        //       },
-        //     })),
-        // ),
+        			          }
+        			      ",
+            None,
+            Some(serde_json::json!({
+              "jsdoc": {
+                "tagNamePreference": {
+                  "access": "accessLevel",
+                },
+              },
+            })),
+        ),
         (
             r"
 			          /**
