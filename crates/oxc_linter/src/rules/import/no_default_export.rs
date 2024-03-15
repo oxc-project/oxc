@@ -43,12 +43,12 @@ declare_oxc_lint!(
     nursery
 );
 
-fn write_diagnostic(ctx: &LintContext<'_>, span: &Span) {
-    ctx.diagnostic(NoDefaultExportDiagnostic(span.to_owned()))
+fn write_diagnostic(ctx: &LintContext<'_>, span: Span) {
+    ctx.diagnostic(NoDefaultExportDiagnostic(span));
 }
 fn write_diagnostic_optional(ctx: &LintContext<'_>, span_option: Option<Span>) {
     if let Some(span) = span_option {
-        write_diagnostic(ctx, &span)
+        write_diagnostic(ctx, span);
     }
 }
 
