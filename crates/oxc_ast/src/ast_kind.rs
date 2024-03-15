@@ -171,6 +171,7 @@ pub enum AstKind<'a> {
     TSTypeParameter(&'a TSTypeParameter<'a>),
     TSTypeParameterDeclaration(&'a TSTypeParameterDeclaration<'a>),
     TSTypeParameterInstantiation(&'a TSTypeParameterInstantiation<'a>),
+    TSImportType(&'a TSImportType<'a>),
 
     TSPropertySignature(&'a TSPropertySignature<'a>),
 }
@@ -485,6 +486,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSTypeParameter(x) => x.span,
             Self::TSTypeParameterDeclaration(x) => x.span,
             Self::TSTypeParameterInstantiation(x) => x.span,
+            Self::TSImportType(x) => x.span,
 
             Self::TSPropertySignature(x) => x.span,
         }
@@ -672,6 +674,7 @@ impl<'a> AstKind<'a> {
             Self::TSTypeParameter(_) => "TSTypeParameter".into(),
             Self::TSTypeParameterDeclaration(_) => "TSTypeParameterDeclaration".into(),
             Self::TSTypeParameterInstantiation(_) => "TSTypeParameterInstantiation".into(),
+            Self::TSImportType(_) => "TSImportType".into(),
 
             Self::TSPropertySignature(_) => "TSPropertySignature".into(),
         }

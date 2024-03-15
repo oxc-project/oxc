@@ -5,7 +5,7 @@ define_index_type! {
     pub struct ScopeId = u32;
 }
 
-#[cfg(feature = "wasm")]
+#[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type ScopeId = number;

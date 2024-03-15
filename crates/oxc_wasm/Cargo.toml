@@ -18,7 +18,7 @@ test       = false
 doctest    = false
 
 [dependencies]
-oxc = { workspace = true, features = ["serde", "semantic", "transformer", "minifier", "codegen", "wasm"] }
+oxc = { workspace = true, features = ["serialize", "semantic", "transformer", "minifier", "codegen"] }
 
 oxc_linter   = { workspace = true }
 oxc_prettier = { workspace = true }

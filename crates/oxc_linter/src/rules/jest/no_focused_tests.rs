@@ -70,7 +70,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
         return;
     };
-    let ParsedGeneralJestFnCall { kind, members, name } = jest_fn_call;
+    let ParsedGeneralJestFnCall { kind, members, name, .. } = jest_fn_call;
     if !matches!(kind, JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)) {
         return;
     }

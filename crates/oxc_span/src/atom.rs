@@ -1,11 +1,11 @@
 use std::{borrow::Borrow, fmt, hash, ops::Deref};
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
 use compact_str::CompactString;
 
-#[cfg(feature = "wasm")]
+#[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type Atom = string;
@@ -22,7 +22,7 @@ pub const MAX_INLINE_LEN: usize = 16;
 #[derive(Clone, Eq)]
 pub struct Atom<'a>(&'a str);
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serialize")]
 impl<'a> Serialize for Atom<'a> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -247,7 +247,7 @@ impl fmt::Display for CompactStr {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serialize")]
 impl Serialize for CompactStr {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

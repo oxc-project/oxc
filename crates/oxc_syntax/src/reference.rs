@@ -1,13 +1,13 @@
 use bitflags::bitflags;
 use oxc_index::define_index_type;
-#[cfg(feature = "serde")]
+#[cfg(feature = "serialize")]
 use serde::Serialize;
 
 define_index_type! {
     pub struct ReferenceId = u32;
 }
 
-#[cfg(feature = "wasm")]
+#[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type ReferenceId = number;
@@ -22,7 +22,7 @@ export type ReferenceFlag = {
 
 bitflags! {
     #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
-    #[cfg_attr(feature = "serde", derive(Serialize))]
+    #[cfg_attr(feature = "serialize", derive(Serialize))]
     pub struct ReferenceFlag: u8 {
         const None = 0;
         const Read = 1 << 0;

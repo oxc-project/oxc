@@ -66,7 +66,15 @@ pub fn parse_jest_fn_call<'a>(
         }
 
         if matches!(kind, JestFnKind::Expect) {
-            let options = ExpectFnCallOptions { call_expr, members, name, head, node, ctx };
+            let options = ExpectFnCallOptions {
+                call_expr,
+                members,
+                name,
+                local: resolved.local,
+                head,
+                node,
+                ctx,
+            };
             return parse_jest_expect_fn_call(options);
         }
 
@@ -80,7 +88,7 @@ pub fn parse_jest_fn_call<'a>(
         }
 
         if matches!(kind, JestFnKind::General(JestGeneralFnKind::Jest)) {
-            return parse_jest_jest_fn_call(members, name);
+            return parse_jest_jest_fn_call(members, name, resolved.local);
         }
 
         // Check every link in the chain except the last is a member expression
@@ -98,6 +106,7 @@ pub fn parse_jest_fn_call<'a>(
             kind,
             members,
             name: Cow::Borrowed(name),
+            local: Cow::Borrowed(resolved.local),
         }));
     }
 
@@ -107,7 +116,7 @@ pub fn parse_jest_fn_call<'a>(
 fn parse_jest_expect_fn_call<'a>(
     options: ExpectFnCallOptions<'a, '_>,
 ) -> Option<ParsedJestFnCall<'a>> {
-    let ExpectFnCallOptions { call_expr, members, name, head, node, ctx } = options;
+    let ExpectFnCallOptions { call_expr, members, name, local, head, node, ctx } = options;
     let (modifiers, matcher, mut expect_error) = match find_modifiers_and_matcher(&members) {
         Ok((modifier, matcher)) => (modifier, matcher, None),
         Err(e) => (vec![], None, Some(e)),
@@ -131,6 +140,7 @@ fn parse_jest_expect_fn_call<'a>(
         head,
         members,
         name: Cow::Borrowed(name),
+        local: Cow::Borrowed(local),
         args: &call_expr.arguments,
         matcher_index: matcher,
         modifier_indices: modifiers,
@@ -222,6 +232,7 @@ fn is_top_most_call_expr<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>
 fn parse_jest_jest_fn_call<'a>(
     members: Vec<KnownMemberExpressionProperty<'a>>,
     name: &'a str,
+    local: &'a str,
 ) -> Option<ParsedJestFnCall<'a>> {
     if !name.to_ascii_lowercase().eq_ignore_ascii_case("jest") {
         return None;
@@ -231,6 +242,7 @@ fn parse_jest_jest_fn_call<'a>(
         kind: JestFnKind::General(JestGeneralFnKind::Jest),
         members,
         name: Cow::Borrowed(name),
+        local: Cow::Borrowed(local),
     }));
 }
 
@@ -245,6 +257,7 @@ pub struct ExpectFnCallOptions<'a, 'b> {
     pub call_expr: &'a CallExpression<'a>,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
     pub name: &'a str,
+    pub local: &'a Atom<'a>,
     pub head: KnownMemberExpressionProperty<'a>,
     pub node: &'b AstNode<'a>,
     pub ctx: &'b LintContext<'a>,
@@ -305,12 +318,14 @@ pub struct ParsedGeneralJestFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
     pub name: Cow<'a, str>,
+    pub local: Cow<'a, str>,
 }
 
 pub struct ParsedExpectFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
     pub name: Cow<'a, str>,
+    pub local: Cow<'a, str>,
     pub head: KnownMemberExpressionProperty<'a>,
     pub args: &'a oxc_allocator::Vec<'a, Argument<'a>>,
     // In `expect(1).not.resolved.toBe()`, "not", "resolved" will be modifier
