@@ -173,7 +173,7 @@ impl SourcemapBuilder {
             });
 
             let remaining = &content.as_bytes()[line_byte_offset..];
-            for (mut byte_offset_from_line_start, b) in remaining.iter().copied().enumerate() {
+            for (mut byte_offset_from_line_start, b) in remaining.iter().enumerate() {
                 match b {
                     b'\n' => {
                         byte_offset_from_line_start += 1;
