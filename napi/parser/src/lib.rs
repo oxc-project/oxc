@@ -40,15 +40,14 @@ pub struct ParserOptions {
 #[napi(object)]
 pub struct ParseResult {
     pub program: String,
-    pub comments: Vec<Comment>,
+    pub comments: String,
     pub errors: Vec<String>,
 }
 
-#[napi(object)]
-pub struct Comment {
+#[derive(Serialize)]
+pub struct Comment<'a> {
     pub r#type: &'static str,
-    #[napi(ts_type = "'Line' | 'Block'")]
-    pub value: String,
+    pub value: &'a str,
     pub start: u32,
     pub end: u32,
 }
@@ -121,11 +120,12 @@ pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseR
                 CommentKind::SingleLine => "Line",
                 CommentKind::MultiLine => "Block",
             },
-            value: span.source_text(&source_text).to_string(),
+            value: span.source_text(&source_text),
             start: span.start,
             end: span.end,
         })
         .collect::<Vec<Comment>>();
+    let comments = serde_json::to_string(&comments).unwrap();
 
     ParseResult { program, comments, errors }
 }

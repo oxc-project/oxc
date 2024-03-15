@@ -44,5 +44,6 @@ for (const {filename, code} of files) {
         const res = parseSync(code, {sourceFilename: filename});
         assert(res.errors.length === 0);
         JSON.parse(res.program);
+        JSON.parse(res.comments);
     });
 }

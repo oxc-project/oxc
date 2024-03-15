@@ -95,14 +95,8 @@ export interface ParserOptions {
 }
 export interface ParseResult {
   program: string
-  comments: Array<Comment>
+  comments: string
   errors: Array<string>
-}
-export interface Comment {
-  type: string
-  value: 'Line' | 'Block'
-  start: number
-  end: number
 }
 /**
  * Parse without returning anything.
