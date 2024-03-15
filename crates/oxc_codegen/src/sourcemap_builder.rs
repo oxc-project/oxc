@@ -1,4 +1,3 @@
-
 use oxc_syntax::identifier::{LS, PS};
 
 // Irregular line breaks - '\u{2028}' (LS) and '\u{2029}' (PS)
