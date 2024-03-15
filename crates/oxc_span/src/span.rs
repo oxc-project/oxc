@@ -1,3 +1,6 @@
+// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+#![allow(non_snake_case)]
+
 use std::hash::{Hash, Hasher};
 
 use miette::{SourceOffset, SourceSpan};
