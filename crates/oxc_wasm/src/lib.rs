@@ -1,3 +1,6 @@
+// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+#![allow(non_snake_case)]
+
 mod options;
 
 use std::{cell::RefCell, path::PathBuf, rc::Rc};

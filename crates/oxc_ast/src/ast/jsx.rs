@@ -1,5 +1,8 @@
 //! [JSX](https://facebook.github.io/jsx)
 
+// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+#![allow(non_snake_case)]
+
 use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, Span};
 #[cfg(feature = "serialize")]
