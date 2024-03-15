@@ -58,12 +58,3 @@ pub fn declare_all_lint_rules(input: proc_macro::TokenStream) -> proc_macro::Tok
 
     declare_all_lint_rules::declare_all_lint_rules(metadata).into()
 }
-
-/// Dummy derive macro which doesn't actually derive anything,
-/// but allows `#[serde]` and `#[tsify]` attrs on the item it's applied to,
-/// without deriving `Serialize` or `Tsify`, and without `#[cfg_attr]`.
-#[proc_macro_derive(SerAttrs, attributes(serde, tsify))]
-pub fn ser_attrs(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    // Return an empty token stream
-    proc_macro::TokenStream::new()
-}

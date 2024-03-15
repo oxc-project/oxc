@@ -35,14 +35,14 @@ impl<'a> JSDocParser<'a> {
         let mut tags = vec![];
 
         // Let's start with the first `@`
-        while let Some(c) = self.source_text.chars().nth(self.current) {
+        while let Some(c) = self.source_text[self.current..].chars().next() {
             match c {
                 '@' => {
-                    self.current += 1;
+                    self.current += c.len_utf8();
                     tags.push(self.parse_tag());
                 }
                 _ => {
-                    self.current += 1;
+                    self.current += c.len_utf8();
                 }
             }
         }
@@ -96,7 +96,8 @@ impl<'a> JSDocParser<'a> {
         self.skip_whitespace();
 
         // JSDoc.app ignores `-` char between name and comment, but TS doesn't
-        if self.at('-') {
+        // Some people use `:` as separator
+        if self.at('-') || self.at(':') {
             self.skip_whitespace();
         }
 
@@ -108,27 +109,29 @@ impl<'a> JSDocParser<'a> {
     //
     // Parser utils
     //
-
     fn skip_whitespace(&mut self) {
-        while let Some(c) = self.source_text.chars().nth(self.current) {
+        while let Some(c) = self.source_text[self.current..].chars().next() {
             if c != ' ' {
                 break;
             }
-            self.current += 1;
+            self.current += c.len_utf8();
         }
     }
 
     fn advance(&mut self) {
-        if self.current < self.source_text.len() {
-            self.current += 1;
+        if let Some(c) = self.source_text[self.current..].chars().next() {
+            self.current += c.len_utf8();
         }
     }
 
     fn at(&mut self, c: char) -> bool {
-        let Some(ch) = self.source_text.chars().nth(self.current) else { return false };
-        if ch == c {
-            self.advance();
-            true
+        if let Some(ch) = self.source_text[self.current..].chars().next() {
+            if ch == c {
+                self.advance();
+                true
+            } else {
+                false
+            }
         } else {
             false
         }
@@ -136,11 +139,11 @@ impl<'a> JSDocParser<'a> {
 
     fn take_until(&mut self, predicate: fn(char) -> bool) -> &'a str {
         let start = self.current;
-        while let Some(c) = self.source_text.chars().nth(self.current) {
+        while let Some(c) = self.source_text[self.current..].chars().next() {
             if predicate(c) {
                 break;
             }
-            self.current += 1;
+            self.current += c.len_utf8();
         }
         &self.source_text[start..self.current]
     }
@@ -178,13 +181,24 @@ mod test {
 
         assert_eq!(
             parse_from_full_text(
-                "/** 
-this is comment
+                "/**
+this is
+comment
 @x
 */"
             )
             .0,
-            "this is comment"
+            "this is\ncomment"
+        );
+        assert_eq!(
+            parse_from_full_text(
+                "/**
+　　　　　　　　　* 日本語とか
+　　　　　　　　　* multibyte文字はどう？
+                  */"
+            )
+            .0,
+            "日本語とか\nmultibyte文字はどう？"
         );
     }
 
@@ -399,7 +413,7 @@ comment */"
 comment */"
             ),
             parse_from_full_text(
-                "/** 
+                "/**
                   * @param {str} name
                   * comment
                   */"
@@ -446,6 +460,63 @@ comment */"
                         r#type: Some(ParamType { value: "Num" })
                     }),
                     comment: "comment2".to_string(),
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn parses_practical_with_multibyte() {
+        let jsdoc = parse_from_full_text(
+            "/**
+              * flat tree data on expanded state
+              *
+              * @export
+              * @template T
+              * @param {*} data : table data
+              * @param {string} childrenColumnName : 指定树形结构的列名
+              * @param {Set<Key>} expandedKeys : 展开的行对应的keys
+              * @param {GetRowKey<T>} getRowKey  : 获取当前rowKey的方法
+              * @returns flattened data
+              */",
+        );
+        assert_eq!(jsdoc.0, "flat tree data on expanded state");
+        assert_eq!(
+            jsdoc.1,
+            vec![
+                JSDocTag { kind: JSDocTagKind::Unknown("export"), comment: String::new() },
+                JSDocTag { kind: JSDocTagKind::Unknown("template"), comment: "T".to_string() },
+                JSDocTag {
+                    kind: JSDocTagKind::Parameter(Param {
+                        name: "data",
+                        r#type: Some(ParamType { value: "*" })
+                    }),
+                    comment: "table data".to_string(),
+                },
+                JSDocTag {
+                    kind: JSDocTagKind::Parameter(Param {
+                        name: "childrenColumnName",
+                        r#type: Some(ParamType { value: "string" })
+                    }),
+                    comment: "指定树形结构的列名".to_string(),
+                },
+                JSDocTag {
+                    kind: JSDocTagKind::Parameter(Param {
+                        name: "expandedKeys",
+                        r#type: Some(ParamType { value: "Set<Key>" })
+                    }),
+                    comment: "展开的行对应的keys".to_string(),
+                },
+                JSDocTag {
+                    kind: JSDocTagKind::Parameter(Param {
+                        name: "getRowKey",
+                        r#type: Some(ParamType { value: "GetRowKey<T>" })
+                    }),
+                    comment: "获取当前rowKey的方法".to_string(),
+                },
+                JSDocTag {
+                    kind: JSDocTagKind::Unknown("returns"),
+                    comment: "flattened data".to_string(),
                 },
             ]
         );
