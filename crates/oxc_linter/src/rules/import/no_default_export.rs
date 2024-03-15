@@ -57,10 +57,7 @@ impl Rule for NoDefaultExport {
         let module_record = ctx.semantic().module_record();
 
         write_diagnostic_optional(ctx, module_record.export_default);
-        module_record
-            .export_default_duplicated
-            .iter()
-            .for_each(|it| write_diagnostic(ctx, *it));
+        module_record.export_default_duplicated.iter().for_each(|it| write_diagnostic(ctx, *it));
         write_diagnostic_optional(ctx, module_record.exported_bindings.get("default").copied());
     }
 }
