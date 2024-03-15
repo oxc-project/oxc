@@ -13,7 +13,10 @@ use crate::{
     context::LintContext,
     fixer::Fix,
     rule::Rule,
-    utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
+    utils::{
+        collect_possible_jest_call_node, parse_expect_jest_fn_call, ParsedExpectFnCall,
+        PossibleJestNode,
+    },
 };
 
 #[derive(Debug, Error, Diagnostic)]
@@ -87,19 +90,12 @@ impl PreferExpectResolves {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Some(expect_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
+        let Some(jest_expect_fn_call) =
+            parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
         else {
             return;
         };
-        let Some(parent) = expect_fn_call.head.parent else {
-            return;
-        };
-
-        if !parent.is_call_expression() {
-            return;
-        }
-
-        let Some(Expression::CallExpression(call_expr)) = expect_fn_call.head.parent else {
+        let Some(Expression::CallExpression(call_expr)) = jest_expect_fn_call.head.parent else {
             return;
         };
         let Some(argument) = call_expr.arguments.first() else {
@@ -108,35 +104,42 @@ impl PreferExpectResolves {
         let Argument::Expression(Expression::AwaitExpression(await_expr)) = argument else {
             return;
         };
+        let Some(ident) = call_expr.callee.get_identifier_reference() else {
+            return;
+        };
 
         ctx.diagnostic_with_fix(ExpectResolves(await_expr.span), || {
-            let content = Self::build_code(call_expr, ctx);
+            let content = Self::build_code(&jest_expect_fn_call, call_expr, ident.span, ctx);
             Fix::new(content, call_expr.span)
         });
     }
 
-    fn build_code<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) -> String {
+    fn build_code<'a>(
+        jest_expect_fn_call: &ParsedExpectFnCall,
+        call_expr: &CallExpression<'a>,
+        ident_span: Span,
+        ctx: &LintContext<'a>,
+    ) -> String {
         let mut formatter = ctx.codegen();
-        let ident = call_expr.callee.get_identifier_reference().unwrap();
         let first = call_expr.arguments.first().unwrap();
         let Argument::Expression(Expression::AwaitExpression(await_expr)) = first else {
             return formatter.into_source_text();
         };
 
         let offset = match &await_expr.argument {
-            Expression::CallExpression(call_expr) => call_expr.span.start - ident.span.end,
-            Expression::Identifier(promise_ident) => promise_ident.span.start - ident.span.end,
+            Expression::CallExpression(call_expr) => call_expr.span.start - ident_span.end,
+            Expression::Identifier(promise_ident) => promise_ident.span.start - ident_span.end,
             _ => 0,
         };
 
         let arg_span = Span::new(
-            call_expr.span.start + (ident.span.end - ident.span.start) + offset,
+            call_expr.span.start + (ident_span.end - ident_span.start) + offset,
             call_expr.span.end,
         );
 
         formatter.print_str(b"await");
         formatter.print_hard_space();
-        formatter.print_str(ident.name.as_bytes());
+        formatter.print_str(jest_expect_fn_call.local.as_bytes());
         formatter.print(b'(');
         formatter.print_str(arg_span.source_text(ctx.source_text()).as_bytes());
         formatter.print_str(b".resolves");

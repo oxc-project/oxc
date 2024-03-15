@@ -153,6 +153,8 @@ mod jest {
     pub mod no_test_return_statement;
     pub mod prefer_called_with;
     pub mod prefer_equality_matcher;
+    pub mod prefer_expect_resolves;
+    pub mod prefer_spy_on;
     pub mod prefer_strict_equal;
     pub mod prefer_to_be;
     pub mod prefer_to_have_length;
@@ -457,6 +459,8 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_test_return_statement,
     jest::prefer_called_with,
     jest::prefer_equality_matcher,
+    jest::prefer_expect_resolves,
+    jest::prefer_spy_on,
     jest::prefer_strict_equal,
     jest::prefer_to_be,
     jest::prefer_to_have_length,
