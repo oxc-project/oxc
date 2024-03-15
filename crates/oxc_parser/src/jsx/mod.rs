@@ -215,7 +215,7 @@ impl<'a> ParserImpl<'a> {
             }
             // {expr}
             Kind::LCurly => self
-                .parse_jsx_expression_container(true)
+                .parse_jsx_expression_container(/* is_jsx_child */ true)
                 .map(JSXChild::ExpressionContainer)
                 .map(Some),
             // text
@@ -232,13 +232,17 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // bump `{`
 
-        let expr = if self.eat(Kind::RCurly) {
+        let expr = if self.at(Kind::RCurly) {
+            if in_jsx_child {
+                self.expect_jsx_child(Kind::RCurly)
+            } else {
+                self.expect(Kind::RCurly)
+            }?;
+            let span = self.end_span(span);
             // Handle comment between curly braces (ex. `{/* comment */}`)
             //                                            ^^^^^^^^^^^^^ span
-            let span = self.end_span(span);
-            JSXExpression::EmptyExpression(
-                self.ast.jsx_empty_expression(Span::new(span.start + 1, span.end - 1)),
-            )
+            let expr = self.ast.jsx_empty_expression(Span::new(span.start + 1, span.end - 1));
+            JSXExpression::EmptyExpression(expr)
         } else {
             let expr = self.parse_jsx_assignment_expression().map(JSXExpression::Expression)?;
             if in_jsx_child {
@@ -339,7 +343,7 @@ impl<'a> ParserImpl<'a> {
         match self.cur_kind() {
             Kind::Str => self.parse_literal_string().map(JSXAttributeValue::StringLiteral),
             Kind::LCurly => {
-                let expr = self.parse_jsx_expression_container(false)?;
+                let expr = self.parse_jsx_expression_container(/* is_jsx_child */ false)?;
                 Ok(JSXAttributeValue::ExpressionContainer(expr))
             }
             Kind::LAngle => {

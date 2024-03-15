@@ -1,6 +1,6 @@
 parser_misc Summary:
-AST Parsed     : 14/14 (100.00%)
-Positive Passed: 14/14 (100.00%)
+AST Parsed     : 15/15 (100.00%)
+Positive Passed: 15/15 (100.00%)
 Negative Passed: 8/8 (100.00%)
 
   × Unexpected token
