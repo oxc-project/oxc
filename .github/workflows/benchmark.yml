@@ -6,6 +6,8 @@ on:
     types: [opened, synchronize]
     paths:
       - '**/*.rs'
+      - 'napi/parser/**/*.js'
+      - 'napi/parser/**/*.mjs'
       - 'Cargo.lock'
       - '.github/workflows/benchmark.yml'
   push:
@@ -14,6 +16,8 @@ on:
       - bench-*
     paths:
       - '**/*.rs'
+      - 'napi/parser/**/*.js'
+      - 'napi/parser/**/*.mjs'
       - 'Cargo.lock'
       - '.github/workflows/benchmark.yml'
 
