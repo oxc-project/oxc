@@ -13,6 +13,7 @@ mod import {
     pub mod namespace;
     pub mod no_amd;
     pub mod no_cycle;
+    pub mod no_default_export;
     pub mod no_deprecated;
     pub mod no_duplicates;
     pub mod no_named_as_default;
@@ -582,6 +583,7 @@ oxc_macros::declare_all_lint_rules! {
     import::no_unresolved,
     import::no_unused_modules,
     import::no_duplicates,
+    import::no_default_export,
     jsx_a11y::alt_text,
     jsx_a11y::anchor_has_content,
     jsx_a11y::anchor_is_valid,
