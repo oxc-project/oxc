@@ -4,7 +4,8 @@
   "scripts": {
     "build": "napi build --platform --release",
     "test": "node test.mjs",
-    "bench": "vitest bench"
+    "bench": "vitest bench",
+    "bench-uninstrumented": "vitest bench --config vitest-dummy.config.mjs"
   },
   "devDependencies": {
     "@codspeed/vitest-plugin": "^3.1.0",

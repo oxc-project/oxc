@@ -85,3 +85,36 @@ jobs:
             cd napi/parser
             pnpm run bench
           token: ${{ secrets.CODSPEED_TOKEN }}
+
+  benchmark-napi-uninstrumented:
+    name: Benchmark NAPI uninstrumented
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@v4
+        with:
+          progress: false
+          persist-credentials: false
+
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
+        with:
+          shared-key: 'benchmark'
+          save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Build NAPI benchmark
+        working-directory: ./napi/parser
+        run: |
+          corepack enable
+          pnpm install
+          pnpm run build
+
+      - name: Run NAPI benchmark
+        working-directory: ./napi/parser
+        run: pnpm run bench-uninstrumented
