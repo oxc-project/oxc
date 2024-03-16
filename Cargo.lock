@@ -303,17 +303,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "codspeed-criterion-compat"
-version = "2.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02ae9de916d6315a5129bca2fc7957285f0b9f77a2f6a8734a0a146caee2b0b6"
-dependencies = [
- "codspeed",
- "colored",
- "criterion",
-]
-
-[[package]]
 name = "colored"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -378,20 +367,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "criterion"
-version = "0.5.1"
+name = "criterion2"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2b12d017a929603d80db1831cd3a24082f8137ce19c69e6447f54f5fc8d692f"
+checksum = "b9ad70e018971763c773c9cc3e6669092f88318a69894e79ec47adb577bc8006"
 dependencies = [
  "anes",
  "cast",
  "ciborium",
  "clap",
- "criterion-plot",
- "is-terminal",
- "itertools 0.10.5",
+ "codspeed",
+ "colored",
+ "itertools",
  "num-traits",
- "once_cell",
  "oorandom",
  "regex",
  "serde",
@@ -399,16 +387,6 @@ dependencies = [
  "serde_json",
  "tinytemplate",
  "walkdir",
-]
-
-[[package]]
-name = "criterion-plot"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b50826342786a51a89e2da3a28f1c32b06e387201bc2d19791f622c673706b1"
-dependencies = [
- "cast",
- "itertools 0.10.5",
 ]
 
 [[package]]
@@ -892,15 +870,6 @@ checksum = "7655c9839580ee829dfacba1d1278c2b7883e50a277ff7541299489d6bdfdc45"
 
 [[package]]
 name = "itertools"
-version = "0.10.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
@@ -1306,7 +1275,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b645dcde5f119c2c454a92d0dfa271a2a3b205da92e4292a68ead4bdbfde1f33"
 dependencies = [
  "heck",
- "itertools 0.12.1",
+ "itertools",
  "proc-macro2",
  "proc-macro2-diagnostics",
  "quote",
@@ -1378,8 +1347,7 @@ dependencies = [
 name = "oxc_benchmark"
 version = "0.0.0"
 dependencies = [
- "codspeed-criterion-compat",
- "criterion",
+ "criterion2",
  "oxc_allocator",
  "oxc_codegen",
  "oxc_linter",
@@ -1515,7 +1483,7 @@ dependencies = [
  "convert_case",
  "dashmap",
  "insta",
- "itertools 0.12.1",
+ "itertools",
  "json-strip-comments",
  "language-tags",
  "lazy_static",
@@ -1548,7 +1516,7 @@ name = "oxc_macros"
 version = "0.0.0"
 dependencies = [
  "convert_case",
- "itertools 0.12.1",
+ "itertools",
  "proc-macro2",
  "quote",
  "syn 1.0.109",
@@ -1559,7 +1527,7 @@ name = "oxc_minifier"
 version = "0.10.0"
 dependencies = [
  "insta",
- "itertools 0.12.1",
+ "itertools",
  "num-bigint",
  "num-traits",
  "oxc_allocator",
@@ -1702,7 +1670,7 @@ version = "0.10.0"
 dependencies = [
  "indexmap",
  "insta",
- "itertools 0.12.1",
+ "itertools",
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
