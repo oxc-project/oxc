@@ -63,8 +63,7 @@ oxc_tasks_common = { workspace = true }
 oxc_transformer  = { workspace = true }
 oxc_codegen      = { workspace = true }
 
-criterion                 = { workspace = true }
-codspeed-criterion-compat = { workspace = true, optional = true }
+criterion = { package = "criterion2", version = "0.6.0", default-features = false }
 
 [features]
-codspeed = ["codspeed-criterion-compat"]
+codspeed = ["criterion/codspeed"]
