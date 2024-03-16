@@ -1,0 +1,40 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_default_export
+---
+  ⚠ eslint-plugin-import(no-default-export): Prefer named exports
+   ╭─[index.ts:1:8]
+ 1 │ export default function bar() {};
+   ·        ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-default-export): Prefer named exports
+   ╭─[index.ts:2:8]
+ 1 │ export const foo = 'foo';
+ 2 │ export default bar;
+   ·        ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-default-export): Prefer named exports
+   ╭─[index.ts:1:8]
+ 1 │ export default class Bar {};
+   ·        ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-default-export): Prefer named exports
+   ╭─[index.ts:1:8]
+ 1 │ export default function() {};
+   ·        ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-default-export): Prefer named exports
+   ╭─[index.ts:1:8]
+ 1 │ export default class {};
+   ·        ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-default-export): Prefer named exports
+   ╭─[index.ts:1:26]
+ 1 │ let foo; export { foo as default }
+   ·                          ───────
+   ╰────
