@@ -42,6 +42,7 @@ mod eslint {
     pub mod eqeqeq;
     pub mod for_direction;
     pub mod getter_return;
+    pub mod max_lines;
     pub mod no_array_constructor;
     pub mod no_async_promise_executor;
     pub mod no_bitwise;
@@ -353,6 +354,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::eqeqeq,
     eslint::for_direction,
     eslint::getter_return,
+    eslint::max_lines,
     eslint::no_this_before_super,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
