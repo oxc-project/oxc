@@ -48,27 +48,6 @@ jobs:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install codspeed
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-codspeed
-
-      - name: Build Benchmark
-        env:
-          RUSTFLAGS: "-C debuginfo=2 -C strip=none -g --cfg codspeed"
-        shell: bash
-        run: |
-          cargo build --release -p oxc_benchmark --features codspeed --bench lexer --bench parser --bench transformer --bench semantic --bench linter --bench minifier --bench codegen_sourcemap
-          mkdir -p target/codspeed/oxc_benchmark/
-          mv target/release/deps/lexer-* target/codspeed/oxc_benchmark
-          mv target/release/deps/parser-* target/codspeed/oxc_benchmark
-          mv target/release/deps/transformer-* target/codspeed/oxc_benchmark
-          mv target/release/deps/semantic-* target/codspeed/oxc_benchmark
-          mv target/release/deps/linter-* target/codspeed/oxc_benchmark
-          mv target/release/deps/minifier-* target/codspeed/oxc_benchmark
-          mv target/release/deps/codegen_sourcemap-* target/codspeed/oxc_benchmark
-          rm -rf target/codspeed/oxc_benchmark/*.d
-
       - name: Build NAPI benchmark
         working-directory: ./napi/parser
         run: |
@@ -76,13 +55,11 @@ jobs:
           pnpm install
           pnpm run build
 
-      - name: Run benchmark
+      - name: Run NAPI benchmark
         uses: CodSpeedHQ/action@v2
         timeout-minutes: 30
         with:
-          run: |
-            cargo codspeed run
-            node napi/parser/parse.bench.mjs
+          run: node napi/parser/parse.bench.mjs
           token: ${{ secrets.CODSPEED_TOKEN }}
 
   benchmark-napi-uninstrumented:
