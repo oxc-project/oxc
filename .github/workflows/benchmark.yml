@@ -83,7 +83,7 @@ jobs:
           run: |
             cargo codspeed run
             cd napi/parser
-            pnpm run bench
+            node parse.bench.mjs
           token: ${{ secrets.CODSPEED_TOKEN }}
 
   benchmark-napi-uninstrumented:
@@ -117,4 +117,4 @@ jobs:
 
       - name: Run NAPI benchmark
         working-directory: ./napi/parser
-        run: pnpm run bench-uninstrumented
+        run: DISABLE_CODSPEED=true node parse.bench.mjs

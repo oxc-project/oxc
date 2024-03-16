@@ -2,8 +2,10 @@ import {fileURLToPath} from 'url';
 import {join as pathJoin} from 'path';
 import {readFile, writeFile} from 'fs/promises';
 import assert from 'assert';
-import {bench} from 'vitest';
+import {Bench} from 'tinybench';
 import {parseSync} from './index.js';
+
+const CODSPEED = !!process.env.CI && !process.env.DISABLE_CODSPEED;
 
 const urls = [
     // TypeScript syntax (2.81MB)
@@ -39,10 +41,36 @@ const files = await Promise.all(urls.map(async (url) => {
     return {filename, code};
 }));
 
+let bench, benchUninstrumented, addBench;
+if (CODSPEED) {
+    console.log('Running benchmarks with CodSpeed ENABLED');
+    const {withCodSpeed} = await import('@codspeed/tinybench-plugin');
+    bench = withCodSpeed(new Bench());
+    benchUninstrumented = new Bench();
+
+    addBench = (name, createFn) => {
+        bench.add(name, createFn());
+        benchUninstrumented.add(`${name}(uninstrumented)`, createFn());
+    };
+} else {
+    console.log('Running benchmarks with CodSpeed DISABLED');
+    bench = new Bench();
+    addBench = (name, createFn) => bench.add(name, createFn());
+}
+
 for (const {filename, code} of files) {
-    bench(`parser(napi)[${filename}]`, () => {
+    addBench(`parser(napi)[${filename}]`, () => () => {
         const res = parseSync(code, {sourceFilename: filename});
         assert(res.errors.length === 0);
         JSON.parse(res.program);
     });
+}
+
+await bench.run();
+console.table(bench.table());
+
+if (CODSPEED) {
+    console.log('Running again uninstrumented');
+    await benchUninstrumented.run();
+    console.table(benchUninstrumented.table());
 }
