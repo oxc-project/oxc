@@ -1,7 +1,7 @@
-use oxc_ast::{ast::Expression,AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::{self, Error},
+    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -38,15 +38,10 @@ declare_oxc_lint!(
 impl Rule for NoTernary {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ConditionalExpression(cond_expr) = node.kind() {
-            if cond_expr.consequent.is_binaryish()
-                || cond_expr.alternate.is_binaryish()
-                || cond_expr.test.is_binaryish()
-            {
-                ctx.diagnostic(NoTernaryDiagnostic(Span::new(
-                    cond_expr.span.start,
-                    cond_expr.span.end,
-                )));
-            }
+            ctx.diagnostic(NoTernaryDiagnostic(Span::new(
+                cond_expr.span.start,
+                cond_expr.span.end,
+            )));
         }
     }
 }
