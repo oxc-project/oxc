@@ -1,0 +1,31 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_continue
+---
+  ⚠ eslint(no-continue): Unexpected use of `continue` statement.
+   ╭─[no_continue.tsx:1:55]
+ 1 │ var sum = 0, i; for(i = 0; i < 10; i++){ if(i <= 5) { continue; } sum += i; }
+   ·                                                       ────────
+   ╰────
+  help: Do not use the `continue` statement.
+
+  ⚠ eslint(no-continue): Unexpected use of `continue` statement.
+   ╭─[no_continue.tsx:1:64]
+ 1 │ var sum = 0, i; myLabel: for(i = 0; i < 10; i++){ if(i <= 5) { continue myLabel; } sum += i; }
+   ·                                                                ────────
+   ╰────
+  help: Do not use the `continue` statement.
+
+  ⚠ eslint(no-continue): Unexpected use of `continue` statement.
+   ╭─[no_continue.tsx:1:55]
+ 1 │ var sum = 0, i = 0; while(i < 10) { if(i <= 5) { i++; continue; } sum += i; i++; }
+   ·                                                       ────────
+   ╰────
+  help: Do not use the `continue` statement.
+
+  ⚠ eslint(no-continue): Unexpected use of `continue` statement.
+   ╭─[no_continue.tsx:1:64]
+ 1 │ var sum = 0, i = 0; myLabel: while(i < 10) { if(i <= 5) { i++; continue myLabel; } sum += i; i++; }
+   ·                                                                ────────
+   ╰────
+  help: Do not use the `continue` statement.
