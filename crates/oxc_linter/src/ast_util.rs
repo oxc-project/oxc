@@ -1,7 +1,7 @@
 use std::hash::{Hash, Hasher};
 
 use oxc_ast::AstKind;
-use oxc_semantic::AstNode;
+use oxc_semantic::{AstNode, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 use rustc_hash::FxHasher;
@@ -269,11 +269,19 @@ pub fn get_declaration_of_variable<'a, 'b>(
     ident: &IdentifierReference,
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b AstNode<'a>> {
+    let symbol_id = get_symbol_id_of_variable(ident, ctx)?;
+    let symbol_table = ctx.semantic().symbols();
+    Some(ctx.nodes().get_node(symbol_table.get_declaration(symbol_id)))
+}
+
+pub fn get_symbol_id_of_variable(
+    ident: &IdentifierReference,
+    ctx: &LintContext<'_>,
+) -> Option<SymbolId> {
     let symbol_table = ctx.semantic().symbols();
     let reference_id = ident.reference_id.get()?;
     let reference = symbol_table.get_reference(reference_id);
-    let symbol_id = reference.symbol_id()?;
-    Some(ctx.nodes().get_node(symbol_table.get_declaration(symbol_id)))
+    reference.symbol_id()
 }
 
 pub fn extract_regex_flags<'a>(

@@ -106,7 +106,7 @@ num-bigint                = { version = "0.4.4" }
 num-traits                = { version = "0.2.18" }
 phf                       = { version = "0.11" }
 pico-args                 = { version = "0.5.0" }
-proc-macro2               = { version = "1.0.78" }
+proc-macro2               = { version = "1.0.79" }
 project-root              = { version = "0.2.2" }
 quote                     = { version = "1.0.35" }
 rayon                     = { version = "1.9.0" }
@@ -118,7 +118,7 @@ seq-macro                 = { version = "0.3.5" }
 serde                     = { version = "1.0.197" }
 serde_json                = { version = "1.0.114" }
 syn                       = { version = "=1.0.109" }
-thiserror                 = { version = "1.0.57" }
+thiserror                 = { version = "1.0.58" }
 tokio                     = { version = "1" }
 tower-lsp                 = { version = "0.20.0", features = ["proposed"] }
 unicode-id-start          = { version = "1.1.2" }
