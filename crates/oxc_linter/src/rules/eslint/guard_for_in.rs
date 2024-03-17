@@ -37,12 +37,16 @@ declare_oxc_lint!(
 impl Rule for GuardForIn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ForInStatement(for_in_statement) = node.kind() {
-
             match &for_in_statement.body {
                 Statement::EmptyStatement(_) => return,
                 Statement::IfStatement(_) => return,
                 Statement::BlockStatement(block_body) if block_body.body.is_empty() => return,
-                Statement::BlockStatement(block_body) if block_body.body.len() == 1 && matches!(block_body.body[0], Statement::IfStatement(_)) => return,
+                Statement::BlockStatement(block_body)
+                    if block_body.body.len() == 1
+                        && matches!(block_body.body[0], Statement::IfStatement(_)) =>
+                {
+                    return
+                }
                 Statement::BlockStatement(block_body) if block_body.body.len() >= 1 => {
                     let block_statement = &block_body.body[0];
                     if let Statement::IfStatement(i) = block_statement {
@@ -50,7 +54,12 @@ impl Rule for GuardForIn {
                             return;
                         }
                         if let Statement::BlockStatement(consequent_block) = &i.consequent {
-                            if consequent_block.body.len() == 1 && matches!(&consequent_block.body[0], Statement::ContinueStatement(_)) {
+                            if consequent_block.body.len() == 1
+                                && matches!(
+                                    &consequent_block.body[0],
+                                    Statement::ContinueStatement(_)
+                                )
+                            {
                                 return;
                             }
                         }
