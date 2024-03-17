@@ -38,8 +38,7 @@ impl Rule for GuardForIn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ForInStatement(for_in_statement) = node.kind() {
             match &for_in_statement.body {
-                Statement::EmptyStatement(_) => return,
-                Statement::IfStatement(_) => return,
+                Statement::EmptyStatement(_) | Statement::IfStatement(_) => return,
                 Statement::BlockStatement(block_body) if block_body.body.is_empty() => return,
                 Statement::BlockStatement(block_body)
                     if block_body.body.len() == 1
