@@ -51,7 +51,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     MaxLines,
-    correctness
+    pedantic
 );
 
 impl Rule for MaxLines {
@@ -112,22 +112,23 @@ impl Rule for MaxLines {
             0
         };
 
-        let lines_in_file = if self.skip_blank_lines {
-            ctx.source_text().lines().filter(|&line| !line.trim().is_empty()).count()
-        } else if ctx.source_text().is_empty() {
-            1
+        let lines_in_file =
+            if ctx.source_text().is_empty() { 1 } else { ctx.source_text().lines().count() };
+
+        let blank_lines = if self.skip_blank_lines {
+            ctx.source_text().lines().filter(|&line| line.trim().is_empty()).count()
         } else {
-            ctx.source_text().lines().count()
+            0
         };
 
-        if lines_in_file.saturating_sub(comment_lines) > self.max {
+        if lines_in_file.saturating_sub(blank_lines).saturating_sub(comment_lines) > self.max {
             let error = CompactStr::from(format!(
                 "File has too many lines ({}). Maximum allowed is {}.",
                 lines_in_file, self.max,
             ));
             ctx.diagnostic(MaxLinesDiagnostic(
                 error,
-                Span::new(0, u32::try_from(lines_in_file).unwrap_or(u32::MAX)),
+                Span::new(0, u32::try_from(ctx.source_text().len()).unwrap_or(u32::MAX)),
             ));
         }
     }
