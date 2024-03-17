@@ -4,6 +4,7 @@ target/
 /node_modules/
 /website/node_modules/
 /benchmark/node_modules/
+/tasks/benchmark/codspeed/node_modules/
 /editors/vscode/node_modules/
 /editors/vscode/icon.png
 
