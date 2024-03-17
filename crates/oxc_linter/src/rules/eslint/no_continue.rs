@@ -36,7 +36,7 @@ declare_oxc_lint!(
     // }
     /// ```
     NoContinue,
-    correctness
+    style
 );
 
 impl Rule for NoContinue {
