@@ -56,6 +56,7 @@ mod eslint {
     pub mod no_const_assign;
     pub mod no_constant_binary_expression;
     pub mod no_constant_condition;
+    pub mod no_continue;
     pub mod no_control_regex;
     pub mod no_debugger;
     pub mod no_delete_var;
@@ -374,6 +375,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_const_assign,
     eslint::no_constant_binary_expression,
     eslint::no_constant_condition,
+    eslint::no_continue,
     eslint::no_control_regex,
     eslint::no_debugger,
     eslint::no_delete_var,
