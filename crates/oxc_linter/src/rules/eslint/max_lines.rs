@@ -34,11 +34,7 @@ impl std::ops::Deref for MaxLines {
 
 impl Default for MaxLinesConfig {
     fn default() -> Self {
-        Self {
-            max: 300,
-            skip_blank_lines: false,
-            skip_comments: false,
-        }
+        Self { max: 300, skip_blank_lines: false, skip_comments: false }
     }
 }
 
@@ -64,7 +60,8 @@ impl Rule for MaxLines {
         if let Some(max) = config
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .and_then(|v| usize::try_from(v).ok()) {
+            .and_then(|v| usize::try_from(v).ok())
+        {
             Self(Box::new(MaxLinesConfig { max, skip_comments: false, skip_blank_lines: false }))
         } else {
             let max = config
@@ -89,22 +86,25 @@ impl Rule for MaxLines {
             let mut comment_lines: usize = 0;
             for (kind, span) in ctx.semantic().trivias().comments() {
                 if kind.is_single_line() {
-                    let comment_line = ctx.source_text()[..span.start as usize].lines().next_back().unwrap_or("");
+                    let comment_line =
+                        ctx.source_text()[..span.start as usize].lines().next_back().unwrap_or("");
                     if line_has_just_comment(comment_line, "//") {
                         comment_lines += 1;
                     }
                 } else {
                     let mut start_line = ctx.source_text()[..span.start as usize].lines().count();
-                    let comment_start_line = ctx.source_text()[..span.start as usize].lines().next_back().unwrap_or("");
+                    let comment_start_line =
+                        ctx.source_text()[..span.start as usize].lines().next_back().unwrap_or("");
                     if !line_has_just_comment(comment_start_line, "/*") {
                         start_line += 1;
                     }
                     let mut end_line = ctx.source_text()[..=span.end as usize].lines().count();
-                    let comment_end_line = ctx.source_text()[span.end as usize..].lines().next().unwrap_or("");
+                    let comment_end_line =
+                        ctx.source_text()[span.end as usize..].lines().next().unwrap_or("");
                     if line_has_just_comment(comment_end_line, "*/") {
                         end_line += 1;
                     }
-                    comment_lines += end_line - start_line
+                    comment_lines += end_line - start_line;
                 }
             }
             comment_lines
@@ -123,10 +123,12 @@ impl Rule for MaxLines {
         if lines_in_file.saturating_sub(comment_lines) > self.max {
             let error = CompactStr::from(format!(
                 "File has too many lines ({}). Maximum allowed is {}.",
-                lines_in_file,
-                self.max,
+                lines_in_file, self.max,
             ));
-            ctx.diagnostic(MaxLinesDiagnostic(error, Span::new(0, u32::try_from(lines_in_file).unwrap_or(u32::MAX))));
+            ctx.diagnostic(MaxLinesDiagnostic(
+                error,
+                Span::new(0, u32::try_from(lines_in_file).unwrap_or(u32::MAX)),
+            ));
         }
     }
 }
@@ -155,146 +157,231 @@ fn test() {
         ("var xy;\nvar xy;", Some(serde_json::json!([{ "max": 2 }]))),
         ("// comment\n", Some(serde_json::json!([{ "max": 0, "skipComments": true }]))),
         ("foo;\n /* comment */\n", Some(serde_json::json!([{ "max": 1, "skipComments": true }]))),
-        ("//a single line comment
+        (
+            "//a single line comment
 			var xy;
 			var xy;
 			 /* a multiline
 			 really really
-			 long comment*/ ", Some(serde_json::json!([{ "max": 2, "skipComments": true }]))),
-        ("var x; /* inline comment\nspanning multiple lines */ var z;", Some(serde_json::json!([{ "max": 2, "skipComments": true }]))),
-        ("var x; /* inline comment
+			 long comment*/ ",
+            Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
+        ),
+        (
+            "var x; /* inline comment\nspanning multiple lines */ var z;",
+            Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
+        ),
+        (
+            "var x; /* inline comment
 			 spanning multiple lines */
-			var z;", Some(serde_json::json!([{ "max": 2, "skipComments": true }]))),
-        ("var x;
+			var z;",
+            Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
+        ),
+        (
+            "var x;
 			
 				
 				  
-			var y;", Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }]))),
-        ("//a single line comment
+			var y;",
+            Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }])),
+        ),
+        (
+            "//a single line comment
 			var xy;
 			 
 			var xy;
 			 
 			 /* a multiline
 			 really really
-			 long comment*/", Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": true }]))),
+			 long comment*/",
+            Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": true }])),
+        ),
     ];
 
     let fail = vec![
         ("var xyz;\nvar xyz;\nvar xyz;", Some(serde_json::json!([2]))),
-        ("/* a multiline comment\n that goes to many lines*/\nvar xy;\nvar xy;", Some(serde_json::json!([2]))),
+        (
+            "/* a multiline comment\n that goes to many lines*/\nvar xy;\nvar xy;",
+            Some(serde_json::json!([2])),
+        ),
         ("//a single line comment\nvar xy;\nvar xy;", Some(serde_json::json!([2]))),
-        ("var x;
+        (
+            "var x;
 			
 			
 			
-			var y;", Some(serde_json::json!([{ "max": 2 }]))),
-        ("//a single line comment
+			var y;",
+            Some(serde_json::json!([{ "max": 2 }])),
+        ),
+        (
+            "//a single line comment
 			var xy;
 			 
 			var xy;
 			 
 			 /* a multiline
 			 really really
-			 long comment*/", Some(serde_json::json!([{ "max": 2, "skipComments": true }]))),
-        ("var x; // inline comment
+			 long comment*/",
+            Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
+        ),
+        (
+            "var x; // inline comment
 			var y;
-			var z;", Some(serde_json::json!([{ "max": 2, "skipComments": true }]))),
-        ("var x; /* inline comment
+			var z;",
+            Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
+        ),
+        (
+            "var x; /* inline comment
 			 spanning multiple lines */
 			var y;
-			var z;", Some(serde_json::json!([{ "max": 2, "skipComments": true }]))),
-        ("//a single line comment
+			var z;",
+            Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
+        ),
+        (
+            "//a single line comment
 			var xy;
 			 
 			var xy;
 			 
 			 /* a multiline
 			 really really
-			 long comment*/", Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }]))),
+			 long comment*/",
+            Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }])),
+        ),
         ("", Some(serde_json::json!([{ "max": 0 }]))),
         (" ", Some(serde_json::json!([{ "max": 0 }]))),
-        ("
-			", Some(serde_json::json!([{ "max": 0 }]))),
+        (
+            "
+			",
+            Some(serde_json::json!([{ "max": 0 }])),
+        ),
         ("A", Some(serde_json::json!([{ "max": 0 }]))),
-        ("A
-			", Some(serde_json::json!([{ "max": 0 }]))),
-        ("A
-			 ", Some(serde_json::json!([{ "max": 0 }]))),
-        ("A
-			 ", Some(serde_json::json!([{ "max": 1 }]))),
-        ("A
+        (
+            "A
+			",
+            Some(serde_json::json!([{ "max": 0 }])),
+        ),
+        (
+            "A
+			 ",
+            Some(serde_json::json!([{ "max": 0 }])),
+        ),
+        (
+            "A
+			 ",
+            Some(serde_json::json!([{ "max": 1 }])),
+        ),
+        (
+            "A
 			
-			", Some(serde_json::json!([{ "max": 1 }]))),
-        ("var a = 'a';
+			",
+            Some(serde_json::json!([{ "max": 1 }])),
+        ),
+        (
+            "var a = 'a';
 			var x
 			var c;
-			console.log", Some(serde_json::json!([{ "max": 2 }]))),
-        ("var a = 'a',
+			console.log",
+            Some(serde_json::json!([{ "max": 2 }])),
+        ),
+        (
+            "var a = 'a',
 			c,
 			x;
-", Some(serde_json::json!([{ "max": 2 }]))),
-        ("var a = 'a',
+",
+            Some(serde_json::json!([{ "max": 2 }])),
+        ),
+        (
+            "var a = 'a',
 			c,
 			x;
-			", Some(serde_json::json!([{ "max": 2 }]))),
-        ("
+			",
+            Some(serde_json::json!([{ "max": 2 }])),
+        ),
+        (
+            "
 			
 			var a = 'a',
 			c,
 			x;
-			", Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }]))),
-        ("var a = 'a';
+			",
+            Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }])),
+        ),
+        (
+            "var a = 'a';
 			var x
 			var c;
 			console.log
 			// some block 
-			// comments", Some(serde_json::json!([{ "max": 2, "skipComments": true }]))),
-        ("var a = 'a';
+			// comments",
+            Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
+        ),
+        (
+            "var a = 'a';
 			var x
 			var c;
 			console.log
-			/* block comments */", Some(serde_json::json!([{ "max": 2, "skipComments": true }]))),
-        ("var a = 'a';
+			/* block comments */",
+            Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
+        ),
+        (
+            "var a = 'a';
 			var x
 			var c;
 			console.log
 			/* block comments */
-			", Some(serde_json::json!([{ "max": 2, "skipComments": true }]))),
-        ("var a = 'a';
+			",
+            Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
+        ),
+        (
+            "var a = 'a';
 			var x
 			var c;
 			console.log
 			/** block 
 			
-			 comments */", Some(serde_json::json!([{ "max": 2, "skipComments": true }]))),
-        ("var a = 'a';
+			 comments */",
+            Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
+        ),
+        (
+            "var a = 'a';
 			
 			
-			// comment", Some(serde_json::json!([{ "max": 2, "skipComments": true }]))),
-        ("var a = 'a';
+			// comment",
+            Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
+        ),
+        (
+            "var a = 'a';
 			var x
 			
 			
 			var c;
 			console.log
 			
-			", Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }]))),
-        ("var a = 'a';
+			",
+            Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }])),
+        ),
+        (
+            "var a = 'a';
 			
 			
 			var x
 			var c;
 			console.log
 			
-			", Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }]))),
-        ("var a = 'a';
+			",
+            Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }])),
+        ),
+        (
+            "var a = 'a';
 			//
 			var x
 			var c;
 			console.log
-			//", Some(serde_json::json!([{ "max": 2, "skipComments": true }]))),
-        ("// hello world
+			//",
+            Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
+        ),
+        (
+            "// hello world
 			/*hello
 			 world 2 */
 			var a,
@@ -302,8 +389,11 @@ fn test() {
 			// hh
 			c,
 			e,
-			f;", Some(serde_json::json!([{ "max": 2, "skipComments": true }]))),
-        ("
+			f;",
+            Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
+        ),
+        (
+            "
 			var x = '';
 			
 			// comment
@@ -313,7 +403,9 @@ fn test() {
 			d,
 			e
 			
-			// comment", Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": true }]))),
+			// comment",
+            Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": true }])),
+        ),
     ];
 
     Tester::new(MaxLines::NAME, pass, fail).test_and_snapshot();
