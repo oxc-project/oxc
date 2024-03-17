@@ -8,7 +8,7 @@ use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
-use self::listener_map::ListenerMap;
+use self::listener_map::{ListenerMap, NodeListenerOptions};
 
 mod listener_map;
 
@@ -52,8 +52,8 @@ impl Rule for NoSideEffectsInInitialization {
     fn run_once(&self, ctx: &LintContext) {
         let Some(root) = ctx.nodes().iter().next() else { return };
         let AstKind::Program(program) = root.kind() else { return };
-
-        program.report_effects(ctx);
+        let node_listener_options = NodeListenerOptions::new(ctx);
+        program.report_effects(&node_listener_options);
     }
 }
 
