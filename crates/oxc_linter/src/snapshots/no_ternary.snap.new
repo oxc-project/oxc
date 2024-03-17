@@ -1,0 +1,25 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 151
+expression: no_ternary
+---
+  ⚠ eslint(no-ternary):
+   ╭─[no_ternary.tsx:1:11]
+ 1 │ var foo = true ? thing : stuff;
+   ·           ────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint(no-ternary):
+   ╭─[no_ternary.tsx:1:1]
+ 1 │ true ? thing() : stuff();
+   · ────────────────────────
+   ╰────
+  help: 
+
+  ⚠ eslint(no-ternary):
+   ╭─[no_ternary.tsx:1:28]
+ 1 │ function foo(bar) { return bar ? baz : qux; }
+   ·                            ───────────────
+   ╰────
+  help:

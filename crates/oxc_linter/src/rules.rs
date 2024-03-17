@@ -91,6 +91,7 @@ mod eslint {
     pub mod no_setter_return;
     pub mod no_shadow_restricted_names;
     pub mod no_sparse_arrays;
+    pub mod no_ternary;
     pub mod no_this_before_super;
     pub mod no_undef;
     pub mod no_unsafe_finally;
@@ -359,6 +360,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::for_direction,
     eslint::getter_return,
     eslint::max_lines,
+    eslint::no_ternary,
     eslint::no_this_before_super,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
