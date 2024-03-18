@@ -81,21 +81,37 @@ impl Rule for MaxParams {
                 if !function.is_declaration() & !function.is_expression() {
                     return;
                 }
+
                 if function.params.items.len() > self.max {
-                    let error_msg = format!(
-                        "Function has too many parameters ({}). Maximum allowed is {}.",
-                        function.params.items.len(),
-                        self.max
-                    );
-                    let error = CompactStr::from(error_msg);
-                    let span = function.params.span;
-                    ctx.diagnostic(MaxParamsDiagnostic(error, Span::new(span.start, span.end)));
+                    if let Some(id) = &function.id {
+                        let function_name = id.name.as_str();
+                        let error_msg = format!(
+                            "Function '{}' has too many parameters ({}). Maximum allowed is {}.",
+                            function_name,
+                            function.params.items.len(),
+                            self.max
+                        );
+                        let error = CompactStr::from(error_msg);
+                        let span = function.params.span;
+                        ctx.diagnostic(MaxParamsDiagnostic(error, Span::new(span.start, span.end)));
+                    } else {
+                        let error_msg = format!(
+                            "Function has too many parameters ({}). Maximum allowed is {}.",
+                            function.params.items.len(),
+                            self.max
+                        );
+                        let error = CompactStr::from(error_msg);
+                        let span = function.params.span;
+                        ctx.diagnostic(MaxParamsDiagnostic(error, Span::new(span.start, span.end)));
+                    }
                 }
+
+
             }
             AstKind::ArrowFunctionExpression(function) => {
                 if function.params.items.len() > self.max {
                     let error_msg = format!(
-                        "Function has too many parameters ({}). Maximum allowed is {}.",
+                        "Arrow function has too many parameters ({}). Maximum allowed is {}.",
                         function.params.items.len(),
                         self.max
                     );
