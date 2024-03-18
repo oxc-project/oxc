@@ -15,18 +15,20 @@ mod serialize;
 pub mod ast;
 mod ast_builder;
 mod ast_kind;
+mod ast_kind2;
 pub mod precedence;
 mod span;
 pub mod syntax_directed_operations;
 mod trivia;
 mod visit;
-mod visit_mut;
+pub mod visit_mut;
 
 pub use num_bigint::BigUint;
 
 pub use crate::{
     ast_builder::AstBuilder,
     ast_kind::AstKind,
+    ast_kind2::{AstKind2, AstRef, AstType},
     trivia::{Comment, CommentKind, Trivias, TriviasMap},
     visit::Visit,
     visit_mut::VisitMut,

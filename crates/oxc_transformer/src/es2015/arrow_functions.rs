@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstBuilder, AstKind, VisitMut};
+use oxc_ast::{ast::*, AstBuilder, AstKind, AstKind2, AstType, VisitMut};
 use oxc_span::{Atom, SPAN};
 use serde::Deserialize;
 
@@ -16,7 +16,7 @@ use crate::TransformTarget;
 /// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-arrow-functions>
 pub struct ArrowFunctions<'a> {
     ast: Rc<AstBuilder<'a>>,
-    nodes: Vec<'a, AstKind<'a>>,
+    nodes: Vec<'a, AstKind2<'a>>,
     uid: usize,
     has_this: bool,
     /// Insert a variable declaration at the top of the BlockStatement
@@ -33,11 +33,11 @@ pub struct ArrowFunctionsOptions {
 }
 
 impl<'a> VisitMut<'a> for ArrowFunctions<'a> {
-    fn enter_node(&mut self, kind: AstKind<'a>) {
+    fn enter_node(&mut self, kind: AstKind2<'a>) {
         self.nodes.push(kind);
     }
 
-    fn leave_node(&mut self, _kind: AstKind<'a>) {
+    fn leave_node(&mut self, _kind: AstType) {
         self.nodes.pop();
     }
 
@@ -45,8 +45,8 @@ impl<'a> VisitMut<'a> for ArrowFunctions<'a> {
         let parent_kind = self.nodes.last().unwrap();
         let parent_parent_kind = self.nodes[self.nodes.len() - 2];
         if ident.name == "this"
-            && (matches!(parent_kind, AstKind::JSXElementName(_))
-                || matches!(parent_parent_kind, AstKind::JSXMemberExpression(_)))
+            && (matches!(parent_kind.ast_type(), AstType::JSXElementName)
+                || matches!(parent_parent_kind.ast_type(), AstType::JSXMemberExpression))
         {
             if !self.has_this {
                 self.has_this = true;
