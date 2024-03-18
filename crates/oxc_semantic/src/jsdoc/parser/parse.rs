@@ -10,59 +10,57 @@ pub fn parse_jsdoc(source_text: &str) -> (String, Vec<JSDocTag>) {
     // - Comment goes first, and tags(`@xxx`) follow
     // - Each tag is also separated by whitespace + `@`
     // `@` can be inside of `{}` (e.g. `{@link}`) and it should be distinguished.
-    let mut draft = String::new();
+    let (mut start, mut end) = (0, 0);
     let mut in_braces = false;
-    let mut has_comment = false;
+    let mut comment_found = false;
     for ch in source_text.chars() {
         match ch {
             '{' => in_braces = true,
             '}' => in_braces = false,
             '@' if !in_braces => {
-                if has_comment {
-                    tags.push(parse_jsdoc_tag(&draft.clone()));
+                if comment_found {
+                    tags.push(parse_jsdoc_tag(&source_text[start..end]));
+                    start = end;
                 } else {
-                    comment = draft.clone();
-                    has_comment = true;
+                    comment = source_text[start..end].to_string();
+                    comment_found = true;
+                    start = end;
                 }
-
-                draft.clear();
             }
             _ => {}
         }
 
-        draft.push(ch);
+        end += ch.len_utf8();
     }
 
-    if !draft.is_empty() {
-        if has_comment {
-            tags.push(parse_jsdoc_tag(&draft.clone()));
+    // Flush the last draft
+    if start != end {
+        if comment_found {
+            tags.push(parse_jsdoc_tag(&source_text[start..end]));
         } else {
-            comment = draft;
+            comment = source_text[start..end].to_string();
         }
     }
 
     (utils::trim_multiline_comment(&comment), tags)
 }
 
-/// tag_text: Starts with `@`, may be multiline
-fn parse_jsdoc_tag(tag_text: &str) -> JSDocTag {
-    let mut chars = tag_text.chars().skip(/* @ */ 1);
+// TODO: `Span` with (start, end)? kind only span?
+/// tag_content: Starts with `@`, may be mulitline
+fn parse_jsdoc_tag(tag_content: &str) -> JSDocTag {
+    let mut parts = tag_content.splitn(2, |ch| ch == ' ' || ch == '\n');
 
-    let mut kind = String::new();
-    for ch in chars.by_ref() {
-        if ch == ' ' || ch == '\n' {
-            break;
-        }
-        kind.push(ch);
-    }
+    let kind = parts.next().unwrap();
+    let raw_body = parts.next().unwrap_or("");
 
-    // How to prase body is not determined yet, it depends on the use case!
-    JSDocTag::new(kind, chars.collect())
+    // Omit the first `@`
+    JSDocTag::new(&kind[1..], raw_body)
 }
 
 #[cfg(test)]
 mod test {
     use super::parse_jsdoc;
+    use super::parse_jsdoc_tag;
     use super::JSDocTag;
 
     fn parse_from_full_text(full_text: &str) -> (String, Vec<JSDocTag>) {
@@ -108,57 +106,48 @@ comment {@link link} ...
             parse_from_full_text(
                 "/**
 　　　　　　　　　* 日本語とか
-　　　　　　　　　* multibyte文字はどう？
+　　　　　　　　　* multibyte文字はどう⁉️
                   */"
             )
             .0,
-            "日本語とか\nmultibyte文字はどう？"
+            "日本語とか\nmultibyte文字はどう⁉️"
         );
 
-        assert_eq!(parse_jsdoc("hello {@see inline} source").0, "hello {@see inline} source");
+        assert_eq!(
+            parse_jsdoc("hello {@see inline} source {@a 2}").0,
+            "hello {@see inline} source {@a 2}"
+        );
     }
 
     #[test]
     fn parses_single_line_1_jsdoc() {
         assert_eq!(parse_jsdoc("@deprecated"), parse_from_full_text("/** @deprecated */"));
-        assert_eq!(
-            parse_jsdoc("@deprecated").1,
-            vec![JSDocTag::new("deprecated".to_string(), String::new())]
-        );
+        assert_eq!(parse_jsdoc("@deprecated").1, vec![parse_jsdoc_tag("@deprecated")]);
 
         assert_eq!(
             parse_from_full_text("/**@foo since 2024 */").1,
-            vec![JSDocTag::new("foo".to_string(), "since 2024 ".to_string())]
+            vec![parse_jsdoc_tag("@foo since 2024 ")]
         );
-        assert_eq!(
-            parse_from_full_text("/**@*/").1,
-            vec![JSDocTag::new(String::new(), String::new())]
-        );
+        assert_eq!(parse_from_full_text("/**@*/").1, vec![JSDocTag::new("", "")]);
     }
 
     #[test]
     fn parses_single_line_n_jsdocs() {
         assert_eq!(
             parse_from_full_text("/** @foo @bar */").1,
-            vec![
-                JSDocTag::new("foo".to_string(), String::new()),
-                JSDocTag::new("bar".to_string(), String::new()),
-            ]
+            vec![JSDocTag::new("foo", ""), JSDocTag::new("bar", "")]
         );
         assert_eq!(
             parse_from_full_text("/** @aiue あいうえ @o お*/").1,
-            vec![
-                JSDocTag::new("aiue".to_string(), "あいうえ ".to_string()),
-                JSDocTag::new("o".to_string(), "お".to_string()),
-            ]
+            vec![JSDocTag::new("aiue", "あいうえ "), JSDocTag::new("o", "お")]
         );
         assert_eq!(
             parse_from_full_text("/** @a @@ @d */").1,
             vec![
-                JSDocTag::new("a".to_string(), String::new()),
-                JSDocTag::new(String::new(), String::new()),
-                JSDocTag::new(String::new(), String::new()),
-                JSDocTag::new("d".to_string(), String::new()),
+                JSDocTag::new("a", ""),
+                JSDocTag::new("", ""),
+                JSDocTag::new("", ""),
+                JSDocTag::new("d", "")
             ]
         );
     }
@@ -171,7 +160,7 @@ comment {@link link} ...
     */"
             )
             .1,
-            vec![JSDocTag::new("yo".to_string(), "    ".to_string())]
+            vec![JSDocTag::new("yo", "    ")]
         );
         assert_eq!(
             parse_from_full_text(
@@ -180,7 +169,7 @@ comment {@link link} ...
                           */"
             )
             .1,
-            vec![JSDocTag::new("foo".to_string(), "                          ".to_string())]
+            vec![JSDocTag::new("foo", "                          ")]
         );
         assert_eq!(
             parse_from_full_text(
@@ -191,7 +180,7 @@ comment {@link link} ...
                 "
             )
             .1,
-            vec![JSDocTag::new("x".to_string(), "with asterisk\n         ".to_string())]
+            vec![JSDocTag::new("x", "with asterisk\n         ")]
         );
         assert_eq!(
             parse_from_full_text(
@@ -203,10 +192,7 @@ comment {@link link} ...
                     "
             )
             .1,
-            vec![JSDocTag::new(
-                "y".to_string(),
-                "without\n        asterisk\n             ".to_string()
-            )]
+            vec![JSDocTag::new("y", "without\n        asterisk\n             ")]
         );
     }
 
@@ -223,9 +209,9 @@ comment {@link link} ...
             )
             .1,
             vec![
-                JSDocTag::new("foo".to_string(), String::new()),
-                JSDocTag::new("bar".to_string(), "    * ".to_string()),
-                JSDocTag::new("baz".to_string(), "     ".to_string()),
+                JSDocTag::new("foo", ""),
+                JSDocTag::new("bar", "    * "),
+                JSDocTag::new("baz", "     ")
             ]
         );
         assert_eq!(
@@ -239,8 +225,8 @@ comment {@link link} ...
             )
             .1,
             vec![
-                JSDocTag::new("one".to_string(), "                  *\n                  * ...\n              *\n                      * ".to_string()),
-                JSDocTag::new("two".to_string(), String::new()),
+                JSDocTag::new("one", "                  *\n                  * ...\n              *\n                      * "),
+                JSDocTag::new("two", ""),
             ]
         );
         assert_eq!(
@@ -255,10 +241,10 @@ comment {@link link} ...
             .1,
             vec![
                 JSDocTag::new(
-                    "hey".to_string(),
-                    "you!\n                  *   Are you OK?\n                  * ".to_string()
+                    "hey",
+                    "you!\n                  *   Are you OK?\n                  * "
                 ),
-                JSDocTag::new("yes".to_string(), "I'm fine\n                  ".to_string())
+                JSDocTag::new("yes", "I'm fine\n                  ")
             ]
         );
     }

@@ -6,7 +6,7 @@ use std::cell::OnceCell;
 pub struct JSDoc<'a> {
     raw: &'a str,
     /// Cached+parsed JSDoc comment and tags
-    cached: OnceCell<(String, Vec<JSDocTag>)>,
+    cached: OnceCell<(String, Vec<JSDocTag<'a>>)>,
 }
 
 impl<'a> JSDoc<'a> {
@@ -15,7 +15,7 @@ impl<'a> JSDoc<'a> {
         Self { raw: comment_content, cached: OnceCell::new() }
     }
 
-    fn parse(&self) -> &(String, Vec<JSDocTag>) {
+    fn parse(&self) -> &(String, Vec<JSDocTag<'a>>) {
         self.cached.get_or_init(|| parse_jsdoc(self.raw))
     }
 
@@ -23,7 +23,7 @@ impl<'a> JSDoc<'a> {
         &self.parse().0
     }
 
-    pub fn tags(&self) -> &Vec<JSDocTag> {
+    pub fn tags(&self) -> &Vec<JSDocTag<'a>> {
         &self.parse().1
     }
 }
