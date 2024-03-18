@@ -1,18 +1,21 @@
-use std::fmt::Debug;
 use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::Error
+    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
+use std::fmt::Debug;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-eq-null): Use '===' to compare with null")]
-#[diagnostic(severity(warning), help("Disallow `null` comparisons without type-checking operators."))]
+#[diagnostic(
+    severity(warning),
+    help("Disallow `null` comparisons without type-checking operators.")
+)]
 struct NoEqNullDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -38,13 +41,18 @@ declare_oxc_lint!(
 impl Rule for NoEqNull {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::BinaryExpression(binary_expression) = node.kind() {
-            let bad_operator = match binary_expression.operator {
-                BinaryOperator::Equality | BinaryOperator::Inequality => true,
-                _ => false,
-            };
+            let bad_operator = matches!(
+                binary_expression.operator,
+                BinaryOperator::Equality | BinaryOperator::Inequality
+            );
 
-            if binary_expression.right.is_literal() & binary_expression.right.is_null() & bad_operator |
-                binary_expression.left.is_literal() & binary_expression.left.is_null() & bad_operator {
+            if binary_expression.right.is_literal()
+                & binary_expression.right.is_null()
+                & bad_operator
+                | binary_expression.left.is_literal()
+                    & binary_expression.left.is_null()
+                    & bad_operator
+            {
                 ctx.diagnostic(NoEqNullDiagnostic(Span::new(
                     binary_expression.span.start,
                     binary_expression.span.end,
