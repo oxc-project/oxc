@@ -10,7 +10,10 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-template-curly-in-string): Unexpected template string expression")]
-#[diagnostic(severity(warning), help("Disallow template literal placeholder syntax in regular strings"))]
+#[diagnostic(
+    severity(warning),
+    help("Disallow template literal placeholder syntax in regular strings")
+)]
 struct NoTemplateCurlyInStringDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -46,21 +49,21 @@ impl Rule for NoTemplateCurlyInString {
                     let real_index = start_index + i;
                     if c == '{' {
                         open_braces_count += 1;
-                    } else if c == '}' {
-                        if open_braces_count > 0 {
-                            open_braces_count -= 1;
-                            if open_braces_count == 0 {
-                                end_index = Some(real_index);
-                                break;
-                            }
+                    } else if c == '}' && open_braces_count > 0 {
+                        open_braces_count -= 1;
+                        if open_braces_count == 0 {
+                            end_index = Some(real_index);
+                            break;
                         }
                     }
                 }
 
                 if let Some(end_index) = end_index {
                     let literal_span_start = literal.span.start + 1;
-                    let match_start = start_index as u32;
-                    let match_end = (end_index + 1) as u32;
+                    let match_start = u32::try_from(start_index)
+                        .expect("Conversion from usize to u32 failed for match_start");
+                    let match_end = u32::try_from(end_index + 1)
+                        .expect("Conversion from usize to u32 failed for match_end");
                     ctx.diagnostic(NoTemplateCurlyInStringDiagnostic(Span::new(
                         literal_span_start + match_start,
                         literal_span_start + match_end,
@@ -70,7 +73,6 @@ impl Rule for NoTemplateCurlyInString {
         }
     }
 }
-
 
 #[test]
 fn test() {
