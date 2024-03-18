@@ -5,7 +5,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -68,7 +68,7 @@ impl Rule for GuardForIn {
             }
             ctx.diagnostic(GuardForInDiagnostic(Span::new(
                 for_in_statement.span.start,
-                for_in_statement.span.end,
+                for_in_statement.right.span().end+1,
             )));
         }
     }
