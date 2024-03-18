@@ -1,8 +1,15 @@
-use super::{Kind, Lexer, Token};
+use super::{
+    cold_branch,
+    search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
+    Kind, Lexer, Token,
+};
 use crate::diagnostics;
 
 use memchr::{memchr, memchr2};
 use oxc_syntax::identifier::is_identifier_part;
+
+static NOT_ASCII_JSX_ID_CONTINUE_TABLE: SafeByteMatchTable =
+    safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || matches!(b, b'_' | b'$' | b'-')));
 
 impl<'a> Lexer<'a> {
     /// `JSXDoubleStringCharacters` ::
@@ -92,19 +99,39 @@ impl<'a> Lexer<'a> {
     ///   `JSXIdentifier` `IdentifierPart`
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
     pub(crate) fn continue_lex_jsx_identifier(&mut self) -> Option<Token> {
-        if self.peek() != Some('-') {
+        if self.source.peek_byte() != Some(b'-') {
             return None;
         }
         self.consume_char();
-        while let Some(c) = self.peek() {
-            if c == '-' || is_identifier_part(c) {
-                self.consume_char();
-            } else {
-                break;
-            }
-        }
+
         // Clear the current lookahead `Minus` Token
         self.lookahead.clear();
+
+        // Consume bytes which are part of identifier tail
+        let next_byte = byte_search! {
+            lexer: self,
+            table: NOT_ASCII_JSX_ID_CONTINUE_TABLE,
+            handle_eof: {
+                return Some(self.finish_next(Kind::Ident));
+            },
+        };
+
+        // Found a matching byte.
+        // Either end of identifier found, or a Unicode char.
+        if !next_byte.is_ascii() {
+            // Unicode chars are rare in identifiers, so cold branch to keep common path for ASCII
+            // as fast as possible
+            cold_branch(|| {
+                while let Some(c) = self.peek() {
+                    if c == '-' || is_identifier_part(c) {
+                        self.consume_char();
+                    } else {
+                        break;
+                    }
+                }
+            });
+        }
+
         Some(self.finish_next(Kind::Ident))
     }
 }
