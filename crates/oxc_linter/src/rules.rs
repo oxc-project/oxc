@@ -72,6 +72,7 @@ mod eslint {
     pub mod no_eval;
     pub mod no_ex_assign;
     pub mod no_extra_boolean_cast;
+    pub mod no_eq_null;
     pub mod no_fallthrough;
     pub mod no_func_assign;
     pub mod no_global_assign;
@@ -392,6 +393,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_eval,
     eslint::no_ex_assign,
     eslint::no_extra_boolean_cast,
+    eslint::no_eq_null,
     eslint::no_fallthrough,
     eslint::no_func_assign,
     eslint::no_global_assign,
