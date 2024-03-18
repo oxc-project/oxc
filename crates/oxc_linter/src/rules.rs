@@ -69,10 +69,10 @@ mod eslint {
     pub mod no_empty_character_class;
     pub mod no_empty_pattern;
     pub mod no_empty_static_block;
+    pub mod no_eq_null;
     pub mod no_eval;
     pub mod no_ex_assign;
     pub mod no_extra_boolean_cast;
-    pub mod no_eq_null;
     pub mod no_fallthrough;
     pub mod no_func_assign;
     pub mod no_global_assign;
