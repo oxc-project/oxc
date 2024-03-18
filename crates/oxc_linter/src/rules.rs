@@ -95,6 +95,7 @@ mod eslint {
     pub mod no_sparse_arrays;
     pub mod no_ternary;
     pub mod no_this_before_super;
+    pub mod no_template_curly_in_string;
     pub mod no_undef;
     pub mod no_unsafe_finally;
     pub mod no_unsafe_negation;
@@ -365,6 +366,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_lines,
     eslint::no_ternary,
     eslint::no_this_before_super,
+    eslint::no_template_curly_in_string,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
     eslint::no_bitwise,
