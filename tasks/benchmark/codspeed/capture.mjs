@@ -21,7 +21,8 @@ const rand = Math.round(Math.random() * 1000000000000000000).toString(16),
     dataDir = `/tmp/oxc_bench_data_${rand}`;
 fs.mkdirSync(dataDir);
 
-const component = process.env.COMPONENT;
+let component = process.env.COMPONENT;
+if (process.env.FIXTURE) component += process.env.FIXTURE;
 
 const app = express();
 
