@@ -94,7 +94,8 @@ jobs:
           FIXTURE: ${{ matrix.fixture }}
         with:
           run: cargo codspeed run
-          token: ${{ secrets.CODSPEED_TOKEN }}
+          # Dummy token for tokenless runs, to suppress logging hash of metadata JSON (see `upload.mjs`)
+          token: ${{ secrets.CODSPEED_TOKEN || 'dummy' }}
           upload-url: http://localhost:${{ env.INTERCEPT_PORT }}/upload
 
       - name: Upload bench data artefact
