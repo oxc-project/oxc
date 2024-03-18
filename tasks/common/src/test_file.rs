@@ -42,7 +42,18 @@ impl TestFiles {
     }
 
     pub fn complicated() -> Self {
-        let files = [
+        let files = Self::complicated_urls().into_iter().map(TestFile::new).collect();
+        Self { files }
+    }
+
+    pub fn complicated_one(index: usize) -> Self {
+        let url = Self::complicated_urls()[index];
+        let file = TestFile::new(url);
+        Self { files: vec![file] }
+    }
+
+    fn complicated_urls() -> [&'static str; 5] {
+        [
             // TypeScript syntax (2.81MB)
             "https://raw.githubusercontent.com/microsoft/TypeScript/v5.3.3/src/compiler/checker.ts",
             // Real world app tsx (1.0M)
@@ -54,10 +65,6 @@ impl TestFiles {
             // ES5 (3.9M)
             "https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/antd.js",
         ]
-        .into_iter()
-        .map(TestFile::new)
-        .collect();
-        Self { files }
     }
 }
 

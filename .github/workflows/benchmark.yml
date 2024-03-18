@@ -29,7 +29,20 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        component: [lexer, parser, transformer, semantic, linter, minifier, codegen_sourcemap]
+        # Run each benchmark in own job.
+        # Linter benchmark is by far the slowest, so split each fixture into own job.
+        component: [lexer, parser, transformer, semantic, minifier, codegen_sourcemap]
+        include:
+          - component: linter
+            fixture: 0
+          - component: linter
+            fixture: 1
+          - component: linter
+            fixture: 2
+          - component: linter
+            fixture: 3
+          - component: linter
+            fixture: 4
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v4
@@ -58,6 +71,7 @@ jobs:
         working-directory: ./tasks/benchmark/codspeed
         env:
           COMPONENT: ${{ matrix.component }}
+          FIXTURE: ${{ matrix.fixture }}
         run: |
           corepack enable
           pnpm install
@@ -76,6 +90,8 @@ jobs:
       - name: Run benchmark
         uses: CodSpeedHQ/action@v2
         timeout-minutes: 30
+        env:
+          FIXTURE: ${{ matrix.fixture }}
         with:
           run: cargo codspeed run
           token: ${{ secrets.CODSPEED_TOKEN }}
@@ -84,7 +100,7 @@ jobs:
       - name: Upload bench data artefact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.component }}
+          name: ${{ matrix.component }}${{ matrix.fixture }}
           path: ${{ env.DATA_DIR }}
           if-no-files-found: error
           retention-days: 1
