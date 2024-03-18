@@ -105,8 +105,6 @@ impl Rule for MaxParams {
                         ctx.diagnostic(MaxParamsDiagnostic(error, Span::new(span.start, span.end)));
                     }
                 }
-
-
             }
             AstKind::ArrowFunctionExpression(function) => {
                 if function.params.items.len() > self.max {
