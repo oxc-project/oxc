@@ -1,12 +1,12 @@
 use super::jsdoc_tag::JSDocTag;
-use super::parse::JSDocParser;
+use super::parse::parse_jsdoc;
 use std::cell::OnceCell;
 
 #[derive(Debug, Clone)]
 pub struct JSDoc<'a> {
     raw: &'a str,
     /// Cached+parsed JSDoc comment and tags
-    cached: OnceCell<(String, Vec<JSDocTag<'a>>)>,
+    cached: OnceCell<(String, Vec<JSDocTag>)>,
 }
 
 impl<'a> JSDoc<'a> {
@@ -15,13 +15,15 @@ impl<'a> JSDoc<'a> {
         Self { raw: comment_content, cached: OnceCell::new() }
     }
 
-    pub fn comment(&self) -> &str {
-        let cache = self.cached.get_or_init(|| JSDocParser::new(self.raw).parse());
-        &cache.0
+    fn parse(&self) -> &(String, Vec<JSDocTag>) {
+        self.cached.get_or_init(|| parse_jsdoc(self.raw))
     }
 
-    pub fn tags<'b>(&'b self) -> &'b Vec<JSDocTag<'a>> {
-        let cache = self.cached.get_or_init(|| JSDocParser::new(self.raw).parse());
-        &cache.1
+    pub fn comment(&self) -> &str {
+        &self.parse().0
+    }
+
+    pub fn tags(&self) -> &Vec<JSDocTag> {
+        &self.parse().1
     }
 }
