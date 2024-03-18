@@ -1,7 +1,12 @@
 use crate::{context::TransformerCtx, TransformOptions, TransformTarget};
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstBuilder, AstKind, VisitMut};
+use oxc_ast::{
+    ast::*,
+    visit_mut::{walk_function_mut, walk_method_definition_mut, walk_object_property_mut},
+    AstBuilder, AstKind, AstKind2, AstType, VisitMut,
+};
 use oxc_diagnostics::miette;
+use oxc_semantic::ScopeFlags;
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::operator::BinaryOperator;
 use std::rc::Rc;
@@ -25,15 +30,52 @@ enum NewTargetKind<'a> {
 }
 
 impl<'a> VisitMut<'a> for NewTarget<'a> {
-    fn enter_node(&mut self, kind: AstKind<'a>) {
-        if let Some(kind) = self.get_kind(kind) {
-            self.kinds.push(kind);
+    fn visit_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
+        let kind = match def.kind {
+            MethodDefinitionKind::Get
+            | MethodDefinitionKind::Set
+            | MethodDefinitionKind::Method => NewTargetKind::Method,
+            MethodDefinitionKind::Constructor => NewTargetKind::Constructor,
+        };
+
+        self.push(kind);
+        walk_method_definition_mut(self, def);
+        self.pop();
+    }
+
+    fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
+        let pop = if prop.method {
+            self.push(NewTargetKind::Method);
+            true
+        } else {
+            false
+        };
+
+        walk_object_property_mut(self, prop);
+
+        if pop {
+            self.pop();
         }
     }
 
-    fn leave_node(&mut self, kind: AstKind<'a>) {
-        if self.get_kind(kind).is_some() {
-            self.kinds.pop();
+    fn visit_function(&mut self, func: &mut Function<'a>, flags: Option<ScopeFlags>) {
+        // oxc visitor `MethodDefinitionKind` will enter `Function` node, here need to exclude it
+        let pop = if let Some(kind) = self.kinds.last() {
+            if matches!(kind, NewTargetKind::Function(_)) {
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        };
+
+        func.id.as_ref().map(|id| NewTargetKind::Function(Some(id.name.clone())));
+
+        walk_function_mut(self, func, flags);
+
+        if pop {
+            self.pop()
         }
     }
 }
@@ -52,26 +94,12 @@ impl<'a> NewTarget<'a> {
         })
     }
 
-    fn get_kind(&self, kind: AstKind<'a>) -> Option<NewTargetKind<'a>> {
-        match kind {
-            AstKind::MethodDefinition(def) => match def.kind {
-                MethodDefinitionKind::Get
-                | MethodDefinitionKind::Set
-                | MethodDefinitionKind::Method => Some(NewTargetKind::Method),
-                MethodDefinitionKind::Constructor => Some(NewTargetKind::Constructor),
-            },
-            AstKind::ObjectProperty(property) => property.method.then_some(NewTargetKind::Method),
-            AstKind::Function(function) => {
-                // oxc visitor `MethodDefinitionKind` will enter `Function` node, here need to exclude it
-                if let Some(kind) = self.kinds.last() {
-                    if !matches!(kind, NewTargetKind::Function(_)) {
-                        return None;
-                    }
-                }
-                function.id.as_ref().map(|id| NewTargetKind::Function(Some(id.name.clone())))
-            }
-            _ => None,
-        }
+    fn push(&mut self, kind: NewTargetKind<'a>) {
+        self.kinds.push(kind);
+    }
+
+    fn pop(&mut self) {
+        self.kinds.pop();
     }
 
     fn create_constructor_expr(&self, span: Span) -> Expression<'a> {
