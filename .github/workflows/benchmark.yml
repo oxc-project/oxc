@@ -8,6 +8,7 @@ on:
       - '**/*.rs'
       - 'Cargo.lock'
       - '.github/workflows/benchmark.yml'
+      - 'tasks/benchmark/codspeed/*.mjs'
   push:
     branches:
       - main
@@ -16,6 +17,7 @@ on:
       - '**/*.rs'
       - 'Cargo.lock'
       - '.github/workflows/benchmark.yml'
+      - 'tasks/benchmark/codspeed/*.mjs'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -25,11 +27,14 @@ jobs:
   benchmark:
     name: Benchmark
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [lexer, parser, transformer, semantic, linter, minifier, codegen_sourcemap]
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v4
         with:
-          progress: false
+          show-progress: false
           persist-credentials: false
 
       - name: Install Rust Toolchain
@@ -43,20 +48,29 @@ jobs:
         with:
           tool: cargo-codspeed
 
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Start bench results interceptor server
+        working-directory: ./tasks/benchmark/codspeed
+        env:
+          COMPONENT: ${{ matrix.component }}
+        run: |
+          corepack enable
+          pnpm install
+          node capture.mjs &
+
       - name: Build Benchmark
         env:
           RUSTFLAGS: "-C debuginfo=2 -C strip=none -g --cfg codspeed"
         shell: bash
         run: |
-          cargo build --release -p oxc_benchmark --features codspeed --bench lexer --bench parser --bench transformer --bench semantic --bench linter --bench minifier --bench codegen_sourcemap
+          cargo build --release -p oxc_benchmark --features codspeed --bench ${{ matrix.component }}
           mkdir -p target/codspeed/oxc_benchmark/
-          mv target/release/deps/lexer-* target/codspeed/oxc_benchmark
-          mv target/release/deps/parser-* target/codspeed/oxc_benchmark
-          mv target/release/deps/transformer-* target/codspeed/oxc_benchmark
-          mv target/release/deps/semantic-* target/codspeed/oxc_benchmark
-          mv target/release/deps/linter-* target/codspeed/oxc_benchmark
-          mv target/release/deps/minifier-* target/codspeed/oxc_benchmark
-          mv target/release/deps/codegen_sourcemap-* target/codspeed/oxc_benchmark
+          mv target/release/deps/${{ matrix.component }}-* target/codspeed/oxc_benchmark
           rm -rf target/codspeed/oxc_benchmark/*.d
 
       - name: Run benchmark
@@ -65,3 +79,48 @@ jobs:
         with:
           run: cargo codspeed run
           token: ${{ secrets.CODSPEED_TOKEN }}
+          upload-url: http://localhost:${{ env.INTERCEPT_PORT }}/upload
+
+      - name: Upload bench data artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.component }}
+          path: ${{ env.DATA_DIR }}
+          if-no-files-found: error
+          retention-days: 1
+
+  upload:
+    name: Upload benchmarks
+    needs: benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+          persist-credentials: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Create temp dir
+        working-directory: ./tasks/benchmark/codspeed
+        run: |
+          corepack enable
+          pnpm install
+          node create_temp_dir.mjs
+
+      - name: Download artefacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ env.DATA_DIR }}
+          merge-multiple: true
+
+      - name: Upload to Codspeed
+        working-directory: ./tasks/benchmark/codspeed
+        env:
+          CODSPEED_TOKEN: ${{ secrets.CODSPEED_TOKEN }}
+        run: node upload.mjs
