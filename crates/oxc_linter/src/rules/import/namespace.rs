@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{ast::BindingPatternKind, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -109,13 +109,22 @@ impl Rule for Namespace {
                                 check_binding_exported(name, span);
                             }
                         }
-
                         AstKind::JSXMemberExpressionObject(_) => {
                             if let Some(AstKind::JSXMemberExpression(expr)) =
                                 ctx.nodes().parent_kind(node.id())
                             {
                                 check_binding_exported(&expr.property.name, expr.property.span);
                             }
+                        }
+                        AstKind::VariableDeclarator(decl) => {
+                            let BindingPatternKind::ObjectPattern(pattern) = &decl.id.kind else {
+                                return;
+                            };
+                            pattern.properties.iter().for_each(|property| {
+                                if let Some(name) = property.key.name() {
+                                    check_binding_exported(&name, property.key.span());
+                                }
+                            });
                         }
                         _ => {}
                     }
@@ -144,30 +153,28 @@ fn test() {
         // console.log(foo.Qux1);
         // console.log(foo.Qux2);"#,
         r"import * as foo from './common';",
-        // r#"import * as names from "./named-exports"; const { a } = names"#,
-        // r#"import * as names from "./named-exports"; const { d: c } = names"#,
-        // r#"import * as names from "./named-exports";
+        r#"import * as names from "./named-exports"; const { a } = names"#,
+        r#"import * as names from "./named-exports"; const { d: c } = names"#,
+        r#"import * as names from "./named-exports";
         // const { c } = foo,
         // { length } = "names",
         // alt = names;"#,
-        // r#"import * as names from "./named-exports"; const { ExportedClass: { length } } = names"#,
-        // r#"import * as names from "./named-exports"; function b(names) { const { c } = names }"#,
-        // r#"import * as names from "./named-exports"; function b() { let names = null; const { c } = names }"#,
-        // r#"import * as names from "./named-exports"; const x = function names() { const { c } = names }"#,
-        // r#"export * as names from "./named-exports""#,
-        // r#"export defport, * as names from "./named-exports""#,
+        r#"import * as names from "./named-exports"; const { ExportedClass: { length } } = names"#,
+        r#"import * as names from "./named-exports"; function b(names) { const { c } = names }"#,
+        r#"import * as names from "./named-exports"; function b() { let names = null; const { c } = names }"#,
+        r#"import * as names from "./named-exports"; const x = function names() { const { c } = names }"#,
+        r#"export * as names from "./named-exports""#,
         // r#"export * as names from "./does-not-exist""#,
         // r#"import * as Endpoints from "./issue-195/Endpoints"; console.log(Endpoints.Users)"#,
-        // r#"function x() { console.log((names.b).c); } import * as names from "./named-exports";"#,
+        r#"function x() { console.log((names.b).c); } import * as names from "./named-exports";"#,
         // r#"import * as names from './default-export';"#,
         // r#"import * as names from './default-export'; console.log(names.default)"#,
         // r#"export * as names from "./default-export""#,
         // r#"export defport, * as names from "./default-export""#,
-        // r#"import * as names from './named-exports'; console.log(names['a']);"#,
-        // r#"import * as names from './named-exports'; const {a, b, ...rest} = names;"#,
-        // r#"import * as names from './named-exports'; const {a, b, ...rest} = names;"#,
-        // r#"import * as ns from './re-export-common'; const {foo} = ns;"#,
-        // r#"import * as Names from "./named-exports"; const Foo = <Names.a/>"#,
+        // r"import * as names from './named-exports'; console.log(names['a']);",
+        r"import * as names from './named-exports'; const {a, b, ...rest} = names;",
+        r"import * as ns from './re-export-common'; const {foo} = ns;",
+        r#"import * as Names from "./named-exports"; const Foo = <Names.a/>"#,
         // r#"import * as foo from "./typescript-declare-nested"
         // foo.bar.MyFunction()"#,
         // r#"import { foobar } from "./typescript-declare-interface""#,
@@ -220,10 +227,10 @@ fn test() {
         r"import * as names from './named-exports'; console.log(names['a']);",
         r"import * as foo from './bar'; foo.foo = 'y';",
         r"import * as foo from './bar'; foo.x = 'y';",
-        // r#"import * as names from "./named-exports"; const { c } = names"#,
-        // r#"import * as names from "./named-exports"; function b() { const { c } = names }"#,
-        // r#"import * as names from "./named-exports"; const { c: d } = names"#,
-        // r#"import * as names from "./named-exports"; const { c: { d } } = names"#,
+        r#"import * as names from "./named-exports"; const { c } = names"#,
+        r#"import * as names from "./named-exports"; function b() { const { c } = names }"#,
+        r#"import * as names from "./named-exports"; const { c: d } = names"#,
+        r#"import * as names from "./named-exports"; const { c: { d } } = names"#,
         // r#"import * as Endpoints from "./issue-195/Endpoints"; console.log(Endpoints.Foo)"#,
         // r#"import * as namespace from './malformed.js';"#,
         // r#"import b from './deep/default'; console.log(b.e)"#,
