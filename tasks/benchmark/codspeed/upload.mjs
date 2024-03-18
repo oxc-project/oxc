@@ -110,13 +110,28 @@ const metadata = JSON.parse(
 );
 metadata.profileMd5 = md5;
 
+// If no token, set `metadata.tokenless`, and log hash of metadata JSON.
+// For tokenless runs (PRs from forks), `codspeed-runner` logs SHA256 hash of metadata JSON.
+// CodSpeed then reads the job logs to find a line matching `CodSpeed Run Hash: "..."`.
+// So we used a dummy token for `CodSpeedHQ/action` to prevent it logging the hash,
+// so can log the correct hash ourselves here instead.
+if (!token) metadata.tokenless = true;
+const metadataJson = JSON.stringify(metadata);
+if (!token) {
+    const metadataHash = createHash('sha256').update(metadataJson).digest('hex');
+    console.log(`CodSpeed Run Hash: "${metadataHash}"`);
+}
+
 // Upload metadata to CodSpeed
 console.log('Uploading metadata to CodSpeed');
 const {data} = await axios({
     method: 'post',
     url: CODSPEED_UPLOAD_URL,
-    data: metadata,
-    headers: {Authorization: token},
+    data: metadataJson,
+    headers: {
+        'Content-Type': 'application/json',
+        ...(token ? {Authorization: token} : null),
+    },
 });
 assert(data?.status === 'success', 'Failed to upload metadata to Codspeed');
 const {uploadUrl} = data;
