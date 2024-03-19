@@ -904,7 +904,12 @@ impl<'a> Format<'a> for TSTypeQuery<'a> {
 
 impl<'a> Format<'a> for TSTypeReference<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+        parts.push(format!(p, self.type_name));
+        if let Some(params) = &self.type_parameters {
+            parts.push(format!(p, params));
+        }
+        Doc::Array(parts)
     }
 }
 
@@ -991,7 +996,10 @@ impl<'a> Format<'a> for TSModuleReference<'a> {
 
 impl<'a> Format<'a> for TSTypeName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        match self {
+            TSTypeName::IdentifierReference(it) => format!(p, it),
+            TSTypeName::QualifiedName(it) => format!(p, it),
+        }
     }
 }
 

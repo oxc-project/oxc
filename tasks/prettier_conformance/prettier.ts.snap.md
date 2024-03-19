@@ -1,4 +1,4 @@
-ts compatibility: 43/527 (8.16%)
+ts compatibility: 48/527 (9.11%)
 
 # Failed
 
@@ -29,7 +29,6 @@ ts compatibility: 43/527 (8.16%)
 
 ### arrows
 * arrows/arrow_function_expression.ts
-* arrows/short_body.ts
 * arrows/type_params.ts
 
 ### as
@@ -42,7 +41,6 @@ ts compatibility: 43/527 (8.16%)
 * as/expression-statement.ts
 * as/long-identifiers.ts
 * as/nested-await-and-as.ts
-* as/return.ts
 * as/ternary.ts
 
 ### assert
@@ -168,7 +166,6 @@ ts compatibility: 43/527 (8.16%)
 * conformance/classes/nestedClassDeclaration.ts
 
 ### conformance/classes/classDeclarations/classAbstractKeyword
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAssignabilityConstructorFunction.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractClinterfaceAssignability.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructorAssignability.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractCrashedOnce.ts
@@ -176,7 +173,6 @@ ts compatibility: 43/527 (8.16%)
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractGeneric.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractImportInstantiation.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInAModule.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations1.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts
@@ -261,9 +257,6 @@ ts compatibility: 43/527 (8.16%)
 * conformance/types/functions/functionOverloadCompatibilityWithVoid03.ts
 * conformance/types/functions/functionOverloadErrorsSyntax.ts
 * conformance/types/functions/functionTypeTypeParameters.ts
-
-### conformance/types/indexedAccesType
-* conformance/types/indexedAccesType/indexedAccesType.ts
 
 ### conformance/types/interfaceDeclaration
 * conformance/types/interfaceDeclaration/interfaceDeclaration.ts
