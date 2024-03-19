@@ -21,14 +21,28 @@ impl<'a> JSDocTag<'a> {
         utils::trim_multiline_comment(self.raw_body)
     }
 
-    // For `@yields {type} comment`, `@returns {type} comment`, `@type {type} comment`, ...etc
+    // For `@type {type}`, `@satisfies {type}`, ...etc
+    // It may be `@kind`
+    pub fn r#type(&self) -> Option<&str> {
+        let parts = self.body_splitn(1);
+        parts.first().map(|may_type| utils::extract_type(may_type))?
+    }
+
+    // For `@yields {type} comment`, `@returns {type} comment`, ...etc
+    // It may be `@kind {type}` or `@kind comment`
+    // even or `@kind`
     // pub fn type_comment(&self) -> (Option<&str>, Option<String>) {}
 
-    // For `@param {type} name comment`, `@property {type} name comment`, ...etc
+    // For `@param {type} name comment`, `@property {type} name comment`, `@typedef {type} name comment`, ...etc
+    // It may be `@kind {type} name` or `@kind name comment`,
+    // even or `@kind {type}` or `@kind name`
+    // even or `@kind`
     // pub fn type_name_comment(&self) -> (Option<&str>, Option<&str>, Option<String>) {}
 
+    pub fn body_splitn(&self, max_parts: usize) -> Vec<&str> {
+        debug_assert!(1 <= max_parts);
+        debug_assert!(max_parts <= 3);
 
-    pub fn as_param(&self) -> (Option<&str>, Option<&str>, Option<String>) {
         let mut breakpoints = vec![];
         let mut in_braces = false;
         // Use indices for string slices
@@ -42,11 +56,10 @@ impl<'a> JSDocTag<'a> {
             chars.next();
         }
 
-        // Find 2 breakpoints: {type}|name|comment
-        // - type may contain line breaks and spaces
-        // - comment may contain line breaks
         'outer: while let Some((_, ch)) = chars.peek() {
-            if breakpoints.len() == 2 {
+            // To get 1 part, we need 0 breakpoints
+            // To get 3 parts, we need 2 breakpoints
+            if max_parts - 1 == breakpoints.len() {
                 break;
             }
 
@@ -67,66 +80,23 @@ impl<'a> JSDocTag<'a> {
             chars.next();
         }
 
-        match breakpoints.len() {
-            // ```
-            // {type} name3 comment
-            //
-            // name
-            // comm-
-            // -ent
-            // ```
+        println!("Breakpoints: {breakpoints:?}");
+
+        match max_parts {
+            3 => {
+                let idx1 = breakpoints[0];
+                let idx2 = breakpoints[1];
+                vec![&self.raw_body[..idx1], &self.raw_body[idx1..idx2], &self.raw_body[idx2..]]
+            }
             2 => {
-                let type_or_name = &self.raw_body[..breakpoints[0]].trim();
-                if type_or_name.starts_with('{') {
-                    let r#type = &type_or_name[1..type_or_name.len() - 1].trim();
-                    let name = &self.raw_body[breakpoints[0]..breakpoints[1]].trim();
-                    let comment = &self.raw_body[breakpoints[1]..];
-                    (Some(r#type), Some(name), Some(utils::trim_multiline_comment(comment)))
-                } else {
-                    let name = type_or_name;
-                    let comment = &self.raw_body[breakpoints[0]..].trim();
-                    (None, Some(name), Some(utils::trim_multiline_comment(comment)))
-                }
+                let idx = breakpoints[0];
+                vec![&self.raw_body[..idx], &self.raw_body[idx..]]
             }
-            // ```
-            // {type} name
-            //
-            // name comment
-            //
-            // name
-            // comment
-            // ```
-            1 => {
-                let type_or_name = &self.raw_body[..breakpoints[0]].trim();
-                if type_or_name.starts_with('{') {
-                    let r#type = &type_or_name[1..type_or_name.len() - 1].trim();
-                    let name = &self.raw_body[breakpoints[0]..].trim();
-                    (Some(r#type), Some(name), None)
-                } else {
-                    let name = type_or_name;
-                    let comment = &self.raw_body[breakpoints[0]..].trim();
-                    (None, Some(name), Some(utils::trim_multiline_comment(comment)))
-                }
-            }
-            // ```
-            // name
-            // {type}
-            // {type not closed
-            // ```
             _ => {
-                let type_or_name = &self.raw_body.trim();
-                if type_or_name.starts_with('{') {
-                    let r#type = &type_or_name[1..type_or_name.len() - 1].trim();
-                    (Some(r#type), None, None)
-                } else {
-                    let name = type_or_name;
-                    (None, Some(name), None)
-                }
+                vec![self.raw_body]
             }
         }
     }
-
-    // pub fn as_returns(&self) {}
 }
 
 #[cfg(test)]
@@ -146,45 +116,56 @@ mod test {
     }
 
     #[test]
-    fn parses_parameter_tag() {
-        assert_eq!(JSDocTag::new("param", "name1").as_param(), (None, Some("name1"), None));
-        assert_eq!(
-            JSDocTag::new("arg", "{type2} name2").as_param(),
-            (Some("type2"), Some("name2"), None)
-        );
-        assert_eq!(
-            JSDocTag::new("arg", " {type3 }  name3 ").as_param(),
-            (Some("type3"), Some("name3"), None)
-        );
-        assert_eq!(
-            JSDocTag::new("arg", "{{ x: 1 }} name4").as_param(),
-            (Some("{ x: 1 }"), Some("name4"), None)
-        );
-        assert_eq!(
-            JSDocTag::new("arg", "{type5} name5 comment5").as_param(),
-            (Some("type5"), Some("name5"), Some("comment5".to_string()))
-        );
-        assert_eq!(
-            JSDocTag::new("arg", "{type6} 変数6 あいうえ\nお6").as_param(),
-            (Some("type6"), Some("変数6"), Some("あいうえ\nお6".to_string()))
-        );
-        assert_eq!(
-            JSDocTag::new("arg", "{type7}\nname7").as_param(),
-            (Some("type7"), Some("name7"), None)
-        );
-        assert_eq!(
-            JSDocTag::new("arg", "{type8}\nname8\ncomment8").as_param(),
-            (Some("type8"), Some("name8"), Some("comment8".to_string()))
-        );
-        assert_eq!(JSDocTag::new("arg", "\nname9").as_param(), (None, Some("name9"), None));
-        assert_eq!(
-            JSDocTag::new("arg", "name10\ncom\nment10").as_param(),
-            (None, Some("name10"), Some("com\nment10".to_string()))
-        );
-        assert_eq!(JSDocTag::new("arg", "{type11}").as_param(), (Some("type11"), None, None));
-
-        // TODO: More tests!
+    fn parses_type() {
+        assert_eq!(JSDocTag::new("t", "{t1}").r#type(), Some("t1"));
+        assert_eq!(JSDocTag::new("t", "{t2} foo").r#type(), Some("t2"));
+        assert_eq!(JSDocTag::new("t", " {t3 } ").r#type(), Some("t3 "));
+        assert_eq!(JSDocTag::new("t", "  ").r#type(), None);
+        assert_eq!(JSDocTag::new("t", "t4").r#type(), None);
+        assert_eq!(JSDocTag::new("t", "{t5 ").r#type(), None);
+        assert_eq!(JSDocTag::new("t", "{t6}\nx").r#type(), Some("t6"));
     }
+
+    // #[test]
+    // fn parses_parameter_tag() {
+    //     assert_eq!(JSDocTag::new("param", "name1").as_param(), (None, Some("name1"), None));
+    //     assert_eq!(
+    //         JSDocTag::new("arg", "{type2} name2").as_param(),
+    //         (Some("type2"), Some("name2"), None)
+    //     );
+    //     assert_eq!(
+    //         JSDocTag::new("arg", " {type3 }  name3 ").as_param(),
+    //         (Some("type3"), Some("name3"), None)
+    //     );
+    //     assert_eq!(
+    //         JSDocTag::new("arg", "{{ x: 1 }} name4").as_param(),
+    //         (Some("{ x: 1 }"), Some("name4"), None)
+    //     );
+    //     assert_eq!(
+    //         JSDocTag::new("arg", "{type5} name5 comment5").as_param(),
+    //         (Some("type5"), Some("name5"), Some("comment5".to_string()))
+    //     );
+    //     assert_eq!(
+    //         JSDocTag::new("arg", "{type6} 変数6 あいうえ\nお6").as_param(),
+    //         (Some("type6"), Some("変数6"), Some("あいうえ\nお6".to_string()))
+    //     );
+    //     assert_eq!(
+    //         JSDocTag::new("arg", "{type7}\nname7").as_param(),
+    //         (Some("type7"), Some("name7"), None)
+    //     );
+    //     assert_eq!(
+    //         JSDocTag::new("arg", "{type8}\nname8\ncomment8").as_param(),
+    //         (Some("type8"), Some("name8"), Some("comment8".to_string()))
+    //     );
+    //     assert_eq!(JSDocTag::new("arg", "\nname9").as_param(), (None, Some("name9"), None));
+    //     assert_eq!(
+    //         JSDocTag::new("arg", "name10\ncom\nment10").as_param(),
+    //         (None, Some("name10"), Some("com\nment10".to_string()))
+    //     );
+    //     assert_eq!(JSDocTag::new("arg", "{type11}").as_param(), (Some("type11"), None, None));
+
+    //     // TODO: More tests!
+    // }
 
     //         assert_eq!(
     //             parse_from_full_text("/** @param */").1,
