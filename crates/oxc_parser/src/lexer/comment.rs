@@ -75,8 +75,8 @@ impl<'a> Lexer<'a> {
             },
         };
 
-        self.token.is_on_new_line = true;
-        Kind::Skip
+        // Skip indentation after line break
+        self.line_break_handler()
     }
 
     /// Section 12.4 Multi Line Comment
