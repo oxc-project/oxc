@@ -1,0 +1,45 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: guard_for_in
+---
+  ⚠ eslint(guard-for-in): Require `for-in` loops to include an `if` statement
+   ╭─[guard_for_in.tsx:1:1]
+ 1 │ for (var x in o) { if (x) { f(); continue; } g(); }
+   · ────────────────
+   ╰────
+  help: The body of a for-in should be wrapped in an if statement to filter unwanted properties from the prototype.
+
+  ⚠ eslint(guard-for-in): Require `for-in` loops to include an `if` statement
+   ╭─[guard_for_in.tsx:1:1]
+ 1 │ for (var x in o) { if (x) { continue; f(); } g(); }
+   · ────────────────
+   ╰────
+  help: The body of a for-in should be wrapped in an if statement to filter unwanted properties from the prototype.
+
+  ⚠ eslint(guard-for-in): Require `for-in` loops to include an `if` statement
+   ╭─[guard_for_in.tsx:1:1]
+ 1 │ for (var x in o) { if (x) { f(); } g(); }
+   · ────────────────
+   ╰────
+  help: The body of a for-in should be wrapped in an if statement to filter unwanted properties from the prototype.
+
+  ⚠ eslint(guard-for-in): Require `for-in` loops to include an `if` statement
+   ╭─[guard_for_in.tsx:1:1]
+ 1 │ for (var x in o) { if (x) f(); g(); }
+   · ────────────────
+   ╰────
+  help: The body of a for-in should be wrapped in an if statement to filter unwanted properties from the prototype.
+
+  ⚠ eslint(guard-for-in): Require `for-in` loops to include an `if` statement
+   ╭─[guard_for_in.tsx:1:1]
+ 1 │ for (var x in o) { foo() }
+   · ────────────────
+   ╰────
+  help: The body of a for-in should be wrapped in an if statement to filter unwanted properties from the prototype.
+
+  ⚠ eslint(guard-for-in): Require `for-in` loops to include an `if` statement
+   ╭─[guard_for_in.tsx:1:1]
+ 1 │ for (var x in o) foo();
+   · ────────────────
+   ╰────
+  help: The body of a for-in should be wrapped in an if statement to filter unwanted properties from the prototype.

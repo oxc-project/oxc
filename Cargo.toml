@@ -82,11 +82,8 @@ oxc_transformer = { version = "0.10.0", path = "crates/oxc_transformer" }
 # publish = false
 oxc_macros         = { path = "crates/oxc_macros" }
 oxc_linter         = { path = "crates/oxc_linter" }
-oxc_type_synthesis = { path = "crates/oxc_type_synthesis" }
 oxc_prettier       = { path = "crates/oxc_prettier" }
-
 oxc_tasks_common    = { path = "tasks/common" }
-oxc_language_server = { path = "crates/oxc_language_server" }
 
 napi        = { version = "2" }
 napi-derive = { version = "2" }
@@ -96,8 +93,6 @@ bpaf                      = { version = "0.9.9" }
 bitflags                  = { version = "2.4.2" }
 bumpalo                   = { version = "3.15.4" }
 convert_case              = { version = "0.6.0" }
-criterion                 = { version = "0.5.1", default-features = false }
-crossbeam-channel         = { version = "0.5.12" }
 dashmap                   = { version = "5.5.3" }
 flate2                    = { version = "1.0.28" }
 futures                   = { version = "0.3.30" }
@@ -111,7 +106,7 @@ num-bigint                = { version = "0.4.4" }
 num-traits                = { version = "0.2.18" }
 phf                       = { version = "0.11" }
 pico-args                 = { version = "0.5.0" }
-proc-macro2               = { version = "1.0.78" }
+proc-macro2               = { version = "1.0.79" }
 project-root              = { version = "0.2.2" }
 quote                     = { version = "1.0.35" }
 rayon                     = { version = "1.9.0" }
@@ -123,7 +118,7 @@ seq-macro                 = { version = "0.3.5" }
 serde                     = { version = "1.0.197" }
 serde_json                = { version = "1.0.114" }
 syn                       = { version = "=1.0.109" }
-thiserror                 = { version = "1.0.57" }
+thiserror                 = { version = "1.0.58" }
 tokio                     = { version = "1" }
 tower-lsp                 = { version = "0.20.0", features = ["proposed"] }
 unicode-id-start          = { version = "1.1.2" }
@@ -133,12 +128,8 @@ walkdir                   = { version = "2.5.0" }
 indexmap                  = { version = "2.2.5" }
 index_vec                 = { version = "0.1.3" }
 static_assertions         = { version = "1.1.0" }
-stacker                   = { version = "0.1.15" }
-tracing                   = { version = "0.1" }
 tracing-subscriber        = { version = "0.3" }
 insta                     = { version = "1.36.1", features = ["glob"] }
-codspeed-criterion-compat = { version = "2.4.0", default-features = false }
-glob                      = { version = "0.3.1" }
 mime_guess                = { version = "2.0.4" }
 language-tags             = { version = "0.3.2" }
 tsify                     = { version = "0.4.5" }

@@ -1,0 +1,204 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 151
+expression: prefer_to_contain
+---
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:23]
+ 1 │ expect(a.includes(b)).toEqual(true);
+   ·                       ───────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:25]
+ 1 │ expect(a.includes(b,),).toEqual(true,)
+   ·                         ───────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:26]
+ 1 │ expect(a['includes'](b)).toEqual(true);
+   ·                          ───────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:26]
+ 1 │ expect(a['includes'](b))['toEqual'](true);
+   ·                          ─────────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:26]
+ 1 │ expect(a['includes'](b)).toEqual(false);
+   ·                          ───────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:30]
+ 1 │ expect(a['includes'](b)).not.toEqual(false);
+   ·                              ───────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:33]
+ 1 │ expect(a['includes'](b))['not'].toEqual(false);
+   ·                                 ───────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:33]
+ 1 │ expect(a['includes'](b))['not']['toEqual'](false);
+   ·                                 ─────────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:23]
+ 1 │ expect(a.includes(b)).toEqual(false);
+   ·                       ───────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:27]
+ 1 │ expect(a.includes(b)).not.toEqual(false);
+   ·                           ───────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:27]
+ 1 │ expect(a.includes(b)).not.toEqual(true);
+   ·                           ───────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:23]
+ 1 │ expect(a.includes(b)).toBe(true);
+   ·                       ────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:23]
+ 1 │ expect(a.includes(b)).toBe(false);
+   ·                       ────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:27]
+ 1 │ expect(a.includes(b)).not.toBe(false);
+   ·                           ────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:27]
+ 1 │ expect(a.includes(b)).not.toBe(true);
+   ·                           ────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:23]
+ 1 │ expect(a.includes(b)).toStrictEqual(true);
+   ·                       ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:23]
+ 1 │ expect(a.includes(b)).toStrictEqual(false);
+   ·                       ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:27]
+ 1 │ expect(a.includes(b)).not.toStrictEqual(false);
+   ·                           ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:27]
+ 1 │ expect(a.includes(b)).not.toStrictEqual(true);
+   ·                           ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:39]
+ 1 │ expect(a.test(t).includes(b.test(p))).toEqual(true);
+   ·                                       ───────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:39]
+ 1 │ expect(a.test(t).includes(b.test(p))).toEqual(false);
+   ·                                       ───────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:43]
+ 1 │ expect(a.test(t).includes(b.test(p))).not.toEqual(true);
+   ·                                           ───────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:43]
+ 1 │ expect(a.test(t).includes(b.test(p))).not.toEqual(false);
+   ·                                           ───────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:33]
+ 1 │ expect([{a:1}].includes({b:1})).toBe(true);
+   ·                                 ────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:33]
+ 1 │ expect([{a:1}].includes({a:1})).toBe(false);
+   ·                                 ────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:37]
+ 1 │ expect([{a:1}].includes({a:1})).not.toBe(true);
+   ·                                     ────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:37]
+ 1 │ expect([{a:1}].includes({a:1})).not.toBe(false);
+   ·                                     ────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:33]
+ 1 │ expect([{a:1}].includes({a:1})).toStrictEqual(true);
+   ·                                 ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:33]
+ 1 │ expect([{a:1}].includes({a:1})).toStrictEqual(false);
+   ·                                 ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:37]
+ 1 │ expect([{a:1}].includes({a:1})).not.toStrictEqual(true);
+   ·                                     ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:37]
+ 1 │ expect([{a:1}].includes({a:1})).not.toStrictEqual(false);
+   ·                                     ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:3:59]
+ 2 │                 import { expect as pleaseExpect } from '@jest/globals';
+ 3 │                 pleaseExpect([{a:1}].includes({a:1})).not.toStrictEqual(false);
+   ·                                                           ─────────────
+ 4 │             
+   ╰────
+
+  ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
+   ╭─[prefer_to_contain.tsx:1:23]
+ 1 │ expect(a.includes(b)).toEqual(false as boolean);
+   ·                       ───────
+   ╰────
