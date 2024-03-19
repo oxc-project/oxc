@@ -45,8 +45,7 @@ impl Rule for DefaultParamLast {
                     return;
                 }
                 let mut has_seen_plain_param = false;
-                for i in (0..function.params.items.len()).rev() {
-                    let param = &function.params.items[i];
+                for param in function.params.items.iter().rev() {
                     if !param.pattern.kind.is_assignment_pattern() {
                         has_seen_plain_param = true;
                         continue;
@@ -61,8 +60,7 @@ impl Rule for DefaultParamLast {
             }
             AstKind::ArrowFunctionExpression(function) => {
                 let mut has_seen_plain_param = false;
-                for i in (0..function.params.items.len()).rev() {
-                    let param = &function.params.items[i];
+                for param in function.params.items.iter().rev() {
                     if !param.pattern.kind.is_assignment_pattern() {
                         has_seen_plain_param = true;
                         continue;
