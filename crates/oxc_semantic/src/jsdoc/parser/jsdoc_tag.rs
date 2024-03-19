@@ -1,9 +1,5 @@
 use super::utils;
 
-//
-// Structs
-//
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JSDocTag<'a> {
     raw_body: &'a str,
@@ -14,86 +10,113 @@ impl<'a> JSDocTag<'a> {
     /// kind: Does not contain the `@` prefix
     /// raw_body: The body part of the tag, after the `@kind {HERE_MAY_BE_MULTILINE...}`
     pub fn new(kind: &'a str, raw_body: &'a str) -> JSDocTag<'a> {
+        debug_assert!(!kind.starts_with('@'));
         Self { raw_body, kind }
     }
 
+    /// Use for simple tags like `@access`, `@deprecated`, ...etc.
+    /// comment can be multiline.
+    ///
+    /// Variants:
+    /// ```
+    /// @kind comment
+    /// @kind
+    /// ```
     pub fn comment(&self) -> String {
         utils::trim_multiline_comment(self.raw_body)
     }
 
-    // For `@type {type}`, `@satisfies {type}`, ...etc
-    // It may be `@kind`
+    /// Use for `@type`, `@satisfies`, ...etc.
+    ///
+    /// Variants:
+    /// ```
+    /// @kind {type}
+    /// @kind
+    /// ```
     pub fn r#type(&self) -> Option<&str> {
-        let parts = self.body_splitn(1);
-        parts.first().map(|may_type| utils::extract_type(may_type))?
+        utils::extract_type_range(self.raw_body).map(|(start, end)| &self.raw_body[start..end])
     }
 
-    // For `@yields {type} comment`, `@returns {type} comment`, ...etc
-    // It may be `@kind {type}` or `@kind comment`
-    // even or `@kind`
-    // pub fn type_comment(&self) -> (Option<&str>, Option<String>) {}
-
-    // For `@param {type} name comment`, `@property {type} name comment`, `@typedef {type} name comment`, ...etc
-    // It may be `@kind {type} name` or `@kind name comment`,
-    // even or `@kind {type}` or `@kind name`
-    // even or `@kind`
-    // pub fn type_name_comment(&self) -> (Option<&str>, Option<&str>, Option<String>) {}
-
-    pub fn body_splitn(&self, max_parts: usize) -> Vec<&str> {
-        debug_assert!(1 <= max_parts);
-        debug_assert!(max_parts <= 3);
-
-        let mut breakpoints = vec![];
-        let mut in_braces = false;
-        // Use indices for string slices
-        let mut chars = self.raw_body.char_indices().peekable();
-
-        // Skip leading spaces
-        while let Some((_, ch)) = chars.peek() {
-            if !(*ch == ' ' || *ch == '\n') {
-                break;
-            }
-            chars.next();
+    /// Use for `@yields`, `@returns`, ...etc.
+    /// comment can be multiline.
+    ///
+    /// Variants:
+    /// ```
+    /// @kind {type} comment
+    /// @kind {type}
+    /// @kind comment
+    /// @kind
+    /// ```
+    pub fn type_comment(&self) -> (Option<&str>, String) {
+        let type_part_range = utils::extract_type_range(self.raw_body);
+        // {type} comment
+        // {type}
+        if let Some((start, end)) = type_part_range {
+            (
+                Some(&self.raw_body[start..end]),
+                // +1 for `}`
+                utils::trim_multiline_comment(&self.raw_body[end + 1..]),
+            )
         }
-
-        'outer: while let Some((_, ch)) = chars.peek() {
-            // To get 1 part, we need 0 breakpoints
-            // To get 3 parts, we need 2 breakpoints
-            if max_parts - 1 == breakpoints.len() {
-                break;
-            }
-
-            match ch {
-                '{' => in_braces = true,
-                '}' => in_braces = false,
-                ' ' | '\n' if !in_braces => {
-                    for (idx, ch) in chars.by_ref() {
-                        if ch != ' ' {
-                            breakpoints.push(idx);
-                            continue 'outer;
-                        }
-                    }
-                }
-                _ => {}
-            }
-
-            chars.next();
+        // comment
+        // (empty)
+        else {
+            (None, utils::trim_multiline_comment(self.raw_body))
         }
+    }
 
-        println!("Breakpoints: {breakpoints:?}");
+    /// Use for `@param`, `@property`, `@typedef`, ...etc.
+    /// comment can be multiline.
+    ///
+    /// Variants:
+    /// ```
+    /// @kind {type} name comment
+    /// @kind {type} name
+    /// @kind {type}
+    /// @kind name comment
+    /// @kind name
+    /// @kind
+    /// ```
+    pub fn type_name_comment(&self) -> (Option<&str>, Option<&str>, String) {
+        let type_part_range = utils::extract_type_range(self.raw_body);
+        if let Some((t_start, t_end)) = type_part_range {
+            let type_part = &self.raw_body[t_start..t_end];
+            let name_comment_part = &self.raw_body[t_end + 1..];
+            let name_part_range = utils::extract_name_range(name_comment_part);
 
-        match max_parts {
-            3 => {
-                let idx1 = breakpoints[0];
-                let idx2 = breakpoints[1];
-                vec![&self.raw_body[..idx1], &self.raw_body[idx1..idx2], &self.raw_body[idx2..]]
+            // {type} name comment
+            // {type} name
+            if let Some((n_start, n_end)) = name_part_range {
+                (
+                    Some(type_part),
+                    Some(&name_comment_part[n_start..n_end]),
+                    if n_end < name_comment_part.len() {
+                        // +1 for ` ` or `\n`
+                        utils::trim_multiline_comment(&name_comment_part[n_end + 1..])
+                    } else {
+                        String::new()
+                    },
+                )
             }
-            2 => {
-                let idx = breakpoints[0];
-                vec![&self.raw_body[..idx], &self.raw_body[idx..]]
+            // {type}
+            else {
+                (Some(type_part), Some(name_comment_part), String::new())
             }
-            _ => {
-                vec![self.raw_body]
+        } else {
+            let name_part_range = utils::extract_name_range(self.raw_body);
+            // name comment
+            // name
+            if let Some((n_start, n_end)) = name_part_range {
+                (
+                    None,
+                    Some(&self.raw_body[n_start..n_end]),
+                    // +1 for ` ` or `\n`
+                    utils::trim_multiline_comment(&self.raw_body[n_end + 1..]),
+                )
+            }
+            // (empty)
+            else {
+                (None, None, utils::trim_multiline_comment(self.raw_body))
             }
         }
     }
@@ -126,54 +149,41 @@ mod test {
         assert_eq!(JSDocTag::new("t", "{t6}\nx").r#type(), Some("t6"));
     }
 
-    // #[test]
-    // fn parses_parameter_tag() {
-    //     assert_eq!(JSDocTag::new("param", "name1").as_param(), (None, Some("name1"), None));
-    //     assert_eq!(
-    //         JSDocTag::new("arg", "{type2} name2").as_param(),
-    //         (Some("type2"), Some("name2"), None)
-    //     );
-    //     assert_eq!(
-    //         JSDocTag::new("arg", " {type3 }  name3 ").as_param(),
-    //         (Some("type3"), Some("name3"), None)
-    //     );
-    //     assert_eq!(
-    //         JSDocTag::new("arg", "{{ x: 1 }} name4").as_param(),
-    //         (Some("{ x: 1 }"), Some("name4"), None)
-    //     );
-    //     assert_eq!(
-    //         JSDocTag::new("arg", "{type5} name5 comment5").as_param(),
-    //         (Some("type5"), Some("name5"), Some("comment5".to_string()))
-    //     );
-    //     assert_eq!(
-    //         JSDocTag::new("arg", "{type6} 変数6 あいうえ\nお6").as_param(),
-    //         (Some("type6"), Some("変数6"), Some("あいうえ\nお6".to_string()))
-    //     );
-    //     assert_eq!(
-    //         JSDocTag::new("arg", "{type7}\nname7").as_param(),
-    //         (Some("type7"), Some("name7"), None)
-    //     );
-    //     assert_eq!(
-    //         JSDocTag::new("arg", "{type8}\nname8\ncomment8").as_param(),
-    //         (Some("type8"), Some("name8"), Some("comment8".to_string()))
-    //     );
-    //     assert_eq!(JSDocTag::new("arg", "\nname9").as_param(), (None, Some("name9"), None));
-    //     assert_eq!(
-    //         JSDocTag::new("arg", "name10\ncom\nment10").as_param(),
-    //         (None, Some("name10"), Some("com\nment10".to_string()))
-    //     );
-    //     assert_eq!(JSDocTag::new("arg", "{type11}").as_param(), (Some("type11"), None, None));
+    #[test]
+    fn parses_type_comment() {
+        assert_eq!(JSDocTag::new("r", "{t1} c1").type_comment(), (Some("t1"), "c1".to_string()));
+        assert_eq!(JSDocTag::new("r", "{t2}").type_comment(), (Some("t2"), String::new()));
+        assert_eq!(JSDocTag::new("r", "c3").type_comment(), (None, "c3".to_string()));
+        assert_eq!(JSDocTag::new("r", "c4 foo").type_comment(), (None, "c4 foo".to_string()));
+        assert_eq!(JSDocTag::new("r", "").type_comment(), (None, String::new()));
+        assert_eq!(
+            JSDocTag::new("r", "{t5}\nc5\n...").type_comment(),
+            (Some("t5"), "c5\n...".to_string())
+        );
+    }
 
-    //     // TODO: More tests!
-    // }
+    #[test]
+    fn parses_type_name_comment() {
+        assert_eq!(
+            JSDocTag::new("p", "{t1} n1 c1").type_name_comment(),
+            (Some("t1"), Some("n1"), "c1".to_string())
+        );
+        assert_eq!(
+            JSDocTag::new("p", "{t2} n2").type_name_comment(),
+            (Some("t2"), Some("n2"), String::new())
+        );
+        assert_eq!(
+            JSDocTag::new("p", "n3 c3").type_name_comment(),
+            (None, Some("n3"), "c3".to_string())
+        );
+        assert_eq!(JSDocTag::new("p", "").type_name_comment(), (None, None, String::new()));
+        assert_eq!(JSDocTag::new("p", "\n\n").type_name_comment(), (None, None, String::new()));
+        assert_eq!(
+            JSDocTag::new("p", "{t4} n4 c4\n...").type_name_comment(),
+            (Some("t4"), Some("n4"), "c4\n...".to_string())
+        );
+    }
 
-    //         assert_eq!(
-    //             parse_from_full_text("/** @param */").1,
-    //             vec![JSDocTag {
-    //                 kind: JSDocTagKind::Parameter(Param { name: "", r#type: None }),
-    //                 comment: String::new(),
-    //             },]
-    //         );
     //         assert_eq!(
     //             parse_from_full_text("/** @param @noop */").1,
     //             vec![
