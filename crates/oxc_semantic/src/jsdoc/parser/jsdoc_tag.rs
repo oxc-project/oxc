@@ -38,51 +38,52 @@ impl<'a> JSDocTag<'a> {
     // comment...
     // ```
     pub fn as_param(&self) -> (Option<String>, Option<String>, Option<String>) {
-        println!("👻 {}", self.raw_body);
-        let mut chars = self.raw_body.trim_start().chars().peekable();
+        let mut breakpoints = vec![];
 
-        let (mut r#type, mut name, comment) = (None, None, None);
-
-        let mut draft = String::new();
-        if chars.peek().is_some_and(|&c| c == '{') {
-            chars.next(/* { */);
-            while let Some(&ch) = chars.peek() {
-                if ch == '}' {
-                    r#type = Some(draft.clone());
-                    draft.clear();
-                    chars.next(/* } */);
-                    break;
+        let mut in_braces = false;
+        for (i, ch) in self.raw_body.trim_start().char_indices() {
+            match ch {
+                '{' => in_braces = true,
+                '}' => in_braces = false,
+                ' ' | '\n' if !in_braces => {
+                    breakpoints.push(i);
                 }
-                chars.next();
-                draft.push(ch);
+                _ => {}
             }
-        }
 
-        while let Some(&ch) = chars.peek() {
-            if ch == ' ' {
-                chars.next();
-            }
-        }
-
-        while let Some(&ch) = chars.peek() {
-            println!("ch: {ch}");
-            if ch == ' ' || ch == '\n' {
-                name = Some(draft.clone());
-                draft.clear();
+            if breakpoints.len() == 2 {
                 break;
             }
-            chars.next();
-            draft.push(ch);
         }
 
-        if !draft.is_empty() {
-            name = Some(draft.clone());
-            draft.clear();
+        match breakpoints.len() {
+            // name1
+            0 => {
+                let name = &self.raw_body[..].trim();
+                (None, Some((*name).to_string()), None)
+            }
+            // {type} name2
+            1 => {
+                let r#type = &self.raw_body[..breakpoints[0]].trim();
+                let r#type = &r#type[1..r#type.len() - 1];
+                let name = &self.raw_body[breakpoints[0]..].trim();
+                (Some(r#type.to_string()), Some((*name).to_string()), None)
+            }
+            // {type} name3 comment
+            2 => {
+                let r#type = &self.raw_body[..breakpoints[0]].trim();
+                let r#type = &r#type[1..r#type.len() - 1];
+                let name = &self.raw_body[breakpoints[0]..breakpoints[1]].trim();
+                let comment = &self.raw_body[breakpoints[1]..];
+                (
+                    Some(r#type.to_string()),
+                    Some((*name).to_string()),
+                    Some(utils::trim_multiline_comment(comment)),
+                )
+            }
+            // Unreachable!
+            _ => (None, None, None),
         }
-
-        // TODO: struct
-        (r#type, name, comment)
-        // (r#type, name, comment.map(|s| utils::trim_multiline_comment(&s)))
     }
 
     // pub fn body_as_returns(&self) {}
@@ -104,7 +105,7 @@ mod test {
         );
     }
 
-    // #[test]
+    #[test]
     fn parses_parameter_tag() {
         assert_eq!(
             JSDocTag::new("param", "name").as_param(),
@@ -115,9 +116,15 @@ mod test {
             (Some("type".to_string()), Some("name".to_string()), None)
         );
         assert_eq!(
+            JSDocTag::new("arg", "{{ x: 1 }} name").as_param(),
+            (Some("{ x: 1 }".to_string()), Some("name".to_string()), None)
+        );
+        assert_eq!(
             JSDocTag::new("arg", "{type} name comment").as_param(),
             (Some("type".to_string()), Some("name".to_string()), Some("comment".to_string()))
         );
+
+        // TODO: More tests!
     }
 
     //         assert_eq!(

@@ -45,7 +45,9 @@ pub fn parse_jsdoc(source_text: &str) -> (String, Vec<JSDocTag>) {
     (utils::trim_multiline_comment(&comment), tags)
 }
 
-// TODO: `Span` with (start, end)? kind only span?
+// TODO: Manage `Span`
+//   - with (start, end) + global comment span.start
+//   - kind only span?
 /// tag_content: Starts with `@`, may be mulitline
 fn parse_jsdoc_tag(tag_content: &str) -> JSDocTag {
     let mut parts = tag_content.splitn(2, |ch| ch == ' ' || ch == '\n');
