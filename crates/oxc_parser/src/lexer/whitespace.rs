@@ -7,6 +7,7 @@ static NOT_REGULAR_WHITESPACE_OR_LINE_BREAK_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| !matches!(b, b' ' | b'\t' | b'\r' | b'\n'));
 
 impl<'a> Lexer<'a> {
+    #[inline]
     pub(super) fn line_break_handler(&mut self) -> Kind {
         self.token.is_on_new_line = true;
 
