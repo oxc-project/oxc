@@ -46,6 +46,7 @@ mod eslint {
     pub mod getter_return;
     pub mod guard_for_in;
     pub mod max_lines;
+    pub mod max_params;
     pub mod no_array_constructor;
     pub mod no_async_promise_executor;
     pub mod no_bitwise;
@@ -70,6 +71,7 @@ mod eslint {
     pub mod no_empty_character_class;
     pub mod no_empty_pattern;
     pub mod no_empty_static_block;
+    pub mod no_eq_null;
     pub mod no_eval;
     pub mod no_ex_assign;
     pub mod no_extra_boolean_cast;
@@ -365,6 +367,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::getter_return,
     eslint::guard_for_in,
     eslint::max_lines,
+    eslint::max_params,
     eslint::no_ternary,
     eslint::no_this_before_super,
     eslint::no_array_constructor,
@@ -394,6 +397,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_eval,
     eslint::no_ex_assign,
     eslint::no_extra_boolean_cast,
+    eslint::no_eq_null,
     eslint::no_fallthrough,
     eslint::no_func_assign,
     eslint::no_global_assign,
