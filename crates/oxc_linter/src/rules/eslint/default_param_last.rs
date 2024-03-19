@@ -1,3 +1,4 @@
+use oxc_ast::ast::FormalParameter;
 use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -44,36 +45,23 @@ impl Rule for DefaultParamLast {
                 if !function.is_declaration() & !function.is_expression() {
                     return;
                 }
-                let mut has_seen_plain_param = false;
-                for param in function.params.items.iter().rev() {
-                    if !param.pattern.kind.is_assignment_pattern() {
-                        has_seen_plain_param = true;
-                        continue;
-                    }
-                    if has_seen_plain_param & param.pattern.kind.is_assignment_pattern() {
-                        ctx.diagnostic(DefaultParamLastDiagnostic(Span::new(
-                            param.span.start,
-                            param.span.end,
-                        )));
-                    }
-                }
+                check_params(&function.params.items, ctx);
             }
-            AstKind::ArrowFunctionExpression(function) => {
-                let mut has_seen_plain_param = false;
-                for param in function.params.items.iter().rev() {
-                    if !param.pattern.kind.is_assignment_pattern() {
-                        has_seen_plain_param = true;
-                        continue;
-                    }
-                    if has_seen_plain_param & param.pattern.kind.is_assignment_pattern() {
-                        ctx.diagnostic(DefaultParamLastDiagnostic(Span::new(
-                            param.span.start,
-                            param.span.end,
-                        )));
-                    }
-                }
-            }
+            AstKind::ArrowFunctionExpression(function) => check_params(&function.params.items, ctx),
             _ => {}
+        }
+    }
+}
+
+fn check_params<'a>(items: &'a [FormalParameter<'a>], ctx: &LintContext<'a>) {
+    let mut has_seen_plain_param = false;
+    for param in items.iter().rev() {
+        if !param.pattern.kind.is_assignment_pattern() {
+            has_seen_plain_param = true;
+            continue;
+        }
+        if has_seen_plain_param && param.pattern.kind.is_assignment_pattern() {
+            ctx.diagnostic(DefaultParamLastDiagnostic(param.span));
         }
     }
 }
