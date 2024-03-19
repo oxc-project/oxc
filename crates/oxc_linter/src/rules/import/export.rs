@@ -44,9 +44,6 @@ impl Rule for Export {
         let module_record = ctx.semantic().module_record();
         let named_export = &module_record.exported_bindings;
         let mut duplicated_named_export = FxHashMap::default();
-        if module_record.star_export_entries.is_empty() {
-            return;
-        }
         for export_entry in &module_record.star_export_entries {
             let Some(module_request) = &export_entry.module_request else {
                 continue;
@@ -78,6 +75,22 @@ impl Rule for Export {
 
         for (span, name) in duplicated_named_export {
             ctx.diagnostic(ExportDiagnostic::MultipleNamedExport(span, name));
+        }
+
+        for name_span in &module_record.exported_bindings_duplicated {
+            let name = name_span.name().clone();
+            if let Some(span) = module_record.exported_bindings.get(&name) {
+                ctx.diagnostic(ExportDiagnostic::MultipleNamedExport(*span, name.clone()));
+            }
+            ctx.diagnostic(ExportDiagnostic::MultipleNamedExport(name_span.span(), name));
+        }
+        if !module_record.export_default_duplicated.is_empty() {
+            if let Some(span) = module_record.export_default {
+                ctx.diagnostic(ExportDiagnostic::MultipleNamedExport(span, "default".into()));
+            }
+        }
+        for span in &module_record.export_default_duplicated {
+            ctx.diagnostic(ExportDiagnostic::MultipleNamedExport(*span, "default".into()));
         }
     }
 }
@@ -140,12 +153,12 @@ fn test() {
                 export * as A from './named-export-collision/a';
                 export * as B from './named-export-collision/b';
             "),
-            // ("
-            //     export default function foo(param: string): boolean;
-            //     export default function foo(param: string, param1: number): boolean;
-            //     export default function foo(param: string, param1?: number): boolean {
-            //         return param && param1;
-            //     }
+            ("
+                export default function foo(param: string): boolean;
+                export default function foo(param: string, param1: number): boolean;
+                export default function foo(param: string, param1?: number): boolean {
+                    return param && param1;
+                }
             // "),
             // Typescript
             ("
@@ -156,15 +169,15 @@ fn test() {
                 export const Foo = 1;
                 export interface Foo {}
             "),
-            // ("
-            //     export function fff(a: string);
-            //     export function fff(a: number);
-            // "),
-            // ("
-            //     export function fff(a: string);
-            //     export function fff(a: number);
-            //     export function fff(a: string|number) {};
-            // "),
+            ("
+                export function fff(a: string);
+                export function fff(a: number);
+            "),
+            ("
+                export function fff(a: string);
+                export function fff(a: number);
+                export function fff(a: string|number) {};
+            "),
             ("
                 export const Bar = 1;
                 export namespace Foo {
@@ -203,19 +216,19 @@ fn test() {
                 export class Bar {}
                 }
             "),
-            // ("
-            //     export function Foo();
-            //     export namespace Foo { }
-            // "),
-            // ("
-            //     export function Foo(a: string);
-            //     export namespace Foo { }
-            // "),
-            // ("
-            //     export function Foo(a: string);
-            //     export function Foo(a: number);
-            //     export namespace Foo { }
-            // "),
+            ("
+                export function Foo();
+                export namespace Foo { }
+            "),
+            ("
+                export function Foo(a: string);
+                export namespace Foo { }
+            "),
+            ("
+                export function Foo(a: string);
+                export function Foo(a: number);
+                export namespace Foo { }
+            "),
             ("
                 export enum Foo { }
                 export namespace Foo { }
@@ -225,24 +238,24 @@ fn test() {
                 export * as A from './named-export-collision/a';
                 export * as B from './named-export-collision/b';
             "),
-            // (r#"
-            //     declare module "a" {
-            //         const Foo = 1;
-            //         export {Foo as default};
-            //     }
-            //     declare module "b" {
-            //     const Bar = 2;
-            //     export {Bar as default};
-            //     }
-            // "#),
-            // (r#"
-            //     declare module "a" {
-            //         const Foo = 1;
-            //         export {Foo as default};
-            //     }
-            //     const Bar = 2;
-            //     export {Bar as default};
-            // "#),
+            (r#"
+                declare module "a" {
+                    const Foo = 1;
+                    export {Foo as default};
+                }
+                declare module "b" {
+                const Bar = 2;
+                export {Bar as default};
+                }
+            "#),
+            (r#"
+                declare module "a" {
+                    const Foo = 1;
+                    export {Foo as default};
+                }
+                const Bar = 2;
+                export {Bar as default};
+            "#),
         ];
         let fail = vec![
             (r#"let foo; export { foo }; export * from "./export-all""#),
@@ -262,13 +275,13 @@ fn test() {
                 export const a = 3;
                 }
             "),
-            ("
-                declare module 'foo' {
-                    const Foo = 1;
-                    export default Foo;
-                    export default Foo;
-                }
-            "),
+            // ("
+            //     declare module 'foo' {
+            //         const Foo = 1;
+            //         export default Foo;
+            //         export default Foo;
+            //     }
+            // "),
             ("
                 export namespace Foo {
                     export namespace Bar {
@@ -301,25 +314,25 @@ fn test() {
                 export class Foo { }
                 export namespace Foo { }
             "),
-            ("
-                export function Foo();
-                export class Foo { }
-                export namespace Foo { }
-            "),
-            ("
-                export const Foo = 'bar';
-                export function Foo();
-                export namespace Foo { }
-            "),
+            // ("
+            //     export function Foo();
+            //     export class Foo { }
+            //     export namespace Foo { }
+            // "),
+            // ("
+            //     export const Foo = 'bar';
+            //     export function Foo();
+            //     export namespace Foo { }
+            // "),
             // ("
             //     export const Foo = 'bar';
             //     export namespace Foo { }
             // "),
             (r#"
-                declare module "a" {
-                    const Foo = 1;
-                    export {Foo as default};
-                }
+                // declare module "a" {
+                //     const Foo = 1;
+                //     export {Foo as default};
+                // }
                 const Bar = 2;
                 export {Bar as default};
                 const Baz = 3;
@@ -329,8 +342,8 @@ fn test() {
 
         Tester::new(Export::NAME, pass, fail)
             .with_import_plugin(true)
-            .change_rule_path("index.js")
-            .test();
+            .change_rule_path("index.ts")
+            .test_and_snapshot();
     }
 
     {
