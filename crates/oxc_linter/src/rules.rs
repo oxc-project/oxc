@@ -87,6 +87,7 @@ mod eslint {
     pub mod no_new_wrappers;
     pub mod no_nonoctal_decimal_escape;
     pub mod no_obj_calls;
+    pub mod no_proto;
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
     pub mod no_regex_spaces;
@@ -96,6 +97,7 @@ mod eslint {
     pub mod no_setter_return;
     pub mod no_shadow_restricted_names;
     pub mod no_sparse_arrays;
+    pub mod no_template_curly_in_string;
     pub mod no_ternary;
     pub mod no_this_before_super;
     pub mod no_undef;
@@ -370,6 +372,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_params,
     eslint::no_ternary,
     eslint::no_this_before_super,
+    eslint::no_template_curly_in_string,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
     eslint::no_bitwise,
@@ -410,6 +413,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_new_wrappers,
     eslint::no_nonoctal_decimal_escape,
     eslint::no_obj_calls,
+    eslint::no_proto,
     eslint::no_prototype_builtins,
     eslint::no_redeclare,
     eslint::no_regex_spaces,
