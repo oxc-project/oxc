@@ -288,6 +288,7 @@ impl<'a> Lexer<'a> {
 
     /// Read each char and set the current token
     /// Whitespace and line terminators are skipped
+    #[inline]
     fn read_next_token(&mut self) -> Kind {
         self.token.start = self.offset();
 
