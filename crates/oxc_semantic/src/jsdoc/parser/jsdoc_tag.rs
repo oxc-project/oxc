@@ -97,8 +97,8 @@ mod test {
     fn parses_comment() {
         assert_eq!(JSDocTag::new("foo1", "").comment(), "");
         assert_eq!(JSDocTag::new("foo2", "bar").comment(), "bar");
-        assert_eq!(JSDocTag::new("foo3", " ba \n z ").comment(), "ba\nz");
-        assert_eq!(JSDocTag::new("foo4", "* ba\n *  \n z \n\n").comment(), "ba\nz");
+        assert_eq!(JSDocTag::new("foo3", " a \n z ").comment(), "a\nz");
+        assert_eq!(JSDocTag::new("foo4", "* a\n *  \n z \n\n").comment(), "a\nz");
         assert_eq!(
             JSDocTag::new("foo5", "comment and {@inline tag}!").comment(),
             "comment and {@inline tag}!"
