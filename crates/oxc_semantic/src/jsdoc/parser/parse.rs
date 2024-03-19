@@ -3,26 +3,33 @@ use super::utils;
 
 /// source_text: Inside of /**HERE*/, NOT includes `/**` and `*/`
 pub fn parse_jsdoc(source_text: &str) -> (String, Vec<JSDocTag>) {
-    let mut comment = String::new();
-    let mut tags = vec![];
+    debug_assert!(!source_text.starts_with("/**"));
+    debug_assert!(!source_text.ends_with("*/"));
 
     // JSDoc consists of comment and tags.
     // - Comment goes first, and tags(`@xxx`) follow
+    // - Both can be optional
     // - Each tag is also separated by whitespace + `@`
-    // `@` can be inside of `{}` (e.g. `{@link}`) and it should be distinguished.
-    let (mut start, mut end) = (0, 0);
+    let mut comment = "";
+    let mut tags = vec![];
+
+    // So, find `@` to split comment and tags.
+    // But `@` can be found inside of `{}` (e.g. `{@see link}`) and should be distinguished.
     let mut in_braces = false;
     let mut comment_found = false;
+    let (mut start, mut end) = (0, 0);
     for ch in source_text.chars() {
         match ch {
             '{' => in_braces = true,
             '}' => in_braces = false,
             '@' if !in_braces => {
+                let part = &source_text[start..end];
+
                 if comment_found {
-                    tags.push(parse_jsdoc_tag(&source_text[start..end]));
+                    tags.push(parse_jsdoc_tag(part));
                     start = end;
                 } else {
-                    comment = source_text[start..end].to_string();
+                    comment = part;
                     comment_found = true;
                     start = end;
                 }
@@ -35,28 +42,35 @@ pub fn parse_jsdoc(source_text: &str) -> (String, Vec<JSDocTag>) {
 
     // Flush the last draft
     if start != end {
+        let part = &source_text[start..end];
+
         if comment_found {
-            tags.push(parse_jsdoc_tag(&source_text[start..end]));
+            tags.push(parse_jsdoc_tag(part));
         } else {
-            comment = source_text[start..end].to_string();
+            comment = part;
         }
     }
 
-    (utils::trim_multiline_comment(&comment), tags)
+    (utils::trim_multiline_comment(comment), tags)
 }
 
 // TODO: Manage `Span`
-//   - with (start, end) + global comment span.start
-//   - kind only span?
+// - with (start, end) + global comment span.start
+// - add kind only span?
 /// tag_content: Starts with `@`, may be mulitline
 fn parse_jsdoc_tag(tag_content: &str) -> JSDocTag {
+    debug_assert!(tag_content.starts_with('@'));
+
+    // Tag kind and body are separated by whitespace or line break
     let mut parts = tag_content.splitn(2, |ch| ch == ' ' || ch == '\n');
 
+    // This is surely exists, at least `@` itself
     let kind = parts.next().unwrap();
-    let raw_body = parts.next().unwrap_or("");
+    // This may be empty
+    let body = parts.next().unwrap_or("");
 
     // Omit the first `@`
-    JSDocTag::new(&kind[1..], raw_body)
+    JSDocTag::new(&kind[1..], body)
 }
 
 #[cfg(test)]
@@ -119,12 +133,16 @@ comment {@link link} ...
             parse_jsdoc("hello {@see inline} source {@a 2}").0,
             "hello {@see inline} source {@a 2}"
         );
+
+        assert_eq!(parse_jsdoc("").0, "");
     }
 
     #[test]
     fn parses_single_line_1_jsdoc() {
         assert_eq!(parse_jsdoc("@deprecated"), parse_from_full_text("/** @deprecated */"));
         assert_eq!(parse_jsdoc("@deprecated").1, vec![parse_jsdoc_tag("@deprecated")]);
+
+        assert_eq!(parse_jsdoc("").1, vec![]);
 
         assert_eq!(
             parse_from_full_text("/**@foo since 2024 */").1,
@@ -280,22 +298,31 @@ comment {@link link} ...
 
         let tag = tags.next().unwrap();
         assert_eq!(tag.kind, "param");
-        assert_eq!(tag.comment(), "{*} data : table data");
+        assert_eq!(tag.type_name_comment(), (Some("*"), Some("data"), ": table data".to_string()));
 
         let tag = tags.next().unwrap();
         assert_eq!(tag.kind, "param");
-        assert_eq!(tag.comment(), "{string} childrenColumnName : 指定树形结构的列名");
+        assert_eq!(
+            tag.type_name_comment(),
+            (Some("string"), Some("childrenColumnName"), ": 指定树形结构的列名".to_string())
+        );
 
         let tag = tags.next().unwrap();
         assert_eq!(tag.kind, "param");
-        assert_eq!(tag.comment(), "{Set<Key>} expandedKeys : 展开的行对应的keys");
+        assert_eq!(
+            tag.type_name_comment(),
+            (Some("Set<Key>"), Some("expandedKeys"), ": 展开的行对应的keys".to_string())
+        );
 
         let tag = tags.next().unwrap();
         assert_eq!(tag.kind, "param");
-        assert_eq!(tag.comment(), "{GetRowKey<T>} getRowKey  : 获取当前rowKey的方法");
+        assert_eq!(
+            tag.type_name_comment(),
+            (Some("GetRowKey<T>"), Some("getRowKey"), ": 获取当前rowKey的方法".to_string())
+        );
 
         let tag = tags.next().unwrap();
         assert_eq!(tag.kind, "returns");
-        assert_eq!(tag.comment(), "flattened data");
+        assert_eq!(tag.type_comment(), (None, "flattened data".to_string()));
     }
 }

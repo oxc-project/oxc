@@ -1,5 +1,12 @@
 use super::utils;
 
+// Since users use(invent!) any kind of tag and body, we can not enforce any specific format.
+// Instead, we provide helper methods to parse the body.
+//
+// At first, I tried to handle common templates and parse it into specific struct like `JSDocParameterTag`.
+// But I also found that some usecases like `eslint-plugin-jsdoc` providing a option to create an alias for the tag.
+// e.g. Prefer `@foo` instead of `@param`.
+// So, I decided to provide a generic text-based struct and let the user handle it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JSDocTag<'a> {
     raw_body: &'a str,
@@ -14,7 +21,7 @@ impl<'a> JSDocTag<'a> {
         Self { raw_body, kind }
     }
 
-    /// Use for simple tags like `@access`, `@deprecated`, ...etc.
+    /// Use for various simple tags like `@access`, `@deprecated`, ...etc.
     /// comment can be multiline.
     ///
     /// Variants:
@@ -34,7 +41,7 @@ impl<'a> JSDocTag<'a> {
     /// @kind
     /// ```
     pub fn r#type(&self) -> Option<&str> {
-        utils::extract_type_range(self.raw_body).map(|(start, end)| &self.raw_body[start..end])
+        utils::find_type_range(self.raw_body).map(|(start, end)| &self.raw_body[start..end])
     }
 
     /// Use for `@yields`, `@returns`, ...etc.
@@ -48,7 +55,7 @@ impl<'a> JSDocTag<'a> {
     /// @kind
     /// ```
     pub fn type_comment(&self) -> (Option<&str>, String) {
-        let type_part_range = utils::extract_type_range(self.raw_body);
+        let type_part_range = utils::find_type_range(self.raw_body);
         // {type} comment
         // {type}
         if let Some((start, end)) = type_part_range {
@@ -78,11 +85,12 @@ impl<'a> JSDocTag<'a> {
     /// @kind
     /// ```
     pub fn type_name_comment(&self) -> (Option<&str>, Option<&str>, String) {
-        let type_part_range = utils::extract_type_range(self.raw_body);
+        let type_part_range = utils::find_type_range(self.raw_body);
         if let Some((t_start, t_end)) = type_part_range {
             let type_part = &self.raw_body[t_start..t_end];
+            // +1 for `}`
             let name_comment_part = &self.raw_body[t_end + 1..];
-            let name_part_range = utils::extract_name_range(name_comment_part);
+            let name_part_range = utils::find_name_range(name_comment_part);
 
             // {type} name comment
             // {type} name
@@ -91,7 +99,7 @@ impl<'a> JSDocTag<'a> {
                     Some(type_part),
                     Some(&name_comment_part[n_start..n_end]),
                     if n_end < name_comment_part.len() {
-                        // +1 for ` ` or `\n`
+                        // +1 for whitespace
                         utils::trim_multiline_comment(&name_comment_part[n_end + 1..])
                     } else {
                         String::new()
@@ -103,14 +111,14 @@ impl<'a> JSDocTag<'a> {
                 (Some(type_part), Some(name_comment_part), String::new())
             }
         } else {
-            let name_part_range = utils::extract_name_range(self.raw_body);
+            let name_part_range = utils::find_name_range(self.raw_body);
             // name comment
             // name
             if let Some((n_start, n_end)) = name_part_range {
                 (
                     None,
                     Some(&self.raw_body[n_start..n_end]),
-                    // +1 for ` ` or `\n`
+                    // +1 for whitespace
                     utils::trim_multiline_comment(&self.raw_body[n_end + 1..]),
                 )
             }
@@ -128,13 +136,13 @@ mod test {
 
     #[test]
     fn parses_comment() {
-        assert_eq!(JSDocTag::new("foo1", "").comment(), "");
-        assert_eq!(JSDocTag::new("foo2", "bar").comment(), "bar");
-        assert_eq!(JSDocTag::new("foo3", " a \n z ").comment(), "a\nz");
-        assert_eq!(JSDocTag::new("foo4", "* a\n *  \n z \n\n").comment(), "a\nz");
+        assert_eq!(JSDocTag::new("a", "").comment(), "");
+        assert_eq!(JSDocTag::new("a", "c1").comment(), "c1");
+        assert_eq!(JSDocTag::new("a", " c2 \n z ").comment(), "c2\nz");
+        assert_eq!(JSDocTag::new("a", "* c3\n *  \n z \n\n").comment(), "c3\nz");
         assert_eq!(
-            JSDocTag::new("foo5", "comment and {@inline tag}!").comment(),
-            "comment and {@inline tag}!"
+            JSDocTag::new("a", "comment4 and {@inline tag}!").comment(),
+            "comment4 and {@inline tag}!"
         );
     }
 
@@ -160,6 +168,14 @@ mod test {
             JSDocTag::new("r", "{t5}\nc5\n...").type_comment(),
             (Some("t5"), "c5\n...".to_string())
         );
+        assert_eq!(
+            JSDocTag::new("r", "{t6} - c6").type_comment(),
+            (Some("t6"), "- c6".to_string())
+        );
+        assert_eq!(
+            JSDocTag::new("r", "{{ 型: t7 }} : c7").type_comment(),
+            (Some("{ 型: t7 }"), ": c7".to_string())
+        );
     }
 
     #[test]
@@ -182,111 +198,17 @@ mod test {
             JSDocTag::new("p", "{t4} n4 c4\n...").type_name_comment(),
             (Some("t4"), Some("n4"), "c4\n...".to_string())
         );
+        assert_eq!(
+            JSDocTag::new("p", "{t5} n5 - c5").type_name_comment(),
+            (Some("t5"), Some("n5"), "- c5".to_string())
+        );
+        assert_eq!(
+            JSDocTag::new("p", "{t6}\nn6\nc6").type_name_comment(),
+            (Some("t6"), Some("n6"), "c6".to_string())
+        );
+        assert_eq!(
+            JSDocTag::new("p", "{t7}\nn7\nc\n7").type_name_comment(),
+            (Some("t7"), Some("n7"), "c\n7".to_string())
+        );
     }
-
-    //         assert_eq!(
-    //             parse_from_full_text("/** @param @noop */").1,
-    //             vec![
-    //                 JSDocTag {
-    //                     kind: JSDocTagKind::Parameter(Param { name: "", r#type: None }),
-    //                     comment: String::new(),
-    //                 },
-    //                 JSDocTag { kind: JSDocTagKind::Unknown("noop"), comment: String::new() },
-    //             ]
-    //         );
-    //         assert_eq!(
-    //             parse_from_full_text("/** @param name */").1,
-    //             vec![JSDocTag {
-    //                 kind: JSDocTagKind::Parameter(Param { name: "name", r#type: None }),
-    //                 comment: String::new(),
-    //             },]
-    //         );
-    //         assert_eq!(
-    //             parse_from_full_text("/** @param {str} name */").1,
-    //             vec![JSDocTag {
-    //                 kind: JSDocTagKind::Parameter(Param {
-    //                     name: "name",
-    //                     r#type: Some(ParamType { value: "str" })
-    //                 }),
-    //                 comment: String::new(),
-    //             },]
-    //         );
-    //         assert_eq!(
-    //             parse_from_full_text("/** @param {str} name comment */").1,
-    //             vec![JSDocTag {
-    //                 kind: JSDocTagKind::Parameter(Param {
-    //                     name: "name",
-    //                     r#type: Some(ParamType { value: "str" })
-    //                 }),
-    //                 comment: "comment".to_string(),
-    //             },]
-    //         );
-    //         assert_eq!(
-    //             parse_from_full_text("/** @param {str} name comment */"),
-    //             parse_from_full_text("/** @param {str} name - comment */"),
-    //         );
-    //         assert_eq!(
-    //             parse_from_full_text("/** @param {str} name comment */"),
-    //             parse_from_full_text(
-    //                 "/** @param {str} name
-    //     comment */"
-    //             ),
-    //         );
-    //         assert_eq!(
-    //             parse_from_full_text(
-    //                 "/** @param {str} name
-    //     comment */"
-    //             ),
-    //             parse_from_full_text(
-    //                 "/**
-    //                       * @param {str} name
-    //                       * comment
-    //                       */"
-    //             ),
-    //         );
-
-    //         assert_eq!(
-    //             parse_from_full_text(
-    //                 "
-    //                     /**
-    //                      * @param {boolean} a
-    //                      * @param {string b
-    //                      * @param {string} c comment
-    //                      * @param {Num} d - comment2
-    //                      */
-    //             "
-    //             )
-    //             .1,
-    //             vec![
-    //                 JSDocTag {
-    //                     kind: JSDocTagKind::Parameter(Param {
-    //                         name: "a",
-    //                         r#type: Some(ParamType { value: "boolean" })
-    //                     }),
-    //                     comment: String::new(),
-    //                 },
-    //                 JSDocTag {
-    //                     kind: JSDocTagKind::Parameter(Param {
-    //                         name: "b",
-    //                         r#type: Some(ParamType { value: "string" })
-    //                     }),
-    //                     comment: String::new(),
-    //                 },
-    //                 JSDocTag {
-    //                     kind: JSDocTagKind::Parameter(Param {
-    //                         name: "c",
-    //                         r#type: Some(ParamType { value: "string" })
-    //                     }),
-    //                     comment: "comment".to_string(),
-    //                 },
-    //                 JSDocTag {
-    //                     kind: JSDocTagKind::Parameter(Param {
-    //                         name: "d",
-    //                         r#type: Some(ParamType { value: "Num" })
-    //                     }),
-    //                     comment: "comment2".to_string(),
-    //                 },
-    //             ]
-    //         );
-    //     }
 }

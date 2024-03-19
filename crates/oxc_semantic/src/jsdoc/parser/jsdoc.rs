@@ -15,15 +15,15 @@ impl<'a> JSDoc<'a> {
         Self { raw: comment_content, cached: OnceCell::new() }
     }
 
-    fn parse(&self) -> &(String, Vec<JSDocTag<'a>>) {
-        self.cached.get_or_init(|| parse_jsdoc(self.raw))
-    }
-
     pub fn comment(&self) -> &str {
         &self.parse().0
     }
 
     pub fn tags(&self) -> &Vec<JSDocTag<'a>> {
         &self.parse().1
+    }
+
+    fn parse(&self) -> &(String, Vec<JSDocTag<'a>>) {
+        self.cached.get_or_init(|| parse_jsdoc(self.raw))
     }
 }

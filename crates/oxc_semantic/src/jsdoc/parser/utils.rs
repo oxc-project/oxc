@@ -1,6 +1,6 @@
 pub fn trim_multiline_comment(s: &str) -> String {
     s.trim()
-        .split('\n')
+        .lines()
         .map(|line| line.trim().trim_start_matches('*').trim())
         .filter(|line| !line.is_empty())
         .collect::<Vec<_>>()
@@ -8,7 +8,7 @@ pub fn trim_multiline_comment(s: &str) -> String {
 }
 
 // For now, just returns inside of most outer braces
-pub fn extract_type_range(s: &str) -> Option<(usize, usize)> {
+pub fn find_type_range(s: &str) -> Option<(usize, usize)> {
     let mut start = None;
     let mut brace_count = 0;
     for (idx, ch) in s.char_indices() {
@@ -35,23 +35,20 @@ pub fn extract_type_range(s: &str) -> Option<(usize, usize)> {
     None
 }
 
-pub fn extract_name_range(s: &str) -> Option<(usize, usize)> {
+// Find token string range
+pub fn find_name_range(s: &str) -> Option<(usize, usize)> {
     let mut start = None;
     for (idx, ch) in s.char_indices() {
-        match ch {
-            ' ' | '\n' => {
-                if let Some(start) = start {
-                    return Some((start, idx));
-                }
+        if ch.is_whitespace() {
+            if let Some(start) = start {
+                return Some((start, idx));
             }
-            _ => {
-                if start.is_none() {
-                    start = Some(idx);
-                }
-            }
+        } else if start.is_none() {
+            start = Some(idx);
         }
     }
 
+    // Everything is a name
     if let Some(start) = start {
         return Some((start, s.len()));
     }
@@ -61,11 +58,17 @@ pub fn extract_name_range(s: &str) -> Option<(usize, usize)> {
 
 #[cfg(test)]
 mod test {
-    use super::{extract_name_range, extract_type_range, trim_multiline_comment};
+    use super::{find_name_range, find_type_range, trim_multiline_comment};
 
     #[test]
     fn trim_multiline_jsdoc_comments() {
         for (actual, expect) in [
+            ("", ""),
+            (
+                "
+
+", "",
+            ),
             ("hello", "hello"),
             (
                 "
@@ -118,8 +121,11 @@ mod test {
             (" {t5} ", Some("t5")),
             ("{t6 x", None),
             ("t7", None),
+            ("{{t8}", None),
+            ("", None),
+            ("{[ true, false ]}", Some("[ true, false ]")),
         ] {
-            assert_eq!(extract_type_range(actual).map(|(s, e)| &actual[s..e]), expect);
+            assert_eq!(find_type_range(actual).map(|(s, e)| &actual[s..e]), expect);
         }
     }
 
@@ -132,8 +138,9 @@ mod test {
             ("n4\ny", Some("n4")),
             ("", None),
             ("名前5", Some("名前5")),
+            ("\nn6\nx", Some("n6")),
         ] {
-            assert_eq!(extract_name_range(actual).map(|(s, e)| &actual[s..e]), expect);
+            assert_eq!(find_name_range(actual).map(|(s, e)| &actual[s..e]), expect);
         }
     }
 }
