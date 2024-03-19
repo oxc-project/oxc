@@ -1,4 +1,4 @@
-ts compatibility: 42/527 (7.97%)
+ts compatibility: 43/527 (8.16%)
 
 # Failed
 
@@ -313,9 +313,6 @@ ts compatibility: 42/527 (7.97%)
 * conformance/types/tuple/wideningTuples3.ts
 * conformance/types/tuple/wideningTuples4.ts
 * conformance/types/tuple/wideningTuples7.ts
-
-### conformance/types/tuple/emptyTuples
-* conformance/types/tuple/emptyTuples/emptyTuplesTypeAssertion02.ts
 
 ### conformance/types/typeOperator
 * conformance/types/typeOperator/typeOperator.ts

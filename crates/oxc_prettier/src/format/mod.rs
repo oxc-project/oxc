@@ -1267,7 +1267,7 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::ClassExpression(expr) => expr.format(p),
             Self::JSXElement(el) => el.format(p),
             Self::JSXFragment(fragment) => fragment.format(p),
-            Self::TSAsExpression(expr) => expr.expression.format(p),
+            Self::TSAsExpression(expr) => expr.format(p),
             Self::TSSatisfiesExpression(expr) => expr.expression.format(p),
             Self::TSTypeAssertion(expr) => expr.expression.format(p),
             Self::TSNonNullExpression(expr) => expr.expression.format(p),
@@ -2332,5 +2332,11 @@ impl<'a> Format<'a> for TSSignature<'a> {
             TSSignature::TSConstructSignatureDeclaration(it) => it.format(p),
             TSSignature::TSMethodSignature(it) => it.format(p),
         }
+    }
+}
+
+impl<'a> Format<'a> for TSAsExpression<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        array![p, format!(p, self.expression), ss!(" as "), format!(p, self.type_annotation)]
     }
 }
