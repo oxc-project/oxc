@@ -8,7 +8,6 @@ pub enum Kind {
     Undetermined,
     #[default]
     Eof,
-    Skip, // Whitespace, line breaks, comments
     // 12.5 Hashbang Comments
     HashbangComment,
     // 12.7.1 identifier
@@ -479,7 +478,6 @@ impl Kind {
         match self {
             Undetermined => "Unknown",
             Eof => "EOF",
-            Skip => "Skipped",
             HashbangComment => "#!",
             Ident => "Identifier",
             Await => "await",

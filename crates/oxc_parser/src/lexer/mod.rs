@@ -289,19 +289,13 @@ impl<'a> Lexer<'a> {
     /// Read each char and set the current token
     /// Whitespace and line terminators are skipped
     fn read_next_token(&mut self) -> Kind {
-        loop {
-            let offset = self.offset();
-            self.token.start = offset;
+        self.token.start = self.offset();
 
-            let Some(byte) = self.source.peek_byte() else {
-                return Kind::Eof;
-            };
-
+        if let Some(byte) = self.source.peek_byte() {
             // SAFETY: `byte` is byte value at current position in source
-            let kind = unsafe { handle_byte(byte, self) };
-            if kind != Kind::Skip {
-                return kind;
-            }
+            unsafe { handle_byte(byte, self) }
+        } else {
+            Kind::Eof
         }
     }
 }

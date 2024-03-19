@@ -190,14 +190,14 @@ ascii_byte_handler!(ERR(lexer) {
 // <SPACE> <TAB> Normal Whitespace
 ascii_byte_handler!(SPS(lexer) {
     lexer.consume_char();
-    Kind::Skip
+    lexer.read_next_token()
 });
 
 // <VT> <FF> Irregular Whitespace
 ascii_byte_handler!(ISP(lexer) {
     lexer.consume_char();
     lexer.trivia_builder.add_irregular_whitespace(lexer.token.start, lexer.offset());
-    Kind::Skip
+    lexer.read_next_token()
 });
 
 // '\r' '\n'

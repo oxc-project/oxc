@@ -20,6 +20,6 @@ impl<'a> Lexer<'a> {
             handle_eof: 0, // Fall through to below
         };
 
-        Kind::Skip
+        self.read_next_token()
     }
 }
