@@ -1,4 +1,4 @@
-ts compatibility: 41/527 (7.78%)
+ts compatibility: 42/527 (7.97%)
 
 # Failed
 
@@ -620,7 +620,6 @@ ts compatibility: 41/527 (7.78%)
 
 ### nosemi
 * nosemi/index-signature.ts
-* nosemi/interface.ts
 * nosemi/type.ts
 
 ### optional-call

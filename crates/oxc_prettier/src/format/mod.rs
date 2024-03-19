@@ -772,7 +772,7 @@ impl<'a> Format<'a> for TSVoidKeyword {
 
 impl<'a> Format<'a> for TSArrayType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array![p, self.element_type.format(p), ss!("[]")]
     }
 }
 
@@ -928,7 +928,22 @@ impl<'a> Format<'a> for JSDocUnknownType {
 
 impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+        parts.push(ss!("interface "));
+        parts.push(format!(p, self.id));
+        parts.push(space!());
+        parts.push(ss!("{"));
+        if self.body.body.len() > 0 {
+            let mut indent_parts = p.vec();
+            for sig in &self.body.body {
+                indent_parts.extend(hardline!());
+                indent_parts.push(format!(p, sig));
+            }
+            parts.push(Doc::Indent(indent_parts));
+            parts.extend(hardline!());
+        }
+        parts.push(ss!("}"));
+        Doc::Array(parts)
     }
 }
 
@@ -2268,5 +2283,54 @@ impl<'a> Format<'a> for RegExpFlags {
 impl<'a> Format<'a> for TSIndexSignature<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
+    }
+}
+
+impl<'a> Format<'a> for TSPropertySignature<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut parts = p.vec();
+        if self.readonly {
+            parts.push(ss!("readonly "));
+        }
+        parts.push(format!(p, self.key));
+        if let Some(ty) = &self.type_annotation {
+            if self.optional {
+                parts.push(ss!("?"));
+            }
+            parts.push(ss!(":"));
+            parts.push(space!());
+            parts.push(format!(p, ty.type_annotation));
+        }
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for TSCallSignatureDeclaration<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for TSConstructSignatureDeclaration<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for TSMethodSignature<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for TSSignature<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            TSSignature::TSIndexSignature(it) => it.format(p),
+            TSSignature::TSPropertySignature(it) => it.format(p),
+            TSSignature::TSCallSignatureDeclaration(it) => it.format(p),
+            TSSignature::TSConstructSignatureDeclaration(it) => it.format(p),
+            TSSignature::TSMethodSignature(it) => it.format(p),
+        }
     }
 }
