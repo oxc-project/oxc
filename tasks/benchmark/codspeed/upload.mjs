@@ -10,29 +10,26 @@ import assert from 'assert';
 import tar from 'tar';
 import axios from 'axios';
 
-const METADATA_SUFFIX = 'metadata.json',
-    ARCHIVE_SUFFIX = `archive.tar.gz`,
+const METADATA_SUFFIX = '_metadata.json',
     CODSPEED_UPLOAD_URL = 'https://api.codspeed.io/upload';
 
 const dataDir = process.env.DATA_DIR,
     token = process.env.CODSPEED_TOKEN;
 
-// Get list of components
-const components = (await fs.readdir(dataDir))
-    .filter(filename => filename.endsWith(METADATA_SUFFIX))
-    .map(filename => filename.slice(0, -METADATA_SUFFIX.length - 1));
+// Find profile files and first metadata file
+const profileFiles = [];
+let metadataPath;
+for (const filename of await fs.readdir(dataDir)) {
+    const path = pathJoin(dataDir, filename);
+    if (filename.endsWith(METADATA_SUFFIX)) {
+        if (!metadataPath) metadataPath = path;
+    } else {
+        const match = filename.match(/_(\d+)\.out$/);
+        assert(match, `Unexpected file: ${filename}`);
 
-// Unzip tarballs
-const unzipDir = pathJoin(dataDir, 'unzip');
-await fs.mkdir(unzipDir);
-
-for (const component of components) {
-    console.log(`Unzipping profile data: ${component}`);
-    const archivePath = pathJoin(dataDir, `${component}_${ARCHIVE_SUFFIX}`);
-    const componentUnzipDir = pathJoin(unzipDir, component);
-    await fs.mkdir(componentUnzipDir);
-    await tar.extract({file: archivePath, cwd: componentUnzipDir});
-    await fs.rm(archivePath);
+        const pid = +match[1];
+        profileFiles.push({pid, path});
+    }
 }
 
 // Move all `.out` files to one directory
@@ -44,25 +41,14 @@ await fs.mkdir(outDir);
 const pids = new Set(),
     duplicates = [];
 let highestPid = -1;
-for (const component of components) {
-    const componentDir = pathJoin(unzipDir, component);
-    const outFiles = await fs.readdir(componentDir);
-    for (const filename of outFiles) {
-        if (!filename.endsWith('.out')) continue;
-        let pid = filename.slice(0, -4);
-        assert(/^\d+$/.test(pid), `Unexpected file: ${component}/${filename}`);
-        pid *= 1;
-
-        const path = pathJoin(componentDir, filename);
-        if (pids.has(pid)) {
-            // Duplicate PID
-            duplicates.push({pid, path});
-        } else {
-            pids.add(pid);
-            if (pid > highestPid) highestPid = pid;
-
-            await fs.rename(path, pathJoin(outDir, `${pid}.out`));
-        }
+for (const {pid, path} of profileFiles) {
+    if (pids.has(pid)) {
+        // Duplicate PID
+        duplicates.push({pid, path});
+    } else {
+        pids.add(pid);
+        if (pid > highestPid) highestPid = pid;
+        await fs.rename(path, pathJoin(outDir, `${pid}.out`));
     }
 }
 
@@ -83,11 +69,6 @@ for (let {pid, path} of duplicates) {
     await fs.rm(path);
 }
 
-// Add log files to output dir
-for (const filename of ['runner.log', 'valgrind.log']) {
-    await fs.rename(pathJoin(unzipDir, components[0], filename), pathJoin(outDir, filename));
-}
-
 // ZIP combined profile directory
 console.log('Zipping combined profile directory');
 const archivePath = pathJoin(dataDir, 'archive.tar.gz');
@@ -105,9 +86,7 @@ for await (const chunk of inputStream) {
 const md5 = hash.digest('base64');
 
 // Alter MD5 hash in metadata object
-const metadata = JSON.parse(
-    await fs.readFile(pathJoin(dataDir, `${components[0]}_${METADATA_SUFFIX}`), 'utf8')
-);
+const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
 metadata.profileMd5 = md5;
 
 // If no token, set `metadata.tokenless`, and log hash of metadata JSON.
