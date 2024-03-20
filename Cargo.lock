@@ -1358,6 +1358,8 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "oxc_transformer",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

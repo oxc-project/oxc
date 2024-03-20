@@ -1038,6 +1038,7 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
         if self.import_kind.is_type() {
             parts.push(ss!(" type"));
         }
+
         if let Some(specifiers) = &self.specifiers {
             let is_default = specifiers.first().is_some_and(|x| {
                 matches!(x, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
@@ -1080,10 +1081,12 @@ impl<'a> Format<'a> for ImportDeclarationSpecifier<'a> {
 
 impl<'a> Format<'a> for ImportSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let typed = if self.import_kind.is_type() { ss!("type ") } else { ss!("") };
+
         if self.imported.span() == self.local.span {
-            self.local.format(p)
+            array![p, typed, self.local.format(p)]
         } else {
-            array![p, self.imported.format(p), ss!(" as "), self.local.format(p)]
+            array![p, typed, self.imported.format(p), ss!(" as "), self.local.format(p)]
         }
     }
 }
