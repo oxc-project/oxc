@@ -73,8 +73,9 @@ export function generateBoxDeserializer(type) {
 export function generateVecDeserializer(type) {
     return `function ${type.deserializerName}(pos) {
         const arr = [],
-            len = uint32[(pos + 24) >> 2];
-        pos = uint32[pos >> 2] & ptrMask;
+            pos32 = pos >> 2,
+            len = uint32[pos32 + 6];
+        pos = uint32[pos32] & ptrMask;
         for (let i = 0; i < len; i++) {
             arr.push(${type.type.deserializerName}(pos));
             pos += ${type.type.size};
