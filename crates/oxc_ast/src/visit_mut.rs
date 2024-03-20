@@ -105,7 +105,7 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_debugger_statement(&mut self, stmt: &mut DebuggerStatement) {
+    fn visit_debugger_statement(&mut self, _stmt: &mut DebuggerStatement) {
         let kind = AstType::DebuggerStatement;
         self.enter_node(kind);
         self.leave_node(kind);
@@ -119,7 +119,7 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_empty_statement(&mut self, stmt: &mut EmptyStatement) {
+    fn visit_empty_statement(&mut self, _stmt: &mut EmptyStatement) {
         let kind = AstType::EmptyStatement;
         self.enter_node(kind);
         self.leave_node(kind);
@@ -552,7 +552,7 @@ pub trait VisitMut<'a>: Sized {
         }
     }
 
-    fn visit_meta_property(&mut self, meta: &mut MetaProperty<'a>) {
+    fn visit_meta_property(&mut self, _meta: &mut MetaProperty<'a>) {
         let kind = AstType::MetaProperty;
         self.enter_node(kind);
         self.leave_node(kind);
@@ -602,7 +602,7 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_elision(&mut self, span: Span) {
+    fn visit_elision(&mut self, _span: Span) {
         let kind = AstType::Elision;
         self.enter_node(kind);
         self.leave_node(kind);
@@ -800,7 +800,7 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_this_expression(&mut self, expr: &mut ThisExpression) {
+    fn visit_this_expression(&mut self, _expr: &mut ThisExpression) {
         let kind = AstType::ThisExpression;
         self.enter_node(kind);
         self.leave_node(kind);
@@ -829,7 +829,7 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_super(&mut self, expr: &mut Super) {
+    fn visit_super(&mut self, _expr: &mut Super) {
         let kind = AstType::Super;
         self.enter_node(kind);
         self.leave_node(kind);
@@ -1006,7 +1006,7 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_jsx_identifier(&mut self, ident: &mut JSXIdentifier<'a>) {
+    fn visit_jsx_identifier(&mut self, _ident: &mut JSXIdentifier<'a>) {
         let kind = AstType::JSXIdentifier;
         self.enter_node(kind);
         self.leave_node(kind);
@@ -1110,7 +1110,7 @@ pub trait VisitMut<'a>: Sized {
         self.visit_expression(&mut child.expression);
     }
 
-    fn visit_jsx_text(&mut self, child: &JSXText<'a>) {
+    fn visit_jsx_text(&mut self, _child: &JSXText<'a>) {
         let kind = AstType::JSXText;
         self.enter_node(kind);
         self.leave_node(kind);
@@ -1132,7 +1132,7 @@ pub trait VisitMut<'a>: Sized {
         }
     }
 
-    fn visit_binding_identifier(&mut self, ident: &mut BindingIdentifier<'a>) {
+    fn visit_binding_identifier(&mut self, _ident: &mut BindingIdentifier<'a>) {
         let kind = AstType::BindingIdentifier;
         self.enter_node(kind);
         self.leave_node(kind);
@@ -1184,25 +1184,25 @@ pub trait VisitMut<'a>: Sized {
 
     /* ----------  Identifier ---------- */
 
-    fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
+    fn visit_identifier_reference(&mut self, _ident: &mut IdentifierReference<'a>) {
         let kind = AstType::IdentifierReference;
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_private_identifier(&mut self, ident: &mut PrivateIdentifier<'a>) {
+    fn visit_private_identifier(&mut self, _ident: &mut PrivateIdentifier<'a>) {
         let kind = AstType::PrivateIdentifier;
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_label_identifier(&mut self, ident: &mut LabelIdentifier<'a>) {
+    fn visit_label_identifier(&mut self, _ident: &mut LabelIdentifier<'a>) {
         let kind = AstType::LabelIdentifier;
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_identifier_name(&mut self, ident: &mut IdentifierName<'a>) {
+    fn visit_identifier_name(&mut self, _ident: &mut IdentifierName<'a>) {
         let kind = AstType::IdentifierName;
         self.enter_node(kind);
         self.leave_node(kind);
@@ -1210,31 +1210,31 @@ pub trait VisitMut<'a>: Sized {
 
     /* ----------  Literal ---------- */
 
-    fn visit_number_literal(&mut self, lit: &mut NumericLiteral<'a>) {
+    fn visit_number_literal(&mut self, _lit: &mut NumericLiteral<'a>) {
         let kind = AstType::NumericLiteral;
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_boolean_literal(&mut self, lit: &mut BooleanLiteral) {
+    fn visit_boolean_literal(&mut self, _lit: &mut BooleanLiteral) {
         let kind = AstType::BooleanLiteral;
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_null_literal(&mut self, lit: &mut NullLiteral) {
+    fn visit_null_literal(&mut self, _lit: &mut NullLiteral) {
         let kind = AstType::NullLiteral;
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_bigint_literal(&mut self, lit: &mut BigIntLiteral<'a>) {
+    fn visit_bigint_literal(&mut self, _lit: &mut BigIntLiteral<'a>) {
         let kind = AstType::BigintLiteral;
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_string_literal(&mut self, lit: &mut StringLiteral<'a>) {
+    fn visit_string_literal(&mut self, _lit: &mut StringLiteral<'a>) {
         let kind = AstType::StringLiteral;
         self.enter_node(kind);
         self.leave_node(kind);
@@ -1252,7 +1252,7 @@ pub trait VisitMut<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_reg_expr_literal(&mut self, lit: &mut RegExpLiteral<'a>) {
+    fn visit_reg_expr_literal(&mut self, _lit: &mut RegExpLiteral<'a>) {
         let kind = AstType::RegExpLiteral;
         self.enter_node(kind);
         self.leave_node(kind);
@@ -1711,19 +1711,19 @@ pub trait VisitMut<'a>: Sized {
         self.visit_ts_type(&mut ty.element_type);
     }
 
-    fn visit_ts_null_keyword(&mut self, ty: &mut TSNullKeyword) {
+    fn visit_ts_null_keyword(&mut self, _ty: &mut TSNullKeyword) {
         let kind = AstType::TSNullKeyword;
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_ts_any_keyword(&mut self, ty: &mut TSAnyKeyword) {
+    fn visit_ts_any_keyword(&mut self, _ty: &mut TSAnyKeyword) {
         let kind = AstType::TSAnyKeyword;
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_ts_void_keyword(&mut self, ty: &mut TSVoidKeyword) {
+    fn visit_ts_void_keyword(&mut self, _ty: &mut TSVoidKeyword) {
         let kind = AstType::TSVoidKeyword;
         self.enter_node(kind);
         self.leave_node(kind);
