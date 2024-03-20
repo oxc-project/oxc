@@ -29,54 +29,53 @@ enum NewTargetKind<'a> {
     Function(Option<Atom<'a>>),
 }
 
-impl<'a> VisitMut<'a> for NewTarget<'a> {
-    fn visit_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
+impl<'a> NewTarget<'a> {
+    pub(crate) fn enter_method_definition(&mut self, def: &MethodDefinition<'a>) {
         let kind = match def.kind {
             MethodDefinitionKind::Get
             | MethodDefinitionKind::Set
             | MethodDefinitionKind::Method => NewTargetKind::Method,
             MethodDefinitionKind::Constructor => NewTargetKind::Constructor,
         };
-
         self.push(kind);
-        walk_method_definition_mut(self, def);
+    }
+
+    pub(crate) fn leave_method_definition(&mut self, def: &MethodDefinition) {
         self.pop();
     }
 
-    fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
-        let pop = if prop.method {
+    pub(crate) fn enter_object_property(&mut self, prop: &ObjectProperty<'a>) {
+        if prop.method {
             self.push(NewTargetKind::Method);
-            true
-        } else {
-            false
-        };
+        }
+    }
 
-        walk_object_property_mut(self, prop);
-
-        if pop {
+    pub(crate) fn leave_object_property(&mut self, prop: &ObjectProperty<'a>) {
+        if prop.method {
             self.pop();
         }
     }
 
-    fn visit_function(&mut self, func: &mut Function<'a>, flags: Option<ScopeFlags>) {
-        // oxc visitor `MethodDefinitionKind` will enter `Function` node, here need to exclude it
-        let pop = if let Some(kind) = self.kinds.last() {
-            if matches!(kind, NewTargetKind::Function(_)) {
-                true
-            } else {
-                false
-            }
-        } else {
-            false
-        };
-
-        func.id.as_ref().map(|id| NewTargetKind::Function(Some(id.name.clone())));
-
-        walk_function_mut(self, func, flags);
-
-        if pop {
-            self.pop()
+    pub(crate) fn enter_function(&mut self, func: &Function<'a>) {
+        if let Some(kind) = self.function_new_target_kind(func) {
+            self.push(kind);
         }
+    }
+
+    pub(crate) fn leave_function(&mut self, func: &Function<'a>) {
+        if let Some(kind) = self.function_new_target_kind(func) {
+            self.pop();
+        }
+    }
+
+    fn function_new_target_kind(&self, func: &Function<'a>) -> Option<NewTargetKind<'a>> {
+        // oxc visitor `MethodDefinitionKind` will enter `Function` node, here need to exclude it
+        if let Some(kind) = self.kinds.last() {
+            if !matches!(kind, NewTargetKind::Function(_)) {
+                return None;
+            }
+        }
+        func.id.as_ref().map(|id| NewTargetKind::Function(Some(id.name.clone())))
     }
 }
 
