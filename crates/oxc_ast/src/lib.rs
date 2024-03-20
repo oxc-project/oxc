@@ -64,6 +64,7 @@ fn size_asserts() {
     assert_eq_size!(ast::BindingPatternKind, [u8; 16]);
     assert_eq_size!(ast::ModuleDeclaration, [u8; 16]);
     assert_eq_size!(ast::ClassElement, [u8; 16]);
+    #[cfg(not(feature = "raw"))]
     assert_eq_size!(ast::ExportDefaultDeclarationKind, [u8; 16]);
     assert_eq_size!(ast::AssignmentTargetPattern, [u8; 16]);
     assert_eq_size!(ast::AssignmentTargetMaybeDefault, [u8; 24]);

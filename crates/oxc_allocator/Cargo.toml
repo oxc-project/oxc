@@ -21,5 +21,11 @@ doctest = false
 bumpalo = { workspace = true, features = ["collections"] }
 serde   = { workspace = true }
 
+layout_inspect = { workspace = true, features = ["unique_names"], optional = true }
+
 [dev-dependencies]
 serde_json = { workspace = true }
+
+[features]
+default = []
+raw     = ["dep:layout_inspect"]

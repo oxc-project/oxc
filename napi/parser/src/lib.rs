@@ -2,10 +2,11 @@
 
 mod module_lexer;
 
-use std::sync::Arc;
+use std::{alloc::Layout, str, sync::Arc};
 
+use bumpalo::Bump;
 use flexbuffers::FlexbufferSerializer;
-use napi::bindgen_prelude::Buffer;
+use napi::bindgen_prelude::{Buffer, Uint8Array};
 use napi_derive::napi;
 use serde::Serialize;
 
@@ -146,6 +147,94 @@ pub fn parse_sync_buffer(source_text: String, options: Option<ParserOptions>) ->
     let mut serializer = FlexbufferSerializer::new();
     ret.program.serialize(&mut serializer).unwrap();
     serializer.take_buffer().into()
+}
+
+/// Returns schema for AST types
+///
+/// # Panics
+/// Panics if type definitions cannot be converted to JSON.
+#[napi]
+pub fn get_schema() -> String {
+    let types = layout_inspect::inspect::<Program>();
+    serde_json::to_string(&types).unwrap()
+}
+
+/// Returns AST as raw bytes from Rust's memory.
+/// # Panics
+/// Panics if AST takes more memory than expected.
+#[napi]
+#[allow(clippy::needless_pass_by_value)]
+pub fn parse_sync_raw(
+    source: Uint8Array,
+    options: Option<ParserOptions>,
+    bump_size: u32,
+) -> Uint8Array {
+    // Create allocator with enough capacity for entire AST to be in 1 chunk.
+    // Keep requesting allocations until get one where allocation won't straddle 32 bit boundary.
+    let mut rejected_bumps = vec![];
+    let bump = loop {
+        let bump = Bump::with_capacity(bump_size as usize);
+        // SAFETY: No allocations from this arena are performed while the iterator is alive.
+        // Arena is empty, so no mutable references to data in the arena exist.
+        let (ptr, ..) = unsafe { bump.iter_allocated_chunks_raw().next().unwrap() };
+        #[allow(clippy::cast_possible_truncation)]
+        if ptr as u32 > bump_size {
+            break bump;
+        }
+        // This bump is unsuitable. Store it, so don't get given same allocation again on next attempt.
+        // println!("Unsuitable bump {:?}", ptr);
+        rejected_bumps.push(bump);
+    };
+    drop(rejected_bumps);
+
+    let allocator: Allocator = bump.into();
+
+    // Parse + allocate space for metadata in chunk
+    let source_text = str::from_utf8(&source).unwrap();
+    let options = options.unwrap_or_default();
+    let (program_addr, metadata_ptr) = {
+        let ret = parse(&allocator, source_text, &options);
+        let program = allocator.alloc(ret.program);
+        let program_addr = program as *mut _ as usize;
+        let metadata_ptr = allocator.alloc_layout(Layout::new::<[usize; 4]>()).as_ptr();
+        (program_addr, metadata_ptr)
+    };
+
+    // Get pointer to Bump's memory, and check there's only 1 chunk
+    let bump = allocator.into_bump();
+    let (chunk_ptr, chunk_len) = {
+        // SAFETY: No allocations from this arena are performed while the returned iterator is alive.
+        // No mutable references to previously allocated data exist.
+        let mut chunks_iter = unsafe { bump.iter_allocated_chunks_raw() };
+        let (chunk_ptr, chunk_len) = chunks_iter.next().unwrap();
+        assert!(chunks_iter.next().is_none());
+        (chunk_ptr, chunk_len)
+    };
+    assert!(chunk_ptr == metadata_ptr);
+    let chunk_addr = chunk_ptr as usize;
+    let chunk_end = chunk_addr + chunk_len;
+
+    // Write at start of bump:
+    // * Offset of program
+    // * Memory address of start of bump
+    // * Memory address of end of bump
+    // * Memory address of start of source
+    let program_offset = program_addr - chunk_addr;
+    #[allow(clippy::borrow_as_ptr, clippy::ptr_as_ptr)]
+    let source_addr = &*source as *const _ as *const u8 as usize;
+    // SAFETY: `chunk_ptr` is valid for writes, and we allocated space for `[usize; 4] at that address.
+    // LACK OF SAFETY: This may be unsound due to breaking aliasing rules. Or maybe not.
+    // TODO: Ensure this is sound.
+    unsafe {
+        #[allow(clippy::ptr_as_ptr, clippy::cast_ptr_alignment)]
+        (chunk_ptr as *mut [usize; 4]).write([program_offset, chunk_addr, chunk_end, source_addr]);
+    };
+
+    // Convert to NAPI `Uint8Array`.
+    // SAFETY: `chunk_ptr` is valid for reading `len` bytes.
+    // LACK OF SAFETY: This block of memory contains uninitialized bytes. I *think* that's OK.
+    // TODO: Ensure this is sound.
+    unsafe { Uint8Array::with_external_data(chunk_ptr, chunk_len, move |_ptr, _len| drop(bump)) }
 }
 
 /// # Panics

@@ -1,5 +1,6 @@
 use std::{borrow::Borrow, fmt, hash, ops::Deref};
 
+use oxc_macros::ast_node;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
@@ -19,6 +20,7 @@ pub const MAX_INLINE_LEN: usize = 16;
 ///
 /// Use [CompactStr] with [Atom::to_compact_str] or [Atom::into_compact_str] for the
 /// lifetimeless form.
+#[ast_node]
 #[derive(Clone, Eq)]
 pub struct Atom<'a>(&'a str);
 

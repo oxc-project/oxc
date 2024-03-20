@@ -10,6 +10,12 @@ pub struct Allocator {
     bump: Bump,
 }
 
+impl Allocator {
+    pub fn into_bump(self) -> Bump {
+        self.bump
+    }
+}
+
 impl From<Bump> for Allocator {
     fn from(bump: Bump) -> Self {
         Self { bump }

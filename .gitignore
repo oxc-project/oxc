@@ -13,6 +13,11 @@ target/
 
 npm/cli-*
 
+/napi/parser/deserialize.js
+/napi/parser/schema.json
+/napi/parser/sizes.json
+/napi/parser/*.diff
+
 # Ignore accidental files from the root
 /*.js
 /*.jsx

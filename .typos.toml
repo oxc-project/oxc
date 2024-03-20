@@ -14,6 +14,7 @@ extend-exclude = [
   "crates/oxc_syntax/src/xml_entities.rs",
   "**/*.snap",
   "pnpm-lock.yaml",
+  "Cargo.toml",
 ]
 
 [default.extend-words]
@@ -25,3 +26,5 @@ labeledby = "labeledby"
 
 [default.extend-identifiers]
 IIFEs = "IIFEs"
+serName = "serName"
+serValue = "serValue"

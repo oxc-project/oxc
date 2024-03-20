@@ -132,6 +132,19 @@ export function parseSync(sourceText: string, options?: ParserOptions | undefine
  */
 export function parseSyncBuffer(sourceText: string, options?: ParserOptions | undefined | null): Buffer
 /**
+ * Returns schema for AST types
+ *
+ * # Panics
+ * Panics if type definitions cannot be converted to JSON.
+ */
+export function getSchema(): string
+/**
+ * Returns AST as raw bytes from Rust's memory.
+ * # Panics
+ * Panics if AST takes more memory than expected.
+ */
+export function parseSyncRaw(source: Uint8Array, options: ParserOptions | undefined | null, bumpSize: number): Uint8Array
+/**
  * # Panics
  *
  * * Tokio crashes
