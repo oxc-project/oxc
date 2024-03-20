@@ -1575,6 +1575,7 @@ dependencies = [
  "oxc_span",
  "serde",
  "serde_json",
+ "static_assertions",
  "tokio",
 ]
 

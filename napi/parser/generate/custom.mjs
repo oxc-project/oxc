@@ -37,9 +37,9 @@ function deserializeAtom(pos) {
 
     const strLow = uint32[pos32],
         strHigh = uint32[pos32 + 1];
-    if (strHigh === ptrHigh && strLow >= ptrOffset && strLow < endLow) {
+    if (strHigh === buffHigh && strLow >= buffLow && strLow <= buffEndLow) {
         // String is in buffer
-        const offset = strLow - ptrOffset;
+        const offset = strLow & ptrMask;
         return deserializeStr(uint8, offset, len);
     }
 

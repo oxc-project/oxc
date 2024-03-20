@@ -34,8 +34,9 @@ napi-derive = { workspace = true }
 serde       = { workspace = true }
 serde_json  = { workspace = true }
 
-bumpalo        = { workspace = true }
-layout_inspect = { workspace = true, features = ["unique_names", "serde"] }
+bumpalo           = { workspace = true }
+layout_inspect    = { workspace = true, features = ["unique_names", "serde"] }
+static_assertions = { workspace = true }
 
 [package.metadata.cargo-shear]
 ignored = ["napi"]

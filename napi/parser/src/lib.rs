@@ -5,6 +5,7 @@ use std::{alloc::Layout, str, sync::Arc};
 use bumpalo::Bump;
 use napi::bindgen_prelude::Uint8Array;
 use napi_derive::napi;
+use static_assertions::const_assert;
 
 use oxc_allocator::Allocator;
 pub use oxc_ast::ast::Program;
@@ -141,78 +142,107 @@ pub fn get_schema() -> String {
 /// # Panics
 /// Panics if AST takes more memory than expected.
 #[napi]
-#[allow(unsafe_code, clippy::needless_pass_by_value)]
+#[allow(unsafe_code, clippy::needless_pass_by_value, clippy::items_after_statements)]
 pub fn parse_sync_raw(
     source: Uint8Array,
     options: Option<ParserOptions>,
     bump_size: u32,
 ) -> Uint8Array {
+    // 32-bit systems are not supported
+    const_assert!(std::mem::size_of::<usize>() >= 8);
+
+    // Round up bump size to a power of 2
+    let bump_size = (bump_size as usize).next_power_of_two();
+
     // Create allocator with enough capacity for entire AST to be in 1 chunk.
-    // Keep requesting allocations until get one where allocation won't straddle 32 bit boundary.
-    let mut rejected_bumps = vec![];
-    let bump = loop {
-        let bump = Bump::with_capacity(bump_size as usize);
-        // SAFETY: No allocations from this arena are performed while the iterator is alive.
-        // Arena is empty, so no mutable references to data in the arena exist.
-        let (ptr, ..) = unsafe { bump.iter_allocated_chunks_raw().next().unwrap() };
-        #[allow(clippy::cast_possible_truncation)]
-        if ptr as u32 > bump_size {
-            break bump;
-        }
-        // This bump is unsuitable. Store it, so don't get given same allocation again on next attempt.
-        // println!("Unsuitable bump {:?}", ptr);
-        rejected_bumps.push(bump);
-    };
-    drop(rejected_bumps);
+    // We want to send a buffer to JS which is `bump_size` long, and aligned on `bump_size`.
+    // Then can convert a 64-bit pointer to offset in that buffer with `ptr & (bump_size - 1)`.
+    // Bumpalo doesn't allow requesting an allocation with a specific alignment,
+    // so allocate twice as much as required, so that can use just the chunk in the middle
+    // which is aligned to `bump_size`.
+    let bump = Bump::with_capacity(bump_size * 2);
 
+    // Prevent Bumpalo creating any further chunks.
+    // Attempts to use more memory than requested will result in an OOM error.
+    bump.set_allocation_limit(Some(0));
+
+    // Get pointer to end of allocation.
+    // SAFETY: No allocations from this arena are performed while the iterator is alive.
+    // Arena is empty, so no mutable references to data in the arena exist.
+    let (mut end_ptr, ..) = unsafe { bump.iter_allocated_chunks_raw().next().unwrap() };
+
+    // Consume space at end of the bump, so end of the chunk we'll send to JS is aligned on `bump_size`.
+    // As that chunk will be `bump_size` in length, start of the chunk will also be aligned on `bump_size`.
+    let padding = end_ptr as usize & (bump_size - 1);
+    if padding != 0 {
+        // SAFETY: `align` is 1 which is non-zero and a power of 2.
+        // `size` must be less than `isize::MAX` as it's less than `bump_size` which is `u32`
+        // and we've checked above this is a 64-bit system.
+        let padding_layout = unsafe { Layout::from_size_align_unchecked(padding, 1) };
+        end_ptr = bump.alloc_layout(padding_layout).as_ptr();
+    }
+    debug_assert_eq!(end_ptr as usize & (bump_size - 1), 0);
+    // SAFETY: We allocated `bump_size * 2` bytes.
+    // Bumpalo's pointer is initially at end of the allocation, so this must be within the allocation.
+    let start_ptr = unsafe { end_ptr.sub(bump_size) };
+
+    // Parse source
     let allocator: Allocator = bump.into();
-
-    // Parse + allocate space for metadata in chunk
     let source_text = str::from_utf8(&source).unwrap();
     let options = options.unwrap_or_default();
-    let (program_addr, metadata_ptr) = {
+    let program_ptr = {
         let ret = parse(&allocator, source_text, &options);
         let program = allocator.alloc(ret.program);
-        let program_addr = program as *mut _ as usize;
-        let metadata_ptr = allocator.alloc_layout(Layout::new::<[usize; 4]>()).as_ptr();
-        (program_addr, metadata_ptr)
+        program as *mut _ as *const u8
     };
-
-    // Get pointer to Bump's memory, and check there's only 1 chunk
     let bump = allocator.into_bump();
-    let (chunk_ptr, chunk_len) = {
-        // SAFETY: No allocations from this arena are performed while the returned iterator is alive.
-        // No mutable references to previously allocated data exist.
-        let mut chunks_iter = unsafe { bump.iter_allocated_chunks_raw() };
-        let (chunk_ptr, chunk_len) = chunks_iter.next().unwrap();
-        assert!(chunks_iter.next().is_none());
-        (chunk_ptr, chunk_len)
-    };
-    assert!(chunk_ptr == metadata_ptr);
-    let chunk_addr = chunk_ptr as usize;
-    let chunk_end = chunk_addr + chunk_len;
 
-    // Write at start of bump:
-    // * Offset of program
-    // * Memory address of start of bump
-    // * Memory address of end of bump
-    // * Memory address of start of source
-    let program_offset = program_addr - chunk_addr;
-    #[allow(clippy::borrow_as_ptr, clippy::ptr_as_ptr)]
-    let source_addr = &*source as *const _ as *const u8 as usize;
-    // SAFETY: `chunk_ptr` is valid for writes, and we allocated space for `[usize; 4] at that address.
-    // LACK OF SAFETY: This may be unsound due to breaking aliasing rules. Or maybe not.
-    // TODO: Ensure this is sound.
-    unsafe {
-        #[allow(clippy::ptr_as_ptr, clippy::cast_ptr_alignment)]
-        (chunk_ptr as *mut [usize; 4]).write([program_offset, chunk_addr, chunk_end, source_addr]);
-    };
+    // Consume space between program and where metadata will go.
+    // Once metadata is written before the padding, metadata will be at `start_ptr`
+    // (i.e. start of buffer being passed to JS)
+    type Metadata = [u32; 7];
+    const METADATA_SIZE: usize = std::mem::size_of::<Metadata>();
 
-    // Convert to NAPI `Uint8Array`.
-    // SAFETY: `chunk_ptr` is valid for reading `len` bytes.
-    // LACK OF SAFETY: This block of memory contains uninitialized bytes. I *think* that's OK.
-    // TODO: Ensure this is sound.
-    unsafe { Uint8Array::with_external_data(chunk_ptr, chunk_len, move |_ptr, _len| drop(bump)) }
+    #[allow(clippy::cast_possible_wrap)]
+    // SAFETY: `program_ptr` and `start_ptr` are part of same allocation
+    let padding = unsafe { program_ptr.offset_from(start_ptr) } - METADATA_SIZE as isize;
+    assert!(padding >= 0, "AST is larger than requested size {bump_size}");
+    if padding > 0 {
+        // SAFETY: `align` is 1 which is non-zero and a power of 2.
+        // `size` must be less than `isize::MAX` as it's less than `bump_size` and check above
+        // ensures `bump_size` cannot exceed `isize::MAX`.
+        #[allow(clippy::cast_sign_loss)]
+        let padding_layout = unsafe { Layout::from_size_align_unchecked(padding as usize, 1) };
+        bump.alloc_layout(padding_layout);
+    }
+
+    // Write metadata
+    fn low_and_high(p: *const u8) -> (u32, u32) {
+        let bytes = (p as usize).to_le_bytes();
+        let lo = u32::from_le_bytes(bytes[..4].try_into().unwrap());
+        let hi = u32::from_le_bytes(bytes[4..].try_into().unwrap());
+        (lo, hi)
+    }
+
+    #[allow(clippy::cast_possible_truncation)]
+    let ptr_mask = (bump_size - 1) as u32;
+    let (program_lo, ..) = low_and_high(program_ptr);
+    let program_offset = program_lo & ptr_mask;
+    let (start_lo, start_hi) = low_and_high(start_ptr);
+    let (end_lo, ..) = low_and_high(end_ptr);
+    let (source_lo, source_hi) = low_and_high(std::ptr::addr_of!(*source).cast::<u8>());
+
+    let metadata: Metadata =
+        [program_offset, ptr_mask, start_lo, start_hi, end_lo, source_lo, source_hi];
+    let metadata = bump.alloc(metadata);
+    debug_assert!((metadata as *const Metadata).cast::<u8>() == start_ptr);
+
+    // Convert slice of allocation between `start_ptr` and `end_ptr` (length `bump_size`)
+    // to NAPI `Uint8Array`. This buffer is aligned on `bump_size`, and with the metadata at the start.
+    // SAFETY: `start_ptr` is valid for reading `bump_size` bytes.
+    // TODO: Add comment pointing to Github discussion where NodeJS maintainer said
+    // passing uninitialized data is fine
+    unsafe { Uint8Array::with_external_data(start_ptr, bump_size, move |_ptr, _len| drop(bump)) }
 }
 
 /// # Panics
