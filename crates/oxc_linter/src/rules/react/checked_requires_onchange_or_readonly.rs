@@ -24,7 +24,7 @@ enum CheckedRequiresOnchangeOrReadonlyDiagnostic {
 
     #[error("eslint-plugin-react(checked-requires-onchange-or-readonly): Use either `checked` or `defaultChecked`, but not both.")]
     #[diagnostic(severity(warning), help("Remove either `checked` or `defaultChecked`."))]
-    ExclusiveCheckedAttribute(#[label] Span),
+    ExclusiveCheckedAttribute(#[label] Span, #[label] Span),
 }
 
 #[derive(Debug, Default, Clone)]
@@ -73,38 +73,50 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     return;
                 }
 
-                let (span, is_exclusive_checked_attribute, is_missing_property) =
+                let (checked_span, default_checked_span, is_missing_property) =
                     jsx_opening_el.attributes.iter().fold(
-                        (None, false, true),
-                        |(span, is_exclusive_checked_attribute, is_missing_property), attr| {
+                        (None, None, true),
+                        |(checked_span, default_checked_span, is_missing_property), attr| {
                             if let JSXAttributeItem::Attribute(jsx_attr) = attr {
                                 let name = get_jsx_attribute_name(&jsx_attr.name);
                                 (
-                                    if name == "checked" { Some(jsx_attr.span) } else { span },
-                                    is_exclusive_checked_attribute
-                                        || name.contains("defaultChecked"),
+                                    if name == "checked" {
+                                        Some(jsx_attr.span)
+                                    } else {
+                                        checked_span
+                                    },
+                                    if default_checked_span.is_none() && name == "defaultChecked" {
+                                        Some(jsx_attr.span)
+                                    } else {
+                                        default_checked_span
+                                    },
                                     is_missing_property
                                         && !(name.contains("onChange")
                                             || name.contains("readOnly")),
                                 )
                             } else {
-                                (span, is_exclusive_checked_attribute, is_missing_property)
+                                (checked_span, default_checked_span, is_missing_property)
                             }
                         },
                     );
 
-                if let Some(span) = span {
-                    if !self.ignore_exclusive_checked_attribute && is_exclusive_checked_attribute {
-                        ctx.diagnostic(
-                            CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
-                                span,
-                            ),
-                        );
+                if let Some(checked_span) = checked_span {
+                    if !self.ignore_exclusive_checked_attribute {
+                        if let Some(default_checked_span) = default_checked_span {
+                            ctx.diagnostic(
+                                CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
+                                    checked_span,
+                                    default_checked_span,
+                                ),
+                            );
+                        }
                     }
 
                     if !self.ignore_missing_properties && is_missing_property {
                         ctx.diagnostic(
-                            CheckedRequiresOnchangeOrReadonlyDiagnostic::MissingProperty(span),
+                            CheckedRequiresOnchangeOrReadonlyDiagnostic::MissingProperty(
+                                checked_span,
+                            ),
                         );
                     }
                 }
@@ -130,45 +142,55 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     return;
                 };
 
-                let (span, is_exclusive_checked_attribute, is_missing_property) =
+                let (checked_span, default_checked_span, is_missing_property) =
                     obj_expr.properties.iter().fold(
-                        (None, false, true),
-                        |(span, is_exclusive_checked_attribute, is_missing_property), prop| {
+                        (None, None, true),
+                        |(checked_span, default_checked_span, is_missing_property), prop| {
                             if let ObjectPropertyKind::ObjectProperty(object_prop) = prop {
                                 if let Some(name) = object_prop.key.static_name() {
                                     (
-                                        if span.is_none() && name == "checked" {
+                                        if checked_span.is_none() && name == "checked" {
                                             Some(object_prop.span)
                                         } else {
-                                            span
+                                            checked_span
                                         },
-                                        is_exclusive_checked_attribute
-                                            || name.contains("defaultChecked"),
+                                        if default_checked_span.is_none()
+                                            && name == "defaultChecked"
+                                        {
+                                            Some(object_prop.span)
+                                        } else {
+                                            default_checked_span
+                                        },
                                         is_missing_property
                                             && !(name.contains("onChange")
                                                 || name.contains("readOnly")),
                                     )
                                 } else {
-                                    (span, is_exclusive_checked_attribute, is_missing_property)
+                                    (checked_span, default_checked_span, is_missing_property)
                                 }
                             } else {
-                                (span, is_exclusive_checked_attribute, is_missing_property)
+                                (checked_span, default_checked_span, is_missing_property)
                             }
                         },
                     );
 
-                if let Some(span) = span {
-                    if !self.ignore_exclusive_checked_attribute && is_exclusive_checked_attribute {
-                        ctx.diagnostic(
-                            CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
-                                span,
-                            ),
-                        );
+                if let Some(checked_span) = checked_span {
+                    if !self.ignore_exclusive_checked_attribute {
+                        if let Some(default_checked_span) = default_checked_span {
+                            ctx.diagnostic(
+                                CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
+                                    checked_span,
+                                    default_checked_span,
+                                ),
+                            );
+                        }
                     }
 
                     if !self.ignore_missing_properties && is_missing_property {
                         ctx.diagnostic(
-                            CheckedRequiresOnchangeOrReadonlyDiagnostic::MissingProperty(span),
+                            CheckedRequiresOnchangeOrReadonlyDiagnostic::MissingProperty(
+                                checked_span,
+                            ),
                         );
                     }
                 }
