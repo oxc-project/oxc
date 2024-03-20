@@ -6,6 +6,9 @@ use oxc_syntax::scope::ScopeFlags;
 
 use crate::{ast::*, AstType};
 
+#[allow(clippy::wildcard_imports)]
+use self::walk_mut::*;
+
 /// Syntax tree traversal to mutate an exclusive borrow of a syntax tree in place.
 pub trait VisitMut<'a>: Sized {
     fn enter_node(&mut self, _kind: AstType) {}
@@ -1890,68 +1893,71 @@ pub trait VisitMut<'a>: Sized {
     }
 }
 
-pub fn walk_method_definition_mut<'a, V: VisitMut<'a>>(
-    visitor: &mut V,
-    def: &mut MethodDefinition<'a>,
-) {
-    let kind = AstType::MethodDefinition;
-    visitor.enter_node(kind);
-    for decorator in def.decorators.iter_mut() {
-        visitor.visit_decorator(decorator);
-    }
-
-    let flags = match def.kind {
-        MethodDefinitionKind::Get => ScopeFlags::GetAccessor,
-        MethodDefinitionKind::Set => ScopeFlags::SetAccessor,
-        MethodDefinitionKind::Constructor => ScopeFlags::Constructor,
-        MethodDefinitionKind::Method => ScopeFlags::empty(),
-    };
-    visitor.visit_property_key(&mut def.key);
-    visitor.visit_function(&mut def.value, Some(flags));
-    visitor.leave_node(kind);
-}
-
-pub fn walk_object_property_mut<'a, V: VisitMut<'a>>(
-    visitor: &mut V,
-    prop: &mut ObjectProperty<'a>,
-) {
-    let kind = AstType::ObjectProperty;
-    visitor.enter_node(kind);
-    visitor.visit_property_key(&mut prop.key);
-    visitor.visit_expression(&mut prop.value);
-    if let Some(init) = &mut prop.init {
-        visitor.visit_expression(init);
-    }
-    visitor.leave_node(kind);
-}
-
-pub fn walk_function_mut<'a, V: VisitMut<'a>>(
-    visitor: &mut V,
-    func: &mut Function<'a>,
-    flags: Option<ScopeFlags>,
-) {
-    let kind = AstType::Function;
-    visitor.enter_scope({
-        let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
-        if func.is_strict() {
-            flags |= ScopeFlags::StrictMode;
+pub mod walk_mut {
+    use super::*;
+    pub fn walk_method_definition_mut<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        def: &mut MethodDefinition<'a>,
+    ) {
+        let kind = AstType::MethodDefinition;
+        visitor.enter_node(kind);
+        for decorator in def.decorators.iter_mut() {
+            visitor.visit_decorator(decorator);
         }
-        flags
-    });
-    visitor.enter_node(kind);
-    if let Some(ident) = &mut func.id {
-        visitor.visit_binding_identifier(ident);
+
+        let flags = match def.kind {
+            MethodDefinitionKind::Get => ScopeFlags::GetAccessor,
+            MethodDefinitionKind::Set => ScopeFlags::SetAccessor,
+            MethodDefinitionKind::Constructor => ScopeFlags::Constructor,
+            MethodDefinitionKind::Method => ScopeFlags::empty(),
+        };
+        visitor.visit_property_key(&mut def.key);
+        visitor.visit_function(&mut def.value, Some(flags));
+        visitor.leave_node(kind);
     }
-    visitor.visit_formal_parameters(&mut func.params);
-    if let Some(body) = &mut func.body {
-        visitor.visit_function_body(body);
+
+    pub fn walk_object_property_mut<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        prop: &mut ObjectProperty<'a>,
+    ) {
+        let kind = AstType::ObjectProperty;
+        visitor.enter_node(kind);
+        visitor.visit_property_key(&mut prop.key);
+        visitor.visit_expression(&mut prop.value);
+        if let Some(init) = &mut prop.init {
+            visitor.visit_expression(init);
+        }
+        visitor.leave_node(kind);
     }
-    if let Some(parameters) = &mut func.type_parameters {
-        visitor.visit_ts_type_parameter_declaration(parameters);
+
+    pub fn walk_function_mut<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        func: &mut Function<'a>,
+        flags: Option<ScopeFlags>,
+    ) {
+        let kind = AstType::Function;
+        visitor.enter_scope({
+            let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
+            if func.is_strict() {
+                flags |= ScopeFlags::StrictMode;
+            }
+            flags
+        });
+        visitor.enter_node(kind);
+        if let Some(ident) = &mut func.id {
+            visitor.visit_binding_identifier(ident);
+        }
+        visitor.visit_formal_parameters(&mut func.params);
+        if let Some(body) = &mut func.body {
+            visitor.visit_function_body(body);
+        }
+        if let Some(parameters) = &mut func.type_parameters {
+            visitor.visit_ts_type_parameter_declaration(parameters);
+        }
+        if let Some(annotation) = &mut func.return_type {
+            visitor.visit_ts_type_annotation(annotation);
+        }
+        visitor.leave_node(kind);
+        visitor.leave_scope();
     }
-    if let Some(annotation) = &mut func.return_type {
-        visitor.visit_ts_type_annotation(annotation);
-    }
-    visitor.leave_node(kind);
-    visitor.leave_scope();
 }

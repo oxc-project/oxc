@@ -19,8 +19,7 @@ pub mod precedence;
 mod span;
 pub mod syntax_directed_operations;
 mod trivia;
-mod visit;
-pub mod visit_mut;
+pub mod visit;
 
 pub use num_bigint::BigUint;
 
@@ -28,8 +27,7 @@ pub use crate::{
     ast_builder::AstBuilder,
     ast_kind::{AstKind, AstType},
     trivia::{Comment, CommentKind, Trivias, TriviasMap},
-    visit::Visit,
-    visit_mut::VisitMut,
+    visit::{Visit, VisitMut},
 };
 
 // After experimenting with two types of boxed enum variants:
