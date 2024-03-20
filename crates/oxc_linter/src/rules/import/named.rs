@@ -58,6 +58,15 @@ impl Rule for Named {
             if remote_module_record.exported_bindings.contains_key(import_name.name()) {
                 continue;
             }
+            // check re-export
+            if remote_module_record
+                .exported_bindings_from_star_export
+                .iter()
+                .any(|entry| entry.value().contains(import_name.name()))
+            {
+                continue;
+            }
+
             ctx.diagnostic(NamedDiagnostic(
                 import_name.name().to_string(),
                 specifier.to_string(),
@@ -106,14 +115,13 @@ fn test() {
         "import { destructingAssign } from './named-exports'",
         "import { destructingRenamedAssign } from './named-exports'",
         "import { ActionTypes } from './qc'",
-        // TODO: export *
-        // "import {a, b, c, d} from './re-export'",
-        // "import {a, b, c} from './re-export-common-star'",
+        "import {a, b, c, d} from './re-export'",
         // "import {RuleTester} from './re-export-node_modules'",
-        // "import { jsxFoo } from './jsx/AnotherComponent'",
+        "import { jsxFoo } from './jsx/AnotherComponent'",
         "import {a, b, d} from './common'; // eslint-disable-line named",
         "import { foo, bar } from './re-export-names'",
         // TODO: module.exports
+        // "import {a, b, c} from './re-export-common-star'",
         // "import { foo, bar } from './common'",
         // ignore core modules by default
         "import { foo } from 'crypto'",
@@ -150,7 +158,7 @@ fn test() {
         // "import {a, b, d} from './common'",
         // settings: { 'import/ignore': ['bar'] },
         // "import { baz } from './bar'",
-        // "import { common } from './re-export-default'",
+        "import { common } from './re-export-default'",
         // "const { destructuredProp } = require('./named-exports')",
         // "let { arrayKeyProp } = require('./named-exports')",
         // "const { deepProp } = require('./named-exports')",
@@ -164,7 +172,7 @@ fn test() {
         "import { 'foo' as foo } from './bar'",
         "import { 'foo' as foo } from './empty-module'",
         // export all
-        // "import { foo } from './export-all'",
+        "import { foo } from './export-all'",
         // TypeScript export assignment
         "import x from './typescript-export-assign-object'",
     ];
