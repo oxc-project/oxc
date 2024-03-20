@@ -46,6 +46,7 @@ function deserializeAtom(pos) {
     // String is in source
     let offset = strLow - sourceLow;
     if (strHigh > sourceHigh) offset += 4294967296; // 1 << 32
+    if (sourceIsAscii) return source.substr(offset, len);
     return deserializeStr(source, offset, len);
 }
 
@@ -58,6 +59,7 @@ function deserializeRefStr(pos) {
         strHigh = uint32[pos32 + 1];
     let offset = strLow - sourceLow;
     if (strHigh > sourceHigh) offset += 4294967296; // 1 << 32
+    if (sourceIsAscii) return source.substr(offset, len);
     return deserializeStr(source, offset, len);
 }
 

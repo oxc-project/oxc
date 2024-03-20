@@ -18,10 +18,11 @@ const bench = new Bench(
     : undefined
 );
 
-for (const {filename, sourceBuff, allocSize} of fixtures) {
+for (const {filename, sourceBuff, sourceStr, allocSize} of fixtures) {
     bench.add(`parser_napi[${filename}]`, () => {
         const buff = parseSyncRaw(sourceBuff, {sourceFilename: filename}, allocSize);
-        deserialize(buff, sourceBuff);
+        const sourceIsAscii = sourceBuff.length === sourceStr.length;
+        deserialize(buff, sourceIsAscii ? sourceStr : sourceBuff, sourceIsAscii);
     });
 }
 

@@ -39,16 +39,23 @@ export default await Promise.all(sources.map(async ({url, allocSize}) => {
     const filename = url.split('/').at(-1),
         path = pathJoin(cacheDirPath, filename);
 
-    let sourceBuff, sourceStr;
+    let sourceStr;
     try {
-        sourceBuff = await readFile(path);
-        sourceStr = sourceBuff.toString();
+        sourceStr = await readFile(path, 'utf8');
     } catch {
         const res = await fetch(url);
         sourceStr = await res.text();
-        sourceBuff = Buffer.from(sourceStr);
-        await writeFile(path, sourceBuff);
+        await writeFile(path, sourceStr);
     }
+
+    // Remove a few Unicode characters
+    // TODO: Deserialization works without this, but is a bit slower.
+    // Make this unnecessary by encoding UTF-16 offset into `Atom`.
+    sourceStr = sourceStr.replace(/৹/, 'x').replace(/ç/g, 'c').replace(/[–—]/g, '-')
+        .replace(/[“”]/g, '"').replace(/’/g, "'")
+        .replace(/•/g, '*').replace(/[🏝️😄😴]/g, '_').replace(/ﬅ|ſt/g, 'ft');
+
+    const sourceBuff = Buffer.from(sourceStr);
 
     // Convert from MiB to bytes
     allocSize *= 1024 * 1024;

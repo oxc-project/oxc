@@ -2,13 +2,13 @@
 
 module.exports = deserialize;
 
-let uint8, uint32, float64, ptrOffset, ptrHigh, endLow, sourceHigh, sourceLow, source;
+let uint8, uint32, float64, ptrOffset, ptrHigh, endLow, sourceHigh, sourceLow, source, sourceIsAscii;
 
 const textDecoder = new TextDecoder('utf-8', {ignoreBOM: true}),
     decodeStr = textDecoder.decode.bind(textDecoder),
     {fromCodePoint} = String;
 
-function deserialize(buff, sourceBuff) {
+function deserialize(buff, sourceBuff, isAscii) {
     const arrayBuffer = buff.buffer;
     let pos = buff.byteOffset;
     uint8 = pos > 0 ? new Uint8Array(arrayBuffer) : buff;
@@ -24,6 +24,7 @@ function deserialize(buff, sourceBuff) {
     sourceHigh = uint32[pos32 + 7];
 
     source = sourceBuff;
+    sourceIsAscii = isAscii;
 
     const program = deserializeProgram(uint32[pos32]);
 

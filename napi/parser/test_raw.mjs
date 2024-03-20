@@ -13,14 +13,15 @@ for (const {filename, sourceBuff, sourceStr, allocSize} of fixtures) {
     await test(filename, sourceBuff, sourceStr, allocSize);
 }
 
-async function test(filename, sourceBuff, sourceText, allocSize) {
+async function test(filename, sourceBuff, sourceStr, allocSize) {
     console.log('Testing:', filename);
 
-    const astViaJson = JSON.parse(oxc.parseSync(sourceText, {sourceFilename: filename}).program);
+    const astViaJson = JSON.parse(oxc.parseSync(sourceStr, {sourceFilename: filename}).program);
     // console.dir(astViaJson, {depth: 10});
 
     const buff = oxc.parseSyncRaw(sourceBuff, {sourceFilename: filename}, allocSize);
-    const astRaw = deserialize(buff, sourceBuff);
+    const sourceIsAscii = sourceBuff.length === sourceStr.length;
+    const astRaw = deserialize(buff, sourceIsAscii ? sourceStr : sourceBuff, sourceIsAscii);
     // console.dir(astRaw, {depth: 10});
 
     if (JSON.stringify(astRaw) === JSON.stringify(astViaJson)) {
