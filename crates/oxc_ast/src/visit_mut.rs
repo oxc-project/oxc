@@ -360,7 +360,7 @@ pub trait VisitMut<'a>: Sized {
     /* ----------  Function ---------- */
 
     fn visit_function(&mut self, func: &mut Function<'a>, flags: Option<ScopeFlags>) {
-        walk_function_mut(self, func, flags)
+        walk_function_mut(self, func, flags);
     }
 
     fn visit_function_body(&mut self, body: &mut FunctionBody<'a>) {
@@ -473,7 +473,7 @@ pub trait VisitMut<'a>: Sized {
     }
 
     fn visit_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
-        walk_method_definition_mut(self, def)
+        walk_method_definition_mut(self, def);
     }
 
     fn visit_property_definition(&mut self, def: &mut PropertyDefinition<'a>) {
@@ -757,7 +757,7 @@ pub trait VisitMut<'a>: Sized {
     }
 
     fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
-        walk_object_property_mut(self, prop)
+        walk_object_property_mut(self, prop);
     }
 
     fn visit_property_key(&mut self, key: &mut PropertyKey<'a>) {
