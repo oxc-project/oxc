@@ -1,4 +1,4 @@
-Passed: 352/1369
+Passed: 354/1386
 
 # All Passed:
 * babel-plugin-transform-numeric-separator
@@ -695,9 +695,7 @@ Passed: 352/1369
 * regression/gh-7388/input.js
 * regression/gh-8323/input.js
 
-# babel-plugin-transform-dotall-regex (0/3)
-* dotall-regex/simple/input.js
-* dotall-regex/with-unicode-flag/input.js
+# babel-plugin-transform-dotall-regex (2/3)
 * dotall-regex/with-unicode-property-escape/input.js
 
 # babel-plugin-transform-async-to-generator (1/43)
@@ -832,7 +830,7 @@ Passed: 352/1369
 * general/function-duplicate-name/input.js
 * general/object/input.js
 
-# babel-plugin-transform-typescript (97/158)
+# babel-plugin-transform-typescript (97/175)
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
 * class/accessor-allowDeclareFields-false/input.ts
@@ -845,6 +843,23 @@ Passed: 352/1369
 * class/parameter-properties-with-parameters/input.ts
 * class/private-method-override-transform-private/input.ts
 * class/transform-properties-declare-wrong-order/input.ts
+* enum/boolean-value/input.ts
+* enum/const/input.ts
+* enum/constant-folding/input.ts
+* enum/enum-merging-inner-references/input.ts
+* enum/enum-merging-inner-references-shadow/input.ts
+* enum/export/input.ts
+* enum/inferred/input.ts
+* enum/inner-references/input.ts
+* enum/mix-references/input.ts
+* enum/non-foldable-constant/input.ts
+* enum/non-scoped/input.ts
+* enum/outer-references/input.ts
+* enum/scoped/input.ts
+* enum/string-value/input.ts
+* enum/string-value-template/input.ts
+* enum/string-values-computed/input.ts
+* enum/ts5.0-const-foldable/input.ts
 * exports/declared-types/input.ts
 * exports/export-const-enums/input.ts
 * exports/export-type-star-from/input.ts

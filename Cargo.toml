@@ -111,6 +111,7 @@ project-root              = { version = "0.2.2" }
 quote                     = { version = "1.0.35" }
 rayon                     = { version = "1.9.0" }
 regex                     = { version = "1.10.3" }
+regex-syntax              = { version = "0.8.2" }
 rustc-hash                = { version = "1.1.0", default-features = false, features = ["std"] }
 ryu-js                    = { version = "1.0.1" }
 ropey                     = { version = "1.6.1" }

@@ -30,6 +30,7 @@ pub struct TransformOptions {
     pub function_name: bool,
     pub arrow_functions: Option<ArrowFunctionsOptions>,
     pub shorthand_properties: bool,
+    pub dotall_regex: bool,
     pub sticky_regex: bool,
     pub template_literals: bool,
     pub property_literals: bool,

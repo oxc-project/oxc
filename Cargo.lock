@@ -1754,6 +1754,7 @@ name = "oxc_transformer"
 version = "0.10.0"
 dependencies = [
  "bitflags 2.4.2",
+ "lazy_static",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
@@ -1763,6 +1764,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "phf",
+ "regex-syntax 0.8.2",
  "rustc-hash",
  "serde",
 ]
