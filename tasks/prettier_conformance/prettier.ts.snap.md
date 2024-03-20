@@ -1,4 +1,4 @@
-ts compatibility: 48/527 (9.11%)
+ts compatibility: 48/528 (9.09%)
 
 # Failed
 
@@ -86,6 +86,7 @@ ts compatibility: 48/527 (9.11%)
 * class/declare-readonly-field-initializer-w-annotation.ts
 * class/declare-readonly-field-initializer.ts
 * class/dunder.ts
+* class/duplicates-access-modifier.ts
 * class/empty-method-body.ts
 * class/extends_implements.ts
 * class/generics.ts
