@@ -192,7 +192,7 @@ pub fn parse_sync_raw(
     let allocator: Allocator = bump.into();
     let options = options.unwrap_or_default();
     let (program_ptr, source_ptr) = {
-        let source_text = str::from_utf8(&source).unwrap();
+        let source_text = simdutf8::basic::from_utf8(&source).unwrap();
         let source_text = allocator.alloc_str(source_text);
         let ret = parse(&allocator, source_text, &options);
         let program = allocator.alloc(ret.program);
