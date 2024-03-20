@@ -186,21 +186,24 @@ pub fn parse_sync_raw(
     // Bumpalo's pointer is initially at end of the allocation, so this must be within the allocation.
     let start_ptr = unsafe { end_ptr.sub(bump_size) };
 
-    // Parse source
+    // Copy source into arena + parse.
+    // Reason for copying source into arena is to simplify calculations on JS side.
+    // All string data (whether slices of source, or escaped strings) are in the same buffer.
     let allocator: Allocator = bump.into();
-    let source_text = str::from_utf8(&source).unwrap();
     let options = options.unwrap_or_default();
-    let program_ptr = {
+    let (program_ptr, source_ptr) = {
+        let source_text = str::from_utf8(&source).unwrap();
+        let source_text = allocator.alloc_str(source_text);
         let ret = parse(&allocator, source_text, &options);
         let program = allocator.alloc(ret.program);
-        program as *mut _ as *const u8
+        ((program as *const Program).cast::<u8>(), (source_text as *const str).cast::<u8>())
     };
     let bump = allocator.into_bump();
 
     // Consume space between program and where metadata will go.
     // Once metadata is written before the padding, metadata will be at `start_ptr`
     // (i.e. start of buffer being passed to JS)
-    type Metadata = [u32; 7];
+    type Metadata = [u32; 3];
     const METADATA_SIZE: usize = std::mem::size_of::<Metadata>();
 
     #[allow(clippy::cast_possible_wrap)]
@@ -217,23 +220,11 @@ pub fn parse_sync_raw(
     }
 
     // Write metadata
-    fn low_and_high(p: *const u8) -> (u32, u32) {
-        let bytes = (p as usize).to_le_bytes();
-        let lo = u32::from_le_bytes(bytes[..4].try_into().unwrap());
-        let hi = u32::from_le_bytes(bytes[4..].try_into().unwrap());
-        (lo, hi)
-    }
-
     #[allow(clippy::cast_possible_truncation)]
     let ptr_mask = (bump_size - 1) as u32;
-    let (program_lo, ..) = low_and_high(program_ptr);
-    let program_offset = program_lo & ptr_mask;
-    let (start_lo, start_hi) = low_and_high(start_ptr);
-    let (end_lo, ..) = low_and_high(end_ptr);
-    let (source_lo, source_hi) = low_and_high(std::ptr::addr_of!(*source).cast::<u8>());
-
-    let metadata: Metadata =
-        [program_offset, ptr_mask, start_lo, start_hi, end_lo, source_lo, source_hi];
+    let program_offset = program_ptr as u32 & ptr_mask;
+    let source_offset = source_ptr as u32 & ptr_mask;
+    let metadata: Metadata = [program_offset, source_offset, ptr_mask];
     let metadata = bump.alloc(metadata);
     debug_assert!((metadata as *const Metadata).cast::<u8>() == start_ptr);
 

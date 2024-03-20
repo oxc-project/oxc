@@ -30,6 +30,9 @@ for (const [index, type] of types.entries()) {
         types[index] = types[type.valueTypeId];
         continue;
     }
+    // TODO: Make `Atom` transparent type in Rust type def
+    if (type.name === 'Atom') type.transparent = true;
+
     if (type.kind === 'struct' && type.transparent && type.fields[0].offset === 0) {
         types[index] = types[type.fields[0].typeId];
         continue;
@@ -81,7 +84,6 @@ typesByName.AssignmentTargetMaybeDefault.variants[1].discriminant = 0;
 flattenEnumVariants('AssignmentTargetMaybeDefault', 'AssignmentTarget', 'AssignmentTarget');
 typesByName.AssignmentTargetMaybeDefault.niche = {offset: 0, size: 1, min: 255, max: 255};
 
-typesByName.Atom.niche = {offset: 0, size: 8, min: 0, max: 0};
 typesByName.RegExpFlags.niche = false;
 typesByName.ReferenceFlag.niche = false;
 

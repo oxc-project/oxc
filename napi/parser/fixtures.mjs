@@ -8,7 +8,7 @@ const sources = [
     // TypeScript syntax (2.81MB)
     {
         url: 'https://raw.githubusercontent.com/microsoft/TypeScript/v5.3.3/src/compiler/checker.ts',
-        allocSize: 16,
+        allocSize: 32,
     },
     // Real world app tsx (1.0M)
     {

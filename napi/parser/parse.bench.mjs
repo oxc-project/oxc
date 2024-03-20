@@ -22,7 +22,7 @@ for (const {filename, sourceBuff, sourceStr, allocSize} of fixtures) {
     bench.add(`parser_napi[${filename}]`, () => {
         const buff = parseSyncRaw(sourceBuff, {sourceFilename: filename}, allocSize);
         const sourceIsAscii = sourceBuff.length === sourceStr.length;
-        deserialize(buff, sourceIsAscii ? sourceStr : sourceBuff, sourceIsAscii);
+        deserialize(buff, sourceStr, sourceIsAscii);
     });
 }
 
