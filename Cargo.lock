@@ -1694,6 +1694,7 @@ dependencies = [
  "oxc_span",
  "serde",
  "serde_json",
+ "simdutf8",
  "static_assertions",
  "tokio",
 ]
@@ -2478,6 +2479,12 @@ checksum = "9cadb29c57caadc51ff8346233b5cec1d240b68ce55cf1afc764818791876987"
 dependencies = [
  "outref",
 ]
+
+[[package]]
+name = "simdutf8"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f27f6278552951f1f2b8cf9da965d10969b2efdea95a6ec47987ab46edfe263a"
 
 [[package]]
 name = "similar"
