@@ -13,7 +13,7 @@ use phf::phf_set;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, get_jsx_attribute_name, is_create_element_call},
+    utils::{get_element_type, get_jsx_attribute_name, has_jsx_prop, is_create_element_call},
     AstNode,
 };
 
@@ -99,7 +99,13 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     })
                     .collect();
 
-                self.check_attributes_and_report(ctx, &prop_names, jsx_opening_el.span);
+                let Some(JSXAttributeItem::Attribute(prop)) =
+                    has_jsx_prop(jsx_opening_el, "checked")
+                else {
+                    return;
+                };
+
+                self.check_attributes_and_report(ctx, &prop_names, prop.span);
             }
             AstKind::CallExpression(call_expr) => {
                 if !is_create_element_call(call_expr) {
