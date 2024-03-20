@@ -13,7 +13,7 @@ mod gen;
 mod gen_ts;
 mod operator;
 mod sourcemap_builder;
-
+mod sourcemap_visualizer;
 use std::str::from_utf8_unchecked;
 
 #[allow(clippy::wildcard_imports)]
@@ -31,6 +31,7 @@ pub use crate::{
     context::Context,
     gen::{Gen, GenExpr},
     operator::Operator,
+    sourcemap_visualizer::SourcemapVisualizer,
 };
 // use crate::mangler::Mangler;
 
