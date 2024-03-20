@@ -12,6 +12,9 @@ use super::assignment::AssignmentLikeNode;
 
 pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
     let mut parts = p.vec();
+    if class.modifiers.contains(ModifierKind::Abstract) {
+        parts.push(ss!("abstract "));
+    }
     parts.push(ss!("class "));
     if let Some(id) = &class.id {
         parts.push(id.format(p));
