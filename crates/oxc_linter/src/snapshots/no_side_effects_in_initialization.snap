@@ -19,3 +19,9 @@ expression: no_side_effects_in_initialization
  1 │ ext.x = 1
    · ───
    ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:16]
+ 1 │ const x = {};x[ext()] = 1
+   ·                ───
+   ╰────

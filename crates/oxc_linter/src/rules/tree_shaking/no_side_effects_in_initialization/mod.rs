@@ -21,6 +21,22 @@ enum NoSideEffectsDiagnostic {
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating `{0}`")]
     #[diagnostic(severity(warning))]
     Mutation(CompactStr, #[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function return value")]
+    #[diagnostic(severity(warning))]
+    MutationOfFunctionReturnValue(#[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling")]
+    #[diagnostic(severity(warning))]
+    Call(#[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function return value")]
+    #[diagnostic(severity(warning))]
+    CallReturnValue(#[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `{0}`")]
+    #[diagnostic(severity(warning))]
+    CallGlobal(CompactStr, #[label] Span),
 }
 
 /// <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/master/src/rules/no-side-effects-in-initialization.ts>
@@ -353,7 +369,7 @@ fn test() {
         "ext = 1",
         "ext += 1",
         "ext.x = 1",
-        // "const x = {};x[ext()] = 1",
+        "const x = {};x[ext()] = 1",
         // "this.x = 1",
         // // AssignmentPattern
         // "const {x = ext()} = {}",
