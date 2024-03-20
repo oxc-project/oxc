@@ -30,7 +30,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoIterator,
-    style
+    restriction
 );
 
 impl Rule for NoIterator {
