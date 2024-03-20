@@ -9,9 +9,12 @@
  * then shuts itself down.
  */
 
-import fs from 'fs';
+import {createWriteStream} from 'fs';
+import fs from 'fs/promises';
+import {join as pathJoin} from 'path';
 import {pipeline} from 'stream/promises';
 import express from 'express';
+import tar from 'tar';
 
 const DEFAULT_PORT = 3000,
     LISTEN_ATTEMPTS = 10;
@@ -19,37 +22,51 @@ const DEFAULT_PORT = 3000,
 // Create directory for saving assets
 const rand = Math.round(Math.random() * 1000000000000000000).toString(16),
     dataDir = `/tmp/oxc_bench_data_${rand}`;
-fs.mkdirSync(dataDir);
+await fs.mkdir(dataDir);
 
 let component = process.env.COMPONENT;
 if (process.env.FIXTURE) component += process.env.FIXTURE;
 
 const app = express();
 
-app.post('/upload', (req, res, next) => {
-    saveBody(req, 'metadata.json', next, () => {
-        res.json({
-            status: 'success',
-            uploadUrl: `http://localhost:${port}/upload_archive`,
-            runId: 'dummy_value',
-        });
-    });
-});
+const wrapHandler = fn => (req, res, next) => { fn(req, res).catch(next); };
+const getFilePath = filename => pathJoin(dataDir, `${component}_${filename}`);
 
-app.put('/upload_archive', (req, res, next) => {
-    saveBody(req, 'archive.tar.gz', next, () => {
-        res.send('OK');
-        server.close(() => {});
-    });
-});
+app.post('/upload', wrapHandler(async (req, res) => {
+    const stream = createWriteStream(getFilePath('metadata.json'));
+    await pipeline(req, stream);
 
-function saveBody(req, filename, onError, done) {
-    (async () => {
-        const stream = fs.createWriteStream(`${dataDir}/${component}_${filename}`);
-        await pipeline(req, stream);
-        done();
-    })().catch(onError);
-}
+    res.json({
+        status: 'success',
+        uploadUrl: `http://localhost:${port}/upload_archive`,
+        runId: 'dummy_value',
+    });
+}));
+
+app.put('/upload_archive', wrapHandler(async (req, res) => {
+    // Stream uploaded tarball to file
+    const path = getFilePath('archive.tar.gz');
+    const stream = createWriteStream(path);
+    await pipeline(req, stream);
+
+    // Untar contents + delete tarball
+    await tar.extract({file: path, cwd: dataDir});
+    await fs.rm(path);
+
+    // Rename `.out` files + delete `.log` files
+    const filenames = await fs.readdir(dataDir);
+    for (const filename of filenames) {
+        if (filename.endsWith('.log')) {
+            await fs.rm(pathJoin(dataDir, filename));
+        } else if (filename.endsWith('.out')) {
+            await fs.rename(pathJoin(dataDir, filename), getFilePath(filename));
+        }
+    }
+
+    // Send response
+    res.send('');
+    server.close(() => {});
+}));
 
 // Open server on a port which is not already in use
 let server,
@@ -71,4 +88,4 @@ for (let i = 0; i < LISTEN_ATTEMPTS; i++) {
 console.log(`Server listening on port ${port}`);
 
 // Output data dir path + port to env vars
-fs.appendFileSync(process.env.GITHUB_ENV, `DATA_DIR=${dataDir}\nINTERCEPT_PORT=${port}\n`);
+await fs.appendFile(process.env.GITHUB_ENV, `DATA_DIR=${dataDir}\nINTERCEPT_PORT=${port}\n`);

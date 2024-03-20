@@ -51,6 +51,12 @@ harness = false
 name    = "minifier"
 harness = false
 
+# Only run in CI
+[[bench]]
+name    = "parser_napi"
+harness = false
+bench   = false
+
 [dependencies]
 oxc_allocator    = { workspace = true }
 oxc_linter       = { workspace = true }
@@ -63,7 +69,10 @@ oxc_tasks_common = { workspace = true }
 oxc_transformer  = { workspace = true }
 oxc_codegen      = { workspace = true }
 
-criterion = { package = "criterion2", version = "0.6.0", default-features = false }
+criterion  = { package = "criterion2", version = "0.6.0", default-features = false }
+serde      = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
 
 [features]
-codspeed = ["criterion/codspeed"]
+codspeed      = ["criterion/codspeed"]
+codspeed_napi = ["criterion/codspeed", "dep:serde", "dep:serde_json"]
