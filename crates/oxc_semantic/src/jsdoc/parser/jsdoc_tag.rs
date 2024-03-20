@@ -98,17 +98,12 @@ impl<'a> JSDocTag<'a> {
                 (
                     Some(type_part),
                     Some(&name_comment_part[n_start..n_end]),
-                    if n_end < name_comment_part.len() {
-                        // +1 for whitespace
-                        utils::trim_multiline_comment(&name_comment_part[n_end + 1..])
-                    } else {
-                        String::new()
-                    },
+                    utils::trim_multiline_comment(&name_comment_part[n_end..]),
                 )
             }
             // {type}
             else {
-                (Some(type_part), Some(name_comment_part), String::new())
+                (Some(type_part), None, String::new())
             }
         } else {
             let name_part_range = utils::find_name_range(self.raw_body);
@@ -118,8 +113,7 @@ impl<'a> JSDocTag<'a> {
                 (
                     None,
                     Some(&self.raw_body[n_start..n_end]),
-                    // +1 for whitespace
-                    utils::trim_multiline_comment(&self.raw_body[n_end + 1..]),
+                    utils::trim_multiline_comment(&self.raw_body[n_end..]),
                 )
             }
             // (empty)
@@ -209,6 +203,10 @@ mod test {
         assert_eq!(
             JSDocTag::new("p", "{t7}\nn7\nc\n7").type_name_comment(),
             (Some("t7"), Some("n7"), "c\n7".to_string())
+        );
+        assert_eq!(
+            JSDocTag::new("p", "{t8}").type_name_comment(),
+            (Some("t8"), None, String::new())
         );
     }
 }
