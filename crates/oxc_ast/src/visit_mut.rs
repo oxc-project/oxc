@@ -14,13 +14,6 @@ pub trait VisitMut<'a>: Sized {
     fn enter_scope(&mut self, _flags: ScopeFlags) {}
     fn leave_scope(&mut self) {}
 
-    fn alloc<T>(&self, t: &T) -> &'a T {
-        // SAFETY:
-        // This should be safe as long as `src` is an reference from the allocator.
-        // But honestly, I'm not really sure if this is safe.
-        unsafe { std::mem::transmute(t) }
-    }
-
     fn visit_program(&mut self, program: &mut Program<'a>) {
         let kind = AstType::Program;
         self.enter_scope({
