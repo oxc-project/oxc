@@ -19,6 +19,8 @@ workspace = true
 doctest = false
 
 [dependencies]
+oxc_macros = { workspace = true }
+
 miette      = { workspace = true }
 compact_str = { workspace = true }
 
@@ -26,6 +28,12 @@ tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 serde        = { workspace = true, features = ["derive"], optional = true }
 
+layout_inspect = { workspace = true, features = ["unique_names"], optional = true }
+
 [features]
 default   = []
+raw       = ["serialize", "dep:layout_inspect"]
 serialize = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "compact_str/serde"]
+
+[package.metadata.cargo-shear]
+ignored = ["layout_inspect"]

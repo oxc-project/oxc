@@ -1,9 +1,15 @@
 use bitflags::bitflags;
+#[cfg(feature = "raw")]
+use layout_inspect::{
+    defs::{DefPrimitive, DefType},
+    Inspect, TypesCollector,
+};
 use oxc_index::define_index_type;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
 define_index_type! {
+    #[cfg_attr(feature = "raw", derive(Inspect))]
     pub struct ReferenceId = u32;
 }
 
@@ -74,5 +80,28 @@ impl ReferenceFlag {
     /// The identifier is used in a type definition.
     pub const fn is_type(&self) -> bool {
         self.contains(Self::Type)
+    }
+}
+
+#[cfg(feature = "raw")]
+impl Inspect for ReferenceFlag {
+    fn name() -> String {
+        "ReferenceFlag".to_string()
+    }
+
+    fn size() -> Option<usize> {
+        Some(std::mem::size_of::<Self>())
+    }
+
+    fn align() -> Option<usize> {
+        Some(std::mem::align_of::<Self>())
+    }
+
+    fn def(_collector: &mut TypesCollector) -> DefType {
+        DefType::Primitive(DefPrimitive {
+            name: Self::name(),
+            size: Self::size().unwrap(),
+            align: Self::align().unwrap(),
+        })
     }
 }

@@ -122,6 +122,42 @@ export function parseWithoutReturn(sourceText: string, options?: ParserOptions |
  */
 export function parseSync(sourceText: string, options?: ParserOptions | undefined | null): ParseResult
 /**
+ * Returns schema for AST types
+ *
+ * # Panics
+ * Panics if type definitions cannot be converted to JSON.
+ */
+export function getSchema(): string
+/**
+ * Create a buffer for use with `parse_sync_raw`.
+ * # Panics
+ * Panics if cannot allocate buffer.
+ */
+export function createBuffer(): Uint8Array
+/**
+ * Returns AST as raw bytes from Rust's memory.
+ *
+ * Caller provides a buffer.
+ * Source text must be written into the start of the buffer, and its length provided as `source_len`.
+ * This function will parse the source, and write the AST into the buffer, starting at the end.
+ * It also writes to the buffer after the source text:
+ * * Offset of `Program` in the buffer.
+ * * Mask for converting 64-bit pointers to buffer offsets.
+ *
+ * # SAFETY
+ * Caller must ensure:
+ * * Source text is written into start of the buffer.
+ * * Source text's byte length is `source_len`.
+ * * Source text is valid UTF-8.
+ *
+ * If source text is originally a JS string on JS side, and converted to a buffer with
+ * `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
+ *
+ * # Panics
+ * Panics if AST takes more memory than expected.
+ */
+export function parseSyncRaw(buff: Uint8Array, sourceLen: number, options?: ParserOptions | undefined | null): void
+/**
  * # Panics
  *
  * * Tokio crashes

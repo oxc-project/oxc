@@ -1,10 +1,13 @@
 use bitflags::bitflags;
+#[cfg(feature = "raw")]
+use layout_inspect::Inspect;
 use oxc_index::define_index_type;
 
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
 define_index_type! {
+    #[cfg_attr(feature = "raw", derive(Inspect))]
     pub struct SymbolId = u32;
 }
 

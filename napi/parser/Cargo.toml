@@ -23,7 +23,7 @@ doctest    = false
 [dependencies]
 oxc_allocator    = { workspace = true }
 oxc_parser       = { workspace = true }
-oxc_ast          = { workspace = true, features = ["serialize"] }
+oxc_ast          = { workspace = true, features = ["raw", "serialize"] }
 oxc_span         = { workspace = true }
 oxc_diagnostics  = { workspace = true }
 oxc_module_lexer = { path = "../../crates/oxc_module_lexer" }
@@ -31,10 +31,14 @@ oxc_module_lexer = { path = "../../crates/oxc_module_lexer" }
 tokio       = { workspace = true }
 napi        = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }
+serde       = { workspace = true }
 serde_json  = { workspace = true }
 
+layout_inspect    = { workspace = true, features = ["unique_names", "serde"] }
+static_assertions = { workspace = true }
+
 [package.metadata.cargo-shear]
-ignored = ["napi"]
+ignored = ["napi", "serde"]
 
 [build-dependencies]
 napi-build = { workspace = true }
