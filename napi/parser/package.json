@@ -2,13 +2,16 @@
   "name": "@oxc-parser/binding",
   "private": true,
   "scripts": {
-    "build": "napi build --platform --release",
+    "build": "napi build --platform --release && node generate/index.mjs",
     "test": "node test.mjs",
     "bench": "node parse.bench.mjs"
   },
   "devDependencies": {
     "@napi-rs/cli": "^2.18.0",
     "es-module-lexer": "^1.4.1",
+    "expect": "^29.7.0",
+    "filesize": "^10.1.0",
+    "prettier": "^3.2.5",
     "tinybench": "^2.6.0"
   },
   "engines": {

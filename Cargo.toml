@@ -108,6 +108,7 @@ glob                = "0.3.1"
 ignore              = "0.4.22"
 itertools           = "0.12.1"
 jemallocator        = "0.5.4"
+layout_inspect      = { git = "https://github.com/overlookmotel/layout_inspect", rev = "5ba0afe" }
 lazy_static         = "1.4.0"
 miette              = { version = "7.2.0", features = ["fancy-no-syscall"] }
 mimalloc            = "0.1.39"

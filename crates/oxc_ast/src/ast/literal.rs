@@ -9,6 +9,12 @@ use std::{
 };
 
 use bitflags::bitflags;
+#[cfg(feature = "raw")]
+use layout_inspect::{
+    defs::{DefPrimitive, DefType},
+    Inspect, TypesCollector,
+};
+use oxc_macros::ast_node;
 use oxc_span::{Atom, Span};
 use oxc_syntax::{BigintBase, NumberBase};
 #[cfg(feature = "serialize")]
@@ -16,6 +22,7 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
+#[ast_node]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -39,6 +46,7 @@ impl BooleanLiteral {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -59,6 +67,7 @@ impl NullLiteral {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -110,6 +119,7 @@ impl<'a> Hash for NumericLiteral<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -127,6 +137,7 @@ impl<'a> BigIntLiteral<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -139,6 +150,7 @@ pub struct RegExpLiteral<'a> {
     pub regex: RegExp<'a>,
 }
 
+#[ast_node]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct RegExp<'a> {
@@ -181,6 +193,29 @@ export type RegExpFlags = {
     V: 128
 };
 "#;
+
+#[cfg(feature = "raw")]
+impl Inspect for RegExpFlags {
+    fn name() -> String {
+        "RegExpFlags".to_string()
+    }
+
+    fn size() -> Option<usize> {
+        Some(std::mem::size_of::<Self>())
+    }
+
+    fn align() -> Option<usize> {
+        Some(std::mem::align_of::<Self>())
+    }
+
+    fn def(_collector: &mut TypesCollector) -> DefType {
+        DefType::Primitive(DefPrimitive {
+            name: Self::name(),
+            size: Self::size().unwrap(),
+            align: Self::align().unwrap(),
+        })
+    }
+}
 
 impl TryFrom<char> for RegExpFlags {
     type Error = char;
@@ -230,10 +265,12 @@ impl fmt::Display for RegExpFlags {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct EmptyObject;
 
+#[ast_node]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]

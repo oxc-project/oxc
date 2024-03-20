@@ -13,6 +13,11 @@ use std::{
 use allocator_api2::vec;
 pub use bumpalo::collections::String;
 use bumpalo::Bump;
+#[cfg(feature = "raw")]
+use layout_inspect::{
+    defs::{DefBox, DefType, DefVec},
+    Inspect, TypesCollector,
+};
 use serde::{ser::SerializeSeq, Serialize, Serializer};
 
 use crate::Allocator;
@@ -38,6 +43,30 @@ impl<'alloc, T> Box<'alloc, T> {
 impl<'alloc, T> Box<'alloc, T> {
     pub fn new_in(x: T, alloc: &Allocator) -> Self {
         Self(alloc.alloc(x).into(), PhantomData)
+    }
+}
+
+#[cfg(feature = "raw")]
+impl<'alloc, T: Inspect + 'alloc> Inspect for Box<'alloc, T> {
+    fn name() -> std::string::String {
+        "Box<".to_string() + &<T as Inspect>::name() + ">"
+    }
+
+    fn size() -> Option<usize> {
+        Some(std::mem::size_of::<Self>())
+    }
+
+    fn align() -> Option<usize> {
+        Some(std::mem::align_of::<Self>())
+    }
+
+    fn def(collector: &mut TypesCollector) -> DefType {
+        DefType::Box(DefBox {
+            name: <Self as Inspect>::name(),
+            size: <Self as Inspect>::size().unwrap(),
+            align: <Self as Inspect>::align().unwrap(),
+            value_type_id: collector.collect::<T>(),
+        })
     }
 }
 
@@ -113,6 +142,30 @@ impl<'alloc, T> Vec<'alloc, T> {
         let mut vec = vec::Vec::new_in(&**allocator);
         vec.extend(iter);
         Self(vec)
+    }
+}
+
+#[cfg(feature = "raw")]
+impl<'alloc, T: Inspect + 'alloc> Inspect for Vec<'alloc, T> {
+    fn name() -> std::string::String {
+        "Vec<".to_string() + &<T as Inspect>::name() + ">"
+    }
+
+    fn size() -> Option<usize> {
+        Some(std::mem::size_of::<Self>())
+    }
+
+    fn align() -> Option<usize> {
+        Some(std::mem::align_of::<Self>())
+    }
+
+    fn def(collector: &mut TypesCollector) -> DefType {
+        DefType::Vec(DefVec {
+            name: <Self as Inspect>::name(),
+            size: <Self as Inspect>::size().unwrap(),
+            align: <Self as Inspect>::align().unwrap(),
+            value_type_id: collector.collect::<T>(),
+        })
     }
 }
 
