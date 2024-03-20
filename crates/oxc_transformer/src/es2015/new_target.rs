@@ -58,7 +58,7 @@ impl<'a> NewTarget<'a> {
     }
 
     pub(crate) fn leave_function(&mut self, func: &Function<'a>) {
-        if let Some(_) = self.function_new_target_kind(func) {
+        if self.function_new_target_kind(func).is_some() {
             self.pop();
         }
     }
