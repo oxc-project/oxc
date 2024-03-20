@@ -1,11 +1,12 @@
 use std::cell::RefCell;
 
 use oxc_ast::ast::{
-    ArrayExpressionElement, AssignmentTarget, ComputedMemberExpression, Expression,
-    IdentifierReference, MemberExpression, PrivateFieldExpression, Program, SimpleAssignmentTarget,
-    Statement, StaticMemberExpression,
+    Argument, ArrayExpressionElement, AssignmentTarget, CallExpression, ComputedMemberExpression,
+    Expression, IdentifierReference, MemberExpression, PrivateFieldExpression, Program,
+    SimpleAssignmentTarget, Statement, StaticMemberExpression,
 };
 use oxc_semantic::SymbolId;
+use oxc_span::GetSpan;
 use rustc_hash::FxHashSet;
 
 use crate::{ast_util::get_symbol_id_of_variable, utils::Value, LintContext};
@@ -66,6 +67,9 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::Identifier(ident) => {
                 ident.report_effects(options);
             }
+            Self::CallExpression(call_expr) => {
+                call_expr.report_effects(options);
+            }
             _ => {}
         }
     }
@@ -76,6 +80,65 @@ impl<'a> ListenerMap for Expression<'a> {
                 ident.report_effects_when_mutated(options);
             }
             _ => {}
+        }
+    }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        match self {
+            Self::CallExpression(expr) => {
+                expr.report_effects_when_called(options);
+            }
+            Self::Identifier(expr) => {
+                expr.report_effects_when_called(options);
+            }
+            _ => {}
+        }
+    }
+}
+
+// which kind of Expression defines `report_effects_when_called` method.
+fn defined_custom_report_effects_when_called(expr: &Expression) -> bool {
+    matches!(
+        expr,
+        Expression::ArrowFunctionExpression(_)
+            | Expression::CallExpression(_)
+            | Expression::ClassExpression(_)
+            | Expression::ConditionalExpression(_)
+            | Expression::FunctionExpression(_)
+            | Expression::Identifier(_)
+            | Expression::MemberExpression(_)
+    )
+}
+
+impl<'a> ListenerMap for CallExpression<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.arguments.iter().for_each(|arg| arg.report_effects(options));
+        if defined_custom_report_effects_when_called(&self.callee) {
+            self.callee.report_effects_when_called(options);
+        } else {
+            // TODO: Not work now
+            options.ctx.diagnostic(NoSideEffectsDiagnostic::Call(self.callee.span()));
+        }
+    }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        if let Expression::Identifier(ident) = &self.callee {
+            if get_symbol_id_of_variable(ident, options.ctx).is_none() {
+                // TODO: Not work now
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::CallReturnValue(self.span));
+            }
+        }
+    }
+    fn report_effects_when_mutated(&self, options: &NodeListenerOptions) {
+        options.ctx.diagnostic(NoSideEffectsDiagnostic::MutationOfFunctionReturnValue(self.span));
+    }
+}
+
+impl<'a> ListenerMap for Argument<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        match self {
+            Self::Expression(expr) => expr.report_effects(options),
+            Self::SpreadElement(spread) => {
+                spread.argument.report_effects(options);
+            }
         }
     }
 }
@@ -120,6 +183,16 @@ impl<'a> ListenerMap for IdentifierReference<'a> {
         }
     }
 
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        let ctx = options.ctx;
+        if get_symbol_id_of_variable(self, ctx).is_none() {
+            ctx.diagnostic(NoSideEffectsDiagnostic::CallGlobal(
+                self.name.to_compact_str(),
+                self.span,
+            ));
+        }
+    }
+
     fn report_effects_when_mutated(&self, options: &NodeListenerOptions) {
         let ctx = options.ctx;
         if let Some(symbol_id) = get_symbol_id_of_variable(self, ctx) {
@@ -143,6 +216,19 @@ impl<'a> ListenerMap for IdentifierReference<'a> {
 }
 
 impl<'a> ListenerMap for MemberExpression<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        match self {
+            Self::ComputedMemberExpression(expr) => {
+                expr.report_effects(options);
+            }
+            Self::StaticMemberExpression(expr) => {
+                expr.report_effects(options);
+            }
+            Self::PrivateFieldExpression(expr) => {
+                expr.report_effects(options);
+            }
+        }
+    }
     fn report_effects_when_assigned(&self, options: &NodeListenerOptions) {
         match self {
             Self::ComputedMemberExpression(expr) => {
@@ -161,11 +247,24 @@ impl<'a> ListenerMap for MemberExpression<'a> {
     }
 }
 
-impl<'a> ListenerMap for ComputedMemberExpression<'a> {}
+impl<'a> ListenerMap for ComputedMemberExpression<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.expression.report_effects(options);
+        self.object.report_effects(options);
+    }
+}
 
-impl<'a> ListenerMap for StaticMemberExpression<'a> {}
+impl<'a> ListenerMap for StaticMemberExpression<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.object.report_effects(options);
+    }
+}
 
-impl<'a> ListenerMap for PrivateFieldExpression<'a> {}
+impl<'a> ListenerMap for PrivateFieldExpression<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.object.report_effects(options);
+    }
+}
 
 impl<'a> ListenerMap for ArrayExpressionElement<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
