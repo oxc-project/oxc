@@ -91,8 +91,7 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                                         default_checked_span
                                     },
                                     is_missing_property
-                                        && !(name.contains("onChange")
-                                            || name.contains("readOnly")),
+                                        && !(name == "onChange" || name == "readOnly"),
                                 )
                             } else {
                                 (checked_span, default_checked_span, is_missing_property)
@@ -162,8 +161,7 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                                             default_checked_span
                                         },
                                         is_missing_property
-                                            && !(name.contains("onChange")
-                                                || name.contains("readOnly")),
+                                            && !(name == "onChange" || name == "readOnly"),
                                     )
                                 } else {
                                     (checked_span, default_checked_span, is_missing_property)
