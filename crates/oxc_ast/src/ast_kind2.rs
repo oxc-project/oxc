@@ -1,6 +1,4 @@
-use std::ops::Deref;
-
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::Span;
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
@@ -24,6 +22,7 @@ macro_rules! def_ast_types {
             $($ident,)*
         }
 
+        #[allow(non_snake_case)]
         #[derive(Clone, Copy)]
         pub union AstRef<'a> {
             $($ident: $type,)*
