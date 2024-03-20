@@ -61,20 +61,10 @@ impl Rule for Namespace {
 
             let check_binding_exported = |name: &str, span| {
                 if module.exported_bindings.contains_key(name)
-                    || module.star_export_entries.iter().any(|entry| {
-                        entry.module_request.as_ref().is_some_and(|name_span| {
-                            module
-                                .exported_bindings_from_star_export
-                                .get(
-                                    &module
-                                        .loaded_modules
-                                        .get(name_span.name())
-                                        .unwrap()
-                                        .resolved_absolute_path,
-                                )
-                                .is_some_and(|bindings| bindings.contains(&CompactStr::from(name)))
-                        })
-                    })
+                    || module
+                        .exported_bindings_from_star_export
+                        .iter()
+                        .any(|entry| entry.value().contains(&CompactStr::from(name)))
                 {
                     return;
                 }
