@@ -79,37 +79,37 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     return;
                 };
 
-                if !self.ignore_exclusive_checked_attribute {
-                    let is_exclusive_checked_attribute =
-                        jsx_opening_el.attributes.iter().any(|attr| {
-                            let JSXAttributeItem::Attribute(jsx_attr) = attr else {
-                                return false;
-                            };
-                            let name = get_jsx_attribute_name(&jsx_attr.name);
-                            name.contains("defaultChecked")
-                        });
-                    if is_exclusive_checked_attribute {
-                        ctx.diagnostic(
-                            CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
-                                prop.span,
-                            ),
-                        );
-                    }
+                let (is_exclusive_checked_attribute, is_missing_property) =
+                    jsx_opening_el.attributes.iter().fold(
+                        (false, true),
+                        |(is_exclusive_checked_attribute, is_missing_property), attr| {
+                            if let JSXAttributeItem::Attribute(jsx_attr) = attr {
+                                let name = get_jsx_attribute_name(&jsx_attr.name);
+                                (
+                                    is_exclusive_checked_attribute
+                                        || name.contains("defaultChecked"),
+                                    is_missing_property
+                                        && !(name.contains("onChange")
+                                            || name.contains("readOnly")),
+                                )
+                            } else {
+                                (is_exclusive_checked_attribute, is_missing_property)
+                            }
+                        },
+                    );
+
+                if !self.ignore_exclusive_checked_attribute && is_exclusive_checked_attribute {
+                    ctx.diagnostic(
+                        CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
+                            prop.span,
+                        ),
+                    );
                 }
 
-                if !self.ignore_missing_properties {
-                    let is_missing_property = !jsx_opening_el.attributes.iter().any(|attr| {
-                        let JSXAttributeItem::Attribute(jsx_attr) = attr else {
-                            return false;
-                        };
-                        let name = get_jsx_attribute_name(&jsx_attr.name);
-                        name.contains("onChange") || name.contains("readOnly")
-                    });
-                    if is_missing_property {
-                        ctx.diagnostic(
-                            CheckedRequiresOnchangeOrReadonlyDiagnostic::MissingProperty(prop.span),
-                        );
-                    }
+                if !self.ignore_missing_properties && is_missing_property {
+                    ctx.diagnostic(CheckedRequiresOnchangeOrReadonlyDiagnostic::MissingProperty(
+                        prop.span,
+                    ));
                 }
             }
             AstKind::CallExpression(call_expr) => {
@@ -142,37 +142,40 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
 
                     None
                 }) {
-                    if !self.ignore_exclusive_checked_attribute {
-                        let is_exclusive_checked_attribute =
-                            obj_expr.properties.iter().any(|prop| {
-                                let ObjectPropertyKind::ObjectProperty(object_prop) = prop else {
-                                    return false;
-                                };
-                                let Some(name) = object_prop.key.static_name() else {
-                                    return false;
-                                };
-                                name.contains("defaultChecked")
-                            });
-                        if is_exclusive_checked_attribute {
-                            ctx.diagnostic(CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
+                    let (is_exclusive_checked_attribute, is_missing_property) =
+                        obj_expr.properties.iter().fold(
+                            (false, true),
+                            |(is_exclusive_checked_attribute, is_missing_property), prop| {
+                                if let ObjectPropertyKind::ObjectProperty(object_prop) = prop {
+                                    if let Some(name) = object_prop.key.static_name() {
+                                        (
+                                            is_exclusive_checked_attribute
+                                                || name.contains("defaultChecked"),
+                                            is_missing_property
+                                                && !(name.contains("onChange")
+                                                    || name.contains("readOnly")),
+                                        )
+                                    } else {
+                                        (is_exclusive_checked_attribute, is_missing_property)
+                                    }
+                                } else {
+                                    (is_exclusive_checked_attribute, is_missing_property)
+                                }
+                            },
+                        );
+
+                    if !self.ignore_exclusive_checked_attribute && is_exclusive_checked_attribute {
+                        ctx.diagnostic(
+                            CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
                                 span,
-                            ));
-                        }
+                            ),
+                        );
                     }
 
-                    if !self.ignore_missing_properties {
-                        let is_missing_property = !obj_expr.properties.iter().any(|prop| {
-                            let ObjectPropertyKind::ObjectProperty(object_prop) = prop else {
-                                return false;
-                            };
-                            let Some(name) = object_prop.key.static_name() else { return false };
-                            name.contains("onChange") || name.contains("readOnly")
-                        });
-                        if is_missing_property {
-                            ctx.diagnostic(
-                                CheckedRequiresOnchangeOrReadonlyDiagnostic::MissingProperty(span),
-                            );
-                        }
+                    if !self.ignore_missing_properties && is_missing_property {
+                        ctx.diagnostic(
+                            CheckedRequiresOnchangeOrReadonlyDiagnostic::MissingProperty(span),
+                        );
                     }
                 }
             }
