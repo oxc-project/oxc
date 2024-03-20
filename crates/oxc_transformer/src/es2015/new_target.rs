@@ -1,12 +1,7 @@
 use crate::{context::TransformerCtx, TransformOptions, TransformTarget};
 use oxc_allocator::Vec;
-use oxc_ast::{
-    ast::*,
-    visit_mut::{walk_function_mut, walk_method_definition_mut, walk_object_property_mut},
-    AstBuilder, AstKind, AstKind2, AstType, VisitMut,
-};
+use oxc_ast::{ast::*, AstBuilder};
 use oxc_diagnostics::miette;
-use oxc_semantic::ScopeFlags;
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::operator::BinaryOperator;
 use std::rc::Rc;
@@ -40,7 +35,7 @@ impl<'a> NewTarget<'a> {
         self.push(kind);
     }
 
-    pub(crate) fn leave_method_definition(&mut self, def: &MethodDefinition) {
+    pub(crate) fn leave_method_definition(&mut self, _: &MethodDefinition) {
         self.pop();
     }
 
@@ -63,7 +58,7 @@ impl<'a> NewTarget<'a> {
     }
 
     pub(crate) fn leave_function(&mut self, func: &Function<'a>) {
-        if let Some(kind) = self.function_new_target_kind(func) {
+        if let Some(_) = self.function_new_target_kind(func) {
             self.pop();
         }
     }
