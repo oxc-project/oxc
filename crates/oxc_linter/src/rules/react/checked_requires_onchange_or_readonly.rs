@@ -8,7 +8,6 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_set;
 
 use crate::{
     context::LintContext,
@@ -65,16 +64,6 @@ declare_oxc_lint!(
     correctness
 );
 
-pub const TARGET_PROPS: phf::Set<&'static str> = phf_set! {
-    "onChange",
-    "readOnly",
-    "defaultChecked",
-};
-
-fn is_target_prop(name: &str) -> bool {
-    TARGET_PROPS.contains(name)
-}
-
 impl Rule for CheckedRequiresOnchangeOrReadonly {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
@@ -84,27 +73,44 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     return;
                 }
 
-                let prop_names: Vec<String> = jsx_opening_el
-                    .attributes
-                    .iter()
-                    .filter_map(|attr| {
-                        if let JSXAttributeItem::Attribute(jsx_attr) = attr {
-                            let attr_name = get_jsx_attribute_name(&jsx_attr.name);
-                            if is_target_prop(&attr_name) {
-                                return Some(attr_name);
-                            }
-                        }
-                        None
-                    })
-                    .collect();
-
                 let Some(JSXAttributeItem::Attribute(prop)) =
                     has_jsx_prop(jsx_opening_el, "checked")
                 else {
                     return;
                 };
 
-                self.check_attributes_and_report(ctx, &prop_names, prop.span);
+                if !self.ignore_exclusive_checked_attribute {
+                    let is_exclusive_checked_attribute =
+                        jsx_opening_el.attributes.iter().any(|attr| {
+                            let JSXAttributeItem::Attribute(jsx_attr) = attr else {
+                                return false;
+                            };
+                            let name = get_jsx_attribute_name(&jsx_attr.name);
+                            name.contains("defaultChecked")
+                        });
+                    if is_exclusive_checked_attribute {
+                        ctx.diagnostic(
+                            CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
+                                prop.span,
+                            ),
+                        );
+                    }
+                }
+
+                if !self.ignore_missing_properties {
+                    let is_missing_property = !jsx_opening_el.attributes.iter().any(|attr| {
+                        let JSXAttributeItem::Attribute(jsx_attr) = attr else {
+                            return false;
+                        };
+                        let name = get_jsx_attribute_name(&jsx_attr.name);
+                        name.contains("onChange") || name.contains("readOnly")
+                    });
+                    if is_missing_property {
+                        ctx.diagnostic(
+                            CheckedRequiresOnchangeOrReadonlyDiagnostic::MissingProperty(prop.span),
+                        );
+                    }
+                }
             }
             AstKind::CallExpression(call_expr) => {
                 if !is_create_element_call(call_expr) {
@@ -127,20 +133,6 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     return;
                 };
 
-                let prop_names: Vec<String> = obj_expr
-                    .properties
-                    .iter()
-                    .filter_map(|attr| {
-                        if let ObjectPropertyKind::ObjectProperty(obj_prop) = attr {
-                            let name = &obj_prop.key.name()?;
-                            if is_target_prop(name) {
-                                return Some(name.to_string());
-                            }
-                        }
-                        None
-                    })
-                    .collect();
-
                 if let Some(span) = obj_expr.properties.iter().find_map(|prop| {
                     if let ObjectPropertyKind::ObjectProperty(prop) = prop {
                         if prop.key.is_specific_static_name("checked") {
@@ -150,7 +142,38 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
 
                     None
                 }) {
-                    self.check_attributes_and_report(ctx, &prop_names, span);
+                    if !self.ignore_exclusive_checked_attribute {
+                        let is_exclusive_checked_attribute =
+                            obj_expr.properties.iter().any(|prop| {
+                                let ObjectPropertyKind::ObjectProperty(object_prop) = prop else {
+                                    return false;
+                                };
+                                let Some(name) = object_prop.key.static_name() else {
+                                    return false;
+                                };
+                                name.contains("defaultChecked")
+                            });
+                        if is_exclusive_checked_attribute {
+                            ctx.diagnostic(CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
+                                span,
+                            ));
+                        }
+                    }
+
+                    if !self.ignore_missing_properties {
+                        let is_missing_property = !obj_expr.properties.iter().any(|prop| {
+                            let ObjectPropertyKind::ObjectProperty(object_prop) = prop else {
+                                return false;
+                            };
+                            let Some(name) = object_prop.key.static_name() else { return false };
+                            name.contains("onChange") || name.contains("readOnly")
+                        });
+                        if is_missing_property {
+                            ctx.diagnostic(
+                                CheckedRequiresOnchangeOrReadonlyDiagnostic::MissingProperty(span),
+                            );
+                        }
+                    }
                 }
             }
             _ => {}
@@ -171,24 +194,6 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     val.get("ignoreExclusiveCheckedAttribute").and_then(serde_json::Value::as_bool)
                 })
                 .unwrap_or(false),
-        }
-    }
-}
-
-impl CheckedRequiresOnchangeOrReadonly {
-    fn check_attributes_and_report(&self, ctx: &LintContext, props: &[String], span: Span) {
-        if !self.ignore_exclusive_checked_attribute && props.contains(&"defaultChecked".to_string())
-        {
-            ctx.diagnostic(CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
-                span,
-            ));
-        }
-
-        if !(self.ignore_missing_properties
-            || props.contains(&"onChange".to_string())
-            || props.contains(&"readOnly".to_string()))
-        {
-            ctx.diagnostic(CheckedRequiresOnchangeOrReadonlyDiagnostic::MissingProperty(span));
         }
     }
 }
