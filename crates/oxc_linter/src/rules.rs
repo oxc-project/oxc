@@ -40,11 +40,13 @@ mod eslint {
     pub mod array_callback_return;
     pub mod constructor_super;
     pub mod default_case_last;
+    pub mod default_param_last;
     pub mod eqeqeq;
     pub mod for_direction;
     pub mod getter_return;
     pub mod guard_for_in;
     pub mod max_lines;
+    pub mod max_params;
     pub mod no_array_constructor;
     pub mod no_async_promise_executor;
     pub mod no_bitwise;
@@ -69,6 +71,7 @@ mod eslint {
     pub mod no_empty_character_class;
     pub mod no_empty_pattern;
     pub mod no_empty_static_block;
+    pub mod no_eq_null;
     pub mod no_eval;
     pub mod no_ex_assign;
     pub mod no_extra_boolean_cast;
@@ -84,15 +87,18 @@ mod eslint {
     pub mod no_new_wrappers;
     pub mod no_nonoctal_decimal_escape;
     pub mod no_obj_calls;
+    pub mod no_proto;
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
     pub mod no_regex_spaces;
     pub mod no_return_await;
+    pub mod no_script_url;
     pub mod no_self_assign;
     pub mod no_self_compare;
     pub mod no_setter_return;
     pub mod no_shadow_restricted_names;
     pub mod no_sparse_arrays;
+    pub mod no_template_curly_in_string;
     pub mod no_ternary;
     pub mod no_this_before_super;
     pub mod no_undef;
@@ -359,13 +365,16 @@ oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::constructor_super,
     eslint::default_case_last,
+    eslint::default_param_last,
     eslint::eqeqeq,
     eslint::for_direction,
     eslint::getter_return,
     eslint::guard_for_in,
     eslint::max_lines,
+    eslint::max_params,
     eslint::no_ternary,
     eslint::no_this_before_super,
+    eslint::no_template_curly_in_string,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
     eslint::no_bitwise,
@@ -393,6 +402,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_eval,
     eslint::no_ex_assign,
     eslint::no_extra_boolean_cast,
+    eslint::no_eq_null,
     eslint::no_fallthrough,
     eslint::no_func_assign,
     eslint::no_global_assign,
@@ -405,10 +415,12 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_new_wrappers,
     eslint::no_nonoctal_decimal_escape,
     eslint::no_obj_calls,
+    eslint::no_proto,
     eslint::no_prototype_builtins,
     eslint::no_redeclare,
     eslint::no_regex_spaces,
     eslint::no_return_await,
+    eslint::no_script_url,
     eslint::no_self_assign,
     eslint::no_self_compare,
     eslint::no_setter_return,

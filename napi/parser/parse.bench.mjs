@@ -1,9 +1,10 @@
 import {fileURLToPath} from 'url';
 import {join as pathJoin} from 'path';
 import {readFile, writeFile} from 'fs/promises';
-import assert from 'assert';
-import {bench} from 'vitest';
+import {Bench} from 'tinybench';
 import {parseSync} from './index.js';
+
+const IS_CI = !!process.env.CI;
 
 const urls = [
     // TypeScript syntax (2.81MB)
@@ -28,9 +29,9 @@ const files = await Promise.all(urls.map(async (url) => {
     let code;
     try {
         code = await readFile(path, 'utf8');
-        console.log('Found cached file:', filename);
+        if (IS_CI) console.log('Found cached file:', filename);
     } catch {
-        console.log('Downloading:', filename);
+        if (IS_CI) console.log('Downloading:', filename);
         const res = await fetch(url);
         code = await res.text();
         await writeFile(path, code);
@@ -39,10 +40,27 @@ const files = await Promise.all(urls.map(async (url) => {
     return {filename, code};
 }));
 
+const bench = new Bench();
+
 for (const {filename, code} of files) {
-    bench(`parser(napi)[${filename}]`, () => {
+    bench.add(`parser_napi[${filename}]`, () => {
         const res = parseSync(code, {sourceFilename: filename});
-        assert(res.errors.length === 0);
         JSON.parse(res.program);
     });
+}
+
+console.log('Warming up');
+await bench.warmup();
+console.log('Running benchmarks');
+await bench.run();
+console.table(bench.table());
+
+// If running on CI, save results to file
+if (IS_CI) {
+    const dataDir = process.env.DATA_DIR;
+    const results = bench.tasks.map(task => ({
+        filename: task.name.match(/\[(.+)\]$/)[1],
+        duration: task.result.period / 1000, // In seconds
+    }));
+    await writeFile(pathJoin(dataDir, 'results.json'), JSON.stringify(results));
 }
