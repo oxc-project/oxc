@@ -21,7 +21,7 @@ async function test(filename, sourceBuff, sourceStr, allocSize) {
 
     const buff = oxc.parseSyncRaw(sourceBuff, {sourceFilename: filename}, allocSize);
     const sourceIsAscii = sourceBuff.length === sourceStr.length;
-    const astRaw = deserialize(buff, sourceIsAscii ? sourceStr : sourceBuff, sourceIsAscii);
+    const astRaw = deserialize(buff, sourceStr, sourceIsAscii);
     // console.dir(astRaw, {depth: 10});
 
     if (JSON.stringify(astRaw) === JSON.stringify(astViaJson)) {
