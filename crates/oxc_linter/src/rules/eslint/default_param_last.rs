@@ -42,7 +42,7 @@ impl Rule for DefaultParamLast {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Function(function) => {
-                if !function.is_declaration() & !function.is_expression() {
+                if !function.is_declaration() && !function.is_expression() {
                     return;
                 }
                 check_params(&function.params.items, ctx);
