@@ -12,7 +12,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, get_jsx_attribute_name, has_jsx_prop, is_create_element_call},
+    utils::{get_element_type, get_jsx_attribute_name, is_create_element_call},
     AstNode,
 };
 
@@ -73,19 +73,14 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     return;
                 }
 
-                let Some(JSXAttributeItem::Attribute(prop)) =
-                    has_jsx_prop(jsx_opening_el, "checked")
-                else {
-                    return;
-                };
-
-                let (is_exclusive_checked_attribute, is_missing_property) =
+                let (span, is_exclusive_checked_attribute, is_missing_property) =
                     jsx_opening_el.attributes.iter().fold(
-                        (false, true),
-                        |(is_exclusive_checked_attribute, is_missing_property), attr| {
+                        (None, false, true),
+                        |(span, is_exclusive_checked_attribute, is_missing_property), attr| {
                             if let JSXAttributeItem::Attribute(jsx_attr) = attr {
                                 let name = get_jsx_attribute_name(&jsx_attr.name);
                                 (
+                                    if name == "checked" { Some(jsx_attr.span) } else { span },
                                     is_exclusive_checked_attribute
                                         || name.contains("defaultChecked"),
                                     is_missing_property
@@ -93,23 +88,25 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                                             || name.contains("readOnly")),
                                 )
                             } else {
-                                (is_exclusive_checked_attribute, is_missing_property)
+                                (span, is_exclusive_checked_attribute, is_missing_property)
                             }
                         },
                     );
 
-                if !self.ignore_exclusive_checked_attribute && is_exclusive_checked_attribute {
-                    ctx.diagnostic(
-                        CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
-                            prop.span,
-                        ),
-                    );
-                }
+                if let Some(span) = span {
+                    if !self.ignore_exclusive_checked_attribute && is_exclusive_checked_attribute {
+                        ctx.diagnostic(
+                            CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
+                                span,
+                            ),
+                        );
+                    }
 
-                if !self.ignore_missing_properties && is_missing_property {
-                    ctx.diagnostic(CheckedRequiresOnchangeOrReadonlyDiagnostic::MissingProperty(
-                        prop.span,
-                    ));
+                    if !self.ignore_missing_properties && is_missing_property {
+                        ctx.diagnostic(
+                            CheckedRequiresOnchangeOrReadonlyDiagnostic::MissingProperty(span),
+                        );
+                    }
                 }
             }
             AstKind::CallExpression(call_expr) => {
@@ -133,37 +130,34 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     return;
                 };
 
-                if let Some(span) = obj_expr.properties.iter().find_map(|prop| {
-                    if let ObjectPropertyKind::ObjectProperty(prop) = prop {
-                        if prop.key.is_specific_static_name("checked") {
-                            return Some(prop.span);
-                        }
-                    }
-
-                    None
-                }) {
-                    let (is_exclusive_checked_attribute, is_missing_property) =
-                        obj_expr.properties.iter().fold(
-                            (false, true),
-                            |(is_exclusive_checked_attribute, is_missing_property), prop| {
-                                if let ObjectPropertyKind::ObjectProperty(object_prop) = prop {
-                                    if let Some(name) = object_prop.key.static_name() {
-                                        (
-                                            is_exclusive_checked_attribute
-                                                || name.contains("defaultChecked"),
-                                            is_missing_property
-                                                && !(name.contains("onChange")
-                                                    || name.contains("readOnly")),
-                                        )
-                                    } else {
-                                        (is_exclusive_checked_attribute, is_missing_property)
-                                    }
+                let (span, is_exclusive_checked_attribute, is_missing_property) =
+                    obj_expr.properties.iter().fold(
+                        (None, false, true),
+                        |(span, is_exclusive_checked_attribute, is_missing_property), prop| {
+                            if let ObjectPropertyKind::ObjectProperty(object_prop) = prop {
+                                if let Some(name) = object_prop.key.static_name() {
+                                    (
+                                        if span.is_none() && name == "checked" {
+                                            Some(object_prop.span)
+                                        } else {
+                                            span
+                                        },
+                                        is_exclusive_checked_attribute
+                                            || name.contains("defaultChecked"),
+                                        is_missing_property
+                                            && !(name.contains("onChange")
+                                                || name.contains("readOnly")),
+                                    )
                                 } else {
-                                    (is_exclusive_checked_attribute, is_missing_property)
+                                    (span, is_exclusive_checked_attribute, is_missing_property)
                                 }
-                            },
-                        );
+                            } else {
+                                (span, is_exclusive_checked_attribute, is_missing_property)
+                            }
+                        },
+                    );
 
+                if let Some(span) = span {
                     if !self.ignore_exclusive_checked_attribute && is_exclusive_checked_attribute {
                         ctx.diagnostic(
                             CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
