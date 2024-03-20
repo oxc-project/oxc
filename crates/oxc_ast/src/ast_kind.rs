@@ -3,9 +3,22 @@ use oxc_span::{Atom, GetSpan, Span};
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
-/// Untyped AST Node Kind
-#[derive(Debug, Clone, Copy)]
-pub enum AstKind<'a> {
+macro_rules! ast_kinds {
+    { $($ident:ident($type:ty),)* } => (
+        #[derive(Debug, Clone, Copy)]
+        pub enum AstType {
+            $($ident,)*
+        }
+
+        /// Untyped AST Node Kind
+        #[derive(Debug, Clone, Copy)]
+        pub enum AstKind<'a> {
+            $($ident($type),)*
+        }
+    )
+}
+
+ast_kinds! {
     Program(&'a Program<'a>),
     Directive(&'a Directive<'a>),
     Hashbang(&'a Hashbang<'a>),
