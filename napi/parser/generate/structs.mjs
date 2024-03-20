@@ -66,7 +66,7 @@ function generateUntypedEnumDeserializer(type) {
 
 export function generateBoxDeserializer(type) {
     return `function ${type.deserializerName}(pos) {
-        return ${type.type.deserializerName}(uint32[pos >> 2] - ptrOffset);
+        return ${type.type.deserializerName}(uint32[pos >> 2] & ptrMask);
     }`;
 }
 
@@ -74,7 +74,7 @@ export function generateVecDeserializer(type) {
     return `function ${type.deserializerName}(pos) {
         const arr = [],
             len = uint32[(pos + 24) >> 2];
-        pos = uint32[pos >> 2] - ptrOffset;
+        pos = uint32[pos >> 2] & ptrMask;
         for (let i = 0; i < len; i++) {
             arr.push(${type.type.deserializerName}(pos));
             pos += ${type.type.size};

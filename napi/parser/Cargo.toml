@@ -32,8 +32,9 @@ serde       = { workspace = true }
 serde_json  = { workspace = true }
 flexbuffers = { workspace = true }
 
-bumpalo        = { workspace = true }
-layout_inspect = { workspace = true, features = ["unique_names", "serde"] }
+bumpalo           = { workspace = true }
+layout_inspect    = { workspace = true, features = ["unique_names", "serde"] }
+static_assertions = { workspace = true }
 
 tokio       = { workspace = true }
 napi        = { workspace = true, features = ["serde-json", "async"] }
