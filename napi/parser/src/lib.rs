@@ -151,6 +151,11 @@ pub fn parse_sync_raw(
     // 32-bit systems are not supported
     const_assert!(std::mem::size_of::<usize>() >= 8);
 
+    // Limit AST size to 2 GiB.
+    // This allows using faster `>>` bitshift operations in JS, instead of `>>>`.
+    const MAX_BUMP_SIZE: u32 = 1u32 << 31;
+    assert!(bump_size <= MAX_BUMP_SIZE, "AST cannot be larger than 2 GiB ({MAX_BUMP_SIZE} bytes)");
+
     // Round up bump size to a power of 2
     let bump_size = (bump_size as usize).next_power_of_two();
 
