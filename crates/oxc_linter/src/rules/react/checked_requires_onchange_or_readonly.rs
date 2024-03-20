@@ -66,7 +66,6 @@ declare_oxc_lint!(
 );
 
 pub const TARGET_PROPS: phf::Set<&'static str> = phf_set! {
-    "checked",
     "onChange",
     "readOnly",
     "defaultChecked",
@@ -142,7 +141,17 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     })
                     .collect();
 
-                self.check_attributes_and_report(ctx, &prop_names, call_expr.span);
+                if let Some(span) = obj_expr.properties.iter().find_map(|prop| {
+                    if let ObjectPropertyKind::ObjectProperty(prop) = prop {
+                        if prop.key.is_specific_static_name("checked") {
+                            return Some(prop.span);
+                        }
+                    }
+
+                    None
+                }) {
+                    self.check_attributes_and_report(ctx, &prop_names, span);
+                }
             }
             _ => {}
         }
@@ -168,10 +177,6 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
 
 impl CheckedRequiresOnchangeOrReadonly {
     fn check_attributes_and_report(&self, ctx: &LintContext, props: &[String], span: Span) {
-        if !props.contains(&"checked".to_string()) {
-            return;
-        }
-
         if !self.ignore_exclusive_checked_attribute && props.contains(&"defaultChecked".to_string())
         {
             ctx.diagnostic(CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
