@@ -10,8 +10,8 @@ const textDecoder = new TextDecoder('utf-8', {ignoreBOM: true}),
 
 function deserialize(buff, sourceBuff, isAscii) {
     uint8 = buff;
-    uint32 = new Uint32Array(buff.buffer, buff.byteOffset, buff.byteLength >>> 2);
-    float64 = new Float64Array(buff.buffer, buff.byteOffset, buff.byteLength >>> 3);
+    uint32 = new Uint32Array(buff.buffer, buff.byteOffset, buff.byteLength >> 2);
+    float64 = new Float64Array(buff.buffer, buff.byteOffset, buff.byteLength >> 3);
 
     source = sourceBuff;
     sourceIsAscii = isAscii;
