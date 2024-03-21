@@ -10,6 +10,7 @@
 mod context;
 mod es2015;
 mod es2016;
+mod es2018;
 mod es2019;
 mod es2020;
 mod es2021;
@@ -38,6 +39,7 @@ use crate::{
     context::TransformerCtx,
     es2015::*,
     es2016::ExponentiationOperator,
+    es2018::DotallRegex,
     es2019::{JsonStrings, OptionalCatchBinding},
     es2020::NullishCoalescingOperator,
     es2021::LogicalAssignmentOperators,
@@ -74,6 +76,8 @@ pub struct Transformer<'a> {
     // es2019
     es2019_json_strings: Option<JsonStrings<'a>>,
     es2019_optional_catch_binding: Option<OptionalCatchBinding<'a>>,
+    // es2018
+    es2018_dotall_regex: Option<DotallRegex<'a>>,
     // es2016
     es2016_exponentiation_operator: Option<ExponentiationOperator<'a>>,
     // es2015
@@ -116,6 +120,8 @@ impl<'a> Transformer<'a> {
             // es2019
             es2019_json_strings: JsonStrings::new(Rc::clone(&ast), &options),
             es2019_optional_catch_binding: OptionalCatchBinding::new(Rc::clone(&ast), &options),
+            // es2018
+            es2018_dotall_regex: DotallRegex::new(Rc::clone(&ast), &options),
             // es2016
             es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), ctx.clone(), &options),
             // es2015
@@ -224,6 +230,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         // self.typescript.as_mut().map(|t| t.transform_expression(expr));
         self.react_jsx.as_mut().map(|t| t.transform_expression(expr));
+        self.es2018_dotall_regex.as_mut().map(|t| t.transform_expression(expr));
         self.regexp_flags.as_mut().map(|t| t.transform_expression(expr));
 
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.transform_expression(expr));
