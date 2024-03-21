@@ -1,7 +1,5 @@
 #![allow(clippy::trailing_empty_array)]
 
-// Dummy comment
-
 mod module_lexer;
 
 use std::sync::Arc;
