@@ -1358,6 +1358,8 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "oxc_transformer",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -1390,6 +1392,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
+ "rustc-hash",
  "sourcemap",
 ]
 
