@@ -45,7 +45,8 @@ const bench = new Bench(
     ACCURATE
     ? {
         warmupIterations: 20, // Default is 5
-        time: 10000 // 10 seconds, default is 500 ms
+        time: 5000, // 5 seconds, default is 500 ms
+        iterations: 100, // Default is 10
     }
     : undefined
 );
