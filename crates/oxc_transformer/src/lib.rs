@@ -167,9 +167,9 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
             self.visit_directive(directive);
         }
 
-        self.typescript.as_mut().map(|t| t.transform_program(program));
         self.visit_statements(&mut program.body);
 
+        self.typescript.as_mut().map(|t| t.transform_program(program));
         self.react_jsx.as_mut().map(|t| t.add_react_jsx_runtime_imports(program));
         self.decorators.as_mut().map(|t| t.transform_program(program));
         self.leave_node(kind);
