@@ -9,19 +9,21 @@ import fixtures from './fixtures.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-for (const {filename, sourceBuff, sourceStr, allocSize} of fixtures) {
-    await test(filename, sourceBuff, sourceStr, allocSize);
+for (const {filename, sourceBuff, sourceStr} of fixtures) {
+    await test(filename, sourceBuff, sourceStr);
 }
 
-async function test(filename, sourceBuff, sourceStr, allocSize) {
+async function test(filename, sourceBuff, sourceStr) {
     console.log('Testing:', filename);
 
     const astViaJson = JSON.parse(oxc.parseSync(sourceStr, {sourceFilename: filename}).program);
     // console.dir(astViaJson, {depth: 10});
 
-    const buff = oxc.parseSyncRaw(sourceBuff, {sourceFilename: filename}, allocSize);
-    const sourceIsAscii = sourceBuff.length === sourceStr.length;
-    const astRaw = deserialize(buff, sourceStr, sourceIsAscii);
+    const buff = oxc.createBuffer();
+    buff.set(sourceBuff);
+    const sourceByteLen = sourceBuff.length;
+    oxc.parseSyncRaw(buff, sourceByteLen, {sourceFilename: filename});
+    const astRaw = deserialize(buff, sourceStr, sourceByteLen);
     // console.dir(astRaw, {depth: 10});
 
     if (JSON.stringify(astRaw) === JSON.stringify(astViaJson)) {

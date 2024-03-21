@@ -1,7 +1,7 @@
 import {join as pathJoin} from 'path';
 import {writeFile} from 'fs/promises';
 import {Bench} from 'tinybench';
-import {parseSyncRaw} from './index.js';
+import {parseSyncRaw, createBuffer} from './index.js';
 import deserialize from './deserialize.js';
 import fixtures from './fixtures.mjs';
 
@@ -17,13 +17,24 @@ const bench = new Bench(
     }
     : undefined
 );
+const buff = createBuffer();
 
-for (const {filename, sourceBuff, sourceStr, allocSize} of fixtures) {
-    bench.add(`parser_napi[${filename}]`, () => {
-        const buff = parseSyncRaw(sourceBuff, {sourceFilename: filename}, allocSize);
-        const sourceIsAscii = sourceBuff.length === sourceStr.length;
-        deserialize(buff, sourceStr, sourceIsAscii);
-    });
+for (const {filename, sourceBuff, sourceStr} of fixtures) {
+    bench.add(
+        `parser_napi[${filename}]`,
+        () => {
+            parseSyncRaw(buff, sourceBuff.length, {sourceFilename: filename});
+            deserialize(buff, sourceStr, sourceBuff.length);
+        },
+        {
+            beforeAll() {
+                // Writing source into buffer is not done in the bench loop,
+                // as presumably would need to load source from a file anyway,
+                // and we'll provide an API to load it direct into buffer
+                buff.set(sourceBuff);
+            }
+        }
+    );
 }
 
 console.log('Warming up');

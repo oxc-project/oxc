@@ -2,23 +2,25 @@
 
 module.exports = deserialize;
 
-let uint8, uint32, float64, source, sourceIsAscii, sourceOffset, ptrMask;
+let uint8, uint32, float64, source, sourceIsAscii, sourceLen, ptrMask;
 
 const textDecoder = new TextDecoder('utf-8', {ignoreBOM: true}),
     decodeStr = textDecoder.decode.bind(textDecoder),
     {fromCodePoint} = String;
 
-function deserialize(buff, sourceBuff, isAscii) {
+function deserialize(buff, sourceStr, sourceByteLen) {
     uint8 = buff;
-    uint32 = new Uint32Array(buff.buffer, buff.byteOffset, buff.byteLength >> 2);
-    float64 = new Float64Array(buff.buffer, buff.byteOffset, buff.byteLength >> 3);
+    uint32 = new Uint32Array(buff.buffer);
+    float64 = new Float64Array(buff.buffer);
 
-    source = sourceBuff;
-    sourceIsAscii = isAscii;
-    sourceOffset = uint32[1];
-    ptrMask = uint32[2];
+    source = sourceStr;
+    sourceLen = sourceByteLen;
+    sourceIsAscii = sourceStr.length === sourceByteLen;
 
-    const program = deserializeProgram(uint32[0]);
+    const metadataPos32 = (buff.length - 16) >> 2;
+    ptrMask = uint32[metadataPos32 + 1];
+
+    const program = deserializeProgram(uint32[metadataPos32]);
 
     uint8 = uint32 = float64 = undefined;
 

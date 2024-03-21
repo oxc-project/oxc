@@ -31,7 +31,7 @@ function deserializeRefStr(pos) {
     if (len === 0) return '';
 
     pos = uint32[pos32] & ptrMask;
-    if (sourceIsAscii && pos >= sourceOffset) return source.substr(pos - sourceOffset, len);
+    if (sourceIsAscii && pos < sourceLen) return source.substr(pos, len);
 
     // Longer strings use `TextDecoder`
     // TODO: Find best switch-over point

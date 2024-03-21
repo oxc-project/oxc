@@ -295,7 +295,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { moduleLexerSync, moduleLexerAsync, parseWithoutReturn, parseSync, parseSyncBuffer, getSchema, parseSyncRaw, parseAsync } = nativeBinding
+const { moduleLexerSync, moduleLexerAsync, parseWithoutReturn, parseSync, parseSyncBuffer, getSchema, createBuffer, parseSyncRaw, parseAsync } = nativeBinding
 
 module.exports.moduleLexerSync = moduleLexerSync
 module.exports.moduleLexerAsync = moduleLexerAsync
@@ -303,5 +303,6 @@ module.exports.parseWithoutReturn = parseWithoutReturn
 module.exports.parseSync = parseSync
 module.exports.parseSyncBuffer = parseSyncBuffer
 module.exports.getSchema = getSchema
+module.exports.createBuffer = createBuffer
 module.exports.parseSyncRaw = parseSyncRaw
 module.exports.parseAsync = parseAsync
