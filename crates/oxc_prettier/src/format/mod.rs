@@ -772,7 +772,7 @@ impl<'a> Format<'a> for TSVoidKeyword {
 
 impl<'a> Format<'a> for TSArrayType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array![p, self.element_type.format(p), ss!("[]")]
     }
 }
 
@@ -784,7 +784,14 @@ impl<'a> Format<'a> for TSConditionalType<'a> {
 
 impl<'a> Format<'a> for TSConstructorType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+        if self.r#abstract {
+            parts.push(ss!("abstract "));
+        }
+        parts.push(ss!("new "));
+        parts.push(self.params.format(p));
+        parts.push(array![p, ss!(" => "), self.return_type.type_annotation.format(p)]);
+        Doc::Array(parts)
     }
 }
 
@@ -897,7 +904,12 @@ impl<'a> Format<'a> for TSTypeQuery<'a> {
 
 impl<'a> Format<'a> for TSTypeReference<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+        parts.push(format!(p, self.type_name));
+        if let Some(params) = &self.type_parameters {
+            parts.push(format!(p, params));
+        }
+        Doc::Array(parts)
     }
 }
 
@@ -921,7 +933,22 @@ impl<'a> Format<'a> for JSDocUnknownType {
 
 impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+        parts.push(ss!("interface "));
+        parts.push(format!(p, self.id));
+        parts.push(space!());
+        parts.push(ss!("{"));
+        if self.body.body.len() > 0 {
+            let mut indent_parts = p.vec();
+            for sig in &self.body.body {
+                indent_parts.extend(hardline!());
+                indent_parts.push(format!(p, sig));
+            }
+            parts.push(Doc::Indent(indent_parts));
+            parts.extend(hardline!());
+        }
+        parts.push(ss!("}"));
+        Doc::Array(parts)
     }
 }
 
@@ -969,7 +996,10 @@ impl<'a> Format<'a> for TSModuleReference<'a> {
 
 impl<'a> Format<'a> for TSTypeName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        match self {
+            TSTypeName::IdentifierReference(it) => format!(p, it),
+            TSTypeName::QualifiedName(it) => format!(p, it),
+        }
     }
 }
 
@@ -1245,7 +1275,7 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::ClassExpression(expr) => expr.format(p),
             Self::JSXElement(el) => el.format(p),
             Self::JSXFragment(fragment) => fragment.format(p),
-            Self::TSAsExpression(expr) => expr.expression.format(p),
+            Self::TSAsExpression(expr) => expr.format(p),
             Self::TSSatisfiesExpression(expr) => expr.expression.format(p),
             Self::TSTypeAssertion(expr) => expr.expression.format(p),
             Self::TSNonNullExpression(expr) => expr.expression.format(p),
@@ -2175,12 +2205,17 @@ impl<'a> Format<'a> for PrivateIdentifier<'a> {
 
 impl<'a> Format<'a> for BindingPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        match self.kind {
+        let mut parts = p.vec();
+        parts.push(match self.kind {
             BindingPatternKind::BindingIdentifier(ref ident) => ident.format(p),
             BindingPatternKind::ObjectPattern(ref pattern) => pattern.format(p),
             BindingPatternKind::ArrayPattern(ref pattern) => pattern.format(p),
             BindingPatternKind::AssignmentPattern(ref pattern) => pattern.format(p),
+        });
+        if let Some(typ) = &self.type_annotation {
+            parts.push(array![p, ss!(": "), typ.type_annotation.format(p)]);
         }
+        Doc::Array(parts)
     }
 }
 
@@ -2256,5 +2291,60 @@ impl<'a> Format<'a> for RegExpFlags {
 impl<'a> Format<'a> for TSIndexSignature<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
+    }
+}
+
+impl<'a> Format<'a> for TSPropertySignature<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut parts = p.vec();
+        if self.readonly {
+            parts.push(ss!("readonly "));
+        }
+        parts.push(format!(p, self.key));
+        if let Some(ty) = &self.type_annotation {
+            if self.optional {
+                parts.push(ss!("?"));
+            }
+            parts.push(ss!(":"));
+            parts.push(space!());
+            parts.push(format!(p, ty.type_annotation));
+        }
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for TSCallSignatureDeclaration<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for TSConstructSignatureDeclaration<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for TSMethodSignature<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for TSSignature<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            TSSignature::TSIndexSignature(it) => it.format(p),
+            TSSignature::TSPropertySignature(it) => it.format(p),
+            TSSignature::TSCallSignatureDeclaration(it) => it.format(p),
+            TSSignature::TSConstructSignatureDeclaration(it) => it.format(p),
+            TSSignature::TSMethodSignature(it) => it.format(p),
+        }
+    }
+}
+
+impl<'a> Format<'a> for TSAsExpression<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        array![p, format!(p, self.expression), ss!(" as "), format!(p, self.type_annotation)]
     }
 }

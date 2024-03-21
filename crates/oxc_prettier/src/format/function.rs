@@ -1,6 +1,7 @@
 use oxc_ast::ast::*;
 
 use crate::{
+    array,
     doc::{Doc, DocBuilder},
     format::function_parameters::should_group_function_parameters,
     group, if_break, indent, softline, space, ss, Format, Prettier,
@@ -57,6 +58,10 @@ pub(super) fn print_function<'a>(
 pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> Doc<'a> {
     let mut parts = p.vec();
 
+    if matches!(method.r#type, MethodDefinitionType::TSAbstractMethodDefinition) {
+        parts.push(ss!("abstract "));
+    }
+
     if method.r#static {
         parts.push(ss!("static "));
     }
@@ -94,10 +99,17 @@ fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<
         if should_group_parameters { group!(p, parameters_doc) } else { parameters_doc };
     parts.push(group!(p, parameters_doc));
 
+    if let Some(ret_typ) = &function.return_type {
+        parts.push(array![p, ss!(": "), ret_typ.type_annotation.format(p)]);
+    }
+
     if let Some(body) = &function.body {
         parts.push(space!());
         parts.push(body.format(p));
+    } else if p.options.semi {
+        parts.push(ss!(";"));
     }
+
     Doc::Array(parts)
 }
 
