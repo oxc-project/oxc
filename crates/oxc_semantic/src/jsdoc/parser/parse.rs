@@ -63,13 +63,11 @@ fn parse_jsdoc_tag(tag_content: &str) -> JSDocTag {
 
     // This surely exists, at least `@` itself
     let (k_start, k_end) = utils::find_token_range(tag_content).unwrap();
+    // +1 for whitespace, may be empty
+    let b_start = tag_content.len().min(k_end + 1);
 
-    JSDocTag::new(
-        // Omit the first `@`
-        &tag_content[k_start + 1..k_end],
-        // +1 for whitespace, this may be empty
-        if k_end < tag_content.len() { &tag_content[k_end + 1..] } else { "" },
-    )
+    // Omit the first `@`
+    JSDocTag::new(&tag_content[k_start + 1..k_end], &tag_content[b_start..])
 }
 
 #[cfg(test)]
