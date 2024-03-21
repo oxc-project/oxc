@@ -27,7 +27,7 @@ fn main() -> std::io::Result<()> {
     }
 
     let codegen_options = CodegenOptions {
-        enable_source_map: Some(path.to_string_lossy().to_string()),
+        enable_source_map: Some(path.to_string_lossy().into()),
         enable_typescript: true,
     };
 

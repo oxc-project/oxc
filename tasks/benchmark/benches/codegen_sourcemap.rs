@@ -15,7 +15,7 @@ fn bench_codegen_sourcemap(criterion: &mut Criterion) {
             let allocator = Allocator::default();
             let program = Parser::new(&allocator, source_text, source_type).parse().program;
             let codegen_options = CodegenOptions {
-                enable_source_map: Some(file.file_name.clone()),
+                enable_source_map: Some(file.file_name.as_str().into()),
                 ..CodegenOptions::default()
             };
             b.iter_with_large_drop(|| {

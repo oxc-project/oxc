@@ -14,7 +14,7 @@ mod gen_ts;
 mod operator;
 mod sourcemap_builder;
 mod sourcemap_visualizer;
-use std::str::from_utf8_unchecked;
+use std::{str::from_utf8_unchecked, sync::Arc};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -38,7 +38,7 @@ pub use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct CodegenOptions {
     /// Pass in the filename to enable source map support.
-    pub enable_source_map: Option<String>,
+    pub enable_source_map: Option<Arc<str>>,
 
     /// Enable TypeScript code generation.
     pub enable_typescript: bool,

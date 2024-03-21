@@ -127,7 +127,7 @@ impl Case for SourcemapCase {
         }
 
         let codegen_options = CodegenOptions {
-            enable_source_map: Some(self.path.to_string_lossy().to_string()),
+            enable_source_map: Some(self.path.to_string_lossy().into()),
             ..CodegenOptions::default()
         };
         let codegen_ret = Codegen::<false>::new(source_text, codegen_options).build(&ret.program);
