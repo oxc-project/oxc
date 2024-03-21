@@ -42,8 +42,8 @@ jobs:
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
         with:
-          shared-key: 'benchmark_napi'
-          save-cache: ${{ github.ref_name == 'main' }}
+          shared-key: benchmark_napi_ast_transfer
+          save-cache: true
 
       - name: Install codspeed
         uses: taiki-e/install-action@v2
