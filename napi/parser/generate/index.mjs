@@ -50,7 +50,12 @@ for (const [index, type] of types.entries()) {
     type.dependencies = new Set();
     type.niche = null;
     type.deserializerName = `deserialize${type.name}`;
+    type.generateDeserializerCall = generateDeserializerCall;
     type.isOutput = false;
+}
+
+function generateDeserializerCall(posStr) {
+    return `${this.deserializerName}(${posStr})`;
 }
 
 // Prep for combining `rest` fields
@@ -257,6 +262,7 @@ while (withNoNiche.size > 0) {
         dependencies: new Set(restField.type.dependencies),
         name: 'FormalParameterRest',
         deserializerName: 'deserializeFormalParameterRest',
+        generateDeserializerCall: posStr => `${restType.deserializerName}(${posStr})`,
     };
     typesByName.FormalParameterRest = restType;
     restField.type = restType;
