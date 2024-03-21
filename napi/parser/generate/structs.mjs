@@ -23,7 +23,7 @@ export function generateStructDeserializer(type) {
 }
 
 export function generateStructFieldCode(field) {
-    return `${field.type.deserializerName}(${posWithOffsetAndShift(field.offset)})`;
+    return field.type.generateDeserializerCall(posWithOffsetAndShift(field.offset));
 }
 
 export function generateEnumDeserializer(type) {
@@ -47,7 +47,7 @@ function generateTypedEnumDeserializer(type) {
 }
 
 function generateEnumVariantCode(variant) {
-    return `${variant.type.deserializerName}(pos + ${variant.type.align})`;
+    return variant.type.generateDeserializerCall(posWithOffsetAndShift(variant.type.align));
 }
 
 function generateUntypedEnumDeserializer(type) {
@@ -66,7 +66,7 @@ function generateUntypedEnumDeserializer(type) {
 
 export function generateBoxDeserializer(type) {
     return `function ${type.deserializerName}(pos) {
-        return ${type.type.deserializerName}(uint32[pos >> 2] & ptrMask);
+        return ${type.type.generateDeserializerCall('uint32[pos >> 2] & ptrMask')};
     }`;
 }
 
@@ -77,7 +77,7 @@ export function generateVecDeserializer(type) {
             len = uint32[pos32 + 6];
         pos = uint32[pos32] & ptrMask;
         for (let i = 0; i < len; i++) {
-            arr.push(${type.type.deserializerName}(pos));
+            arr.push(${type.type.generateDeserializerCall('pos')});
             pos += ${type.type.size};
         }
         return arr;
@@ -123,7 +123,7 @@ export function generateOptionDeserializer(type) {
 
     return `function ${type.deserializerName}(pos) {
         if (${noneCondition}) return null;
-        return ${child.deserializerName}(${posWithOffsetAndShift(valueOffset)});
+        return ${child.generateDeserializerCall(posWithOffsetAndShift(valueOffset))};
     }`;
 }
 
