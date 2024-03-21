@@ -145,7 +145,8 @@ pub fn get_schema() -> String {
 }
 
 const RAW_BUFFER_SIZE: usize = 1 << 31; // 2 GiB
-const RAW_BUFFER_ALIGN: usize = 1 << 31; // 2 GiB
+const RAW_BUFFER_ALIGN: usize = 1 << 32; // 4 GiB
+const ALLOC_ATTEMPTS: usize = 10;
 
 /// Create a buffer for use with `parse_sync_raw`.
 /// # Panics
@@ -155,18 +156,49 @@ pub fn create_buffer() -> Uint8Array {
     // 32-bit systems are not supported
     const_assert!(std::mem::size_of::<usize>() >= 8);
 
-    let layout = Layout::from_size_align(RAW_BUFFER_SIZE, RAW_BUFFER_ALIGN).unwrap();
+    // Attempt to create allocation with required alignment
+    let mut align = RAW_BUFFER_ALIGN;
+    let layout = Layout::from_size_align(RAW_BUFFER_SIZE, align).unwrap();
     // SAFETY: Layout was created safely
-    let data_ptr = unsafe { alloc::alloc(layout) };
-    assert!(!data_ptr.is_null(), "Failed to allocate buffer");
+    let mut data_ptr = unsafe { alloc::alloc(layout) };
+    if data_ptr.is_null() {
+        // Could not allocate with this alignment.
+        // Try again with lower alignment until get alignment we need.
+        align /= 2;
+        let less_aligned_layout = Layout::from_size_align(RAW_BUFFER_SIZE, align).unwrap();
+
+        let mut rejected_alloc_ptrs = Vec::with_capacity(ALLOC_ATTEMPTS);
+        for _ in 0..ALLOC_ATTEMPTS {
+            // SAFETY: Layout was created safely
+            let try_data_ptr = unsafe { alloc::alloc(less_aligned_layout) };
+            if try_data_ptr.is_null() {
+                break;
+            }
+
+            if try_data_ptr as usize % RAW_BUFFER_ALIGN == 0 {
+                data_ptr = try_data_ptr;
+                break;
+            }
+
+            rejected_alloc_ptrs.push(try_data_ptr);
+        }
+
+        // Free rejected allocations
+        for bad_ptr in rejected_alloc_ptrs {
+            // SAFETY: We just allocated this
+            unsafe { alloc::dealloc(bad_ptr, less_aligned_layout) };
+        }
+
+        assert!(!data_ptr.is_null(), "Failed to allocate buffer");
+    }
 
     // Return as NAPI `Uint8Array`, borrowing the allocation's memory.
     // SAFETY: `data_ptr` is valid for reading `FOUR_GIB` bytes.
     // TODO: Add comment pointing to Github discussion where NodeJS maintainer said
     // passing uninitialized data is fine
     unsafe {
-        Uint8Array::with_external_data(data_ptr, RAW_BUFFER_SIZE, |ptr, _len| {
-            let layout = Layout::from_size_align(RAW_BUFFER_SIZE, RAW_BUFFER_ALIGN).unwrap();
+        Uint8Array::with_external_data(data_ptr, RAW_BUFFER_SIZE, move |ptr, _len| {
+            let layout = Layout::from_size_align(RAW_BUFFER_SIZE, align).unwrap();
             alloc::dealloc(ptr, layout);
         })
     }
@@ -195,11 +227,11 @@ pub fn parse_sync_raw(mut buff: Uint8Array, source_len: u32, options: Option<Par
     assert_eq!(buff.len(), RAW_BUFFER_SIZE);
     assert_eq!(buff_ptr as usize % RAW_BUFFER_ALIGN, 0);
 
+    // TODO: Need fallback for when could not create buffer with required alignment
+
     // Get offsets and size of data region to be managed by allocator.
     // Leave space for source before it, and 16 bytes for metadata after it.
-    type Metadata = [u32; 2];
-    const METADATA_SIZE: usize = std::mem::size_of::<Metadata>().next_multiple_of(16);
-
+    const METADATA_SIZE: usize = 16;
     let data_offset = (source_len as usize).next_multiple_of(16);
     let data_size = RAW_BUFFER_SIZE.saturating_sub(data_offset + METADATA_SIZE);
     assert!(data_size >= Allocator::MIN_SIZE);
@@ -227,15 +259,12 @@ pub fn parse_sync_raw(mut buff: Uint8Array, source_len: u32, options: Option<Par
 
     // Write offset of program into end of buffer
     #[allow(clippy::cast_possible_truncation)]
-    let ptr_mask = (RAW_BUFFER_ALIGN - 1) as u32;
-    #[allow(clippy::cast_possible_truncation)]
-    let program_offset = program_ptr as u32 & ptr_mask;
-    let metadata = [program_offset, ptr_mask];
+    let program_offset = program_ptr as u32;
     const METADATA_OFFSET: usize = RAW_BUFFER_SIZE - METADATA_SIZE;
     // SAFETY: `METADATA_OFFSET` is less than length of `buff`
     #[allow(clippy::cast_ptr_alignment)]
     unsafe {
-        buff_ptr.add(METADATA_OFFSET).cast::<Metadata>().write(metadata);
+        buff_ptr.add(METADATA_OFFSET).cast::<u32>().write(program_offset);
     }
 }
 

@@ -2,7 +2,7 @@
 
 module.exports = deserialize;
 
-let uint8, uint32, float64, source, sourceIsAscii, sourceLen, ptrMask;
+let uint8, uint32, float64, source, sourceIsAscii, sourceLen;
 
 const textDecoder = new TextDecoder('utf-8', {ignoreBOM: true}),
     decodeStr = textDecoder.decode.bind(textDecoder),
@@ -18,8 +18,6 @@ function deserialize(buff, sourceStr, sourceByteLen) {
     sourceIsAscii = sourceStr.length === sourceByteLen;
 
     const metadataPos32 = (buff.length - 16) >> 2;
-    ptrMask = uint32[metadataPos32 + 1];
-
     const program = deserializeProgram(uint32[metadataPos32]);
 
     uint8 = uint32 = float64 = undefined;
