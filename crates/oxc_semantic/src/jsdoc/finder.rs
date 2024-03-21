@@ -19,9 +19,7 @@ impl<'a> JSDocFinder<'a> {
     }
 
     pub fn get_one_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<JSDoc<'a>> {
-        let Some(jsdocs) = self.get_all_by_node(node) else {
-            return None;
-        };
+        let jsdocs = self.get_all_by_node(node)?;
 
         // If flagged, at least 1 JSDoc is attached
         // If multiple JSDocs are attached, return the last = nearest

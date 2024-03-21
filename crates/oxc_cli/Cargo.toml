@@ -43,7 +43,7 @@ oxc_span        = { workspace = true }
 
 ignore             = { workspace = true, features = ["simd-accel"] }
 miette             = { workspace = true }
-tempfile           = {workspace=true}
+tempfile           = { workspace = true }
 rayon              = { workspace = true }
 bpaf               = { workspace = true, features = ["derive", "autocomplete", "bright-color"] }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }

@@ -1,6 +1,6 @@
 pub fn trim_multiline_comment(s: &str) -> String {
     s.trim()
-        .split('\n')
+        .lines()
         .map(|line| line.trim().trim_start_matches('*').trim())
         .filter(|line| !line.is_empty())
         .collect::<Vec<_>>()
