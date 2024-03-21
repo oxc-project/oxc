@@ -1,26 +1,11 @@
-const deserializers = {
-    U8: deserializeU8,
-    U32: deserializeU32,
-    F64: deserializeF64,
-    Bool: deserializeBool
+const deserializerCallGenerators = {
+    U8: posStr => `uint8[${posStr}]`,
+    U32: posStr => `uint32[(${posStr}) >> 2]`,
+    F64: posStr => `float64[(${posStr}) >> 3]`,
+    Bool: posStr => `uint8[${posStr}] === 1`,
 };
 
-export default function generatePrimitiveDeserializer(type) {
-    return deserializers[type.name].toString();
-}
-
-function deserializeU8(pos) {
-    return uint8[pos];
-}
-
-function deserializeU32(pos) {
-    return uint32[pos >> 2];
-}
-
-function deserializeBool(pos) {
-    return uint8[pos] === 1;
-}
-
-function deserializeF64(pos) {
-    return float64[pos >> 3];
+export default function generatePrimitiveDeserializerCallGenerator(type) {
+    const generator = deserializerCallGenerators[type.name];
+    if (generator) type.generateDeserializerCall = generator;
 }
