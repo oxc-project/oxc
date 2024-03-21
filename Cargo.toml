@@ -96,6 +96,7 @@ convert_case              = { version = "0.6.0" }
 dashmap                   = { version = "5.5.3" }
 flate2                    = { version = "1.0.28" }
 futures                   = { version = "0.3.30" }
+glob                      = { version = "0.3.1" }
 ignore                    = { version = "0.4.22" }
 itertools                 = { version = "0.12.1" }
 jemallocator              = { version = "0.5.4" }
@@ -118,6 +119,7 @@ seq-macro                 = { version = "0.3.5" }
 serde                     = { version = "1.0.197" }
 serde_json                = { version = "1.0.114" }
 syn                       = { version = "=1.0.109" }
+tempfile                  = { version = "3.10.1" }
 thiserror                 = { version = "1.0.58" }
 tokio                     = { version = "1" }
 tower-lsp                 = { version = "0.20.0", features = ["proposed"] }
