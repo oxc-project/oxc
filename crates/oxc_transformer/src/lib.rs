@@ -28,7 +28,7 @@ use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use es2015::TemplateLiterals;
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::*, visit::walk_mut::walk_function_mut, AstBuilder, AstType, VisitMut};
+use oxc_ast::{ast::*, visit::walk_mut::{walk_function_mut, walk_program_mut}, AstBuilder, AstType, VisitMut};
 use oxc_diagnostics::Error;
 use oxc_semantic::{ScopeFlags, Semantic};
 use oxc_span::SourceType;
@@ -153,27 +153,10 @@ impl<'a> Transformer<'a> {
 
 impl<'a> VisitMut<'a> for Transformer<'a> {
     fn visit_program(&mut self, program: &mut Program<'a>) {
-        let kind = AstType::Program;
-        self.enter_scope({
-            let mut flags = ScopeFlags::Top;
-            if program.is_strict() {
-                flags |= ScopeFlags::StrictMode;
-            }
-            flags
-        });
-        self.enter_node(kind);
-
-        for directive in program.directives.iter_mut() {
-            self.visit_directive(directive);
-        }
-
-        self.visit_statements(&mut program.body);
-
+        walk_program_mut(self, program);
         self.typescript.as_mut().map(|t| t.transform_program(program));
         self.react_jsx.as_mut().map(|t| t.add_react_jsx_runtime_imports(program));
         self.decorators.as_mut().map(|t| t.transform_program(program));
-        self.leave_node(kind);
-        self.leave_scope();
     }
 
     fn visit_assignment_expression(&mut self, expr: &mut AssignmentExpression<'a>) {
