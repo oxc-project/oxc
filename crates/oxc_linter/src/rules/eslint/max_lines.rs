@@ -126,9 +126,19 @@ impl Rule for MaxLines {
                 "File has too many lines ({}). Maximum allowed is {}.",
                 lines_in_file, self.max,
             ));
+
+            let start = ctx
+                .source_text()
+                .lines()
+                .take(self.max)
+                .map(|line| line.chars().count() + 1) // padding 1 each line for '\n'
+                .sum::<usize>();
             ctx.diagnostic(MaxLinesDiagnostic(
                 error,
-                Span::new(0, u32::try_from(ctx.source_text().len()).unwrap_or(u32::MAX)),
+                Span::new(
+                    u32::try_from(start).unwrap_or(u32::MIN),
+                    u32::try_from(ctx.source_text().len()).unwrap_or(u32::MAX),
+                ),
             ));
         }
     }
