@@ -30,7 +30,7 @@ function deserializeRefStr(pos) {
         len = uint32[pos32 + 2];
     if (len === 0) return '';
 
-    pos = uint32[pos32] & ptrMask;
+    pos = uint32[pos32];
     if (sourceIsAscii && pos < sourceLen) return source.substr(pos, len);
 
     // Longer strings use `TextDecoder`
