@@ -1,12 +1,33 @@
 use super::utils;
 
-// Since users use(invent!) any kind of tag and body, we can not enforce any specific format.
-// Instead, we provide helper methods to parse the body.
+// Initially, I attempted to parse into specific structures such as:
+// - `@param {type} name comment`: `JSDocParameterTag { type, name, comment }`
+// - `@returns {type} comment`: `JSDocReturnsTag { type, comment }`
+// - `@whatever comment`: `JSDocUnknownTag { comment }`
+// - etc...
 //
-// At first, I tried to handle common templates and parse it into specific struct like `JSDocParameterTag`.
-// But I also found that some usecases like `eslint-plugin-jsdoc` providing a option to create an alias for the tag.
-// e.g. Prefer `@foo` instead of `@param`.
-// So, I decided to provide a generic text-based struct and let the user handle it.
+// However, I discovered that some use cases, like `eslint-plugin-jsdoc`, provide an option to create an alias for the tag kind.
+// .e.g. Preferring `@foo` instead of `@param`
+//
+// This means that:
+// - We cannot parse a tag exactly as it was written
+// - We cannot assume that `@param` will always map to `JSDocParameterTag`
+//
+// Therefore, I decided to provide a generic structure with helper methods to parse the tag according to the needs.
+//
+// I also considered providing an API with methods like `as_param() -> JSDocParameterTag` or `as_return() -> JSDocReturnTag`, etc.
+//
+// However:
+// - There are many kinds of tags, but most of them have a similar structure
+// - JSDoc is not a strict format; it's just a comment
+// - Users can invent their own tags like `@whatever {type}` and may want to parse its type
+//
+// As a result, I ended up providing helper methods that are fit for purpose.
+
+/// General struct for JSDoc tag.
+///
+/// `kind` can be any string like `param`, `type`, `whatever`, ...etc.
+/// `raw_body` is kept as is, you can use helper methods according to your needs.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JSDocTag<'a> {
     raw_body: &'a str,
@@ -55,21 +76,16 @@ impl<'a> JSDocTag<'a> {
     /// @kind
     /// ```
     pub fn type_comment(&self) -> (Option<&str>, String) {
-        let type_part_range = utils::find_type_range(self.raw_body);
-        // {type} comment
-        // {type}
-        if let Some((start, end)) = type_part_range {
-            (
-                Some(&self.raw_body[start..end]),
-                // +1 for `}`
-                utils::trim_multiline_comment(&self.raw_body[end + 1..]),
-            )
-        }
-        // comment
-        // (empty)
-        else {
-            (None, utils::trim_multiline_comment(self.raw_body))
-        }
+        let (type_part, comment_part) = match utils::find_type_range(self.raw_body) {
+            Some((t_start, t_end)) => {
+                // +1 for `}`, +1 for whitespace
+                let c_start = self.raw_body.len().min(t_end + 2);
+                (Some(&self.raw_body[t_start..t_end]), &self.raw_body[c_start..])
+            }
+            None => (None, self.raw_body),
+        };
+
+        (type_part, utils::trim_multiline_comment(comment_part))
     }
 
     /// Use for `@param`, `@property`, `@typedef`, ...etc.
@@ -85,42 +101,25 @@ impl<'a> JSDocTag<'a> {
     /// @kind
     /// ```
     pub fn type_name_comment(&self) -> (Option<&str>, Option<&str>, String) {
-        let type_part_range = utils::find_type_range(self.raw_body);
-        if let Some((t_start, t_end)) = type_part_range {
-            let type_part = &self.raw_body[t_start..t_end];
-            // +1 for `}`
-            let name_comment_part = &self.raw_body[t_end + 1..];
-            let name_part_range = utils::find_name_range(name_comment_part);
+        let (type_part, name_comment_part) = match utils::find_type_range(self.raw_body) {
+            Some((t_start, t_end)) => {
+                // +1 for `}`, +1 for whitespace
+                let c_start = self.raw_body.len().min(t_end + 2);
+                (Some(&self.raw_body[t_start..t_end]), &self.raw_body[c_start..])
+            }
+            None => (None, self.raw_body),
+        };
 
-            // {type} name comment
-            // {type} name
-            if let Some((n_start, n_end)) = name_part_range {
-                (
-                    Some(type_part),
-                    Some(&name_comment_part[n_start..n_end]),
-                    utils::trim_multiline_comment(&name_comment_part[n_end..]),
-                )
+        let (name_part, comment_part) = match utils::find_token_range(name_comment_part) {
+            Some((n_start, n_end)) => {
+                // +1 for whitespace
+                let c_start = name_comment_part.len().min(n_end + 1);
+                (Some(&name_comment_part[n_start..n_end]), &name_comment_part[c_start..])
             }
-            // {type}
-            else {
-                (Some(type_part), None, String::new())
-            }
-        } else {
-            let name_part_range = utils::find_name_range(self.raw_body);
-            // name comment
-            // name
-            if let Some((n_start, n_end)) = name_part_range {
-                (
-                    None,
-                    Some(&self.raw_body[n_start..n_end]),
-                    utils::trim_multiline_comment(&self.raw_body[n_end..]),
-                )
-            }
-            // (empty)
-            else {
-                (None, None, utils::trim_multiline_comment(self.raw_body))
-            }
-        }
+            None => (None, ""),
+        };
+
+        (type_part, name_part, utils::trim_multiline_comment(comment_part))
     }
 }
 

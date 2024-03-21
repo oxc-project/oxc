@@ -13,8 +13,8 @@ pub fn parse_jsdoc(source_text: &str) -> (String, Vec<JSDocTag>) {
     let mut comment = "";
     let mut tags = vec![];
 
-    // So, find `@` to split comment and tags.
-    // But `@` can be found inside of `{}` (e.g. `{@see link}`) and should be distinguished.
+    // So, find `@` to split comment and each tag.
+    // But `@` can be found inside of `{}` (e.g. `{@see link}`), it should be distinguished.
     let mut in_braces = false;
     let mut comment_found = false;
     let (mut start, mut end) = (0, 0);
@@ -27,20 +27,20 @@ pub fn parse_jsdoc(source_text: &str) -> (String, Vec<JSDocTag>) {
 
                 if comment_found {
                     tags.push(parse_jsdoc_tag(part));
-                    start = end;
                 } else {
                     comment = part;
                     comment_found = true;
-                    start = end;
                 }
+                // Prepare for the next draft
+                start = end;
             }
             _ => {}
         }
-
+        // Update the current draft
         end += ch.len_utf8();
     }
 
-    // Flush the last draft
+    // If `@` not found, flush the last draft
     if start != end {
         let part = &source_text[start..end];
 
@@ -61,16 +61,15 @@ pub fn parse_jsdoc(source_text: &str) -> (String, Vec<JSDocTag>) {
 fn parse_jsdoc_tag(tag_content: &str) -> JSDocTag {
     debug_assert!(tag_content.starts_with('@'));
 
-    // Tag kind and body are separated by whitespace or line break
-    let mut parts = tag_content.splitn(2, |ch| ch == ' ' || ch == '\n');
+    // This surely exists, at least `@` itself
+    let (k_start, k_end) = utils::find_token_range(tag_content).unwrap();
 
-    // This is surely exists, at least `@` itself
-    let kind = parts.next().unwrap();
-    // This may be empty
-    let body = parts.next().unwrap_or("");
-
-    // Omit the first `@`
-    JSDocTag::new(&kind[1..], body)
+    JSDocTag::new(
+        // Omit the first `@`
+        &tag_content[k_start + 1..k_end],
+        // +1 for whitespace, this may be empty
+        if k_end < tag_content.len() { &tag_content[k_end + 1..] } else { "" },
+    )
 }
 
 #[cfg(test)]
@@ -139,7 +138,7 @@ comment {@link link} ...
 
     #[test]
     fn parses_single_line_1_jsdoc() {
-        assert_eq!(parse_jsdoc("@deprecated"), parse_from_full_text("/** @deprecated */"));
+        assert_eq!(parse_jsdoc("@deprecated"), parse_from_full_text("/** @deprecated*/"));
         assert_eq!(parse_jsdoc("@deprecated").1, vec![parse_jsdoc_tag("@deprecated")]);
 
         assert_eq!(parse_jsdoc("").1, vec![]);

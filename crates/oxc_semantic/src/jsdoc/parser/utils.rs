@@ -35,8 +35,8 @@ pub fn find_type_range(s: &str) -> Option<(usize, usize)> {
     None
 }
 
-// Find token string range
-pub fn find_name_range(s: &str) -> Option<(usize, usize)> {
+// Find inline token string as range
+pub fn find_token_range(s: &str) -> Option<(usize, usize)> {
     let mut start = None;
     for (idx, ch) in s.char_indices() {
         if ch.is_whitespace() {
@@ -58,7 +58,7 @@ pub fn find_name_range(s: &str) -> Option<(usize, usize)> {
 
 #[cfg(test)]
 mod test {
-    use super::{find_name_range, find_type_range, trim_multiline_comment};
+    use super::{find_token_range, find_type_range, trim_multiline_comment};
 
     #[test]
     fn trim_multiline_jsdoc_comments() {
@@ -140,7 +140,7 @@ mod test {
             ("名前5", Some("名前5")),
             ("\nn6\nx", Some("n6")),
         ] {
-            assert_eq!(find_name_range(actual).map(|(s, e)| &actual[s..e]), expect);
+            assert_eq!(find_token_range(actual).map(|(s, e)| &actual[s..e]), expect);
         }
     }
 }
