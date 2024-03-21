@@ -34,7 +34,6 @@ napi-derive = { workspace = true }
 serde       = { workspace = true }
 serde_json  = { workspace = true }
 
-bumpalo           = { workspace = true }
 layout_inspect    = { workspace = true, features = ["unique_names", "serde"] }
 simdutf8          = { workspace = true }
 static_assertions = { workspace = true }

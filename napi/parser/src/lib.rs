@@ -1,6 +1,12 @@
 mod module_lexer;
 
-use std::{alloc::Layout, str, sync::Arc};
+use std::{
+    alloc::{self, Layout},
+    mem::ManuallyDrop,
+    ptr::NonNull,
+    str,
+    sync::Arc,
+};
 
 use bumpalo::Bump;
 use napi::bindgen_prelude::Uint8Array;
@@ -138,107 +144,99 @@ pub fn get_schema() -> String {
     serde_json::to_string(&types).unwrap()
 }
 
+const RAW_BUFFER_SIZE: usize = 1 << 31; // 2 GiB
+const RAW_BUFFER_ALIGN: usize = 1 << 31; // 2 GiB
+
+/// Create a buffer for use with `parse_sync_raw`.
+/// # Panics
+/// Panics if cannot allocate buffer.
+#[napi]
+pub fn create_buffer() -> Uint8Array {
+    // 32-bit systems are not supported
+    const_assert!(std::mem::size_of::<usize>() >= 8);
+
+    let layout = Layout::from_size_align(RAW_BUFFER_SIZE, RAW_BUFFER_ALIGN).unwrap();
+    // SAFETY: Layout was created safely
+    let data_ptr = unsafe { alloc::alloc(layout) };
+    assert!(!data_ptr.is_null(), "Failed to allocate buffer");
+
+    // Return as NAPI `Uint8Array`, borrowing the allocation's memory.
+    // SAFETY: `data_ptr` is valid for reading `FOUR_GIB` bytes.
+    // TODO: Add comment pointing to Github discussion where NodeJS maintainer said
+    // passing uninitialized data is fine
+    unsafe {
+        Uint8Array::with_external_data(data_ptr, RAW_BUFFER_SIZE, |ptr, _len| {
+            let layout = Layout::from_size_align(RAW_BUFFER_SIZE, RAW_BUFFER_ALIGN).unwrap();
+            alloc::dealloc(ptr, layout);
+        })
+    }
+}
+
 /// Returns AST as raw bytes from Rust's memory.
+///
+/// Caller provides a buffer.
+/// Source text must be written into the start of the buffer, and its length provided as `source_len`.
+/// This function will parse the source, and write the AST into the buffer, starting at the end.
+/// It also writes to the buffer after the source text:
+/// * Offset of `Program` in the buffer.
+/// * Mask for converting 64-bit pointers to buffer offsets.
+///
 /// # Panics
 /// Panics if AST takes more memory than expected.
 #[napi]
 #[allow(unsafe_code, clippy::needless_pass_by_value, clippy::items_after_statements)]
-pub fn parse_sync_raw(
-    source: Uint8Array,
-    options: Option<ParserOptions>,
-    bump_size: u32,
-) -> Uint8Array {
+pub fn parse_sync_raw(mut buff: Uint8Array, source_len: u32, options: Option<ParserOptions>) {
     // 32-bit systems are not supported
     const_assert!(std::mem::size_of::<usize>() >= 8);
 
-    // Limit AST size to 2 GiB.
-    // This allows using faster `>>` bitshift operations in JS, instead of `>>>`.
-    const MAX_BUMP_SIZE: u32 = 1u32 << 31;
-    assert!(bump_size <= MAX_BUMP_SIZE, "AST cannot be larger than 2 GiB ({MAX_BUMP_SIZE} bytes)");
+    // Check buffer has expected size and alignment
+    let buff = &mut *buff;
+    let buff_ptr = (buff as *mut [u8]).cast::<u8>();
+    assert_eq!(buff.len(), RAW_BUFFER_SIZE);
+    assert_eq!(buff_ptr as usize % RAW_BUFFER_ALIGN, 0);
 
-    // Round up bump size to a power of 2
-    let bump_size = (bump_size as usize).next_power_of_two();
+    // Get offsets and size of data region to be managed by allocator.
+    // Leave space for source before it, and 16 bytes for metadata after it.
+    type Metadata = [u32; 2];
+    const METADATA_SIZE: usize = std::mem::size_of::<Metadata>().next_multiple_of(16);
 
-    // Create allocator with enough capacity for entire AST to be in 1 chunk.
-    // We want to send a buffer to JS which is `bump_size` long, and aligned on `bump_size`.
-    // Then can convert a 64-bit pointer to offset in that buffer with `ptr & (bump_size - 1)`.
-    // Bumpalo doesn't allow requesting an allocation with a specific alignment,
-    // so allocate twice as much as required, so that can use just the chunk in the middle
-    // which is aligned to `bump_size`.
-    let bump = Bump::with_capacity(bump_size * 2);
+    let data_offset = (source_len as usize).next_multiple_of(16);
+    let data_size = RAW_BUFFER_SIZE.saturating_sub(data_offset + METADATA_SIZE);
+    assert!(data_size >= Allocator::MIN_SIZE);
 
-    // Prevent Bumpalo creating any further chunks.
-    // Attempts to use more memory than requested will result in an OOM error.
-    bump.set_allocation_limit(Some(0));
+    // Create `Allocator`.
+    // Wrap in `ManuallyDrop` so the allocation doesn't get freed at end of function, or if panic.
+    // SAFETY: `data_offset` is less than `buff.len()`
+    let data_ptr = unsafe { buff_ptr.add(data_offset) };
+    // SAFETY: `data_ptr` and `data_size` are multiples of 16.
+    // `data_size` is greater than `Allocator::MIN_SIZE`.
+    // `data_ptr + data_size` is not after end of `buff`.
+    let allocator = unsafe {
+        ManuallyDrop::new(Allocator::from_raw_parts(NonNull::new_unchecked(data_ptr), data_size))
+    };
 
-    // Get pointer to end of allocation.
-    // SAFETY: No allocations from this arena are performed while the iterator is alive.
-    // Arena is empty, so no mutable references to data in the arena exist.
-    let (mut end_ptr, ..) = unsafe { bump.iter_allocated_chunks_raw().next().unwrap() };
-
-    // Consume space at end of the bump, so end of the chunk we'll send to JS is aligned on `bump_size`.
-    // As that chunk will be `bump_size` in length, start of the chunk will also be aligned on `bump_size`.
-    let padding = end_ptr as usize & (bump_size - 1);
-    if padding != 0 {
-        // SAFETY: `align` is 1 which is non-zero and a power of 2.
-        // `size` must be less than `isize::MAX` as it's less than `bump_size` which is `u32`
-        // and we've checked above this is a 64-bit system.
-        let padding_layout = unsafe { Layout::from_size_align_unchecked(padding, 1) };
-        end_ptr = bump.alloc_layout(padding_layout).as_ptr();
-    }
-    debug_assert_eq!(end_ptr as usize & (bump_size - 1), 0);
-    // SAFETY: We allocated `bump_size * 2` bytes.
-    // Bumpalo's pointer is initially at end of the allocation, so this must be within the allocation.
-    let start_ptr = unsafe { end_ptr.sub(bump_size) };
-
-    // Copy source into arena + parse.
-    // Reason for copying source into arena is to simplify calculations on JS side.
-    // All string data (whether slices of source, or escaped strings) are in the same buffer.
-    let allocator: Allocator = bump.into();
+    // Parse source
     let options = options.unwrap_or_default();
-    let (program_ptr, source_ptr) = {
-        let source_text = simdutf8::basic::from_utf8(&source).unwrap();
-        let source_text = allocator.alloc_str(source_text);
+    let program_ptr = {
+        let source = &buff[..source_len as usize];
+        let source_text = simdutf8::basic::from_utf8(source).unwrap();
         let ret = parse(&allocator, source_text, &options);
         let program = allocator.alloc(ret.program);
-        ((program as *const Program).cast::<u8>(), (source_text as *const str).cast::<u8>())
+        (program as *const Program).cast::<u8>()
     };
-    let bump = allocator.into_bump();
 
-    // Consume space between program and where metadata will go.
-    // Once metadata is written before the padding, metadata will be at `start_ptr`
-    // (i.e. start of buffer being passed to JS)
-    type Metadata = [u32; 3];
-    const METADATA_SIZE: usize = std::mem::size_of::<Metadata>();
-
-    #[allow(clippy::cast_possible_wrap)]
-    // SAFETY: `program_ptr` and `start_ptr` are part of same allocation
-    let padding = unsafe { program_ptr.offset_from(start_ptr) } - METADATA_SIZE as isize;
-    assert!(padding >= 0, "AST is larger than requested size {bump_size}");
-    if padding > 0 {
-        // SAFETY: `align` is 1 which is non-zero and a power of 2.
-        // `size` must be less than `isize::MAX` as it's less than `bump_size` and check above
-        // ensures `bump_size` cannot exceed `isize::MAX`.
-        #[allow(clippy::cast_sign_loss)]
-        let padding_layout = unsafe { Layout::from_size_align_unchecked(padding as usize, 1) };
-        bump.alloc_layout(padding_layout);
-    }
-
-    // Write metadata
+    // Write offset of program into end of buffer
     #[allow(clippy::cast_possible_truncation)]
-    let ptr_mask = (bump_size - 1) as u32;
+    let ptr_mask = (RAW_BUFFER_ALIGN - 1) as u32;
+    #[allow(clippy::cast_possible_truncation)]
     let program_offset = program_ptr as u32 & ptr_mask;
-    let source_offset = source_ptr as u32 & ptr_mask;
-    let metadata: Metadata = [program_offset, source_offset, ptr_mask];
-    let metadata = bump.alloc(metadata);
-    debug_assert!((metadata as *const Metadata).cast::<u8>() == start_ptr);
-
-    // Convert slice of allocation between `start_ptr` and `end_ptr` (length `bump_size`)
-    // to NAPI `Uint8Array`. This buffer is aligned on `bump_size`, and with the metadata at the start.
-    // SAFETY: `start_ptr` is valid for reading `bump_size` bytes.
-    // TODO: Add comment pointing to Github discussion where NodeJS maintainer said
-    // passing uninitialized data is fine
-    unsafe { Uint8Array::with_external_data(start_ptr, bump_size, move |_ptr, _len| drop(bump)) }
+    let metadata = [program_offset, ptr_mask];
+    const METADATA_OFFSET: usize = RAW_BUFFER_SIZE - METADATA_SIZE;
+    // SAFETY: `METADATA_OFFSET` is less than length of `buff`
+    #[allow(clippy::cast_ptr_alignment)]
+    unsafe {
+        buff_ptr.add(METADATA_OFFSET).cast::<Metadata>().write(metadata);
+    }
 }
 
 /// # Panics

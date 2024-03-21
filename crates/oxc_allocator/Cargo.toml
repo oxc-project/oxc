@@ -22,7 +22,8 @@ bumpalo        = { workspace = true, features = ["collections", "allocator-api2"
 serde          = { workspace = true }
 allocator-api2 = { workspace = true }
 
-layout_inspect = { workspace = true, features = ["unique_names"], optional = true }
+layout_inspect    = { workspace = true, features = ["unique_names"], optional = true }
+static_assertions = { workspace = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }

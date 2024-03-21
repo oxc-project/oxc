@@ -173,9 +173,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.16.0"
+version = "3.15.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79296716171880943b8470b5f8d03aa55eb2e645a4874bdbb28adb49162e012c"
+checksum = "7ff69b9dd49fd426c69a0db9fc04dd934cdb6645ff000864d98f7e2af8830eaa"
 dependencies = [
  "allocator-api2",
 ]
@@ -1288,6 +1288,7 @@ dependencies = [
  "layout_inspect",
  "serde",
  "serde_json",
+ "static_assertions",
 ]
 
 [[package]]
@@ -1562,7 +1563,6 @@ dependencies = [
 name = "oxc_parser_napi"
 version = "0.0.0"
 dependencies = [
- "bumpalo",
  "layout_inspect",
  "napi",
  "napi-build",

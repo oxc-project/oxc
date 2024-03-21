@@ -129,11 +129,25 @@ export function parseSync(sourceText: string, options?: ParserOptions | undefine
  */
 export function getSchema(): string
 /**
+ * Create a buffer for use with `parse_sync_raw`.
+ * # Panics
+ * Panics if cannot allocate buffer.
+ */
+export function createBuffer(): Uint8Array
+/**
  * Returns AST as raw bytes from Rust's memory.
+ *
+ * Caller provides a buffer.
+ * Source text must be written into the start of the buffer, and its length provided as `source_len`.
+ * This function will parse the source, and write the AST into the buffer, starting at the end.
+ * It also writes to the buffer after the source text:
+ * * Offset of `Program` in the buffer.
+ * * Mask for converting 64-bit pointers to buffer offsets.
+ *
  * # Panics
  * Panics if AST takes more memory than expected.
  */
-export function parseSyncRaw(source: Uint8Array, options: ParserOptions | undefined | null, bumpSize: number): Uint8Array
+export function parseSyncRaw(buff: Uint8Array, sourceLen: number, options?: ParserOptions | undefined | null): void
 /**
  * # Panics
  *
