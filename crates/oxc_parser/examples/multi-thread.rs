@@ -77,6 +77,9 @@ fn main() {
         let ast = ast_rx.recv().unwrap();
         let index = ast.borrow_index();
         println!("received ast({index}) in {:?} at {}", thread::current().id(), timestamp());
+        ast.with_ast(|bumpalo_program| {
+            println!("AST span: {:?}", bumpalo_program.0.span);
+        });
     }
 }
 
