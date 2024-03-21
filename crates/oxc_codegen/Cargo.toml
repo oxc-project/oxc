@@ -25,6 +25,7 @@ oxc_allocator = { workspace = true }
 oxc_syntax    = { workspace = true }
 sourcemap     = { version = "7.1.1" }
 bitflags      = { workspace = true }
+rustc-hash    = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }
