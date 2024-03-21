@@ -28,89 +28,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  benchmark:
-    name: Benchmark
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        # Run each benchmark in own job.
-        # Linter benchmark is by far the slowest, so split each fixture into own job.
-        component: [lexer, parser, transformer, semantic, minifier, codegen_sourcemap]
-        include:
-          - component: linter
-            fixture: 0
-          - component: linter
-            fixture: 1
-          - component: linter
-            fixture: 2
-          - component: linter
-            fixture: 3
-          - component: linter
-            fixture: 4
-    steps:
-      - name: Checkout Branch
-        uses: actions/checkout@v4
-        with:
-          show-progress: false
-          persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
-        with:
-          shared-key: 'benchmark'
-          save-cache: ${{ github.ref_name == 'main' }}
-
-      - name: Install codspeed
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-codspeed
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Start bench results interceptor server
-        working-directory: ./tasks/benchmark/codspeed
-        env:
-          COMPONENT: ${{ matrix.component }}
-          FIXTURE: ${{ matrix.fixture }}
-        run: |
-          corepack enable
-          pnpm install
-          node capture.mjs &
-
-      - name: Build benchmark
-        env:
-          RUSTFLAGS: "-C debuginfo=2 -C strip=none -g --cfg codspeed"
-        shell: bash
-        run: |
-          cargo build --release -p oxc_benchmark --bench ${{ matrix.component }} --features codspeed
-          mkdir -p target/codspeed/oxc_benchmark/
-          mv target/release/deps/${{ matrix.component }}-* target/codspeed/oxc_benchmark
-          rm -rf target/codspeed/oxc_benchmark/*.d
-
-      - name: Run benchmark
-        uses: CodSpeedHQ/action@v2
-        timeout-minutes: 30
-        env:
-          FIXTURE: ${{ matrix.fixture }}
-        with:
-          run: cargo codspeed run
-          # Dummy token for tokenless runs, to suppress logging hash of metadata JSON (see `upload.mjs`)
-          token: ${{ secrets.CODSPEED_TOKEN || 'dummy' }}
-          upload-url: http://localhost:${{ env.INTERCEPT_PORT }}/upload
-
-      - name: Upload bench data artefact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.component }}${{ matrix.fixture }}
-          path: ${{ env.DATA_DIR }}
-          if-no-files-found: error
-          retention-days: 1
-
   benchmark-napi:
     name: Benchmark NAPI parser
     runs-on: ubuntu-latest
@@ -193,7 +110,7 @@ jobs:
 
   upload:
     name: Upload benchmarks
-    needs: [benchmark, benchmark-napi]
+    needs: benchmark-napi
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Branch
