@@ -4,7 +4,8 @@ import {readFile, writeFile} from 'fs/promises';
 import {Bench} from 'tinybench';
 import {parseSync} from './index.js';
 
-const IS_CI = !!process.env.CI;
+const IS_CI = !!process.env.CI,
+    ACCURATE = IS_CI || process.env.ACCURATE;
 
 const urls = [
     // TypeScript syntax (2.81MB)
@@ -40,7 +41,14 @@ const files = await Promise.all(urls.map(async (url) => {
     return {filename, code};
 }));
 
-const bench = new Bench();
+const bench = new Bench(
+    ACCURATE
+    ? {
+        warmupIterations: 20, // Default is 5
+        time: 10000 // 10 seconds, default is 500 ms
+    }
+    : undefined
+);
 
 for (const {filename, code} of files) {
     bench.add(`parser_napi[${filename}]`, () => {
