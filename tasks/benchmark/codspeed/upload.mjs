@@ -4,11 +4,14 @@
 
 import {createReadStream} from 'fs';
 import fs from 'fs/promises';
-import {join as pathJoin} from 'path';
+import {join as pathJoin, dirname} from 'path';
+import {fileURLToPath} from 'url';
 import {createHash} from 'crypto';
 import assert from 'assert';
-import {create as createTar} from 'tar';
+import {create as createTar, extract as extractTar} from 'tar';
 import axios from 'axios';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const METADATA_SUFFIX = '_metadata.json',
     CODSPEED_UPLOAD_URL = 'https://api.codspeed.io/upload';
@@ -17,12 +20,14 @@ const dataDir = process.env.DATA_DIR,
     token = process.env.CODSPEED_TOKEN;
 
 // Find profile files and first metadata file
-const profileFiles = [];
+const profileFiles = [],
+    components = new Set();
 let metadataPath;
 for (const filename of await fs.readdir(dataDir)) {
     const path = pathJoin(dataDir, filename);
     if (filename.endsWith(METADATA_SUFFIX)) {
         if (!metadataPath) metadataPath = path;
+        components.add(metadataPath.slice(0, -METADATA_SUFFIX.length));
     } else {
         const match = filename.match(/_(\d+)\.out$/);
         assert(match, `Unexpected file: ${filename}`);
@@ -30,6 +35,23 @@ for (const filename of await fs.readdir(dataDir)) {
         const pid = +match[1];
         profileFiles.push({pid, path});
     }
+}
+
+// Add cached results for benchmarks which weren't run
+const cacheZipPath = pathJoin(__dirname, 'cachedBenches.tar.gz'),
+    cacheDir = pathJoin(dataDir, 'cache');
+await fs.mkdir(cacheDir);
+await extractTar({file: cacheZipPath, cwd: cacheDir});
+
+for (const filename of await fs.readdir(cacheDir)) {
+    const match = filename.match(/^(.+)_(\d+)\.out$/);
+    assert(match, `Unexpected file in cache: ${filename}`);
+    const [, component, pid] = match;
+    if (components.has(component)) continue;
+    
+    const outPath = pathJoin(dataDir, filename);
+    await fs.rename(pathJoin(cacheDir, filename), outPath);
+    profileFiles.push({pid: +pid, path: outPath});
 }
 
 // Move all `.out` files to one directory
