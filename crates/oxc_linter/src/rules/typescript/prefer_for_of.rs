@@ -40,7 +40,7 @@ fn is_assignee(node: &AstNode) -> bool {
         AstKind::SimpleAssignmentTarget(_)
         | AstKind::UpdateExpression(_)
         | AstKind::ArrayPattern(_) => true,
-        AstKind::UnaryExpression(ue) => ue.operator == UnaryOperator::Delete,
+        AstKind::UnaryExpression(unary_expr) => unary_expr.operator == UnaryOperator::Delete,
         _ => false,
     }
 }
@@ -65,7 +65,8 @@ fn is_increment_of(update: &Expression, var_name: &Atom) -> bool {
 
             match expr.operator {
                 AssignmentOperator::Addition => {
-                    matches!(&expr.right, Expression::NumericLiteral(lit) if lit.value == 1f64)
+                    matches!(&expr.right, Expression::NumericLiteral(lit)
+                        if (lit.value - 1f64).abs() < f64::EPSILON)
                 }
                 AssignmentOperator::Assign => {
                     let Expression::BinaryExpression(bin_expr) = &expr.right else {
@@ -79,7 +80,7 @@ fn is_increment_of(update: &Expression, var_name: &Atom) -> bool {
                     match (&bin_expr.left, &bin_expr.right) {
                         (Expression::Identifier(id), Expression::NumericLiteral(lit))
                         | (Expression::NumericLiteral(lit), Expression::Identifier(id)) => {
-                            id.name == var_name && lit.value == 1f64
+                            id.name == var_name && (lit.value - 1f64).abs() < f64::EPSILON
                         }
                         _ => false,
                     }
@@ -91,7 +92,7 @@ fn is_increment_of(update: &Expression, var_name: &Atom) -> bool {
     }
 }
 
-fn contains(parent: &Span, child: &Span) -> bool {
+fn contains(parent: Span, child: Span) -> bool {
     parent.start <= child.start && parent.end >= child.end
 }
 
@@ -130,13 +131,14 @@ impl Rule for PreferForOf {
         }
 
         let array_name = {
-            let Expression::MemberExpression(m_expr) = &test_expr.right else { return };
-            if !matches!(m_expr.static_property_name(), Some(prop_name) if prop_name == "length") {
+            let Expression::MemberExpression(mem_expr) = &test_expr.right else { return };
+            if !matches!(mem_expr.static_property_name(), Some(prop_name) if prop_name == "length")
+            {
                 return;
             }
 
-            let MemberExpression::StaticMemberExpression(sm_expr) = &**m_expr else { return };
-            match &sm_expr.object {
+            let MemberExpression::StaticMemberExpression(st_mem_expr) = &**mem_expr else { return };
+            match &st_mem_expr.object {
                 Expression::Identifier(id) => id.name.as_str(),
                 Expression::MemberExpression(m_expr) => match m_expr.static_property_name() {
                     Some(array_name) => array_name,
@@ -147,7 +149,7 @@ impl Rule for PreferForOf {
         };
 
         let Some(update_expr) = &for_stmt.update else { return };
-        if !is_increment_of(&update_expr, var_name) {
+        if !is_increment_of(update_expr, var_name) {
             return;
         }
 
@@ -155,35 +157,34 @@ impl Rule for PreferForOf {
 
         let nodes = ctx.nodes();
         let test_and_update_span = test_expr.span.merge(&update_expr.span());
-        let body_span = &for_stmt.body.span();
+        let body_span = for_stmt.body.span();
 
         if ctx.semantic().symbol_references(index_symbol_id).any(|reference| {
             let ref_id = reference.node_id();
 
             let symbol_span = nodes.get_node(ref_id).kind().span();
-            if contains(&test_and_update_span, &symbol_span) || !contains(&body_span, &symbol_span)
-            {
+            if contains(test_and_update_span, symbol_span) || !contains(body_span, symbol_span) {
                 return false;
             }
 
             let Some(ref_parent) = nodes.parent_node(ref_id) else { return true };
             let Some(ref_parent_parent) = nodes.parent_node(ref_parent.id()) else { return true };
-            if is_assignee(&ref_parent_parent) {
+            if is_assignee(ref_parent_parent) {
                 return true;
             }
 
             let parent_kind = ref_parent.kind();
-            let AstKind::MemberExpression(member_expr) = parent_kind else { return true };
-            let MemberExpression::ComputedMemberExpression(cm_expr) = &member_expr else {
+            let AstKind::MemberExpression(mem_expr) = parent_kind else { return true };
+            let MemberExpression::ComputedMemberExpression(cm_expr) = &mem_expr else {
                 return true;
             };
 
             match &cm_expr.object {
                 Expression::Identifier(id) => id.name.as_str() != array_name,
-                Expression::MemberExpression(m_expr) => {
-                    matches!(&**m_expr,
-                        MemberExpression::StaticMemberExpression(sm_expr)
-                        if sm_expr.property.name != array_name
+                Expression::MemberExpression(mem_expr) => {
+                    matches!(&**mem_expr,
+                        MemberExpression::StaticMemberExpression(st_mem_expr)
+                        if st_mem_expr.property.name != array_name
                     )
                 }
                 _ => true,
