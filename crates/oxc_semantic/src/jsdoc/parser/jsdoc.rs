@@ -1,5 +1,5 @@
 use super::jsdoc_tag::JSDocTag;
-use super::parse::JSDocParser;
+use super::parse::parse_jsdoc;
 use std::cell::OnceCell;
 
 #[derive(Debug, Clone)]
@@ -16,12 +16,14 @@ impl<'a> JSDoc<'a> {
     }
 
     pub fn comment(&self) -> &str {
-        let cache = self.cached.get_or_init(|| JSDocParser::new(self.raw).parse());
-        &cache.0
+        &self.parse().0
     }
 
-    pub fn tags<'b>(&'b self) -> &'b Vec<JSDocTag<'a>> {
-        let cache = self.cached.get_or_init(|| JSDocParser::new(self.raw).parse());
-        &cache.1
+    pub fn tags(&self) -> &Vec<JSDocTag<'a>> {
+        &self.parse().1
+    }
+
+    fn parse(&self) -> &(String, Vec<JSDocTag<'a>>) {
+        self.cached.get_or_init(|| parse_jsdoc(self.raw))
     }
 }
