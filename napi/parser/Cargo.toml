@@ -35,7 +35,6 @@ serde       = { workspace = true }
 serde_json  = { workspace = true }
 
 layout_inspect    = { workspace = true, features = ["unique_names", "serde"] }
-simdutf8          = { workspace = true }
 static_assertions = { workspace = true }
 
 [package.metadata.cargo-shear]

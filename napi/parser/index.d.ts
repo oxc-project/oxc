@@ -144,6 +144,12 @@ export function createBuffer(): Uint8Array
  * * Offset of `Program` in the buffer.
  * * Mask for converting 64-bit pointers to buffer offsets.
  *
+ * # SAFETY
+ * Caller must ensure:
+ * * Source text is written into start of the buffer.
+ * * Source text's byte length is `source_len`.
+ * * Source text is valid UTF-8.
+ *
  * # Panics
  * Panics if AST takes more memory than expected.
  */

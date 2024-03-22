@@ -8,7 +8,6 @@ use std::{
     sync::Arc,
 };
 
-use bumpalo::Bump;
 use napi::bindgen_prelude::Uint8Array;
 use napi_derive::napi;
 use static_assertions::const_assert;
@@ -160,6 +159,7 @@ const ALLOC_ATTEMPTS: usize = 10;
 /// # Panics
 /// Panics if cannot allocate buffer.
 #[napi]
+#[allow(unsafe_code)]
 pub fn create_buffer() -> Uint8Array {
     // 32-bit systems are not supported
     const_assert!(std::mem::size_of::<usize>() >= 8);
@@ -225,11 +225,30 @@ pub fn create_buffer() -> Uint8Array {
 /// * Offset of `Program` in the buffer.
 /// * Mask for converting 64-bit pointers to buffer offsets.
 ///
+/// # SAFETY
+/// Caller must ensure:
+/// * Source text is written into start of the buffer.
+/// * Source text's byte length is `source_len`.
+/// * Source text is valid UTF-8.
+///
+/// If source text is originally a JS string on JS side, and converted to a buffer with
+/// `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
+///
 /// # Panics
 /// Panics if AST takes more memory than expected.
 #[napi]
-#[allow(unsafe_code, clippy::needless_pass_by_value, clippy::items_after_statements)]
-pub fn parse_sync_raw(mut buff: Uint8Array, source_len: u32, options: Option<ParserOptions>) {
+#[allow(
+    unsafe_code,
+    clippy::needless_pass_by_value,
+    clippy::items_after_statements,
+    clippy::missing_safety_doc,
+    clippy::unnecessary_safety_comment
+)]
+pub unsafe fn parse_sync_raw(
+    mut buff: Uint8Array,
+    source_len: u32,
+    options: Option<ParserOptions>,
+) {
     // 32-bit systems are not supported
     const_assert!(std::mem::size_of::<usize>() >= 8);
 
@@ -252,19 +271,19 @@ pub fn parse_sync_raw(mut buff: Uint8Array, source_len: u32, options: Option<Par
     // Create `Allocator`.
     // Wrap in `ManuallyDrop` so the allocation doesn't get freed at end of function, or if panic.
     // SAFETY: `data_offset` is less than `buff.len()`
-    let data_ptr = unsafe { buff_ptr.add(data_offset) };
+    let data_ptr = buff_ptr.add(data_offset);
     // SAFETY: `data_ptr` and `data_size` are multiples of 16.
     // `data_size` is greater than `Allocator::MIN_SIZE`.
     // `data_ptr + data_size` is not after end of `buff`.
-    let allocator = unsafe {
-        ManuallyDrop::new(Allocator::from_raw_parts(NonNull::new_unchecked(data_ptr), data_size))
-    };
+    let allocator =
+        ManuallyDrop::new(Allocator::from_raw_parts(NonNull::new_unchecked(data_ptr), data_size));
 
     // Parse source
     let options = options.unwrap_or_default();
     let program_ptr = {
         let source = &buff[..source_len as usize];
-        let source_text = simdutf8::basic::from_utf8(source).unwrap();
+        // SAFETY: Caller guarantees source occupies this region of the buffer and is valid UTF-8
+        let source_text = str::from_utf8_unchecked(source);
         let ret = parse(&allocator, source_text, &options);
         let program = allocator.alloc(ret.program);
         (program as *const Program).cast::<u8>()
@@ -276,9 +295,7 @@ pub fn parse_sync_raw(mut buff: Uint8Array, source_len: u32, options: Option<Par
     const METADATA_OFFSET: usize = RAW_BUMP_SIZE - METADATA_SIZE;
     // SAFETY: `METADATA_OFFSET` is less than length of `buff`
     #[allow(clippy::cast_ptr_alignment)]
-    unsafe {
-        buff_ptr.add(METADATA_OFFSET).cast::<u32>().write(program_offset);
-    }
+    buff_ptr.add(METADATA_OFFSET).cast::<u32>().write(program_offset);
 }
 
 /// # Panics
