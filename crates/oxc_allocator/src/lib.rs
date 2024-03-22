@@ -42,9 +42,9 @@ impl Allocator {
     /// Panics if cannot determine layout of Bumpalo's `Bump` type.
     #[allow(unsafe_code, clippy::items_after_statements, clippy::missing_safety_doc)]
     pub unsafe fn from_raw_parts(ptr: NonNull<u8>, size: usize) -> Self {
-        // Get position of chunk header pointer in `Bump`.
+        // Get position of chunk footer pointer in `Bump`.
         // This should be const-folded by compiler.
-        let chunk_header_offset: usize = {
+        let chunk_footer_offset: usize = {
             assert_eq_size!(Cell<NonNull<ChunkFooter>>, usize);
 
             let bump = Bump::new();
@@ -67,10 +67,10 @@ impl Allocator {
         bump.set_allocation_limit(Some(0));
 
         // Get pointer to `EmptyChunkFooter`
-        let chunk_header_field = &mut *(std::ptr::addr_of_mut!(bump)
+        let chunk_footer_field = &mut *(std::ptr::addr_of_mut!(bump)
             .cast::<Cell<NonNull<ChunkFooter>>>())
-        .add(chunk_header_offset);
-        let empty_chunk_header_ptr = chunk_header_field.get();
+        .add(chunk_footer_offset);
+        let empty_chunk_footer_ptr = chunk_footer_field.get();
 
         const CHUNK_FOOTER_SIZE: usize = size_of::<ChunkFooter>();
         debug_assert_eq!(ptr.as_ptr() as usize % 16, 0);
@@ -78,20 +78,20 @@ impl Allocator {
         debug_assert!(size >= Self::MIN_SIZE);
 
         // Construct `ChunkFooter` and write into end of allocation
-        let chunk_header_ptr = ptr.as_ptr().add(size - CHUNK_FOOTER_SIZE);
+        let chunk_footer_ptr = ptr.as_ptr().add(size - CHUNK_FOOTER_SIZE);
         let chunk_footer = ChunkFooter {
             data: ptr,
             layout: Layout::from_size_align_unchecked(size, 16),
-            prev: Cell::new(empty_chunk_header_ptr),
-            ptr: Cell::new(NonNull::new_unchecked(chunk_header_ptr)),
+            prev: Cell::new(empty_chunk_footer_ptr),
+            ptr: Cell::new(NonNull::new_unchecked(chunk_footer_ptr)),
             allocated_bytes: 0,
         };
         #[allow(clippy::cast_ptr_alignment)]
-        let chunk_header_ptr = chunk_header_ptr.cast::<ChunkFooter>();
-        chunk_header_ptr.write(chunk_footer);
+        let chunk_footer_ptr = chunk_footer_ptr.cast::<ChunkFooter>();
+        chunk_footer_ptr.write(chunk_footer);
 
         // Write chunk header into bump's `chunk_header` field
-        chunk_header_field.set(NonNull::new_unchecked(chunk_header_ptr));
+        chunk_footer_field.set(NonNull::new_unchecked(chunk_footer_ptr));
 
         Self { bump }
     }
