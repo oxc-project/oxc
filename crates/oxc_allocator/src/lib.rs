@@ -95,6 +95,24 @@ impl Allocator {
 
         Self { bump }
     }
+
+    /// Set allocation limit.
+    ///
+    /// This is disabled as it would allow changing allocation limit from 0 for `Allocator`s
+    /// created by `Allocator::from_raw_parts`, which would allow them to add another chunk.
+    /// If `Allocator::reset` was then called, it would free the original chunk, which would
+    /// deallocate the memory. That must not be allowed to happen as memory may be borrowed,
+    /// in which case it could lead to a use-after-free.
+    ///
+    /// This method is only present to block access to `Bump`'s method of same name via deref.
+    /// NB: User could still deref manually and then call the method on `Bump` directly,
+    /// but this at least makes it harder to do.
+    ///
+    /// # Panics
+    /// Always panics!
+    pub fn set_allocation_limit(&self, _limit: Option<usize>) {
+        panic!("set_allocation_limit is not supported");
+    }
 }
 
 impl From<Bump> for Allocator {
