@@ -1448,7 +1448,7 @@ pub mod walk {
         match arg {
             ArrayExpressionElement::SpreadElement(spread) => visitor.visit_spread_element(spread),
             ArrayExpressionElement::Expression(expr) => {
-                visitor.visit_expression_array_element(expr)
+                visitor.visit_expression_array_element(expr);
             }
             ArrayExpressionElement::Elision(span) => visitor.visit_elision(*span),
         }
