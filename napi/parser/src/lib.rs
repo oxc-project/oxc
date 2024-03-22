@@ -144,8 +144,16 @@ pub fn get_schema() -> String {
     serde_json::to_string(&types).unwrap()
 }
 
-const RAW_BUFFER_SIZE: usize = 1 << 31; // 2 GiB
+// For raw transfer, use a buffer 4 GiB in size, with 4 GiB alignment.
+// This ensures that all 64-bit pointers have the same value in upper 32 bits,
+// so JS only needs to read the lower 32 bits to get an offset into the buffer.
+// However, only use first half of buffer (2 GiB) for the arena, so 32-bit offsets
+// don't have the highest bit set. JS bitwise operators interpret the highest bit as sign bit,
+// so this enables using `>>` bitshift operator in JS, rather than the more expensive `>>>`,
+// without offsets being interpreted as negative.
+const RAW_BUFFER_SIZE: usize = 1 << 32; // 4 GiB
 const RAW_BUFFER_ALIGN: usize = 1 << 32; // 4 GiB
+const RAW_BUMP_SIZE: usize = 1 << 31; // 2 GiB
 const ALLOC_ATTEMPTS: usize = 10;
 
 /// Create a buffer for use with `parse_sync_raw`.
@@ -156,7 +164,11 @@ pub fn create_buffer() -> Uint8Array {
     // 32-bit systems are not supported
     const_assert!(std::mem::size_of::<usize>() >= 8);
 
-    // Attempt to create allocation with required alignment
+    // Attempt to create allocation with required alignment.
+    // On some systems (e.g. MacOS), the allocator only supports alignment of up to 2 GiB,
+    // so trying to allocate with 4 GiB alignment may fail.
+    // If it does, try again with 2 GiB alignment, and repeatedly request allocations until happen
+    // to get one which is aligned on 4 GiB. Usually this happens first time.
     let mut align = RAW_BUFFER_ALIGN;
     let layout = Layout::from_size_align(RAW_BUFFER_SIZE, align).unwrap();
     // SAFETY: Layout was created safely
@@ -164,7 +176,7 @@ pub fn create_buffer() -> Uint8Array {
     if data_ptr.is_null() {
         // Could not allocate with this alignment.
         // Try again with lower alignment until get alignment we need.
-        align /= 2;
+        align = RAW_BUFFER_ALIGN / 2;
         let less_aligned_layout = Layout::from_size_align(RAW_BUFFER_SIZE, align).unwrap();
 
         let mut rejected_alloc_ptrs = Vec::with_capacity(ALLOC_ATTEMPTS);
@@ -229,11 +241,12 @@ pub fn parse_sync_raw(mut buff: Uint8Array, source_len: u32, options: Option<Par
 
     // TODO: Need fallback for when could not create buffer with required alignment
 
-    // Get offsets and size of data region to be managed by allocator.
+    // Get offsets and size of data region to be managed by arena allocator.
+    // Only use first 2 GiB of buffer.
     // Leave space for source before it, and 16 bytes for metadata after it.
     const METADATA_SIZE: usize = 16;
     let data_offset = (source_len as usize).next_multiple_of(16);
-    let data_size = RAW_BUFFER_SIZE.saturating_sub(data_offset + METADATA_SIZE);
+    let data_size = RAW_BUMP_SIZE.saturating_sub(data_offset + METADATA_SIZE);
     assert!(data_size >= Allocator::MIN_SIZE);
 
     // Create `Allocator`.
@@ -260,7 +273,7 @@ pub fn parse_sync_raw(mut buff: Uint8Array, source_len: u32, options: Option<Par
     // Write offset of program into end of buffer
     #[allow(clippy::cast_possible_truncation)]
     let program_offset = program_ptr as u32;
-    const METADATA_OFFSET: usize = RAW_BUFFER_SIZE - METADATA_SIZE;
+    const METADATA_OFFSET: usize = RAW_BUMP_SIZE - METADATA_SIZE;
     // SAFETY: `METADATA_OFFSET` is less than length of `buff`
     #[allow(clippy::cast_ptr_alignment)]
     unsafe {
