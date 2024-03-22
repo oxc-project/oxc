@@ -3230,6 +3230,4 @@ pub mod walk_mut {
             TSImportAttributeName::StringLiteral(ident) => visitor.visit_string_literal(ident),
         }
     }
-
-    // TODO: Remove me, I'm here to let vim macro work for the duration of refactoring.
 }
