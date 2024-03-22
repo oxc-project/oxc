@@ -95,10 +95,6 @@ impl Allocator {
 
         Self { bump }
     }
-
-    pub fn into_bump(self) -> Bump {
-        self.bump
-    }
 }
 
 impl From<Bump> for Allocator {
