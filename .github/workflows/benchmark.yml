@@ -167,7 +167,7 @@ jobs:
           RUSTFLAGS: "-C debuginfo=2 -C strip=none -g --cfg codspeed"
         shell: bash
         run: |
-          cargo build --release -p oxc_benchmark --bench parser_napi --features codspeed_napi
+          cargo build --release -p oxc_benchmark --bench parser_napi --no-default-features --features codspeed_napi
           mkdir -p target/codspeed/oxc_benchmark/
           mv target/release/deps/parser_napi-* target/codspeed/oxc_benchmark
           rm -rf target/codspeed/oxc_benchmark/*.d
