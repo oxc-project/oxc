@@ -114,9 +114,12 @@ impl<'a> ModuleLexer<'a> {
 
 impl<'a> Visit<'a> for ModuleLexer<'a> {
     fn visit_statement(&mut self, stmt: &Statement<'a>) {
-        if self.facade {
+        if self.facade
+            && !matches!(stmt, Statement::ModuleDeclaration(..) | Statement::Declaration(..))
+        {
             self.facade = false;
         }
+
         walk_statement(self, stmt);
     }
 
