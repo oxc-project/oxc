@@ -17,7 +17,8 @@ function deserialize(buff, sourceStr, sourceByteLen) {
     sourceLen = sourceByteLen;
     sourceIsAscii = sourceStr.length === sourceByteLen;
 
-    const metadataPos32 = (buff.length - 16) >> 2;
+    // (2 * 1024 * 1024 * 1024 - 16) >> 2
+    const metadataPos32 = 536870908;
     const program = deserializeProgram(uint32[metadataPos32]);
 
     uint8 = uint32 = float64 = undefined;
