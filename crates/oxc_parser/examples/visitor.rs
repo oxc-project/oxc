@@ -4,7 +4,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{Class, Function},
     walk::{walk_class, walk_function},
-    AstKind, Visit,
+    Visit,
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
