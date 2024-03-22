@@ -1,7 +1,11 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::{Class, Function}, walk::{walk_class, walk_function}, AstKind, Visit};
+use oxc_ast::{
+    ast::{Class, Function},
+    walk::{walk_class, walk_function},
+    AstKind, Visit,
+};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_syntax::scope::ScopeFlags;
@@ -40,11 +44,7 @@ struct ASTPass {
 }
 
 impl<'a> Visit<'a> for ASTPass {
-    fn visit_function(
-        &mut self,
-        func: &Function<'a>,
-        flags: Option<ScopeFlags>,
-    ) {
+    fn visit_function(&mut self, func: &Function<'a>, flags: Option<ScopeFlags>) {
         self.number_of_functions += 1;
         walk_function(self, func, flags);
     }
