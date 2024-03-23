@@ -41,10 +41,6 @@ pub trait Visit<'a>: Sized {
         walk_statement(self, stmt);
     }
 
-    fn visit_statement_match(&mut self, stmt: &Statement<'a>) {
-        walk_statement_match(self, stmt);
-    }
-
     fn visit_block_statement(&mut self, stmt: &BlockStatement<'a>) {
         walk_block_statement(self, stmt);
     }
@@ -211,10 +207,6 @@ pub trait Visit<'a>: Sized {
 
     fn visit_expression(&mut self, expr: &Expression<'a>) {
         walk_expression(self, expr);
-    }
-
-    fn visit_expression_match(&mut self, expr: &Expression<'a>) {
-        walk_expression_match(self, expr);
     }
 
     fn visit_meta_property(&mut self, meta: &MetaProperty<'a>) {
@@ -855,10 +847,6 @@ pub mod walk {
     }
 
     pub fn walk_statement<'a, V: Visit<'a>>(visitor: &mut V, stmt: &Statement<'a>) {
-        visitor.visit_statement_match(stmt);
-    }
-
-    pub fn walk_statement_match<'a, V: Visit<'a>>(visitor: &mut V, stmt: &Statement<'a>) {
         match stmt {
             Statement::BlockStatement(stmt) => visitor.visit_block_statement(stmt),
             Statement::BreakStatement(stmt) => visitor.visit_break_statement(stmt),
@@ -1365,10 +1353,6 @@ pub mod walk {
     /* ----------  Expression ---------- */
 
     pub fn walk_expression<'a, V: Visit<'a>>(visitor: &mut V, expr: &Expression<'a>) {
-        visitor.visit_expression_match(expr);
-    }
-
-    pub fn walk_expression_match<'a, V: Visit<'a>>(visitor: &mut V, expr: &Expression<'a>) {
         match expr {
             Expression::BigintLiteral(lit) => visitor.visit_bigint_literal(lit),
             Expression::BooleanLiteral(lit) => visitor.visit_boolean_literal(lit),
