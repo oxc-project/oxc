@@ -20,13 +20,13 @@ mod span;
 pub mod syntax_directed_operations;
 mod trivia;
 mod visit;
-mod visit_mut;
+pub mod visit_mut;
 
 pub use num_bigint::BigUint;
 
 pub use crate::{
     ast_builder::AstBuilder,
-    ast_kind::AstKind,
+    ast_kind::{AstKind, AstType},
     trivia::{Comment, CommentKind, Trivias, TriviasMap},
     visit::Visit,
     visit_mut::VisitMut,
