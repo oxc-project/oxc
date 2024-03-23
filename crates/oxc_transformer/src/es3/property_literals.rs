@@ -2,8 +2,9 @@ use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::SPAN;
 use std::rc::Rc;
 
+use crate::context::TransformerCtx;
 use crate::utils::is_valid_es3_identifier;
-use crate::{TransformOptions, TransformTarget};
+use crate::TransformTarget;
 
 /// ES3: PropertyLiteral
 ///
@@ -14,9 +15,9 @@ pub struct PropertyLiteral<'a> {
 }
 
 impl<'a> PropertyLiteral<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
-        (options.target <= TransformTarget::ES3 || options.property_literals)
-            .then_some(Self { ast })
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        (ctx.options.target <= TransformTarget::ES3 || ctx.options.property_literals)
+            .then_some(Self { ast: ctx.ast })
     }
 
     pub fn transform_object_property<'b>(&mut self, expr: &'b mut ObjectProperty<'a>) {

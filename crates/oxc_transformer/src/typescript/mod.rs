@@ -1,5 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::ast::*;
 use oxc_semantic::SymbolFlags;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
@@ -7,12 +7,12 @@ use oxc_syntax::{
     NumberBase,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::{mem, rc::Rc};
+use std::mem;
 
 mod options;
 
 pub use self::options::TypescriptOptions;
-use crate::{context::TransformerCtx, utils::is_valid_identifier, TransformOptions};
+use crate::{context::TransformerCtx, utils::is_valid_identifier};
 
 /// Transform TypeScript
 ///
@@ -21,7 +21,6 @@ use crate::{context::TransformerCtx, utils::is_valid_identifier, TransformOption
 /// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-typescript>
 /// * <https://www.typescriptlang.org/tsconfig#verbatimModuleSyntax>
 pub struct TypeScript<'a> {
-    ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
     verbatim_module_syntax: bool,
     export_name_set: FxHashSet<Atom<'a>>,
@@ -30,19 +29,13 @@ pub struct TypeScript<'a> {
 }
 
 impl<'a> TypeScript<'a> {
-    pub fn new(
-        ast: Rc<AstBuilder<'a>>,
-        ctx: TransformerCtx<'a>,
-        verbatim_module_syntax: bool,
-        options: &TransformOptions,
-    ) -> Self {
+    pub fn new(ctx: TransformerCtx<'a>, verbatim_module_syntax: bool) -> Self {
         Self {
-            ast,
-            ctx,
             verbatim_module_syntax,
             export_name_set: FxHashSet::default(),
-            options: options.typescript.clone().unwrap_or_default(),
+            options: ctx.options.typescript.clone().unwrap_or_default(),
             namespace_arg_names: FxHashMap::default(),
+            ctx,
         }
     }
 
@@ -237,16 +230,16 @@ impl<'a> TypeScript<'a> {
 
         // explicit esm
         if module_declaration_len > 0 && module_declaration_len == delete_indexes_len {
-            let empty_export = self.ast.export_named_declaration(
+            let empty_export = self.ctx.ast.export_named_declaration(
                 SPAN,
                 None,
-                self.ast.new_vec(),
+                self.ctx.ast.new_vec(),
                 None,
                 ImportOrExportKind::Value,
                 None,
             );
             let export_decl = ModuleDeclaration::ExportNamedDeclaration(empty_export);
-            program.body.push(self.ast.module_declaration(export_decl));
+            program.body.push(self.ctx.ast.module_declaration(export_decl));
         }
     }
 
@@ -283,13 +276,13 @@ impl<'a> TypeScript<'a> {
         members: &mut Vec<'a, TSEnumMember<'a>>,
         enum_name: &Atom<'a>,
     ) -> Vec<'a, Statement<'a>> {
-        let mut default_init = self.ast.literal_number_expression(NumericLiteral {
+        let mut default_init = self.ctx.ast.literal_number_expression(NumericLiteral {
             span: SPAN,
             value: 0.0,
             raw: "0",
             base: NumberBase::Decimal,
         });
-        let mut statements = self.ast.new_vec();
+        let mut statements = self.ctx.ast.new_vec();
 
         for member in members.iter_mut() {
             let (member_name, member_span) = match &member.id {
@@ -299,42 +292,47 @@ impl<'a> TypeScript<'a> {
                 | TSEnumMemberName::NumericLiteral(..) => unreachable!(),
             };
 
-            let mut init =
-                self.ast.move_expression(member.initializer.as_mut().unwrap_or(&mut default_init));
+            let mut init = self
+                .ctx
+                .ast
+                .move_expression(member.initializer.as_mut().unwrap_or(&mut default_init));
 
             let is_str = init.is_string_literal();
 
             let mut self_ref = {
-                let obj = self.ast.identifier_reference_expression(IdentifierReference::new(
+                let obj = self.ctx.ast.identifier_reference_expression(IdentifierReference::new(
                     SPAN,
                     enum_name.clone(),
                 ));
                 let expr = self
+                    .ctx
                     .ast
                     .literal_string_expression(StringLiteral::new(SPAN, member_name.clone()));
-                self.ast.computed_member_expression(SPAN, obj, expr, false)
+                self.ctx.ast.computed_member_expression(SPAN, obj, expr, false)
             };
 
             if is_valid_identifier(member_name, true) {
                 let ident = IdentifierReference::new(member_span, member_name.clone());
 
-                self_ref = self.ast.identifier_reference_expression(ident.clone());
-                let init = mem::replace(&mut init, self.ast.identifier_reference_expression(ident));
+                self_ref = self.ctx.ast.identifier_reference_expression(ident.clone());
+                let init =
+                    mem::replace(&mut init, self.ctx.ast.identifier_reference_expression(ident));
 
                 let kind = VariableDeclarationKind::Const;
                 let decls = {
-                    let mut decls = self.ast.new_vec();
+                    let mut decls = self.ctx.ast.new_vec();
 
                     let binding_identifier = BindingIdentifier::new(SPAN, member_name.clone());
                     let binding_pattern_kind =
-                        self.ast.binding_pattern_identifier(binding_identifier);
-                    let binding = self.ast.binding_pattern(binding_pattern_kind, None, false);
-                    let decl = self.ast.variable_declarator(SPAN, kind, binding, Some(init), false);
+                        self.ctx.ast.binding_pattern_identifier(binding_identifier);
+                    let binding = self.ctx.ast.binding_pattern(binding_pattern_kind, None, false);
+                    let decl =
+                        self.ctx.ast.variable_declarator(SPAN, kind, binding, Some(init), false);
 
                     decls.push(decl);
                     decls
                 };
-                let decl = self.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
+                let decl = self.ctx.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
                 let stmt: Statement<'_> =
                     Statement::Declaration(Declaration::VariableDeclaration(decl));
 
@@ -343,57 +341,63 @@ impl<'a> TypeScript<'a> {
 
             // Foo["x"] = init
             let member_expr = {
-                let obj = self.ast.identifier_reference_expression(IdentifierReference::new(
+                let obj = self.ctx.ast.identifier_reference_expression(IdentifierReference::new(
                     SPAN,
                     enum_name.clone(),
                 ));
                 let expr = self
+                    .ctx
                     .ast
                     .literal_string_expression(StringLiteral::new(SPAN, member_name.clone()));
 
-                self.ast.computed_member(SPAN, obj, expr, false)
+                self.ctx.ast.computed_member(SPAN, obj, expr, false)
             };
-            let left = self.ast.simple_assignment_target_member_expression(member_expr);
+            let left = self.ctx.ast.simple_assignment_target_member_expression(member_expr);
             let mut expr =
-                self.ast.assignment_expression(SPAN, AssignmentOperator::Assign, left, init);
+                self.ctx.ast.assignment_expression(SPAN, AssignmentOperator::Assign, left, init);
 
             // Foo[Foo["x"] = init] = "x"
             if !is_str {
                 let member_expr = {
-                    let obj = self.ast.identifier_reference_expression(IdentifierReference::new(
-                        SPAN,
-                        enum_name.clone(),
-                    ));
-                    self.ast.computed_member(SPAN, obj, expr, false)
+                    let obj = self.ctx.ast.identifier_reference_expression(
+                        IdentifierReference::new(SPAN, enum_name.clone()),
+                    );
+                    self.ctx.ast.computed_member(SPAN, obj, expr, false)
                 };
-                let left = self.ast.simple_assignment_target_member_expression(member_expr);
+                let left = self.ctx.ast.simple_assignment_target_member_expression(member_expr);
                 let right = self
+                    .ctx
                     .ast
                     .literal_string_expression(StringLiteral::new(SPAN, member_name.clone()));
-                expr =
-                    self.ast.assignment_expression(SPAN, AssignmentOperator::Assign, left, right);
+                expr = self.ctx.ast.assignment_expression(
+                    SPAN,
+                    AssignmentOperator::Assign,
+                    left,
+                    right,
+                );
             }
 
-            statements.push(self.ast.expression_statement(member.span, expr));
+            statements.push(self.ctx.ast.expression_statement(member.span, expr));
 
             // 1 + Foo["x"]
             default_init = {
-                let one = self.ast.literal_number_expression(NumericLiteral {
+                let one = self.ctx.ast.literal_number_expression(NumericLiteral {
                     span: SPAN,
                     value: 1.0,
                     raw: "1",
                     base: NumberBase::Decimal,
                 });
 
-                self.ast.binary_expression(SPAN, one, BinaryOperator::Addition, self_ref)
+                self.ctx.ast.binary_expression(SPAN, one, BinaryOperator::Addition, self_ref)
             };
         }
 
         let enum_ref = self
+            .ctx
             .ast
             .identifier_reference_expression(IdentifierReference::new(SPAN, enum_name.clone()));
         // return Foo;
-        let return_stmt = self.ast.return_statement(SPAN, Some(enum_ref));
+        let return_stmt = self.ctx.ast.return_statement(SPAN, Some(enum_ref));
         statements.push(return_stmt);
 
         statements
@@ -401,10 +405,13 @@ impl<'a> TypeScript<'a> {
 
     fn transform_ts_type_name(&self, type_name: &mut TSTypeName<'a>) -> Expression<'a> {
         match type_name {
-            TSTypeName::IdentifierReference(reference) => self.ast.identifier_reference_expression(
-                IdentifierReference::new(SPAN, reference.name.clone()),
-            ),
-            TSTypeName::QualifiedName(qualified_name) => self.ast.static_member_expression(
+            TSTypeName::IdentifierReference(reference) => {
+                self.ctx.ast.identifier_reference_expression(IdentifierReference::new(
+                    SPAN,
+                    reference.name.clone(),
+                ))
+            }
+            TSTypeName::QualifiedName(qualified_name) => self.ctx.ast.static_member_expression(
                 SPAN,
                 self.transform_ts_type_name(&mut qualified_name.left),
                 qualified_name.right.clone(),
@@ -428,22 +435,22 @@ impl<'a> TypeScript<'a> {
         let kind = VariableDeclarationKind::Var;
         let decls = {
             let binding_identifier = BindingIdentifier::new(SPAN, decl.id.name.clone());
-            let binding_pattern_kind = self.ast.binding_pattern_identifier(binding_identifier);
-            let binding = self.ast.binding_pattern(binding_pattern_kind, None, false);
+            let binding_pattern_kind = self.ctx.ast.binding_pattern_identifier(binding_identifier);
+            let binding = self.ctx.ast.binding_pattern(binding_pattern_kind, None, false);
 
             let init = match &mut decl.module_reference.0 {
                 TSModuleReference::TypeName(type_name) => self.transform_ts_type_name(type_name),
                 TSModuleReference::ExternalModuleReference(reference) => {
-                    let callee = self.ast.identifier_reference_expression(
+                    let callee = self.ctx.ast.identifier_reference_expression(
                         IdentifierReference::new(SPAN, "require".into()),
                     );
-                    let arguments = self.ast.new_vec_single(Argument::Expression(
-                        self.ast.literal_string_expression(reference.expression.clone()),
+                    let arguments = self.ctx.ast.new_vec_single(Argument::Expression(
+                        self.ctx.ast.literal_string_expression(reference.expression.clone()),
                     ));
-                    self.ast.call_expression(SPAN, callee, arguments, false, None)
+                    self.ctx.ast.call_expression(SPAN, callee, arguments, false, None)
                 }
             };
-            self.ast.new_vec_single(self.ast.variable_declarator(
+            self.ctx.ast.new_vec_single(self.ctx.ast.variable_declarator(
                 SPAN,
                 kind,
                 binding,
@@ -452,7 +459,7 @@ impl<'a> TypeScript<'a> {
             ))
         };
         let variable_declaration =
-            self.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
+            self.ctx.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
 
         Declaration::VariableDeclaration(variable_declaration)
     }
@@ -478,15 +485,22 @@ impl<'a> TypeScript<'a> {
 
         let span = decl.span;
         let ident = decl.id.clone();
-        let kind = self.ast.binding_pattern_identifier(ident);
-        let id = self.ast.binding_pattern(kind, None, false);
+        let kind = self.ctx.ast.binding_pattern_identifier(ident);
+        let id = self.ctx.ast.binding_pattern(kind, None, false);
 
-        let mut params = self.ast.new_vec();
+        let mut params = self.ctx.ast.new_vec();
 
         // ((Foo) => {
-        params.push(self.ast.formal_parameter(SPAN, id, None, false, false, self.ast.new_vec()));
+        params.push(self.ctx.ast.formal_parameter(
+            SPAN,
+            id,
+            None,
+            false,
+            false,
+            self.ctx.ast.new_vec(),
+        ));
 
-        let params = self.ast.formal_parameters(
+        let params = self.ctx.ast.formal_parameters(
             SPAN,
             FormalParameterKind::ArrowFormalParameters,
             params,
@@ -496,38 +510,39 @@ impl<'a> TypeScript<'a> {
         // Foo[Foo["X"] = 0] = "X";
         let enum_name = decl.id.name.clone();
         let statements = self.transform_ts_enum_members(&mut decl.members, &enum_name);
-        let body = self.ast.function_body(decl.span, self.ast.new_vec(), statements);
+        let body = self.ctx.ast.function_body(decl.span, self.ctx.ast.new_vec(), statements);
 
         let callee =
-            self.ast.arrow_function_expression(SPAN, false, false, params, body, None, None);
+            self.ctx.ast.arrow_function_expression(SPAN, false, false, params, body, None, None);
 
         // })(Foo || {});
-        let mut arguments = self.ast.new_vec();
+        let mut arguments = self.ctx.ast.new_vec();
         let op = LogicalOperator::Or;
         let left = self
+            .ctx
             .ast
             .identifier_reference_expression(IdentifierReference::new(SPAN, enum_name.clone()));
-        let right = self.ast.object_expression(SPAN, self.ast.new_vec(), None);
-        let expression = self.ast.logical_expression(SPAN, left, op, right);
+        let right = self.ctx.ast.object_expression(SPAN, self.ctx.ast.new_vec(), None);
+        let expression = self.ctx.ast.logical_expression(SPAN, left, op, right);
         arguments.push(Argument::Expression(expression));
 
-        let call_expression = self.ast.call_expression(SPAN, callee, arguments, false, None);
+        let call_expression = self.ctx.ast.call_expression(SPAN, callee, arguments, false, None);
 
         let kind = VariableDeclarationKind::Var;
         let decls = {
-            let mut decls = self.ast.new_vec();
+            let mut decls = self.ctx.ast.new_vec();
 
             let binding_identifier = BindingIdentifier::new(SPAN, enum_name.clone());
-            let binding_pattern_kind = self.ast.binding_pattern_identifier(binding_identifier);
-            let binding = self.ast.binding_pattern(binding_pattern_kind, None, false);
+            let binding_pattern_kind = self.ctx.ast.binding_pattern_identifier(binding_identifier);
+            let binding = self.ctx.ast.binding_pattern(binding_pattern_kind, None, false);
             let decl =
-                self.ast.variable_declarator(SPAN, kind, binding, Some(call_expression), false);
+                self.ctx.ast.variable_declarator(SPAN, kind, binding, Some(call_expression), false);
 
             decls.push(decl);
             decls
         };
         let variable_declaration =
-            self.ast.variable_declaration(span, kind, decls, Modifiers::empty());
+            self.ctx.ast.variable_declaration(span, kind, decls, Modifiers::empty());
 
         Some(Declaration::VariableDeclaration(variable_declaration))
     }
@@ -573,7 +588,7 @@ impl<'a> TypeScript<'a> {
             return None;
         }
 
-        Some(Statement::Declaration(self.ast.move_declaration(declaration)))
+        Some(Statement::Declaration(self.ctx.ast.move_declaration(declaration)))
     }
 
     /// Insert let declaration for ts module block
@@ -604,22 +619,23 @@ impl<'a> TypeScript<'a> {
             let kind = VariableDeclarationKind::Let;
             let decls = {
                 let binding_identifier = BindingIdentifier::new(SPAN, name.clone());
-                let binding_pattern_kind = self.ast.binding_pattern_identifier(binding_identifier);
-                let binding = self.ast.binding_pattern(binding_pattern_kind, None, false);
-                let decl = self.ast.variable_declarator(SPAN, kind, binding, None, false);
-                self.ast.new_vec_single(decl)
+                let binding_pattern_kind =
+                    self.ctx.ast.binding_pattern_identifier(binding_identifier);
+                let binding = self.ctx.ast.binding_pattern(binding_pattern_kind, None, false);
+                let decl = self.ctx.ast.variable_declarator(SPAN, kind, binding, None, false);
+                self.ctx.ast.new_vec_single(decl)
             };
             let variable_declaration =
-                self.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
+                self.ctx.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
 
             let decl = Declaration::VariableDeclaration(variable_declaration);
 
             let stmt = if is_export {
-                self.ast.module_declaration(ModuleDeclaration::ExportNamedDeclaration(
-                    self.ast.export_named_declaration(
+                self.ctx.ast.module_declaration(ModuleDeclaration::ExportNamedDeclaration(
+                    self.ctx.ast.export_named_declaration(
                         SPAN,
                         Some(decl),
-                        self.ast.new_vec(),
+                        self.ctx.ast.new_vec(),
                         None,
                         ImportOrExportKind::Value,
                         None,
@@ -635,7 +651,7 @@ impl<'a> TypeScript<'a> {
     fn get_namespace_arg_name(&mut self, name: &Atom<'a>) -> Atom<'a> {
         let count = self.namespace_arg_names.entry(name.clone()).or_insert(0);
         *count += 1;
-        self.ast.new_atom(&format!(
+        self.ctx.ast.new_atom(&format!(
             "_{name}{}",
             if *count > 1 { count.to_string() } else { String::new() }
         ))
@@ -657,36 +673,40 @@ impl<'a> TypeScript<'a> {
         let body_statements = match &mut block.body {
             TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
                 let transformed_module_block = self.transform_ts_module_block(decl);
-                self.ast.new_vec_single(transformed_module_block)
+                self.ctx.ast.new_vec_single(transformed_module_block)
             }
             TSModuleDeclarationBody::TSModuleBlock(ts_module_block) => {
-                self.ast.move_statement_vec(&mut ts_module_block.body)
+                self.ctx.ast.move_statement_vec(&mut ts_module_block.body)
             }
         };
 
         let name = block.id.name();
 
         let callee = {
-            let body = self.ast.function_body(SPAN, self.ast.new_vec(), body_statements);
+            let body = self.ctx.ast.function_body(SPAN, self.ctx.ast.new_vec(), body_statements);
             let arg_name = self.get_namespace_arg_name(name);
-            let params = self.ast.formal_parameters(
+            let params = self.ctx.ast.formal_parameters(
                 SPAN,
                 FormalParameterKind::FormalParameter,
-                self.ast.new_vec_single(self.ast.formal_parameter(
-                    SPAN,
-                    self.ast.binding_pattern(
-                        self.ast.binding_pattern_identifier(BindingIdentifier::new(SPAN, arg_name)),
+                self.ctx.ast.new_vec_single(
+                    self.ctx.ast.formal_parameter(
+                        SPAN,
+                        self.ctx.ast.binding_pattern(
+                            self.ctx
+                                .ast
+                                .binding_pattern_identifier(BindingIdentifier::new(SPAN, arg_name)),
+                            None,
+                            false,
+                        ),
                         None,
                         false,
+                        false,
+                        self.ctx.ast.new_vec(),
                     ),
-                    None,
-                    false,
-                    false,
-                    self.ast.new_vec(),
-                )),
+                ),
                 None,
             );
-            let function = self.ast.function(
+            let function = self.ctx.ast.function(
                 FunctionType::FunctionExpression,
                 SPAN,
                 None,
@@ -699,36 +719,39 @@ impl<'a> TypeScript<'a> {
                 None,
                 Modifiers::empty(),
             );
-            let function_expr = self.ast.function_expression(function);
-            self.ast.parenthesized_expression(SPAN, function_expr)
+            let function_expr = self.ctx.ast.function_expression(function);
+            self.ctx.ast.parenthesized_expression(SPAN, function_expr)
         };
 
-        let arguments = {
-            let right = {
-                let left = self.ast.simple_assignment_target_identifier(IdentifierReference::new(
+        let arguments =
+            {
+                let right = {
+                    let left = self.ctx.ast.simple_assignment_target_identifier(
+                        IdentifierReference::new(SPAN, name.clone()),
+                    );
+                    let right = self.ctx.ast.object_expression(SPAN, self.ctx.ast.new_vec(), None);
+                    self.ctx.ast.parenthesized_expression(
+                        SPAN,
+                        self.ctx.ast.assignment_expression(
+                            SPAN,
+                            AssignmentOperator::Assign,
+                            left,
+                            right,
+                        ),
+                    )
+                };
+                self.ctx.ast.new_vec_single(Argument::Expression(self.ctx.ast.logical_expression(
                     SPAN,
-                    name.clone(),
-                ));
-                let right = self.ast.object_expression(SPAN, self.ast.new_vec(), None);
-                self.ast.parenthesized_expression(
-                    SPAN,
-                    self.ast.assignment_expression(SPAN, AssignmentOperator::Assign, left, right),
-                )
-            };
-            self.ast.new_vec_single(Argument::Expression(
-                self.ast.logical_expression(
-                    SPAN,
-                    self.ast.identifier_reference_expression(IdentifierReference::new(
+                    self.ctx.ast.identifier_reference_expression(IdentifierReference::new(
                         SPAN,
                         name.clone(),
                     )),
                     LogicalOperator::Or,
                     right,
-                ),
-            ))
-        };
-        let expr = self.ast.call_expression(SPAN, callee, arguments, false, None);
-        self.ast.expression_statement(SPAN, expr)
+                )))
+            };
+        let expr = self.ctx.ast.call_expression(SPAN, callee, arguments, false, None);
+        self.ctx.ast.expression_statement(SPAN, expr)
     }
 
     /// Transform constructor method
@@ -772,20 +795,26 @@ impl<'a> TypeScript<'a> {
 
         for name in params_name {
             // TODO: We should push it before the super call
-            body.statements.push(self.ast.expression_statement(
-                SPAN,
-                self.ast.assignment_expression(
+            body.statements.push(
+                self.ctx.ast.expression_statement(
                     SPAN,
-                    AssignmentOperator::Assign,
-                    self.ast.simple_assignment_target_member_expression(self.ast.static_member(
+                    self.ctx.ast.assignment_expression(
                         SPAN,
-                        self.ast.this_expression(SPAN),
-                        IdentifierName::new(SPAN, name.clone()),
-                        false,
-                    )),
-                    self.ast.identifier_reference_expression(IdentifierReference::new(SPAN, name)),
+                        AssignmentOperator::Assign,
+                        self.ctx.ast.simple_assignment_target_member_expression(
+                            self.ctx.ast.static_member(
+                                SPAN,
+                                self.ctx.ast.this_expression(SPAN),
+                                IdentifierName::new(SPAN, name.clone()),
+                                false,
+                            ),
+                        ),
+                        self.ctx
+                            .ast
+                            .identifier_reference_expression(IdentifierReference::new(SPAN, name)),
+                    ),
                 ),
-            ));
+            );
         }
     }
 }

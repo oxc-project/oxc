@@ -1,10 +1,9 @@
-use crate::{context::TransformerCtx, TransformOptions, TransformTarget};
+use crate::{context::TransformerCtx, TransformTarget};
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::ast::*;
 use oxc_diagnostics::miette;
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::operator::BinaryOperator;
-use std::rc::Rc;
 
 /// ES2015: New Target
 ///
@@ -12,7 +11,6 @@ use std::rc::Rc;
 /// * <https://babel.dev/docs/babel-plugin-transform-template-new-target>
 /// * <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-new-target>
 pub struct NewTarget<'a> {
-    ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
     kinds: Vec<'a, NewTargetKind<'a>>,
 }
@@ -75,17 +73,10 @@ impl<'a> NewTarget<'a> {
 }
 
 impl<'a> NewTarget<'a> {
-    pub fn new(
-        ast: Rc<AstBuilder<'a>>,
-        ctx: TransformerCtx<'a>,
-        options: &TransformOptions,
-    ) -> Option<Self> {
-        let kinds = ast.new_vec();
-        (options.target < TransformTarget::ES2015 || options.new_target).then_some(Self {
-            ast,
-            ctx,
-            kinds,
-        })
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        let kinds = ctx.ast.new_vec();
+        (ctx.options.target < TransformTarget::ES2015 || ctx.options.new_target)
+            .then_some(Self { ctx, kinds })
     }
 
     fn push(&mut self, kind: NewTargetKind<'a>) {
@@ -97,9 +88,9 @@ impl<'a> NewTarget<'a> {
     }
 
     fn create_constructor_expr(&self, span: Span) -> Expression<'a> {
-        self.ast.static_member_expression(
+        self.ctx.ast.static_member_expression(
             span,
-            self.ast.this_expression(span),
+            self.ctx.ast.this_expression(span),
             IdentifierName { span, name: "constructor".into() },
             false,
         )
@@ -114,33 +105,35 @@ impl<'a> NewTarget<'a> {
                             *expr = self.create_constructor_expr(meta.span);
                         }
                         NewTargetKind::Method => {
-                            *expr = self.ast.void_0();
+                            *expr = self.ctx.ast.void_0();
                         }
                         NewTargetKind::Function(name) => {
                             // TODO packages/babel-helper-create-class-features-plugin/src/fields.ts#L192 unshadow
                             // It will mutate previous ast node, it is difficult at now.
                             let id = name.clone().unwrap_or_else(|| {
-                                self.ast.new_atom(self.ctx.scopes().generate_uid("target").as_str())
+                                self.ctx
+                                    .ast
+                                    .new_atom(self.ctx.scopes().generate_uid("target").as_str())
                             });
-                            let test = self.ast.binary_expression(
+                            let test = self.ctx.ast.binary_expression(
                                 SPAN,
-                                self.ast.this_expression(SPAN),
+                                self.ctx.ast.this_expression(SPAN),
                                 BinaryOperator::Instanceof,
-                                self.ast.identifier_reference_expression(IdentifierReference::new(
-                                    SPAN, id,
-                                )),
+                                self.ctx.ast.identifier_reference_expression(
+                                    IdentifierReference::new(SPAN, id),
+                                ),
                             );
-                            let consequent = self.ast.static_member_expression(
+                            let consequent = self.ctx.ast.static_member_expression(
                                 SPAN,
-                                self.ast.this_expression(SPAN),
+                                self.ctx.ast.this_expression(SPAN),
                                 IdentifierName { span: SPAN, name: "constructor".into() },
                                 false,
                             );
-                            *expr = self.ast.conditional_expression(
+                            *expr = self.ctx.ast.conditional_expression(
                                 meta.span,
                                 test,
                                 consequent,
-                                self.ast.void_0(),
+                                self.ctx.ast.void_0(),
                             );
                         }
                     }

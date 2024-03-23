@@ -99,36 +99,38 @@ impl<'a> Transformer<'a> {
         let ctx = TransformerCtx::new(
             Rc::clone(&ast),
             Rc::new(RefCell::new(semantic)),
+            options,
         );
 
         Self {
-            ctx: ctx.clone(),
-            decorators: Decorators::new(Rc::clone(&ast), ctx.clone(), &options),
+            decorators: Decorators::new(ctx.clone()),
             // TODO: pass verbatim_module_syntax from user config
-            typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), false, &options)),
-            regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
+            typescript: source_type.is_typescript().then(|| TypeScript::new(ctx.clone(), false)),
+            regexp_flags: RegexpFlags::new(ctx.clone()),
             // es2022
-            es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), &options),
+            es2022_class_static_block: es2022::ClassStaticBlock::new(ctx.clone()),
             // es2021
-            es2021_logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ast), ctx.clone(), &options),
+            es2021_logical_assignment_operators: LogicalAssignmentOperators::new(ctx.clone()),
             // es2020
-            es2020_nullish_coalescing_operators: NullishCoalescingOperator::new(Rc::clone(&ast), ctx.clone(), &options),
+            es2020_nullish_coalescing_operators: NullishCoalescingOperator::new(ctx.clone()),
             // es2019
-            es2019_json_strings: JsonStrings::new(Rc::clone(&ast), &options),
-            es2019_optional_catch_binding: OptionalCatchBinding::new(Rc::clone(&ast), &options),
+            es2019_json_strings: JsonStrings::new(ctx.clone()),
+            es2019_optional_catch_binding: OptionalCatchBinding::new(ctx.clone()),
             // es2016
-            es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), ctx.clone(), &options),
+            es2016_exponentiation_operator: ExponentiationOperator::new(ctx.clone()),
             // es2015
-            es2015_function_name: FunctionName::new(Rc::clone(&ast), ctx.clone(), &options),
-            es2015_arrow_functions: ArrowFunctions::new(Rc::clone(&ast), ctx.clone(), &options),
-            es2015_shorthand_properties: ShorthandProperties::new(Rc::clone(&ast), &options),
-            es2015_template_literals: TemplateLiterals::new(Rc::clone(&ast), &options),
-            es2015_duplicate_keys: DuplicateKeys::new(Rc::clone(&ast), &options),
-            es2015_instanceof: Instanceof::new(Rc::clone(&ast), ctx.clone(), &options),
-            es2015_new_target: NewTarget::new(Rc::clone(&ast),ctx.clone(), &options),
+            es2015_function_name: FunctionName::new(ctx.clone()),
+            es2015_arrow_functions: ArrowFunctions::new(ctx.clone()),
+            es2015_shorthand_properties: ShorthandProperties::new(ctx.clone()),
+            es2015_template_literals: TemplateLiterals::new(ctx.clone()),
+            es2015_duplicate_keys: DuplicateKeys::new(ctx.clone()),
+            es2015_instanceof: Instanceof::new(ctx.clone()),
+            es2015_new_target: NewTarget::new(ctx.clone()),
             // other
-            es3_property_literal: PropertyLiteral::new(Rc::clone(&ast), &options),
-            react_jsx: ReactJsx::new(Rc::clone(&ast), ctx.clone(), options)
+            es3_property_literal: PropertyLiteral::new(ctx.clone()),
+            react_jsx: ReactJsx::new(ctx.clone()),
+            // original context
+            ctx,
         }
     }
 
