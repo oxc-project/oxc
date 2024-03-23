@@ -150,6 +150,9 @@ export function createBuffer(): Uint8Array
  * * Source text's byte length is `source_len`.
  * * Source text is valid UTF-8.
  *
+ * If source text is originally a JS string on JS side, and converted to a buffer with
+ * `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
+ *
  * # Panics
  * Panics if AST takes more memory than expected.
  */
