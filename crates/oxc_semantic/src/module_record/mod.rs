@@ -244,4 +244,31 @@ mod module_record_tests {
         assert_eq!(module_record.local_export_entries.len(), 1);
         assert_eq!(module_record.local_export_entries[0], export_entry);
     }
+
+    #[test]
+    fn indirect_export_entries() {
+        let module_record =
+            build("import { x } from 'mod';export { x };export * as ns from 'mod';");
+        assert_eq!(module_record.indirect_export_entries.len(), 2);
+        assert_eq!(
+            module_record.indirect_export_entries[0],
+            ExportEntry {
+                module_request: Some(NameSpan::new("mod".into(), Span::new(18, 23))),
+                span: Span::new(33, 34),
+                import_name: ExportImportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
+                export_name: ExportExportName::Name(NameSpan::new("x".into(), Span::new(33, 34))),
+                local_name: ExportLocalName::Null,
+            }
+        );
+        assert_eq!(
+            module_record.indirect_export_entries[1],
+            ExportEntry {
+                module_request: Some(NameSpan::new("mod".into(), Span::new(57, 62))),
+                span: Span::new(0, 0),
+                import_name: ExportImportName::All,
+                export_name: ExportExportName::Name(NameSpan::new("ns".into(), Span::new(49, 51))),
+                local_name: ExportLocalName::Null,
+            }
+        );
+    }
 }
