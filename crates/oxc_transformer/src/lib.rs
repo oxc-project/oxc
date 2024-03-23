@@ -273,10 +273,4 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         walk_function_mut(self, func, flags);
         self.es2015_new_target.as_mut().map(|t| t.leave_function(func));
     }
-
-    fn visit_function(&mut self, func: &mut Function<'a>, flags: Option<ScopeFlags>) {
-        self.es2015_new_target.as_mut().map(|t| t.enter_function(func));
-        walk_function_mut(self, func, flags);
-        self.es2015_new_target.as_mut().map(|t| t.leave_function(func));
-    }
 }
