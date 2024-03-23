@@ -148,6 +148,8 @@ pub struct ImportEntry {
 
     /// The name that is used to locally access the imported value from within the importing module.
     pub local_name: NameSpan,
+
+    pub is_type: bool,
 }
 
 /// `ImportName` For `ImportEntry`

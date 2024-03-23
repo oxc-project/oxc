@@ -170,33 +170,35 @@ impl ModuleRecordBuilder {
     }
 
     fn visit_import_declaration(&mut self, decl: &ImportDeclaration) {
-        if decl.import_kind.is_type() {
-            return;
-        }
         let module_request = NameSpan::new(decl.source.value.to_compact_str(), decl.source.span);
+
         if let Some(specifiers) = &decl.specifiers {
             for specifier in specifiers {
-                let (import_name, local_name) = match specifier {
+                let (import_name, local_name, is_type) = match specifier {
                     ImportDeclarationSpecifier::ImportSpecifier(specifier) => (
                         ImportImportName::Name(NameSpan::new(
                             specifier.imported.name().to_compact_str(),
                             specifier.imported.span(),
                         )),
                         NameSpan::new(specifier.local.name.to_compact_str(), specifier.local.span),
+                        decl.import_kind.is_type() || specifier.import_kind.is_type(),
                     ),
                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => (
                         ImportImportName::NamespaceObject,
                         NameSpan::new(specifier.local.name.to_compact_str(), specifier.local.span),
+                        decl.import_kind.is_type(),
                     ),
                     ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => (
                         ImportImportName::Default(specifier.span),
                         NameSpan::new(specifier.local.name.to_compact_str(), specifier.local.span),
+                        decl.import_kind.is_type(),
                     ),
                 };
                 self.add_import_entry(ImportEntry {
                     module_request: module_request.clone(),
                     import_name,
                     local_name,
+                    is_type,
                 });
             }
         }

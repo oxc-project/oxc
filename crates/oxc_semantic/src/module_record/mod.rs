@@ -35,6 +35,7 @@ mod module_record_tests {
             module_request: NameSpan::new("mod".into(), Span::new(14, 19)),
             import_name: ImportImportName::Default(Span::new(7, 8)),
             local_name: NameSpan::new("v".into(), Span::new(7, 8)),
+            is_type: false,
         };
         assert_eq!(module_record.import_entries.len(), 1);
         assert_eq!(module_record.import_entries[0], import_entry);
@@ -47,6 +48,7 @@ mod module_record_tests {
             module_request: NameSpan::new("mod".into(), Span::new(20, 25)),
             import_name: ImportImportName::NamespaceObject,
             local_name: NameSpan::new("ns".into(), Span::new(12, 14)),
+            is_type: false,
         };
         assert_eq!(module_record.import_entries.len(), 1);
         assert_eq!(module_record.import_entries[0], import_entry);
@@ -59,6 +61,7 @@ mod module_record_tests {
             module_request: NameSpan::new("mod".into(), Span::new(18, 23)),
             import_name: ImportImportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
             local_name: NameSpan::new("x".into(), Span::new(9, 10)),
+            is_type: false,
         };
         assert_eq!(module_record.import_entries.len(), 1);
         assert_eq!(module_record.import_entries[0], import_entry);
@@ -71,6 +74,7 @@ mod module_record_tests {
             module_request: NameSpan::new("mod".into(), Span::new(23, 28)),
             import_name: ImportImportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
             local_name: NameSpan::new("v".into(), Span::new(14, 15)),
+            is_type: false,
         };
         assert_eq!(module_record.import_entries.len(), 1);
         assert_eq!(module_record.import_entries[0], import_entry);
