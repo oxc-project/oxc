@@ -24,7 +24,7 @@ mod tester;
 mod typescript;
 mod utils;
 
-use std::{cell::RefCell, rc::Rc, sync::Arc};
+use std::{rc::Rc, sync::Arc};
 
 use es2015::TemplateLiterals;
 use oxc_allocator::Allocator;
@@ -97,8 +97,8 @@ impl<'a> Transformer<'a> {
     ) -> Self {
         let ast = Rc::new(AstBuilder::new(allocator));
         let ctx = TransformerCtx::new(
-            Rc::clone(&ast),
-            Rc::new(RefCell::new(semantic)),
+            ast,
+            semantic,
             options,
         );
 

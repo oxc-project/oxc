@@ -21,12 +21,13 @@ pub struct TransformerCtx<'a> {
 }
 
 impl<'a> TransformerCtx<'a> {
-    pub fn new(
-        ast: Rc<AstBuilder<'a>>,
-        semantic: Rc<RefCell<Semantic<'a>>>,
-        options: TransformOptions,
-    ) -> Self {
-        Self { ast, semantic, options: Cow::Owned(options), errors: Rc::new(RefCell::new(vec![])) }
+    pub fn new(ast: Rc<AstBuilder<'a>>, semantic: Semantic<'a>, options: TransformOptions) -> Self {
+        Self {
+            ast,
+            semantic: Rc::new(RefCell::new(semantic)),
+            options: Cow::Owned(options),
+            errors: Rc::new(RefCell::new(vec![])),
+        }
     }
 
     pub fn semantic(&self) -> Ref<'_, Semantic<'a>> {
