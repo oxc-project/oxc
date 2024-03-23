@@ -31,10 +31,6 @@ pub trait VisitMut<'a>: Sized {
         walk_statement_mut(self, stmt);
     }
 
-    fn visit_statement_match(&mut self, stmt: &mut Statement<'a>) {
-        walk_statement_match_mut(self, stmt);
-    }
-
     fn visit_block_statement(&mut self, stmt: &mut BlockStatement<'a>) {
         walk_block_statement_mut(self, stmt);
     }
@@ -201,10 +197,6 @@ pub trait VisitMut<'a>: Sized {
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         walk_expression_mut(self, expr);
-    }
-
-    fn visit_expression_match(&mut self, expr: &mut Expression<'a>) {
-        walk_expression_match_mut(self, expr);
     }
 
     fn visit_meta_property(&mut self, meta: &mut MetaProperty<'a>) {
@@ -622,10 +614,6 @@ pub trait VisitMut<'a>: Sized {
         walk_declaration_mut(self, decl);
     }
 
-    fn visit_declaration_match(&mut self, decl: &mut Declaration<'a>) {
-        walk_declaration_match_mut(self, decl);
-    }
-
     /* ----------  TypeScript ---------- */
 
     fn visit_ts_import_equals_declaration(&mut self, decl: &mut TSImportEqualsDeclaration<'a>) {
@@ -868,13 +856,6 @@ pub mod walk_mut {
     }
 
     pub fn walk_statement_mut<'a, V: VisitMut<'a>>(visitor: &mut V, stmt: &mut Statement<'a>) {
-        visitor.visit_statement_match(stmt);
-    }
-
-    pub fn walk_statement_match_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        stmt: &mut Statement<'a>,
-    ) {
         match stmt {
             Statement::BlockStatement(stmt) => visitor.visit_block_statement(stmt),
             Statement::BreakStatement(stmt) => visitor.visit_break_statement(stmt),
@@ -1454,13 +1435,6 @@ pub mod walk_mut {
     /* ----------  Expression ---------- */
 
     pub fn walk_expression_mut<'a, V: VisitMut<'a>>(visitor: &mut V, expr: &mut Expression<'a>) {
-        visitor.visit_expression_match(expr);
-    }
-
-    pub fn walk_expression_match_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        expr: &mut Expression<'a>,
-    ) {
         match expr {
             Expression::BigintLiteral(lit) => visitor.visit_bigint_literal(lit),
             Expression::BooleanLiteral(lit) => visitor.visit_boolean_literal(lit),
@@ -2632,13 +2606,6 @@ pub mod walk_mut {
     }
 
     pub fn walk_declaration_mut<'a, V: VisitMut<'a>>(visitor: &mut V, decl: &mut Declaration<'a>) {
-        visitor.visit_declaration_match(decl);
-    }
-
-    pub fn walk_declaration_match_mut<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        decl: &mut Declaration<'a>,
-    ) {
         match decl {
             Declaration::VariableDeclaration(decl) => visitor.visit_variable_declaration(decl),
             Declaration::FunctionDeclaration(func) => visitor.visit_function(func, None),
