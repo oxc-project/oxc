@@ -307,6 +307,10 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.es2021_numeric_separator.as_mut().map(|t| t.transform_number_literal(lit));
     }
 
+    fn visit_bigint_literal(&mut self, lit: &mut BigIntLiteral<'a>) {
+        self.es2021_numeric_separator.as_mut().map(|t| t.transform_bigint_literal(lit));
+    }
+
     fn visit_string_literal(&mut self, lit: &mut StringLiteral) {
         self.es2019_json_strings.as_mut().map(|t| t.transform_string_literal(lit));
     }
