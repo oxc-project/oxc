@@ -28,7 +28,7 @@ use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use es2015::TemplateLiterals;
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::*, AstBuilder, AstKind, VisitMut};
+use oxc_ast::{ast::*, visit_mut::walk_function_mut, AstBuilder, AstType, VisitMut};
 use oxc_diagnostics::Error;
 use oxc_semantic::{ScopeFlags, Semantic};
 use oxc_span::SourceType;
@@ -152,16 +152,8 @@ impl<'a> Transformer<'a> {
 }
 
 impl<'a> VisitMut<'a> for Transformer<'a> {
-    fn enter_node(&mut self, kind: oxc_ast::AstKind<'a>) {
-        self.es2015_new_target.as_mut().map(|t| t.enter_node(kind));
-    }
-
-    fn leave_node(&mut self, kind: oxc_ast::AstKind<'a>) {
-        self.es2015_new_target.as_mut().map(|t| t.leave_node(kind));
-    }
-
     fn visit_program(&mut self, program: &mut Program<'a>) {
-        let kind = AstKind::Program(self.alloc(program));
+        let kind = AstType::Program;
         self.enter_scope({
             let mut flags = ScopeFlags::Top;
             if program.is_strict() {
@@ -185,7 +177,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     }
 
     fn visit_assignment_expression(&mut self, expr: &mut AssignmentExpression<'a>) {
-        let kind = AstKind::AssignmentExpression(self.alloc(expr));
+        let kind = AstType::AssignmentExpression;
         self.enter_node(kind);
 
         self.es2015_function_name.as_mut().map(|t| t.transform_assignment_expression(expr));
@@ -238,7 +230,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     }
 
     fn visit_catch_clause(&mut self, clause: &mut CatchClause<'a>) {
-        let kind = AstKind::CatchClause(self.alloc(clause));
+        let kind = AstType::CatchClause;
         self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
 
@@ -253,7 +245,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     }
 
     fn visit_object_expression(&mut self, expr: &mut ObjectExpression<'a>) {
-        let kind = AstKind::ObjectExpression(self.alloc(expr));
+        let kind = AstType::ObjectExpression;
         self.enter_node(kind);
         self.es2015_function_name.as_mut().map(|t| t.transform_object_expression(expr));
         self.es2015_duplicate_keys.as_mut().map(|t| t.transform_object_expression(expr));
@@ -265,8 +257,9 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     }
 
     fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
-        let kind = AstKind::ObjectProperty(self.alloc(prop));
+        let kind = AstType::ObjectProperty;
         self.enter_node(kind);
+        self.es2015_new_target.as_mut().map(|t| t.enter_object_property(prop));
 
         self.es2015_shorthand_properties.as_mut().map(|t| t.transform_object_property(prop));
         self.es3_property_literal.as_mut().map(|t| t.transform_object_property(prop));
@@ -276,6 +269,8 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         if let Some(init) = &mut prop.init {
             self.visit_expression(init);
         }
+
+        self.es2015_new_target.as_mut().map(|t| t.leave_object_property(prop));
         self.leave_node(kind);
     }
 
@@ -288,7 +283,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     }
 
     fn visit_variable_declarator(&mut self, declarator: &mut VariableDeclarator<'a>) {
-        let kind = AstKind::VariableDeclarator(self.alloc(declarator));
+        let kind = AstType::VariableDeclarator;
         self.enter_node(kind);
 
         self.es2015_function_name.as_mut().map(|t| t.transform_variable_declarator(declarator));
@@ -315,8 +310,9 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     }
 
     fn visit_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
-        let kind = AstKind::MethodDefinition(self.alloc(def));
+        let kind = AstType::MethodDefinition;
         self.enter_node(kind);
+        self.es2015_new_target.as_mut().map(|t| t.enter_method_definition(def));
 
         self.typescript.as_mut().map(|t| t.transform_method_definition(def));
 
@@ -332,6 +328,13 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         };
         self.visit_property_key(&mut def.key);
         self.visit_function(&mut def.value, Some(flags));
+        self.es2015_new_target.as_mut().map(|t| t.leave_method_definition(def));
         self.leave_node(kind);
+    }
+
+    fn visit_function(&mut self, func: &mut Function<'a>, flags: Option<ScopeFlags>) {
+        self.es2015_new_target.as_mut().map(|t| t.enter_function(func));
+        walk_function_mut(self, func, flags);
+        self.es2015_new_target.as_mut().map(|t| t.leave_function(func));
     }
 }

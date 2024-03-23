@@ -1,6 +1,6 @@
 use crate::{context::TransformerCtx, TransformOptions, TransformTarget};
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstBuilder, AstKind, VisitMut};
+use oxc_ast::{ast::*, AstBuilder};
 use oxc_diagnostics::miette;
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::operator::BinaryOperator;
@@ -24,17 +24,53 @@ enum NewTargetKind<'a> {
     Function(Option<Atom<'a>>),
 }
 
-impl<'a> VisitMut<'a> for NewTarget<'a> {
-    fn enter_node(&mut self, kind: AstKind<'a>) {
-        if let Some(kind) = self.get_kind(kind) {
-            self.kinds.push(kind);
+impl<'a> NewTarget<'a> {
+    pub(crate) fn enter_method_definition(&mut self, def: &MethodDefinition<'a>) {
+        let kind = match def.kind {
+            MethodDefinitionKind::Get
+            | MethodDefinitionKind::Set
+            | MethodDefinitionKind::Method => NewTargetKind::Method,
+            MethodDefinitionKind::Constructor => NewTargetKind::Constructor,
+        };
+        self.push(kind);
+    }
+
+    pub(crate) fn leave_method_definition(&mut self, _: &MethodDefinition) {
+        self.pop();
+    }
+
+    pub(crate) fn enter_object_property(&mut self, prop: &ObjectProperty<'a>) {
+        if prop.method {
+            self.push(NewTargetKind::Method);
         }
     }
 
-    fn leave_node(&mut self, kind: AstKind<'a>) {
-        if self.get_kind(kind).is_some() {
-            self.kinds.pop();
+    pub(crate) fn leave_object_property(&mut self, prop: &ObjectProperty<'a>) {
+        if prop.method {
+            self.pop();
         }
+    }
+
+    pub(crate) fn enter_function(&mut self, func: &Function<'a>) {
+        if let Some(kind) = self.function_new_target_kind(func) {
+            self.push(kind);
+        }
+    }
+
+    pub(crate) fn leave_function(&mut self, func: &Function<'a>) {
+        if self.function_new_target_kind(func).is_some() {
+            self.pop();
+        }
+    }
+
+    fn function_new_target_kind(&self, func: &Function<'a>) -> Option<NewTargetKind<'a>> {
+        // oxc visitor `MethodDefinitionKind` will enter `Function` node, here need to exclude it
+        if let Some(kind) = self.kinds.last() {
+            if !matches!(kind, NewTargetKind::Function(_)) {
+                return None;
+            }
+        }
+        func.id.as_ref().map(|id| NewTargetKind::Function(Some(id.name.clone())))
     }
 }
 
@@ -52,26 +88,12 @@ impl<'a> NewTarget<'a> {
         })
     }
 
-    fn get_kind(&self, kind: AstKind<'a>) -> Option<NewTargetKind<'a>> {
-        match kind {
-            AstKind::MethodDefinition(def) => match def.kind {
-                MethodDefinitionKind::Get
-                | MethodDefinitionKind::Set
-                | MethodDefinitionKind::Method => Some(NewTargetKind::Method),
-                MethodDefinitionKind::Constructor => Some(NewTargetKind::Constructor),
-            },
-            AstKind::ObjectProperty(property) => property.method.then_some(NewTargetKind::Method),
-            AstKind::Function(function) => {
-                // oxc visitor `MethodDefinitionKind` will enter `Function` node, here need to exclude it
-                if let Some(kind) = self.kinds.last() {
-                    if !matches!(kind, NewTargetKind::Function(_)) {
-                        return None;
-                    }
-                }
-                function.id.as_ref().map(|id| NewTargetKind::Function(Some(id.name.clone())))
-            }
-            _ => None,
-        }
+    fn push(&mut self, kind: NewTargetKind<'a>) {
+        self.kinds.push(kind);
+    }
+
+    fn pop(&mut self) {
+        self.kinds.pop();
     }
 
     fn create_constructor_expr(&self, span: Span) -> Expression<'a> {
