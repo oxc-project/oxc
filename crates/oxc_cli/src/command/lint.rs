@@ -4,8 +4,9 @@ use bpaf::Bpaf;
 use oxc_linter::AllowWarnDeny;
 
 use super::{
+    expand_glob,
     ignore::{ignore_options, IgnoreOptions},
-    misc_options, CliCommand, MiscOptions, VERSION,
+    misc_options, validate_paths, CliCommand, MiscOptions, PATHS_ERROR_MESSAGE, VERSION,
 };
 
 // To add a header or footer, see
@@ -62,20 +63,9 @@ pub struct LintOptions {
     pub tsconfig: Option<PathBuf>,
 
     /// Single file, single path or list of paths
-    #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
+    #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE), map(expand_glob))]
     pub paths: Vec<PathBuf>,
 }
-
-#[allow(clippy::ptr_arg)]
-fn validate_paths(paths: &Vec<PathBuf>) -> bool {
-    if paths.is_empty() {
-        true
-    } else {
-        paths.iter().all(|p| p.components().next() != Some(std::path::Component::ParentDir))
-    }
-}
-
-const PATHS_ERROR_MESSAGE: &str = "PATH cannot start with \"..\"";
 
 // This is formatted according to
 // <https://docs.rs/bpaf/latest/bpaf/params/struct.NamedArg.html#method.help>
@@ -213,6 +203,7 @@ mod warning_options {
 
 #[cfg(test)]
 mod lint_options {
+    use std::fs::File;
     use std::path::PathBuf;
 
     use oxc_linter::AllowWarnDeny;
@@ -234,12 +225,45 @@ mod lint_options {
     }
 
     #[test]
+    #[allow(clippy::similar_names)]
     fn multiple_paths() {
-        let options = get_lint_options("foo bar baz");
-        assert_eq!(
-            options.paths,
-            [PathBuf::from("foo"), PathBuf::from("bar"), PathBuf::from("baz")]
+        let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
+        let file_foo = temp_dir.path().join("foo.js");
+        File::create(&file_foo).expect("Could not create foo.js temp file");
+        let file_name_foo =
+            file_foo.to_str().expect("Could not get path string for foo.js temp file");
+        let file_bar = temp_dir.path().join("bar.js");
+        File::create(&file_bar).expect("Could not create bar.js temp file");
+        let file_name_bar =
+            file_bar.to_str().expect("Could not get path string for bar.js temp file");
+        let file_baz = temp_dir.path().join("baz");
+        File::create(&file_baz).expect("Could not create baz temp file");
+        let file_name_baz = file_baz.to_str().expect("Could not get path string for baz temp file");
+
+        let options =
+            get_lint_options(format!("{file_name_foo} {file_name_bar} {file_name_baz}").as_str());
+        assert_eq!(options.paths, [file_foo, file_bar, file_baz]);
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    #[allow(clippy::similar_names)]
+    fn wildcard_expansion() {
+        let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
+        let file_foo = temp_dir.path().join("foo.js");
+        File::create(&file_foo).expect("Could not create foo.js temp file");
+        let file_bar = temp_dir.path().join("bar.js");
+        File::create(&file_bar).expect("Could not create bar.js temp file");
+        let file_baz = temp_dir.path().join("baz");
+        File::create(&file_baz).expect("Could not create baz temp file");
+
+        let js_files_wildcard = temp_dir.path().join("*.js");
+        let options = get_lint_options(
+            js_files_wildcard.to_str().expect("could not get js files wildcard path"),
         );
+        assert!(options.paths.contains(&file_foo));
+        assert!(options.paths.contains(&file_bar));
+        assert!(!options.paths.contains(&file_baz));
     }
 
     #[test]
@@ -248,7 +272,7 @@ mod lint_options {
             Ok(_) => panic!("Should not allow parent dir"),
             Err(err) => match err {
                 bpaf::ParseFailure::Stderr(doc) => {
-                    assert_eq!("`../parent_dir`: PATH cannot start with \"..\"", format!("{doc}"));
+                    assert_eq!("`../parent_dir`: PATH must not contain \"..\"", format!("{doc}"));
                 }
                 _ => unreachable!(),
             },

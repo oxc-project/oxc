@@ -3,8 +3,9 @@ use std::path::PathBuf;
 use bpaf::Bpaf;
 
 use super::{
+    expand_glob,
     ignore::{ignore_options, IgnoreOptions},
-    misc_options, CliCommand, MiscOptions, VERSION,
+    misc_options, validate_paths, CliCommand, MiscOptions, PATHS_ERROR_MESSAGE, VERSION,
 };
 
 /// Formatter for the JavaScript Oxidation Compiler
@@ -30,6 +31,6 @@ pub struct FormatOptions {
     pub ignore_options: IgnoreOptions,
 
     /// Single file, single path or list of paths
-    #[bpaf(positional("PATH"), many)]
+    #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE), map(expand_glob))]
     pub paths: Vec<PathBuf>,
 }

@@ -5,7 +5,7 @@ use std::{
 };
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions, SourcemapVisualizer};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_tasks_common::{project_root, TestFiles};
@@ -67,13 +67,12 @@ impl<T: Case> Suite<T> for SourcemapSuite<T> {
             let result = case.test_result();
             let path = case.path().to_string_lossy();
             let result = match result {
-                TestResult::Snapshot(snapshot) => snapshot,
-                TestResult::ParseError(error, _) => error,
+                TestResult::Snapshot(snapshot) => snapshot.to_string(),
+                TestResult::ParseError(error, _) => format!("- {path}\n{error}"),
                 _ => {
                     unreachable!()
                 }
             };
-            writeln!(file, "- {path}").unwrap();
             writeln!(file, "{result}\n\n").unwrap();
         }
     }
@@ -89,82 +88,6 @@ pub struct SourcemapCase {
 impl SourcemapCase {
     pub fn source_type(&self) -> SourceType {
         self.source_type
-    }
-
-    fn generate_line_utf16_tables(content: &str) -> Vec<Vec<u16>> {
-        let mut tables = vec![];
-        let mut line_byte_offset = 0;
-        for (i, ch) in content.char_indices() {
-            match ch {
-                '\r' | '\n' | '\u{2028}' | '\u{2029}' => {
-                    // Handle Windows-specific "\r\n" newlines
-                    if ch == '\r' && content.chars().nth(i + 1) == Some('\n') {
-                        continue;
-                    }
-                    tables.push(content[line_byte_offset..i].encode_utf16().collect::<Vec<_>>());
-                    line_byte_offset = i;
-                }
-                _ => {}
-            }
-        }
-        tables.push(content[line_byte_offset..].encode_utf16().collect::<Vec<_>>());
-        tables
-    }
-
-    fn create_visualizer_text(
-        source: &str,
-        output: &str,
-        tokens: &[(u32, u32, u32, u32)],
-    ) -> String {
-        let source_lines = Self::generate_line_utf16_tables(source);
-        let output_lines = Self::generate_line_utf16_tables(output);
-        let mut s = String::new();
-
-        tokens.iter().reduce(|pre, cur| {
-            s.push_str(&format!(
-                "({}:{}-{}:{}) {:?}",
-                pre.0,
-                pre.1,
-                cur.0,
-                cur.1,
-                Self::str_slice_by_token(&source_lines, (pre.0, pre.1), (cur.0, cur.1))
-            ));
-            s.push_str(" --> ");
-            s.push_str(&format!(
-                "({}:{}-{}:{}) {:?}",
-                pre.2,
-                pre.3,
-                cur.2,
-                cur.3,
-                Self::str_slice_by_token(&output_lines, (pre.2, pre.3), (cur.2, cur.3))
-            ));
-            s.push('\n');
-            cur
-        });
-
-        s
-    }
-
-    fn str_slice_by_token(buff: &[Vec<u16>], start: (u32, u32), end: (u32, u32)) -> String {
-        if start.0 == end.0 {
-            return String::from_utf16(&buff[start.0 as usize][start.1 as usize..end.1 as usize])
-                .unwrap();
-        }
-
-        let mut s = String::new();
-
-        for i in start.0..end.0 {
-            let slice = &buff[i as usize];
-            if i == start.0 {
-                s.push_str(&String::from_utf16(&slice[start.1 as usize..]).unwrap());
-            } else if i == end.0 {
-                s.push_str(&String::from_utf16(&slice[..end.1 as usize]).unwrap());
-            } else {
-                s.push_str(&String::from_utf16(slice).unwrap());
-            }
-        }
-
-        s
     }
 }
 
@@ -203,28 +126,18 @@ impl Case for SourcemapCase {
             }
         }
 
-        let codegen_options = CodegenOptions {
-            enable_source_map: Some(self.path.to_string_lossy().to_string()),
-            ..CodegenOptions::default()
-        };
-        let codegen_ret = Codegen::<false>::new(source_text, codegen_options).build(&ret.program);
-        let content = codegen_ret.source_text;
-        let map = codegen_ret.source_map.unwrap();
-        let tokens = map
-            .tokens()
-            .map(|token| {
-                (
-                    token.get_src_line(),
-                    token.get_src_col(),
-                    token.get_dst_line(),
-                    token.get_dst_col(),
-                )
-            })
-            .collect::<Vec<_>>();
+        let codegen_options =
+            CodegenOptions { enable_source_map: true, ..CodegenOptions::default() };
+        let codegen_ret = Codegen::<false>::new(
+            self.path.to_string_lossy().as_ref(),
+            source_text,
+            codegen_options,
+        )
+        .build(&ret.program);
 
-        let mut result = String::new();
-        result.push_str(Self::create_visualizer_text(source_text, &content, &tokens).as_str());
-
-        TestResult::Snapshot(result)
+        TestResult::Snapshot(
+            SourcemapVisualizer::new(&codegen_ret.source_text, &codegen_ret.source_map.unwrap())
+                .into_visualizer_text(),
+        )
     }
 }

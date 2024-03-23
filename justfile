@@ -17,7 +17,7 @@ init:
 ready:
   git diff --exit-code --quiet
   typos
-  cargo fmt
+  just fmt
   just check
   just test
   just lint

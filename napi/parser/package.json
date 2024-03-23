@@ -4,7 +4,7 @@
   "scripts": {
     "build": "napi build --platform --release",
     "test": "node test.mjs",
-    "bench": "vitest bench"
+    "bench": "node parse.bench.mjs"
   },
   "devDependencies": {
     "@napi-rs/cli": "^2.18.0",

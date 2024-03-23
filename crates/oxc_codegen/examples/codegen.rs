@@ -30,12 +30,12 @@ fn main() -> std::io::Result<()> {
 
     let options = CodegenOptions::default();
     let printed =
-        Codegen::<false>::new(&source_text, options.clone()).build(&ret.program).source_text;
+        Codegen::<false>::new("", &source_text, options.clone()).build(&ret.program).source_text;
     println!("Printed:");
     println!("{printed}");
 
     let ret = Parser::new(&allocator, &printed, source_type).parse();
-    let minified = Codegen::<true>::new(&source_text, options).build(&ret.program).source_text;
+    let minified = Codegen::<true>::new("", &source_text, options).build(&ret.program).source_text;
     println!("Minified:");
     println!("{minified}");
 

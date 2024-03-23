@@ -270,14 +270,10 @@ impl<'a> TypeScript<'a> {
     fn has_value_references(&self, name: &Atom) -> bool {
         let root_scope_id = self.ctx.scopes().root_scope_id();
 
-        self.ctx
-            .scopes()
-            .get_binding(root_scope_id, name)
-            .map(|symbol_id| {
-                self.ctx.symbols().get_flag(symbol_id).is_export()
-                    || self.ctx.symbols().get_resolved_references(symbol_id).any(|x| !x.is_type())
-            })
-            .unwrap_or_default()
+        self.ctx.scopes().get_binding(root_scope_id, name).is_some_and(|symbol_id| {
+            self.ctx.symbols().get_flag(symbol_id).is_export()
+                || self.ctx.symbols().get_resolved_references(symbol_id).any(|x| !x.is_type())
+        })
     }
 }
 
