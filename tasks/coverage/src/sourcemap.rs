@@ -126,11 +126,14 @@ impl Case for SourcemapCase {
             }
         }
 
-        let codegen_options = CodegenOptions {
-            enable_source_map: Some(self.path.to_string_lossy().to_string()),
-            ..CodegenOptions::default()
-        };
-        let codegen_ret = Codegen::<false>::new(source_text, codegen_options).build(&ret.program);
+        let codegen_options =
+            CodegenOptions { enable_source_map: true, ..CodegenOptions::default() };
+        let codegen_ret = Codegen::<false>::new(
+            self.path.to_string_lossy().as_ref(),
+            source_text,
+            codegen_options,
+        )
+        .build(&ret.program);
 
         TestResult::Snapshot(
             SourcemapVisualizer::new(&codegen_ret.source_text, &codegen_ret.source_map.unwrap())
