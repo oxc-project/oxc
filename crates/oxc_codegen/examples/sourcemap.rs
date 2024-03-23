@@ -26,13 +26,11 @@ fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
-    let codegen_options = CodegenOptions {
-        enable_source_map: Some(path.to_string_lossy().into()),
-        enable_typescript: true,
-    };
+    let codegen_options = CodegenOptions { enable_source_map: true, enable_typescript: true };
 
     let CodegenReturn { source_text, source_map } =
-        Codegen::<false>::new(&source_text, codegen_options).build(&ret.program);
+        Codegen::<false>::new(path.to_string_lossy().as_ref(), &source_text, codegen_options)
+            .build(&ret.program);
 
     if let Some(source_map) = source_map {
         let mut buff = vec![];
