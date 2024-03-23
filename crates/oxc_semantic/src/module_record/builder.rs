@@ -219,6 +219,7 @@ impl ModuleRecordBuilder {
                     exported_name.span(),
                 ))
             }),
+            span: decl.span,
             ..ExportEntry::default()
         };
         self.add_export_entry(export_entry);
