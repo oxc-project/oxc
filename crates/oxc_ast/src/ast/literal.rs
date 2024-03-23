@@ -6,10 +6,11 @@
 use std::{
     fmt,
     hash::{Hash, Hasher},
+    marker::PhantomData,
 };
 
 use bitflags::bitflags;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, CompactStr, Span};
 use oxc_syntax::{BigintBase, NumberBase};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
@@ -116,9 +117,10 @@ impl<'a> Hash for NumericLiteral<'a> {
 pub struct BigIntLiteral<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub raw: Atom<'a>,
+    pub raw: CompactStr,
     #[cfg_attr(feature = "serialize", serde(skip))]
     pub base: BigintBase,
+    pub(crate) _marker: PhantomData<&'a ()>,
 }
 
 impl<'a> BigIntLiteral<'a> {

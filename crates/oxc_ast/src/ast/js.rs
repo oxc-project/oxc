@@ -501,7 +501,7 @@ impl<'a> PropertyKey<'a> {
                 Expression::StringLiteral(lit) => Some(lit.value.to_compact_str()),
                 Expression::RegExpLiteral(lit) => Some(lit.regex.to_string().into()),
                 Expression::NumericLiteral(lit) => Some(lit.value.to_string().into()),
-                Expression::BigintLiteral(lit) => Some(lit.raw.to_compact_str()),
+                Expression::BigintLiteral(lit) => Some(lit.raw.clone()),
                 Expression::NullLiteral(_) => Some("null".into()),
                 Expression::TemplateLiteral(lit) => lit
                     .expressions

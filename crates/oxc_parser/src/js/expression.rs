@@ -325,7 +325,7 @@ impl<'a> ParserImpl<'a> {
         let _value = parse_big_int(src, token.kind)
             .map_err(|err| diagnostics::InvalidNumber(err, token.span()))?;
         self.bump_any();
-        Ok(self.ast.bigint_literal(self.end_span(span), Atom::from(raw), base))
+        Ok(self.ast.bigint_literal(self.end_span(span), raw, base))
     }
 
     pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral<'a> {
