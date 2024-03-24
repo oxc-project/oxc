@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use oxc_ast::ast::*;
 
 use crate::{
@@ -11,26 +9,27 @@ use crate::{
 ///
 /// References:
 /// * <https://babeljs.io/docs/babel-plugin-transform-numeric-separator>
-pub struct NumericSeparator<'a>(PhantomData<&'a ()>);
+pub struct NumericSeparator<'a> {
+    ctx: TransformerCtx<'a>,
+}
 
 impl<'a> NumericSeparator<'a> {
     #![allow(clippy::unused_self)]
 
-    pub fn new(_: TransformerCtx<'a>, options: &TransformOptions) -> Option<Self> {
+    pub fn new(ctx: TransformerCtx<'a>, options: &TransformOptions) -> Option<Self> {
         (options.target < TransformTarget::ES2021 || options.numeric_separator)
-            .then_some(Self(PhantomData {}))
+            .then_some(Self { ctx })
     }
 
     pub fn transform_number_literal(&mut self, lit: &mut NumericLiteral<'a>) {
         if !lit.raw.is_empty() {
-            // set literal raw string to empty so codegen have to use the value.
-            lit.raw = "";
+            lit.raw = self.ctx.ast.new_str(lit.raw.replace('_', "").as_str());
         }
     }
 
     pub fn transform_bigint_literal(&mut self, lit: &mut BigIntLiteral<'a>) {
         let raw = &lit.raw;
-        if !raw.is_empty() && raw.contains('_') {
+        if !raw.is_empty() {
             lit.raw = raw.replace('_', "").into();
         }
     }
