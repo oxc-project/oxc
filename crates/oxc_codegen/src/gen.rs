@@ -1081,18 +1081,19 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for NumericLiteral<'a> {
                 let value = abs_value as u64;
                 // If integers less than 1000, we know that exponential notation will always be longer than
                 // the integer representation. This is not the case for 1000 which is "1e3".
-                if value < 1000 {
-                    format!("{value}")
-                } else if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
-                    let hex = format!("{value:#x}");
-                    let result = print_non_negative_float(abs_value, p);
-                    if hex.len() < result.len() {
-                        hex
-                    } else {
-                        result
+                match value {
+                    _ if !MINIFY => print_non_negative_float(abs_value, p),
+                    value @ ..=999 => format!("{value}"),
+                    1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800 => {
+                        let hex = format!("{value:#x}");
+                        let result = print_non_negative_float(abs_value, p);
+                        if hex.len() < result.len() {
+                            hex
+                        } else {
+                            result
+                        }
                     }
-                } else {
-                    print_non_negative_float(abs_value, p)
+                    _ => print_non_negative_float(abs_value, p),
                 }
             };
             let bytes = result.as_bytes();
