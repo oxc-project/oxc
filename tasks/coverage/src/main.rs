@@ -1,11 +1,3 @@
-#[cfg(not(target_env = "msvc"))]
-#[global_allocator]
-static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
-
-#[cfg(target_os = "windows")]
-#[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
-
 use oxc_coverage::AppArgs;
 use pico_args::Arguments;
 
@@ -25,6 +17,7 @@ fn main() {
         "parser" => args.run_parser(),
         "codegen" => args.run_codegen(),
         "codegen-runtime" => args.run_codegen_runtime(),
+        "prettier" => args.run_prettier(),
         "minifier" => args.run_minifier(),
         "v8_test262_status" => args.run_sync_v8_test262_status(),
         _ => args.run_all(),

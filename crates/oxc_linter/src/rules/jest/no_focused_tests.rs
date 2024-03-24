@@ -70,7 +70,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
         return;
     };
-    let ParsedGeneralJestFnCall { kind, members, name } = jest_fn_call;
+    let ParsedGeneralJestFnCall { kind, members, name, .. } = jest_fn_call;
     if !matches!(kind, JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)) {
         return;
     }
@@ -78,7 +78,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     if name.starts_with('f') {
         ctx.diagnostic_with_fix(NoFocusedTestsDiagnostic(call_expr.span), || {
             let start = call_expr.span.start;
-            Fix::delete(Span { start, end: start + 1 })
+            Fix::delete(Span::new(start, start + 1))
         });
 
         return;
@@ -94,7 +94,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
             } else {
                 span.end + 1
             };
-            Fix::delete(Span { start, end })
+            Fix::delete(Span::new(start, end))
         });
     }
 }

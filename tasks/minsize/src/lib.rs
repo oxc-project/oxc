@@ -1,11 +1,3 @@
-#[cfg(not(target_env = "msvc"))]
-#[global_allocator]
-static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
-
-#[cfg(target_os = "windows")]
-#[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
-
 use std::{
     fs::File,
     io::{self, Write},
@@ -81,7 +73,7 @@ fn minify(source_text: &str, source_type: SourceType, options: MinifierOptions) 
     let program = Parser::new(&allocator, source_text, source_type).parse().program;
     let program = allocator.alloc(program);
     Minifier::new(options).build(&allocator, program);
-    Codegen::<true>::new(source_text.len(), CodegenOptions).build(program)
+    Codegen::<true>::new("", source_text, CodegenOptions::default()).build(program).source_text
 }
 
 fn gzip_size(s: &str) -> usize {

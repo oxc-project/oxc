@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: prefer_regexp_test
 ---
-
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
    ╭─[prefer_regexp_test.tsx:1:34]
  1 │ const re = /a/; const bar = !foo.match(re)
@@ -338,4 +337,3 @@ expression: prefer_regexp_test
    ·       ────
    ╰────
   help: RegExp#test() exclusively returns a boolean and therefore is more efficient
-

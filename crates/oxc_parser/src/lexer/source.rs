@@ -106,12 +106,14 @@ impl<'a> Source<'a> {
     /// Get entire source text as `&str`.
     #[inline]
     pub(super) fn whole(&self) -> &'a str {
-        // SAFETY: `start` and `end` are created from a `&str` in `Source::new`,
-        // so guaranteed to be start and end of a valid UTF-8 string
+        // SAFETY:
+        // `start` and `end` are created from a `&str` in `Source::new`, so `start` cannot be after `end`.
+        // `start` and `end` are by definition on UTF-8 char boundaries.
         unsafe {
-            let len = self.end as usize - self.start as usize;
-            let slice = slice::from_raw_parts(self.start, len);
-            str::from_utf8_unchecked(slice)
+            self.str_between_positions_unchecked(
+                SourcePosition::new(self.start),
+                SourcePosition::new(self.end),
+            )
         }
     }
 
@@ -119,16 +121,13 @@ impl<'a> Source<'a> {
     #[inline]
     pub(super) fn remaining(&self) -> &'a str {
         // SAFETY:
-        // `start` and `end` are created from a `&str` in `Source::new` so span a single allocation.
-        // Invariant of `Source` is that `ptr` is always >= `start` and <= `end`,
-        // so a slice spanning `ptr` to `end` will always be part of of a single allocation.
-        // Invariant of `Source` is that `ptr` is always on a UTF-8 character boundary,
-        // so slice from `ptr` to `end` will always be a valid UTF-8 string.
+        // Invariant of `Source` is that `ptr` is always <= `end`, and is on a UTF-8 char boundary.
+        // `end` is pointer to end of original `&str`, so be definition a UTF-8 char boundary.
         unsafe {
-            let len = self.end as usize - self.ptr as usize;
-            let slice = slice::from_raw_parts(self.ptr, len);
-            debug_assert!(slice.is_empty() || !is_utf8_cont_byte(slice[0]));
-            str::from_utf8_unchecked(slice)
+            self.str_between_positions_unchecked(
+                SourcePosition::new(self.ptr),
+                SourcePosition::new(self.end),
+            )
         }
     }
 
@@ -162,22 +161,7 @@ impl<'a> Source<'a> {
     pub(super) fn position(&self) -> SourcePosition<'a> {
         // SAFETY: Creating a `SourcePosition` from current position of `Source` is always valid,
         // if caller has upheld safety conditions of other unsafe methods of this type.
-        let pos = unsafe { SourcePosition::new(self.ptr) };
-
-        // SAFETY: `pos.read()`'s contract is upheld by:
-        // * The preceding checks that `pos.ptr` >= `self.start` and < `self.end`.
-        // * `Source`'s invariants guarantee that `self.start` - `self.end` contains allocated memory.
-        // * `Source::new` takes an immutable ref `&str`, guaranteeing that the memory `pos.ptr`
-        //   addresses cannot be aliased by a `&mut` ref as long as `Source` exists.
-        // * `SourcePosition` can only live as long as the `&str` underlying `Source`.
-        debug_assert!(
-            pos.ptr >= self.start
-                && pos.ptr <= self.end
-                // SAFETY: See above
-                && (pos.ptr == self.end || !is_utf8_cont_byte(unsafe { pos.read() }))
-        );
-
-        pos
+        unsafe { SourcePosition::new(self.ptr) }
     }
 
     /// Move current position.
@@ -207,6 +191,12 @@ impl<'a> Source<'a> {
         self.ptr = pos.ptr;
     }
 
+    /// Advance `Source`'s cursor to end.
+    #[inline]
+    pub(super) fn advance_to_end(&mut self) {
+        self.ptr = self.end;
+    }
+
     /// Get string slice from a `SourcePosition` up to the current position of `Source`.
     pub(super) fn str_from_pos_to_current(&self, pos: SourcePosition) -> &'a str {
         assert!(pos.ptr <= self.ptr);
@@ -214,10 +204,9 @@ impl<'a> Source<'a> {
         unsafe { self.str_from_pos_to_current_unchecked(pos) }
     }
 
-    /// Get string slice from a `SourcePosition` up to the current position of `Source`,
-    /// without checks.
+    /// Get string slice from a `SourcePosition` up to current position of `Source`, without checks.
     ///
-    /// SAFETY:
+    /// # SAFETY
     /// `pos` must not be after current position of `Source`.
     /// This is always the case if both:
     /// 1. `Source::set_position` has not been called since `pos` was created.
@@ -225,19 +214,66 @@ impl<'a> Source<'a> {
     #[inline]
     pub(super) unsafe fn str_from_pos_to_current_unchecked(&self, pos: SourcePosition) -> &'a str {
         // SAFETY: Caller guarantees `pos` is not after current position of `Source`.
+        // `self.ptr` is always a valid `SourcePosition` due to invariants of `Source`.
+        self.str_between_positions_unchecked(pos, SourcePosition::new(self.ptr))
+    }
+
+    /// Get string slice from current position of `Source` up to a `SourcePosition`, without checks.
+    ///
+    /// # SAFETY
+    /// `pos` must not be before current position of `Source`.
+    /// This is always the case if both:
+    /// 1. `Source::set_position` has not been called since `pos` was created.
+    /// 2. `pos` has not been moved backwards with `SourcePosition::sub`.
+    #[inline]
+    pub(super) unsafe fn str_from_current_to_pos_unchecked(&self, pos: SourcePosition) -> &'a str {
+        // SAFETY: Caller guarantees `pos` is not before current position of `Source`.
+        // `self.ptr` is always a valid `SourcePosition` due to invariants of `Source`.
+        self.str_between_positions_unchecked(SourcePosition::new(self.ptr), pos)
+    }
+
+    /// Get string slice from a `SourcePosition` up to the end of `Source`.
+    #[inline]
+    pub(super) fn str_from_pos_to_end(&self, pos: SourcePosition) -> &'a str {
+        // SAFETY: Invariants of `SourcePosition` is that it cannot be after end of `Source`,
+        // and always on a UTF-8 character boundary.
+        // `self.end` is always a valid `SourcePosition` due to invariants of `Source`.
+        unsafe { self.str_between_positions_unchecked(pos, SourcePosition::new(self.end)) }
+    }
+
+    /// Get string slice of source between 2 `SourcePosition`s, without checks.
+    ///
+    /// # SAFETY
+    /// `start` must not be after `end`.
+    #[inline]
+    pub(super) unsafe fn str_between_positions_unchecked(
+        &self,
+        start: SourcePosition,
+        end: SourcePosition,
+    ) -> &'a str {
+        // Check `start` is not after `end`
+        debug_assert!(start.ptr <= end.ptr);
+        // Check `start` and `end` are within bounds of `Source`
+        debug_assert!(start.ptr >= self.start);
+        debug_assert!(end.ptr <= self.end);
+        // Check `start` and `end` are on UTF-8 character boundaries.
+        // SAFETY: Above assertions ensure `start` and `end` are valid to read from if not at EOF.
+        debug_assert!(start.ptr == self.end || !is_utf8_cont_byte(start.read()));
+        debug_assert!(end.ptr == self.end || !is_utf8_cont_byte(end.read()));
+
+        // SAFETY: Caller guarantees `start` is not after `end`.
         // `SourcePosition`s can only be created from a `Source`.
         // `Source::new` takes a `UniquePromise`, which guarantees that it's the only `Source`
         // in existence on this thread. `Source` is not `Sync` or `Send`, so no possibility another
         // `Source` originated on another thread can "jump" onto this one.
         // This is sufficient to guarantee that any `SourcePosition` that parser/lexer holds must be
-        // from this `Source`, therefore `pos.ptr` and `self.ptr` must both be within the same allocation
-        // and derived from the same original pointer.
+        // from this `Source`, therefore `start.ptr` and `end.ptr` must both be within the same
+        // allocation, and derived from the same original pointer.
         // Invariants of `Source` and `SourcePosition` types guarantee that both are positioned
         // on UTF-8 character boundaries. So slicing source text between these 2 points will always
         // yield a valid UTF-8 string.
-        debug_assert!(pos.ptr <= self.ptr);
-        let len = self.ptr as usize - pos.addr();
-        let slice = slice::from_raw_parts(pos.ptr, len);
+        let len = end.addr() - start.addr();
+        let slice = slice::from_raw_parts(start.ptr, len);
         std::str::from_utf8_unchecked(slice)
     }
 
@@ -245,8 +281,15 @@ impl<'a> Source<'a> {
     #[allow(clippy::cast_possible_truncation)]
     #[inline]
     pub(super) fn offset(&self) -> u32 {
+        self.offset_of(self.position())
+    }
+
+    /// Get offset of `pos`.
+    #[allow(clippy::cast_possible_truncation)]
+    #[inline]
+    pub(super) fn offset_of(&self, pos: SourcePosition) -> u32 {
         // Cannot overflow `u32` because of `MAX_LEN` check in `Source::new`
-        (self.ptr as usize - self.start as usize) as u32
+        (pos.addr() - self.start as usize) as u32
     }
 
     /// Move current position back by `n` bytes.
@@ -258,7 +301,7 @@ impl<'a> Source<'a> {
     /// * Moving back `n` bytes would not place current position on a UTF-8 character boundary.
     #[inline]
     pub(super) fn back(&mut self, n: usize) {
-        // This assertion is essential to ensure safety of `pos.read()` call below.
+        // This assertion is essential to ensure safety of `new_pos.read()` call below.
         // Without this check, calling `back(0)` on an empty `Source` would cause reading
         // out of bounds.
         // Compiler should remove this assertion when inlining this function,
@@ -377,7 +420,7 @@ impl<'a> Source<'a> {
     /// In particular, safe methods `Source::next_char`, `Source::peek_char`, and `Source::remaining`
     /// are *not* safe to call until one of above conditions is satisfied.
     #[inline]
-    unsafe fn next_byte_unchecked(&mut self) -> u8 {
+    pub(super) unsafe fn next_byte_unchecked(&mut self) -> u8 {
         // SAFETY: Caller guarantees not at end of file i.e. `ptr != end`.
         // Methods of this type provide no way for `ptr` to be before `start` or after `end`.
         // Therefore always valid to read a byte from `ptr`, and incrementing `ptr` cannot result
@@ -535,6 +578,26 @@ impl<'a> SourcePosition<'a> {
         // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
         debug_assert!(!self.ptr.is_null());
         *self.ptr.as_ref().unwrap_unchecked()
+    }
+
+    /// Read 2 bytes from this `SourcePosition`.
+    ///
+    /// # SAFETY
+    /// Caller must ensure `SourcePosition` is no later than 2 bytes before end of source text.
+    /// i.e. if source length is 10, `self` must be on position 8 max.
+    #[inline]
+    pub(super) unsafe fn read2(self) -> [u8; 2] {
+        // SAFETY:
+        // Caller guarantees `self` is not at no later than 2 bytes before end of source text.
+        // `Source` is created from a valid `&str`, so points to allocated, initialized memory.
+        // `Source` conceptually holds the source text `&str`, which guarantees to mutable references
+        // to the same memory can exist, as that would violate Rust's aliasing rules.
+        // Pointer is "dereferenceable" by definition as a `u8` is 1 byte and cannot span multiple objects.
+        // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
+        debug_assert!(!self.ptr.is_null());
+        #[allow(clippy::ptr_as_ptr)]
+        let p = self.ptr as *const [u8; 2];
+        *p.as_ref().unwrap_unchecked()
     }
 }
 

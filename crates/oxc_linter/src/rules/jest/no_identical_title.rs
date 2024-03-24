@@ -120,10 +120,8 @@ fn filter_and_process_jest_result<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
-) -> Option<(Span, &'a Atom, JestFnKind, AstNodeId)> {
-    let Some(result) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
-        return None;
-    };
+) -> Option<(Span, &'a Atom<'a>, JestFnKind, AstNodeId)> {
+    let result = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)?;
     let kind = result.kind;
     // we only need check `describe` or `test` block
     if !matches!(kind, JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)) {
@@ -134,9 +132,7 @@ fn filter_and_process_jest_result<'a>(
         return None;
     }
 
-    let Some(parent_id) = get_closest_block(possible_jest_node.node, ctx) else {
-        return None;
-    };
+    let parent_id = get_closest_block(possible_jest_node.node, ctx)?;
 
     match call_expr.arguments.first() {
         Some(Argument::Expression(Expression::StringLiteral(string_lit))) => {

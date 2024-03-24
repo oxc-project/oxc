@@ -10,7 +10,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{CompactStr, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{
@@ -24,12 +24,12 @@ use crate::{
 enum ExplicitLengthCheckDiagnostic {
     #[error("eslint-plugin-unicorn(explicit-length-check): Use `.{1} {2}` when checking {1} is not zero.")]
     #[diagnostic(severity(warning))]
-    NoneZero(#[label] Span, Atom, Atom, #[help] Option<String>),
+    NoneZero(#[label] Span, CompactStr, CompactStr, #[help] Option<String>),
     #[error(
         "eslint-plugin-unicorn(explicit-length-check): Use `.{1} {2}` when checking {1} is zero."
     )]
     #[diagnostic(severity(warning))]
-    Zero(#[label] Span, Atom, Atom, #[help] Option<String>),
+    Zero(#[label] Span, CompactStr, CompactStr, #[help] Option<String>),
 }
 #[derive(Debug, Default, Clone)]
 enum NonZero {
@@ -78,7 +78,7 @@ declare_oxc_lint!(
     pedantic
 );
 fn is_literal(expr: &Expression, value: f64) -> bool {
-    matches!(expr, Expression::NumberLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
+    matches!(expr, Expression::NumericLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
 }
 fn is_compare_left(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> bool {
     matches!(
@@ -218,7 +218,7 @@ impl ExplicitLengthCheck {
         let diagnostic = if is_zero_length_check {
             ExplicitLengthCheckDiagnostic::Zero(
                 span,
-                property.clone(),
+                property.to_compact_str(),
                 check_code.into(),
                 if auto_fix {
                     None
@@ -229,7 +229,7 @@ impl ExplicitLengthCheck {
         } else {
             ExplicitLengthCheckDiagnostic::NoneZero(
                 span,
-                property.clone(),
+                property.to_compact_str(),
                 check_code.into(),
                 if auto_fix {
                     None
@@ -279,7 +279,7 @@ impl Rule for ExplicitLengthCheck {
                         operator, right, ..
                     })) if *operator == LogicalOperator::And
                         || (*operator == LogicalOperator::Or
-                            && !matches!(right, Expression::NumberLiteral(_))) =>
+                            && !matches!(right, Expression::NumericLiteral(_))) =>
                     {
                         self.report(ctx, ancestor, is_negative, static_member_expr, false);
                     }

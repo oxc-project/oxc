@@ -105,10 +105,7 @@ fn diagnose_variable_declarator(
         && matches!(parent_kind, Some(AstKind::VariableDeclaration(var_declaration)) if !var_declaration.kind.is_const() )
     {
         ctx.diagnostic_with_fix(RemoveNullDiagnostic(null_literal.span), || {
-            Fix::delete(Span {
-                start: variable_declarator.id.span().end,
-                end: null_literal.span.end,
-            })
+            Fix::delete(Span::new(variable_declarator.id.span().end, null_literal.span.end))
         });
 
         return;

@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 /// https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-
 #[derive(Debug, Deserialize, Default)]
-pub struct ESLintSettingsReact {
+pub struct ReactPluginSettings {
     #[serde(default)]
     #[serde(rename = "formComponents")]
     form_components: Vec<CustomComponent>,
@@ -12,7 +12,7 @@ pub struct ESLintSettingsReact {
     // TODO: More properties should be added
 }
 
-impl ESLintSettingsReact {
+impl ReactPluginSettings {
     pub fn get_form_component_attrs(&self, name: &str) -> Option<Vec<String>> {
         get_component_attrs_by_name(&self.form_components, name)
     }

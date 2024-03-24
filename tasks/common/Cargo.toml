@@ -14,7 +14,7 @@ doctest = false
 
 [dependencies]
 console    = "0.15.8"
-oxc_syntax = { workspace = true, features = ["serde"] }
+oxc_syntax = { workspace = true, features = ["serialize"] }
 
 project-root = { workspace = true }
 serde        = { workspace = true, features = ["derive"] }

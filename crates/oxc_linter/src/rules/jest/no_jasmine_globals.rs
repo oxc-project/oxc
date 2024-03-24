@@ -79,14 +79,11 @@ fn diagnostic_assign_expr<'a>(expr: &'a AssignmentExpression<'a>, ctx: &LintCont
         SimpleAssignmentTarget::MemberAssignmentTarget(member_expr),
     ) = &expr.left
     {
-        let (span, property_name) = match get_jasmine_property_name(member_expr) {
-            Some(value) => value,
-            None => return,
-        };
+        let Some((span, property_name)) = get_jasmine_property_name(member_expr) else { return };
 
         if property_name == "DEFAULT_TIMEOUT_INTERVAL" {
             // `jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000` we can fix it to `jest.setTimeout(5000)`
-            if let Expression::NumberLiteral(number_literal) = &expr.right {
+            if let Expression::NumericLiteral(number_literal) = &expr.right {
                 ctx.diagnostic_with_fix(
                     NoJasmineGlobalsDiagnostic(COMMON_ERROR_TEXT, COMMON_HELP_TEXT, span),
                     || {
@@ -104,10 +101,7 @@ fn diagnostic_assign_expr<'a>(expr: &'a AssignmentExpression<'a>, ctx: &LintCont
 
 fn diagnostic_call_expr<'a>(expr: &'a CallExpression<'a>, ctx: &LintContext) {
     if let Expression::MemberExpression(member_expr) = &expr.callee {
-        let (span, property_name) = match get_jasmine_property_name(member_expr) {
-            Some(value) => value,
-            None => return,
-        };
+        let Some((span, property_name)) = get_jasmine_property_name(member_expr) else { return };
 
         JasmineProperty::from_str(property_name).map_or_else(
             || {
@@ -140,9 +134,7 @@ fn get_jasmine_property_name<'a>(member_expr: &'a MemberExpression<'a>) -> Optio
     if !is_jasmine_object {
         return None;
     }
-    let Some((span, property_name)) = member_expr.static_property_info() else {
-        return None;
-    };
+    let (span, property_name) = member_expr.static_property_info()?;
     Some((span, property_name))
 }
 

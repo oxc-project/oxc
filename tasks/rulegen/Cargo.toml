@@ -24,5 +24,4 @@ serde        = { workspace = true, features = ["derive"] }
 regex        = { workspace = true }
 lazy_static  = { workspace = true }
 ureq         = { workspace = true }
-
-handlebars = "5.1.1"
+handlebars   = { workspace = true }

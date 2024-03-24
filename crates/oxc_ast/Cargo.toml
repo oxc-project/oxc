@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_ast"
-version                = "0.6.0"
+version                = "0.10.0"
 authors.workspace      = true
 description.workspace  = true
 edition.workspace      = true
@@ -35,5 +35,12 @@ wasm-bindgen = { workspace = true, optional = true }
 
 [features]
 default = []
-serde   = ["dep:serde", "dep:serde_json", "dep:ryu-js", "oxc_span/serde", "oxc_syntax/serde"]
-wasm    = ["dep:tsify", "dep:wasm-bindgen"]
+serialize = [
+  "dep:serde",
+  "dep:serde_json",
+  "dep:ryu-js",
+  "dep:tsify",
+  "dep:wasm-bindgen",
+  "oxc_span/serialize",
+  "oxc_syntax/serialize",
+]

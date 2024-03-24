@@ -1,6 +1,9 @@
+// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+#![allow(non_snake_case)]
+
 use oxc_ast::ast::Expression;
 use oxc_index::IndexVec;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, CompactStr, Span};
 pub use oxc_syntax::{
     scope::ScopeId,
     symbol::{SymbolFlags, SymbolId},
@@ -11,14 +14,13 @@ use crate::{
     reference::{Reference, ReferenceId},
 };
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serialize")]
 use serde::Serialize;
+#[cfg(feature = "serialize")]
+use tsify::Tsify;
 
-#[cfg_attr(
-    all(feature = "serde", feature = "wasm"),
-    wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
-)]
-#[allow(dead_code)]
+#[cfg(feature = "serialize")]
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type IndexVec<I, T> = Array<T>;
 "#;
@@ -27,17 +29,17 @@ export type IndexVec<I, T> = Array<T>;
 ///
 /// `SoA` (Struct of Arrays) for memory efficiency.
 #[derive(Debug, Default)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(rename_all = "camelCase"))]
 pub struct SymbolTable {
     pub spans: IndexVec<SymbolId, Span>,
-    pub names: IndexVec<SymbolId, Atom>,
+    pub names: IndexVec<SymbolId, CompactStr>,
     pub flags: IndexVec<SymbolId, SymbolFlags>,
     pub scope_ids: IndexVec<SymbolId, ScopeId>,
     /// Pointer to the AST Node where this symbol is declared
     pub declarations: IndexVec<SymbolId, AstNodeId>,
     pub resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
     pub references: IndexVec<ReferenceId, Reference>,
+    pub redeclare_variables: IndexVec<SymbolId, Vec<Span>>,
 }
 
 impl SymbolTable {
@@ -63,26 +65,34 @@ impl SymbolTable {
             .find_map(|(symbol, inner_span)| if inner_span == span { Some(symbol) } else { None })
     }
 
-    pub fn get_symbol_id_from_name(&self, name: &Atom) -> Option<SymbolId> {
-        self.names
-            .iter_enumerated()
-            .find_map(|(symbol, inner_name)| if inner_name == name { Some(symbol) } else { None })
+    pub fn get_symbol_id_from_name(&self, name: &str) -> Option<SymbolId> {
+        self.names.iter_enumerated().find_map(|(symbol, inner_name)| {
+            if inner_name.as_str() == name {
+                Some(symbol)
+            } else {
+                None
+            }
+        })
     }
 
     pub fn get_span(&self, symbol_id: SymbolId) -> Span {
         self.spans[symbol_id]
     }
 
-    pub fn get_name(&self, symbol_id: SymbolId) -> &Atom {
+    pub fn get_name(&self, symbol_id: SymbolId) -> &str {
         &self.names[symbol_id]
     }
 
-    pub fn set_name(&mut self, symbol_id: SymbolId, name: Atom) {
+    pub fn set_name(&mut self, symbol_id: SymbolId, name: CompactStr) {
         self.names[symbol_id] = name;
     }
 
     pub fn get_flag(&self, symbol_id: SymbolId) -> SymbolFlags {
         self.flags[symbol_id]
+    }
+
+    pub fn get_redeclare_variables(&self, symbol_id: SymbolId) -> &Vec<Span> {
+        &self.redeclare_variables[symbol_id]
     }
 
     pub fn union_flag(&mut self, symbol_id: SymbolId, includes: SymbolFlags) {
@@ -108,19 +118,24 @@ impl SymbolTable {
     pub fn create_symbol(
         &mut self,
         span: Span,
-        name: Atom,
+        name: &str,
         flag: SymbolFlags,
         scope_id: ScopeId,
     ) -> SymbolId {
         _ = self.spans.push(span);
-        _ = self.names.push(name);
+        _ = self.names.push(CompactStr::from(name));
         _ = self.flags.push(flag);
         _ = self.scope_ids.push(scope_id);
-        self.resolved_references.push(vec![])
+        _ = self.resolved_references.push(vec![]);
+        self.redeclare_variables.push(vec![])
     }
 
     pub fn add_declaration(&mut self, node_id: AstNodeId) {
         self.declarations.push(node_id);
+    }
+
+    pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
+        self.redeclare_variables[symbol_id].push(span);
     }
 
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {

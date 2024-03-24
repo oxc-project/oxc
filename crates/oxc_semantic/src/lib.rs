@@ -19,8 +19,8 @@ pub use petgraph;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 use class::ClassTable;
-pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
-use oxc_ast::{ast::IdentifierReference, AstKind, TriviasMap};
+pub use jsdoc::JSDocFinder;
+use oxc_ast::{ast::IdentifierReference, AstKind, Trivias};
 use oxc_span::SourceType;
 pub use oxc_syntax::{
     module_record::ModuleRecord,
@@ -30,7 +30,6 @@ pub use oxc_syntax::{
 use rustc_hash::FxHashSet;
 
 pub use crate::{
-    builder::VariableInfo,
     control_flow::{
         print_basic_block, AssignmentValue, BasicBlockElement, BinaryAssignmentValue, BinaryOp,
         CallType, CalleeWithArgumentsAssignmentValue, CollectionAssignmentValue, ControlFlowGraph,
@@ -56,15 +55,13 @@ pub struct Semantic<'a> {
 
     classes: ClassTable,
 
-    trivias: Rc<TriviasMap>,
+    trivias: Rc<Trivias>,
 
     module_record: Arc<ModuleRecord>,
 
-    jsdoc: JSDoc<'a>,
+    jsdoc: JSDocFinder<'a>,
 
     unused_labels: FxHashSet<AstNodeId>,
-
-    redeclare_variables: Vec<VariableInfo>,
 
     cfg: ControlFlowGraph,
 }
@@ -98,11 +95,11 @@ impl<'a> Semantic<'a> {
         &mut self.scopes
     }
 
-    pub fn trivias(&self) -> &TriviasMap {
+    pub fn trivias(&self) -> &Trivias {
         &self.trivias
     }
 
-    pub fn jsdoc(&self) -> &JSDoc<'a> {
+    pub fn jsdoc(&self) -> &JSDocFinder<'a> {
         &self.jsdoc
     }
 
@@ -127,7 +124,7 @@ impl<'a> Semantic<'a> {
         let AstKind::IdentifierReference(id) = reference_node.kind() else {
             return false;
         };
-        self.scopes().root_unresolved_references().contains_key(&id.name)
+        self.scopes().root_unresolved_references().contains_key(id.name.as_str())
     }
 
     /// Find which scope a symbol is declared in
@@ -145,11 +142,7 @@ impl<'a> Semantic<'a> {
     }
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
-        self.scopes().root_unresolved_references().contains_key(&ident.name)
-    }
-
-    pub fn redeclare_variables(&self) -> &Vec<VariableInfo> {
-        &self.redeclare_variables
+        self.scopes().root_unresolved_references().contains_key(ident.name.as_str())
     }
 }
 
@@ -212,7 +205,7 @@ mod tests {
         let top_level_a = semantic
             .scopes()
             .iter_bindings()
-            .find(|(_scope_id, _symbol_id, name)| name == &Atom::from("Fn"))
+            .find(|(_scope_id, _symbol_id, name)| name.as_str() == "Fn")
             .unwrap();
         assert_eq!(semantic.symbols.get_scope_id(top_level_a.1), top_level_a.0);
     }
@@ -254,6 +247,7 @@ mod tests {
             // simple cases
             (SourceType::default(), "let a = 1; a = 2", ReferenceFlag::write()),
             (SourceType::default(), "let a = 1, b; b = a", ReferenceFlag::read()),
+            (SourceType::default(), "let a = 1, b; b[a]", ReferenceFlag::read()),
             (SourceType::default(), "let a = 1, b = 1, c; c = a + b", ReferenceFlag::read()),
             (SourceType::default(), "function a() { return }; a()", ReferenceFlag::read()),
             (SourceType::default(), "class a {}; new a()", ReferenceFlag::read()),
@@ -285,8 +279,8 @@ mod tests {
             (SourceType::default(), "let a = 1, b; b = a += 5", ReferenceFlag::read_write()),
             (SourceType::default(), "let a = 1; a += 5", ReferenceFlag::read_write()),
             // note: we consider a to be written, and the read of `1` propagates upwards
-            (SourceType::default(), "let a, b; b = a = 1", ReferenceFlag::write()),
-            (SourceType::default(), "let a, b; b = (a = 1)", ReferenceFlag::write()),
+            (SourceType::default(), "let a, b; b = a = 1", ReferenceFlag::read_write()),
+            (SourceType::default(), "let a, b; b = (a = 1)", ReferenceFlag::read_write()),
             (SourceType::default(), "let a, b, c; b = c = a", ReferenceFlag::read()),
             // sequences return last value in sequence
             (SourceType::default(), "let a, b; b = (0, a++)", ReferenceFlag::read_write()),
@@ -324,7 +318,20 @@ mod tests {
             (
                 SourceType::default(),
                 "let a; function foo(a) { return a }; foo(a = 1)",
-                ReferenceFlag::write(),
+                ReferenceFlag::read_write(),
+            ),
+            // member expression
+            (SourceType::default(), "let a; a.b = 1", ReferenceFlag::read()),
+            (SourceType::default(), "let a; let b; b[a += 1] = 1", ReferenceFlag::read_write()),
+            (
+                SourceType::default(),
+                "let a; let b; let c; b[c[a = c['a']] = 'c'] = 'b'",
+                ReferenceFlag::read_write(),
+            ),
+            (
+                SourceType::default(),
+                "let a; let b; let c; a[c[b = c['a']] = 'c'] = 'b'",
+                ReferenceFlag::read(),
             ),
             // typescript
             (typescript, "let a: number = 1; (a as any) = true", ReferenceFlag::write()),

@@ -1,18 +1,23 @@
-use oxc_span::{Atom, Span};
-#[cfg(feature = "serde")]
+// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+#![allow(non_snake_case)]
+
+use oxc_span::{CompactStr, Span};
+#[cfg(feature = "serialize")]
 use serde::Serialize;
+#[cfg(feature = "serialize")]
+use tsify::Tsify;
 
 use crate::{symbol::SymbolId, AstNodeId};
 
 pub use oxc_syntax::reference::{ReferenceFlag, ReferenceId};
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct Reference {
     span: Span,
     /// The name of the identifier that was referred to
-    name: Atom,
+    name: CompactStr,
     node_id: AstNodeId,
     symbol_id: Option<SymbolId>,
     /// Describes how this referenced is used by other AST nodes. References can
@@ -21,7 +26,7 @@ pub struct Reference {
 }
 
 impl Reference {
-    pub fn new(span: Span, name: Atom, node_id: AstNodeId, flag: ReferenceFlag) -> Self {
+    pub fn new(span: Span, name: CompactStr, node_id: AstNodeId, flag: ReferenceFlag) -> Self {
         Self { span, name, node_id, symbol_id: None, flag }
     }
 
@@ -29,7 +34,7 @@ impl Reference {
         self.span
     }
 
-    pub fn name(&self) -> &Atom {
+    pub fn name(&self) -> &CompactStr {
         &self.name
     }
 

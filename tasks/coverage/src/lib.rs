@@ -2,7 +2,9 @@ mod babel;
 mod codegen;
 mod minifier;
 mod misc;
+mod prettier;
 mod runtime;
+mod sourcemap;
 mod suite;
 mod test262;
 mod typescript;
@@ -12,12 +14,14 @@ use std::{fs, path::PathBuf, process::Command, time::Duration};
 use oxc_tasks_common::agent;
 use runtime::{CodegenRuntimeTest262Case, V8_TEST_262_FAILED_TESTS_PATH};
 use similar::DiffableStr;
+use sourcemap::{SourcemapCase, SourcemapSuite};
 
 use crate::{
     babel::{BabelCase, BabelSuite},
     codegen::{CodegenBabelCase, CodegenMiscCase, CodegenTest262Case, CodegenTypeScriptCase},
     minifier::{MinifierBabelCase, MinifierTest262Case},
     misc::{MiscCase, MiscSuite},
+    prettier::{PrettierBabelCase, PrettierMiscCase, PrettierTest262Case, PrettierTypeScriptCase},
     suite::Suite,
     test262::{Test262Case, Test262Suite},
     typescript::{TypeScriptCase, TypeScriptSuite},
@@ -45,6 +49,7 @@ impl AppArgs {
     pub fn run_all(&self) {
         self.run_parser();
         self.run_codegen();
+        self.run_prettier();
         // self.run_codegen_runtime();
         self.run_minifier();
     }
@@ -61,6 +66,14 @@ impl AppArgs {
         BabelSuite::<CodegenBabelCase>::new().run("codegen_babel", self);
         TypeScriptSuite::<CodegenTypeScriptCase>::new().run("codegen_typescript", self);
         MiscSuite::<CodegenMiscCase>::new().run("codegen_misc", self);
+        SourcemapSuite::<SourcemapCase>::new().run("codegen_sourcemap", self);
+    }
+
+    pub fn run_prettier(&self) {
+        Test262Suite::<PrettierTest262Case>::new().run("prettier_test262", self);
+        BabelSuite::<PrettierBabelCase>::new().run("prettier_babel", self);
+        TypeScriptSuite::<PrettierTypeScriptCase>::new().run("prettier_typescript", self);
+        MiscSuite::<PrettierMiscCase>::new().run("prettier_misc", self);
     }
 
     /// # Panics

@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_commented_out_tests
 ---
-
   ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // fdescribe('foo', function () {})
@@ -166,4 +165,3 @@ expression: no_commented_out_tests
  6 │                   bar()
    ╰────
   help: Remove or uncomment this comment
-

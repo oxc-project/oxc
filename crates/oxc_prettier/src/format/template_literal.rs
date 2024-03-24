@@ -13,7 +13,7 @@ pub enum TemplateLiteralPrinter<'a, 'b> {
 }
 
 impl<'a, 'b> TemplateLiteralPrinter<'a, 'b> {
-    fn quasis(&self) -> &[TemplateElement] {
+    fn quasis(&self) -> &[TemplateElement<'a>] {
         match self {
             Self::TemplateLiteral(template_literal) => &template_literal.quasis,
             Self::TSTemplateLiteralType(template_literal) => &template_literal.quasis,
@@ -31,9 +31,9 @@ impl<'a, 'b> TemplateLiteralPrinter<'a, 'b> {
     }
 }
 
-pub(super) fn print_template_literal<'a>(
+pub(super) fn print_template_literal<'a, 'b>(
     p: &mut Prettier<'a>,
-    template_literal: &TemplateLiteralPrinter<'a, '_>,
+    template_literal: &'b TemplateLiteralPrinter<'a, 'b>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
     parts.push(ss!("`"));

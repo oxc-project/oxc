@@ -2,13 +2,14 @@
 
 use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 
-use itertools::Itertools;
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, AstKind, Trivias, TriviasMap, Visit};
+use oxc_ast::{ast::*, AstKind, Trivias, Visit};
 use oxc_diagnostics::Error;
-use oxc_span::{Atom, SourceType, Span};
-use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
-use rustc_hash::FxHashMap;
+use oxc_span::{CompactStr, SourceType, Span};
+use oxc_syntax::{
+    module_record::{ExportLocalName, ModuleRecord},
+    operator::AssignmentOperator,
+};
 
 use crate::{
     binder::Binder,
@@ -28,23 +29,12 @@ use crate::{
     Semantic,
 };
 
-#[derive(Debug, Clone)]
-pub struct VariableInfo {
-    pub span: Span,
-    pub symbol_id: SymbolId,
-}
-
-#[derive(Debug)]
-pub struct RedeclareVariables {
-    pub variables: Vec<VariableInfo>,
-}
-
 pub struct SemanticBuilder<'a> {
     pub source_text: &'a str,
 
     pub source_type: SourceType,
 
-    trivias: Rc<TriviasMap>,
+    trivias: Rc<Trivias>,
 
     /// Semantic early errors such as redeclaration errors.
     errors: RefCell<Vec<Error>>,
@@ -54,7 +44,7 @@ pub struct SemanticBuilder<'a> {
     pub current_node_flags: NodeFlags,
     pub current_symbol_flags: SymbolFlags,
     pub current_scope_id: ScopeId,
-    /// Stores current `AstKind::Function` and `AstKind::ArrowExpression` during AST visit
+    /// Stores current `AstKind::Function` and `AstKind::ArrowFunctionExpression` during AST visit
     pub function_stack: Vec<AstNodeId>,
     // To make a namespace/module value like
     // we need the to know the modules we are inside
@@ -63,6 +53,7 @@ pub struct SemanticBuilder<'a> {
     pub namespace_stack: Vec<SymbolId>,
     /// If true, the current node is in the type definition
     in_type_definition: bool,
+    current_reference_flag: ReferenceFlag,
 
     // builders
     pub nodes: AstNodes<'a>,
@@ -76,8 +67,6 @@ pub struct SemanticBuilder<'a> {
     jsdoc: JSDocBuilder<'a>,
 
     check_syntax_error: bool,
-
-    redeclare_variables: RedeclareVariables,
 
     pub cfg: ControlFlowGraph,
 
@@ -94,7 +83,7 @@ impl<'a> SemanticBuilder<'a> {
         let scope = ScopeTree::default();
         let current_scope_id = scope.root_scope_id();
 
-        let trivias = Rc::new(TriviasMap::default());
+        let trivias = Rc::new(Trivias::default());
         Self {
             source_text,
             source_type,
@@ -104,6 +93,7 @@ impl<'a> SemanticBuilder<'a> {
             current_node_flags: NodeFlags::empty(),
             current_symbol_flags: SymbolFlags::empty(),
             in_type_definition: false,
+            current_reference_flag: ReferenceFlag::empty(),
             current_scope_id,
             function_stack: vec![],
             namespace_stack: vec![],
@@ -114,7 +104,6 @@ impl<'a> SemanticBuilder<'a> {
             label_builder: LabelBuilder::default(),
             jsdoc: JSDocBuilder::new(source_text, &trivias),
             check_syntax_error: false,
-            redeclare_variables: RedeclareVariables { variables: vec![] },
             cfg: ControlFlowGraph::new(),
             class_table_builder: ClassTableBuilder::new(),
         }
@@ -122,7 +111,7 @@ impl<'a> SemanticBuilder<'a> {
 
     #[must_use]
     pub fn with_trivias(mut self, trivias: Trivias) -> Self {
-        self.trivias = Rc::new(TriviasMap::from(trivias));
+        self.trivias = Rc::new(trivias);
         self.jsdoc = JSDocBuilder::new(self.source_text, &self.trivias);
         self
     }
@@ -143,7 +132,7 @@ impl<'a> SemanticBuilder<'a> {
     pub fn build_module_record(
         mut self,
         resolved_absolute_path: PathBuf,
-        program: &'a Program<'a>,
+        program: &Program<'a>,
     ) -> Self {
         let mut module_record_builder = ModuleRecordBuilder::new(resolved_absolute_path);
         module_record_builder.visit(program);
@@ -174,7 +163,6 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::clone(&self.module_record),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.label_builder.unused_node_ids,
-            redeclare_variables: self.redeclare_variables.variables,
             cfg: self.cfg,
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
@@ -192,7 +180,6 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::new(ModuleRecord::default()),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.label_builder.unused_node_ids,
-            redeclare_variables: self.redeclare_variables.variables,
             cfg: self.cfg,
         }
     }
@@ -204,9 +191,10 @@ impl<'a> SemanticBuilder<'a> {
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
         let mut flags = self.current_node_flags;
-        if self.jsdoc.retrieve_jsdoc_comment(kind) {
+        if self.jsdoc.retrieve_attached_jsdoc(&kind) {
             flags |= NodeFlags::JSDoc;
         }
+
         let ast_node = AstNode::new(kind, self.current_scope_id, self.cfg.current_node_ix, flags);
         let parent_node_id =
             if matches!(kind, AstKind::Program(_)) { None } else { Some(self.current_node_id) };
@@ -243,30 +231,28 @@ impl<'a> SemanticBuilder<'a> {
     pub fn declare_symbol_on_scope(
         &mut self,
         span: Span,
-        name: &Atom,
+        name: &str,
         scope_id: ScopeId,
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
             self.symbols.union_flag(symbol_id, includes);
-            if includes.is_function_scoped_declaration() {
-                self.add_redeclared_variables(VariableInfo { span, symbol_id });
-            }
+            self.add_redeclare_variable(symbol_id, span);
             return symbol_id;
         }
 
         let includes = includes | self.current_symbol_flags;
-        let symbol_id = self.symbols.create_symbol(span, name.clone(), includes, scope_id);
+        let symbol_id = self.symbols.create_symbol(span, name, includes, scope_id);
         self.symbols.add_declaration(self.current_node_id);
-        self.scope.add_binding(scope_id, name.clone(), symbol_id);
+        self.scope.add_binding(scope_id, CompactStr::from(name), symbol_id);
         symbol_id
     }
 
     pub fn declare_symbol(
         &mut self,
         span: Span,
-        name: &Atom,
+        name: &str,
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> SymbolId {
@@ -277,14 +263,14 @@ impl<'a> SemanticBuilder<'a> {
         &mut self,
         scope_id: ScopeId,
         span: Span,
-        name: &Atom,
+        name: &str,
         excludes: SymbolFlags,
         report_error: bool,
     ) -> Option<SymbolId> {
         let symbol_id = self.scope.get_binding(scope_id, name)?;
         if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
-            self.error(Redeclaration(name.clone(), symbol_span, span));
+            self.error(Redeclaration(CompactStr::from(name), symbol_span, span));
         }
         Some(symbol_id)
     }
@@ -299,16 +285,15 @@ impl<'a> SemanticBuilder<'a> {
     /// Declares a `Symbol` for the node, shadowing previous declarations in the same scope.
     pub fn declare_shadow_symbol(
         &mut self,
-        name: &Atom,
+        name: &str,
         span: Span,
         scope_id: ScopeId,
         includes: SymbolFlags,
     ) -> SymbolId {
         let includes = includes | self.current_symbol_flags;
-        let symbol_id =
-            self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
+        let symbol_id = self.symbols.create_symbol(span, name, includes, self.current_scope_id);
         self.symbols.add_declaration(self.current_node_id);
-        self.scope.get_bindings_mut(scope_id).insert(name.clone(), symbol_id);
+        self.scope.get_bindings_mut(scope_id).insert(CompactStr::from(name), symbol_id);
         symbol_id
     }
 
@@ -317,36 +302,41 @@ impl<'a> SemanticBuilder<'a> {
             .scope
             .unresolved_references_mut(self.current_scope_id)
             .drain()
-            .collect::<Vec<(Atom, Vec<ReferenceId>)>>();
+            .collect::<Vec<(_, Vec<_>)>>();
 
-        let mut unresolved_references: FxHashMap<Atom, Vec<ReferenceId>> = FxHashMap::default();
-        let mut resolved_references: Vec<(SymbolId, Vec<ReferenceId>)> = vec![];
+        let parent_scope_id =
+            self.scope.get_parent_id(self.current_scope_id).unwrap_or(self.current_scope_id);
 
         for (name, reference_ids) in all_references {
             if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, &name) {
-                resolved_references.push((symbol_id, reference_ids));
+                for reference_id in &reference_ids {
+                    self.symbols.references[*reference_id].set_symbol_id(symbol_id);
+                }
+                self.symbols.resolved_references[symbol_id].extend(reference_ids);
             } else {
-                unresolved_references.insert(name, reference_ids);
-            }
-        }
-
-        let scope_id =
-            self.scope.get_parent_id(self.current_scope_id).unwrap_or(self.current_scope_id);
-
-        for (name, reference_ids) in unresolved_references {
-            self.scope.extend_unresolved_reference(scope_id, name, reference_ids);
-        }
-
-        for (symbol_id, reference_ids) in resolved_references {
-            for reference_id in reference_ids {
-                self.symbols.references[reference_id].set_symbol_id(symbol_id);
-                self.symbols.resolved_references[symbol_id].push(reference_id);
+                self.scope.extend_unresolved_reference(parent_scope_id, name, reference_ids);
             }
         }
     }
 
-    pub fn add_redeclared_variables(&mut self, variable: VariableInfo) {
-        self.redeclare_variables.variables.push(variable);
+    pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
+        self.symbols.add_redeclare_variable(symbol_id, span);
+    }
+
+    fn add_export_flag_for_export_identifier(&mut self) {
+        self.module_record.local_export_entries.iter().for_each(|entry| match &entry.local_name {
+            ExportLocalName::Name(name_span) => {
+                if let Some(symbol_id) = self.scope.get_root_binding(name_span.name()) {
+                    self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+                }
+            }
+            ExportLocalName::Default(span) => {
+                if let Some(symbol_id) = self.symbols.get_symbol_id_from_span(span) {
+                    self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+                }
+            }
+            ExportLocalName::Null => {}
+        });
     }
 }
 
@@ -456,7 +446,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
     }
 
-    fn visit_break_statement(&mut self, stmt: &BreakStatement) {
+    fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
         let kind = AstKind::BreakStatement(self.alloc(stmt));
         self.enter_node(kind);
 
@@ -508,7 +498,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
-    fn visit_continue_statement(&mut self, stmt: &ContinueStatement) {
+    fn visit_continue_statement(&mut self, stmt: &ContinueStatement<'a>) {
         let kind = AstKind::ContinueStatement(self.alloc(stmt));
         self.enter_node(kind);
 
@@ -1032,7 +1022,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_label_identifier(&stmt.label);
 
         /* cfg */
-        self.cfg.next_label = Some(stmt.label.name.clone());
+        self.cfg.next_label = Some(stmt.label.name.to_compact_str());
         /* cfg */
 
         self.visit_statement(&stmt.body);
@@ -1092,9 +1082,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_switch_statement(&mut self, stmt: &SwitchStatement<'a>) {
         let kind = AstKind::SwitchStatement(self.alloc(stmt));
-        self.enter_scope(ScopeFlags::empty());
         self.enter_node(kind);
         self.visit_expression(&stmt.discriminant);
+        self.enter_scope(ScopeFlags::empty());
 
         /* cfg */
         let discriminant_graph_ix = self.cfg.current_node_ix;
@@ -1157,8 +1147,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         );
         /* cfg */
 
-        self.leave_node(kind);
         self.leave_scope();
+        self.leave_node(kind);
     }
 
     fn visit_switch_case(&mut self, case: &SwitchCase<'a>) {
@@ -1602,8 +1592,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
     }
 
-    fn visit_arrow_expression(&mut self, expr: &ArrowExpression<'a>) {
-        let kind = AstKind::ArrowExpression(self.alloc(expr));
+    fn visit_arrow_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
+        let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow);
 
         /* cfg */
@@ -1667,7 +1657,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.add_current_node_id_to_current_scope();
                 self.make_all_namespaces_valuelike();
             }
-            AstKind::ArrowExpression(_) => {
+            AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.push(self.current_node_id);
                 self.add_current_node_id_to_current_scope();
                 self.make_all_namespaces_valuelike();
@@ -1705,7 +1695,7 @@ impl<'a> SemanticBuilder<'a> {
                 let symbol_id = self
                     .scope
                     .get_bindings(self.current_scope_id)
-                    .get(module_declaration.id.name());
+                    .get(module_declaration.id.name().as_str());
                 self.namespace_stack.push(*symbol_id.unwrap());
                 self.in_type_definition = true;
             }
@@ -1735,8 +1725,27 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
             }
-            AstKind::JSXElementName(elem) => {
-                self.reference_jsx_element_name(elem);
+            AstKind::JSXIdentifier(ident) => {
+                self.reference_jsx_identifier(ident);
+            }
+            AstKind::UpdateExpression(_) => {
+                if self.is_not_expression_statement_parent() {
+                    self.current_reference_flag |= ReferenceFlag::Read;
+                }
+                self.current_reference_flag |= ReferenceFlag::Write;
+            }
+            AstKind::AssignmentExpression(expr) => {
+                if expr.operator != AssignmentOperator::Assign
+                    || self.is_not_expression_statement_parent()
+                {
+                    self.current_reference_flag |= ReferenceFlag::Read;
+                }
+            }
+            AstKind::MemberExpression(_) => {
+                self.current_reference_flag = ReferenceFlag::Read;
+            }
+            AstKind::AssignmentTarget(_) => {
+                self.current_reference_flag |= ReferenceFlag::Write;
             }
             AstKind::LabeledStatement(stmt) => {
                 self.label_builder.enter(stmt, self.current_node_id);
@@ -1757,6 +1766,9 @@ impl<'a> SemanticBuilder<'a> {
     #[allow(clippy::single_match)]
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
+            AstKind::Program(_) => {
+                self.add_export_flag_for_export_identifier();
+            }
             AstKind::Class(_) => {
                 self.current_node_flags -= NodeFlags::Class;
                 self.class_table_builder.pop_class();
@@ -1772,7 +1784,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.label_builder.leave_function_or_static_block();
                 self.function_stack.pop();
             }
-            AstKind::ArrowExpression(_) => {
+            AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.pop();
             }
             AstKind::TSModuleBlock(_) => {
@@ -1786,6 +1798,20 @@ impl<'a> SemanticBuilder<'a> {
             | AstKind::TSTypeAnnotation(_) => {
                 self.in_type_definition = false;
             }
+            AstKind::UpdateExpression(_) => {
+                if self.is_not_expression_statement_parent() {
+                    self.current_reference_flag -= ReferenceFlag::Read;
+                }
+                self.current_reference_flag -= ReferenceFlag::Write;
+            }
+            AstKind::AssignmentExpression(expr) => {
+                if expr.operator != AssignmentOperator::Assign
+                    || self.is_not_expression_statement_parent()
+                {
+                    self.current_reference_flag -= ReferenceFlag::Read;
+                }
+            }
+            AstKind::AssignmentTarget(_) => self.current_reference_flag -= ReferenceFlag::Write,
             _ => {}
         }
     }
@@ -1806,7 +1832,8 @@ impl<'a> SemanticBuilder<'a> {
 
     fn reference_identifier(&mut self, ident: &IdentifierReference) {
         let flag = self.resolve_reference_usages();
-        let reference = Reference::new(ident.span, ident.name.clone(), self.current_node_id, flag);
+        let reference =
+            Reference::new(ident.span, ident.name.to_compact_str(), self.current_node_id, flag);
         let reference_id = self.declare_reference(reference);
         ident.reference_id.set(Some(reference_id));
     }
@@ -1814,95 +1841,41 @@ impl<'a> SemanticBuilder<'a> {
     /// Resolve reference flags for the current ast node.
     fn resolve_reference_usages(&self) -> ReferenceFlag {
         if self.in_type_definition {
-            return ReferenceFlag::Type;
+            ReferenceFlag::Type
+        } else if self.current_reference_flag.is_write() {
+            self.current_reference_flag
+        } else {
+            ReferenceFlag::Read
         }
-
-        let mut flags = ReferenceFlag::None;
-
-        if self.nodes.parent_id(self.current_node_id).is_none() {
-            return ReferenceFlag::Read;
-        }
-
-        // This func should only get called when an IdentifierReference is
-        // reached
-        debug_assert!(matches!(
-            self.nodes.get_node(self.current_node_id).kind(),
-            AstKind::IdentifierReference(_)
-        ));
-
-        for (curr, parent) in self
-            .nodes
-            .iter_parents(self.current_node_id)
-            .tuple_windows::<(&AstNode<'a>, &AstNode<'a>)>()
-        {
-            match (curr.kind(), parent.kind()) {
-                // lhs of assignment expression
-                (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
-                    debug_assert!(!flags.is_read());
-                    flags = ReferenceFlag::write();
-                    // a lhs expr will not propagate upwards into a rhs
-                    // expression, sow e can safely break
-                    break;
-                }
-                (AstKind::AssignmentTarget(_), AstKind::AssignmentExpression(expr)) => {
-                    flags |= if expr.operator == AssignmentOperator::Assign {
-                        ReferenceFlag::write()
-                    } else {
-                        ReferenceFlag::read_write()
-                    };
-                    break;
-                }
-                (_, AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_)) => {
-                    flags |= ReferenceFlag::write();
-                    // continue up tree
-                }
-                (_, AstKind::UpdateExpression(_)) => {
-                    flags |= ReferenceFlag::Write;
-                    // continue up tree
-                }
-                (
-                    AstKind::AssignmentTarget(_),
-                    AstKind::ForInStatement(_) | AstKind::ForOfStatement(_),
-                ) => {
-                    break;
-                }
-                (_, AstKind::ParenthesizedExpression(_)) => {
-                    // continue up tree
-                }
-                _ => {
-                    flags |= ReferenceFlag::Read;
-                    break;
-                }
-            }
-        }
-
-        debug_assert!(flags != ReferenceFlag::None);
-
-        flags
     }
 
-    fn reference_jsx_element_name(&mut self, elem: &JSXElementName) {
-        if matches!(
-            self.nodes.parent_kind(self.current_node_id),
-            Some(AstKind::JSXOpeningElement(_))
-        ) {
-            if let Some(ident) = match elem {
-                JSXElementName::Identifier(ident)
-                    if ident.name.chars().next().is_some_and(char::is_uppercase) =>
-                {
-                    Some(ident)
+    fn reference_jsx_identifier(&mut self, ident: &JSXIdentifier) {
+        match self.nodes.parent_kind(self.current_node_id) {
+            Some(AstKind::JSXElementName(_)) => {
+                if !ident.name.chars().next().is_some_and(char::is_uppercase) {
+                    return;
                 }
-                JSXElementName::MemberExpression(expr) => Some(expr.get_object_identifier()),
-                _ => None,
-            } {
-                let reference = Reference::new(
-                    ident.span,
-                    ident.name.clone(),
-                    self.current_node_id,
-                    ReferenceFlag::read(),
-                );
-                self.declare_reference(reference);
             }
+            Some(AstKind::JSXMemberExpressionObject(_)) => {}
+            _ => return,
         }
+        let reference = Reference::new(
+            ident.span,
+            ident.name.to_compact_str(),
+            self.current_node_id,
+            ReferenceFlag::read(),
+        );
+        self.declare_reference(reference);
+    }
+
+    fn is_not_expression_statement_parent(&self) -> bool {
+        for node in self.nodes.iter_parents(self.current_node_id).skip(1) {
+            return match node.kind() {
+                AstKind::ParenthesizedExpression(_) => continue,
+                AstKind::ExpressionStatement(_) => false,
+                _ => true,
+            };
+        }
+        false
     }
 }

@@ -1,7 +1,8 @@
 use std::{
     collections::HashMap,
+    ffi::OsStr,
     fs,
-    path::Path,
+    path::{Path, PathBuf},
     rc::Rc,
     sync::{Arc, Condvar, Mutex},
 };
@@ -13,7 +14,7 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, FailedToOpenFileError};
 use oxc_parser::Parser;
-use oxc_resolver::{ResolveOptions, Resolver};
+use oxc_resolver::Resolver;
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 
@@ -22,20 +23,31 @@ use crate::{
     Fixer, LintContext, Linter, Message,
 };
 
+pub struct LintServiceOptions {
+    /// Current working directory
+    pub cwd: Box<Path>,
+
+    /// All paths to lint
+    pub paths: Vec<Box<Path>>,
+
+    /// TypeScript `tsconfig.json` path for reading path alias and project references
+    pub tsconfig: Option<PathBuf>,
+}
+
 #[derive(Clone)]
 pub struct LintService {
     runtime: Arc<Runtime>,
 }
 
 impl LintService {
-    pub fn new(cwd: Box<Path>, paths: &[Box<Path>], linter: Linter) -> Self {
-        let runtime = Arc::new(Runtime::new(cwd, paths, linter));
+    pub fn new(linter: Linter, options: LintServiceOptions) -> Self {
+        let runtime = Arc::new(Runtime::new(linter, options));
         Self { runtime }
     }
 
     #[cfg(test)]
-    pub(crate) fn from_linter(cwd: Box<Path>, paths: &[Box<Path>], linter: Linter) -> Self {
-        let runtime = Arc::new(Runtime::new(cwd, paths, linter));
+    pub(crate) fn from_linter(linter: Linter, options: LintServiceOptions) -> Self {
+        let runtime = Arc::new(Runtime::new(linter, options));
         Self { runtime }
     }
 
@@ -103,33 +115,54 @@ enum CacheStateEntry {
 }
 
 /// Keyed by canonicalized path
-type ModuleMap = DashMap<Box<Path>, Arc<ModuleRecord>>;
+type ModuleMap = DashMap<Box<Path>, ModuleState>;
+
+#[derive(Clone)]
+enum ModuleState {
+    Resolved(Arc<ModuleRecord>),
+    Ignored,
+}
 
 pub struct Runtime {
     cwd: Box<Path>,
     /// All paths to lint
     paths: FxHashSet<Box<Path>>,
     linter: Linter,
-    resolver: Resolver,
+    resolver: Option<Resolver>,
     module_map: ModuleMap,
     cache_state: CacheState,
 }
 
 impl Runtime {
-    fn new(cwd: Box<Path>, paths: &[Box<Path>], linter: Linter) -> Self {
+    fn new(linter: Linter, options: LintServiceOptions) -> Self {
+        let resolver = linter.options().import_plugin.then(|| Self::get_resolver(options.tsconfig));
         Self {
-            cwd,
-            paths: paths.iter().cloned().collect(),
+            cwd: options.cwd,
+            paths: options.paths.iter().cloned().collect(),
             linter,
-            resolver: Self::resolver(),
+            resolver,
             module_map: ModuleMap::default(),
             cache_state: CacheState::default(),
         }
     }
 
-    fn resolver() -> Resolver {
+    fn get_resolver(tsconfig: Option<PathBuf>) -> Resolver {
+        use oxc_resolver::{ResolveOptions, TsconfigOptions, TsconfigReferences};
+        let tsconfig = if let Some(path) = tsconfig {
+            if path.is_file() {
+                Some(TsconfigOptions { config_file: path, references: TsconfigReferences::Auto })
+            } else {
+                // TODO: crates/oxc_cli/src/lint/mod.rs
+                eprintln!("Tsconfig {path:?} is not a file");
+                None
+            }
+        } else {
+            None
+        };
         Resolver::new(ResolveOptions {
             extensions: VALID_EXTENSIONS.iter().map(|ext| format!(".{ext}")).collect(),
+            condition_names: vec!["module".into(), "require".into()],
+            tsconfig,
             ..ResolveOptions::default()
         })
     }
@@ -138,10 +171,6 @@ impl Runtime {
         path: &Path,
         ext: &str,
     ) -> Option<Result<(SourceType, String), Error>> {
-        let read_file = |path: &Path| -> Result<String, Error> {
-            fs::read_to_string(path)
-                .map_err(|e| Error::new(FailedToOpenFileError(path.to_path_buf(), e)))
-        };
         let source_type = SourceType::from_path(path);
         let not_supported_yet =
             source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXT.contains(&ext));
@@ -149,27 +178,33 @@ impl Runtime {
             return None;
         }
         let source_type = source_type.unwrap_or_default();
-        let source_text = match read_file(path) {
-            Ok(source_text) => source_text,
-            Err(e) => {
-                return Some(Err(e));
-            }
-        };
-
-        Some(Ok((source_type, source_text)))
+        let file_result = fs::read_to_string(path)
+            .map_err(|e| Error::new(FailedToOpenFileError(path.to_path_buf(), e)));
+        Some(match file_result {
+            Ok(source_text) => Ok((source_type, source_text)),
+            Err(e) => Err(e),
+        })
     }
 
     fn process_path(&self, path: &Path, tx_error: &DiagnosticSender) {
         if self.init_cache_state(path) {
             return;
         }
-        let Some(ext) = path.extension().and_then(std::ffi::OsStr::to_str) else {
+
+        let Some(ext) = path.extension().and_then(OsStr::to_str) else {
+            self.ignore_path(path);
             return;
         };
-        let Some(source_type_and_text) = Self::get_source_type_and_text(path, ext) else { return };
+
+        let Some(source_type_and_text) = Self::get_source_type_and_text(path, ext) else {
+            self.ignore_path(path);
+            return;
+        };
+
         let (source_type, source_text) = match source_type_and_text {
             Ok(source_text) => source_text,
             Err(e) => {
+                self.ignore_path(path);
                 tx_error.send(Some((path.to_path_buf(), vec![e]))).unwrap();
                 return;
             }
@@ -181,6 +216,7 @@ impl Runtime {
             sources.unwrap_or_else(|| vec![JavaScriptSource::new(&source_text, source_type, 0)]);
 
         if sources.is_empty() {
+            self.ignore_path(path);
             return;
         }
 
@@ -234,8 +270,10 @@ impl Runtime {
         let module_record = semantic_builder.module_record();
 
         if self.linter.options().import_plugin {
-            self.module_map
-                .insert(path.to_path_buf().into_boxed_path(), Arc::clone(&module_record));
+            self.module_map.insert(
+                path.to_path_buf().into_boxed_path(),
+                ModuleState::Resolved(Arc::clone(&module_record)),
+            );
             self.update_cache_state(path);
 
             // Retrieve all dependency modules from this module.
@@ -244,19 +282,56 @@ impl Runtime {
                 .requested_modules
                 .keys()
                 .par_bridge()
-                .map_with(&self.resolver, |resolver, specifier| {
+                .map_with(self.resolver.as_ref().unwrap(), |resolver, specifier| {
                     resolver.resolve(dir, specifier).ok().map(|r| (specifier, r))
                 })
                 .flatten()
                 .for_each_with(tx_error, |tx_error, (specifier, resolution)| {
                     let path = resolution.path();
                     self.process_path(path, tx_error);
-                    if let Some(target_module_record) = self.module_map.get(path) {
-                        module_record
-                            .loaded_modules
-                            .insert(specifier.clone(), Arc::clone(&target_module_record));
-                    }
+                    let Some(target_module_record_ref) = self.module_map.get(path) else { return };
+                    let ModuleState::Resolved(target_module_record) =
+                        target_module_record_ref.value()
+                    else {
+                        return;
+                    };
+                    // Append target_module to loaded_modules
+                    module_record
+                        .loaded_modules
+                        .insert(specifier.clone(), Arc::clone(target_module_record));
                 });
+
+            // The thread is blocked here until all dependent modules are resolved.
+
+            // Resolve and append `star_export_bindings`
+            for export_entry in &module_record.star_export_entries {
+                let Some(remote_module_record_ref) =
+                    export_entry.module_request.as_ref().and_then(|module_request| {
+                        module_record.loaded_modules.get(module_request.name())
+                    })
+                else {
+                    continue;
+                };
+                let remote_module_record = remote_module_record_ref.value();
+
+                // Append both remote `bindings` and `exported_bindings_from_star_export`
+                let remote_exported_bindings_from_star_export = remote_module_record
+                    .exported_bindings_from_star_export
+                    .iter()
+                    .flat_map(|r| r.value().clone());
+                let remote_bindings = remote_module_record
+                    .exported_bindings
+                    .keys()
+                    .cloned()
+                    .chain(remote_exported_bindings_from_star_export)
+                    .collect::<Vec<_>>();
+                module_record
+                    .exported_bindings_from_star_export
+                    .entry(remote_module_record.resolved_absolute_path.clone())
+                    .or_default()
+                    .value_mut()
+                    .extend(remote_bindings);
+            }
 
             // Stop if the current module is not marked for lint.
             if !self.paths.contains(path) {
@@ -327,6 +402,13 @@ impl Runtime {
             } else {
                 *state = CacheStateEntry::PendingStore(new);
             }
+        }
+    }
+
+    fn ignore_path(&self, path: &Path) {
+        if self.linter.options().import_plugin {
+            self.module_map.insert(path.to_path_buf().into_boxed_path(), ModuleState::Ignored);
+            self.update_cache_state(path);
         }
     }
 }

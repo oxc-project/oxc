@@ -34,6 +34,6 @@ tokio           = { workspace = true, features = ["full"] }
 tower-lsp       = { workspace = true, features = ["proposed"] }
 serde           = { workspace = true, features = ["derive"] }
 serde_json      = { workspace = true }
-log             = "0.4.20"
+log             = "0.4.21"
 globset         = "0.4.14"
-env_logger      = { version = "0.11.1", default-features = false, features = ["humantime"] }
+env_logger      = { version = "0.11.3", default-features = false, features = ["humantime"] }

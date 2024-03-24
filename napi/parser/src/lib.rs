@@ -1,5 +1,7 @@
 #![allow(clippy::trailing_empty_array)]
 
+mod module_lexer;
+
 use std::sync::Arc;
 
 use flexbuffers::FlexbufferSerializer;
@@ -9,9 +11,12 @@ use serde::Serialize;
 
 use oxc_allocator::Allocator;
 pub use oxc_ast::ast::Program;
+use oxc_ast::CommentKind;
 use oxc_diagnostics::miette::NamedSource;
 use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
+
+pub use crate::module_lexer::*;
 
 /// Babel Parser Options
 ///
@@ -22,12 +27,30 @@ pub struct ParserOptions {
     #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
     pub source_type: Option<String>,
     pub source_filename: Option<String>,
+    /// Emit `ParenthesizedExpression` in AST.
+    ///
+    /// If this option is true, parenthesized expressions are represented by
+    /// (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
+    /// containing the expression inside parentheses.
+    ///
+    /// Default: true
+    pub preserve_parens: Option<bool>,
 }
 
 #[napi(object)]
 pub struct ParseResult {
     pub program: String,
+    pub comments: Vec<Comment>,
     pub errors: Vec<String>,
+}
+
+#[napi(object)]
+pub struct Comment {
+    pub r#type: &'static str,
+    #[napi(ts_type = "'Line' | 'Block'")]
+    pub value: String,
+    pub start: u32,
+    pub end: u32,
 }
 
 fn parse<'a>(
@@ -45,7 +68,9 @@ fn parse<'a>(
         Some("module") => source_type.with_module(true),
         _ => source_type,
     };
-    Parser::new(allocator, source_text, source_type).parse()
+    Parser::new(allocator, source_text, source_type)
+        .preserve_parens(options.preserve_parens.unwrap_or(true))
+        .parse()
 }
 
 /// Parse without returning anything.
@@ -88,11 +113,26 @@ pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseR
             .collect()
     };
 
-    ParseResult { program, errors }
+    let comments = ret
+        .trivias
+        .comments()
+        .map(|(kind, span)| Comment {
+            r#type: match kind {
+                CommentKind::SingleLine => "Line",
+                CommentKind::MultiLine => "Block",
+            },
+            value: span.source_text(&source_text).to_string(),
+            start: span.start,
+            end: span.end,
+        })
+        .collect::<Vec<Comment>>();
+
+    ParseResult { program, comments, errors }
 }
 
 /// Returns a binary AST in flexbuffers format.
 /// This is a POC API. Error handling is not done yet.
+///
 /// # Panics
 ///
 /// * File extension is invalid

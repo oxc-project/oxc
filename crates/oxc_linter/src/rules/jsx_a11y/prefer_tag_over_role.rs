@@ -1,7 +1,12 @@
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{get_element_type, has_jsx_prop_lowercase},
+    AstNode,
+};
 use once_cell::sync::Lazy;
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName},
+    ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -52,7 +57,7 @@ impl PreferTagOverRole {
     fn check_roles<'a>(
         role_prop: &JSXAttributeItem<'a>,
         role_to_tag: &phf::Map<&str, &str>,
-        jsx_name: &JSXElementName<'a>,
+        jsx_name: &str,
         ctx: &LintContext<'a>,
     ) {
         if let JSXAttributeItem::Attribute(attr) = role_prop {
@@ -65,23 +70,20 @@ impl PreferTagOverRole {
         }
     }
 
-    fn check_role<'a>(
+    fn check_role(
         role: &str,
         role_to_tag: &phf::Map<&str, &str>,
-        jsx_name: &JSXElementName<'a>,
+        jsx_name: &str,
         span: Span,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext,
     ) {
         if let Some(tag) = role_to_tag.get(role) {
-            match jsx_name {
-                JSXElementName::Identifier(id) if id.name != *tag => {
-                    ctx.diagnostic(PreferTagOverRoleDiagnostic {
-                        span,
-                        tag: (*tag).to_string(),
-                        role: role.to_string(),
-                    });
-                }
-                _ => {}
+            if jsx_name != *tag {
+                ctx.diagnostic(PreferTagOverRoleDiagnostic {
+                    span,
+                    tag: (*tag).to_string(),
+                    role: role.to_string(),
+                });
             }
         }
     }
@@ -101,8 +103,10 @@ static ROLE_TO_TAG_MAP: Lazy<phf::Map<&'static str, &'static str>> = Lazy::new(|
 impl Rule for PreferTagOverRole {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
-            if let Some(role_prop) = has_jsx_prop_lowercase(jsx_el, "role") {
-                Self::check_roles(role_prop, &ROLE_TO_TAG_MAP, &jsx_el.name, ctx);
+            if let Some(name) = get_element_type(ctx, jsx_el) {
+                if let Some(role_prop) = has_jsx_prop_lowercase(jsx_el, "role") {
+                    Self::check_roles(role_prop, &ROLE_TO_TAG_MAP, &name, ctx);
+                }
             }
         }
     }

@@ -1,11 +1,11 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::Statement;
+use oxc_span::GetSpan;
 
 use crate::{
-    doc::{Doc, DocBuilder, Group, Line},
+    doc::{Doc, DocBuilder},
     hardline, Prettier,
 };
-use oxc_span::GetSpan;
 
 use super::Format;
 
@@ -16,33 +16,19 @@ pub(super) fn print_statement_sequence<'a>(
     skip_empty_statement: bool,
 ) -> Vec<'a, Doc<'a>> {
     let mut parts = p.vec();
-    let len = stmts.len();
 
-    for (i, stmt) in stmts.iter().enumerate() {
-        if skip_empty_statement && matches!(stmt, Statement::EmptyStatement(_)) {
+    let last_statement_span =
+        stmts.iter().rev().find(|s| !matches!(s, Statement::EmptyStatement(_))).map(GetSpan::span);
+
+    for stmt in stmts {
+        if matches!(stmt, Statement::EmptyStatement(_)) {
             continue;
         }
 
-        let mut docs = stmt.format(p);
+        parts.push(stmt.format(p));
 
-        if remove_last_statement_hardline && i == len - 1 {
-            match docs {
-                Doc::Array(ref mut docs) | Doc::Group(Group { contents: ref mut docs, .. }) => {
-                    if docs.last().is_some_and(
-                        |doc| matches!(doc, Doc::Line(line) if *line == Line::hardline()),
-                    ) {
-                        docs.pop();
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        parts.push(docs);
-
-        if i < len - 1 && !matches!(stmts[i + 1], Statement::EmptyStatement(_)) {
+        if Some(stmt.span()) != last_statement_span {
             parts.extend(hardline!());
-
             if p.is_next_line_empty(stmt.span()) {
                 parts.extend(hardline!());
             }

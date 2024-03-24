@@ -10,29 +10,44 @@
 
 mod context;
 mod gen;
+mod gen_ts;
 mod operator;
-
+mod sourcemap_builder;
+mod sourcemap_visualizer;
 use std::str::from_utf8_unchecked;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_span::Atom;
+use oxc_span::{Atom, Span};
 use oxc_syntax::{
     identifier::is_identifier_part,
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
     symbol::SymbolId,
 };
+use sourcemap_builder::SourcemapBuilder;
 
 pub use crate::{
     context::Context,
     gen::{Gen, GenExpr},
     operator::Operator,
+    sourcemap_visualizer::SourcemapVisualizer,
 };
 // use crate::mangler::Mangler;
 
-#[derive(Debug, Default, Clone, Copy)]
-pub struct CodegenOptions;
+#[derive(Debug, Default, Clone)]
+pub struct CodegenOptions {
+    /// Pass in the filename to enable source map support.
+    pub enable_source_map: bool,
+
+    /// Enable TypeScript code generation.
+    pub enable_typescript: bool,
+}
+
+pub struct CodegenReturn {
+    pub source_text: String,
+    pub source_map: Option<sourcemap::SourceMap>,
+}
 
 pub struct Codegen<const MINIFY: bool> {
     #[allow(unused)]
@@ -58,6 +73,8 @@ pub struct Codegen<const MINIFY: bool> {
 
     /// Track the current indentation level
     indentation: u8,
+
+    sourcemap_builder: SourcemapBuilder,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -68,10 +85,16 @@ pub enum Separator {
 }
 
 impl<const MINIFY: bool> Codegen<MINIFY> {
-    pub fn new(source_len: usize, options: CodegenOptions) -> Self {
+    pub fn new(source_name: &str, source_text: &str, options: CodegenOptions) -> Self {
         // Initialize the output code buffer to reduce memory reallocation.
         // Minification will reduce by at least half of the original size.
+        let source_len = source_text.len();
         let capacity = if MINIFY { source_len / 2 } else { source_len };
+
+        let mut sourcemap_builder = SourcemapBuilder::default();
+        if options.enable_source_map {
+            sourcemap_builder.with_name_and_source(source_name, source_text);
+        }
         Self {
             options,
             // mangler: None,
@@ -85,6 +108,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
             indentation: 0,
+            sourcemap_builder,
         }
     }
 
@@ -92,14 +116,16 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     // self.mangler = Some(mangler);
     // }
 
-    pub fn build(mut self, program: &Program<'_>) -> String {
+    pub fn build(mut self, program: &Program<'_>) -> CodegenReturn {
         program.gen(&mut self, Context::default());
-        self.into_code()
+        let source_text = self.into_source_text();
+        let source_map = self.sourcemap_builder.into_sourcemap();
+        CodegenReturn { source_text, source_map }
     }
 
-    pub fn into_code(self) -> String {
-        // SAFETY: criteria of `from_utf8_unchecked`.are met.
-        unsafe { String::from_utf8_unchecked(self.code) }
+    pub fn into_source_text(&mut self) -> String {
+        // SAFETY: criteria of `from_utf8_unchecked` are met.
+        unsafe { String::from_utf8_unchecked(std::mem::take(&mut self.code)) }
     }
 
     fn code(&self) -> &Vec<u8> {
@@ -154,7 +180,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     }
 
     fn peek_nth(&self, n: usize) -> Option<char> {
-        // SAFETY: criteria of `from_utf8_unchecked`.are met.
+        // SAFETY: criteria of `from_utf8_unchecked` are met.
         unsafe { from_utf8_unchecked(self.code()) }.chars().nth_back(n)
     }
 
@@ -218,32 +244,37 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         }
     }
 
-    fn print_block_start(&mut self) {
+    fn print_block_start(&mut self, position: u32) {
+        self.add_source_mapping(position);
         self.print(b'{');
         self.print_soft_newline();
         self.indent();
     }
 
-    fn print_block_end(&mut self) {
+    fn print_block_end(&mut self, position: u32) {
         self.dedent();
         self.print_indent();
+        self.add_source_mapping(position);
         self.print(b'}');
     }
 
     fn print_block1(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
-        self.print_block_start();
-        for item in &stmt.body {
-            self.print_semicolon_if_needed();
-            item.gen(self, ctx);
-        }
-        self.print_block_end();
+        self.print_block_start(stmt.span.start);
+        self.print_directives_and_statements_with_semicolon_order(None, &stmt.body, ctx, true);
+        self.print_block_end(stmt.span.end);
         self.needs_semicolon = false;
     }
 
-    fn print_block<T: Gen<MINIFY>>(&mut self, items: &[T], separator: Separator, ctx: Context) {
-        self.print_block_start();
+    fn print_block<T: Gen<MINIFY>>(
+        &mut self,
+        items: &[T],
+        separator: Separator,
+        ctx: Context,
+        span: Span,
+    ) {
+        self.print_block_start(span.start);
         self.print_sequence(items, separator, ctx);
-        self.print_block_end();
+        self.print_block_end(span.end);
     }
 
     fn print_list<T: Gen<MINIFY>>(&mut self, items: &[T], ctx: Context) {
@@ -274,7 +305,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         }
     }
 
-    fn print_symbol(&mut self, _symbol_id: Option<SymbolId>, fallback: &Atom) {
+    fn print_symbol(&mut self, start: u32, _symbol_id: Option<SymbolId>, fallback: &Atom) {
         // if let Some(mangler) = &self.mangler {
         // if let Some(symbol_id) = symbol_id {
         // let name = mangler.get_symbol_name(symbol_id);
@@ -282,6 +313,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         // return;
         // }
         // }
+        self.add_source_mapping_for_name(start, fallback);
         self.print_str(fallback.as_bytes());
     }
 
@@ -329,5 +361,78 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         if wrap {
             self.print(b')');
         }
+    }
+
+    fn wrap_quote<F: FnMut(&mut Self, char)>(&mut self, s: &str, mut f: F) {
+        let quote = choose_quote(s);
+        self.print(quote as u8);
+        f(self, quote);
+        self.print(quote as u8);
+    }
+
+    fn print_directives_and_statements_with_semicolon_order(
+        &mut self,
+        directives: Option<&[Directive]>,
+        statements: &[Statement<'_>],
+        ctx: Context,
+        print_semicolon_first: bool,
+    ) {
+        if let Some(directives) = directives {
+            if directives.is_empty() {
+                if let Some(Statement::ExpressionStatement(s)) = statements.first() {
+                    if matches!(s.expression.get_inner_expression(), Expression::StringLiteral(_)) {
+                        self.print_semicolon();
+                    }
+                }
+            } else {
+                for directive in directives {
+                    directive.gen(self, ctx);
+                }
+                self.print_soft_newline();
+            }
+        }
+        for stmt in statements {
+            if let Statement::Declaration(decl) = stmt {
+                if decl.is_typescript_syntax()
+                    && !self.options.enable_typescript
+                    && !matches!(decl, Declaration::TSEnumDeclaration(_))
+                {
+                    continue;
+                }
+            }
+            if print_semicolon_first {
+                self.print_semicolon_if_needed();
+                stmt.gen(self, ctx);
+            } else {
+                stmt.gen(self, ctx);
+                self.print_semicolon_if_needed();
+            }
+        }
+    }
+
+    fn add_source_mapping(&mut self, position: u32) {
+        self.sourcemap_builder.add_source_mapping(&self.code, position, None);
+    }
+
+    fn add_source_mapping_for_name(&mut self, position: u32, name: &str) {
+        self.sourcemap_builder.add_source_mapping(&self.code, position, Some(name));
+    }
+}
+
+fn choose_quote(s: &str) -> char {
+    let mut single_cost = 0;
+    let mut double_cost = 0;
+    for c in s.chars() {
+        match c {
+            '\'' => single_cost += 1,
+            '"' => double_cost += 1,
+            _ => {}
+        }
+    }
+
+    if single_cost > double_cost {
+        '"'
+    } else {
+        '\''
     }
 }

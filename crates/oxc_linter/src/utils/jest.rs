@@ -37,7 +37,7 @@ const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
     "pending"
 ];
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum JestFnKind {
     Expect,
     General(JestGeneralFnKind),
@@ -74,19 +74,19 @@ pub enum JestGeneralFnKind {
     Jest,
 }
 
+/// <https://jestjs.io/docs/configuration#testmatch-arraystring>
 pub fn is_jest_file(ctx: &LintContext) -> bool {
-    if JEST_METHOD_NAMES
-        .iter()
-        .any(|name| ctx.scopes().root_unresolved_references().contains_key(*name))
-    {
+    if ctx.file_path().components().any(|c| match c {
+        std::path::Component::Normal(p) => p == std::ffi::OsStr::new("__tests__"),
+        _ => false,
+    }) {
         return true;
-    };
+    }
 
-    let import_entries = &ctx.semantic().module_record().import_entries;
-
-    return import_entries.iter().any(|import_entry| {
-        matches!(import_entry.module_request.name().as_str(), "@jest/globals")
-    });
+    let file_path = ctx.file_path().to_string_lossy();
+    ["spec.js", "spec.jsx", "spec.ts", "spec.tsx", "test.js", "test.jsx", "test.ts", "test.tsx"]
+        .iter()
+        .any(|ext| file_path.ends_with(ext))
 }
 
 pub fn is_type_of_jest_fn_call<'a>(
@@ -134,7 +134,7 @@ pub fn parse_expect_jest_fn_call<'a>(
 
 pub struct PossibleJestNode<'a, 'b> {
     pub node: &'b AstNode<'a>,
-    pub original: Option<&'a Atom>, // if this node is imported from 'jest/globals', this field will be Some(original_name), otherwise None
+    pub original: Option<&'a Atom<'a>>, // if this node is imported from 'jest/globals', this field will be Some(original_name), otherwise None
 }
 
 /// Collect all possible Jest fn Call Expression,
@@ -193,7 +193,7 @@ pub fn collect_possible_jest_call_node<'a, 'b>(
 
 fn collect_ids_referenced_to_import<'a, 'b>(
     ctx: &'b LintContext<'a>,
-) -> Vec<(ReferenceId, Option<&'a Atom>)> {
+) -> Vec<(ReferenceId, Option<&'a Atom<'a>>)> {
     ctx.symbols()
         .resolved_references
         .iter_enumerated()
@@ -220,14 +220,17 @@ fn collect_ids_referenced_to_import<'a, 'b>(
             None
         })
         .flatten()
-        .collect::<Vec<(ReferenceId, Option<&'a Atom>)>>()
+        .collect::<Vec<(ReferenceId, Option<&'a Atom<'a>>)>>()
 }
 
 /// Find name in the Import Declaration, not use name because of lifetime not long enough.
-fn find_original_name<'a>(import_decl: &'a ImportDeclaration<'a>, name: &Atom) -> Option<&'a Atom> {
+fn find_original_name<'a>(
+    import_decl: &'a ImportDeclaration<'a>,
+    name: &str,
+) -> Option<&'a Atom<'a>> {
     import_decl.specifiers.iter().flatten().find_map(|specifier| match specifier {
         ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
-            if import_specifier.local.name.as_str() == name.as_str() {
+            if import_specifier.local.name.as_str() == name {
                 return Some(import_specifier.imported.name());
             }
             None
@@ -285,4 +288,42 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
 
 fn is_pure_string(template_literal: &TemplateLiteral) -> bool {
     template_literal.expressions.is_empty() && template_literal.quasis.len() == 1
+}
+
+pub fn is_equality_matcher(matcher: &KnownMemberExpressionProperty) -> bool {
+    matcher.is_name_equal("toBe")
+        || matcher.is_name_equal("toEqual")
+        || matcher.is_name_equal("toStrictEqual")
+}
+
+#[cfg(test)]
+mod test {
+    use crate::LintContext;
+    use oxc_allocator::Allocator;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::SourceType;
+    use std::{path::Path, rc::Rc};
+
+    #[test]
+    fn test_is_jest_file() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let parser_ret = Parser::new(&allocator, "", source_type).parse();
+        let program = allocator.alloc(parser_ret.program);
+        let semantic_ret = SemanticBuilder::new("", source_type).build(program).semantic;
+        let semantic_ret = Rc::new(semantic_ret);
+
+        let path = Path::new("foo.js");
+        let ctx = LintContext::new(Box::from(path), &semantic_ret);
+        assert!(!super::is_jest_file(&ctx));
+
+        let path = Path::new("foo.test.js");
+        let ctx = LintContext::new(Box::from(path), &semantic_ret);
+        assert!(super::is_jest_file(&ctx));
+
+        let path = Path::new("__tests__/foo/test.spec.js");
+        let ctx = LintContext::new(Box::from(path), &semantic_ret);
+        assert!(super::is_jest_file(&ctx));
+    }
 }

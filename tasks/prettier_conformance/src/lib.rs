@@ -1,3 +1,4 @@
+mod ignore_list;
 mod spec;
 
 use std::{
@@ -6,28 +7,50 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use spec::SpecParser;
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_prettier::{Prettier, PrettierOptions};
-use oxc_span::{Atom, SourceType};
+use oxc_span::SourceType;
 use oxc_tasks_common::project_root;
+
+use crate::{
+    ignore_list::{JS_IGNORE_TESTS, TS_IGNORE_TESTS},
+    spec::SpecParser,
+};
 
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
 fn test() {
-    TestRunner::new(TestRunnerOptions::default()).run();
+    TestRunner::new(TestLanguage::Js, TestRunnerOptions::default()).run();
+    TestRunner::new(TestLanguage::Ts, TestRunnerOptions::default()).run();
 }
 
-#[derive(Default)]
+pub enum TestLanguage {
+    Js,
+    Ts,
+}
+
+impl TestLanguage {
+    fn as_str(&self) -> &'static str {
+        match self {
+            Self::Js => "js",
+            Self::Ts => "ts",
+        }
+    }
+}
+
+#[derive(Default, Clone)]
 pub struct TestRunnerOptions {
     pub filter: Option<String>,
 }
 
 /// The test runner which walks the prettier repository and searches for formatting tests.
 pub struct TestRunner {
+    language: TestLanguage,
+    fixtures_root: PathBuf,
+    ignore_tests: &'static [&'static str],
     options: TestRunnerOptions,
     spec: SpecParser,
 }
@@ -37,46 +60,8 @@ fn root() -> PathBuf {
 }
 
 fn fixtures_root() -> PathBuf {
-    project_root().join(root()).join("prettier/tests/format/js")
+    project_root().join(root()).join("prettier/tests/format")
 }
-
-const IGNORE_TESTS: &[&str] = &[
-    // non-standard syntax
-    "js/deferred-import-evaluation",
-    "js/bind-expressions",
-    // Unsupported stage3 features
-    "tuple-and-record.js",
-    "js/async-do-expressions",
-    "js/babel-plugins",
-    "js/decorator",
-    "js/destructuring-private-fields",
-    "js/do", // do expression
-    "js/explicit-resource-management",
-    "js/export-default/escaped",
-    "js/export-default/export-default-from",
-    "js/import-assertions",
-    "js/import-attributes",
-    "js/import-reflection",
-    "js/module-blocks",
-    "js/multiparser",
-    "js/partial-application",
-    "js/pipeline-operator",
-    "js/record",
-    "js/source-phase-imports",
-    "js/throw_expressions",
-    "js/tuple",
-    "js/arrows-bind",
-    "js/v8_intrinsic",
-    // prettier-ignore
-    "js/ignore",
-    // range formatting
-    "range",
-    // IDE cursor
-    "cursor",
-    // Invalid
-    "js/call/invalid",
-    "optional-chaining-assignment/invalid-",
-];
 
 const SNAP_NAME: &str = "jsfmt.spec.js";
 const SNAP_RELATIVE_PATH: &str = "__snapshots__/jsfmt.spec.js.snap";
@@ -84,14 +69,22 @@ const LF: char = '\u{a}';
 const CR: char = '\u{d}';
 
 impl TestRunner {
-    pub fn new(options: TestRunnerOptions) -> Self {
-        Self { options, spec: SpecParser::default() }
+    pub fn new(language: TestLanguage, options: TestRunnerOptions) -> Self {
+        let fixtures_root = fixtures_root().join(match language {
+            TestLanguage::Js => "js",
+            TestLanguage::Ts => "typescript",
+        });
+        let ignore_tests = match language {
+            TestLanguage::Js => JS_IGNORE_TESTS,
+            TestLanguage::Ts => TS_IGNORE_TESTS,
+        };
+        Self { language, fixtures_root, ignore_tests, options, spec: SpecParser::default() }
     }
 
     /// # Panics
     #[allow(clippy::cast_precision_loss)]
     pub fn run(mut self) {
-        let fixture_root = fixtures_root();
+        let fixture_root = &self.fixtures_root;
         // Read the first level of directories that contain `__snapshots__`
         let mut dirs = WalkDir::new(fixture_root)
             .min_depth(1)
@@ -103,7 +96,7 @@ impl TestRunner {
                     .as_ref()
                     .map_or(true, |name| e.path().to_string_lossy().contains(name))
             })
-            .filter(|e| !IGNORE_TESTS.iter().any(|s| e.path().to_string_lossy().contains(s)))
+            .filter(|e| !self.ignore_tests.iter().any(|s| e.path().to_string_lossy().contains(s)))
             .map(|e| {
                 let mut path = e.into_path();
                 if path.is_file() {
@@ -142,7 +135,9 @@ impl TestRunner {
                 .into_iter()
                 .filter_map(Result::ok)
                 .filter(|e| !e.file_type().is_dir())
-                .filter(|e| !IGNORE_TESTS.iter().any(|s| e.path().to_string_lossy().contains(s)))
+                .filter(|e| {
+                    !self.ignore_tests.iter().any(|s| e.path().to_string_lossy().contains(s))
+                })
                 .filter(|e| {
                     self.options
                         .filter
@@ -167,15 +162,17 @@ impl TestRunner {
             self.test_snapshot(dir, &spec_path, &inputs, &mut failed);
         }
 
+        let language = self.language.as_str();
         let passed = total - failed.len();
         let percentage = (passed as f64 / total as f64) * 100.0;
-        let heading = format!("Compatibility: {passed}/{total} ({percentage:.2}%)");
+        let heading = format!("{language} compatibility: {passed}/{total} ({percentage:.2}%)");
         println!("{heading}");
 
         if self.options.filter.is_none() {
             let failed = failed.join("\n");
             let snapshot = format!("{heading}\n\n# Failed\n{failed}");
-            fs::write(root().join("prettier.snap.md"), snapshot).unwrap();
+            let filename = format!("prettier.{language}.snap.md");
+            fs::write(root().join(filename), snapshot).unwrap();
         }
     }
 
@@ -186,7 +183,6 @@ impl TestRunner {
         inputs: &[PathBuf],
         failed: &mut Vec<String>,
     ) {
-        let fixture_root = fixtures_root();
         let mut write_dir_info = true;
         for path in inputs {
             let input = fs::read_to_string(path).unwrap();
@@ -212,7 +208,7 @@ impl TestRunner {
                     dir_info.push_str(
                         format!(
                             "\n### {}\n",
-                            dir.strip_prefix(&fixture_root).unwrap().to_string_lossy()
+                            dir.strip_prefix(&self.fixtures_root).unwrap().to_string_lossy()
                         )
                         .as_str(),
                     );
@@ -221,7 +217,7 @@ impl TestRunner {
 
                 failed.push(format!(
                     "{dir_info}* {}",
-                    path.strip_prefix(&fixture_root).unwrap().to_string_lossy()
+                    path.strip_prefix(&self.fixtures_root).unwrap().to_string_lossy()
                 ));
             }
         }
@@ -261,7 +257,7 @@ impl TestRunner {
         path: &Path,
         input: &str,
         prettier_options: PrettierOptions,
-        snapshot_options: &[(Atom, String)],
+        snapshot_options: &[(String, String)],
         snap_content: &str,
     ) -> String {
         let filename = path.file_name().unwrap().to_string_lossy();
@@ -313,6 +309,7 @@ impl TestRunner {
             r#"
 =====================================output=====================================
 {output}
+
 ================================================================================
 `;"#
         );
@@ -386,7 +383,7 @@ impl TestRunner {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(path).unwrap();
         let ret = Parser::new(&allocator, source_text, source_type).preserve_parens(false).parse();
-        Prettier::new(&allocator, source_text, ret.trivias, prettier_options).build(&ret.program)
+        Prettier::new(&allocator, source_text, &ret.trivias, prettier_options).build(&ret.program)
     }
 }
 
@@ -396,7 +393,7 @@ mod tests {
     use std::fs;
 
     fn get_expect_in_arrays(input_name: &str) -> String {
-        let base = fixtures_root().join("arrays");
+        let base = fixtures_root().join("js/arrays");
         let expect_file = fs::read_to_string(base.join(SNAP_RELATIVE_PATH)).unwrap();
         let input = fs::read_to_string(base.join(input_name)).unwrap();
         TestRunner::get_expect(&expect_file, &input).unwrap()

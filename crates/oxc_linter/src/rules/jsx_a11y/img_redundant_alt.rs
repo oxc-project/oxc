@@ -117,22 +117,16 @@ impl Rule for ImgRedundantAlt {
             return;
         }
 
-        if is_hidden_from_screen_reader(jsx_el) {
+        if is_hidden_from_screen_reader(ctx, jsx_el) {
             return;
         }
 
-        let alt_prop = match has_jsx_prop_lowercase(jsx_el, "alt") {
-            Some(v) => v,
-            None => {
-                return;
-            }
+        let Some(alt_prop) = has_jsx_prop_lowercase(jsx_el, "alt") else {
+            return;
         };
 
-        let alt_attribute = match get_prop_value(alt_prop) {
-            Some(v) => v,
-            None => {
-                return;
-            }
+        let Some(alt_attribute) = get_prop_value(alt_prop) else {
+            return;
         };
 
         let alt_attribute_name = match alt_prop {

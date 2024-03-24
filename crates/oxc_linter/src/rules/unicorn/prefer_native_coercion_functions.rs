@@ -55,7 +55,7 @@ declare_oxc_lint!(
 impl Rule for PreferNativeCoercionFunctions {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ArrowExpression(arrow_expr) => {
+            AstKind::ArrowFunctionExpression(arrow_expr) => {
                 if arrow_expr.r#async || arrow_expr.params.items.len() == 0 {
                     return;
                 }
@@ -144,7 +144,7 @@ fn check_function(
     None
 }
 
-fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a Atom> {
+fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a Atom<'a>> {
     if is_arrow {
         if let Statement::ExpressionStatement(expr_stmt) = &stmt {
             return expr_stmt

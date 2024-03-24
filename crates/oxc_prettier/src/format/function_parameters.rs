@@ -62,21 +62,25 @@ pub(super) fn print_function_parameters<'a>(
     params: &FormalParameters<'a>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    let is_arrow_function = matches!(p.parent_kind(), AstKind::ArrowExpression(_));
+    let is_arrow_function = matches!(p.parent_kind(), AstKind::ArrowFunctionExpression(_));
     let need_parens =
         !is_arrow_function || p.options.arrow_parens.is_always() || params.items.len() != 1;
     if need_parens {
         parts.push(ss!("("));
     }
 
+    let should_hug_the_only_function_parameter = should_hug_the_only_function_parameter(p, params);
+
     let mut printed = p.vec();
+    let len = params.items.len();
+    let has_rest = params.rest.is_some();
     for (i, param) in params.items.iter().enumerate() {
         printed.push(param.format(p));
-        if i == params.items.len() - 1 {
+        if i == len - 1 && !has_rest {
             break;
         }
         printed.push(ss!(","));
-        if should_hug_the_only_function_parameter(p, params) {
+        if should_hug_the_only_function_parameter {
             printed.push(space!());
         } else if p.is_next_line_empty(param.span) {
             printed.extend(hardline!());
@@ -85,12 +89,16 @@ pub(super) fn print_function_parameters<'a>(
             printed.push(line!());
         }
     }
-
     if let Some(rest) = &params.rest {
-        if !params.items.is_empty() {
-            printed.push(ss!(", "));
-        }
         printed.push(rest.format(p));
+    }
+
+    if should_hug_the_only_function_parameter {
+        let mut array = p.vec();
+        array.push(ss!("("));
+        array.extend(printed);
+        array.push(ss!(")"));
+        return Doc::Array(array);
     }
 
     let mut indented = p.vec();
@@ -106,9 +114,9 @@ pub(super) fn print_function_parameters<'a>(
     }
 
     if p.args.expand_first_arg {
-        Doc::Group(Group::new(parts, false))
-    } else {
         Doc::Array(parts)
+    } else {
+        Doc::Group(Group::new(parts))
     }
 }
 

@@ -149,6 +149,11 @@ pub struct BindingRestElementTrailingComma(#[label] pub Span);
 pub struct InvalidBindingRestElement(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
+#[error("A rest parameter cannot be optional")]
+#[diagnostic()]
+pub struct ARestParameterCannotBeOptional(#[label] pub Span);
+
+#[derive(Debug, Error, Diagnostic)]
 #[error("Cannot assign to this expression")]
 #[diagnostic()]
 pub struct InvalidAssignment(#[label] pub Span);
@@ -326,3 +331,8 @@ pub struct UsingDeclarationsMustBeInitialized(#[label] pub Span);
 #[error("TS1089: `static` modifier cannot appear on a constructor declaration.")]
 #[diagnostic()]
 pub struct StaticConstructor(#[label] pub Span);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("No line break is allowed before '=>'.")]
+#[diagnostic()]
+pub struct NoLineBreakIsAllowedBeforeArrow(#[label] pub Span);

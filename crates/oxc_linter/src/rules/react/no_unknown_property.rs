@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use once_cell::sync::Lazy;
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName},
+    ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -16,12 +16,7 @@ use serde::Deserialize;
 use std::collections::hash_map::HashMap;
 use std::collections::hash_set::HashSet;
 
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{get_element_type, get_jsx_attribute_name},
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, utils::get_jsx_attribute_name, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 enum NoUnknownPropertyDiagnostic {
@@ -455,15 +450,17 @@ impl Rule for NoUnknownProperty {
         let AstKind::JSXOpeningElement(el) = &node.kind() else {
             return;
         };
-        let Some(el_type) = get_element_type(ctx, el) else {
+        let JSXElementName::Identifier(ident) = &el.name else {
             return;
         };
+        let el_type = ident.name.as_str();
+
         // fbt/fbs nodes are bonkers, let's not go there
         if !el_type.starts_with(char::is_lowercase) || el_type == "fbt" || el_type == "fbs" {
             return;
         }
 
-        let is_valid_html_tag = HTML_TAG_CONVENTION.is_match(el_type.as_str())
+        let is_valid_html_tag = HTML_TAG_CONVENTION.is_match(el_type)
             && el.attributes.iter().all(|attr| {
                 let JSXAttributeItem::Attribute(jsx_attr) = attr else {
                     return true;
@@ -500,7 +497,7 @@ impl Rule for NoUnknownProperty {
                 };
                 let name = normalize_attribute_case(actual_name.as_str());
                 if let Some(tags) = ATTRIBUTE_TAGS_MAP.get(name) {
-                    if !tags.contains(el_type.as_str()) {
+                    if !tags.contains(el_type) {
                         ctx.diagnostic(NoUnknownPropertyDiagnostic::InvalidPropOnTag(
                             span,
                             actual_name.to_string(),

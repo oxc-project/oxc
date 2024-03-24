@@ -90,3 +90,19 @@ fn test_function_level_strict() {
         .test();
     tester.has_some_symbol("foo").is_not_in_scope(ScopeFlags::StrictMode).test();
 }
+
+#[test]
+fn test_switch_case() {
+    SemanticTester::js(
+        "
+            const foo = 1;
+            switch (foo) {
+                case 1:
+                    const foo = 2;
+            }
+        ",
+    )
+    .has_root_symbol("foo")
+    .has_number_of_references(1)
+    .test();
+}

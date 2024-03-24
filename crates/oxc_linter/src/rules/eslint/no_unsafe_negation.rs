@@ -97,7 +97,7 @@ impl NoUnsafeNegation {
                 expr.operator.gen(&mut codegen, Context::default());
                 codegen.print_expression(&expr.right);
                 codegen.print(b')');
-                codegen.into_code()
+                codegen.into_source_text()
             };
             Fix::new(modified_code, expr.span)
         };

@@ -85,12 +85,10 @@ fn is_in_array_or_iter<'a, 'b>(
     let mut is_explicit_return = false;
 
     loop {
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-            return None;
-        };
+        let parent = ctx.nodes().parent_node(node.id())?;
 
         match parent.kind() {
-            AstKind::ArrowExpression(arrow_expr) => {
+            AstKind::ArrowFunctionExpression(arrow_expr) => {
                 let is_arrow_expr_statement = matches!(
                     arrow_expr.body.statements.first(),
                     Some(Statement::ExpressionStatement(_))
@@ -99,9 +97,7 @@ fn is_in_array_or_iter<'a, 'b>(
                     return None;
                 }
 
-                let Some(parent) = ctx.nodes().parent_node(parent.id()) else {
-                    return None;
-                };
+                let parent = ctx.nodes().parent_node(parent.id())?;
 
                 if let AstKind::ObjectProperty(_) = parent.kind() {
                     return None;
@@ -112,9 +108,7 @@ fn is_in_array_or_iter<'a, 'b>(
                 is_outside_containing_function = true;
             }
             AstKind::Function(_) => {
-                let Some(parent) = ctx.nodes().parent_node(parent.id()) else {
-                    return None;
-                };
+                let parent = ctx.nodes().parent_node(parent.id())?;
 
                 if let AstKind::ObjectProperty(_) = parent.kind() {
                     return None;
@@ -391,7 +385,7 @@ fn test() {
           (Component) => <div><Component /></div>
         ];
         ",
-        r" 
+        r"
         MyStory.decorators = [
           (Component) => {
             const store = useMyStore();

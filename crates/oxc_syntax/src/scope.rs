@@ -5,11 +5,8 @@ define_index_type! {
     pub struct ScopeId = u32;
 }
 
-#[cfg_attr(
-    all(feature = "serde", feature = "wasm"),
-    wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
-)]
-#[allow(dead_code)]
+#[cfg(feature = "serialize")]
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type ScopeId = number;
 "#;
@@ -51,6 +48,10 @@ impl ScopeFlags {
 
     pub fn is_function(&self) -> bool {
         self.contains(Self::Function)
+    }
+
+    pub fn is_arrow(&self) -> bool {
+        self.contains(Self::Arrow)
     }
 
     pub fn is_constructor(&self) -> bool {

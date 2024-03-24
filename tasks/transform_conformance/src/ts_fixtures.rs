@@ -99,6 +99,7 @@ impl TypeScriptFixtures {
         let semantic_ret = SemanticBuilder::new(&source_text, source_type)
             .with_trivias(parser_ret.trivias)
             .with_check_syntax_error(true)
+            .build_module_record(PathBuf::new(), &parser_ret.program)
             .build(&parser_ret.program);
 
         let errors = parser_ret.errors.into_iter().chain(semantic_ret.errors).collect::<Vec<_>>();
@@ -126,7 +127,9 @@ impl TypeScriptFixtures {
 
         result
             .map(|()| {
-                Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
+                Codegen::<false>::new("", &source_text, CodegenOptions::default())
+                    .build(transformed_program)
+                    .source_text
             })
             .map_err(|e| e.iter().map(ToString::to_string).collect())
     }

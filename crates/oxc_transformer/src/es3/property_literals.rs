@@ -15,7 +15,8 @@ pub struct PropertyLiteral<'a> {
 
 impl<'a> PropertyLiteral<'a> {
     pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
-        (options.target <= TransformTarget::ES3 || options.property_literals).then(|| Self { ast })
+        (options.target <= TransformTarget::ES3 || options.property_literals)
+            .then_some(Self { ast })
     }
 
     pub fn transform_object_property<'b>(&mut self, expr: &'b mut ObjectProperty<'a>) {

@@ -1,19 +1,25 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 
-use std::{hash::BuildHasherDefault, path::PathBuf, sync::Arc};
+use std::{fmt, hash::BuildHasherDefault, path::PathBuf, sync::Arc};
 
 use dashmap::DashMap;
 use indexmap::IndexMap;
-use oxc_span::{Atom, Span};
 use rustc_hash::{FxHashMap, FxHasher};
 
-/// Module Record
+use oxc_span::{CompactStr, Span};
+
+/// ESM Module Record
+///
+/// All data inside this data structure are for ESM, no commonjs data is allowed.
 ///
 /// See
 /// * <https://tc39.es/ecma262/#table-additional-fields-of-source-text-module-records>
 /// * <https://tc39.es/ecma262/#cyclic-module-record>
 #[derive(Default)]
 pub struct ModuleRecord {
+    /// This module has no import / export statements
+    pub not_esm: bool,
+
     /// Resolved absolute path to this module record
     pub resolved_absolute_path: PathBuf,
 
@@ -26,13 +32,13 @@ pub struct ModuleRecord {
     ///   import ModuleSpecifier
     ///   export ExportFromClause FromClause
     /// Keyed by ModuleSpecifier, valued by all node occurrences
-    pub requested_modules: IndexMap<Atom, Vec<Span>, BuildHasherDefault<FxHasher>>,
+    pub requested_modules: IndexMap<CompactStr, Vec<Span>, BuildHasherDefault<FxHasher>>,
 
     /// `[[LoadedModules]]`
     ///
     /// A map from the specifier strings used by the module represented by this record to request the importation of a module to the resolved Module Record.
     /// The list does not contain two different Records with the same `[[Specifier]]`.
-    pub loaded_modules: DashMap<Atom, Arc<ModuleRecord>, BuildHasherDefault<FxHasher>>,
+    pub loaded_modules: DashMap<CompactStr, Arc<ModuleRecord>, BuildHasherDefault<FxHasher>>,
 
     /// `[[ImportEntries]]`
     ///
@@ -59,10 +65,21 @@ pub struct ModuleRecord {
     /// not including export * as namespace declarations.
     pub star_export_entries: Vec<ExportEntry>,
 
-    pub exported_bindings: FxHashMap<Atom, Span>,
+    /// Local exported bindings
+    pub exported_bindings: FxHashMap<CompactStr, Span>,
+
+    /// Local duplicated exported bindings, for diagnostics
     pub exported_bindings_duplicated: Vec<NameSpan>,
 
+    /// Reexported bindings from `export * from 'specifier'`
+    /// Keyed by resolved path
+    pub exported_bindings_from_star_export: DashMap<PathBuf, Vec<CompactStr>>,
+
+    /// `export default name`
+    ///         ^^^^^^^ span
     pub export_default: Option<Span>,
+
+    /// Duplicated span of `export default` for diagnostics
     pub export_default_duplicated: Vec<Span>,
 }
 
@@ -72,18 +89,46 @@ impl ModuleRecord {
     }
 }
 
+impl fmt::Debug for ModuleRecord {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+        // recursively formatting loaded modules can crash when the module graph is cyclic
+        let loaded_modules = self
+            .loaded_modules
+            .iter()
+            .map(|entry| (entry.key().to_string()))
+            .reduce(|acc, key| format!("{acc}, {key}"))
+            .unwrap_or_default();
+        let loaded_modules = format!("{{ {loaded_modules} }}");
+        f.debug_struct("ModuleRecord")
+            .field("not_esm", &self.not_esm)
+            .field("resolved_absolute_path", &self.resolved_absolute_path)
+            .field("requested_modules", &self.requested_modules)
+            .field("loaded_modules", &loaded_modules)
+            .field("import_entries", &self.import_entries)
+            .field("local_export_entries", &self.local_export_entries)
+            .field("indirect_export_entries", &self.indirect_export_entries)
+            .field("star_export_entries", &self.star_export_entries)
+            .field("exported_bindings", &self.exported_bindings)
+            .field("exported_bindings_duplicated", &self.exported_bindings_duplicated)
+            .field("exported_bindings_from_star_export", &self.exported_bindings_from_star_export)
+            .field("export_default", &self.export_default)
+            .field("export_default_duplicated", &self.export_default_duplicated)
+            .finish()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NameSpan {
-    name: Atom,
+    name: CompactStr,
     span: Span,
 }
 
 impl NameSpan {
-    pub fn new(name: Atom, span: Span) -> Self {
+    pub fn new(name: CompactStr, span: Span) -> Self {
         Self { name, span }
     }
 
-    pub fn name(&self) -> &Atom {
+    pub fn name(&self) -> &CompactStr {
         &self.name
     }
 
@@ -103,6 +148,8 @@ pub struct ImportEntry {
 
     /// The name that is used to locally access the imported value from within the importing module.
     pub local_name: NameSpan,
+
+    pub is_type: bool,
 }
 
 /// `ImportName` For `ImportEntry`
@@ -216,6 +263,10 @@ impl ExportLocalName {
     }
 }
 
+pub struct FunctionMeta {
+    pub deprecated: bool,
+}
+
 #[cfg(test)]
 mod test {
     use super::{ExportExportName, ExportLocalName, ImportImportName, NameSpan};
@@ -228,7 +279,7 @@ mod test {
         assert!(!ImportImportName::NamespaceObject.is_default());
         assert!(ImportImportName::Default(Span::new(0, 0)).is_default());
 
-        assert!(!ImportImportName::Name(name).is_namespace_object());
+        assert!(!ImportImportName::Name(name.clone()).is_namespace_object());
         assert!(ImportImportName::NamespaceObject.is_namespace_object());
         assert!(!ImportImportName::Default(Span::new(0, 0)).is_namespace_object());
     }

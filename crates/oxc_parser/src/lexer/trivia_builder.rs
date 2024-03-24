@@ -1,27 +1,31 @@
-use oxc_ast::{CommentKind, Trivias};
+use std::collections::BTreeMap;
+
+use oxc_ast::{Comment, CommentKind, Trivias};
 use oxc_span::Span;
 
 #[derive(Debug, Default)]
 pub struct TriviaBuilder {
-    trivias: Trivias,
+    // Duplicated comments can be added from rewind, use `BTreeMap` to ensure uniqueness
+    comments: BTreeMap<u32, Comment>,
+    irregular_whitespaces: Vec<Span>,
 }
 
 impl TriviaBuilder {
     pub fn build(self) -> Trivias {
-        self.trivias
+        Trivias::new(self.comments, self.irregular_whitespaces)
     }
 
-    /// skip leading `//`
     pub fn add_single_line_comment(&mut self, start: u32, end: u32) {
-        self.trivias.comments.push((start + 2, end, CommentKind::SingleLine));
+        // skip leading `//`
+        self.comments.insert(start + 2, Comment::new(end, CommentKind::SingleLine));
     }
 
-    /// skip leading `/*` and trailing `*/`
     pub fn add_multi_line_comment(&mut self, start: u32, end: u32) {
-        self.trivias.comments.push((start + 2, end - 2, CommentKind::MultiLine));
+        // skip leading `/*` and trailing `*/`
+        self.comments.insert(start + 2, Comment::new(end - 2, CommentKind::MultiLine));
     }
 
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
-        self.trivias.irregular_whitespaces.push(Span::new(start, end));
+        self.irregular_whitespaces.push(Span::new(start, end));
     }
 }

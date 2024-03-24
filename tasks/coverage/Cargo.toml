@@ -23,18 +23,19 @@ test = false
 [dependencies]
 oxc_allocator    = { workspace = true }
 oxc_parser       = { workspace = true }
-oxc_ast          = { workspace = true, features = ["serde"] }
+oxc_ast          = { workspace = true, features = ["serialize"] }
 oxc_codegen      = { workspace = true }
 oxc_diagnostics  = { workspace = true }
 oxc_semantic     = { workspace = true }
 oxc_minifier     = { workspace = true }
+oxc_prettier     = { workspace = true }
 oxc_span         = { workspace = true }
 oxc_tasks_common = { workspace = true }
 
 serde        = { workspace = true, features = ["derive"] }
 serde_json   = { workspace = true }
 rayon        = { workspace = true }
-miette       = { workspace = true, features = ["fancy-no-backtrace"] }
+miette       = { workspace = true }
 project-root = { workspace = true }
 pico-args    = { workspace = true }
 lazy_static  = { workspace = true }
@@ -47,11 +48,5 @@ tokio        = { workspace = true, features = ["rt-multi-thread", "macros"] }
 console        = "0.15.8"
 encoding_rs    = "0.8.33"
 encoding_rs_io = "0.1.7"
-serde_yaml     = "0.9.31"
+serde_yaml     = "0.9.33"
 similar        = "2.4.0"
-
-[target.'cfg(not(target_env = "msvc"))'.dependencies]
-jemallocator = { workspace = true }
-
-[target.'cfg(target_os = "windows")'.dependencies]
-mimalloc = { workspace = true }

@@ -12,6 +12,9 @@ use super::assignment::AssignmentLikeNode;
 
 pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
     let mut parts = p.vec();
+    if class.modifiers.contains(ModifierKind::Abstract) {
+        parts.push(ss!("abstract "));
+    }
     parts.push(ss!("class "));
     if let Some(id) = &class.id {
         parts.push(id.format(p));
@@ -35,6 +38,7 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
         parts_inner.push(node.format(p));
 
         if !p.options.semi
+            && node.is_property()
             && should_print_semicolon_after_class_property(node, class_body.body.get(i + 1))
         {
             parts_inner.push(ss!(";"));
@@ -218,9 +222,6 @@ fn should_print_semicolon_after_class_property<'a>(
 
     match next_node {
         ClassElement::PropertyDefinition(property_definition) => property_definition.computed,
-        ClassElement::TSAbstractPropertyDefinition(property_definition) => {
-            property_definition.0.property_definition.computed
-        }
         ClassElement::StaticBlock(_) => false,
         ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => true,
         ClassElement::MethodDefinition(method_definition) => {
@@ -236,24 +237,6 @@ fn should_print_semicolon_after_class_property<'a>(
             let is_generator = method_definition.value.generator;
 
             if method_definition.computed || is_generator {
-                return true;
-            }
-
-            false
-        }
-        ClassElement::TSAbstractMethodDefinition(ts_abstract_method_definition) => {
-            let is_async = ts_abstract_method_definition.method_definition.value.r#async;
-
-            if is_async
-                || ts_abstract_method_definition.method_definition.kind == MethodDefinitionKind::Get
-                || ts_abstract_method_definition.method_definition.kind == MethodDefinitionKind::Set
-            {
-                return false;
-            }
-
-            let is_generator = ts_abstract_method_definition.method_definition.value.generator;
-
-            if ts_abstract_method_definition.method_definition.computed || is_generator {
                 return true;
             }
 

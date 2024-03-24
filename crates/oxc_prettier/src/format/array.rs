@@ -6,7 +6,7 @@ use crate::{
     array,
     comments::{CommentFlags, DanglingCommentsPrintOptions},
     doc::{Doc, DocBuilder, Fill, Group},
-    group, hardline, if_break, indent, line, softline, ss, Prettier,
+    group, hardline, if_break, line, softline, ss, Prettier,
 };
 
 use super::Format;
@@ -36,6 +36,7 @@ impl<'a, 'b> Array<'a, 'b> {
             Self::ArrayAssignmentTarget(array) => array.span,
         }
     }
+
     fn is_concisely_printed(&self) -> bool {
         match self {
             Self::ArrayExpression(array) => {
@@ -49,12 +50,12 @@ impl<'a, 'b> Array<'a, 'b> {
                     };
 
                     match expr {
-                        Expression::NumberLiteral(_) => true,
+                        Expression::NumericLiteral(_) => true,
                         Expression::UnaryExpression(unary_expr) => {
                             matches!(
                                 unary_expr.operator,
                                 UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation
-                            ) && matches!(unary_expr.argument, Expression::NumberLiteral(_))
+                            ) && matches!(unary_expr.argument, Expression::NumericLiteral(_))
                         }
                         _ => false,
                     }
@@ -65,7 +66,7 @@ impl<'a, 'b> Array<'a, 'b> {
     }
 }
 
-pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
+pub fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
     if array.len() == 0 {
         return print_empty_array_elements(p, array);
     }
@@ -98,24 +99,36 @@ pub(super) fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Do
     };
 
     let mut parts = p.vec();
-    let elements = if should_use_concise_formatting {
-        print_array_elements_concisely(p, array, trailing_comma_fn)
-    } else {
-        let trailing_comma = trailing_comma_fn(p);
-        array!(p, print_elements(p, array), trailing_comma)
-    };
-    let parts_inner = if let Some(dangling_comments) = p.print_dangling_comments(array.span(), None)
-    {
-        indent!(p, softline!(), elements, dangling_comments)
-    } else {
-        indent!(p, softline!(), elements)
-    };
-    parts.push(ss!("["));
-    parts.push(parts_inner);
-    parts.push(softline!());
-    parts.push(ss!("]"));
-    let should_break = should_break(array);
-    Doc::Group(Group::new(parts, should_break).with_id(id))
+
+    parts.push(Doc::Group(
+        Group::new({
+            let mut group = p.vec();
+            group.push(ss!("["));
+            group.push({
+                Doc::Indent({
+                    let mut indent_parts = p.vec();
+                    indent_parts.push(softline!());
+                    indent_parts.push(if should_use_concise_formatting {
+                        print_array_elements_concisely(p, array, trailing_comma_fn)
+                    } else {
+                        let trailing_comma = trailing_comma_fn(p);
+                        array!(p, print_array_elements(p, array), trailing_comma)
+                    });
+                    if let Some(dangling_comments) = p.print_dangling_comments(array.span(), None) {
+                        indent_parts.push(dangling_comments);
+                    };
+                    indent_parts
+                })
+            });
+            group.push(softline!());
+            group.push(ss!("]"));
+            group
+        })
+        .with_break(should_break(array))
+        .with_id(id),
+    ));
+
+    Doc::Array(parts)
 }
 
 fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
@@ -126,17 +139,20 @@ fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -
     )
 }
 
-fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
+fn print_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
     let mut parts = p.vec();
     match array {
         Array::ArrayExpression(array) => {
             for (i, element) in array.elements.iter().enumerate() {
-                if i > 0 && i < array.elements.len() {
+                parts.push(element.format(p));
+                let is_last = i == array.elements.len() - 1;
+                if !is_last {
                     parts.push(ss!(","));
                     parts.push(line!());
+                    if !element.is_elision() && is_line_after_element_empty(p, element.span().end) {
+                        parts.push(softline!());
+                    }
                 }
-
-                parts.push(element.format(p));
             }
         }
         Array::TSTupleType(tuple) => {
@@ -150,21 +166,20 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
             }
         }
         Array::ArrayPattern(array_pat) => {
+            let len = array_pat.elements.len();
+            let has_rest = array_pat.rest.is_some();
             for (i, element) in array_pat.elements.iter().enumerate() {
-                if i > 0 && i < array_pat.elements.len() {
-                    parts.push(ss!(","));
-                    parts.push(line!());
-                }
-
                 if let Some(binding_pat) = element {
-                    parts.push(binding_pat.format(p));
+                    parts.push(group!(p, binding_pat.format(p)));
                 }
-            }
-
-            if let Some(rest) = &array_pat.rest {
+                if i == len - 1 && !has_rest {
+                    break;
+                }
                 parts.push(ss!(","));
                 parts.push(line!());
-                parts.push(rest.format(p));
+            }
+            if let Some(rest) = &array_pat.rest {
+                parts.push(group!(p, rest.format(p)));
             }
         }
         Array::ArrayAssignmentTarget(array_pat) => {
@@ -182,7 +197,6 @@ fn print_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
             if let Some(rest) = &array_pat.rest {
                 parts.push(ss!(","));
                 parts.push(line!());
-                parts.push(ss!("..."));
                 parts.push(rest.format(p));
             }
         }
@@ -212,7 +226,7 @@ where
                 parts.push(part);
 
                 if !is_last {
-                    if p.is_next_line_empty_after_index(element.span().end) {
+                    if is_line_after_element_empty(p, element.span().end) {
                         let mut space_parts = p.vec();
                         space_parts.extend(hardline!());
                         space_parts.extend(hardline!());
@@ -231,7 +245,7 @@ where
         }
         _ => {
             // TODO: implement
-            array!(p, print_elements(p, array), trailing_comma_fn(p));
+            array!(p, print_array_elements(p, array), trailing_comma_fn(p));
         }
     }
 
@@ -294,4 +308,23 @@ fn should_break(array: &Array) -> bool {
         Array::ArrayPattern(array) => false,
         Array::ArrayAssignmentTarget(array) => false,
     }
+}
+
+fn skip_comment(p: &Prettier<'_>, idx: u32) -> Option<u32> {
+    p.skip_inline_comment(p.skip_trailing_comment(Some(idx)))
+}
+
+#[allow(clippy::cast_possible_truncation)]
+fn skip_to_comma(p: &Prettier<'_>, current_idx: Option<u32>) -> Option<u32> {
+    let current_idx = current_idx?;
+    match p.source_text[current_idx as usize..].chars().next() {
+        Some(',') => Some(current_idx),
+        Some(c) => skip_to_comma(p, skip_comment(p, current_idx + c.len_utf8() as u32)),
+        None => None,
+    }
+}
+
+fn is_line_after_element_empty(p: &Prettier<'_>, index: u32) -> bool {
+    let Some(start_index) = skip_to_comma(p, Some(index)) else { return false };
+    p.is_next_line_empty_after_index(start_index)
 }

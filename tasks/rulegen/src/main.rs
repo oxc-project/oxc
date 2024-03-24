@@ -1,22 +1,22 @@
 use std::{
     borrow::Cow,
-    fmt::{self},
-    fmt::{Display, Formatter},
+    collections::HashMap,
+    fmt::{self, Display, Formatter},
 };
 
 use convert_case::{Case, Casing};
 use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{
-        Argument, ArrayExpressionElement, CallExpression, Expression, ExpressionStatement,
-        MemberExpression, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
-        PropertyKey, Statement, StaticMemberExpression, StringLiteral, TaggedTemplateExpression,
-        TemplateLiteral,
+        Argument, ArrayExpressionElement, CallExpression, ExportDefaultDeclarationKind, Expression,
+        ExpressionStatement, MemberExpression, ModuleDeclaration, ObjectExpression, ObjectProperty,
+        ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression, StringLiteral,
+        TaggedTemplateExpression, TemplateLiteral,
     },
     Visit,
 };
 use oxc_parser::Parser;
-use oxc_span::{GetSpan, SourceType};
+use oxc_span::{GetSpan, SourceType, Span};
 use serde::Serialize;
 use ureq::Response;
 
@@ -53,19 +53,33 @@ const REACT_PERF_TEST_PATH: &str =
 const NODE_TEST_PATH: &str =
     "https://raw.githubusercontent.com/eslint-community/eslint-plugin-n/master/tests/lib/rules";
 
+const TREE_SHAKING_PATH: &str =
+    "https://raw.githubusercontent.com/lukastaegert/eslint-plugin-tree-shaking/master/src/rules";
+
 struct TestCase<'a> {
     source_text: String,
     code: Option<String>,
+    group_comment: Option<String>,
     config: Option<Cow<'a, str>>,
     settings: Option<Cow<'a, str>>,
 }
 
 impl<'a> TestCase<'a> {
     fn new(source_text: &str, arg: &'a Expression<'a>) -> Self {
-        let mut test_case =
-            Self { source_text: source_text.to_string(), code: None, config: None, settings: None };
+        let mut test_case = Self {
+            source_text: source_text.to_string(),
+            code: None,
+            config: None,
+            settings: None,
+            group_comment: None,
+        };
         test_case.visit_expression(arg);
         test_case
+    }
+
+    fn with_group_comment(mut self, comment: String) -> Self {
+        self.group_comment = Some(comment);
+        self
     }
 
     fn code(&self, need_config: bool, need_settings: bool) -> String {
@@ -91,15 +105,24 @@ impl<'a> TestCase<'a> {
                     || "None".to_string(),
                     |settings| format!("Some(serde_json::json!({settings}))"),
                 );
-                if need_settings {
-                    format!("(r#\"{code}\"#, {config}, {settings})")
-                } else if need_config {
-                    format!("(r#\"{code}\"#, {config})")
+                let code_str = if code.contains('"') {
+                    format!("r#\"{}\"#", code.replace("\\\"", "\""))
                 } else {
-                    format!("r#\"{code}\"#")
+                    format!("\"{code}\"")
+                };
+                if need_settings {
+                    format!("({code_str}, {config}, {settings})")
+                } else if need_config {
+                    format!("({code_str}, {config})")
+                } else {
+                    code_str.to_string()
                 }
             })
             .unwrap_or_default()
+    }
+
+    fn group_comment(&self) -> Option<&str> {
+        self.group_comment.as_deref()
     }
 }
 
@@ -266,22 +289,55 @@ struct State<'a> {
     source_text: &'a str,
     valid_tests: Vec<&'a Expression<'a>>,
     invalid_tests: Vec<&'a Expression<'a>>,
+    expression_to_group_comment_map: HashMap<Span, String>,
+    group_comment_stack: Vec<String>,
 }
 
 impl<'a> State<'a> {
     fn new(source_text: &'a str) -> Self {
-        Self { source_text, valid_tests: vec![], invalid_tests: vec![] }
+        Self {
+            source_text,
+            valid_tests: vec![],
+            invalid_tests: vec![],
+            expression_to_group_comment_map: HashMap::new(),
+            group_comment_stack: vec![],
+        }
     }
 
     fn pass_cases(&self) -> Vec<TestCase> {
-        self.valid_tests.iter().map(|arg| TestCase::new(self.source_text, arg)).collect::<Vec<_>>()
+        self.get_test_cases(&self.valid_tests)
     }
 
     fn fail_cases(&self) -> Vec<TestCase> {
-        self.invalid_tests
+        self.get_test_cases(&self.invalid_tests)
+    }
+
+    fn get_test_cases(&self, tests: &[&'a Expression<'a>]) -> Vec<TestCase> {
+        tests
             .iter()
-            .map(|arg| TestCase::new(self.source_text, arg))
+            .map(|arg| {
+                let case = TestCase::new(self.source_text, arg);
+                if let Some(group_comment) = self.expression_to_group_comment_map.get(&arg.span()) {
+                    case.with_group_comment(group_comment.to_string())
+                } else {
+                    case
+                }
+            })
             .collect::<Vec<_>>()
+    }
+
+    fn get_comment(&self) -> String {
+        self.group_comment_stack.join(" ")
+    }
+
+    fn add_valid_test(&mut self, expr: &'a Expression<'a>) {
+        self.valid_tests.push(expr);
+        self.expression_to_group_comment_map.insert(expr.span(), self.get_comment());
+    }
+
+    fn add_invalid_test(&mut self, expr: &'a Expression<'a>) {
+        self.invalid_tests.push(expr);
+        self.expression_to_group_comment_map.insert(expr.span(), self.get_comment());
     }
 }
 
@@ -293,8 +349,20 @@ impl<'a> Visit<'a> for State<'a> {
     }
 
     fn visit_statement(&mut self, stmt: &Statement<'a>) {
-        if let Statement::ExpressionStatement(expr_stmt) = stmt {
-            self.visit_expression_statement(expr_stmt);
+        match stmt {
+            Statement::ExpressionStatement(expr_stmt) => self.visit_expression_statement(expr_stmt),
+            // for eslint-plugin-jsdoc
+            Statement::ModuleDeclaration(mod_decl) => {
+                if let ModuleDeclaration::ExportDefaultDeclaration(export_decl) = &mod_decl.0 {
+                    if let ExportDefaultDeclarationKind::Expression(Expression::ObjectExpression(
+                        obj_expr,
+                    )) = &export_decl.declaration
+                    {
+                        self.visit_object_expression(obj_expr);
+                    }
+                }
+            }
+            _ => {}
         }
     }
 
@@ -302,21 +370,29 @@ impl<'a> Visit<'a> for State<'a> {
         self.visit_expression(&stmt.expression);
     }
 
-    fn visit_expression(&mut self, expr: &Expression<'a>) {
-        if let Expression::CallExpression(call_expr) = expr {
-            for arg in &call_expr.arguments {
-                self.visit_argument(arg);
+    fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
+        let mut pushed = false;
+        if let Expression::Identifier(ident) = &expr.callee {
+            // Add describe's first parameter as part group comment
+            // e.g. for `describe('valid', () => { ... })`, the group comment will be "valid"
+            if ident.name == "describe" {
+                if let Some(Argument::Expression(Expression::StringLiteral(lit))) =
+                    expr.arguments.first()
+                {
+                    pushed = true;
+                    self.group_comment_stack.push(lit.value.to_string());
+                }
             }
         }
-    }
+        for arg in &expr.arguments {
+            self.visit_argument(arg);
+        }
 
-    fn visit_argument(&mut self, arg: &Argument<'a>) {
-        if let Argument::Expression(Expression::ObjectExpression(obj_expr)) = arg {
-            for obj_prop in &obj_expr.properties {
-                let ObjectPropertyKind::ObjectProperty(prop) = obj_prop else { return };
-                self.visit_object_property(prop);
-            }
+        if pushed {
+            self.group_comment_stack.pop();
         }
+
+        self.visit_expression(&expr.callee);
     }
 
     fn visit_object_property(&mut self, prop: &ObjectProperty<'a>) {
@@ -327,7 +403,7 @@ impl<'a> Visit<'a> for State<'a> {
                     let array_expr = self.alloc(array_expr);
                     for arg in &array_expr.elements {
                         if let ArrayExpressionElement::Expression(expr) = arg {
-                            self.valid_tests.push(expr);
+                            self.add_valid_test(expr);
                         }
                     }
                 }
@@ -337,7 +413,7 @@ impl<'a> Visit<'a> for State<'a> {
                 {
                     for arg in args {
                         if let Argument::Expression(expr) = arg {
-                            self.valid_tests.push(expr);
+                            self.add_valid_test(expr);
                         }
                     }
                 }
@@ -351,7 +427,7 @@ impl<'a> Visit<'a> for State<'a> {
                             let array_expr = self.alloc(array_expr);
                             for arg in &array_expr.elements {
                                 if let ArrayExpressionElement::Expression(expr) = arg {
-                                    self.valid_tests.push(expr);
+                                    self.add_valid_test(expr);
                                 }
                             }
                         }
@@ -363,7 +439,7 @@ impl<'a> Visit<'a> for State<'a> {
                     let array_expr = self.alloc(array_expr);
                     for arg in &array_expr.elements {
                         if let ArrayExpressionElement::Expression(expr) = arg {
-                            self.invalid_tests.push(expr);
+                            self.add_invalid_test(expr);
                         }
                     }
                 }
@@ -373,7 +449,7 @@ impl<'a> Visit<'a> for State<'a> {
                 {
                     for arg in args {
                         if let Argument::Expression(expr) = arg {
-                            self.invalid_tests.push(expr);
+                            self.add_invalid_test(expr);
                         }
                     }
                 }
@@ -387,7 +463,7 @@ impl<'a> Visit<'a> for State<'a> {
                             let array_expr = self.alloc(array_expr);
                             for arg in &array_expr.elements {
                                 if let ArrayExpressionElement::Expression(expr) = arg {
-                                    self.invalid_tests.push(expr);
+                                    self.add_invalid_test(expr);
                                 }
                             }
                         }
@@ -441,6 +517,7 @@ pub enum RuleKind {
     NextJS,
     JSDoc,
     Node,
+    TreeShaking,
 }
 
 impl RuleKind {
@@ -457,6 +534,7 @@ impl RuleKind {
             "nextjs" => Self::NextJS,
             "jsdoc" => Self::JSDoc,
             "n" => Self::Node,
+            "tree-shaking" => Self::TreeShaking,
             _ => Self::ESLint,
         }
     }
@@ -477,6 +555,7 @@ impl Display for RuleKind {
             Self::NextJS => write!(f, "eslint-plugin-next"),
             Self::JSDoc => write!(f, "eslint-plugin-jsdoc"),
             Self::Node => write!(f, "eslint-plugin-n"),
+            Self::TreeShaking => write!(f, "eslint-plugin-tree-shaking"),
         }
     }
 }
@@ -502,6 +581,7 @@ fn main() {
         RuleKind::NextJS => format!("{NEXT_JS_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::JSDoc => format!("{JSDOC_TEST_PATH}/{camel_rule_name}.js"),
         RuleKind::Node => format!("{NODE_TEST_PATH}/{kebab_rule_name}.js"),
+        RuleKind::TreeShaking => format!("{TREE_SHAKING_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Oxc | RuleKind::DeepScan => String::new(),
     };
 
@@ -521,6 +601,11 @@ fn main() {
 
             let pass_cases = state.pass_cases();
             let fail_cases = state.fail_cases();
+            println!(
+                "File parsed and {} pass cases, {} fail cases are found",
+                pass_cases.len(),
+                fail_cases.len()
+            );
 
             let pass_has_config = pass_cases.iter().any(|case| case.config.is_some());
             let fail_has_config = fail_cases.iter().any(|case| case.config.is_some());
@@ -530,19 +615,34 @@ fn main() {
             let fail_has_settings = fail_cases.iter().any(|case| case.settings.is_some());
             let has_settings = pass_has_settings || fail_has_settings;
 
-            let pass_cases = pass_cases
-                .into_iter()
-                .map(|c| c.code(has_config, has_settings))
-                .filter(|t| !t.is_empty())
-                .collect::<Vec<_>>()
-                .join(",\n");
+            let gen_cases_string = |cases: Vec<TestCase>| {
+                let mut codes = vec![];
+                let mut last_comment = String::new();
+                for case in cases {
+                    let current_comment = case.group_comment();
+                    let mut code = case.code(has_config, has_settings);
+                    if code.is_empty() {
+                        continue;
+                    }
+                    if let Some(current_comment) = current_comment {
+                        if current_comment != last_comment {
+                            last_comment = current_comment.to_string();
+                            code = format!(
+                                "// {}\n{}",
+                                &last_comment,
+                                case.code(has_config, has_settings)
+                            );
+                        }
+                    }
 
-            let fail_cases = fail_cases
-                .into_iter()
-                .map(|c| c.code(has_config, has_settings))
-                .filter(|t| !t.is_empty())
-                .collect::<Vec<_>>()
-                .join(",\n");
+                    codes.push(code);
+                }
+
+                codes.join(",\n")
+            };
+
+            let pass_cases = gen_cases_string(pass_cases);
+            let fail_cases = gen_cases_string(fail_cases);
 
             Context::new(plugin_name, &rule_name, pass_cases, fail_cases)
         }

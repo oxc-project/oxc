@@ -2,7 +2,7 @@ use std::mem;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 use oxc_syntax::identifier::is_identifier_name;
 
 use crate::context::TransformerCtx;
@@ -25,12 +25,13 @@ pub trait CreateVars<'a> {
         stmts.insert(0, stmt);
     }
 
-    fn create_new_var(&mut self, expr: &Expression<'a>) -> IdentifierReference {
+    fn create_new_var(&mut self, expr: &Expression<'a>) -> IdentifierReference<'a> {
         let name = self.ctx().scopes().generate_uid_based_on_node(expr);
         self.ctx().add_binding(name.clone());
 
         // Add `var name` to scope
         // TODO: hookup symbol id
+        let name = self.ctx().ast.new_atom(name.as_str());
         let binding_identifier = BindingIdentifier::new(Span::default(), name.clone());
         let binding_pattern_kind = self.ctx().ast.binding_pattern_identifier(binding_identifier);
         let binding = self.ctx().ast.binding_pattern(binding_pattern_kind, None, false);
@@ -43,7 +44,10 @@ pub trait CreateVars<'a> {
 
     /// Possibly generate a memoised identifier if it is not static and has consequences.
     /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L578>
-    fn maybe_generate_memoised(&mut self, expr: &Expression<'a>) -> Option<IdentifierReference> {
+    fn maybe_generate_memoised(
+        &mut self,
+        expr: &Expression<'a>,
+    ) -> Option<IdentifierReference<'a>> {
         if self.ctx().symbols().is_static(expr) {
             None
         } else {
@@ -129,22 +133,22 @@ pub const KEYWORDS: phf::Set<&str> = phf::phf_set![
     "delete",
 ];
 
-pub fn is_valid_identifier(name: &Atom, reserved: bool) -> bool {
-    if reserved && (KEYWORDS.contains(name.as_str()) || is_strict_reserved_word(name, true)) {
+pub fn is_valid_identifier(name: &str, reserved: bool) -> bool {
+    if reserved && (KEYWORDS.contains(name) || is_strict_reserved_word(name, true)) {
         return false;
     }
     is_identifier_name(name)
 }
 
-pub fn is_strict_reserved_word(name: &Atom, in_module: bool) -> bool {
-    is_reserved_word(name, in_module) || RESERVED_WORD_STRICT.contains(name.as_str())
+pub fn is_strict_reserved_word(name: &str, in_module: bool) -> bool {
+    is_reserved_word(name, in_module) || RESERVED_WORD_STRICT.contains(name)
 }
 
-pub fn is_reserved_word(name: &Atom, in_module: bool) -> bool {
-    (in_module && name.as_str() == "await") || name.as_str() == "enum"
+pub fn is_reserved_word(name: &str, in_module: bool) -> bool {
+    (in_module && name == "await") || name == "enum"
 }
 
 /// https://github.com/babel/babel/blob/main/packages/babel-types/src/validators/isValidES3Identifier.ts#L35
-pub fn is_valid_es3_identifier(name: &Atom) -> bool {
-    is_valid_identifier(name, true) && !RESERVED_WORDS_ES3_ONLY.contains(name.as_str())
+pub fn is_valid_es3_identifier(name: &str) -> bool {
+    is_valid_identifier(name, true) && !RESERVED_WORDS_ES3_ONLY.contains(name)
 }

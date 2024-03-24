@@ -1,5 +1,8 @@
 //! Literals
 
+// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+#![allow(non_snake_case)]
+
 use std::{
     fmt,
     hash::{Hash, Hasher},
@@ -8,14 +11,16 @@ use std::{
 use bitflags::bitflags;
 use oxc_span::{Atom, Span};
 use oxc_syntax::{BigintBase, NumberBase};
-#[cfg(feature = "serde")]
+#[cfg(feature = "serialize")]
 use serde::Serialize;
+#[cfg(feature = "serialize")]
+use tsify::Tsify;
 
 #[derive(Debug, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct BooleanLiteral {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub value: bool,
 }
@@ -35,10 +40,10 @@ impl BooleanLiteral {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct NullLiteral {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
 }
 
@@ -55,19 +60,18 @@ impl NullLiteral {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct NumberLiteral<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+pub struct NumericLiteral<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub value: f64,
-    #[cfg_attr(feature = "serde", serde(skip))]
     pub raw: &'a str,
-    #[cfg_attr(feature = "serde", serde(skip))]
+    #[cfg_attr(feature = "serialize", serde(skip))]
     pub base: NumberBase,
 }
 
-impl<'a> NumberLiteral<'a> {
+impl<'a> NumericLiteral<'a> {
     pub fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
         Self { span, value, raw, base }
     }
@@ -82,7 +86,7 @@ impl<'a> NumberLiteral<'a> {
             return int32_value;
         }
 
-        // NaN, Infinity if not included in our NumberLiteral, so we just skip step 2.
+        // NaN, Infinity if not included in our NumericLiteral, so we just serde(skip) step 2.
 
         // step 3
         let pos_int = num.signum() * num.abs().floor();
@@ -99,7 +103,7 @@ impl<'a> NumberLiteral<'a> {
     }
 }
 
-impl<'a> Hash for NumberLiteral<'a> {
+impl<'a> Hash for NumericLiteral<'a> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.base.hash(state);
         self.raw.hash(state);
@@ -107,43 +111,42 @@ impl<'a> Hash for NumberLiteral<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct BigintLiteral {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+pub struct BigIntLiteral<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub raw: Atom,
-    #[cfg_attr(feature = "serde", serde(skip))]
+    pub raw: Atom<'a>,
+    #[cfg_attr(feature = "serialize", serde(skip))]
     pub base: BigintBase,
 }
 
-impl BigintLiteral {
+impl<'a> BigIntLiteral<'a> {
     pub fn is_zero(&self) -> bool {
         self.raw == "0n"
     }
 }
 
 #[derive(Debug, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct RegExpLiteral {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+pub struct RegExpLiteral<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     // valid regex is printed as {}
     // invalid regex is printed as null, which we can't implement yet
     pub value: EmptyObject,
-    pub regex: RegExp,
+    pub regex: RegExp<'a>,
 }
 
 #[derive(Debug, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct RegExp {
-    pub pattern: Atom,
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+pub struct RegExp<'a> {
+    pub pattern: Atom<'a>,
     pub flags: RegExpFlags,
 }
 
-impl fmt::Display for RegExp {
+impl<'a> fmt::Display for RegExp<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "/{}/{}", self.pattern, self.flags)
     }
@@ -164,11 +167,8 @@ bitflags! {
     }
 }
 
-#[cfg_attr(
-    all(feature = "serde", feature = "wasm"),
-    wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)
-)]
-#[allow(dead_code)]
+#[cfg(feature = "serialize")]
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type RegExpFlags = {
     G: 1,
@@ -231,21 +231,20 @@ impl fmt::Display for RegExpFlags {
 }
 
 #[derive(Debug, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct EmptyObject;
 
 #[derive(Debug, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
-pub struct StringLiteral {
-    #[cfg_attr(feature = "serde", serde(flatten))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+pub struct StringLiteral<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub value: Atom,
+    pub value: Atom<'a>,
 }
 
-impl StringLiteral {
-    pub fn new(span: Span, value: Atom) -> Self {
+impl<'a> StringLiteral<'a> {
+    pub fn new(span: Span, value: Atom<'a>) -> Self {
         Self { span, value }
     }
 

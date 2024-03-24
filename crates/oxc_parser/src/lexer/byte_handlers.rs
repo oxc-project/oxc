@@ -1,4 +1,4 @@
-use super::{Kind, Lexer, LexerContext};
+use super::{Kind, Lexer};
 use crate::diagnostics;
 
 #[allow(clippy::unnecessary_safety_comment)]
@@ -21,7 +21,7 @@ static BYTE_HANDLERS: [ByteHandler; 256] = [
 //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F    //
     ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, SPS, LIN, ISP, ISP, LIN, ERR, ERR, // 0
     ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, // 1
-    SPS, EXL, QOT, HAS, IDT, PRC, AMP, QOT, PNO, PNC, ATR, PLS, COM, MIN, PRD, SLH, // 2
+    SPS, EXL, QOD, HAS, IDT, PRC, AMP, QOS, PNO, PNC, ATR, PLS, COM, MIN, PRD, SLH, // 2
     ZER, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, DIG, COL, SEM, LSS, EQL, GTR, QST, // 3
     AT_, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, // 4
     IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, IDT, BTO, ESC, BTC, CRT, IDT, // 5
@@ -31,10 +31,10 @@ static BYTE_HANDLERS: [ByteHandler; 256] = [
     UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // 9
     UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // A
     UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // B
-    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // C
+    UER, UER, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // C
     UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // D
     UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // E
-    UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UER, UER, UER, UER, UER, UER, UER, UER, // F
+    UNI, UNI, UNI, UNI, UNI, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // F
 ];
 
 /// Macro for defining a byte handler.
@@ -220,14 +220,16 @@ ascii_byte_handler!(EXL(lexer) {
     }
 });
 
-// ' "
-ascii_byte_handler!(QOT(lexer) {
-    let c = lexer.consume_char();
-    if lexer.context == LexerContext::JsxAttributeValue {
-        lexer.read_jsx_string_literal(c)
-    } else {
-        lexer.read_string_literal(c)
-    }
+// "
+ascii_byte_handler!(QOD(lexer) {
+    // SAFETY: This function is only called for `"`
+    unsafe { lexer.read_string_literal_double_quote() }
+});
+
+// '
+ascii_byte_handler!(QOS(lexer) {
+    // SAFETY: This function is only called for `'`
+    unsafe { lexer.read_string_literal_single_quote() }
 });
 
 // #
@@ -677,11 +679,11 @@ byte_handler!(UNI(lexer) {
     lexer.unicode_char_handler()
 });
 
-// UTF-8 continuation bytes (128-191) (i.e. middle of a multi-byte UTF-8 sequence)
-// + and byte values which are not legal in UTF-8 strings (248-255).
-// `handle_byte()` should only be called with 1st byte of a valid UTF-8 char,
+// UTF-8 continuation bytes (0x80 - 0xBF) (i.e. middle of a multi-byte UTF-8 sequence)
+// + and byte values which are not legal in UTF-8 strings (0xC0, 0xC1, 0xF5 - 0xFF).
+// `handle_byte()` should only be called with 1st byte of a valid UTF-8 character,
 // so something has gone wrong if we get here.
-// https://en.wikipedia.org/wiki/UTF-8
+// https://datatracker.ietf.org/doc/html/rfc3629
 // NB: Must not use `ascii_byte_handler!` macro, as this handler is for non-ASCII bytes.
 byte_handler!(UER(_lexer) {
     unreachable!();

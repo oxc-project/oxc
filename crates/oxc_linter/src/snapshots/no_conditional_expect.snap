@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_conditional_expect
 ---
-
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:34]
  2 │                 it('foo', () => {
@@ -355,7 +354,7 @@ expression: no_conditional_expect
   help: Avoid calling `expect` conditionally`
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
-   ╭─[no_conditional_expect.tsx:6:41]
+   ╭─[no_conditional_expect.tsx:6:32]
  5 │                         .catch(error => expect(error).toBeInstanceOf(Error))
  6 │                         .catch(error => expect(error).toBeInstanceOf(Error));
    ·                                         ──────
@@ -364,7 +363,7 @@ expression: no_conditional_expect
   help: Avoid calling `expect` conditionally`
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
-   ╭─[no_conditional_expect.tsx:5:41]
+   ╭─[no_conditional_expect.tsx:5:32]
  4 │                         .catch(error => expect(error).toBeInstanceOf(Error))
  5 │                         .catch(error => expect(error).toBeInstanceOf(Error))
    ·                                         ──────
@@ -373,7 +372,7 @@ expression: no_conditional_expect
   help: Avoid calling `expect` conditionally`
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
-   ╭─[no_conditional_expect.tsx:4:41]
+   ╭─[no_conditional_expect.tsx:4:32]
  3 │                       await Promise.resolve()
  4 │                         .catch(error => expect(error).toBeInstanceOf(Error))
    ·                                         ──────
@@ -407,4 +406,3 @@ expression: no_conditional_expect
  4 │                 });
    ╰────
   help: Avoid calling `expect` conditionally`
-

@@ -160,20 +160,28 @@ pub trait TestCase {
     fn transform(&self, path: &Path) -> Result<String, Vec<Error>> {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
-        let source_type = SourceType::from_path(path).unwrap();
+
+        let source_type = SourceType::from_path(path)
+            .unwrap()
+            .with_typescript(self.transform_options().typescript.is_some());
+
         let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
         let semantic = SemanticBuilder::new(&source_text, source_type)
             .with_trivias(ret.trivias)
+            .build_module_record(PathBuf::new(), &ret.program)
             .build(&ret.program)
             .semantic;
+
         let transformed_program = allocator.alloc(ret.program);
 
         let result = Transformer::new(&allocator, source_type, semantic, self.transform_options())
             .build(transformed_program);
 
         result.map(|()| {
-            Codegen::<false>::new(source_text.len(), CodegenOptions).build(transformed_program)
+            Codegen::<false>::new("", &source_text, CodegenOptions::default())
+                .build(transformed_program)
+                .source_text
         })
     }
 }
@@ -213,13 +221,16 @@ impl TestCase for ConformanceTestCase {
             .as_ref()
             .is_some_and(|path| path.extension().and_then(std::ffi::OsStr::to_str) == Some("js"));
 
-        let source_type = SourceType::from_path(&self.path).unwrap().with_script(
-            if self.options.source_type.is_some() {
+        let transform_options = self.transform_options();
+
+        let source_type = SourceType::from_path(&self.path)
+            .unwrap()
+            .with_script(if self.options.source_type.is_some() {
                 !self.options.is_module()
             } else {
                 input_is_js && output_is_js
-            },
-        );
+            })
+            .with_typescript(transform_options.typescript.is_some());
 
         if filtered {
             println!("input_path: {:?}", &self.path);
@@ -230,21 +241,23 @@ impl TestCase for ConformanceTestCase {
         let ret = Parser::new(&allocator, &input, source_type).parse();
         let semantic = SemanticBuilder::new(&input, source_type)
             .with_trivias(ret.trivias)
+            .build_module_record(PathBuf::new(), &ret.program)
             .build(&ret.program)
             .semantic;
         let program = allocator.alloc(ret.program);
-        let transform_options = self.transform_options();
         let transformer =
             Transformer::new(&allocator, source_type, semantic, transform_options.clone());
 
+        let codegen_options = CodegenOptions::default();
         let mut transformed_code = String::new();
         let mut actual_errors = String::new();
         let result = transformer.build(program);
         if result.is_ok() {
-            transformed_code = Codegen::<false>::new(input.len(), CodegenOptions).build(program);
+            transformed_code = Codegen::<false>::new("", &input, codegen_options.clone())
+                .build(program)
+                .source_text;
         } else {
-            actual_errors =
-                result.err().unwrap().iter().map(std::string::ToString::to_string).collect();
+            actual_errors = result.err().unwrap().iter().map(ToString::to_string).collect();
         }
 
         let babel_options = self.options();
@@ -257,12 +270,16 @@ impl TestCase for ConformanceTestCase {
                 }
                 // The transformation should be equal to input.js If output.js does not exist.
                 let program = Parser::new(&allocator, &input, source_type).parse().program;
-                Codegen::<false>::new(input.len(), CodegenOptions).build(&program)
+                Codegen::<false>::new("", &input, codegen_options.clone())
+                    .build(&program)
+                    .source_text
             },
             |output| {
                 // Get expected code by parsing the source text, so we can get the same code generated result.
                 let program = Parser::new(&allocator, &output, source_type).parse().program;
-                Codegen::<false>::new(output.len(), CodegenOptions).build(&program)
+                Codegen::<false>::new("", &output, codegen_options.clone())
+                    .build(&program)
+                    .source_text
             },
         );
 
@@ -322,8 +339,9 @@ impl ExecTestCase {
         let source_type = SourceType::from_path(&target_path).unwrap();
         let transformed_program =
             Parser::new(&allocator, &source_text, source_type).parse().program;
-        let result =
-            Codegen::<false>::new(source_text.len(), CodegenOptions).build(&transformed_program);
+        let result = Codegen::<false>::new("", &source_text, CodegenOptions::default())
+            .build(&transformed_program)
+            .source_text;
 
         fs::write(&target_path, result).unwrap();
 

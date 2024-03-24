@@ -1,7 +1,7 @@
 use std::hash::{Hash, Hasher};
 
 use oxc_ast::AstKind;
-use oxc_semantic::AstNode;
+use oxc_semantic::{AstNode, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 use rustc_hash::FxHasher;
@@ -77,7 +77,7 @@ pub trait IsConstant<'a, 'b> {
 impl<'a, 'b> IsConstant<'a, 'b> for Expression<'a> {
     fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
         match self {
-            Self::ArrowExpression(_)
+            Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
             | Self::ClassExpression(_)
             | Self::ObjectExpression(_) => true,
@@ -202,7 +202,7 @@ impl<'a> IsPrivate for PropertyDefinition<'a> {
     }
 }
 
-/// Return the innermost `Function` or `ArrowExpression` Node
+/// Return the innermost `Function` or `ArrowFunctionExpression` Node
 /// enclosing the specified node
 pub fn get_enclosing_function<'a, 'b>(
     node: &'b AstNode<'a>,
@@ -213,7 +213,8 @@ pub fn get_enclosing_function<'a, 'b>(
         if matches!(current_node.kind(), AstKind::Program(_)) {
             return None;
         }
-        if matches!(current_node.kind(), AstKind::Function(_) | AstKind::ArrowExpression(_)) {
+        if matches!(current_node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
+        {
             return Some(current_node);
         }
         current_node = ctx.nodes().parent_node(current_node.id()).unwrap();
@@ -268,11 +269,19 @@ pub fn get_declaration_of_variable<'a, 'b>(
     ident: &IdentifierReference,
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b AstNode<'a>> {
+    let symbol_id = get_symbol_id_of_variable(ident, ctx)?;
+    let symbol_table = ctx.semantic().symbols();
+    Some(ctx.nodes().get_node(symbol_table.get_declaration(symbol_id)))
+}
+
+pub fn get_symbol_id_of_variable(
+    ident: &IdentifierReference,
+    ctx: &LintContext<'_>,
+) -> Option<SymbolId> {
     let symbol_table = ctx.semantic().symbols();
     let reference_id = ident.reference_id.get()?;
     let reference = symbol_table.get_reference(reference_id);
-    let symbol_id = reference.symbol_id()?;
-    Some(ctx.nodes().get_node(symbol_table.get_declaration(symbol_id)))
+    reference.symbol_id()
 }
 
 pub fn extract_regex_flags<'a>(
@@ -380,4 +389,27 @@ pub fn get_new_expr_ident_name<'a>(new_expr: &'a NewExpression<'a>) -> Option<&'
     };
 
     Some(ident.name.as_str())
+}
+
+/// Check if the given [IdentifierReference] is a global reference.
+/// Such as `window`, `document`, `globalThis`, etc.
+pub fn is_global_reference(ident: &IdentifierReference, ctx: &LintContext) -> bool {
+    let symbol_table = ctx.semantic().symbols();
+    let Some(reference_id) = ident.reference_id.get() else {
+        return false;
+    };
+    let reference = symbol_table.get_reference(reference_id);
+    reference.symbol_id().is_none()
+}
+
+pub fn is_global_require_call(call_expr: &CallExpression, ctx: &LintContext) -> bool {
+    if call_expr.arguments.len() != 1 {
+        return false;
+    }
+
+    if let Expression::Identifier(id_ref) = &call_expr.callee {
+        id_ref.name == "require" && is_global_reference(id_ref, ctx)
+    } else {
+        false
+    }
 }

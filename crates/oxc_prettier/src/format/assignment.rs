@@ -48,7 +48,9 @@ pub(super) fn print_variable_declarator<'a>(
 pub(super) enum AssignmentLikeNode<'a, 'b> {
     AssignmentExpression(&'b AssignmentExpression<'a>),
     VariableDeclarator(&'b VariableDeclarator<'a>),
+    #[allow(dead_code)]
     PropertyDefinition(&'b PropertyDefinition<'a>),
+    #[allow(dead_code)]
     AccessorProperty(&'b AccessorProperty<'a>),
     ObjectProperty(&'b ObjectProperty<'a>),
 }
@@ -92,7 +94,7 @@ pub(super) fn print_assignment<'a>(
             let after_op = {
                 let mut parts = p.vec();
                 parts.push(indent!(p, line!()));
-                Doc::Group(Group::new(parts, false).with_id(group_id))
+                Doc::Group(Group::new(parts).with_id(group_id))
             };
 
             let right_doc = {
@@ -162,11 +164,11 @@ fn choose_layout<'a>(
     if should_use_chain_formatting {
         if !is_tail {
             return Layout::Chain;
-        } else if let Expression::ArrowExpression(arrow_expr) = right_expr {
+        } else if let Expression::ArrowFunctionExpression(arrow_expr) = right_expr {
             if let Some(Statement::ExpressionStatement(expr_stmt)) =
                 arrow_expr.body.statements.first()
             {
-                if let Expression::ArrowExpression(_) = expr_stmt.expression {
+                if let Expression::ArrowFunctionExpression(_) = expr_stmt.expression {
                     return Layout::ChainTailArrowChain;
                 }
             }
@@ -212,7 +214,7 @@ fn choose_layout<'a>(
                 Expression::TemplateLiteral(_)
                     | Expression::TaggedTemplateExpression(_)
                     | Expression::BooleanLiteral(_)
-                    | Expression::NumberLiteral(_)
+                    | Expression::NumericLiteral(_)
                     | Expression::ClassExpression(_)
             ))
     {
@@ -279,7 +281,7 @@ fn has_complex_type_annotation(expr: &AssignmentLikeNode) -> bool {
 fn is_arrow_function_variable_declarator(expr: &AssignmentLikeNode) -> bool {
     match expr {
         AssignmentLikeNode::VariableDeclarator(variable_declarator) => {
-            if let Some(Expression::ArrowExpression(_)) = &variable_declarator.init {
+            if let Some(Expression::ArrowFunctionExpression(_)) = &variable_declarator.init {
                 return true;
             }
             false

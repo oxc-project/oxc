@@ -11,11 +11,10 @@ use oxc_span::SourceType;
 // run `cargo run -p oxc_semantic --example simple`
 // or `just watch "run -p oxc_semantic --example simple"`
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);
-    let source_text =
-        Arc::new(std::fs::read_to_string(path).unwrap_or_else(|_| panic!("{name} not found")));
+    let source_text = Arc::new(std::fs::read_to_string(path)?);
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
@@ -34,6 +33,8 @@ fn main() {
             .map(|error| error.with_source_code(Arc::clone(&source_text)).to_string())
             .join("\n\n");
 
-        panic!("Semantic analysis failed:\n\n{error_message}",);
+        println!("Semantic analysis failed:\n\n{error_message}",);
     }
+
+    Ok(())
 }

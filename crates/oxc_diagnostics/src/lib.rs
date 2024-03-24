@@ -3,14 +3,19 @@
 
 mod graphic_reporter;
 mod graphical_theme;
+mod reporter;
 mod service;
 
 use std::path::PathBuf;
 
-pub use crate::service::{DiagnosticSender, DiagnosticService, DiagnosticTuple};
-pub use graphic_reporter::{GraphicalReportHandler, GraphicalTheme};
 pub use miette;
 pub use thiserror;
+
+pub use crate::{
+    graphic_reporter::GraphicalReportHandler,
+    graphical_theme::GraphicalTheme,
+    service::{DiagnosticSender, DiagnosticService, DiagnosticTuple},
+};
 
 pub type Error = miette::Error;
 pub type Severity = miette::Severity;

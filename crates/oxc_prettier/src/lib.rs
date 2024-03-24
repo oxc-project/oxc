@@ -52,7 +52,7 @@ pub struct Prettier<'a> {
     options: PrettierOptions,
 
     /// A stack of comments that will be carefully placed in the right places.
-    trivias: Peekable<vec::IntoIter<(u32, u32, CommentKind)>>,
+    trivias: Peekable<vec::IntoIter<(CommentKind, Span)>>,
 
     /// The stack of AST Nodes
     /// See <https://github.com/prettier/prettier/blob/main/src/common/ast-path.js>
@@ -73,14 +73,14 @@ impl<'a> Prettier<'a> {
     pub fn new(
         allocator: &'a Allocator,
         source_text: &'a str,
-        trivias: Trivias,
+        trivias: &Trivias,
         options: PrettierOptions,
     ) -> Self {
         Self {
             allocator,
             source_text,
             options,
-            trivias: trivias.comments.into_iter().peekable(),
+            trivias: trivias.comments().collect::<Vec<_>>().into_iter().peekable(),
             stack: vec![],
             group_id_builder: GroupIdBuilder::default(),
             args: PrettierArgs::default(),
@@ -160,7 +160,7 @@ impl<'a> Prettier<'a> {
         while idx != old_idx {
             old_idx = idx;
             idx = self.skip_to_line_end(idx);
-            // idx = self.skip_inline_comment(idx);
+            idx = self.skip_inline_comment(idx);
             idx = self.skip_spaces(idx, /* backwards */ false);
         }
         idx = self.skip_trailing_comment(idx);
@@ -180,6 +180,12 @@ impl<'a> Prettier<'a> {
             return Some(start_index);
         }
         self.skip_everything_but_new_line(Some(start_index), /* backwards */ false)
+    }
+
+    #[allow(clippy::unused_self)]
+    fn skip_inline_comment(&self, start_index: Option<u32>) -> Option<u32> {
+        let start_index = start_index?;
+        Some(start_index)
     }
 
     fn skip_to_line_end(&self, start_index: Option<u32>) -> Option<u32> {

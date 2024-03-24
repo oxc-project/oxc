@@ -10,6 +10,7 @@ mod arrow_function;
 mod assignment;
 mod binaryish;
 mod block;
+mod call_arguments;
 mod call_expression;
 mod class;
 mod function;
@@ -53,12 +54,14 @@ where
 }
 
 impl<'a> Format<'a> for Program<'a> {
+    #[allow(clippy::cast_possible_truncation)]
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         p.enter_node(AstKind::Program(p.alloc(self)));
         let mut parts = p.vec();
         if let Some(hashbang) = &self.hashbang {
             parts.push(hashbang.format(p));
-            if p.is_next_line_empty_after_index(hashbang.span.end - 1) {
+            let c = p.source_text[..hashbang.span.end as usize].chars().last().unwrap();
+            if p.is_next_line_empty_after_index(hashbang.span.end - c.len_utf8() as u32) {
                 parts.extend(hardline!());
             }
         }
@@ -76,13 +79,13 @@ impl<'a> Format<'a> for Program<'a> {
     }
 }
 
-impl<'a> Format<'a> for Hashbang {
+impl<'a> Format<'a> for Hashbang<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         Doc::Str(self.span.source_text(p.source_text))
     }
 }
 
-impl<'a> Format<'a> for Directive {
+impl<'a> Format<'a> for Directive<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(Doc::Str(string::print_string(
@@ -248,7 +251,7 @@ impl<'a> Format<'a> for ForInStatement<'a> {
             parts.push(ss!(")"));
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
-            Doc::Group(Group::new(parts, false))
+            Doc::Group(Group::new(parts))
         })
     }
 }
@@ -268,7 +271,7 @@ impl<'a> Format<'a> for ForOfStatement<'a> {
             parts.push(ss!(")"));
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
-            Doc::Group(Group::new(parts, false))
+            Doc::Group(Group::new(parts))
         })
     }
 }
@@ -295,7 +298,7 @@ impl<'a> Format<'a> for WhileStatement<'a> {
             let body = format!(p, self.body);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
 
-            Doc::Group(Group::new(parts, false))
+            Doc::Group(Group::new(parts))
         })
     }
 }
@@ -329,7 +332,7 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
     }
 }
 
-impl<'a> Format<'a> for ContinueStatement {
+impl<'a> Format<'a> for ContinueStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(ss!("continue"));
@@ -343,7 +346,7 @@ impl<'a> Format<'a> for ContinueStatement {
     }
 }
 
-impl<'a> Format<'a> for BreakStatement {
+impl<'a> Format<'a> for BreakStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(ss!("break"));
@@ -375,7 +378,7 @@ impl<'a> Format<'a> for SwitchStatement<'a> {
             header_parts.push(softline!());
             header_parts.push(ss!(")"));
 
-            parts.push(Doc::Group(Group::new(header_parts, false)));
+            parts.push(Doc::Group(Group::new(header_parts)));
 
             parts.push(ss!(" {"));
 
@@ -445,7 +448,7 @@ impl<'a> Format<'a> for SwitchCase<'a> {
             if is_only_one_block_statement {
                 parts.extend(consequent_parts);
             } else {
-                parts.push(indent!(p, Doc::Group(Group::new(consequent_parts, false))));
+                parts.push(indent!(p, Doc::Group(Group::new(consequent_parts))));
             }
         }
 
@@ -613,7 +616,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
                 }
             }
 
-            Doc::Group(Group::new(parts, false))
+            Doc::Group(Group::new(parts))
         })
     }
 }
@@ -659,7 +662,7 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSObjectKeyword(v) => v.format(p),
             TSType::TSStringKeyword(v) => v.format(p),
             TSType::TSSymbolKeyword(v) => v.format(p),
-            TSType::TSThisKeyword(v) => v.format(p),
+            TSType::TSThisType(v) => v.format(p),
             TSType::TSUndefinedKeyword(v) => v.format(p),
             TSType::TSUnknownKeyword(v) => v.format(p),
             TSType::TSVoidKeyword(v) => v.format(p),
@@ -673,6 +676,7 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSIntersectionType(v) => v.format(p),
             TSType::TSLiteralType(v) => v.format(p),
             TSType::TSMappedType(v) => v.format(p),
+            TSType::TSNamedTupleMember(v) => v.format(p),
             TSType::TSQualifiedName(v) => v.format(p),
             TSType::TSTemplateLiteralType(v) => v.format(p),
             TSType::TSTupleType(v) => v.format(p),
@@ -742,7 +746,7 @@ impl<'a> Format<'a> for TSSymbolKeyword {
     }
 }
 
-impl<'a> Format<'a> for TSThisKeyword {
+impl<'a> Format<'a> for TSThisType {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         Doc::Str("this")
     }
@@ -768,7 +772,7 @@ impl<'a> Format<'a> for TSVoidKeyword {
 
 impl<'a> Format<'a> for TSArrayType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array![p, self.element_type.format(p), ss!("[]")]
     }
 }
 
@@ -780,7 +784,14 @@ impl<'a> Format<'a> for TSConditionalType<'a> {
 
 impl<'a> Format<'a> for TSConstructorType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+        if self.r#abstract {
+            parts.push(ss!("abstract "));
+        }
+        parts.push(ss!("new "));
+        parts.push(self.params.format(p));
+        parts.push(array![p, ss!(" => "), self.return_type.type_annotation.format(p)]);
+        Doc::Array(parts)
     }
 }
 
@@ -824,7 +835,7 @@ impl<'a> Format<'a> for TSLiteralType<'a> {
         match &self.literal {
             TSLiteral::BooleanLiteral(v) => v.format(p),
             TSLiteral::NullLiteral(v) => v.format(p),
-            TSLiteral::NumberLiteral(v) => v.format(p),
+            TSLiteral::NumericLiteral(v) => v.format(p),
             TSLiteral::BigintLiteral(v) => v.format(p),
             TSLiteral::RegExpLiteral(v) => v.format(p),
             TSLiteral::StringLiteral(v) => v.format(p),
@@ -835,6 +846,12 @@ impl<'a> Format<'a> for TSLiteralType<'a> {
 }
 
 impl<'a> Format<'a> for TSMappedType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for TSNamedTupleMember<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
@@ -867,7 +884,7 @@ impl<'a> Format<'a> for TSTypeLiteral<'a> {
     }
 }
 
-impl<'a> Format<'a> for TSTypeOperatorType<'a> {
+impl<'a> Format<'a> for TSTypeOperator<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
@@ -887,7 +904,12 @@ impl<'a> Format<'a> for TSTypeQuery<'a> {
 
 impl<'a> Format<'a> for TSTypeReference<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+        parts.push(format!(p, self.type_name));
+        if let Some(params) = &self.type_parameters {
+            parts.push(format!(p, params));
+        }
+        Doc::Array(parts)
     }
 }
 
@@ -911,7 +933,22 @@ impl<'a> Format<'a> for JSDocUnknownType {
 
 impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+        parts.push(ss!("interface "));
+        parts.push(format!(p, self.id));
+        parts.push(space!());
+        parts.push(ss!("{"));
+        if self.body.body.len() > 0 {
+            let mut indent_parts = p.vec();
+            for sig in &self.body.body {
+                indent_parts.extend(hardline!());
+                indent_parts.push(format!(p, sig));
+            }
+            parts.push(Doc::Indent(indent_parts));
+            parts.extend(hardline!());
+        }
+        parts.push(ss!("}"));
+        Doc::Array(parts)
     }
 }
 
@@ -930,10 +967,6 @@ impl<'a> Format<'a> for TSModuleDeclaration<'a> {
 impl<'a> Format<'a> for TSImportEqualsDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-
-        if self.is_export {
-            parts.push(ss!("export "));
-        }
 
         parts.push(ss!("import "));
 
@@ -963,11 +996,14 @@ impl<'a> Format<'a> for TSModuleReference<'a> {
 
 impl<'a> Format<'a> for TSTypeName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        match self {
+            TSTypeName::IdentifierReference(it) => format!(p, it),
+            TSTypeName::QualifiedName(it) => format!(p, it),
+        }
     }
 }
 
-impl<'a> Format<'a> for TSExternalModuleReference {
+impl<'a> Format<'a> for TSExternalModuleReference<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         array!(p, ss!("require("), format!(p, self.expression), ss!(")"))
     }
@@ -1032,6 +1068,7 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
         if self.import_kind.is_type() {
             parts.push(ss!(" type"));
         }
+
         if let Some(specifiers) = &self.specifiers {
             let is_default = specifiers.first().is_some_and(|x| {
                 matches!(x, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
@@ -1045,9 +1082,16 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
                 || specifiers.get(1).is_some_and(validate_namespace);
 
             parts.push(module::print_module_specifiers(p, specifiers, is_default, is_namespace));
+            parts.push(ss!(" from"));
         }
-        parts.push(ss!(" from "));
+        parts.push(space!());
         parts.push(self.source.format(p));
+
+        if let Some(with_clause) = &self.with_clause {
+            parts.push(space!());
+            parts.push(with_clause.format(p));
+        }
+
         if let Some(semi) = p.semi() {
             parts.push(semi);
         }
@@ -1055,7 +1099,7 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
     }
 }
 
-impl<'a> Format<'a> for ImportDeclarationSpecifier {
+impl<'a> Format<'a> for ImportDeclarationSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::ImportSpecifier(specifier) => specifier.format(p),
@@ -1065,37 +1109,53 @@ impl<'a> Format<'a> for ImportDeclarationSpecifier {
     }
 }
 
-impl<'a> Format<'a> for ImportSpecifier {
+impl<'a> Format<'a> for ImportSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let typed = if self.import_kind.is_type() { ss!("type ") } else { ss!("") };
+
         if self.imported.span() == self.local.span {
-            self.local.format(p)
+            array![p, typed, self.local.format(p)]
         } else {
-            array![p, self.imported.format(p), ss!(" as "), self.local.format(p)]
+            array![p, typed, self.imported.format(p), ss!(" as "), self.local.format(p)]
         }
     }
 }
 
-impl<'a> Format<'a> for ImportDefaultSpecifier {
+impl<'a> Format<'a> for ImportDefaultSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         self.local.format(p)
     }
 }
 
-impl<'a> Format<'a> for ImportNamespaceSpecifier {
+impl<'a> Format<'a> for ImportNamespaceSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         array!(p, ss!("* as "), self.local.format(p))
     }
 }
 
-impl<'a> Format<'a> for Option<Vec<'a, ImportAttribute>> {
+impl<'a> Format<'a> for WithClause<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array!(
+            p,
+            self.attributes_keyword.format(p),
+            space!(),
+            object::print_object_properties(p, ObjectLike::WithClause(self))
+        )
     }
 }
 
-impl<'a> Format<'a> for ImportAttribute {
+impl<'a> Format<'a> for ImportAttribute<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array!(p, self.key.format(p), ss!(": "), self.value.format(p))
+    }
+}
+
+impl<'a> Format<'a> for ImportAttributeKey<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            Self::Identifier(ident) => ident.format(p),
+            Self::StringLiteral(literal) => literal.format(p),
+        }
     }
 }
 
@@ -1123,13 +1183,13 @@ impl<'a> Format<'a> for TSExportAssignment<'a> {
     }
 }
 
-impl<'a> Format<'a> for TSNamespaceExportDeclaration {
+impl<'a> Format<'a> for TSNamespaceExportDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
 }
 
-impl<'a> Format<'a> for ExportSpecifier {
+impl<'a> Format<'a> for ExportSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         if self.exported.span() == self.local.span() {
             self.local.format(p)
@@ -1139,7 +1199,7 @@ impl<'a> Format<'a> for ExportSpecifier {
     }
 }
 
-impl<'a> Format<'a> for ModuleExportName {
+impl<'a> Format<'a> for ModuleExportName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::Identifier(ident) => ident.format(p),
@@ -1182,7 +1242,7 @@ impl<'a> Format<'a> for Expression<'a> {
         match self {
             Self::BooleanLiteral(lit) => lit.format(p),
             Self::NullLiteral(lit) => lit.format(p),
-            Self::NumberLiteral(lit) => lit.format(p),
+            Self::NumericLiteral(lit) => lit.format(p),
             Self::BigintLiteral(lit) => lit.format(p),
             Self::RegExpLiteral(lit) => lit.format(p),
             Self::StringLiteral(lit) => lit.format(p),
@@ -1193,7 +1253,7 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::ArrayExpression(expr) => expr.format(p),
             Self::ObjectExpression(expr) => expr.format(p),
             Self::FunctionExpression(expr) => expr.format(p),
-            Self::ArrowExpression(expr) => expr.format(p),
+            Self::ArrowFunctionExpression(expr) => expr.format(p),
             Self::YieldExpression(expr) => expr.format(p),
             Self::UpdateExpression(expr) => expr.format(p),
             Self::UnaryExpression(expr) => expr.format(p),
@@ -1215,7 +1275,7 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::ClassExpression(expr) => expr.format(p),
             Self::JSXElement(el) => el.format(p),
             Self::JSXFragment(fragment) => fragment.format(p),
-            Self::TSAsExpression(expr) => expr.expression.format(p),
+            Self::TSAsExpression(expr) => expr.format(p),
             Self::TSSatisfiesExpression(expr) => expr.expression.format(p),
             Self::TSTypeAssertion(expr) => expr.expression.format(p),
             Self::TSNonNullExpression(expr) => expr.expression.format(p),
@@ -1224,25 +1284,25 @@ impl<'a> Format<'a> for Expression<'a> {
     }
 }
 
-impl<'a> Format<'a> for IdentifierReference {
+impl<'a> Format<'a> for IdentifierReference<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, IdentifierReference, { p.str(self.name.as_str()) })
     }
 }
 
-impl<'a> Format<'a> for IdentifierName {
+impl<'a> Format<'a> for IdentifierName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         p.str(self.name.as_str())
     }
 }
 
-impl<'a> Format<'a> for BindingIdentifier {
+impl<'a> Format<'a> for BindingIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, BindingIdentifier, { p.str(self.name.as_str()) })
     }
 }
 
-impl<'a> Format<'a> for LabelIdentifier {
+impl<'a> Format<'a> for LabelIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         p.str(self.name.as_str())
     }
@@ -1260,9 +1320,9 @@ impl<'a> Format<'a> for NullLiteral {
     }
 }
 
-impl<'a> Format<'a> for NumberLiteral<'a> {
+impl<'a> Format<'a> for NumericLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, NumberLiteral, {
+        wrap!(p, self, NumericLiteral, {
             // See https://github.com/prettier/prettier/blob/main/src/utils/print-number.js
             // Perf: the regexes from prettier code above are ported to manual search for performance reasons.
             let raw = self.span.source_text(p.source_text);
@@ -1333,7 +1393,7 @@ impl<'a> Format<'a> for NumberLiteral<'a> {
     }
 }
 
-impl<'a> Format<'a> for BigintLiteral {
+impl<'a> Format<'a> for BigIntLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let text = self.span.source_text(p.source_text);
         // Perf: avoid a memory allocation from `to_ascii_lowercase`.
@@ -1345,7 +1405,7 @@ impl<'a> Format<'a> for BigintLiteral {
     }
 }
 
-impl<'a> Format<'a> for RegExpLiteral {
+impl<'a> Format<'a> for RegExpLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(ss!("/"));
@@ -1356,10 +1416,12 @@ impl<'a> Format<'a> for RegExpLiteral {
     }
 }
 
-impl<'a> Format<'a> for StringLiteral {
+impl<'a> Format<'a> for StringLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, StringLiteral, {
-            Doc::Str(string::print_string(p, self.value.as_str(), p.options.single_quote))
+            let raw = &p.source_text[(self.span.start + 1) as usize..(self.span.end - 1) as usize];
+            // TODO: implement `makeString` from prettier/src/utils/print-string.js
+            Doc::Str(string::print_string(p, raw, p.options.single_quote))
         })
     }
 }
@@ -1510,7 +1572,7 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
                     parts.push(ss!(": "));
                     parts.push(format!(p, self.value));
                 }
-                return Doc::Group(Group::new(parts, false));
+                return Doc::Group(Group::new(parts));
             }
 
             if self.shorthand {
@@ -1556,7 +1618,7 @@ impl<'a> Format<'a> for PropertyKey<'a> {
 
         wrap!(p, self, PropertyKey, {
             // Perf: Cache the result of `need_quote` to avoid checking it in each PropertyKey
-            let need_quote = p.options.quote_props.is_consistent()
+            let need_quote = p.options.quote_props.consistent()
                 && match p.parent_parent_kind() {
                     Some(AstKind::ObjectExpression(a)) => a.properties.iter().any(|x| match x {
                         ObjectPropertyKind::ObjectProperty(p) => {
@@ -1584,19 +1646,23 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                 PropertyKey::PrivateIdentifier(ident) => ident.format(p),
                 PropertyKey::Expression(expr) => match expr {
                     Expression::StringLiteral(literal) => {
-                        let unquote = if need_quote {
-                            false
+                        // This does not pass quotes/objects.js
+                        // because prettier uses the function `isEs5IdentifierName` based on unicode version 3,
+                        // but `is_identifier_name` uses the latest unicode version.
+                        if is_identifier_name(literal.value.as_str())
+                            && (p.options.quote_props.as_needed()
+                                || (p.options.quote_props.consistent()/* && !needsQuoteProps.get(parent) */))
+                        {
+                            string!(p, literal.value.as_str())
                         } else {
-                            is_identifier_name(literal.value.as_str())
-                        };
-
-                        if !unquote || p.options.quote_props.is_preserve() {
-                            literal.format(p)
-                        } else {
-                            p.str(literal.value.as_str())
+                            Doc::Str(string::print_string(
+                                p,
+                                literal.value.as_str(),
+                                p.options.single_quote,
+                            ))
                         }
                     }
-                    Expression::NumberLiteral(literal) => {
+                    Expression::NumericLiteral(literal) => {
                         if need_quote {
                             Doc::Str(string::print_string(p, literal.raw, p.options.single_quote))
                         } else {
@@ -1613,9 +1679,9 @@ impl<'a> Format<'a> for PropertyKey<'a> {
     }
 }
 
-impl<'a> Format<'a> for ArrowExpression<'a> {
+impl<'a> Format<'a> for ArrowFunctionExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, ArrowExpression, { arrow_function::print_arrow_function(p, self) })
+        wrap!(p, self, ArrowFunctionExpression, { arrow_function::print_arrow_function(p, self) })
     }
 }
 
@@ -1667,7 +1733,7 @@ impl<'a> Format<'a> for BinaryExpression<'a> {
         wrap!(p, self, BinaryExpression, {
             let doc = binaryish::print_binaryish_expression(
                 p,
-                (&self.left).into(),
+                &self.left,
                 self.operator.into(),
                 &self.right,
             );
@@ -1683,12 +1749,14 @@ impl<'a> Format<'a> for BinaryExpression<'a> {
 impl<'a> Format<'a> for PrivateInExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, PrivateInExpression, {
-            binaryish::print_binaryish_expression(
+            array![
                 p,
-                (&self.left).into(),
-                self.operator.into(),
-                &self.right,
-            )
+                format!(p, self.left),
+                space!(),
+                ss!(self.operator.as_str()),
+                space!(),
+                format!(p, self.right)
+            ]
         })
     }
 }
@@ -1698,7 +1766,7 @@ impl<'a> Format<'a> for LogicalExpression<'a> {
         wrap!(p, self, LogicalExpression, {
             let doc = binaryish::print_binaryish_expression(
                 p,
-                (&self.left).into(),
+                &self.left,
                 self.operator.into(),
                 &self.right,
             );
@@ -1813,6 +1881,12 @@ impl<'a> Format<'a> for AssignmentTargetPropertyProperty<'a> {
     }
 }
 
+impl<'a> Format<'a> for AssignmentTargetRest<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        array![p, ss!("..."), self.target.format(p)]
+    }
+}
+
 impl<'a> Format<'a> for SequenceExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, SequenceExpression, {
@@ -1849,7 +1923,7 @@ impl<'a> Format<'a> for ImportExpression<'a> {
             parts.push(softline!());
             parts.push(ss!(")"));
 
-            Doc::Group(Group::new(parts, false))
+            Doc::Group(Group::new(parts))
         })
     }
 }
@@ -1860,7 +1934,7 @@ impl<'a> Format<'a> for TemplateLiteral<'a> {
     }
 }
 
-impl<'a> Format<'a> for TemplateElement {
+impl<'a> Format<'a> for TemplateElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         // TODO: `replaceEndOfLine`
         p.str(self.value.raw.as_str())
@@ -1930,7 +2004,7 @@ impl<'a> Format<'a> for NewExpression<'a> {
     }
 }
 
-impl<'a> Format<'a> for MetaProperty {
+impl<'a> Format<'a> for MetaProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         array![p, format!(p, self.meta), ss!("."), format!(p, self.property)]
     }
@@ -1955,14 +2029,12 @@ impl<'a> Format<'a> for ClassElement<'a> {
             ClassElement::MethodDefinition(c) => c.format(p),
             ClassElement::PropertyDefinition(c) => c.format(p),
             ClassElement::AccessorProperty(c) => c.format(p),
-            ClassElement::TSAbstractMethodDefinition(c) => c.format(p),
-            ClassElement::TSAbstractPropertyDefinition(c) => c.format(p),
             ClassElement::TSIndexSignature(c) => c.format(p),
         }
     }
 }
 
-impl<'a> Format<'a> for JSXIdentifier {
+impl<'a> Format<'a> for JSXIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
@@ -1986,7 +2058,7 @@ impl<'a> Format<'a> for JSXElementName<'a> {
     }
 }
 
-impl<'a> Format<'a> for JSXNamespacedName {
+impl<'a> Format<'a> for JSXNamespacedName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
@@ -2070,7 +2142,7 @@ impl<'a> Format<'a> for JSXClosingFragment {
     }
 }
 
-impl<'a> Format<'a> for JSXText {
+impl<'a> Format<'a> for JSXText<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
@@ -2122,7 +2194,7 @@ impl<'a> Format<'a> for AccessorProperty<'a> {
     }
 }
 
-impl<'a> Format<'a> for PrivateIdentifier {
+impl<'a> Format<'a> for PrivateIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(ss!("#"));
@@ -2133,12 +2205,17 @@ impl<'a> Format<'a> for PrivateIdentifier {
 
 impl<'a> Format<'a> for BindingPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        match self.kind {
+        let mut parts = p.vec();
+        parts.push(match self.kind {
             BindingPatternKind::BindingIdentifier(ref ident) => ident.format(p),
             BindingPatternKind::ObjectPattern(ref pattern) => pattern.format(p),
             BindingPatternKind::ArrayPattern(ref pattern) => pattern.format(p),
             BindingPatternKind::AssignmentPattern(ref pattern) => pattern.format(p),
+        });
+        if let Some(typ) = &self.type_annotation {
+            parts.push(array![p, ss!(": "), typ.type_annotation.format(p)]);
         }
+        Doc::Array(parts)
     }
 }
 
@@ -2211,20 +2288,63 @@ impl<'a> Format<'a> for RegExpFlags {
     }
 }
 
-impl<'a> Format<'a> for TSAbstractMethodDefinition<'a> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
-    }
-}
-
-impl<'a> Format<'a> for TSAbstractPropertyDefinition<'a> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
-    }
-}
-
 impl<'a> Format<'a> for TSIndexSignature<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
+    }
+}
+
+impl<'a> Format<'a> for TSPropertySignature<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut parts = p.vec();
+        if self.readonly {
+            parts.push(ss!("readonly "));
+        }
+        parts.push(format!(p, self.key));
+        if let Some(ty) = &self.type_annotation {
+            if self.optional {
+                parts.push(ss!("?"));
+            }
+            parts.push(ss!(":"));
+            parts.push(space!());
+            parts.push(format!(p, ty.type_annotation));
+        }
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for TSCallSignatureDeclaration<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for TSConstructSignatureDeclaration<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for TSMethodSignature<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for TSSignature<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            TSSignature::TSIndexSignature(it) => it.format(p),
+            TSSignature::TSPropertySignature(it) => it.format(p),
+            TSSignature::TSCallSignatureDeclaration(it) => it.format(p),
+            TSSignature::TSConstructSignatureDeclaration(it) => it.format(p),
+            TSSignature::TSMethodSignature(it) => it.format(p),
+        }
+    }
+}
+
+impl<'a> Format<'a> for TSAsExpression<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        array![p, format!(p, self.expression), ss!(" as "), format!(p, self.type_annotation)]
     }
 }

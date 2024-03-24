@@ -79,6 +79,8 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
+pub use crate::lexer::Kind; // re-export for codegen
+
 use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, AstBuilder, Trivias};
@@ -86,7 +88,7 @@ use oxc_diagnostics::{Error, Result};
 use oxc_span::{ModuleKind, SourceType, Span};
 
 use crate::{
-    lexer::{Kind, Lexer, Token},
+    lexer::{Lexer, Token},
     state::ParserState,
 };
 
@@ -120,6 +122,13 @@ pub struct ParserReturn<'a> {
 #[derive(Clone, Copy)]
 struct ParserOptions {
     pub allow_return_outside_function: bool,
+    /// Emit `ParenthesizedExpression` in AST.
+    ///
+    /// If this option is true, parenthesized expressions are represented by
+    /// (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
+    /// containing the expression inside parentheses.
+    ///
+    /// Default: true
     pub preserve_parens: bool,
 }
 
@@ -398,6 +407,8 @@ impl<'a> ParserImpl<'a> {
 #[cfg(test)]
 mod test {
 
+    use oxc_ast::CommentKind;
+
     use super::*;
 
     #[test]
@@ -438,6 +449,23 @@ mod test {
             let ret = Parser::new(&allocator, source, source_type).parse();
             assert!(ret.program.directives.is_empty(), "{source}");
             assert_eq!(ret.program.body.len(), body_length, "{source}");
+        }
+    }
+
+    #[test]
+    fn comments() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default().with_typescript(true);
+        let sources = [
+            ("// line comment", CommentKind::SingleLine),
+            ("/* line comment */", CommentKind::MultiLine),
+            ("type Foo = ( /* Require properties which are not generated automatically. */ 'bar')", CommentKind::MultiLine),
+        ];
+        for (source, kind) in sources {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            let comments = ret.trivias.comments().collect::<Vec<_>>();
+            assert_eq!(comments.len(), 1, "{source}");
+            assert_eq!(comments.first().unwrap().0, kind, "{source}");
         }
     }
 

@@ -19,7 +19,7 @@ use crate::TransformTarget;
 /// * <https://babel.dev/docs/babel-plugin-transform-function-name>
 /// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-function-name>
 pub struct FunctionName<'a> {
-    _ast: Rc<AstBuilder<'a>>,
+    ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
     unicode_escapes: bool,
 }
@@ -30,8 +30,8 @@ impl<'a> FunctionName<'a> {
         ctx: TransformerCtx<'a>,
         options: &TransformOptions,
     ) -> Option<Self> {
-        (options.target < TransformTarget::ES2015 || options.function_name).then(|| Self {
-            _ast: ast,
+        (options.target < TransformTarget::ES2015 || options.function_name).then_some(Self {
+            ast,
             ctx,
             // TODO hook up the plugin
             unicode_escapes: true,
@@ -45,7 +45,7 @@ impl<'a> FunctionName<'a> {
             ) = &expr.left
             {
                 if let Some(id) =
-                    create_valid_identifier(target.span, target.name.clone(), self.unicode_escapes)
+                    self.create_valid_identifier(target.span, &target.name, self.unicode_escapes)
                 {
                     let scope_id = self.ctx.symbols().get_scope_id_from_span(&target.span);
 
@@ -64,19 +64,11 @@ impl<'a> FunctionName<'a> {
 
                 let (id, scope_id) = match &property.key {
                     PropertyKey::Identifier(ident) => (
-                        create_valid_identifier(
-                            ident.span,
-                            ident.name.clone(),
-                            self.unicode_escapes,
-                        ),
+                        self.create_valid_identifier(ident.span, &ident.name, self.unicode_escapes),
                         self.ctx.symbols().get_scope_id_from_span(&ident.span),
                     ),
                     PropertyKey::PrivateIdentifier(ident) => (
-                        create_valid_identifier(
-                            ident.span,
-                            ident.name.clone(),
-                            self.unicode_escapes,
-                        ),
+                        self.create_valid_identifier(ident.span, &ident.name, self.unicode_escapes),
                         self.ctx.symbols().get_scope_id_from_span(&ident.span),
                     ),
                     PropertyKey::Expression(_) => continue,
@@ -95,7 +87,7 @@ impl<'a> FunctionName<'a> {
         if let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind {
             // Create a new ID instead of cloning to avoid local binding/refs
             if let Some(id) =
-                create_valid_identifier(ident.span, ident.name.clone(), self.unicode_escapes)
+                self.create_valid_identifier(ident.span, &ident.name, self.unicode_escapes)
             {
                 let scope_id = match ident.symbol_id.get() {
                     Some(symbol_id) => Some(self.ctx.symbols().get_scope_id(symbol_id)),
@@ -111,7 +103,7 @@ impl<'a> FunctionName<'a> {
     fn transform_expression(
         &mut self,
         expr: &mut Expression<'a>,
-        mut id: BindingIdentifier,
+        mut id: BindingIdentifier<'a>,
         scope_id: Option<ScopeId>,
     ) {
         // function () {} -> function name() {}
@@ -133,7 +125,7 @@ impl<'a> FunctionName<'a> {
 
             // If we're shadowing, change the name
             if count > 0 {
-                id.name = Atom::from(format!("{}{}", id.name, count));
+                id.name = self.ast.new_atom(&format!("{}{}", id.name, count));
             }
 
             if func.id.is_none() {
@@ -141,37 +133,41 @@ impl<'a> FunctionName<'a> {
             }
         }
     }
-}
 
-// https://github.com/babel/babel/blob/main/packages/babel-helper-function-name/src/index.ts
-// https://github.com/babel/babel/blob/main/packages/babel-types/src/converters/toBindingIdentifierName.ts#L3
-// https://github.com/babel/babel/blob/main/packages/babel-types/src/converters/toIdentifier.ts#L4
-#[allow(clippy::unnecessary_wraps)]
-fn create_valid_identifier(
-    span: Span,
-    atom: Atom,
-    _unicode_escapes: bool,
-) -> Option<BindingIdentifier> {
-    // NOTE: this regex fails to compile on Rust
-    // lazy_static! {
-    //     static ref UNICODE_NAME: Regex = Regex::new(r"(?u)[\u{D800}-\u{DFFF}]").unwrap();
-    // }
+    // https://github.com/babel/babel/blob/main/packages/babel-helper-function-name/src/index.ts
+    // https://github.com/babel/babel/blob/main/packages/babel-types/src/converters/toBindingIdentifierName.ts#L3
+    // https://github.com/babel/babel/blob/main/packages/babel-types/src/converters/toIdentifier.ts#L4
+    #[allow(clippy::unnecessary_wraps)]
+    fn create_valid_identifier(
+        &self,
+        span: Span,
+        atom: &Atom<'a>,
+        _unicode_escapes: bool,
+    ) -> Option<BindingIdentifier<'a>> {
+        // NOTE: this regex fails to compile on Rust
+        // lazy_static! {
+        //     static ref UNICODE_NAME: Regex = Regex::new(r"(?u)[\u{D800}-\u{DFFF}]").unwrap();
+        // }
 
-    // if !unicode_escapes && UNICODE_NAME.is_match(atom.as_str()) {
-    //     return None;
-    // }
+        // if !unicode_escapes && UNICODE_NAME.is_match(atom.as_str()) {
+        //     return None;
+        // }
 
-    let id = Atom::from(
-        atom.chars().map(|c| if is_identifier_part(c) { c } else { '_' }).collect::<String>(),
-    );
+        let id =
+            atom.chars().map(|c| if is_identifier_part(c) { c } else { '_' }).collect::<String>();
 
-    let id = if id == "" {
-        Atom::from("_")
-    } else if id == "eval" || id == "arguments" || id == "null" || !is_valid_identifier(&id, true) {
-        Atom::from(format!("_{id}"))
-    } else {
-        atom
-    };
+        let id = if id.is_empty() {
+            self.ast.new_atom("_")
+        } else if id == "eval"
+            || id == "arguments"
+            || id == "null"
+            || !is_valid_identifier(&id, true)
+        {
+            self.ast.new_atom(&format!("_{id}"))
+        } else {
+            atom.clone()
+        };
 
-    Some(BindingIdentifier::new(span, id))
+        Some(BindingIdentifier::new(span, id))
+    }
 }

@@ -19,7 +19,6 @@ mod regex;
 mod search;
 mod source;
 mod string;
-mod string_builder;
 mod template;
 mod token;
 mod trivia_builder;
@@ -38,7 +37,6 @@ use oxc_span::{SourceType, Span};
 use self::{
     byte_handlers::handle_byte,
     source::{Source, SourcePosition},
-    string_builder::AutoCow,
     trivia_builder::TriviaBuilder,
 };
 pub use self::{
@@ -95,6 +93,9 @@ pub struct Lexer<'a> {
     /// Data store for escaped templates, indexed by [Token::start] when [Token::escaped] is true
     /// `None` is saved when the string contains an invalid escape sequence.
     pub escaped_templates: FxHashMap<u32, Option<&'a str>>,
+
+    /// `memchr` Finder for end of multi-line comments. Created lazily when first used.
+    multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
 }
 
 #[allow(clippy::unused_self)]
@@ -124,6 +125,7 @@ impl<'a> Lexer<'a> {
             trivia_builder: TriviaBuilder::default(),
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
+            multi_line_comment_end_finder: None,
         }
     }
 
@@ -291,9 +293,7 @@ impl<'a> Lexer<'a> {
             let offset = self.offset();
             self.token.start = offset;
 
-            let byte = if let Some(byte) = self.source.peek_byte() {
-                byte
-            } else {
+            let Some(byte) = self.source.peek_byte() else {
                 return Kind::Eof;
             };
 

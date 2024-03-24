@@ -15,6 +15,10 @@ pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
         return member_expr.static_property_name() == Some("createElement");
     }
 
+    if let Some(ident) = call_expr.callee.get_identifier_reference() {
+        return ident.name == "createElement";
+    }
+
     false
 }
 
@@ -74,9 +78,9 @@ pub fn get_string_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Opti
 }
 
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/isHiddenFromScreenReader.js
-pub fn is_hidden_from_screen_reader(node: &JSXOpeningElement) -> bool {
-    if let JSXElementName::Identifier(iden) = &node.name {
-        if iden.name.as_str().to_uppercase() == "INPUT" {
+pub fn is_hidden_from_screen_reader(ctx: &LintContext, node: &JSXOpeningElement) -> bool {
+    if let Some(name) = get_element_type(ctx, node) {
+        if name.as_str().to_uppercase() == "INPUT" {
             if let Some(item) = has_jsx_prop_lowercase(node, "type") {
                 let hidden = get_string_literal_prop_value(item);
 
@@ -99,14 +103,14 @@ pub fn is_hidden_from_screen_reader(node: &JSXOpeningElement) -> bool {
 }
 
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/hasAccessibleChild.js
-pub fn object_has_accessible_child(node: &JSXElement<'_>) -> bool {
+pub fn object_has_accessible_child(ctx: &LintContext, node: &JSXElement<'_>) -> bool {
     node.children.iter().any(|child| match child {
         JSXChild::Text(text) => !text.value.is_empty(),
-        JSXChild::Element(el) => !is_hidden_from_screen_reader(&el.opening_element),
+        JSXChild::Element(el) => !is_hidden_from_screen_reader(ctx, &el.opening_element),
         JSXChild::ExpressionContainer(JSXExpressionContainer {
             expression: JSXExpression::Expression(expr),
             ..
-        }) => !expr.is_undefined(),
+        }) => !expr.is_undefined() && !expr.is_null(),
         _ => false,
     }) || has_jsx_prop_lowercase(&node.opening_element, "dangerouslySetInnerHTML").is_some()
         || has_jsx_prop_lowercase(&node.opening_element, "children").is_some()
@@ -219,6 +223,8 @@ pub fn get_parent_es6_component<'a, 'b>(ctx: &'b LintContext<'a>) -> Option<&'b 
     })
 }
 
+/// Resolve element type(name) using jsx-a11y settings
+/// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/getElementType.js
 pub fn get_element_type(context: &LintContext, element: &JSXOpeningElement) -> Option<String> {
     let JSXElementName::Identifier(ident) = &element.name else {
         return None;
@@ -226,19 +232,20 @@ pub fn get_element_type(context: &LintContext, element: &JSXOpeningElement) -> O
 
     let ESLintSettings { jsx_a11y, .. } = context.settings();
 
-    if let Some(polymorphic_prop_name_value) = &jsx_a11y.polymorphic_prop_name {
-        if let Some(as_tag) = has_jsx_prop_lowercase(element, polymorphic_prop_name_value) {
-            if let Some(JSXAttributeValue::StringLiteral(str)) = get_prop_value(as_tag) {
-                return Some(String::from(str.value.as_str()));
-            }
-        }
-    }
+    let polymorphic_prop = jsx_a11y
+        .polymorphic_prop_name
+        .as_ref()
+        .and_then(|polymorphic_prop_name_value| {
+            has_jsx_prop_lowercase(element, polymorphic_prop_name_value)
+        })
+        .and_then(get_prop_value)
+        .and_then(|prop_value| match prop_value {
+            JSXAttributeValue::StringLiteral(str) => Some(str.value.as_str()),
+            _ => None,
+        });
 
-    let element_type = ident.name.as_str();
-    if let Some(val) = jsx_a11y.components.get(element_type) {
-        return Some(String::from(val));
-    }
-    Some(String::from(element_type))
+    let raw_type = polymorphic_prop.unwrap_or_else(|| ident.name.as_str());
+    Some(String::from(jsx_a11y.components.get(raw_type).map_or(raw_type, |c| c)))
 }
 
 pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
@@ -252,7 +259,7 @@ pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
             Expression::TemplateLiteral(tmpl) => {
                 tmpl.quasis.first().unwrap().value.raw.parse().or(Err(()))
             }
-            Expression::NumberLiteral(num) => Ok(num.value),
+            Expression::NumericLiteral(num) => Ok(num.value),
             _ => Err(()),
         },
         _ => Err(()),

@@ -35,6 +35,11 @@ pub(super) fn print_export_declaration<'a>(
         parts.push(source.format(p));
     }
 
+    if let Some(with_clause) = decl.with_clause() {
+        parts.push(space!());
+        parts.push(with_clause.format(p));
+    }
+
     if let Some(doc) = print_semicolon_after_export_declaration(p, decl) {
         parts.push(doc);
     }

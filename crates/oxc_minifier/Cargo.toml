@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_minifier"
-version                = "0.6.0"
+version                = "0.10.0"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -39,8 +39,5 @@ insta     = { workspace = true }
 walkdir   = { workspace = true }
 pico-args = { workspace = true }
 
-[target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
-jemallocator = { workspace = true }
-
-[target.'cfg(target_os = "windows")'.dev-dependencies]
-mimalloc = { workspace = true }
+[package.metadata.cargo-machete]
+ignored = ["insta", "walkdir"]

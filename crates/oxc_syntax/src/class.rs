@@ -9,11 +9,13 @@ define_index_type! {
 }
 
 bitflags! {
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
     pub struct ElementKind: u8 {
-        const Accessor = 0;
-        const Method = 1;
-        const Property = 2;
+        const Accessor = 1 << 0;
+        const Method = 1 << 1;
+        const Property = 1 << 2;
+        const Setter = 1 << 3;
+        const Getter = 1 << 4;
     }
 }
 
@@ -28,5 +30,9 @@ impl ElementKind {
 
     pub fn is_accessor(self) -> bool {
         self.contains(Self::Accessor)
+    }
+
+    pub fn is_setter_or_getter(self) -> bool {
+        self.intersects(Self::Setter | Self::Getter)
     }
 }

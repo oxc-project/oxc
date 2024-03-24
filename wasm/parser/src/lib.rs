@@ -1,3 +1,5 @@
+// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+#![allow(non_snake_case)]
 #![allow(clippy::needless_pass_by_value)]
 
 use serde::{Deserialize, Serialize};

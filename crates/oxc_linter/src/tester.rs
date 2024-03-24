@@ -9,7 +9,10 @@ use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, GraphicalTheme}
 use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{rules::RULES, ESLintSettings, Fixer, LintOptions, LintService, Linter, RuleEnum};
+use crate::{
+    rules::RULES, ESLintSettings, Fixer, LintOptions, LintService, LintServiceOptions, Linter,
+    RuleEnum,
+};
 
 #[derive(Eq, PartialEq)]
 enum TestResult {
@@ -209,11 +212,10 @@ impl Tester {
             self.rule_path.clone()
         };
 
-        let lint_service = LintService::from_linter(
-            self.current_working_directory.clone(),
-            &[path_to_lint.into_boxed_path()],
-            linter,
-        );
+        let cwd = self.current_working_directory.clone();
+        let paths = vec![path_to_lint.into_boxed_path()];
+        let options = LintServiceOptions { cwd, paths, tsconfig: None };
+        let lint_service = LintService::from_linter(linter, options);
         let diagnostic_service = DiagnosticService::default();
         let tx_error = diagnostic_service.sender();
         let result = lint_service.run_source(&allocator, source_text, false, tx_error);
@@ -236,8 +238,7 @@ impl Tester {
 
         let handler = GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
         for diagnostic in result {
-            let diagnostic = diagnostic.error.with_source_code(source_text.to_string());
-            let diagnostic = diagnostic.with_source_code(NamedSource::new(
+            let diagnostic = diagnostic.error.with_source_code(NamedSource::new(
                 diagnostic_path.clone(),
                 source_text.to_string(),
             ));

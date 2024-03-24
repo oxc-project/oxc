@@ -1,0 +1,85 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 151
+expression: prefer_spy_on
+---
+  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:9]
+ 1 │ obj.a = jest.fn(); const test = 10;
+   ·         ───────
+   ╰────
+  help: Use jest.spyOn() instead
+
+  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:15]
+ 1 │ Date['now'] = jest['fn']()
+   ·               ─────────
+   ╰────
+  help: Use jest.spyOn() instead
+
+  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:21]
+ 1 │ window[`${name}`] = jest[`fn`]()
+   ·                     ─────────
+   ╰────
+  help: Use jest.spyOn() instead
+
+  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:19]
+ 1 │ obj['prop' + 1] = jest['fn']()
+   ·                   ─────────
+   ╰────
+  help: Use jest.spyOn() instead
+
+  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:15]
+ 1 │ obj.one.two = jest.fn(); const test = 10;
+   ·               ───────
+   ╰────
+  help: Use jest.spyOn() instead
+
+  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:9]
+ 1 │ obj.a = jest.fn(() => 10,)
+   ·         ───────
+   ╰────
+  help: Use jest.spyOn() instead
+
+  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:11]
+ 1 │ obj.a.b = jest.fn(() => ({})).mockReturnValue('default').mockReturnValueOnce('first call'); test();
+   ·           ───────
+   ╰────
+  help: Use jest.spyOn() instead
+
+  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:16]
+ 1 │ window.fetch = jest.fn(() => ({})).one.two().three().four
+   ·                ───────
+   ╰────
+  help: Use jest.spyOn() instead
+
+  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+   ╭─[prefer_spy_on.tsx:1:12]
+ 1 │ foo[bar] = jest.fn().mockReturnValue(undefined)
+   ·            ───────
+   ╰────
+  help: Use jest.spyOn() instead
+
+  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+   ╭─[prefer_spy_on.tsx:2:27]
+ 1 │ 
+ 2 │                 foo.bar = jest.fn().mockImplementation(baz => baz)
+   ·                           ───────
+ 3 │                 foo.bar = jest.fn(a => b).mockImplementation(baz => baz)
+   ╰────
+  help: Use jest.spyOn() instead
+
+  ⚠ eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.
+   ╭─[prefer_spy_on.tsx:3:27]
+ 2 │                 foo.bar = jest.fn().mockImplementation(baz => baz)
+ 3 │                 foo.bar = jest.fn(a => b).mockImplementation(baz => baz)
+   ·                           ───────
+ 4 │             
+   ╰────
+  help: Use jest.spyOn() instead

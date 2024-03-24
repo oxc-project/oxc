@@ -1,11 +1,11 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, syntax_directed_operations::PrivateBoundIdentifiers};
+use oxc_ast::ast::*;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
     Result,
 };
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{Atom, CompactStr, GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -19,7 +19,7 @@ use crate::{
 #[error("Identifier `{0}` has already been declared")]
 #[diagnostic()]
 struct Redeclaration(
-    pub Atom,
+    pub CompactStr,
     #[label("`{0}` has already been declared here")] pub Span,
     #[label("It can not be redeclared here")] pub Span,
 );
@@ -50,7 +50,9 @@ impl<'a> SeparatedList<'a> for ObjectExpressionProperties<'a> {
         }?;
 
         if p.at(Kind::Comma) && p.peek_at(self.close()) {
-            self.trailing_comma = Some(p.end_span(p.start_span()));
+            let span = p.start_span();
+            p.bump_any();
+            self.trailing_comma = Some(p.end_span(span));
         }
 
         self.elements.push(element);
@@ -121,7 +123,9 @@ impl<'a> SeparatedList<'a> for ArrayExpressionList<'a> {
         };
 
         if p.at(Kind::Comma) && p.peek_at(self.close()) {
-            self.trailing_comma = Some(p.end_span(p.start_span()));
+            let span = p.start_span();
+            p.bump_any();
+            self.trailing_comma = Some(p.end_span(span));
         }
 
         self.elements.push(element?);
@@ -160,7 +164,7 @@ impl<'a> SeparatedList<'a> for ArrayPatternList<'a> {
                 }
             }
             _ => {
-                let element = p.parse_binding_pattern()?;
+                let element = p.parse_binding_pattern_with_initializer()?;
                 self.elements.push(Some(element));
             }
         }
@@ -258,6 +262,7 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
         let modifiers = p.parse_class_element_modifiers(true);
         let accessibility = modifiers.accessibility();
         let readonly = modifiers.readonly();
+        let r#override = modifiers.r#override();
 
         match p.cur_kind() {
             Kind::This if p.ts_enabled() => {
@@ -271,13 +276,14 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
                 }
             }
             _ => {
-                let pattern = p.parse_binding_pattern()?;
+                let pattern = p.parse_binding_pattern_with_initializer()?;
                 let decorators = p.state.consume_decorators();
                 let formal_parameter = p.ast.formal_parameter(
                     p.end_span(span),
                     pattern,
                     accessibility,
                     readonly,
+                    r#override,
                     decorators,
                 );
                 self.elements.push(formal_parameter);
@@ -290,8 +296,8 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
 
 /// [Assert Entries](https://tc39.es/proposal-import-assertions)
 pub struct AssertEntries<'a> {
-    pub elements: Vec<'a, ImportAttribute>,
-    keys: FxHashMap<Atom, Span>,
+    pub elements: Vec<'a, ImportAttribute<'a>>,
+    keys: FxHashMap<Atom<'a>, Span>,
 }
 
 impl<'a> SeparatedList<'a> for AssertEntries<'a> {
@@ -315,7 +321,7 @@ impl<'a> SeparatedList<'a> for AssertEntries<'a> {
         };
 
         if let Some(old_span) = self.keys.get(&key.as_atom()) {
-            p.error(Redeclaration(key.as_atom(), *old_span, key.span()));
+            p.error(Redeclaration(key.as_atom().into_compact_str(), *old_span, key.span()));
         } else {
             self.keys.insert(key.as_atom(), key.span());
         }
@@ -329,7 +335,7 @@ impl<'a> SeparatedList<'a> for AssertEntries<'a> {
 }
 
 pub struct ExportNamedSpecifiers<'a> {
-    pub elements: Vec<'a, ExportSpecifier>,
+    pub elements: Vec<'a, ExportSpecifier<'a>>,
 }
 
 impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
@@ -382,65 +388,13 @@ impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
     }
 }
 
-pub struct PrivateBoundIdentifierMeta {
-    span: Span,
-    r#static: bool,
-    kind: Option<MethodDefinitionKind>,
-}
-
 pub struct ClassElements<'a> {
     pub elements: Vec<'a, ClassElement<'a>>,
-
-    /// <https://tc39.es/ecma262/#sec-static-semantics-privateboundidentifiers>
-    pub private_bound_identifiers: FxHashMap<Atom, PrivateBoundIdentifierMeta>,
 }
 
 impl<'a> ClassElements<'a> {
     pub(crate) fn new(p: &ParserImpl<'a>) -> Self {
-        Self { elements: p.ast.new_vec(), private_bound_identifiers: FxHashMap::default() }
-    }
-
-    fn detect_private_name_conflict(
-        &self,
-        p: &mut ParserImpl,
-        private_ident: &PrivateIdentifier,
-        r#static: bool,
-        kind: Option<MethodDefinitionKind>,
-    ) {
-        if let Some(existed) = self.private_bound_identifiers.get(&private_ident.name) {
-            if !(r#static == existed.r#static
-                && match existed.kind {
-                    Some(MethodDefinitionKind::Get) => {
-                        kind.as_ref().map_or(false, |kind| *kind == MethodDefinitionKind::Set)
-                    }
-                    Some(MethodDefinitionKind::Set) => {
-                        kind.as_ref().map_or(false, |kind| *kind == MethodDefinitionKind::Get)
-                    }
-                    _ => false,
-                })
-            {
-                p.error(Redeclaration(
-                    private_ident.name.clone(),
-                    existed.span,
-                    private_ident.span,
-                ));
-            }
-        }
-    }
-
-    fn on_declare_private_property(
-        &mut self,
-        p: &mut ParserImpl,
-        private_ident: &PrivateIdentifier,
-        r#static: bool,
-        kind: Option<MethodDefinitionKind>,
-    ) {
-        self.detect_private_name_conflict(p, private_ident, r#static, kind);
-
-        self.private_bound_identifiers.insert(
-            private_ident.name.clone(),
-            PrivateBoundIdentifierMeta { r#static, kind, span: private_ident.span },
-        );
+        Self { elements: p.ast.new_vec() }
     }
 }
 
@@ -462,15 +416,6 @@ impl<'a> NormalList<'a> for ClassElements<'a> {
             return Ok(());
         }
         let element = p.parse_class_element()?;
-
-        if let Some(private_ident) = element.private_bound_identifiers() {
-            self.on_declare_private_property(
-                p,
-                &private_ident,
-                element.r#static(),
-                element.method_definition_kind(),
-            );
-        }
 
         self.elements.push(element);
         Ok(())
@@ -504,7 +449,7 @@ impl<'a> NormalList<'a> for SwitchCases<'a> {
 }
 
 pub struct ImportSpecifierList<'a> {
-    pub import_specifiers: Vec<'a, ImportDeclarationSpecifier>,
+    pub import_specifiers: Vec<'a, ImportDeclarationSpecifier<'a>>,
 }
 
 impl<'a> SeparatedList<'a> for ImportSpecifierList<'a> {

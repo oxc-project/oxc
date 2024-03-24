@@ -153,7 +153,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_jsx_member_expression(
         &mut self,
         span: Span,
-        object: JSXIdentifier,
+        object: JSXIdentifier<'a>,
     ) -> Result<Box<'a, JSXMemberExpression<'a>>> {
         let mut span = span;
         let mut object = JSXMemberExpressionObject::Identifier(object);
@@ -215,7 +215,7 @@ impl<'a> ParserImpl<'a> {
             }
             // {expr}
             Kind::LCurly => self
-                .parse_jsx_expression_container(true)
+                .parse_jsx_expression_container(/* is_jsx_child */ true)
                 .map(JSXChild::ExpressionContainer)
                 .map(Some),
             // text
@@ -231,20 +231,28 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<JSXExpressionContainer<'a>> {
         let span = self.start_span();
         self.bump_any(); // bump `{`
-        let expr = match self.cur_kind() {
-            // {} empty
-            Kind::RCurly => {
-                let span = self.start_span();
-                JSXExpression::EmptyExpression(self.ast.jsx_empty_expression(self.end_span(span)))
-            }
-            // {expr}
-            _ => self.parse_jsx_assignment_expression().map(JSXExpression::Expression)?,
-        };
-        if in_jsx_child {
-            self.expect_jsx_child(Kind::RCurly)?;
+
+        let expr = if self.at(Kind::RCurly) {
+            if in_jsx_child {
+                self.expect_jsx_child(Kind::RCurly)
+            } else {
+                self.expect(Kind::RCurly)
+            }?;
+            let span = self.end_span(span);
+            // Handle comment between curly braces (ex. `{/* comment */}`)
+            //                                            ^^^^^^^^^^^^^ span
+            let expr = self.ast.jsx_empty_expression(Span::new(span.start + 1, span.end - 1));
+            JSXExpression::EmptyExpression(expr)
         } else {
-            self.expect(Kind::RCurly)?;
-        }
+            let expr = self.parse_jsx_assignment_expression().map(JSXExpression::Expression)?;
+            if in_jsx_child {
+                self.expect_jsx_child(Kind::RCurly)
+            } else {
+                self.expect(Kind::RCurly)
+            }?;
+            expr
+        };
+
         Ok(self.ast.jsx_expression_container(self.end_span(span), expr))
     }
 
@@ -335,7 +343,7 @@ impl<'a> ParserImpl<'a> {
         match self.cur_kind() {
             Kind::Str => self.parse_literal_string().map(JSXAttributeValue::StringLiteral),
             Kind::LCurly => {
-                let expr = self.parse_jsx_expression_container(false)?;
+                let expr = self.parse_jsx_expression_container(/* is_jsx_child */ false)?;
                 Ok(JSXAttributeValue::ExpressionContainer(expr))
             }
             Kind::LAngle => {
@@ -353,20 +361,20 @@ impl<'a> ParserImpl<'a> {
     ///   `IdentifierStart`
     ///   `JSXIdentifier` `IdentifierPart`
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
-    fn parse_jsx_identifier(&mut self) -> Result<JSXIdentifier> {
+    fn parse_jsx_identifier(&mut self) -> Result<JSXIdentifier<'a>> {
         let span = self.start_span();
         if !self.at(Kind::Ident) && !self.cur_kind().is_all_keyword() {
             return Err(self.unexpected());
         }
-        // we are at a valid normal Ident or Keyword, let's keep on lexing for `-`
-        self.re_lex_jsx_identifier();
+        // Currently at a valid normal Ident or Keyword, keep on lexing for `-` in `<component-name />`
+        self.continue_lex_jsx_identifier();
         self.bump_any();
         let span = self.end_span(span);
         let name = span.source_text(self.source_text);
         Ok(self.ast.jsx_identifier(span, name.into()))
     }
 
-    fn parse_jsx_text(&mut self) -> JSXText {
+    fn parse_jsx_text(&mut self) -> JSXText<'a> {
         let span = self.start_span();
         let value = Atom::from(self.cur_string());
         self.bump_any();

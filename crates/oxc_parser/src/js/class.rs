@@ -172,7 +172,10 @@ impl<'a> ParserImpl<'a> {
 
         let modifier = self.parse_class_element_modifiers(false);
 
-        let accessor = self.peek_kind().is_class_element_name_start() && self.eat(Kind::Accessor);
+        let accessor = {
+            let token = self.peek_token();
+            !token.is_on_new_line && token.kind.is_class_element_name_start()
+        } && self.eat(Kind::Accessor);
 
         let accessibility = modifier.accessibility();
 
@@ -372,7 +375,13 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
+        let r#type = if r#abstract {
+            MethodDefinitionType::TSAbstractMethodDefinition
+        } else {
+            MethodDefinitionType::MethodDefinition
+        };
         let method_definition = MethodDefinition {
+            r#type,
             span: self.end_span(span),
             key,
             value,
@@ -384,14 +393,7 @@ impl<'a> ParserImpl<'a> {
             optional,
             decorators,
         };
-
-        if r#abstract {
-            Ok(ClassElement::TSAbstractMethodDefinition(
-                self.ast.alloc(TSAbstractMethodDefinition { method_definition }),
-            ))
-        } else {
-            Ok(ClassElement::MethodDefinition(self.ast.alloc(method_definition)))
-        }
+        Ok(ClassElement::MethodDefinition(self.ast.alloc(method_definition)))
     }
 
     /// `FieldDefinition`[?Yield, ?Await] ;
@@ -423,7 +425,13 @@ impl<'a> ParserImpl<'a> {
         };
         self.asi()?;
 
+        let r#type = if r#abstract {
+            PropertyDefinitionType::TSAbstractPropertyDefinition
+        } else {
+            PropertyDefinitionType::PropertyDefinition
+        };
         let property_definition = PropertyDefinition {
+            r#type,
             span: self.end_span(span),
             key,
             value,
@@ -438,14 +446,7 @@ impl<'a> ParserImpl<'a> {
             definite,
             decorators: self.state.consume_decorators(),
         };
-
-        if r#abstract {
-            Ok(ClassElement::TSAbstractPropertyDefinition(
-                self.ast.alloc(TSAbstractPropertyDefinition { property_definition }),
-            ))
-        } else {
-            Ok(ClassElement::PropertyDefinition(self.ast.alloc(property_definition)))
-        }
+        Ok(ClassElement::PropertyDefinition(self.ast.alloc(property_definition)))
     }
 
     /// `ClassStaticBlockStatementList` :

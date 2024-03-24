@@ -1,6 +1,7 @@
 use oxc_ast::ast::*;
 
 use crate::{
+    array,
     doc::{Doc, DocBuilder},
     format::function_parameters::should_group_function_parameters,
     group, if_break, indent, softline, space, ss, Format, Prettier,
@@ -33,13 +34,14 @@ pub(super) fn print_function<'a>(
     if let Some(id) = &func.id {
         parts.push(p.str(id.name.as_str()));
     }
-    let params_doc = if should_group_function_parameters(func) {
-        group!(p, func.params.format(p))
-    } else {
-        func.params.format(p)
-    };
     // Prettier has `returnTypeDoc` to group together, write this for keep same with prettier.
-    parts.push(group!(p, params_doc));
+    parts.push(group!(p, {
+        if should_group_function_parameters(func) {
+            group!(p, func.params.format(p))
+        } else {
+            func.params.format(p)
+        }
+    }));
     if let Some(body) = &func.body {
         parts.push(space!());
         parts.push(body.format(p));
@@ -55,6 +57,10 @@ pub(super) fn print_function<'a>(
 
 pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> Doc<'a> {
     let mut parts = p.vec();
+
+    if matches!(method.r#type, MethodDefinitionType::TSAbstractMethodDefinition) {
+        parts.push(ss!("abstract "));
+    }
 
     if method.r#static {
         parts.push(ss!("static "));
@@ -93,10 +99,17 @@ fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<
         if should_group_parameters { group!(p, parameters_doc) } else { parameters_doc };
     parts.push(group!(p, parameters_doc));
 
+    if let Some(ret_typ) = &function.return_type {
+        parts.push(array![p, ss!(": "), ret_typ.type_annotation.format(p)]);
+    }
+
     if let Some(body) = &function.body {
         parts.push(space!());
         parts.push(body.format(p));
+    } else if p.options.semi {
+        parts.push(ss!(";"));
     }
+
     Doc::Array(parts)
 }
 

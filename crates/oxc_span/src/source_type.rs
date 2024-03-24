@@ -1,12 +1,17 @@
+// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+#![allow(non_snake_case)]
+
 use std::path::Path;
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serialize")]
 use serde::Serialize;
+#[cfg(feature = "serialize")]
+use tsify::Tsify;
 
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
     language: Language,
@@ -24,20 +29,19 @@ pub struct SourceType {
 
 /// JavaScript or TypeScript
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum Language {
     JavaScript,
-    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-    TypeScript {
-        is_definition_file: bool,
-    },
+    TypeScript,
+    #[cfg_attr(feature = "serialize", serde(rename = "typescriptDefinition"))]
+    TypeScriptDefinition,
 }
 
 /// Script or Module
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub enum ModuleKind {
     Script,
     Module,
@@ -45,8 +49,8 @@ pub enum ModuleKind {
 
 /// JSX for JavaScript and TypeScript
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-#[cfg_attr(all(feature = "serde", feature = "wasm"), derive(tsify::Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub enum LanguageVariant {
     Standard,
     Jsx,
@@ -83,15 +87,15 @@ impl SourceType {
     }
 
     pub fn is_javascript(self) -> bool {
-        matches!(self.language, Language::JavaScript)
+        self.language == Language::JavaScript
     }
 
     pub fn is_typescript(self) -> bool {
-        matches!(self.language, Language::TypeScript { .. })
+        matches!(self.language, Language::TypeScript | Language::TypeScriptDefinition)
     }
 
     pub fn is_typescript_definition(self) -> bool {
-        matches!(self.language, Language::TypeScript { is_definition_file: true })
+        self.language == Language::TypeScriptDefinition
     }
 
     pub fn is_jsx(self) -> bool {
@@ -123,7 +127,7 @@ impl SourceType {
     #[must_use]
     pub fn with_typescript(mut self, yes: bool) -> Self {
         if yes {
-            self.language = Language::TypeScript { is_definition_file: false };
+            self.language = Language::TypeScript;
         }
         self
     }
@@ -131,7 +135,7 @@ impl SourceType {
     #[must_use]
     pub fn with_typescript_definition(mut self, yes: bool) -> Self {
         if yes {
-            self.language = Language::TypeScript { is_definition_file: true };
+            self.language = Language::TypeScriptDefinition;
         }
         self
     }
@@ -174,14 +178,15 @@ impl SourceType {
                 )
             })?;
 
-        let is_definition_file = file_name.ends_with(".d.ts")
-            || file_name.ends_with(".d.mts")
-            || file_name.ends_with(".d.cts");
-
         let language = match extension {
             "js" | "mjs" | "cjs" | "jsx" => Language::JavaScript,
-            "ts" | "mts" | "cts" | "tsx" => Language::TypeScript { is_definition_file },
-            _ => unreachable!(),
+            "ts" if file_name.ends_with(".d.ts") => Language::TypeScriptDefinition,
+            "mts" if file_name.ends_with(".d.mts") => Language::TypeScriptDefinition,
+            "cts" if file_name.ends_with(".d.cts") => Language::TypeScriptDefinition,
+            _ => {
+                debug_assert!(matches!(extension, "ts" | "mts" | "cts" | "tsx"));
+                Language::TypeScript
+            }
         };
 
         let variant = match extension {
