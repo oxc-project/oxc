@@ -74,6 +74,7 @@ impl SourcemapBuilder {
                 original_column,
                 Some(self.source_id),
                 name_id,
+                false,
             );
             self.last_position = Some(position);
         }

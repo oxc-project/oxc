@@ -38,11 +38,11 @@ wasm-bindgen = { workspace = true, optional = true }
 [dev-dependencies]
 oxc_parser = { workspace = true }
 
-itertools         = { workspace = true }
-indexmap          = { workspace = true }
-insta             = { workspace = true }
-phf               = { workspace = true, features = ["macros"] }
-rustc-hash        = { workspace = true }
+itertools  = { workspace = true }
+indexmap   = { workspace = true }
+insta      = { workspace = true }
+phf        = { workspace = true, features = ["macros"] }
+rustc-hash = { workspace = true }
 
 [features]
 default   = []

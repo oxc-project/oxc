@@ -43,11 +43,15 @@ impl Tester {
         Transformer::new(&self.allocator, self.source_type, semantic, self.options.clone())
             .build(program)?;
 
-        Ok(Codegen::<false>::new(source_text, CodegenOptions::default()).build(program).source_text)
+        Ok(Codegen::<false>::new("", source_text, CodegenOptions::default())
+            .build(program)
+            .source_text)
     }
 
     fn codegen(&self, source_text: &str) -> String {
         let program = Parser::new(&self.allocator, source_text, self.source_type).parse().program;
-        Codegen::<false>::new(source_text, CodegenOptions::default()).build(&program).source_text
+        Codegen::<false>::new("", source_text, CodegenOptions::default())
+            .build(&program)
+            .source_text
     }
 }

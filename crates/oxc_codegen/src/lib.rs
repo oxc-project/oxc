@@ -38,7 +38,7 @@ pub use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct CodegenOptions {
     /// Pass in the filename to enable source map support.
-    pub enable_source_map: Option<String>,
+    pub enable_source_map: bool,
 
     /// Enable TypeScript code generation.
     pub enable_typescript: bool,
@@ -85,14 +85,14 @@ pub enum Separator {
 }
 
 impl<const MINIFY: bool> Codegen<MINIFY> {
-    pub fn new(source_text: &str, options: CodegenOptions) -> Self {
+    pub fn new(source_name: &str, source_text: &str, options: CodegenOptions) -> Self {
         // Initialize the output code buffer to reduce memory reallocation.
         // Minification will reduce by at least half of the original size.
         let source_len = source_text.len();
         let capacity = if MINIFY { source_len / 2 } else { source_len };
 
         let mut sourcemap_builder = SourcemapBuilder::default();
-        if let Some(source_name) = &options.enable_source_map {
+        if options.enable_source_map {
             sourcemap_builder.with_name_and_source(source_name, source_text);
         }
         Self {

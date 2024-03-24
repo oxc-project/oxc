@@ -126,8 +126,14 @@ fn default_true() -> bool {
 #[serde(untagged)]
 enum TagNamePreference {
     TagNameOnly(String),
-    ObjectWithMessageAndReplacement { message: String, replacement: String },
-    ObjectWithMessage { message: String },
+    ObjectWithMessageAndReplacement {
+        message: String,
+        replacement: String,
+    },
+    ObjectWithMessage {
+        message: String,
+    },
+    #[allow(dead_code)]
     FalseOnly(bool), // Should care `true`...?
 }
 

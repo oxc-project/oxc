@@ -8,8 +8,9 @@ fn test(source_text: &str, expected: &str) {
     let source_type = SourceType::default().with_module(true);
     let program = Parser::new(&allocator, source_text, source_type).parse().program;
     let program = allocator.alloc(program);
-    let result =
-        Codegen::<false>::new(source_text, CodegenOptions::default()).build(program).source_text;
+    let result = Codegen::<false>::new("", source_text, CodegenOptions::default())
+        .build(program)
+        .source_text;
     assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
 }
 
@@ -22,7 +23,7 @@ fn test_ts(source_text: &str, expected: &str, is_typescript_definition: bool) {
     let program = Parser::new(&allocator, source_text, source_type).parse().program;
     let program = allocator.alloc(program);
     let codegen_options = CodegenOptions { enable_typescript: true, ..CodegenOptions::default() };
-    let result = Codegen::<false>::new(source_text, codegen_options).build(program).source_text;
+    let result = Codegen::<false>::new("", source_text, codegen_options).build(program).source_text;
     assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
 }
 

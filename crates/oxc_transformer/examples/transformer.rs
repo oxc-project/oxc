@@ -55,8 +55,9 @@ fn main() {
     };
     Transformer::new(&allocator, source_type, semantic, transform_options).build(program).unwrap();
 
-    let printed =
-        Codegen::<false>::new(&source_text, CodegenOptions::default()).build(program).source_text;
+    let printed = Codegen::<false>::new("", &source_text, CodegenOptions::default())
+        .build(program)
+        .source_text;
     println!("Transformed:\n");
     println!("{printed}");
 }

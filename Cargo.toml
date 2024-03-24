@@ -80,62 +80,64 @@ oxc_syntax      = { version = "0.10.0", path = "crates/oxc_syntax" }
 oxc_transformer = { version = "0.10.0", path = "crates/oxc_transformer" }
 
 # publish = false
-oxc_macros         = { path = "crates/oxc_macros" }
-oxc_linter         = { path = "crates/oxc_linter" }
-oxc_prettier       = { path = "crates/oxc_prettier" }
-oxc_tasks_common    = { path = "tasks/common" }
+oxc_macros       = { path = "crates/oxc_macros" }
+oxc_linter       = { path = "crates/oxc_linter" }
+oxc_prettier     = { path = "crates/oxc_prettier" }
+oxc_tasks_common = { path = "tasks/common" }
 
 napi        = { version = "2" }
 napi-derive = { version = "2" }
 
-assert-unchecked          = { version = "0.1.2" }
-bpaf                      = { version = "0.9.9" }
-bitflags                  = { version = "2.4.2" }
-bumpalo                   = { version = "3.15.4" }
-convert_case              = { version = "0.6.0" }
-dashmap                   = { version = "5.5.3" }
-flate2                    = { version = "1.0.28" }
-futures                   = { version = "0.3.30" }
-ignore                    = { version = "0.4.22" }
-itertools                 = { version = "0.12.1" }
-jemallocator              = { version = "0.5.4" }
-lazy_static               = { version = "1.4.0" }
-miette                    = { version = "7.2.0", features = ["fancy-no-syscall"] }
-mimalloc                  = { version = "0.1.39" }
-num-bigint                = { version = "0.4.4" }
-num-traits                = { version = "0.2.18" }
-phf                       = { version = "0.11" }
-pico-args                 = { version = "0.5.0" }
-proc-macro2               = { version = "1.0.79" }
-project-root              = { version = "0.2.2" }
-quote                     = { version = "1.0.35" }
-rayon                     = { version = "1.9.0" }
-regex                     = { version = "1.10.3" }
-rustc-hash                = { version = "1.1.0", default-features = false, features = ["std"] }
-ryu-js                    = { version = "1.0.1" }
-ropey                     = { version = "1.6.1" }
-seq-macro                 = { version = "0.3.5" }
-serde                     = { version = "1.0.197" }
-serde_json                = { version = "1.0.114" }
-syn                       = { version = "=1.0.109" }
-thiserror                 = { version = "1.0.58" }
-tokio                     = { version = "1" }
-tower-lsp                 = { version = "0.20.0", features = ["proposed"] }
-unicode-id-start          = { version = "1.1.2" }
-ureq                      = { version = "2.9.6", default-features = false, features = ["tls", "json"] }
-url                       = { version = "2.5.0" }
-walkdir                   = { version = "2.5.0" }
-indexmap                  = { version = "2.2.5" }
-index_vec                 = { version = "0.1.3" }
-static_assertions         = { version = "1.1.0" }
-tracing-subscriber        = { version = "0.3" }
-insta                     = { version = "1.36.1", features = ["glob"] }
-mime_guess                = { version = "2.0.4" }
-language-tags             = { version = "0.3.2" }
-tsify                     = { version = "0.4.5" }
-wasm-bindgen              = { version = "0.2" }
-serde-wasm-bindgen        = { version = "0.6.5" }
-handlebars                = { version = "5.1.0" }
+assert-unchecked   = { version = "0.1.2" }
+bpaf               = { version = "0.9.9" }
+bitflags           = { version = "2.4.2" }
+bumpalo            = { version = "3.15.4" }
+convert_case       = { version = "0.6.0" }
+dashmap            = { version = "5.5.3" }
+flate2             = { version = "1.0.28" }
+futures            = { version = "0.3.30" }
+glob               = { version = "0.3.1" }
+ignore             = { version = "0.4.22" }
+itertools          = { version = "0.12.1" }
+jemallocator       = { version = "0.5.4" }
+lazy_static        = { version = "1.4.0" }
+miette             = { version = "7.2.0", features = ["fancy-no-syscall"] }
+mimalloc           = { version = "0.1.39" }
+num-bigint         = { version = "0.4.4" }
+num-traits         = { version = "0.2.18" }
+phf                = { version = "0.11" }
+pico-args          = { version = "0.5.0" }
+proc-macro2        = { version = "1.0.79" }
+project-root       = { version = "0.2.2" }
+quote              = { version = "1.0.35" }
+rayon              = { version = "1.9.0" }
+regex              = { version = "1.10.3" }
+rustc-hash         = { version = "1.1.0", default-features = false, features = ["std"] }
+ryu-js             = { version = "1.0.1" }
+ropey              = { version = "1.6.1" }
+seq-macro          = { version = "0.3.5" }
+serde              = { version = "1.0.197" }
+serde_json         = { version = "1.0.114" }
+syn                = { version = "=1.0.109" }
+tempfile           = { version = "3.10.1" }
+thiserror          = { version = "1.0.58" }
+tokio              = { version = "1" }
+tower-lsp          = { version = "0.20.0", features = ["proposed"] }
+unicode-id-start   = { version = "1.1.2" }
+ureq               = { version = "2.9.6", default-features = false, features = ["tls", "json"] }
+url                = { version = "2.5.0" }
+walkdir            = { version = "2.5.0" }
+indexmap           = { version = "2.2.5" }
+index_vec          = { version = "0.1.3" }
+static_assertions  = { version = "1.1.0" }
+tracing-subscriber = { version = "0.3" }
+insta              = { version = "1.36.1", features = ["glob"] }
+mime_guess         = { version = "2.0.4" }
+language-tags      = { version = "0.3.2" }
+tsify              = { version = "0.4.5" }
+wasm-bindgen       = { version = "0.2" }
+serde-wasm-bindgen = { version = "0.6.5" }
+handlebars         = { version = "5.1.0" }
 
 [profile.release.package.oxc_wasm]
 opt-level = 'z'

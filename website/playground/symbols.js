@@ -27,7 +27,7 @@ export const renderSymbols = (symbols) => {
       symbolId: index,
       nodeId,
       span: symbols.spans[index],
-      references: symbols.resolvedReferences[index].map((id) => symbols.references[id]),
+      references: symbols.resolvedReferences[index].map((id) => ({ referenceId: id, ...symbols.references[id] })),
     })
   })
   cacheSymbols = target
