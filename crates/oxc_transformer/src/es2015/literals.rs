@@ -17,6 +17,8 @@ pub struct Literals<'a> {
 }
 
 impl<'a> Literals<'a> {
+    #![allow(clippy::unused_self)]
+
     pub fn new(ctx: TransformerCtx<'a>, options: &TransformOptions) -> Option<Self> {
         (options.target < TransformTarget::ES2015 || options.literals)
             .then_some(Self { _ast: ctx.ast })
@@ -29,11 +31,10 @@ impl<'a> Literals<'a> {
             return;
         }
 
-        match lit.raw[0..3].as_bytes() {
+        if [b'0', b'b' | b'B' | b'o' | b'O'] == lit.raw[0..3].as_bytes() {
             // Set binary and octal raw values to empty, It would force the codegen,
             // go generate them from their value.
-            [b'0', b'b' | b'B' | b'o' | b'O'] => lit.raw = "",
-            _ => {}
+            lit.raw = "";
         }
     }
 
