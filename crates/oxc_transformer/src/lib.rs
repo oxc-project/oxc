@@ -84,6 +84,7 @@ pub struct Transformer<'a> {
     es2015_template_literals: Option<TemplateLiterals<'a>>,
     es2015_duplicate_keys: Option<DuplicateKeys<'a>>,
     es2015_instanceof: Option<Instanceof<'a>>,
+    es2015_literals: Option<Literals<'a>>,
     es2015_new_target: Option<NewTarget<'a>>,
     es3_property_literal: Option<PropertyLiteral<'a>>,
 }
@@ -127,6 +128,7 @@ impl<'a> Transformer<'a> {
             es2015_template_literals: TemplateLiterals::new(Rc::clone(&ast), &options),
             es2015_duplicate_keys: DuplicateKeys::new(Rc::clone(&ast), &options),
             es2015_instanceof: Instanceof::new(Rc::clone(&ast), ctx.clone(), &options),
+            es2015_literals: Literals::new(ctx.clone(), &options),
             es2015_new_target: NewTarget::new(Rc::clone(&ast),ctx.clone(), &options),
             // other
             es3_property_literal: PropertyLiteral::new(Rc::clone(&ast), &options),
@@ -305,14 +307,16 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
 
     fn visit_number_literal(&mut self, lit: &mut NumericLiteral<'a>) {
         self.es2021_numeric_separator.as_mut().map(|t| t.transform_number_literal(lit));
+        self.es2015_literals.as_mut().map(|t| t.transform_number_literal(lit));
     }
 
     fn visit_bigint_literal(&mut self, lit: &mut BigIntLiteral<'a>) {
         self.es2021_numeric_separator.as_mut().map(|t| t.transform_bigint_literal(lit));
     }
 
-    fn visit_string_literal(&mut self, lit: &mut StringLiteral) {
+    fn visit_string_literal(&mut self, lit: &mut StringLiteral<'a>) {
         self.es2019_json_strings.as_mut().map(|t| t.transform_string_literal(lit));
+        self.es2015_literals.as_mut().map(|t| t.transform_string_literal(lit));
     }
 
     fn visit_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
