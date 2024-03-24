@@ -31,7 +31,7 @@ impl<'a> Literals<'a> {
             return;
         }
 
-        if [b'0', b'b' | b'B' | b'o' | b'O'] == lit.raw[0..3].as_bytes() {
+        if let [b'0', b'b' | b'B' | b'o' | b'O'] = lit.raw[0..2].as_bytes() {
             // Set binary and octal raw values to empty, It would force the codegen,
             // go generate them from their value.
             lit.raw = "";
