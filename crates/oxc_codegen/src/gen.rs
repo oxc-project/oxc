@@ -1099,7 +1099,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for NumericLiteral<'a> {
             p.print_str(bytes);
             need_space_before_dot(bytes, p);
         } else {
-            let bytes = self.raw.as_bytes();
+            let lower = self.raw.to_lowercase();
+            let bytes = lower.as_bytes();
             p.print_str(bytes);
             need_space_before_dot(bytes, p);
         };
