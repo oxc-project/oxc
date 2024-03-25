@@ -125,19 +125,18 @@ jobs:
             src:
               - 'Cargo.lock'
               - '**/Cargo.toml'
+              - '.github/workflows/ci.yml'
 
-      - name: Install cargo-machete
+      - name: Install cargo-binstall
         if: steps.filter.outputs.src == 'true'
-        uses: taiki-e/install-action@cargo-machete
+        uses: cargo-bins/cargo-binstall@main
 
-      - name: Install Rust
+      - name: Install cargo-shear
         if: steps.filter.outputs.src == 'true'
-        uses: ./.github/actions/rustup
-        with:
-          restore-cache: false
+        run: cargo binstall cargo-shear
 
       - if: steps.filter.outputs.src == 'true'
-        run: cargo machete
+        run: cargo shear
 
   format:
     name: Format
