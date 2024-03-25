@@ -7,7 +7,7 @@ use oxc_ast::{ast::*, AstKind, Trivias, Visit};
 use oxc_diagnostics::Error;
 use oxc_span::{CompactStr, SourceType, Span};
 use oxc_syntax::{
-    module_record::{ExportLocalName, ModuleRecord},
+    module_record::{ExportImportName, ExportLocalName, ModuleRecord},
     operator::AssignmentOperator,
 };
 
@@ -324,18 +324,20 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn add_export_flag_for_export_identifier(&mut self) {
-        self.module_record.local_export_entries.iter().for_each(|entry| match &entry.local_name {
-            ExportLocalName::Name(name_span) => {
+        self.module_record.indirect_export_entries.iter().for_each(|entry| {
+            if let ExportImportName::Name(name) = &entry.import_name {
+                if let Some(symbol_id) = self.symbols.get_symbol_id_from_name(name.name()) {
+                    self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+                }
+            }
+        });
+
+        self.module_record.local_export_entries.iter().for_each(|entry| {
+            if let ExportLocalName::Name(name_span) = &entry.local_name {
                 if let Some(symbol_id) = self.scope.get_root_binding(name_span.name()) {
                     self.symbols.union_flag(symbol_id, SymbolFlags::Export);
                 }
             }
-            ExportLocalName::Default(span) => {
-                if let Some(symbol_id) = self.symbols.get_symbol_id_from_span(span) {
-                    self.symbols.union_flag(symbol_id, SymbolFlags::Export);
-                }
-            }
-            ExportLocalName::Null => {}
         });
     }
 }

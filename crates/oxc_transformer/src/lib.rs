@@ -106,8 +106,7 @@ impl<'a> Transformer<'a> {
         Self {
             ctx: ctx.clone(),
             decorators: Decorators::new(Rc::clone(&ast), ctx.clone(), &options),
-            // TODO: pass verbatim_module_syntax from user config
-            typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), false, &options)),
+            typescript: source_type.is_typescript().then(|| TypeScript::new(Rc::clone(&ast), ctx.clone(), &options)),
             regexp_flags: RegexpFlags::new(Rc::clone(&ast), &options),
             // es2022
             es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), &options),
