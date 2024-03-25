@@ -155,7 +155,8 @@ impl<'a> JSDocBuilder<'a> {
             return None;
         }
 
-        Some(JSDoc::new(comment_content))
+        // Remove the very first `*`
+        Some(JSDoc::new(&comment_content[1..]))
     }
 }
 

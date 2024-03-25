@@ -1,7 +1,7 @@
 use super::jsdoc_tag::JSDocTag;
 use super::utils;
 
-/// source_text: Inside of /*HERE*/, NOT includes `/*` and `*/`, but `*`
+/// source_text: Inside of /**HERE*/, NOT includes `/**` and `*/`
 pub fn parse_jsdoc(source_text: &str) -> (String, Vec<JSDocTag>) {
     debug_assert!(!source_text.starts_with("/*"));
     debug_assert!(!source_text.ends_with("*/"));
@@ -51,7 +51,7 @@ pub fn parse_jsdoc(source_text: &str) -> (String, Vec<JSDocTag>) {
         }
     }
 
-    (utils::trim_multiline_comment(comment), tags)
+    (utils::trim_comment(comment), tags)
 }
 
 // TODO: Manage `Span`
@@ -63,11 +63,25 @@ fn parse_jsdoc_tag(tag_content: &str) -> JSDocTag {
 
     // This surely exists, at least `@` itself
     let (k_start, k_end) = utils::find_token_range(tag_content).unwrap();
-    // +1 for whitespace, may be empty
-    let b_start = tag_content.len().min(k_end + 1);
 
-    // Omit the first `@`
-    JSDocTag::new(&tag_content[k_start + 1..k_end], &tag_content[b_start..])
+    JSDocTag::new(
+        // Omit the first `@`
+        &tag_content[k_start + 1..k_end],
+        // ```
+        // /**
+        //  * @k * <- should not omit
+        //  */
+        //
+        // /**
+        //  * @k
+        //  * <- should omit
+        //  */
+        // ```
+        // Includes splitter whitespace is needed to distinguish these cases.
+        // If not included, both body_part will starts with `* <- ...`!
+        // It will be trimmed later.
+        &tag_content[k_end..],
+    )
 }
 
 #[cfg(test)]
@@ -164,19 +178,19 @@ comment {@link link} ...
     fn parses_single_line_n_jsdocs() {
         assert_eq!(
             parse_from_full_text("/** @foo @bar */").1,
-            vec![JSDocTag::new("foo", ""), JSDocTag::new("bar", "")]
+            vec![JSDocTag::new("foo", " "), JSDocTag::new("bar", " ")]
         );
         assert_eq!(
             parse_from_full_text("/** @aiue あいうえ @o お*/").1,
-            vec![JSDocTag::new("aiue", "あいうえ "), JSDocTag::new("o", "お")]
+            vec![JSDocTag::new("aiue", " あいうえ "), JSDocTag::new("o", " お")]
         );
         assert_eq!(
             parse_from_full_text("/** @a @@ @d */").1,
             vec![
-                JSDocTag::new("a", ""),
+                JSDocTag::new("a", " "),
                 JSDocTag::new("", ""),
-                JSDocTag::new("", ""),
-                JSDocTag::new("d", "")
+                JSDocTag::new("", " "),
+                JSDocTag::new("d", " ")
             ]
         );
     }
@@ -189,7 +203,7 @@ comment {@link link} ...
     */"
             )
             .1,
-            vec![JSDocTag::new("yo", "    ")]
+            vec![JSDocTag::new("yo", "\n    ")]
         );
         assert_eq!(
             parse_from_full_text(
@@ -198,7 +212,7 @@ comment {@link link} ...
                           */"
             )
             .1,
-            vec![JSDocTag::new("foo", "                          ")]
+            vec![JSDocTag::new("foo", "\n                          ")]
         );
         assert_eq!(
             parse_from_full_text(
@@ -209,7 +223,7 @@ comment {@link link} ...
                 "
             )
             .1,
-            vec![JSDocTag::new("x", "with asterisk\n         ")]
+            vec![JSDocTag::new("x", " with asterisk\n         ")]
         );
         assert_eq!(
             parse_from_full_text(
@@ -221,7 +235,7 @@ comment {@link link} ...
                     "
             )
             .1,
-            vec![JSDocTag::new("y", "without\n        asterisk\n             ")]
+            vec![JSDocTag::new("y", " without\n        asterisk\n             ")]
         );
     }
 
@@ -239,8 +253,8 @@ comment {@link link} ...
             .1,
             vec![
                 JSDocTag::new("foo", ""),
-                JSDocTag::new("bar", "    * "),
-                JSDocTag::new("baz", "     ")
+                JSDocTag::new("bar", "\n    * "),
+                JSDocTag::new("baz", "\n     ")
             ]
         );
         assert_eq!(
@@ -254,8 +268,8 @@ comment {@link link} ...
             )
             .1,
             vec![
-                JSDocTag::new("one", "                  *\n                  * ...\n              *\n                      * "),
-                JSDocTag::new("two", ""),
+                JSDocTag::new("one", "\n                  *\n                  * ...\n              *\n                      * "),
+                JSDocTag::new("two", " "),
             ]
         );
         assert_eq!(
@@ -271,9 +285,9 @@ comment {@link link} ...
             vec![
                 JSDocTag::new(
                     "hey",
-                    "you!\n                  *   Are you OK?\n                  * "
+                    " you!\n                  *   Are you OK?\n                  * "
                 ),
-                JSDocTag::new("yes", "I'm fine\n                  ")
+                JSDocTag::new("yes", " I'm fine\n                  ")
             ]
         );
     }

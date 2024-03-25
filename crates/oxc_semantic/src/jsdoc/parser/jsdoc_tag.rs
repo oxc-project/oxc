@@ -51,7 +51,7 @@ impl<'a> JSDocTag<'a> {
     /// @kind
     /// ```
     pub fn comment(&self) -> String {
-        utils::trim_multiline_comment(self.raw_body)
+        utils::trim_comment(self.raw_body)
     }
 
     /// Use for `@type`, `@satisfies`, ...etc.
@@ -85,7 +85,7 @@ impl<'a> JSDocTag<'a> {
             None => (None, self.raw_body),
         };
 
-        (type_part, utils::trim_multiline_comment(comment_part))
+        (type_part, utils::trim_comment(comment_part))
     }
 
     /// Use for `@param`, `@property`, `@typedef`, ...etc.
@@ -119,7 +119,7 @@ impl<'a> JSDocTag<'a> {
             None => (None, ""),
         };
 
-        (type_part, name_part, utils::trim_multiline_comment(comment_part))
+        (type_part, name_part, utils::trim_comment(comment_part))
     }
 }
 

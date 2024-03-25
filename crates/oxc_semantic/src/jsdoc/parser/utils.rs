@@ -1,11 +1,11 @@
-pub fn trim_multiline_comment(s: &str) -> String {
+pub fn trim_comment(s: &str) -> String {
     let lines = s.lines();
     if lines.clone().count() == 1 {
         return s.trim().to_string();
     }
 
     s.lines()
-        // Trim leading the first `*` each line
+        // Trim leading the first `*` in each line
         .map(|line| line.trim().strip_prefix('*').unwrap_or(line).trim())
         .filter(|line| !line.is_empty())
         .collect::<Vec<_>>()
@@ -63,7 +63,7 @@ pub fn find_token_range(s: &str) -> Option<(usize, usize)> {
 
 #[cfg(test)]
 mod test {
-    use super::{find_token_range, find_type_range, trim_multiline_comment};
+    use super::{find_token_range, find_type_range, trim_comment};
 
     #[test]
     fn trim_multiline_jsdoc_comments() {
@@ -122,7 +122,7 @@ mod test {
             (" * * ", "* *"),
             ("***", "***"),
         ] {
-            assert_eq!(trim_multiline_comment(actual), expect);
+            assert_eq!(trim_comment(actual), expect);
         }
     }
 
