@@ -127,13 +127,17 @@ jobs:
               - '**/Cargo.toml'
               - '.github/workflows/ci.yml'
 
+      - name: Install Rust Toolchain
+        if: steps.filter.outputs.src == 'true'
+        uses: ./.github/actions/rustup
+
       - name: Install cargo-binstall
         if: steps.filter.outputs.src == 'true'
         uses: cargo-bins/cargo-binstall@main
 
       - name: Install cargo-shear
         if: steps.filter.outputs.src == 'true'
-        run: cargo binstall cargo-shear
+        run: cargo binstall --no-confirm cargo-shear
 
       - if: steps.filter.outputs.src == 'true'
         run: cargo shear
