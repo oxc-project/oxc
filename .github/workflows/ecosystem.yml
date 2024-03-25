@@ -27,7 +27,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       - name: Install Rust
         uses: ./.github/actions/rustup
@@ -59,7 +59,7 @@ jobs:
             ref: master
     steps:
       - name: Clone ${{ matrix.repository }}
-        uses: actions/checkout@v4
+        uses: taiki-e/checkout-action@v1
         with:
           show-progress: false
           repository: ${{ matrix.repository }}
