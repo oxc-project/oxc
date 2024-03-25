@@ -122,9 +122,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
-version = "2.4.2"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed570934406eb16438a4e976b1b4500774099c13b8cb96eec99f620f05090ddf"
+checksum = "cf4b9d6a944f767f8e5e0db018570623c85f3d925ac718db4e06d0187adb21c1"
 dependencies = [
  "serde",
 ]
@@ -152,9 +152,9 @@ dependencies = [
 
 [[package]]
 name = "bpaf"
-version = "0.9.9"
+version = "0.9.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edc932b40b31d9bea0196f54c5b1b721b9aff3882fc08d9fe4082970c7e94d3d"
+checksum = "567fc5f0a754100df11b167b2a247b2366fc1ac18e9b776a07659be00878f681"
 dependencies = [
  "bpaf_derive",
  "owo-colors",
@@ -163,9 +163,9 @@ dependencies = [
 
 [[package]]
 name = "bpaf_derive"
-version = "0.5.7"
+version = "0.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "efeab2975f8102de445dcf898856a638332403c50216144653a89aec22fd79e0"
+checksum = "9a8d5b11f7fa1068e5bbac8ab6c8c2c6940047f69185987446b60c995d4bf89c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -773,9 +773,9 @@ dependencies = [
 
 [[package]]
 name = "handlebars"
-version = "5.1.0"
+version = "5.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab283476b99e66691dee3f1640fea91487a8d81f50fb5ecc75538f8f8879a1e4"
+checksum = "d08485b96a0e6393e9e4d1b8d48cf74ad6c063cd905eb33f42c1ce3f0377539b"
 dependencies = [
  "log",
  "pest",
@@ -867,9 +867,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.2.5"
+version = "2.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b0b929d511467233429c45a44ac1dcaa21ba0f5ba11e4879e6ed28ddb4f9df4"
+checksum = "168fb715dda47215e360912c096649d23d58bf392ac62f73919e831745e40f26"
 dependencies = [
  "equivalent",
  "hashbrown",
@@ -1144,7 +1144,7 @@ version = "2.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "54a63d0570e4c3e0daf7a8d380563610e159f538e20448d6c911337246f40e84"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "ctor",
  "napi-derive",
  "napi-sys",
@@ -1376,7 +1376,7 @@ dependencies = [
 name = "oxc_ast"
 version = "0.10.0"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "num-bigint",
  "oxc_allocator",
  "oxc_index",
@@ -1434,7 +1434,7 @@ name = "oxc_codegen"
 version = "0.10.0"
 dependencies = [
  "base64 0.22.0",
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",
@@ -1623,7 +1623,7 @@ name = "oxc_parser"
 version = "0.10.0"
 dependencies = [
  "assert-unchecked",
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "memchr",
  "miette",
  "num-bigint",
@@ -1673,7 +1673,7 @@ dependencies = [
 name = "oxc_prettier"
 version = "0.0.0"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",
@@ -1698,9 +1698,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "1.6.1"
+version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6351564310d149357fcd2fe75baeee075eb338fd068de781991e017c8895093"
+checksum = "e25e001325ea3e526424f01c6bdd5fda061eec2cc4cb21b6e64e660c0d8a14a1"
 dependencies = [
  "dashmap",
  "dunce",
@@ -1752,7 +1752,7 @@ dependencies = [
 name = "oxc_syntax"
 version = "0.10.0"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "dashmap",
  "indexmap",
  "oxc_index",
@@ -1802,7 +1802,7 @@ dependencies = [
 name = "oxc_transformer"
 version = "0.10.0"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
@@ -2063,9 +2063,9 @@ checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 
 [[package]]
 name = "rayon"
-version = "1.9.0"
+version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4963ed1bc86e4f3ee217022bd855b297cef07fb9eac5dfa1f788b220b49b3bd"
+checksum = "b418a60154510ca1a002a752ca9714984e21e4241e804d32555251faf8b78ffa"
 dependencies = [
  "either",
  "rayon-core",
@@ -2092,9 +2092,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.10.3"
+version = "1.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b62dbe01f0b06f9d8dc7d49e05a0785f153b00b2c227856282f671e0318c9b15"
+checksum = "c117dbdfde9c8308975b6a18d71f3f385c89461f7b3fb054288ecf2a2058ba4c"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -2212,7 +2212,7 @@ version = "0.38.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ea3e1a662af26cd7a3ba09c0297a31af215563ecf42817c98df621387f4e949"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "errno",
  "libc",
  "linux-raw-sys",
