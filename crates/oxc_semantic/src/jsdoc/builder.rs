@@ -156,7 +156,8 @@ impl<'a> JSDocBuilder<'a> {
         }
 
         // Remove the very first `*`
-        Some(JSDoc::new(&comment_content[1..]))
+        let jsdoc_span = Span::new(comment_span.start + 1, comment_span.end);
+        Some(JSDoc::new(&comment_content[1..], jsdoc_span))
     }
 }
 
