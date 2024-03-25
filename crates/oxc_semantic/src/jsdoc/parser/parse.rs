@@ -1,9 +1,9 @@
 use super::jsdoc_tag::JSDocTag;
 use super::utils;
 
-/// source_text: Inside of /**HERE*/, NOT includes `/**` and `*/`
+/// source_text: Inside of /*HERE*/, NOT includes `/*` and `*/`, but `*`
 pub fn parse_jsdoc(source_text: &str) -> (String, Vec<JSDocTag>) {
-    debug_assert!(!source_text.starts_with("/**"));
+    debug_assert!(!source_text.starts_with("/*"));
     debug_assert!(!source_text.ends_with("*/"));
 
     // JSDoc consists of comment and tags.
@@ -90,6 +90,18 @@ mod test {
             ("hello full_text".to_string(), vec![])
         );
         assert_eq!(parse_from_full_text("/***/"), (String::new(), vec![]));
+        assert_eq!(parse_from_full_text("/****/"), ("*".to_string(), vec![]));
+        assert_eq!(parse_from_full_text("/*****/"), ("**".to_string(), vec![]));
+        assert_eq!(
+            parse_from_full_text(
+                "/**
+                  * * x
+                  ** y
+                  */"
+            )
+            .0,
+            "* x\n* y"
+        );
 
         assert_eq!(parse_jsdoc(" <- trim -> ").0, "<- trim ->");
         assert_eq!(

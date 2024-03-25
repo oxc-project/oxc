@@ -10,8 +10,9 @@ pub struct JSDoc<'a> {
 }
 
 impl<'a> JSDoc<'a> {
-    /// comment_content: Inside of /**HERE*/, not include `/**` and `*/`
+    /// comment_content: Inside of /*HERE*/, not include `/*` and `*/`, the 1st char is `*`
     pub fn new(comment_content: &'a str) -> JSDoc<'a> {
+        debug_assert!(comment_content.starts_with('*'));
         Self { raw: comment_content, cached: OnceCell::new() }
     }
 

@@ -1,7 +1,12 @@
 pub fn trim_multiline_comment(s: &str) -> String {
-    s.trim()
-        .lines()
-        .map(|line| line.trim().trim_start_matches('*').trim())
+    let lines = s.lines();
+    if lines.clone().count() == 1 {
+        return s.trim().to_string();
+    }
+
+    s.lines()
+        // Trim leading the first `*` each line
+        .map(|line| line.trim().strip_prefix('*').unwrap_or(line).trim())
         .filter(|line| !line.is_empty())
         .collect::<Vec<_>>()
         .join("\n")
@@ -97,6 +102,13 @@ mod test {
             ),
             (
                 "
+ * * 1
+ ** 2 
+",
+                "* 1\n* 2",
+            ),
+            (
+                "
 1
 
 2
@@ -106,6 +118,9 @@ mod test {
             ",
                 "1\n2\n3",
             ),
+            (" * ", "*"),
+            (" * * ", "* *"),
+            ("***", "***"),
         ] {
             assert_eq!(trim_multiline_comment(actual), expect);
         }
