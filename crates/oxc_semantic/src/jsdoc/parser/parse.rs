@@ -87,19 +87,17 @@ fn parse_jsdoc_tag(tag_content: &str) -> JSDocTag {
 
 #[cfg(test)]
 mod test {
-    use super::parse_jsdoc;
     use super::parse_jsdoc_tag;
-    use super::JSDocTag;
 
-    fn parse_from_full_text(full_text: &str) -> (String, Vec<JSDocTag>) {
+    fn parse_from_full_text(full_text: &str) -> (String, Vec<super::JSDocTag>) {
         // Outside of markers can be trimmed
         let source_text = full_text.trim().trim_start_matches("/**").trim_end_matches("*/");
-        parse_jsdoc(source_text)
+        super::parse_jsdoc(source_text)
     }
 
     #[test]
     fn parses_jsdoc_comment() {
-        assert_eq!(parse_jsdoc("hello source"), ("hello source".to_string(), vec![]));
+        assert_eq!(parse_from_full_text("/**hello*/"), ("hello".to_string(), vec![]));
         assert_eq!(
             parse_from_full_text("/** hello full_text */"),
             ("hello full_text".to_string(), vec![])
@@ -118,7 +116,7 @@ mod test {
             "* x\n* y"
         );
 
-        assert_eq!(parse_jsdoc(" <- trim -> ").0, "<- trim ->");
+        assert_eq!(parse_from_full_text("/** <- trim -> */").0, "<- trim ->");
         assert_eq!(
             parse_from_full_text(
                 "
@@ -154,57 +152,52 @@ comment {@link link} ...
         );
 
         assert_eq!(
-            parse_jsdoc("hello {@see inline} source {@a 2}").0,
+            parse_from_full_text("/**\nhello {@see inline} source {@a 2}\n*/").0,
             "hello {@see inline} source {@a 2}"
         );
 
-        assert_eq!(parse_jsdoc("").0, "");
+        assert_eq!(parse_from_full_text("/** ハロー @comment だよ*/").0, "ハロー");
     }
 
     #[test]
-    fn parses_single_line_1_jsdoc() {
-        assert_eq!(parse_jsdoc("@deprecated"), parse_from_full_text("/** @deprecated*/"));
-        assert_eq!(parse_jsdoc("@deprecated").1, vec![parse_jsdoc_tag("@deprecated")]);
-
-        assert_eq!(parse_jsdoc("").1, vec![]);
-
+    fn parses_jsdoc_tags() {
+        assert_eq!(
+            parse_from_full_text("/**@deprecated*/").1,
+            vec![parse_jsdoc_tag("@deprecated")]
+        );
         assert_eq!(
             parse_from_full_text("/**@foo since 2024 */").1,
             vec![parse_jsdoc_tag("@foo since 2024 ")]
         );
-        assert_eq!(parse_from_full_text("/**@*/").1, vec![JSDocTag::new("", "")]);
-    }
 
-    #[test]
-    fn parses_single_line_n_jsdocs() {
         assert_eq!(
             parse_from_full_text("/** @foo @bar */").1,
-            vec![JSDocTag::new("foo", " "), JSDocTag::new("bar", " ")]
+            vec![parse_jsdoc_tag("@foo "), parse_jsdoc_tag("@bar ")]
         );
+
+        assert_eq!(parse_from_full_text("/**@*/").1, vec![parse_jsdoc_tag("@")]);
+
         assert_eq!(
             parse_from_full_text("/** @aiue あいうえ @o お*/").1,
-            vec![JSDocTag::new("aiue", " あいうえ "), JSDocTag::new("o", " お")]
+            vec![parse_jsdoc_tag("@aiue あいうえ "), parse_jsdoc_tag("@o お")],
         );
         assert_eq!(
             parse_from_full_text("/** @a @@ @d */").1,
             vec![
-                JSDocTag::new("a", " "),
-                JSDocTag::new("", ""),
-                JSDocTag::new("", " "),
-                JSDocTag::new("d", " ")
-            ]
+                parse_jsdoc_tag("@a "),
+                parse_jsdoc_tag("@"),
+                parse_jsdoc_tag("@ "),
+                parse_jsdoc_tag("@d ")
+            ],
         );
-    }
 
-    #[test]
-    fn parses_multiline_1_jsdoc() {
         assert_eq!(
             parse_from_full_text(
                 "/** @yo
     */"
             )
             .1,
-            vec![JSDocTag::new("yo", "\n    ")]
+            vec![parse_jsdoc_tag("@yo\n    ")]
         );
         assert_eq!(
             parse_from_full_text(
@@ -213,7 +206,7 @@ comment {@link link} ...
                           */"
             )
             .1,
-            vec![JSDocTag::new("foo", "\n                          ")]
+            vec![parse_jsdoc_tag("@foo\n                          ")]
         );
         assert_eq!(
             parse_from_full_text(
@@ -224,7 +217,7 @@ comment {@link link} ...
                 "
             )
             .1,
-            vec![JSDocTag::new("x", " with asterisk\n         ")]
+            vec![parse_jsdoc_tag("@x with asterisk\n         ")]
         );
         assert_eq!(
             parse_from_full_text(
@@ -236,12 +229,9 @@ comment {@link link} ...
                     "
             )
             .1,
-            vec![JSDocTag::new("y", " without\n        asterisk\n             ")]
+            vec![parse_jsdoc_tag("@y without\n        asterisk\n             ")]
         );
-    }
 
-    #[test]
-    fn parses_multiline_n_jsdocs() {
         assert_eq!(
             parse_from_full_text(
                 "
@@ -253,9 +243,9 @@ comment {@link link} ...
             )
             .1,
             vec![
-                JSDocTag::new("foo", ""),
-                JSDocTag::new("bar", "\n    * "),
-                JSDocTag::new("baz", "\n     ")
+                parse_jsdoc_tag("@foo"),
+                parse_jsdoc_tag("@bar\n    * "),
+                parse_jsdoc_tag("@baz\n     ")
             ]
         );
         assert_eq!(
@@ -269,8 +259,8 @@ comment {@link link} ...
             )
             .1,
             vec![
-                JSDocTag::new("one", "\n                  *\n                  * ...\n              *\n                      * "),
-                JSDocTag::new("two", " "),
+                parse_jsdoc_tag("@one\n                  *\n                  * ...\n              *\n                      * "),
+                parse_jsdoc_tag("@two ")
             ]
         );
         assert_eq!(
@@ -284,13 +274,50 @@ comment {@link link} ...
             )
             .1,
             vec![
-                JSDocTag::new(
-                    "hey",
-                    " you!\n                  *   Are you OK?\n                  * "
+                parse_jsdoc_tag(
+                    "@hey you!\n                  *   Are you OK?\n                  * "
                 ),
-                JSDocTag::new("yes", " I'm fine\n                  ")
+                parse_jsdoc_tag("@yes I'm fine\n                  ")
             ]
         );
+    }
+
+    #[test]
+    fn parses_practical() {
+        let jsdoc = parse_from_full_text(
+            "
+/**
+ * @typedef {Object} User - a User account
+ * @property {string} displayName - the name used to show the user
+ * @property {number} id - a unique id
+ */
+",
+        );
+        let mut tags = jsdoc.1.iter();
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind, "typedef");
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind, "property");
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind, "property");
+
+        let jsdoc = parse_from_full_text(
+            "
+/**
+ * Adds two numbers together
+ * @param {number} a The first number
+ * @param {number} b The second number
+ * @returns {number}
+ */
+",
+        );
+        let mut tags = jsdoc.1.iter();
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind, "param");
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind, "param");
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind, "returns");
     }
 
     #[test]
