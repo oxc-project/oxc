@@ -17,6 +17,7 @@ pub fn parse_jsdoc(source_text: &str) -> (String, Vec<JSDocTag>) {
     // But `@` can be found inside of `{}` (e.g. `{@see link}`), it should be distinguished.
     let mut in_braces = false;
     let mut comment_found = false;
+    // Parser local offsets, not for global span
     let (mut start, mut end) = (0, 0);
     for ch in source_text.chars() {
         match ch {
