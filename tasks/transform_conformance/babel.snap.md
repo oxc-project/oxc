@@ -1,4 +1,4 @@
-Passed: 352/1369
+Passed: 351/1369
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
