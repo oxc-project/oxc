@@ -68,15 +68,12 @@ impl PreferCalledWith {
             return;
         };
 
-        let mut has_not_modifier = false;
-        for modifier in jest_fn_call.modifiers() {
-            if let Some(modifier_name) = modifier.name() {
-                if modifier_name.eq("not") {
-                    has_not_modifier = true;
-                    break;
-                }
-            }
-        }
+        let has_not_modifier = jest_fn_call
+            .modifiers()
+            .iter()
+            .filter(|modifier| modifier.is_name_equal("not"))
+            .count()
+            > 0;
 
         if has_not_modifier {
             return;
