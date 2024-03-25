@@ -3,7 +3,7 @@ use std::{env, path::Path};
 use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{Class, Function},
-    walk::{walk_class, walk_function},
+    visit::walk::{walk_class, walk_function},
     Visit,
 };
 use oxc_parser::Parser;
