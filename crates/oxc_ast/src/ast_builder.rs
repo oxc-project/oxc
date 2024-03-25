@@ -5,10 +5,10 @@
     clippy::unused_self,
 )]
 
-use std::{marker::PhantomData, mem};
+use std::mem;
 
 use oxc_allocator::{Allocator, Box, String, Vec};
-use oxc_span::{Atom, CompactStr, GetSpan, SourceType, Span, SPAN};
+use oxc_span::{Atom, GetSpan, SourceType, Span, SPAN};
 use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -140,8 +140,8 @@ impl<'a> AstBuilder<'a> {
         BooleanLiteral { span, value }
     }
 
-    pub fn bigint_literal(&self, span: Span, raw: &'a str, base: BigintBase) -> BigIntLiteral<'a> {
-        BigIntLiteral { span, raw: CompactStr::new(raw), base, _marker: PhantomData {} }
+    pub fn bigint_literal(&self, span: Span, raw: Atom<'a>, base: BigintBase) -> BigIntLiteral<'a> {
+        BigIntLiteral { span, raw, base }
     }
 
     pub fn template_literal(

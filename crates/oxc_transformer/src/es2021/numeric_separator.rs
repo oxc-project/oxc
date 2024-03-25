@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_span::Atom;
 
 use crate::{
     context::TransformerCtx,
@@ -28,9 +29,8 @@ impl<'a> NumericSeparator<'a> {
     }
 
     pub fn transform_bigint_literal(&mut self, lit: &mut BigIntLiteral<'a>) {
-        let raw = &lit.raw;
-        if !raw.is_empty() {
-            lit.raw = raw.replace('_', "").into();
+        if !lit.raw.is_empty() {
+            lit.raw = Atom::from(self.ctx.ast.new_str(lit.raw.replace('_', "").as_str()));
         }
     }
 }
