@@ -1,7 +1,6 @@
 Passed: 352/1369
 
 # All Passed:
-* babel-plugin-transform-numeric-separator
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-json-strings
 * babel-plugin-transform-shorthand-properties
@@ -9,6 +8,9 @@ Passed: 352/1369
 * babel-plugin-transform-instanceof
 * babel-plugin-transform-property-literals
 
+
+# babel-plugin-transform-numeric-separator (1/2)
+* used-with-transform-es2015-literals/input.js
 
 # babel-plugin-transform-unicode-sets-regex (0/4)
 * basic/basic/input.js
