@@ -124,9 +124,7 @@ impl NoUntypedMockFactory {
             return;
         };
 
-        if call_expr.type_parameters.is_some()
-            || (Self::is_function_type(factory_node) && Self::has_return_type(factory_node))
-        {
+        if call_expr.type_parameters.is_some() || Self::has_return_type(factory_node) {
             return;
         }
 
@@ -161,15 +159,6 @@ impl NoUntypedMockFactory {
                 property_span,
             ));
         }
-    }
-
-    fn is_function_type(argument: &Argument) -> bool {
-        matches!(
-            argument,
-            Argument::Expression(
-                Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
-            )
-        )
     }
 
     fn has_return_type(argument: &Argument) -> bool {
