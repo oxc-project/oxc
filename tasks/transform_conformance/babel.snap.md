@@ -9,9 +9,6 @@ Passed: 352/1369
 * babel-plugin-transform-property-literals
 
 
-# babel-plugin-transform-numeric-separator (1/2)
-* used-with-transform-es2015-literals/input.js
-
 # babel-plugin-transform-unicode-sets-regex (0/4)
 * basic/basic/input.js
 * basic/string-properties/input.js
@@ -516,6 +513,9 @@ Passed: 352/1369
 
 # babel-plugin-transform-logical-assignment-operators (5/6)
 * logical-assignment/null-coalescing/input.js
+
+# babel-plugin-transform-numeric-separator (1/2)
+* used-with-transform-es2015-literals/input.js
 
 # babel-plugin-transform-export-namespace-from (0/4)
 * export-namespace/namespace-default/input.mjs
