@@ -36,7 +36,7 @@ pub struct JSDocTag<'a> {
 
 impl<'a> JSDocTag<'a> {
     /// kind: Does not contain the `@` prefix
-    /// raw_body: The body part of the tag, after the `@kind {HERE_MAY_BE_MULTILINE...}`
+    /// raw_body: The body part of the tag, after the `@kind{HERE_MAY_BE_MULTILINE...}`
     pub fn new(kind: &'a str, raw_body: &'a str) -> JSDocTag<'a> {
         debug_assert!(!kind.starts_with('@'));
         Self { raw_body, kind }
