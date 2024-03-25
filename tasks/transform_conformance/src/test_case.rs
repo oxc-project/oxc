@@ -269,11 +269,7 @@ impl TestCase for ConformanceTestCase {
                 if let Some(throws) = &babel_options.throws {
                     return throws.to_string();
                 }
-                // The transformation should be equal to input.js If output.js does not exist.
-                let program = Parser::new(&allocator, &input, source_type).parse().program;
-                Codegen::<false>::new("", &input, codegen_options.clone())
-                    .build(&program)
-                    .source_text
+                String::default()
             },
             |output| {
                 // Get expected code by parsing the source text, so we can get the same code generated result.
@@ -284,7 +280,8 @@ impl TestCase for ConformanceTestCase {
             },
         );
 
-        let passed = transformed_code == output || actual_errors.contains(&output);
+        let passed =
+            transformed_code == output || (!output.is_empty() && actual_errors.contains(&output));
         if filtered {
             println!("Input:\n");
             println!("{input}\n");
