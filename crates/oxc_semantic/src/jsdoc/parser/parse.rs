@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 
 /// source_text: Inside of /**HERE*/, NOT includes `/**` and `*/`
 /// span_start: Global positioned `Span` start for this JSDoc comment
-pub fn parse_jsdoc(source_text: &str, span_start: u32) -> (String, BTreeMap<Span, JSDocTag>) {
+pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (String, BTreeMap<Span, JSDocTag>) {
     debug_assert!(!source_text.starts_with("/*"));
     debug_assert!(!source_text.ends_with("*/"));
 
@@ -30,16 +30,15 @@ pub fn parse_jsdoc(source_text: &str, span_start: u32) -> (String, BTreeMap<Span
                 let part = &source_text[start..end];
 
                 if comment_found {
-                    let (start, end) = (
-                        u32::try_from(start).unwrap_or_default(),
-                        u32::try_from(end).unwrap_or_default(),
+                    tags.insert(
+                        get_tag_kind_span(part, (start, end), jsdoc_span_start),
+                        parse_jsdoc_tag(part),
                     );
-                    let span = Span::new(start + span_start, end + span_start);
-                    tags.insert(span, parse_jsdoc_tag(part));
                 } else {
                     comment = part;
                     comment_found = true;
                 }
+
                 // Prepare for the next draft
                 start = end;
             }
@@ -54,10 +53,10 @@ pub fn parse_jsdoc(source_text: &str, span_start: u32) -> (String, BTreeMap<Span
         let part = &source_text[start..end];
 
         if comment_found {
-            let (start, end) =
-                (u32::try_from(start).unwrap_or_default(), u32::try_from(end).unwrap_or_default());
-            let span = Span::new(start + span_start, end + span_start);
-            tags.insert(span, parse_jsdoc_tag(part));
+            tags.insert(
+                get_tag_kind_span(part, (start, end), jsdoc_span_start),
+                parse_jsdoc_tag(part),
+            );
         } else {
             comment = part;
         }
@@ -66,9 +65,34 @@ pub fn parse_jsdoc(source_text: &str, span_start: u32) -> (String, BTreeMap<Span
     (utils::trim_comment(comment), tags)
 }
 
-// TODO: Manage `Span`
-// - with (start, end) + global comment span.start
-// - add kind only span?
+// Use `Span` for `@kind` part instead of whole tag.
+//
+// For example, whole `tag.span` in the following JSDoc will be:
+// /**
+//  * @kind1 bar
+//  * baz...
+//  * @kind2
+//  */
+// for `@kind1`: `@kind1 bar\n * baz...\n * `
+// for `@kind2`: `@kind2\n `
+//
+// It's too verbose and may not fit for linter diagnostics span.
+fn get_tag_kind_span(
+    tag_content: &str,
+    (tag_offset_start, _): (usize, usize),
+    jsdoc_span_start: u32,
+) -> Span {
+    let (k_start, k_end) = utils::find_token_range(tag_content).unwrap();
+    let k_len = k_end - k_start;
+
+    let (start, end) = (
+        u32::try_from(tag_offset_start + k_start).unwrap_or_default(),
+        u32::try_from(tag_offset_start + k_start + k_len).unwrap_or_default(),
+    );
+
+    Span::new(jsdoc_span_start + start, jsdoc_span_start + end)
+}
+
 /// tag_content: Starts with `@`, may be mulitline
 fn parse_jsdoc_tag(tag_content: &str) -> JSDocTag {
     debug_assert!(tag_content.starts_with('@'));

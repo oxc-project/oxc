@@ -111,21 +111,15 @@ line
         let jsdoc = jsdocs.next().unwrap();
         let mut tags = jsdoc.tags().iter();
         let (span, _) = tags.next().unwrap();
-        assert_eq!(span.source_text(semantic.source_text), "@k1 d1 ");
+        assert_eq!(span.source_text(semantic.source_text), "@k1");
 
         let jsdoc = jsdocs.next().unwrap();
         let mut tags = jsdoc.tags().iter();
         let (span, _) = tags.next().unwrap();
-        assert_eq!(
-            span.source_text(semantic.source_text),
-            "@k2 d2\n             * d2\n             * "
-        );
+        assert_eq!(span.source_text(semantic.source_text), "@k2");
         let (span, _) = tags.next().unwrap();
-        assert_eq!(span.source_text(semantic.source_text), "@k3 d3\n             * ");
+        assert_eq!(span.source_text(semantic.source_text), "@k3");
         let (span, _) = tags.next().unwrap();
-        assert_eq!(
-            span.source_text(semantic.source_text),
-            "@k4 d4\n             * d4\n             "
-        );
+        assert_eq!(span.source_text(semantic.source_text), "@k4");
     }
 }
