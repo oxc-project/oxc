@@ -115,7 +115,6 @@ impl<'a> Transformer<'a> {
 
         Self {
             decorators: Decorators::new(ctx.clone()),
-            // TODO: pass verbatim_module_syntax from user config
             typescript: source_type.is_typescript().then(|| TypeScript::new(ctx.clone())),
             regexp_flags: RegexpFlags::new(ctx.clone()),
             // es2022
