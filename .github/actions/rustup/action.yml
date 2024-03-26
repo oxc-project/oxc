@@ -41,15 +41,19 @@ runs:
         echo 'restore-cache: ${{ inputs.restore-cache }}'
         echo 'save-cache: ${{ inputs.save-cache }}'
 
-    - name: Remove `profile` line on MacOS
+    - name: Change to minimal profile on MacOS
       shell: bash
       if: runner.os == 'macOS'
-      run: sed -i '' '/profile/d' rust-toolchain.toml
+      run: |
+        sed -i '' -e 's/profile = "default"/profile = "minimal"/g' rust-toolchain.toml
+        cat rust-toolchain.toml
 
-    - name: Remove `profile` line on non-MacOS
+    - name: Change to minimal profile on non-MacOS
       shell: bash
       if: runner.os != 'macOS'
-      run: sed -i '/profile/d' rust-toolchain.toml
+      run: |
+        sed -i -e 's/profile = "default"/profile = "minimal"/g' rust-toolchain.toml
+        cat rust-toolchain.toml
 
     - name: Set minimal
       shell: bash
