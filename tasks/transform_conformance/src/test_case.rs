@@ -121,6 +121,7 @@ pub trait TestCase {
                 .get_plugin("transform-exponentiation-operator")
                 .is_some(),
             shorthand_properties: options.get_plugin("transform-shorthand-properties").is_some(),
+            spread: options.get_plugin("transform-spread").is_some(),
             sticky_regex: options.get_plugin("transform-sticky-regex").is_some(),
             template_literals: options.get_plugin("transform-template-literals").is_some(),
             property_literals: options.get_plugin("transform-property-literals").is_some(),

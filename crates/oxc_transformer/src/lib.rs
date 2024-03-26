@@ -87,14 +87,15 @@ pub struct Transformer<'a> {
     // es2016
     es2016_exponentiation_operator: Option<ExponentiationOperator<'a>>,
     // es2015
-    es2015_function_name: Option<FunctionName<'a>>,
     es2015_arrow_functions: Option<ArrowFunctions<'a>>,
-    es2015_shorthand_properties: Option<ShorthandProperties<'a>>,
-    es2015_template_literals: Option<TemplateLiterals<'a>>,
     es2015_duplicate_keys: Option<DuplicateKeys<'a>>,
+    es2015_function_name: Option<FunctionName<'a>>,
     es2015_instanceof: Option<Instanceof<'a>>,
     es2015_literals: Option<Literals<'a>>,
     es2015_new_target: Option<NewTarget<'a>>,
+    es2015_shorthand_properties: Option<ShorthandProperties<'a>>,
+    es2015_spread: Option<Spread<'a>>,
+    es2015_template_literals: Option<TemplateLiterals<'a>>,
     es3_property_literal: Option<PropertyLiteral<'a>>,
 }
 
@@ -130,14 +131,15 @@ impl<'a> Transformer<'a> {
             // es2016
             es2016_exponentiation_operator: ExponentiationOperator::new(ctx.clone()),
             // es2015
-            es2015_function_name: FunctionName::new(ctx.clone()),
             es2015_arrow_functions: ArrowFunctions::new(ctx.clone()),
-            es2015_shorthand_properties: ShorthandProperties::new(ctx.clone()),
-            es2015_template_literals: TemplateLiterals::new(ctx.clone()),
             es2015_duplicate_keys: DuplicateKeys::new(ctx.clone()),
+            es2015_function_name: FunctionName::new(ctx.clone()),
             es2015_instanceof: Instanceof::new(ctx.clone()),
             es2015_literals: Literals::new(ctx.clone()),
             es2015_new_target: NewTarget::new(ctx.clone()),
+            es2015_shorthand_properties: ShorthandProperties::new(ctx.clone()),
+            es2015_spread: Spread::new(ctx.clone()),
+            es2015_template_literals: TemplateLiterals::new(ctx.clone()),
             // other
             es3_property_literal: PropertyLiteral::new(ctx.clone()),
             react_jsx: ReactJsx::new(ctx.clone()),
@@ -216,6 +218,10 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.es2015_new_target.as_mut().map(|t| t.transform_expression(expr));
 
         walk_expression_mut(self, expr);
+    }
+
+    fn visit_array_expression(&mut self, expr: &mut ArrayExpression<'a>) {
+        self.es2015_spread.as_mut().map(|t| t.transform_array_expression(expr));
     }
 
     fn visit_catch_clause(&mut self, clause: &mut CatchClause<'a>) {
