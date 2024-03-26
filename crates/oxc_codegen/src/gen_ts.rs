@@ -553,6 +553,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
                 p.print_semicolon_if_needed();
                 p.print_block_end(body.span.end);
             }
+            TSModuleDeclarationBody::EmptyDeclaration => {}
         }
         if MINIFY {
             p.print_semicolon();
