@@ -19,7 +19,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       version_changed: ${{ steps.version.outputs.changed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       - name: Check version changes
         uses: EndBug/version-check@v2
@@ -78,7 +78,7 @@ jobs:
     name: Package ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       - name: Install cross
         uses: taiki-e/install-action@cross
@@ -128,7 +128,7 @@ jobs:
       contents: write # for softprops/action-gh-release@v1
       id-token: write # for `npm publish --provenance`
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       - name: Install Node.js
         uses: actions/setup-node@v4
