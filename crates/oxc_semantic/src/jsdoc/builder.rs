@@ -490,7 +490,10 @@ line
         let jsdoc = jsdocs.next().unwrap();
         assert_eq!(jsdoc.span.source_text(semantic.source_text), " single line ");
         let jsdoc = jsdocs.next().unwrap();
-        assert_eq!(jsdoc.span.source_text(semantic.source_text), "\n             * multi\n             * line\n             ");
+        assert_eq!(
+            jsdoc.span.source_text(semantic.source_text),
+            "\n             * multi\n             * line\n             "
+        );
         let jsdoc = jsdocs.next().unwrap();
         assert_eq!(jsdoc.span.source_text(semantic.source_text), "\nmulti\nline\n             ");
     }
