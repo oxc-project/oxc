@@ -103,6 +103,7 @@ function generateCombinedRestDeserializer(type, arrayFieldName) {
     });
 
     type.preamble = `
+        ${type.preamble || ''}
         const ${arrayFieldName} = ${generateStructFieldCode(arrField)},
             rest = ${generateStructFieldCode(restField)};
         if (rest) ${arrayFieldName}.push(rest);
