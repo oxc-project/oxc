@@ -8,6 +8,7 @@ on:
       - '**/*.md'
       - '**/*.yml'
       - '!.github/workflows/ci.yml'
+      - '!.github/actions/clone-submodules/action.yml'
   push:
     branches:
       - main
@@ -15,6 +16,7 @@ on:
       - '**/*.md'
       - '**/*.yml'
       - '!.github/workflows/ci.yml'
+      - '!.github/actions/clone-submodules/action.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
