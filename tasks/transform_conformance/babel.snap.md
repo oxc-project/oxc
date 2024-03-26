@@ -1,6 +1,7 @@
-Passed: 319/1415
+Passed: 320/1415
 
 # All Passed:
+* babel-plugin-transform-numeric-separator
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-json-strings
 * babel-plugin-transform-shorthand-properties
@@ -518,9 +519,6 @@ Passed: 319/1415
 
 # babel-plugin-transform-logical-assignment-operators (5/6)
 * logical-assignment/null-coalescing/input.js
-
-# babel-plugin-transform-numeric-separator (1/2)
-* numeric-separator/used-with-transform-literals/input.js
 
 # babel-plugin-transform-export-namespace-from (0/4)
 * export-namespace/namespace-default/input.mjs

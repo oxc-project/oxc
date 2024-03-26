@@ -109,6 +109,7 @@ pub trait TestCase {
             logical_assignment_operators: options
                 .get_plugin("transform-logical-assignment-operators")
                 .is_some(),
+            numeric_separator: options.get_plugin("transform-numeric-separator").is_some(),
             nullish_coalescing_operator: options
                 .get_plugin("transform-nullish-coalescing-operator")
                 .map(get_options::<NullishCoalescingOperatorOptions>),

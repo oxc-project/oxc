@@ -49,7 +49,7 @@ use crate::{
     es2016::ExponentiationOperator,
     es2019::{JsonStrings, OptionalCatchBinding},
     es2020::NullishCoalescingOperator,
-    es2021::LogicalAssignmentOperators,
+    es2021::{LogicalAssignmentOperators, NumericSeparator},
     es2022::ClassStaticBlock,
     es3::PropertyLiteral,
     react_jsx::ReactJsx,
@@ -78,6 +78,7 @@ pub struct Transformer<'a> {
     es2022_class_static_block: Option<ClassStaticBlock<'a>>,
     // es2021
     es2021_logical_assignment_operators: Option<LogicalAssignmentOperators<'a>>,
+    es2021_numeric_separator: Option<NumericSeparator<'a>>,
     // es2020
     es2020_nullish_coalescing_operators: Option<NullishCoalescingOperator<'a>>,
     // es2019
@@ -120,6 +121,7 @@ impl<'a> Transformer<'a> {
             es2022_class_static_block: es2022::ClassStaticBlock::new(Rc::clone(&ast), &options),
             // es2021
             es2021_logical_assignment_operators: LogicalAssignmentOperators::new(Rc::clone(&ast), ctx.clone(), &options),
+            es2021_numeric_separator: NumericSeparator::new(ctx.clone(), &options),
             // es2020
             es2020_nullish_coalescing_operators: NullishCoalescingOperator::new(Rc::clone(&ast), ctx.clone(), &options),
             // es2019
@@ -247,21 +249,20 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     }
 
     fn visit_directive(&mut self, directive: &mut Directive<'a>) {
-        self.es2019_json_strings
-            .as_mut()
-            .map(|t: &mut JsonStrings| t.transform_directive(directive));
-        // TODO: we didn't walk this through, but maybe we should?
-        // walk_directive_mut(self, directive);
+        self.es2019_json_strings.as_mut().map(|t| t.transform_directive(directive));
     }
 
     fn visit_number_literal(&mut self, lit: &mut NumericLiteral<'a>) {
+        self.es2021_numeric_separator.as_mut().map(|t| t.transform_number_literal(lit));
         self.es2015_literals.as_mut().map(|t| t.transform_number_literal(lit));
     }
 
+    fn visit_bigint_literal(&mut self, lit: &mut BigIntLiteral<'a>) {
+        self.es2021_numeric_separator.as_mut().map(|t| t.transform_bigint_literal(lit));
+    }
+
     fn visit_string_literal(&mut self, lit: &mut StringLiteral<'a>) {
-        self.es2019_json_strings
-            .as_mut()
-            .map(|t: &mut JsonStrings| t.transform_string_literal(lit));
+        self.es2019_json_strings.as_mut().map(|t| t.transform_string_literal(lit));
         self.es2015_literals.as_mut().map(|t| t.transform_string_literal(lit));
     }
 
