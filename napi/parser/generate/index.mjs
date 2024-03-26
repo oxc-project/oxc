@@ -11,7 +11,8 @@ import {
     generateEnumDeserializer,
     generateBoxDeserializer,
     generateVecDeserializer,
-    generateOptionDeserializer
+    generateOptionDeserializer,
+    generateStructFieldCode,
 } from './structs.mjs';
 import {customTypeNames, generateCustomDeserializer} from './custom.mjs';
 
@@ -273,6 +274,49 @@ function cloneType(type, newTypeName) {
     restField.type = paramRestType;
     type.dependencies.delete(restType);
     type.dependencies.add(paramRestType);
+}
+
+// Alter `BindingPattern` to handle flattened `kind` field without `...`
+{
+    const type = typesByName.BindingPattern;
+
+    let kindField;
+    const otherFields = [];
+    for (const field of type.fields) {
+        if (field.name === 'kind') {
+            kindField = field;
+        } else {
+            otherFields.push(field);
+        }
+    }
+
+    assert(kindField.offset === 0, "BindingPattern's kind field is not first");
+
+    type.dependencies = new Set();
+
+    const {variants} = typesByName.BindingPatternKind;
+    for (const variant of variants) {
+        let variantType = variant.type.type; // Extra `.type` to get type inside box
+        if (variant.name === 'BindingIdentifier') {
+            variantType = cloneType(variantType, 'BindingPatternIdentifier');
+            variantType.fields = [...variantType.fields];
+        }
+        variant.type = variantType;
+        type.dependencies.add(variantType);
+
+        const fieldPreambles = [];
+        for (let field of otherFields) {
+            field = {...field, offset: field.offset - 8, code: field.name};
+            fieldPreambles.push(`${field.name} = ${generateStructFieldCode(field)}`);
+            variantType.fields.push(field);
+            variantType.dependencies.add(field.type);
+        }
+        variantType.preamble = `const ${fieldPreambles.join(', ')}; pos = uint32[pos >> 2];`;
+    }
+
+    type.kind = 'enum';
+    type.variants = variants;
+    type.isTyped = true;
 }
 
 // Set custom types
