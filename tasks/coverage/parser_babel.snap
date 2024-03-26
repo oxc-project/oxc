@@ -1,7 +1,7 @@
 parser_babel Summary:
-AST Parsed     : 2090/2096 (99.71%)
-Positive Passed: 2083/2096 (99.38%)
-Negative Passed: 1362/1500 (90.80%)
+AST Parsed     : 2091/2097 (99.71%)
+Positive Passed: 2084/2097 (99.38%)
+Negative Passed: 1363/1501 (90.81%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -10511,6 +10511,13 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[typescript/type-only-import-export-specifiers/import-invalid-type-only-as-string/input.ts:1:22]
  1 │ import { type foo as "bar" } from "mod";
    ·                      ─────
+   ╰────
+
+  × Expected `{` but found `<`
+   ╭─[typescript/types/import-type-dynamic-with-jsx-options/input.ts:1:34]
+ 1 │ let x: typeof import("foo.json", <ImportOptionBagJSX type="json"/>)
+   ·                                  ┬
+   ·                                  ╰── `{` expected
    ╰────
 
   × Keywords cannot contain escape characters
