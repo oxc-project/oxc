@@ -126,7 +126,7 @@ impl<'a> Transformer<'a> {
             es2020_nullish_coalescing_operators: NullishCoalescingOperator::new(Rc::clone(&ast), ctx.clone(), &options),
             // es2019
             es2019_json_strings: JsonStrings::new(Rc::clone(&ast), &options),
-            es2019_optional_catch_binding: OptionalCatchBinding::new(Rc::clone(&ast), &options),
+            es2019_optional_catch_binding: OptionalCatchBinding::new(ctx.clone(), &options),
             // es2016
             es2016_exponentiation_operator: ExponentiationOperator::new(Rc::clone(&ast), ctx.clone(), &options),
             // es2015
