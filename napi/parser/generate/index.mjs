@@ -253,21 +253,26 @@ while (withNoNiche.size > 0) {
     }
 }
 
+function cloneType(type, newTypeName) {
+    type = {
+        ...type,
+        name: newTypeName,
+        deserializerName: `deserialize${newTypeName}`,
+        dependencies: new Set(type.dependencies),
+    };
+    typesByName[newTypeName] = type;
+    return type;
+}
+
 // Customize `FormalParameters.rest` field
 {
     const type = typesByName.FormalParameters,
-        restField = type.fields.find(field => field.name === 'rest');
-    type.dependencies.delete(restField.type);
-    const restType = {
-        ...restField.type,
-        dependencies: new Set(restField.type.dependencies),
-        name: 'FormalParameterRest',
-        deserializerName: 'deserializeFormalParameterRest',
-        generateDeserializerCall: posStr => `${restType.deserializerName}(${posStr})`,
-    };
-    typesByName.FormalParameterRest = restType;
-    restField.type = restType;
-    type.dependencies.add(restType);
+        restField = type.fields.find(field => field.name === 'rest'),
+        restType = restField.type,
+        paramRestType = cloneType(restType, 'FormalParameterRest');
+    restField.type = paramRestType;
+    type.dependencies.delete(restType);
+    type.dependencies.add(paramRestType);
 }
 
 // Set custom types
