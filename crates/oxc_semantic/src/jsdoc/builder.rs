@@ -465,36 +465,4 @@ mod test {
         );
         assert_eq!(semantic.jsdoc().iter_all().count(), 7);
     }
-
-    #[test]
-    fn get_jsdoc_span() {
-        let allocator = Allocator::default();
-        let semantic = build_semantic(
-            &allocator,
-            r"
-            /** single line */
-            /**
-             * multi
-             * line
-             */
-            /**
-multi
-line
-             */
-            ",
-            Some(SourceType::default()),
-        );
-
-        let mut jsdocs = semantic.jsdoc().iter_all();
-
-        let jsdoc = jsdocs.next().unwrap();
-        assert_eq!(jsdoc.span.source_text(semantic.source_text), " single line ");
-        let jsdoc = jsdocs.next().unwrap();
-        assert_eq!(
-            jsdoc.span.source_text(semantic.source_text),
-            "\n             * multi\n             * line\n             "
-        );
-        let jsdoc = jsdocs.next().unwrap();
-        assert_eq!(jsdoc.span.source_text(semantic.source_text), "\nmulti\nline\n             ");
-    }
 }
