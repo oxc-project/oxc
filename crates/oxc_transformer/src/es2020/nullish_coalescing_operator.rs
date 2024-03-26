@@ -74,7 +74,7 @@ impl<'a> NullishCoalescingOperator<'a> {
             reference = self.ast.copy(&logical_expr.left);
             assignment = self.ast.copy(&logical_expr.left);
         } else {
-            let ident = self.create_new_var(&logical_expr.left);
+            let ident = self.create_new_var_with_expression(&logical_expr.left);
             reference = self.ast.identifier_reference_expression(ident.clone());
             let left = self.ast.simple_assignment_target_identifier(ident);
             let right = self.ast.copy(&logical_expr.left);
