@@ -2,12 +2,9 @@ use std::rc::Rc;
 
 use oxc_ast::{ast::*, AstBuilder};
 
-use crate::{
-    context::TransformerCtx,
-    options::{TransformOptions, TransformTarget},
-};
+use crate::{context::TransformerCtx, options::TransformTarget};
 
-/// ES2015: Shorthand Properties
+/// ES2015: Literals
 ///
 /// References:
 /// * <https://babeljs.io/docs/babel-plugin-transform-literals>
@@ -19,8 +16,8 @@ pub struct Literals<'a> {
 impl<'a> Literals<'a> {
     #![allow(clippy::unused_self)]
 
-    pub fn new(ctx: TransformerCtx<'a>, options: &TransformOptions) -> Option<Self> {
-        (options.target < TransformTarget::ES2015 || options.literals)
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        (ctx.options.target < TransformTarget::ES2015 || ctx.options.literals)
             .then_some(Self { _ast: ctx.ast })
     }
 
@@ -33,7 +30,7 @@ impl<'a> Literals<'a> {
 
         if let [b'0', b'b' | b'B' | b'o' | b'O'] = lit.raw[0..2].as_bytes() {
             // Set binary and octal raw values to empty, It would force the codegen,
-            // go generate them from their value.
+            // to generate them from their value.
             lit.raw = "";
         }
     }

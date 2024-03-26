@@ -1,13 +1,13 @@
-use std::{borrow::Cow, collections::HashMap, rc::Rc};
+use std::{borrow::Cow, collections::HashMap};
 
 use bitflags::bitflags;
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::ast::*;
 use oxc_span::{Atom, CompactStr, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 use serde::Deserialize;
 
-use crate::{context::TransformerCtx, options::TransformOptions};
+use crate::context::TransformerCtx;
 
 /// Proposal: Decorators
 ///
@@ -16,7 +16,6 @@ use crate::{context::TransformerCtx, options::TransformOptions};
 /// * <https://github.com/babel/babel/blob/main/packages/babel-plugin-proposal-decorators>
 /// * <https://github.com/tc39/proposal-decorators>
 pub struct Decorators<'a> {
-    ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
     options: DecoratorsOptions,
     // Insert to the top of the program
@@ -104,15 +103,10 @@ impl Version {
 }
 
 impl<'a> Decorators<'a> {
-    pub fn new(
-        ast: Rc<AstBuilder<'a>>,
-        ctx: TransformerCtx<'a>,
-        options: &TransformOptions,
-    ) -> Option<Self> {
-        let top_statements = ast.new_vec();
-        let bottom_statements = ast.new_vec();
-        options.decorators.map(|options| Self {
-            ast,
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        let top_statements = ctx.ast.new_vec();
+        let bottom_statements = ctx.ast.new_vec();
+        ctx.options.decorators.map(|options| Self {
             ctx,
             options,
             top_statements,
@@ -122,12 +116,12 @@ impl<'a> Decorators<'a> {
     }
 
     pub fn get_variable_declarator(&self, name: &str) -> VariableDeclarator<'a> {
-        let name = self.ast.new_atom(name);
-        self.ast.variable_declarator(
+        let name = self.ctx.ast.new_atom(name);
+        self.ctx.ast.variable_declarator(
             SPAN,
             VariableDeclarationKind::Var,
             BindingPattern::new_with_kind(
-                self.ast.binding_pattern_identifier(BindingIdentifier::new(SPAN, name)),
+                self.ctx.ast.binding_pattern_identifier(BindingIdentifier::new(SPAN, name)),
             ),
             None,
             false,
@@ -139,9 +133,9 @@ impl<'a> Decorators<'a> {
         &self,
         name: &str,
     ) -> Option<AssignmentTargetMaybeDefault<'a>> {
-        let name = self.ast.new_atom(name);
+        let name = self.ctx.ast.new_atom(name);
         Some(AssignmentTargetMaybeDefault::AssignmentTarget(
-            self.ast.simple_assignment_target_identifier(IdentifierReference::new(SPAN, name)),
+            self.ctx.ast.simple_assignment_target_identifier(IdentifierReference::new(SPAN, name)),
         ))
     }
 
@@ -158,7 +152,7 @@ impl<'a> Decorators<'a> {
     pub fn get_call_with_this(&self, name: &str) -> Expression<'a> {
         self.get_call_with_arguments(
             name,
-            self.ast.new_vec_single(Argument::Expression(self.ast.this_expression(SPAN))),
+            self.ctx.ast.new_vec_single(Argument::Expression(self.ctx.ast.this_expression(SPAN))),
         )
     }
 
@@ -167,10 +161,10 @@ impl<'a> Decorators<'a> {
         name: &str,
         arguments: Vec<'a, Argument<'a>>,
     ) -> Expression<'a> {
-        let name = self.ast.new_atom(name);
-        self.ast.call_expression(
+        let name = self.ctx.ast.new_atom(name);
+        self.ctx.ast.call_expression(
             SPAN,
-            self.ast.identifier_reference_expression(IdentifierReference::new(SPAN, name)),
+            self.ctx.ast.identifier_reference_expression(IdentifierReference::new(SPAN, name)),
             arguments,
             false,
             None,
@@ -206,17 +200,17 @@ impl<'a> Decorators<'a> {
                                 };
 
                                 if has_decorator {
-                                    self.bottom_statements.push(self.ast.module_declaration(
+                                    self.bottom_statements.push(self.ctx.ast.module_declaration(
                                         ModuleDeclaration::ExportNamedDeclaration(
-                                            self.ast.export_named_declaration(
+                                            self.ctx.ast.export_named_declaration(
                                                 SPAN,
                                                 None,
-                                                self.ast.new_vec_single(ExportSpecifier::new(
+                                                self.ctx.ast.new_vec_single(ExportSpecifier::new(
                                                     SPAN,
                                                     ModuleExportName::Identifier(
                                                         IdentifierName::new(
                                                             SPAN,
-                                                            self.ast.new_atom(
+                                                            self.ctx.ast.new_atom(
                                                                 class_name.as_ref().unwrap(),
                                                             ),
                                                         ),
@@ -266,20 +260,20 @@ impl<'a> Decorators<'a> {
                         };
 
                         if class_has_decorator {
-                            self.bottom_statements.push(self.ast.module_declaration(
+                            self.bottom_statements.push(self.ctx.ast.module_declaration(
                                 ModuleDeclaration::ExportNamedDeclaration(
-                                    self.ast.export_named_declaration(
+                                    self.ctx.ast.export_named_declaration(
                                         SPAN,
                                         None,
-                                        self.ast.new_vec_single(ExportSpecifier::new(
+                                        self.ctx.ast.new_vec_single(ExportSpecifier::new(
                                             SPAN,
                                             ModuleExportName::Identifier(IdentifierName::new(
                                                 SPAN,
-                                                self.ast.new_atom(class_name.as_ref().unwrap()),
+                                                self.ctx.ast.new_atom(class_name.as_ref().unwrap()),
                                             )),
                                             ModuleExportName::Identifier(IdentifierName::new(
                                                 SPAN,
-                                                self.ast.new_atom("default"),
+                                                self.ctx.ast.new_atom("default"),
                                             )),
                                         )),
                                         None,
@@ -335,19 +329,19 @@ impl<'a> Decorators<'a> {
         let has_decorator = !class.decorators.is_empty();
         let has_member_decorator = class.body.body.iter().any(ClassElement::has_decorator);
 
-        let mut declarations = self.ast.new_vec();
+        let mut declarations = self.ctx.ast.new_vec();
 
-        let mut c_elements = self.ast.new_vec();
-        let mut e_elements = self.ast.new_vec();
+        let mut c_elements = self.ctx.ast.new_vec();
+        let mut e_elements = self.ctx.ast.new_vec();
 
         let mut private_in_expression = None;
 
         let mut init_static_name = None;
 
         // insert member decorators
-        let mut member_decorators_vec = self.ast.new_vec();
+        let mut member_decorators_vec = self.ctx.ast.new_vec();
         let mut class_decorators_argument =
-            Argument::Expression(self.ast.array_expression(SPAN, self.ast.new_vec(), None));
+            Argument::Expression(self.ctx.ast.array_expression(SPAN, self.ctx.ast.new_vec(), None));
 
         if has_decorator {
             let class_name = class_name.unwrap_or_else(|| {
@@ -372,13 +366,13 @@ impl<'a> Decorators<'a> {
                 });
 
                 if decorators_exists {
-                    let mut elements = self.ast.new_vec();
+                    let mut elements = self.ctx.ast.new_vec();
 
                     elements.extend(class.decorators.drain(..).map(|decorator| {
-                        ArrayExpressionElement::Expression(self.ast.copy(&decorator.expression))
+                        ArrayExpressionElement::Expression(self.ctx.ast.copy(&decorator.expression))
                     }));
                     class_decorators_argument =
-                        Argument::Expression(self.ast.array_expression(SPAN, elements, None));
+                        Argument::Expression(self.ctx.ast.array_expression(SPAN, elements, None));
                 } else {
                     let class_decs_name = self.get_unique_name("classDecs");
 
@@ -386,24 +380,24 @@ impl<'a> Decorators<'a> {
                     declarations.push(self.get_variable_declarator(&class_decs_name));
 
                     // insert _classDecs = decorators;
-                    let left = self.ast.simple_assignment_target_identifier(
-                        IdentifierReference::new(SPAN, self.ast.new_atom(&class_decs_name)),
+                    let left = self.ctx.ast.simple_assignment_target_identifier(
+                        IdentifierReference::new(SPAN, self.ctx.ast.new_atom(&class_decs_name)),
                     );
 
-                    let right = self.ast.array_expression(
+                    let right = self.ctx.ast.array_expression(
                         SPAN,
                         {
-                            let mut elements = self.ast.new_vec();
+                            let mut elements = self.ctx.ast.new_vec();
                             elements.extend(class.decorators.drain(..).map(|d| {
-                                ArrayExpressionElement::Expression(self.ast.copy(&d.expression))
+                                ArrayExpressionElement::Expression(self.ctx.ast.copy(&d.expression))
                             }));
                             elements
                         },
                         None,
                     );
-                    let assign_class_decs = self.ast.expression_statement(
+                    let assign_class_decs = self.ctx.ast.expression_statement(
                         SPAN,
-                        self.ast.assignment_expression(
+                        self.ctx.ast.assignment_expression(
                             SPAN,
                             AssignmentOperator::Assign,
                             left,
@@ -413,8 +407,8 @@ impl<'a> Decorators<'a> {
                     self.top_statements.push(assign_class_decs);
 
                     class_decorators_argument =
-                        Argument::Expression(self.ast.identifier_reference_expression(
-                            IdentifierReference::new(SPAN, self.ast.new_atom(&class_decs_name)),
+                        Argument::Expression(self.ctx.ast.identifier_reference_expression(
+                            IdentifierReference::new(SPAN, self.ctx.ast.new_atom(&class_decs_name)),
                         ));
                 }
             };
@@ -422,8 +416,8 @@ impl<'a> Decorators<'a> {
             {
                 // insert let _className
                 let declarations =
-                    self.ast.new_vec_single(self.get_variable_declarator(&class_name));
-                let variable_declaration = self.ast.variable_declaration(
+                    self.ctx.ast.new_vec_single(self.get_variable_declarator(&class_name));
+                let variable_declaration = self.ctx.ast.variable_declaration(
                     SPAN,
                     VariableDeclarationKind::Let,
                     declarations,
@@ -439,15 +433,14 @@ impl<'a> Decorators<'a> {
 
             {
                 // call _initClass
-                let callee = self.ast.identifier_reference_expression(IdentifierReference::new(
-                    SPAN,
-                    self.ast.new_atom(&init_class_name),
-                ));
+                let callee = self.ctx.ast.identifier_reference_expression(
+                    IdentifierReference::new(SPAN, self.ctx.ast.new_atom(&init_class_name)),
+                );
                 let call_expr =
-                    self.ast.call_expression(SPAN, callee, self.ast.new_vec(), false, None);
+                    self.ctx.ast.call_expression(SPAN, callee, self.ctx.ast.new_vec(), false, None);
                 let statements =
-                    self.ast.new_vec_single(self.ast.expression_statement(SPAN, call_expr));
-                let static_block = self.ast.static_block(SPAN, statements);
+                    self.ctx.ast.new_vec_single(self.ctx.ast.expression_statement(SPAN, call_expr));
+                let static_block = self.ctx.ast.static_block(SPAN, statements);
                 class.body.body.insert(0, static_block);
             }
         }
@@ -477,7 +470,7 @@ impl<'a> Decorators<'a> {
                             member_decorators_vec.push(ArrayExpressionElement::Expression(
                                 self.get_decorator_info(
                                     &def.key,
-                                    Some(self.ast.copy(&def.value)),
+                                    Some(self.ctx.ast.copy(&def.value)),
                                     flag,
                                     decorator,
                                 ),
@@ -503,35 +496,35 @@ impl<'a> Decorators<'a> {
                                 Cow::Owned(format!("call_{}", def.key.name().unwrap()))
                             });
 
-                            let mut arguments = self.ast.new_vec_with_capacity(2);
-                            arguments.push(Argument::Expression(self.ast.this_expression(SPAN)));
+                            let mut arguments = self.ctx.ast.new_vec_with_capacity(2);
+                            arguments
+                                .push(Argument::Expression(self.ctx.ast.this_expression(SPAN)));
                             arguments.push(Argument::Expression(
-                                self.ast.identifier_reference_expression(IdentifierReference::new(
-                                    SPAN,
-                                    self.ast.new_atom("v"),
-                                )),
+                                self.ctx.ast.identifier_reference_expression(
+                                    IdentifierReference::new(SPAN, self.ctx.ast.new_atom("v")),
+                                ),
                             ));
 
                             let is_setter = def.kind == MethodDefinitionKind::Set;
 
-                            def.value = self.ast.function(
+                            def.value = self.ctx.ast.function(
                                 def.value.r#type,
                                 def.value.span,
-                                self.ast.copy(&def.value.id),
+                                self.ctx.ast.copy(&def.value.id),
                                 def.value.generator,
                                 def.value.r#async,
-                                self.ast.copy(&def.value.this_param),
-                                self.ast.formal_parameters(
+                                self.ctx.ast.copy(&def.value.this_param),
+                                self.ctx.ast.formal_parameters(
                                     SPAN,
                                     FormalParameterKind::FormalParameter,
                                     if is_setter {
-                                        self.ast.new_vec_single(self.ast.formal_parameter(
+                                        self.ctx.ast.new_vec_single(self.ctx.ast.formal_parameter(
                                             SPAN,
-                                            self.ast.binding_pattern(
-                                                self.ast.binding_pattern_identifier(
+                                            self.ctx.ast.binding_pattern(
+                                                self.ctx.ast.binding_pattern_identifier(
                                                     BindingIdentifier::new(
                                                         SPAN,
-                                                        self.ast.new_atom("v"),
+                                                        self.ctx.ast.new_atom("v"),
                                                     ),
                                                 ),
                                                 None,
@@ -540,31 +533,31 @@ impl<'a> Decorators<'a> {
                                             None,
                                             false,
                                             false,
-                                            self.ast.new_vec(),
+                                            self.ctx.ast.new_vec(),
                                         ))
                                     } else {
-                                        self.ast.new_vec()
+                                        self.ctx.ast.new_vec()
                                     },
                                     None,
                                 ),
-                                Some(self.ast.function_body(
+                                Some(self.ctx.ast.function_body(
                                     SPAN,
-                                    self.ast.new_vec(),
-                                    self.ast.new_vec_single(if is_setter {
-                                        self.ast.expression_statement(
+                                    self.ctx.ast.new_vec(),
+                                    self.ctx.ast.new_vec_single(if is_setter {
+                                        self.ctx.ast.expression_statement(
                                             SPAN,
                                             self.get_call_with_arguments(&name, arguments),
                                         )
                                     } else {
-                                        self.ast.return_statement(
+                                        self.ctx.ast.return_statement(
                                             SPAN,
                                             Some(self.get_call_with_this(&name)),
                                         )
                                     }),
                                 )),
-                                self.ast.copy(&def.value.type_parameters),
-                                self.ast.copy(&def.value.return_type),
-                                self.ast.copy(&def.value.modifiers),
+                                self.ctx.ast.copy(&def.value.type_parameters),
+                                self.ctx.ast.copy(&def.value.return_type),
+                                self.ctx.ast.copy(&def.value.modifiers),
                             );
                         } else {
                             continue;
@@ -595,19 +588,20 @@ impl<'a> Decorators<'a> {
                         }
                         def.decorators.clear();
 
-                        let mut arguments = self
-                            .ast
-                            .new_vec_single(Argument::Expression(self.ast.this_expression(SPAN)));
+                        let mut arguments = self.ctx.ast.new_vec_single(Argument::Expression(
+                            self.ctx.ast.this_expression(SPAN),
+                        ));
 
                         if let Some(value) = &mut def.value {
-                            arguments.push(Argument::Expression(self.ast.move_expression(value)));
+                            arguments
+                                .push(Argument::Expression(self.ctx.ast.move_expression(value)));
                         }
 
-                        def.value = Some(self.ast.call_expression(
+                        def.value = Some(self.ctx.ast.call_expression(
                             SPAN,
-                            self.ast.identifier_reference_expression(IdentifierReference::new(
+                            self.ctx.ast.identifier_reference_expression(IdentifierReference::new(
                                 SPAN,
-                                self.ast.new_atom(&name),
+                                self.ctx.ast.new_atom(&name),
                             )),
                             arguments,
                             false,
@@ -633,7 +627,7 @@ impl<'a> Decorators<'a> {
                 ) {
                     if let ClassElement::MethodDefinition(def) = constructor_element {
                         if let Some(body) = &mut def.value.body {
-                            body.statements.insert(0, self.ast.expression_statement(SPAN, self.get_call_with_this(&name)));
+                            body.statements.insert(0, self.ctx.ast.expression_statement(SPAN, self.get_call_with_this(&name)));
                         }
                     } else {
                         unreachable!();
@@ -642,26 +636,26 @@ impl<'a> Decorators<'a> {
                     // if the class has no constructor, insert a empty constructor and call initProto
                     class.body.body.insert(
                         0,
-                        self.ast.class_constructor(
+                        self.ctx.ast.class_constructor(
                             SPAN,
-                            self.ast.function(
+                            self.ctx.ast.function(
                                 FunctionType::FunctionExpression,
                                 SPAN,
                                 None,
                                 false,
                                 false,
                                 None,
-                                self.ast.formal_parameters(
+                                self.ctx.ast.formal_parameters(
                                     SPAN,
                                     FormalParameterKind::FormalParameter,
-                                    self.ast.new_vec(),
+                                    self.ctx.ast.new_vec(),
                                     None,
                                 ),
-                                Some(self.ast.function_body(
+                                Some(self.ctx.ast.function_body(
                                     SPAN,
-                                    self.ast.new_vec(),
-                                    self.ast.new_vec_single(
-                                        self.ast.expression_statement(SPAN, self.get_call_with_this(&name))
+                                    self.ctx.ast.new_vec(),
+                                    self.ctx.ast.new_vec_single(
+                                        self.ctx.ast.expression_statement(SPAN, self.get_call_with_this(&name))
                                     ),
                                 )),
                                 None,
@@ -683,7 +677,7 @@ impl<'a> Decorators<'a> {
 
         {
             // insert all variable_declarator in same variable_declaration
-            let variable_declaration = self.ast.variable_declaration(
+            let variable_declaration = self.ctx.ast.variable_declaration(
                 SPAN,
                 VariableDeclarationKind::Var,
                 declarations,
@@ -706,19 +700,21 @@ impl<'a> Decorators<'a> {
             //     parentClass: any,
             //   ) {}
             // call babelHelpers.applyDecs2305
-            let callee = self.ast.static_member_expression(
+            let callee = self.ctx.ast.static_member_expression(
                 SPAN,
-                self.ast.identifier_reference_expression(IdentifierReference::new(
+                self.ctx.ast.identifier_reference_expression(IdentifierReference::new(
                     SPAN,
-                    self.ast.new_atom("babelHelpers"),
+                    self.ctx.ast.new_atom("babelHelpers"),
                 )),
-                IdentifierName::new(SPAN, self.ast.new_atom("applyDecs2305")),
+                IdentifierName::new(SPAN, self.ctx.ast.new_atom("applyDecs2305")),
                 false,
             );
 
-            let mut arguments =
-                self.ast.new_vec_single(Argument::Expression(self.ast.this_expression(SPAN)));
-            arguments.push(Argument::Expression(self.ast.array_expression(
+            let mut arguments = self
+                .ctx
+                .ast
+                .new_vec_single(Argument::Expression(self.ctx.ast.this_expression(SPAN)));
+            arguments.push(Argument::Expression(self.ctx.ast.array_expression(
                 SPAN,
                 member_decorators_vec,
                 None,
@@ -726,58 +722,58 @@ impl<'a> Decorators<'a> {
             arguments.push(class_decorators_argument);
             if let Some(private_in_expression) = private_in_expression {
                 // classDecsHaveThis
-                arguments.push(Argument::Expression(self.ast.literal_number_expression(
+                arguments.push(Argument::Expression(self.ctx.ast.literal_number_expression(
                     // TODO: use correct number instead of `0`
-                    self.ast.number_literal(SPAN, 0f64, "0", oxc_syntax::NumberBase::Decimal),
+                    self.ctx.ast.number_literal(SPAN, 0f64, "0", oxc_syntax::NumberBase::Decimal),
                 )));
                 // instanceBrand
                 arguments.push(Argument::Expression(private_in_expression));
             }
 
-            let mut call_expr = self.ast.call_expression(SPAN, callee, arguments, false, None);
+            let mut call_expr = self.ctx.ast.call_expression(SPAN, callee, arguments, false, None);
 
             if has_decorator && has_decorator == has_member_decorator {
-                let mut properties = self.ast.new_vec_with_capacity(2);
-                properties.push(self.ast.assignment_target_property_property(
+                let mut properties = self.ctx.ast.new_vec_with_capacity(2);
+                properties.push(self.ctx.ast.assignment_target_property_property(
                     SPAN,
-                    self.ast.property_key_identifier(IdentifierName::new(SPAN, "e".into())),
-                    self.ast.array_assignment_target_maybe_default(
+                    self.ctx.ast.property_key_identifier(IdentifierName::new(SPAN, "e".into())),
+                    self.ctx.ast.array_assignment_target_maybe_default(
                         ArrayAssignmentTarget::new_with_elements(SPAN, e_elements),
                     ),
                 ));
-                properties.push(self.ast.assignment_target_property_property(
+                properties.push(self.ctx.ast.assignment_target_property_property(
                     SPAN,
-                    self.ast.property_key_identifier(IdentifierName::new(SPAN, "c".into())),
-                    self.ast.array_assignment_target_maybe_default(
+                    self.ctx.ast.property_key_identifier(IdentifierName::new(SPAN, "c".into())),
+                    self.ctx.ast.array_assignment_target_maybe_default(
                         ArrayAssignmentTarget::new_with_elements(SPAN, c_elements),
                     ),
                 ));
-                call_expr = self.ast.assignment_expression(
+                call_expr = self.ctx.ast.assignment_expression(
                     SPAN,
                     AssignmentOperator::Assign,
-                    self.ast.object_assignment_target(ObjectAssignmentTarget::new_with_properties(
-                        SPAN, properties,
-                    )),
+                    self.ctx.ast.object_assignment_target(
+                        ObjectAssignmentTarget::new_with_properties(SPAN, properties),
+                    ),
                     call_expr,
                 );
             } else if has_decorator || has_member_decorator {
-                call_expr = self.ast.static_member_expression(
+                call_expr = self.ctx.ast.static_member_expression(
                     SPAN,
                     call_expr,
                     IdentifierName::new(
                         SPAN,
-                        self.ast.new_atom(if has_decorator { "c" } else { "e" }),
+                        self.ctx.ast.new_atom(if has_decorator { "c" } else { "e" }),
                     ),
                     false,
                 );
 
                 let left =
-                    self.ast.array_assignment_target(ArrayAssignmentTarget::new_with_elements(
+                    self.ctx.ast.array_assignment_target(ArrayAssignmentTarget::new_with_elements(
                         SPAN,
                         if has_decorator { c_elements } else { e_elements },
                     ));
 
-                call_expr = self.ast.assignment_expression(
+                call_expr = self.ctx.ast.assignment_expression(
                     SPAN,
                     AssignmentOperator::Assign,
                     left,
@@ -785,28 +781,29 @@ impl<'a> Decorators<'a> {
                 );
             }
 
-            let mut statements = self.ast.new_vec();
-            statements.push(self.ast.expression_statement(SPAN, call_expr));
+            let mut statements = self.ctx.ast.new_vec();
+            statements.push(self.ctx.ast.expression_statement(SPAN, call_expr));
 
             if let Some(init_static_name) = init_static_name {
                 // call initStatic
-                let callee = self.ast.identifier_reference_expression(IdentifierReference::new(
+                let callee = self.ctx.ast.identifier_reference_expression(
+                    IdentifierReference::new(SPAN, self.ctx.ast.new_atom(&init_static_name)),
+                );
+                let arguments = self
+                    .ctx
+                    .ast
+                    .new_vec_single(Argument::Expression(self.ctx.ast.this_expression(SPAN)));
+                statements.push(self.ctx.ast.expression_statement(
                     SPAN,
-                    self.ast.new_atom(&init_static_name),
-                ));
-                let arguments =
-                    self.ast.new_vec_single(Argument::Expression(self.ast.this_expression(SPAN)));
-                statements.push(self.ast.expression_statement(
-                    SPAN,
-                    self.ast.call_expression(SPAN, callee, arguments, false, None),
+                    self.ctx.ast.call_expression(SPAN, callee, arguments, false, None),
                 ));
             }
 
-            let static_block = self.ast.static_block(SPAN, statements);
+            let static_block = self.ctx.ast.static_block(SPAN, statements);
             class.body.body.insert(0, static_block);
         }
 
-        Declaration::ClassDeclaration(self.ast.copy(class))
+        Declaration::ClassDeclaration(self.ctx.ast.copy(class))
     }
 
     /// transform version: legacy
@@ -817,40 +814,42 @@ impl<'a> Decorators<'a> {
     ) -> Declaration<'a> {
         let class_binding_identifier = &class.id.clone().unwrap_or_else(|| {
             let class_name = class_name.unwrap_or_else(|| self.get_unique_name("class"));
-            BindingIdentifier::new(SPAN, self.ast.new_atom(&class_name))
+            BindingIdentifier::new(SPAN, self.ctx.ast.new_atom(&class_name))
         });
         let class_name = BindingPattern::new_with_kind(
-            self.ast.binding_pattern_identifier(self.ast.copy(class_binding_identifier)),
+            self.ctx.ast.binding_pattern_identifier(self.ctx.ast.copy(class_binding_identifier)),
         );
 
         let init = {
             let class_identifier_name = self.get_unique_name("class");
             let class_identifier =
-                IdentifierReference::new(SPAN, self.ast.new_atom(&class_identifier_name));
+                IdentifierReference::new(SPAN, self.ctx.ast.new_atom(&class_identifier_name));
 
-            let decl = self.ast.variable_declaration(
+            let decl = self.ctx.ast.variable_declaration(
                 SPAN,
                 VariableDeclarationKind::Var,
-                self.ast.new_vec_single(self.get_variable_declarator(&class_identifier_name)),
+                self.ctx.ast.new_vec_single(self.get_variable_declarator(&class_identifier_name)),
                 Modifiers::empty(),
             );
             self.top_statements
                 .push(Statement::Declaration(Declaration::VariableDeclaration(decl)));
 
-            let left = self.ast.simple_assignment_target_identifier(class_identifier.clone());
-            let right = self.ast.class_expression(self.ast.copy(class));
+            let left = self.ctx.ast.simple_assignment_target_identifier(class_identifier.clone());
+            let right = self.ctx.ast.class_expression(self.ctx.ast.copy(class));
             let new_expr =
-                self.ast.assignment_expression(SPAN, AssignmentOperator::Assign, left, right);
+                self.ctx.ast.assignment_expression(SPAN, AssignmentOperator::Assign, left, right);
 
             let new_expr = class.decorators.drain(..).fold(new_expr, |new_expr, decorator| {
                 match &decorator.expression {
-                    Expression::Identifier(identifier) => self.ast.call_expression(
+                    Expression::Identifier(identifier) => self.ctx.ast.call_expression(
                         SPAN,
-                        self.ast.identifier_reference_expression(IdentifierReference::new(
+                        self.ctx.ast.identifier_reference_expression(IdentifierReference::new(
                             SPAN,
                             identifier.name.clone(),
                         )),
-                        self.ast.new_vec_single(Argument::Expression(self.ast.copy(&new_expr))),
+                        self.ctx
+                            .ast
+                            .new_vec_single(Argument::Expression(self.ctx.ast.copy(&new_expr))),
                         false,
                         None,
                     ),
@@ -858,15 +857,15 @@ impl<'a> Decorators<'a> {
                 }
             });
 
-            self.ast.logical_expression(
+            self.ctx.ast.logical_expression(
                 SPAN,
                 new_expr,
                 LogicalOperator::Or,
-                self.ast.identifier_reference_expression(class_identifier),
+                self.ctx.ast.identifier_reference_expression(class_identifier),
             )
         };
 
-        let declarator = self.ast.variable_declarator(
+        let declarator = self.ctx.ast.variable_declarator(
             SPAN,
             VariableDeclarationKind::Let,
             class_name,
@@ -874,10 +873,10 @@ impl<'a> Decorators<'a> {
             false,
         );
 
-        Declaration::VariableDeclaration(self.ast.variable_declaration(
+        Declaration::VariableDeclaration(self.ctx.ast.variable_declaration(
             SPAN,
             VariableDeclarationKind::Let,
-            self.ast.new_vec_single(declarator),
+            self.ctx.ast.new_vec_single(declarator),
             Modifiers::empty(),
         ))
     }
@@ -892,22 +891,24 @@ impl<'a> Decorators<'a> {
     ) -> Expression<'a> {
         let name = key.name();
         // [dec, flag, name, defaultValue | (o) => o.#a, (o, v) => o.#a = v]
-        let mut decorator_elements = self.ast.new_vec_with_capacity(2);
+        let mut decorator_elements = self.ctx.ast.new_vec_with_capacity(2);
         decorator_elements
-            .push(ArrayExpressionElement::Expression(self.ast.copy(&decorator.expression)));
+            .push(ArrayExpressionElement::Expression(self.ctx.ast.copy(&decorator.expression)));
         decorator_elements.push(ArrayExpressionElement::Expression(
-            self.ast.literal_number_expression(NumericLiteral::new(
+            self.ctx.ast.literal_number_expression(NumericLiteral::new(
                 SPAN,
                 0f64,
-                self.ast.new_str(flag.to_value().to_string().as_str()),
+                self.ctx.ast.new_str(flag.to_value().to_string().as_str()),
                 oxc_syntax::NumberBase::Decimal,
             )),
         ));
         if let Some(name) = name {
-            decorator_elements
-                .push(ArrayExpressionElement::Expression(self.ast.literal_string_expression(
-                    StringLiteral::new(SPAN, self.ast.new_atom(&name)),
-                )));
+            decorator_elements.push(ArrayExpressionElement::Expression(
+                self.ctx.ast.literal_string_expression(StringLiteral::new(
+                    SPAN,
+                    self.ctx.ast.new_atom(&name),
+                )),
+            ));
 
             if key.is_private_identifier() {
                 if let Some(value) = value {
@@ -916,12 +917,12 @@ impl<'a> Decorators<'a> {
                     ));
                 } else {
                     // o => o.#a
-                    let mut items = self.ast.new_vec_single(self.ast.formal_parameter(
+                    let mut items = self.ctx.ast.new_vec_single(self.ctx.ast.formal_parameter(
                         SPAN,
-                        self.ast.binding_pattern(
-                            self.ast.binding_pattern_identifier(BindingIdentifier::new(
+                        self.ctx.ast.binding_pattern(
+                            self.ctx.ast.binding_pattern_identifier(BindingIdentifier::new(
                                 SPAN,
-                                self.ast.new_atom("o"),
+                                self.ctx.ast.new_atom("o"),
                             )),
                             None,
                             false,
@@ -929,36 +930,40 @@ impl<'a> Decorators<'a> {
                         None,
                         false,
                         false,
-                        self.ast.new_vec(),
+                        self.ctx.ast.new_vec(),
                     ));
-                    let private_field = self.ast.private_field(
+                    let private_field = self.ctx.ast.private_field(
                         SPAN,
-                        self.ast.identifier_reference_expression(IdentifierReference::new(
+                        self.ctx.ast.identifier_reference_expression(IdentifierReference::new(
                             SPAN,
-                            self.ast.new_atom("o"),
+                            self.ctx.ast.new_atom("o"),
                         )),
-                        PrivateIdentifier::new(SPAN, self.ast.new_atom(&name)),
+                        PrivateIdentifier::new(SPAN, self.ctx.ast.new_atom(&name)),
                         false,
                     );
-                    let params = self.ast.formal_parameters(
+                    let params = self.ctx.ast.formal_parameters(
                         SPAN,
                         FormalParameterKind::ArrowFormalParameters,
-                        self.ast.copy(&items),
+                        self.ctx.ast.copy(&items),
                         None,
                     );
                     decorator_elements.push(ArrayExpressionElement::Expression(
-                        self.ast.arrow_function_expression(
+                        self.ctx.ast.arrow_function_expression(
                             SPAN,
                             true,
                             false,
                             params,
-                            self.ast.function_body(
+                            self.ctx.ast.function_body(
                                 SPAN,
-                                self.ast.new_vec(),
-                                self.ast.new_vec_single(self.ast.expression_statement(
-                                    SPAN,
-                                    self.ast.member_expression(self.ast.copy(&private_field)),
-                                )),
+                                self.ctx.ast.new_vec(),
+                                self.ctx.ast.new_vec_single(
+                                    self.ctx.ast.expression_statement(
+                                        SPAN,
+                                        self.ctx
+                                            .ast
+                                            .member_expression(self.ctx.ast.copy(&private_field)),
+                                    ),
+                                ),
                             ),
                             None,
                             None,
@@ -967,12 +972,12 @@ impl<'a> Decorators<'a> {
 
                     {
                         // (o, v) => o.#a = v
-                        items.push(self.ast.formal_parameter(
+                        items.push(self.ctx.ast.formal_parameter(
                             SPAN,
-                            self.ast.binding_pattern(
-                                self.ast.binding_pattern_identifier(BindingIdentifier::new(
+                            self.ctx.ast.binding_pattern(
+                                self.ctx.ast.binding_pattern_identifier(BindingIdentifier::new(
                                     SPAN,
-                                    self.ast.new_atom("v"),
+                                    self.ctx.ast.new_atom("v"),
                                 )),
                                 None,
                                 false,
@@ -980,10 +985,10 @@ impl<'a> Decorators<'a> {
                             None,
                             false,
                             false,
-                            self.ast.new_vec(),
+                            self.ctx.ast.new_vec(),
                         ));
 
-                        let params = self.ast.formal_parameters(
+                        let params = self.ctx.ast.formal_parameters(
                             SPAN,
                             FormalParameterKind::ArrowFormalParameters,
                             items,
@@ -991,30 +996,34 @@ impl<'a> Decorators<'a> {
                         );
 
                         decorator_elements.push(ArrayExpressionElement::Expression(
-                            self.ast.arrow_function_expression(
+                            self.ctx.ast.arrow_function_expression(
                                 SPAN,
                                 true,
                                 false,
                                 params,
-                                self.ast.function_body(
+                                self.ctx.ast.function_body(
                                     SPAN,
-                                    self.ast.new_vec(),
-                                    self.ast.new_vec_single(self.ast.expression_statement(
-                                        SPAN,
-                                        self.ast.assignment_expression(
+                                    self.ctx.ast.new_vec(),
+                                    self.ctx.ast.new_vec_single(
+                                        self.ctx.ast.expression_statement(
                                             SPAN,
-                                            AssignmentOperator::Assign,
-                                            self.ast.simple_assignment_target_member_expression(
-                                                private_field,
-                                            ),
-                                            self.ast.identifier_reference_expression(
-                                                IdentifierReference::new(
-                                                    SPAN,
-                                                    self.ast.new_atom("v"),
+                                            self.ctx.ast.assignment_expression(
+                                                SPAN,
+                                                AssignmentOperator::Assign,
+                                                self.ctx
+                                                    .ast
+                                                    .simple_assignment_target_member_expression(
+                                                        private_field,
+                                                    ),
+                                                self.ctx.ast.identifier_reference_expression(
+                                                    IdentifierReference::new(
+                                                        SPAN,
+                                                        self.ctx.ast.new_atom("v"),
+                                                    ),
                                                 ),
                                             ),
                                         ),
-                                    )),
+                                    ),
                                 ),
                                 None,
                                 None,
@@ -1024,24 +1033,24 @@ impl<'a> Decorators<'a> {
                 }
             }
         }
-        self.ast.array_expression(SPAN, decorator_elements, None)
+        self.ctx.ast.array_expression(SPAN, decorator_elements, None)
     }
 
     // _ => #a in _;
     fn get_is_private_function(&self, name: &Atom<'a>) -> Expression<'a> {
-        self.ast.arrow_function_expression(
+        self.ctx.ast.arrow_function_expression(
             SPAN,
             true,
             false,
-            self.ast.formal_parameters(
+            self.ctx.ast.formal_parameters(
                 SPAN,
                 FormalParameterKind::ArrowFormalParameters,
-                self.ast.new_vec_single(self.ast.formal_parameter(
+                self.ctx.ast.new_vec_single(self.ctx.ast.formal_parameter(
                     SPAN,
-                    self.ast.binding_pattern(
-                        self.ast.binding_pattern_identifier(BindingIdentifier::new(
+                    self.ctx.ast.binding_pattern(
+                        self.ctx.ast.binding_pattern_identifier(BindingIdentifier::new(
                             SPAN,
-                            self.ast.new_atom("_"),
+                            self.ctx.ast.new_atom("_"),
                         )),
                         None,
                         false,
@@ -1049,21 +1058,21 @@ impl<'a> Decorators<'a> {
                     None,
                     false,
                     false,
-                    self.ast.new_vec(),
+                    self.ctx.ast.new_vec(),
                 )),
                 None,
             ),
-            self.ast.function_body(
+            self.ctx.ast.function_body(
                 SPAN,
-                self.ast.new_vec(),
-                self.ast.new_vec_single(self.ast.expression_statement(
+                self.ctx.ast.new_vec(),
+                self.ctx.ast.new_vec_single(self.ctx.ast.expression_statement(
                     SPAN,
-                    self.ast.private_in_expression(
+                    self.ctx.ast.private_in_expression(
                         SPAN,
                         PrivateIdentifier::new(SPAN, name.clone()),
-                        self.ast.identifier_reference_expression(IdentifierReference::new(
+                        self.ctx.ast.identifier_reference_expression(IdentifierReference::new(
                             SPAN,
-                            self.ast.new_atom("_"),
+                            self.ctx.ast.new_atom("_"),
                         )),
                     ),
                 )),

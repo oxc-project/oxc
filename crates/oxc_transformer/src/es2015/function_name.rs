@@ -1,7 +1,5 @@
-use std::rc::Rc;
-
 // use lazy_static::lazy_static;
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::ast::*;
 use oxc_semantic::ScopeId;
 use oxc_span::{Atom, Span};
 use oxc_syntax::identifier::is_identifier_part;
@@ -9,7 +7,6 @@ use oxc_syntax::operator::AssignmentOperator;
 // use regex::Regex;
 
 use crate::context::TransformerCtx;
-use crate::options::TransformOptions;
 use crate::utils::is_valid_identifier;
 use crate::TransformTarget;
 
@@ -19,23 +16,19 @@ use crate::TransformTarget;
 /// * <https://babel.dev/docs/babel-plugin-transform-function-name>
 /// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-function-name>
 pub struct FunctionName<'a> {
-    ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
     unicode_escapes: bool,
 }
 
 impl<'a> FunctionName<'a> {
-    pub fn new(
-        ast: Rc<AstBuilder<'a>>,
-        ctx: TransformerCtx<'a>,
-        options: &TransformOptions,
-    ) -> Option<Self> {
-        (options.target < TransformTarget::ES2015 || options.function_name).then_some(Self {
-            ast,
-            ctx,
-            // TODO hook up the plugin
-            unicode_escapes: true,
-        })
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        (ctx.options.target < TransformTarget::ES2015 || ctx.options.function_name).then_some(
+            Self {
+                ctx,
+                // TODO hook up the plugin
+                unicode_escapes: true,
+            },
+        )
     }
 
     pub fn transform_assignment_expression(&mut self, expr: &mut AssignmentExpression<'a>) {
@@ -125,7 +118,7 @@ impl<'a> FunctionName<'a> {
 
             // If we're shadowing, change the name
             if count > 0 {
-                id.name = self.ast.new_atom(&format!("{}{}", id.name, count));
+                id.name = self.ctx.ast.new_atom(&format!("{}{}", id.name, count));
             }
 
             if func.id.is_none() {
@@ -157,13 +150,13 @@ impl<'a> FunctionName<'a> {
             atom.chars().map(|c| if is_identifier_part(c) { c } else { '_' }).collect::<String>();
 
         let id = if id.is_empty() {
-            self.ast.new_atom("_")
+            self.ctx.ast.new_atom("_")
         } else if id == "eval"
             || id == "arguments"
             || id == "null"
             || !is_valid_identifier(&id, true)
         {
-            self.ast.new_atom(&format!("_{id}"))
+            self.ctx.ast.new_atom(&format!("_{id}"))
         } else {
             atom.clone()
         };

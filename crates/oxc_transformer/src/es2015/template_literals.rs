@@ -3,7 +3,7 @@ use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, Span, SPAN};
 use std::{mem, rc::Rc};
 
-use crate::{TransformOptions, TransformTarget};
+use crate::{context::TransformerCtx, TransformTarget};
 
 /// ES2015: Template Literals
 ///
@@ -15,9 +15,9 @@ pub struct TemplateLiterals<'a> {
 }
 
 impl<'a> TemplateLiterals<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
-        (options.target < TransformTarget::ES2015 || options.template_literals)
-            .then_some(Self { ast })
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        (ctx.options.target < TransformTarget::ES2015 || ctx.options.template_literals)
+            .then_some(Self { ast: ctx.ast })
     }
 
     pub fn transform_expression<'b>(&mut self, expr: &'b mut Expression<'a>) {

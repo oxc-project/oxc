@@ -1,15 +1,9 @@
-use std::rc::Rc;
-
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 
-use crate::{
-    context::TransformerCtx,
-    options::{TransformOptions, TransformTarget},
-    utils::CreateVars,
-};
+use crate::{context::TransformerCtx, options::TransformTarget, utils::CreateVars};
 
 /// ES2021: Logical Assignment Operators
 ///
@@ -17,9 +11,7 @@ use crate::{
 /// * <https://babel.dev/docs/babel-plugin-transform-logical-assignment-operators>
 /// * <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-logical-assignment-operators>
 pub struct LogicalAssignmentOperators<'a> {
-    ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
-
     vars: Vec<'a, VariableDeclarator<'a>>,
 }
 
@@ -34,17 +26,12 @@ impl<'a> CreateVars<'a> for LogicalAssignmentOperators<'a> {
 }
 
 impl<'a> LogicalAssignmentOperators<'a> {
-    pub fn new(
-        ast: Rc<AstBuilder<'a>>,
-        ctx: TransformerCtx<'a>,
-        options: &TransformOptions,
-    ) -> Option<Self> {
-        (options.target < TransformTarget::ES2021 || options.logical_assignment_operators).then(
-            || {
-                let vars = ast.new_vec();
-                Self { ast, ctx, vars }
-            },
-        )
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        (ctx.options.target < TransformTarget::ES2021 || ctx.options.logical_assignment_operators)
+            .then(|| {
+                let vars = ctx.ast.new_vec();
+                Self { ctx, vars }
+            })
     }
 
     pub fn transform_expression<'b>(&mut self, expr: &'b mut Expression<'a>) {
@@ -69,8 +56,9 @@ impl<'a> LogicalAssignmentOperators<'a> {
         match &assignment_expr.left {
             AssignmentTarget::SimpleAssignmentTarget(target) => match target {
                 SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                    left_expr = self.ast.identifier_reference_expression((*ident).clone());
-                    assign_target = self.ast.simple_assignment_target_identifier((*ident).clone());
+                    left_expr = self.ctx.ast.identifier_reference_expression((*ident).clone());
+                    assign_target =
+                        self.ctx.ast.simple_assignment_target_identifier((*ident).clone());
                 }
                 SimpleAssignmentTarget::MemberAssignmentTarget(member_expr) => {
                     let op = AssignmentOperator::Assign;
@@ -79,31 +67,31 @@ impl<'a> LogicalAssignmentOperators<'a> {
                     match &**member_expr {
                         MemberExpression::StaticMemberExpression(static_expr) => {
                             if let Some(ident) = self.maybe_generate_memoised(&static_expr.object) {
-                                let right = self.ast.copy(&static_expr.object);
-                                let mut expr = self.ast.copy(static_expr);
+                                let right = self.ctx.ast.copy(&static_expr.object);
+                                let mut expr = self.ctx.ast.copy(static_expr);
                                 let target =
-                                    self.ast.simple_assignment_target_identifier(ident.clone());
+                                    self.ctx.ast.simple_assignment_target_identifier(ident.clone());
                                 expr.object =
-                                    self.ast.assignment_expression(SPAN, op, target, right);
-                                left_expr = self.ast.member_expression(
+                                    self.ctx.ast.assignment_expression(SPAN, op, target, right);
+                                left_expr = self.ctx.ast.member_expression(
                                     MemberExpression::StaticMemberExpression(expr),
                                 );
 
-                                let mut expr = self.ast.copy(static_expr);
-                                expr.object = self.ast.identifier_reference_expression(ident);
+                                let mut expr = self.ctx.ast.copy(static_expr);
+                                expr.object = self.ctx.ast.identifier_reference_expression(ident);
                                 assign_target =
-                                    self.ast.simple_assignment_target_member_expression(
+                                    self.ctx.ast.simple_assignment_target_member_expression(
                                         MemberExpression::StaticMemberExpression(expr),
                                     );
                             } else {
-                                left_expr = self.ast.member_expression(
+                                left_expr = self.ctx.ast.member_expression(
                                     MemberExpression::StaticMemberExpression(
-                                        self.ast.copy(static_expr),
+                                        self.ctx.ast.copy(static_expr),
                                     ),
                                 );
                                 assign_target =
-                                    self.ast.simple_assignment_target_member_expression(
-                                        self.ast.copy(member_expr),
+                                    self.ctx.ast.simple_assignment_target_member_expression(
+                                        self.ctx.ast.copy(member_expr),
                                     );
                             };
                         }
@@ -115,66 +103,70 @@ impl<'a> LogicalAssignmentOperators<'a> {
                                 let property_ident =
                                     self.maybe_generate_memoised(&computed_expr.expression);
 
-                                let right = self.ast.copy(&computed_expr.object);
-                                let mut expr = self.ast.copy(computed_expr);
+                                let right = self.ctx.ast.copy(&computed_expr.object);
+                                let mut expr = self.ctx.ast.copy(computed_expr);
                                 let target =
-                                    self.ast.simple_assignment_target_identifier(ident.clone());
+                                    self.ctx.ast.simple_assignment_target_identifier(ident.clone());
                                 expr.object =
-                                    self.ast.assignment_expression(SPAN, op, target, right);
+                                    self.ctx.ast.assignment_expression(SPAN, op, target, right);
                                 if let Some(property_ident) = &property_ident {
-                                    let left = self.ast.simple_assignment_target_identifier(
+                                    let left = self.ctx.ast.simple_assignment_target_identifier(
                                         property_ident.clone(),
                                     );
-                                    let right = self.ast.copy(&computed_expr.expression);
+                                    let right = self.ctx.ast.copy(&computed_expr.expression);
                                     expr.expression =
-                                        self.ast.assignment_expression(SPAN, op, left, right);
+                                        self.ctx.ast.assignment_expression(SPAN, op, left, right);
                                 }
-                                left_expr = self.ast.member_expression(
+                                left_expr = self.ctx.ast.member_expression(
                                     MemberExpression::ComputedMemberExpression(expr),
                                 );
 
                                 // `(_a[_b$y] = c)` part
-                                let mut expr = self.ast.copy(computed_expr);
-                                expr.object = self.ast.identifier_reference_expression(ident);
+                                let mut expr = self.ctx.ast.copy(computed_expr);
+                                expr.object = self.ctx.ast.identifier_reference_expression(ident);
                                 if let Some(property_ident) = property_ident {
-                                    expr.expression =
-                                        self.ast.identifier_reference_expression(property_ident);
+                                    expr.expression = self
+                                        .ctx
+                                        .ast
+                                        .identifier_reference_expression(property_ident);
                                 }
                                 assign_target =
-                                    self.ast.simple_assignment_target_member_expression(
+                                    self.ctx.ast.simple_assignment_target_member_expression(
                                         MemberExpression::ComputedMemberExpression(expr),
                                     );
                             } else {
                                 let property_ident =
                                     self.maybe_generate_memoised(&computed_expr.expression);
 
-                                // let right = self.ast.copy(&computed_expr.object);
-                                let mut expr = self.ast.copy(computed_expr);
+                                // let right = self.ctx.ast.copy(&computed_expr.object);
+                                let mut expr = self.ctx.ast.copy(computed_expr);
                                 // let target = AssignmentTarget::SimpleAssignmentTarget(
-                                // self.ast.simple_assignment_target_identifier(ident.clone()),
+                                // self.ctx.ast.simple_assignment_target_identifier(ident.clone()),
                                 // );
                                 // expr.object =
-                                // self.ast.assignment_expression(span, op, target, right);
+                                // self.ctx.ast.assignment_expression(span, op, target, right);
                                 if let Some(property_ident) = &property_ident {
-                                    let left = self.ast.simple_assignment_target_identifier(
+                                    let left = self.ctx.ast.simple_assignment_target_identifier(
                                         property_ident.clone(),
                                     );
-                                    let right = self.ast.copy(&computed_expr.expression);
+                                    let right = self.ctx.ast.copy(&computed_expr.expression);
                                     expr.expression =
-                                        self.ast.assignment_expression(SPAN, op, left, right);
+                                        self.ctx.ast.assignment_expression(SPAN, op, left, right);
                                 }
-                                left_expr = self.ast.member_expression(
+                                left_expr = self.ctx.ast.member_expression(
                                     MemberExpression::ComputedMemberExpression(expr),
                                 );
 
-                                let mut expr = self.ast.copy(computed_expr);
-                                // expr.object = self.ast.identifier_reference_expression(ident);
+                                let mut expr = self.ctx.ast.copy(computed_expr);
+                                // expr.object = self.ctx.ast.identifier_reference_expression(ident);
                                 if let Some(property_ident) = property_ident {
-                                    expr.expression =
-                                        self.ast.identifier_reference_expression(property_ident);
+                                    expr.expression = self
+                                        .ctx
+                                        .ast
+                                        .identifier_reference_expression(property_ident);
                                 }
                                 assign_target =
-                                    self.ast.simple_assignment_target_member_expression(
+                                    self.ctx.ast.simple_assignment_target_member_expression(
                                         MemberExpression::ComputedMemberExpression(expr),
                                     );
                             };
@@ -191,10 +183,10 @@ impl<'a> LogicalAssignmentOperators<'a> {
         };
 
         let assign_op = AssignmentOperator::Assign;
-        let right = self.ast.move_expression(&mut assignment_expr.right);
-        let right = self.ast.assignment_expression(SPAN, assign_op, assign_target, right);
+        let right = self.ctx.ast.move_expression(&mut assignment_expr.right);
+        let right = self.ctx.ast.assignment_expression(SPAN, assign_op, assign_target, right);
 
-        let logical_expr = self.ast.logical_expression(SPAN, left_expr, operator, right);
+        let logical_expr = self.ctx.ast.logical_expression(SPAN, left_expr, operator, right);
 
         *expr = logical_expr;
     }
