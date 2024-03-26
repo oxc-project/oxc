@@ -4,7 +4,8 @@ use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, AssignmentTarget, CallExpression,
         ComputedMemberExpression, Expression, IdentifierReference, MemberExpression,
-        PrivateFieldExpression, Program, SimpleAssignmentTarget, Statement, StaticMemberExpression,
+        ModuleDeclaration, PrivateFieldExpression, Program, SimpleAssignmentTarget, Statement,
+        StaticMemberExpression,
     },
     AstKind,
 };
@@ -14,7 +15,7 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     ast_util::{get_declaration_of_variable, get_symbol_id_of_variable},
-    utils::{get_write_expr, Value},
+    utils::{get_write_expr, no_effects, Value},
     LintContext,
 };
 
@@ -54,8 +55,23 @@ impl<'a> ListenerMap for Program<'a> {
 
 impl<'a> ListenerMap for Statement<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
-        if let Self::ExpressionStatement(expr_stmt) = self {
-            expr_stmt.expression.report_effects(options);
+        match self {
+            Self::ExpressionStatement(expr_stmt) => {
+                expr_stmt.expression.report_effects(options);
+            }
+            Self::BreakStatement(_) | Self::ContinueStatement(_) | Self::EmptyStatement(_) => {
+                no_effects();
+            }
+            Self::ModuleDeclaration(decl) => {
+                if matches!(
+                    decl.0,
+                    ModuleDeclaration::ExportAllDeclaration(_)
+                        | ModuleDeclaration::ImportDeclaration(_)
+                ) {
+                    no_effects();
+                }
+            }
+            _ => {}
         }
     }
 }
@@ -87,12 +103,15 @@ impl<'a> ListenerMap for Expression<'a> {
                 assign_expr.left.report_effects_when_assigned(options);
                 assign_expr.right.report_effects(options);
             }
-            Self::Identifier(ident) => {
-                ident.report_effects(options);
-            }
             Self::CallExpression(call_expr) => {
                 call_expr.report_effects(options);
             }
+            Self::ArrowFunctionExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::Identifier(_)
+            | Self::MetaProperty(_)
+            | Self::Super(_)
+            | Self::ThisExpression(_) => no_effects(),
             _ => {}
         }
     }
@@ -102,6 +121,7 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::Identifier(ident) => {
                 ident.report_effects_when_mutated(options);
             }
+            Self::ArrowFunctionExpression(_) | Self::ObjectExpression(_) => no_effects(),
             _ => {
                 // Default behavior
                 options.ctx.diagnostic(NoSideEffectsDiagnostic::Mutation(self.span()));

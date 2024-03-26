@@ -19,3 +19,5 @@ pub fn get_write_expr<'a, 'b>(
         _ => None,
     }
 }
+
+pub fn no_effects() {}
