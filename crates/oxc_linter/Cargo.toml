@@ -52,6 +52,3 @@ json-strip-comments = "1.0.2"
 
 [dev-dependencies]
 insta = { workspace = true }
-
-[package.metadata.cargo-machete]
-ignored = ["once_cell"]
