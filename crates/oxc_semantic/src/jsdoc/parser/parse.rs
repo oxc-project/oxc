@@ -1,11 +1,10 @@
 use super::jsdoc_tag::JSDocTag;
 use super::utils;
 use oxc_span::Span;
-use std::collections::BTreeMap;
 
 /// source_text: Inside of /**HERE*/, NOT includes `/**` and `*/`
 /// span_start: Global positioned `Span` start for this JSDoc comment
-pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (String, BTreeMap<Span, JSDocTag>) {
+pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (String, Vec<(Span, JSDocTag)>) {
     debug_assert!(!source_text.starts_with("/*"));
     debug_assert!(!source_text.ends_with("*/"));
 
@@ -14,7 +13,7 @@ pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (String, BTreeMa
     // - Both can be optional
     // - Each tag is also separated by whitespace + `@`
     let mut comment = "";
-    let mut tags = BTreeMap::new();
+    let mut tags = vec![];
 
     // So, find `@` to split comment and each tag.
     // But `@` can be found inside of `{}` (e.g. `{@see link}`), it should be distinguished.
@@ -30,10 +29,10 @@ pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (String, BTreeMa
                 let part = &source_text[start..end];
 
                 if comment_found {
-                    tags.insert(
+                    tags.push((
                         get_tag_kind_span(part, (start, end), jsdoc_span_start),
                         parse_jsdoc_tag(part),
-                    );
+                    ));
                 } else {
                     comment = part;
                     comment_found = true;
@@ -53,10 +52,10 @@ pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (String, BTreeMa
         let part = &source_text[start..end];
 
         if comment_found {
-            tags.insert(
+            tags.push((
                 get_tag_kind_span(part, (start, end), jsdoc_span_start),
                 parse_jsdoc_tag(part),
-            );
+            ));
         } else {
             comment = part;
         }
@@ -130,7 +129,7 @@ mod test {
         // Outside of markers can be trimmed
         let source_text = full_text.trim().trim_start_matches("/**").trim_end_matches("*/");
         let (comment, tags) = super::parse_jsdoc(source_text, 0);
-        (comment, tags.values().cloned().collect())
+        (comment, tags.iter().map(|(_, t)| t).cloned().collect())
     }
 
     #[test]

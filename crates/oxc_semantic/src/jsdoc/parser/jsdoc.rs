@@ -2,13 +2,12 @@ use super::jsdoc_tag::JSDocTag;
 use super::parse::parse_jsdoc;
 use oxc_span::Span;
 use std::cell::OnceCell;
-use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
 pub struct JSDoc<'a> {
     raw: &'a str,
     /// Cached+parsed JSDoc comment and tags
-    cached: OnceCell<(String, BTreeMap<Span, JSDocTag<'a>>)>,
+    cached: OnceCell<(String, Vec<(Span, JSDocTag<'a>)>)>,
     pub span: Span,
 }
 
@@ -23,11 +22,11 @@ impl<'a> JSDoc<'a> {
         &self.parse().0
     }
 
-    pub fn tags(&self) -> &BTreeMap<Span, JSDocTag<'a>> {
+    pub fn tags(&self) -> &Vec<(Span, JSDocTag<'a>)> {
         &self.parse().1
     }
 
-    fn parse(&self) -> &(String, BTreeMap<Span, JSDocTag<'a>>) {
+    fn parse(&self) -> &(String, Vec<(Span, JSDocTag<'a>)>) {
         self.cached.get_or_init(|| parse_jsdoc(self.raw, self.span.start))
     }
 }
