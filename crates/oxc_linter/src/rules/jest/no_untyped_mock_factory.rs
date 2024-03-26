@@ -91,7 +91,7 @@ declare_oxc_lint!(
     /// ```
     ///
     NoUntypedMockFactory,
-    correctness,
+    style,
 );
 
 impl Rule for NoUntypedMockFactory {
