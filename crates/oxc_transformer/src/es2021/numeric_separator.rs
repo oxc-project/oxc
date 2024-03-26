@@ -1,10 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_span::Atom;
 
-use crate::{
-    context::TransformerCtx,
-    options::{TransformOptions, TransformTarget},
-};
+use crate::{context::TransformerCtx, options::TransformTarget};
 
 /// ES2021: Numeric Separator
 ///
@@ -17,8 +14,8 @@ pub struct NumericSeparator<'a> {
 impl<'a> NumericSeparator<'a> {
     #![allow(clippy::unused_self)]
 
-    pub fn new(ctx: TransformerCtx<'a>, options: &TransformOptions) -> Option<Self> {
-        (options.target < TransformTarget::ES2021 || options.numeric_separator)
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        (ctx.options.target < TransformTarget::ES2021 || ctx.options.numeric_separator)
             .then_some(Self { ctx })
     }
 

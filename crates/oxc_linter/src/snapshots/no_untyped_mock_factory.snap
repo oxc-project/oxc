@@ -1,0 +1,58 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 151
+expression: no_untyped_mock_factory
+---
+  ⚠ eslint-plugin-jest(no-untyped-mock-factory): Disallow using `jest.mock()` factories without an explicit type parameter.
+   ╭─[no_untyped_mock_factory.tsx:2:22]
+ 1 │ 
+ 2 │                 jest.mock('../moduleName', () => {
+   ·                      ────
+ 3 │                     return jest.fn(() => 42);
+   ╰────
+  help: Add a type parameter to the mock factory such as `typeof import("../moduleName")`
+
+  ⚠ eslint-plugin-jest(no-untyped-mock-factory): Disallow using `jest.mock()` factories without an explicit type parameter.
+   ╭─[no_untyped_mock_factory.tsx:2:22]
+ 1 │ 
+ 2 │                 jest.mock("./module", () => ({
+   ·                      ────
+ 3 │                     ...jest.requireActual('./module'),
+   ╰────
+  help: Add a type parameter to the mock factory such as `typeof import("./module")`
+
+  ⚠ eslint-plugin-jest(no-untyped-mock-factory): Disallow using `jest.mock()` factories without an explicit type parameter.
+   ╭─[no_untyped_mock_factory.tsx:2:22]
+ 1 │ 
+ 2 │                 jest.mock('random-num', () => {
+   ·                      ────
+ 3 │                     return jest.fn(() => 42);
+   ╰────
+  help: Add a type parameter to the mock factory such as `typeof import("random-num")`
+
+  ⚠ eslint-plugin-jest(no-untyped-mock-factory): Disallow using `jest.mock()` factories without an explicit type parameter.
+   ╭─[no_untyped_mock_factory.tsx:2:22]
+ 1 │ 
+ 2 │                 jest.doMock('random-num', () => {
+   ·                      ──────
+ 3 │                     return jest.fn(() => 42);
+   ╰────
+  help: Add a type parameter to the mock factory such as `typeof import("random-num")`
+
+  ⚠ eslint-plugin-jest(no-untyped-mock-factory): Disallow using `jest.mock()` factories without an explicit type parameter.
+   ╭─[no_untyped_mock_factory.tsx:2:22]
+ 1 │ 
+ 2 │                 jest['mock']('random-num', () => {
+   ·                      ──────
+ 3 │                     return jest.fn(() => 42);
+   ╰────
+  help: Add a type parameter to the mock factory such as `typeof import("random-num")`
+
+  ⚠ eslint-plugin-jest(no-untyped-mock-factory): Disallow using `jest.mock()` factories without an explicit type parameter.
+   ╭─[no_untyped_mock_factory.tsx:3:22]
+ 2 │                 const moduleToMock = 'random-num';
+ 3 │                 jest.mock(moduleToMock, () => {
+   ·                      ────
+ 4 │                     return jest.fn(() => 42);
+   ╰────
+  help: Add a type parameter to the mock factory such as `typeof import("moduleToMock")`

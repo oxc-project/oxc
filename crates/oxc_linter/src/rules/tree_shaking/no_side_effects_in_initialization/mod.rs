@@ -18,9 +18,13 @@ enum NoSideEffectsDiagnostic {
     #[diagnostic(severity(warning))]
     Assignment(CompactStr, #[label] Span),
 
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating")]
+    #[diagnostic(severity(warning))]
+    Mutation(#[label] Span),
+
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating `{0}`")]
     #[diagnostic(severity(warning))]
-    Mutation(CompactStr, #[label] Span),
+    MutationWithName(CompactStr, #[label] Span),
 
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function return value")]
     #[diagnostic(severity(warning))]
@@ -387,7 +391,7 @@ fn test() {
         // "(()=>{})(ext(), 1)",
         // "(()=>{})(1, ext())",
         // // CallExpression when called
-        // "const x = ()=>ext; const y = x(); y()",
+        "const x = ()=>ext; const y = x(); y()",
         // // CallExpression when mutated
         // "const x = ()=>ext; const y = x(); y.z = 1",
         // // CatchClause

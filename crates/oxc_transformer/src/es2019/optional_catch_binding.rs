@@ -2,11 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 
-use crate::{
-    context::TransformerCtx,
-    options::{TransformOptions, TransformTarget},
-    utils::CreateVars,
-};
+use crate::{context::TransformerCtx, options::TransformTarget, utils::CreateVars};
 
 /// ES2019: Optional Catch Binding
 ///
@@ -29,8 +25,8 @@ impl<'a> CreateVars<'a> for OptionalCatchBinding<'a> {
 }
 
 impl<'a> OptionalCatchBinding<'a> {
-    pub fn new(ctx: TransformerCtx<'a>, options: &TransformOptions) -> Option<Self> {
-        (options.target < TransformTarget::ES2019 || options.optional_catch_binding)
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        (ctx.options.target < TransformTarget::ES2019 || ctx.options.optional_catch_binding)
             .then_some(Self { vars: ctx.ast.new_vec(), ctx })
     }
 

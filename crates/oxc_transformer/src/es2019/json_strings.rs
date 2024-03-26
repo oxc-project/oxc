@@ -4,7 +4,7 @@ use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::Atom;
 use oxc_syntax::identifier::{LS, PS};
 
-use crate::options::{TransformOptions, TransformTarget};
+use crate::{context::TransformerCtx, options::TransformTarget};
 
 /// ES2019: Json Strings
 ///
@@ -16,8 +16,9 @@ pub struct JsonStrings<'a> {
 }
 
 impl<'a> JsonStrings<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
-        (options.target < TransformTarget::ES2019 || options.json_strings).then_some(Self { ast })
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        (ctx.options.target < TransformTarget::ES2019 || ctx.options.json_strings)
+            .then_some(Self { ast: ctx.ast })
     }
 
     // Allow `U+2028` and `U+2029` in string literals

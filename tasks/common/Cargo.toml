@@ -13,13 +13,13 @@ test    = false
 doctest = false
 
 [dependencies]
-console    = "0.15.8"
+console    = { workspace = true }
 oxc_syntax = { workspace = true, features = ["serialize"] }
 
 project-root = { workspace = true }
 serde        = { workspace = true, features = ["derive"] }
 serde_json   = { workspace = true }
-similar      = "2.4.0"
+similar      = { workspace = true }
 
-ureq = { workspace = true }
+ureq = { workspace = true, features = ["tls", "json"] }
 url  = { workspace = true }

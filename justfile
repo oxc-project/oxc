@@ -53,10 +53,6 @@ check:
 test:
   cargo test
 
-test-transform:
-  cargo run -p oxc_transform_conformance
-  cargo run -p oxc_transform_conformance -- --exec
-
 # Lint the whole project
 lint:
   cargo lint -- --deny warnings
@@ -75,6 +71,21 @@ codecov:
 # Run the benchmarks. See `tasks/benchmark`
 benchmark:
   cargo benchmark
+
+# Removed Unused Dependencies
+shear:
+  cargo binstall cargo-shear
+  cargo shear --fix
+
+# Automatically DRY up Cargo.toml manifests in a workspace.
+autoinherit:
+  cargo binstall cargo-autoinherit
+  cargo autoinherit
+
+# Test Transform
+test-transform:
+  cargo run -p oxc_transform_conformance
+  cargo run -p oxc_transform_conformance -- --exec
 
 # Generate the JavaScript global variables. See `tasks/javascript_globals`
 javascript-globals:
