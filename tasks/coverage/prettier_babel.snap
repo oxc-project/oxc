@@ -1,6 +1,6 @@
 prettier_babel Summary:
-AST Parsed     : 2096/2096 (100.00%)
-Positive Passed: 1891/2096 (90.22%)
+AST Parsed     : 2097/2097 (100.00%)
+Positive Passed: 1891/2097 (90.18%)
 Expect to Parse: "comments/attachComment-false/array-expression-trailing-comma/input.js"
 Expect to Parse: "comments/basic/array-expression-trailing-comma/input.js"
 Expect to Parse: "comments/basic/object-expression-trailing-comma/input.js"
@@ -161,6 +161,7 @@ Expect to Parse: "typescript/types/function-in-generic-babel-7/input.ts"
 Expect to Parse: "typescript/types/function-with-this/input.ts"
 Expect to Parse: "typescript/types/function-with-this-babel-7/input.ts"
 Expect to Parse: "typescript/types/import-type-dynamic/input.ts"
+Expect to Parse: "typescript/types/import-type-dynamic-with-options/input.ts"
 Expect to Parse: "typescript/types/infer-with-constraints/input.ts"
 Expect to Parse: "typescript/types/infer-with-constraints-and-conditional-types/input.ts"
 Expect to Parse: "typescript/types/infer-with-constraints-and-conditional-types-babel-7/input.ts"
