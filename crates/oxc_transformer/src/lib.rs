@@ -28,7 +28,16 @@ use std::{cell::RefCell, rc::Rc, sync::Arc};
 
 use es2015::TemplateLiterals;
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::*, visit_mut::walk_function_mut, AstBuilder, AstType, VisitMut};
+use oxc_ast::{
+    ast::*,
+    visit::walk_mut::{
+        walk_assignment_expression_mut, walk_catch_clause_mut, walk_class_body_mut,
+        walk_declaration_mut, walk_expression_mut, walk_function_mut, walk_method_definition_mut,
+        walk_object_expression_mut, walk_object_property_mut, walk_program_mut, walk_statement_mut,
+        walk_statements_mut, walk_variable_declarator_mut,
+    },
+    AstBuilder, VisitMut,
+};
 use oxc_diagnostics::Error;
 use oxc_semantic::{ScopeFlags, Semantic};
 use oxc_span::SourceType;
@@ -154,47 +163,22 @@ impl<'a> Transformer<'a> {
 
 impl<'a> VisitMut<'a> for Transformer<'a> {
     fn visit_program(&mut self, program: &mut Program<'a>) {
-        let kind = AstType::Program;
-        self.enter_scope({
-            let mut flags = ScopeFlags::Top;
-            if program.is_strict() {
-                flags |= ScopeFlags::StrictMode;
-            }
-            flags
-        });
-        self.enter_node(kind);
-
-        for directive in program.directives.iter_mut() {
-            self.visit_directive(directive);
-        }
-
+        walk_program_mut(self, program);
         self.typescript.as_mut().map(|t| t.transform_program(program));
-        self.visit_statements(&mut program.body);
-
         self.react_jsx.as_mut().map(|t| t.add_react_jsx_runtime_imports(program));
         self.decorators.as_mut().map(|t| t.transform_program(program));
-        self.leave_node(kind);
-        self.leave_scope();
     }
 
     fn visit_assignment_expression(&mut self, expr: &mut AssignmentExpression<'a>) {
-        let kind = AstType::AssignmentExpression;
-        self.enter_node(kind);
-
         self.es2015_function_name.as_mut().map(|t| t.transform_assignment_expression(expr));
-
-        self.visit_assignment_target(&mut expr.left);
-        self.visit_expression(&mut expr.right);
-
-        self.leave_node(kind);
+        walk_assignment_expression_mut(self, expr);
     }
 
     fn visit_statements(&mut self, stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>) {
         self.typescript.as_mut().map(|t| t.transform_statements(stmts));
 
-        for stmt in stmts.iter_mut() {
-            self.visit_statement(stmt);
-        }
+        walk_statements_mut(self, stmts);
+
         // TODO: we need scope id to insert the vars into the correct statements
         self.es2021_logical_assignment_operators.as_mut().map(|t| t.add_vars_to_statements(stmts));
         self.es2020_nullish_coalescing_operators.as_mut().map(|t| t.add_vars_to_statements(stmts));
@@ -205,11 +189,11 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
         self.typescript.as_mut().map(|t| t.transform_statement(stmt));
         self.decorators.as_mut().map(|t| t.transform_statement(stmt));
-        self.visit_statement_match(stmt);
+        walk_statement_mut(self, stmt);
     }
 
     fn visit_declaration(&mut self, decl: &mut Declaration<'a>) {
-        self.visit_declaration_match(decl);
+        walk_declaration_mut(self, decl);
         self.typescript.as_mut().map(|t| t.transform_declaration(decl));
         self.decorators.as_mut().map(|t| t.transform_declaration(decl));
     }
@@ -227,81 +211,47 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.es2015_template_literals.as_mut().map(|t| t.transform_expression(expr));
         self.es2015_new_target.as_mut().map(|t| t.transform_expression(expr));
 
-        self.visit_expression_match(expr);
+        walk_expression_mut(self, expr);
     }
 
     fn visit_catch_clause(&mut self, clause: &mut CatchClause<'a>) {
-        let kind = AstType::CatchClause;
-        self.enter_scope(ScopeFlags::empty());
-        self.enter_node(kind);
-
         self.es2019_optional_catch_binding.as_mut().map(|t| t.transform_catch_clause(clause));
-
-        if let Some(param) = &mut clause.param {
-            self.visit_binding_pattern(param);
-        }
-        self.visit_statements(&mut clause.body.body);
-        self.leave_node(kind);
-        self.leave_scope();
+        walk_catch_clause_mut(self, clause);
     }
 
     fn visit_object_expression(&mut self, expr: &mut ObjectExpression<'a>) {
-        let kind = AstType::ObjectExpression;
-        self.enter_node(kind);
         self.es2015_function_name.as_mut().map(|t| t.transform_object_expression(expr));
         self.es2015_duplicate_keys.as_mut().map(|t| t.transform_object_expression(expr));
-
-        for property in expr.properties.iter_mut() {
-            self.visit_object_property_kind(property);
-        }
-        self.leave_node(kind);
+        walk_object_expression_mut(self, expr);
     }
 
     fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
-        let kind = AstType::ObjectProperty;
-        self.enter_node(kind);
         self.es2015_new_target.as_mut().map(|t| t.enter_object_property(prop));
-
         self.es2015_shorthand_properties.as_mut().map(|t| t.transform_object_property(prop));
         self.es3_property_literal.as_mut().map(|t| t.transform_object_property(prop));
 
-        self.visit_property_key(&mut prop.key);
-        self.visit_expression(&mut prop.value);
-        if let Some(init) = &mut prop.init {
-            self.visit_expression(init);
-        }
+        walk_object_property_mut(self, prop);
 
         self.es2015_new_target.as_mut().map(|t| t.leave_object_property(prop));
-        self.leave_node(kind);
     }
 
-    fn visit_class_body(&mut self, class_body: &mut ClassBody<'a>) {
-        self.es2022_class_static_block.as_mut().map(|t| t.transform_class_body(class_body));
+    fn visit_class_body(&mut self, body: &mut ClassBody<'a>) {
+        self.es2022_class_static_block.as_mut().map(|t| t.transform_class_body(body));
 
-        class_body.body.iter_mut().for_each(|class_element| {
-            self.visit_class_element(class_element);
-        });
+        walk_class_body_mut(self, body);
     }
 
     fn visit_variable_declarator(&mut self, declarator: &mut VariableDeclarator<'a>) {
-        let kind = AstType::VariableDeclarator;
-        self.enter_node(kind);
-
         self.es2015_function_name.as_mut().map(|t| t.transform_variable_declarator(declarator));
-
-        self.visit_binding_pattern(&mut declarator.id);
-
-        if let Some(init) = &mut declarator.init {
-            self.visit_expression(init);
-        }
-
-        self.leave_node(kind);
+        walk_variable_declarator_mut(self, declarator);
     }
 
     fn visit_directive(&mut self, directive: &mut Directive<'a>) {
         self.es2019_json_strings
             .as_mut()
             .map(|t: &mut JsonStrings| t.transform_directive(directive));
+        // TODO: we didn't walk this through, but maybe we should?
+        // walk_directive_mut(self, directive);
     }
 
     fn visit_number_literal(&mut self, lit: &mut NumericLiteral<'a>) {
@@ -316,26 +266,12 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     }
 
     fn visit_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
-        let kind = AstType::MethodDefinition;
-        self.enter_node(kind);
         self.es2015_new_target.as_mut().map(|t| t.enter_method_definition(def));
-
         self.typescript.as_mut().map(|t| t.transform_method_definition(def));
 
-        for decorator in def.decorators.iter_mut() {
-            self.visit_decorator(decorator);
-        }
+        walk_method_definition_mut(self, def);
 
-        let flags = match def.kind {
-            MethodDefinitionKind::Get => ScopeFlags::GetAccessor,
-            MethodDefinitionKind::Set => ScopeFlags::SetAccessor,
-            MethodDefinitionKind::Constructor => ScopeFlags::Constructor,
-            MethodDefinitionKind::Method => ScopeFlags::empty(),
-        };
-        self.visit_property_key(&mut def.key);
-        self.visit_function(&mut def.value, Some(flags));
         self.es2015_new_target.as_mut().map(|t| t.leave_method_definition(def));
-        self.leave_node(kind);
     }
 
     fn visit_function(&mut self, func: &mut Function<'a>, flags: Option<ScopeFlags>) {

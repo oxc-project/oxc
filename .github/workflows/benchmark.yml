@@ -49,10 +49,7 @@ jobs:
             fixture: 4
     steps:
       - name: Checkout Branch
-        uses: actions/checkout@v4
-        with:
-          show-progress: false
-          persist-credentials: false
+        uses: taiki-e/checkout-action@v1
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
@@ -115,7 +112,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Branch
-        uses: actions/checkout@v4
+        uses: taiki-e/checkout-action@v1
         with:
           show-progress: false
           persist-credentials: false
@@ -195,7 +192,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Branch
-        uses: actions/checkout@v4
+        uses: taiki-e/checkout-action@v1
         with:
           show-progress: false
           persist-credentials: false
