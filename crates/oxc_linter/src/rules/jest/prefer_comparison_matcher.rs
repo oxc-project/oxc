@@ -48,7 +48,8 @@ declare_oxc_lint!(
     /// expect(x <= y).toStrictEqual(true);
     /// ```
     ///
-    /// ```js /// // valid
+    /// ```js ///
+    /// // valid
     /// expect(x).toBeGreaterThan(5);
     /// expect(x).not.toBeLessThanOrEqual(7);
     /// expect(x).toBeLessThanOrEqual(y);
@@ -98,19 +99,14 @@ impl PreferComparisonMatcher {
             return;
         };
 
-        if Self::is_comparing_to_string(binary_expr)
-            || !is_equality_matcher(matcher)
-            || !matches!(first_matcher_arg.get_inner_expression(), Expression::BooleanLiteral(_))
-        {
+        if Self::is_comparing_to_string(binary_expr) || !is_equality_matcher(matcher) {
             return;
         }
 
         let has_not_modifier = parse_expect_jest_fn
             .modifiers()
             .iter()
-            .filter(|modifier| modifier.is_name_equal("not"))
-            .count()
-            > 0;
+            .any(|modifier| modifier.is_name_equal("not"));
         let Expression::BooleanLiteral(matcher_arg_value) =
             first_matcher_arg.get_inner_expression()
         else {
@@ -123,6 +119,11 @@ impl PreferComparisonMatcher {
         };
 
         ctx.diagnostic_with_fix(UseToBeComparison(prefer_matcher_name, matcher.span), || {
+            // This is to handle the case can be transform into the following case:
+            // expect(value > 1,).toEqual(true,) => expect(value,).toBeGreaterThan(1,)
+            //                 ^              ^
+            // Therefore the range starting after ',' and before '.' is called as call_span_end,
+            // and the same as `arg_span_end`.
             let call_span_end = Span::new(binary_expr.span.end, parent_call_expr.span.end)
                 .source_text(ctx.source_text());
             let arg_span_end = Span::new(matcher_arg_value.span.end, call_expr.span.end)
