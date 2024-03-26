@@ -150,18 +150,17 @@ fn create_new_var<'a, V: CreateVars<'a> + ?Sized>(
     create_vars: &mut V,
     name: CompactStr,
 ) -> IdentifierReference<'a> {
-    create_vars.ctx().add_binding(name.clone());
-
     // Add `var name` to scope
     // TODO: hookup symbol id
-    let name = create_vars.ctx().ast.new_atom(name.as_str());
-    let binding_identifier = BindingIdentifier::new(Span::default(), name.clone());
+    let atom = create_vars.ctx().ast.new_atom(name.as_str());
+    let binding_identifier = BindingIdentifier::new(Span::default(), atom.clone());
     let binding_pattern_kind = create_vars.ctx().ast.binding_pattern_identifier(binding_identifier);
     let binding = create_vars.ctx().ast.binding_pattern(binding_pattern_kind, None, false);
     let kind = VariableDeclarationKind::Var;
     let decl =
         create_vars.ctx().ast.variable_declarator(Span::default(), kind, binding, None, false);
+    create_vars.ctx().add_binding(name);
     create_vars.vars_mut().push(decl);
     // TODO: add reference id and flag
-    IdentifierReference::new(Span::default(), name)
+    IdentifierReference::new(Span::default(), atom)
 }
