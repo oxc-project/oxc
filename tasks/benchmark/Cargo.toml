@@ -78,16 +78,16 @@ serde_json = { workspace = true, optional = true }
 
 [features]
 default = [
-    "dep:oxc_allocator",
-    "dep:oxc_linter",
-    "dep:oxc_minifier",
-    "dep:oxc_parser",
-    "dep:oxc_prettier",
-    "dep:oxc_semantic",
-    "dep:oxc_span",
-    "dep:oxc_tasks_common",
-    "dep:oxc_transformer",
-    "dep:oxc_codegen",
+  "dep:oxc_allocator",
+  "dep:oxc_linter",
+  "dep:oxc_minifier",
+  "dep:oxc_parser",
+  "dep:oxc_prettier",
+  "dep:oxc_semantic",
+  "dep:oxc_span",
+  "dep:oxc_tasks_common",
+  "dep:oxc_transformer",
+  "dep:oxc_codegen",
 ]
 codspeed = ["criterion/codspeed"]
 codspeed_napi = ["criterion/codspeed", "dep:serde", "dep:serde_json"]
