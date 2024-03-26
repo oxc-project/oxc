@@ -82,9 +82,11 @@ fn get_tag_kind_span(
     (tag_offset_start, _): (usize, usize),
     jsdoc_span_start: u32,
 ) -> Span {
+    debug_assert!(tag_content.starts_with('@'));
+    // This surely exists, at least `@` itself
     let (k_start, k_end) = utils::find_token_range(tag_content).unwrap();
-    let k_len = k_end - k_start;
 
+    let k_len = k_end - k_start;
     let (start, end) = (
         u32::try_from(tag_offset_start + k_start).unwrap_or_default(),
         u32::try_from(tag_offset_start + k_start + k_len).unwrap_or_default(),
@@ -96,13 +98,13 @@ fn get_tag_kind_span(
 /// tag_content: Starts with `@`, may be mulitline
 fn parse_jsdoc_tag(tag_content: &str) -> JSDocTag {
     debug_assert!(tag_content.starts_with('@'));
-
     // This surely exists, at least `@` itself
     let (k_start, k_end) = utils::find_token_range(tag_content).unwrap();
 
     JSDocTag::new(
         // Omit the first `@`
         &tag_content[k_start + 1..k_end],
+        // Includes splitter whitespace to distinguish these cases:
         // ```
         // /**
         //  * @k * <- should not omit
@@ -113,9 +115,9 @@ fn parse_jsdoc_tag(tag_content: &str) -> JSDocTag {
         //  * <- should omit
         //  */
         // ```
-        // Includes splitter whitespace is needed to distinguish these cases.
         // If not included, both body_part will starts with `* <- ...`!
-        // It will be trimmed later.
+        //
+        // It does not affect the output since it will be trimmed later.
         &tag_content[k_end..],
     )
 }
