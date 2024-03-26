@@ -31,12 +31,12 @@ rustc-hash       = { workspace = true }
 num-bigint       = { workspace = true }
 seq-macro        = { workspace = true }
 
-memchr = "2.7.1"
+memchr = { workspace = true }
 
 [dev-dependencies]
 oxc_ast    = { workspace = true, features = ["serialize"] }
 serde_json = { workspace = true }
-ouroboros  = "0.18.3"                                       # for `multi-thread` example
+ouroboros  = { workspace = true }                           # for `multi-thread` example
 
 [features]
 # Expose Lexer for benchmarks

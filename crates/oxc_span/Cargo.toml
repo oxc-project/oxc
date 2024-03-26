@@ -20,7 +20,7 @@ doctest = false
 
 [dependencies]
 miette      = { workspace = true }
-compact_str = { version = "0.7.1" }
+compact_str = { workspace = true }
 
 tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }

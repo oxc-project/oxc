@@ -23,10 +23,10 @@ oxc_ast       = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_syntax    = { workspace = true }
-sourcemap     = { version = "8.0.0" }
+sourcemap     = { workspace = true }
 bitflags      = { workspace = true }
 rustc-hash    = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }
-base64     = "0.22.0"
+base64     = { workspace = true }
