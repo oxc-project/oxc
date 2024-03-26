@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: taiki-e/checkout-action@v1
 
       - name: Check Links
         uses: lycheeverse/lychee-action@master
