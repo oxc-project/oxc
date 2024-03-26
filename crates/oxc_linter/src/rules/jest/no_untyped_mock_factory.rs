@@ -14,7 +14,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jest(no-untyped-mock-factory): Disallow using `jest.mock()` factories without an explicit type parameter.")]
@@ -22,7 +22,7 @@ use oxc_span::Span;
     severity(warning),
     help("Add a type parameter to the mock factory such as `typeof import({0:?})`")
 )]
-struct AddTypeParameterToModuleMockDiagnostic(String, #[label] pub Span);
+struct AddTypeParameterToModuleMockDiagnostic(CompactStr, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUntypedMockFactory;
@@ -96,6 +96,10 @@ declare_oxc_lint!(
 
 impl Rule for NoUntypedMockFactory {
     fn run_once(&self, ctx: &LintContext<'_>) {
+        if !ctx.source_type().is_typescript() {
+            return;
+        }
+
         for possible_jest_node in &collect_possible_jest_call_node(ctx) {
             Self::run(possible_jest_node, ctx);
         }
@@ -138,7 +142,7 @@ impl NoUntypedMockFactory {
         if let Expression::StringLiteral(string_literal) = expr {
             ctx.diagnostic_with_fix(
                 AddTypeParameterToModuleMockDiagnostic(
-                    string_literal.value.to_string(),
+                    string_literal.value.to_compact_str(),
                     property_span,
                 ),
                 || {
@@ -155,7 +159,7 @@ impl NoUntypedMockFactory {
             );
         } else if let Expression::Identifier(ident) = expr {
             ctx.diagnostic(AddTypeParameterToModuleMockDiagnostic(
-                ident.name.to_string(),
+                ident.name.to_compact_str(),
                 property_span,
             ));
         }
