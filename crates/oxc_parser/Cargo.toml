@@ -35,7 +35,6 @@ memchr = "2.7.1"
 
 [dev-dependencies]
 oxc_ast    = { workspace = true, features = ["serialize"] }
-miette     = { workspace = true }
 serde_json = { workspace = true }
 ouroboros  = "0.18.3"                                       # for `multi-thread` example
 

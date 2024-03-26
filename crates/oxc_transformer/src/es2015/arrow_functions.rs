@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use oxc_allocator::Vec;
+use oxc_ast::visit::walk_mut::walk_jsx_identifier_mut;
 use oxc_ast::{ast::*, AstBuilder, AstType, VisitMut};
 use oxc_span::{Atom, SPAN};
 use serde::Deserialize;
@@ -53,6 +54,8 @@ impl<'a> VisitMut<'a> for ArrowFunctions<'a> {
             }
             *ident = self.ast.jsx_identifier(SPAN, self.get_this_name());
         }
+
+        walk_jsx_identifier_mut(self, ident);
     }
 }
 

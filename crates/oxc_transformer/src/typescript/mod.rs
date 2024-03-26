@@ -22,16 +22,14 @@ use crate::{context::TransformerCtx, utils::is_valid_identifier};
 /// * <https://www.typescriptlang.org/tsconfig#verbatimModuleSyntax>
 pub struct TypeScript<'a> {
     ctx: TransformerCtx<'a>,
-    verbatim_module_syntax: bool,
     export_name_set: FxHashSet<Atom<'a>>,
     options: TypescriptOptions,
     namespace_arg_names: FxHashMap<Atom<'a>, usize>,
 }
 
 impl<'a> TypeScript<'a> {
-    pub fn new(ctx: TransformerCtx<'a>, verbatim_module_syntax: bool) -> Self {
+    pub fn new(ctx: TransformerCtx<'a>) -> Self {
         Self {
-            verbatim_module_syntax,
             export_name_set: FxHashSet::default(),
             options: ctx.options.typescript.clone().unwrap_or_default(),
             namespace_arg_names: FxHashMap::default(),
@@ -133,7 +131,6 @@ impl<'a> TypeScript<'a> {
                         });
 
                         if decl.export_kind.is_type()
-                            || self.verbatim_module_syntax
                             || ((decl.declaration.is_none()
                                 || decl.declaration.as_ref().is_some_and(|d| {
                                     d.modifiers().is_some_and(|modifiers| {
@@ -163,9 +160,7 @@ impl<'a> TypeScript<'a> {
                                         return false;
                                     }
 
-                                    if self.verbatim_module_syntax
-                                        || self.options.only_remove_type_imports
-                                    {
+                                    if self.options.only_remove_type_imports {
                                         return true;
                                     }
 
@@ -175,9 +170,7 @@ impl<'a> TypeScript<'a> {
 
                                     self.has_value_references(&s.local.name)
                                 }
-                                ImportDeclarationSpecifier::ImportDefaultSpecifier(s)
-                                    if !self.verbatim_module_syntax =>
-                                {
+                                ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
                                     if is_type {
                                         import_type_names.insert(s.local.name.clone());
                                         return false;
@@ -188,9 +181,7 @@ impl<'a> TypeScript<'a> {
                                     }
                                     self.has_value_references(&s.local.name)
                                 }
-                                ImportDeclarationSpecifier::ImportNamespaceSpecifier(s)
-                                    if !self.verbatim_module_syntax =>
-                                {
+                                ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
                                     if is_type {
                                         import_type_names.insert(s.local.name.clone());
                                     }
@@ -201,7 +192,6 @@ impl<'a> TypeScript<'a> {
 
                                     self.has_value_references(&s.local.name)
                                 }
-                                _ => true,
                             });
                         }
 
