@@ -1,0 +1,12 @@
+[workspace]
+semver_check = false
+changelog_update = false # disable the changelog for all packages
+git_release_enable = false # Disable git releases for all packages by default
+git_tag_enable = false # Disable git tags for all packages by default
+
+[[package]]
+name = "oxc"
+changelog_update = true # enable the changelog for this package
+changelog_path = "./CHANGELOG.md"
+git_tag_enable = true # Enable git tags for this package
+git_release_enable = true # Enable git releases for this package

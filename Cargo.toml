@@ -139,6 +139,9 @@ wasm-bindgen       = { version = "0.2" }
 serde-wasm-bindgen = { version = "0.6.5" }
 handlebars         = { version = "5.1.2" }
 
+[profile.dev]
+debug = 1 # "limited" debug, speed up compilation; debug info without type or variable-level information.
+
 [profile.release.package.oxc_wasm]
 opt-level = 'z'
 

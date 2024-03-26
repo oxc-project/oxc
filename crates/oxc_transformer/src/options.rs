@@ -18,6 +18,7 @@ pub struct TransformOptions {
     pub class_static_block: bool,
     // es2021
     pub logical_assignment_operators: bool,
+    pub numeric_separator: bool,
     // es2020
     pub nullish_coalescing_operator: Option<NullishCoalescingOperatorOptions>,
     // es2019
@@ -30,6 +31,7 @@ pub struct TransformOptions {
     pub function_name: bool,
     pub arrow_functions: Option<ArrowFunctionsOptions>,
     pub shorthand_properties: bool,
+    pub literals: bool,
     pub sticky_regex: bool,
     pub template_literals: bool,
     pub property_literals: bool,

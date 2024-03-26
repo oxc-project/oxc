@@ -2,7 +2,7 @@
 //!
 //! * <https://github.com/guybedford/es-module-lexer>
 
-use oxc_ast::walk::{
+use oxc_ast::visit::walk::{
     walk_export_all_declaration, walk_export_named_declaration, walk_import_declaration,
     walk_import_expression, walk_meta_property, walk_module_declaration, walk_statement,
 };

@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: taiki-e/checkout-action@v1
 
       - name: Clone submodules
         uses: ./.github/actions/clone-submodules
@@ -57,7 +57,7 @@ jobs:
     steps:
       - name: Checkout
         if: env.CODECOV_TOKEN
-        uses: actions/checkout@v4
+        uses: taiki-e/checkout-action@v1
 
       - name: Download coverage file
         if: env.CODECOV_TOKEN
