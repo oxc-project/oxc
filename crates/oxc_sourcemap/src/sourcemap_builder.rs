@@ -100,13 +100,16 @@ impl SourceMapBuilder {
                 Some(vec![TokenChunk::new(0, sourcemap.tokens.len() as u32, 0, 0, 0, 0, 0, 0)]);
         }
 
+        self.sources.reserve(sourcemap.sources.len());
         for (index, source) in sourcemap.get_sources().enumerate() {
             let source_content = sourcemap.get_source_content(index as u32).unwrap_or_default();
             self.set_source_and_content(source, source_content);
         }
 
+        self.tokens.reserve(sourcemap.names.len());
         self.names.extend(sourcemap.get_names().map(Into::into));
 
+        self.tokens.reserve(sourcemap.tokens.len());
         self.tokens.extend(sourcemap.get_tokens().map(|token| {
             Token::new(
                 token.get_dst_line() + line_offset,
