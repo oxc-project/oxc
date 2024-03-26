@@ -13,6 +13,70 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, Up
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
+trait SpanExt {
+    fn contains(&self, other: Self) -> bool;
+}
+
+impl SpanExt for Span {
+    fn contains(&self, other: Self) -> bool {
+        self.start <= other.start && self.end >= other.end
+    }
+}
+
+trait ExpressionExt {
+    fn is_increment_of(&self, var_name: &Atom) -> bool;
+}
+
+impl<'a> ExpressionExt for Expression<'a> {
+    fn is_increment_of(&self, var_name: &Atom) -> bool {
+        match self {
+            Expression::UpdateExpression(expr) => match (&expr.argument, &expr.operator) {
+                (
+                    SimpleAssignmentTarget::AssignmentTargetIdentifier(id),
+                    UpdateOperator::Increment,
+                ) => id.name == var_name,
+                _ => false,
+            },
+            Expression::AssignmentExpression(expr) => {
+                if !matches!(&expr.left,
+                    AssignmentTarget::SimpleAssignmentTarget(
+                        SimpleAssignmentTarget::AssignmentTargetIdentifier(id)
+                    )
+                    if id.name == var_name
+                ) {
+                    return false;
+                }
+
+                match expr.operator {
+                    AssignmentOperator::Addition => {
+                        matches!(&expr.right, Expression::NumericLiteral(lit)
+                            if (lit.value - 1f64).abs() < f64::EPSILON)
+                    }
+                    AssignmentOperator::Assign => {
+                        let Expression::BinaryExpression(bin_expr) = &expr.right else {
+                            return false;
+                        };
+
+                        if bin_expr.operator != BinaryOperator::Addition {
+                            return false;
+                        }
+
+                        match (&bin_expr.left, &bin_expr.right) {
+                            (Expression::Identifier(id), Expression::NumericLiteral(lit))
+                            | (Expression::NumericLiteral(lit), Expression::Identifier(id)) => {
+                                id.name == var_name && (lit.value - 1f64).abs() < f64::EPSILON
+                            }
+                            _ => false,
+                        }
+                    }
+                    _ => false,
+                }
+            }
+            _ => false,
+        }
+    }
+}
+
 #[derive(Debug, Error, Diagnostic)]
 #[error("typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.")]
 #[diagnostic(severity(warning), help("Consider using a for-of loop for this simple iteration."))]
@@ -43,57 +107,6 @@ fn is_assignee(node: &AstNode) -> bool {
         AstKind::UnaryExpression(unary_expr) => unary_expr.operator == UnaryOperator::Delete,
         _ => false,
     }
-}
-
-fn is_increment_of(update: &Expression, var_name: &Atom) -> bool {
-    match update {
-        Expression::UpdateExpression(expr) => match (&expr.argument, &expr.operator) {
-            (SimpleAssignmentTarget::AssignmentTargetIdentifier(id), UpdateOperator::Increment) => {
-                id.name == var_name
-            }
-            _ => false,
-        },
-        Expression::AssignmentExpression(expr) => {
-            if !matches!(&expr.left,
-                AssignmentTarget::SimpleAssignmentTarget(
-                    SimpleAssignmentTarget::AssignmentTargetIdentifier(id)
-                )
-                if id.name == var_name
-            ) {
-                return false;
-            }
-
-            match expr.operator {
-                AssignmentOperator::Addition => {
-                    matches!(&expr.right, Expression::NumericLiteral(lit)
-                        if (lit.value - 1f64).abs() < f64::EPSILON)
-                }
-                AssignmentOperator::Assign => {
-                    let Expression::BinaryExpression(bin_expr) = &expr.right else {
-                        return false;
-                    };
-
-                    if bin_expr.operator != BinaryOperator::Addition {
-                        return false;
-                    }
-
-                    match (&bin_expr.left, &bin_expr.right) {
-                        (Expression::Identifier(id), Expression::NumericLiteral(lit))
-                        | (Expression::NumericLiteral(lit), Expression::Identifier(id)) => {
-                            id.name == var_name && (lit.value - 1f64).abs() < f64::EPSILON
-                        }
-                        _ => false,
-                    }
-                }
-                _ => false,
-            }
-        }
-        _ => false,
-    }
-}
-
-fn contains(parent: Span, child: Span) -> bool {
-    parent.start <= child.start && parent.end >= child.end
 }
 
 impl Rule for PreferForOf {
@@ -149,37 +162,37 @@ impl Rule for PreferForOf {
         };
 
         let Some(update_expr) = &for_stmt.update else { return };
-        if !is_increment_of(update_expr, var_name) {
+        if !update_expr.is_increment_of(var_name) {
             return;
         }
-
-        let Some(index_symbol_id) = var_symbol_id else { return };
 
         let nodes = ctx.nodes();
         let test_and_update_span = test_expr.span.merge(&update_expr.span());
         let body_span = for_stmt.body.span();
 
-        if ctx.semantic().symbol_references(index_symbol_id).any(|reference| {
+        let Some(var_symbol_id) = var_symbol_id else { return };
+        if ctx.semantic().symbol_references(var_symbol_id).any(|reference| {
             let ref_id = reference.node_id();
 
             let symbol_span = nodes.get_node(ref_id).kind().span();
-            if contains(test_and_update_span, symbol_span) || !contains(body_span, symbol_span) {
+            if test_and_update_span.contains(symbol_span) || !body_span.contains(symbol_span) {
                 return false;
             }
 
             let Some(ref_parent) = nodes.parent_node(ref_id) else { return true };
-            let Some(ref_parent_parent) = nodes.parent_node(ref_parent.id()) else { return true };
-            if is_assignee(ref_parent_parent) {
+            if matches!(nodes.parent_node(ref_parent.id()), Some(ref_grand_parent)
+                if is_assignee(ref_grand_parent))
+            {
                 return true;
             }
 
             let parent_kind = ref_parent.kind();
             let AstKind::MemberExpression(mem_expr) = parent_kind else { return true };
-            let MemberExpression::ComputedMemberExpression(cm_expr) = &mem_expr else {
+            let MemberExpression::ComputedMemberExpression(com_mem_expr) = &mem_expr else {
                 return true;
             };
 
-            match &cm_expr.object {
+            match &com_mem_expr.object {
                 Expression::Identifier(id) => id.name.as_str() != array_name,
                 Expression::MemberExpression(mem_expr) => {
                     matches!(&**mem_expr,
