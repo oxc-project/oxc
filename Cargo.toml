@@ -161,7 +161,6 @@ petgraph            = "0.6.4"
 rust-lapper         = "1.1.0"
 serde_yaml          = "0.9.34"
 similar             = "2.4.0"
-sourcemap           = "8.0.0"
 textwrap            = "0.16.0"
 unicode-width       = "0.1.11"
 
