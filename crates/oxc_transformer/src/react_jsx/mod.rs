@@ -52,6 +52,7 @@ pub struct ReactJsx<'a> {
     imports: Vec<'a, Statement<'a>>,
     import_jsx: bool,
     import_jsxs: bool,
+    import_jsx_dev: bool,
     import_fragment: bool,
     import_create_element: bool,
     require_jsx_runtime: bool,
@@ -117,14 +118,17 @@ impl<'a> ReactJsx<'a> {
         let default_runtime = Self::normalize_default_runtime(
             jsx_options.runtime.as_ref(),
             ctx.options.babel_8_breaking,
+            jsx_options.development,
             &ctx,
         )?;
 
+        let jsx_runtime =
+            if jsx_options.development == Some(true) { "jsx-dev-runtime" } else { "jsx-runtime" };
         let jsx_runtime_importer =
             if jsx_options.import_source == "react" || default_runtime.is_classic() {
-                CompactStr::from("react/jsx-runtime")
+                CompactStr::from(format!("react/{}", jsx_runtime))
             } else {
-                CompactStr::from(format!("{}/jsx-runtime", jsx_options.import_source))
+                CompactStr::from(format!("{}/{}", jsx_options.import_source, jsx_runtime))
             };
         Some(Self {
             options: jsx_options,
@@ -133,6 +137,7 @@ impl<'a> ReactJsx<'a> {
             require_jsx_runtime: false,
             import_jsx: false,
             import_jsxs: false,
+            import_jsx_dev: false,
             import_fragment: false,
             import_create_element: false,
             babel_8_breaking: ctx.options.babel_8_breaking,
@@ -144,16 +149,20 @@ impl<'a> ReactJsx<'a> {
     fn normalize_default_runtime(
         runtime: Option<&ReactJsxRuntimeOption>,
         babel_8_breaking: Option<bool>,
+        development: Option<bool>,
         ctx: &TransformerCtx<'a>,
     ) -> Option<ReactJsxRuntime> {
         match runtime {
             Some(ReactJsxRuntimeOption::Valid(runtime)) => Some(*runtime),
             None => {
-                // TODO: development mode https://github.com/babel/babel/blob/ff3481746a830e0e94626de4c4cb075ea5f2f5dc/packages/babel-plugin-transform-react-jsx/src/create-plugin.ts#L77-L81
                 if babel_8_breaking == Some(true) {
                     Some(ReactJsxRuntime::Automatic)
                 } else {
-                    Some(ReactJsxRuntime::Classic)
+                    if development == Some(true) {
+                        Some(ReactJsxRuntime::Automatic)
+                    } else {
+                        Some(ReactJsxRuntime::Classic)
+                    }
                 }
             }
             Some(_) => {
@@ -243,23 +252,32 @@ impl<'a> ReactJsx<'a> {
     fn add_import_jsx(&mut self) {
         if self.ctx.source_type().is_script() {
             self.add_require_jsx_runtime();
-        } else if !self.import_jsx {
+        } else if !self.import_jsx && !self.import_jsx_dev {
             self.import_jsx = true;
-            self.add_import_statement(
-                "jsx",
-                "_jsx",
-                self.new_string_literal(self.jsx_runtime_importer.as_str()),
-            );
+            let jsx = if self.options.development == Some(true) {
+                self.import_jsx_dev = true;
+                "jsxDEV"
+            } else {
+                "jsx"
+            };
+            let source = self.new_string_literal(self.jsx_runtime_importer.as_str());
+            self.add_import_statement(jsx, &format!("_{}", jsx), source);
         }
     }
 
     fn add_import_jsxs(&mut self) {
         if self.ctx.source_type().is_script() {
             self.add_require_jsx_runtime();
-        } else if !self.import_jsxs {
+        } else if !self.import_jsxs && !self.import_jsx_dev {
             self.import_jsxs = true;
+            let jsxs = if self.options.development == Some(true) {
+                self.import_jsx_dev = true;
+                "jsxDEV"
+            } else {
+                "jsxs"
+            };
             let source = self.new_string_literal(self.jsx_runtime_importer.as_str());
-            self.add_import_statement("jsxs", "_jsxs", source);
+            self.add_import_statement(jsxs, &format!("_{}", jsxs), source);
         }
     }
 
@@ -478,6 +496,13 @@ impl<'a> ReactJsx<'a> {
             );
         }
 
+        if is_automatic && self.options.development == Some(true) {
+            arguments.push(Argument::Expression(self.ctx.ast.void_0()));
+            arguments.push(Argument::Expression(
+                self.ctx.ast.literal_boolean_expression(self.ctx.ast.boolean_literal(SPAN, need_jsxs)),
+            ));
+        }
+
         let callee = self.get_create_element(has_key_after_props_spread, need_jsxs);
         self.ctx.ast.call_expression(SPAN, callee, arguments, false, None)
     }
@@ -530,19 +555,25 @@ impl<'a> ReactJsx<'a> {
             ReactJsxRuntime::Automatic => {
                 let is_script = self.ctx.source_type().is_script();
                 let name = if is_script {
-                    if has_key_after_props_spread {
+                    if self.options.development == Some(true) {
+                        "jsxDEV"
+                    } else if has_key_after_props_spread {
                         "createElement"
                     } else if jsxs {
                         "jsxs"
                     } else {
                         "jsx"
                     }
-                } else if has_key_after_props_spread {
-                    "_createElement"
-                } else if jsxs {
-                    "_jsxs"
                 } else {
-                    "_jsx"
+                    if self.options.development == Some(true) {
+                        "_jsxDEV"
+                    } else if has_key_after_props_spread {
+                        "_createElement"
+                    } else if jsxs {
+                        "_jsxs"
+                    } else {
+                        "_jsx"
+                    }
                 };
 
                 if is_script {
