@@ -1,9 +1,6 @@
-Passed: 0/1
+Passed: 1/1
 
 # All Passed:
+* babel-plugin-transform-optional-catch-binding
 
-
-
-# babel-plugin-transform-optional-catch-binding (0/1)
-* try-catch-shadow/input.js
 
