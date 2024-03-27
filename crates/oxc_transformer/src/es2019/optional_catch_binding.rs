@@ -3,7 +3,7 @@ use std::rc::Rc;
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::SPAN;
 
-use crate::options::{TransformOptions, TransformTarget};
+use crate::{context::TransformerCtx, options::TransformTarget};
 
 /// ES2019: Optional Catch Binding
 ///
@@ -15,9 +15,9 @@ pub struct OptionalCatchBinding<'a> {
 }
 
 impl<'a> OptionalCatchBinding<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
-        (options.target < TransformTarget::ES2019 || options.optional_catch_binding)
-            .then_some(Self { ast })
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        (ctx.options.target < TransformTarget::ES2019 || ctx.options.optional_catch_binding)
+            .then_some(Self { ast: ctx.ast })
     }
 
     pub fn transform_catch_clause<'b>(&mut self, clause: &'b mut CatchClause<'a>) {

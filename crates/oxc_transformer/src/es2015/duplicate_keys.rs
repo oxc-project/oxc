@@ -5,7 +5,7 @@ use std::{collections::HashSet, rc::Rc};
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{CompactStr, SPAN};
 
-use crate::options::{TransformOptions, TransformTarget};
+use crate::{context::TransformerCtx, options::TransformTarget};
 
 /// ES2015: Duplicate Keys
 ///
@@ -17,8 +17,9 @@ pub struct DuplicateKeys<'a> {
 }
 
 impl<'a> DuplicateKeys<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
-        (options.target < TransformTarget::ES2015 || options.duplicate_keys).then_some(Self { ast })
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        (ctx.options.target < TransformTarget::ES2015 || ctx.options.duplicate_keys)
+            .then_some(Self { ast: ctx.ast })
     }
 
     pub fn transform_object_expression<'b>(&mut self, obj_expr: &'b mut ObjectExpression<'a>) {

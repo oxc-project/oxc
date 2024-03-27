@@ -30,14 +30,11 @@ oxc_module_lexer = { path = "../../crates/oxc_module_lexer" }
 
 serde       = { workspace = true }
 serde_json  = { workspace = true }
-flexbuffers = { version = "2.0.0" }
+flexbuffers = { workspace = true }
 
 tokio       = { workspace = true }
 napi        = { workspace = true, features = ["serde-json", "async"] }
 napi-derive = { workspace = true }
 
 [build-dependencies]
-napi-build = "2"
-
-[package.metadata.cargo-machete]
-ignored = ["napi_build"]
+napi-build = { workspace = true }

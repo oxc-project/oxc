@@ -21,6 +21,6 @@ doctest = false
 thiserror = { workspace = true }
 miette    = { workspace = true }
 
-unicode-width = "0.1.11"
-owo-colors    = { version = "4.0.0" }
-textwrap      = { version = "0.16.0" }
+unicode-width = { workspace = true }
+owo-colors    = { workspace = true }
+textwrap      = { workspace = true }

@@ -1,18 +1,25 @@
 use std::cell::RefCell;
 
-use oxc_ast::ast::{
-    Argument, ArrayExpressionElement, AssignmentTarget, CallExpression, ComputedMemberExpression,
-    Expression, IdentifierReference, MemberExpression, PrivateFieldExpression, Program,
-    SimpleAssignmentTarget, Statement, StaticMemberExpression,
+use oxc_ast::{
+    ast::{
+        Argument, ArrayExpressionElement, AssignmentTarget, CallExpression,
+        ComputedMemberExpression, Expression, IdentifierReference, MemberExpression,
+        ModuleDeclaration, PrivateFieldExpression, Program, SimpleAssignmentTarget, Statement,
+        StaticMemberExpression,
+    },
+    AstKind,
 };
-use oxc_semantic::SymbolId;
+use oxc_semantic::{AstNode, SymbolId};
 use oxc_span::GetSpan;
 use rustc_hash::FxHashSet;
 
-use crate::{ast_util::get_symbol_id_of_variable, utils::Value, LintContext};
+use crate::{
+    ast_util::{get_declaration_of_variable, get_symbol_id_of_variable},
+    utils::{get_write_expr, no_effects, Value},
+    LintContext,
+};
 
 use super::NoSideEffectsDiagnostic;
-
 pub struct NodeListenerOptions<'a, 'b> {
     checked_mutated_nodes: RefCell<FxHashSet<SymbolId>>,
     ctx: &'b LintContext<'a>,
@@ -48,8 +55,40 @@ impl<'a> ListenerMap for Program<'a> {
 
 impl<'a> ListenerMap for Statement<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
-        if let Self::ExpressionStatement(expr_stmt) = self {
-            expr_stmt.expression.report_effects(options);
+        match self {
+            Self::ExpressionStatement(expr_stmt) => {
+                expr_stmt.expression.report_effects(options);
+            }
+            Self::BreakStatement(_) | Self::ContinueStatement(_) | Self::EmptyStatement(_) => {
+                no_effects();
+            }
+            Self::ModuleDeclaration(decl) => {
+                if matches!(
+                    decl.0,
+                    ModuleDeclaration::ExportAllDeclaration(_)
+                        | ModuleDeclaration::ImportDeclaration(_)
+                ) {
+                    no_effects();
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+// we don't need implement all AstNode
+// it's same as `reportSideEffectsInDefinitionWhenCalled` in eslint-plugin-tree-shaking
+// <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/463fa1f0bef7caa2b231a38b9c3557051f506c92/src/rules/no-side-effects-in-initialization.ts#L1070-L1080>
+impl<'a> ListenerMap for AstNode<'a> {
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        #[allow(clippy::single_match)]
+        match self.kind() {
+            AstKind::VariableDeclarator(decl) => {
+                if let Some(init) = &decl.init {
+                    init.report_effects_when_called(options);
+                }
+            }
+            _ => {}
         }
     }
 }
@@ -64,12 +103,15 @@ impl<'a> ListenerMap for Expression<'a> {
                 assign_expr.left.report_effects_when_assigned(options);
                 assign_expr.right.report_effects(options);
             }
-            Self::Identifier(ident) => {
-                ident.report_effects(options);
-            }
             Self::CallExpression(call_expr) => {
                 call_expr.report_effects(options);
             }
+            Self::ArrowFunctionExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::Identifier(_)
+            | Self::MetaProperty(_)
+            | Self::Super(_)
+            | Self::ThisExpression(_) => no_effects(),
             _ => {}
         }
     }
@@ -79,7 +121,11 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::Identifier(ident) => {
                 ident.report_effects_when_mutated(options);
             }
-            _ => {}
+            Self::ArrowFunctionExpression(_) | Self::ObjectExpression(_) => no_effects(),
+            _ => {
+                // Default behavior
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::Mutation(self.span()));
+            }
         }
     }
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
@@ -90,7 +136,10 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::Identifier(expr) => {
                 expr.report_effects_when_called(options);
             }
-            _ => {}
+            _ => {
+                // Default behavior
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::Call(self.span()));
+            }
         }
     }
 }
@@ -120,9 +169,18 @@ impl<'a> ListenerMap for CallExpression<'a> {
         }
     }
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        let ctx = options.ctx;
         if let Expression::Identifier(ident) = &self.callee {
-            if get_symbol_id_of_variable(ident, options.ctx).is_none() {
-                // TODO: Not work now
+            if let Some(node) = get_declaration_of_variable(ident, ctx) {
+                let Some(parent) = ctx.nodes().parent_kind(node.id()) else {
+                    return;
+                };
+                // TODO: `isLocalVariableAWhitelistedModule`
+                if matches!(parent, AstKind::ImportDeclaration(_)) {
+                    return;
+                }
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::CallReturnValue(self.span));
+            } else {
                 options.ctx.diagnostic(NoSideEffectsDiagnostic::CallReturnValue(self.span));
             }
         }
@@ -185,7 +243,20 @@ impl<'a> ListenerMap for IdentifierReference<'a> {
 
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
         let ctx = options.ctx;
-        if get_symbol_id_of_variable(self, ctx).is_none() {
+        if let Some(symbol_id) = get_symbol_id_of_variable(self, ctx) {
+            let symbol_table = ctx.semantic().symbols();
+            for reference in symbol_table.get_resolved_references(symbol_id) {
+                if reference.is_write() {
+                    let node_id = reference.node_id();
+                    if let Some(expr) = get_write_expr(node_id, ctx) {
+                        expr.report_effects_when_called(options);
+                    }
+                }
+            }
+            let symbol_table = ctx.semantic().symbols();
+            let node = ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
+            node.report_effects_when_called(options);
+        } else {
             ctx.diagnostic(NoSideEffectsDiagnostic::CallGlobal(
                 self.name.to_compact_str(),
                 self.span,
@@ -199,7 +270,12 @@ impl<'a> ListenerMap for IdentifierReference<'a> {
             if options.insert_mutated_node(symbol_id) {
                 for reference in ctx.symbols().get_resolved_references(symbol_id) {
                     if reference.is_write() {
-                        ctx.diagnostic(NoSideEffectsDiagnostic::Mutation(
+                        let node_id = reference.node_id();
+                        if let Some(expr) = get_write_expr(node_id, ctx) {
+                            expr.report_effects_when_mutated(options);
+                        }
+
+                        ctx.diagnostic(NoSideEffectsDiagnostic::MutationWithName(
                             self.name.to_compact_str(),
                             self.span,
                         ));
@@ -207,7 +283,7 @@ impl<'a> ListenerMap for IdentifierReference<'a> {
                 }
             }
         } else {
-            ctx.diagnostic(NoSideEffectsDiagnostic::Mutation(
+            ctx.diagnostic(NoSideEffectsDiagnostic::MutationWithName(
                 self.name.to_compact_str(),
                 self.span,
             ));

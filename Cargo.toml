@@ -85,59 +85,84 @@ oxc_linter       = { path = "crates/oxc_linter" }
 oxc_prettier     = { path = "crates/oxc_prettier" }
 oxc_tasks_common = { path = "tasks/common" }
 
-napi        = { version = "2" }
-napi-derive = { version = "2" }
+napi        = "2"
+napi-derive = "2"
 
-assert-unchecked   = { version = "0.1.2" }
-bpaf               = { version = "0.9.11" }
-bitflags           = { version = "2.5.0" }
-bumpalo            = { version = "3.15.4" }
-convert_case       = { version = "0.6.0" }
-dashmap            = { version = "5.5.3" }
-flate2             = { version = "1.0.28" }
-futures            = { version = "0.3.30" }
-glob               = { version = "0.3.1" }
-ignore             = { version = "0.4.22" }
-itertools          = { version = "0.12.1" }
-jemallocator       = { version = "0.5.4" }
-lazy_static        = { version = "1.4.0" }
-miette             = { version = "7.2.0", features = ["fancy-no-syscall"] }
-mimalloc           = { version = "0.1.39" }
-num-bigint         = { version = "0.4.4" }
-num-traits         = { version = "0.2.18" }
-phf                = { version = "0.11" }
-pico-args          = { version = "0.5.0" }
-proc-macro2        = { version = "1.0.79" }
-project-root       = { version = "0.2.2" }
-quote              = { version = "1.0.35" }
-rayon              = { version = "1.10.0" }
-regex              = { version = "1.10.4" }
-rustc-hash         = { version = "1.1.0", default-features = false, features = ["std"] }
-ryu-js             = { version = "1.0.1" }
-ropey              = { version = "1.6.1" }
-seq-macro          = { version = "0.3.5" }
-serde              = { version = "1.0.197" }
-serde_json         = { version = "1.0.114" }
-syn                = { version = "=1.0.109" }
-tempfile           = { version = "3.10.1" }
-thiserror          = { version = "1.0.58" }
-tokio              = { version = "1" }
-tower-lsp          = { version = "0.20.0", features = ["proposed"] }
-unicode-id-start   = { version = "1.1.2" }
-ureq               = { version = "2.9.6", default-features = false, features = ["tls", "json"] }
-url                = { version = "2.5.0" }
-walkdir            = { version = "2.5.0" }
-indexmap           = { version = "2.2.6" }
-index_vec          = { version = "0.1.3" }
-static_assertions  = { version = "1.1.0" }
-tracing-subscriber = { version = "0.3" }
-insta              = { version = "1.36.1", features = ["glob"] }
-mime_guess         = { version = "2.0.4" }
-language-tags      = { version = "0.3.2" }
-tsify              = { version = "0.4.5" }
-wasm-bindgen       = { version = "0.2" }
-serde-wasm-bindgen = { version = "0.6.5" }
-handlebars         = { version = "5.1.2" }
+assert-unchecked    = "0.1.2"
+bpaf                = "0.9.11"
+bitflags            = "2.5.0"
+bumpalo             = "3.15.4"
+convert_case        = "0.6.0"
+dashmap             = "5.5.3"
+flate2              = "1.0.28"
+futures             = "0.3.30"
+glob                = "0.3.1"
+ignore              = "0.4.22"
+itertools           = "0.12.1"
+jemallocator        = "0.5.4"
+lazy_static         = "1.4.0"
+miette              = { version = "7.2.0", features = ["fancy-no-syscall"] }
+mimalloc            = "0.1.39"
+num-bigint          = "0.4.4"
+num-traits          = "0.2.18"
+phf                 = "0.11"
+pico-args           = "0.5.0"
+proc-macro2         = "1.0.79"
+project-root        = "0.2.2"
+quote               = "1.0.35"
+rayon               = "1.10.0"
+regex               = "1.10.4"
+rustc-hash          = "1.1.0"
+ryu-js              = "1.0.1"
+ropey               = "1.6.1"
+seq-macro           = "0.3.5"
+serde               = "1.0.197"
+serde_json          = "1.0.115"
+syn                 = "=1.0.109"
+tempfile            = "3.10.1"
+thiserror           = "1.0.58"
+tokio               = "1"
+tower-lsp           = "0.20.0"
+unicode-id-start    = "1.1.2"
+ureq                = { version = "2.9.6", default-features = false }
+url                 = "2.5.0"
+walkdir             = "2.5.0"
+indexmap            = "2.2.6"
+index_vec           = "0.1.3"
+static_assertions   = "1.1.0"
+tracing-subscriber  = "0.3"
+insta               = "1.37.0"
+mime_guess          = "2.0.4"
+language-tags       = "0.3.2"
+tsify               = "0.4.5"
+wasm-bindgen        = "0.2"
+serde-wasm-bindgen  = "0.6.5"
+handlebars          = "5.1.2"
+base64              = "0.22.0"
+brotlic             = "0.8.2"
+compact_str         = "0.7.1"
+console             = "0.15.8"
+encoding_rs         = "0.8.33"
+encoding_rs_io      = "0.1.7"
+env_logger          = { version = "0.11.3", default-features = false }
+flexbuffers         = "2.0.0"
+globset             = "0.4.14"
+humansize           = "2.1.3"
+json-strip-comments = "1.0.2"
+log                 = "0.4.21"
+memchr              = "2.7.1"
+napi-build          = "2"
+once_cell           = "1.19.0"
+ouroboros           = "0.18.3"
+owo-colors          = "4.0.0"
+oxc_resolver        = "1.6.3"
+petgraph            = "0.6.4"
+rust-lapper         = "1.1.0"
+serde_yaml          = "0.9.34"
+similar             = "2.4.0"
+sourcemap           = "8.0.0"
+textwrap            = "0.16.0"
+unicode-width       = "0.1.11"
 
 [profile.dev]
 debug = 1 # "limited" debug, speed up compilation; debug info without type or variable-level information.

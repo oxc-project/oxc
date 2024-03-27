@@ -25,5 +25,5 @@ oxc_minifier  = { workspace = true }
 oxc_tasks_common = { workspace = true }
 flate2           = { workspace = true }
 
-humansize = "2.1.3"
-brotlic   = "0.8.2"
+humansize = { workspace = true }
+brotlic   = { workspace = true }

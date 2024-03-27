@@ -164,6 +164,7 @@ mod jest {
     pub mod no_standalone_expect;
     pub mod no_test_prefixes;
     pub mod no_test_return_statement;
+    pub mod no_untyped_mock_factory;
     pub mod prefer_called_with;
     pub mod prefer_comparison_matcher;
     pub mod prefer_equality_matcher;
@@ -485,6 +486,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_standalone_expect,
     jest::no_test_prefixes,
     jest::no_test_return_statement,
+    jest::no_untyped_mock_factory,
     jest::prefer_called_with,
     jest::prefer_comparison_matcher,
     jest::prefer_equality_matcher,

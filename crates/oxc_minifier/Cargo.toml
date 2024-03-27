@@ -38,6 +38,3 @@ oxc_codegen = { workspace = true }
 insta     = { workspace = true }
 walkdir   = { workspace = true }
 pico-args = { workspace = true }
-
-[package.metadata.cargo-machete]
-ignored = ["insta", "walkdir"]
