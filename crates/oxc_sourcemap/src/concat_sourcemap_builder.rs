@@ -8,7 +8,7 @@ pub struct ConcatSourceMapBuilder {
     pub(crate) sources: Vec<Arc<str>>,
     pub(crate) source_contents: Vec<Arc<str>>,
     pub(crate) tokens: Vec<Token>,
-    /// The `token_chunks` is used for encode tokens to vlq at parallel.
+    /// The `token_chunks` is used for encode tokens to vlq mappings at parallel.
     pub(crate) token_chunks: Vec<TokenChunk>,
 }
 
