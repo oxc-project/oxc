@@ -406,8 +406,8 @@ impl<'a> ParserImpl<'a> {
 
 #[cfg(test)]
 mod test {
-    use std::path::Path;
     use oxc_ast::CommentKind;
+    use std::path::Path;
 
     use super::*;
 
@@ -442,9 +442,8 @@ mod test {
         let source_type = SourceType::from_path(Path::new("module.ts")).unwrap();
         let source = "declare module 'test'\n";
         let ret = Parser::new(&allocator, source, source_type).parse();
-        assert_eq!(ret.errors.len(), 0)
+        assert_eq!(ret.errors.len(), 0);
     }
-
 
     #[test]
     fn directives() {
