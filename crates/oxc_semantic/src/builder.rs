@@ -7,6 +7,7 @@ use oxc_ast::{ast::*, AstKind, Trivias, Visit};
 use oxc_diagnostics::Error;
 use oxc_span::{CompactStr, SourceType, Span};
 use oxc_syntax::{
+    identifier::is_identifier_name,
     module_record::{ExportImportName, ExportLocalName, ModuleRecord},
     operator::AssignmentOperator,
 };
@@ -333,10 +334,23 @@ impl<'a> SemanticBuilder<'a> {
         });
 
         self.module_record.local_export_entries.iter().for_each(|entry| {
-            if let ExportLocalName::Name(name_span) = &entry.local_name {
-                if let Some(symbol_id) = self.scope.get_root_binding(name_span.name()) {
-                    self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+            match &entry.local_name {
+                ExportLocalName::Name(name_span) => {
+                    if let Some(symbol_id) = self.scope.get_root_binding(name_span.name()) {
+                        self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+                    }
                 }
+                ExportLocalName::Default(_) => {
+                    // export default identifier
+                    //                ^^^^^^^^^^
+                    let identifier = entry.span.source_text(self.source_text);
+                    if is_identifier_name(identifier) {
+                        if let Some(symbol_id) = self.scope.get_root_binding(identifier) {
+                            self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+                        }
+                    }
+                }
+                ExportLocalName::Null => {}
             }
         });
     }
