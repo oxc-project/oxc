@@ -2698,7 +2698,7 @@ pub mod walk_mut {
                 visitor.visit_ts_module_declaration(decl);
             }
             Some(TSModuleDeclarationBody::TSModuleBlock(block)) => {
-                visitor.visit_ts_module_block(block)
+                visitor.visit_ts_module_block(block);
             }
             None => {}
         }
