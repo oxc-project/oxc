@@ -742,6 +742,7 @@ impl<'a> TSModuleDeclarationName<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSModuleDeclarationBody<'a> {
+    EmptyDeclaration,
     TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>),
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>),
 }

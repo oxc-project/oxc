@@ -668,6 +668,7 @@ impl<'a> TypeScript<'a> {
             TSModuleDeclarationBody::TSModuleBlock(ts_module_block) => {
                 self.ctx.ast.move_statement_vec(&mut ts_module_block.body)
             }
+            TSModuleDeclarationBody::EmptyDeclaration => self.ctx.ast.new_vec(),
         };
 
         let name = block.id.name();

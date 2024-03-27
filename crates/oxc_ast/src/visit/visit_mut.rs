@@ -2698,6 +2698,7 @@ pub mod walk_mut {
                 visitor.visit_ts_module_declaration(decl);
             }
             TSModuleDeclarationBody::TSModuleBlock(block) => visitor.visit_ts_module_block(block),
+            TSModuleDeclarationBody::EmptyDeclaration => {}
         }
         visitor.leave_node(kind);
     }
