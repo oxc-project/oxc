@@ -103,10 +103,8 @@ impl PreferToBe {
             return;
         };
 
-        let has_not_modifier = jest_expect_fn_call
-            .modifiers()
-            .iter()
-            .any(|modifier| modifier.is_name_equal("not"));
+        let has_not_modifier =
+            jest_expect_fn_call.modifiers().iter().any(|modifier| modifier.is_name_equal("not"));
 
         if has_not_modifier {
             if matcher.is_name_equal("toBeUndefined") {

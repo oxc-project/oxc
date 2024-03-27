@@ -103,10 +103,8 @@ impl PreferComparisonMatcher {
             return;
         }
 
-        let has_not_modifier = parse_expect_jest_fn
-            .modifiers()
-            .iter()
-            .any(|modifier| modifier.is_name_equal("not"));
+        let has_not_modifier =
+            parse_expect_jest_fn.modifiers().iter().any(|modifier| modifier.is_name_equal("not"));
         let Expression::BooleanLiteral(matcher_arg_value) =
             first_matcher_arg.get_inner_expression()
         else {

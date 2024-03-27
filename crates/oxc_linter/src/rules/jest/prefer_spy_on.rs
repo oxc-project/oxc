@@ -117,7 +117,7 @@ impl PreferSpyOn {
                     let has_mock_implementation = jest_fn_call
                         .members
                         .iter()
-                        .any(|modifier| modifier.is_name_equal("not"));
+                        .any(|modifier| modifier.is_name_equal("mockImplementation"));
 
                     (second.span.start - 1, has_mock_implementation)
                 } else {
