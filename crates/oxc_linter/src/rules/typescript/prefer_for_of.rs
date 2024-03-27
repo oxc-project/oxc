@@ -161,8 +161,7 @@ impl Rule for PreferForOf {
                 return;
             }
 
-            let MemberExpression::StaticMemberExpression(st_mem_expr) = &**mem_expr else { return };
-            match &st_mem_expr.object {
+            match &mem_expr.object() {
                 Expression::Identifier(id) => id.name.as_str(),
                 Expression::MemberExpression(m_expr) => match m_expr.static_property_name() {
                     Some(array_name) => array_name,
