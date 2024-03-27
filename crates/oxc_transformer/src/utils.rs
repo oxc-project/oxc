@@ -2,7 +2,7 @@ use std::mem;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 use oxc_syntax::identifier::is_identifier_name;
 
 use crate::context::TransformerCtx;
@@ -25,21 +25,14 @@ pub trait CreateVars<'a> {
         stmts.insert(0, stmt);
     }
 
-    fn create_new_var(&mut self, expr: &Expression<'a>) -> IdentifierReference<'a> {
+    fn create_new_var_with_expression(&mut self, expr: &Expression<'a>) -> IdentifierReference<'a> {
         let name = self.ctx().scopes().generate_uid_based_on_node(expr);
-        self.ctx().add_binding(name.clone());
+        create_new_var(self, name)
+    }
 
-        // Add `var name` to scope
-        // TODO: hookup symbol id
-        let name = self.ctx().ast.new_atom(name.as_str());
-        let binding_identifier = BindingIdentifier::new(Span::default(), name.clone());
-        let binding_pattern_kind = self.ctx().ast.binding_pattern_identifier(binding_identifier);
-        let binding = self.ctx().ast.binding_pattern(binding_pattern_kind, None, false);
-        let kind = VariableDeclarationKind::Var;
-        let decl = self.ctx().ast.variable_declarator(Span::default(), kind, binding, None, false);
-        self.vars_mut().push(decl);
-        // TODO: add reference id and flag
-        IdentifierReference::new(Span::default(), name)
+    fn create_new_named_var(&mut self, name: &'a str) -> IdentifierReference<'a> {
+        let name = self.ctx().scopes().generate_uid(name);
+        create_new_var(self, name)
     }
 
     /// Possibly generate a memoised identifier if it is not static and has consequences.
@@ -51,7 +44,7 @@ pub trait CreateVars<'a> {
         if self.ctx().symbols().is_static(expr) {
             None
         } else {
-            Some(self.create_new_var(expr))
+            Some(self.create_new_var_with_expression(expr))
         }
     }
 }
@@ -151,4 +144,23 @@ pub fn is_reserved_word(name: &str, in_module: bool) -> bool {
 /// https://github.com/babel/babel/blob/main/packages/babel-types/src/validators/isValidES3Identifier.ts#L35
 pub fn is_valid_es3_identifier(name: &str) -> bool {
     is_valid_identifier(name, true) && !RESERVED_WORDS_ES3_ONLY.contains(name)
+}
+
+fn create_new_var<'a, V: CreateVars<'a> + ?Sized>(
+    create_vars: &mut V,
+    name: CompactStr,
+) -> IdentifierReference<'a> {
+    // Add `var name` to scope
+    // TODO: hookup symbol id
+    let atom = create_vars.ctx().ast.new_atom(name.as_str());
+    let binding_identifier = BindingIdentifier::new(Span::default(), atom.clone());
+    let binding_pattern_kind = create_vars.ctx().ast.binding_pattern_identifier(binding_identifier);
+    let binding = create_vars.ctx().ast.binding_pattern(binding_pattern_kind, None, false);
+    let kind = VariableDeclarationKind::Var;
+    let decl =
+        create_vars.ctx().ast.variable_declarator(Span::default(), kind, binding, None, false);
+    create_vars.ctx().add_binding(name);
+    create_vars.vars_mut().push(decl);
+    // TODO: add reference id and flag
+    IdentifierReference::new(Span::default(), atom)
 }

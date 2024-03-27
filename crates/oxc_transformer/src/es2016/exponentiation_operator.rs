@@ -215,7 +215,7 @@ impl<'a> ExponentiationOperator<'a> {
         expr: Expression<'a>,
         nodes: &mut Vec<'a, Expression<'a>>,
     ) -> Expression<'a> {
-        let ident = self.create_new_var(&expr);
+        let ident = self.create_new_var_with_expression(&expr);
         // Add new reference `_name = name` to nodes
         let target = self.ctx.ast.simple_assignment_target_identifier(ident.clone());
         let op = AssignmentOperator::Assign;

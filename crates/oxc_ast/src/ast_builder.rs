@@ -1273,7 +1273,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         id: TSModuleDeclarationName<'a>,
-        body: TSModuleDeclarationBody<'a>,
+        body: Option<TSModuleDeclarationBody<'a>>,
         kind: TSModuleDeclarationKind,
         modifiers: Modifiers<'a>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {

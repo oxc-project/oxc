@@ -697,7 +697,7 @@ pub struct TSModuleDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: TSModuleDeclarationName<'a>,
-    pub body: TSModuleDeclarationBody<'a>,
+    pub body: Option<TSModuleDeclarationBody<'a>>,
     /// The keyword used to define this module declaration
     /// ```text
     /// namespace Foo {}
