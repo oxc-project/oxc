@@ -30,15 +30,18 @@ impl SourceMap {
         Self { file, names, sources, source_contents, tokens, token_chunks }
     }
 
+    /// Convert `SourceMap` to vlq sourcemap string.
     #[allow(clippy::missing_errors_doc)]
     pub fn from_json_string(value: &str) -> Result<Self> {
         decode(value)
     }
 
+    /// Convert the vlq sourcemap string to `SourceMap`.
     pub fn to_json_string(&self) -> String {
         encode(self)
     }
 
+    /// Convert `SourceMap` to vlq sourcemap data url.
     pub fn to_data_url(&self) -> String {
         let base_64_str =
             base64_simd::Base64::STANDARD.encode_to_boxed_str(self.to_json_string().as_bytes());
@@ -99,6 +102,7 @@ impl SourceMap {
         Some((source, content))
     }
 
+    /// Generate a lookup table, it will be used at `lookup_token` or `lookup_source_view_token`.
     pub fn generate_lookup_table(&self) -> Vec<(u32, u32, u32)> {
         let mut table = self
             .tokens
@@ -121,6 +125,7 @@ impl SourceMap {
         self.get_token(table.2)
     }
 
+    /// Lookup a token by line and column, it will used at remapping. See `SourceViewToken`.
     pub fn lookup_source_view_token(
         &self,
         lookup_table: &[(u32, u32, u32)],

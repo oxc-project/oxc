@@ -1,5 +1,6 @@
 use crate::SourceMap;
 
+/// The `Token` is used to generate vlq `mappings`.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Token {
     pub(crate) dst_line: u32,
@@ -47,7 +48,8 @@ impl Token {
     }
 }
 
-/// It used by encode tokens to vlq mappings at parallel.
+/// The `TokenChunk` used by encode tokens to vlq mappings at parallel.
+/// It is a slice of `SourceMap::tokens`, it is a unit of parallel.
 #[derive(Debug, Clone, Default)]
 pub struct TokenChunk {
     pub start: u32,
@@ -85,7 +87,7 @@ impl TokenChunk {
     }
 }
 
-/// It provider extra `source` and `source_content` value.
+/// The `SourceViewToken` provider extra `source` and `source_content` value.
 #[derive(Debug, Clone, Copy)]
 pub struct SourceViewToken<'a> {
     pub(crate) token: &'a Token,

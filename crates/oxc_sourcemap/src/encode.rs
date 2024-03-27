@@ -1,3 +1,7 @@
+/// Port from https://github.com/getsentry/rust-sourcemap/blob/master/src/encoder.rs
+/// It is a helper for encode `SourceMap` to vlq soucemap string, but here some different.
+/// - Quote `source_content` at parallel.
+/// - If you using `ConcatSourceMapBuilder`, serialize `tokens` to vlq `mappings` at parallel.
 use crate::{token::TokenChunk, SourceMap, Token};
 use rayon::prelude::*;
 
@@ -36,6 +40,7 @@ fn serialize_sourcemap_mappings(sm: &SourceMap) -> String {
             )
         },
         |token_chunks| {
+            // Serialize `tokens` to vlq `mappings` at parallel.
             token_chunks
                 .par_iter()
                 .map(|token_chunk| serialize_mappings(&sm.tokens, token_chunk))

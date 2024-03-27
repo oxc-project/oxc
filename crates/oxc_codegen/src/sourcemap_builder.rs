@@ -18,6 +18,7 @@ pub struct LineOffsetTable {
     byte_offset_to_start_of_line: usize,
 }
 
+#[derive(Default)]
 #[allow(clippy::struct_field_names)]
 pub struct SourcemapBuilder {
     enable_sourcemap: bool,
@@ -29,22 +30,6 @@ pub struct SourcemapBuilder {
     sourcemap_builder: oxc_sourcemap::SourceMapBuilder,
     generated_line: u32,
     generated_column: u32,
-}
-
-impl Default for SourcemapBuilder {
-    fn default() -> Self {
-        Self {
-            enable_sourcemap: false,
-            source_id: 0,
-            last_generated_update: 0,
-            last_position: None,
-            last_search_line: 0,
-            line_offset_tables: vec![],
-            sourcemap_builder: oxc_sourcemap::SourceMapBuilder::new(),
-            generated_line: 0,
-            generated_column: 0,
-        }
-    }
 }
 
 impl SourcemapBuilder {

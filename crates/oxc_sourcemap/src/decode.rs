@@ -1,3 +1,5 @@
+/// Port from https://github.com/getsentry/rust-sourcemap/blob/master/src/decoder.rs
+/// It is a helper for decode vlq soucemap string to `SourceMap`.
 use crate::error::{Error, Result};
 use crate::{SourceMap, Token};
 

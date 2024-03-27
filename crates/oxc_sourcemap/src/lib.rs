@@ -1,3 +1,4 @@
+mod concat_sourcemap_builder;
 #[allow(clippy::cast_sign_loss)]
 mod decode;
 mod encode;
@@ -7,6 +8,7 @@ mod sourcemap_builder;
 mod sourcemap_visualizer;
 mod token;
 
+pub use concat_sourcemap_builder::ConcatSourceMapBuilder;
 pub use sourcemap::SourceMap;
 pub use sourcemap_builder::SourceMapBuilder;
 pub use sourcemap_visualizer::SourcemapVisualizer;

@@ -1,6 +1,8 @@
 use crate::SourceMap;
 use rustc_hash::FxHashMap;
 
+/// The `SourcemapVisualizer` is a helper for sourcemap testing.
+/// It print the mapping of original content and final content tokens.
 pub struct SourcemapVisualizer<'a> {
     output: &'a str,
     sourcemap: &'a SourceMap,
