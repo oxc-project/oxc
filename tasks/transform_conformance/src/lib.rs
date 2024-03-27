@@ -32,6 +32,10 @@ fn root() -> PathBuf {
     project_root().join("tasks/coverage/babel/packages")
 }
 
+fn oxc_test_root() -> PathBuf {
+    project_root().join("tasks/transform_conformance/tests")
+}
+
 fn snap_root() -> PathBuf {
     project_root().join("tasks/transform_conformance")
 }
@@ -96,7 +100,9 @@ const CASES: &[&str] = &[
 const EXCLUDE_TESTS: &[&str] = &["babel-plugin-transform-typescript/test/fixtures/enum"];
 
 const CONFORMANCE_SNAPSHOT: &str = "babel.snap.md";
+const OXC_CONFORMANCE_SNAPSHOT: &str = "oxc.snap.md";
 const EXEC_SNAPSHOT: &str = "babel_exec.snap.md";
+const OXC_EXEC_SNAPSHOT: &str = "oxc_exec.snap.md";
 
 struct SnapshotOption {
     paths: IndexMap<String, Vec<TestCaseKind>>,
@@ -116,17 +122,22 @@ impl TestRunner {
 
     /// # Panics
     pub fn run(self) {
-        let root = root();
-        let (transform_paths, exec_files) = Self::glob_files(&root, self.options.filter.as_ref());
-        self.generate_snapshot(SnapshotOption::new(transform_paths, CONFORMANCE_SNAPSHOT));
+        for (root, snapshot, exec_snapshot) in &[
+            (root(), CONFORMANCE_SNAPSHOT, EXEC_SNAPSHOT),
+            (oxc_test_root(), OXC_CONFORMANCE_SNAPSHOT, OXC_EXEC_SNAPSHOT),
+        ] {
+            let (transform_paths, exec_files) =
+                Self::glob_files(root, self.options.filter.as_ref());
+            self.generate_snapshot(root, SnapshotOption::new(transform_paths, snapshot));
 
-        if self.options.exec {
-            let fixture_root = fixture_root();
-            if !fixture_root.exists() {
-                fs::create_dir(&fixture_root).unwrap();
+            if self.options.exec {
+                let fixture_root = fixture_root();
+                if !fixture_root.exists() {
+                    fs::create_dir(&fixture_root).unwrap();
+                }
+                self.generate_snapshot(root, SnapshotOption::new(exec_files, exec_snapshot));
+                let _ = fs::remove_dir_all(fixture_root);
             }
-            self.generate_snapshot(SnapshotOption::new(exec_files, EXEC_SNAPSHOT));
-            let _ = fs::remove_dir_all(fixture_root);
         }
     }
 
@@ -178,7 +189,7 @@ impl TestRunner {
         (transform_files, exec_files)
     }
 
-    fn generate_snapshot(&self, option: SnapshotOption) {
+    fn generate_snapshot(&self, root: &Path, option: SnapshotOption) {
         let SnapshotOption { paths, dest } = option;
         let mut snapshot = String::new();
         let mut total = 0;
@@ -191,7 +202,7 @@ impl TestRunner {
                 continue;
             }
 
-            let case_root = root().join(&case).join("test/fixtures");
+            let case_root = root.join(&case).join("test/fixtures");
             let num_of_tests = test_cases.len();
             total += num_of_tests;
 
