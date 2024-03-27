@@ -2493,11 +2493,13 @@ pub mod walk {
             TSModuleDeclarationName::StringLiteral(lit) => visitor.visit_string_literal(lit),
         }
         match &decl.body {
-            TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
+            Some(TSModuleDeclarationBody::TSModuleDeclaration(decl)) => {
                 visitor.visit_ts_module_declaration(decl);
             }
-            TSModuleDeclarationBody::TSModuleBlock(block) => visitor.visit_ts_module_block(block),
-            TSModuleDeclarationBody::EmptyDeclaration => {}
+            Some(TSModuleDeclarationBody::TSModuleBlock(block)) => {
+                visitor.visit_ts_module_block(block)
+            }
+            None => {}
         }
         visitor.leave_node(kind);
     }

@@ -241,14 +241,14 @@ impl<'a> ParserImpl<'a> {
             let span = self.start_span();
             let decl =
                 self.parse_ts_namespace_or_module_declaration_body(span, kind, Modifiers::empty())?;
-            TSModuleDeclarationBody::TSModuleDeclaration(decl)
+            Some(TSModuleDeclarationBody::TSModuleDeclaration(decl))
         } else if self.at(Kind::LCurly) {
             let block = self.parse_ts_module_block()?;
             self.asi()?;
-            TSModuleDeclarationBody::TSModuleBlock(block)
+            Some(TSModuleDeclarationBody::TSModuleBlock(block))
         } else {
             self.asi()?;
-            TSModuleDeclarationBody::EmptyDeclaration
+            None
         };
 
         Ok(self.ast.ts_module_declaration(self.end_span(span), id, body, kind, modifiers))
