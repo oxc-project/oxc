@@ -661,13 +661,14 @@ impl<'a> TypeScript<'a> {
         block: &mut Box<'a, TSModuleDeclaration<'a>>,
     ) -> Statement<'a> {
         let body_statements = match &mut block.body {
-            TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
+            Some(TSModuleDeclarationBody::TSModuleDeclaration(decl)) => {
                 let transformed_module_block = self.transform_ts_module_block(decl);
                 self.ctx.ast.new_vec_single(transformed_module_block)
             }
-            TSModuleDeclarationBody::TSModuleBlock(ts_module_block) => {
+            Some(TSModuleDeclarationBody::TSModuleBlock(ts_module_block)) => {
                 self.ctx.ast.move_statement_vec(&mut ts_module_block.body)
             }
+            None => self.ctx.ast.new_vec(),
         };
 
         let name = block.id.name();
