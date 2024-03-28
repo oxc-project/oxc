@@ -21,7 +21,6 @@ pub struct LineOffsetTable {
     byte_offset_to_start_of_line: usize,
 }
 
-#[derive(Default)]
 #[allow(clippy::struct_field_names)]
 pub struct SourcemapBuilder {
     enable_sourcemap: bool,
@@ -46,7 +45,7 @@ impl Default for SourcemapBuilder {
             last_position: None,
             last_search_line: 0,
             line_offset_tables: vec![],
-            sourcemap_builder: sourcemap::SourceMapBuilder::new(None),
+            sourcemap_builder: oxc_sourcemap::SourceMapBuilder::default(),
             generated_line: 0,
             generated_column: 0,
         }
@@ -391,8 +390,14 @@ mod test {
         builder.add_source_mapping_for_name(output, Span::new(1, 2), "c");
         let sm = builder.into_sourcemap().unwrap();
         // The name `a` not change.
-        assert_eq!(sm.get_token(0_u32).and_then(|token| token.get_name()), None);
+        assert_eq!(
+            sm.get_source_view_token(0_u32).as_ref().and_then(|token| token.get_name()),
+            None
+        );
         // The name `b` -> `c`, save `b` to token.
-        assert_eq!(sm.get_token(1_u32).and_then(|token| token.get_name()), Some("b"));
+        assert_eq!(
+            sm.get_source_view_token(1_u32).as_ref().and_then(|token| token.get_name()),
+            Some("b")
+        );
     }
 }
