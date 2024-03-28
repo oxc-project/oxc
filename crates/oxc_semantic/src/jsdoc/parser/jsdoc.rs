@@ -121,7 +121,4 @@ line
         let (span, _) = tags.next().unwrap();
         assert_eq!(span.source_text(semantic.source_text), "@k4");
     }
-
-    // Should implement here...? Or leave it to usecases?
-    // fn has_deprecated_tag(&self) -> bool {}
 }
