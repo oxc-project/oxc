@@ -10,6 +10,7 @@ pub struct ConcatSourceMapBuilder {
     pub(crate) tokens: Vec<Token>,
     /// The `token_chunks` is used for encode tokens to vlq mappings at parallel.
     pub(crate) token_chunks: Vec<TokenChunk>,
+    pub(crate) token_chunk_prev_name_id: u32,
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -27,7 +28,7 @@ impl ConcatSourceMapBuilder {
                 last_token.get_dst_col(),
                 last_token.get_src_line(),
                 last_token.get_src_col(),
-                name_offset - 1,
+                self.token_chunk_prev_name_id,
                 source_offset - 1,
             ));
         } else {
@@ -57,16 +58,20 @@ impl ConcatSourceMapBuilder {
 
         // Extend `tokens`.
         self.tokens.reserve(sourcemap.tokens.len());
-        self.tokens.extend(sourcemap.get_tokens().map(|token| {
+        let tokens = sourcemap.get_tokens().map(|token| {
             Token::new(
                 token.get_dst_line() + line_offset,
                 token.get_dst_col(),
                 token.get_src_line(),
                 token.get_src_col(),
-                token.get_source_id().map(|x| x + source_offset),
-                token.get_name_id().map(|x| x + name_offset),
+                token.get_source_id().map(|x|  x + source_offset),
+                token.get_name_id().map(|x| {
+                    self.token_chunk_prev_name_id = x + name_offset;
+                    self.token_chunk_prev_name_id
+                }),
             )
-        }));
+        });
+        self.tokens.extend(tokens);
     }
 
     pub fn into_sourcemap(self) -> SourceMap {
@@ -85,7 +90,7 @@ impl ConcatSourceMapBuilder {
 fn test_concat_sourcemap_builder() {
     let sm1 = SourceMap::new(
         None,
-        vec!["foo".into()],
+        vec!["foo".into(), "foo2".into()],
         vec!["foo.js".into()],
         None,
         vec![Token::new(1, 1, 1, 1, Some(0), Some(0))],
@@ -106,10 +111,10 @@ fn test_concat_sourcemap_builder() {
 
     let sm = SourceMap::new(
         None,
-        vec!["foo".into(), "bar".into()],
+        vec!["foo".into(), "foo2".into(), "bar".into()],
         vec!["foo.js".into(), "bar.js".into()],
         None,
-        vec![Token::new(1, 1, 1, 1, Some(0), Some(0)), Token::new(3, 1, 1, 1, Some(1), Some(1))],
+        vec![Token::new(1, 1, 1, 1, Some(0), Some(0)), Token::new(3, 1, 1, 1, Some(1), Some(2))],
         None,
     );
     let concat_sm = builder.into_sourcemap();
