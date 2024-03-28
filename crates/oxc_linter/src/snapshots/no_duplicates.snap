@@ -356,3 +356,29 @@ expression: no_duplicates
     ·            ─
  13 │         }
     ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:19]
+ 1 │ import {A1,} from 'foo';
+   ·                   ─────
+ 2 │         import {B1,} from 'foo';
+   ·                           ─────
+ 3 │         import {C1,} from 'foo';
+   ·                           ─────
+ 4 │ 
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+    ╭─[index.ts:7:16]
+  6 │         A2,
+  7 │         } from 'bar';
+    ·                ─────
+  8 │         import {
+  9 │         B2,
+ 10 │         } from 'bar';
+    ·                ─────
+ 11 │         import {
+ 12 │         C2,
+ 13 │         } from 'bar';
+    ·                ─────
+    ╰────

@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 
 use crate::{context::LintContext, rule::Rule};
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-unresolved.md>
+/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-duplicates.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoDuplicates;
 
@@ -21,19 +21,24 @@ impl Rule for NoDuplicates {
         let module_record = ctx.semantic().module_record();
 
         let groups = module_record
-            .loaded_modules
+            .requested_modules
             .iter()
-            .map(|r| (r.value().resolved_absolute_path.clone(), r.key().clone()))
+            .map(|(source, spans)| {
+                let resolved_absolute_path = module_record.loaded_modules.get(source).map_or_else(
+                    || source.to_string(),
+                    |module| module.resolved_absolute_path.to_string_lossy().to_string(),
+                );
+                (resolved_absolute_path, spans)
+            })
             .group_by(|r| r.0.clone());
 
         for (_path, group) in &groups {
             let labels = group
                 .into_iter()
-                .map(|(_path, specifier)| specifier)
-                .filter_map(|specifier| module_record.requested_modules.get(&specifier))
-                .flatten()
+                .flat_map(|(_path, spans)| spans)
                 .map(|span| LabeledSpan::underline(*span))
                 .collect::<Vec<_>>();
+
             if labels.len() > 1 {
                 ctx.diagnostic(miette!(
                 severity = Severity::Warning,
@@ -175,20 +180,19 @@ export const value = {}",
         }
 
         export default TestComponent;",
-        // TODO: figure out module imports
-        // r#"import {A1,} from 'foo';
-        // import {B1,} from 'foo';
-        // import {C1,} from 'foo';
+        r"import {A1,} from 'foo';
+        import {B1,} from 'foo';
+        import {C1,} from 'foo';
 
-        // import {
-        // A2,
-        // } from 'bar';
-        // import {
-        // B2,
-        // } from 'bar';
-        // import {
-        // C2,
-        // } from 'bar';"#,
+        import {
+        A2,
+        } from 'bar';
+        import {
+        B2,
+        } from 'bar';
+        import {
+        C2,
+        } from 'bar';",
         // TypeScript
         // TODO: distinguish type imports in module record
         // r#"import type x from './foo'; import type y from './foo'"#,
