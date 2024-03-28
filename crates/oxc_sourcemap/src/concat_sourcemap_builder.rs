@@ -64,7 +64,7 @@ impl ConcatSourceMapBuilder {
                 token.get_dst_col(),
                 token.get_src_line(),
                 token.get_src_col(),
-                token.get_source_id().map(|x|  x + source_offset),
+                token.get_source_id().map(|x| x + source_offset),
                 token.get_name_id().map(|x| {
                     self.token_chunk_prev_name_id = x + name_offset;
                     self.token_chunk_prev_name_id
