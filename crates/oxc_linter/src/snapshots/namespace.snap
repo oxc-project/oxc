@@ -80,3 +80,81 @@ expression: namespace
  1 │ import * as Names from "./named-exports"; const Foo = <Names.e/>
    ·                                                              ─
    ╰────
+
+  ⚠ eslint-plugin-import(namespace): "e" not found in imported namespace "./b".
+   ╭─[index.js:1:52]
+ 1 │ import { "b" as b } from "./deep/a"; console.log(b.e)
+   ·                                                    ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "b.c".
+   ╭─[index.js:1:54]
+ 1 │ import { "b" as b } from "./deep/a"; console.log(b.c.e)
+   ·                                                      ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "a.b".
+   ╭─[index.js:1:48]
+ 1 │ import * as a from "./deep/a"; console.log(a.b.e)
+   ·                                                ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "e" not found in imported namespace "./b".
+   ╭─[index.js:1:45]
+ 1 │ import { b } from "./deep/a"; console.log(b.e)
+   ·                                             ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "a.b.c".
+   ╭─[index.js:1:50]
+ 1 │ import * as a from "./deep/a"; console.log(a.b.c.e)
+   ·                                                  ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "b.c".
+   ╭─[index.js:1:47]
+ 1 │ import { b } from "./deep/a"; console.log(b.c.e)
+   ·                                               ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "a.b".
+   ╭─[index.js:1:52]
+ 1 │ import * as a from "./deep-es7/a"; console.log(a.b.e)
+   ·                                                    ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "e" not found in imported namespace "./b".
+   ╭─[index.js:1:49]
+ 1 │ import { b } from "./deep-es7/a"; console.log(b.e)
+   ·                                                 ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "a.b.c".
+   ╭─[index.js:1:54]
+ 1 │ import * as a from "./deep-es7/a"; console.log(a.b.c.e)
+   ·                                                      ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "b.c".
+   ╭─[index.js:1:51]
+ 1 │ import { b } from "./deep-es7/a"; console.log(b.c.e)
+   ·                                                   ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "a.b".
+   ╭─[index.js:1:45]
+ 1 │ import * as a from "./deep-es7/a"; var {b:{ e }} = a
+   ·                                             ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "a.b.c".
+   ╭─[index.js:1:48]
+ 1 │ import * as a from "./deep-es7/a"; var {b:{c:{ e }, e: { c }}} = a
+   ·                                                ─
+   ╰────
+
+  ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "a.b".
+   ╭─[index.js:1:53]
+ 1 │ import * as a from "./deep-es7/a"; var {b:{c:{ e }, e: { c }}} = a
+   ·                                                     ─
+   ╰────
