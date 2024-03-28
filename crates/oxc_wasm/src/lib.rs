@@ -165,6 +165,11 @@ impl Oxc {
         let path = PathBuf::from(
             parser_options.source_filename.clone().unwrap_or_else(|| "test.tsx".to_string()),
         );
+        let file_name = path
+            .file_name()
+            .expect("Expected to have a file name")
+            .to_str()
+            .expect("File name to be valid UTF-8");
         let source_type = SourceType::from_path(&path).unwrap_or_default();
 
         let ret = Parser::new(&allocator, source_text, source_type)
@@ -190,7 +195,7 @@ impl Oxc {
         // Only lint if there are not syntax errors
         if run_options.lint() && self.diagnostics.borrow().is_empty() {
             let semantic = Rc::new(semantic_ret.semantic);
-            let lint_ctx = LintContext::new(path.into_boxed_path(), &semantic);
+            let lint_ctx = LintContext::new(path.clone().into_boxed_path(), &semantic);
             let linter_ret = Linter::default().run(lint_ctx);
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);
@@ -235,7 +240,8 @@ impl Oxc {
             let options =
                 TransformOptions { target: TransformTarget::ES2015, ..TransformOptions::default() };
             let result =
-                Transformer::new(&allocator, source_type, semantic, options).build(program);
+                Transformer::new(&allocator, source_type, semantic, options, file_name.to_string())
+                    .build(program);
             if let Err(errs) = result {
                 self.save_diagnostics(errs);
             }

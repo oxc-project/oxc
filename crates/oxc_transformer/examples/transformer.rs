@@ -21,6 +21,11 @@ use oxc_transformer::{
 fn main() {
     let name = env::args().nth(1).unwrap_or_else(|| "test.tsx".to_string());
     let path = Path::new(&name);
+    let file_name = path
+        .file_name()
+        .expect("Expected to have a file name")
+        .to_str()
+        .expect("File name to be valid UTF-8");
     let source_text = std::fs::read_to_string(path).expect("{name} not found");
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
@@ -49,11 +54,14 @@ fn main() {
         target: TransformTarget::ES5,
         react_jsx: Some(ReactJsxOptions {
             runtime: Some(ReactJsxRuntimeOption::Valid(ReactJsxRuntime::Classic)),
+            development: Some(true),
             ..ReactJsxOptions::default()
         }),
         ..TransformOptions::default()
     };
-    Transformer::new(&allocator, source_type, semantic, transform_options).build(program).unwrap();
+    Transformer::new(&allocator, source_type, semantic, transform_options, file_name.to_string())
+        .build(program)
+        .unwrap();
 
     let printed = Codegen::<false>::new("", &source_text, CodegenOptions::default())
         .build(program)

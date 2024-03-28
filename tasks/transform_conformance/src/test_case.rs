@@ -162,6 +162,11 @@ pub trait TestCase {
     fn transform(&self, path: &Path) -> Result<String, Vec<Error>> {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
+        let file_name = path
+            .file_name()
+            .expect("Expected to have a file name")
+            .to_str()
+            .expect("File name to be valid UTF-8");
 
         let source_type = SourceType::from_path(path)
             .unwrap()
@@ -177,8 +182,14 @@ pub trait TestCase {
 
         let transformed_program = allocator.alloc(ret.program);
 
-        let result = Transformer::new(&allocator, source_type, semantic, self.transform_options())
-            .build(transformed_program);
+        let result = Transformer::new(
+            &allocator,
+            source_type,
+            semantic,
+            self.transform_options(),
+            file_name.to_string(),
+        )
+        .build(transformed_program);
 
         result.map(|()| {
             Codegen::<false>::new("", &source_text, CodegenOptions::default())
@@ -218,6 +229,12 @@ impl TestCase for ConformanceTestCase {
 
         let allocator = Allocator::default();
         let input = fs::read_to_string(&self.path).unwrap();
+        let file_name = self
+            .path
+            .file_name()
+            .expect("Expected to have a file name")
+            .to_str()
+            .expect("File name to be valid UTF-8");
         let input_is_js = self.path.extension().and_then(std::ffi::OsStr::to_str) == Some("js");
         let output_is_js = output_path
             .as_ref()
@@ -247,8 +264,13 @@ impl TestCase for ConformanceTestCase {
             .build(&ret.program)
             .semantic;
         let program = allocator.alloc(ret.program);
-        let transformer =
-            Transformer::new(&allocator, source_type, semantic, transform_options.clone());
+        let transformer = Transformer::new(
+            &allocator,
+            source_type,
+            semantic,
+            transform_options.clone(),
+            file_name.to_string(),
+        );
 
         let codegen_options = CodegenOptions::default();
         let mut transformed_code = String::new();

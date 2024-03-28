@@ -15,12 +15,19 @@ pub struct Tester {
     options: TransformOptions,
 
     allocator: Allocator,
+
+    file_name: String,
 }
 
 impl Tester {
     pub fn new(filename: &str, options: TransformOptions) -> Self {
         let source_type = SourceType::from_path(filename).unwrap();
-        Self { source_type, options, allocator: Allocator::default() }
+        Self {
+            source_type,
+            options,
+            allocator: Allocator::default(),
+            file_name: filename.to_string(),
+        }
     }
 
     pub fn test(&self, tests: &[(&str, &str)]) {
@@ -40,8 +47,14 @@ impl Tester {
 
         let program = self.allocator.alloc(program);
 
-        Transformer::new(&self.allocator, self.source_type, semantic, self.options.clone())
-            .build(program)?;
+        Transformer::new(
+            &self.allocator,
+            self.source_type,
+            semantic,
+            self.options.clone(),
+            self.file_name.clone(),
+        )
+        .build(program)?;
 
         Ok(Codegen::<false>::new("", source_text, CodegenOptions::default())
             .build(program)
