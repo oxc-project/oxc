@@ -2,8 +2,12 @@
 //!
 //! * <https://github.com/guybedford/es-module-lexer>
 
+use oxc_ast::visit::walk::{
+    walk_export_all_declaration, walk_export_named_declaration, walk_import_declaration,
+    walk_import_expression, walk_meta_property, walk_module_declaration, walk_statement,
+};
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, syntax_directed_operations::BoundNames, AstKind, Visit};
+use oxc_ast::{ast::*, syntax_directed_operations::BoundNames, Visit};
 use oxc_span::{Atom, GetSpan};
 
 #[derive(Debug, Clone)]
@@ -109,161 +113,170 @@ impl<'a> ModuleLexer<'a> {
 }
 
 impl<'a> Visit<'a> for ModuleLexer<'a> {
-    fn enter_node(&mut self, kind: AstKind<'a>) {
-        match kind {
-            kind if self.facade && kind.is_statement() => {
+    fn visit_statement(&mut self, stmt: &Statement<'a>) {
+        if self.facade
+            && !matches!(stmt, Statement::ModuleDeclaration(..) | Statement::Declaration(..))
+        {
+            self.facade = false;
+        }
+
+        walk_statement(self, stmt);
+    }
+
+    fn visit_module_declaration(&mut self, decl: &ModuleDeclaration<'a>) {
+        if !self.has_module_syntax {
+            self.has_module_syntax = true;
+        }
+        walk_module_declaration(self, decl);
+    }
+
+    // import.meta
+    fn visit_meta_property(&mut self, prop: &MetaProperty<'a>) {
+        if !self.has_module_syntax {
+            self.has_module_syntax = true;
+        }
+        if prop.meta.name == "import" && prop.property.name == "meta" {
+            self.imports.push(ImportSpecifier {
+                n: None,
+                s: prop.span.start,
+                e: prop.span.end,
+                ss: prop.span.start,
+                se: prop.span.end,
+                d: ImportType::ImportMeta,
+                a: None,
+            });
+        }
+        walk_meta_property(self, prop);
+    }
+
+    // import("foo")
+    fn visit_import_expression(&mut self, expr: &ImportExpression<'a>) {
+        let (source, source_span_start, source_span_end) =
+            if let Expression::StringLiteral(s) = &expr.source {
+                (Some(s.value.clone()), s.span.start, s.span.end)
+            } else {
+                let span = expr.source.span();
+                (None, span.start, span.end)
+            };
+        self.imports.push(ImportSpecifier {
+            n: source,
+            s: source_span_start,
+            e: source_span_end,
+            ss: expr.span.start,
+            se: expr.span.end,
+            d: ImportType::DynamicImport(expr.span.start + 6),
+            a: expr.arguments.first().map(|e| e.span().start),
+        });
+        walk_import_expression(self, expr);
+    }
+
+    fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
+        let assertions = decl
+            .with_clause
+            .as_ref()
+            .filter(|c| c.with_entries.first().is_some_and(|a| a.key.as_atom() == "type"))
+            .map(|c| c.span.start);
+        self.imports.push(ImportSpecifier {
+            n: Some(decl.source.value.clone()),
+            s: decl.source.span.start + 1, // +- 1 for removing string quotes
+            e: decl.source.span.end - 1,
+            ss: decl.span.start,
+            se: decl.span.end,
+            d: ImportType::StaticImport,
+            a: assertions,
+        });
+        walk_import_declaration(self, decl);
+    }
+
+    fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
+        if let Some(source) = &decl.source {
+            // export { named } from 'foo'
+            self.imports.push(ImportSpecifier {
+                n: Some(source.value.clone()),
+                s: source.span.start + 1,
+                e: source.span.end - 1,
+                ss: decl.span.start,
+                se: decl.span.end,
+                d: ImportType::StaticImport,
+                a: None,
+            });
+        }
+
+        // export const/let/var/function/class ...
+        if let Some(decl) = &decl.declaration {
+            if self.facade {
                 self.facade = false;
             }
-            AstKind::ModuleDeclaration(_) if !self.has_module_syntax => {
-                self.has_module_syntax = true;
-            }
-            // import.meta
-            AstKind::MetaProperty(prop) => {
-                if !self.has_module_syntax {
-                    self.has_module_syntax = true;
-                }
-                if prop.meta.name == "import" && prop.property.name == "meta" {
-                    self.imports.push(ImportSpecifier {
-                        n: None,
-                        s: prop.span.start,
-                        e: prop.span.end,
-                        ss: prop.span.start,
-                        se: prop.span.end,
-                        d: ImportType::ImportMeta,
-                        a: None,
-                    });
-                }
-            }
-            // import("foo")
-            AstKind::ImportExpression(expr) => {
-                let (source, source_span_start, source_span_end) =
-                    if let Expression::StringLiteral(s) = &expr.source {
-                        (Some(s.value.clone()), s.span.start, s.span.end)
-                    } else {
-                        let span = expr.source.span();
-                        (None, span.start, span.end)
-                    };
-                self.imports.push(ImportSpecifier {
-                    n: source,
-                    s: source_span_start,
-                    e: source_span_end,
-                    ss: expr.span.start,
-                    se: expr.span.end,
-                    d: ImportType::DynamicImport(expr.span.start + 6),
-                    a: expr.arguments.first().map(|e| e.span().start),
-                });
-            }
-            AstKind::ImportDeclaration(decl) => {
-                let assertions = decl
-                    .with_clause
-                    .as_ref()
-                    .filter(|c| c.with_entries.first().is_some_and(|a| a.key.as_atom() == "type"))
-                    .map(|c| c.span.start);
-                self.imports.push(ImportSpecifier {
-                    n: Some(decl.source.value.clone()),
-                    s: decl.source.span.start + 1, // +- 1 for removing string quotes
-                    e: decl.source.span.end - 1,
-                    ss: decl.span.start,
-                    se: decl.span.end,
-                    d: ImportType::StaticImport,
-                    a: assertions,
-                });
-            }
-            AstKind::ExportNamedDeclaration(decl) => {
-                if let Some(source) = &decl.source {
-                    // export { named } from 'foo'
-                    self.imports.push(ImportSpecifier {
-                        n: Some(source.value.clone()),
-                        s: source.span.start + 1,
-                        e: source.span.end - 1,
-                        ss: decl.span.start,
-                        se: decl.span.end,
-                        d: ImportType::StaticImport,
-                        a: None,
-                    });
-                }
-
-                // export const/let/var/function/class ...
-                if let Some(decl) = &decl.declaration {
-                    if self.facade {
-                        self.facade = false;
-                    }
-                    decl.bound_names(&mut |ident| {
-                        self.exports.push(ExportSpecifier {
-                            n: ident.name.clone(),
-                            ln: Some(ident.name.clone()),
-                            s: ident.span.start,
-                            e: ident.span.end,
-                            ls: None,
-                            le: None,
-                        });
-                    });
-                }
-
-                // export { named }
-                self.exports.extend(decl.specifiers.iter().map(|s| {
-                    let (exported_start, exported_end) = match &s.exported {
-                        ModuleExportName::Identifier(ident) => (ident.span.start, ident.span.end),
-                        // +1 -1 to remove the string quotes
-                        ModuleExportName::StringLiteral(s) => (s.span.start + 1, s.span.end - 1),
-                    };
-                    ExportSpecifier {
-                        n: s.exported.name().clone(),
-                        ln: decl.source.is_none().then(|| s.local.name().clone()),
-                        s: exported_start,
-                        e: exported_end,
-                        ls: Some(s.local.span().start),
-                        le: Some(s.local.span().end),
-                    }
-                }));
-            }
-            // export default foo
-            AstKind::ExportDefaultDeclaration(decl) => {
-                if self.facade {
-                    self.facade = false;
-                }
-                let ln = match &decl.declaration {
-                    ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.id.as_ref(),
-                    ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref(),
-                    ExportDefaultDeclarationKind::Expression(_)
-                    | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
-                    | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => None,
-                };
+            decl.bound_names(&mut |ident| {
                 self.exports.push(ExportSpecifier {
-                    n: decl.exported.name().clone(),
-                    ln: ln.map(|id| id.name.clone()),
-                    s: decl.exported.span().start,
-                    e: decl.exported.span().end,
+                    n: ident.name.clone(),
+                    ln: Some(ident.name.clone()),
+                    s: ident.span.start,
+                    e: ident.span.end,
                     ls: None,
                     le: None,
                 });
-            }
-            AstKind::ExportAllDeclaration(decl) => {
-                // export * as ns from 'foo'
-                if let Some(exported) = &decl.exported {
-                    let n = exported.name().clone();
-                    let s = exported.span().start;
-                    let e = exported.span().end;
-                    self.exports.push(ExportSpecifier {
-                        n: n.clone(),
-                        ln: None,
-                        s,
-                        e,
-                        ls: None,
-                        le: None,
-                    });
-                    self.imports.push(ImportSpecifier {
-                        n: Some(n),
-                        s,
-                        e,
-                        ss: decl.span.start,
-                        se: decl.span.end,
-                        d: ImportType::StaticImport,
-                        a: None,
-                    });
-                }
-            }
-            _ => {}
+            });
         }
+
+        // export { named }
+        self.exports.extend(decl.specifiers.iter().map(|s| {
+            let (exported_start, exported_end) = match &s.exported {
+                ModuleExportName::Identifier(ident) => (ident.span.start, ident.span.end),
+                // +1 -1 to remove the string quotes
+                ModuleExportName::StringLiteral(s) => (s.span.start + 1, s.span.end - 1),
+            };
+            ExportSpecifier {
+                n: s.exported.name().clone(),
+                ln: decl.source.is_none().then(|| s.local.name().clone()),
+                s: exported_start,
+                e: exported_end,
+                ls: Some(s.local.span().start),
+                le: Some(s.local.span().end),
+            }
+        }));
+        walk_export_named_declaration(self, decl);
+    }
+
+    // export default foo
+    fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration<'a>) {
+        if self.facade {
+            self.facade = false;
+        }
+        let ln = match &decl.declaration {
+            ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.id.as_ref(),
+            ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref(),
+            ExportDefaultDeclarationKind::Expression(_)
+            | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
+            | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => None,
+        };
+        self.exports.push(ExportSpecifier {
+            n: decl.exported.name().clone(),
+            ln: ln.map(|id| id.name.clone()),
+            s: decl.exported.span().start,
+            e: decl.exported.span().end,
+            ls: None,
+            le: None,
+        });
+    }
+
+    fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration<'a>) {
+        // export * as ns from 'foo'
+        if let Some(exported) = &decl.exported {
+            let n = exported.name().clone();
+            let s = exported.span().start;
+            let e = exported.span().end;
+            self.exports.push(ExportSpecifier { n: n.clone(), ln: None, s, e, ls: None, le: None });
+            self.imports.push(ImportSpecifier {
+                n: Some(n),
+                s,
+                e,
+                ss: decl.span.start,
+                se: decl.span.end,
+                d: ImportType::StaticImport,
+                a: None,
+            });
+        }
+        walk_export_all_declaration(self, decl);
     }
 }

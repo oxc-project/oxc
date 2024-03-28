@@ -3,7 +3,7 @@ use std::rc::Rc;
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::GetSpan;
 
-use crate::options::{TransformOptions, TransformTarget};
+use crate::{context::TransformerCtx, options::TransformTarget};
 
 /// ES2015: Shorthand Properties
 ///
@@ -15,9 +15,9 @@ pub struct ShorthandProperties<'a> {
 }
 
 impl<'a> ShorthandProperties<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
-        (options.target < TransformTarget::ES2015 || options.shorthand_properties)
-            .then_some(Self { ast })
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        (ctx.options.target < TransformTarget::ES2015 || ctx.options.shorthand_properties)
+            .then_some(Self { ast: ctx.ast })
     }
 
     pub fn transform_object_property<'b>(&mut self, obj_prop: &'b mut ObjectProperty<'a>) {

@@ -48,7 +48,9 @@ pub(super) fn print_variable_declarator<'a>(
 pub(super) enum AssignmentLikeNode<'a, 'b> {
     AssignmentExpression(&'b AssignmentExpression<'a>),
     VariableDeclarator(&'b VariableDeclarator<'a>),
+    #[allow(dead_code)]
     PropertyDefinition(&'b PropertyDefinition<'a>),
+    #[allow(dead_code)]
     AccessorProperty(&'b AccessorProperty<'a>),
     ObjectProperty(&'b ObjectProperty<'a>),
 }

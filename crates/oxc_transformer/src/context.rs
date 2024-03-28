@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     cell::{Ref, RefCell, RefMut},
     mem,
     rc::Rc,
@@ -9,16 +10,24 @@ use oxc_diagnostics::Error;
 use oxc_semantic::{ScopeId, ScopeTree, Semantic, SymbolId, SymbolTable};
 use oxc_span::{CompactStr, SourceType};
 
+use crate::TransformOptions;
+
 #[derive(Clone)]
 pub struct TransformerCtx<'a> {
     pub ast: Rc<AstBuilder<'a>>,
+    pub options: Cow<'a, TransformOptions>,
     semantic: Rc<RefCell<Semantic<'a>>>,
     errors: Rc<RefCell<Vec<Error>>>,
 }
 
 impl<'a> TransformerCtx<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>, semantic: Rc<RefCell<Semantic<'a>>>) -> Self {
-        Self { ast, semantic, errors: Rc::new(RefCell::new(vec![])) }
+    pub fn new(ast: Rc<AstBuilder<'a>>, semantic: Semantic<'a>, options: TransformOptions) -> Self {
+        Self {
+            ast,
+            semantic: Rc::new(RefCell::new(semantic)),
+            options: Cow::Owned(options),
+            errors: Rc::new(RefCell::new(vec![])),
+        }
     }
 
     pub fn semantic(&self) -> Ref<'_, Semantic<'a>> {
@@ -51,7 +60,7 @@ impl<'a> TransformerCtx<'a> {
     }
 
     /// Push a Transform Error
-    pub fn error<T: Into<Error>>(&mut self, error: T) {
+    pub fn error<T: Into<Error>>(&self, error: T) {
         self.errors.borrow_mut().push(error.into());
     }
 }

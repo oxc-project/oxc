@@ -8,7 +8,7 @@ use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
-use self::listener_map::ListenerMap;
+use self::listener_map::{ListenerMap, NodeListenerOptions};
 
 mod listener_map;
 
@@ -18,9 +18,29 @@ enum NoSideEffectsDiagnostic {
     #[diagnostic(severity(warning))]
     Assignment(CompactStr, #[label] Span),
 
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating")]
+    #[diagnostic(severity(warning))]
+    Mutation(#[label] Span),
+
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating `{0}`")]
     #[diagnostic(severity(warning))]
-    Mutation(CompactStr, #[label] Span),
+    MutationWithName(CompactStr, #[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function return value")]
+    #[diagnostic(severity(warning))]
+    MutationOfFunctionReturnValue(#[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling")]
+    #[diagnostic(severity(warning))]
+    Call(#[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function return value")]
+    #[diagnostic(severity(warning))]
+    CallReturnValue(#[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `{0}`")]
+    #[diagnostic(severity(warning))]
+    CallGlobal(CompactStr, #[label] Span),
 }
 
 /// <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/master/src/rules/no-side-effects-in-initialization.ts>
@@ -52,8 +72,8 @@ impl Rule for NoSideEffectsInInitialization {
     fn run_once(&self, ctx: &LintContext) {
         let Some(root) = ctx.nodes().iter().next() else { return };
         let AstKind::Program(program) = root.kind() else { return };
-
-        program.report_effects(ctx);
+        let node_listener_options = NodeListenerOptions::new(ctx);
+        program.report_effects(&node_listener_options);
     }
 }
 
@@ -353,7 +373,7 @@ fn test() {
         "ext = 1",
         "ext += 1",
         "ext.x = 1",
-        // "const x = {};x[ext()] = 1",
+        "const x = {};x[ext()] = 1",
         // "this.x = 1",
         // // AssignmentPattern
         // "const {x = ext()} = {}",
@@ -371,7 +391,7 @@ fn test() {
         // "(()=>{})(ext(), 1)",
         // "(()=>{})(1, ext())",
         // // CallExpression when called
-        // "const x = ()=>ext; const y = x(); y()",
+        "const x = ()=>ext; const y = x(); y()",
         // // CallExpression when mutated
         // "const x = ()=>ext; const y = x(); y.z = 1",
         // // CatchClause

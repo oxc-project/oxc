@@ -1,10 +1,9 @@
-use crate::{context::TransformerCtx, TransformOptions, TransformTarget};
+use crate::{context::TransformerCtx, TransformTarget};
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstBuilder, AstKind, VisitMut};
+use oxc_ast::ast::*;
 use oxc_diagnostics::miette;
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::operator::BinaryOperator;
-use std::rc::Rc;
 
 /// ES2015: New Target
 ///
@@ -12,7 +11,6 @@ use std::rc::Rc;
 /// * <https://babel.dev/docs/babel-plugin-transform-template-new-target>
 /// * <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-new-target>
 pub struct NewTarget<'a> {
-    ast: Rc<AstBuilder<'a>>,
     ctx: TransformerCtx<'a>,
     kinds: Vec<'a, NewTargetKind<'a>>,
 }
@@ -24,60 +22,75 @@ enum NewTargetKind<'a> {
     Function(Option<Atom<'a>>),
 }
 
-impl<'a> VisitMut<'a> for NewTarget<'a> {
-    fn enter_node(&mut self, kind: AstKind<'a>) {
-        if let Some(kind) = self.get_kind(kind) {
-            self.kinds.push(kind);
+impl<'a> NewTarget<'a> {
+    pub(crate) fn enter_method_definition(&mut self, def: &MethodDefinition<'a>) {
+        let kind = match def.kind {
+            MethodDefinitionKind::Get
+            | MethodDefinitionKind::Set
+            | MethodDefinitionKind::Method => NewTargetKind::Method,
+            MethodDefinitionKind::Constructor => NewTargetKind::Constructor,
+        };
+        self.push(kind);
+    }
+
+    pub(crate) fn leave_method_definition(&mut self, _: &MethodDefinition) {
+        self.pop();
+    }
+
+    pub(crate) fn enter_object_property(&mut self, prop: &ObjectProperty<'a>) {
+        if prop.method {
+            self.push(NewTargetKind::Method);
         }
     }
 
-    fn leave_node(&mut self, kind: AstKind<'a>) {
-        if self.get_kind(kind).is_some() {
-            self.kinds.pop();
+    pub(crate) fn leave_object_property(&mut self, prop: &ObjectProperty<'a>) {
+        if prop.method {
+            self.pop();
         }
+    }
+
+    pub(crate) fn enter_function(&mut self, func: &Function<'a>) {
+        if let Some(kind) = self.function_new_target_kind(func) {
+            self.push(kind);
+        }
+    }
+
+    pub(crate) fn leave_function(&mut self, func: &Function<'a>) {
+        if self.function_new_target_kind(func).is_some() {
+            self.pop();
+        }
+    }
+
+    fn function_new_target_kind(&self, func: &Function<'a>) -> Option<NewTargetKind<'a>> {
+        // oxc visitor `MethodDefinitionKind` will enter `Function` node, here need to exclude it
+        if let Some(kind) = self.kinds.last() {
+            if !matches!(kind, NewTargetKind::Function(_)) {
+                return None;
+            }
+        }
+        func.id.as_ref().map(|id| NewTargetKind::Function(Some(id.name.clone())))
     }
 }
 
 impl<'a> NewTarget<'a> {
-    pub fn new(
-        ast: Rc<AstBuilder<'a>>,
-        ctx: TransformerCtx<'a>,
-        options: &TransformOptions,
-    ) -> Option<Self> {
-        let kinds = ast.new_vec();
-        (options.target < TransformTarget::ES2015 || options.new_target).then_some(Self {
-            ast,
-            ctx,
-            kinds,
-        })
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        let kinds = ctx.ast.new_vec();
+        (ctx.options.target < TransformTarget::ES2015 || ctx.options.new_target)
+            .then_some(Self { ctx, kinds })
     }
 
-    fn get_kind(&self, kind: AstKind<'a>) -> Option<NewTargetKind<'a>> {
-        match kind {
-            AstKind::MethodDefinition(def) => match def.kind {
-                MethodDefinitionKind::Get
-                | MethodDefinitionKind::Set
-                | MethodDefinitionKind::Method => Some(NewTargetKind::Method),
-                MethodDefinitionKind::Constructor => Some(NewTargetKind::Constructor),
-            },
-            AstKind::ObjectProperty(property) => property.method.then_some(NewTargetKind::Method),
-            AstKind::Function(function) => {
-                // oxc visitor `MethodDefinitionKind` will enter `Function` node, here need to exclude it
-                if let Some(kind) = self.kinds.last() {
-                    if !matches!(kind, NewTargetKind::Function(_)) {
-                        return None;
-                    }
-                }
-                function.id.as_ref().map(|id| NewTargetKind::Function(Some(id.name.clone())))
-            }
-            _ => None,
-        }
+    fn push(&mut self, kind: NewTargetKind<'a>) {
+        self.kinds.push(kind);
+    }
+
+    fn pop(&mut self) {
+        self.kinds.pop();
     }
 
     fn create_constructor_expr(&self, span: Span) -> Expression<'a> {
-        self.ast.static_member_expression(
+        self.ctx.ast.static_member_expression(
             span,
-            self.ast.this_expression(span),
+            self.ctx.ast.this_expression(span),
             IdentifierName { span, name: "constructor".into() },
             false,
         )
@@ -92,33 +105,35 @@ impl<'a> NewTarget<'a> {
                             *expr = self.create_constructor_expr(meta.span);
                         }
                         NewTargetKind::Method => {
-                            *expr = self.ast.void_0();
+                            *expr = self.ctx.ast.void_0();
                         }
                         NewTargetKind::Function(name) => {
                             // TODO packages/babel-helper-create-class-features-plugin/src/fields.ts#L192 unshadow
                             // It will mutate previous ast node, it is difficult at now.
                             let id = name.clone().unwrap_or_else(|| {
-                                self.ast.new_atom(self.ctx.scopes().generate_uid("target").as_str())
+                                self.ctx
+                                    .ast
+                                    .new_atom(self.ctx.scopes().generate_uid("target").as_str())
                             });
-                            let test = self.ast.binary_expression(
+                            let test = self.ctx.ast.binary_expression(
                                 SPAN,
-                                self.ast.this_expression(SPAN),
+                                self.ctx.ast.this_expression(SPAN),
                                 BinaryOperator::Instanceof,
-                                self.ast.identifier_reference_expression(IdentifierReference::new(
-                                    SPAN, id,
-                                )),
+                                self.ctx.ast.identifier_reference_expression(
+                                    IdentifierReference::new(SPAN, id),
+                                ),
                             );
-                            let consequent = self.ast.static_member_expression(
+                            let consequent = self.ctx.ast.static_member_expression(
                                 SPAN,
-                                self.ast.this_expression(SPAN),
+                                self.ctx.ast.this_expression(SPAN),
                                 IdentifierName { span: SPAN, name: "constructor".into() },
                                 false,
                             );
-                            *expr = self.ast.conditional_expression(
+                            *expr = self.ctx.ast.conditional_expression(
                                 meta.span,
                                 test,
                                 consequent,
-                                self.ast.void_0(),
+                                self.ctx.ast.void_0(),
                             );
                         }
                     }

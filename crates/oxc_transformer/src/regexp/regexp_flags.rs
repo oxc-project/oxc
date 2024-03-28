@@ -3,7 +3,7 @@ use oxc_span::{Atom, SPAN};
 
 use std::rc::Rc;
 
-use crate::{TransformOptions, TransformTarget};
+use crate::{context::TransformerCtx, TransformOptions, TransformTarget};
 
 /// Transforms unsupported regex flags into Regex constructors.
 ///
@@ -20,9 +20,9 @@ pub struct RegexpFlags<'a> {
 }
 
 impl<'a> RegexpFlags<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>, options: &TransformOptions) -> Option<Self> {
-        let transform_flags = Self::from_transform_target(options);
-        (!transform_flags.is_empty()).then_some(Self { ast, transform_flags })
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        let transform_flags = Self::from_transform_target(&ctx.options);
+        (!transform_flags.is_empty()).then_some(Self { ast: ctx.ast, transform_flags })
     }
 
     fn from_transform_target(options: &TransformOptions) -> RegExpFlags {

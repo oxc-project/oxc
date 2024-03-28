@@ -1,0 +1,101 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: checked_requires_onchange_or_readonly
+---
+  ⚠ eslint-plugin-react(checked-requires-onchange-or-readonly): `checked` should be used with either `onChange` or `readOnly`.
+   ╭─[checked_requires_onchange_or_readonly.tsx:1:21]
+ 1 │ <input type='radio' checked />
+   ·                     ───────
+   ╰────
+  help: Add either `onChange` or `readOnly`.
+
+  ⚠ eslint-plugin-react(checked-requires-onchange-or-readonly): `checked` should be used with either `onChange` or `readOnly`.
+   ╭─[checked_requires_onchange_or_readonly.tsx:1:21]
+ 1 │ <input type='radio' checked={true} />
+   ·                     ──────────────
+   ╰────
+  help: Add either `onChange` or `readOnly`.
+
+  ⚠ eslint-plugin-react(checked-requires-onchange-or-readonly): `checked` should be used with either `onChange` or `readOnly`.
+   ╭─[checked_requires_onchange_or_readonly.tsx:1:24]
+ 1 │ <input type='checkbox' checked />
+   ·                        ───────
+   ╰────
+  help: Add either `onChange` or `readOnly`.
+
+  ⚠ eslint-plugin-react(checked-requires-onchange-or-readonly): `checked` should be used with either `onChange` or `readOnly`.
+   ╭─[checked_requires_onchange_or_readonly.tsx:1:24]
+ 1 │ <input type='checkbox' checked={true} />
+   ·                        ──────────────
+   ╰────
+  help: Add either `onChange` or `readOnly`.
+
+  ⚠ eslint-plugin-react(checked-requires-onchange-or-readonly): `checked` should be used with either `onChange` or `readOnly`.
+   ╭─[checked_requires_onchange_or_readonly.tsx:1:24]
+ 1 │ <input type='checkbox' checked={condition ? true : false} />
+   ·                        ──────────────────────────────────
+   ╰────
+  help: Add either `onChange` or `readOnly`.
+
+  ⚠ eslint-plugin-react(checked-requires-onchange-or-readonly): Use either `checked` or `defaultChecked`, but not both.
+   ╭─[checked_requires_onchange_or_readonly.tsx:1:24]
+ 1 │ <input type='checkbox' checked defaultChecked />
+   ·                        ─────── ──────────────
+   ╰────
+  help: Remove either `checked` or `defaultChecked`.
+
+  ⚠ eslint-plugin-react(checked-requires-onchange-or-readonly): `checked` should be used with either `onChange` or `readOnly`.
+   ╭─[checked_requires_onchange_or_readonly.tsx:1:24]
+ 1 │ <input type='checkbox' checked defaultChecked />
+   ·                        ───────
+   ╰────
+  help: Add either `onChange` or `readOnly`.
+
+  ⚠ eslint-plugin-react(checked-requires-onchange-or-readonly): `checked` should be used with either `onChange` or `readOnly`.
+   ╭─[checked_requires_onchange_or_readonly.tsx:1:32]
+ 1 │ React.createElement('input', { checked: false })
+   ·                                ──────────────
+   ╰────
+  help: Add either `onChange` or `readOnly`.
+
+  ⚠ eslint-plugin-react(checked-requires-onchange-or-readonly): Use either `checked` or `defaultChecked`, but not both.
+   ╭─[checked_requires_onchange_or_readonly.tsx:1:32]
+ 1 │ React.createElement('input', { checked: true, defaultChecked: true })
+   ·                                ─────────────  ────────────────────
+   ╰────
+  help: Remove either `checked` or `defaultChecked`.
+
+  ⚠ eslint-plugin-react(checked-requires-onchange-or-readonly): `checked` should be used with either `onChange` or `readOnly`.
+   ╭─[checked_requires_onchange_or_readonly.tsx:1:32]
+ 1 │ React.createElement('input', { checked: true, defaultChecked: true })
+   ·                                ─────────────
+   ╰────
+  help: Add either `onChange` or `readOnly`.
+
+  ⚠ eslint-plugin-react(checked-requires-onchange-or-readonly): Use either `checked` or `defaultChecked`, but not both.
+   ╭─[checked_requires_onchange_or_readonly.tsx:1:24]
+ 1 │ <input type='checkbox' checked defaultChecked />
+   ·                        ─────── ──────────────
+   ╰────
+  help: Remove either `checked` or `defaultChecked`.
+
+  ⚠ eslint-plugin-react(checked-requires-onchange-or-readonly): `checked` should be used with either `onChange` or `readOnly`.
+   ╭─[checked_requires_onchange_or_readonly.tsx:1:24]
+ 1 │ <input type='checkbox' checked defaultChecked />
+   ·                        ───────
+   ╰────
+  help: Add either `onChange` or `readOnly`.
+
+  ⚠ eslint-plugin-react(checked-requires-onchange-or-readonly): Use either `checked` or `defaultChecked`, but not both.
+   ╭─[checked_requires_onchange_or_readonly.tsx:1:24]
+ 1 │ <input type='checkbox' checked defaultChecked />
+   ·                        ─────── ──────────────
+   ╰────
+  help: Remove either `checked` or `defaultChecked`.
+
+  ⚠ eslint-plugin-react(checked-requires-onchange-or-readonly): `checked` should be used with either `onChange` or `readOnly`.
+   ╭─[checked_requires_onchange_or_readonly.tsx:1:24]
+ 1 │ <input type='checkbox' checked defaultChecked />
+   ·                        ───────
+   ╰────
+  help: Add either `onChange` or `readOnly`.

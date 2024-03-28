@@ -101,6 +101,7 @@ pub trait TestCase {
             assumptions: options.assumptions,
             class_static_block: options.get_plugin("transform-class-static-block").is_some(),
             instanceof: options.get_plugin("transform-instanceof").is_some(),
+            literals: options.get_plugin("transform-literals").is_some(),
             function_name: options.get_plugin("transform-function-name").is_some(),
             arrow_functions: options
                 .get_plugin("transform-arrow-functions")
@@ -108,6 +109,7 @@ pub trait TestCase {
             logical_assignment_operators: options
                 .get_plugin("transform-logical-assignment-operators")
                 .is_some(),
+            numeric_separator: options.get_plugin("transform-numeric-separator").is_some(),
             nullish_coalescing_operator: options
                 .get_plugin("transform-nullish-coalescing-operator")
                 .map(get_options::<NullishCoalescingOperatorOptions>),
@@ -179,7 +181,7 @@ pub trait TestCase {
             .build(transformed_program);
 
         result.map(|()| {
-            Codegen::<false>::new(&source_text, CodegenOptions::default())
+            Codegen::<false>::new("", &source_text, CodegenOptions::default())
                 .build(transformed_program)
                 .source_text
         })
@@ -253,8 +255,9 @@ impl TestCase for ConformanceTestCase {
         let mut actual_errors = String::new();
         let result = transformer.build(program);
         if result.is_ok() {
-            transformed_code =
-                Codegen::<false>::new(&input, codegen_options.clone()).build(program).source_text;
+            transformed_code = Codegen::<false>::new("", &input, codegen_options.clone())
+                .build(program)
+                .source_text;
         } else {
             actual_errors = result.err().unwrap().iter().map(ToString::to_string).collect();
         }
@@ -267,18 +270,19 @@ impl TestCase for ConformanceTestCase {
                 if let Some(throws) = &babel_options.throws {
                     return throws.to_string();
                 }
-                // The transformation should be equal to input.js If output.js does not exist.
-                let program = Parser::new(&allocator, &input, source_type).parse().program;
-                Codegen::<false>::new(&input, codegen_options.clone()).build(&program).source_text
+                String::default()
             },
             |output| {
                 // Get expected code by parsing the source text, so we can get the same code generated result.
                 let program = Parser::new(&allocator, &output, source_type).parse().program;
-                Codegen::<false>::new(&output, codegen_options.clone()).build(&program).source_text
+                Codegen::<false>::new("", &output, codegen_options.clone())
+                    .build(&program)
+                    .source_text
             },
         );
 
-        let passed = transformed_code == output || actual_errors.contains(&output);
+        let passed =
+            transformed_code == output || (!output.is_empty() && actual_errors.contains(&output));
         if filtered {
             println!("Input:\n");
             println!("{input}\n");
@@ -334,7 +338,7 @@ impl ExecTestCase {
         let source_type = SourceType::from_path(&target_path).unwrap();
         let transformed_program =
             Parser::new(&allocator, &source_text, source_type).parse().program;
-        let result = Codegen::<false>::new(&source_text, CodegenOptions::default())
+        let result = Codegen::<false>::new("", &source_text, CodegenOptions::default())
             .build(&transformed_program)
             .source_text;
 

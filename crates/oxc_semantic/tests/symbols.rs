@@ -92,7 +92,7 @@ fn test_export_flag() {
     let tester = SemanticTester::js(
         "
         const a = 1;
-        export { a, b, c as d };
+        export { a, b as d };
         class b {}
         export default c;
         function c() {}

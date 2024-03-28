@@ -17,7 +17,7 @@ init:
 ready:
   git diff --exit-code --quiet
   typos
-  cargo fmt
+  just fmt
   just check
   just test
   just lint
@@ -26,7 +26,7 @@ ready:
 # Clone or update submodules
 submodules:
   just clone-submodule tasks/coverage/test262 git@github.com:tc39/test262.git 17ba9aea47e496f5b2bc6ce7405b3f32e3cfbf7a
-  just clone-submodule tasks/coverage/babel git@github.com:babel/babel.git eccbd203383487f6957dcf086aa83d773691560b
+  just clone-submodule tasks/coverage/babel git@github.com:babel/babel.git acf3d17fdfe150a270c822581b709dddac4548ce
   just clone-submodule tasks/coverage/typescript git@github.com:microsoft/TypeScript.git 64d2eeea7b9c7f1a79edf42cb99f302535136a2e
   just clone-submodule tasks/prettier_conformance/prettier git@github.com:prettier/prettier.git 7142cf354cce2558f41574f44b967baf11d5b603
 
@@ -53,10 +53,6 @@ check:
 test:
   cargo test
 
-test-transform:
-  cargo run -p oxc_transform_conformance
-  cargo run -p oxc_transform_conformance -- --exec
-
 # Lint the whole project
 lint:
   cargo lint -- --deny warnings
@@ -75,6 +71,21 @@ codecov:
 # Run the benchmarks. See `tasks/benchmark`
 benchmark:
   cargo benchmark
+
+# Removed Unused Dependencies
+shear:
+  cargo binstall cargo-shear
+  cargo shear --fix
+
+# Automatically DRY up Cargo.toml manifests in a workspace.
+autoinherit:
+  cargo binstall cargo-autoinherit
+  cargo autoinherit
+
+# Test Transform
+test-transform:
+  cargo run -p oxc_transform_conformance
+  cargo run -p oxc_transform_conformance -- --exec
 
 # Generate the JavaScript global variables. See `tasks/javascript_globals`
 javascript-globals:

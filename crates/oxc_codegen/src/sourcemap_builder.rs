@@ -24,6 +24,7 @@ pub struct SourcemapBuilder {
     source_id: u32,
     last_generated_update: usize,
     last_position: Option<u32>,
+    last_search_line: usize,
     line_offset_tables: Vec<LineOffsetTable>,
     sourcemap_builder: sourcemap::SourceMapBuilder,
     generated_line: u32,
@@ -37,6 +38,7 @@ impl Default for SourcemapBuilder {
             source_id: 0,
             last_generated_update: 0,
             last_position: None,
+            last_search_line: 0,
             line_offset_tables: vec![],
             sourcemap_builder: sourcemap::SourceMapBuilder::new(None),
             generated_line: 0,
@@ -72,17 +74,25 @@ impl SourcemapBuilder {
                 original_column,
                 Some(self.source_id),
                 name_id,
+                false,
             );
             self.last_position = Some(position);
         }
     }
 
     #[allow(clippy::cast_possible_truncation)]
-    fn search_original_line_and_column(&self, position: u32) -> (u32, u32) {
-        let result = self
-            .line_offset_tables
-            .partition_point(|table| table.byte_offset_to_start_of_line <= position as usize);
-        let original_line = if result > 0 { result - 1 } else { 0 };
+    fn search_original_line_and_column(&mut self, position: u32) -> (u32, u32) {
+        let mut original_line = 0;
+        for i in self.last_search_line..self.line_offset_tables.len() {
+            if self.line_offset_tables[i].byte_offset_to_start_of_line > position as usize {
+                original_line = i - 1;
+                break;
+            }
+            if i == self.line_offset_tables.len() - 1 {
+                original_line = i;
+            }
+        }
+        self.last_search_line = original_line;
         let line = &self.line_offset_tables[original_line];
         let mut original_column = (position as usize) - line.byte_offset_to_start_of_line;
         if original_column >= line.byte_offset_to_first {
@@ -173,7 +183,7 @@ impl SourcemapBuilder {
             });
 
             let remaining = &content.as_bytes()[line_byte_offset..];
-            for (mut byte_offset_from_line_start, b) in remaining.iter().copied().enumerate() {
+            for (mut byte_offset_from_line_start, b) in remaining.iter().enumerate() {
                 match b {
                     b'\n' => {
                         byte_offset_from_line_start += 1;

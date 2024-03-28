@@ -1,12 +1,12 @@
 use std::rc::Rc;
 
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstBuilder, AstKind, VisitMut};
+use oxc_ast::visit::walk_mut::walk_jsx_identifier_mut;
+use oxc_ast::{ast::*, AstBuilder, AstType, VisitMut};
 use oxc_span::{Atom, SPAN};
 use serde::Deserialize;
 
 use crate::context::TransformerCtx;
-use crate::options::TransformOptions;
 use crate::TransformTarget;
 
 /// ES2015 Arrow Functions
@@ -16,7 +16,7 @@ use crate::TransformTarget;
 /// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-arrow-functions>
 pub struct ArrowFunctions<'a> {
     ast: Rc<AstBuilder<'a>>,
-    nodes: Vec<'a, AstKind<'a>>,
+    nodes: Vec<'a, AstType>,
     uid: usize,
     has_this: bool,
     /// Insert a variable declaration at the top of the BlockStatement
@@ -33,11 +33,11 @@ pub struct ArrowFunctionsOptions {
 }
 
 impl<'a> VisitMut<'a> for ArrowFunctions<'a> {
-    fn enter_node(&mut self, kind: AstKind<'a>) {
+    fn enter_node(&mut self, kind: AstType) {
         self.nodes.push(kind);
     }
 
-    fn leave_node(&mut self, _kind: AstKind<'a>) {
+    fn leave_node(&mut self, _kind: AstType) {
         self.nodes.pop();
     }
 
@@ -45,8 +45,8 @@ impl<'a> VisitMut<'a> for ArrowFunctions<'a> {
         let parent_kind = self.nodes.last().unwrap();
         let parent_parent_kind = self.nodes[self.nodes.len() - 2];
         if ident.name == "this"
-            && (matches!(parent_kind, AstKind::JSXElementName(_))
-                || matches!(parent_parent_kind, AstKind::JSXMemberExpression(_)))
+            && (matches!(parent_kind, AstType::JSXElementName)
+                || matches!(parent_parent_kind, AstType::JSXMemberExpression))
         {
             if !self.has_this {
                 self.has_this = true;
@@ -54,19 +54,18 @@ impl<'a> VisitMut<'a> for ArrowFunctions<'a> {
             }
             *ident = self.ast.jsx_identifier(SPAN, self.get_this_name());
         }
+
+        walk_jsx_identifier_mut(self, ident);
     }
 }
 
 impl<'a> ArrowFunctions<'a> {
-    pub fn new(
-        ast: Rc<AstBuilder<'a>>,
-        _: TransformerCtx<'a>,
-        options: &TransformOptions,
-    ) -> Option<Self> {
-        (options.target < TransformTarget::ES2015 || options.arrow_functions.is_some()).then(|| {
-            let nodes = ast.new_vec();
-            Self { ast, uid: 0, nodes, has_this: false, insert: false }
-        })
+    pub fn new(ctx: TransformerCtx<'a>) -> Option<Self> {
+        (ctx.options.target < TransformTarget::ES2015 || ctx.options.arrow_functions.is_some())
+            .then(|| {
+                let nodes = ctx.ast.new_vec();
+                Self { ast: ctx.ast, uid: 0, nodes, has_this: false, insert: false }
+            })
     }
 
     fn get_this_name(&self) -> Atom<'a> {

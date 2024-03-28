@@ -1,9 +1,14 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_ast::{AstKind, Visit};
+use oxc_ast::{
+    ast::{Class, Function},
+    visit::walk::{walk_class, walk_function},
+    Visit,
+};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
+use oxc_syntax::scope::ScopeFlags;
 
 // Instruction:
 // create a `test.js`,
@@ -39,15 +44,13 @@ struct ASTPass {
 }
 
 impl<'a> Visit<'a> for ASTPass {
-    fn enter_node(&mut self, kind: AstKind<'a>) {
-        match kind {
-            AstKind::Function(_) => {
-                self.number_of_functions += 1;
-            }
-            AstKind::Class(_) => {
-                self.number_of_classes += 1;
-            }
-            _ => {}
-        }
+    fn visit_function(&mut self, func: &Function<'a>, flags: Option<ScopeFlags>) {
+        self.number_of_functions += 1;
+        walk_function(self, func, flags);
+    }
+
+    fn visit_class(&mut self, class: &Class<'a>) {
+        self.number_of_classes += 1;
+        walk_class(self, class);
     }
 }

@@ -3,6 +3,9 @@
 //! [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec)
 //! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 
+// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+#![allow(non_snake_case)]
+
 use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, GetSpan, Span};
 #[cfg(feature = "serialize")]
@@ -694,7 +697,7 @@ pub struct TSModuleDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: TSModuleDeclarationName<'a>,
-    pub body: TSModuleDeclarationBody<'a>,
+    pub body: Option<TSModuleDeclarationBody<'a>>,
     /// The keyword used to define this module declaration
     /// ```text
     /// namespace Foo {}

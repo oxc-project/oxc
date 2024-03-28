@@ -6,16 +6,22 @@ on:
     types: [opened, synchronize]
     paths:
       - '**/*.rs'
+      - 'napi/parser/**/*.js'
+      - 'napi/parser/**/*.mjs'
       - 'Cargo.lock'
       - '.github/workflows/benchmark.yml'
+      - 'tasks/benchmark/codspeed/*.mjs'
   push:
     branches:
       - main
       - bench-*
     paths:
       - '**/*.rs'
+      - 'napi/parser/**/*.js'
+      - 'napi/parser/**/*.mjs'
       - 'Cargo.lock'
       - '.github/workflows/benchmark.yml'
+      - 'tasks/benchmark/codspeed/*.mjs'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -25,12 +31,25 @@ jobs:
   benchmark:
     name: Benchmark
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Run each benchmark in own job.
+        # Linter benchmark is by far the slowest, so split each fixture into own job.
+        component: [lexer, parser, transformer, semantic, minifier, codegen_sourcemap]
+        include:
+          - component: linter
+            fixture: 0
+          - component: linter
+            fixture: 1
+          - component: linter
+            fixture: 2
+          - component: linter
+            fixture: 3
+          - component: linter
+            fixture: 4
     steps:
       - name: Checkout Branch
-        uses: actions/checkout@v4
-        with:
-          progress: false
-          persist-credentials: false
+        uses: taiki-e/checkout-action@v1
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
@@ -43,25 +62,162 @@ jobs:
         with:
           tool: cargo-codspeed
 
-      - name: Build Benchmark
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Start bench results interceptor server
+        working-directory: ./tasks/benchmark/codspeed
+        env:
+          COMPONENT: ${{ matrix.component }}
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          corepack enable
+          pnpm install
+          node capture.mjs &
+
+      - name: Build benchmark
         env:
           RUSTFLAGS: "-C debuginfo=2 -C strip=none -g --cfg codspeed"
         shell: bash
         run: |
-          cargo build --release -p oxc_benchmark --features codspeed --bench lexer --bench parser --bench transformer --bench semantic --bench linter --bench minifier --bench codegen_sourcemap
+          cargo build --release -p oxc_benchmark --bench ${{ matrix.component }} --features codspeed
           mkdir -p target/codspeed/oxc_benchmark/
-          mv target/release/deps/lexer-* target/codspeed/oxc_benchmark
-          mv target/release/deps/parser-* target/codspeed/oxc_benchmark
-          mv target/release/deps/transformer-* target/codspeed/oxc_benchmark
-          mv target/release/deps/semantic-* target/codspeed/oxc_benchmark
-          mv target/release/deps/linter-* target/codspeed/oxc_benchmark
-          mv target/release/deps/minifier-* target/codspeed/oxc_benchmark
-          mv target/release/deps/codegen_sourcemap-* target/codspeed/oxc_benchmark
+          mv target/release/deps/${{ matrix.component }}-* target/codspeed/oxc_benchmark
           rm -rf target/codspeed/oxc_benchmark/*.d
 
       - name: Run benchmark
         uses: CodSpeedHQ/action@v2
         timeout-minutes: 30
+        env:
+          FIXTURE: ${{ matrix.fixture }}
         with:
           run: cargo codspeed run
-          token: ${{ secrets.CODSPEED_TOKEN }}
+          # Dummy token for tokenless runs, to suppress logging hash of metadata JSON (see `upload.mjs`)
+          token: ${{ secrets.CODSPEED_TOKEN || 'dummy' }}
+          upload-url: http://localhost:${{ env.INTERCEPT_PORT }}/upload
+
+      - name: Upload bench data artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.component }}${{ matrix.fixture }}
+          path: ${{ env.DATA_DIR }}
+          if-no-files-found: error
+          retention-days: 1
+
+  benchmark-napi:
+    name: Benchmark NAPI parser
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Branch
+        uses: taiki-e/checkout-action@v1
+        with:
+          show-progress: false
+          persist-credentials: false
+
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
+        with:
+          shared-key: 'benchmark_napi'
+          save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Install codspeed
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-codspeed
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Start bench results interceptor server
+        working-directory: ./tasks/benchmark/codspeed
+        env:
+          COMPONENT: 'parser_napi'
+        run: |
+          corepack enable
+          pnpm install
+          node capture.mjs &
+
+      # CodSpeed gets measurements completely off for NAPI if run in `CodSpeedHQ/action`,
+      # so instead run real benchmark without CodSpeed's instrumentation and save the results.
+      # Then "Run Rust benchmark" step below runs a loop of some simple Rust code the number
+      # of times required to take same amount of time as the real benchmark took.
+      # This is all a workaround for https://github.com/CodSpeedHQ/action/issues/96
+      - name: Build NAPI Benchmark
+        working-directory: ./napi/parser
+        run: |
+          corepack enable
+          pnpm install
+          pnpm build
+
+      - name: Run NAPI Benchmark
+        working-directory: ./napi/parser
+        run: node parse.bench.mjs
+
+      - name: Build Rust benchmark
+        env:
+          RUSTFLAGS: "-C debuginfo=2 -C strip=none -g --cfg codspeed"
+        shell: bash
+        run: |
+          cargo build --release -p oxc_benchmark --bench parser_napi --no-default-features --features codspeed_napi
+          mkdir -p target/codspeed/oxc_benchmark/
+          mv target/release/deps/parser_napi-* target/codspeed/oxc_benchmark
+          rm -rf target/codspeed/oxc_benchmark/*.d
+
+      - name: Run Rust benchmark
+        uses: CodSpeedHQ/action@v2
+        timeout-minutes: 30
+        with:
+          run: cargo codspeed run
+          # Dummy token for tokenless runs, to suppress logging hash of metadata JSON (see `upload.mjs`)
+          token: ${{ secrets.CODSPEED_TOKEN || 'dummy' }}
+          upload-url: http://localhost:${{ env.INTERCEPT_PORT }}/upload
+
+      - name: Upload bench data artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'parser_napi'
+          path: ${{ env.DATA_DIR }}
+          if-no-files-found: error
+          retention-days: 1
+
+  upload:
+    name: Upload benchmarks
+    needs: [benchmark, benchmark-napi]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Branch
+        uses: taiki-e/checkout-action@v1
+        with:
+          show-progress: false
+          persist-credentials: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Create temp dir
+        working-directory: ./tasks/benchmark/codspeed
+        run: |
+          corepack enable
+          pnpm install
+          node create_temp_dir.mjs
+
+      - name: Download artefacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ env.DATA_DIR }}
+          merge-multiple: true
+
+      - name: Upload to Codspeed
+        working-directory: ./tasks/benchmark/codspeed
+        env:
+          CODSPEED_TOKEN: ${{ secrets.CODSPEED_TOKEN }}
+        run: node upload.mjs

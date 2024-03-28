@@ -1,0 +1,115 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: export
+---
+  ⚠ eslint-plugin-import(export): Multiple exports of name 'foo'.
+   ╭─[index.ts:1:19]
+ 1 │ let foo; export { foo }; export * from "./export-all"
+   ·                   ───
+   ╰────
+
+  ⚠ eslint-plugin-import(export): Multiple exports of name 'foo'.
+   ╭─[index.ts:1:26]
+ 1 │ let foo; export { foo as "foo" }; export * from "./export-all"
+   ·                          ─────
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[index.ts:2:29]
+ 1 │ 
+ 2 │                 export type Foo = string;
+   ·                             ─┬─
+   ·                              ╰── `Foo` has already been declared here
+ 3 │                 export type Foo = number;
+   ·                             ─┬─
+   ·                              ╰── It can not be redeclared here
+ 4 │             
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[index.ts:4:30]
+ 3 │                 export namespace Foo {
+ 4 │                 export const a = 2;
+   ·                              ┬
+   ·                              ╰── `a` has already been declared here
+ 5 │                 export const a = 3;
+   ·                              ┬
+   ·                              ╰── It can not be redeclared here
+ 6 │                 }
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[index.ts:4:38]
+ 3 │                     export namespace Bar {
+ 4 │                         export const Foo = 1;
+   ·                                      ─┬─
+   ·                                       ╰── `Foo` has already been declared here
+ 5 │                             export const Foo = 2;
+   ·                                          ─┬─
+   ·                                           ╰── It can not be redeclared here
+ 6 │                     }
+   ╰────
+
+  × Identifier `Bar` has already been declared
+    ╭─[index.ts:8:38]
+  7 │                     export namespace Baz {
+  8 │                         export const Bar = 3;
+    ·                                      ─┬─
+    ·                                       ╰── `Bar` has already been declared here
+  9 │                         export const Bar = 4;
+    ·                                      ─┬─
+    ·                                       ╰── It can not be redeclared here
+ 10 │                     }
+    ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[index.ts:2:30]
+ 1 │ 
+ 2 │                 export class Foo { }
+   ·                              ─┬─
+   ·                               ╰── `Foo` has already been declared here
+ 3 │                 export class Foo { }
+   ·                              ─┬─
+   ·                               ╰── It can not be redeclared here
+ 4 │                 export namespace Foo { }
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[index.ts:2:29]
+ 1 │ 
+ 2 │                 export enum Foo { }
+   ·                             ─┬─
+   ·                              ╰── `Foo` has already been declared here
+ 3 │                 export class Foo { }
+   ·                              ─┬─
+   ·                               ╰── It can not be redeclared here
+ 4 │                 export namespace Foo { }
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[index.ts:2:30]
+ 1 │ 
+ 2 │                 export const Foo = 'bar';
+   ·                              ─┬─
+   ·                               ╰── `Foo` has already been declared here
+ 3 │                 export class Foo { }
+   ·                              ─┬─
+   ·                               ╰── It can not be redeclared here
+ 4 │                 export namespace Foo { }
+   ╰────
+
+  ⚠ eslint-plugin-import(export): Multiple exports of name 'default'.
+    ╭─[index.ts:9:32]
+  8 │                 const Baz = 3;
+  9 │                 export {Baz as default};
+    ·                                ───────
+ 10 │             
+    ╰────
+
+  ⚠ eslint-plugin-import(export): Multiple exports of name 'default'.
+   ╭─[index.ts:7:32]
+ 6 │                 const Bar = 2;
+ 7 │                 export {Bar as default};
+   ·                                ───────
+ 8 │                 const Baz = 3;
+   ╰────

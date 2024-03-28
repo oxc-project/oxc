@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Branch
-        uses: actions/checkout@v4
+        uses: taiki-e/checkout-action@v1
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
