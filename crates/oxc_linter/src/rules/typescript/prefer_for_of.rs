@@ -13,6 +13,39 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, Up
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
+#[derive(Debug, Error, Diagnostic)]
+#[error("typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.")]
+#[diagnostic(severity(warning), help("Consider using a for-of loop for this simple iteration."))]
+struct PreferForOfDiagnostic(#[label] pub Span);
+
+#[derive(Debug, Default, Clone)]
+pub struct PreferForOf;
+
+declare_oxc_lint!(
+    /// ### What it does
+    /// Enforces the use of for-of loop instead of a for loop with a simple iteration.
+    ///
+    /// ### Why is this bad?
+    /// Using a for loop with a simple iteration over an array can be replaced with a more concise
+    /// and readable for-of loop. For-of loops are easier to read and less error-prone, as they
+    /// eliminate the need for an index variable and manual array access.
+    ///
+    /// ### Example
+    /// ```javascript
+    /// // Bad
+    /// for (let i = 0; i < arr.length; i++) {
+    ///   console.log(arr[i]);
+    /// }
+    ///
+    /// // Good
+    /// for (const item of arr) {
+    ///   console.log(item);
+    /// }
+    /// ```
+    PreferForOf,
+    style
+);
+
 trait SpanExt {
     fn contains(&self, other: Self) -> bool;
 }
@@ -76,39 +109,6 @@ impl<'a> ExpressionExt for Expression<'a> {
         }
     }
 }
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.")]
-#[diagnostic(severity(warning), help("Consider using a for-of loop for this simple iteration."))]
-struct PreferForOfDiagnostic(#[label] pub Span);
-
-#[derive(Debug, Default, Clone)]
-pub struct PreferForOf;
-
-declare_oxc_lint!(
-    /// ### What it does
-    /// Enforces the use of for-of loop instead of a for loop with a simple iteration.
-    ///
-    /// ### Why is this bad?
-    /// Using a for loop with a simple iteration over an array can be replaced with a more concise
-    /// and readable for-of loop. For-of loops are easier to read and less error-prone, as they
-    /// eliminate the need for an index variable and manual array access.
-    ///
-    /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// for (let i = 0; i < arr.length; i++) {
-    ///   console.log(arr[i]);
-    /// }
-    ///
-    /// // Good
-    /// for (const item of arr) {
-    ///   console.log(item);
-    /// }
-    /// ```
-    PreferForOf,
-    correctness
-);
 
 fn is_assignee(node: &AstNode) -> bool {
     match node.kind() {
