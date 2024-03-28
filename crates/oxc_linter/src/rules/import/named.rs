@@ -26,7 +26,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     Named,
-    nursery
+    suspicious
 );
 
 impl Rule for Named {
