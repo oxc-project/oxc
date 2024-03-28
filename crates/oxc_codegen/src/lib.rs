@@ -303,7 +303,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         }
     }
 
-    fn print_symbol(&mut self, start: u32, _symbol_id: Option<SymbolId>, fallback: &Atom) {
+    fn print_symbol(&mut self, span: Span, _symbol_id: Option<SymbolId>, fallback: &Atom) {
         // if let Some(mangler) = &self.mangler {
         // if let Some(symbol_id) = symbol_id {
         // let name = mangler.get_symbol_name(symbol_id);
@@ -311,7 +311,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         // return;
         // }
         // }
-        self.add_source_mapping_for_name(start, fallback);
+        self.add_source_mapping_for_name(span, fallback);
         self.print_str(fallback.as_bytes());
     }
 
@@ -412,8 +412,8 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         self.sourcemap_builder.add_source_mapping(&self.code, position, None);
     }
 
-    fn add_source_mapping_for_name(&mut self, position: u32, name: &str) {
-        self.sourcemap_builder.add_source_mapping(&self.code, position, Some(name));
+    fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {
+        self.sourcemap_builder.add_source_mapping_for_name(&self.code, span, name);
     }
 }
 
