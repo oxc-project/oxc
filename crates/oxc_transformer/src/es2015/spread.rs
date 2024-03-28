@@ -24,12 +24,17 @@ impl<'a> Spread<'a> {
     }
 
     pub fn transform_array_expression<'b>(&mut self, expr: &'b mut ArrayExpression<'a>) {
-        // Return early if array is empty
-        if expr.elements.is_empty() {
+        // Return early if array contains no spread elements
+        if !expr.elements.iter().any(|e| e.is_spread_element()) {
             return;
         }
 
-        let first = match &expr.elements[0] {
+        let iter = expr.elements.iter();
+
+        // SAFETY: we already checked that elements is not empty.
+        let first = unsafe { iter.next().unwrap_unchecked() };
+
+        let first = match first {
             ArrayExpressionElement::Elision(..) | ArrayExpressionElement::Expression(..) => {
                 return;
             }
