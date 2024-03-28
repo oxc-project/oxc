@@ -39,7 +39,7 @@ declare_oxc_lint!(
     /// import bar from './foo.js';
     /// ```
     NoNamedAsDefault,
-    nursery
+    suspicious
 );
 
 impl Rule for NoNamedAsDefault {
