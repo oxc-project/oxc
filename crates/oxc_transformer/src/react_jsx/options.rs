@@ -34,6 +34,9 @@ pub struct ReactJsxOptions {
     /// Use `Some<T>` instead of `bool` because we want to know if user set this field explicitly,
     /// which used for creating warning, <https://github.com/oxc-project/oxc/blob/c3e2098c04d8916cb812bdd16d2026bb430ac25f/crates/oxc_transformer/src/react_jsx/mod.rs#L111-L114>
     pub use_spread: Option<bool>,
+
+    #[serde(default)]
+    pub development: Option<bool>,
 }
 
 fn default_throw_if_namespace() -> bool {
@@ -62,6 +65,7 @@ impl Default for ReactJsxOptions {
             pragma_frag: default_pragma_frag(),
             use_built_ins: None,
             use_spread: None,
+            development: None,
         }
     }
 }

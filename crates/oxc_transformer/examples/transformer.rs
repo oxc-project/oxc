@@ -20,6 +20,7 @@ use oxc_transformer::{
 
 fn main() {
     let name = env::args().nth(1).unwrap_or_else(|| "test.tsx".to_string());
+    // println!("env args are: {:?}", env::args());
     let path = Path::new(&name);
     let source_text = std::fs::read_to_string(path).expect("{name} not found");
     let allocator = Allocator::default();
@@ -48,7 +49,8 @@ fn main() {
     let transform_options = TransformOptions {
         target: TransformTarget::ES5,
         react_jsx: Some(ReactJsxOptions {
-            runtime: Some(ReactJsxRuntimeOption::Valid(ReactJsxRuntime::Classic)),
+            runtime: Some(ReactJsxRuntimeOption::Valid(ReactJsxRuntime::Automatic)),
+            development: Some(true),
             ..ReactJsxOptions::default()
         }),
         ..TransformOptions::default()
