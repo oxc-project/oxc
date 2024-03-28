@@ -1,6 +1,8 @@
+use crate::SourceMap;
 use rustc_hash::FxHashMap;
-use sourcemap::SourceMap;
 
+/// The `SourcemapVisualizer` is a helper for sourcemap testing.
+/// It print the mapping of original content and final content tokens.
 pub struct SourcemapVisualizer<'a> {
     output: &'a str,
     sourcemap: &'a SourceMap,
@@ -16,22 +18,26 @@ impl<'a> SourcemapVisualizer<'a> {
         let mut source_log_map = FxHashMap::default();
         let source_contents_lines_map: FxHashMap<String, Option<Vec<Vec<u16>>>> = self
             .sourcemap
-            .sources()
+            .sources
+            .iter()
             .enumerate()
             .map(|(source_id, source)| {
                 (
                     source.to_string(),
                     self.sourcemap
-                        .get_source_view(source_id as u32)
-                        .map(|source_view| Self::generate_line_utf16_tables(source_view.source())),
+                        .get_source_content(source_id as u32)
+                        .map(Self::generate_line_utf16_tables),
                 )
             })
             .collect();
         let output_lines = Self::generate_line_utf16_tables(self.output);
+
         let mut s = String::new();
 
-        self.sourcemap.tokens().reduce(|pre_token, token| {
-            if let Some(source) = pre_token.get_source() {
+        self.sourcemap.tokens.iter().reduce(|pre_token, token| {
+            if let Some(source) =
+                pre_token.get_source_id().and_then(|id| self.sourcemap.get_source(id))
+            {
                 if let Some(Some(source_contents_lines)) = source_contents_lines_map.get(source) {
                     // Print source
                     source_log_map.entry(source).or_insert_with(|| {
@@ -129,13 +135,13 @@ mod test {
 
     #[test]
     fn should_work() {
-        let sourcemap = SourceMap::from_slice(r#"{
+        let sourcemap = SourceMap::from_json_string(r#"{
             "version":3,
             "sources":["shared.js","index.js"],
             "sourcesContent":["const a = 'shared.js'\n\nexport { a }","import { a as a2 } from './shared'\nconst a = 'index.js'\nconsole.log(a, a2)\n"],
             "names":["a","a$1"],
             "mappings":";;AAAA,MAAMA,IAAI;;;ACCV,MAAMC,MAAI;AACV,QAAQ,IAAIA,KAAGD,EAAG"
-        }"#.as_bytes()).unwrap();
+        }"#).unwrap();
         let output = "\n// shared.js\nconst a = 'shared.js';\n\n// index.js\nconst a$1 = 'index.js';\nconsole.log(a$1, a);\n";
         let visualizer = SourcemapVisualizer::new(output, &sourcemap);
         let visualizer_text = visualizer.into_visualizer_text();

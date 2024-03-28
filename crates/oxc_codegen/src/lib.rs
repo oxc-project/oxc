@@ -13,7 +13,6 @@ mod gen;
 mod gen_ts;
 mod operator;
 mod sourcemap_builder;
-mod sourcemap_visualizer;
 use std::str::from_utf8_unchecked;
 
 #[allow(clippy::wildcard_imports)]
@@ -31,7 +30,6 @@ pub use crate::{
     context::Context,
     gen::{Gen, GenExpr},
     operator::Operator,
-    sourcemap_visualizer::SourcemapVisualizer,
 };
 // use crate::mangler::Mangler;
 
@@ -46,7 +44,7 @@ pub struct CodegenOptions {
 
 pub struct CodegenReturn {
     pub source_text: String,
-    pub source_map: Option<sourcemap::SourceMap>,
+    pub source_map: Option<oxc_sourcemap::SourceMap>,
 }
 
 pub struct Codegen<const MINIFY: bool> {

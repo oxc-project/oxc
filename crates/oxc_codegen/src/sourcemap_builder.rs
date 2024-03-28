@@ -18,6 +18,7 @@ pub struct LineOffsetTable {
     byte_offset_to_start_of_line: usize,
 }
 
+#[derive(Default)]
 #[allow(clippy::struct_field_names)]
 pub struct SourcemapBuilder {
     enable_sourcemap: bool,
@@ -26,36 +27,19 @@ pub struct SourcemapBuilder {
     last_position: Option<u32>,
     last_search_line: usize,
     line_offset_tables: Vec<LineOffsetTable>,
-    sourcemap_builder: sourcemap::SourceMapBuilder,
+    sourcemap_builder: oxc_sourcemap::SourceMapBuilder,
     generated_line: u32,
     generated_column: u32,
-}
-
-impl Default for SourcemapBuilder {
-    fn default() -> Self {
-        Self {
-            enable_sourcemap: false,
-            source_id: 0,
-            last_generated_update: 0,
-            last_position: None,
-            last_search_line: 0,
-            line_offset_tables: vec![],
-            sourcemap_builder: sourcemap::SourceMapBuilder::new(None),
-            generated_line: 0,
-            generated_column: 0,
-        }
-    }
 }
 
 impl SourcemapBuilder {
     pub fn with_name_and_source(&mut self, name: &str, source: &str) {
         self.enable_sourcemap = true;
         self.line_offset_tables = Self::generate_line_offset_tables(source);
-        self.source_id = self.sourcemap_builder.add_source(name);
-        self.sourcemap_builder.set_source_contents(self.source_id, Some(source));
+        self.source_id = self.sourcemap_builder.set_source_and_content(name, source);
     }
 
-    pub fn into_sourcemap(self) -> Option<sourcemap::SourceMap> {
+    pub fn into_sourcemap(self) -> Option<oxc_sourcemap::SourceMap> {
         self.enable_sourcemap.then(|| self.sourcemap_builder.into_sourcemap())
     }
 
@@ -67,14 +51,13 @@ impl SourcemapBuilder {
             let (original_line, original_column) = self.search_original_line_and_column(position);
             self.update_generated_line_and_column(output);
             let name_id = name.map(|s| self.sourcemap_builder.add_name(s));
-            self.sourcemap_builder.add_raw(
+            self.sourcemap_builder.add_token(
                 self.generated_line,
                 self.generated_column,
                 original_line,
                 original_column,
                 Some(self.source_id),
                 name_id,
-                false,
             );
             self.last_position = Some(position);
         }

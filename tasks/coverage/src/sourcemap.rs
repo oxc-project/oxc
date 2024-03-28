@@ -5,8 +5,9 @@ use std::{
 };
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions, SourcemapVisualizer};
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::Parser;
+use oxc_sourcemap::SourcemapVisualizer;
 use oxc_span::SourceType;
 use oxc_tasks_common::{project_root, TestFiles};
 

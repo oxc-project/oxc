@@ -1,7 +1,6 @@
 [package]
-name                   = "oxc_codegen"
+name                   = "oxc_sourcemap"
 version                = "0.10.0"
-publish                = true
 authors.workspace      = true
 description.workspace  = true
 edition.workspace      = true
@@ -11,6 +10,7 @@ license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
+include                = ["/src"]
 
 [lints]
 workspace = true
@@ -19,13 +19,8 @@ workspace = true
 doctest = false
 
 [dependencies]
-oxc_ast       = { workspace = true }
-oxc_span      = { workspace = true }
-oxc_allocator = { workspace = true }
-oxc_syntax    = { workspace = true }
-oxc_sourcemap = { workspace = true }
-bitflags      = { workspace = true }
-
-[dev-dependencies]
-oxc_parser = { workspace = true }
-base64     = { workspace = true }
+rustc-hash  = { workspace = true }
+rayon       = { workspace = true }
+serde       = { workspace = true, features = ["derive"] }
+serde_json  = { workspace = true }
+base64-simd = "0.7"

@@ -78,6 +78,7 @@ oxc_semantic    = { version = "0.10.0", path = "crates/oxc_semantic" }
 oxc_span        = { version = "0.10.0", path = "crates/oxc_span" }
 oxc_syntax      = { version = "0.10.0", path = "crates/oxc_syntax" }
 oxc_transformer = { version = "0.10.0", path = "crates/oxc_transformer" }
+oxc_sourcemap   = { version = "0.10.0", path = "crates/oxc_sourcemap" }
 
 # publish = false
 oxc_macros       = { path = "crates/oxc_macros" }
@@ -160,7 +161,6 @@ petgraph            = "0.6.4"
 rust-lapper         = "1.1.0"
 serde_yaml          = "0.9.34"
 similar             = "2.4.0"
-sourcemap           = "8.0.0"
 textwrap            = "0.16.0"
 unicode-width       = "0.1.11"
 
