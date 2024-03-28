@@ -18,15 +18,22 @@ pub struct TransformerCtx<'a> {
     pub options: Cow<'a, TransformOptions>,
     semantic: Rc<RefCell<Semantic<'a>>>,
     errors: Rc<RefCell<Vec<Error>>>,
+    pub file_name: String,
 }
 
 impl<'a> TransformerCtx<'a> {
-    pub fn new(ast: Rc<AstBuilder<'a>>, semantic: Semantic<'a>, options: TransformOptions) -> Self {
+    pub fn new(
+        ast: Rc<AstBuilder<'a>>,
+        semantic: Semantic<'a>,
+        options: TransformOptions,
+        file_name: String,
+    ) -> Self {
         Self {
             ast,
             semantic: Rc::new(RefCell::new(semantic)),
             options: Cow::Owned(options),
             errors: Rc::new(RefCell::new(vec![])),
+            file_name,
         }
     }
 

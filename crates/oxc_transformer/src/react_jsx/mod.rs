@@ -1,3 +1,4 @@
+mod jsx_src;
 mod options;
 
 use oxc_allocator::Vec;
@@ -12,6 +13,7 @@ use oxc_syntax::{
     xml_entities::XML_ENTITIES,
 };
 
+pub use self::jsx_src::JsxSrc;
 pub use self::options::{ReactJsxOptions, ReactJsxRuntime, ReactJsxRuntimeOption};
 use crate::context::TransformerCtx;
 

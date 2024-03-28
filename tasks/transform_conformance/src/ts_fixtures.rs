@@ -94,6 +94,11 @@ impl TypeScriptFixtures {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
         let source_type = SourceType::from_path(path).unwrap();
+        let file_name = path
+            .file_name()
+            .expect("Expected to have a file name")
+            .to_str()
+            .expect("File name to be valid UTF-8");
         let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
 
         let semantic_ret = SemanticBuilder::new(&source_text, source_type)
@@ -122,8 +127,14 @@ impl TypeScriptFixtures {
         let semantic = semantic_ret.semantic;
         let transformed_program = allocator.alloc(parser_ret.program);
 
-        let result = Transformer::new(&allocator, source_type, semantic, Self::transform_options())
-            .build(transformed_program);
+        let result = Transformer::new(
+            &allocator,
+            source_type,
+            semantic,
+            Self::transform_options(),
+            file_name.to_string(),
+        )
+        .build(transformed_program);
 
         result
             .map(|()| {
