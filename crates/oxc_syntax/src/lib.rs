@@ -1,5 +1,7 @@
 //! Common code for JavaScript Syntax
 
+use oxc_macros::ast_node;
+
 pub mod assumptions;
 pub mod class;
 pub mod identifier;
@@ -13,6 +15,7 @@ pub mod scope;
 pub mod symbol;
 pub mod xml_entities;
 
+#[ast_node]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum NumberBase {
     Float,
@@ -28,6 +31,7 @@ impl NumberBase {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum BigintBase {
     Decimal,

@@ -10,6 +10,11 @@ use std::{
 
 use bumpalo::collections;
 pub use bumpalo::collections::String;
+#[cfg(feature = "raw")]
+use layout_inspect::{
+    defs::{DefBox, DefType, DefVec},
+    Inspect, TypesCollector,
+};
 use serde::{ser::SerializeSeq, Serialize, Serializer};
 
 use crate::Allocator;
@@ -28,6 +33,30 @@ impl<'alloc, T> Box<'alloc, T> {
         // construct an alloc::Box with a borrowed reference, only with a fresh
         // one just allocated from a Bump.
         unsafe { ptr::read(self.0 as *mut T) }
+    }
+}
+
+#[cfg(feature = "raw")]
+impl<'alloc, T: Inspect + 'alloc> Inspect for Box<'alloc, T> {
+    fn name() -> std::string::String {
+        "Box<".to_string() + &<T as Inspect>::name() + ">"
+    }
+
+    fn size() -> Option<usize> {
+        Some(std::mem::size_of::<Self>())
+    }
+
+    fn align() -> Option<usize> {
+        Some(std::mem::align_of::<Self>())
+    }
+
+    fn def(collector: &mut TypesCollector) -> DefType {
+        DefType::Box(DefBox {
+            name: <Self as Inspect>::name(),
+            size: <Self as Inspect>::size().unwrap(),
+            align: <Self as Inspect>::align().unwrap(),
+            value_type_id: collector.collect::<T>(),
+        })
     }
 }
 
@@ -97,6 +126,30 @@ impl<'alloc, T> Vec<'alloc, T> {
     #[inline]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
         Self(collections::Vec::from_iter_in(iter, allocator))
+    }
+}
+
+#[cfg(feature = "raw")]
+impl<'alloc, T: Inspect + 'alloc> Inspect for Vec<'alloc, T> {
+    fn name() -> std::string::String {
+        "Vec<".to_string() + &<T as Inspect>::name() + ">"
+    }
+
+    fn size() -> Option<usize> {
+        Some(std::mem::size_of::<Self>())
+    }
+
+    fn align() -> Option<usize> {
+        Some(std::mem::align_of::<Self>())
+    }
+
+    fn def(collector: &mut TypesCollector) -> DefType {
+        DefType::Vec(DefVec {
+            name: <Self as Inspect>::name(),
+            size: <Self as Inspect>::size().unwrap(),
+            align: <Self as Inspect>::align().unwrap(),
+            value_type_id: collector.collect::<T>(),
+        })
     }
 }
 

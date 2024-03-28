@@ -1,6 +1,7 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
+use oxc_macros::ast_node;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
@@ -8,6 +9,7 @@ use tsify::Tsify;
 
 use crate::precedence::{GetPrecedence, Precedence};
 
+#[ast_node]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum AssignmentOperator {
@@ -86,6 +88,7 @@ impl AssignmentOperator {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum BinaryOperator {
@@ -272,6 +275,7 @@ impl GetPrecedence for BinaryOperator {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
@@ -304,6 +308,7 @@ impl GetPrecedence for LogicalOperator {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
@@ -350,6 +355,7 @@ impl UnaryOperator {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", derive(Tsify))]

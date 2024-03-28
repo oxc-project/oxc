@@ -19,8 +19,9 @@ workspace = true
 doctest = false
 
 [dependencies]
-oxc_index = { workspace = true }
-oxc_span  = { workspace = true }
+oxc_index  = { workspace = true }
+oxc_macros = { workspace = true }
+oxc_span   = { workspace = true }
 
 unicode-id-start = { workspace = true }
 bitflags         = { workspace = true }
@@ -28,6 +29,7 @@ rustc-hash       = { workspace = true }
 indexmap         = { workspace = true }
 dashmap          = { workspace = true }
 phf              = { workspace = true, features = ["macros"] }
+layout_inspect   = { workspace = true, features = ["unique_names"], optional = true }
 
 serde        = { workspace = true, features = ["derive"], optional = true }
 tsify        = { workspace = true, optional = true }
@@ -35,4 +37,5 @@ wasm-bindgen = { workspace = true, optional = true }
 
 [features]
 default   = []
+raw       = ["serialize", "dep:layout_inspect"]
 serialize = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_index/serialize", "bitflags/serde"]
