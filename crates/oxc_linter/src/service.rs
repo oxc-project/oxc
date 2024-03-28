@@ -135,7 +135,9 @@ pub struct Runtime {
 
 impl Runtime {
     fn new(linter: Linter, options: LintServiceOptions) -> Self {
-        let resolver = linter.options().import_plugin.then(|| Self::get_resolver(options.tsconfig));
+        let resolver = linter.options().import_plugin.then(|| {
+            Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
+        });
         Self {
             cwd: options.cwd,
             paths: options.paths.iter().cloned().collect(),
