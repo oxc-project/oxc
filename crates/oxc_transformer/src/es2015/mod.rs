@@ -5,6 +5,7 @@ mod instanceof;
 mod literals;
 mod new_target;
 mod shorthand_properties;
+mod spread;
 mod template_literals;
 
 pub use arrow_functions::{ArrowFunctions, ArrowFunctionsOptions};
@@ -14,4 +15,5 @@ pub use instanceof::Instanceof;
 pub use literals::Literals;
 pub use new_target::NewTarget;
 pub use shorthand_properties::ShorthandProperties;
+pub use spread::Spread;
 pub use template_literals::TemplateLiterals;

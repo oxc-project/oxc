@@ -316,6 +316,10 @@ impl<'a> Expression<'a> {
             _ => false,
         }
     }
+
+    pub fn is_array_expression(&self) -> bool {
+        matches!(self, Expression::ArrayExpression(_))
+    }
 }
 
 /// Identifier Name
@@ -439,6 +443,10 @@ pub enum ArrayExpressionElement<'a> {
 impl<'a> ArrayExpressionElement<'a> {
     pub fn is_elision(&self) -> bool {
         matches!(self, Self::Elision(_))
+    }
+
+    pub fn is_spread_element(&self) -> bool {
+        matches!(self, Self::SpreadElement(_))
     }
 }
 
