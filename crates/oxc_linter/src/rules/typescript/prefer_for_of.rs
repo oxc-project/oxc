@@ -177,7 +177,6 @@ impl Rule for PreferForOf {
         }
 
         let nodes = ctx.nodes();
-        let test_and_update_span = test_expr.span.merge(&update_expr.span());
         let body_span = for_stmt.body.span();
 
         let Some(var_symbol_id) = var_symbol_id else { return };
@@ -185,7 +184,7 @@ impl Rule for PreferForOf {
             let ref_id = reference.node_id();
 
             let symbol_span = nodes.get_node(ref_id).kind().span();
-            if test_and_update_span.contains(symbol_span) || !body_span.contains(symbol_span) {
+            if !body_span.contains(symbol_span) {
                 return false;
             }
 
@@ -216,7 +215,8 @@ impl Rule for PreferForOf {
             return;
         }
 
-        ctx.diagnostic(PreferForOfDiagnostic(for_stmt_init.span.merge(&test_and_update_span)));
+        let span = for_stmt_init.span.merge(&test_expr.span).merge(&update_expr.span());
+        ctx.diagnostic(PreferForOfDiagnostic(span));
     }
 }
 
