@@ -384,7 +384,7 @@ mod test {
 
     #[test]
     fn add_source_mapping_for_name() {
-        let output = "ba".as_bytes();
+        let output = "ac".as_bytes();
         let mut builder = SourcemapBuilder::default();
         builder.with_name_and_source("x.js", "ab");
         builder.add_source_mapping_for_name(output, Span::new(0, 1), "a");
