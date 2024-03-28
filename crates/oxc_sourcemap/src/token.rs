@@ -50,7 +50,7 @@ impl Token {
 
 /// The `TokenChunk` used by encode tokens to vlq mappings at parallel.
 /// It is a slice of `SourceMap::tokens`, it is a unit of parallel.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct TokenChunk {
     pub start: u32,
     pub end: u32,

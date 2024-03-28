@@ -35,7 +35,7 @@ jobs:
       matrix:
         # Run each benchmark in own job.
         # Linter benchmark is by far the slowest, so split each fixture into own job.
-        component: [lexer, parser, transformer, semantic, minifier, codegen_sourcemap]
+        component: [lexer, parser, transformer, semantic, minifier, codegen_sourcemap, sourcemap]
         include:
           - component: linter
             fixture: 0

@@ -14,13 +14,6 @@ pub struct ConcatSourceMapBuilder {
 
 #[allow(clippy::cast_possible_truncation)]
 impl ConcatSourceMapBuilder {
-    pub fn set_source_and_content(&mut self, source: &str, source_content: &str) -> u32 {
-        let count = self.sources.len() as u32;
-        self.sources.push(source.into());
-        self.source_contents.push(source_content.into());
-        count
-    }
-
     pub fn add_sourcemap(&mut self, sourcemap: &SourceMap, line_offset: u32) {
         let source_offset = self.sources.len() as u32;
         let name_offset = self.names.len() as u32;
@@ -54,7 +47,8 @@ impl ConcatSourceMapBuilder {
         self.sources.reserve(sourcemap.sources.len());
         for (index, source) in sourcemap.get_sources().enumerate() {
             let source_content = sourcemap.get_source_content(index as u32).unwrap_or_default();
-            self.set_source_and_content(source, source_content);
+            self.sources.push(source.into());
+            self.source_contents.push(source_content.into());
         }
 
         // Extend `names`.
@@ -85,4 +79,51 @@ impl ConcatSourceMapBuilder {
             Some(self.token_chunks),
         )
     }
+}
+
+#[test]
+fn test_concat_sourcemap_builder() {
+    let sm1 = SourceMap::new(
+        None,
+        vec!["foo".into()],
+        vec!["foo.js".into()],
+        None,
+        vec![Token::new(1, 1, 1, 1, Some(0), Some(0))],
+        None,
+    );
+    let sm2 = SourceMap::new(
+        None,
+        vec!["bar".into()],
+        vec!["bar.js".into()],
+        None,
+        vec![Token::new(1, 1, 1, 1, Some(0), Some(0))],
+        None,
+    );
+
+    let mut builder = ConcatSourceMapBuilder::default();
+    builder.add_sourcemap(&sm1, 0);
+    builder.add_sourcemap(&sm2, 2);
+
+    let sm = SourceMap::new(
+        None,
+        vec!["foo".into(), "bar".into()],
+        vec!["foo.js".into(), "bar.js".into()],
+        None,
+        vec![Token::new(1, 1, 1, 1, Some(0), Some(0)), Token::new(3, 1, 1, 1, Some(1), Some(1))],
+        None,
+    );
+    let concat_sm = builder.into_sourcemap();
+
+    assert_eq!(concat_sm.tokens, sm.tokens);
+    assert_eq!(concat_sm.sources, sm.sources);
+    assert_eq!(concat_sm.names, sm.names);
+    assert_eq!(
+        concat_sm.token_chunks,
+        Some(vec![
+            TokenChunk::new(0, 1, 0, 0, 0, 0, 0, 0,),
+            TokenChunk::new(1, 2, 1, 1, 1, 1, 0, 0,)
+        ])
+    );
+
+    assert_eq!(sm.to_json_string(), sm.to_json_string());
 }

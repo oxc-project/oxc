@@ -1,5 +1,5 @@
 /// Port from https://github.com/getsentry/rust-sourcemap/blob/master/src/encoder.rs
-/// It is a helper for encode `SourceMap` to vlq soucemap string, but here some different.
+/// It is a helper for encode `SourceMap` to vlq sourcemap string, but here some different.
 /// - Quote `source_content` at parallel.
 /// - If you using `ConcatSourceMapBuilder`, serialize `tokens` to vlq `mappings` at parallel.
 use crate::{token::TokenChunk, SourceMap, Token};

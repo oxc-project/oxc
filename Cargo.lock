@@ -1350,6 +1350,7 @@ dependencies = [
  "oxc_parser",
  "oxc_prettier",
  "oxc_semantic",
+ "oxc_sourcemap",
  "oxc_span",
  "oxc_tasks_common",
  "oxc_transformer",

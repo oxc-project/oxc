@@ -74,7 +74,7 @@ impl SourceMapBuilder {
 }
 
 #[test]
-fn test_builder_into_sourcemap() {
+fn test_sourcemap_builder() {
     let mut builder = SourceMapBuilder::default();
     builder.set_source_and_content("baz.js", "");
     builder.add_name("x");

@@ -162,3 +162,54 @@ fn greatest_lower_bound<'a, T, K: Ord, F: Fn(&'a T) -> K>(
     }
     slice.get(idx)
 }
+
+#[test]
+fn test_sourcemap_lookup_token() {
+    let input = r#"{
+        "version": 3,
+        "sources": ["coolstuff.js"],
+        "sourceRoot": "x",
+        "names": ["x","alert"],
+        "mappings": "AAAA,GAAIA,GAAI,EACR,IAAIA,GAAK,EAAG,CACVC,MAAM"
+    }"#;
+    let sm = SourceMap::from_json_string(input).unwrap();
+    let lookup_table = sm.generate_lookup_table();
+    assert_eq!(
+        sm.lookup_source_view_token(&lookup_table, 0, 0).unwrap().to_tuple(),
+        (Some("coolstuff.js"), 0, 0, None)
+    );
+    assert_eq!(
+        sm.lookup_source_view_token(&lookup_table, 0, 3).unwrap().to_tuple(),
+        (Some("coolstuff.js"), 0, 4, Some("x"))
+    );
+    assert_eq!(
+        sm.lookup_source_view_token(&lookup_table, 0, 24).unwrap().to_tuple(),
+        (Some("coolstuff.js"), 2, 8, None)
+    );
+
+    // Lines continue out to infinity
+    assert_eq!(
+        sm.lookup_source_view_token(&lookup_table, 0, 1000).unwrap().to_tuple(),
+        (Some("coolstuff.js"), 2, 8, None)
+    );
+
+    // Token can return prior lines.
+    assert_eq!(
+        sm.lookup_source_view_token(&lookup_table, 1000, 0).unwrap().to_tuple(),
+        (Some("coolstuff.js"), 2, 8, None)
+    );
+}
+
+#[test]
+fn test_sourcemap_source_view_token() {
+    let sm = SourceMap::new(
+        None,
+        vec!["foo".into()],
+        vec!["foo.js".into()],
+        None,
+        vec![Token::new(1, 1, 1, 1, Some(0), Some(0))],
+        None,
+    );
+    let mut source_view_tokens = sm.get_source_view_tokens();
+    assert_eq!(source_view_tokens.next().unwrap().to_tuple(), (Some("foo.js"), 1, 1, Some("foo")));
+}
