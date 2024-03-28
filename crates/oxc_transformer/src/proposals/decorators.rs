@@ -232,7 +232,7 @@ impl<'a> Decorators<'a> {
 
                                 let new_declaration = self.transform_class(class, class_name);
                                 if has_decorator {
-                                    return Some(Statement::Declaration(new_declaration));
+                                    return Some(Statement::from(new_declaration));
                                 }
                                 *declaration = new_declaration;
                                 return None;
@@ -284,7 +284,7 @@ impl<'a> Decorators<'a> {
                             ));
                         }
 
-                        Some(Statement::Declaration(self.transform_class(class, class_name)))
+                        Some(Statement::from(self.transform_class(class, class_name)))
                     } else {
                         None
                     }
@@ -423,9 +423,7 @@ impl<'a> Decorators<'a> {
                     declarations,
                     Modifiers::empty(),
                 );
-                self.top_statements.push(Statement::Declaration(Declaration::VariableDeclaration(
-                    variable_declaration,
-                )));
+                self.top_statements.push(Statement::VariableDeclaration(variable_declaration));
             }
 
             c_elements.push(self.get_assignment_target_maybe_default(&class_name));
@@ -684,10 +682,7 @@ impl<'a> Decorators<'a> {
                 Modifiers::empty(),
             );
 
-            self.top_statements.insert(
-                0,
-                Statement::Declaration(Declaration::VariableDeclaration(variable_declaration)),
-            );
+            self.top_statements.insert(0, Statement::VariableDeclaration(variable_declaration));
         }
 
         {
@@ -831,8 +826,7 @@ impl<'a> Decorators<'a> {
                 self.ctx.ast.new_vec_single(self.get_variable_declarator(&class_identifier_name)),
                 Modifiers::empty(),
             );
-            self.top_statements
-                .push(Statement::Declaration(Declaration::VariableDeclaration(decl)));
+            self.top_statements.push(Statement::VariableDeclaration(decl));
 
             let left = self.ctx.ast.simple_assignment_target_identifier(class_identifier.clone());
             let right = self.ctx.ast.class_expression(self.ctx.ast.copy(class));

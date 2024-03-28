@@ -191,7 +191,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::LexicalDeclarationSingleStatement(decl.span));
         }
 
-        Ok(Statement::Declaration(Declaration::VariableDeclaration(decl)))
+        Ok(Statement::VariableDeclaration(decl))
     }
 
     /// Section 14.4 Empty Statement

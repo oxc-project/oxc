@@ -390,7 +390,7 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             }
         }
         for stmt in statements {
-            if let Statement::Declaration(decl) = stmt {
+            if let Some(decl) = stmt.as_declaration() {
                 if decl.is_typescript_syntax()
                     && !self.options.enable_typescript
                     && !matches!(decl, Declaration::TSEnumDeclaration(_))

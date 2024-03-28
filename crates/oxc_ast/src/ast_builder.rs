@@ -261,11 +261,7 @@ impl<'a> AstBuilder<'a> {
         declarations: Vec<'a, VariableDeclarator<'a>>,
         is_await: bool,
     ) -> Statement<'a> {
-        Statement::Declaration(Declaration::UsingDeclaration(self.alloc(UsingDeclaration {
-            span,
-            is_await,
-            declarations,
-        })))
+        Statement::UsingDeclaration(self.alloc(UsingDeclaration { span, is_await, declarations }))
     }
 
     pub fn do_while_statement(
@@ -806,7 +802,7 @@ impl<'a> AstBuilder<'a> {
 
     /* ---------- Functions ---------- */
     pub fn function_declaration(&self, func: Box<'a, Function<'a>>) -> Statement<'a> {
-        Statement::Declaration(Declaration::FunctionDeclaration(func))
+        Statement::FunctionDeclaration(func)
     }
 
     pub fn formal_parameters(
@@ -916,7 +912,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn class_declaration(&self, class: Box<'a, Class<'a>>) -> Statement<'a> {
-        Statement::Declaration(Declaration::ClassDeclaration(class))
+        Statement::ClassDeclaration(class)
     }
 
     pub fn static_block(&self, span: Span, body: Vec<'a, Statement<'a>>) -> ClassElement<'a> {

@@ -21,7 +21,7 @@ pub trait CreateVars<'a> {
         let kind = VariableDeclarationKind::Var;
         let decl =
             self.ctx().ast.variable_declaration(Span::default(), kind, decls, Modifiers::empty());
-        let stmt = Statement::Declaration(Declaration::VariableDeclaration(decl));
+        let stmt = Statement::VariableDeclaration(decl);
         stmts.insert(0, stmt);
     }
 
