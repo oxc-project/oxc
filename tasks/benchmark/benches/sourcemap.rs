@@ -28,7 +28,7 @@ fn bench_sourcemap(criterion: &mut Criterion) {
                 let line = source_text.matches('\n').count() as u32;
                 if let Some(sourcemap) = source_map {
                     let mut concat_sourcemap_builder = ConcatSourceMapBuilder::default();
-                    for i in 0..5 {
+                    for i in 0..1 {
                         concat_sourcemap_builder.add_sourcemap(&sourcemap, line * i);
                     }
                     concat_sourcemap_builder.into_sourcemap().to_json_string();
