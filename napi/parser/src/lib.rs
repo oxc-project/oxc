@@ -150,10 +150,12 @@ pub fn get_schema() -> String {
 // don't have the highest bit set. JS bitwise operators interpret the highest bit as sign bit,
 // so this enables using `>>` bitshift operator in JS, rather than the more expensive `>>>`,
 // without offsets being interpreted as negative.
-const RAW_BUFFER_SIZE: usize = 1 << 32; // 4 GiB
-const RAW_BUFFER_ALIGN: usize = 1 << 32; // 4 GiB
-const RAW_BUMP_SIZE: usize = 1 << 31; // 2 GiB
-const ALLOC_ATTEMPTS: usize = 10;
+const TWO_GIB: usize = 1 << 31;
+const FOUR_GIB: usize = 1 << 32;
+const EIGHT_GIB: usize = 1 << 33;
+
+const RAW_BUMP_SIZE: usize = TWO_GIB;
+const RAW_BUMP_ALIGN: usize = FOUR_GIB;
 
 /// Create a buffer for use with `parse_sync_raw`.
 /// # Panics
@@ -167,51 +169,31 @@ pub fn create_buffer() -> Uint8Array {
     // Attempt to create allocation with required alignment.
     // On some systems (e.g. MacOS), the allocator only supports alignment of up to 2 GiB,
     // so trying to allocate with 4 GiB alignment may fail.
-    // If it does, try again with 2 GiB alignment, and repeatedly request allocations until happen
-    // to get one which is aligned on 4 GiB. Usually this happens first time.
-    let mut align = RAW_BUFFER_ALIGN;
-    let layout = Layout::from_size_align(RAW_BUFFER_SIZE, align).unwrap();
+    // If it does, try again with 8 GiB size and low alignment, and can then use 4 GiB in the middle.
+    let mut layout = Layout::from_size_align(FOUR_GIB, FOUR_GIB).unwrap();
     // SAFETY: Layout was created safely
-    let mut data_ptr = unsafe { alloc::alloc(layout) };
-    if data_ptr.is_null() {
-        // Could not allocate with this alignment.
-        // Try again with lower alignment until get alignment we need.
-        align = RAW_BUFFER_ALIGN / 2;
-        let less_aligned_layout = Layout::from_size_align(RAW_BUFFER_SIZE, align).unwrap();
+    let mut alloc_ptr = unsafe { alloc::alloc(layout) };
+    let data_ptr = if alloc_ptr.is_null() {
+        layout = Layout::from_size_align(EIGHT_GIB, 16).unwrap();
+        // SAFETY: Layout was created safely
+        alloc_ptr = unsafe { alloc::alloc(layout) };
+        assert!(!alloc_ptr.is_null(), "Failed to allocate buffer");
 
-        let mut rejected_alloc_ptrs = Vec::with_capacity(ALLOC_ATTEMPTS);
-        for _ in 0..ALLOC_ATTEMPTS {
-            // SAFETY: Layout was created safely
-            let try_data_ptr = unsafe { alloc::alloc(less_aligned_layout) };
-            if try_data_ptr.is_null() {
-                break;
-            }
-
-            if try_data_ptr as usize % RAW_BUFFER_ALIGN == 0 {
-                data_ptr = try_data_ptr;
-                break;
-            }
-
-            rejected_alloc_ptrs.push(try_data_ptr);
-        }
-
-        // Free rejected allocations
-        for bad_ptr in rejected_alloc_ptrs {
-            // SAFETY: We just allocated this
-            unsafe { alloc::dealloc(bad_ptr, less_aligned_layout) };
-        }
-
-        assert!(!data_ptr.is_null(), "Failed to allocate buffer");
-    }
+        let offset = RAW_BUMP_ALIGN - (alloc_ptr as usize % RAW_BUMP_ALIGN);
+        // SAFETY: We allocated 8 GiB, and offset is 4 GiB max, so must be within bounds
+        unsafe { alloc_ptr.add(offset) }
+    } else {
+        alloc_ptr
+    };
+    debug_assert!(data_ptr as usize % RAW_BUMP_ALIGN == 0);
 
     // Return as NAPI `Uint8Array`, borrowing the allocation's memory.
-    // SAFETY: `data_ptr` is valid for reading `FOUR_GIB` bytes.
+    // SAFETY: `data_ptr` is valid for reading `RAW_BUMP_SIZE` bytes.
     // TODO: Add comment pointing to Github discussion where NodeJS maintainer said
     // passing uninitialized data is fine
     unsafe {
-        Uint8Array::with_external_data(data_ptr, RAW_BUFFER_SIZE, move |ptr, _len| {
-            let layout = Layout::from_size_align(RAW_BUFFER_SIZE, align).unwrap();
-            alloc::dealloc(ptr, layout);
+        Uint8Array::with_external_data(data_ptr, RAW_BUMP_SIZE, move |_ptr, _len| {
+            alloc::dealloc(alloc_ptr, layout);
         })
     }
 }
@@ -255,10 +237,8 @@ pub unsafe fn parse_sync_raw(
     // Check buffer has expected size and alignment
     let buff = &mut *buff;
     let buff_ptr = (buff as *mut [u8]).cast::<u8>();
-    assert_eq!(buff.len(), RAW_BUFFER_SIZE);
-    assert_eq!(buff_ptr as usize % RAW_BUFFER_ALIGN, 0);
-
-    // TODO: Need fallback for when could not create buffer with required alignment
+    assert_eq!(buff.len(), RAW_BUMP_SIZE);
+    assert_eq!(buff_ptr as usize % RAW_BUMP_ALIGN, 0);
 
     // Get offsets and size of data region to be managed by arena allocator.
     // Only use first 2 GiB of buffer.
