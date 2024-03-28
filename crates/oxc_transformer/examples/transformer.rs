@@ -49,6 +49,7 @@ fn main() {
         target: TransformTarget::ES5,
         react_jsx: Some(ReactJsxOptions {
             runtime: Some(ReactJsxRuntimeOption::Valid(ReactJsxRuntime::Classic)),
+            development: Some(true),
             ..ReactJsxOptions::default()
         }),
         ..TransformOptions::default()

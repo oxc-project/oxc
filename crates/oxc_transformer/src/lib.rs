@@ -52,7 +52,7 @@ use crate::{
     es2021::{LogicalAssignmentOperators, NumericSeparator},
     es2022::ClassStaticBlock,
     es3::PropertyLiteral,
-    react_jsx::ReactJsx,
+    react_jsx::{JsxSelf, ReactJsx},
     regexp::RegexpFlags,
     typescript::TypeScript,
     utils::CreateVars,
@@ -72,6 +72,7 @@ pub struct Transformer<'a> {
     decorators: Option<Decorators<'a>>,
     #[allow(unused)]
     typescript: Option<TypeScript<'a>>,
+    jsx_self: Option<JsxSelf<'a>>,
     react_jsx: Option<ReactJsx<'a>>,
     regexp_flags: Option<RegexpFlags<'a>>,
     // es2022
@@ -140,6 +141,7 @@ impl<'a> Transformer<'a> {
             es2015_new_target: NewTarget::new(ctx.clone()),
             // other
             es3_property_literal: PropertyLiteral::new(ctx.clone()),
+            jsx_self: JsxSelf::new(ctx.clone()),
             react_jsx: ReactJsx::new(ctx.clone()),
             // original context
             ctx,
@@ -200,6 +202,10 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         walk_declaration_mut(self, decl);
         self.typescript.as_mut().map(|t| t.transform_declaration(decl));
         self.decorators.as_mut().map(|t| t.transform_declaration(decl));
+    }
+
+    fn visit_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
+        self.jsx_self.as_mut().map(|t| t.transform_jsx_opening_element(elem));
     }
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {

@@ -92,6 +92,9 @@ pub trait TestCase {
             decorators: options
                 .get_plugin("proposal-decorators")
                 .map(get_options::<DecoratorsOptions>),
+            jsx_self: options
+                .get_plugin("transform-react-jsx-self")
+                .map(get_options::<ReactJsxOptions>),
             react_jsx: options
                 .get_plugin("transform-react-jsx")
                 .map(get_options::<ReactJsxOptions>),
