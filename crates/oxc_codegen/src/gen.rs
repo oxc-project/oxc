@@ -1015,7 +1015,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierReference<'a> {
         // }
         // }
         // }
-        p.add_source_mapping_for_name(self.span.start, &self.name);
+        p.add_source_mapping_for_name(self.span, &self.name);
         p.print_str(self.name.as_bytes());
     }
 }
@@ -1029,13 +1029,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierName<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingIdentifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        p.print_symbol(self.span.start, self.symbol_id.get(), &self.name);
+        p.print_symbol(self.span, self.symbol_id.get(), &self.name);
     }
 }
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for LabelIdentifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        p.add_source_mapping_for_name(self.span.start, &self.name);
+        p.add_source_mapping_for_name(self.span, &self.name);
         p.print_str(self.name.as_bytes());
     }
 }
@@ -2057,7 +2057,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ClassElement<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXIdentifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        p.add_source_mapping_for_name(self.span.start, &self.name);
+        p.add_source_mapping_for_name(self.span, &self.name);
         p.print_str(self.name.as_bytes());
     }
 }
@@ -2398,7 +2398,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AccessorProperty<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for PrivateIdentifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        p.add_source_mapping_for_name(self.span.start, &self.name);
+        p.add_source_mapping_for_name(self.span, &self.name);
         p.print(b'#');
         p.print_str(self.name.as_bytes());
     }

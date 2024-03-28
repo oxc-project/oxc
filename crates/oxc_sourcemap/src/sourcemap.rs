@@ -72,6 +72,10 @@ impl SourceMap {
         self.tokens.get(index as usize)
     }
 
+    pub fn get_source_view_token(&self, index: u32) -> Option<SourceViewToken<'_>> {
+        self.tokens.get(index as usize).map(|token| SourceViewToken::new(token, self))
+    }
+
     /// Get raw tokens.
     pub fn get_tokens(&self) -> impl Iterator<Item = &Token> {
         self.tokens.iter()
