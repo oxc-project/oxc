@@ -10,6 +10,8 @@ pub struct TransformOptions {
     pub target: TransformTarget,
     pub assumptions: CompilerAssumptions,
 
+    pub jsx_self: Option<ReactJsxOptions>,
+
     pub react_jsx: Option<ReactJsxOptions>,
 
     pub typescript: Option<TypescriptOptions>,
