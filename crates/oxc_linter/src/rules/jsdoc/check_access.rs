@@ -39,7 +39,6 @@ const ACCESS_LEVELS: phf::Set<&'static str> = phf_set! {
 };
 
 // TODO: Diagnostic message
-// TODO: Diagnostic span, how to get it?
 
 impl Rule for CheckAccess {
     fn run_once(&self, ctx: &LintContext) {
@@ -54,21 +53,19 @@ impl Rule for CheckAccess {
 
         for jsdoc in ctx.semantic().jsdoc().iter_all() {
             let mut access_related_tags_count = 0;
-            for tag in jsdoc.tags() {
-                let tag_name = tag.tag_name();
-
-                if access_related_tag_names.contains(tag_name) {
+            for (span, tag) in jsdoc.tags() {
+                if access_related_tag_names.contains(tag.kind) {
                     access_related_tags_count += 1;
                 }
 
                 // Has valid access level?
-                if tag_name == resolved_access_tag_name && !ACCESS_LEVELS.contains(&tag.comment) {
-                    ctx.diagnostic(CheckAccessDiagnostic(Span::default()));
+                if tag.kind == resolved_access_tag_name && !ACCESS_LEVELS.contains(&tag.comment()) {
+                    ctx.diagnostic(CheckAccessDiagnostic(*span));
                 }
 
                 // Has redundant access level?
                 if 1 < access_related_tags_count {
-                    ctx.diagnostic(CheckAccessDiagnostic(Span::default()));
+                    ctx.diagnostic(CheckAccessDiagnostic(*span));
                 }
             }
         }

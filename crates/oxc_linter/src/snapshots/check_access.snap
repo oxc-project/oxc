@@ -3,100 +3,100 @@ source: crates/oxc_linter/src/tester.rs
 expression: check_access
 ---
   ⚠ eslint-plugin-jsdoc(check-access): TODO
-   ╭─[check_access.tsx:1:1]
- 1 │ 
-   · ▲
+   ╭─[check_access.tsx:3:17]
  2 │                       /**
  3 │                        * @access foo
+   ·                          ───────
+ 4 │                        */
    ╰────
   help: TODO
 
   ⚠ eslint-plugin-jsdoc(check-access): TODO
-   ╭─[check_access.tsx:1:1]
- 1 │ 
-   · ▲
+   ╭─[check_access.tsx:3:17]
  2 │                       /**
  3 │                        * @access foo
+   ·                          ───────
+ 4 │                        */
    ╰────
   help: TODO
 
   ⚠ eslint-plugin-jsdoc(check-access): TODO
-   ╭─[check_access.tsx:1:1]
- 1 │ 
-   · ▲
+   ╭─[check_access.tsx:3:25]
  2 │                               /**
  3 │                                * @accessLevel foo
+   ·                                  ────────────
+ 4 │                                */
    ╰────
   help: TODO
 
   ⚠ eslint-plugin-jsdoc(check-access): TODO
-   ╭─[check_access.tsx:1:1]
- 1 │ 
-   · ▲
+   ╭─[check_access.tsx:3:17]
  2 │                       /**
  3 │                        * @access
+   ·                          ───────
+ 4 │                        */
    ╰────
   help: TODO
 
   ⚠ eslint-plugin-jsdoc(check-access): TODO
-   ╭─[check_access.tsx:1:1]
- 1 │ 
-   · ▲
- 2 │                   class MyClass {
+   ╭─[check_access.tsx:4:15]
  3 │                     /**
+ 4 │                      * @access
+   ·                        ───────
+ 5 │                      */
    ╰────
   help: TODO
 
   ⚠ eslint-plugin-jsdoc(check-access): TODO
-   ╭─[check_access.tsx:1:1]
- 1 │ 
-   · ▲
- 2 │                       /**
+   ╭─[check_access.tsx:4:17]
  3 │                        * @access public
+ 4 │                        * @public
+   ·                          ───────
+ 5 │                        */
    ╰────
   help: TODO
 
   ⚠ eslint-plugin-jsdoc(check-access): TODO
-   ╭─[check_access.tsx:1:1]
- 1 │ 
-   · ▲
- 2 │                       /**
+   ╭─[check_access.tsx:4:17]
  3 │                        * @access public
+ 4 │                        * @access private
+   ·                          ───────
+ 5 │                        */
    ╰────
   help: TODO
 
   ⚠ eslint-plugin-jsdoc(check-access): TODO
-   ╭─[check_access.tsx:1:1]
- 1 │ 
-   · ▲
- 2 │                       /**
+   ╭─[check_access.tsx:4:17]
  3 │                        * @access public
+ 4 │                        * @access private
+   ·                          ───────
+ 5 │                        */
    ╰────
   help: TODO
 
   ⚠ eslint-plugin-jsdoc(check-access): TODO
-   ╭─[check_access.tsx:1:1]
- 1 │ 
-   · ▲
- 2 │                       /**
+   ╭─[check_access.tsx:4:17]
  3 │                        * @public
+ 4 │                        * @private
+   ·                          ────────
+ 5 │                        */
    ╰────
   help: TODO
 
   ⚠ eslint-plugin-jsdoc(check-access): TODO
-   ╭─[check_access.tsx:1:1]
- 1 │ 
-   · ▲
- 2 │                       /**
+   ╭─[check_access.tsx:4:17]
  3 │                        * @public
+ 4 │                        * @private
+   ·                          ────────
+ 5 │                        */
    ╰────
   help: TODO
 
   ⚠ eslint-plugin-jsdoc(check-access): TODO
-   ╭─[check_access.tsx:1:1]
- 1 │ 
-   · ▲
- 2 │                       /**
+   ╭─[check_access.tsx:4:17]
  3 │                        * @public
+ 4 │                        * @public
+   ·                          ───────
+ 5 │                        */
    ╰────
   help: TODO
