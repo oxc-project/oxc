@@ -1193,6 +1193,7 @@ pub struct ParenthesizedExpression<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
+#[repr(u8)]
 pub enum Statement<'a> {
     // Statements
     BlockStatement(Box<'a, BlockStatement<'a>>),
@@ -1215,7 +1216,19 @@ pub enum Statement<'a> {
     WithStatement(Box<'a, WithStatement<'a>>),
 
     ModuleDeclaration(Box<'a, ModuleDeclaration<'a>>),
-    Declaration(Declaration<'a>),
+
+    // SAFETY: Discriminants and types here MUST match discriminants for same variants in `Declaration`,
+    // to allow transmuting between the two types
+    VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
+    FunctionDeclaration(Box<'a, Function<'a>>) = 33,
+    ClassDeclaration(Box<'a, Class<'a>>) = 34,
+    UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 35,
+
+    TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 36,
+    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 37,
+    TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 38,
+    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 39,
+    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
 }
 
 impl<'a> Statement<'a> {
@@ -1228,6 +1241,46 @@ impl<'a> Statement<'a> {
                 | Statement::ForStatement(_)
                 | Statement::WhileStatement(_)
         )
+    }
+
+    #[inline]
+    pub fn is_declaration(&self) -> bool {
+        matches!(
+            self,
+            Self::VariableDeclaration(_)
+                | Self::FunctionDeclaration(_)
+                | Self::ClassDeclaration(_)
+                | Self::UsingDeclaration(_)
+                | Self::TSTypeAliasDeclaration(_)
+                | Self::TSInterfaceDeclaration(_)
+                | Self::TSEnumDeclaration(_)
+                | Self::TSModuleDeclaration(_)
+                | Self::TSImportEqualsDeclaration(_)
+        )
+    }
+
+    #[inline]
+    pub fn as_declaration(&self) -> Option<&Declaration<'a>> {
+        if self.is_declaration() {
+            #[allow(clippy::ptr_as_ptr)]
+            // SAFETY: Transmute is safe because discriminants + types are identical between
+            // `Statement` and `Declaration` for declaration variants
+            Some(unsafe { &*(self as *const _ as *const Declaration<'_>) })
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_declaration_mut(&mut self) -> Option<&mut Declaration<'a>> {
+        if self.is_declaration() {
+            #[allow(clippy::ptr_as_ptr)]
+            // SAFETY: Transmute is safe because discriminants + types are identical between
+            // `Statement` and `Declaration` for declaration variants
+            Some(unsafe { &mut *(self as *mut _ as *mut Declaration<'_>) })
+        } else {
+            None
+        }
     }
 }
 
@@ -1269,17 +1322,20 @@ pub struct BlockStatement<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
+#[repr(u8)]
 pub enum Declaration<'a> {
-    VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
-    FunctionDeclaration(Box<'a, Function<'a>>),
-    ClassDeclaration(Box<'a, Class<'a>>),
-    UsingDeclaration(Box<'a, UsingDeclaration<'a>>),
+    // SAFETY: Discriminants and types here MUST match discriminants for same variants in `Statement`,
+    // to allow transmuting between the two types
+    VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
+    FunctionDeclaration(Box<'a, Function<'a>>) = 33,
+    ClassDeclaration(Box<'a, Class<'a>>) = 34,
+    UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 35,
 
-    TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>),
-    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>),
-    TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>),
-    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>),
-    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>),
+    TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 36,
+    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 37,
+    TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 38,
+    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 39,
+    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
 }
 
 impl<'a> Declaration<'a> {
@@ -1301,6 +1357,26 @@ impl<'a> Declaration<'a> {
             Declaration::TSModuleDeclaration(decl) => Some(&decl.modifiers),
             Declaration::TSInterfaceDeclaration(decl) => Some(&decl.modifiers),
             _ => None,
+        }
+    }
+}
+
+impl<'a> From<Declaration<'a>> for Statement<'a> {
+    fn from(val: Declaration<'a>) -> Self {
+        // Compiler should implement this as zero-cost transmute as discriminants
+        // for `Declaration` and `Statement` are aligned
+        match val {
+            Declaration::VariableDeclaration(decl) => Statement::VariableDeclaration(decl),
+            Declaration::FunctionDeclaration(decl) => Statement::FunctionDeclaration(decl),
+            Declaration::ClassDeclaration(decl) => Statement::ClassDeclaration(decl),
+            Declaration::UsingDeclaration(decl) => Statement::UsingDeclaration(decl),
+            Declaration::TSTypeAliasDeclaration(decl) => Statement::TSTypeAliasDeclaration(decl),
+            Declaration::TSInterfaceDeclaration(decl) => Statement::TSInterfaceDeclaration(decl),
+            Declaration::TSEnumDeclaration(decl) => Statement::TSEnumDeclaration(decl),
+            Declaration::TSModuleDeclaration(decl) => Statement::TSModuleDeclaration(decl),
+            Declaration::TSImportEqualsDeclaration(decl) => {
+                Statement::TSImportEqualsDeclaration(decl)
+            }
         }
     }
 }

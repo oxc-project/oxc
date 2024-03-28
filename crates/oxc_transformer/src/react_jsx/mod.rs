@@ -351,7 +351,7 @@ impl<'a> ReactJsx<'a> {
             decl,
             Modifiers::empty(),
         );
-        let stmt = Statement::Declaration(Declaration::VariableDeclaration(variable_declaration));
+        let stmt = Statement::VariableDeclaration(variable_declaration);
 
         if front {
             self.imports.insert(0, stmt);

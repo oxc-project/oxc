@@ -24,7 +24,15 @@ impl<'a> GetSpan for Statement<'a> {
             Self::WhileStatement(stmt) => stmt.span,
             Self::WithStatement(stmt) => stmt.span,
             Self::ModuleDeclaration(decl) => decl.span(),
-            Self::Declaration(decl) => decl.span(),
+            Self::VariableDeclaration(decl) => decl.span,
+            Self::FunctionDeclaration(decl) => decl.span,
+            Self::ClassDeclaration(decl) => decl.span,
+            Self::UsingDeclaration(decl) => decl.span,
+            Self::TSTypeAliasDeclaration(decl) => decl.span,
+            Self::TSInterfaceDeclaration(decl) => decl.span,
+            Self::TSEnumDeclaration(decl) => decl.span,
+            Self::TSModuleDeclaration(decl) => decl.span,
+            Self::TSImportEqualsDeclaration(decl) => decl.span,
         }
     }
 }

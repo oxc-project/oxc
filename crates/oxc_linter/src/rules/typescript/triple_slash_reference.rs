@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use oxc_ast::{
-    ast::{Declaration, ModuleDeclaration, Statement, TSModuleReference},
+    ast::{ModuleDeclaration, Statement, TSModuleReference},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -133,21 +133,18 @@ impl Rule for TripleSlashReference {
         if !refs_for_import.is_empty() {
             for stmt in &program.body {
                 match stmt {
-                    Statement::Declaration(Declaration::TSImportEqualsDeclaration(decl)) => {
-                        match *decl.module_reference {
-                            TSModuleReference::ExternalModuleReference(ref mod_ref) => {
-                                if let Some(v) =
-                                    refs_for_import.get(mod_ref.expression.value.as_str())
-                                {
-                                    ctx.diagnostic(TripleSlashReferenceDiagnostic(
-                                        mod_ref.expression.value.to_string(),
-                                        *v,
-                                    ));
-                                }
+                    Statement::TSImportEqualsDeclaration(decl) => match *decl.module_reference {
+                        TSModuleReference::ExternalModuleReference(ref mod_ref) => {
+                            if let Some(v) = refs_for_import.get(mod_ref.expression.value.as_str())
+                            {
+                                ctx.diagnostic(TripleSlashReferenceDiagnostic(
+                                    mod_ref.expression.value.to_string(),
+                                    *v,
+                                ));
                             }
-                            TSModuleReference::TypeName(_) => {}
                         }
-                    }
+                        TSModuleReference::TypeName(_) => {}
+                    },
                     Statement::ModuleDeclaration(st) => {
                         if let ModuleDeclaration::ImportDeclaration(ref decl) = **st {
                             if let Some(v) = refs_for_import.get(decl.source.value.as_str()) {

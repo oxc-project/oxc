@@ -79,7 +79,7 @@ impl<'a> TypeScript<'a> {
                     None
                 }
             }
-            Statement::Declaration(Declaration::TSModuleDeclaration(ts_module_decl)) => {
+            Statement::TSModuleDeclaration(ts_module_decl) => {
                 if ts_module_decl.modifiers.is_contains_declare() {
                     None
                 } else {
@@ -323,8 +323,7 @@ impl<'a> TypeScript<'a> {
                     decls
                 };
                 let decl = self.ctx.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
-                let stmt: Statement<'_> =
-                    Statement::Declaration(Declaration::VariableDeclaration(decl));
+                let stmt = Statement::VariableDeclaration(decl);
 
                 statements.push(stmt);
             }
@@ -578,7 +577,7 @@ impl<'a> TypeScript<'a> {
             return None;
         }
 
-        Some(Statement::Declaration(self.ctx.ast.move_declaration(declaration)))
+        Some(Statement::from(self.ctx.ast.move_declaration(declaration)))
     }
 
     /// Insert let declaration for ts module block
@@ -587,7 +586,7 @@ impl<'a> TypeScript<'a> {
 
         for (index, stmt) in stmts.iter().enumerate() {
             match stmt {
-                Statement::Declaration(Declaration::TSModuleDeclaration(decl)) => {
+                Statement::TSModuleDeclaration(decl) => {
                     if !decl.modifiers.is_contains_declare() {
                         insert_var_decl.push((index, decl.id.name().clone(), false));
                     }
@@ -632,7 +631,7 @@ impl<'a> TypeScript<'a> {
                     ),
                 ))
             } else {
-                Statement::Declaration(decl)
+                Statement::from(decl)
             };
             stmts.insert(index, stmt);
         }

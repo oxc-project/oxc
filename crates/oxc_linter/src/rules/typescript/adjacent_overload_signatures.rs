@@ -241,8 +241,10 @@ impl GetMethod for Statement<'_> {
     fn get_method(&self) -> Option<Method> {
         match self {
             Statement::ModuleDeclaration(decl) => decl.get_method(),
-            Statement::Declaration(decl) => decl.get_method(),
-            _ => None,
+            _ => match self.as_declaration() {
+                Some(decl) => decl.get_method(),
+                None => None,
+            },
         }
     }
 }

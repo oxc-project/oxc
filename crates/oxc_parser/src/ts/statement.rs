@@ -265,7 +265,7 @@ impl<'a> ParserImpl<'a> {
         self.ctx = self.ctx.union_ambient_if(flags.declare()).and_await(flags.r#async());
         let result = self.parse_declaration(start_span, modifiers);
         self.ctx = reserved_ctx;
-        result.map(Statement::Declaration)
+        result.map(Statement::from)
     }
 
     pub(crate) fn parse_declaration(

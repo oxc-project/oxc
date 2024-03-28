@@ -96,7 +96,7 @@ impl<'a> ArrowFunctions<'a> {
                 self.ast.new_vec_single(variable_declarator),
                 Modifiers::empty(),
             );
-            stmts.insert(0, Statement::Declaration(Declaration::VariableDeclaration(stmt)));
+            stmts.insert(0, Statement::VariableDeclaration(stmt));
             self.insert = false;
         }
 

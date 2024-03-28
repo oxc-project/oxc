@@ -123,7 +123,15 @@ impl<'a> Format<'a> for Statement<'a> {
             Self::TryStatement(stmt) => stmt.format(p),
             Self::WhileStatement(stmt) => stmt.format(p),
             Self::WithStatement(stmt) => stmt.format(p),
-            Self::Declaration(decl) => decl.format(p),
+            Self::VariableDeclaration(decl) => decl.format(p),
+            Self::FunctionDeclaration(decl) => decl.format(p),
+            Self::ClassDeclaration(decl) => decl.format(p),
+            Self::UsingDeclaration(decl) => decl.format(p),
+            Self::TSTypeAliasDeclaration(decl) => decl.format(p),
+            Self::TSInterfaceDeclaration(decl) => decl.format(p),
+            Self::TSEnumDeclaration(decl) => decl.format(p),
+            Self::TSModuleDeclaration(decl) => decl.format(p),
+            Self::TSImportEqualsDeclaration(decl) => decl.format(p),
         }
     }
 }

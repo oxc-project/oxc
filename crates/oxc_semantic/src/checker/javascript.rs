@@ -579,7 +579,7 @@ fn check_function_declaration<'a>(
     struct FunctionDeclarationNonStrict(#[label] Span);
 
     // Function declaration not allowed in statement position
-    if let Statement::Declaration(Declaration::FunctionDeclaration(decl)) = stmt {
+    if let Statement::FunctionDeclaration(decl) = stmt {
         if ctx.strict_mode() {
             ctx.error(FunctionDeclarationStrict(decl.span));
         } else if !is_if_stmt_or_labeled_stmt {
