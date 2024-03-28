@@ -13,7 +13,7 @@ declare_oxc_lint!(
     ///
     /// Reports if a resolved path is imported more than once.
     NoDuplicates,
-    nursery
+    suspicious
 );
 
 impl Rule for NoDuplicates {

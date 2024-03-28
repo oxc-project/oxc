@@ -43,7 +43,7 @@ declare_oxc_lint!(
     /// const bar = foo.bar // trying to access named export via default
     /// ```
     NoNamedAsDefaultMember,
-    nursery
+    suspicious
 );
 fn get_symbol_id_from_ident(
     ctx: &LintContext<'_>,

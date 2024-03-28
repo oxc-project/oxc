@@ -25,7 +25,7 @@ declare_oxc_lint!(
     ///
     /// Ensures an imported module can be resolved to a module on the local filesystem.
     NoUnresolved,
-    nursery
+    suspicious
 );
 
 impl Rule for NoUnresolved {
