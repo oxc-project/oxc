@@ -36,7 +36,9 @@ enum NamespaceDiagnostic {
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/namespace.md>
 #[derive(Debug, Default, Clone)]
-pub struct Namespace;
+pub struct Namespace {
+    allow_computed: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -49,6 +51,15 @@ declare_oxc_lint!(
 );
 
 impl Rule for Namespace {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let obj = value.get(0);
+        Self {
+            allow_computed: obj
+                .and_then(|v| v.get("allowComputed"))
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(false),
+        }
+    }
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.semantic().module_record();
         module_record.import_entries.iter().for_each(|entry| {
@@ -111,8 +122,7 @@ impl Rule for Namespace {
                                 ));
                             };
 
-                            // TODO: Support allow_computed option
-                            if member.is_computed() {
+                            if !self.allow_computed && member.is_computed() {
                                 return ctx.diagnostic(NamespaceDiagnostic::ComputedReference(
                                     member.span(),
                                     name.clone(),
@@ -322,44 +332,72 @@ fn check_binding_exported(
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use serde_json::json;
 
     let pass = vec![
-        r#"import "./malformed.js""#,
-        r"import * as foo from './empty-folder';",
-        r#"import * as names from "./named-exports"; console.log((names.b).c);"#,
-        r#"import * as names from "./named-exports"; console.log(names.a);"#,
-        r#"import * as names from "./re-export-names"; console.log(names.foo);"#,
-        r"import * as elements from './jsx';",
-        r#"import * as foo from "./jsx/re-export.js";
+        (r#"import "./malformed.js""#, None),
+        (r"import * as foo from './empty-folder';", None),
+        (r#"import * as names from "./named-exports"; console.log((names.b).c);"#, None),
+        (r#"import * as names from "./named-exports"; console.log(names.a);"#, None),
+        (r#"import * as names from "./re-export-names"; console.log(names.foo);"#, None),
+        (r"import * as elements from './jsx';", None),
+        (
+            r#"import * as foo from "./jsx/re-export.js";
         console.log(foo.jsxFoo);"#,
-        r#"import * as foo from "./jsx/bar/index.js";
+            None,
+        ),
+        (
+            r#"import * as foo from "./jsx/bar/index.js";
         console.log(foo.Baz1);
         console.log(foo.Baz2);
         console.log(foo.Qux1);
         console.log(foo.Qux2);"#,
-        r"import * as foo from './common';",
-        r#"import * as names from "./named-exports"; const { a } = names"#,
-        r#"import * as names from "./named-exports"; const { d: c } = names"#,
-        r#"import * as names from "./named-exports";
+            None,
+        ),
+        (r"import * as foo from './common';", None),
+        (r#"import * as names from "./named-exports"; const { a } = names"#, None),
+        (r#"import * as names from "./named-exports"; const { d: c } = names"#, None),
+        (
+            r#"import * as names from "./named-exports";
         const { c } = foo,
         { length } = "names",
         alt = names;"#,
-        r#"import * as names from "./named-exports"; const { ExportedClass: { length } } = names"#,
-        r#"import * as names from "./named-exports"; function b(names) { const { c } = names }"#,
-        r#"import * as names from "./named-exports"; function b() { let names = null; const { c } = names }"#,
-        r#"import * as names from "./named-exports"; const x = function names() { const { c } = names }"#,
-        r#"export * as names from "./named-exports""#,
+            None,
+        ),
+        (
+            r#"import * as names from "./named-exports"; const { ExportedClass: { length } } = names"#,
+            None,
+        ),
+        (
+            r#"import * as names from "./named-exports"; function b(names) { const { c } = names }"#,
+            None,
+        ),
+        (
+            r#"import * as names from "./named-exports"; function b() { let names = null; const { c } = names }"#,
+            None,
+        ),
+        (
+            r#"import * as names from "./named-exports"; const x = function names() { const { c } = names }"#,
+            None,
+        ),
+        (r#"export * as names from "./named-exports""#, None),
         // r#"export * as names from "./does-not-exist""#,
         // r#"import * as Endpoints from "./issue-195/Endpoints"; console.log(Endpoints.Users)"#,
-        r#"function x() { console.log((names.b).c); } import * as names from "./named-exports";"#,
-        r"import * as names from './default-export';",
-        r"import * as names from './default-export'; console.log(names.default)",
-        r#"export * as names from "./default-export""#,
+        (
+            r#"function x() { console.log((names.b).c); } import * as names from "./named-exports";"#,
+            None,
+        ),
+        (r"import * as names from './default-export';", None),
+        (r"import * as names from './default-export'; console.log(names.default)", None),
+        (r#"export * as names from "./default-export""#, None),
         // r#"export defport, * as names from "./default-export""#,
-        // r"import * as names from './named-exports'; console.log(names['a']);",
-        r"import * as names from './named-exports'; const {a, b, ...rest} = names;",
-        r"import * as ns from './re-export-common'; const {foo} = ns;",
-        r#"import * as Names from "./named-exports"; const Foo = <Names.a/>"#,
+        (
+            r"import * as names from './named-exports'; console.log(names['a']);",
+            Some(json!([{ "allowComputed": true }])),
+        ),
+        (r"import * as names from './named-exports'; const {a, b, ...rest} = names;", None),
+        (r"import * as ns from './re-export-common'; const {foo} = ns;", None),
+        (r#"import * as Names from "./named-exports"; const Foo = <Names.a/>"#, None),
         // r#"import * as foo from "./typescript-declare-nested"
         // foo.bar.MyFunction()"#,
         // r#"import { foobar } from "./typescript-declare-interface""#,
@@ -393,49 +431,49 @@ fn test() {
         // r#"import * as names from './default-export-string'; console.log(names.default)"#,
         // r#"import * as names from './default-export-namespace-string';"#,
         // r#"import * as names from './default-export-namespace-string'; console.log(names.default)"#,
-        r#"import { "b" as b } from "./deep/a"; console.log(b.c.d.e)"#,
-        r#"import { "b" as b } from "./deep/a"; var {c:{d:{e}}} = b"#,
-        r#"import * as a from "./deep/a"; console.log(a.b.c.d.e)"#,
-        r#"import { b } from "./deep/a"; console.log(b.c.d.e)"#,
-        r#"import * as a from "./deep/a"; console.log(a.b.c.d.e.f)"#,
-        r#"import * as a from "./deep/a"; var {b:{c:{d:{e}}}} = a"#,
-        r#"import { b } from "./deep/a"; var {c:{d:{e}}} = b"#,
-        r#"import * as a from "./deep-es7/a"; console.log(a.b.c.d.e)"#,
-        r#"import { b } from "./deep-es7/a"; console.log(b.c.d.e)"#,
-        r#"import * as a from "./deep-es7/a"; console.log(a.b.c.d.e.f)"#,
-        r#"import * as a from "./deep-es7/a"; var {b:{c:{d:{e}}}} = a"#,
-        r#"import { b } from "./deep-es7/a"; var {c:{d:{e}}} = b"#,
+        (r#"import { "b" as b } from "./deep/a"; console.log(b.c.d.e)"#, None),
+        (r#"import { "b" as b } from "./deep/a"; var {c:{d:{e}}} = b"#, None),
+        (r#"import * as a from "./deep/a"; console.log(a.b.c.d.e)"#, None),
+        (r#"import { b } from "./deep/a"; console.log(b.c.d.e)"#, None),
+        (r#"import * as a from "./deep/a"; console.log(a.b.c.d.e.f)"#, None),
+        (r#"import * as a from "./deep/a"; var {b:{c:{d:{e}}}} = a"#, None),
+        (r#"import { b } from "./deep/a"; var {c:{d:{e}}} = b"#, None),
+        (r#"import * as a from "./deep-es7/a"; console.log(a.b.c.d.e)"#, None),
+        (r#"import { b } from "./deep-es7/a"; console.log(b.c.d.e)"#, None),
+        (r#"import * as a from "./deep-es7/a"; console.log(a.b.c.d.e.f)"#, None),
+        (r#"import * as a from "./deep-es7/a"; var {b:{c:{d:{e}}}} = a"#, None),
+        (r#"import { b } from "./deep-es7/a"; var {c:{d:{e}}} = b"#, None),
     ];
 
     let fail = vec![
-        r"import * as names from './named-exports'; console.log(names.c)",
-        r"import * as names from './named-exports'; console.log(names['a']);",
-        r"import * as foo from './bar'; foo.foo = 'y';",
-        r"import * as foo from './bar'; foo.x = 'y';",
-        r#"import * as names from "./named-exports"; const { c } = names"#,
-        r#"import * as names from "./named-exports"; function b() { const { c } = names }"#,
-        r#"import * as names from "./named-exports"; const { c: d } = names"#,
-        r#"import * as names from "./named-exports"; const { c: { d } } = names"#,
+        (r"import * as names from './named-exports'; console.log(names.c)", None),
+        (r"import * as names from './named-exports'; console.log(names['a']);", None),
+        (r"import * as foo from './bar'; foo.foo = 'y';", None),
+        (r"import * as foo from './bar'; foo.x = 'y';", None),
+        (r#"import * as names from "./named-exports"; const { c } = names"#, None),
+        (r#"import * as names from "./named-exports"; function b() { const { c } = names }"#, None),
+        (r#"import * as names from "./named-exports"; const { c: d } = names"#, None),
+        (r#"import * as names from "./named-exports"; const { c: { d } } = names"#, None),
         // r#"import * as Endpoints from "./issue-195/Endpoints"; console.log(Endpoints.Foo)"#,
         // r#"import * as namespace from './malformed.js';"#,
         // TODO: Hard to confirm if it's a namespace object
         // r"import b from './deep/default'; console.log(b.e)",
-        r"console.log(names.c); import * as names from './named-exports';",
-        r"function x() { console.log(names.c) } import * as names from './named-exports';",
-        r#"import * as ree from "./re-export"; console.log(ree.default)"#,
-        r#"import * as Names from "./named-exports"; const Foo = <Names.e/>"#,
-        r#"import { "b" as b } from "./deep/a"; console.log(b.e)"#,
-        r#"import { "b" as b } from "./deep/a"; console.log(b.c.e)"#,
-        r#"import * as a from "./deep/a"; console.log(a.b.e)"#,
-        r#"import { b } from "./deep/a"; console.log(b.e)"#,
-        r#"import * as a from "./deep/a"; console.log(a.b.c.e)"#,
-        r#"import { b } from "./deep/a"; console.log(b.c.e)"#,
-        r#"import * as a from "./deep-es7/a"; console.log(a.b.e)"#,
-        r#"import { b } from "./deep-es7/a"; console.log(b.e)"#,
-        r#"import * as a from "./deep-es7/a"; console.log(a.b.c.e)"#,
-        r#"import { b } from "./deep-es7/a"; console.log(b.c.e)"#,
-        r#"import * as a from "./deep-es7/a"; var {b:{ e }} = a"#,
-        r#"import * as a from "./deep-es7/a"; var {b:{c:{ e }, e: { c }}} = a"#,
+        (r"console.log(names.c); import * as names from './named-exports';", None),
+        (r"function x() { console.log(names.c) } import * as names from './named-exports';", None),
+        (r#"import * as ree from "./re-export"; console.log(ree.default)"#, None),
+        (r#"import * as Names from "./named-exports"; const Foo = <Names.e/>"#, None),
+        (r#"import { "b" as b } from "./deep/a"; console.log(b.e)"#, None),
+        (r#"import { "b" as b } from "./deep/a"; console.log(b.c.e)"#, None),
+        (r#"import * as a from "./deep/a"; console.log(a.b.e)"#, None),
+        (r#"import { b } from "./deep/a"; console.log(b.e)"#, None),
+        (r#"import * as a from "./deep/a"; console.log(a.b.c.e)"#, None),
+        (r#"import { b } from "./deep/a"; console.log(b.c.e)"#, None),
+        (r#"import * as a from "./deep-es7/a"; console.log(a.b.e)"#, None),
+        (r#"import { b } from "./deep-es7/a"; console.log(b.e)"#, None),
+        (r#"import * as a from "./deep-es7/a"; console.log(a.b.c.e)"#, None),
+        (r#"import { b } from "./deep-es7/a"; console.log(b.c.e)"#, None),
+        (r#"import * as a from "./deep-es7/a"; var {b:{ e }} = a"#, None),
+        (r#"import * as a from "./deep-es7/a"; var {b:{c:{ e }, e: { c }}} = a"#, None),
     ];
 
     Tester::new(Namespace::NAME, pass, fail)
