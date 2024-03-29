@@ -21,7 +21,7 @@ fn validate_derive_input(input: &DeriveInput) {
             assert!(data
                 .fields
                 .iter()
-                .any(|field| field.ident.as_ref().is_some_and(|f| { println!("{f:?}"); f == AST_NODE_ID_IDENT})),
+                .any(|field| field.ident.as_ref().is_some_and(|f| f == AST_NODE_ID_IDENT)),
                 "Ast derive macro needs the implementer structure to contain an `ast_node_id` field."
             );
         }
