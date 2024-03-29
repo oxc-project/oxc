@@ -6,12 +6,11 @@ export class Option extends Kind {
     initFromDef(def) {
         super.initFromDef(def);
         this.type = getTypeById(def.valueTypeId);
+    }
 
-        if (this.size > this.type.size) {
-            this.niche = new Niche({offset: 0, size: 1, min: 2, max: 255});
-        } else if (this.type.niche) {
-            this.niche = this.type.niche.consume();
-        }
+    calculateNiche() {
+        if (this.size > this.type.size) return new Niche({offset: 0, size: 1, min: 2, max: 255});
+        return this.type.getNiche().consume();
     }
 
     generateDeserializerBody(deser) {
@@ -19,30 +18,26 @@ export class Option extends Kind {
         let noneCondition, valueOffset;
         if (child.size === this.size) {
             // Using niche
-            // TODO: Make this work
             valueOffset = 0;
 
             const {niche} = child;
-            if (niche) {
-                if (niche.size === 1) {
-                    noneCondition = `uint8[${posWithOffsetAndShift(niche.offset, 0)}] === ${niche.min}`;
-                } else if (niche.size === 8) {
-                    if (niche.min === 0) {
-                        noneCondition = `uint32[${posWithOffsetAndShift(niche.offset, 2)}] === 0`
-                            + ` && uint32[${posWithOffsetAndShift(niche.offset + 4, 2)}] === 0`;
-                    } else {
-                        // TODO
-                        console.log(`Option with niche size 8 and non-zero niche value:`, this.name, child);
-                        noneCondition = 'true';
-                    }
-                } else {
-                    // TODO
-                    console.log(`Option with niche size ${niche.size}:`, this.name, child);
-                    noneCondition = 'true';
-                }
+            if (niche.isEmpty()) {
+                noneCondition = `uint8[pos] === 0`; // TODO: Is this always correct?
+                valueOffset = child.align;
+            } else if (niche.size === 1) {
+                noneCondition = `uint8[${posWithOffsetAndShift(niche.offset, 0)}] === ${niche.min}`;
+            } else if (niche.size === 2) {
+                noneCondition = `uint32[${posWithOffsetAndShift(niche.offset, 2)}] & 0xFFFF === ${niche.min}`;
+            } else if (niche.size === 4) {
+                noneCondition = `uint32[${posWithOffsetAndShift(niche.offset, 2)}] === ${niche.min}`;
+            } else if (niche.size === 8) {
+                const value = BigInt(niche.min),
+                    high32 = value / 0x100000000n, // Top 32 bits
+                    low32 = value % 0x100000000n; // Bottom 32 bits
+                noneCondition = `uint32[${posWithOffsetAndShift(niche.offset, 2)}] === ${low32}`
+                    + ` && uint32[${posWithOffsetAndShift(niche.offset + 4, 2)}] === ${high32}`;
             } else {
-                console.log('Option with no niche:', this.name);
-                noneCondition = 'true'; // TODO
+                throw new Error(`Option with niche size ${niche.size}: ${this.name}`);
             }
         } else {
             // No niche
@@ -61,7 +56,7 @@ export class Option extends Kind {
         Object.assign(type, this, {
             name,
             serName: name,
-            niche: this.niche ? this.niche.clone() : null,
+            niche: this.niche.clone(),
         });
         createType(name, type);
         return type;

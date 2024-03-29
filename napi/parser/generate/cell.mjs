@@ -6,7 +6,10 @@ export class Cell extends Kind {
     initFromDef(def) {
         super.initFromDef(def);
         this.type = getTypeById(def.valueTypeId);
-        this.niche = this.type.niche;
+    }
+
+    calculateNiche() {
+        return this.type.getNiche();
     }
 
     generateDeserializerCall(posStr, deser) {

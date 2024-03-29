@@ -1,5 +1,5 @@
 import assert from 'assert';
-import {Kind, getTypeById, registerKindClass, posWithOffsetAndShift, createType} from './common.mjs';
+import {Kind, Niche, getTypeById, registerKindClass, posWithOffsetAndShift, createType} from './common.mjs';
 
 export class Struct extends Kind {
     tag;
@@ -25,25 +25,25 @@ export class Struct extends Kind {
         });
 
         this.transparent = def.transparent;
+    }
 
-        // Calculate niche. Choose field with the largest niche.
+    calculateNiche() {
+        // Choose field with the largest niche
         let nicheField,
-            nicheSize = 0;
+            nicheCount = 0;
         for (const field of this.fields) {
-            const {niche} = field.type;
-            if (niche) {
-                const size = niche.numValues();
-                if (size > nicheSize) {
-                    nicheField = field;
-                    nicheSize = size;
-                }
+            const count = field.type.getNiche().numValues();
+            if (count > nicheCount) {
+                nicheField = field;
+                nicheCount = count;
             }
         }
 
-        if (nicheField) {
-            this.niche = nicheField.type.niche.clone();
-            this.niche.offset += nicheField.offset;
-        }
+        if (!nicheField) return Niche.empty();
+
+        const niche = nicheField.type.niche.clone();
+        niche.offset += nicheField.offset;
+        return niche;
     }
 
     getFieldByName(name) {
@@ -97,7 +97,7 @@ export class Struct extends Kind {
         Object.assign(type, this, {
             name,
             serName: name,
-            niche: this.niche ? this.niche.clone() : null,
+            niche: this.niche.clone(),
             fields: this.fields.map(field => field.clone()),
         });
         createType(name, type);

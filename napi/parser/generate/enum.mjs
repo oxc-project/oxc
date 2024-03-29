@@ -5,24 +5,19 @@ export class Enum extends Kind {
 
     initFromDef(def) {
         super.initFromDef(def);
+        this.variants = def.variants.map(variantDef => EnumVariant.fromDef(variantDef));
+    }
 
-        let minDiscriminant = Infinity, maxDiscriminant = 0;
-        this.variants = def.variants.map((variantDef) => {
-            const variant = EnumVariant.fromDef(variantDef);
-
-            const {discriminant} = variant;
-            if (discriminant < minDiscriminant) minDiscriminant = discriminant;
-            if (discriminant > maxDiscriminant) maxDiscriminant = discriminant;
-
-            return variant;
-        });
-        
-        // Calculate niche
-        if (minDiscriminant > 0) {
-            this.niche = new Niche({offset: 0, size: 1, min: 0, max: minDiscriminant - 1});
-        } else if (maxDiscriminant < 255) {
-            this.niche = new Niche({offset: 0, size: 1, min: maxDiscriminant + 1, max: 255});
+    calculateNiche() {
+        let minDiscrim = Infinity, maxDiscrim = 0;
+        for (const {discriminant} of this.variants) {
+            if (discriminant < minDiscrim) minDiscrim = discriminant;
+            if (discriminant > maxDiscrim) maxDiscrim = discriminant;
         }
+
+        if (minDiscrim > 0) return new Niche({offset: 0, size: 1, min: 0, max: minDiscrim - 1});
+        if (maxDiscrim < 255) return new Niche({offset: 0, size: 1, min: maxDiscrim + 1, max: 255});
+        return Niche.empty();
     }
 
     getVariantByName(name) {

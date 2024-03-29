@@ -6,7 +6,10 @@ export class Vec extends Kind {
     initFromDef(def) {
         super.initFromDef(def);
         this.type = getTypeById(def.valueTypeId);
-        this.niche = new Niche({offset: 0, size: 8, min: 0, max: 0});
+    }
+
+    calculateNiche() {
+        return new Niche({offset: 0, size: 8, min: 0, max: 0});
     }
 
     generateDeserializerBody(deser) {

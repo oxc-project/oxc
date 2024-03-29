@@ -10,6 +10,18 @@ export function registerKindClass(kind, Klass) {
     kindClasses.set(kind, Klass);
 }
 
+export function init() {
+    // Init types
+    const root = getTypeById(0);
+
+    // Calculate niches
+    for (const type of typesByName.values()) {
+        type.getNiche();
+    }
+
+    return root;
+}
+
 export function getTypeById(id) {
     let type = typesById[id];
     if (!type) {
@@ -49,6 +61,11 @@ export class Kind {
         this.align = def.align;
     }
 
+    getNiche() {
+        if (this.niche === null) this.niche = this.calculateNiche();
+        return this.niche;
+    }
+
     deserializerName() {
         return `deserialize${this.name}`;
     }
@@ -86,7 +103,16 @@ export class Niche {
         this.max = max;
     }
 
+    static empty() {
+        return new Niche({offset: 0, size: 0, min: 0, max: 0});
+    }
+
+    isEmpty() {
+        return this.size === 0;
+    }
+
     numValues() {
+        if (this.isEmpty()) return 0;
         return this.max - this.min + 1;
     }
 
@@ -95,7 +121,7 @@ export class Niche {
     }
 
     consume() {
-        if (this.max === this.min) return null;
+        if (this.max === this.min) return Niche.empty();
         return new Niche({offset: this.offset, size: this.size, min: this.min + 1, max: this.max});
     }
 }

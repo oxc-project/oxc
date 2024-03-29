@@ -3,7 +3,7 @@ import {join as pathJoin, dirname} from 'path';
 import {fileURLToPath} from 'url';
 import assert from 'assert';
 import {format} from 'prettier';
-import {Kind, Niche, getTypeById, getTypeByName, getFunctionBody} from './common.mjs';
+import {Kind, Niche, init, getTypeByName, getFunctionBody} from './common.mjs';
 import {StructField} from './struct.mjs';
 import {Enum} from './enum.mjs';
 import './box.mjs';
@@ -30,7 +30,7 @@ class DeserializerGenerator {
     }
 }
 
-const programType = getTypeById(0);
+const programType = init();
 
 // TODO: Make `Atom` transparent type in Rust type def
 getTypeByName('Atom').transparent = true;

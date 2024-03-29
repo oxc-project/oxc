@@ -3,7 +3,10 @@ import {Kind, Niche, registerKindClass, getFunctionBody} from './common.mjs';
 export class RefStr extends Kind {
     initFromDef(def) {
         super.initFromDef(def);
-        this.niche = new Niche({offset: 0, size: 8, min: 0, max: 0});
+    }
+
+    calculateNiche() {
+        return new Niche({offset: 0, size: 8, min: 0, max: 0});
     }
 
     generateDeserializerBody(_deser) {
