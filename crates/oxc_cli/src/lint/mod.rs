@@ -113,6 +113,15 @@ impl Runner for LintRunner {
             }
         };
 
+        if let Some(path) = tsconfig.as_ref() {
+            if !path.is_file() {
+                let path = if path.is_relative() { cwd.join(path) } else { path.clone() };
+                return CliRunResult::InvalidOptions {
+                    message: format!("The tsconfig file {path:?} does not exist, Please provide a valid tsconfig file.", ),
+                };
+            }
+        }
+
         let options = LintServiceOptions { cwd, paths, tsconfig };
         let lint_service = LintService::new(linter, options);
         let mut diagnostic_service =
@@ -170,6 +179,18 @@ mod test {
         match LintRunner::new(options).run() {
             CliRunResult::LintResult(lint_result) => lint_result,
             other => panic!("{other:?}"),
+        }
+    }
+
+    fn test_invalid_options(args: &[&str]) -> String {
+        let mut new_args = vec!["--quiet"];
+        new_args.extend(args);
+        let options = lint_command().run_inner(new_args.as_slice()).unwrap().lint_options;
+        match LintRunner::new(options).run() {
+            CliRunResult::InvalidOptions { message } => message,
+            other => {
+                panic!("Expected InvalidOptions, got {other:?}");
+            }
         }
     }
 
@@ -401,5 +422,15 @@ mod test {
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn test_tsconfig_option() {
+        // passed
+        test(&["--tsconfig", "fixtures/tsconfig/tsconfig.json"]);
+
+        // failed
+        assert!(test_invalid_options(&["--tsconfig", "oxc/tsconfig.json"])
+            .contains("oxc/tsconfig.json\" does not exist, Please provide a valid tsconfig file."));
     }
 }
