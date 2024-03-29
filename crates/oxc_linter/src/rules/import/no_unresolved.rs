@@ -1,11 +1,13 @@
 use std::path::{Component, Path};
 
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_resolver::NODEJS_BUILTINS;
+use oxc_semantic::AstNode;
 use oxc_span::SourceType;
 use oxc_span::Span;
 
@@ -36,21 +38,8 @@ impl Rule for NoUnresolved {
             if module_record.loaded_modules.contains_key(specifier) {
                 continue;
             }
-            let specifier_path = Path::new(specifier.as_str());
-            // skip if the extension is not supported
-            if specifier_path.extension().is_some()
-                && SourceType::from_path(specifier_path).is_err()
-            {
-                continue;
-            }
-            // skip node.js builtin modules
-            if specifier.starts_with("node:")
-                || (specifier_path
-                    .components()
-                    .next()
-                    .is_some_and(|c| matches!(c, Component::Normal(_)))
-                    && NODEJS_BUILTINS.binary_search(&specifier.as_str()).is_ok())
-            {
+
+            if is_unsupported_extension_or_builtin_modules(specifier) {
                 continue;
             }
 
@@ -63,6 +52,40 @@ impl Rule for NoUnresolved {
             }
         }
     }
+    fn run(&self, node: &AstNode, ctx: &LintContext<'_>) {
+        if let AstKind::ImportExpression(expr) = node.kind() {
+            let Expression::StringLiteral(literal) = &expr.source else {
+                return;
+            };
+            let source = &literal.value;
+            if is_unsupported_extension_or_builtin_modules(&source.to_compact_str()) {
+                return;
+            }
+
+            if ctx.resolver().resolve(ctx.file_path().parent().unwrap(), source).is_err() {
+                ctx.diagnostic(NoUnresolvedDiagnostic(literal.span));
+            };
+        }
+    }
+}
+
+fn is_unsupported_extension_or_builtin_modules(specifier: &oxc_span::CompactStr) -> bool {
+    let specifier_path = Path::new(specifier.as_str());
+
+    // skip if the extension is not supported
+    if specifier_path.extension().is_some() && SourceType::from_path(specifier_path).is_err() {
+        return true;
+    }
+
+    // skip node.js builtin modules
+    if specifier.starts_with("node:")
+        || (specifier_path.components().next().is_some_and(|c| matches!(c, Component::Normal(_)))
+            && NODEJS_BUILTINS.binary_search(&specifier.as_str()).is_ok())
+    {
+        return true;
+    }
+
+    false
 }
 
 #[test]
@@ -77,8 +100,6 @@ fn test() {
         r"import {someThing} from './test-module';",
         r"import fs from 'fs';",
         r"import fs from 'node:fs';",
-        r"import('fs');",
-        r"import('fs');",
         r#"import * as foo from "a""#,
         r#"export { foo } from "./bar""#,
         r#"export * from "./bar""#,
@@ -109,6 +130,9 @@ fn test() {
         // ignore type-only imports and exports
         r"import type { m } from 'mod'",
         r"export type * from 'mod'",
+        // dynamic imports
+        r"import('./foo')",
+        r"import('fs');",
     ];
 
     let fail = vec![
@@ -117,12 +141,9 @@ fn test() {
         r"import bar from './baz';",
         r"import bar from './empty-folder';",
         r"import { DEEP } from 'in-alternate-root';",
-        // TODO: dynamic import
-        // r#"import('in-alternate-root').then(function({DEEP}) {});"#,
+        r"import('in-alternate-root').then(function({DEEP}) {});",
         r#"export { foo } from "./does-not-exist""#,
         r#"export * from "./does-not-exist""#,
-        // TODO: dynamic import
-        // r#"import('in-alternate-root').then(function({DEEP}) {});"#,
         r#"export * as bar from "./does-not-exist""#,
         r#"export bar from "./does-not-exist""#,
         // r#"var bar = require("./baz")"#,
