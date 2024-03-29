@@ -1,8 +1,23 @@
+use std::{cell::Cell, hash::Hash};
+
 use bitflags::bitflags;
 use oxc_index::define_index_type;
 
 define_index_type! {
     pub struct AstNodeId = usize;
+}
+
+#[derive(Default, Debug, Clone)]
+pub struct AstNodeIdContainer(Cell<Option<AstNodeId>>);
+
+impl AstNodeIdContainer {
+    pub fn get(&self) -> Option<AstNodeId> {
+        self.0.get()
+    }
+}
+
+impl Hash for AstNodeIdContainer {
+    fn hash<H: std::hash::Hasher>(&self, _: &mut H) {}
 }
 
 #[cfg(feature = "serialize")]

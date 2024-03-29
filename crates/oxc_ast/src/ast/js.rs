@@ -4,8 +4,10 @@
 use std::{cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, Vec};
+use oxc_macros::AstNode;
 use oxc_span::{Atom, CompactStr, SourceType, Span};
 use oxc_syntax::{
+    node::{AstNodeId, AstNodeIdContainer},
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
@@ -36,7 +38,7 @@ export interface FormalParameterRest extends Span {
 }
 "#;
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct Program<'a> {
@@ -46,6 +48,9 @@ pub struct Program<'a> {
     pub directives: Vec<'a, Directive<'a>>,
     pub hashbang: Option<Hashbang<'a>>,
     pub body: Vec<'a, Statement<'a>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> Program<'a> {
@@ -58,6 +63,14 @@ impl<'a> Program<'a> {
             || self.source_type.always_strict()
             || self.directives.iter().any(|d| d.directive == "use strict")
     }
+}
+
+#[derive(AstNode, Debug, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(untagged))]
+pub enum TestExpr<'a> {
+    BooleanLiteral(Box<'a, BooleanLiteral>),
+    NullLiteral(Box<'a, NullLiteral>),
 }
 
 /// Expression

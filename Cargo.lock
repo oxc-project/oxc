@@ -1329,6 +1329,7 @@ dependencies = [
  "num-bigint",
  "oxc_allocator",
  "oxc_index",
+ "oxc_macros",
  "oxc_span",
  "oxc_syntax",
  "ryu-js",

@@ -10,6 +10,7 @@ use std::mem;
 use oxc_allocator::{Allocator, Box, String, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span, SPAN};
 use oxc_syntax::{
+    node::AstNodeIdContainer,
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
@@ -112,7 +113,14 @@ impl<'a> AstBuilder<'a> {
         hashbang: Option<Hashbang<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
-        Program { span, source_type, directives, hashbang, body }
+        Program {
+            span,
+            source_type,
+            directives,
+            hashbang,
+            body,
+            ast_node_id: AstNodeIdContainer::default(),
+        }
     }
 
     /* ---------- Constructors ---------- */
@@ -137,7 +145,11 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn boolean_literal(&self, span: Span, value: bool) -> BooleanLiteral {
-        BooleanLiteral { span, value }
+        BooleanLiteral { span, value, ast_node_id: AstNodeIdContainer::default() }
+    }
+
+    pub fn null_literal(&self, span: Span) -> NullLiteral {
+        NullLiteral { span, ast_node_id: AstNodeIdContainer::default() }
     }
 
     pub fn bigint_literal(&self, span: Span, raw: Atom<'a>, base: BigintBase) -> BigIntLiteral<'a> {

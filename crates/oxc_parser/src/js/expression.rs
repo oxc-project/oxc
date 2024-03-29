@@ -272,13 +272,13 @@ impl<'a> ParserImpl<'a> {
             _ => return Err(self.unexpected()),
         };
         self.bump_any();
-        Ok(BooleanLiteral { span: self.end_span(span), value })
+        Ok(self.ast.boolean_literal(self.end_span(span), value))
     }
 
     pub(crate) fn parse_literal_null(&mut self) -> NullLiteral {
         let span = self.start_span();
         self.bump_any(); // bump `null`
-        NullLiteral { span: self.end_span(span) }
+        self.ast.null_literal(self.end_span(span))
     }
 
     pub(crate) fn parse_literal_number(&mut self) -> Result<NumericLiteral<'a>> {

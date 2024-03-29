@@ -15,6 +15,7 @@ mod serialize;
 pub mod ast;
 mod ast_builder;
 mod ast_kind;
+mod ast_node;
 pub mod precedence;
 mod span;
 pub mod syntax_directed_operations;
@@ -26,6 +27,7 @@ pub use num_bigint::BigUint;
 pub use crate::{
     ast_builder::AstBuilder,
     ast_kind::{AstKind, AstType},
+    ast_node::AstNode,
     trivia::{Comment, CommentKind, Trivias, TriviasMap},
     visit::{Visit, VisitMut},
 };

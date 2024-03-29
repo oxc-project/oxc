@@ -1,5 +1,4 @@
-use syn::parse_macro_input;
-
+mod ast_node;
 mod declare_all_lint_rules;
 mod declare_oxc_lint;
 
@@ -37,7 +36,7 @@ mod declare_oxc_lint;
 /// ```
 #[proc_macro]
 pub fn declare_oxc_lint(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let metadata = parse_macro_input!(input as declare_oxc_lint::LintRuleMeta);
+    let metadata = syn::parse_macro_input!(input as declare_oxc_lint::LintRuleMeta);
 
     declare_oxc_lint::declare_oxc_lint(metadata).into()
 }
@@ -46,7 +45,7 @@ pub fn declare_oxc_lint(input: proc_macro::TokenStream) -> proc_macro::TokenStre
 /// Enables multiple usages in a single file.
 #[proc_macro]
 pub fn declare_oxc_lint_test(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let mut metadata = parse_macro_input!(input as declare_oxc_lint::LintRuleMeta);
+    let mut metadata = syn::parse_macro_input!(input as declare_oxc_lint::LintRuleMeta);
     metadata.used_in_test = true;
 
     declare_oxc_lint::declare_oxc_lint(metadata).into()
@@ -54,7 +53,12 @@ pub fn declare_oxc_lint_test(input: proc_macro::TokenStream) -> proc_macro::Toke
 
 #[proc_macro]
 pub fn declare_all_lint_rules(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let metadata = parse_macro_input!(input as declare_all_lint_rules::AllLintRulesMeta);
+    let metadata = syn::parse_macro_input!(input as declare_all_lint_rules::AllLintRulesMeta);
 
     declare_all_lint_rules::declare_all_lint_rules(metadata).into()
+}
+
+#[proc_macro_derive(AstNode)]
+pub fn ast_node_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    ast_node::derive(input)
 }

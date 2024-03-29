@@ -9,25 +9,32 @@ use std::{
 };
 
 use bitflags::bitflags;
+use oxc_macros::AstNode;
 use oxc_span::{Atom, Span};
-use oxc_syntax::{BigintBase, NumberBase};
+use oxc_syntax::{
+    node::{AstNodeId, AstNodeIdContainer},
+    BigintBase, NumberBase,
+};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
-#[derive(Debug, Clone, Hash)]
+#[derive(AstNode, Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct BooleanLiteral {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub value: bool,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 impl BooleanLiteral {
     pub fn new(span: Span, value: bool) -> Self {
-        Self { span, value }
+        Self { span, value, ast_node_id: AstNodeIdContainer::default() }
     }
 
     pub fn as_str(&self) -> &'static str {
@@ -39,12 +46,15 @@ impl BooleanLiteral {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(AstNode, Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct NullLiteral {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 impl Hash for NullLiteral {
@@ -55,7 +65,7 @@ impl Hash for NullLiteral {
 
 impl NullLiteral {
     pub fn new(span: Span) -> Self {
-        Self { span }
+        Self { span, ast_node_id: AstNodeIdContainer::default() }
     }
 }
 
