@@ -102,7 +102,7 @@ impl Rule for NoCycle {
         let mut state = State::default();
         if self.detect_cycle(&mut state, module_record, needle) {
             let stack = &state.stack;
-            let span = module_record.requested_modules.get(&stack[0].0).unwrap()[0];
+            let span = module_record.requested_modules.get(&stack[0].0).unwrap()[0].span();
             let help = stack
                 .iter()
                 .map(|(specifier, path)| {
