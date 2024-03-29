@@ -14,7 +14,7 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, FailedToOpenFileError};
 use oxc_parser::Parser;
-use oxc_resolver::Resolver;
+use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 
@@ -149,7 +149,7 @@ impl Runtime {
     }
 
     fn get_resolver(tsconfig: Option<PathBuf>) -> Resolver {
-        use oxc_resolver::{ResolveOptions, TsconfigOptions, TsconfigReferences};
+        use oxc_resolver::{TsconfigOptions, TsconfigReferences};
         let tsconfig = tsconfig.and_then(|path| {
             if path.is_file() {
                 Some(TsconfigOptions { config_file: path, references: TsconfigReferences::Auto })
@@ -344,8 +344,18 @@ impl Runtime {
             return semantic_ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
         };
 
-        let lint_ctx =
-            LintContext::new(path.to_path_buf().into_boxed_path(), &Rc::new(semantic_ret.semantic));
+        let lint_ctx = LintContext::new(
+            path.to_path_buf().into_boxed_path(),
+            &Rc::new(semantic_ret.semantic),
+            self.resolver.as_ref().map(|resolver| {
+                resolver.clone_with_options(ResolveOptions {
+                    extensions: resolver.options().extensions.clone(),
+                    condition_names: resolver.options().condition_names.clone(),
+                    tsconfig: resolver.options().tsconfig.clone(),
+                    ..Default::default()
+                })
+            }),
+        );
         self.linter.run(lint_ctx)
     }
 

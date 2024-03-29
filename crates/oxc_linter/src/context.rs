@@ -1,9 +1,10 @@
-use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
+use std::{borrow::Borrow, cell::RefCell, path::Path, rc::Rc, sync::Arc};
 
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::Error;
+use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_semantic::{AstNodes, JSDocFinder, ScopeTree, Semantic, SymbolTable};
-use oxc_span::SourceType;
+use oxc_span::{SourceType, VALID_EXTENSIONS};
 
 use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
@@ -29,10 +30,16 @@ pub struct LintContext<'a> {
     settings: Arc<ESLintSettings>,
 
     env: Arc<ESLintEnv>,
+
+    resolver: Rc<Resolver>,
 }
 
 impl<'a> LintContext<'a> {
-    pub fn new(file_path: Box<Path>, semantic: &Rc<Semantic<'a>>) -> Self {
+    pub fn new(
+        file_path: Box<Path>,
+        semantic: &Rc<Semantic<'a>>,
+        resolver: Option<Resolver>,
+    ) -> Self {
         let disable_directives =
             DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias()).build();
         Self {
@@ -44,6 +51,13 @@ impl<'a> LintContext<'a> {
             file_path,
             settings: Arc::new(ESLintSettings::default()),
             env: Arc::new(ESLintEnv::default()),
+            resolver: Rc::new(resolver.unwrap_or_else(|| {
+                Resolver::new(ResolveOptions {
+                    extensions: VALID_EXTENSIONS.iter().map(|ext| format!(".{ext}")).collect(),
+                    condition_names: vec!["module".into(), "require".into()],
+                    ..ResolveOptions::default()
+                })
+            })),
         }
     }
 
@@ -147,6 +161,10 @@ impl<'a> LintContext<'a> {
 
     pub fn symbols(&self) -> &SymbolTable {
         self.semantic().symbols()
+    }
+
+    pub fn resolver(&self) -> &Resolver {
+        self.resolver.borrow()
     }
 
     #[allow(clippy::unused_self)]
