@@ -78,7 +78,8 @@ fn derive_for_enum(input: DeriveInput) -> TokenStream {
         let var_ident = var.ident;
 
         let fields = match var.fields {
-            Fields::Unnamed(_) | Fields::Named(_) => quote_spanned! ( span=> (node) ),
+            Fields::Unnamed(_) => quote_spanned! ( span=> (node) ),
+            Fields::Named(_) => panic!("AstNode derive macro does not support Named enum fields."),
             Fields::Unit => panic!("AstNode derive macro does not support Unit enum fields."),
         };
 
