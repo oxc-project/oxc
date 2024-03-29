@@ -32,7 +32,7 @@ impl Rule for NoUnresolved {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.semantic().module_record();
 
-        for (specifier, spans) in &module_record.requested_modules {
+        for (specifier, requested_modules) in &module_record.requested_modules {
             if module_record.loaded_modules.contains_key(specifier) {
                 continue;
             }
@@ -53,8 +53,9 @@ impl Rule for NoUnresolved {
             {
                 continue;
             }
-            for span in spans {
-                ctx.diagnostic(NoUnresolvedDiagnostic(*span));
+
+            for requested_module in requested_modules {
+                ctx.diagnostic(NoUnresolvedDiagnostic(requested_module.span()));
             }
         }
     }

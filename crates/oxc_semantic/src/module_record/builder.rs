@@ -37,12 +37,12 @@ impl ModuleRecordBuilder {
         self.module_record
     }
 
-    fn add_module_request(&mut self, name_span: &NameSpan) {
+    fn add_module_request(&mut self, name_span: &NameSpan, is_type: bool) {
         self.module_record
             .requested_modules
             .entry(name_span.name().clone())
             .or_default()
-            .push(name_span.span());
+            .push(RequestedModule::new(name_span.span(), is_type));
     }
 
     fn add_import_entry(&mut self, entry: ImportEntry) {
@@ -202,7 +202,7 @@ impl ModuleRecordBuilder {
                 });
             }
         }
-        self.add_module_request(&module_request);
+        self.add_module_request(&module_request, decl.import_kind.is_type());
     }
 
     fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration) {
@@ -226,7 +226,7 @@ impl ModuleRecordBuilder {
         if let Some(exported_name) = &decl.exported {
             self.add_export_binding(exported_name.name().to_compact_str(), exported_name.span());
         }
-        self.add_module_request(&module_request);
+        self.add_module_request(&module_request, decl.export_kind.is_type());
     }
 
     fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration) {
@@ -273,7 +273,7 @@ impl ModuleRecordBuilder {
             .map(|source| NameSpan::new(source.value.to_compact_str(), source.span));
 
         if let Some(module_request) = &module_request {
-            self.add_module_request(module_request);
+            self.add_module_request(module_request, decl.export_kind.is_type());
         }
 
         if let Some(decl) = &decl.declaration {

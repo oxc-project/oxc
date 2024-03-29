@@ -32,7 +32,7 @@ pub struct ModuleRecord {
     ///   import ModuleSpecifier
     ///   export ExportFromClause FromClause
     /// Keyed by ModuleSpecifier, valued by all node occurrences
-    pub requested_modules: IndexMap<CompactStr, Vec<Span>, BuildHasherDefault<FxHasher>>,
+    pub requested_modules: IndexMap<CompactStr, Vec<RequestedModule>, BuildHasherDefault<FxHasher>>,
 
     /// `[[LoadedModules]]`
     ///
@@ -265,6 +265,26 @@ impl ExportLocalName {
 
 pub struct FunctionMeta {
     pub deprecated: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct RequestedModule {
+    span: Span,
+    is_type: bool,
+}
+
+impl RequestedModule {
+    pub fn new(span: Span, is_type: bool) -> Self {
+        Self { span, is_type }
+    }
+
+    pub fn span(&self) -> Span {
+        self.span
+    }
+
+    pub fn is_type(&self) -> bool {
+        self.is_type
+    }
 }
 
 #[cfg(test)]
