@@ -141,7 +141,7 @@ impl<'a> AstBuilder<'a> {
         raw: &'a str,
         base: NumberBase,
     ) -> NumericLiteral<'a> {
-        NumericLiteral { span, value, raw, base }
+        NumericLiteral { span, value, raw, base, ast_node_id: AstNodeIdContainer::default() }
     }
 
     pub fn boolean_literal(&self, span: Span, value: bool) -> BooleanLiteral {
@@ -153,7 +153,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn bigint_literal(&self, span: Span, raw: Atom<'a>, base: BigintBase) -> BigIntLiteral<'a> {
-        BigIntLiteral { span, raw, base }
+        BigIntLiteral { span, raw, base, ast_node_id: AstNodeIdContainer::default() }
     }
 
     pub fn template_literal(
@@ -162,7 +162,7 @@ impl<'a> AstBuilder<'a> {
         quasis: Vec<'a, TemplateElement>,
         expressions: Vec<'a, Expression<'a>>,
     ) -> TemplateLiteral<'a> {
-        TemplateLiteral { span, quasis, expressions }
+        TemplateLiteral { span, quasis, expressions, ast_node_id: AstNodeIdContainer::default() }
     }
 
     pub fn template_element(
@@ -188,7 +188,12 @@ impl<'a> AstBuilder<'a> {
         pattern: &'a str,
         flags: RegExpFlags,
     ) -> RegExpLiteral<'a> {
-        RegExpLiteral { span, value: EmptyObject, regex: RegExp { pattern: pattern.into(), flags } }
+        RegExpLiteral {
+            span,
+            value: EmptyObject,
+            regex: RegExp { pattern: pattern.into(), flags },
+            ast_node_id: AstNodeIdContainer::default(),
+        }
     }
 
     pub fn literal_string_expression(&self, literal: StringLiteral<'a>) -> Expression<'a> {
@@ -234,25 +239,31 @@ impl<'a> AstBuilder<'a> {
         expression: StringLiteral<'a>,
         directive: Atom<'a>,
     ) -> Directive<'a> {
-        Directive { span, expression, directive }
+        Directive { span, expression, directive, ast_node_id: AstNodeIdContainer::default() }
     }
 
     pub fn hashbang(&self, span: Span, value: Atom<'a>) -> Hashbang<'a> {
-        Hashbang { span, value }
+        Hashbang { span, value, ast_node_id: AstNodeIdContainer::default() }
     }
 
     pub fn block(&self, span: Span, body: Vec<'a, Statement<'a>>) -> Box<'a, BlockStatement<'a>> {
-        self.alloc(BlockStatement { span, body })
+        self.alloc(BlockStatement { span, body, ast_node_id: AstNodeIdContainer::default() })
     }
 
     pub fn block_statement(&self, block: Box<'a, BlockStatement<'a>>) -> Statement<'a> {
-        Statement::BlockStatement(
-            self.alloc(BlockStatement { span: block.span, body: block.unbox().body }),
-        )
+        Statement::BlockStatement(self.alloc(BlockStatement {
+            span: block.span,
+            body: block.unbox().body,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn break_statement(&self, span: Span, label: Option<LabelIdentifier<'a>>) -> Statement<'a> {
-        Statement::BreakStatement(self.alloc(BreakStatement { span, label }))
+        Statement::BreakStatement(self.alloc(BreakStatement {
+            span,
+            label,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn continue_statement(
@@ -260,11 +271,17 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         label: Option<LabelIdentifier<'a>>,
     ) -> Statement<'a> {
-        Statement::ContinueStatement(self.alloc(ContinueStatement { span, label }))
+        Statement::ContinueStatement(self.alloc(ContinueStatement {
+            span,
+            label,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn debugger_statement(&self, span: Span) -> Statement<'a> {
-        Statement::DebuggerStatement(self.alloc(DebuggerStatement { span }))
+        Statement::DebuggerStatement(
+            self.alloc(DebuggerStatement { span, ast_node_id: AstNodeIdContainer::default() }),
+        )
     }
 
     pub fn using_statement(
@@ -277,6 +294,7 @@ impl<'a> AstBuilder<'a> {
             span,
             is_await,
             declarations,
+            ast_node_id: AstNodeIdContainer::default(),
         })))
     }
 
@@ -286,15 +304,26 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
         test: Expression<'a>,
     ) -> Statement<'a> {
-        Statement::DoWhileStatement(self.alloc(DoWhileStatement { span, body, test }))
+        Statement::DoWhileStatement(self.alloc(DoWhileStatement {
+            span,
+            body,
+            test,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn empty_statement(&self, span: Span) -> Statement<'a> {
-        Statement::EmptyStatement(self.alloc(EmptyStatement { span }))
+        Statement::EmptyStatement(
+            self.alloc(EmptyStatement { span, ast_node_id: AstNodeIdContainer::default() }),
+        )
     }
 
     pub fn expression_statement(&self, span: Span, expression: Expression<'a>) -> Statement<'a> {
-        Statement::ExpressionStatement(self.alloc(ExpressionStatement { span, expression }))
+        Statement::ExpressionStatement(self.alloc(ExpressionStatement {
+            span,
+            expression,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn for_in_statement(
@@ -304,7 +333,13 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::ForInStatement(self.alloc(ForInStatement { span, left, right, body }))
+        Statement::ForInStatement(self.alloc(ForInStatement {
+            span,
+            left,
+            right,
+            body,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn for_of_statement(
@@ -315,7 +350,14 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::ForOfStatement(self.alloc(ForOfStatement { span, r#await, left, right, body }))
+        Statement::ForOfStatement(self.alloc(ForOfStatement {
+            span,
+            r#await,
+            left,
+            right,
+            body,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn for_statement(
@@ -326,7 +368,14 @@ impl<'a> AstBuilder<'a> {
         update: Option<Expression<'a>>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::ForStatement(self.alloc(ForStatement { span, init, test, update, body }))
+        Statement::ForStatement(self.alloc(ForStatement {
+            span,
+            init,
+            test,
+            update,
+            body,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn if_statement(
@@ -336,7 +385,13 @@ impl<'a> AstBuilder<'a> {
         consequent: Statement<'a>,
         alternate: Option<Statement<'a>>,
     ) -> Statement<'a> {
-        Statement::IfStatement(self.alloc(IfStatement { span, test, consequent, alternate }))
+        Statement::IfStatement(self.alloc(IfStatement {
+            span,
+            test,
+            consequent,
+            alternate,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn labeled_statement(
@@ -345,11 +400,20 @@ impl<'a> AstBuilder<'a> {
         label: LabelIdentifier<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::LabeledStatement(self.alloc(LabeledStatement { span, label, body }))
+        Statement::LabeledStatement(self.alloc(LabeledStatement {
+            span,
+            label,
+            body,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn return_statement(&self, span: Span, argument: Option<Expression<'a>>) -> Statement<'a> {
-        Statement::ReturnStatement(self.alloc(ReturnStatement { span, argument }))
+        Statement::ReturnStatement(self.alloc(ReturnStatement {
+            span,
+            argument,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn switch_statement(
@@ -358,7 +422,12 @@ impl<'a> AstBuilder<'a> {
         discriminant: Expression<'a>,
         cases: Vec<'a, SwitchCase<'a>>,
     ) -> Statement<'a> {
-        Statement::SwitchStatement(self.alloc(SwitchStatement { span, discriminant, cases }))
+        Statement::SwitchStatement(self.alloc(SwitchStatement {
+            span,
+            discriminant,
+            cases,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn switch_case(
@@ -367,11 +436,15 @@ impl<'a> AstBuilder<'a> {
         test: Option<Expression<'a>>,
         consequent: Vec<'a, Statement<'a>>,
     ) -> SwitchCase<'a> {
-        SwitchCase { span, test, consequent }
+        SwitchCase { span, test, consequent, ast_node_id: AstNodeIdContainer::default() }
     }
 
     pub fn throw_statement(&self, span: Span, argument: Expression<'a>) -> Statement<'a> {
-        Statement::ThrowStatement(self.alloc(ThrowStatement { span, argument }))
+        Statement::ThrowStatement(self.alloc(ThrowStatement {
+            span,
+            argument,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn try_statement(
@@ -381,7 +454,13 @@ impl<'a> AstBuilder<'a> {
         handler: Option<Box<'a, CatchClause<'a>>>,
         finalizer: Option<Box<'a, BlockStatement<'a>>>,
     ) -> Statement<'a> {
-        Statement::TryStatement(self.alloc(TryStatement { span, block, handler, finalizer }))
+        Statement::TryStatement(self.alloc(TryStatement {
+            span,
+            block,
+            handler,
+            finalizer,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn catch_clause(
@@ -390,7 +469,7 @@ impl<'a> AstBuilder<'a> {
         param: Option<BindingPattern<'a>>,
         body: Box<'a, BlockStatement<'a>>,
     ) -> Box<'a, CatchClause<'a>> {
-        self.alloc(CatchClause { span, param, body })
+        self.alloc(CatchClause { span, param, body, ast_node_id: AstNodeIdContainer::default() })
     }
 
     pub fn while_statement(
@@ -399,7 +478,12 @@ impl<'a> AstBuilder<'a> {
         test: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::WhileStatement(self.alloc(WhileStatement { span, test, body }))
+        Statement::WhileStatement(self.alloc(WhileStatement {
+            span,
+            test,
+            body,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn with_statement(
@@ -408,13 +492,18 @@ impl<'a> AstBuilder<'a> {
         object: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::WithStatement(self.alloc(WithStatement { span, object, body }))
+        Statement::WithStatement(self.alloc(WithStatement {
+            span,
+            object,
+            body,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     /* ---------- Expressions ---------- */
 
     pub fn super_(&self, span: Span) -> Expression<'a> {
-        Expression::Super(self.alloc(Super { span }))
+        Expression::Super(self.alloc(Super { span, ast_node_id: AstNodeIdContainer::default() }))
     }
 
     pub fn meta_property(
@@ -423,7 +512,12 @@ impl<'a> AstBuilder<'a> {
         meta: IdentifierName<'a>,
         property: IdentifierName<'a>,
     ) -> Expression<'a> {
-        Expression::MetaProperty(self.alloc(MetaProperty { span, meta, property }))
+        Expression::MetaProperty(self.alloc(MetaProperty {
+            span,
+            meta,
+            property,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn array_expression(
@@ -432,7 +526,12 @@ impl<'a> AstBuilder<'a> {
         elements: Vec<'a, ArrayExpressionElement<'a>>,
         trailing_comma: Option<Span>,
     ) -> Expression<'a> {
-        Expression::ArrayExpression(self.alloc(ArrayExpression { span, elements, trailing_comma }))
+        Expression::ArrayExpression(self.alloc(ArrayExpression {
+            span,
+            elements,
+            trailing_comma,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn arrow_function_expression(
@@ -453,6 +552,7 @@ impl<'a> AstBuilder<'a> {
             body,
             type_parameters,
             return_type,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -468,6 +568,7 @@ impl<'a> AstBuilder<'a> {
             operator,
             left,
             right,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -528,7 +629,11 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn await_expression(&self, span: Span, argument: Expression<'a>) -> Expression<'a> {
-        Expression::AwaitExpression(self.alloc(AwaitExpression { span, argument }))
+        Expression::AwaitExpression(self.alloc(AwaitExpression {
+            span,
+            argument,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn binary_expression(
@@ -538,7 +643,13 @@ impl<'a> AstBuilder<'a> {
         operator: BinaryOperator,
         right: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::BinaryExpression(self.alloc(BinaryExpression { span, left, operator, right }))
+        Expression::BinaryExpression(self.alloc(BinaryExpression {
+            span,
+            left,
+            operator,
+            right,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn call_expression(
@@ -555,11 +666,16 @@ impl<'a> AstBuilder<'a> {
             arguments,
             optional,
             type_parameters,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
     pub fn chain_expression(&self, span: Span, expression: ChainElement<'a>) -> Expression<'a> {
-        Expression::ChainExpression(self.alloc(ChainExpression { span, expression }))
+        Expression::ChainExpression(self.alloc(ChainExpression {
+            span,
+            expression,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn class_expression(&self, class: Box<'a, Class<'a>>) -> Expression<'a> {
@@ -578,6 +694,7 @@ impl<'a> AstBuilder<'a> {
             test,
             consequent,
             alternate,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -591,7 +708,12 @@ impl<'a> AstBuilder<'a> {
         source: Expression<'a>,
         arguments: Vec<'a, Expression<'a>>,
     ) -> Expression<'a> {
-        Expression::ImportExpression(self.alloc(ImportExpression { span, source, arguments }))
+        Expression::ImportExpression(self.alloc(ImportExpression {
+            span,
+            source,
+            arguments,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn logical_expression(
@@ -601,7 +723,13 @@ impl<'a> AstBuilder<'a> {
         operator: LogicalOperator,
         right: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::LogicalExpression(self.alloc(LogicalExpression { span, left, operator, right }))
+        Expression::LogicalExpression(self.alloc(LogicalExpression {
+            span,
+            left,
+            operator,
+            right,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn member_expression(&self, expr: MemberExpression<'a>) -> Expression<'a> {
@@ -620,6 +748,7 @@ impl<'a> AstBuilder<'a> {
             object,
             expression,
             optional,
+            ast_node_id: AstNodeIdContainer::default(),
         })
     }
 
@@ -645,6 +774,7 @@ impl<'a> AstBuilder<'a> {
             object,
             property,
             optional,
+            ast_node_id: AstNodeIdContainer::default(),
         })
     }
 
@@ -670,6 +800,7 @@ impl<'a> AstBuilder<'a> {
             object,
             field,
             optional,
+            ast_node_id: AstNodeIdContainer::default(),
         })
     }
 
@@ -684,6 +815,7 @@ impl<'a> AstBuilder<'a> {
             left,
             operator: BinaryOperator::In,
             right,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -709,6 +841,7 @@ impl<'a> AstBuilder<'a> {
             callee,
             arguments,
             type_parameters,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -722,6 +855,7 @@ impl<'a> AstBuilder<'a> {
             span,
             properties,
             trailing_comma,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -736,7 +870,17 @@ impl<'a> AstBuilder<'a> {
         shorthand: bool,
         computed: bool,
     ) -> Box<'a, ObjectProperty<'a>> {
-        self.alloc(ObjectProperty { span, kind, key, value, init, method, shorthand, computed })
+        self.alloc(ObjectProperty {
+            span,
+            kind,
+            key,
+            value,
+            init,
+            method,
+            shorthand,
+            computed,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn parenthesized_expression(
@@ -744,9 +888,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::ParenthesizedExpression(
-            self.alloc(ParenthesizedExpression { span, expression }),
-        )
+        Expression::ParenthesizedExpression(self.alloc(ParenthesizedExpression {
+            span,
+            expression,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn sequence_expression(
@@ -754,7 +900,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expressions: Vec<'a, Expression<'a>>,
     ) -> Expression<'a> {
-        Expression::SequenceExpression(self.alloc(SequenceExpression { span, expressions }))
+        Expression::SequenceExpression(self.alloc(SequenceExpression {
+            span,
+            expressions,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn tagged_template_expression(
@@ -769,6 +919,7 @@ impl<'a> AstBuilder<'a> {
             tag,
             quasi,
             type_parameters,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -780,7 +931,9 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn this_expression(&self, span: Span) -> Expression<'a> {
-        Expression::ThisExpression(self.alloc(ThisExpression { span }))
+        Expression::ThisExpression(
+            self.alloc(ThisExpression { span, ast_node_id: AstNodeIdContainer::default() }),
+        )
     }
 
     pub fn unary_expression(
@@ -789,7 +942,12 @@ impl<'a> AstBuilder<'a> {
         operator: UnaryOperator,
         argument: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::UnaryExpression(self.alloc(UnaryExpression { span, operator, argument }))
+        Expression::UnaryExpression(self.alloc(UnaryExpression {
+            span,
+            operator,
+            argument,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn update_expression(
@@ -804,6 +962,7 @@ impl<'a> AstBuilder<'a> {
             operator,
             prefix,
             argument,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -813,7 +972,12 @@ impl<'a> AstBuilder<'a> {
         delegate: bool,
         argument: Option<Expression<'a>>,
     ) -> Expression<'a> {
-        Expression::YieldExpression(self.alloc(YieldExpression { span, delegate, argument }))
+        Expression::YieldExpression(self.alloc(YieldExpression {
+            span,
+            delegate,
+            argument,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     /* ---------- Functions ---------- */
@@ -828,7 +992,13 @@ impl<'a> AstBuilder<'a> {
         items: Vec<'a, FormalParameter<'a>>,
         rest: Option<Box<'a, BindingRestElement<'a>>>,
     ) -> Box<'a, FormalParameters<'a>> {
-        self.alloc(FormalParameters { span, kind, items, rest })
+        self.alloc(FormalParameters {
+            span,
+            kind,
+            items,
+            rest,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn formal_parameter(
@@ -840,7 +1010,15 @@ impl<'a> AstBuilder<'a> {
         r#override: bool,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> FormalParameter<'a> {
-        FormalParameter { span, pattern, accessibility, readonly, r#override, decorators }
+        FormalParameter {
+            span,
+            pattern,
+            accessibility,
+            readonly,
+            r#override,
+            decorators,
+            ast_node_id: AstNodeIdContainer::default(),
+        }
     }
 
     pub fn ts_this_parameter(
@@ -878,6 +1056,7 @@ impl<'a> AstBuilder<'a> {
             type_parameters,
             return_type,
             modifiers,
+            ast_node_id: AstNodeIdContainer::default(),
         })
     }
 
@@ -887,7 +1066,12 @@ impl<'a> AstBuilder<'a> {
         directives: Vec<'a, Directive>,
         statements: Vec<'a, Statement<'a>>,
     ) -> Box<'a, FunctionBody<'a>> {
-        self.alloc(FunctionBody { span, directives, statements })
+        self.alloc(FunctionBody {
+            span,
+            directives,
+            statements,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     /* ---------- Class ---------- */
@@ -916,6 +1100,7 @@ impl<'a> AstBuilder<'a> {
             implements,
             decorators,
             modifiers,
+            ast_node_id: AstNodeIdContainer::default(),
         })
     }
 
@@ -924,7 +1109,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         body: Vec<'a, ClassElement<'a>>,
     ) -> Box<'a, ClassBody<'a>> {
-        self.alloc(ClassBody { span, body })
+        self.alloc(ClassBody { span, body, ast_node_id: AstNodeIdContainer::default() })
     }
 
     pub fn class_declaration(&self, class: Box<'a, Class<'a>>) -> Statement<'a> {
@@ -932,7 +1117,11 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn static_block(&self, span: Span, body: Vec<'a, Statement<'a>>) -> ClassElement<'a> {
-        ClassElement::StaticBlock(self.alloc(StaticBlock { span, body }))
+        ClassElement::StaticBlock(self.alloc(StaticBlock {
+            span,
+            body,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn class_property(
@@ -960,6 +1149,7 @@ impl<'a> AstBuilder<'a> {
             type_annotation: None,
             accessibility: None,
             decorators,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -978,6 +1168,7 @@ impl<'a> AstBuilder<'a> {
             optional: false,
             accessibility: None,
             decorators: self.new_vec(),
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -1009,7 +1200,13 @@ impl<'a> AstBuilder<'a> {
         declarations: Vec<'a, VariableDeclarator<'a>>,
         modifiers: Modifiers<'a>,
     ) -> Box<'a, VariableDeclaration<'a>> {
-        self.alloc(VariableDeclaration { span, kind, declarations, modifiers })
+        self.alloc(VariableDeclaration {
+            span,
+            kind,
+            declarations,
+            modifiers,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn variable_declarator(
@@ -1020,7 +1217,14 @@ impl<'a> AstBuilder<'a> {
         init: Option<Expression<'a>>,
         definite: bool,
     ) -> VariableDeclarator<'a> {
-        VariableDeclarator { span, kind, id, init, definite }
+        VariableDeclarator {
+            span,
+            kind,
+            id,
+            init,
+            definite,
+            ast_node_id: AstNodeIdContainer::default(),
+        }
     }
 
     pub fn using_declaration(
@@ -1029,7 +1233,12 @@ impl<'a> AstBuilder<'a> {
         declarations: Vec<'a, VariableDeclarator<'a>>,
         is_await: bool,
     ) -> UsingDeclaration<'a> {
-        UsingDeclaration { span, is_await, declarations }
+        UsingDeclaration {
+            span,
+            is_await,
+            declarations,
+            ast_node_id: AstNodeIdContainer::default(),
+        }
     }
 
     /* ---------- Patterns ---------- */
@@ -1056,7 +1265,12 @@ impl<'a> AstBuilder<'a> {
         properties: Vec<'a, BindingProperty<'a>>,
         rest: Option<Box<'a, BindingRestElement<'a>>>,
     ) -> BindingPatternKind<'a> {
-        BindingPatternKind::ObjectPattern(self.alloc(ObjectPattern { span, properties, rest }))
+        BindingPatternKind::ObjectPattern(self.alloc(ObjectPattern {
+            span,
+            properties,
+            rest,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn binding_property(
@@ -1075,7 +1289,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: Expression<'a>,
     ) -> Box<'a, SpreadElement<'a>> {
-        self.alloc(SpreadElement { span, argument })
+        self.alloc(SpreadElement { span, argument, ast_node_id: AstNodeIdContainer::default() })
     }
 
     pub fn array_pattern(
@@ -1084,7 +1298,12 @@ impl<'a> AstBuilder<'a> {
         elements: Vec<'a, Option<BindingPattern<'a>>>,
         rest: Option<Box<'a, BindingRestElement<'a>>>,
     ) -> BindingPatternKind<'a> {
-        BindingPatternKind::ArrayPattern(self.alloc(ArrayPattern { span, elements, rest }))
+        BindingPatternKind::ArrayPattern(self.alloc(ArrayPattern {
+            span,
+            elements,
+            rest,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn assignment_pattern(
@@ -1093,7 +1312,12 @@ impl<'a> AstBuilder<'a> {
         left: BindingPattern<'a>,
         right: Expression<'a>,
     ) -> BindingPattern<'a> {
-        let pattern = self.alloc(AssignmentPattern { span, left, right });
+        let pattern = self.alloc(AssignmentPattern {
+            span,
+            left,
+            right,
+            ast_node_id: AstNodeIdContainer::default(),
+        });
         BindingPattern {
             kind: BindingPatternKind::AssignmentPattern(pattern),
             type_annotation: None,
@@ -1106,7 +1330,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: BindingPattern<'a>,
     ) -> Box<'a, BindingRestElement<'a>> {
-        self.alloc(BindingRestElement { span, argument })
+        self.alloc(BindingRestElement {
+            span,
+            argument,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn property_key_identifier(&self, ident: IdentifierName<'a>) -> PropertyKey<'a> {
@@ -1131,7 +1359,14 @@ impl<'a> AstBuilder<'a> {
         with_clause: Option<WithClause<'a>>,
         import_kind: ImportOrExportKind,
     ) -> Box<'a, ImportDeclaration<'a>> {
-        self.alloc(ImportDeclaration { span, specifiers, source, with_clause, import_kind })
+        self.alloc(ImportDeclaration {
+            span,
+            specifiers,
+            source,
+            with_clause,
+            import_kind,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn export_all_declaration(
@@ -1142,7 +1377,14 @@ impl<'a> AstBuilder<'a> {
         with_clause: Option<WithClause<'a>>,
         export_kind: ImportOrExportKind,
     ) -> Box<'a, ExportAllDeclaration<'a>> {
-        self.alloc(ExportAllDeclaration { span, exported, source, with_clause, export_kind })
+        self.alloc(ExportAllDeclaration {
+            span,
+            exported,
+            source,
+            with_clause,
+            export_kind,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn export_default_declaration(
@@ -1151,7 +1393,12 @@ impl<'a> AstBuilder<'a> {
         declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName<'a>,
     ) -> Box<'a, ExportDefaultDeclaration<'a>> {
-        self.alloc(ExportDefaultDeclaration { span, declaration, exported })
+        self.alloc(ExportDefaultDeclaration {
+            span,
+            declaration,
+            exported,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn export_named_declaration(
@@ -1170,6 +1417,7 @@ impl<'a> AstBuilder<'a> {
             source,
             export_kind,
             with_clause,
+            ast_node_id: AstNodeIdContainer::default(),
         })
     }
 
@@ -1181,7 +1429,13 @@ impl<'a> AstBuilder<'a> {
         closing_element: Option<Box<'a, JSXClosingElement<'a>>>,
         children: Vec<'a, JSXChild<'a>>,
     ) -> Box<'a, JSXElement<'a>> {
-        self.alloc(JSXElement { span, opening_element, closing_element, children })
+        self.alloc(JSXElement {
+            span,
+            opening_element,
+            closing_element,
+            children,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn jsx_opening_element(
@@ -1192,7 +1446,14 @@ impl<'a> AstBuilder<'a> {
         attributes: Vec<'a, JSXAttributeItem<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> Box<'a, JSXOpeningElement<'a>> {
-        self.alloc(JSXOpeningElement { span, self_closing, name, attributes, type_parameters })
+        self.alloc(JSXOpeningElement {
+            span,
+            self_closing,
+            name,
+            attributes,
+            type_parameters,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn jsx_closing_element(
@@ -1200,7 +1461,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         name: JSXElementName<'a>,
     ) -> Box<'a, JSXClosingElement<'a>> {
-        self.alloc(JSXClosingElement { span, name })
+        self.alloc(JSXClosingElement { span, name, ast_node_id: AstNodeIdContainer::default() })
     }
 
     pub fn jsx_fragment(
@@ -1210,7 +1471,13 @@ impl<'a> AstBuilder<'a> {
         closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
     ) -> Box<'a, JSXFragment<'a>> {
-        self.alloc(JSXFragment { span, opening_fragment, closing_fragment, children })
+        self.alloc(JSXFragment {
+            span,
+            opening_fragment,
+            closing_fragment,
+            children,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn jsx_opening_fragment(&self, span: Span) -> JSXOpeningFragment {
@@ -1227,7 +1494,12 @@ impl<'a> AstBuilder<'a> {
         namespace: JSXIdentifier<'a>,
         property: JSXIdentifier<'a>,
     ) -> Box<'a, JSXNamespacedName<'a>> {
-        self.alloc(JSXNamespacedName { span, namespace, property })
+        self.alloc(JSXNamespacedName {
+            span,
+            namespace,
+            property,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn jsx_member_expression(
@@ -1236,7 +1508,12 @@ impl<'a> AstBuilder<'a> {
         object: JSXMemberExpressionObject<'a>,
         property: JSXIdentifier<'a>,
     ) -> Box<'a, JSXMemberExpression<'a>> {
-        self.alloc(JSXMemberExpression { span, object, property })
+        self.alloc(JSXMemberExpression {
+            span,
+            object,
+            property,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn jsx_expression_container(
@@ -1244,7 +1521,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: JSXExpression<'a>,
     ) -> JSXExpressionContainer<'a> {
-        JSXExpressionContainer { span, expression }
+        JSXExpressionContainer { span, expression, ast_node_id: AstNodeIdContainer::default() }
     }
 
     pub fn jsx_spread_child(&self, span: Span, expression: Expression<'a>) -> JSXSpreadChild<'a> {
@@ -1261,7 +1538,7 @@ impl<'a> AstBuilder<'a> {
         name: JSXAttributeName<'a>,
         value: Option<JSXAttributeValue<'a>>,
     ) -> Box<'a, JSXAttribute<'a>> {
-        self.alloc(JSXAttribute { span, name, value })
+        self.alloc(JSXAttribute { span, name, value, ast_node_id: AstNodeIdContainer::default() })
     }
 
     pub fn jsx_spread_attribute(
@@ -1269,15 +1546,19 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: Expression<'a>,
     ) -> Box<'a, JSXSpreadAttribute<'a>> {
-        self.alloc(JSXSpreadAttribute { span, argument })
+        self.alloc(JSXSpreadAttribute {
+            span,
+            argument,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn jsx_identifier(&self, span: Span, name: Atom<'a>) -> JSXIdentifier<'a> {
-        JSXIdentifier { span, name }
+        JSXIdentifier { span, name, ast_node_id: AstNodeIdContainer::default() }
     }
 
     pub fn jsx_text(&self, span: Span, value: Atom<'a>) -> JSXText<'a> {
-        JSXText { span, value }
+        JSXText { span, value, ast_node_id: AstNodeIdContainer::default() }
     }
 
     /* ---------- TypeScript ---------- */
@@ -1289,7 +1570,14 @@ impl<'a> AstBuilder<'a> {
         kind: TSModuleDeclarationKind,
         modifiers: Modifiers<'a>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        self.alloc(TSModuleDeclaration { span, id, body, kind, modifiers })
+        self.alloc(TSModuleDeclaration {
+            span,
+            id,
+            body,
+            kind,
+            modifiers,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn ts_type_annotation(
@@ -1297,19 +1585,35 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
     ) -> Box<'a, TSTypeAnnotation<'a>> {
-        self.alloc(TSTypeAnnotation { span, type_annotation })
+        self.alloc(TSTypeAnnotation {
+            span,
+            type_annotation,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn ts_literal_type(&self, span: Span, literal: TSLiteral<'a>) -> TSType<'a> {
-        TSType::TSLiteralType(self.alloc(TSLiteralType { span, literal }))
+        TSType::TSLiteralType(self.alloc(TSLiteralType {
+            span,
+            literal,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn ts_union_type(&self, span: Span, types: Vec<'a, TSType<'a>>) -> TSType<'a> {
-        TSType::TSUnionType(self.alloc(TSUnionType { span, types }))
+        TSType::TSUnionType(self.alloc(TSUnionType {
+            span,
+            types,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn ts_intersection_type(&self, span: Span, types: Vec<'a, TSType<'a>>) -> TSType<'a> {
-        TSType::TSIntersectionType(self.alloc(TSIntersectionType { span, types }))
+        TSType::TSIntersectionType(self.alloc(TSIntersectionType {
+            span,
+            types,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn ts_type_operator_type(
@@ -1335,6 +1639,7 @@ impl<'a> AstBuilder<'a> {
             span,
             object_type,
             index_type,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -1352,11 +1657,20 @@ impl<'a> AstBuilder<'a> {
         type_name: TSTypeName<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> TSType<'a> {
-        TSType::TSTypeReference(self.alloc(TSTypeReference { span, type_name, type_parameters }))
+        TSType::TSTypeReference(self.alloc(TSTypeReference {
+            span,
+            type_name,
+            type_parameters,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn ts_type_literal(&self, span: Span, members: Vec<'a, TSSignature<'a>>) -> TSType<'a> {
-        TSType::TSTypeLiteral(self.alloc(TSTypeLiteral { span, members }))
+        TSType::TSTypeLiteral(self.alloc(TSTypeLiteral {
+            span,
+            members,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn ts_type_implement(
@@ -1378,7 +1692,16 @@ impl<'a> AstBuilder<'a> {
         out: bool,
         r#const: bool,
     ) -> Box<'a, TSTypeParameter<'a>> {
-        self.alloc(TSTypeParameter { span, name, constraint, default, r#in, out, r#const })
+        self.alloc(TSTypeParameter {
+            span,
+            name,
+            constraint,
+            default,
+            r#in,
+            out,
+            r#const,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn ts_type_parameters(
@@ -1386,7 +1709,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         params: Vec<'a, Box<'a, TSTypeParameter<'a>>>,
     ) -> Box<'a, TSTypeParameterDeclaration<'a>> {
-        self.alloc(TSTypeParameterDeclaration { span, params })
+        self.alloc(TSTypeParameterDeclaration {
+            span,
+            params,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn ts_interface_heritages(
@@ -1440,6 +1767,7 @@ impl<'a> AstBuilder<'a> {
             readonly,
             key,
             type_annotation,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -1497,6 +1825,7 @@ impl<'a> AstBuilder<'a> {
             params,
             return_type,
             type_parameters,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -1505,7 +1834,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         body: Vec<'a, Statement<'a>>,
     ) -> Box<'a, TSModuleBlock<'a>> {
-        self.alloc(TSModuleBlock { span, body })
+        self.alloc(TSModuleBlock { span, body, ast_node_id: AstNodeIdContainer::default() })
     }
 
     pub fn ts_type_arguments(
@@ -1513,7 +1842,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         params: Vec<'a, TSType<'a>>,
     ) -> Box<'a, TSTypeParameterInstantiation<'a>> {
-        self.alloc(TSTypeParameterInstantiation { span, params })
+        self.alloc(TSTypeParameterInstantiation {
+            span,
+            params,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub fn ts_as_expression(
@@ -1522,7 +1855,12 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> Expression<'a> {
-        Expression::TSAsExpression(self.alloc(TSAsExpression { span, expression, type_annotation }))
+        Expression::TSAsExpression(self.alloc(TSAsExpression {
+            span,
+            expression,
+            type_annotation,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn ts_satisfies_expression(
@@ -1535,11 +1873,16 @@ impl<'a> AstBuilder<'a> {
             span,
             expression,
             type_annotation,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
     pub fn ts_non_null_expression(&self, span: Span, expression: Expression<'a>) -> Expression<'a> {
-        Expression::TSNonNullExpression(self.alloc(TSNonNullExpression { span, expression }))
+        Expression::TSNonNullExpression(self.alloc(TSNonNullExpression {
+            span,
+            expression,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn ts_type_assertion(
@@ -1552,6 +1895,7 @@ impl<'a> AstBuilder<'a> {
             span,
             expression,
             type_annotation,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -1567,6 +1911,7 @@ impl<'a> AstBuilder<'a> {
             id,
             module_reference: self.alloc(module_reference),
             import_kind,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -1586,6 +1931,7 @@ impl<'a> AstBuilder<'a> {
             type_parameters,
             extends,
             modifiers,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -1603,6 +1949,7 @@ impl<'a> AstBuilder<'a> {
             type_annotation,
             type_parameters,
             modifiers,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -1618,15 +1965,18 @@ impl<'a> AstBuilder<'a> {
             id,
             members,
             modifiers,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
     pub fn decorator(&self, span: Span, expression: Expression<'a>) -> Decorator<'a> {
-        Decorator { span, expression }
+        Decorator { span, expression, ast_node_id: AstNodeIdContainer::default() }
     }
 
     pub fn ts_void_keyword(&self, span: Span) -> TSType<'a> {
-        TSType::TSVoidKeyword(self.alloc(TSVoidKeyword { span }))
+        TSType::TSVoidKeyword(
+            self.alloc(TSVoidKeyword { span, ast_node_id: AstNodeIdContainer::default() }),
+        )
     }
 
     pub fn ts_this_keyword(&self, span: Span) -> TSType<'a> {
@@ -1634,7 +1984,9 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn ts_any_keyword(&self, span: Span) -> TSType<'a> {
-        TSType::TSAnyKeyword(self.alloc(TSAnyKeyword { span }))
+        TSType::TSAnyKeyword(
+            self.alloc(TSAnyKeyword { span, ast_node_id: AstNodeIdContainer::default() }),
+        )
     }
 
     pub fn ts_unknown_keyword(&self, span: Span) -> TSType<'a> {
@@ -1666,7 +2018,9 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn ts_null_keyword(&self, span: Span) -> TSType<'a> {
-        TSType::TSNullKeyword(self.alloc(TSNullKeyword { span }))
+        TSType::TSNullKeyword(
+            self.alloc(TSNullKeyword { span, ast_node_id: AstNodeIdContainer::default() }),
+        )
     }
 
     pub fn ts_undefined_keyword(&self, span: Span) -> TSType<'a> {
@@ -1692,7 +2046,12 @@ impl<'a> AstBuilder<'a> {
         expr_name: TSTypeQueryExprName<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> TSType<'a> {
-        TSType::TSTypeQuery(self.alloc(TSTypeQuery { span, expr_name, type_parameters }))
+        TSType::TSTypeQuery(self.alloc(TSTypeQuery {
+            span,
+            expr_name,
+            type_parameters,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub fn ts_conditional_type(
@@ -1745,6 +2104,7 @@ impl<'a> AstBuilder<'a> {
             qualifier,
             attributes,
             type_parameters,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -1803,6 +2163,15 @@ impl<'a> AstBuilder<'a> {
             asserts,
             type_annotation,
         }))
+    }
+
+    pub fn ts_qualified_name(
+        &self,
+        span: Span,
+        left: TSTypeName<'a>,
+        right: IdentifierName<'a>,
+    ) -> TSQualifiedName<'a> {
+        TSQualifiedName { span, left, right, ast_node_id: AstNodeIdContainer::default() }
     }
 
     /* JSDoc */

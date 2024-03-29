@@ -244,7 +244,7 @@ impl<'a> GetSpan for ArrayExpressionElement<'a> {
         match self {
             Self::SpreadElement(e) => e.span,
             Self::Expression(expr) => expr.span(),
-            Self::Elision(span) => *span,
+            Self::Elision(e) => e.span,
         }
     }
 }

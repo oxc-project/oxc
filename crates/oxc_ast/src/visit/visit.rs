@@ -5,7 +5,6 @@
 //! * [rustc visitor](https://github.com/rust-lang/rust/blob/master/compiler/rustc_ast/src/visit.rs)
 
 use oxc_allocator::Vec;
-use oxc_span::Span;
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{ast::*, ast_kind::AstKind};
@@ -233,8 +232,8 @@ pub trait Visit<'a>: Sized {
         walk_expression_array_element(self, expr);
     }
 
-    fn visit_elision(&mut self, span: Span) {
-        walk_elision(self, span);
+    fn visit_elision(&mut self, elision: &ElisionElement<'a>) {
+        walk_elision(self, elision);
     }
 
     fn visit_assignment_expression(&mut self, expr: &AssignmentExpression<'a>) {
@@ -1434,7 +1433,7 @@ pub mod walk {
             ArrayExpressionElement::Expression(expr) => {
                 visitor.visit_expression_array_element(expr);
             }
-            ArrayExpressionElement::Elision(span) => visitor.visit_elision(*span),
+            ArrayExpressionElement::Elision(elision) => visitor.visit_elision(elision),
         }
         visitor.leave_node(kind);
     }
@@ -1463,8 +1462,8 @@ pub mod walk {
         visitor.leave_node(kind);
     }
 
-    pub fn walk_elision<'a, V: Visit<'a>>(visitor: &mut V, span: Span) {
-        let kind = AstKind::Elision(span);
+    pub fn walk_elision<'a, V: Visit<'a>>(visitor: &mut V, elision: &ElisionElement<'a>) {
+        let kind = AstKind::Elision(visitor.alloc(elision));
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }

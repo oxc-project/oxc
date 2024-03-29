@@ -3,7 +3,7 @@ use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::Span;
-use oxc_syntax::operator::UnaryOperator;
+use oxc_syntax::{node::AstNodeIdContainer, operator::UnaryOperator};
 
 use super::list::{
     TSInterfaceOrObjectBodyList, TSTupleElementList, TSTypeArgumentList, TSTypeParameterList,
@@ -499,11 +499,11 @@ impl<'a> ParserImpl<'a> {
         let mut left = TSTypeName::IdentifierReference(self.ast.alloc(ident));
         while self.eat(Kind::Dot) {
             let right = self.parse_identifier_name()?;
-            left = TSTypeName::QualifiedName(self.ast.alloc(TSQualifiedName {
-                span: self.end_span(span),
+            left = TSTypeName::QualifiedName(self.ast.alloc(self.ast.ts_qualified_name(
+                self.end_span(span),
                 left,
                 right,
-            }));
+            )));
         }
         Ok(left)
     }
@@ -784,13 +784,13 @@ impl<'a> ParserImpl<'a> {
 
         let type_parameters = self.parse_ts_type_arguments()?;
 
-        Ok(TSImportType {
-            span: self.end_span(span),
+        Ok(self.ast.ts_import_type(
+            self.end_span(span),
             argument,
             qualifier,
             attributes,
             type_parameters,
-        })
+        ))
     }
 
     fn parse_ts_import_attributes(&mut self) -> Result<TSImportAttributes<'a>> {

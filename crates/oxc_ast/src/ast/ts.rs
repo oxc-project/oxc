@@ -7,7 +7,9 @@
 #![allow(non_snake_case)]
 
 use oxc_allocator::{Box, Vec};
+use oxc_macros::AstNode;
 use oxc_span::{Atom, GetSpan, Span};
+use oxc_syntax::node::{AstNodeId, AstNodeIdContainer};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
@@ -38,7 +40,7 @@ pub struct TSThisParameter<'a> {
 /// Enum Declaration
 ///
 /// `const_opt` enum `BindingIdentifier` { `EnumBody_opt` }
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSEnumDeclaration<'a> {
@@ -48,9 +50,12 @@ pub struct TSEnumDeclaration<'a> {
     pub members: Vec<'a, TSEnumMember<'a>>,
     /// Valid Modifiers: `const`, `export`, `declare`
     pub modifiers: Modifiers<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSEnumMember<'a> {
@@ -58,6 +63,9 @@ pub struct TSEnumMember<'a> {
     pub span: Span,
     pub id: TSEnumMemberName<'a>,
     pub initializer: Option<Expression<'a>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -72,22 +80,28 @@ pub enum TSEnumMemberName<'a> {
     NumericLiteral(NumericLiteral<'a>),
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeAnnotation<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub type_annotation: TSType<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSLiteralType<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub literal: TSLiteral<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -183,25 +197,31 @@ pub struct TSConditionalType<'a> {
 /// string | string[] | (() => string) | { s: string }
 ///
 /// <https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-func.html#unions>
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSUnionType<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub types: Vec<'a, TSType<'a>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 /// type `ColorfulCircle` = Colorful & Circle;
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#intersection-types>
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSIntersectionType<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub types: Vec<'a, TSType<'a>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 /// keyof unique readonly
@@ -241,7 +261,7 @@ pub struct TSArrayType<'a> {
 /// `type I1 = Person["age" | "name"];`
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/indexed-access-types.html#handbook-content>
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSIndexedAccessType<'a> {
@@ -249,6 +269,9 @@ pub struct TSIndexedAccessType<'a> {
     pub span: Span,
     pub object_type: TSType<'a>,
     pub index_type: TSType<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 /// type `StringNumberPair` = [string, number];
@@ -302,12 +325,15 @@ pub enum TSTupleElement<'a> {
     TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>),
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSAnyKeyword {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -350,12 +376,15 @@ pub struct TSUnknownKeyword {
     pub span: Span,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSNullKeyword {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -366,12 +395,15 @@ pub struct TSUndefinedKeyword {
     pub span: Span,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSVoidKeyword {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -409,7 +441,7 @@ pub struct TSBigIntKeyword {
 /// type C = A;
 /// type D = B.a;
 /// type E = D.c.b.a;
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeReference<'a> {
@@ -417,12 +449,15 @@ pub struct TSTypeReference<'a> {
     pub span: Span,
     pub type_name: TSTypeName<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 /// TypeName:
 ///     IdentifierReference
 ///     NamespaceName . IdentifierReference
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSTypeName<'a> {
@@ -465,7 +500,7 @@ impl GetSpan for TSTypeName<'_> {
     }
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSQualifiedName<'a> {
@@ -473,18 +508,24 @@ pub struct TSQualifiedName<'a> {
     pub span: Span,
     pub left: TSTypeName<'a>,
     pub right: IdentifierName<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeParameterInstantiation<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub params: Vec<'a, TSType<'a>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeParameter<'a> {
@@ -496,18 +537,24 @@ pub struct TSTypeParameter<'a> {
     pub r#in: bool,
     pub out: bool,
     pub r#const: bool,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeParameterDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub params: Vec<'a, Box<'a, TSTypeParameter<'a>>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeAliasDeclaration<'a> {
@@ -518,6 +565,9 @@ pub struct TSTypeAliasDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     /// Valid Modifiers: `declare`, `export`
     pub modifiers: Modifiers<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash, Clone, PartialEq, Eq, Copy)]
@@ -542,7 +592,7 @@ pub struct TSClassImplements<'a> {
 /// Interface Declaration
 ///
 ///   interface `BindingIdentifier` `TypeParameters_opt` `InterfaceExtendsClause_opt` `ObjectType`
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSInterfaceDeclaration<'a> {
@@ -554,6 +604,9 @@ pub struct TSInterfaceDeclaration<'a> {
     pub extends: Option<Vec<'a, Box<'a, TSInterfaceHeritage<'a>>>>,
     /// Valid Modifiers: `export`, `default`, `declare`
     pub modifiers: Modifiers<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -565,7 +618,7 @@ pub struct TSInterfaceBody<'a> {
     pub body: Vec<'a, TSSignature<'a>>,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSPropertySignature<'a> {
@@ -576,6 +629,9 @@ pub struct TSPropertySignature<'a> {
     pub readonly: bool,
     pub key: PropertyKey<'a>,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -621,7 +677,7 @@ pub enum TSMethodSignatureKind {
     Set,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSMethodSignature<'a> {
@@ -635,6 +691,9 @@ pub struct TSMethodSignature<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -690,7 +749,7 @@ pub enum TSTypePredicateName<'a> {
     This(TSThisType),
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSModuleDeclaration<'a> {
@@ -710,6 +769,9 @@ pub struct TSModuleDeclaration<'a> {
     pub kind: TSModuleDeclarationKind,
     /// Valid Modifiers: `declare`, `export`
     pub modifiers: Modifiers<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -746,22 +808,28 @@ pub enum TSModuleDeclarationBody<'a> {
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>),
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSModuleBlock<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeLiteral<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub members: Vec<'a, TSSignature<'a>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -773,7 +841,7 @@ pub struct TSInferType<'a> {
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeQuery<'a> {
@@ -781,6 +849,9 @@ pub struct TSTypeQuery<'a> {
     pub span: Span,
     pub expr_name: TSTypeQueryExprName<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -791,7 +862,7 @@ pub enum TSTypeQueryExprName<'a> {
     TSImportType(TSImportType<'a>),
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSImportType<'a> {
@@ -801,6 +872,9 @@ pub struct TSImportType<'a> {
     pub qualifier: Option<TSTypeName<'a>>,
     pub attributes: Option<TSImportAttributes<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -889,7 +963,7 @@ pub struct TSTemplateLiteralType<'a> {
     pub types: Vec<'a, TSType<'a>>,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSAsExpression<'a> {
@@ -897,9 +971,12 @@ pub struct TSAsExpression<'a> {
     pub span: Span,
     pub expression: Expression<'a>,
     pub type_annotation: TSType<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSSatisfiesExpression<'a> {
@@ -907,9 +984,12 @@ pub struct TSSatisfiesExpression<'a> {
     pub span: Span,
     pub expression: Expression<'a>,
     pub type_annotation: TSType<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeAssertion<'a> {
@@ -917,9 +997,12 @@ pub struct TSTypeAssertion<'a> {
     pub span: Span,
     pub expression: Expression<'a>,
     pub type_annotation: TSType<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSImportEqualsDeclaration<'a> {
@@ -928,6 +1011,9 @@ pub struct TSImportEqualsDeclaration<'a> {
     pub id: BindingIdentifier<'a>,
     pub module_reference: Box<'a, TSModuleReference<'a>>,
     pub import_kind: ImportOrExportKind,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -938,31 +1024,40 @@ pub enum TSModuleReference<'a> {
     ExternalModuleReference(TSExternalModuleReference<'a>),
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSExternalModuleReference<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub expression: StringLiteral<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSNonNullExpression<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub expression: Expression<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct Decorator<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub expression: Expression<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> Decorator<'a> {
@@ -1048,28 +1143,34 @@ impl<'a> Modifiers<'a> {
 /// Export Assignment in non-module files
 ///
 /// `export = foo`
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSExportAssignment<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub expression: Expression<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 /// Namespace Export Declaration in declaration files
 ///
 /// `export as namespace foo`
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSNamespaceExportDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: IdentifierName<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSInstantiationExpression<'a> {
@@ -1077,6 +1178,9 @@ pub struct TSInstantiationExpression<'a> {
     pub span: Span,
     pub expression: Expression<'a>,
     pub type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

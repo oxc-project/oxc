@@ -1,4 +1,6 @@
+use oxc_macros::AstNode;
 use oxc_span::{Atom, GetSpan, Span};
+use oxc_syntax::node::AstNodeId;
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
@@ -11,7 +13,7 @@ macro_rules! ast_kinds {
         }
 
         /// Untyped AST Node Kind
-        #[derive(Debug, Clone, Copy)]
+        #[derive(AstNode, Debug, Clone, Copy)]
         pub enum AstKind<'a> {
             $($ident($type),)*
         }
@@ -98,7 +100,7 @@ ast_kinds! {
     SimpleAssignmentTarget(&'a SimpleAssignmentTarget<'a>),
     AssignmentTargetWithDefault(&'a AssignmentTargetWithDefault<'a>),
     ArrayExpressionElement(&'a ArrayExpressionElement<'a>),
-    Elision(Span),
+    Elision(&'a ElisionElement<'a>),
     ExpressionArrayElement(&'a Expression<'a>),
     SpreadElement(&'a SpreadElement<'a>),
     BindingRestElement(&'a BindingRestElement<'a>),
@@ -419,7 +421,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::SimpleAssignmentTarget(x) => x.span(),
             Self::AssignmentTargetWithDefault(x) => x.span,
             Self::SpreadElement(x) => x.span,
-            Self::Elision(span) => *span,
+            Self::Elision(x) => x.span,
             Self::ExpressionArrayElement(x) => x.span(),
             Self::BindingRestElement(x) => x.span,
 

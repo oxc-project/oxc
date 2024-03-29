@@ -4,7 +4,9 @@
 #![allow(non_snake_case)]
 
 use oxc_allocator::{Box, Vec};
+use oxc_macros::AstNode;
 use oxc_span::{Atom, Span};
+use oxc_syntax::node::{AstNodeId, AstNodeIdContainer};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
@@ -15,7 +17,7 @@ use super::{js::*, literal::*, ts::*};
 // 1.2 JSX Elements
 
 /// JSX Element
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct JSXElement<'a> {
@@ -24,10 +26,13 @@ pub struct JSXElement<'a> {
     pub opening_element: Box<'a, JSXOpeningElement<'a>>,
     pub closing_element: Option<Box<'a, JSXClosingElement<'a>>>,
     pub children: Vec<'a, JSXChild<'a>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 /// JSX Opening Element
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct JSXOpeningElement<'a> {
@@ -37,20 +42,26 @@ pub struct JSXOpeningElement<'a> {
     pub name: JSXElementName<'a>,
     pub attributes: Vec<'a, JSXAttributeItem<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 /// JSX Closing Element
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXClosingElement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub name: JSXElementName<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 /// JSX Fragment
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct JSXFragment<'a> {
@@ -59,6 +70,9 @@ pub struct JSXFragment<'a> {
     pub opening_fragment: JSXOpeningFragment,
     pub closing_fragment: JSXClosingFragment,
     pub children: Vec<'a, JSXChild<'a>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -78,7 +92,7 @@ pub struct JSXClosingFragment {
 }
 
 /// JSX Element Name
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXElementName<'a> {
@@ -91,7 +105,7 @@ pub enum JSXElementName<'a> {
 }
 
 /// JSX Namespaced Name
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXNamespacedName<'a> {
@@ -99,6 +113,9 @@ pub struct JSXNamespacedName<'a> {
     pub span: Span,
     pub namespace: JSXIdentifier<'a>,
     pub property: JSXIdentifier<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> std::fmt::Display for JSXNamespacedName<'a> {
@@ -108,7 +125,7 @@ impl<'a> std::fmt::Display for JSXNamespacedName<'a> {
 }
 
 /// JSX Member Expression
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXMemberExpression<'a> {
@@ -116,6 +133,9 @@ pub struct JSXMemberExpression<'a> {
     pub span: Span,
     pub object: JSXMemberExpressionObject<'a>,
     pub property: JSXIdentifier<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> JSXMemberExpression<'a> {
@@ -127,7 +147,7 @@ impl<'a> JSXMemberExpression<'a> {
     }
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXMemberExpressionObject<'a> {
@@ -135,13 +155,16 @@ pub enum JSXMemberExpressionObject<'a> {
     MemberExpression(Box<'a, JSXMemberExpression<'a>>),
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXExpressionContainer<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub expression: JSXExpression<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -163,7 +186,7 @@ pub struct JSXEmptyExpression {
 // 1.3 JSX Attributes
 
 /// JSX Attributes
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXAttributeItem<'a> {
@@ -172,7 +195,7 @@ pub enum JSXAttributeItem<'a> {
 }
 
 /// JSX Attribute
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXAttribute<'a> {
@@ -180,6 +203,9 @@ pub struct JSXAttribute<'a> {
     pub span: Span,
     pub name: JSXAttributeName<'a>,
     pub value: Option<JSXAttributeValue<'a>>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> JSXAttribute<'a> {
@@ -189,13 +215,16 @@ impl<'a> JSXAttribute<'a> {
 }
 
 /// JSX Spread Attribute
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXSpreadAttribute<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub argument: Expression<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 /// JSX Attribute Name
@@ -218,13 +247,16 @@ pub enum JSXAttributeValue<'a> {
     Fragment(Box<'a, JSXFragment<'a>>),
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXIdentifier<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub name: Atom<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 // 1.4 JSX Children
@@ -250,11 +282,14 @@ pub struct JSXSpreadChild<'a> {
     pub expression: Expression<'a>,
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXText<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub value: Atom<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }

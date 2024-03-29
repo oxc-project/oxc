@@ -69,7 +69,7 @@ impl NullLiteral {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(AstNode, Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct NumericLiteral<'a> {
@@ -79,11 +79,14 @@ pub struct NumericLiteral<'a> {
     pub raw: &'a str,
     #[cfg_attr(feature = "serialize", serde(skip))]
     pub base: NumberBase,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> NumericLiteral<'a> {
     pub fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
-        Self { span, value, raw, base }
+        Self { span, value, raw, base, ast_node_id: AstNodeIdContainer::default() }
     }
 
     /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/base/JSCompDoubles.java#L113)
@@ -120,7 +123,7 @@ impl<'a> Hash for NumericLiteral<'a> {
     }
 }
 
-#[derive(Debug, Hash)]
+#[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct BigIntLiteral<'a> {
@@ -129,6 +132,9 @@ pub struct BigIntLiteral<'a> {
     pub raw: Atom<'a>,
     #[cfg_attr(feature = "serialize", serde(skip))]
     pub base: BigintBase,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> BigIntLiteral<'a> {
@@ -137,7 +143,7 @@ impl<'a> BigIntLiteral<'a> {
     }
 }
 
-#[derive(Debug, Clone, Hash)]
+#[derive(AstNode, Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct RegExpLiteral<'a> {
@@ -147,6 +153,9 @@ pub struct RegExpLiteral<'a> {
     // invalid regex is printed as null, which we can't implement yet
     pub value: EmptyObject,
     pub regex: RegExp<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Clone, Hash)]
@@ -244,18 +253,21 @@ impl fmt::Display for RegExpFlags {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct EmptyObject;
 
-#[derive(Debug, Clone, Hash)]
+#[derive(AstNode, Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct StringLiteral<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub value: Atom<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub(crate) ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> StringLiteral<'a> {
     pub fn new(span: Span, value: Atom<'a>) -> Self {
-        Self { span, value }
+        Self { span, value, ast_node_id: AstNodeIdContainer::default() }
     }
 
     /// Static Semantics: `IsStringWellFormedUnicode`

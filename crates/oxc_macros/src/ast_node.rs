@@ -10,9 +10,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
 
     validate_derive_input(&input);
 
-    let expanded = derive_for_input(input);
-
-    TokenStream::from(expanded)
+    derive_for_input(input)
 }
 
 fn validate_derive_input(input: &DeriveInput) {
@@ -27,7 +25,7 @@ fn validate_derive_input(input: &DeriveInput) {
         }
         Data::Enum(_) => {
             // TODO: maybe we need to check for all enum variants, They all have to also implement
-            // the AstNode trait.
+            // the AstNode trait. Helps with better error messages when derive fails.
         }
         Data::Union(_) => {
             panic!("Ast derive macro doesn't support union types.");
