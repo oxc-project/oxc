@@ -223,7 +223,7 @@ impl<'a> AstBuilder<'a> {
         Expression::TemplateLiteral(self.alloc(literal))
     }
 
-    /* ---------- Statemets ---------- */
+    /* ---------- Statements ---------- */
 
     pub fn directive(
         &self,
