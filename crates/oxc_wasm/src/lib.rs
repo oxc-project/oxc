@@ -14,7 +14,7 @@ use oxc::{
     parser::Parser,
     semantic::{ScopeId, Semantic, SemanticBuilder},
     span::SourceType,
-    transformer::{TransformOptions, TransformTarget, Transformer},
+    transformer::{TransformOptions, Transformer},
 };
 use oxc_linter::{LintContext, Linter};
 use oxc_prettier::{Prettier, PrettierOptions};
@@ -232,8 +232,7 @@ impl Oxc {
                 .build_module_record(PathBuf::new(), program)
                 .build(program)
                 .semantic;
-            let options =
-                TransformOptions { target: TransformTarget::ES2015, ..TransformOptions::default() };
+            let options = TransformOptions::default();
             let result =
                 Transformer::new(&allocator, source_type, semantic, options).build(program);
             if let Err(errs) = result {

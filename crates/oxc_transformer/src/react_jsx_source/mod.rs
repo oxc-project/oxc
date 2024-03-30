@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ReactJsxOptions;
+pub struct ReactJsxSourceOptions;
 
 /// [plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx)
 ///
@@ -12,14 +12,19 @@ pub struct ReactJsxOptions;
 /// please use @babel/plugin-transform-react-jsx-development for a better debugging experience.
 ///
 /// This plugin is included in `preset-react`.
+///
+/// ## Example
+///
+/// In: `<sometag />`
+/// Out: `<sometag __source={ { fileName: 'this/file.js', lineNumber: 10, columnNumber: 1 } } />`
 #[derive(Debug, Default)]
-pub struct ReactJsx {
+pub struct ReactJsxSource {
     #[allow(unused)]
-    options: ReactJsxOptions,
+    options: ReactJsxSourceOptions,
 }
 
-impl ReactJsx {
-    pub fn new(options: ReactJsxOptions) -> Self {
+impl ReactJsxSource {
+    pub fn new(options: ReactJsxSourceOptions) -> Self {
         Self { options }
     }
 }
