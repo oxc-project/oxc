@@ -6,6 +6,10 @@
 //! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformer.ts>
 
 // Plugins: <https://babeljs.io/docs/plugins-list>
+mod react_display_name;
+mod react_jsx;
+mod react_jsx_self;
+mod react_jsx_source;
 mod typescript;
 
 use oxc_allocator::Allocator;
@@ -14,12 +18,22 @@ use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 use oxc_span::SourceType;
 
-pub use crate::typescript::{TypeScript, TypeScriptOptions};
+pub use crate::{
+    react_display_name::{ReactDisplayName, ReactDisplayNameOptions},
+    react_jsx::{ReactJsx, ReactJsxOptions},
+    react_jsx_self::{ReactJsxSelf, ReactJsxSelfOptions},
+    react_jsx_source::{ReactJsxSource, ReactJsxSourceOptions},
+    typescript::{TypeScript, TypeScriptOptions},
+};
 
+#[allow(unused)]
 #[derive(Debug, Default, Clone)]
 pub struct TransformOptions {
-    #[allow(unused)]
     pub typescript: TypeScriptOptions,
+    pub react_jsx: ReactJsxOptions,
+    pub react_display_name: ReactDisplayNameOptions,
+    pub react_jsx_self: ReactJsxSelfOptions,
+    pub react_jsx_source: ReactJsxSourceOptions,
 }
 
 #[allow(unused)]
@@ -29,7 +43,13 @@ pub struct Transformer<'a> {
     semantic: Semantic<'a>,
     options: TransformOptions,
 
+    // [preset-typescript](https://babeljs.io/docs/babel-preset-typescript)
     typescript: TypeScript,
+    // [preset-react](https://babeljs.io/docs/babel-preset-react)
+    react_display_name: ReactDisplayName,
+    react_jsx: ReactJsx,
+    react_jsx_self: ReactJsxSelf,
+    react_jsx_source: ReactJsxSource,
 }
 
 impl<'a> Transformer<'a> {
@@ -39,7 +59,17 @@ impl<'a> Transformer<'a> {
         semantic: Semantic<'a>,
         options: TransformOptions,
     ) -> Self {
-        Self { allocator, source_type, semantic, options, typescript: TypeScript::default() }
+        Self {
+            allocator,
+            source_type,
+            semantic,
+            options,
+            typescript: TypeScript::default(),
+            react_display_name: ReactDisplayName::default(),
+            react_jsx: ReactJsx::default(),
+            react_jsx_self: ReactJsxSelf::default(),
+            react_jsx_source: ReactJsxSource::default(),
+        }
     }
 
     /// # Errors

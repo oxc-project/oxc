@@ -10,7 +10,10 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
-use oxc_transformer::{TransformOptions, Transformer, TypeScriptOptions};
+use oxc_transformer::{
+    ReactDisplayNameOptions, ReactJsxOptions, ReactJsxSelfOptions, ReactJsxSourceOptions,
+    TransformOptions, Transformer, TypeScriptOptions,
+};
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 
@@ -86,6 +89,22 @@ pub trait TestCase {
             typescript: options
                 .get_plugin("transform-typescript")
                 .map(get_options::<TypeScriptOptions>)
+                .unwrap_or_default(),
+            react_display_name: options
+                .get_plugin("transform-react-display-name")
+                .map(get_options::<ReactDisplayNameOptions>)
+                .unwrap_or_default(),
+            react_jsx: options
+                .get_plugin("transform-react-jsx")
+                .map(get_options::<ReactJsxOptions>)
+                .unwrap_or_default(),
+            react_jsx_self: options
+                .get_plugin("transform-react-jsx-self")
+                .map(get_options::<ReactJsxSelfOptions>)
+                .unwrap_or_default(),
+            react_jsx_source: options
+                .get_plugin("transform-react-jsx-source")
+                .map(get_options::<ReactJsxSourceOptions>)
                 .unwrap_or_default(),
         }
     }
