@@ -11,7 +11,6 @@ pub use oxc_syntax::node::{AstNodeId, NodeFlags};
 /// Semantic node contains all the semantic information about an ast node.
 #[derive(Debug, Clone, Copy)]
 pub struct AstNode<'a> {
-    id: AstNodeId,
     /// A pointer to the ast node, which resides in the `bumpalo` memory arena.
     kind: AstKind<'a>,
 
@@ -26,11 +25,11 @@ pub struct AstNode<'a> {
 
 impl<'a> AstNode<'a> {
     pub fn new(kind: AstKind<'a>, scope_id: ScopeId, cfg_ix: NodeIndex, flags: NodeFlags) -> Self {
-        Self { id: AstNodeId::new(0), kind, cfg_ix, scope_id, flags }
+        Self { kind, scope_id, cfg_ix, flags }
     }
 
     pub fn id(&self) -> AstNodeId {
-        self.id
+        self.kind.ast_node_id().unwrap_or(AstNodeId::new(0))
     }
 
     pub fn cfg_ix(&self) -> NodeIndex {
@@ -109,9 +108,7 @@ impl<'a> AstNodes<'a> {
     }
 
     pub fn add_node(&mut self, node: AstNode<'a>, parent_id: Option<AstNodeId>) -> AstNodeId {
-        let mut node = node;
         let ast_node_id = self.parent_ids.push(parent_id);
-        node.id = ast_node_id;
         node.kind.set_ast_node_id(Some(ast_node_id));
         self.nodes.push(node);
         ast_node_id
