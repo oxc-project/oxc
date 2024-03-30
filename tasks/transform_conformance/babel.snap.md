@@ -1,12 +1,6 @@
-Passed: 320/1415
+Passed: 72/1415
 
 # All Passed:
-* babel-plugin-transform-numeric-separator
-* babel-plugin-transform-optional-catch-binding
-* babel-plugin-transform-json-strings
-* babel-plugin-transform-shorthand-properties
-* babel-plugin-transform-sticky-regex
-* babel-plugin-transform-instanceof
 * babel-plugin-transform-property-literals
 
 
@@ -289,7 +283,13 @@ Passed: 320/1415
 * regression/T7364/input.mjs
 * regression/multiple-super-in-termary/input.js
 
-# babel-plugin-transform-class-static-block (6/21)
+# babel-plugin-transform-class-static-block (0/21)
+* class-static-block/class-binding/input.js
+* class-static-block/class-declaration/input.js
+* class-static-block/in-class-heritage/input.js
+* class-static-block/multiple-static-initializers/input.js
+* class-static-block/name-conflict/input.js
+* class-static-block/new-target/input.js
 * class-static-block/preserve-comments/input.js
 * integration/class-binding/input.js
 * integration/class-declaration/input.js
@@ -517,8 +517,17 @@ Passed: 320/1415
 * to-native-fields/static-shadow/input.js
 * to-native-fields/static-shadowed-binding/input.js
 
-# babel-plugin-transform-logical-assignment-operators (5/6)
+# babel-plugin-transform-logical-assignment-operators (0/6)
+* logical-assignment/anonymous-functions-transform/input.js
+* logical-assignment/arrow-functions-transform/input.js
+* logical-assignment/general-semantics/input.js
+* logical-assignment/named-functions-transform/input.js
 * logical-assignment/null-coalescing/input.js
+* logical-assignment/null-coalescing-without-other/input.js
+
+# babel-plugin-transform-numeric-separator (0/2)
+* numeric-separator/removal/bigint/input.js
+* numeric-separator/used-with-transform-literals/input.js
 
 # babel-plugin-transform-export-namespace-from (0/4)
 * export-namespace/namespace-default/input.mjs
@@ -563,9 +572,19 @@ Passed: 320/1415
 * systemjs-createImportExpression-false/script/input.js
 * systemjs-createImportExpression-false/to-string/input.js
 
-# babel-plugin-transform-nullish-coalescing-operator (10/12)
+# babel-plugin-transform-nullish-coalescing-operator (0/12)
+* assumption-noDocumentAll/transform/input.js
+* assumption-noDocumentAll/transform-in-default-destructuring/input.js
 * assumption-noDocumentAll/transform-in-default-param/input.js
+* assumption-noDocumentAll/transform-in-function/input.js
+* assumption-noDocumentAll/transform-static-refs-in-default/input.js
+* assumption-noDocumentAll/transform-static-refs-in-function/input.js
+* nullish-coalescing/transform-in-default-destructuring/input.js
 * nullish-coalescing/transform-in-default-param/input.js
+* nullish-coalescing/transform-in-function/input.js
+* nullish-coalescing/transform-loose/input.js
+* nullish-coalescing/transform-static-refs-in-default/input.js
+* nullish-coalescing/transform-static-refs-in-function/input.js
 
 # babel-plugin-transform-optional-chaining (1/45)
 * assumption-noDocumentAll/assignment/input.js
@@ -612,6 +631,14 @@ Passed: 320/1415
 * transparent-expr-wrappers/ts-as-in-conditional/input.ts
 * transparent-expr-wrappers/ts-as-member-expression/input.ts
 * transparent-expr-wrappers/ts-parenthesized-expression-member-call/input.ts
+
+# babel-plugin-transform-optional-catch-binding (2/4)
+* optional-catch-bindings/try-catch-block-no-binding/input.js
+* optional-catch-bindings/try-catch-finally-no-binding/input.js
+
+# babel-plugin-transform-json-strings (2/4)
+* json-strings/directive-line-separator/input.js
+* json-strings/directive-paragraph-separator/input.js
 
 # babel-plugin-transform-async-generator-functions (0/22)
 * async-generators/class-method/input.js
@@ -749,19 +776,30 @@ Passed: 320/1415
 * regression/in-uncompiled-class-fields/input.js
 * regression/regression-2765/input.js
 
-# babel-plugin-transform-exponentiation-operator (3/4)
+# babel-plugin-transform-exponentiation-operator (0/4)
+* exponentiation-operator/assignment/input.js
+* exponentiation-operator/binary/input.js
 * regression/4349/input.js
+* regression/4403/input.js
 
-# babel-plugin-transform-arrow-functions (9/26)
+# babel-plugin-transform-arrow-functions (0/26)
 * arrow-functions/arguments/input.js
 * arrow-functions/arguments-global-undeclared/input.js
 * arrow-functions/arguments-global-var/input.js
 * arrow-functions/default-parameters/input.js
 * arrow-functions/destructuring-parameters/input.js
+* arrow-functions/empty-arguments/input.js
+* arrow-functions/empty-block/input.js
+* arrow-functions/expression/input.js
 * arrow-functions/implicit-var-arguments/input.js
+* arrow-functions/inside-call/input.js
+* arrow-functions/multiple-arguments/input.js
 * arrow-functions/nested/input.js
+* arrow-functions/paran-insertion/input.js
 * arrow-functions/self-referential/input.js
+* arrow-functions/single-argument/input.js
 * arrow-functions/spec/input.js
+* arrow-functions/statement/input.js
 * arrow-functions/super-call/input.js
 * arrow-functions/super-prop/input.js
 * arrow-functions/this/input.js
@@ -770,11 +808,15 @@ Passed: 320/1415
 * assumption-newableArrowFunctions-false/self-referential/input.js
 * spec/newableArrowFunction-default/input.js
 * spec/newableArrowFunction-vs-spec-false/input.js
+* spec/newableArrowFunction-vs-spec-true/input.js
 
-# babel-plugin-transform-function-name (6/33)
+# babel-plugin-transform-function-name (1/33)
 * function-name/assignment/input.js
+* function-name/await/input.mjs
+* function-name/basic/input.js
 * function-name/class-method/input.js
 * function-name/collisions/input.js
+* function-name/eval/input.js
 * function-name/export/input.mjs
 * function-name/export-default-arrow-renaming/input.mjs
 * function-name/export-default-arrow-renaming-2/input.mjs
@@ -795,73 +837,145 @@ Passed: 320/1415
 * function-name/own-bindings/input.js
 * function-name/self-reference/input.js
 * function-name/shorthand-property/input.js
+* function-name/unicode-id-not-supported/input.js
 * function-name/unicode-id-supported/input.js
 * function-name/with-arrow-functions-transform/input.js
 * function-name/with-arrow-functions-transform-spec/input.js
+* issues/5004/input.mjs
 * issues/7199/input.js
+
+# babel-plugin-transform-shorthand-properties (1/7)
+* shorthand-properties/method-plain/input.js
+* shorthand-properties/proto/input.js
+* shorthand-properties/shorthand-comments/input.js
+* shorthand-properties/shorthand-mixed/input.js
+* shorthand-properties/shorthand-multiple/input.js
+* shorthand-properties/shorthand-single/input.js
+
+# babel-plugin-transform-sticky-regex (1/2)
+* sticky-regex/basic/input.js
 
 # babel-plugin-transform-unicode-regex (1/4)
 * unicode-regex/basic/input.js
 * unicode-regex/negated-set/input.js
 * unicode-regex/slash/input.js
 
-# babel-plugin-transform-template-literals (13/32)
+# babel-plugin-transform-template-literals (1/32)
 * assumption-ignoreToPrimitiveHint/escape-quotes/input.js
 * assumption-ignoreToPrimitiveHint/expression-first/input.js
 * assumption-ignoreToPrimitiveHint/functions/input.js
 * assumption-ignoreToPrimitiveHint/literals/input.js
+* assumption-ignoreToPrimitiveHint/multiline/input.js
 * assumption-ignoreToPrimitiveHint/multiple/input.js
+* assumption-ignoreToPrimitiveHint/none/input.js
 * assumption-ignoreToPrimitiveHint/only/input.js
 * assumption-ignoreToPrimitiveHint/single/input.js
 * assumption-ignoreToPrimitiveHint/statement/input.js
 * assumption-ignoreToPrimitiveHint/tag/input.js
+* assumption-mutableTemplateObject/no-tag/input.js
 * assumption-mutableTemplateObject/tag/input.js
 * assumption-mutableTemplateObject/template-revision/input.js
 * default/cache-revision/input.js
+* default/escape-quotes/input.js
+* default/expression-first/input.js
+* default/functions/input.js
 * default/literals/input.js
+* default/multiline/input.js
+* default/multiple/input.js
+* default/none/input.js
+* default/only/input.js
 * default/simple-tag/input.js
+* default/single/input.js
+* default/statement/input.js
 * default/tag/input.js
 * default/tag-with-unicode-escapes/input.js
 * default/template-revision/input.js
 * loose/ignoreToPrimitiveHint/input.js
 * loose/mutableTemplateObject/input.js
 
-# babel-plugin-transform-duplicate-keys (7/8)
+# babel-plugin-transform-duplicate-keys (2/8)
 * combination/dupes/input.js
+* duplicate-keys/both-quoted/input.js
+* duplicate-keys/dupes/input.js
+* duplicate-keys/getter/input.js
+* duplicate-keys/getters-and-setters/input.js
+* duplicate-keys/one-quoted/input.js
 
-# babel-plugin-transform-new-target (2/8)
+# babel-plugin-transform-instanceof (0/1)
+* instanceof/instanceof/input.js
+
+# babel-plugin-transform-new-target (0/8)
 * general/arrow/input.js
+* general/class/input.js
 * general/class-properties/input.js
 * general/class-properties-loose/input.js
+* general/extended-class/input.js
 * general/function/input.js
 * general/function-duplicate-name/input.js
 * general/object/input.js
 
-# babel-plugin-transform-typescript (97/158)
+# babel-plugin-transform-typescript (55/158)
+* class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
 * class/declare/input.ts
 * class/decorated-declare-properties/input.ts
+* class/parameter-properties/input.ts
 * class/parameter-properties-late-super/input.ts
 * class/parameter-properties-with-class/input.ts
 * class/parameter-properties-with-class-and-super/input.ts
 * class/parameter-properties-with-parameters/input.ts
+* class/parameter-properties-with-super/input.ts
 * class/private-method-override-transform-private/input.ts
 * class/transform-properties-declare-wrong-order/input.ts
+* declarations/erased/input.ts
+* declarations/export-declare-enum/input.ts
+* declarations/nested-namespace/input.mjs
 * exports/declared-types/input.ts
 * exports/export-const-enums/input.ts
+* exports/export-type/input.ts
+* exports/export-type-from/input.ts
 * exports/export-type-star-from/input.ts
 * exports/export=/input.ts
 * exports/export=-to-cjs/input.ts
+* exports/imported-types/input.ts
+* exports/imported-types-only-remove-type-imports/input.ts
+* exports/issue-9916-3/input.ts
+* exports/type-only-export-specifier-1/input.ts
+* exports/type-only-export-specifier-2/input.ts
+* exports/type-only-export-specifier-3/input.ts
+* function/overloads-exports/input.mjs
 * imports/elide-injected/input.ts
+* imports/elide-preact/input.ts
+* imports/elide-react/input.ts
+* imports/elide-type-referenced-in-imports-equal-no/input.ts
+* imports/elide-typeof/input.ts
+* imports/elision/input.ts
+* imports/elision-export-type/input.ts
+* imports/elision-locations/input.ts
+* imports/elision-qualifiedname/input.ts
+* imports/elision-rename/input.ts
 * imports/enum-id/input.ts
 * imports/enum-value/input.ts
+* imports/import-removed-exceptions/input.ts
+* imports/import-type/input.ts
+* imports/import-type-func-with-duplicate-name/input.ts
+* imports/import-type-not-removed/input.ts
+* imports/import=-declaration/input.ts
 * imports/import=-module/input.ts
 * imports/import=-module-to-cjs/input.ts
+* imports/only-remove-type-imports/input.ts
 * imports/parameter-decorators/input.ts
+* imports/property-signature/input.ts
+* imports/type-only-export-specifier-1/input.ts
 * imports/type-only-export-specifier-2/input.ts
+* imports/type-only-import-specifier-1/input.ts
+* imports/type-only-import-specifier-2/input.ts
+* imports/type-only-import-specifier-3/input.ts
+* imports/type-only-import-specifier-4/input.ts
+* namespace/alias/input.ts
 * namespace/ambient-module-nested/input.ts
 * namespace/ambient-module-nested-exported/input.ts
 * namespace/canonical/input.ts
@@ -869,7 +983,11 @@ Passed: 320/1415
 * namespace/clobber-enum/input.ts
 * namespace/clobber-export/input.ts
 * namespace/clobber-import/input.ts
+* namespace/contentious-names/input.ts
+* namespace/declare/input.ts
+* namespace/declare-global-nested-namespace/input.ts
 * namespace/empty-removed/input.ts
+* namespace/export/input.ts
 * namespace/export-type-only/input.ts
 * namespace/module-nested/input.ts
 * namespace/module-nested-export/input.ts
@@ -883,6 +1001,7 @@ Passed: 320/1415
 * namespace/nested-shorthand/input.ts
 * namespace/nested-shorthand-export/input.ts
 * namespace/same-name/input.ts
+* namespace/undeclared/input.ts
 * optimize-const-enums/custom-values/input.ts
 * optimize-const-enums/custom-values-exported/input.ts
 * optimize-const-enums/declare/input.ts
@@ -900,30 +1019,164 @@ Passed: 320/1415
 * regression/15768/input.ts
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-plugin-transform-react-jsx (135/156)
+# babel-plugin-transform-react-jsx (1/156)
+* autoImport/after-polyfills/input.mjs
+* autoImport/after-polyfills-2/input.mjs
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
+* autoImport/after-polyfills-script-not-supported/input.js
 * autoImport/auto-import-react-source-type-module/input.js
+* autoImport/auto-import-react-source-type-script/input.js
 * autoImport/complicated-scope-module/input.js
+* autoImport/complicated-scope-script/input.js
+* autoImport/import-source/input.js
+* autoImport/import-source-pragma/input.js
 * autoImport/react-defined/input.js
+* pure/false-default-pragma-automatic-runtime/input.js
+* pure/false-default-pragma-classic-runtime/input.js
+* pure/false-pragma-comment-automatic-runtime/input.js
+* pure/false-pragma-comment-classic-runtime/input.js
+* pure/false-pragma-option-automatic-runtime/input.js
+* pure/false-pragma-option-classic-runtime/input.js
+* pure/true-default-pragma-automatic-runtime/input.js
+* pure/true-default-pragma-classic-runtime/input.js
+* pure/true-pragma-comment-automatic-runtime/input.js
+* pure/true-pragma-comment-classic-runtime/input.js
+* pure/true-pragma-option-automatic-runtime/input.js
+* pure/true-pragma-option-classic-runtime/input.js
+* pure/unset-default-pragma-automatic-runtime/input.js
+* pure/unset-default-pragma-classic-runtime/input.js
+* pure/unset-pragma-comment-automatic-runtime/input.js
+* pure/unset-pragma-comment-classic-runtime/input.js
+* pure/unset-pragma-option-automatic-runtime/input.js
+* pure/unset-pragma-option-classic-runtime/input.js
+* react/adds-appropriate-newlines-when-using-spread-attribute/input.js
+* react/arrow-functions/input.js
+* react/assignment/input.js
+* react/concatenates-adjacent-string-literals/input.js
+* react/does-not-add-source-self/input.mjs
+* react/dont-coerce-expression-containers/input.js
+* react/duplicate-props/input.js
+* react/flattens-spread/input.js
+* react/handle-spread-with-proto/input.js
+* react/honor-custom-jsx-comment/input.js
+* react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
+* react/honor-custom-jsx-pragma-option/input.js
+* react/jsx-with-retainlines-option/input.js
+* react/jsx-without-retainlines-option/input.js
 * react/optimisation.react.constant-elements/input.js
+* react/pragma-works-with-no-space-at-the-end/input.js
+* react/proto-in-jsx-attribute/input.js
+* react/should-add-quotes-es3/input.js
+* react/should-allow-constructor-as-prop/input.js
+* react/should-allow-deeper-js-namespacing/input.js
+* react/should-allow-elements-as-attributes/input.js
+* react/should-allow-js-namespacing/input.js
+* react/should-allow-jsx-docs-comment-with-pragma/input.js
+* react/should-allow-nested-fragments/input.js
+* react/should-allow-no-pragmafrag-if-frag-unused/input.js
+* react/should-allow-pragmafrag-and-frag/input.js
+* react/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
+* react/should-convert-simple-tags/input.js
+* react/should-convert-simple-text/input.js
+* react/should-disallow-spread-children/input.js
+* react/should-disallow-valueless-key/input.js
+* react/should-disallow-xml-namespacing/input.js
+* react/should-escape-xhtml-jsxattribute/input.js
+* react/should-escape-xhtml-jsxtext/input.js
+* react/should-handle-attributed-elements/input.js
+* react/should-handle-has-own-property-correctly/input.js
+* react/should-have-correct-comma-in-nested-children/input.js
+* react/should-insert-commas-after-expressions-before-whitespace/input.js
+* react/should-not-add-quotes-to-identifier-names/input.js
+* react/should-not-allow-jsx-pragma-to-be-anywhere-in-comment/input.js
+* react/should-not-mangle-expressioncontainer-attribute-values/input.js
+* react/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
+* react/should-not-strip-tags-with-a-single-child-of-nbsp/input.js
+* react/should-properly-handle-comments-between-props/input.js
+* react/should-quote-jsx-attributes/input.js
+* react/should-support-xml-namespaces-if-flag/input.js
+* react/should-throw-error-namespaces-if-not-flag/input.js
+* react/should-transform-known-hyphenated-tags/input.js
+* react/should-warn-when-importSource-is-set/input.js
+* react/should-warn-when-importSource-pragma-is-set/input.js
+* react/this-tag-name/input.js
+* react/weird-symbols/input.js
+* react/wraps-props-in-react-spread-for-first-spread-attributes/input.js
+* react/wraps-props-in-react-spread-for-last-spread-attributes/input.js
+* react/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
+* react-automatic/adds-appropriate-newlines-when-using-spread-attribute/input.js
+* react-automatic/arrow-functions/input.js
+* react-automatic/assignment/input.js
 * react-automatic/concatenates-adjacent-string-literals/input.js
 * react-automatic/does-not-add-source-self-automatic/input.mjs
+* react-automatic/dont-coerce-expression-containers/input.js
+* react-automatic/duplicate-props/input.js
+* react-automatic/flattens-spread/input.js
 * react-automatic/handle-fragments/input.js
+* react-automatic/handle-fragments-with-key/input.js
 * react-automatic/handle-fragments-with-no-children/input.js
+* react-automatic/handle-nonstatic-children/input.js
+* react-automatic/handle-spread-with-proto/input.js
 * react-automatic/handle-static-children/input.js
+* react-automatic/jsx-with-retainlines-option/input.js
+* react-automatic/jsx-without-retainlines-option/input.js
+* react-automatic/key-undefined-works/input.js
 * react-automatic/optimisation.react.constant-elements/input.js
+* react-automatic/pragma-works-with-no-space-at-the-end/input.js
+* react-automatic/should-add-quotes-es3/input.js
+* react-automatic/should-allow-constructor-as-prop/input.js
+* react-automatic/should-allow-deeper-js-namespacing/input.js
+* react-automatic/should-allow-elements-as-attributes/input.js
+* react-automatic/should-allow-js-namespacing/input.js
 * react-automatic/should-allow-nested-fragments/input.js
+* react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
+* react-automatic/should-convert-simple-tags/input.js
+* react-automatic/should-convert-simple-text/input.js
+* react-automatic/should-disallow-spread-children/input.js
+* react-automatic/should-disallow-valueless-key/input.js
+* react-automatic/should-disallow-xml-namespacing/input.js
+* react-automatic/should-escape-xhtml-jsxattribute/input.js
 * react-automatic/should-escape-xhtml-jsxtext/input.js
 * react-automatic/should-handle-attributed-elements/input.js
+* react-automatic/should-handle-has-own-property-correctly/input.js
 * react-automatic/should-have-correct-comma-in-nested-children/input.js
+* react-automatic/should-insert-commas-after-expressions-before-whitespace/input.js
+* react-automatic/should-not-add-quotes-to-identifier-names/input.js
+* react-automatic/should-not-mangle-expressioncontainer-attribute-values/input.js
+* react-automatic/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
+* react-automatic/should-not-strip-tags-with-a-single-child-of-nbsp/input.js
+* react-automatic/should-properly-handle-comments-between-props/input.js
 * react-automatic/should-properly-handle-keys/input.js
+* react-automatic/should-properly-handle-null-prop-spread/input.js
+* react-automatic/should-quote-jsx-attributes/input.js
+* react-automatic/should-support-xml-namespaces-if-flag/input.js
+* react-automatic/should-throw-error-namespaces-if-not-flag/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
+* react-automatic/should-transform-known-hyphenated-tags/input.js
+* react-automatic/should-use-createElement-when-key-comes-after-spread/input.js
+* react-automatic/should-use-jsx-when-key-comes-before-spread/input.js
+* react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
+* react-automatic/this-tag-name/input.js
+* react-automatic/weird-symbols/input.js
+* react-automatic/wraps-props-in-react-spread-for-last-spread-attributes/input.js
+* react-automatic/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
 * regression/issue-12478-automatic/input.js
 * regression/issue-12478-classic/input.js
+* regression/pragma-frag-set-default-classic-runtime/input.js
+* removed-options/invalid-use-builtins-false/input.js
+* removed-options/invalid-use-builtins-true/input.js
+* removed-options/invalid-use-spread-false/input.js
+* removed-options/invalid-use-spread-true/input.js
+* runtime/classic/input.js
+* runtime/defaults-to-automatic/input.js
+* runtime/invalid-runtime/input.js
+* runtime/pragma-runtime-classsic/input.js
+* runtime/runtime-automatic/input.js
+* sourcemaps/JSXText/input.js
 * spread-transform/transform-to-babel-extend/input.js
 * spread-transform/transform-to-object-assign/input.js
 
-# babel-plugin-proposal-decorators (3/231)
+# babel-plugin-proposal-decorators (2/231)
 * 2018-09-transformation/async-generator-method/input.js
 * 2018-09-transformation/class-decorators-yield-await/input.js
 * 2021-12-accessors/context-name/input.js
@@ -1149,6 +1402,7 @@ Passed: 320/1415
 * 2023-11-typescript/computed-key-ts-as-expression/input.ts
 * legacy-decl-to-expression/class-decorators/input.mjs
 * legacy-decl-to-expression/method-decorators/input.mjs
+* legacy-regression/10264/input.mjs
 * legacy-regression/7030/input.js
 * legacy-regression/8041/input.mjs
 * legacy-regression/8559/input.mjs
