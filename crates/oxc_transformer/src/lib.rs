@@ -5,7 +5,8 @@
 //! * <https://babel.dev/docs/presets>
 //! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformer.ts>
 
-mod options;
+// Plugins: <https://babeljs.io/docs/plugins-list>
+mod typescript;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
@@ -13,7 +14,13 @@ use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 use oxc_span::SourceType;
 
-pub use crate::options::TransformOptions;
+pub use crate::typescript::{TypeScript, TypeScriptOptions};
+
+#[derive(Debug, Default, Clone)]
+pub struct TransformOptions {
+    #[allow(unused)]
+    pub typescript: TypeScriptOptions,
+}
 
 #[allow(unused)]
 pub struct Transformer<'a> {
@@ -21,6 +28,8 @@ pub struct Transformer<'a> {
     source_type: SourceType,
     semantic: Semantic<'a>,
     options: TransformOptions,
+
+    typescript: TypeScript,
 }
 
 impl<'a> Transformer<'a> {
@@ -30,7 +39,7 @@ impl<'a> Transformer<'a> {
         semantic: Semantic<'a>,
         options: TransformOptions,
     ) -> Self {
-        Self { allocator, source_type, semantic, options }
+        Self { allocator, source_type, semantic, options, typescript: TypeScript::default() }
     }
 
     /// # Errors

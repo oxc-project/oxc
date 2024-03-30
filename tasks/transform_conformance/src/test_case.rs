@@ -10,9 +10,9 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
-use oxc_transformer::{TransformOptions, Transformer};
-// use serde::de::DeserializeOwned;
-// use serde_json::Value;
+use oxc_transformer::{TransformOptions, Transformer, TypeScriptOptions};
+use serde::de::DeserializeOwned;
+use serde_json::Value;
 
 use crate::{fixture_root, root, TestRunnerEnv};
 
@@ -78,12 +78,16 @@ pub trait TestCase {
     fn path(&self) -> &Path;
 
     fn transform_options(&self) -> TransformOptions {
-        // fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> T {
-        // value.and_then(|v| serde_json::from_value::<T>(v).ok()).unwrap_or_default()
-        // }
-
-        // let options = self.options();
-        TransformOptions {}
+        fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> T {
+            value.and_then(|v| serde_json::from_value::<T>(v).ok()).unwrap_or_default()
+        }
+        let options = self.options();
+        TransformOptions {
+            typescript: options
+                .get_plugin("transform-typescript")
+                .map(get_options::<TypeScriptOptions>)
+                .unwrap_or_default(),
+        }
     }
 
     fn skip_test_case(&self) -> bool {

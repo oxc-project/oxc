@@ -1752,6 +1752,8 @@ dependencies = [
  "oxc_tasks_common",
  "oxc_transformer",
  "pico-args",
+ "serde",
+ "serde_json",
  "walkdir",
 ]
 
@@ -1766,6 +1768,7 @@ dependencies = [
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
+ "serde",
 ]
 
 [[package]]
