@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "0.2.14",
+  "version": "0.2.15",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",

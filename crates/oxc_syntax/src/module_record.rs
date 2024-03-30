@@ -271,11 +271,13 @@ pub struct FunctionMeta {
 pub struct RequestedModule {
     span: Span,
     is_type: bool,
+    /// is_import is true if the module is requested by an import statement.
+    is_import: bool,
 }
 
 impl RequestedModule {
-    pub fn new(span: Span, is_type: bool) -> Self {
-        Self { span, is_type }
+    pub fn new(span: Span, is_type: bool, is_import: bool) -> Self {
+        Self { span, is_type, is_import }
     }
 
     pub fn span(&self) -> Span {
@@ -284,6 +286,10 @@ impl RequestedModule {
 
     pub fn is_type(&self) -> bool {
         self.is_type
+    }
+
+    pub fn is_import(&self) -> bool {
+        self.is_import
     }
 }
 
