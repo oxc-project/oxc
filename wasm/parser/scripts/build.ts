@@ -32,8 +32,8 @@ async function buildProject(target: BuildTarget, outDir: string) {
 }
 
 async function moveStaticFiles(outDir: string) {
-    const pacakgeJsonPath = join(outDir, "package.json")
-    await writeFile(pacakgeJsonPath, JSON.stringify(packageJson, null, 2))
+    const packageJsonPath = join(outDir, "package.json")
+    await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2))
 
     const readmeFilePath = join(outDir, "README.md")
     await cp("README.md", readmeFilePath)
