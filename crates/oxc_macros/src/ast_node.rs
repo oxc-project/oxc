@@ -20,7 +20,7 @@ fn validate_derive_input(input: &DeriveInput) {
                 .fields
                 .iter()
                 .any(|field| field.ident.as_ref().is_some_and(|f| f == AST_NODE_ID_IDENT)),
-                "Ast derive macro needs the implementer structure to contain an `ast_node_id` field."
+                "AstNode derive macro needs the implementer structure to contain an `ast_node_id` field."
             );
         }
         Data::Enum(_) => {
@@ -71,12 +71,12 @@ fn derive_for_struct(input: DeriveInput) -> TokenStream {
 fn derive_for_enum(input: DeriveInput) -> TokenStream {
     debug_assert!(matches!(input.data, Data::Enum(_)));
 
-    let node = quote!(node);
-    let id = quote!(id);
-
     let Data::Enum(data) = input.data else {
         unreachable!("We check for it in debug builds, It shouldn't happen in production!");
     };
+
+    let node = quote!(node);
+    let id = quote!(id);
 
     let ident = input.ident;
 
@@ -88,6 +88,11 @@ fn derive_for_enum(input: DeriveInput) -> TokenStream {
         data.variants.iter().fold(TokenStream2::new(), |mut acc, var| {
             let span = var.span();
             let var_ident = var.ident.clone();
+
+            assert!(
+                var.fields.len() == 1,
+                "AstNode derive macro only supports enum variants with a single field."
+            );
 
             let fields = match var.fields {
                 Fields::Unnamed(_) => quote_spanned! ( span=> (#node) ),
