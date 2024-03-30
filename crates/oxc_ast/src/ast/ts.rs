@@ -9,13 +9,14 @@
 use oxc_allocator::{Box, Vec};
 use oxc_macros::AstNode;
 use oxc_span::{Atom, GetSpan, Span};
-use oxc_syntax::node::{AstNodeId, AstNodeIdContainer};
+use oxc_syntax::node::AstNodeId;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
 use super::{js::*, literal::*};
+use crate::AstNodeIdContainer;
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -52,7 +53,7 @@ pub struct TSEnumDeclaration<'a> {
     pub modifiers: Modifiers<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -65,7 +66,7 @@ pub struct TSEnumMember<'a> {
     pub initializer: Option<Expression<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -89,7 +90,7 @@ pub struct TSTypeAnnotation<'a> {
     pub type_annotation: TSType<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -101,7 +102,7 @@ pub struct TSLiteralType<'a> {
     pub literal: TSLiteral<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -206,7 +207,7 @@ pub struct TSUnionType<'a> {
     pub types: Vec<'a, TSType<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// type `ColorfulCircle` = Colorful & Circle;
@@ -221,7 +222,7 @@ pub struct TSIntersectionType<'a> {
     pub types: Vec<'a, TSType<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// keyof unique readonly
@@ -271,7 +272,7 @@ pub struct TSIndexedAccessType<'a> {
     pub index_type: TSType<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// type `StringNumberPair` = [string, number];
@@ -333,7 +334,7 @@ pub struct TSAnyKeyword {
     pub span: Span,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -384,7 +385,7 @@ pub struct TSNullKeyword {
     pub span: Span,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -403,7 +404,7 @@ pub struct TSVoidKeyword {
     pub span: Span,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -451,7 +452,7 @@ pub struct TSTypeReference<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// TypeName:
@@ -510,7 +511,7 @@ pub struct TSQualifiedName<'a> {
     pub right: IdentifierName<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -522,7 +523,7 @@ pub struct TSTypeParameterInstantiation<'a> {
     pub params: Vec<'a, TSType<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -539,7 +540,7 @@ pub struct TSTypeParameter<'a> {
     pub r#const: bool,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -551,7 +552,7 @@ pub struct TSTypeParameterDeclaration<'a> {
     pub params: Vec<'a, Box<'a, TSTypeParameter<'a>>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -567,7 +568,7 @@ pub struct TSTypeAliasDeclaration<'a> {
     pub modifiers: Modifiers<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash, Clone, PartialEq, Eq, Copy)]
@@ -606,7 +607,7 @@ pub struct TSInterfaceDeclaration<'a> {
     pub modifiers: Modifiers<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -631,7 +632,7 @@ pub struct TSPropertySignature<'a> {
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -693,7 +694,7 @@ pub struct TSMethodSignature<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -771,7 +772,7 @@ pub struct TSModuleDeclaration<'a> {
     pub modifiers: Modifiers<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -817,7 +818,7 @@ pub struct TSModuleBlock<'a> {
     pub body: Vec<'a, Statement<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -829,7 +830,7 @@ pub struct TSTypeLiteral<'a> {
     pub members: Vec<'a, TSSignature<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -851,7 +852,7 @@ pub struct TSTypeQuery<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -874,7 +875,26 @@ pub struct TSImportType<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
+}
+
+impl<'a> TSImportType<'a> {
+    pub fn new(
+        span: Span,
+        argument: TSType<'a>,
+        qualifier: Option<TSTypeName<'a>>,
+        attributes: Option<TSImportAttributes<'a>>,
+        type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    ) -> Self {
+        Self {
+            span,
+            argument,
+            qualifier,
+            attributes,
+            type_parameters,
+            ast_node_id: AstNodeIdContainer::default(),
+        }
+    }
 }
 
 #[derive(Debug, Hash)]
@@ -973,7 +993,7 @@ pub struct TSAsExpression<'a> {
     pub type_annotation: TSType<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -986,7 +1006,7 @@ pub struct TSSatisfiesExpression<'a> {
     pub type_annotation: TSType<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -999,7 +1019,7 @@ pub struct TSTypeAssertion<'a> {
     pub type_annotation: TSType<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -1013,7 +1033,7 @@ pub struct TSImportEqualsDeclaration<'a> {
     pub import_kind: ImportOrExportKind,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -1033,7 +1053,7 @@ pub struct TSExternalModuleReference<'a> {
     pub expression: StringLiteral<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -1045,7 +1065,7 @@ pub struct TSNonNullExpression<'a> {
     pub expression: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -1057,7 +1077,7 @@ pub struct Decorator<'a> {
     pub expression: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> Decorator<'a> {
@@ -1152,7 +1172,7 @@ pub struct TSExportAssignment<'a> {
     pub expression: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Namespace Export Declaration in declaration files
@@ -1167,7 +1187,7 @@ pub struct TSNamespaceExportDeclaration<'a> {
     pub id: IdentifierName<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -1180,7 +1200,7 @@ pub struct TSInstantiationExpression<'a> {
     pub type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

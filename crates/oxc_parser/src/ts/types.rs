@@ -3,7 +3,7 @@ use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::Span;
-use oxc_syntax::{node::AstNodeIdContainer, operator::UnaryOperator};
+use oxc_syntax::operator::UnaryOperator;
 
 use super::list::{
     TSInterfaceOrObjectBodyList, TSTupleElementList, TSTypeArgumentList, TSTypeParameterList,
@@ -395,13 +395,7 @@ impl<'a> ParserImpl<'a> {
             Kind::Typeof => self.parse_ts_typeof_type(),
             Kind::Import => {
                 let node = self.parse_ts_import_type()?;
-                Ok(self.ast.ts_import_type(
-                    node.span,
-                    node.argument,
-                    node.qualifier,
-                    node.attributes,
-                    node.type_parameters,
-                ))
+                Ok(self.ast.ts_import_type(node))
             }
             Kind::Minus if self.peek_kind().is_number() => self.parse_ts_literal_type(),
             Kind::Question => self.parse_js_doc_unknown_or_nullable_type(),
@@ -784,13 +778,7 @@ impl<'a> ParserImpl<'a> {
 
         let type_parameters = self.parse_ts_type_arguments()?;
 
-        Ok(self.ast.ts_import_type(
-            self.end_span(span),
-            argument,
-            qualifier,
-            attributes,
-            type_parameters,
-        ))
+        Ok(TSImportType::new(self.end_span(span), argument, qualifier, attributes, type_parameters))
     }
 
     fn parse_ts_import_attributes(&mut self) -> Result<TSImportAttributes<'a>> {

@@ -1,5 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, syntax_directed_operations::PropName};
+use oxc_ast::{ast::*, syntax_directed_operations::PropName, AstNodeIdContainer};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
@@ -392,6 +392,7 @@ impl<'a> ParserImpl<'a> {
             accessibility,
             optional,
             decorators,
+            ast_node_id: AstNodeIdContainer::default(),
         };
         Ok(ClassElement::MethodDefinition(self.ast.alloc(method_definition)))
     }
@@ -445,6 +446,7 @@ impl<'a> ParserImpl<'a> {
             optional,
             definite,
             decorators: self.state.consume_decorators(),
+            ast_node_id: AstNodeIdContainer::default(),
         };
         Ok(ClassElement::PropertyDefinition(self.ast.alloc(property_definition)))
     }

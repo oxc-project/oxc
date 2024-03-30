@@ -7,7 +7,7 @@ use oxc_allocator::{Box, Vec};
 use oxc_macros::AstNode;
 use oxc_span::{Atom, CompactStr, SourceType, Span};
 use oxc_syntax::{
-    node::{AstNodeId, AstNodeIdContainer},
+    node::AstNodeId,
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
@@ -20,6 +20,7 @@ use serde::Serialize;
 use tsify::Tsify;
 
 use super::{jsx::*, literal::*, ts::*};
+use crate::AstNodeIdContainer;
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -50,7 +51,7 @@ pub struct Program<'a> {
     pub body: Vec<'a, Statement<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> Program<'a> {
@@ -333,7 +334,7 @@ pub struct IdentifierName<'a> {
     pub name: Atom<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> IdentifierName<'a> {
@@ -343,7 +344,7 @@ impl<'a> IdentifierName<'a> {
 }
 
 /// Identifier Reference
-#[derive(AstNode, Debug, Clone)]
+#[derive(AstNode, Default, Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Identifier"))]
 pub struct IdentifierReference<'a> {
@@ -357,7 +358,7 @@ pub struct IdentifierReference<'a> {
     pub reference_flag: ReferenceFlag,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> Hash for IdentifierReference<'a> {
@@ -369,12 +370,21 @@ impl<'a> Hash for IdentifierReference<'a> {
 
 impl<'a> IdentifierReference<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
+        Self { span, name, ..Default::default() }
+    }
+
+    pub fn with_reference_data(
+        span: Span,
+        name: Atom<'a>,
+        reference_id: Option<ReferenceId>,
+        reference_flag: ReferenceFlag,
+    ) -> Self {
         Self {
             span,
             name,
-            reference_id: Cell::default(),
-            reference_flag: ReferenceFlag::default(),
-            ast_node_id: AstNodeIdContainer::default(),
+            reference_id: Cell::new(reference_id),
+            reference_flag,
+            ..Default::default()
         }
     }
 }
@@ -391,7 +401,7 @@ pub struct BindingIdentifier<'a> {
     pub symbol_id: Cell<Option<SymbolId>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> Hash for BindingIdentifier<'a> {
@@ -417,7 +427,7 @@ pub struct LabelIdentifier<'a> {
     pub name: Atom<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// This Expression
@@ -429,7 +439,7 @@ pub struct ThisExpression {
     pub span: Span,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// <https://tc39.es/ecma262/#prod-ArrayLiteral>
@@ -446,7 +456,7 @@ pub struct ArrayExpression<'a> {
     pub trailing_comma: Option<Span>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Spread Element
@@ -458,9 +468,15 @@ pub struct ElisionElement<'a> {
     pub span: Span,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 
     pub(crate) _marker: PhantomData<&'a ()>,
+}
+
+impl<'a> ElisionElement<'a> {
+    pub fn new(span: Span) -> Self {
+        Self { span, ast_node_id: AstNodeIdContainer::default(), _marker: PhantomData {} }
+    }
 }
 
 /// Array Expression Element
@@ -497,7 +513,7 @@ pub struct ObjectExpression<'a> {
     pub trailing_comma: Option<Span>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> ObjectExpression<'a> {
@@ -530,7 +546,7 @@ pub struct ObjectProperty<'a> {
     pub computed: bool,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -628,7 +644,7 @@ pub struct TemplateLiteral<'a> {
     pub expressions: Vec<'a, Expression<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> TemplateLiteral<'a> {
@@ -653,7 +669,7 @@ pub struct TaggedTemplateExpression<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -788,7 +804,7 @@ pub struct ComputedMemberExpression<'a> {
     pub optional: bool, // for optional chaining
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// `MemberExpression[?Yield, ?Await] . IdentifierName`
@@ -803,7 +819,7 @@ pub struct StaticMemberExpression<'a> {
     pub optional: bool, // for optional chaining
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
@@ -818,7 +834,7 @@ pub struct PrivateFieldExpression<'a> {
     pub optional: bool, // for optional chaining
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Call Expression
@@ -834,7 +850,7 @@ pub struct CallExpression<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> CallExpression<'a> {
@@ -890,7 +906,7 @@ pub struct NewExpression<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Meta Property `new.target` | `import.meta`
@@ -904,7 +920,7 @@ pub struct MetaProperty<'a> {
     pub property: IdentifierName<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Spread Element
@@ -917,7 +933,7 @@ pub struct SpreadElement<'a> {
     pub argument: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Argument
@@ -947,7 +963,7 @@ pub struct UpdateExpression<'a> {
     pub argument: SimpleAssignmentTarget<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Unary Expression
@@ -961,7 +977,7 @@ pub struct UnaryExpression<'a> {
     pub argument: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Binary Expression
@@ -976,7 +992,7 @@ pub struct BinaryExpression<'a> {
     pub right: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Private Identifier in Shift Expression
@@ -991,7 +1007,7 @@ pub struct PrivateInExpression<'a> {
     pub right: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Binary Logical Operators
@@ -1006,7 +1022,7 @@ pub struct LogicalExpression<'a> {
     pub right: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Conditional Expression
@@ -1021,7 +1037,7 @@ pub struct ConditionalExpression<'a> {
     pub alternate: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Assignment Expression
@@ -1036,7 +1052,7 @@ pub struct AssignmentExpression<'a> {
     pub right: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Destructuring Assignment
@@ -1114,7 +1130,7 @@ pub struct ArrayAssignmentTarget<'a> {
     pub trailing_comma: Option<Span>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> ArrayAssignmentTarget<'a> {
@@ -1148,7 +1164,7 @@ pub struct ObjectAssignmentTarget<'a> {
     pub rest: Option<AssignmentTargetRest<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> ObjectAssignmentTarget<'a> {
@@ -1214,7 +1230,7 @@ pub struct AssignmentTargetWithDefault<'a> {
     pub init: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -1257,7 +1273,7 @@ pub struct SequenceExpression<'a> {
     pub expressions: Vec<'a, Expression<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -1268,7 +1284,7 @@ pub struct Super {
     pub span: Span,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Await Expression
@@ -1281,7 +1297,7 @@ pub struct AwaitExpression<'a> {
     pub argument: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -1293,7 +1309,7 @@ pub struct ChainExpression<'a> {
     pub expression: ChainElement<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -1314,7 +1330,7 @@ pub struct ParenthesizedExpression<'a> {
     pub expression: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Statements
@@ -1373,7 +1389,7 @@ pub struct Directive<'a> {
     pub directive: Atom<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Hashbang
@@ -1386,7 +1402,7 @@ pub struct Hashbang<'a> {
     pub value: Atom<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Block Statement
@@ -1399,7 +1415,7 @@ pub struct BlockStatement<'a> {
     pub body: Vec<'a, Statement<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Declarations and the Variable Statement
@@ -1455,7 +1471,7 @@ pub struct VariableDeclaration<'a> {
     pub modifiers: Modifiers<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> VariableDeclaration<'a> {
@@ -1515,7 +1531,7 @@ pub struct VariableDeclarator<'a> {
     pub definite: bool,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Using Declaration
@@ -1531,7 +1547,7 @@ pub struct UsingDeclaration<'a> {
     pub declarations: Vec<'a, VariableDeclarator<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Empty Statement
@@ -1543,7 +1559,7 @@ pub struct EmptyStatement {
     pub span: Span,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Expression Statement
@@ -1556,7 +1572,7 @@ pub struct ExpressionStatement<'a> {
     pub expression: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// If Statement
@@ -1571,7 +1587,7 @@ pub struct IfStatement<'a> {
     pub alternate: Option<Statement<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Do-While Statement
@@ -1585,7 +1601,7 @@ pub struct DoWhileStatement<'a> {
     pub test: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// While Statement
@@ -1599,7 +1615,7 @@ pub struct WhileStatement<'a> {
     pub body: Statement<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// For Statement
@@ -1615,7 +1631,7 @@ pub struct ForStatement<'a> {
     pub body: Statement<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -1654,7 +1670,7 @@ pub struct ForInStatement<'a> {
     pub body: Statement<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// For-Of Statement
@@ -1670,7 +1686,7 @@ pub struct ForOfStatement<'a> {
     pub body: Statement<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -1700,7 +1716,7 @@ pub struct ContinueStatement<'a> {
     pub label: Option<LabelIdentifier<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Break Statement
@@ -1713,7 +1729,7 @@ pub struct BreakStatement<'a> {
     pub label: Option<LabelIdentifier<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Return Statement
@@ -1726,7 +1742,7 @@ pub struct ReturnStatement<'a> {
     pub argument: Option<Expression<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// With Statement
@@ -1740,7 +1756,7 @@ pub struct WithStatement<'a> {
     pub body: Statement<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Switch Statement
@@ -1754,7 +1770,7 @@ pub struct SwitchStatement<'a> {
     pub cases: Vec<'a, SwitchCase<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -1767,7 +1783,7 @@ pub struct SwitchCase<'a> {
     pub consequent: Vec<'a, Statement<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> SwitchCase<'a> {
@@ -1787,7 +1803,7 @@ pub struct LabeledStatement<'a> {
     pub body: Statement<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Throw Statement
@@ -1800,7 +1816,7 @@ pub struct ThrowStatement<'a> {
     pub argument: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Try Statement
@@ -1815,7 +1831,7 @@ pub struct TryStatement<'a> {
     pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -1828,7 +1844,7 @@ pub struct CatchClause<'a> {
     pub body: Box<'a, BlockStatement<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Debugger Statement
@@ -1840,7 +1856,7 @@ pub struct DebuggerStatement {
     pub span: Span,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Destructuring Binding Patterns
@@ -1907,7 +1923,7 @@ pub struct AssignmentPattern<'a> {
     pub right: Expression<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 // See serializer in serialize.rs
@@ -1923,7 +1939,7 @@ pub struct ObjectPattern<'a> {
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> ObjectPattern<'a> {
@@ -1964,7 +1980,7 @@ pub struct ArrayPattern<'a> {
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> ArrayPattern<'a> {
@@ -1986,7 +2002,7 @@ pub struct BindingRestElement<'a> {
     pub argument: BindingPattern<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Function Definitions
@@ -2024,7 +2040,7 @@ pub struct Function<'a> {
     pub modifiers: Modifiers<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> Function<'a> {
@@ -2085,7 +2101,7 @@ pub struct FormalParameters<'a> {
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> FormalParameters<'a> {
@@ -2107,7 +2123,7 @@ pub struct FormalParameter<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -2146,7 +2162,7 @@ pub struct FunctionBody<'a> {
     pub statements: Vec<'a, Statement<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> FunctionBody<'a> {
@@ -2173,7 +2189,7 @@ pub struct ArrowFunctionExpression<'a> {
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> ArrowFunctionExpression<'a> {
@@ -2199,7 +2215,7 @@ pub struct YieldExpression<'a> {
     pub argument: Option<Expression<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 /// Class Definitions
@@ -2221,7 +2237,7 @@ pub struct Class<'a> {
     pub modifiers: Modifiers<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> Class<'a> {
@@ -2258,7 +2274,7 @@ pub struct ClassBody<'a> {
     pub body: Vec<'a, ClassElement<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -2380,7 +2396,7 @@ pub struct MethodDefinition<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -2411,7 +2427,7 @@ pub struct PropertyDefinition<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -2452,7 +2468,7 @@ pub struct PrivateIdentifier<'a> {
     pub name: Atom<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> PrivateIdentifier<'a> {
@@ -2470,7 +2486,7 @@ pub struct StaticBlock<'a> {
     pub body: Vec<'a, Statement<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -2560,7 +2576,7 @@ pub struct ImportExpression<'a> {
     pub arguments: Vec<'a, Expression<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(AstNode, Debug, Hash)]
@@ -2578,7 +2594,7 @@ pub struct ImportDeclaration<'a> {
     pub import_kind: ImportOrExportKind,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -2607,7 +2623,7 @@ pub struct ImportSpecifier<'a> {
     pub import_kind: ImportOrExportKind,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 // import local from "source"
@@ -2620,7 +2636,7 @@ pub struct ImportDefaultSpecifier<'a> {
     pub local: BindingIdentifier<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 // import * as local from "source"
@@ -2633,7 +2649,7 @@ pub struct ImportNamespaceSpecifier<'a> {
     pub local: BindingIdentifier<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Hash)]
@@ -2688,7 +2704,7 @@ pub struct ExportNamedDeclaration<'a> {
     pub with_clause: Option<WithClause<'a>>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> ExportNamedDeclaration<'a> {
@@ -2712,7 +2728,7 @@ pub struct ExportDefaultDeclaration<'a> {
     pub exported: ModuleExportName<'a>, // `default`
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> ExportDefaultDeclaration<'a> {
@@ -2733,7 +2749,7 @@ pub struct ExportAllDeclaration<'a> {
     pub export_kind: ImportOrExportKind,     // `export type *`
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> ExportAllDeclaration<'a> {

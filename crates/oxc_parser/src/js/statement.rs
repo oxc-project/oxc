@@ -1,5 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstNodeIdContainer};
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, Span};
 
@@ -149,7 +149,11 @@ impl<'a> ParserImpl<'a> {
             // Section 14.13 Labelled Statement
             // Avoids lookahead for a labeled statement, which is on a hot path
             if self.eat(Kind::Colon) {
-                let label = LabelIdentifier { span: ident.span, name: ident.name.clone() };
+                let label = LabelIdentifier {
+                    span: ident.span,
+                    name: ident.name.clone(),
+                    ast_node_id: AstNodeIdContainer::default(),
+                };
                 let body = self.parse_statement_list_item(StatementContext::Label)?;
                 return Ok(self.ast.labeled_statement(self.end_span(span), label, body));
             }

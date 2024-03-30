@@ -27,7 +27,7 @@ pub use num_bigint::BigUint;
 pub use crate::{
     ast_builder::AstBuilder,
     ast_kind::{AstKind, AstType},
-    ast_node::AstNode,
+    ast_node::{AstNode, AstNodeIdContainer},
     trivia::{Comment, CommentKind, Trivias, TriviasMap},
     visit::{Visit, VisitMut},
 };

@@ -738,12 +738,12 @@ impl<'a> Compressor<'a> {
     fn try_detach_unary_op(&mut self, unary_expr: &UnaryExpression<'a>) -> Option<Expression<'a>> {
         if let Expression::Identifier(ident) = &unary_expr.argument {
             if matches!(ident.name.as_str(), "NaN" | "Infinity") {
-                let ident = IdentifierReference {
-                    span: unary_expr.span,
-                    name: ident.name.clone(),
-                    reference_id: ident.reference_id.clone(),
-                    reference_flag: ident.reference_flag,
-                };
+                let ident = IdentifierReference::with_reference_data(
+                    unary_expr.span,
+                    ident.name.clone(),
+                    ident.reference_id.get(),
+                    ident.reference_flag,
+                );
                 return Some(self.ast.identifier_reference_expression(ident));
             }
         }

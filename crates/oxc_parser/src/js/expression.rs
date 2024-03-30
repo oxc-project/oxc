@@ -1,7 +1,7 @@
 use std::cell::Cell;
 
 use oxc_allocator::Box;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstNodeIdContainer};
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, Span};
 use oxc_syntax::{operator::BinaryOperator, precedence::Precedence, BigintBase, NumberBase};
@@ -76,7 +76,12 @@ impl<'a> ParserImpl<'a> {
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
-        Ok(BindingIdentifier { span, name, symbol_id: Cell::default() })
+        Ok(BindingIdentifier {
+            span,
+            name,
+            symbol_id: Cell::default(),
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     pub(crate) fn parse_label_identifier(&mut self) -> Result<LabelIdentifier<'a>> {
@@ -85,7 +90,7 @@ impl<'a> ParserImpl<'a> {
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
-        Ok(LabelIdentifier { span, name })
+        Ok(LabelIdentifier { span, name, ast_node_id: AstNodeIdContainer::default() })
     }
 
     pub(crate) fn parse_identifier_name(&mut self) -> Result<IdentifierName<'a>> {
@@ -93,13 +98,13 @@ impl<'a> ParserImpl<'a> {
             return Err(self.unexpected());
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
-        Ok(IdentifierName { span, name })
+        Ok(IdentifierName { span, name, ast_node_id: AstNodeIdContainer::default() })
     }
 
     /// Parse keyword kind as identifier
     pub(crate) fn parse_keyword_identifier(&mut self, kind: Kind) -> IdentifierName<'a> {
         let (span, name) = self.parse_identifier_kind(kind);
-        IdentifierName { span, name }
+        IdentifierName { span, name, ast_node_id: AstNodeIdContainer::default() }
     }
 
     #[inline]
@@ -129,7 +134,11 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let name = Atom::from(self.cur_string());
         self.bump_any();
-        PrivateIdentifier { span: self.end_span(span), name }
+        PrivateIdentifier {
+            span: self.end_span(span),
+            name,
+            ast_node_id: AstNodeIdContainer::default(),
+        }
     }
 
     /// Section [Primary Expression](https://tc39.es/ecma262/#sec-primary-expression)
@@ -347,7 +356,11 @@ impl<'a> ParserImpl<'a> {
         let value = self.cur_string();
         let span = self.start_span();
         self.bump_any();
-        Ok(StringLiteral { span: self.end_span(span), value: value.into() })
+        Ok(StringLiteral {
+            span: self.end_span(span),
+            value: value.into(),
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     /// Section [Array Expression](https://tc39.es/ecma262/#prod-ArrayLiteral)
@@ -368,7 +381,7 @@ impl<'a> ParserImpl<'a> {
     ///     ,
     ///    Elision ,
     pub(crate) fn parse_elision(&mut self) -> ArrayExpressionElement<'a> {
-        ArrayExpressionElement::Elision(self.cur_token().span())
+        ArrayExpressionElement::Elision(ElisionElement::new(self.cur_token().span()))
     }
 
     /// Section [Template Literal](https://tc39.es/ecma262/#prod-TemplateLiteral)
@@ -410,7 +423,12 @@ impl<'a> ParserImpl<'a> {
             }
             _ => unreachable!("parse_template_literal"),
         }
-        Ok(TemplateLiteral { span: self.end_span(span), quasis, expressions })
+        Ok(TemplateLiteral {
+            span: self.end_span(span),
+            quasis,
+            expressions,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     fn parse_template_literal_expression(&mut self, tagged: bool) -> Result<Expression<'a>> {
@@ -602,6 +620,7 @@ impl<'a> ParserImpl<'a> {
                                 span: self.end_span(lhs_span),
                                 expression: lhs,
                                 type_parameters: arguments,
+                                ast_node_id: AstNodeIdContainer::default(),
                             },
                         ));
                         continue;
@@ -828,6 +847,7 @@ impl<'a> ParserImpl<'a> {
                 left,
                 operator: BinaryOperator::In,
                 right,
+                ast_node_id: AstNodeIdContainer::default(),
             }))
         } else {
             self.parse_unary_expression_base(lhs_span)?

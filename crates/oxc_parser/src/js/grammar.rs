@@ -1,6 +1,6 @@
 //! Cover Grammar for Destructuring Assignment
 
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstNodeIdContainer};
 use oxc_diagnostics::Result;
 use oxc_span::GetSpan;
 
@@ -98,6 +98,7 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
             elements,
             rest,
             trailing_comma: expr.trailing_comma,
+            ast_node_id: AstNodeIdContainer::default(),
         })
     }
 }
@@ -119,7 +120,12 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for AssignmentTargetMaybeDefault<'a> {
 
 impl<'a> CoverGrammar<'a, AssignmentExpression<'a>> for AssignmentTargetWithDefault<'a> {
     fn cover(expr: AssignmentExpression<'a>, _p: &mut ParserImpl<'a>) -> Result<Self> {
-        Ok(Self { span: expr.span, binding: expr.left, init: expr.right })
+        Ok(Self {
+            span: expr.span,
+            binding: expr.left,
+            init: expr.right,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 }
 
@@ -148,7 +154,7 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
             }
         }
 
-        Ok(Self { span: expr.span, properties, rest })
+        Ok(Self { span: expr.span, properties, rest, ast_node_id: AstNodeIdContainer::default() })
     }
 }
 

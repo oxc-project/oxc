@@ -45,7 +45,7 @@ impl<'a> ParserImpl<'a> {
         let initializer =
             if self.eat(Kind::Eq) { Some(self.parse_assignment_expression_base()?) } else { None };
 
-        Ok(TSEnumMember { span: self.end_span(span), id, initializer })
+        Ok(self.ast.ts_enum_member(self.end_span(span), id, initializer))
     }
 
     fn parse_ts_enum_member_name(&mut self) -> Result<TSEnumMemberName<'a>> {
@@ -374,10 +374,9 @@ impl<'a> ParserImpl<'a> {
             self.expect(Kind::LParen)?;
             let expression = self.parse_literal_string()?;
             self.expect(Kind::RParen)?;
-            TSModuleReference::ExternalModuleReference(TSExternalModuleReference {
-                span: self.end_span(reference_span),
-                expression,
-            })
+            TSModuleReference::ExternalModuleReference(
+                self.ast.ts_external_module_reference(self.end_span(reference_span), expression),
+            )
         } else {
             TSModuleReference::TypeName(self.parse_ts_type_name()?)
         };
@@ -397,7 +396,7 @@ impl<'a> ParserImpl<'a> {
 
         let this = {
             let (span, name) = self.parse_identifier_kind(Kind::This);
-            IdentifierName { span, name }
+            IdentifierName::new(span, name)
         };
 
         let type_annotation = self.parse_ts_type_annotation()?;

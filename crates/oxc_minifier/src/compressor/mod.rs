@@ -7,12 +7,15 @@ mod prepass;
 mod util;
 
 use oxc_allocator::{Allocator, Vec};
-use oxc_ast::visit::walk_mut::{
-    walk_binary_expression_mut, walk_expression_mut, walk_return_statement_mut, walk_statement_mut,
-    walk_statements_mut,
-};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
+use oxc_ast::{
+    visit::walk_mut::{
+        walk_binary_expression_mut, walk_expression_mut, walk_return_statement_mut,
+        walk_statement_mut, walk_statements_mut,
+    },
+    AstNodeIdContainer,
+};
 use oxc_span::Span;
 use oxc_syntax::{
     operator::{BinaryOperator, UnaryOperator},
@@ -236,7 +239,13 @@ impl<'a> Compressor<'a> {
                     let left = self.ast.void_0();
                     let operator = BinaryOperator::StrictEquality;
                     let right = self.ast.identifier_reference_expression(id_ref);
-                    let cmp = BinaryExpression { span, left, operator, right };
+                    let cmp = BinaryExpression {
+                        span,
+                        left,
+                        operator,
+                        right,
+                        ast_node_id: AstNodeIdContainer::default(),
+                    };
                     *expr = cmp;
                 }
             }

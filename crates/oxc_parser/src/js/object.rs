@@ -1,5 +1,5 @@
 use oxc_allocator::Box;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstNodeIdContainer};
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 use oxc_syntax::operator::AssignmentOperator;
@@ -100,8 +100,11 @@ impl<'a> ParserImpl<'a> {
     fn parse_property_definition_shorthand(&mut self) -> Result<Box<'a, ObjectProperty<'a>>> {
         let span = self.start_span();
         let identifier = self.parse_identifier_reference()?;
-        let key =
-            self.ast.alloc(IdentifierName { span: identifier.span, name: identifier.name.clone() });
+        let key = self.ast.alloc(IdentifierName {
+            span: identifier.span,
+            name: identifier.name.clone(),
+            ast_node_id: AstNodeIdContainer::default(),
+        });
         // IdentifierReference ({ foo })
         let value = Expression::Identifier(self.ast.alloc(identifier.clone()));
         // CoverInitializedName ({ foo = bar })

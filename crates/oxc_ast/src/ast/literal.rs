@@ -11,14 +11,13 @@ use std::{
 use bitflags::bitflags;
 use oxc_macros::AstNode;
 use oxc_span::{Atom, Span};
-use oxc_syntax::{
-    node::{AstNodeId, AstNodeIdContainer},
-    BigintBase, NumberBase,
-};
+use oxc_syntax::{node::AstNodeId, BigintBase, NumberBase};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
+
+use crate::AstNodeIdContainer;
 
 #[derive(AstNode, Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -29,7 +28,7 @@ pub struct BooleanLiteral {
     pub value: bool,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl BooleanLiteral {
@@ -54,7 +53,7 @@ pub struct NullLiteral {
     pub span: Span,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl Hash for NullLiteral {
@@ -81,7 +80,7 @@ pub struct NumericLiteral<'a> {
     pub base: NumberBase,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> NumericLiteral<'a> {
@@ -134,7 +133,7 @@ pub struct BigIntLiteral<'a> {
     pub base: BigintBase,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> BigIntLiteral<'a> {
@@ -155,7 +154,7 @@ pub struct RegExpLiteral<'a> {
     pub regex: RegExp<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 #[derive(Debug, Clone, Hash)]
@@ -262,7 +261,7 @@ pub struct StringLiteral<'a> {
     pub value: Atom<'a>,
 
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub(crate) ast_node_id: AstNodeIdContainer,
+    pub ast_node_id: AstNodeIdContainer,
 }
 
 impl<'a> StringLiteral<'a> {

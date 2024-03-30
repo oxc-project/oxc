@@ -1,5 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstNodeIdContainer};
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
@@ -110,6 +110,7 @@ impl<'a> ParserImpl<'a> {
         Ok(ImportDeclarationSpecifier::ImportDefaultSpecifier(ImportDefaultSpecifier {
             span: self.end_span(span),
             local,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -122,6 +123,7 @@ impl<'a> ParserImpl<'a> {
         Ok(ImportDeclarationSpecifier::ImportNamespaceSpecifier(ImportNamespaceSpecifier {
             span: self.end_span(span),
             local,
+            ast_node_id: AstNodeIdContainer::default(),
         }))
     }
 
@@ -161,7 +163,11 @@ impl<'a> ParserImpl<'a> {
         let expression = self.parse_assignment_expression_base()?;
         self.asi()?;
 
-        Ok(self.ast.alloc(TSExportAssignment { span: self.end_span(start_span), expression }))
+        Ok(self.ast.alloc(TSExportAssignment {
+            span: self.end_span(start_span),
+            expression,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     pub(crate) fn parse_ts_export_namespace(
@@ -174,7 +180,11 @@ impl<'a> ParserImpl<'a> {
         let id = self.parse_identifier_name()?;
         self.asi()?;
 
-        Ok(self.ast.alloc(TSNamespaceExportDeclaration { span: self.end_span(span), id }))
+        Ok(self.ast.alloc(TSNamespaceExportDeclaration {
+            span: self.end_span(span),
+            id,
+            ast_node_id: AstNodeIdContainer::default(),
+        }))
     }
 
     /// [Exports](https://tc39.es/ecma262/#sec-exports)
@@ -412,10 +422,20 @@ impl<'a> ParserImpl<'a> {
             (imported, local)
         } else {
             let local = self.parse_binding_identifier()?;
-            let imported = IdentifierName { span: local.span, name: local.name.clone() };
+            let imported = IdentifierName {
+                span: local.span,
+                name: local.name.clone(),
+                ast_node_id: AstNodeIdContainer::default(),
+            };
             (ModuleExportName::Identifier(imported), local)
         };
-        Ok(ImportSpecifier { span: self.end_span(specifier_span), imported, local, import_kind })
+        Ok(ImportSpecifier {
+            span: self.end_span(specifier_span),
+            imported,
+            local,
+            import_kind,
+            ast_node_id: AstNodeIdContainer::default(),
+        })
     }
 
     // ModuleExportName :

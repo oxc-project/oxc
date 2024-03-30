@@ -19,7 +19,7 @@ pub const MAX_INLINE_LEN: usize = 16;
 ///
 /// Use [CompactStr] with [Atom::to_compact_str] or [Atom::into_compact_str] for the
 /// lifetimeless form.
-#[derive(Clone, Eq)]
+#[derive(Default, Clone, Eq)]
 pub struct Atom<'a>(&'a str);
 
 #[cfg(feature = "serialize")]

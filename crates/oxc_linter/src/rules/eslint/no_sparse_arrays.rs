@@ -42,7 +42,7 @@ impl Rule for NoSparseArrays {
                 .elements
                 .iter()
                 .filter_map(|el| match el {
-                    ArrayExpressionElement::Elision(span) => Some(span),
+                    ArrayExpressionElement::Elision(elision) => Some(elision.span),
                     _ => None,
                 })
                 .map(|span| {

@@ -10,7 +10,6 @@ use std::mem;
 use oxc_allocator::{Allocator, Box, String, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span, SPAN};
 use oxc_syntax::{
-    node::AstNodeIdContainer,
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
@@ -18,7 +17,7 @@ use oxc_syntax::{
 };
 
 #[allow(clippy::wildcard_imports)]
-use crate::ast::*;
+use crate::{ast::*, AstNodeIdContainer};
 
 /// AST builder for creating AST nodes
 pub struct AstBuilder<'a> {
@@ -224,14 +223,7 @@ impl<'a> AstBuilder<'a> {
         Expression::TemplateLiteral(self.alloc(literal))
     }
 
-    pub fn identifier_reference_expression(
-        &self,
-        ident: IdentifierReference<'a>,
-    ) -> Expression<'a> {
-        Expression::Identifier(self.alloc(ident))
-    }
-
-    /* ---------- Statements ---------- */
+    /* ---------- Statemets ---------- */
 
     pub fn directive(
         &self,
@@ -980,6 +972,13 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
+    pub fn identifier_reference_expression(
+        &self,
+        ident: IdentifierReference<'a>,
+    ) -> Expression<'a> {
+        Expression::Identifier(self.alloc(ident))
+    }
+
     /* ---------- Functions ---------- */
     pub fn function_declaration(&self, func: Box<'a, Function<'a>>) -> Statement<'a> {
         Statement::Declaration(Declaration::FunctionDeclaration(func))
@@ -1580,6 +1579,14 @@ impl<'a> AstBuilder<'a> {
         })
     }
 
+    pub fn ts_external_module_reference(
+        &self,
+        span: Span,
+        expression: StringLiteral<'a>,
+    ) -> TSExternalModuleReference<'a> {
+        TSExternalModuleReference { span, expression, ast_node_id: AstNodeIdContainer::default() }
+    }
+
     pub fn ts_type_annotation(
         &self,
         span: Span,
@@ -1969,6 +1976,15 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
+    pub fn ts_enum_member(
+        &self,
+        span: Span,
+        id: TSEnumMemberName<'a>,
+        initializer: Option<Expression<'a>>,
+    ) -> TSEnumMember<'a> {
+        TSEnumMember { span, id, initializer, ast_node_id: AstNodeIdContainer::default() }
+    }
+
     pub fn decorator(&self, span: Span, expression: Expression<'a>) -> Decorator<'a> {
         Decorator { span, expression, ast_node_id: AstNodeIdContainer::default() }
     }
@@ -2090,22 +2106,8 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    pub fn ts_import_type(
-        &self,
-        span: Span,
-        argument: TSType<'a>,
-        qualifier: Option<TSTypeName<'a>>,
-        attributes: Option<TSImportAttributes<'a>>,
-        type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    ) -> TSType<'a> {
-        TSType::TSImportType(self.alloc(TSImportType {
-            span,
-            argument,
-            qualifier,
-            attributes,
-            type_parameters,
-            ast_node_id: AstNodeIdContainer::default(),
-        }))
+    pub fn ts_import_type(&self, ty: TSImportType<'a>) -> TSType<'a> {
+        TSType::TSImportType(self.alloc(ty))
     }
 
     pub fn ts_constructor_type(
