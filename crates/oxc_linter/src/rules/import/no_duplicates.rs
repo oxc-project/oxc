@@ -67,6 +67,7 @@ impl Rule for NoDuplicates {
             let import_entries_maps = group
                 .into_iter()
                 .flat_map(|(_path, requested_modules)| requested_modules)
+                .filter(|requested_module| requested_module.is_import())
                 .into_group_map_by(|requested_module| {
                     // We should early return if there is no type import
                     if !has_type_import {
@@ -136,6 +137,7 @@ fn test() {
         (r"import { type x } from './foo'; import y from './foo'", None),
         (r"import { type x } from './foo'; import { y } from './foo'", None),
         (r"import { type x } from './foo'; import type y from 'foo'", None),
+        (r"import { x } from './foo'; export { x } from './foo'", None),
     ];
 
     let fail = vec![
