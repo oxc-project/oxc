@@ -1,11 +1,11 @@
-//! <https://babeljs.io/docs/babel-plugin-transform-typescript>
-
 use serde::Deserialize;
 
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeScriptOptions;
 
+/// [plugin-transform-typescript](https://babeljs.io/docs/babel-plugin-transform-typescript)
+///
 /// This plugin adds support for the types syntax used by the TypeScript programming language.
 /// However, this plugin does not add the ability to type-check the JavaScript passed to it.
 /// For that, you will need to install and set up TypeScript.
