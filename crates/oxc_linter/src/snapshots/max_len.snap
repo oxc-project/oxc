@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: max_len
+---
+  ⚠ eslint(max-len): Line is too long (current length: 145, maximum: 80)
+   ╭─[max_len.tsx:1:1]
+ 1 │ const longLine = "This is a sentence that is deliberately made to go beyond the typical 80 character limit to show that the linting rule works.";
+   · ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ eslint(max-len): Line is too long (current length: 139, maximum: 80)
+   ╭─[max_len.tsx:1:1]
+ 1 │ // This comment is definitely too long for a single line and should be broken up according to the max len rule which we expect to fail here
+   · ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ eslint(max-len): Line is too long (current length: 145, maximum: 80)
+   ╭─[max_len.tsx:1:1]
+ 1 │ const anotherLongLine = "Lines of code or comments should not extend beyond the 80 characters in length to be easily readable and maintainable.";
+   · ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
