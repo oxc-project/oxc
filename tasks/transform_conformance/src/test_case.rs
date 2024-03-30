@@ -10,12 +10,9 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
-use oxc_transformer::{
-    ArrowFunctionsOptions, DecoratorsOptions, NullishCoalescingOperatorOptions, ReactJsxOptions,
-    TransformOptions, TransformTarget, Transformer, TypescriptOptions,
-};
-use serde::de::DeserializeOwned;
-use serde_json::Value;
+use oxc_transformer::{TransformOptions, Transformer};
+// use serde::de::DeserializeOwned;
+// use serde_json::Value;
 
 use crate::{fixture_root, root, TestRunnerEnv};
 
@@ -81,52 +78,12 @@ pub trait TestCase {
     fn path(&self) -> &Path;
 
     fn transform_options(&self) -> TransformOptions {
-        fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> T {
-            value.and_then(|v| serde_json::from_value::<T>(v).ok()).unwrap_or_default()
-        }
+        // fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> T {
+        // value.and_then(|v| serde_json::from_value::<T>(v).ok()).unwrap_or_default()
+        // }
 
-        let options = self.options();
-        TransformOptions {
-            target: TransformTarget::ESNext,
-            babel_8_breaking: options.babel_8_breaking,
-            decorators: options
-                .get_plugin("proposal-decorators")
-                .map(get_options::<DecoratorsOptions>),
-            react_jsx: options
-                .get_plugin("transform-react-jsx")
-                .map(get_options::<ReactJsxOptions>),
-            typescript: options
-                .get_plugin("transform-typescript")
-                .map(get_options::<TypescriptOptions>),
-            assumptions: options.assumptions,
-            class_static_block: options.get_plugin("transform-class-static-block").is_some(),
-            instanceof: options.get_plugin("transform-instanceof").is_some(),
-            literals: options.get_plugin("transform-literals").is_some(),
-            function_name: options.get_plugin("transform-function-name").is_some(),
-            arrow_functions: options
-                .get_plugin("transform-arrow-functions")
-                .map(get_options::<ArrowFunctionsOptions>),
-            logical_assignment_operators: options
-                .get_plugin("transform-logical-assignment-operators")
-                .is_some(),
-            numeric_separator: options.get_plugin("transform-numeric-separator").is_some(),
-            nullish_coalescing_operator: options
-                .get_plugin("transform-nullish-coalescing-operator")
-                .map(get_options::<NullishCoalescingOperatorOptions>),
-            json_strings: options.get_plugin("transform-json-strings").is_some(),
-            optional_catch_binding: options
-                .get_plugin("transform-optional-catch-binding")
-                .is_some(),
-            exponentiation_operator: options
-                .get_plugin("transform-exponentiation-operator")
-                .is_some(),
-            shorthand_properties: options.get_plugin("transform-shorthand-properties").is_some(),
-            sticky_regex: options.get_plugin("transform-sticky-regex").is_some(),
-            template_literals: options.get_plugin("transform-template-literals").is_some(),
-            property_literals: options.get_plugin("transform-property-literals").is_some(),
-            duplicate_keys: options.get_plugin("transform-duplicate-keys").is_some(),
-            new_target: options.get_plugin("transform-new-target").is_some(),
-        }
+        // let options = self.options();
+        TransformOptions {}
     }
 
     fn skip_test_case(&self) -> bool {
@@ -163,9 +120,7 @@ pub trait TestCase {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
 
-        let source_type = SourceType::from_path(path)
-            .unwrap()
-            .with_typescript(self.transform_options().typescript.is_some());
+        let source_type = SourceType::from_path(path).unwrap().with_typescript(false);
 
         let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
@@ -232,7 +187,7 @@ impl TestCase for ConformanceTestCase {
             } else {
                 input_is_js && output_is_js
             })
-            .with_typescript(transform_options.typescript.is_some());
+            .with_typescript(false);
 
         if filtered {
             println!("input_path: {:?}", &self.path);
