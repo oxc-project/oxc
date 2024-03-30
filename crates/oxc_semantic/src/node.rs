@@ -1,6 +1,7 @@
 use petgraph::stable_graph::NodeIndex;
 
-use oxc_ast::AstKind;
+// TODO: remove `AstNodeTrait` alias when the `AstNode` struct got removed.
+use oxc_ast::{AstKind, AstNode as AstNodeTrait};
 use oxc_index::IndexVec;
 
 use crate::scope::ScopeId;
@@ -111,6 +112,7 @@ impl<'a> AstNodes<'a> {
         let mut node = node;
         let ast_node_id = self.parent_ids.push(parent_id);
         node.id = ast_node_id;
+        node.kind.set_ast_node_id(Some(ast_node_id));
         self.nodes.push(node);
         ast_node_id
     }

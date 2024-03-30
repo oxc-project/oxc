@@ -55,6 +55,14 @@ fn derive_for_struct(input: DeriveInput) -> TokenStream {
             fn ast_node_id(&self) -> Option<AstNodeId> {
                 self.ast_node_id.get()
             }
+
+            fn set_ast_node_id(&self, id: Option<AstNodeId>) {
+                self.ast_node_id.set(id);
+            }
+
+            fn swap_ast_node_id(&self, id: Option<AstNodeId>) -> Option<AstNodeId> {
+                self.ast_node_id.swap(id)
+            }
         }
     }
     .into()
@@ -62,6 +70,9 @@ fn derive_for_struct(input: DeriveInput) -> TokenStream {
 
 fn derive_for_enum(input: DeriveInput) -> TokenStream {
     debug_assert!(matches!(input.data, Data::Enum(_)));
+
+    let node = quote!(node);
+    let id = quote!(id);
 
     let Data::Enum(data) = input.data else {
         unreachable!("We check for it in debug builds, It shouldn't happen in production!");
@@ -73,27 +84,47 @@ fn derive_for_enum(input: DeriveInput) -> TokenStream {
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-    let variant_matcher = data.variants.into_iter().fold(TokenStream2::new(), |mut acc, var| {
-        let span = var.span();
-        let var_ident = var.ident;
+    let variant_matcher = |operation: TokenStream2| {
+        data.variants.iter().fold(TokenStream2::new(), |mut acc, var| {
+            let span = var.span();
+            let var_ident = var.ident.clone();
 
-        let fields = match var.fields {
-            Fields::Unnamed(_) => quote_spanned! ( span=> (node) ),
-            Fields::Named(_) => panic!("AstNode derive macro does not support Named enum fields."),
-            Fields::Unit => panic!("AstNode derive macro does not support Unit enum fields."),
-        };
+            let fields = match var.fields {
+                Fields::Unnamed(_) => quote_spanned! ( span=> (#node) ),
+                Fields::Named(_) => {
+                    panic!("AstNode derive macro does not support Named enum fields.")
+                }
+                Fields::Unit => panic!("AstNode derive macro does not support Unit enum fields."),
+            };
 
-        acc.extend(quote_spanned! {
-            span=> #ident::#var_ident #fields => node.ast_node_id(),
-        });
-        acc
-    });
+            acc.extend(quote_spanned! {
+                span=> #ident::#var_ident #fields => #operation,
+            });
+            acc
+        })
+    };
+
+    let get_match = variant_matcher(quote! {#node.ast_node_id()});
+    let set_match = variant_matcher(quote! {#node.set_ast_node_id(#id)});
+    let swap_match = variant_matcher(quote! {#node.swap_ast_node_id(#id)});
 
     quote! {
         impl #impl_generics crate::AstNode for #ident #ty_generics #where_clause {
             fn ast_node_id(&self) -> Option<AstNodeId> {
                 match self {
-                    #variant_matcher
+                    #get_match
+                }
+            }
+
+            fn set_ast_node_id(&self, #id: Option<AstNodeId>) {
+                match self {
+                    #set_match
+                };
+            }
+
+            fn swap_ast_node_id(&self, #id: Option<AstNodeId>) -> Option<AstNodeId> {
+                match self {
+                    #swap_match
                 }
             }
         }
