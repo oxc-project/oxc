@@ -61,7 +61,7 @@ declare_oxc_lint!(
     /// React.createElement('input', { type: 'checkbox', defaultChecked: true });
     /// ```
     CheckedRequiresOnchangeOrReadonly,
-    correctness
+    pedantic
 );
 
 impl Rule for CheckedRequiresOnchangeOrReadonly {

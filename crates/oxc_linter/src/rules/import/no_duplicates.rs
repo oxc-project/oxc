@@ -1,8 +1,7 @@
 use itertools::Itertools;
 use oxc_diagnostics::miette::{miette, LabeledSpan, Severity};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use oxc_syntax::module_record::ImportImportName;
+use oxc_syntax::module_record::{ImportImportName, RequestedModule};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -36,20 +35,22 @@ impl Rule for NoDuplicates {
         let groups = module_record
             .requested_modules
             .iter()
-            .map(|(source, spans)| {
+            .map(|(source, requested_modules)| {
                 let resolved_absolute_path = module_record.loaded_modules.get(source).map_or_else(
                     || source.to_string(),
                     |module| module.resolved_absolute_path.to_string_lossy().to_string(),
                 );
-                (resolved_absolute_path, spans)
+                (resolved_absolute_path, requested_modules)
             })
             .group_by(|r| r.0.clone());
 
-        let check_duplicates = |spans: Option<&Vec<&Span>>| {
-            if let Some(spans) = spans {
-                if spans.len() > 1 {
-                    let labels =
-                        spans.iter().map(|span| LabeledSpan::underline(**span)).collect::<Vec<_>>();
+        let check_duplicates = |requested_modules: Option<&Vec<&RequestedModule>>| {
+            if let Some(requested_modules) = requested_modules {
+                if requested_modules.len() > 1 {
+                    let labels = requested_modules
+                        .iter()
+                        .map(|requested_module| LabeledSpan::underline(requested_module.span()))
+                        .collect::<Vec<_>>();
                     ctx.diagnostic(miette!(
                             severity = Severity::Warning,
                             labels = labels,
@@ -63,14 +64,17 @@ impl Rule for NoDuplicates {
             let has_type_import = module_record.import_entries.iter().any(|entry| entry.is_type);
             // When prefer_inline is false, 0 is value, 1 is type named, 2 is type default or type namespace
             // When prefer_inline is true, 0 is value and type named, 2 is type default or type namespace
-            let import_entries_maps =
-                group.into_iter().flat_map(|(_path, spans)| spans).into_group_map_by(|span| {
+            let import_entries_maps = group
+                .into_iter()
+                .flat_map(|(_path, requested_modules)| requested_modules)
+                .filter(|requested_module| requested_module.is_import())
+                .into_group_map_by(|requested_module| {
                     // We should early return if there is no type import
                     if !has_type_import {
                         return 0;
                     };
                     for entry in &module_record.import_entries {
-                        if entry.module_request.span() != **span {
+                        if entry.module_request.span() != requested_module.span() {
                             continue;
                         }
 
@@ -133,6 +137,7 @@ fn test() {
         (r"import { type x } from './foo'; import y from './foo'", None),
         (r"import { type x } from './foo'; import { y } from './foo'", None),
         (r"import { type x } from './foo'; import type y from 'foo'", None),
+        (r"import { x } from './foo'; export { x } from './foo'", None),
     ];
 
     let fail = vec![

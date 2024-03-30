@@ -35,7 +35,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoEqNull,
-    correctness
+    restriction
 );
 
 impl Rule for NoEqNull {
