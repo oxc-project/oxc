@@ -3,6 +3,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use serde::de::DeserializeOwned;
+use serde_json::Value;
+
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::Error;
@@ -11,11 +14,9 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
 use oxc_transformer::{
-    ReactDisplayNameOptions, ReactJsxOptions, ReactJsxSelfOptions, ReactJsxSourceOptions,
-    TransformOptions, Transformer, TypeScriptOptions,
+    DecoratorsOptions, ReactDisplayNameOptions, ReactJsxOptions, ReactJsxSelfOptions,
+    ReactJsxSourceOptions, TransformOptions, Transformer, TypeScriptOptions,
 };
-use serde::de::DeserializeOwned;
-use serde_json::Value;
 
 use crate::{fixture_root, root, TestRunnerEnv};
 
@@ -86,6 +87,10 @@ pub trait TestCase {
         }
         let options = self.options();
         TransformOptions {
+            decorators: options
+                .get_plugin("proposal-decorators")
+                .map(get_options::<DecoratorsOptions>)
+                .unwrap_or_default(),
             typescript: options
                 .get_plugin("transform-typescript")
                 .map(get_options::<TypeScriptOptions>)

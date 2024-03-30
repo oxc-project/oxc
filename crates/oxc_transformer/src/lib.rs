@@ -6,6 +6,7 @@
 //! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformer.ts>
 
 // Plugins: <https://babeljs.io/docs/plugins-list>
+mod decorators;
 mod react_display_name;
 mod react_jsx;
 mod react_jsx_self;
@@ -19,6 +20,7 @@ use oxc_semantic::Semantic;
 use oxc_span::SourceType;
 
 pub use crate::{
+    decorators::{Decorators, DecoratorsOptions},
     react_display_name::{ReactDisplayName, ReactDisplayNameOptions},
     react_jsx::{ReactJsx, ReactJsxOptions},
     react_jsx_self::{ReactJsxSelf, ReactJsxSelfOptions},
@@ -29,6 +31,7 @@ pub use crate::{
 #[allow(unused)]
 #[derive(Debug, Default, Clone)]
 pub struct TransformOptions {
+    pub decorators: DecoratorsOptions,
     pub typescript: TypeScriptOptions,
     pub react_jsx: ReactJsxOptions,
     pub react_display_name: ReactDisplayNameOptions,
@@ -43,6 +46,8 @@ pub struct Transformer<'a> {
     semantic: Semantic<'a>,
     options: TransformOptions,
 
+    // Stage 3
+    decorators: Decorators,
     // [preset-typescript](https://babeljs.io/docs/babel-preset-typescript)
     typescript: TypeScript,
     // [preset-react](https://babeljs.io/docs/babel-preset-react)
@@ -64,6 +69,7 @@ impl<'a> Transformer<'a> {
             source_type,
             semantic,
             options,
+            decorators: Decorators::default(),
             typescript: TypeScript::default(),
             react_display_name: ReactDisplayName::default(),
             react_jsx: ReactJsx::default(),
