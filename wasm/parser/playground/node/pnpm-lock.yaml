@@ -1,0 +1,10 @@
+lockfileVersion: '6.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+dependencies:
+  '@oxc-parser/wasm':
+    specifier: link:../../../../npm/parser-wasm
+    version: link:../../../../npm/parser-wasm
