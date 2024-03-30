@@ -1,23 +1,18 @@
-name: Release Plz
-
-permissions:
-  pull-requests: write
-  contents: write
+name: Release crates
 
 on:
   push:
     branches:
       - main
+    paths:
+      - Cargo.toml
 
 jobs:
   release-plz:
     name: Release-plz
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: taiki-e/checkout-action@v1
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
@@ -26,6 +21,8 @@ jobs:
 
       - name: Run release-plz
         uses: MarcoIeni/release-plz-action@v0.5
+        with:
+          command: release
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
