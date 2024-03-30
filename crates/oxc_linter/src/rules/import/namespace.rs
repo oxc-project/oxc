@@ -198,7 +198,13 @@ fn get_module_request_name(name: &str, module_record: &ModuleRecord) -> Option<S
 
                 false
             }
-            ExportImportName::Name(name_span) => name_span.name().as_str() == name,
+            ExportImportName::Name(name_span) => {
+                return name_span.name().as_str() == name
+                    && module_record.import_entries.iter().any(|entry| {
+                        entry.local_name.name().as_str() == name
+                            && entry.import_name.is_namespace_object()
+                    })
+            }
             _ => false,
         })
     {
@@ -443,6 +449,7 @@ fn test() {
         (r#"import * as a from "./deep-es7/a"; console.log(a.b.c.d.e.f)"#, None),
         (r#"import * as a from "./deep-es7/a"; var {b:{c:{d:{e}}}} = a"#, None),
         (r#"import { b } from "./deep-es7/a"; var {c:{d:{e}}} = b"#, None),
+        (r"import { a } from './oxc/indirect-export'; console.log(a.nothing)", None),
     ];
 
     let fail = vec![
