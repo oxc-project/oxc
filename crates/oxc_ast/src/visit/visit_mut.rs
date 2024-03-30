@@ -1554,7 +1554,10 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
-    pub fn walk_elision_mut<'a, V: VisitMut<'a>>(visitor: &mut V, _elision: &mut ElisionElement<'a>) {
+    pub fn walk_elision_mut<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        _elision: &mut ElisionElement<'a>,
+    ) {
         let kind = AstType::Elision;
         visitor.enter_node(kind);
         visitor.leave_node(kind);

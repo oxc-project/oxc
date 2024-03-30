@@ -4,7 +4,11 @@ use serde::{
 };
 
 use crate::ast::{
-    ArrayAssignmentTarget, ArrayExpressionElement, ArrayPattern, AssignmentTargetMaybeDefault, AssignmentTargetProperty, AssignmentTargetRest, BindingPattern, BindingPatternKind, BindingProperty, BindingRestElement, ElisionElement, FormalParameter, FormalParameterKind, FormalParameters, ObjectAssignmentTarget, ObjectPattern, Program, RegExpFlags, TSTypeAnnotation
+    ArrayAssignmentTarget, ArrayExpressionElement, ArrayPattern, AssignmentTargetMaybeDefault,
+    AssignmentTargetProperty, AssignmentTargetRest, BindingPattern, BindingPatternKind,
+    BindingProperty, BindingRestElement, ElisionElement, FormalParameter, FormalParameterKind,
+    FormalParameters, ObjectAssignmentTarget, ObjectPattern, Program, RegExpFlags,
+    TSTypeAnnotation,
 };
 use oxc_allocator::{Box, Vec};
 use oxc_span::Span;
