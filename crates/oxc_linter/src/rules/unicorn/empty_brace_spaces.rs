@@ -70,6 +70,13 @@ impl Rule for EmptyBraceSpaces {
                     catch_clause.body.span,
                 );
             }
+            AstKind::FinallyClause(finally_clause) => {
+                remove_empty_braces_spaces(
+                    ctx,
+                    finally_clause.body.is_empty(),
+                    finally_clause.span,
+                );
+            }
             _ => (),
         };
     }
