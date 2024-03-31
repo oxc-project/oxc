@@ -141,9 +141,35 @@ pub struct JSXMemberExpression<'a> {
 
 impl<'a> JSXMemberExpression<'a> {
     pub fn get_object_identifier(&self) -> &JSXIdentifier {
-        match &self.object {
-            JSXMemberExpressionObject::Identifier(ident) => ident,
-            JSXMemberExpressionObject::MemberExpression(expr) => expr.get_object_identifier(),
+        match &self.object.kind {
+            JSXMemberExpressionObjectKind::Identifier(ident) => ident,
+            JSXMemberExpressionObjectKind::MemberExpression(expr) => expr.get_object_identifier(),
+        }
+    }
+}
+
+#[derive(AstNode, Debug, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+pub struct JSXMemberExpressionObject<'a> {
+    pub kind: JSXMemberExpressionObjectKind<'a>,
+
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub ast_node_id: AstNodeIdContainer,
+}
+
+impl<'a> JSXMemberExpressionObject<'a> {
+    pub fn with_identifier(ident: JSXIdentifier<'a>) -> Self {
+        Self {
+            kind: JSXMemberExpressionObjectKind::Identifier(ident),
+            ast_node_id: AstNodeIdContainer::default(),
+        }
+    }
+
+    pub fn with_member_expression(expr: Box<'a, JSXMemberExpression<'a>>) -> Self {
+        Self {
+            kind: JSXMemberExpressionObjectKind::MemberExpression(expr),
+            ast_node_id: AstNodeIdContainer::default(),
         }
     }
 }
@@ -151,7 +177,7 @@ impl<'a> JSXMemberExpression<'a> {
 #[derive(AstNode, Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum JSXMemberExpressionObject<'a> {
+pub enum JSXMemberExpressionObjectKind<'a> {
     Identifier(JSXIdentifier<'a>),
     MemberExpression(Box<'a, JSXMemberExpression<'a>>),
 }

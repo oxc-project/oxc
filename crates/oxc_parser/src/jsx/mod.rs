@@ -156,14 +156,14 @@ impl<'a> ParserImpl<'a> {
         object: JSXIdentifier<'a>,
     ) -> Result<Box<'a, JSXMemberExpression<'a>>> {
         let mut span = span;
-        let mut object = JSXMemberExpressionObject::Identifier(object);
+        let mut object = JSXMemberExpressionObject::with_identifier(object);
         let mut property = None;
 
         while self.eat(Kind::Dot) && !self.at(Kind::Eof) {
             // <foo.bar.baz>
             if let Some(prop) = property {
                 let obj = self.ast.jsx_member_expression(span, object, prop);
-                object = JSXMemberExpressionObject::MemberExpression(obj);
+                object = JSXMemberExpressionObject::with_member_expression(obj);
             }
 
             // <foo.bar>

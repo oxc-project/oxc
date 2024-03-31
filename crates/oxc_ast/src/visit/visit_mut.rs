@@ -2102,9 +2102,9 @@ pub mod walk_mut {
     ) {
         let kind = AstType::JSXMemberExpressionObject;
         visitor.enter_node(kind);
-        match expr {
-            JSXMemberExpressionObject::Identifier(ident) => visitor.visit_jsx_identifier(ident),
-            JSXMemberExpressionObject::MemberExpression(expr) => {
+        match &mut expr.kind {
+            JSXMemberExpressionObjectKind::Identifier(ident) => visitor.visit_jsx_identifier(ident),
+            JSXMemberExpressionObjectKind::MemberExpression(expr) => {
                 visitor.visit_jsx_member_expression(expr);
             }
         }

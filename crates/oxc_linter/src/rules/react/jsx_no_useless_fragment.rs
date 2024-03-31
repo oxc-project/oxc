@@ -1,7 +1,8 @@
 use oxc_ast::{
     ast::{
         Expression, JSXAttributeItem, JSXAttributeName, JSXChild, JSXElement, JSXElementName,
-        JSXExpression, JSXFragment, JSXMemberExpressionObject, JSXOpeningElement,
+        JSXExpression, JSXFragment, JSXMemberExpressionObjectKind,
+        JSXOpeningElement,
     },
     AstKind,
 };
@@ -164,7 +165,7 @@ fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
                 return false;
             }
 
-            let JSXMemberExpressionObject::Identifier(ident) = &mem_expr.object else {
+            let JSXMemberExpressionObjectKind::Identifier(ident) = &mem_expr.object.kind else {
                 return false;
             };
 

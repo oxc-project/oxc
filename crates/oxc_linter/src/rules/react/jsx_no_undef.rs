@@ -1,6 +1,6 @@
 use oxc_ast::{
     ast::{
-        JSXElementName, JSXIdentifier, JSXMemberExpression, JSXMemberExpressionObject,
+        JSXElementName, JSXIdentifier, JSXMemberExpression, JSXMemberExpressionObjectKind,
         JSXOpeningElement,
     },
     AstKind,
@@ -39,9 +39,9 @@ declare_oxc_lint!(
 );
 
 fn get_member_ident<'a>(expr: &'a JSXMemberExpression<'a>) -> &'a JSXIdentifier {
-    match expr.object {
-        JSXMemberExpressionObject::Identifier(ref ident) => ident,
-        JSXMemberExpressionObject::MemberExpression(ref next_expr) => get_member_ident(next_expr),
+    match &expr.object.kind {
+        JSXMemberExpressionObjectKind::Identifier(ident) => ident,
+        JSXMemberExpressionObjectKind::MemberExpression(next_expr) => get_member_ident(next_expr),
     }
 }
 fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a JSXIdentifier> {

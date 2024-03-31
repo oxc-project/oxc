@@ -2064,6 +2064,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXIdentifier<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXMemberExpressionObject<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        self.kind.gen(p, ctx);
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXMemberExpressionObjectKind<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
             Self::Identifier(ident) => ident.gen(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.gen(p, ctx),

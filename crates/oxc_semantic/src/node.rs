@@ -30,10 +30,11 @@ impl<'a> AstNode<'a> {
     }
 
     pub fn id(&self) -> AstNodeId {
+        #[allow(clippy::enum_glob_use)]
         use AstKind::*;
         match self.kind {
-            | JSXMemberExpressionObject(_) // enum
-            // | FinallyClause(_) // block
+            // These absoulutly have to change.
+            // | JSXMemberExpressionObject(_) // enum, refactored as the subject of this experiment
             | PropertyKey(_) // enum
             | Argument(_) // enum
             | AssignmentTarget(_) // enum
@@ -42,10 +43,16 @@ impl<'a> AstNode<'a> {
             | ExpressionArrayElement(_) // enum
             | ModuleDeclaration(_) // enum
             | JSXElementName(_) // enum
+            // | FinallyClause(_) // block,
+                                  // fixable via minor refactoring in 2 of our linter rules.
+                                  // isn't related to the issue at hand and is already fixed in
+                                  // this experiment.
                 => self.id,
             _ => self.kind.ast_node_id().unwrap_or(AstNodeId::new(0)),
         }
-        // to go
+        // These are good to go, Some are using enums but no linter rules are based on them so we
+        // can change our assumptions but I prefer to refactor all enums.
+        //
         // | JSXNamespacedName(_)
         // | Program(_)
         // | Directive(_)

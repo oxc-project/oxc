@@ -435,9 +435,15 @@ impl<'a> GetSpan for JSXAttributeValue<'a> {
 
 impl<'a> GetSpan for JSXMemberExpressionObject<'a> {
     fn span(&self) -> Span {
+        self.kind.span()
+    }
+}
+
+impl<'a> GetSpan for JSXMemberExpressionObjectKind<'a> {
+    fn span(&self) -> Span {
         match &self {
-            JSXMemberExpressionObject::Identifier(ident) => ident.span,
-            JSXMemberExpressionObject::MemberExpression(expr) => expr.span,
+            JSXMemberExpressionObjectKind::Identifier(ident) => ident.span,
+            JSXMemberExpressionObjectKind::MemberExpression(expr) => expr.span,
         }
     }
 }
