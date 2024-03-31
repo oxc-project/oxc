@@ -42,8 +42,15 @@ fn serialize_sourcemap_mappings(sm: &SourceMap) -> String {
         |token_chunks| {
             // Serialize `tokens` to vlq `mappings` at parallel.
             token_chunks
+                .iter()
+                .map(|token_chunk| {
+                    let tokens = &sm.tokens.as_slice()
+                        [(token_chunk.start as usize)..(token_chunk.end as usize)];
+                    (tokens, token_chunk)
+                })
+                .collect::<Vec<_>>()
                 .par_iter()
-                .map(|token_chunk| serialize_mappings(&sm.tokens, token_chunk))
+                .map(|(tokens, token_chunk)| serialize_mappings(tokens, token_chunk))
                 .collect::<String>()
         },
     )

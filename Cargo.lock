@@ -1690,6 +1690,7 @@ name = "oxc_sourcemap"
 version = "0.10.0"
 dependencies = [
  "base64-simd",
+ "oxc_allocator",
  "rayon",
  "rustc-hash",
  "serde",

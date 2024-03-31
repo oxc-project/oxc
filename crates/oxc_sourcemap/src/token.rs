@@ -88,14 +88,14 @@ impl TokenChunk {
 }
 
 /// The `SourceViewToken` provider extra `source` and `source_content` value.
-#[derive(Debug, Clone, Copy)]
+// #[derive(Debug, Clone, Copy)]
 pub struct SourceViewToken<'a> {
     pub(crate) token: &'a Token,
     pub(crate) sourcemap: &'a SourceMap,
 }
 
 impl<'a> SourceViewToken<'a> {
-    pub fn new(token: &'a Token, sourcemap: &'a SourceMap) -> Self {
+    pub fn new(token: &'a Token, sourcemap: &'a SourceMap) -> SourceViewToken<'a> {
         Self { token, sourcemap }
     }
 

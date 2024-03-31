@@ -9,7 +9,7 @@ pub struct SourcemapVisualizer<'a> {
 }
 
 impl<'a> SourcemapVisualizer<'a> {
-    pub fn new(output: &'a str, sourcemap: &'a SourceMap) -> Self {
+    pub fn new(output: &'a str, sourcemap: &'a SourceMap) -> SourcemapVisualizer<'a> {
         Self { output, sourcemap }
     }
 

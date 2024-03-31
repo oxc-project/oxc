@@ -5,18 +5,39 @@ use rustc_hash::FxHashMap;
 use crate::{token::Token, SourceMap};
 
 /// The `SourceMapBuilder` is a helper to generate sourcemap.
-#[derive(Debug, Default)]
 pub struct SourceMapBuilder {
+    pub(crate) allocator: oxc_allocator::Allocator,
     pub(crate) names_map: FxHashMap<Arc<str>, u32>,
     pub(crate) names: Vec<Arc<str>>,
     pub(crate) sources: Vec<Arc<str>>,
     pub(crate) sources_map: FxHashMap<Arc<str>, u32>,
     pub(crate) source_contents: Vec<Arc<str>>,
-    pub(crate) tokens: Vec<Token>,
+    pub(crate) tokens: oxc_allocator::Vec<'static, Token>,
+}
+
+impl Default for SourceMapBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[allow(clippy::cast_possible_truncation)]
 impl SourceMapBuilder {
+    pub fn new() -> Self {
+        let allocator = oxc_allocator::Allocator::default();
+        // SAFETY: already owner the `allocator`
+        let tokens = oxc_allocator::Vec::new_in(unsafe { std::mem::transmute(&allocator) });
+        Self {
+            allocator,
+            names_map: FxHashMap::default(),
+            names: vec![],
+            sources: vec![],
+            sources_map: FxHashMap::default(),
+            source_contents: vec![],
+            tokens,
+        }
+    }
+
     /// Add item to `SourceMap::name`.
     pub fn add_name(&mut self, name: &str) -> u32 {
         let count = self.names.len() as u32;
@@ -63,6 +84,7 @@ impl SourceMapBuilder {
 
     pub fn into_sourcemap(self) -> SourceMap {
         SourceMap::new(
+            self.allocator,
             None,
             self.names,
             self.sources,

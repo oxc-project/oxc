@@ -19,8 +19,9 @@ workspace = true
 doctest = false
 
 [dependencies]
-rustc-hash  = { workspace = true }
-rayon       = { workspace = true }
-serde       = { workspace = true, features = ["derive"] }
-serde_json  = { workspace = true }
-base64-simd = "0.7"
+oxc_allocator = { workspace = true }
+rustc-hash    = { workspace = true }
+rayon         = { workspace = true }
+serde         = { workspace = true, features = ["derive"] }
+serde_json    = { workspace = true }
+base64-simd   = "0.7"

@@ -20,14 +20,20 @@ pub fn decode(value: &str) -> Result<SourceMap> {
     let sources = json.sources.into_iter().map(Into::into).collect::<Vec<_>>();
     let source_contents =
         json.sources_content.map(|v| v.into_iter().map(Into::into).collect::<Vec<_>>());
-    let tokens = decode_mapping(&json.mappings, names.len(), sources.len())?;
-    Ok(SourceMap::new(file, names, sources, source_contents, tokens, None))
+    let allocator = oxc_allocator::Allocator::default();
+    // SAFETY: already owner the `allocator`
+    let mut tokens = oxc_allocator::Vec::new_in(unsafe { std::mem::transmute(&allocator) });
+    decode_mapping(&mut tokens, &json.mappings, names.len(), sources.len())?;
+    Ok(SourceMap::new(allocator, file, names, sources, source_contents, tokens, None))
 }
 
 #[allow(clippy::cast_possible_truncation)]
-fn decode_mapping(mapping: &str, names_len: usize, sources_len: usize) -> Result<Vec<Token>> {
-    let mut tokens = vec![];
-
+fn decode_mapping(
+    tokens: &mut oxc_allocator::Vec<'_, Token>,
+    mapping: &str,
+    names_len: usize,
+    sources_len: usize,
+) -> Result<()> {
     let mut dst_col;
     let mut src_id = 0;
     let mut src_line = 0;
@@ -87,7 +93,7 @@ fn decode_mapping(mapping: &str, names_len: usize, sources_len: usize) -> Result
         }
     }
 
-    Ok(tokens)
+    Ok(())
 }
 
 #[rustfmt::skip]
