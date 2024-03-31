@@ -1,8 +1,7 @@
 use oxc_ast::{
     ast::{
         Expression, JSXAttributeItem, JSXAttributeName, JSXChild, JSXElement, JSXElementName,
-        JSXExpression, JSXFragment, JSXMemberExpressionObjectKind,
-        JSXOpeningElement,
+        JSXExpression, JSXFragment, JSXMemberExpressionObjectKind, JSXOpeningElement,
     },
     AstKind,
 };

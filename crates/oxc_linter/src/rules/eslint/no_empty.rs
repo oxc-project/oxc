@@ -66,9 +66,7 @@ impl Rule for NoEmpty {
                 }
                 ctx.diagnostic(NoEmptyDiagnostic("block", catch_clause.body.span));
             }
-            AstKind::FinallyClause(finally_clause)
-                if finally_clause.body.is_empty() =>
-            {
+            AstKind::FinallyClause(finally_clause) if finally_clause.body.is_empty() => {
                 if ctx.semantic().trivias().has_comments_between(finally_clause.span) {
                     return;
                 }
