@@ -224,12 +224,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatement<'a> {
 
         if let Some(init) = self.init.as_ref() {
             let ctx = Context::empty();
-            match init {
-                ForStatementInit::UsingDeclaration(decl) => decl.gen(p, ctx),
-                ForStatementInit::Expression(expr) => {
+            match &init.kind {
+                ForStatementInitKind::UsingDeclaration(decl) => decl.gen(p, ctx),
+                ForStatementInitKind::Expression(expr) => {
                     expr.gen_expr(p, Precedence::lowest(), ctx);
                 }
-                ForStatementInit::VariableDeclaration(var) => var.gen(p, ctx),
+                ForStatementInitKind::VariableDeclaration(var) => var.gen(p, ctx),
             }
         }
 

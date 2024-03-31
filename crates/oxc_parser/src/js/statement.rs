@@ -299,7 +299,7 @@ impl<'a> ParserImpl<'a> {
             return self.parse_for_in_or_of_loop(span, r#await, for_stmt_left);
         }
 
-        self.parse_for_loop(span, Some(ForStatementInit::Expression(init_expression)), r#await)
+        self.parse_for_loop(span, Some(ForStatementInit::with_expression(init_expression)), r#await)
     }
 
     fn parse_variable_declaration_for_statement(
@@ -319,7 +319,7 @@ impl<'a> ParserImpl<'a> {
             return self.parse_for_in_or_of_loop(span, r#await, init);
         }
 
-        let init = Some(ForStatementInit::VariableDeclaration(init_declaration));
+        let init = Some(ForStatementInit::with_variable_declaration(init_declaration));
         self.parse_for_loop(span, init, r#await)
     }
 
@@ -347,7 +347,7 @@ impl<'a> ParserImpl<'a> {
             return self.parse_for_in_or_of_loop(span, r#await, init);
         }
 
-        let init = Some(ForStatementInit::UsingDeclaration(self.ast.alloc(using_decl)));
+        let init = Some(ForStatementInit::with_using_declaration(self.ast.alloc(using_decl)));
         self.parse_for_loop(span, init, r#await)
     }
 

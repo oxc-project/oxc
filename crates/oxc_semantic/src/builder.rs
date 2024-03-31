@@ -805,14 +805,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_for_statement_init(&mut self, init: &ForStatementInit<'a>) {
         let kind = AstKind::ForStatementInit(self.alloc(init));
         self.enter_node(kind);
-        match init {
-            ForStatementInit::UsingDeclaration(decl) => {
+        match &init.kind {
+            ForStatementInitKind::UsingDeclaration(decl) => {
                 self.visit_using_declaration(decl);
             }
-            ForStatementInit::VariableDeclaration(decl) => {
+            ForStatementInitKind::VariableDeclaration(decl) => {
                 self.visit_variable_declaration(decl);
             }
-            ForStatementInit::Expression(expr) => self.visit_expression(expr),
+            ForStatementInitKind::Expression(expr) => self.visit_expression(expr),
         }
         self.leave_node(kind);
     }

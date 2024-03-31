@@ -959,14 +959,14 @@ pub mod walk {
     pub fn walk_for_statement_init<'a, V: Visit<'a>>(visitor: &mut V, init: &ForStatementInit<'a>) {
         let kind = AstKind::ForStatementInit(visitor.alloc(init));
         visitor.enter_node(kind);
-        match init {
-            ForStatementInit::UsingDeclaration(decl) => {
+        match &init.kind {
+            ForStatementInitKind::UsingDeclaration(decl) => {
                 visitor.visit_using_declaration(decl);
             }
-            ForStatementInit::VariableDeclaration(decl) => {
+            ForStatementInitKind::VariableDeclaration(decl) => {
                 visitor.visit_variable_declaration(decl);
             }
-            ForStatementInit::Expression(expr) => visitor.visit_expression(expr),
+            ForStatementInitKind::Expression(expr) => visitor.visit_expression(expr),
         }
         visitor.leave_node(kind);
     }

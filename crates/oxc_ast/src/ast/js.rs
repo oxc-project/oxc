@@ -1456,14 +1456,45 @@ pub struct ForStatement<'a> {
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+pub struct ForStatementInit<'a> {
+    pub kind: ForStatementInitKind<'a>,
+}
+
+impl<'a> ForStatementInit<'a> {
+    pub fn with_expression(expr: Expression<'a>) -> Self {
+        Self { kind: ForStatementInitKind::Expression(expr) }
+    }
+
+    pub fn with_variable_declaration(decl: Box<'a, VariableDeclaration<'a>>) -> Self {
+        Self { kind: ForStatementInitKind::VariableDeclaration(decl) }
+    }
+
+    pub fn with_using_declaration(using: Box<'a, UsingDeclaration<'a>>) -> Self {
+        Self { kind: ForStatementInitKind::UsingDeclaration(using) }
+    }
+
+    /// LexicalDeclaration[In, Yield, Await] :
+    ///   LetOrConst BindingList[?In, ?Yield, ?Await] ;
+    pub fn is_lexical_declaration(&self) -> bool {
+        self.kind.is_lexical_declaration()
+    }
+
+    pub fn expression(&self) -> Option<&Expression<'a>> {
+        self.kind.expression()
+    }
+}
+
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum ForStatementInit<'a> {
+pub enum ForStatementInitKind<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
     Expression(Expression<'a>),
     UsingDeclaration(Box<'a, UsingDeclaration<'a>>),
 }
 
-impl<'a> ForStatementInit<'a> {
+impl<'a> ForStatementInitKind<'a> {
     /// LexicalDeclaration[In, Yield, Await] :
     ///   LetOrConst BindingList[?In, ?Yield, ?Await] ;
     pub fn is_lexical_declaration(&self) -> bool {

@@ -989,12 +989,12 @@ pub mod walk_mut {
     ) {
         let kind = AstType::ForStatementInit;
         visitor.enter_node(kind);
-        match init {
-            ForStatementInit::VariableDeclaration(decl) => {
+        match &mut init.kind {
+            ForStatementInitKind::VariableDeclaration(decl) => {
                 visitor.visit_variable_declaration(decl);
             }
-            ForStatementInit::Expression(expr) => visitor.visit_expression(expr),
-            ForStatementInit::UsingDeclaration(decl) => {
+            ForStatementInitKind::Expression(expr) => visitor.visit_expression(expr),
+            ForStatementInitKind::UsingDeclaration(decl) => {
                 visitor.visit_using_declaration(decl);
             }
         }

@@ -232,10 +232,10 @@ impl<'a> Format<'a> for ForStatement<'a> {
 
 impl<'a> Format<'a> for ForStatementInit<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        match self {
-            ForStatementInit::VariableDeclaration(v) => v.format(p),
-            ForStatementInit::Expression(v) => v.format(p),
-            ForStatementInit::UsingDeclaration(v) => v.format(p),
+        match &self.kind {
+            ForStatementInitKind::VariableDeclaration(v) => v.format(p),
+            ForStatementInitKind::Expression(v) => v.format(p),
+            ForStatementInitKind::UsingDeclaration(v) => v.format(p),
         }
     }
 }

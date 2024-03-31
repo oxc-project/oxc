@@ -251,6 +251,12 @@ impl<'a> GetSpan for ArrayExpressionElement<'a> {
 
 impl<'a> GetSpan for ForStatementInit<'a> {
     fn span(&self) -> Span {
+        self.kind.span()
+    }
+}
+
+impl<'a> GetSpan for ForStatementInitKind<'a> {
+    fn span(&self) -> Span {
         match self {
             Self::VariableDeclaration(x) => x.span,
             Self::Expression(x) => x.span(),
