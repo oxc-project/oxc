@@ -67,9 +67,7 @@ impl Rule for NoEmpty {
             }
             // The visitor does not visit the `BlockStatement` inside the `FinallyClause`.
             // See `Visit::visit_finally_clause`.
-            AstKind::FinallyClause(finally_clause)
-                if finally_clause.body.is_empty() =>
-            {
+            AstKind::FinallyClause(finally_clause) if finally_clause.body.is_empty() => {
                 if ctx.semantic().trivias().has_comments_between(finally_clause.span) {
                     return;
                 }
