@@ -5,6 +5,8 @@
 //! * <https://babel.dev/docs/presets>
 //! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformer.ts>
 
+// Core
+mod compiler_assumptions;
 // Plugins: <https://babeljs.io/docs/plugins-list>
 mod decorators;
 mod react_display_name;
@@ -20,6 +22,7 @@ use oxc_semantic::Semantic;
 use oxc_span::SourceType;
 
 pub use crate::{
+    compiler_assumptions::CompilerAssumptions,
     decorators::{Decorators, DecoratorsOptions},
     react_display_name::{ReactDisplayName, ReactDisplayNameOptions},
     react_jsx::{ReactJsx, ReactJsxOptions},
@@ -31,6 +34,12 @@ pub use crate::{
 #[allow(unused)]
 #[derive(Debug, Default, Clone)]
 pub struct TransformOptions {
+    // Core
+    /// Set assumptions in order to produce smaller output.
+    /// For more information, check the [assumptions](https://babel.dev/docs/assumptions) documentation page.
+    pub assumptions: CompilerAssumptions,
+
+    // Plugins
     pub decorators: DecoratorsOptions,
     pub typescript: TypeScriptOptions,
     pub react_jsx: ReactJsxOptions,

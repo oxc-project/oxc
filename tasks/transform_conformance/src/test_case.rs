@@ -87,6 +87,7 @@ pub trait TestCase {
         }
         let options = self.options();
         TransformOptions {
+            assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
             decorators: options
                 .get_plugin("proposal-decorators")
                 .map(get_options::<DecoratorsOptions>)
