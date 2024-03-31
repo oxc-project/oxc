@@ -119,30 +119,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            src:
-              - 'Cargo.lock'
-              - '**/Cargo.toml'
-              - '.github/workflows/ci.yml'
-
-      - name: Install Rust Toolchain
-        if: steps.filter.outputs.src == 'true'
-        uses: ./.github/actions/rustup
-
-      - name: Install cargo-binstall
-        if: steps.filter.outputs.src == 'true'
-        uses: cargo-bins/cargo-binstall@main
-
-      - name: Install cargo-shear
-        if: steps.filter.outputs.src == 'true'
-        run: cargo binstall --no-confirm cargo-shear
-
-      - if: steps.filter.outputs.src == 'true'
-        run: cargo shear
+      - uses: ./.github/actions/rustup
+      - uses: cargo-bins/cargo-binstall@main
+      - run: cargo binstall --no-confirm cargo-shear
+      - run: cargo shear
 
   format:
     name: Format
