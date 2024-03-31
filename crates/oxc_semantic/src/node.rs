@@ -11,6 +11,7 @@ pub use oxc_syntax::node::{AstNodeId, NodeFlags};
 /// Semantic node contains all the semantic information about an ast node.
 #[derive(Debug, Clone, Copy)]
 pub struct AstNode<'a> {
+    id: AstNodeId,
     /// A pointer to the ast node, which resides in the `bumpalo` memory arena.
     kind: AstKind<'a>,
 
@@ -25,11 +26,157 @@ pub struct AstNode<'a> {
 
 impl<'a> AstNode<'a> {
     pub fn new(kind: AstKind<'a>, scope_id: ScopeId, cfg_ix: NodeIndex, flags: NodeFlags) -> Self {
-        Self { kind, scope_id, cfg_ix, flags }
+        Self { id: AstNodeId::new(0), kind, scope_id, cfg_ix, flags }
     }
 
     pub fn id(&self) -> AstNodeId {
-        self.kind.ast_node_id().unwrap_or(AstNodeId::new(0))
+        use AstKind::*;
+        match self.kind {
+            | JSXMemberExpressionObject(_) // enum
+            // | FinallyClause(_) // block
+            | PropertyKey(_) // enum
+            | Argument(_) // enum
+            | AssignmentTarget(_) // enum
+            | SimpleAssignmentTarget(_) // enum
+            | ArrayExpressionElement(_) // enum
+            | ExpressionArrayElement(_) // enum
+            | ModuleDeclaration(_) // enum
+            | JSXElementName(_) // enum
+                => self.id,
+            _ => self.kind.ast_node_id().unwrap_or(AstNodeId::new(0)),
+        }
+        // to go
+        // | JSXNamespacedName(_)
+        // | Program(_)
+        // | Directive(_)
+        // | Hashbang(_)
+        // | BlockStatement(_)
+        // | BreakStatement(_)
+        // | ContinueStatement(_)
+        // | DebuggerStatement(_)
+        // | DoWhileStatement(_)
+        // | EmptyStatement(_)
+        // | ExpressionStatement(_)
+        // | ForInStatement(_)
+        // | ForOfStatement(_)
+        // | ForStatement(_)
+        // | ForStatementInit(_)
+        // | IfStatement(_)
+        // | LabeledStatement(_)
+        // | ReturnStatement(_)
+        // | SwitchStatement(_)
+        // | ThrowStatement(_)
+        // | TryStatement(_)
+        // | WhileStatement(_)
+        // | WithStatement(_)
+        // | SwitchCase(_)
+        // | CatchClause(_)
+        // | VariableDeclaration(_)
+        // | VariableDeclarator(_)
+        // | UsingDeclaration(_)
+        // | IdentifierName(_)
+        // | IdentifierReference(_)
+        // | BindingIdentifier(_)
+        // | LabelIdentifier(_)
+        // | PrivateIdentifier(_)
+        // | NumericLiteral(_)
+        // | StringLiteral(_)
+        // | BooleanLiteral(_)
+        // | NullLiteral(_)
+        // | BigintLiteral(_)
+        // | RegExpLiteral(_)
+        // | TemplateLiteral(_)
+        // | MetaProperty(_)
+        // | Super(_)
+        // | ArrayExpression(_)
+        // | ArrowFunctionExpression(_)
+        // | AssignmentExpression(_)
+        // | AwaitExpression(_)
+        // | BinaryExpression(_)
+        // | CallExpression(_)
+        // | ChainExpression(_)
+        // | ConditionalExpression(_)
+        // | LogicalExpression(_)
+        // | MemberExpression(_)
+        // | NewExpression(_)
+        // | ObjectExpression(_)
+        // | ParenthesizedExpression(_)
+        // | SequenceExpression(_)
+        // | TaggedTemplateExpression(_)
+        // | ThisExpression(_)
+        // | UnaryExpression(_)
+        // | UpdateExpression(_)
+        // | YieldExpression(_)
+        // | ImportExpression(_)
+        // | PrivateInExpression(_)
+        // | ObjectProperty(_)
+        // | AssignmentTargetWithDefault(_)
+        // | Elision(_)
+        // | SpreadElement(_)
+        // | BindingRestElement(_)
+        // | Function(_)
+        // | FunctionBody(_)
+        // | FormalParameters(_)
+        // | FormalParameter(_)
+        // | Class(_)
+        // | ClassBody(_)
+        // | ClassHeritage(_)
+        // | StaticBlock(_)
+        // | PropertyDefinition(_)
+        // | MethodDefinition(_)
+        // | ArrayPattern(_)
+        // | ObjectPattern(_)
+        // | AssignmentPattern(_)
+        // | Decorator(_)
+        // | ImportDeclaration(_)
+        // | ImportSpecifier(_)
+        // | ImportDefaultSpecifier(_)
+        // | ImportNamespaceSpecifier(_)
+        // | ExportDefaultDeclaration(_)
+        // | ExportNamedDeclaration(_)
+        // | ExportAllDeclaration(_)
+        // | JSXElement(_)
+        // | JSXFragment(_)
+        // | JSXOpeningElement(_)
+        // | JSXClosingElement(_)
+        // | JSXExpressionContainer(_)
+        // | JSXAttributeItem(_)
+        // | JSXSpreadAttribute(_)
+        // | JSXText(_)
+        // | JSXIdentifier(_)
+        // | JSXMemberExpression(_)
+        // | TSModuleBlock(_)
+        // | TSAnyKeyword(_)
+        // | TSIntersectionType(_)
+        // | TSLiteralType(_)
+        // | TSMethodSignature(_)
+        // | TSNullKeyword(_)
+        // | TSTypeLiteral(_)
+        // | TSTypeReference(_)
+        // | TSUnionType(_)
+        // | TSVoidKeyword(_)
+        // | TSIndexedAccessType(_)
+        // | TSAsExpression(_)
+        // | TSSatisfiesExpression(_)
+        // | TSNonNullExpression(_)
+        // | TSInstantiationExpression(_)
+        // | TSEnumDeclaration(_)
+        // | TSEnumMember(_)
+        // | TSImportEqualsDeclaration(_)
+        // | TSTypeName(_)
+        // | TSExternalModuleReference(_)
+        // | TSQualifiedName(_)
+        // | TSInterfaceDeclaration(_)
+        // | TSModuleDeclaration(_)
+        // | TSTypeAliasDeclaration(_)
+        // | TSTypeAnnotation(_)
+        // | TSTypeQuery(_)
+        // | TSTypeAssertion(_)
+        // | TSTypeParameter(_)
+        // | TSTypeParameterDeclaration(_)
+        // | TSTypeParameterInstantiation(_)
+        // | TSImportType(_)
+        // | TSPropertySignature(_)
     }
 
     pub fn cfg_ix(&self) -> NodeIndex {
@@ -108,7 +255,9 @@ impl<'a> AstNodes<'a> {
     }
 
     pub fn add_node(&mut self, node: AstNode<'a>, parent_id: Option<AstNodeId>) -> AstNodeId {
+        let mut node = node;
         let ast_node_id = self.parent_ids.push(parent_id);
+        node.id = ast_node_id;
         node.kind.set_ast_node_id(Some(ast_node_id));
         self.nodes.push(node);
         ast_node_id
