@@ -14,6 +14,7 @@ extend-exclude = [
   "crates/oxc_syntax/src/xml_entities.rs",
   "**/*.snap",
   "pnpm-lock.yaml",
+  "**/*/CHANGELOG.md",
 ]
 
 [default.extend-words]
