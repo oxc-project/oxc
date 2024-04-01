@@ -1,8 +1,6 @@
-use serde::Deserialize;
+mod options;
 
-#[derive(Debug, Default, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ReactJsxOptions;
+pub use self::options::ReactJsxOptions;
 
 /// [plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx)
 ///
@@ -12,6 +10,11 @@ pub struct ReactJsxOptions;
 /// please use @babel/plugin-transform-react-jsx-development for a better debugging experience.
 ///
 /// This plugin is included in `preset-react`.
+///
+/// References:
+///
+/// * <https://babeljs.io/docs/babel-plugin-transform-react-jsx>
+/// * <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-react-jsx>
 #[derive(Debug, Default)]
 pub struct ReactJsx {
     #[allow(unused)]

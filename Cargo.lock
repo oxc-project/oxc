@@ -1729,7 +1729,6 @@ name = "oxc_tasks_common"
 version = "0.0.0"
 dependencies = [
  "console",
- "oxc_syntax",
  "project-root",
  "serde",
  "serde_json",

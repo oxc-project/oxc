@@ -1,6 +1,5 @@
 //! Common code for JavaScript Syntax
 
-pub mod assumptions;
 pub mod class;
 pub mod identifier;
 pub mod keyword;
