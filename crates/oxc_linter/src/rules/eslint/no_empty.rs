@@ -65,6 +65,14 @@ impl Rule for NoEmpty {
                 }
                 ctx.diagnostic(NoEmptyDiagnostic("block", catch_clause.body.span));
             }
+            // The visitor does not visit the `BlockStatement` inside the `FinallyClause`.
+            // See `Visit::visit_finally_clause`.
+            AstKind::FinallyClause(finally_clause) if finally_clause.body.is_empty() => {
+                if ctx.semantic().trivias().has_comments_between(finally_clause.span) {
+                    return;
+                }
+                ctx.diagnostic(NoEmptyDiagnostic("block", finally_clause.span));
+            }
             AstKind::SwitchStatement(switch) if switch.cases.is_empty() => {
                 ctx.diagnostic(NoEmptyDiagnostic("switch", switch.span));
             }

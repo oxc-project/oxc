@@ -2,10 +2,10 @@ use std::cell::RefCell;
 
 use oxc_ast::{
     ast::{
-        Argument, ArrayExpressionElement, AssignmentTarget, CallExpression,
-        ComputedMemberExpression, Expression, IdentifierReference, MemberExpression,
-        ModuleDeclaration, PrivateFieldExpression, Program, SimpleAssignmentTarget, Statement,
-        StaticMemberExpression,
+        Argument, ArrayExpressionElement, ArrowFunctionExpression, AssignmentTarget,
+        CallExpression, ComputedMemberExpression, Expression, FormalParameter, Function,
+        IdentifierReference, MemberExpression, ModuleDeclaration, ParenthesizedExpression,
+        PrivateFieldExpression, Program, SimpleAssignmentTarget, Statement, StaticMemberExpression,
     },
     AstKind,
 };
@@ -91,6 +91,17 @@ impl<'a> ListenerMap for AstNode<'a> {
             _ => {}
         }
     }
+    fn report_effects_when_mutated(&self, options: &NodeListenerOptions) {
+        #[allow(clippy::single_match)]
+        match self.kind() {
+            AstKind::VariableDeclarator(decl) => {
+                if let Some(init) = &decl.init {
+                    init.report_effects_when_mutated(options);
+                }
+            }
+            _ => {}
+        }
+    }
 }
 
 impl<'a> ListenerMap for Expression<'a> {
@@ -105,6 +116,9 @@ impl<'a> ListenerMap for Expression<'a> {
             }
             Self::CallExpression(call_expr) => {
                 call_expr.report_effects(options);
+            }
+            Self::ParenthesizedExpression(expr) => {
+                expr.report_effects(options);
             }
             Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
@@ -122,6 +136,12 @@ impl<'a> ListenerMap for Expression<'a> {
                 ident.report_effects_when_mutated(options);
             }
             Self::ArrowFunctionExpression(_) | Self::ObjectExpression(_) => no_effects(),
+            Self::ParenthesizedExpression(expr) => {
+                expr.report_effects_when_mutated(options);
+            }
+            Self::CallExpression(expr) => {
+                expr.report_effects_when_mutated(options);
+            }
             _ => {
                 // Default behavior
                 options.ctx.diagnostic(NoSideEffectsDiagnostic::Mutation(self.span()));
@@ -136,6 +156,15 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::Identifier(expr) => {
                 expr.report_effects_when_called(options);
             }
+            Self::FunctionExpression(expr) => {
+                expr.report_effects_when_called(options);
+            }
+            Self::ArrowFunctionExpression(expr) => {
+                expr.report_effects_when_called(options);
+            }
+            Self::ParenthesizedExpression(expr) => {
+                expr.report_effects_when_called(options);
+            }
             _ => {
                 // Default behavior
                 options.ctx.diagnostic(NoSideEffectsDiagnostic::Call(self.span()));
@@ -147,7 +176,7 @@ impl<'a> ListenerMap for Expression<'a> {
 // which kind of Expression defines `report_effects_when_called` method.
 fn defined_custom_report_effects_when_called(expr: &Expression) -> bool {
     matches!(
-        expr,
+        expr.get_inner_expression(),
         Expression::ArrowFunctionExpression(_)
             | Expression::CallExpression(_)
             | Expression::ClassExpression(_)
@@ -156,6 +185,46 @@ fn defined_custom_report_effects_when_called(expr: &Expression) -> bool {
             | Expression::Identifier(_)
             | Expression::MemberExpression(_)
     )
+}
+
+impl<'a> ListenerMap for ParenthesizedExpression<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.expression.report_effects(options);
+    }
+    fn report_effects_when_assigned(&self, options: &NodeListenerOptions) {
+        self.expression.report_effects_when_assigned(options);
+    }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        self.expression.report_effects_when_called(options);
+    }
+    fn report_effects_when_mutated(&self, options: &NodeListenerOptions) {
+        self.expression.report_effects_when_mutated(options);
+    }
+    fn get_value_and_report_effects(&self, options: &NodeListenerOptions) -> Option<Value> {
+        self.expression.get_value_and_report_effects(options)
+    }
+}
+
+impl<'a> ListenerMap for ArrowFunctionExpression<'a> {
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        self.params.items.iter().for_each(|param| param.report_effects(options));
+        self.body.statements.iter().for_each(|stmt| stmt.report_effects(options));
+    }
+}
+
+impl<'a> ListenerMap for Function<'a> {
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        self.params.items.iter().for_each(|param| param.report_effects(options));
+        if let Some(body) = &self.body {
+            body.statements.iter().for_each(|stmt| stmt.report_effects(options));
+        }
+    }
+}
+
+impl<'a> ListenerMap for FormalParameter<'a> {
+    fn report_effects(&self, _options: &NodeListenerOptions) {
+        // TODO: Not work now, need report side effects.
+    }
 }
 
 impl<'a> ListenerMap for CallExpression<'a> {
@@ -274,13 +343,12 @@ impl<'a> ListenerMap for IdentifierReference<'a> {
                         if let Some(expr) = get_write_expr(node_id, ctx) {
                             expr.report_effects_when_mutated(options);
                         }
-
-                        ctx.diagnostic(NoSideEffectsDiagnostic::MutationWithName(
-                            self.name.to_compact_str(),
-                            self.span,
-                        ));
                     }
                 }
+
+                let symbol_table = ctx.semantic().symbols();
+                let node = ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
+                node.report_effects_when_mutated(options);
             }
         } else {
             ctx.diagnostic(NoSideEffectsDiagnostic::MutationWithName(

@@ -60,3 +60,9 @@ pub mod codegen {
     #[doc(inline)]
     pub use oxc_codegen::*;
 }
+
+#[cfg(feature = "sourcemap")]
+pub mod sourcemap {
+    #[doc(inline)]
+    pub use oxc_sourcemap::*;
+}

@@ -135,7 +135,9 @@ pub struct Runtime {
 
 impl Runtime {
     fn new(linter: Linter, options: LintServiceOptions) -> Self {
-        let resolver = linter.options().import_plugin.then(|| Self::get_resolver(options.tsconfig));
+        let resolver = linter.options().import_plugin.then(|| {
+            Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
+        });
         Self {
             cwd: options.cwd,
             paths: options.paths.iter().cloned().collect(),
@@ -148,17 +150,14 @@ impl Runtime {
 
     fn get_resolver(tsconfig: Option<PathBuf>) -> Resolver {
         use oxc_resolver::{ResolveOptions, TsconfigOptions, TsconfigReferences};
-        let tsconfig = if let Some(path) = tsconfig {
+        let tsconfig = tsconfig.and_then(|path| {
             if path.is_file() {
                 Some(TsconfigOptions { config_file: path, references: TsconfigReferences::Auto })
             } else {
-                // TODO: crates/oxc_cli/src/lint/mod.rs
-                eprintln!("Tsconfig {path:?} is not a file");
                 None
             }
-        } else {
-            None
-        };
+        });
+
         Resolver::new(ResolveOptions {
             extensions: VALID_EXTENSIONS.iter().map(|ext| format!(".{ext}")).collect(),
             condition_names: vec!["module".into(), "require".into()],

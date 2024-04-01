@@ -3,55 +3,55 @@ source: crates/oxc_linter/src/tester.rs
 expression: no_unresolved
 ---
   ⚠ eslint-plugin-import(no-unresolved): Ensure imports point to a file/module that can be resolved
-   ╭─[index.js:1:24]
+   ╭─[index.ts:1:24]
  1 │ import reallyfake from "./reallyfake/module"
    ·                        ─────────────────────
    ╰────
 
   ⚠ eslint-plugin-import(no-unresolved): Ensure imports point to a file/module that can be resolved
-   ╭─[index.js:1:17]
+   ╭─[index.ts:1:17]
  1 │ import bar from './baz';
    ·                 ───────
    ╰────
 
   ⚠ eslint-plugin-import(no-unresolved): Ensure imports point to a file/module that can be resolved
-   ╭─[index.js:1:17]
+   ╭─[index.ts:1:17]
  1 │ import bar from './baz';
    ·                 ───────
    ╰────
 
   ⚠ eslint-plugin-import(no-unresolved): Ensure imports point to a file/module that can be resolved
-   ╭─[index.js:1:17]
+   ╭─[index.ts:1:17]
  1 │ import bar from './empty-folder';
    ·                 ────────────────
    ╰────
 
   ⚠ eslint-plugin-import(no-unresolved): Ensure imports point to a file/module that can be resolved
-   ╭─[index.js:1:22]
+   ╭─[index.ts:1:22]
  1 │ import { DEEP } from 'in-alternate-root';
    ·                      ───────────────────
    ╰────
 
   ⚠ eslint-plugin-import(no-unresolved): Ensure imports point to a file/module that can be resolved
-   ╭─[index.js:1:21]
+   ╭─[index.ts:1:21]
  1 │ export { foo } from "./does-not-exist"
    ·                     ──────────────────
    ╰────
 
   ⚠ eslint-plugin-import(no-unresolved): Ensure imports point to a file/module that can be resolved
-   ╭─[index.js:1:15]
+   ╭─[index.ts:1:15]
  1 │ export * from "./does-not-exist"
    ·               ──────────────────
    ╰────
 
   ⚠ eslint-plugin-import(no-unresolved): Ensure imports point to a file/module that can be resolved
-   ╭─[index.js:1:22]
+   ╭─[index.ts:1:22]
  1 │ export * as bar from "./does-not-exist"
    ·                      ──────────────────
    ╰────
 
   × Unexpected token
-   ╭─[index.js:1:8]
+   ╭─[index.ts:1:8]
  1 │ export bar from "./does-not-exist"
    ·        ───
    ╰────

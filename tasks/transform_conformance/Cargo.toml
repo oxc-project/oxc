@@ -30,8 +30,8 @@ oxc_transformer  = { workspace = true }
 oxc_tasks_common = { workspace = true }
 oxc_diagnostics  = { workspace = true }
 
-serde_json = { workspace = true }
-serde      = { workspace = true }
 walkdir    = { workspace = true }
 pico-args  = { workspace = true }
 indexmap   = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }

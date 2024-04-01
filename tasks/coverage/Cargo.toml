@@ -31,6 +31,7 @@ oxc_minifier     = { workspace = true }
 oxc_prettier     = { workspace = true }
 oxc_span         = { workspace = true }
 oxc_tasks_common = { workspace = true }
+oxc_sourcemap    = { workspace = true }
 
 serde        = { workspace = true, features = ["derive"] }
 serde_json   = { workspace = true }

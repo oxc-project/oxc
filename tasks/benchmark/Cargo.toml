@@ -42,6 +42,10 @@ harness = false
 name    = "codegen_sourcemap"
 harness = false
 
+[[bench]]
+name    = "sourcemap"
+harness = false
+
 # Broken
 # [[bench]]
 # name    = "prettier"
@@ -71,6 +75,7 @@ oxc_span         = { workspace = true, optional = true }
 oxc_tasks_common = { workspace = true, optional = true }
 oxc_transformer  = { workspace = true, optional = true }
 oxc_codegen      = { workspace = true, optional = true }
+oxc_sourcemap    = { workspace = true, optional = true }
 
 criterion  = { package = "criterion2", version = "0.6.0", default-features = false }
 serde      = { workspace = true, optional = true }
@@ -88,6 +93,7 @@ default = [
   "dep:oxc_tasks_common",
   "dep:oxc_transformer",
   "dep:oxc_codegen",
+  "dep:oxc_sourcemap",
 ]
 codspeed = ["criterion/codspeed"]
 codspeed_napi = ["criterion/codspeed", "dep:serde", "dep:serde_json"]

@@ -1,3 +1,6 @@
+use std::sync::Arc;
+
+use oxc_span::Span;
 use oxc_syntax::identifier::{LS, PS};
 
 // Irregular line breaks - '\u{2028}' (LS) and '\u{2029}' (PS)
@@ -22,11 +25,12 @@ pub struct LineOffsetTable {
 pub struct SourcemapBuilder {
     enable_sourcemap: bool,
     source_id: u32,
+    original_source: Arc<str>,
     last_generated_update: usize,
     last_position: Option<u32>,
     last_search_line: usize,
     line_offset_tables: Vec<LineOffsetTable>,
-    sourcemap_builder: sourcemap::SourceMapBuilder,
+    sourcemap_builder: oxc_sourcemap::SourceMapBuilder,
     generated_line: u32,
     generated_column: u32,
 }
@@ -36,11 +40,12 @@ impl Default for SourcemapBuilder {
         Self {
             enable_sourcemap: false,
             source_id: 0,
+            original_source: "".into(),
             last_generated_update: 0,
             last_position: None,
             last_search_line: 0,
             line_offset_tables: vec![],
-            sourcemap_builder: sourcemap::SourceMapBuilder::new(None),
+            sourcemap_builder: oxc_sourcemap::SourceMapBuilder::default(),
             generated_line: 0,
             generated_column: 0,
         }
@@ -51,30 +56,39 @@ impl SourcemapBuilder {
     pub fn with_name_and_source(&mut self, name: &str, source: &str) {
         self.enable_sourcemap = true;
         self.line_offset_tables = Self::generate_line_offset_tables(source);
-        self.source_id = self.sourcemap_builder.add_source(name);
-        self.sourcemap_builder.set_source_contents(self.source_id, Some(source));
+        self.source_id = self.sourcemap_builder.set_source_and_content(name, source);
+        self.original_source = source.into();
     }
 
-    pub fn into_sourcemap(self) -> Option<sourcemap::SourceMap> {
+    pub fn into_sourcemap(self) -> Option<oxc_sourcemap::SourceMap> {
         self.enable_sourcemap.then(|| self.sourcemap_builder.into_sourcemap())
     }
 
-    pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&str>) {
+    pub fn add_source_mapping_for_name(&mut self, output: &[u8], span: Span, name: &str) {
+        // SAFETY: search original string by span.
+        let original_name =
+            unsafe { self.original_source.get_unchecked(span.start as usize..span.end as usize) };
+        // The token name should be original name.
+        // If it hasn't change, name should be `None` to reduce `SourceMap` size.
+        let token_name = if original_name == name { None } else { Some(original_name.into()) };
+        self.add_source_mapping(output, span.start, token_name);
+    }
+
+    pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<Arc<str>>) {
         if self.enable_sourcemap {
             if matches!(self.last_position, Some(last_position) if last_position >= position) {
                 return;
             }
             let (original_line, original_column) = self.search_original_line_and_column(position);
             self.update_generated_line_and_column(output);
-            let name_id = name.map(|s| self.sourcemap_builder.add_name(s));
-            self.sourcemap_builder.add_raw(
+            let name_id = name.map(|s| self.sourcemap_builder.add_name(&s));
+            self.sourcemap_builder.add_token(
                 self.generated_line,
                 self.generated_column,
                 original_line,
                 original_column,
                 Some(self.source_id),
                 name_id,
-                false,
             );
             self.last_position = Some(position);
         }
@@ -365,5 +379,25 @@ mod test {
         create_mappings("\r\nabc", 1, 3);
         create_mappings("abc\r\n", 1, 0);
         create_mappings("ÖÖ\nÖ\nÖÖÖ", 2, 3);
+    }
+
+    #[test]
+    fn add_source_mapping_for_name() {
+        let output = "ac".as_bytes();
+        let mut builder = SourcemapBuilder::default();
+        builder.with_name_and_source("x.js", "ab");
+        builder.add_source_mapping_for_name(output, Span::new(0, 1), "a");
+        builder.add_source_mapping_for_name(output, Span::new(1, 2), "c");
+        let sm = builder.into_sourcemap().unwrap();
+        // The name `a` not change.
+        assert_eq!(
+            sm.get_source_view_token(0_u32).as_ref().and_then(|token| token.get_name()),
+            None
+        );
+        // The name `b` -> `c`, save `b` to token.
+        assert_eq!(
+            sm.get_source_view_token(1_u32).as_ref().and_then(|token| token.get_name()),
+            Some("b")
+        );
     }
 }
