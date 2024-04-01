@@ -11,7 +11,7 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_semantic::{AstNode, SymbolId};
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
 use crate::{
@@ -66,6 +66,11 @@ impl<'a> ListenerMap for Statement<'a> {
             Self::Declaration(decl) => {
                 decl.report_effects(options);
             }
+            Self::ReturnStatement(stmt) => {
+                if let Some(arg) = &stmt.argument {
+                    arg.report_effects(options);
+                }
+            }
             Self::ModuleDeclaration(decl) => {
                 if matches!(
                     decl.0,
@@ -92,6 +97,16 @@ impl<'a> ListenerMap for AstNode<'a> {
                     init.report_effects_when_called(options);
                 }
             }
+            AstKind::FormalParameter(param) => {
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::CallParameter(param.span));
+            }
+            AstKind::BindingRestElement(rest) => {
+                let start = rest.span.start + 3;
+                let end = rest.span.end;
+                options
+                    .ctx
+                    .diagnostic(NoSideEffectsDiagnostic::CallParameter(Span::new(start, end)));
+            }
             _ => {}
         }
     }
@@ -102,6 +117,16 @@ impl<'a> ListenerMap for AstNode<'a> {
                 if let Some(init) = &decl.init {
                     init.report_effects_when_mutated(options);
                 }
+            }
+            AstKind::FormalParameter(param) => {
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::MutationOfParameter(param.span));
+            }
+            AstKind::BindingRestElement(rest) => {
+                let start = rest.span.start + 3;
+                let end = rest.span.end;
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::MutationOfParameter(Span::new(
+                    start, end,
+                )));
             }
             _ => {}
         }
@@ -272,8 +297,8 @@ impl<'a> ListenerMap for Function<'a> {
 }
 
 impl<'a> ListenerMap for FormalParameter<'a> {
-    fn report_effects(&self, _options: &NodeListenerOptions) {
-        // TODO: Not work now, need report side effects.
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.pattern.report_effects(options);
     }
 }
 
