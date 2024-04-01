@@ -9,7 +9,7 @@ expression: check_access
    ·                          ───────
  4 │                        */
    ╰────
-  help: Valid access leves are `package`, `private`, `protected`, and `public`.
+  help: Valid access levels are `package`, `private`, `protected`, and `public`.
 
   ⚠ eslint-plugin-jsdoc(check-access): Invalid access level is specified.
    ╭─[check_access.tsx:3:17]
@@ -18,7 +18,7 @@ expression: check_access
    ·                          ───────
  4 │                        */
    ╰────
-  help: Valid access leves are `package`, `private`, `protected`, and `public`.
+  help: Valid access levels are `package`, `private`, `protected`, and `public`.
 
   ⚠ eslint-plugin-jsdoc(check-access): Invalid access level is specified.
    ╭─[check_access.tsx:3:25]
@@ -27,7 +27,7 @@ expression: check_access
    ·                                  ────────────
  4 │                                */
    ╰────
-  help: Valid access leves are `package`, `private`, `protected`, and `public`.
+  help: Valid access levels are `package`, `private`, `protected`, and `public`.
 
   ⚠ eslint-plugin-jsdoc(check-access): Invalid access level is specified.
    ╭─[check_access.tsx:3:17]
@@ -36,7 +36,7 @@ expression: check_access
    ·                          ───────
  4 │                        */
    ╰────
-  help: Valid access leves are `package`, `private`, `protected`, and `public`.
+  help: Valid access levels are `package`, `private`, `protected`, and `public`.
 
   ⚠ eslint-plugin-jsdoc(check-access): Invalid access level is specified.
    ╭─[check_access.tsx:4:15]
@@ -45,7 +45,7 @@ expression: check_access
    ·                        ───────
  5 │                      */
    ╰────
-  help: Valid access leves are `package`, `private`, `protected`, and `public`.
+  help: Valid access levels are `package`, `private`, `protected`, and `public`.
 
   ⚠ eslint-plugin-jsdoc(check-access): Mixing of @access with @public, @private, @protected, or @package on the same doc block.
    ╭─[check_access.tsx:4:17]
