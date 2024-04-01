@@ -10,25 +10,51 @@ use rustc_hash::FxHashSet;
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsdoc(check-access): TODO")]
-#[diagnostic(severity(warning), help("TODO"))]
-struct CheckAccessDiagnostic(#[label] pub Span);
+enum CheckAccessDiagnostic {
+    #[error("eslint-plugin-jsdoc(check-access): Invalid access level is specified.")]
+    #[diagnostic(
+        severity(warning),
+        help("Valid access leves are `package`, `private`, `protected`, and `public`.")
+    )]
+    InvalidAccessLevel(#[label] Span),
+
+    #[error("eslint-plugin-jsdoc(check-access): Mixing of @access with @public, @private, @protected, or @package on the same doc block.")]
+    #[diagnostic(
+        severity(warning),
+        help("There should be only one instance of access tag in a JSDoc comment.")
+    )]
+    RedundantAccessTags(#[label] Span),
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct CheckAccess;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// TODO!
+    /// Checks that `@access` tags use one of the following values:
+    /// - "package", "private", "protected", "public"
+    ///
+    /// Also reports:
+    /// - Mixing of `@access` with `@public`, `@private`, `@protected`, or `@package` on the same doc block.
+    /// - Use of multiple instances of `@access` (or the `@public`, etc) on the same doc block.
     ///
     /// ### Why is this bad?
-    ///
+    /// It is important to have a consistent way of specifying access levels.
     ///
     /// ### Example
     /// ```javascript
+    /// // Passing
+    /// /** @access private */
+    ///
+    /// /** @private */
+    ///
+    /// // Failing
+    /// /** @access private @public */
+    ///
+    /// /** @access invalidlevel */
     /// ```
     CheckAccess,
-    correctness
+    restriction
 );
 
 const ACCESS_LEVELS: phf::Set<&'static str> = phf_set! {
@@ -37,8 +63,6 @@ const ACCESS_LEVELS: phf::Set<&'static str> = phf_set! {
     "protected",
     "public",
 };
-
-// TODO: Diagnostic message
 
 impl Rule for CheckAccess {
     fn run_once(&self, ctx: &LintContext) {
@@ -60,12 +84,12 @@ impl Rule for CheckAccess {
 
                 // Has valid access level?
                 if tag.kind == resolved_access_tag_name && !ACCESS_LEVELS.contains(&tag.comment()) {
-                    ctx.diagnostic(CheckAccessDiagnostic(*span));
+                    ctx.diagnostic(CheckAccessDiagnostic::InvalidAccessLevel(*span));
                 }
 
                 // Has redundant access level?
                 if 1 < access_related_tags_count {
-                    ctx.diagnostic(CheckAccessDiagnostic(*span));
+                    ctx.diagnostic(CheckAccessDiagnostic::RedundantAccessTags(*span));
                 }
             }
         }
