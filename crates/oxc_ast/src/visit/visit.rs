@@ -1099,9 +1099,11 @@ pub mod walk {
 
     pub fn walk_finally_clause<'a, V: Visit<'a>>(visitor: &mut V, clause: &BlockStatement<'a>) {
         let kind = AstKind::FinallyClause(visitor.alloc(clause));
+        visitor.enter_scope(ScopeFlags::empty());
         visitor.enter_node(kind);
-        visitor.visit_block_statement(clause);
+        visitor.visit_statements(&clause.body);
         visitor.leave_node(kind);
+        visitor.leave_scope();
     }
 
     pub fn walk_while_statement<'a, V: Visit<'a>>(visitor: &mut V, stmt: &WhileStatement<'a>) {

@@ -1159,9 +1159,11 @@ pub mod walk_mut {
         clause: &mut BlockStatement<'a>,
     ) {
         let kind = AstType::FinallyClause;
+        visitor.enter_scope(ScopeFlags::empty());
         visitor.enter_node(kind);
-        visitor.visit_block_statement(clause);
+        visitor.visit_statements(&mut clause.body);
         visitor.leave_node(kind);
+        visitor.leave_scope();
     }
 
     pub fn walk_while_statement_mut<'a, V: VisitMut<'a>>(
