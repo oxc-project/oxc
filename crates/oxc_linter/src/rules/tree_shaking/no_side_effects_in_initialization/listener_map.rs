@@ -3,9 +3,10 @@ use std::cell::RefCell;
 use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, AssignmentTarget,
-        CallExpression, ComputedMemberExpression, Expression, FormalParameter, Function,
-        IdentifierReference, MemberExpression, ModuleDeclaration, ParenthesizedExpression,
-        PrivateFieldExpression, Program, SimpleAssignmentTarget, Statement, StaticMemberExpression,
+        BindingPattern, BindingPatternKind, CallExpression, ComputedMemberExpression, Declaration,
+        Expression, FormalParameter, Function, IdentifierReference, MemberExpression,
+        ModuleDeclaration, ParenthesizedExpression, PrivateFieldExpression, Program,
+        SimpleAssignmentTarget, Statement, StaticMemberExpression, VariableDeclarator,
     },
     AstKind,
 };
@@ -62,6 +63,9 @@ impl<'a> ListenerMap for Statement<'a> {
             Self::BreakStatement(_) | Self::ContinueStatement(_) | Self::EmptyStatement(_) => {
                 no_effects();
             }
+            Self::Declaration(decl) => {
+                decl.report_effects(options);
+            }
             Self::ModuleDeclaration(decl) => {
                 if matches!(
                     decl.0,
@@ -100,6 +104,52 @@ impl<'a> ListenerMap for AstNode<'a> {
                 }
             }
             _ => {}
+        }
+    }
+}
+
+impl<'a> ListenerMap for Declaration<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        #[allow(clippy::single_match)]
+        match self {
+            Self::VariableDeclaration(decl) => {
+                decl.declarations.iter().for_each(|decl| decl.report_effects(options));
+            }
+            _ => {}
+        }
+    }
+}
+
+impl<'a> ListenerMap for VariableDeclarator<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.id.report_effects(options);
+
+        if let Some(init) = &self.init {
+            init.report_effects(options);
+        }
+    }
+}
+
+impl<'a> ListenerMap for BindingPattern<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        match &self.kind {
+            BindingPatternKind::BindingIdentifier(_) => {}
+            BindingPatternKind::ArrayPattern(array) => {
+                array.elements.iter().for_each(|el| {
+                    if let Some(el) = el {
+                        el.report_effects(options);
+                    }
+                });
+            }
+            BindingPatternKind::ObjectPattern(object) => {
+                object.properties.iter().for_each(|prop| {
+                    prop.value.report_effects(options);
+                });
+            }
+            BindingPatternKind::AssignmentPattern(assign_p) => {
+                assign_p.left.report_effects(options);
+                assign_p.right.report_effects(options);
+            }
         }
     }
 }
