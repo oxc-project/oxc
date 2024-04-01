@@ -14,7 +14,7 @@ enum CheckAccessDiagnostic {
     #[error("eslint-plugin-jsdoc(check-access): Invalid access level is specified.")]
     #[diagnostic(
         severity(warning),
-        help("Valid access leves are `package`, `private`, `protected`, and `public`.")
+        help("Valid access levels are `package`, `private`, `protected`, and `public`.")
     )]
     InvalidAccessLevel(#[label] Span),
 
