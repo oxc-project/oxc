@@ -43,7 +43,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     ConsistentTypeDefinitions,
-    correctness
+    style
 );
 
 impl Rule for ConsistentTypeDefinitions {
