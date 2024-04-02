@@ -1,5 +1,6 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_semantic::AstNodeId;
+use oxc_span::Span;
 
 use crate::LintContext;
 
@@ -21,3 +22,24 @@ pub fn get_write_expr<'a, 'b>(
 }
 
 pub fn no_effects() {}
+
+/// Comments containing @__PURE__ or #__PURE__ mark a specific function call
+/// or constructor invocation as side effect free.
+///
+/// Such an annotation is considered valid if it directly
+/// precedes a function call or constructor invocation
+/// and is only separated from the callee by white-space or comments.
+///
+/// The only exception are parentheses that wrap a call or invocation.
+///
+/// <https://rollupjs.org/configuration-options/#pure>
+pub fn has_pure_notation(span: Span, ctx: &LintContext) -> bool {
+    let Some((start, comment)) = ctx.semantic().trivias().comments_range(..span.start).next_back()
+    else {
+        return false;
+    };
+    let span = Span::new(*start, comment.end);
+    let raw = span.source_text(ctx.semantic().source_text());
+
+    raw.contains("@__PURE__") || raw.contains("#__PURE__")
+}

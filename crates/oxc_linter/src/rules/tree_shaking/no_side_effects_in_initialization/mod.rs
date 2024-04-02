@@ -20,19 +20,23 @@ enum NoSideEffectsDiagnostic {
 
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating")]
     #[diagnostic(severity(warning))]
-    Mutation(#[label] Span),
+    Mutate(#[label] Span),
 
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating `{0}`")]
     #[diagnostic(severity(warning))]
-    MutationWithName(CompactStr, #[label] Span),
+    MutateWithName(CompactStr, #[label] Span),
 
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function return value")]
     #[diagnostic(severity(warning))]
-    MutationOfFunctionReturnValue(#[label] Span),
+    MutateFunctionReturnValue(#[label] Span),
 
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function parameter")]
     #[diagnostic(severity(warning))]
-    MutationOfParameter(#[label] Span),
+    MutateParameter(#[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating unknown this value")]
+    #[diagnostic(severity(warning))]
+    MutateOfThis(#[label] Span),
 
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling")]
     #[diagnostic(severity(warning))]
@@ -292,9 +296,9 @@ fn test() {
         // "class x {a(){}}",
         // "class x {static a(){}}",
         // // NewExpression
-        // "const x = new (function (){this.x = 1})()",
-        // "function x(){this.y = 1}; const z = new x()",
-        // "/*@__PURE__*/ new ext()",
+        "const x = new (function (){this.x = 1})()",
+        "function x(){this.y = 1}; const z = new x()",
+        "/*@__PURE__*/ new ext()",
         // // ObjectExpression
         // "const x = {y: ext}",
         // r#"const x = {["y"]: ext}"#,
@@ -382,7 +386,7 @@ fn test() {
         "ext += 1",
         "ext.x = 1",
         "const x = {};x[ext()] = 1",
-        // "this.x = 1",
+        "this.x = 1",
         // // AssignmentPattern
         // "const {x = ext()} = {}",
         // "const {y: {x = ext()} = {}} = {}",
@@ -577,8 +581,8 @@ fn test() {
         // // MethodDefinition
         // "class x {static [ext()](){}}",
         // // NewExpression
-        // "const x = new ext()",
-        // "new ext()",
+        "const x = new ext()",
+        "new ext()",
         // // ObjectExpression
         // "const x = {y: ext()}",
         // r#"const x = {["y"]: ext()}"#,

@@ -1,12 +1,13 @@
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 
 use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, AssignmentTarget,
         BindingPattern, BindingPatternKind, CallExpression, ComputedMemberExpression, Declaration,
         Expression, FormalParameter, Function, IdentifierReference, MemberExpression,
-        ModuleDeclaration, ParenthesizedExpression, PrivateFieldExpression, Program,
-        SimpleAssignmentTarget, Statement, StaticMemberExpression, VariableDeclarator,
+        ModuleDeclaration, NewExpression, ParenthesizedExpression, PrivateFieldExpression, Program,
+        SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression,
+        VariableDeclarator,
     },
     AstKind,
 };
@@ -16,7 +17,7 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     ast_util::{get_declaration_of_variable, get_symbol_id_of_variable},
-    utils::{get_write_expr, no_effects, Value},
+    utils::{get_write_expr, has_pure_notation, no_effects, Value},
     LintContext,
 };
 
@@ -24,6 +25,8 @@ use super::NoSideEffectsDiagnostic;
 pub struct NodeListenerOptions<'a, 'b> {
     checked_mutated_nodes: RefCell<FxHashSet<SymbolId>>,
     ctx: &'b LintContext<'a>,
+    has_valid_this: Cell<bool>,
+    call_with_new: Cell<bool>,
 }
 
 impl<'a, 'b> NodeListenerOptions<'a, 'b> {
@@ -34,7 +37,12 @@ impl<'a, 'b> NodeListenerOptions<'a, 'b> {
 
 impl<'a, 'b> NodeListenerOptions<'a, 'b> {
     pub fn new(ctx: &'b LintContext<'a>) -> Self {
-        Self { checked_mutated_nodes: RefCell::new(FxHashSet::default()), ctx }
+        Self {
+            checked_mutated_nodes: RefCell::new(FxHashSet::default()),
+            ctx,
+            has_valid_this: Cell::new(false),
+            call_with_new: Cell::new(false),
+        }
     }
 }
 
@@ -119,14 +127,14 @@ impl<'a> ListenerMap for AstNode<'a> {
                 }
             }
             AstKind::FormalParameter(param) => {
-                options.ctx.diagnostic(NoSideEffectsDiagnostic::MutationOfParameter(param.span));
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::MutateParameter(param.span));
             }
             AstKind::BindingRestElement(rest) => {
                 let start = rest.span.start + 3;
                 let end = rest.span.end;
-                options.ctx.diagnostic(NoSideEffectsDiagnostic::MutationOfParameter(Span::new(
-                    start, end,
-                )));
+                options
+                    .ctx
+                    .diagnostic(NoSideEffectsDiagnostic::MutateParameter(Span::new(start, end)));
             }
             _ => {}
         }
@@ -195,6 +203,9 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::ParenthesizedExpression(expr) => {
                 expr.report_effects(options);
             }
+            Self::NewExpression(expr) => {
+                expr.report_effects(options);
+            }
             Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
             | Self::Identifier(_)
@@ -217,9 +228,12 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::CallExpression(expr) => {
                 expr.report_effects_when_mutated(options);
             }
+            Self::ThisExpression(expr) => {
+                expr.report_effects_when_mutated(options);
+            }
             _ => {
                 // Default behavior
-                options.ctx.diagnostic(NoSideEffectsDiagnostic::Mutation(self.span()));
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::Mutate(self.span()));
             }
         }
     }
@@ -262,6 +276,27 @@ fn defined_custom_report_effects_when_called(expr: &Expression) -> bool {
     )
 }
 
+impl ListenerMap for ThisExpression {
+    fn report_effects_when_mutated(&self, options: &NodeListenerOptions) {
+        if !options.has_valid_this.get() {
+            options.ctx.diagnostic(NoSideEffectsDiagnostic::MutateOfThis(self.span));
+        }
+    }
+}
+
+impl<'a> ListenerMap for NewExpression<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        if has_pure_notation(self.span, options.ctx) {
+            return;
+        }
+        self.arguments.iter().for_each(|arg| arg.report_effects(options));
+        let old_val = options.call_with_new.get();
+        options.call_with_new.set(true);
+        self.callee.report_effects_when_called(options);
+        options.call_with_new.set(old_val);
+    }
+}
+
 impl<'a> ListenerMap for ParenthesizedExpression<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
         self.expression.report_effects(options);
@@ -283,16 +318,22 @@ impl<'a> ListenerMap for ParenthesizedExpression<'a> {
 impl<'a> ListenerMap for ArrowFunctionExpression<'a> {
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
         self.params.items.iter().for_each(|param| param.report_effects(options));
+        let old_val = options.has_valid_this.get();
+        options.has_valid_this.set(options.call_with_new.get());
         self.body.statements.iter().for_each(|stmt| stmt.report_effects(options));
+        options.has_valid_this.set(old_val);
     }
 }
 
 impl<'a> ListenerMap for Function<'a> {
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
         self.params.items.iter().for_each(|param| param.report_effects(options));
+        let old_val = options.has_valid_this.get();
+        options.has_valid_this.set(options.call_with_new.get());
         if let Some(body) = &self.body {
             body.statements.iter().for_each(|stmt| stmt.report_effects(options));
         }
+        options.has_valid_this.set(old_val);
     }
 }
 
@@ -330,7 +371,7 @@ impl<'a> ListenerMap for CallExpression<'a> {
         }
     }
     fn report_effects_when_mutated(&self, options: &NodeListenerOptions) {
-        options.ctx.diagnostic(NoSideEffectsDiagnostic::MutationOfFunctionReturnValue(self.span));
+        options.ctx.diagnostic(NoSideEffectsDiagnostic::MutateFunctionReturnValue(self.span));
     }
 }
 
@@ -426,7 +467,7 @@ impl<'a> ListenerMap for IdentifierReference<'a> {
                 node.report_effects_when_mutated(options);
             }
         } else {
-            ctx.diagnostic(NoSideEffectsDiagnostic::MutationWithName(
+            ctx.diagnostic(NoSideEffectsDiagnostic::MutateWithName(
                 self.name.to_compact_str(),
                 self.span,
             ));
