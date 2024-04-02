@@ -1,7 +1,7 @@
 mod trie;
 
 use convert_case::{Case, Casing};
-use proc_macro2::TokenStream;
+use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
@@ -31,10 +31,8 @@ pub struct AllLintRulesMeta {
 
 impl Parse for AllLintRulesMeta {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
-        let rules = input
-            .parse_terminated::<LintRuleMeta, syn::Token![,]>(LintRuleMeta::parse)?
-            .into_iter()
-            .collect();
+        let rules =
+            input.parse_terminated(LintRuleMeta::parse, syn::Token![,])?.into_iter().collect();
 
         Ok(Self { rules })
     }
@@ -63,7 +61,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             .join("/")
     });
 
-    quote! {
+    let expanded = quote! {
         #(#use_stmts)*
 
         use crate::{context::LintContext, rule::{Rule, RuleCategory, RuleMeta}, AstNode};
@@ -158,5 +156,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 #(RuleEnum::#struct_names(#struct_names::default())),*
             ];
         }
-    }
+    };
+
+    TokenStream::from(expanded)
 }
