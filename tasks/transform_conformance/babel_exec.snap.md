@@ -1,20 +1,22 @@
-Passed: 452/716
+Passed: 459/716
 
 # All Passed:
 * babel-plugin-transform-class-static-block
+* babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-numeric-separator
+* babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-json-strings
 * babel-plugin-transform-async-to-generator
 * babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-template-literals
+* babel-plugin-transform-instanceof
 
 
-# babel-plugin-transform-class-properties (139/149)
+# babel-plugin-transform-class-properties (140/149)
 * nested-class/super-call-in-decorator/exec.js
 * nested-class/super-property-in-accessor-key/exec.js
 * nested-class/super-property-in-decorator/exec.js
-* private/instance/exec.js
 * private/parenthesized-optional-member-call/exec.js
 * private/parenthesized-optional-member-call-with-transform/exec.js
 * private-loose/access-before-declaration/exec.js
@@ -38,12 +40,6 @@ Passed: 452/716
 * private-loose/rhs-not-object/exec.js
 * to-native-fields/rhs-not-object/exec.js
 
-# babel-plugin-transform-logical-assignment-operators (0/4)
-* logical-assignment/anonymous-functions-exec/exec.js
-* logical-assignment/arrow-functions-exec/exec.js
-* logical-assignment/named-functions-exec/exec.js
-* logical-assignment/null-coalescing/exec.js
-
 # babel-plugin-transform-dynamic-import (4/18)
 * commonjs/exec-interop/exec.js
 * commonjs/exec-interop-null/exec.js
@@ -59,10 +55,6 @@ Passed: 452/716
 * commonjs-createImportExpression-false/exec-to-primitive/exec.js
 * commonjs-createImportExpression-false/exec-to-string-order/exec.js
 * commonjs-createImportExpression-false/exec-transpiled-dep/exec.js
-
-# babel-plugin-transform-nullish-coalescing-operator (0/2)
-* assumption-noDocumentAll/runtime-semantics/exec.js
-* nullish-coalescing/runtime-semantics/exec.js
 
 # babel-plugin-transform-optional-chaining (11/16)
 * assumption-noDocumentAll/parenthesized-expression-member-call/exec.js
@@ -94,14 +86,10 @@ Passed: 452/716
 # babel-plugin-transform-arrow-functions (2/3)
 * arrow-functions/implicit-var-arguments/exec.js
 
-# babel-plugin-transform-instanceof (0/1)
-* instanceof/instanceof/exec.js
+# babel-plugin-transform-new-target (8/9)
+* exec/reflect-function/exec.js
 
-# babel-plugin-transform-new-target (7/9)
-* general/class-properties/exec.js
-* general/class-properties-loose/exec.js
-
-# babel-plugin-proposal-decorators (61/258)
+# babel-plugin-proposal-decorators (59/258)
 * 2021-12-fields/context-name/exec.js
 * 2021-12-fields--to-es2015/context-name/exec.js
 * 2021-12-getters/context-name/exec.js
@@ -273,6 +261,8 @@ Passed: 452/716
 * 2023-11-setters--to-es2015/static-private/exec.js
 * 2023-11-setters--to-es2015/static-public/exec.js
 * 2023-11-typescript/computed-key-ts-as-expression/exec.ts
+* legacy-class-constructors/mutate-existing-constructor/exec.js
+* legacy-class-constructors/return-new-constructor/exec.js
 * legacy-class-export-default/exec.mjs
 * legacy-class-ordering/order/exec.js
 * legacy-class-ordering/reverse-order/exec.js

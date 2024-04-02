@@ -1752,8 +1752,6 @@ dependencies = [
  "oxc_tasks_common",
  "oxc_transformer",
  "pico-args",
- "serde",
- "serde_json",
  "walkdir",
 ]
 
@@ -1761,7 +1759,6 @@ dependencies = [
 name = "oxc_transformer"
 version = "0.11.0"
 dependencies = [
- "bitflags 2.5.0",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
@@ -1769,10 +1766,6 @@ dependencies = [
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
- "oxc_syntax",
- "phf",
- "rustc-hash",
- "serde",
 ]
 
 [[package]]
