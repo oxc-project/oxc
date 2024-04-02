@@ -130,5 +130,5 @@ fn test_concat_sourcemap_builder() {
         ])
     );
 
-    assert_eq!(sm.to_json_string(), sm.to_json_string());
+    assert_eq!(sm.to_json_string().unwrap(), sm.to_json_string().unwrap());
 }

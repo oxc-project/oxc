@@ -17,7 +17,7 @@ pub struct SourceMap {
     pub(crate) token_chunks: Option<Vec<TokenChunk>>,
 }
 
-#[allow(clippy::cast_possible_truncation)]
+#[allow(clippy::cast_possible_truncation, clippy::missing_errors_doc)]
 impl SourceMap {
     pub fn new(
         file: Option<Arc<str>>,
@@ -37,15 +37,15 @@ impl SourceMap {
     }
 
     /// Convert the vlq sourcemap string to `SourceMap`.
-    pub fn to_json_string(&self) -> String {
+    pub fn to_json_string(&self) -> Result<String> {
         encode(self)
     }
 
     /// Convert `SourceMap` to vlq sourcemap data url.
-    pub fn to_data_url(&self) -> String {
+    pub fn to_data_url(&self) -> Result<String> {
         let base_64_str =
-            base64_simd::Base64::STANDARD.encode_to_boxed_str(self.to_json_string().as_bytes());
-        format!("data:application/json;charset=utf-8;base64,{base_64_str}")
+            base64_simd::Base64::STANDARD.encode_to_boxed_str(self.to_json_string()?.as_bytes());
+        Ok(format!("data:application/json;charset=utf-8;base64,{base_64_str}"))
     }
 
     pub fn get_file(&self) -> Option<&str> {

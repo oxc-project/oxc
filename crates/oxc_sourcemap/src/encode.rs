@@ -1,3 +1,4 @@
+use crate::error::{Error, Result};
 /// Port from https://github.com/getsentry/rust-sourcemap/blob/master/src/encoder.rs
 /// It is a helper for encode `SourceMap` to vlq sourcemap string, but here some different.
 /// - Quote `source_content` at parallel.
@@ -5,7 +6,7 @@
 use crate::{token::TokenChunk, SourceMap, Token};
 use rayon::prelude::*;
 
-pub fn encode(sourcemap: &SourceMap) -> String {
+pub fn encode(sourcemap: &SourceMap) -> Result<String> {
     let mut buf = String::new();
     buf.push_str("{\"version\":3,");
     if let Some(file) = sourcemap.get_file() {
@@ -14,20 +15,35 @@ pub fn encode(sourcemap: &SourceMap) -> String {
         buf.push_str("\",");
     }
     buf.push_str("\"names\":[");
-    buf.push_str(&sourcemap.names.iter().map(|x| format!("{x:?}")).collect::<Vec<_>>().join(","));
+    let names = sourcemap
+        .names
+        .iter()
+        .map(|x| serde_json::to_string(x.as_ref()))
+        .collect::<std::result::Result<Vec<_>, serde_json::Error>>()
+        .map_err(Error::from)?;
+    buf.push_str(&names.join(","));
     buf.push_str("],\"sources\":[");
-    buf.push_str(&sourcemap.sources.iter().map(|x| format!("{x:?}")).collect::<Vec<_>>().join(","));
+    let sources = sourcemap
+        .sources
+        .iter()
+        .map(|x| serde_json::to_string(x.as_ref()))
+        .collect::<std::result::Result<Vec<_>, serde_json::Error>>()
+        .map_err(Error::from)?;
+    buf.push_str(&sources.join(","));
     // Quote `source_content` at parallel.
     if let Some(source_contents) = &sourcemap.source_contents {
         buf.push_str("],\"sourcesContent\":[");
-        buf.push_str(
-            &source_contents.par_iter().map(|x| format!("{x:?}")).collect::<Vec<_>>().join(","),
-        );
+        let quote_source_contents = source_contents
+            .par_iter()
+            .map(|x| serde_json::to_string(x.as_ref()))
+            .collect::<std::result::Result<Vec<_>, serde_json::Error>>()
+            .map_err(Error::from)?;
+        buf.push_str(&quote_source_contents.join(","));
     }
     buf.push_str("],\"mappings\":\"");
     buf.push_str(&serialize_sourcemap_mappings(sourcemap));
     buf.push_str("\"}");
-    buf
+    Ok(buf)
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -130,7 +146,7 @@ fn test_encode() {
         "mappings": "AAAA,GAAIA,GAAI,EACR,IAAIA,GAAK,EAAG,CACVC,MAAM"
     }"#;
     let sm = SourceMap::from_json_string(input).unwrap();
-    let sm2 = SourceMap::from_json_string(&sm.to_json_string()).unwrap();
+    let sm2 = SourceMap::from_json_string(&sm.to_json_string().unwrap()).unwrap();
 
     for (tok1, tok2) in sm.get_tokens().zip(sm2.get_tokens()) {
         assert_eq!(tok1, tok2);
