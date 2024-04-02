@@ -84,12 +84,12 @@ fn test() {
     let pass = vec![
         // ArrayExpression
         "[]",
-        // "const x = []",
-        // "const x = [ext,ext]",
-        // "const x = [1,,2,]",
+        "const x = []",
+        "const x = [ext,ext]",
+        "const x = [1,,2,]",
         // // ArrayPattern
-        // "const [x] = []",
-        // "const [,x,] = []",
+        "const [x] = []",
+        "const [,x,] = []",
         // // ArrowFunctionExpression
         // "const x = a=>{a(); ext()}",
         // // ArrowFunctionExpression when called
@@ -354,11 +354,11 @@ fn test() {
 
     let fail = vec![
         // // ArrayExpression
-        // "const x = [ext()]",
-        // "const x = [,,ext(),]",
+        "const x = [ext()]",
+        "const x = [,,ext(),]",
         // // ArrayPattern
-        // "const [x = ext()] = []",
-        // "const [,x = ext(),] = []",
+        "const [x = ext()] = []",
+        "const [,x = ext(),] = []",
         // // ArrowFunctionExpression when called
         // "(()=>{ext()})()",
         // "(({a = ext()})=>{})()",
