@@ -112,8 +112,8 @@ impl<'a> SourcemapVisualizer<'a> {
             );
             s.push('\n');
         }
-        // Windows: Replace "\r\n" and replace with "\n"
-        s.replace("\r\n", "\n")
+
+        s
     }
 
     #[allow(clippy::cast_possible_truncation)]
@@ -168,7 +168,8 @@ impl<'a> SourcemapVisualizer<'a> {
             }
         }
 
-        s
+        // Windows: Replace "\r\n" and replace with "\n"
+        s.replace('\r', "")
     }
 }
 
