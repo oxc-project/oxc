@@ -14,12 +14,14 @@ mod react_jsx;
 mod react_jsx_self;
 mod react_jsx_source;
 mod typescript;
+mod visit_utils;
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast::Program;
+use oxc_ast::{ast::Program, VisitMut};
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 use oxc_span::SourceType;
+use visit_utils::TransformResult;
 
 pub use crate::{
     compiler_assumptions::CompilerAssumptions,
@@ -93,4 +95,8 @@ impl<'a> Transformer<'a> {
     pub fn build(self, _program: &mut Program<'a>) -> Result<(), Vec<Error>> {
         Ok(())
     }
+}
+
+impl<'a> VisitMut<'a> for Transformer<'a> {
+    type Result = TransformResult<'a>;
 }
