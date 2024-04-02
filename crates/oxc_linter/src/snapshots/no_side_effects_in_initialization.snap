@@ -26,6 +26,60 @@ expression: no_side_effects_in_initialization
    ·             ───
    ╰────
 
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:7]
+ 1 │ (()=>{ext()})()
+   ·       ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:8]
+ 1 │ (({a = ext()})=>{})()
+   ·        ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function parameter
+   ╭─[no_side_effects_in_initialization.tsx:1:2]
+ 1 │ (a=>{a()})(ext)
+   ·  ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function parameter
+   ╭─[no_side_effects_in_initialization.tsx:1:6]
+ 1 │ ((...a)=>{a()})(ext)
+   ·      ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function parameter
+   ╭─[no_side_effects_in_initialization.tsx:1:3]
+ 1 │ (({a})=>{a()})(ext)
+   ·   ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function parameter
+   ╭─[no_side_effects_in_initialization.tsx:1:2]
+ 1 │ (a=>{a.x = 1})(ext)
+   ·  ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function parameter
+   ╭─[no_side_effects_in_initialization.tsx:1:2]
+ 1 │ (a=>{const b = a;b.x = 1})(ext)
+   ·  ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function parameter
+   ╭─[no_side_effects_in_initialization.tsx:1:6]
+ 1 │ ((...a)=>{a.x = 1})(ext)
+   ·      ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function parameter
+   ╭─[no_side_effects_in_initialization.tsx:1:3]
+ 1 │ (({a})=>{a.x = 1})(ext)
+   ·   ───
+   ╰────
+
   ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of assignment to `ext`
    ╭─[no_side_effects_in_initialization.tsx:1:1]
  1 │ ext = 1
