@@ -39,7 +39,7 @@ declare_oxc_lint!(
     ///   .mockReturnValueOnce(Promise.resolve(42))
     ///   .mockImplementationOnce(() => Promise.resolve(42))
     ///   .mockReturnValue(Promise.reject(new Error('too many calls!')));
-    ///```
+    /// ```
     ///
     /// // valid
     /// ```javascript
