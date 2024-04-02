@@ -146,7 +146,7 @@ impl<'a> Binder for Function<'a> {
                 let symbol_id = builder.declare_symbol(
                     ident.span,
                     &ident.name,
-                    SymbolFlags::empty(),
+                    SymbolFlags::Function,
                     SymbolFlags::empty(),
                 );
                 ident.symbol_id.set(Some(symbol_id));
