@@ -92,7 +92,7 @@ impl Rule for PreferMockPromiseShorthand {
                     };
 
                     if let Some(expr) = arrow_func.get_expression() {
-                         Self::report(is_once, property_span, Some(arrow_func.span), expr, ctx);
+                        Self::report(is_once, property_span, Some(arrow_func.span), expr, ctx);
                     } else if let Statement::ReturnStatement(return_stmt) = stmt {
                         let Some(arg_expr) = &return_stmt.argument else {
                             return;
