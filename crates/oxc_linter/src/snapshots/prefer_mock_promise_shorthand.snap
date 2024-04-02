@@ -5,6 +5,13 @@ expression: prefer_mock_promise_shorthand
 ---
   ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
+ 1 │ aVariable.mockImplementation(() => Promise.reject(42, 25))
+   ·           ──────────────────
+   ╰────
+  help: Prefer "mockRejectedValue"
+
+  ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises
+   ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ jest.fn().mockImplementation(() => Promise.reject(42))
    ·           ──────────────────
    ╰────

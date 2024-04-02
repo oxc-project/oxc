@@ -39,6 +39,7 @@ declare_oxc_lint!(
     ///   .mockReturnValueOnce(Promise.resolve(42))
     ///   .mockImplementationOnce(() => Promise.resolve(42))
     ///   .mockReturnValue(Promise.reject(new Error('too many calls!')));
+    ///```
     ///
     /// // valid
     /// ```javascript
@@ -52,7 +53,7 @@ declare_oxc_lint!(
     /// ```
     ///
     PreferMockPromiseShorthand,
-    correctness,
+    style,
 );
 
 impl Rule for PreferMockPromiseShorthand {
@@ -163,13 +164,18 @@ impl PreferMockPromiseShorthand {
             if arg_name.ends_with("reject") { mock_promise_reject } else { mock_promise_resolve };
         let fix_span = arg_span.unwrap_or(call_expr.span);
 
-        ctx.diagnostic_with_fix(
-            UseMockShorthand(Atom::from(prefer_name).to_compact_str(), property_span),
-            || {
-                let content = Self::fix(prefer_name, call_expr, ctx);
-                Fix::new(content, Span::new(property_span.start, fix_span.end))
-            },
-        );
+        // if arguments is more than one, just report it instead of fixing it.
+        if call_expr.arguments.len() <= 1 {
+            ctx.diagnostic_with_fix(
+                UseMockShorthand(Atom::from(prefer_name).to_compact_str(), property_span),
+                || {
+                    let content = Self::fix(prefer_name, call_expr, ctx);
+                    Fix::new(content, Span::new(property_span.start, fix_span.end))
+                },
+            );
+        } else {
+            ctx.diagnostic(UseMockShorthand(Atom::from(prefer_name).to_compact_str(), property_span));
+        }
     }
 
     fn fix(prefer_name: &str, call_expr: &CallExpression, ctx: &LintContext) -> String {
@@ -253,6 +259,7 @@ fn test() {
     ];
 
     let fail = vec![
+        ("aVariable.mockImplementation(() => Promise.reject(42, 25))", None),
         ("jest.fn().mockImplementation(() => Promise.reject(42))", None),
         ("aVariable.mockImplementation(() => Promise.resolve(42))", None),
         ("aVariable.mockImplementation(() => { return Promise.resolve(42); })", None),
