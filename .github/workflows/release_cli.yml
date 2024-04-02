@@ -92,7 +92,7 @@ jobs:
 
       - name: Build Binary
         # strip debug symbols from std, see https://github.com/johnthagen/min-sized-rust#remove-panic-string-formatting-with-panic_immediate_abort
-        run: cargo build --release --target ${{ matrix.target }} -p oxc_cli
+        run: cargo build --release --target ${{ matrix.target }} -p oxc_cli --features allocator
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 

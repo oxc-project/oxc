@@ -13,7 +13,7 @@ test    = false
 doctest = false
 
 [dependencies]
-console    = { workspace = true }
+console = { workspace = true }
 
 project-root = { workspace = true }
 serde        = { workspace = true, features = ["derive"] }

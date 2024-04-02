@@ -33,6 +33,12 @@ name = "oxformat"
 path = "src/format/main.rs"
 test = false
 
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+jemallocator = { workspace = true, optional = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+mimalloc = { workspace = true, optional = true }
+
 [dependencies]
 oxc_allocator   = { workspace = true }
 oxc_diagnostics = { workspace = true }
@@ -41,6 +47,7 @@ oxc_parser      = { workspace = true }
 oxc_prettier    = { workspace = true }
 oxc_span        = { workspace = true }
 
+glob               = { workspace = true }
 ignore             = { workspace = true, features = ["simd-accel"] }
 miette             = { workspace = true }
 tempfile           = { workspace = true }
@@ -48,9 +55,6 @@ rayon              = { workspace = true }
 bpaf               = { workspace = true, features = ["derive", "autocomplete", "bright-color"] }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
 
-[target.'cfg(not(target_env = "msvc"))'.dependencies]
-jemallocator = { workspace = true }
-
-[target.'cfg(target_os = "windows")'.dependencies]
-mimalloc = { workspace = true }
-glob     = { workspace = true }
+[features]
+default   = []
+allocator = ["dep:jemallocator", "dep:mimalloc"]
