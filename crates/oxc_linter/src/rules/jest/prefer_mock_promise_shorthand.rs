@@ -174,7 +174,10 @@ impl PreferMockPromiseShorthand {
                 },
             );
         } else {
-            ctx.diagnostic(UseMockShorthand(Atom::from(prefer_name).to_compact_str(), property_span));
+            ctx.diagnostic(UseMockShorthand(
+                Atom::from(prefer_name).to_compact_str(),
+                property_span,
+            ));
         }
     }
 
