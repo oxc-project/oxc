@@ -14,6 +14,18 @@ pub trait VisitResult {
     fn replace() -> Self;
 }
 
+pub struct BasicVisitResult;
+
+impl VisitResult for BasicVisitResult {
+    fn keep() -> Self {
+        Self
+    }
+
+    fn replace() -> Self {
+        Self
+    }
+}
+
 /// Syntax tree traversal to mutate an exclusive borrow of a syntax tree in place.
 pub trait VisitMut<'a>: Sized {
     type Result: VisitResult;

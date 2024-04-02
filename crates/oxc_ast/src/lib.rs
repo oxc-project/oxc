@@ -27,7 +27,7 @@ pub use crate::{
     ast_builder::AstBuilder,
     ast_kind::{AstKind, AstType},
     trivia::{Comment, CommentKind, Trivias, TriviasMap},
-    visit::{Visit, VisitMut},
+    visit::*,
 };
 
 // After experimenting with two types of boxed enum variants:

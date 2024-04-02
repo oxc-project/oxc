@@ -7,12 +7,15 @@ mod prepass;
 mod util;
 
 use oxc_allocator::{Allocator, Vec};
-use oxc_ast::visit::walk_mut::{
-    walk_binary_expression_mut, walk_expression_mut, walk_return_statement_mut, walk_statement_mut,
-    walk_statements_mut,
-};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
+use oxc_ast::{
+    visit::walk_mut::{
+        walk_binary_expression_mut, walk_expression_mut, walk_return_statement_mut,
+        walk_statement_mut, walk_statements_mut,
+    },
+    BasicVisitResult, VisitResult,
+};
 use oxc_span::Span;
 use oxc_syntax::{
     operator::{BinaryOperator, UnaryOperator},
@@ -312,7 +315,9 @@ impl<'a> Compressor<'a> {
 }
 
 impl<'a> VisitMut<'a> for Compressor<'a> {
-    fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+    type Result = BasicVisitResult;
+
+    fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) -> Self::Result {
         stmts.retain(|stmt| {
             if self.drop_debugger(stmt) {
                 return false;
@@ -325,40 +330,49 @@ impl<'a> VisitMut<'a> for Compressor<'a> {
 
         self.join_vars(stmts);
 
-        walk_statements_mut(self, stmts);
+        walk_statements_mut(self, stmts)
     }
 
-    fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
+    fn visit_statement(&mut self, stmt: &mut Statement<'a>) -> Self::Result {
         self.compress_block(stmt);
         self.compress_while(stmt);
         self.fold_condition(stmt);
-        walk_statement_mut(self, stmt);
+
+        walk_statement_mut(self, stmt)
     }
 
-    fn visit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>) {
+    fn visit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>) -> Self::Result {
         walk_return_statement_mut(self, stmt);
         // We may fold `void 1` to `void 0`, so compress it after visiting
         self.compress_return_statement(stmt);
+
+        BasicVisitResult::keep()
     }
 
-    fn visit_variable_declaration(&mut self, decl: &mut VariableDeclaration<'a>) {
+    fn visit_variable_declaration(&mut self, decl: &mut VariableDeclaration<'a>) -> Self::Result {
         for declarator in decl.declarations.iter_mut() {
             self.visit_variable_declarator(declarator);
             self.compress_variable_declarator(declarator);
         }
+
+        BasicVisitResult::keep()
     }
 
-    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) -> Self::Result {
         walk_expression_mut(self, expr);
         self.compress_console(expr);
         self.fold_expression(expr);
         if !self.compress_undefined(expr) {
             self.compress_boolean(expr);
         }
+
+        BasicVisitResult::keep()
     }
 
-    fn visit_binary_expression(&mut self, expr: &mut BinaryExpression<'a>) {
+    fn visit_binary_expression(&mut self, expr: &mut BinaryExpression<'a>) -> Self::Result {
         walk_binary_expression_mut(self, expr);
         self.compress_typeof_undefined(expr);
+
+        BasicVisitResult::keep()
     }
 }

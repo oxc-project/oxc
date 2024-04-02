@@ -5,7 +5,7 @@ use std::{fs, path::Path, str::FromStr};
 use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{Argument, ArrayExpressionElement, CallExpression, Expression, ObjectPropertyKind},
-    VisitMut,
+    BasicVisitResult, VisitMut, VisitResult,
 };
 use oxc_parser::Parser;
 use oxc_prettier::{ArrowParens, EndOfLine, PrettierOptions, QuoteProps, TrailingComma};
@@ -30,21 +30,27 @@ impl SpecParser {
 }
 
 impl VisitMut<'_> for SpecParser {
-    fn visit_call_expression(&mut self, expr: &mut CallExpression<'_>) {
-        let Some(ident) = expr.callee.get_identifier_reference() else { return };
+    type Result = BasicVisitResult;
+
+    fn visit_call_expression(&mut self, expr: &mut CallExpression<'_>) -> Self::Result {
+        let Some(ident) = expr.callee.get_identifier_reference() else {
+            return BasicVisitResult::keep();
+        };
+
         // The `runFormatTest` function used on prettier's test cases. We need to collect all `run_spec` calls
         // And then parse the arguments to get the options and parsers
         // Finally we use this information to generate the snapshot tests
         if ident.name != "runFormatTest" {
-            return;
+            return BasicVisitResult::keep();
         }
+
         let mut parsers = vec![];
         let mut snapshot_options: Vec<(String, String)> = vec![];
         let mut options = PrettierOptions::default();
 
         if let Some(argument) = expr.arguments.get(1) {
             let Argument::Expression(argument_expr) = argument else {
-                return;
+                return BasicVisitResult::keep();
             };
 
             if let Expression::ArrayExpression(arr_expr) = argument_expr {
@@ -63,7 +69,7 @@ impl VisitMut<'_> for SpecParser {
                     .collect::<Vec<String>>();
             }
         } else {
-            return;
+            return BasicVisitResult::keep();
         }
 
         if let Some(Argument::Expression(Expression::ObjectExpression(obj_expr))) =
@@ -134,5 +140,7 @@ impl VisitMut<'_> for SpecParser {
         snapshot_options.sort_by(|a, b| a.0.cmp(&b.0));
 
         self.calls.push((options, snapshot_options));
+
+        BasicVisitResult::keep()
     }
 }

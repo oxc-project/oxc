@@ -1,6 +1,7 @@
 use oxc_allocator::{Allocator, Vec};
 
 use oxc_ast::visit::walk_mut::{walk_expression_mut, walk_statements_mut};
+use oxc_ast::BasicVisitResult;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
 
@@ -26,13 +27,15 @@ impl<'a> Prepass<'a> {
 }
 
 impl<'a> VisitMut<'a> for Prepass<'a> {
-    fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+    type Result = BasicVisitResult;
+
+    fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) -> Self::Result {
         stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
-        walk_statements_mut(self, stmts);
+        walk_statements_mut(self, stmts)
     }
 
-    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) -> Self::Result {
         self.strip_parenthesized_expression(expr);
-        walk_expression_mut(self, expr);
+        walk_expression_mut(self, expr)
     }
 }
