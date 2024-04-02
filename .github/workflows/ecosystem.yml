@@ -36,7 +36,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Build oxlint
-        run: cargo build --release -p oxc_cli --bin oxlint
+        run: cargo build --release -p oxc_cli --bin oxlint --features allocator
 
       - name: Upload Binary
         uses: actions/upload-artifact@v4

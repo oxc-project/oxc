@@ -30,6 +30,10 @@ enum NoSideEffectsDiagnostic {
     #[diagnostic(severity(warning))]
     MutationOfFunctionReturnValue(#[label] Span),
 
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function parameter")]
+    #[diagnostic(severity(warning))]
+    MutationOfParameter(#[label] Span),
+
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling")]
     #[diagnostic(severity(warning))]
     Call(#[label] Span),
@@ -41,6 +45,10 @@ enum NoSideEffectsDiagnostic {
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `{0}`")]
     #[diagnostic(severity(warning))]
     CallGlobal(CompactStr, #[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function parameter")]
+    #[diagnostic(severity(warning))]
+    CallParameter(#[label] Span),
 }
 
 /// <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/master/src/rules/no-side-effects-in-initialization.ts>
@@ -84,21 +92,21 @@ fn test() {
     let pass = vec![
         // ArrayExpression
         "[]",
-        // "const x = []",
-        // "const x = [ext,ext]",
-        // "const x = [1,,2,]",
+        "const x = []",
+        "const x = [ext,ext]",
+        "const x = [1,,2,]",
         // // ArrayPattern
-        // "const [x] = []",
-        // "const [,x,] = []",
+        "const [x] = []",
+        "const [,x,] = []",
         // // ArrowFunctionExpression
-        // "const x = a=>{a(); ext()}",
+        "const x = a=>{a(); ext()}",
         // // ArrowFunctionExpression when called
-        // "(()=>{})()",
-        // "(a=>{})()",
-        // "((...a)=>{})()",
-        // "(({a})=>{})()",
+        "(()=>{})()",
+        "(a=>{})()",
+        "((...a)=>{})()",
+        "(({a})=>{})()",
         // // ArrowFunctionExpression when mutated
-        // "const x = ()=>{}; x.y = 1",
+        "const x = ()=>{}; x.y = 1",
         // // AssignmentExpression
         "var x;x = {}",
         "var x;x += 1",
@@ -354,21 +362,21 @@ fn test() {
 
     let fail = vec![
         // // ArrayExpression
-        // "const x = [ext()]",
-        // "const x = [,,ext(),]",
+        "const x = [ext()]",
+        "const x = [,,ext(),]",
         // // ArrayPattern
-        // "const [x = ext()] = []",
-        // "const [,x = ext(),] = []",
+        "const [x = ext()] = []",
+        "const [,x = ext(),] = []",
         // // ArrowFunctionExpression when called
-        // "(()=>{ext()})()",
-        // "(({a = ext()})=>{})()",
-        // "(a=>{a()})(ext)",
-        // "((...a)=>{a()})(ext)",
-        // "(({a})=>{a()})(ext)",
-        // "(a=>{a.x = 1})(ext)",
-        // "(a=>{const b = a;b.x = 1})(ext)",
-        // "((...a)=>{a.x = 1})(ext)",
-        // "(({a})=>{a.x = 1})(ext)",
+        "(()=>{ext()})()",
+        "(({a = ext()})=>{})()",
+        "(a=>{a()})(ext)",
+        "((...a)=>{a()})(ext)",
+        "(({a})=>{a()})(ext)",
+        "(a=>{a.x = 1})(ext)",
+        "(a=>{const b = a;b.x = 1})(ext)",
+        "((...a)=>{a.x = 1})(ext)",
+        "(({a})=>{a.x = 1})(ext)",
         // // AssignmentExpression
         "ext = 1",
         "ext += 1",

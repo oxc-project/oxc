@@ -77,7 +77,7 @@ oxc_transformer  = { workspace = true, optional = true }
 oxc_codegen      = { workspace = true, optional = true }
 oxc_sourcemap    = { workspace = true, optional = true }
 
-criterion  = { package = "criterion2", version = "0.6.0", default-features = false }
+criterion  = { package = "criterion2", version = "0.7.0", default-features = false }
 serde      = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 

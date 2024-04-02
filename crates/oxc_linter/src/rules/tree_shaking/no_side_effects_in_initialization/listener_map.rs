@@ -3,14 +3,15 @@ use std::cell::RefCell;
 use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, AssignmentTarget,
-        CallExpression, ComputedMemberExpression, Expression, FormalParameter, Function,
-        IdentifierReference, MemberExpression, ModuleDeclaration, ParenthesizedExpression,
-        PrivateFieldExpression, Program, SimpleAssignmentTarget, Statement, StaticMemberExpression,
+        BindingPattern, BindingPatternKind, CallExpression, ComputedMemberExpression, Declaration,
+        Expression, FormalParameter, Function, IdentifierReference, MemberExpression,
+        ModuleDeclaration, ParenthesizedExpression, PrivateFieldExpression, Program,
+        SimpleAssignmentTarget, Statement, StaticMemberExpression, VariableDeclarator,
     },
     AstKind,
 };
 use oxc_semantic::{AstNode, SymbolId};
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
 use crate::{
@@ -62,6 +63,14 @@ impl<'a> ListenerMap for Statement<'a> {
             Self::BreakStatement(_) | Self::ContinueStatement(_) | Self::EmptyStatement(_) => {
                 no_effects();
             }
+            Self::Declaration(decl) => {
+                decl.report_effects(options);
+            }
+            Self::ReturnStatement(stmt) => {
+                if let Some(arg) = &stmt.argument {
+                    arg.report_effects(options);
+                }
+            }
             Self::ModuleDeclaration(decl) => {
                 if matches!(
                     decl.0,
@@ -88,6 +97,16 @@ impl<'a> ListenerMap for AstNode<'a> {
                     init.report_effects_when_called(options);
                 }
             }
+            AstKind::FormalParameter(param) => {
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::CallParameter(param.span));
+            }
+            AstKind::BindingRestElement(rest) => {
+                let start = rest.span.start + 3;
+                let end = rest.span.end;
+                options
+                    .ctx
+                    .diagnostic(NoSideEffectsDiagnostic::CallParameter(Span::new(start, end)));
+            }
             _ => {}
         }
     }
@@ -99,7 +118,63 @@ impl<'a> ListenerMap for AstNode<'a> {
                     init.report_effects_when_mutated(options);
                 }
             }
+            AstKind::FormalParameter(param) => {
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::MutationOfParameter(param.span));
+            }
+            AstKind::BindingRestElement(rest) => {
+                let start = rest.span.start + 3;
+                let end = rest.span.end;
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::MutationOfParameter(Span::new(
+                    start, end,
+                )));
+            }
             _ => {}
+        }
+    }
+}
+
+impl<'a> ListenerMap for Declaration<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        #[allow(clippy::single_match)]
+        match self {
+            Self::VariableDeclaration(decl) => {
+                decl.declarations.iter().for_each(|decl| decl.report_effects(options));
+            }
+            _ => {}
+        }
+    }
+}
+
+impl<'a> ListenerMap for VariableDeclarator<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.id.report_effects(options);
+
+        if let Some(init) = &self.init {
+            init.report_effects(options);
+        }
+    }
+}
+
+impl<'a> ListenerMap for BindingPattern<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        match &self.kind {
+            BindingPatternKind::BindingIdentifier(_) => {}
+            BindingPatternKind::ArrayPattern(array) => {
+                array.elements.iter().for_each(|el| {
+                    if let Some(el) = el {
+                        el.report_effects(options);
+                    }
+                });
+            }
+            BindingPatternKind::ObjectPattern(object) => {
+                object.properties.iter().for_each(|prop| {
+                    prop.value.report_effects(options);
+                });
+            }
+            BindingPatternKind::AssignmentPattern(assign_p) => {
+                assign_p.left.report_effects(options);
+                assign_p.right.report_effects(options);
+            }
         }
     }
 }
@@ -222,8 +297,8 @@ impl<'a> ListenerMap for Function<'a> {
 }
 
 impl<'a> ListenerMap for FormalParameter<'a> {
-    fn report_effects(&self, _options: &NodeListenerOptions) {
-        // TODO: Not work now, need report side effects.
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.pattern.report_effects(options);
     }
 }
 
