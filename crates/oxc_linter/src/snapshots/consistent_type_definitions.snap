@@ -1,0 +1,104 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: consistent_type_definitions
+---
+  ⚠ typescript-eslint(consistent-type-definitions):
+   ╭─[consistent_type_definitions.tsx:2:28]
+ 1 │     
+ 2 │ ╭─▶         export type W<T> = {
+ 3 │ │             x: T;
+ 4 │ ├─▶         };
+   · ╰──── Use an `interface` instead of a `type`
+ 5 │                   
+   ╰────
+  help: Use an `interface` instead of a `type`
+
+  ⚠ typescript-eslint(consistent-type-definitions):
+   ╭─[consistent_type_definitions.tsx:2:16]
+ 1 │     
+ 2 │ ╭─▶         export interface W<T> {
+ 3 │ │             x: T;
+ 4 │ ├─▶         }
+   · ╰──── Use an `type` instead of a `interface`
+ 5 │                   
+   ╰────
+  help: Use an `type` instead of a `interface`
+
+  ⚠ typescript-eslint(consistent-type-definitions):
+   ╭─[consistent_type_definitions.tsx:3:11]
+ 2 │             namespace JSX {
+ 3 │ ╭─▶           interface Array<T> {
+ 4 │ │               foo(x: (x: number) => T): T[];
+ 5 │ ├─▶           }
+   · ╰──── Use an `type` instead of a `interface`
+ 6 │             }
+   ╰────
+  help: Use an `type` instead of a `interface`
+
+  ⚠ typescript-eslint(consistent-type-definitions):
+   ╭─[consistent_type_definitions.tsx:3:11]
+ 2 │             global {
+ 3 │ ╭─▶           interface Array<T> {
+ 4 │ │               foo(x: (x: number) => T): T[];
+ 5 │ ├─▶           }
+   · ╰──── Use an `type` instead of a `interface`
+ 6 │             }
+   ╰────
+  help: Use an `type` instead of a `interface`
+
+  ⚠ typescript-eslint(consistent-type-definitions):
+   ╭─[consistent_type_definitions.tsx:3:11]
+ 2 │             declare global {
+ 3 │ ╭─▶           interface Array<T> {
+ 4 │ │               foo(x: (x: number) => T): T[];
+ 5 │ ├─▶           }
+   · ╰──── Use an `type` instead of a `interface`
+ 6 │             }
+   ╰────
+  help: Use an `type` instead of a `interface`
+
+  ⚠ typescript-eslint(consistent-type-definitions):
+   ╭─[consistent_type_definitions.tsx:4:13]
+ 3 │           namespace Foo {
+ 4 │             interface Bar {}
+   ·             ────────┬───────
+   ·                     ╰── Use an `type` instead of a `interface`
+ 5 │           }
+   ╰────
+  help: Use an `type` instead of a `interface`
+
+  ⚠ typescript-eslint(consistent-type-definitions):
+   ╭─[consistent_type_definitions.tsx:2:19]
+ 1 │     
+ 2 │ ╭─▶             export default interface Test {
+ 3 │ │                 bar(): string;
+ 4 │ │                 foo(): number;
+ 5 │ ├─▶             }
+   · ╰──── Use an `type` instead of a `interface`
+ 6 │                       
+   ╰────
+  help: Use an `type` instead of a `interface`
+
+  ⚠ typescript-eslint(consistent-type-definitions):
+   ╭─[consistent_type_definitions.tsx:2:36]
+ 1 │     
+ 2 │ ╭─▶         export declare type Test = {
+ 3 │ │             foo: string;
+ 4 │ │             bar: string;
+ 5 │ ├─▶         };
+   · ╰──── Use an `interface` instead of a `type`
+ 6 │                   
+   ╰────
+  help: Use an `interface` instead of a `type`
+
+  ⚠ typescript-eslint(consistent-type-definitions):
+   ╭─[consistent_type_definitions.tsx:2:16]
+ 1 │     
+ 2 │ ╭─▶         export declare interface Test {
+ 3 │ │             foo: string;
+ 4 │ │             bar: string;
+ 5 │ ├─▶         }
+   · ╰──── Use an `type` instead of a `interface`
+ 6 │                   
+   ╰────
+  help: Use an `type` instead of a `interface`
