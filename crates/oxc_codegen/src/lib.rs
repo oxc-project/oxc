@@ -182,8 +182,8 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     }
 
     fn peek_nth(&self, n: usize) -> Option<char> {
-        // SAFETY: criteria of `from_utf8_unchecked` are met.
         #[allow(unsafe_code)]
+        // SAFETY: criteria of `from_utf8_unchecked` are met.
         unsafe { std::str::from_utf8_unchecked(self.code()) }.chars().nth_back(n)
     }
 
