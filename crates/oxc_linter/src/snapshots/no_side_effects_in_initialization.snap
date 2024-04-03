@@ -104,6 +104,12 @@ expression: no_side_effects_in_initialization
    ·                ───
    ╰────
 
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating unknown this value
+   ╭─[no_side_effects_in_initialization.tsx:1:1]
+ 1 │ this.x = 1
+   · ────
+   ╰────
+
   ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
    ╭─[no_side_effects_in_initialization.tsx:1:10]
  1 │ (()=>{})(ext(), 1)
@@ -126,4 +132,16 @@ expression: no_side_effects_in_initialization
    ╭─[no_side_effects_in_initialization.tsx:1:30]
  1 │ const x = ()=>ext; const y = x(); y.z = 1
    ·                              ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:15]
+ 1 │ const x = new ext()
+   ·               ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:5]
+ 1 │ new ext()
+   ·     ───
    ╰────
