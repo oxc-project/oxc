@@ -158,9 +158,16 @@ fn test_encode() {
 #[test]
 fn test_encode_escape_string() {
     // '\0' should be escaped.
-    let sm = SourceMap::new(None, vec!["\0a.js".into()], vec![], None, vec![], None);
+    let sm = SourceMap::new(
+        None,
+        vec!["\0".into()],
+        vec!["\0".into()],
+        Some(vec!["\0".into()]),
+        vec![],
+        None,
+    );
     assert_eq!(
         sm.to_json_string().unwrap(),
-        r#"{"version":3,"names":["\u0000a.js"],"sources":[],"mappings":""}"#
+        r#"{"version":3,"names":["\u0000"],"sources":["\u0000"],"sourcesContent":["\u0000"],"mappings":""}"#
     );
 }
