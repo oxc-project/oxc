@@ -1701,7 +1701,10 @@ impl<'a> SemanticBuilder<'a> {
                 element.bind(self);
             }
             AstKind::FormalParameter(param) => {
+                let is_currently_exporting = self.current_symbol_flags & SymbolFlags::Export;
+                self.current_symbol_flags ^= SymbolFlags::Export;
                 param.bind(self);
+                self.current_symbol_flags |= is_currently_exporting;
             }
             AstKind::CatchClause(clause) => {
                 clause.bind(self);

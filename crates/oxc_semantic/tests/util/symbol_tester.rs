@@ -155,6 +155,23 @@ impl<'a> SymbolTester<'a> {
         self
     }
 
+    pub fn is_not_exported(mut self) -> Self {
+        self.test_result = match self.test_result {
+            Ok(symbol_id) => {
+                let binding = self.target_symbol_name.clone();
+                if self.semantic.symbols().get_flag(symbol_id).contains(SymbolFlags::Export) {
+                    Err(miette!("Expected {binding} to not be exported. Symbol has export flag."))
+                } else if self.semantic.module_record().exported_bindings.contains_key(binding.as_str()) {
+                    Err(miette!("Expected {binding} to not be exported. Binding is in the module record"))
+                } else {
+                    Ok(symbol_id)
+                }
+            }
+            e => e,
+        };
+        self
+    }
+
     #[allow(clippy::wrong_self_convention)]
     pub fn is_in_scope(mut self, expected_flags: ScopeFlags) -> Self {
         let target_name: &str = self.target_symbol_name.as_ref();

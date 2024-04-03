@@ -29,3 +29,12 @@ fn test_exports() {
     // FIXME: failing
     // test.has_some_symbol("defaultExport").is_exported().test();
 }
+
+#[test]
+fn test_exported_function_params() {
+    SemanticTester::js("export default function (a) {}")
+        .has_some_symbol("a")
+        .is_not_exported()
+        .test();
+        
+}
