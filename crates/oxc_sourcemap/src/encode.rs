@@ -141,7 +141,7 @@ fn encode_vlq(out: &mut String, num: i64) {
 fn test_encode() {
     let input = r#"{
         "version": 3,
-        "sources": ["coolstuff.js"],
+        "sources": ["coolstuff.js", "\0a.js"],
         "names": ["x","alert"],
         "mappings": "AAAA,GAAIA,GAAI,EACR,IAAIA,GAAK,EAAG,CACVC,MAAM"
     }"#;
@@ -151,4 +151,14 @@ fn test_encode() {
     for (tok1, tok2) in sm.get_tokens().zip(sm2.get_tokens()) {
         assert_eq!(tok1, tok2);
     }
+}
+
+#[test]
+fn test_encode_escape_string() {
+    // '\0' should be escaped.
+    let sm = SourceMap::new(None, vec!["\0a.js".into()], vec![], None, vec![], None);
+    assert_eq!(
+        sm.to_json_string().unwrap(),
+        r#"{"version":3,"names":["\u0000a.js"],"sources":[],"mappings":""}"#
+    );
 }
