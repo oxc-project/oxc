@@ -85,5 +85,5 @@ fn test_sourcemap_builder() {
 
     let expected =
         r#"{"version":3,"names":["x"],"sources":["baz.js"],"sourcesContent":[""],"mappings":""}"#;
-    assert_eq!(expected, sm.to_json_string());
+    assert_eq!(expected, sm.to_json_string().unwrap());
 }

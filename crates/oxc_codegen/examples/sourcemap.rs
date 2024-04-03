@@ -33,7 +33,7 @@ fn main() -> std::io::Result<()> {
             .build(&ret.program);
 
     if let Some(source_map) = source_map {
-        let result = source_map.to_json_string();
+        let result = source_map.to_json_string().unwrap();
         let hash = BASE64_STANDARD.encode(format!(
             "{}\0{}{}\0{}",
             source_text.len(),
