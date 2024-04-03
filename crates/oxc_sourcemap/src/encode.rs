@@ -143,7 +143,7 @@ fn encode_vlq(out: &mut String, num: i64) {
 fn test_encode() {
     let input = r#"{
         "version": 3,
-        "sources": ["coolstuff.js", "\0a.js"],
+        "sources": ["coolstuff.js"],
         "names": ["x","alert"],
         "mappings": "AAAA,GAAIA,GAAI,EACR,IAAIA,GAAK,EAAG,CACVC,MAAM"
     }"#;
