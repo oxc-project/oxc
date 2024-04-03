@@ -13,7 +13,6 @@ mod gen;
 mod gen_ts;
 mod operator;
 mod sourcemap_builder;
-use std::str::from_utf8_unchecked;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -125,7 +124,10 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
 
     pub fn into_source_text(&mut self) -> String {
         // SAFETY: criteria of `from_utf8_unchecked` are met.
-        unsafe { String::from_utf8_unchecked(std::mem::take(&mut self.code)) }
+        #[allow(unsafe_code)]
+        unsafe {
+            String::from_utf8_unchecked(std::mem::take(&mut self.code))
+        }
     }
 
     fn code(&self) -> &Vec<u8> {
@@ -181,7 +183,8 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
 
     fn peek_nth(&self, n: usize) -> Option<char> {
         // SAFETY: criteria of `from_utf8_unchecked` are met.
-        unsafe { from_utf8_unchecked(self.code()) }.chars().nth_back(n)
+        #[allow(unsafe_code)]
+        unsafe { std::str::from_utf8_unchecked(self.code()) }.chars().nth_back(n)
     }
 
     fn indent(&mut self) {

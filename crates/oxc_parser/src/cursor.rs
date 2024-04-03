@@ -46,7 +46,10 @@ impl<'a> ParserImpl<'a> {
         let range = self.cur_token().span();
         // SAFETY:
         // range comes from the parser, which are ensured to meeting the criteria of `get_unchecked`.
-        unsafe { self.source_text.get_unchecked(range.start as usize..range.end as usize) }
+        #[allow(unsafe_code)]
+        unsafe {
+            self.source_text.get_unchecked(range.start as usize..range.end as usize)
+        }
     }
 
     /// Get current string

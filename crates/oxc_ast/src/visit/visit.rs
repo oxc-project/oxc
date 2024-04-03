@@ -24,7 +24,10 @@ pub trait Visit<'a>: Sized {
         // SAFETY:
         // This should be safe as long as `src` is an reference from the allocator.
         // But honestly, I'm not really sure if this is safe.
-        unsafe { std::mem::transmute(t) }
+        #[allow(unsafe_code)]
+        unsafe {
+            std::mem::transmute(t)
+        }
     }
 
     fn visit_program(&mut self, program: &Program<'a>) {

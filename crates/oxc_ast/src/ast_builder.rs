@@ -65,7 +65,10 @@ impl<'a> AstBuilder<'a> {
         // SAFETY:
         // This should be safe as long as `src` is an reference from the allocator.
         // But honestly, I'm not really sure if this is safe.
-        unsafe { std::mem::transmute_copy(src) }
+        #[allow(unsafe_code)]
+        unsafe {
+            std::mem::transmute_copy(src)
+        }
     }
 
     /// Moves the expression out by replacing it with a null expression.

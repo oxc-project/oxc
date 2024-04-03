@@ -15,6 +15,7 @@ repository   = "https://github.com/oxc-project/oxc"
 rust-version = "1.74"
 
 [workspace.lints.rust]
+unsafe_code = "warn"
 
 [workspace.lints.clippy]
 all = { level = "warn" }
