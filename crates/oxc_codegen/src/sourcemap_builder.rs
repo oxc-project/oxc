@@ -63,8 +63,8 @@ impl SourcemapBuilder {
 
     pub fn add_source_mapping_for_name(&mut self, output: &[u8], span: Span, name: &str) {
         debug_assert!(
-            (span.end as usize) < self.original_source.len(),
-            "violated {}:{} < {} for {name}",
+            (span.end as usize) <= self.original_source.len(),
+            "violated {}:{} <= {} for {name}",
             span.start,
             span.end,
             self.original_source.len()
