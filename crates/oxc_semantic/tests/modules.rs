@@ -36,5 +36,4 @@ fn test_exported_function_params() {
         .has_some_symbol("a")
         .is_not_exported()
         .test();
-        
 }

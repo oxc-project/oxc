@@ -162,8 +162,15 @@ impl<'a> SymbolTester<'a> {
                 let binding = self.target_symbol_name.clone();
                 if self.semantic.symbols().get_flag(symbol_id).contains(SymbolFlags::Export) {
                     Err(miette!("Expected {binding} to not be exported. Symbol has export flag."))
-                } else if self.semantic.module_record().exported_bindings.contains_key(binding.as_str()) {
-                    Err(miette!("Expected {binding} to not be exported. Binding is in the module record"))
+                } else if self
+                    .semantic
+                    .module_record()
+                    .exported_bindings
+                    .contains_key(binding.as_str())
+                {
+                    Err(miette!(
+                        "Expected {binding} to not be exported. Binding is in the module record"
+                    ))
                 } else {
                     Ok(symbol_id)
                 }
