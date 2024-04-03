@@ -6,6 +6,8 @@ use crate::error::{Error, Result};
 use crate::{token::TokenChunk, SourceMap, Token};
 use rayon::prelude::*;
 
+// Here using `serde_json::to_string` to serialization `names/source_contents/sources`.
+// It will escape the string to avoid invalid JSON string.
 pub fn encode(sourcemap: &SourceMap) -> Result<String> {
     let mut buf = String::new();
     buf.push_str("{\"version\":3,");
