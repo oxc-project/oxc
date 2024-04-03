@@ -155,6 +155,7 @@ impl<'a> SymbolTester<'a> {
         self
     }
 
+    #[allow(clippy::wrong_self_convention)]
     pub fn is_not_exported(mut self) -> Self {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
