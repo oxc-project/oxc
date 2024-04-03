@@ -62,7 +62,6 @@ impl SourcemapBuilder {
     }
 
     pub fn add_source_mapping_for_name(&mut self, output: &[u8], span: Span, name: &str) {
-        // Here using `get_unchecked` happened crash at windows. See https://github.com/rolldown/rolldown/issues/716
         let original_name = self.original_source.get(span.start as usize..span.end as usize);
         // The token name should be original name.
         // If it hasn't change, name should be `None` to reduce `SourceMap` size.
