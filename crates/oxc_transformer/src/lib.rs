@@ -7,8 +7,10 @@
 
 // Core
 mod compiler_assumptions;
+mod context;
 // Plugins: <https://babeljs.io/docs/plugins-list>
 mod decorators;
+mod es2021;
 mod react_display_name;
 mod react_jsx;
 mod react_jsx_self;
