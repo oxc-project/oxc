@@ -1,6 +1,6 @@
 [alias]
 # Do not append `--` or it will break IDEs
-ck = "check --workspace --all-targets --locked"
+ck = "check --workspace --all-features --all-targets --locked"
 lint = "clippy --workspace --all-targets --all-features"
 codecov = "llvm-cov --workspace --ignore-filename-regex tasks"
 coverage = "run -p oxc_coverage --release --"

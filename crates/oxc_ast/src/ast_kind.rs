@@ -189,10 +189,12 @@ ast_kinds! {
     TSPropertySignature(&'a TSPropertySignature<'a>),
 }
 
+#[allow(unsafe_code)]
 // SAFETY:
 // The AST is part of the bump allocator,
 // it is our responsibility to never simultaneously mutate across threads.
 unsafe impl<'a> Send for AstKind<'a> {}
+#[allow(unsafe_code)]
 // SAFETY:
 // The AST is part of the bump allocator,
 // it is our responsibility to never simultaneously mutate across threads.

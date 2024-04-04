@@ -68,7 +68,10 @@ impl<'a> Printer<'a> {
     pub fn build(mut self) -> String {
         self.print_doc_to_string();
         // SAFETY: We should have constructed valid UTF8 strings
-        unsafe { String::from_utf8_unchecked(self.out) }
+        #[allow(unsafe_code)]
+        unsafe {
+            String::from_utf8_unchecked(self.out)
+        }
     }
 
     /// Turn Doc into a string

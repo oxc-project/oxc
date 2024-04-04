@@ -169,6 +169,7 @@ mod jest {
     pub mod prefer_comparison_matcher;
     pub mod prefer_equality_matcher;
     pub mod prefer_expect_resolves;
+    pub mod prefer_mock_promise_shorthand;
     pub mod prefer_spy_on;
     pub mod prefer_strict_equal;
     pub mod prefer_to_be;
@@ -353,6 +354,7 @@ mod nextjs {
 /// <https://github.com/gajus/eslint-plugin-jsdoc>
 mod jsdoc {
     pub mod check_access;
+    pub mod empty_tags;
 }
 
 mod tree_shaking {
@@ -496,6 +498,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_comparison_matcher,
     jest::prefer_equality_matcher,
     jest::prefer_expect_resolves,
+    jest::prefer_mock_promise_shorthand,
     jest::prefer_spy_on,
     jest::prefer_strict_equal,
     jest::prefer_to_be,
@@ -672,5 +675,6 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_unwanted_polyfillio,
     nextjs::no_before_interactive_script_outside_document,
     jsdoc::check_access,
+    jsdoc::empty_tags,
     tree_shaking::no_side_effects_in_initialization,
 }

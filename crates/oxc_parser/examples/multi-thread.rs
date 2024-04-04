@@ -20,8 +20,10 @@ use std::{sync::Arc, thread};
 struct BumpaloProgram<'a>(Program<'a>);
 
 #[allow(clippy::non_send_fields_in_send_ty)]
+#[allow(unsafe_code)]
 // SAFETY: It is now our responsibility to never simultaneously mutate the AST across threads.
 unsafe impl<'a> Send for BumpaloProgram<'a> {}
+#[allow(unsafe_code)]
 // SAFETY: It is now our responsibility to never simultaneously mutate the AST across threads.
 unsafe impl<'a> Sync for BumpaloProgram<'a> {}
 

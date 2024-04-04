@@ -5,6 +5,22 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.11.2] - 2024-04-03
+
+### Bug Fixes
+
+- avoid unsafe code search original name (#2895)
+
+## [0.11.1] - 2024-04-03
+
+### Bug Fixes
+
+- Using serde_json::to_string to quote sourcemap string (#2889)
+
+### Refactor
+
+- Make codegen sourcemap builder clearer (#2894)
+
 ## [0.11.0] - 2024-03-30
 
 ### Features

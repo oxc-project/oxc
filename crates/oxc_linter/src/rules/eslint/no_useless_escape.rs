@@ -164,6 +164,7 @@ fn check_string(string: &str) -> Vec<usize> {
     for offset in escapes {
         // Safety:
         // The offset comes from a utf8 checked string
+        #[allow(unsafe_code)]
         let s = unsafe { std::str::from_utf8_unchecked(&bytes[offset..]) };
         if let Some(c) = s.chars().nth(1) {
             if !(c == quote_char
