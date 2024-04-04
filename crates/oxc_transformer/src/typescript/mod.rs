@@ -1,5 +1,6 @@
 use serde::Deserialize;
 
+/// https://babeljs.io/docs/babel-plugin-transform-typescript#options
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeScriptOptions;
