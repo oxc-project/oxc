@@ -7,7 +7,7 @@
 
 // Core
 mod compiler_assumptions;
-mod options_utils;
+mod options;
 // Plugins: <https://babeljs.io/docs/plugins-list>
 mod decorators;
 mod es2020;

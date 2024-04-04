@@ -1,9 +1,30 @@
 use serde::Deserialize;
 
+use crate::options::default_as_true;
+
 /// https://babeljs.io/docs/babel-plugin-transform-typescript#options
-#[derive(Debug, Default, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TypeScriptOptions;
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct TypeScriptOptions {
+    #[serde(default = "default_as_true")]
+    pub allow_namespaces: bool,
+
+    #[serde(default = "default_as_true")]
+    pub only_remove_type_imports: bool,
+
+    #[serde(default = "default_as_true")]
+    pub optimize_const_enums: bool,
+}
+
+impl Default for TypeScriptOptions {
+    fn default() -> Self {
+        Self {
+            allow_namespaces: default_as_true(),
+            only_remove_type_imports: default_as_true(),
+            optimize_const_enums: default_as_true(),
+        }
+    }
+}
 
 /// [plugin-transform-typescript](https://babeljs.io/docs/babel-plugin-transform-typescript)
 ///
