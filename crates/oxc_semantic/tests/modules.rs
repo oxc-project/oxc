@@ -78,16 +78,30 @@ fn test_exported_named_class() {
         constructor(a) {
             this.a = a;
         }
+
+        bar() {
+            return this.a;
+        }
     }
     ",
     );
 
     test.has_class("Foo");
     test.has_some_symbol("Foo").is_exported().test();
-    test.has_some_symbol("a").is_not_exported().test();
-    test.has_some_symbol("T").is_not_exported().test();
+    // NOTE: bar() is not a symbol. Should it be?
+    for name in &["a", "T"] {
+        test.has_some_symbol(name).is_not_exported().test();
+    }
 
-    SemanticTester::ts("class Foo {}; export { Foo }").has_some_symbol("Foo").is_exported().test();
+    SemanticTester::ts(
+        "
+    class Foo {};
+    export { Foo }
+    ",
+    )
+    .has_some_symbol("Foo")
+    .is_exported()
+    .test();
 }
 
 #[test]
