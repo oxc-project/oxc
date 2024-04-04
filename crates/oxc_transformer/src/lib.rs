@@ -8,6 +8,7 @@
 // Core
 mod compiler_assumptions;
 pub mod options;
+mod preset_plugin;
 // Plugins: <https://babeljs.io/docs/plugins-list>
 mod decorators;
 mod es2020;
@@ -17,12 +18,13 @@ mod es2024;
 mod react;
 mod typescript;
 
-use crate::options::TransformOptions;
+pub use crate::options::*;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 use oxc_span::SourceType;
+use preset_plugin::BoxedTransformation;
 
 #[allow(unused)]
 pub struct Transformer<'a> {
@@ -30,6 +32,7 @@ pub struct Transformer<'a> {
     source_type: SourceType,
     semantic: Semantic<'a>,
     options: TransformOptions,
+    presets: Vec<BoxedTransformation>,
 }
 
 impl<'a> Transformer<'a> {
@@ -37,15 +40,31 @@ impl<'a> Transformer<'a> {
         allocator: &'a Allocator,
         source_type: SourceType,
         semantic: Semantic<'a>,
-        options: TransformOptions,
+        mut options: TransformOptions,
     ) -> Self {
-        Self { allocator, source_type, semantic, options }
+        options.validate();
+
+        let mut presets: Vec<BoxedTransformation> = vec![];
+
+        // Order here is very important!
+        if let Some(opts) = &options.typescript {
+            presets.push(Box::new(crate::typescript::TypeScript::new(
+                opts.to_owned(),
+                options.jsx.as_ref().unwrap().to_owned(),
+            )));
+        }
+
+        Self { allocator, source_type, semantic, options, presets }
     }
 
     /// # Errors
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
-    pub fn build(self, _program: &mut Program<'a>) -> Result<(), Vec<Error>> {
+    pub fn build(self, program: &mut Program<'a>) -> Result<(), Vec<Error>> {
+        for mut preset in self.presets {
+            preset.transform(program);
+        }
+
         Ok(())
     }
 }

@@ -8,7 +8,7 @@ use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_transformer::{TransformOptions, Transformer};
+use oxc_transformer::{options::TransformOptions, Transformer};
 
 // Instruction:
 // create a `test.js`,

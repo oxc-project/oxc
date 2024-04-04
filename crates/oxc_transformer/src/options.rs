@@ -3,13 +3,13 @@ use std::borrow::Cow;
 use serde::Deserialize;
 
 pub use crate::compiler_assumptions::CompilerAssumptions;
-pub use crate::decorators::DecoratorsOptions;
+pub use crate::decorators::*;
 pub use crate::es2020::Es2020Options;
 pub use crate::es2021::Es2021Options;
 pub use crate::es2022::Es2022Options;
 pub use crate::es2024::Es2024Options;
-pub use crate::react::ReactOptions;
-pub use crate::typescript::TypeScriptOptions;
+pub use crate::react::*;
+pub use crate::typescript::*;
 
 /// This is used by React, TypeScript, Solid, and anything else.
 /// Instead of duplicating these fields in each transform/preset,
@@ -65,6 +65,14 @@ pub struct TransformOptions {
     pub jsx: Option<JsxOptions>,
     pub react: Option<ReactOptions>,
     pub typescript: Option<TypeScriptOptions>,
+}
+
+impl TransformOptions {
+    pub fn validate(&mut self) {
+        if self.jsx.is_none() && (self.react.is_some() || self.typescript.is_some()) {
+            self.jsx = Some(JsxOptions::default());
+        }
+    }
 }
 
 #[inline]

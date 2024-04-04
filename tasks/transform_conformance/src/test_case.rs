@@ -14,8 +14,8 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
 use oxc_transformer::{
-    DecoratorsOptions, ReactDisplayNameOptions, ReactJsxOptions, ReactJsxSelfOptions,
-    ReactJsxSourceOptions, TransformOptions, Transformer, TypeScriptOptions,
+    options::{DecoratorsOptions, ReactOptions, TransformOptions, TypeScriptOptions},
+    Transformer,
 };
 
 use crate::{fixture_root, root, TestRunnerEnv};
@@ -86,32 +86,40 @@ pub trait TestCase {
             value.and_then(|v| serde_json::from_value::<T>(v).ok()).unwrap_or_default()
         }
         let options = self.options();
+
         TransformOptions {
             assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
             decorators: options
                 .get_plugin("proposal-decorators")
-                .map(get_options::<DecoratorsOptions>)
-                .unwrap_or_default(),
+                .map(get_options::<DecoratorsOptions>),
             typescript: options
                 .get_plugin("transform-typescript")
-                .map(get_options::<TypeScriptOptions>)
-                .unwrap_or_default(),
-            react_display_name: options
-                .get_plugin("transform-react-display-name")
-                .map(get_options::<ReactDisplayNameOptions>)
-                .unwrap_or_default(),
-            react_jsx: options
-                .get_plugin("transform-react-jsx")
-                .map(get_options::<ReactJsxOptions>)
-                .unwrap_or_default(),
-            react_jsx_self: options
-                .get_plugin("transform-react-jsx-self")
-                .map(get_options::<ReactJsxSelfOptions>)
-                .unwrap_or_default(),
-            react_jsx_source: options
-                .get_plugin("transform-react-jsx-source")
-                .map(get_options::<ReactJsxSourceOptions>)
-                .unwrap_or_default(),
+                .map(get_options::<TypeScriptOptions>),
+            react: {
+                if let Some(mut react) =
+                    options.get_plugin("transform-react-jsx").map(get_options::<ReactOptions>)
+                {
+                    react.display_name = options
+                        .get_plugin("transform-react-display-name")
+                        .map(get_options::<bool>)
+                        .unwrap_or_default();
+
+                    react.self_prop = options
+                        .get_plugin("transform-react-jsx-self")
+                        .map(get_options::<bool>)
+                        .unwrap_or_default();
+
+                    react.source_prop = options
+                        .get_plugin("transform-react-jsx-source")
+                        .map(get_options::<bool>)
+                        .unwrap_or_default();
+
+                    Some(react)
+                } else {
+                    None
+                }
+            },
+            ..TransformOptions::default()
         }
     }
 
