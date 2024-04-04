@@ -351,6 +351,11 @@ mod nextjs {
     pub mod no_unwanted_polyfillio;
 }
 
+/// <https://github.com/gajus/eslint-plugin-jsdoc>
+mod jsdoc {
+    pub mod empty_tags;
+}
+
 mod tree_shaking {
     pub mod no_side_effects_in_initialization;
 }
@@ -668,5 +673,6 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_document_import_in_page,
     nextjs::no_unwanted_polyfillio,
     nextjs::no_before_interactive_script_outside_document,
+    jsdoc::empty_tags,
     tree_shaking::no_side_effects_in_initialization,
 }

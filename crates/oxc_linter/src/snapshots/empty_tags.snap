@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: empty_tags
+---
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @abstract extra text
+   ·                          ─────────
+ 4 │                        */
+   ╰────
+  help: `@abstract` tag should be empty.
+
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:4:17]
+ 3 │                       /**
+ 4 │                        * @abstract extra text
+   ·                          ─────────
+ 5 │                        */
+   ╰────
+  help: `@abstract` tag should be empty.
+
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @abstract extra text
+   ·                          ─────────
+ 4 │                        * @inheritdoc
+   ╰────
+  help: `@abstract` tag should be empty.
+
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:5:17]
+ 4 │                        * @inheritdoc
+ 5 │                        * @async out of place
+   ·                          ──────
+ 6 │                        */
+   ╰────
+  help: `@async` tag should be empty.
+
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @event anEvent
+   ·                          ──────
+ 4 │                        */
+   ╰────
+  help: `@event` tag should be empty.
+
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:3:13]
+ 2 │                   /**
+ 3 │                    * @private {someType}
+   ·                      ────────
+ 4 │                    */
+   ╰────
+  help: `@private` tag should be empty.
+
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:3:13]
+ 2 │                   /**
+ 3 │                    * @internal {someType}
+   ·                      ─────────
+ 4 │                    */
+   ╰────
+  help: `@internal` tag should be empty.
+
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:3:13]
+ 2 │                   /**
+ 3 │                    * @private {someType}
+   ·                      ────────
+ 4 │                    */
+   ╰────
+  help: `@private` tag should be empty.
