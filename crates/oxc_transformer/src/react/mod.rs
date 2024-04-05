@@ -1,10 +1,10 @@
 use std::env;
 
-use oxc_ast::ast::Program;
 use serde::Deserialize;
 
+use crate::impl_preset_transformation;
 use crate::options::{default_as_true, JsxOptions};
-use crate::preset_plugin::{BoxedTransformation, Transformation};
+use crate::preset_plugin::BoxedTransformation;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -64,6 +64,7 @@ pub enum ReactJsxRuntime {
     Automatic,
 }
 
+#[allow(dead_code)]
 pub struct React {
     jsx: JsxOptions,
     options: ReactOptions,
@@ -76,10 +77,4 @@ impl React {
     }
 }
 
-impl Transformation for React {
-    fn transform<'a>(&mut self, program: &mut Program<'a>) {
-        for plugin in &mut self.plugins {
-            plugin.transform(program);
-        }
-    }
-}
+impl_preset_transformation!(React);

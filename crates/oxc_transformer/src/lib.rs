@@ -46,12 +46,30 @@ impl<'a> Transformer<'a> {
 
         let mut presets: Vec<BoxedTransformation> = vec![];
 
-        // Order here is very important!
+        // Order here is very important! We start off by stripping syntax
+        // that isn't valid in a standard JS file, and then we apply
+        // transforms spec-by-spec for each ES version.
+
         if let Some(opts) = &options.typescript {
             presets.push(Box::new(crate::typescript::TypeScript::new(
                 opts.to_owned(),
                 options.jsx.as_ref().unwrap().to_owned(),
             )));
+        }
+
+        if let Some(opts) = &options.react {
+            presets.push(Box::new(crate::react::React::new(
+                opts.to_owned(),
+                options.jsx.as_ref().unwrap().to_owned(),
+            )));
+        }
+
+        if options.target < TransformTarget::ES2024 {
+            presets.push(Box::new(crate::es2024::Es2024::new(options.es2024.clone())));
+        }
+
+        if options.target < TransformTarget::ES2020 {
+            presets.push(Box::new(crate::es2020::Es2020::new(options.es2020.clone())));
         }
 
         Self { allocator, source_type, semantic, options, presets }

@@ -1,8 +1,8 @@
-use oxc_ast::ast::Program;
 use serde::Deserialize;
 
+use crate::impl_preset_transformation;
 use crate::options::{default_as_true, JsxOptions};
-use crate::preset_plugin::{BoxedTransformation, Transformation};
+use crate::preset_plugin::BoxedTransformation;
 
 /// https://babeljs.io/docs/babel-plugin-transform-typescript#options
 #[derive(Debug, Clone, Deserialize)]
@@ -45,6 +45,7 @@ impl Default for TypeScriptOptions {
 ///
 /// In:  `const x: number = 0;`
 /// Out: `const x = 0;`
+#[allow(dead_code)]
 pub struct TypeScript {
     jsx: JsxOptions,
     options: TypeScriptOptions,
@@ -57,10 +58,4 @@ impl TypeScript {
     }
 }
 
-impl Transformation for TypeScript {
-    fn transform<'a>(&mut self, program: &mut Program<'a>) {
-        for plugin in &mut self.plugins {
-            plugin.transform(program);
-        }
-    }
-}
+impl_preset_transformation!(TypeScript);
