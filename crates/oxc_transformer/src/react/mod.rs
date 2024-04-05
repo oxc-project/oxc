@@ -9,27 +9,27 @@ use crate::preset_plugin::BoxedTransformation;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ReactOptions {
-    /// https://babeljs.io/docs/babel-preset-react#development
+    /// [preset-react](https://babeljs.io/docs/babel-preset-react#development)
     #[serde(default = "default_for_development")]
     pub development: bool,
 
-    /// https://babeljs.io/docs/babel-plugin-transform-react-display-name
+    /// [react-display-name](https://babeljs.io/docs/babel-plugin-transform-react-display-name)
     pub display_name: bool,
 
-    /// https://babeljs.io/docs/babel-preset-react#pure
+    /// [preset-react](https://babeljs.io/docs/babel-preset-react#pure)
     #[serde(default = "default_as_true")]
     pub pure: bool,
 
-    /// https://babeljs.io/docs/babel-preset-react#runtime
+    /// [preset-react](https://babeljs.io/docs/babel-preset-react#runtime)
     pub runtime: ReactJsxRuntime,
 
-    /// https://babeljs.io/docs/babel-plugin-transform-react-jsx-self
+    /// [react-jsx-self](https://babeljs.io/docs/babel-plugin-transform-react-jsx-self)
     pub self_prop: bool,
 
-    /// https://babeljs.io/docs/babel-plugin-transform-react-jsx-source
+    /// [react-jsx-source](https://babeljs.io/docs/babel-plugin-transform-react-jsx-source)
     pub source_prop: bool,
 
-    /// https://babeljs.io/docs/babel-preset-react#throwifnamespace
+    /// [preset-react](https://babeljs.io/docs/babel-preset-react#throwifnamespace)
     #[serde(default = "default_as_true")]
     pub throw_if_namespace: bool,
 }

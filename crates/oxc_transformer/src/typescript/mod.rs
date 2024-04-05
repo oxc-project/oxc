@@ -4,26 +4,27 @@ use crate::impl_preset_transformation;
 use crate::options::{default_as_true, JsxOptions};
 use crate::preset_plugin::BoxedTransformation;
 
-/// https://babeljs.io/docs/babel-plugin-transform-typescript#options
+/// [preset-typescript](https://babeljs.io/docs/babel-preset-typescript#options)
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct TypeScriptOptions {
     #[serde(default = "default_as_true")]
     pub allow_namespaces: bool,
 
-    #[serde(default = "default_as_true")]
     pub only_remove_type_imports: bool,
 
-    #[serde(default = "default_as_true")]
     pub optimize_const_enums: bool,
+
+    pub rewrite_import_extensions: bool,
 }
 
 impl Default for TypeScriptOptions {
     fn default() -> Self {
         Self {
             allow_namespaces: default_as_true(),
-            only_remove_type_imports: default_as_true(),
-            optimize_const_enums: default_as_true(),
+            only_remove_type_imports: false,
+            optimize_const_enums: false,
+            rewrite_import_extensions: false,
         }
     }
 }

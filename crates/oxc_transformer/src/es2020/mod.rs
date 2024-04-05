@@ -11,14 +11,14 @@ use crate::preset_plugin::BoxedTransformation;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Es2020Options {
-    /// https://babeljs.io/docs/babel-plugin-proposal-dynamic-import
+    /// [dynamic-import](https://babeljs.io/docs/babel-plugin-proposal-dynamic-import)
     pub dynamic_import: bool,
 
-    /// https://babeljs.io/docs/babel-plugin-transform-export-namespace-from
+    /// [export-namespace-from](https://babeljs.io/docs/babel-plugin-transform-export-namespace-from)
     #[serde(default = "default_as_true")]
     pub export_namespace_from: bool,
 
-    /// https://babeljs.io/docs/babel-plugin-transform-nullish-coalescing-operator
+    /// [nullish-coalescing-operator](https://babeljs.io/docs/babel-plugin-transform-nullish-coalescing-operator)
     #[serde(default = "default_as_true")]
     pub nullish_coalescing_operator: bool,
 }

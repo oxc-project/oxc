@@ -5,11 +5,11 @@ use crate::options::default_as_true;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Es2021Options {
-    /// https://babeljs.io/docs/babel-plugin-transform-logical-assignment-operators
+    /// [logical-assignment-operators](https://babeljs.io/docs/babel-plugin-transform-logical-assignment-operators)
     #[serde(default = "default_as_true")]
     pub logical_assignment_operators: bool,
 
-    /// https://babeljs.io/docs/babel-plugin-transform-numeric-separator
+    /// [numeric-separator](https://babeljs.io/docs/babel-plugin-transform-numeric-separator)
     #[serde(default = "default_as_true")]
     pub numeric_separators: bool,
 }

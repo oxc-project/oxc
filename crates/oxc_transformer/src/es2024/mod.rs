@@ -9,7 +9,7 @@ use crate::preset_plugin::BoxedTransformation;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Es2024Options {
-    /// https://babeljs.io/docs/babel-plugin-transform-unicode-sets-regex
+    /// [unicode-sets-regex](https://babeljs.io/docs/babel-plugin-transform-unicode-sets-regex)
     #[serde(default = "default_as_true")]
     pub unicode_sets_regex: bool,
 }
