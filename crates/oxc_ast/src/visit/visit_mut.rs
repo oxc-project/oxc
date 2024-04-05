@@ -11,6 +11,7 @@ use self::walk_mut::*;
 
 pub trait VisitResult {
     fn keep() -> Self;
+    fn remove() -> Self;
     fn replace() -> Self;
 }
 
@@ -18,6 +19,10 @@ pub struct BasicVisitResult;
 
 impl VisitResult for BasicVisitResult {
     fn keep() -> Self {
+        Self
+    }
+
+    fn remove() -> Self {
         Self
     }
 

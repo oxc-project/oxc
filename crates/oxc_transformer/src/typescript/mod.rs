@@ -1,3 +1,5 @@
+mod namespace;
+
 use serde::Deserialize;
 
 #[derive(Debug, Default, Clone, Deserialize)]
