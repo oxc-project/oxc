@@ -41,20 +41,20 @@ pub struct Es2020 {
 
 impl Es2020 {
     pub fn new(options: Es2020Options) -> Self {
-        let mut plugins: Vec<BoxedTransformation> = vec![];
+        let plugins: Vec<BoxedTransformation> = vec![];
 
         // Ordered from most complex to least complex!
-        if options.nullish_coalescing_operator {
-            plugins.push(Box::new(nullish_coalescing_operator::NullishCoalescingOperator));
-        }
+        // if options.nullish_coalescing_operator {
+        //     plugins.push(Box::new(nullish_coalescing_operator::NullishCoalescingOperator));
+        // }
 
-        if options.export_namespace_from {
-            plugins.push(Box::new(export_namespace_from::ExportNamespaceFrom));
-        }
+        // if options.export_namespace_from {
+        //     plugins.push(Box::new(export_namespace_from::ExportNamespaceFrom));
+        // }
 
-        if options.dynamic_import {
-            plugins.push(Box::new(dynamic_import::DynamicImport));
-        }
+        // if options.dynamic_import {
+        //     plugins.push(Box::new(dynamic_import::DynamicImport));
+        // }
 
         Self { options, plugins }
     }

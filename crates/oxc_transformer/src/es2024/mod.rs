@@ -28,12 +28,12 @@ pub struct Es2024 {
 
 impl Es2024 {
     pub fn new(options: Es2024Options) -> Self {
-        let mut plugins: Vec<BoxedTransformation> = vec![];
+        let plugins: Vec<BoxedTransformation> = vec![];
 
         // Ordered from most complex to least complex!
-        if options.unicode_sets_regex {
-            plugins.push(Box::new(unicode_sets_regex::UnicodeSetsRegex));
-        }
+        // if options.unicode_sets_regex {
+        //     plugins.push(Box::new(unicode_sets_regex::UnicodeSetsRegex));
+        // }
 
         Self { options, plugins }
     }
