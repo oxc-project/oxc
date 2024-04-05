@@ -226,7 +226,7 @@ fn test() {
 
     let pass = vec![
         "for (let i = 0; i < arr1.length; i++) { const x = arr1[i] === arr2[i]; }",
-        "for (let i = 0; i < arr.length; i++) { arr[i] = 0; } ",
+        "for (let i = 0; i < arr.length; i++) { arr[i] = 0; }",
         "for (var c = 0; c < arr.length; c++) { doMath(c); }",
         "for (var d = 0; d < arr.length; d++) doMath(d);",
         "for (var e = 0; e < arr.length; e++) { if (e > 5) { doMath(e); } console.log(arr[e]); }",
@@ -235,7 +235,7 @@ fn test() {
         "for (var h = 0, len = arr.length; h < len; h++) {}",
         "for (var i = 0, len = arr.length; i < len; i++) arr[i];",
         "var m = 0; for (;;) { if (m > 3) break; console.log(m); m++; }",
-        "var n = 0; for (; n < 9; n++) { console.log(n); } ",
+        "var n = 0; for (; n < 9; n++) { console.log(n); }",
         "var o = 0; for (; o < arr.length; o++) { console.log(arr[o]); }",
         "for (; x < arr.length; x++) {}",
         "for (let x = 0; ; x++) {}",
@@ -260,10 +260,10 @@ fn test() {
         "for (let i = 0; i < arr.length; i++) { [arr[i]] = [1]; }",
         "for (let i = 0; i < arr.length; i++) { [...arr[i]] = [1]; }",
         "for (let i = 0; i < arr1?.length; i++) { const x = arr1[i] === arr2[i]; }",
-        "for (let i = 0; i < arr?.length; i++) { arr[i] = 0; } ",
+        "for (let i = 0; i < arr?.length; i++) { arr[i] = 0; }",
         "for (var c = 0; c < arr?.length; c++) { doMath(c); }",
-        "for (var d = 0; d < arr?.length; d++) doMath(d); ",
-        "for (var c = 0; c < arr.length; c++) { doMath?.(c); } ",
+        "for (var d = 0; d < arr?.length; d++) doMath(d);",
+        "for (var c = 0; c < arr.length; c++) { doMath?.(c); }",
         "for (var d = 0; d < arr.length; d++) doMath?.(d);",
         "for (let i = 0; i < test.length; ++i) { this[i]; }",
         "function* gen() { for (let i = 0; i < this.length; ++i) { yield this[i]; } }",
@@ -283,7 +283,7 @@ fn test() {
         "for (let shadow = 0; shadow < arr.length; shadow++) {
             for (let shadow = 0; shadow < arr.length; shadow++) {}
         }",
-        "for (let i = 0; i < arr.length; i++) { obj[arr[i]] = 1; } ",
+        "for (let i = 0; i < arr.length; i++) { obj[arr[i]] = 1; }",
         "for (let i = 0; i < arr.length; i++) { delete obj[arr[i]]; }",
         "for (let i = 0; i < arr.length; i++) { [obj[arr[i]]] = [1]; }",
         "for (let i = 0; i < arr.length; i++) { [...obj[arr[i]]] = [1]; }",
