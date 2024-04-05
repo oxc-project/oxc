@@ -36,6 +36,7 @@ pub struct Transformer<'a> {
 }
 
 impl<'a> Transformer<'a> {
+    #[allow(clippy::missing_panics_doc)]
     pub fn new(
         allocator: &'a Allocator,
         source_type: SourceType,

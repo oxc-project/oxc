@@ -101,18 +101,15 @@ pub trait TestCase {
                 {
                     react.display_name = options
                         .get_plugin("transform-react-display-name")
-                        .map(get_options::<bool>)
-                        .unwrap_or_default();
+                        .is_some_and(get_options::<bool>);
 
                     react.self_prop = options
                         .get_plugin("transform-react-jsx-self")
-                        .map(get_options::<bool>)
-                        .unwrap_or_default();
+                        .is_some_and(get_options::<bool>);
 
                     react.source_prop = options
                         .get_plugin("transform-react-jsx-source")
-                        .map(get_options::<bool>)
-                        .unwrap_or_default();
+                        .is_some_and(get_options::<bool>);
 
                     Some(react)
                 } else {
