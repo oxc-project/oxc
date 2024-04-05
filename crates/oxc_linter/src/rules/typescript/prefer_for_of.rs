@@ -1,6 +1,6 @@
 use oxc_ast::ast::{
-    AssignmentTarget, BindingPatternKind, Expression, ForStatementInit, MemberExpression,
-    SimpleAssignmentTarget, VariableDeclarationKind,
+    AssignmentTarget, BindingPatternKind, Expression, ForStatementInit, SimpleAssignmentTarget,
+    VariableDeclarationKind,
 };
 use oxc_ast::AstKind;
 use oxc_diagnostics::{
@@ -110,16 +110,6 @@ impl<'a> ExpressionExt for Expression<'a> {
     }
 }
 
-fn is_assignee(node: &AstNode) -> bool {
-    match node.kind() {
-        AstKind::SimpleAssignmentTarget(_)
-        | AstKind::UpdateExpression(_)
-        | AstKind::ArrayPattern(_) => true,
-        AstKind::UnaryExpression(unary_expr) => unary_expr.operator == UnaryOperator::Delete,
-        _ => false,
-    }
-}
-
 impl Rule for PreferForOf {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ForStatement(for_stmt) = node.kind() else { return };
@@ -163,7 +153,7 @@ impl Rule for PreferForOf {
 
             match &mem_expr.object() {
                 Expression::Identifier(id) => id.name.as_str(),
-                Expression::MemberExpression(m_expr) => match m_expr.static_property_name() {
+                Expression::MemberExpression(mem_expr) => match mem_expr.static_property_name() {
                     Some(array_name) => array_name,
                     None => return,
                 },
@@ -189,26 +179,29 @@ impl Rule for PreferForOf {
             }
 
             let Some(ref_parent) = nodes.parent_node(ref_id) else { return true };
-            if matches!(nodes.parent_node(ref_parent.id()), Some(ref_grand_parent)
-                if is_assignee(ref_grand_parent))
-            {
-                return true;
+
+            if let Some(ref_grand_parent) = nodes.parent_node(ref_parent.id()) {
+                match ref_grand_parent.kind() {
+                    AstKind::SimpleAssignmentTarget(_) => {
+                        return true;
+                    }
+                    AstKind::UnaryExpression(unary_expr)
+                        if unary_expr.operator == UnaryOperator::Delete =>
+                    {
+                        return true;
+                    }
+                    _ => {}
+                }
             }
 
             let parent_kind = ref_parent.kind();
             let AstKind::MemberExpression(mem_expr) = parent_kind else { return true };
-            let MemberExpression::ComputedMemberExpression(com_mem_expr) = &mem_expr else {
-                return true;
-            };
-
-            match &com_mem_expr.object {
+            match mem_expr.object() {
                 Expression::Identifier(id) => id.name.as_str() != array_name,
-                Expression::MemberExpression(mem_expr) => {
-                    matches!(&**mem_expr,
-                        MemberExpression::StaticMemberExpression(st_mem_expr)
-                        if st_mem_expr.property.name != array_name
-                    )
-                }
+                Expression::MemberExpression(mem_expr) => match mem_expr.static_property_name() {
+                    Some(prop_name) => prop_name != array_name,
+                    None => true,
+                },
                 _ => true,
             }
         }) {
