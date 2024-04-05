@@ -1681,6 +1681,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::Class(class) => {
                 self.current_node_flags |= NodeFlags::Class;
                 class.bind(self);
+                self.remove_export_flag();
                 self.make_all_namespaces_valuelike();
             }
             AstKind::ClassBody(body) => {
@@ -1699,6 +1700,9 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::BindingRestElement(element) => {
                 element.bind(self);
+            }
+            AstKind::FormalParameters(_) => {
+                self.remove_export_flag();
             }
             AstKind::FormalParameter(param) => {
                 param.bind(self);
@@ -1830,6 +1834,10 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::AssignmentTarget(_) => self.current_reference_flag -= ReferenceFlag::Write,
             _ => {}
         }
+    }
+
+    fn remove_export_flag(&mut self) {
+        self.current_symbol_flags -= SymbolFlags::Export;
     }
 
     fn add_current_node_id_to_current_scope(&mut self) {
