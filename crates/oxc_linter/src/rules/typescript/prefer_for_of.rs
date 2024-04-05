@@ -266,6 +266,8 @@ fn test() {
         "for (var c = 0; c < arr.length; c++) { doMath?.(c); }",
         "for (var d = 0; d < arr.length; d++) doMath?.(d);",
         "for (let i = 0; i < test.length; ++i) { this[i]; }",
+        "for (let i = 0; i < arr.length; i++) { ({ foo: arr[i] } = { foo: 1 }); }",
+        "for (let i = 0; i < arr.length; i++) { arr[i]++; }",
         "function* gen() { for (let i = 0; i < this.length; ++i) { yield this[i]; } }",
     ];
 
