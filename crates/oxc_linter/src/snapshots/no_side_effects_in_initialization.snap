@@ -145,3 +145,33 @@ expression: no_side_effects_in_initialization
  1 │ new ext()
    ·     ───
    ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating unknown this value
+   ╭─[no_side_effects_in_initialization.tsx:1:1]
+ 1 │ this.x = 1
+   · ────
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating unknown this value
+   ╭─[no_side_effects_in_initialization.tsx:1:7]
+ 1 │ (()=>{this.x = 1})()
+   ·       ────
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating unknown this value
+   ╭─[no_side_effects_in_initialization.tsx:1:13]
+ 1 │ (function(){this.x = 1}())
+   ·             ────
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating unknown this value
+   ╭─[no_side_effects_in_initialization.tsx:1:40]
+ 1 │ const y = new (function (){(function(){this.x = 1}())})()
+   ·                                        ────
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating unknown this value
+   ╭─[no_side_effects_in_initialization.tsx:1:14]
+ 1 │ function x(){this.y = 1}; x()
+   ·              ────
+   ╰────
