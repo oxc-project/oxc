@@ -119,11 +119,11 @@ fn test() {
         "function x(){this.y = 1}; const z = new x()",
         "let x = 1; x = 2 + 3",
         "let x; x = 2 + 3",
-        // // AssignmentPattern
-        // "const {x = ext} = {}",
-        // "const {x: y = ext} = {}",
-        // "const {[ext]: x = ext} = {}",
-        // "const x = ()=>{}, {y = x()} = {}",
+        // AssignmentPattern
+        "const {x = ext} = {}",
+        "const {x: y = ext} = {}",
+        "const {[ext]: x = ext} = {}",
+        "const x = ()=>{}, {y = x()} = {}",
         // // BinaryExpression
         // "const x = 1 + 2",
         // "if (1-1) ext()",
@@ -137,9 +137,9 @@ fn test() {
         "(a=>{const y = a})(ext, ext)",
         "const x = ()=>{}, y = ()=>{}; x(y())",
         // // CatchClause
-        // "try {} catch (error) {}",
-        // "const x = ()=>{}; try {} catch (error) {const x = ext}; x()",
-        // "const x = ext; try {} catch (error) {const x = ()=>{}; x()}",
+        "try {} catch (error) {}",
+        "const x = ()=>{}; try {} catch (error) {const x = ext}; x()",
+        "const x = ext; try {} catch (error) {const x = ()=>{}; x()}",
         // // ClassBody
         // "class x {a(){ext()}}",
         // // ClassBody when called
@@ -387,11 +387,11 @@ fn test() {
         "ext.x = 1",
         "const x = {};x[ext()] = 1",
         "this.x = 1",
-        // // AssignmentPattern
-        // "const {x = ext()} = {}",
-        // "const {y: {x = ext()} = {}} = {}",
-        // // AwaitExpression
-        // "const x = async ()=>{await ext()}; x()",
+        // AssignmentPattern
+        "const {x = ext()} = {}",
+        "const {y: {x = ext()} = {}} = {}",
+        // AwaitExpression
+        "const x = async ()=>{await ext()}; x()",
         // // BinaryExpression
         // "const x = 1 + ext()",
         // "const x = ext() + 1",
@@ -406,8 +406,9 @@ fn test() {
         "const x = ()=>ext; const y = x(); y()",
         // CallExpression when mutated
         "const x = ()=>ext; const y = x(); y.z = 1",
-        // // CatchClause
-        // "try {} catch (error) {ext()}",
+        // CatchClause
+        "try {} catch (error) {ext()}",
+        // TODO: check global function `ext` call when called `x()` in no strict mode
         // "var x=()=>{}; try {} catch (error) {var x=ext}; x()",
         // // ClassBody
         // "class x {[ext()](){}}",
