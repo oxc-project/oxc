@@ -7,6 +7,7 @@
 
 // Core
 mod compiler_assumptions;
+mod tst;
 // Plugins: <https://babeljs.io/docs/plugins-list>
 mod decorators;
 mod react_display_name;
