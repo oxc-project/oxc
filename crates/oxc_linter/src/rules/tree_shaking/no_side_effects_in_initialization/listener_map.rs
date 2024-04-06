@@ -88,6 +88,15 @@ impl<'a> ListenerMap for Statement<'a> {
                     no_effects();
                 }
             }
+            Self::TryStatement(stmt) => {
+                stmt.block.body.iter().for_each(|stmt| stmt.report_effects(options));
+                stmt.handler.iter().for_each(|handler| {
+                    handler.body.body.iter().for_each(|stmt| stmt.report_effects(options));
+                });
+                stmt.finalizer.iter().for_each(|finalizer| {
+                    finalizer.body.iter().for_each(|stmt| stmt.report_effects(options));
+                });
+            }
             _ => {}
         }
     }
@@ -211,6 +220,9 @@ impl<'a> ListenerMap for Expression<'a> {
             }
             Self::NewExpression(expr) => {
                 expr.report_effects(options);
+            }
+            Self::AwaitExpression(expr) => {
+                expr.argument.report_effects(options);
             }
             Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
