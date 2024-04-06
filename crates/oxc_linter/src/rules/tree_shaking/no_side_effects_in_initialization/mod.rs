@@ -328,12 +328,12 @@ fn test() {
         // "const x = `Literal ${ext}`",
         // r#"const x = ()=>"a"; const y = `Literal ${x()}`"#,
         // // ThisExpression
-        // "const y = this.x",
+        "const y = this.x",
         // // ThisExpression when mutated
-        // "const y = new (function (){this.x = 1})()",
-        // "const y = new (function (){{this.x = 1}})()",
-        // "const y = new (function (){(()=>{this.x = 1})()})()",
-        // "function x(){this.y = 1}; const y = new x()",
+        "const y = new (function (){this.x = 1})()",
+        "const y = new (function (){{this.x = 1}})()",
+        "const y = new (function (){(()=>{this.x = 1})()})()",
+        "function x(){this.y = 1}; const y = new x()",
         // // TryStatement
         // "try {} catch (error) {}",
         // "try {} finally {}",
@@ -365,13 +365,13 @@ fn test() {
     ];
 
     let fail = vec![
-        // // ArrayExpression
+        // ArrayExpression
         "const x = [ext()]",
         "const x = [,,ext(),]",
-        // // ArrayPattern
+        // ArrayPattern
         "const [x = ext()] = []",
         "const [,x = ext(),] = []",
-        // // ArrowFunctionExpression when called
+        // ArrowFunctionExpression when called
         "(()=>{ext()})()",
         "(({a = ext()})=>{})()",
         "(a=>{a()})(ext)",
@@ -381,7 +381,7 @@ fn test() {
         "(a=>{const b = a;b.x = 1})(ext)",
         "((...a)=>{a.x = 1})(ext)",
         "(({a})=>{a.x = 1})(ext)",
-        // // AssignmentExpression
+        // AssignmentExpression
         "ext = 1",
         "ext += 1",
         "ext.x = 1",
@@ -399,12 +399,12 @@ fn test() {
         // "{ext()}",
         // "var x=()=>{};{var x=ext}x()",
         // "var x=ext;{x(); var x=()=>{}}",
-        // // CallExpression
+        // CallExpression
         "(()=>{})(ext(), 1)",
         "(()=>{})(1, ext())",
-        // // CallExpression when called
+        // CallExpression when called
         "const x = ()=>ext; const y = x(); y()",
-        // // CallExpression when mutated
+        // CallExpression when mutated
         "const x = ()=>ext; const y = x(); y.z = 1",
         // // CatchClause
         // "try {} catch (error) {ext()}",
@@ -580,7 +580,7 @@ fn test() {
         // "const x = {y: ext};delete x.y.z",
         // // MethodDefinition
         // "class x {static [ext()](){}}",
-        // // NewExpression
+        // NewExpression
         "const x = new ext()",
         "new ext()",
         // // ObjectExpression
@@ -612,12 +612,12 @@ fn test() {
         // "const x = ()=>{}; const y = x`${ext()}`",
         // // TemplateLiteral
         // "const x = `Literal ${ext()}`",
-        // // ThisExpression when mutated
-        // "this.x = 1",
-        // "(()=>{this.x = 1})()",
-        // "(function(){this.x = 1}())",
-        // "const y = new (function (){(function(){this.x = 1}())})()",
-        // "function x(){this.y = 1}; x()",
+        // ThisExpression when mutated
+        "this.x = 1",
+        "(()=>{this.x = 1})()",
+        "(function(){this.x = 1}())",
+        "const y = new (function (){(function(){this.x = 1}())})()",
+        "function x(){this.y = 1}; x()",
         // // ThrowStatement
         // r#"throw new Error("Hello Error")"#,
         // // TryStatement
