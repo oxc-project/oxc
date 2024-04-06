@@ -53,6 +53,10 @@ impl<'a> Tst<'a> {
         op(parent)
     }
 
+    pub fn check_parent_node(&self, op: impl FnOnce(&AstOwnedKind<'a>) -> bool) -> bool {
+        self.check_parent(|node| op(&node.node))
+    }
+
     pub fn check_ancestors(&self, op: impl Fn(&TstNode<'a>) -> bool) -> bool {
         let current = self.nodes.get(&self.current_id).unwrap();
         let current = current.borrow();
@@ -67,6 +71,10 @@ impl<'a> Tst<'a> {
         }
 
         false
+    }
+
+    pub fn check_ancestor_nodes(&self, op: impl Fn(&AstOwnedKind<'a>) -> bool) -> bool {
+        self.check_ancestors(|node| op(&node.node))
     }
 }
 
