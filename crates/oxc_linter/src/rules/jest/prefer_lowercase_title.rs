@@ -134,7 +134,7 @@ declare_oxc_lint!(
     /// ```
     ///
     PreferLowercaseTitle,
-    correctness,
+    style,
 );
 
 impl Rule for PreferLowercaseTitle {
