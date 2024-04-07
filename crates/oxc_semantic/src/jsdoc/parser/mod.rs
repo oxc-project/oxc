@@ -1,4 +1,5 @@
 mod jsdoc;
+mod jsdoc_parts;
 mod jsdoc_tag;
 mod parse;
 mod utils;
