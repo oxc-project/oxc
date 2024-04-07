@@ -26,7 +26,7 @@ pub struct NodeListenerOptions<'a, 'b> {
     checked_mutated_nodes: RefCell<FxHashSet<SymbolId>>,
     ctx: &'b LintContext<'a>,
     has_valid_this: Cell<bool>,
-    call_with_new: Cell<bool>,
+    called_with_new: Cell<bool>,
 }
 
 impl<'a, 'b> NodeListenerOptions<'a, 'b> {
@@ -41,7 +41,7 @@ impl<'a, 'b> NodeListenerOptions<'a, 'b> {
             checked_mutated_nodes: RefCell::new(FxHashSet::default()),
             ctx,
             has_valid_this: Cell::new(false),
-            call_with_new: Cell::new(false),
+            called_with_new: Cell::new(false),
         }
     }
 }
@@ -88,6 +88,15 @@ impl<'a> ListenerMap for Statement<'a> {
                     no_effects();
                 }
             }
+            Self::TryStatement(stmt) => {
+                stmt.block.body.iter().for_each(|stmt| stmt.report_effects(options));
+                stmt.handler.iter().for_each(|handler| {
+                    handler.body.body.iter().for_each(|stmt| stmt.report_effects(options));
+                });
+                stmt.finalizer.iter().for_each(|finalizer| {
+                    finalizer.body.iter().for_each(|stmt| stmt.report_effects(options));
+                });
+            }
             _ => {}
         }
     }
@@ -114,6 +123,12 @@ impl<'a> ListenerMap for AstNode<'a> {
                 options
                     .ctx
                     .diagnostic(NoSideEffectsDiagnostic::CallParameter(Span::new(start, end)));
+            }
+            AstKind::Function(function) => {
+                let old_val = options.has_valid_this.get();
+                options.has_valid_this.set(options.called_with_new.get());
+                function.report_effects_when_called(options);
+                options.has_valid_this.set(old_val);
             }
             _ => {}
         }
@@ -206,6 +221,9 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::NewExpression(expr) => {
                 expr.report_effects(options);
             }
+            Self::AwaitExpression(expr) => {
+                expr.argument.report_effects(options);
+            }
             Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
             | Self::Identifier(_)
@@ -246,7 +264,10 @@ impl<'a> ListenerMap for Expression<'a> {
                 expr.report_effects_when_called(options);
             }
             Self::FunctionExpression(expr) => {
+                let old_val = options.has_valid_this.get();
+                options.has_valid_this.set(options.called_with_new.get());
                 expr.report_effects_when_called(options);
+                options.has_valid_this.set(old_val);
             }
             Self::ArrowFunctionExpression(expr) => {
                 expr.report_effects_when_called(options);
@@ -290,10 +311,10 @@ impl<'a> ListenerMap for NewExpression<'a> {
             return;
         }
         self.arguments.iter().for_each(|arg| arg.report_effects(options));
-        let old_val = options.call_with_new.get();
-        options.call_with_new.set(true);
+        let old_val = options.called_with_new.get();
+        options.called_with_new.set(true);
         self.callee.report_effects_when_called(options);
-        options.call_with_new.set(old_val);
+        options.called_with_new.set(old_val);
     }
 }
 
@@ -318,22 +339,17 @@ impl<'a> ListenerMap for ParenthesizedExpression<'a> {
 impl<'a> ListenerMap for ArrowFunctionExpression<'a> {
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
         self.params.items.iter().for_each(|param| param.report_effects(options));
-        let old_val = options.has_valid_this.get();
-        options.has_valid_this.set(options.call_with_new.get());
         self.body.statements.iter().for_each(|stmt| stmt.report_effects(options));
-        options.has_valid_this.set(old_val);
     }
 }
 
 impl<'a> ListenerMap for Function<'a> {
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
         self.params.items.iter().for_each(|param| param.report_effects(options));
-        let old_val = options.has_valid_this.get();
-        options.has_valid_this.set(options.call_with_new.get());
+
         if let Some(body) = &self.body {
             body.statements.iter().for_each(|stmt| stmt.report_effects(options));
         }
-        options.has_valid_this.set(old_val);
     }
 }
 
@@ -347,7 +363,10 @@ impl<'a> ListenerMap for CallExpression<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
         self.arguments.iter().for_each(|arg| arg.report_effects(options));
         if defined_custom_report_effects_when_called(&self.callee) {
+            let old_value = options.called_with_new.get();
+            options.called_with_new.set(false);
             self.callee.report_effects_when_called(options);
+            options.called_with_new.set(old_value);
         } else {
             // TODO: Not work now
             options.ctx.diagnostic(NoSideEffectsDiagnostic::Call(self.callee.span()));
