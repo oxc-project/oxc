@@ -1,7 +1,4 @@
-use std::{
-    env,
-    path::{Path, PathBuf},
-};
+use std::{env, path::PathBuf};
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::miette::NamedSource;
@@ -57,12 +54,12 @@ impl From<(&str, Option<Value>, Option<Value>, Option<PathBuf>)> for TestCase {
 
 pub struct Tester {
     rule_name: &'static str,
-    rule_path: PathBuf,
+    rule_path: Option<PathBuf>,
+    tsconfig: Option<PathBuf>,
     expect_pass: Vec<TestCase>,
     expect_fail: Vec<TestCase>,
     expect_fix: Vec<(String, String, Option<Value>)>,
     snapshot: String,
-    current_working_directory: Box<Path>,
     import_plugin: bool,
     jest_plugin: bool,
     jsx_a11y_plugin: bool,
@@ -76,19 +73,17 @@ impl Tester {
         expect_pass: Vec<T>,
         expect_fail: Vec<T>,
     ) -> Self {
-        let rule_path = PathBuf::from(rule_name.replace('-', "_")).with_extension("tsx");
         let expect_pass = expect_pass.into_iter().map(Into::into).collect::<Vec<_>>();
         let expect_fail = expect_fail.into_iter().map(Into::into).collect::<Vec<_>>();
-        let current_working_directory =
-            env::current_dir().unwrap().join("fixtures/import").into_boxed_path();
+
         Self {
             rule_name,
-            rule_path,
+            rule_path: None,
+            tsconfig: None,
             expect_pass,
             expect_fail,
             expect_fix: vec![],
             snapshot: String::new(),
-            current_working_directory,
             import_plugin: false,
             jest_plugin: false,
             jsx_a11y_plugin: false,
@@ -99,7 +94,7 @@ impl Tester {
 
     /// Change the path
     pub fn change_rule_path(mut self, path: &str) -> Self {
-        self.rule_path = self.current_working_directory.join(path);
+        self.rule_path = Some(PathBuf::from(path));
         self
     }
 
@@ -189,6 +184,7 @@ impl Tester {
     ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(config);
+        let requires_type_info = rule.requires_type_info();
         let lint_settings: ESLintSettings = settings
             .as_ref()
             .map_or_else(ESLintSettings::default, |v| ESLintSettings::deserialize(v).unwrap());
@@ -198,23 +194,39 @@ impl Tester {
             .with_jest_plugin(self.jest_plugin)
             .with_jsx_a11y_plugin(self.jsx_a11y_plugin)
             .with_nextjs_plugin(self.nextjs_plugin)
-            .with_react_perf_plugin(self.react_perf_plugin);
+            .with_react_perf_plugin(self.react_perf_plugin)
+            .with_type_info(requires_type_info);
         let linter = Linter::from_options(options)
             .unwrap()
             .with_rules(vec![rule])
             .with_settings(lint_settings);
+        let cwd = env::current_dir()
+            .unwrap()
+            .join(if requires_type_info { "fixtures/typecheck" } else { "fixtures/import" })
+            .into_boxed_path();
+
+        let default_rule_file = PathBuf::from(self.rule_name.replace('-', "_") + ".tsx");
         let path_to_lint = if self.import_plugin {
             assert!(path.is_none(), "import plugin does not support path");
-            self.current_working_directory.join(&self.rule_path)
+            cwd.join(self.rule_path.as_ref().unwrap_or(&default_rule_file))
+        } else if requires_type_info {
+            assert!(path.is_none(), "type check rules do not support path");
+            let default_path = PathBuf::from("file.ts");
+            cwd.join(self.rule_path.as_ref().unwrap_or(&default_path))
         } else if let Some(path) = path {
-            self.current_working_directory.join(path)
+            cwd.join(path)
         } else {
-            self.rule_path.clone()
+            default_rule_file.clone()
+        };
+        let tsconfig = if requires_type_info {
+            let default_tsconfig = PathBuf::from("tsconfig.json");
+            Some(cwd.join(self.tsconfig.as_ref().unwrap_or(&default_tsconfig)))
+        } else {
+            None
         };
 
-        let cwd = self.current_working_directory.clone();
         let paths = vec![path_to_lint.into_boxed_path()];
-        let options = LintServiceOptions { cwd, paths, tsconfig: None };
+        let options = LintServiceOptions { cwd: cwd.clone(), paths, tsconfig };
         let lint_service = LintService::from_linter(linter, options);
         let diagnostic_service = DiagnosticService::default();
         let tx_error = diagnostic_service.sender();
@@ -230,9 +242,9 @@ impl Tester {
         }
 
         let diagnostic_path = if self.import_plugin {
-            self.rule_path.strip_prefix(&self.current_working_directory).unwrap()
+            self.rule_path.as_ref().unwrap_or(&default_rule_file)
         } else {
-            &self.rule_path
+            &default_rule_file
         }
         .to_string_lossy();
 

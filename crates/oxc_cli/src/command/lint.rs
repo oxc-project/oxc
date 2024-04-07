@@ -170,6 +170,10 @@ pub struct EnablePlugins {
     /// Enable the React performance plugin and detect rendering performance problems
     #[bpaf(switch, hide_usage)]
     pub react_perf_plugin: bool,
+
+    /// Enable the TypeCheck plugin and detect type-based problems
+    #[bpaf(switch, hide_usage)]
+    pub typecheck_plugin: bool,
 }
 
 #[cfg(test)]

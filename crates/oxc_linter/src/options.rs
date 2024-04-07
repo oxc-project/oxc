@@ -28,6 +28,7 @@ pub struct LintOptions {
     pub jsx_a11y_plugin: bool,
     pub nextjs_plugin: bool,
     pub react_perf_plugin: bool,
+    pub type_info: bool,
     pub env: ESLintEnv,
 }
 
@@ -43,6 +44,7 @@ impl Default for LintOptions {
             jsx_a11y_plugin: false,
             nextjs_plugin: false,
             react_perf_plugin: false,
+            type_info: false,
             env: ESLintEnv::default(),
         }
     }
@@ -102,6 +104,12 @@ impl LintOptions {
     #[must_use]
     pub fn with_react_perf_plugin(mut self, yes: bool) -> Self {
         self.react_perf_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_type_info(mut self, yes: bool) -> Self {
+        self.type_info = yes;
         self
     }
 
@@ -250,6 +258,10 @@ impl LintOptions {
         may_exclude_plugin_rules(self.jsx_a11y_plugin, JSX_A11Y_PLUGIN_NAME);
         may_exclude_plugin_rules(self.nextjs_plugin, NEXTJS_PLUGIN_NAME);
         may_exclude_plugin_rules(self.react_perf_plugin, REACT_PERF_PLUGIN_NAME);
+
+        if !self.type_info {
+            rules.retain(|rule| !rule.requires_type_info())
+        }
 
         rules
     }

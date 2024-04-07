@@ -3,13 +3,14 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
-    Attribute, Error, Expr, Ident, Lit, LitStr, Meta, Result, Token,
+    Attribute, Error, Expr, Ident, Lit, LitBool, LitStr, Meta, Result, Token,
 };
 
 pub struct LintRuleMeta {
     name: Ident,
     category: Ident,
     documentation: String,
+    requires_type_info: bool,
     pub used_in_test: bool,
 }
 
@@ -31,16 +32,29 @@ impl Parse for LintRuleMeta {
         let struct_name = input.parse()?;
         input.parse::<Token!(,)>()?;
         let category = input.parse()?;
+        let requires_type_info = if input.peek(Token!(,)) {
+            input.parse::<Token!(,)>()?;
+            let token = input.parse::<LitBool>();
+            token.map_or(false, |t| t.value)
+        } else {
+            false
+        };
 
         // Ignore the rest
         input.parse::<proc_macro2::TokenStream>()?;
 
-        Ok(Self { name: struct_name, category, documentation, used_in_test: false })
+        Ok(Self {
+            name: struct_name,
+            category,
+            documentation,
+            requires_type_info,
+            used_in_test: false,
+        })
     }
 }
 
 pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
-    let LintRuleMeta { name, category, documentation, used_in_test } = metadata;
+    let LintRuleMeta { name, category, documentation, used_in_test, requires_type_info } = metadata;
     let canonical_name = name.to_string().to_case(Case::Kebab);
     let category = match category.to_string().as_str() {
         "correctness" => quote! { RuleCategory::Correctness },
@@ -66,6 +80,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
             const NAME: &'static str = #canonical_name;
 
             const CATEGORY: RuleCategory = #category;
+            const REQUIRES_TYPE_INFO: bool = #requires_type_info;
 
             fn documentation() -> Option<&'static str> {
                 Some(#documentation)

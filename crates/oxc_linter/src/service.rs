@@ -129,20 +129,23 @@ pub struct Runtime {
     paths: FxHashSet<Box<Path>>,
     linter: Linter,
     resolver: Option<Resolver>,
+    type_checker: Option<()>,
     module_map: ModuleMap,
     cache_state: CacheState,
 }
 
 impl Runtime {
     fn new(linter: Linter, options: LintServiceOptions) -> Self {
-        let resolver = linter.options().import_plugin.then(|| {
-            Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
-        });
+        let tsconfig = options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json")));
+        let resolver = linter.options().import_plugin.then(|| Self::get_resolver(tsconfig));
+        // TODO: create type-checker
+        let type_checker = linter.options.type_info.then(|| ());
         Self {
             cwd: options.cwd,
             paths: options.paths.iter().cloned().collect(),
             linter,
             resolver,
+            type_checker,
             module_map: ModuleMap::default(),
             cache_state: CacheState::default(),
         }

@@ -24,6 +24,7 @@ pub trait RuleMeta {
     const NAME: &'static str;
 
     const CATEGORY: RuleCategory;
+    const REQUIRES_TYPE_INFO: bool;
 
     fn documentation() -> Option<&'static str> {
         None

@@ -86,6 +86,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
+            pub fn requires_type_info(&self) -> bool {
+                match self {
+                    #(Self::#struct_names(_) => #struct_names::REQUIRES_TYPE_INFO),*
+                }
+            }
+
             pub fn documentation(&self) -> Option<&'static str> {
                 match self {
                     #(Self::#struct_names(_) => #struct_names::documentation()),*

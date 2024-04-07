@@ -43,7 +43,8 @@ declare_oxc_lint!(
     /// [1, 2, 3].map(async x => x + 1);
     /// ```
     NoFloatingPromises,
-    correctness
+    nursery,
+    true
 );
 
 impl Rule for NoFloatingPromises {
