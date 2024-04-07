@@ -129,6 +129,7 @@ mod typescript {
     pub mod no_empty_interface;
     pub mod no_explicit_any;
     pub mod no_extra_non_null_assertion;
+    pub mod no_floating_promises;
     pub mod no_misused_new;
     pub mod no_namespace;
     pub mod no_non_null_asserted_optional_chain;
@@ -462,6 +463,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_empty_interface,
     typescript::no_explicit_any,
     typescript::no_extra_non_null_assertion,
+    typescript::no_floating_promises,
     typescript::no_misused_new,
     typescript::no_namespace,
     typescript::no_non_null_asserted_optional_chain,
