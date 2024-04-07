@@ -27,7 +27,6 @@ pub struct NoCycle {
     /// maximum dependency depth to traverse
     max_depth: u32,
     /// ignore type only imports
-    #[allow(unused)]
     ignore_types: bool,
     /// ignore external modules
     #[allow(unused)]
