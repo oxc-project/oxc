@@ -7,20 +7,25 @@ use crate::{SourceMap, Token};
 #[serde(rename_all = "camelCase")]
 struct JSONSourceMap {
     file: Option<String>,
-    mappings: String,
-    sources: Vec<String>,
-    sources_content: Option<Vec<String>>,
-    names: Vec<String>,
+    mappings: Option<String>,
+    sources: Option<Vec<Option<String>>>,
+    sources_content: Option<Vec<Option<String>>>,
+    names: Option<Vec<String>>,
 }
 
 pub fn decode(value: &str) -> Result<SourceMap> {
     let json: JSONSourceMap = serde_json::from_str(value)?;
     let file = json.file.map(Into::into);
-    let names = json.names.into_iter().map(Into::into).collect::<Vec<_>>();
-    let sources = json.sources.into_iter().map(Into::into).collect::<Vec<_>>();
-    let source_contents =
-        json.sources_content.map(|v| v.into_iter().map(Into::into).collect::<Vec<_>>());
-    let tokens = decode_mapping(&json.mappings, names.len(), sources.len())?;
+    let names =
+        json.names.map(|v| v.into_iter().map(Into::into).collect::<Vec<_>>()).unwrap_or_default();
+    let sources = json
+        .sources
+        .map(|v| v.into_iter().map(Option::unwrap_or_default).map(Into::into).collect::<Vec<_>>())
+        .unwrap_or_default();
+    let source_contents = json
+        .sources_content
+        .map(|v| v.into_iter().map(Option::unwrap_or_default).map(Into::into).collect::<Vec<_>>());
+    let tokens = decode_mapping(&json.mappings.unwrap_or_default(), names.len(), sources.len())?;
     Ok(SourceMap::new(file, names, sources, source_contents, tokens, None))
 }
 
@@ -140,4 +145,13 @@ fn test_decode_sourcemap() {
     assert_eq!(iter.next().unwrap().to_tuple(), (Some("coolstuff.js"), 1, 4, Some("x")));
     assert_eq!(iter.next().unwrap().to_tuple(), (Some("coolstuff.js"), 2, 2, Some("alert")));
     assert!(iter.next().is_none());
+}
+
+#[test]
+fn test_decode_sourcemap_optional_filed() {
+    let input = r#"{
+        "sources": [null],
+        "sourcesContent": [null]
+    }"#;
+    SourceMap::from_json_string(input).expect("should success");
 }
