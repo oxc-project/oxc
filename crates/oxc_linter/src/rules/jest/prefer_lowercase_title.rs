@@ -203,66 +203,62 @@ impl PreferLowercaseTitle {
             return;
         };
 
-        match expr {
-            Expression::StringLiteral(string_expr) => {
-                if string_expr.value.is_empty()
-                    || self.allowed_prefixes.iter().any(|name| string_expr.value.starts_with(name))
-                {
-                    return;
-                }
-
-                let Some(first_char) = string_expr.value.chars().next() else {
-                    return;
-                };
-
-                if first_char == first_char.to_ascii_lowercase() {
-                    return;
-                }
-
-                ctx.diagnostic_with_fix(
-                    UnexpectedLowercase(string_expr.value.to_compact_str(), string_expr.span),
-                    || {
-                        let mut content = ctx.codegen();
-                        content.print_str(first_char.to_ascii_lowercase().to_string().as_bytes());
-                        Fix::new(
-                            content.into_source_text(),
-                            Span::new(string_expr.span.start + 1, string_expr.span.start + 2),
-                        )
-                    },
-                );
+        if let Expression::StringLiteral(string_expr) = expr {
+            if string_expr.value.is_empty()
+                || self.allowed_prefixes.iter().any(|name| string_expr.value.starts_with(name))
+            {
+                return;
             }
-            Expression::TemplateLiteral(template_expr) => {
-                let Some(template_string) = template_expr.quasi() else {
-                    return;
-                };
 
-                if template_string.is_empty()
-                    || self.allowed_prefixes.iter().any(|name| template_string.starts_with(name))
-                {
-                    return;
-                }
+            let Some(first_char) = string_expr.value.chars().next() else {
+                return;
+            };
 
-                let Some(first_char) = template_string.chars().next() else {
-                    return;
-                };
-
-                if first_char == first_char.to_ascii_lowercase() {
-                    return;
-                }
-
-                ctx.diagnostic_with_fix(
-                    UnexpectedLowercase(template_string.to_compact_str(), template_expr.span),
-                    || {
-                        let mut content = ctx.codegen();
-                        content.print_str(first_char.to_ascii_lowercase().to_string().as_bytes());
-                        Fix::new(
-                            content.into_source_text(),
-                            Span::new(template_expr.span.start + 1, template_expr.span.start + 2),
-                        )
-                    },
-                );
+            if first_char == first_char.to_ascii_lowercase() {
+                return;
             }
-            _ => (),
+
+            ctx.diagnostic_with_fix(
+                UnexpectedLowercase(string_expr.value.to_compact_str(), string_expr.span),
+                || {
+                    let mut content = ctx.codegen();
+                    content.print_str(first_char.to_ascii_lowercase().to_string().as_bytes());
+                    Fix::new(
+                        content.into_source_text(),
+                        Span::new(string_expr.span.start + 1, string_expr.span.start + 2),
+                    )
+                },
+            );
+        } else if let Expression::TemplateLiteral(template_expr) = expr {
+            let Some(template_string) = template_expr.quasi() else {
+                return;
+            };
+
+            if template_string.is_empty()
+                || self.allowed_prefixes.iter().any(|name| template_string.starts_with(name))
+            {
+                return;
+            }
+
+            let Some(first_char) = template_string.chars().next() else {
+                return;
+            };
+
+            if first_char == first_char.to_ascii_lowercase() {
+                return;
+            }
+
+            ctx.diagnostic_with_fix(
+                UnexpectedLowercase(template_string.to_compact_str(), template_expr.span),
+                || {
+                    let mut content = ctx.codegen();
+                    content.print_str(first_char.to_ascii_lowercase().to_string().as_bytes());
+                    Fix::new(
+                        content.into_source_text(),
+                        Span::new(template_expr.span.start + 1, template_expr.span.start + 2),
+                    )
+                },
+            );
         }
     }
 
