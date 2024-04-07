@@ -7,7 +7,7 @@ use crate::{
 };
 use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SourceMap {
     pub(crate) file: Option<Arc<str>>,
     pub(crate) names: Vec<Arc<str>>,
@@ -65,15 +65,25 @@ impl SourceMap {
     }
 
     pub fn get_names(&self) -> impl Iterator<Item = &str> {
-        self.names.iter().map(std::convert::AsRef::as_ref)
+        self.names.iter().map(AsRef::as_ref)
+    }
+
+    /// Adjust `sources`.
+    pub fn set_sources(&mut self, sources: Vec<&str>) {
+        self.sources = sources.into_iter().map(Into::into).collect();
     }
 
     pub fn get_sources(&self) -> impl Iterator<Item = &str> {
-        self.sources.iter().map(std::convert::AsRef::as_ref)
+        self.sources.iter().map(AsRef::as_ref)
+    }
+
+    /// Adjust `source_content`.
+    pub fn set_source_contents(&mut self, source_contents: Vec<&str>) {
+        self.source_contents = Some(source_contents.into_iter().map(Into::into).collect());
     }
 
     pub fn get_source_contents(&self) -> Option<impl Iterator<Item = &str>> {
-        self.source_contents.as_ref().map(|v| v.iter().map(std::convert::AsRef::as_ref))
+        self.source_contents.as_ref().map(|v| v.iter().map(AsRef::as_ref))
     }
 
     pub fn get_token(&self, index: u32) -> Option<&Token> {
@@ -95,17 +105,15 @@ impl SourceMap {
     }
 
     pub fn get_name(&self, id: u32) -> Option<&str> {
-        self.names.get(id as usize).map(std::convert::AsRef::as_ref)
+        self.names.get(id as usize).map(AsRef::as_ref)
     }
 
     pub fn get_source(&self, id: u32) -> Option<&str> {
-        self.sources.get(id as usize).map(std::convert::AsRef::as_ref)
+        self.sources.get(id as usize).map(AsRef::as_ref)
     }
 
     pub fn get_source_content(&self, id: u32) -> Option<&str> {
-        self.source_contents
-            .as_ref()
-            .and_then(|x| x.get(id as usize).map(std::convert::AsRef::as_ref))
+        self.source_contents.as_ref().and_then(|x| x.get(id as usize).map(AsRef::as_ref))
     }
 
     pub fn get_source_and_content(&self, id: u32) -> Option<(&str, &str)> {
@@ -224,4 +232,16 @@ fn test_sourcemap_source_view_token() {
     );
     let mut source_view_tokens = sm.get_source_view_tokens();
     assert_eq!(source_view_tokens.next().unwrap().to_tuple(), (Some("foo.js"), 1, 1, Some("foo")));
+}
+
+#[test]
+fn test_mut_sourcemap() {
+    let mut sm = SourceMap::default();
+    sm.set_file("index.js");
+    sm.set_sources(vec!["foo.js"]);
+    sm.set_source_contents(vec!["foo"]);
+
+    assert_eq!(sm.get_file(), Some("index.js"));
+    assert_eq!(sm.get_source(0), Some("foo.js"));
+    assert_eq!(sm.get_source_content(0), Some("foo"));
 }
