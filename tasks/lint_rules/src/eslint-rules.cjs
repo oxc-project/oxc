@@ -39,7 +39,10 @@ const {
   configs: pluginJSXA11yConfigs,
 } = require("eslint-plugin-jsx-a11y");
 // https://github.com/jest-community/eslint-plugin-jest/blob/main/src/index.ts
-const { rules: pluginJestAllRules } = require("eslint-plugin-jest");
+const {
+  rules: pluginJestAllRules,
+  configs: pluginJestConfigs,
+} = require("eslint-plugin-jest");
 // https://github.com/jsx-eslint/eslint-plugin-react/blob/master/index.js
 const { rules: pluginReactAllRules } = require("eslint-plugin-react");
 // https://github.com/facebook/react/blob/main/packages/eslint-plugin-react-hooks/src/index.js
@@ -156,11 +159,16 @@ const loadPluginJSXA11yRules = (linter) => {
 
 /** @param {import("eslint").Linter} linter */
 const loadPluginJestRules = (linter) => {
+  const pluginJestRecommendedRules = new Map(
+    // @ts-expect-error: Property 'recommended' does not exist on type '{}'.
+    Object.entries(pluginJestConfigs.recommended.rules),
+  );
   for (const [name, rule] of Object.entries(pluginJestAllRules)) {
     const prefixedName = `jest/${name}`;
 
-    // Presented but type is `string | false`
-    rule.meta.docs.recommended = typeof rule.meta.docs.recommended === "string";
+    const recommendedValue = pluginJestRecommendedRules.get(prefixedName);
+    // Presented but type is `string | undefined`
+    rule.meta.docs.recommended = typeof recommendedValue === "string";
 
     linter.defineRule(prefixedName, rule);
   }
