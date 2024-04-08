@@ -34,14 +34,16 @@ function generateNativePackage(target) {
   // Generate the package.json manifest
   const { version, author, license, homepage, bugs, repository } = rootManifest;
 
-  // Generate constants
-  const ext = os === "win32" ? ".exe" : "";
-  const binaryName = `${BIN_NAME}${ext}`;
-
+  // Manifest constants
   const triple = target.split("-");
   const platform = triple[0];
   const arch = triple[1];
   const libc = triple[2] && { libc: [LIBC_MAPPING[triple[2]]] }
+
+  // Generate constants
+  const ext = platform === "win32" ? ".exe" : "";
+  const binaryName = `${BIN_NAME}${ext}`;
+
   const manifest = {
     name: packageName,
     version,
