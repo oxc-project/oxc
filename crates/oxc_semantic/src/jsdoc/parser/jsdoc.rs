@@ -34,134 +34,121 @@ impl<'a> JSDoc<'a> {
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use crate::{Semantic, SemanticBuilder};
-//     use oxc_allocator::Allocator;
-//     use oxc_parser::Parser;
-//     use oxc_span::SourceType;
+#[cfg(test)]
+mod test {
+    use crate::{Semantic, SemanticBuilder};
+    use oxc_allocator::Allocator;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
 
-//     fn build_semantic<'a>(
-//         allocator: &'a Allocator,
-//         source_text: &'a str,
-//         source_type: Option<SourceType>,
-//     ) -> Semantic<'a> {
-//         let source_type = source_type.unwrap_or_default();
-//         let ret = Parser::new(allocator, source_text, source_type).parse();
-//         let program = allocator.alloc(ret.program);
-//         let semantic = SemanticBuilder::new(source_text, source_type)
-//             .with_trivias(ret.trivias)
-//             .build(program)
-//             .semantic;
-//         semantic
-//     }
+    fn build_semantic<'a>(allocator: &'a Allocator, source_text: &'a str) -> Semantic<'a> {
+        let source_type = SourceType::default();
+        let ret = Parser::new(allocator, source_text, source_type).parse();
+        let program = allocator.alloc(ret.program);
+        let semantic = SemanticBuilder::new(source_text, source_type)
+            .with_trivias(ret.trivias)
+            .build(program)
+            .semantic;
+        semantic
+    }
 
-//     #[test]
-//     fn get_jsdoc_span() {
-//         let allocator = Allocator::default();
-//         let semantic = build_semantic(
-//             &allocator,
-//             r"
-//             /** single line */
-//             /**
-//              * multi
-//              * line
-//              */
-//             /**
-// multi
-// line
-//              */
-//             ",
-//             Some(SourceType::default()),
-//         );
+    #[test]
+    fn jsdoc_span() {
+        let allocator = Allocator::default();
+        let semantic = build_semantic(
+            &allocator,
+            r"
+            /** single line */
+            /**
+             * multi
+             * line
+             */
+            /**
+multi
+line
+             */
+            ",
+        );
+        let mut jsdocs = semantic.jsdoc().iter_all();
 
-//         let mut jsdocs = semantic.jsdoc().iter_all();
+        let jsdoc = jsdocs.next().unwrap();
+        assert_eq!(jsdoc.span.source_text(semantic.source_text), " single line ");
+        let jsdoc = jsdocs.next().unwrap();
+        assert_eq!(
+            jsdoc.span.source_text(semantic.source_text),
+            "\n             * multi\n             * line\n             "
+        );
+        let jsdoc = jsdocs.next().unwrap();
+        assert_eq!(jsdoc.span.source_text(semantic.source_text), "\nmulti\nline\n             ");
+    }
 
-//         let jsdoc = jsdocs.next().unwrap();
-//         assert_eq!(jsdoc.span.source_text(semantic.source_text), " single line ");
-//         let jsdoc = jsdocs.next().unwrap();
-//         assert_eq!(
-//             jsdoc.span.source_text(semantic.source_text),
-//             "\n             * multi\n             * line\n             "
-//         );
-//         let jsdoc = jsdocs.next().unwrap();
-//         assert_eq!(jsdoc.span.source_text(semantic.source_text), "\nmulti\nline\n             ");
-//     }
+    #[test]
+    fn jsdoc_comment() {
+        let allocator = Allocator::default();
+        let semantic = build_semantic(
+            &allocator,
+            r"
+            /** single line @k1 c1 @k2 */
+            /**
+             * multi
+             * line
+             * @k1 c1a
+             * c1b
+             * @k2 c2
+             * @k3 c3a
+             * c3b
+             */
+            /** * list */
+            ",
+        );
+        let mut jsdocs = semantic.jsdoc().iter_all();
 
-//     #[test]
-//     fn get_jsdoc_comment_span() {
-//         let allocator = Allocator::default();
-//         let semantic = build_semantic(
-//             &allocator,
-//             r"
-//             /** single line @k1 d1 */
-//             /**
-//              * multi
-//              * line
-//              * @k2 d2
-//              * d2
-//              * @k3 d3
-//              * @k4 d4
-//              * d4
-//              */
-//             ",
-//             Some(SourceType::default()),
-//         );
+        let jsdoc = jsdocs.next().unwrap();
+        let comment = jsdoc.comment();
+        assert_eq!(comment.parsed(), "single line");
+        assert_eq!(comment.span.source_text(semantic.source_text), " single line ");
 
-//         let mut jsdocs = semantic.jsdoc().iter_all();
+        let jsdoc = jsdocs.next().unwrap();
+        let comment = jsdoc.comment();
+        assert_eq!(comment.parsed(), "multi\nline");
+        assert_eq!(
+            comment.span.source_text(semantic.source_text),
+            "\n             * multi\n             * line\n             * "
+        );
 
-//         let jsdoc = jsdocs.next().unwrap();
-//         let (_, span) = jsdoc.comment();
-//         assert_eq!(span.source_text(semantic.source_text), " single line ");
+        let jsdoc = jsdocs.next().unwrap();
+        let comment = jsdoc.comment();
+        assert_eq!(comment.parsed(), "* list");
+        assert_eq!(
+            comment.span.source_text(semantic.source_text),
+            " * list "
+        );
+    }
 
-//         let jsdoc = jsdocs.next().unwrap();
-//         let (_, span) = jsdoc.comment();
-//         assert_eq!(
-//             span.source_text(semantic.source_text),
-//             "\n             * multi\n             * line\n             * "
-//         );
-//     }
+    #[test]
+    fn jsdoc_tags() {
+        let allocator = Allocator::default();
+        let semantic = build_semantic(
+            &allocator,
+            r"
+            /** single line @k1 c1 @k2 */
+            /**
+             * multi
+             * line
+             * @k1 c1a
+             * c1b
+             * @k2 c2
+             * @k3 c3a
+             * c3b
+             */
+            ",
+        );
+        let mut jsdocs = semantic.jsdoc().iter_all();
 
-//     #[test]
-//     fn get_jsdoc_tag_span() {
-//         let allocator = Allocator::default();
-//         let semantic = build_semantic(
-//             &allocator,
-//             r"
-//             /** single line @k1 d1 */
-//             /**
-//              * multi
-//              * line
-//              * @k2 d2
-//              * d2
-//              * @k3 d3
-//              * @k4 d4
-//              * d4
-//              */
-//             ",
-//             Some(SourceType::default()),
-//         );
+        let jsdoc = jsdocs.next().unwrap();
+        assert_eq!(jsdoc.tags().len(), 2);
 
-//         let mut jsdocs = semantic.jsdoc().iter_all();
-
-//         let jsdoc = jsdocs.next().unwrap();
-//         let mut tags = jsdoc.tags().iter();
-//         let tag = tags.next().unwrap();
-//         assert_eq!(tag.span.source_text(semantic.source_text), "@k1 d1 ");
-
-//         let jsdoc = jsdocs.next().unwrap();
-//         let mut tags = jsdoc.tags().iter();
-//         let tag = tags.next().unwrap();
-//         assert_eq!(
-//             tag.span.source_text(semantic.source_text),
-//             "@k2 d2\n             * d2\n             * "
-//         );
-//         let tag = tags.next().unwrap();
-//         assert_eq!(tag.span.source_text(semantic.source_text), "@k3 d3\n             * ");
-//         let tag = tags.next().unwrap();
-//         assert_eq!(
-//             tag.span.source_text(semantic.source_text),
-//             "@k4 d4\n             * d4\n             "
-//         );
-//     }
-// }
+        let jsdoc = jsdocs.next().unwrap();
+        assert_eq!(jsdoc.tags().len(), 3);
+    }
+}

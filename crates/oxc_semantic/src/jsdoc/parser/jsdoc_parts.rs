@@ -10,20 +10,44 @@ impl<'a> JSDocCommentPart<'a> {
         Self { raw: part_content, span }
     }
 
-    // TODO: single line span?
-    // TODO: trimmed span?
-    // Use `Span` for `@kind` part instead of whole tag.
-    //
-    // For example, whole `tag.span` in the following JSDoc will be:
+    // For example, `comment_part.span` in the following JSDoc will be:
+    // ```
     // /**
     //  * @kind1 bar
     //  * baz...
     //  * @kind2
     //  */
-    // for `@kind1`: `@kind1 bar\n * baz...\n * `
-    // for `@kind2`: `@kind2\n `
+    // ```
+    // for `@kind1`: `bar\n * baz...\n * `
+    // for `@kind2`: `\n `
     //
-    // It's too verbose and may not fit for linter diagnostics span.
+    // If passed `Span` for Miette's `Diagnostic` is single line,
+    // it will render nice underline for the span range.
+    // ```
+    //     * @kind bar... @kind2
+    //             ------
+    // ````
+    //
+    // But if the span is multiline, it will just render arrow mark at the start of each line.
+    // ```
+    // ╭─▶ * @kind1 bar
+    // ╰─▶ * @kind2
+    // ```
+    //
+    // It's too verbose and may not fit for linter diagnostics.
+    // So instead, provide the first line span to indicate the span range.
+    pub fn span_first_line(&self) -> Span {
+        if let Some(first_line_end) = self.raw.find('\n') {
+            // -1 for `\n`
+            let span_end = first_line_end.checked_sub(1).unwrap_or_default();
+            return Span::new(
+                self.span.start,
+                self.span.start + u32::try_from(span_end).unwrap_or_default(),
+            );
+        }
+
+        self.span
+    }
 
     pub fn parsed(&self) -> String {
         let lines = self.raw.lines();
@@ -43,6 +67,7 @@ impl<'a> JSDocCommentPart<'a> {
     }
 }
 
+/// `kind` can be any string like `param`, `type`, `whatever`, ...etc.
 #[derive(Debug, Clone, Copy)]
 pub struct JSDocTagKindPart<'a> {
     raw: &'a str,
@@ -67,14 +92,9 @@ pub struct JSDocTagTypePart<'a> {
     pub span: Span,
 }
 impl<'a> JSDocTagTypePart<'a> {
-    pub fn new(part_content: &'a str, span_start: u32) -> Self {
+    pub fn new(part_content: &'a str, span: Span) -> Self {
         debug_assert!(part_content.starts_with('{'));
         debug_assert!(part_content.ends_with('}'));
-
-        let span = Span::new(
-            span_start,
-            span_start + u32::try_from(part_content.len()).unwrap_or_default(),
-        );
 
         Self { raw: part_content, span }
     }
@@ -91,12 +111,7 @@ pub struct JSDocTagTypeNamePart<'a> {
     pub span: Span,
 }
 impl<'a> JSDocTagTypeNamePart<'a> {
-    pub fn new(part_content: &'a str, span_start: u32) -> Self {
-        let span = Span::new(
-            span_start,
-            span_start + u32::try_from(part_content.len()).unwrap_or_default(),
-        );
-
+    pub fn new(part_content: &'a str, span: Span) -> Self {
         Self { raw: part_content, span }
     }
 
