@@ -22,6 +22,7 @@ pub struct Decorators {
 }
 
 impl Decorators {
+    #[allow(unused)]
     pub fn new(options: DecoratorsOptions) -> Self {
         Self { options }
     }

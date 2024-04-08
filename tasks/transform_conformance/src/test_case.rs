@@ -14,8 +14,7 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
 use oxc_transformer::{
-    options::{DecoratorsOptions, ReactOptions, TransformOptions, TypeScriptOptions},
-    Transformer,
+    DecoratorsOptions, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
 };
 
 use crate::{fixture_root, root, TestRunnerEnv};

@@ -7,24 +7,20 @@
 
 // Core
 mod compiler_assumptions;
-pub mod options;
-mod preset_plugin;
+mod options;
 // Plugins: <https://babeljs.io/docs/plugins-list>
 mod decorators;
-mod es2020;
-mod es2021;
-mod es2022;
-mod es2024;
 mod react;
 mod typescript;
 
-pub use crate::options::*;
+pub use crate::options::{
+    CompilerAssumptions, DecoratorsOptions, ReactOptions, TransformOptions, TypeScriptOptions,
+};
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 use oxc_span::SourceType;
-use preset_plugin::BoxedTransformation;
 
 #[allow(unused)]
 pub struct Transformer<'a> {
@@ -32,7 +28,6 @@ pub struct Transformer<'a> {
     source_type: SourceType,
     semantic: Semantic<'a>,
     options: TransformOptions,
-    presets: Vec<BoxedTransformation>,
 }
 
 impl<'a> Transformer<'a> {
@@ -44,46 +39,13 @@ impl<'a> Transformer<'a> {
         mut options: TransformOptions,
     ) -> Self {
         options.validate();
-
-        let mut presets: Vec<BoxedTransformation> = vec![];
-
-        // Order here is very important! We start off by stripping syntax
-        // that isn't valid in a standard JS file, and then we apply
-        // transforms spec-by-spec for each ES version.
-
-        if let Some(opts) = &options.typescript {
-            presets.push(Box::new(crate::typescript::TypeScript::new(
-                opts.to_owned(),
-                options.jsx.as_ref().unwrap().to_owned(),
-            )));
-        }
-
-        if let Some(opts) = &options.react {
-            presets.push(Box::new(crate::react::React::new(
-                opts.to_owned(),
-                options.jsx.as_ref().unwrap().to_owned(),
-            )));
-        }
-
-        if options.target < TransformTarget::ES2024 {
-            presets.push(Box::new(crate::es2024::Es2024::new(options.es2024.clone())));
-        }
-
-        if options.target < TransformTarget::ES2020 {
-            presets.push(Box::new(crate::es2020::Es2020::new(options.es2020.clone())));
-        }
-
-        Self { allocator, source_type, semantic, options, presets }
+        Self { allocator, source_type, semantic, options }
     }
 
     /// # Errors
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
-    pub fn build(self, program: &mut Program<'a>) -> Result<(), Vec<Error>> {
-        for mut preset in self.presets {
-            preset.transform(program);
-        }
-
+    pub fn build(self, _program: &mut Program<'a>) -> Result<(), Vec<Error>> {
         Ok(())
     }
 }

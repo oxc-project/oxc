@@ -2,14 +2,54 @@ use std::borrow::Cow;
 
 use serde::Deserialize;
 
-pub use crate::compiler_assumptions::CompilerAssumptions;
-pub use crate::decorators::*;
-pub use crate::es2020::Es2020Options;
-pub use crate::es2021::Es2021Options;
-pub use crate::es2022::Es2022Options;
-pub use crate::es2024::Es2024Options;
-pub use crate::react::*;
-pub use crate::typescript::*;
+pub use crate::{
+    compiler_assumptions::CompilerAssumptions, decorators::DecoratorsOptions, react::ReactOptions,
+    typescript::TypeScriptOptions,
+};
+
+#[inline]
+pub fn default_as_true() -> bool {
+    true
+}
+
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct TransformOptions {
+    // Core
+    pub assumptions: CompilerAssumptions,
+    pub target: TransformTarget,
+
+    // Ecosystem
+    pub decorators: Option<DecoratorsOptions>,
+    pub jsx: Option<JsxOptions>,
+    pub react: Option<ReactOptions>,
+    pub typescript: Option<TypeScriptOptions>,
+}
+
+impl TransformOptions {
+    pub fn validate(&mut self) {
+        if self.jsx.is_none() && (self.react.is_some() || self.typescript.is_some()) {
+            self.jsx = Some(JsxOptions::default());
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum TransformTarget {
+    // ES3,
+    // ES5,
+    // ES2015,
+    // ES2016,
+    // ES2017,
+    // ES2018,
+    // ES2019,
+    // ES2020,
+    // ES2021,
+    // ES2022,
+    // ES2024,
+    #[default]
+    ESNext,
+}
 
 /// This is used by React, TypeScript, Solid, and anything else.
 /// Instead of duplicating these fields in each transform/preset,
@@ -47,54 +87,4 @@ fn default_for_pragma() -> Cow<'static, str> {
 
 fn default_for_pragma_frag() -> Cow<'static, str> {
     Cow::Borrowed("React.Fragment")
-}
-
-#[derive(Debug, Default, Clone, Deserialize)]
-pub struct TransformOptions {
-    // Core
-    pub assumptions: CompilerAssumptions,
-    pub target: TransformTarget,
-
-    // Specs
-    pub es2020: Es2020Options,
-    pub es2021: Es2021Options,
-    pub es2022: Es2022Options,
-    pub es2024: Es2024Options,
-
-    // Ecosystem
-    pub decorators: Option<DecoratorsOptions>,
-    pub jsx: Option<JsxOptions>,
-    pub react: Option<ReactOptions>,
-    pub typescript: Option<TypeScriptOptions>,
-}
-
-impl TransformOptions {
-    pub fn validate(&mut self) {
-        if self.jsx.is_none() && (self.react.is_some() || self.typescript.is_some()) {
-            self.jsx = Some(JsxOptions::default());
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum TransformTarget {
-    // ES3,
-    // ES5,
-    // ES2015,
-    // ES2016,
-    // ES2017,
-    // ES2018,
-    // ES2019,
-    ES2020,
-    ES2021,
-    ES2022,
-    ES2024,
-    #[default]
-    ESNext,
-}
-
-#[inline]
-pub fn default_as_true() -> bool {
-    true
 }
