@@ -232,7 +232,12 @@ exports.ALL_TARGET_PLUGINS = new Map([
 ]);
 
 // All rules(including deprecated, recommended) are loaded initially.
-exports.createESLintLinter = () => new Linter();
+exports.createESLintLinter = () =>
+  new Linter({
+    // XXX: We need to adapt to flat ESLint in near future!
+    // @ts-expect-error: Type '"eslintrc"' is not assignable to type '"flat"'.
+    configType: "eslintrc",
+  });
 
 /** @param {import("eslint").Linter} linter */
 exports.loadTargetPluginRules = (linter) => {
