@@ -5,11 +5,13 @@ use std::{
     self,
     fmt::{self, Debug, Formatter},
     hash::{Hash, Hasher},
-    ops, ptr,
+    ops::{self, Deref},
+    ptr,
 };
 
-use bumpalo::collections;
+use allocator_api2::vec;
 pub use bumpalo::collections::String;
+use bumpalo::Bump;
 use serde::{ser::SerializeSeq, Serialize, Serializer};
 
 use crate::Allocator;
@@ -82,27 +84,29 @@ impl<'alloc, T: Hash> Hash for Box<'alloc, T> {
 
 /// Bumpalo Vec
 #[derive(Debug, PartialEq, Eq)]
-pub struct Vec<'alloc, T>(collections::Vec<'alloc, T>);
+pub struct Vec<'alloc, T>(vec::Vec<T, &'alloc Bump>);
 
 impl<'alloc, T> Vec<'alloc, T> {
     #[inline]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
-        Self(collections::Vec::new_in(allocator))
+        Self(vec::Vec::new_in(allocator))
     }
 
     #[inline]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        Self(collections::Vec::with_capacity_in(capacity, allocator))
+        Self(vec::Vec::with_capacity_in(capacity, allocator))
     }
 
     #[inline]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
-        Self(collections::Vec::from_iter_in(iter, allocator))
+        let mut vec = vec::Vec::new_in(allocator.deref());
+        vec.extend(iter);
+        Self(vec)
     }
 }
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
-    type Target = collections::Vec<'alloc, T>;
+    type Target = vec::Vec<T, &'alloc Bump>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -110,13 +114,13 @@ impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
 }
 
 impl<'alloc, T> ops::DerefMut for Vec<'alloc, T> {
-    fn deref_mut(&mut self) -> &mut collections::Vec<'alloc, T> {
+    fn deref_mut(&mut self) -> &mut vec::Vec<T, &'alloc Bump> {
         &mut self.0
     }
 }
 
 impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
-    type IntoIter = <collections::Vec<'alloc, T> as IntoIterator>::IntoIter;
+    type IntoIter = <vec::Vec<T, &'alloc Bump> as IntoIterator>::IntoIter;
     type Item = T;
 
     fn into_iter(self) -> Self::IntoIter {

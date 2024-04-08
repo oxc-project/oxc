@@ -91,6 +91,7 @@ napi        = "2"
 napi-derive = "2"
 
 assert-unchecked    = "0.1.2"
+allocator-api2      = "0.2.16"
 bpaf                = "0.9.11"
 bitflags            = "2.5.0"
 bumpalo             = "3.15.4"

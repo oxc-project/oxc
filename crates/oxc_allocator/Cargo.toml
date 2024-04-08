@@ -18,8 +18,9 @@ workspace = true
 doctest = false
 
 [dependencies]
-bumpalo = { workspace = true, features = ["collections"] }
-serde   = { workspace = true }
+bumpalo        = { workspace = true, features = ["collections", "allocator-api2"] }
+serde          = { workspace = true }
+allocator-api2 = { workspace = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }
