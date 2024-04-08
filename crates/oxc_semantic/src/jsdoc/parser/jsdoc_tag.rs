@@ -302,7 +302,10 @@ mod test {
         assert_eq!(comment.parsed(), "c2");
         assert_eq!(comment.span_first_line().source_text(semantic.source_text), "c2 ");
         let comment = tags.next().unwrap().comment();
-        assert_eq!(comment.span.source_text(semantic.source_text), "     * c3a\n     * c3b\n     * ");
+        assert_eq!(
+            comment.span.source_text(semantic.source_text),
+            "     * c3a\n     * c3b\n     * "
+        );
         assert_eq!(comment.parsed(), "c3a\nc3b");
         assert_eq!(comment.span_first_line().source_text(semantic.source_text), "");
         let comment = tags.next().unwrap().comment();

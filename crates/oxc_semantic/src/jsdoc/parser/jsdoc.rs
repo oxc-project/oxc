@@ -119,10 +119,7 @@ line
         let jsdoc = jsdocs.next().unwrap();
         let comment = jsdoc.comment();
         assert_eq!(comment.parsed(), "* list");
-        assert_eq!(
-            comment.span.source_text(semantic.source_text),
-            " * list "
-        );
+        assert_eq!(comment.span.source_text(semantic.source_text), " * list ");
     }
 
     #[test]
