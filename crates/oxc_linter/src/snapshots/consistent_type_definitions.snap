@@ -3,31 +3,31 @@ source: crates/oxc_linter/src/tester.rs
 expression: consistent_type_definitions
 ---
   ⚠ typescript-eslint(consistent-type-definitions):
-   ╭─[consistent_type_definitions.tsx:1:10]
+   ╭─[consistent_type_definitions.tsx:1:1]
  1 │ type T = { x: number; };
-   ·          ───────┬──────
-   ·                 ╰── Use an `interface` instead of a `type`
+   · ────────────┬───────────
+   ·             ╰── Use an `interface` instead of a `type`
    ╰────
   help: Use an `interface` instead of a `type`
 
   ⚠ typescript-eslint(consistent-type-definitions):
-   ╭─[consistent_type_definitions.tsx:1:8]
+   ╭─[consistent_type_definitions.tsx:1:1]
  1 │ type T={ x: number; };
-   ·        ───────┬──────
-   ·               ╰── Use an `interface` instead of a `type`
+   · ───────────┬──────────
+   ·            ╰── Use an `interface` instead of a `type`
    ╰────
   help: Use an `interface` instead of a `type`
 
   ⚠ typescript-eslint(consistent-type-definitions):
-   ╭─[consistent_type_definitions.tsx:1:33]
+   ╭─[consistent_type_definitions.tsx:1:1]
  1 │ type T=                         { x: number; };
-   ·                                 ───────┬──────
-   ·                                        ╰── Use an `interface` instead of a `type`
+   · ───────────────────────┬───────────────────────
+   ·                        ╰── Use an `interface` instead of a `type`
    ╰────
   help: Use an `interface` instead of a `type`
 
   ⚠ typescript-eslint(consistent-type-definitions):
-   ╭─[consistent_type_definitions.tsx:2:23]
+   ╭─[consistent_type_definitions.tsx:2:11]
  1 │     
  2 │ ╭─▶             export type W<T> = {
  3 │ │                 x: T;
@@ -144,7 +144,7 @@ expression: consistent_type_definitions
   help: Use an `type` instead of a `interface`
 
   ⚠ typescript-eslint(consistent-type-definitions):
-   ╭─[consistent_type_definitions.tsx:2:31]
+   ╭─[consistent_type_definitions.tsx:2:11]
  1 │     
  2 │ ╭─▶             export declare type Test = {
  3 │ │                 foo: string;
