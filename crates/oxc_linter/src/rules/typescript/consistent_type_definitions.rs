@@ -35,12 +35,23 @@ enum ConsistentTypeDefinitionsConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Enforce type definitions to consistently use either interface or type.
     ///
     /// ### Why is this bad?
     ///
+    /// TypeScript provides two common ways to define an object type: interface and type.
+    /// The two are generally very similar, and can often be used interchangeably.
+    /// Using the same type declaration style consistently helps with code readability.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
+    /// // incorrect, when set to "interface"
+    /// type T = { x: number };
+    ///
+    /// // incorrect when set to "type"
+    /// interface T {
+    /// x: number;
+    /// }
     /// ```
     ConsistentTypeDefinitions,
     style
@@ -64,15 +75,25 @@ impl Rule for ConsistentTypeDefinitions {
                 TSType::TSTypeLiteral(lit)
                     if self.config == ConsistentTypeDefinitionsConfig::Interface =>
                 {
-                    ctx.diagnostic(ConsistentTypeDefinitionsDiagnostic("interface", "type", lit.span))
+                    ctx.diagnostic(ConsistentTypeDefinitionsDiagnostic(
+                        "interface",
+                        "type",
+                        lit.span,
+                    ))
                 }
                 _ => {}
             },
 
             AstKind::ExportDefaultDeclaration(exp) => match &exp.declaration {
-                ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl) => ctx.diagnostic(
-                    ConsistentTypeDefinitionsDiagnostic("type", "interface", decl.span),
-                ),
+                ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
+                    if self.config == ConsistentTypeDefinitionsConfig::Type =>
+                {
+                    ctx.diagnostic(ConsistentTypeDefinitionsDiagnostic(
+                        "type",
+                        "interface",
+                        decl.span,
+                    ))
+                }
                 _ => {}
             },
 
