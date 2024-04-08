@@ -51,8 +51,7 @@ impl SourceMap {
     ///
     /// The `serde_json` serialization Error.
     pub fn to_data_url(&self) -> Result<String> {
-        let base_64_str =
-            base64_simd::Base64::STANDARD.encode_to_boxed_str(self.to_json_string()?.as_bytes());
+        let base_64_str = base64_simd::STANDARD.encode_to_string(self.to_json_string()?.as_bytes());
         Ok(format!("data:application/json;charset=utf-8;base64,{base_64_str}"))
     }
 
