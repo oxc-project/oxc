@@ -71,3 +71,6 @@ fn size_asserts() {
     assert_eq_size!(ast::TSLiteral, [u8; 16]);
     assert_eq_size!(ast::TSType, [u8; 16]);
 }
+
+#[test]
+fn variance_asserts() {}

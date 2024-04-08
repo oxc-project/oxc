@@ -5,8 +5,9 @@ use std::{
     self,
     fmt::{self, Debug, Formatter},
     hash::{Hash, Hasher},
+    marker::PhantomData,
     ops::{self, Deref},
-    ptr,
+    ptr::{self, NonNull},
 };
 
 use allocator_api2::vec;
@@ -19,7 +20,7 @@ use crate::Allocator;
 /// A Box without Drop.
 /// This is used for over coming self-referential structs.
 /// It is a memory leak if the boxed value has a `Drop` implementation.
-pub struct Box<'alloc, T: ?Sized>(pub &'alloc mut T);
+pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<&'alloc T>);
 
 impl<'alloc, T> Box<'alloc, T> {
     #[allow(unsafe_code)]
@@ -30,21 +31,29 @@ impl<'alloc, T> Box<'alloc, T> {
         // borrowed from some other reference. This in turn is because we never
         // construct an alloc::Box with a borrowed reference, only with a fresh
         // one just allocated from a Bump.
-        unsafe { ptr::read(self.0 as *mut T) }
+        unsafe { ptr::read(self.0.as_ptr()) }
+    }
+}
+
+impl<'alloc, T> Box<'alloc, T> {
+    pub fn new_in(x: T, alloc: &Allocator) -> Self {
+        Self(alloc.alloc(x).into(), PhantomData)
     }
 }
 
 impl<'alloc, T: ?Sized> ops::Deref for Box<'alloc, T> {
     type Target = T;
 
+    #[allow(unsafe_code)]
     fn deref(&self) -> &T {
-        self.0
+        unsafe { self.0.as_ref() }
     }
 }
 
 impl<'alloc, T: ?Sized> ops::DerefMut for Box<'alloc, T> {
+    #[allow(unsafe_code)]
     fn deref_mut(&mut self) -> &mut T {
-        self.0
+        unsafe { self.0.as_mut() }
     }
 }
 
@@ -72,7 +81,7 @@ where
     where
         S: Serializer,
     {
-        self.0.serialize(s)
+        self.deref().serialize(s)
     }
 }
 
@@ -85,6 +94,12 @@ impl<'alloc, T: Hash> Hash for Box<'alloc, T> {
 /// Bumpalo Vec
 #[derive(Debug, PartialEq, Eq)]
 pub struct Vec<'alloc, T>(vec::Vec<T, &'alloc Bump>);
+
+fn _variance_asserts() {
+    fn test_fn<'a: 'b, 'b>(program: Vec<'a, ()>) -> Vec<'b, ()> {
+        program
+    }
+}
 
 impl<'alloc, T> Vec<'alloc, T> {
     #[inline]
@@ -191,7 +206,7 @@ mod test {
     #[test]
     fn box_deref_mut() {
         let allocator = Allocator::default();
-        let mut b = Box(allocator.alloc("x"));
+        let mut b = Box::new_in("x", &allocator);
         let b = &mut *b;
         *b = allocator.alloc("v");
         assert_eq!(*b, "v");
@@ -200,7 +215,7 @@ mod test {
     #[test]
     fn box_debug() {
         let allocator = Allocator::default();
-        let b = Box(allocator.alloc("x"));
+        let b = Box::new_in("x", &allocator);
         let b = format!("{b:?}");
         assert_eq!(b, "\"x\"");
     }
@@ -217,7 +232,7 @@ mod test {
     #[test]
     fn box_serialize() {
         let allocator = Allocator::default();
-        let b = Box(allocator.alloc("x"));
+        let b = Box::new_in("x", &allocator);
         let b = serde_json::to_string(&b).unwrap();
         assert_eq!(b, "\"x\"");
     }

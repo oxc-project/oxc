@@ -164,17 +164,11 @@ impl NoSelfAssign {
                 }
             }
         }
-
         if let AssignmentTarget::SimpleAssignmentTarget(
             SimpleAssignmentTarget::MemberAssignmentTarget(member_target),
         ) = &left
         {
-            if let Expression::MemberExpression(member_expr)
-            | Expression::ChainExpression(OBox(ChainExpression {
-                expression: ChainElement::MemberExpression(member_expr),
-                ..
-            })) = right.without_parenthesized()
-            {
+            if let Some(member_expr) = right.without_parenthesized().get_member_expr() {
                 if self.is_member_expression_same_reference(member_expr, member_target) {
                     ctx.diagnostic(NoSelfAssignDiagnostic(member_expr.span()));
                 }
@@ -199,18 +193,15 @@ impl NoSelfAssign {
             (Expression::MemberExpression(member1), Expression::MemberExpression(member2)) => {
                 self.is_member_expression_same_reference(member1, member2)
             }
-            (
-                Expression::ChainExpression(OBox(ChainExpression {
-                    expression: ChainElement::MemberExpression(member1),
-                    ..
-                }))
-                | Expression::MemberExpression(member1),
-                Expression::ChainExpression(OBox(ChainExpression {
-                    expression: ChainElement::MemberExpression(member2),
-                    ..
-                })),
-            ) => self.is_member_expression_same_reference(member1, member2),
-            _ => false,
+            _ => {
+                if let (Some(member1), Some(member2)) =
+                    (left.get_member_expr(), right.get_member_expr())
+                {
+                    self.is_member_expression_same_reference(member1, member2)
+                } else {
+                    false
+                }
+            }
         }
     }
 

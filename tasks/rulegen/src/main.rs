@@ -2,6 +2,7 @@ use std::{
     borrow::Cow,
     collections::HashMap,
     fmt::{self, Display, Formatter},
+    ops::Deref,
 };
 
 use convert_case::{Case, Casing};
@@ -185,7 +186,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
                                     continue;
                                 };
                                 let MemberExpression::StaticMemberExpression(member) =
-                                    &member_expr.0
+                                    member_expr.deref()
                                 else {
                                     continue;
                                 };
@@ -348,7 +349,7 @@ impl<'a> Visit<'a> for State<'a> {
             Statement::ExpressionStatement(expr_stmt) => self.visit_expression_statement(expr_stmt),
             // for eslint-plugin-jsdoc
             Statement::ModuleDeclaration(mod_decl) => {
-                if let ModuleDeclaration::ExportDefaultDeclaration(export_decl) = &mod_decl.0 {
+                if let ModuleDeclaration::ExportDefaultDeclaration(export_decl) = mod_decl.deref() {
                     if let ExportDefaultDeclarationKind::Expression(Expression::ObjectExpression(
                         obj_expr,
                     )) = &export_decl.declaration
@@ -479,7 +480,7 @@ fn find_parser_arguments<'a, 'b>(
     };
     let MemberExpression::StaticMemberExpression(StaticMemberExpression {
         object, property, ..
-    }) = &member_expr.0
+    }) = member_expr.deref()
     else {
         return None;
     };
