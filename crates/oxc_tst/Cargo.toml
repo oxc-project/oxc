@@ -17,3 +17,5 @@ oxc_semantic  = { workspace = true }
 
 dashmap = { workspace = true }
 serde   = { workspace = true, features = ["derive"] }
+
+oxc_parser = { workspace = true }

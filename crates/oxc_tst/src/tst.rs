@@ -57,6 +57,7 @@ impl<'a> Tst<'a> {
 
 // CONVERTING FROM AN AST
 
+#[derive(Debug)]
 pub struct TstBuilder<'a> {
     nodes: DashMap<AstNodeId, TstNode<'a>>,
     current_id: AstNodeId,
@@ -80,15 +81,15 @@ impl<'a> TstBuilder<'a> {
     }
 
     pub fn create_node(&mut self) -> TstNode<'a> {
-        self.current_id += 1;
-
-        let id = self.current_id;
+        let parent_id = self.current_ids_stack.last().cloned().unwrap_or(self.current_id);
         let parent_ids = self.current_ids_stack.clone();
+
+        self.current_id += 1;
 
         TstNode {
             node: AstOwnedKind::Elision(Span::new(0, 0)),
-            id,
-            parent_id: self.current_ids_stack.last().cloned().unwrap_or(self.current_id),
+            id: self.current_id,
+            parent_id,
             parent_ids,
             children_ids: TstNodeChildren::None,
         }

@@ -4,12 +4,14 @@ use oxc_semantic::AstNodeId;
 
 use crate::tst::TstBuilder;
 
+#[derive(Debug)]
 pub enum TstNodeChildren {
     None,
     One(AstNodeId),
     Many(Vec<AstNodeId>),
 }
 
+#[derive(Debug)]
 pub struct TstNode<'a> {
     /// The node itself.
     pub node: AstOwnedKind<'a>,

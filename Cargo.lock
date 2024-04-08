@@ -1747,6 +1747,7 @@ dependencies = [
  "dashmap",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_parser",
  "oxc_semantic",
  "oxc_span",
  "serde",
