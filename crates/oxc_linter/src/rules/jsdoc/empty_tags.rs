@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.")]
-#[diagnostic(severity(warning), help("`@{1}` tag should be empty."))]
+#[diagnostic(severity(warning), help("`@{1}` tag should not have body."))]
 struct EmptyTagsDiagnostic(#[label] Span, String);
 
 #[derive(Debug, Default, Clone)]
@@ -106,15 +106,17 @@ impl Rule for EmptyTags {
         };
 
         for jsdoc in ctx.semantic().jsdoc().iter_all() {
-            for (span, tag) in jsdoc.tags() {
-                if !is_empty_tag_kind(tag.kind) {
+            for tag in jsdoc.tags() {
+                let kind = tag.kind.parsed();
+                if !is_empty_tag_kind(kind) {
                     continue;
                 }
-                if tag.comment().is_empty() {
+                let comment = tag.comment();
+                if comment.parsed().is_empty() {
                     continue;
                 }
 
-                ctx.diagnostic(EmptyTagsDiagnostic(*span, tag.kind.to_string()));
+                ctx.diagnostic(EmptyTagsDiagnostic(comment.span_first_line(), kind.to_string()));
             }
         }
     }
@@ -308,7 +310,8 @@ fn test() {
         (
             "
 			      /**
-			       * @private {someType}
+			       * @private foo
+			       * bar
 			       */
 			      function quux () {
 			

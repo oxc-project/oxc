@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 enum CheckAccessDiagnostic {
-    #[error("eslint-plugin-jsdoc(check-access): Invalid access level is specified.")]
+    #[error("eslint-plugin-jsdoc(check-access): Invalid access level is specified or missing.")]
     #[diagnostic(
         severity(warning),
         help("Valid access levels are `package`, `private`, `protected`, and `public`.")
@@ -77,19 +77,23 @@ impl Rule for CheckAccess {
 
         for jsdoc in ctx.semantic().jsdoc().iter_all() {
             let mut access_related_tags_count = 0;
-            for (span, tag) in jsdoc.tags() {
-                if access_related_tag_names.contains(tag.kind) {
+            for tag in jsdoc.tags() {
+                let kind = tag.kind.parsed();
+                if access_related_tag_names.contains(kind) {
                     access_related_tags_count += 1;
                 }
 
                 // Has valid access level?
-                if tag.kind == resolved_access_tag_name && !ACCESS_LEVELS.contains(&tag.comment()) {
-                    ctx.diagnostic(CheckAccessDiagnostic::InvalidAccessLevel(*span));
+                let comment = tag.comment();
+                if kind == resolved_access_tag_name && !ACCESS_LEVELS.contains(&comment.parsed()) {
+                    ctx.diagnostic(CheckAccessDiagnostic::InvalidAccessLevel(
+                        tag.kind.span.merge(&comment.span_first_line()),
+                    ));
                 }
 
                 // Has redundant access level?
                 if 1 < access_related_tags_count {
-                    ctx.diagnostic(CheckAccessDiagnostic::RedundantAccessTags(*span));
+                    ctx.diagnostic(CheckAccessDiagnostic::RedundantAccessTags(tag.kind.span));
                 }
             }
         }
