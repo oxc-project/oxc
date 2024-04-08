@@ -46,7 +46,7 @@ function generateNativePackage(target) {
     name: packageName,
     version,
     bin: {
-      "oxlint": binaryName
+      oxlint: binaryName
     },
     author,
     license,
