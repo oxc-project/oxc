@@ -12,7 +12,6 @@
     "url": "https://github.com/oxc-project/oxc",
     "directory": "npm/oxlint"
   },
-  "bin": "bin/oxlint",
   "funding": {
     "url": "https://github.com/sponsors/Boshen"
   },
@@ -20,7 +19,6 @@
     "node": ">=14.*"
   },
   "files": [
-    "bin/oxlint",
     "README.md"
   ]
 }

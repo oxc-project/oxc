@@ -34,6 +34,10 @@ function generateNativePackage(target) {
   // Generate the package.json manifest
   const { version, author, license, homepage, bugs, repository } = rootManifest;
 
+  // Generate constants
+	const ext = os === "win32" ? ".exe" : "";
+  const binaryName = `${BIN_NAME}${ext}`;
+
   const triple = target.split("-");
   const platform = triple[0];
   const arch = triple[1];
@@ -41,6 +45,9 @@ function generateNativePackage(target) {
   const manifest = {
     name: packageName,
     version,
+    bin: {
+      "oxlint": binaryName
+    },
     author,
     license,
     homepage,
@@ -56,9 +63,8 @@ function generateNativePackage(target) {
   fs.writeFileSync(manifestPath, JSON.stringify(manifest));
 
   // Copy the binary
-  const ext = platform === "win32" ? ".exe" : "";
   const binarySource = resolve(REPO_ROOT, `${BIN_NAME}-${target}${ext}`);
-  const binaryTarget = resolve(packageRoot, `${BIN_NAME}${ext}`);
+  const binaryTarget = resolve(packageRoot, binaryName);
 
   console.log(`Copy binary ${binaryTarget}`);
   fs.copyFileSync(binarySource, binaryTarget);
