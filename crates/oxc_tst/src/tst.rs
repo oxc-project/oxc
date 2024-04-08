@@ -1,35 +1,12 @@
 use std::borrow::Borrow;
 
 use dashmap::DashMap;
-use oxc_ast::ast::Program;
-use oxc_ast::{AstOwnedKind, AstType};
+use oxc_ast::ast::{Expression, Program, Statement};
+use oxc_ast::AstOwnedKind;
 use oxc_semantic::AstNodeId;
+use oxc_span::Span;
 
-pub enum TstNodeChildren {
-    None,
-    One(AstNodeId),
-    Many(Vec<AstNodeId>),
-}
-
-pub struct TstNode<'a> {
-    /// Kind of node, for quick lookups.
-    kind: AstType,
-
-    /// The node itself.
-    node: AstOwnedKind<'a>,
-
-    /// ID of itself.
-    id: AstNodeId,
-
-    /// ID of direct parent.
-    parent_id: AstNodeId,
-
-    /// IDs of all ancestor parents.
-    parent_ids: Vec<AstNodeId>,
-
-    /// IDs of all children.
-    children_ids: TstNodeChildren,
-}
+use crate::tst_node::*;
 
 pub struct Tst<'a> {
     /// Map of all nodes by their ID.
@@ -93,7 +70,8 @@ impl<'a> TstBuilder<'a> {
             current_id: AstNodeId::new(0),
             current_ids_stack: Vec::new(),
         };
-        tst.add_node(AstOwnedKind::Program(program), AstNodeId::new(0));
+        let node = program.into_tst(&mut tst);
+        tst.add_node(node);
         tst
     }
 
@@ -101,47 +79,53 @@ impl<'a> TstBuilder<'a> {
         None
     }
 
-    pub fn add_node(&mut self, ast_node: AstOwnedKind<'a>, parent_id: AstNodeId) -> &mut Self {
-        // Increment IDs before doing anything
+    pub fn create_node(&mut self) -> TstNode<'a> {
         self.current_id += 1;
 
         let id = self.current_id;
         let parent_ids = self.current_ids_stack.clone();
 
+        TstNode {
+            node: AstOwnedKind::Elision(Span::new(0, 0)),
+            id,
+            parent_id: self.current_ids_stack.last().cloned().unwrap_or(self.current_id),
+            parent_ids,
+            children_ids: TstNodeChildren::None,
+        }
+    }
+
+    pub fn push_parent(&mut self, id: AstNodeId) {
         self.current_ids_stack.push(id);
+    }
 
-        // Process the node by separating its children from itself,
-        // allowing us to store them in separate locations. We then
-        // keep a reference between the parent and children using IDs.
+    pub fn pop_parent(&mut self) {
+        self.current_ids_stack.pop();
+    }
 
-        match ast_node {
-            AstOwnedKind::Program(mut program) => {
-                // Extract the children
-                let children = program.body.drain(..).collect::<Vec<_>>();
+    pub fn add_node(&mut self, node: TstNode<'a>) -> AstNodeId {
+        let id = node.id.clone();
 
-                // Process each child
-                let children_ids =
-                    children.into_iter().map(|_| AstNodeId::new(0)).collect::<Vec<_>>();
+        self.nodes.insert(id, node);
 
-                // Insert the parent node
-                self.nodes.insert(
-                    id,
-                    TstNode {
-                        kind: AstType::Program,
-                        node: AstOwnedKind::Program(program),
-                        id,
-                        parent_id,
-                        parent_ids,
-                        children_ids: TstNodeChildren::Many(children_ids),
-                    },
-                );
-            }
-            _ => {}
+        id
+    }
+
+    pub fn map_expression(&mut self, expr: Expression<'a>) -> AstNodeId {
+        let node = match expr {
+            Expression::NumericLiteral(lit) => lit.unbox().into_tst(self),
+            _ => unreachable!(),
         };
 
-        // Undo the stack after building
-        self.current_ids_stack.pop();
+        self.add_node(node)
+    }
 
-        self
+    pub fn map_statement(&mut self, stmt: Statement<'a>) -> AstNodeId {
+        let node = match stmt {
+            Statement::BlockStatement(block) => block.unbox().into_tst(self),
+            Statement::ExpressionStatement(expr) => expr.unbox().into_tst(self),
+            _ => unreachable!(),
+        };
+
+        self.add_node(node)
     }
 }

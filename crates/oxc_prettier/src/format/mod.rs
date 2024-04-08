@@ -1240,6 +1240,7 @@ impl<'a> Format<'a> for ExportDefaultDeclarationKind<'a> {
 impl<'a> Format<'a> for Expression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
+            Self::None => unreachable!(),
             Self::BooleanLiteral(lit) => lit.format(p),
             Self::NullLiteral(lit) => lit.format(p),
             Self::NumericLiteral(lit) => lit.format(p),

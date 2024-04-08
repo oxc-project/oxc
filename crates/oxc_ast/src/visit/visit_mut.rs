@@ -1438,6 +1438,7 @@ pub mod walk_mut {
 
     pub fn walk_expression_mut<'a, V: VisitMut<'a>>(visitor: &mut V, expr: &mut Expression<'a>) {
         match expr {
+            Expression::None => unreachable!(),
             Expression::BigintLiteral(lit) => visitor.visit_bigint_literal(lit),
             Expression::BooleanLiteral(lit) => visitor.visit_boolean_literal(lit),
             Expression::NullLiteral(lit) => visitor.visit_null_literal(lit),

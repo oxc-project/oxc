@@ -1,0 +1,19 @@
+[package]
+name                   = "oxc_tst"
+version                = "0.0.0"
+publish                = false
+authors.workspace      = true
+edition.workspace      = true
+keywords.workspace     = true
+license.workspace      = true
+rust-version.workspace = true
+categories.workspace   = true
+
+[dependencies]
+oxc_ast       = { workspace = true }
+oxc_span      = { workspace = true }
+oxc_allocator = { workspace = true }
+oxc_semantic  = { workspace = true }
+
+dashmap = { workspace = true }
+serde   = { workspace = true, features = ["derive"] }

@@ -32,6 +32,7 @@ impl<'a> GetSpan for Statement<'a> {
 impl<'a> GetSpan for Expression<'a> {
     fn span(&self) -> Span {
         match self {
+            Self::None => unreachable!(),
             Self::BooleanLiteral(e) => e.span,
             Self::NullLiteral(e) => e.span,
             Self::NumericLiteral(e) => e.span,

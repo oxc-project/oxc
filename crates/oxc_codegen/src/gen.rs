@@ -942,6 +942,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclarationKind<'a> {
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         match self {
+            Self::None => unreachable!(),
             Self::BooleanLiteral(lit) => lit.gen(p, ctx),
             Self::NullLiteral(lit) => lit.gen(p, ctx),
             Self::NumericLiteral(lit) => lit.gen(p, ctx),

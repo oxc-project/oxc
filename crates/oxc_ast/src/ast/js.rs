@@ -65,6 +65,8 @@ impl<'a> Program<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Expression<'a> {
+    None,
+
     BooleanLiteral(Box<'a, BooleanLiteral>),
     NullLiteral(Box<'a, NullLiteral>),
     NumericLiteral(Box<'a, NumericLiteral<'a>>),

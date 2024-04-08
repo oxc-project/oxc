@@ -300,6 +300,7 @@ impl<'a> AstKind<'a> {
 
     pub fn from_expression(e: &'a Expression<'a>) -> Self {
         match e {
+            Expression::None => unreachable!(),
             Expression::BooleanLiteral(e) => Self::BooleanLiteral(e),
             Expression::NullLiteral(e) => Self::NullLiteral(e),
             Expression::NumericLiteral(e) => Self::NumericLiteral(e),

@@ -1741,6 +1741,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_tst"
+version = "0.0.0"
+dependencies = [
+ "dashmap",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_semantic",
+ "oxc_span",
+ "serde",
+]
+
+[[package]]
 name = "oxc_wasm"
 version = "0.0.0"
 dependencies = [
