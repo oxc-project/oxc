@@ -35,7 +35,7 @@ function generateNativePackage(target) {
   const { version, author, license, homepage, bugs, repository } = rootManifest;
 
   // Generate constants
-	const ext = os === "win32" ? ".exe" : "";
+  const ext = os === "win32" ? ".exe" : "";
   const binaryName = `${BIN_NAME}${ext}`;
 
   const triple = target.split("-");
