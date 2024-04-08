@@ -2,8 +2,9 @@ use std::fmt::Debug;
 
 use oxc_ast::ast::{BlockStatement, NumericLiteral, Program};
 use oxc_ast::AstOwnedKind;
+use oxc_span::Span;
 
-use crate::tst::TstContext;
+use crate::tst::{MutationKind, TstContext};
 
 pub trait VisitTransform<'a>: Debug {
     fn transform_program(&mut self, program: &mut Program<'a>, context: &mut TstContext<'a>) {}
@@ -32,15 +33,33 @@ impl<'a> VisitTransform<'a> for NumericSeparators {
         num: &mut NumericLiteral<'a>,
         context: &mut TstContext<'a>,
     ) {
-        let in_program = context.check_ancestor(|node| matches!(node, AstOwnedKind::Program(_)));
+        let in_program =
+            context.query_ancestors(|node| Some(matches!(node, AstOwnedKind::Program(_))));
 
         dbg!("in_program", in_program);
 
-        let in_block_statement =
-            context.check_ancestor(|node| matches!(node, AstOwnedKind::BlockStatement(_)));
+        let in_block_statement = context.query_ancestors_nodes(|node| {
+            if matches!(node.as_kind(), AstOwnedKind::BlockStatement(_)) {
+                Some(node.id)
+            } else {
+                None
+            }
+        });
 
         dbg!("in_block_statement", in_block_statement);
 
+        // If we're in a block statement, try mutating the parent block
+        if let Some(block_id) = in_block_statement {
+            context.mutate_node(block_id, |node| {
+                if let AstOwnedKind::BlockStatement(inner) = node {
+                    inner.span = Span::new(1000, 1000);
+                }
+
+                MutationKind::Keep
+            });
+        }
+
+        // Mutate the node itself
         if num.raw.contains('_') {
             num.raw = context.new_str(num.raw.replace('_', "").as_str());
         }

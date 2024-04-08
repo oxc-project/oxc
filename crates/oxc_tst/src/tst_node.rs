@@ -30,6 +30,10 @@ pub struct TstNode<'a> {
 }
 
 impl<'a> TstNode<'a> {
+    pub fn as_kind(&self) -> &AstOwnedKind<'a> {
+        self.node.as_ref().unwrap()
+    }
+
     pub fn created(mut self, node: AstOwnedKind<'a>) -> Self {
         self.node = Some(node);
         self

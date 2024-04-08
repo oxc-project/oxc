@@ -16,6 +16,12 @@ use crate::tst_visit::VisitTransform;
 
 type NodesMap<'a> = Rc<RwLock<HashMap<AstNodeId, TstNode<'a>>>>;
 
+pub enum MutationKind {
+    Keep,
+    Remove,
+    Replace,
+}
+
 pub struct TstContext<'a> {
     allocator: &'a Allocator,
 
@@ -76,33 +82,49 @@ impl<'a> TstContext<'a> {
         Atom::from(String::from_str_in(value, self.allocator).into_bump_str())
     }
 
-    pub fn check_parent_node(&self, op: impl FnOnce(&TstNode<'a>) -> bool) -> bool {
+    pub fn query_parent_node<T>(&self, op: impl FnOnce(&TstNode<'a>) -> T) -> T {
         let nodes = self.nodes.read().unwrap();
         let parent = nodes.get(&self.parent_id).unwrap();
 
         op(parent)
     }
 
-    pub fn check_parent(&self, op: impl FnOnce(&AstOwnedKind<'a>) -> bool) -> bool {
-        self.check_parent_node(|node| op(node.node.as_ref().unwrap()))
+    pub fn query_parent<T>(&self, op: impl FnOnce(&AstOwnedKind<'a>) -> T) -> T {
+        self.query_parent_node(|node| op(node.node.as_ref().unwrap()))
     }
 
-    pub fn check_ancestors_nodes(&self, op: impl Fn(&TstNode<'a>) -> bool) -> bool {
+    pub fn query_ancestors_nodes<T>(&self, op: impl Fn(&TstNode<'a>) -> Option<T>) -> Option<T> {
         let nodes = self.nodes.read().unwrap();
 
         for parent_id in &self.parent_ids {
             let parent = nodes.get(parent_id).unwrap();
+            let result = op(parent);
 
-            if op(parent) {
-                return true;
+            if result.is_some() {
+                return result;
             }
         }
 
-        false
+        None
     }
 
-    pub fn check_ancestor(&self, op: impl Fn(&AstOwnedKind<'a>) -> bool) -> bool {
-        self.check_ancestors_nodes(|node| op(&node.node.as_ref().unwrap()))
+    pub fn query_ancestors<T>(&self, op: impl Fn(&AstOwnedKind<'a>) -> Option<T>) -> Option<T> {
+        self.query_ancestors_nodes(|node| op(&node.node.as_ref().unwrap()))
+    }
+
+    pub fn mutate_node(
+        &self,
+        id: AstNodeId,
+        mut op: impl FnMut(&mut AstOwnedKind<'a>) -> MutationKind,
+    ) -> MutationKind {
+        let mut nodes = self.nodes.write().unwrap();
+        let node = nodes.get_mut(&id).unwrap();
+
+        if let Some(inner_node) = &mut node.node {
+            return op(inner_node);
+        }
+
+        MutationKind::Keep
     }
 }
 
@@ -206,58 +228,53 @@ impl<'a> Tst<'a> {
     }
 
     pub fn do_transform(&mut self, id: AstNodeId) {
-        // First, retrieve the node mutably, so that we can mutate
-        // the inner node directly. Parent/children will be later!
-        {
-            let mut context = TstContext::new(&self.allocator, Rc::clone(&self.nodes));
+        let mut context = TstContext::new(&self.allocator, Rc::clone(&self.nodes));
 
-            // Extract the inner node and ID references, then release
-            // the lock so that we can acquire write access when
-            // running the transformers!
-            let mut inner_node = {
-                let mut nodes = self.nodes.write().unwrap();
-                let node = nodes.get_mut(&id).unwrap();
+        // Extract the inner node and ID references, then release
+        // the lock so that we can acquire write access on the map
+        // when running the transformers!
+        let mut inner_node = {
+            let mut nodes = self.nodes.write().unwrap();
+            let node = nodes.get_mut(&id).unwrap();
 
-                context.current_id = id;
-                context.parent_id = node.parent_id;
-                context.parent_ids = node.parent_ids.clone();
-                context.children_ids = node.children_ids.clone();
+            context.current_id = id;
+            context.parent_id = node.parent_id;
+            context.parent_ids = node.parent_ids.clone();
+            context.children_ids = node.children_ids.clone();
 
-                node.node.take()
+            node.node.take()
+        };
+
+        if let Some(inner_node) = &mut inner_node {
+            match inner_node {
+                AstOwnedKind::Program(inner) => {
+                    for t in &mut self.transformers {
+                        t.transform_program(inner, &mut context);
+                    }
+                }
+                AstOwnedKind::BlockStatement(inner) => {
+                    for t in &mut self.transformers {
+                        t.transform_block_statement(inner, &mut context);
+                    }
+                }
+                AstOwnedKind::NumericLiteral(inner) => {
+                    for t in &mut self.transformers {
+                        t.transform_numeric_literal(inner, &mut context);
+                    }
+                }
+                _ => {}
             };
-
-            if let Some(inner_node) = &mut inner_node {
-                match inner_node {
-                    AstOwnedKind::Program(inner) => {
-                        for t in &mut self.transformers {
-                            t.transform_program(inner, &mut context);
-                        }
-                    }
-                    AstOwnedKind::BlockStatement(inner) => {
-                        for t in &mut self.transformers {
-                            t.transform_block_statement(inner, &mut context);
-                        }
-                    }
-                    AstOwnedKind::NumericLiteral(inner) => {
-                        for t in &mut self.transformers {
-                            t.transform_numeric_literal(inner, &mut context);
-                        }
-                    }
-                    _ => {}
-                };
-            }
-
-            // The node has potentially been mutated,
-            // so let's inject the inner node back into our map!
-            if inner_node.is_some() {
-                self.nodes.write().unwrap().get_mut(&id).unwrap().node = inner_node;
-            }
         }
 
-        // Second, access the node immutably and process the children!
-        let children_ids = { self.nodes.read().unwrap().get(&id).unwrap().children_ids.clone() };
+        // The node has potentially been mutated,
+        // so let's inject the inner node back into our map!
+        if inner_node.is_some() {
+            self.nodes.write().unwrap().get_mut(&id).unwrap().node = inner_node;
+        }
 
-        match children_ids {
+        // Now we can loop over all the children, and ensure the
+        // ownership on the map is legitimate!
+        match context.children_ids {
             TstNodeChildren::None => {}
             TstNodeChildren::One(child_id) => {
                 self.do_transform(child_id);
