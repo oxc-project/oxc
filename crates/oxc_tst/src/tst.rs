@@ -76,18 +76,18 @@ impl<'a> TstContext<'a> {
         Atom::from(String::from_str_in(value, self.allocator).into_bump_str())
     }
 
-    pub fn check_parent(&self, op: impl FnOnce(&TstNode<'a>) -> bool) -> bool {
+    pub fn check_parent_node(&self, op: impl FnOnce(&TstNode<'a>) -> bool) -> bool {
         let nodes = self.nodes.read().unwrap();
         let parent = nodes.get(&self.parent_id).unwrap();
 
         op(parent)
     }
 
-    pub fn check_parent_node(&self, op: impl FnOnce(&AstOwnedKind<'a>) -> bool) -> bool {
-        self.check_parent(|node| op(node.node.as_ref().unwrap()))
+    pub fn check_parent(&self, op: impl FnOnce(&AstOwnedKind<'a>) -> bool) -> bool {
+        self.check_parent_node(|node| op(node.node.as_ref().unwrap()))
     }
 
-    pub fn check_ancestors(&self, op: impl Fn(&TstNode<'a>) -> bool) -> bool {
+    pub fn check_ancestors_nodes(&self, op: impl Fn(&TstNode<'a>) -> bool) -> bool {
         let nodes = self.nodes.read().unwrap();
 
         for parent_id in &self.parent_ids {
@@ -101,8 +101,8 @@ impl<'a> TstContext<'a> {
         false
     }
 
-    pub fn check_ancestor_nodes(&self, op: impl Fn(&AstOwnedKind<'a>) -> bool) -> bool {
-        self.check_ancestors(|node| op(&node.node.as_ref().unwrap()))
+    pub fn check_ancestor(&self, op: impl Fn(&AstOwnedKind<'a>) -> bool) -> bool {
+        self.check_ancestors_nodes(|node| op(&node.node.as_ref().unwrap()))
     }
 }
 

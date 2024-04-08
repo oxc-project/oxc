@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use oxc_ast::ast::{BlockStatement, NumericLiteral, Program};
+use oxc_ast::AstOwnedKind;
 
 use crate::tst::TstContext;
 
@@ -31,7 +32,14 @@ impl<'a> VisitTransform<'a> for NumericSeparators {
         num: &mut NumericLiteral<'a>,
         context: &mut TstContext<'a>,
     ) {
-        dbg!(&num);
+        let in_program = context.check_ancestor(|node| matches!(node, AstOwnedKind::Program(_)));
+
+        dbg!("in_program", in_program);
+
+        let in_block_statement =
+            context.check_ancestor(|node| matches!(node, AstOwnedKind::BlockStatement(_)));
+
+        dbg!("in_block_statement", in_block_statement);
 
         if num.raw.contains('_') {
             num.raw = context.new_str(num.raw.replace('_', "").as_str());
