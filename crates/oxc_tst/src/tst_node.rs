@@ -2,9 +2,9 @@ use oxc_ast::ast::*;
 use oxc_ast::AstOwnedKind;
 use oxc_semantic::AstNodeId;
 
-use crate::tst::TstBuilder;
+use crate::tst::Tst;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum TstNodeChildren {
     None,
     One(AstNodeId),
@@ -14,7 +14,7 @@ pub enum TstNodeChildren {
 #[derive(Debug)]
 pub struct TstNode<'a> {
     /// The node itself.
-    pub node: AstOwnedKind<'a>,
+    pub node: Option<AstOwnedKind<'a>>,
 
     /// ID of itself.
     pub id: AstNodeId,
@@ -29,12 +29,19 @@ pub struct TstNode<'a> {
     pub children_ids: TstNodeChildren,
 }
 
+impl<'a> TstNode<'a> {
+    pub fn created(mut self, node: AstOwnedKind<'a>) -> Self {
+        self.node = Some(node);
+        self
+    }
+}
+
 pub trait IntoTst<'a> {
-    fn into_tst(self, builder: &mut TstBuilder<'a>) -> TstNode<'a>;
+    fn into_tst(self, builder: &mut Tst<'a>) -> TstNode<'a>;
 }
 
 impl<'a> IntoTst<'a> for Program<'a> {
-    fn into_tst(mut self, builder: &mut TstBuilder<'a>) -> TstNode<'a> {
+    fn into_tst(mut self, builder: &mut Tst<'a>) -> TstNode<'a> {
         let mut node = builder.create_node();
 
         builder.push_parent(node.id);
@@ -45,13 +52,12 @@ impl<'a> IntoTst<'a> for Program<'a> {
 
         builder.pop_parent();
 
-        node.node = AstOwnedKind::Program(self);
-        node
+        node.created(AstOwnedKind::Program(self))
     }
 }
 
 impl<'a> IntoTst<'a> for BlockStatement<'a> {
-    fn into_tst(mut self, builder: &mut TstBuilder<'a>) -> TstNode<'a> {
+    fn into_tst(mut self, builder: &mut Tst<'a>) -> TstNode<'a> {
         let mut node = builder.create_node();
 
         builder.push_parent(node.id);
@@ -62,28 +68,24 @@ impl<'a> IntoTst<'a> for BlockStatement<'a> {
 
         builder.pop_parent();
 
-        node.node = AstOwnedKind::BlockStatement(self);
-        node
+        node.created(AstOwnedKind::BlockStatement(self))
     }
 }
 
 impl<'a> IntoTst<'a> for ExpressionStatement<'a> {
-    fn into_tst(mut self, builder: &mut TstBuilder<'a>) -> TstNode<'a> {
+    fn into_tst(mut self, builder: &mut Tst<'a>) -> TstNode<'a> {
         let mut node = builder.create_node();
 
         node.children_ids = TstNodeChildren::One(
             builder.map_expression(std::mem::replace(&mut self.expression, Expression::None)),
         );
 
-        node.node = AstOwnedKind::ExpressionStatement(self);
-        node
+        node.created(AstOwnedKind::ExpressionStatement(self))
     }
 }
 
 impl<'a> IntoTst<'a> for NumericLiteral<'a> {
-    fn into_tst(self, builder: &mut TstBuilder<'a>) -> TstNode<'a> {
-        let mut node = builder.create_node();
-        node.node = AstOwnedKind::NumericLiteral(self);
-        node
+    fn into_tst(self, builder: &mut Tst<'a>) -> TstNode<'a> {
+        builder.create_node().created(AstOwnedKind::NumericLiteral(self))
     }
 }
