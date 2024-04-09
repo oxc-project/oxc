@@ -63,9 +63,10 @@ jobs:
           corepack enable
           pnpm install
           pnpm run build
+          pnpm run test
 
       - name: Publish
         working-directory: npm/parser-wasm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --tag latest --provenance --access public
+        run: npm publish --provenance --access public # --tag alpha

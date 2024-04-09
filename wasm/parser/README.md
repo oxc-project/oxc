@@ -2,8 +2,20 @@
 
 Experimental wasm package for the oxc parser, with full TypeScript typings support.
 
-This package is built with `wasm-pack build --release --target web` for bundler (webpack / vite) consumption.
-Checkout [oxc-parser](https://www.npmjs.com/package/oxc-parser) for usage in node.js.
+This package is built with different [wasm-pack's target](https://rustwasm.github.io/docs/wasm-bindgen/reference/deployment.html) builds:
+
+* `wasm-pack build --target web` for bundler (webpack / vite) consumption.
+* `wasm-pack build --target nodejs` for node.js
+
+And exports the files as
+
+```json
+"main": "./node/oxc_parser_wasm.js",
+"browser": "./web/oxc_parser_wasm.js",
+"types": "./node/oxc_parser_wasm.d.ts",
+```
+
+Checkout [oxc-parser](https://www.npmjs.com/package/oxc-parser) for usage in node.js via napi bindings.
 
 Source code: https://github.com/oxc-project/oxc/tree/main/wasm/parser
 
