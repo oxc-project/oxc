@@ -16,6 +16,9 @@ pub struct SourceMap {
     pub(crate) source_contents: Option<Vec<Arc<str>>>,
     pub(crate) tokens: Vec<Token>,
     pub(crate) token_chunks: Option<Vec<TokenChunk>>,
+    /// Identifies third-party sources (such as framework code or bundler-generated code), allowing developers to avoid code that they don't want to see or step through, without having to configure this beforehand.
+    /// The `x_google_ignoreList` field refers to the `sources` array, and lists the indices of all the known third-party sources in that source map.
+    /// When parsing the source map, developer tools can use this to determine sections of the code that the browser loads and runs that could be automatically ignore-listed.
     pub(crate) x_google_ignore_list: Option<Vec<u32>>,
 }
 
