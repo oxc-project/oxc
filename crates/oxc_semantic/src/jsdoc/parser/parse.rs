@@ -88,14 +88,15 @@ fn parse_jsdoc_tag(tag_content: &str, jsdoc_tag_span: Span) -> JSDocTag {
         kind,
         // Body part is the rest of the tag_content.
         //
-        // It needs to include splitter whitespace to distinguish these cases as comment:
+        // It needs to include splitter whitespace to distinguish these cases for comment trimming.
         // ```
         // /**
-        //  * @k * <- should not omit */
-        //
+        //  * @k * <- should not omit
+        //  */
         // /**
         //  * @k
-        //  * <- should omit */
+        //  * <- should omit
+        //  */
         // ```
         // If not included, both body_part will starts with `* <- ...` and fails to trim.
         //

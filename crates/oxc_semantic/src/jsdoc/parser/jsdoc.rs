@@ -54,42 +54,41 @@ mod test {
 
     #[test]
     fn jsdoc_span() {
-        let allocator = Allocator::default();
-        let semantic = build_semantic(
-            &allocator,
-            r"
-            /** single line */
+        for (source_text, span_text) in [
+            ("/** single line */", " single line "),
+            (
+                "
             /**
              * multi
              * line1
-             */
+             */",
+                "\n             * multi\n             * line1\n             ",
+            ),
+            (
+                "
             /**
 multi
 line2
              */
-            ",
-        );
-        let mut jsdocs = semantic.jsdoc().iter_all();
+",
+                "\nmulti\nline2\n             ",
+            ),
+        ] {
+            let allocator = Allocator::default();
+            let semantic = build_semantic(&allocator, source_text);
+            let mut jsdocs = semantic.jsdoc().iter_all();
 
-        let jsdoc = jsdocs.next().unwrap();
-        assert_eq!(jsdoc.span.source_text(semantic.source_text), " single line ");
-        let jsdoc = jsdocs.next().unwrap();
-        assert_eq!(
-            jsdoc.span.source_text(semantic.source_text),
-            "\n             * multi\n             * line1\n             "
-        );
-        let jsdoc = jsdocs.next().unwrap();
-        assert_eq!(jsdoc.span.source_text(semantic.source_text), "\nmulti\nline2\n             ");
+            let jsdoc = jsdocs.next().unwrap();
+            assert_eq!(jsdoc.span.source_text(semantic.source_text), span_text);
+        }
     }
 
     #[test]
     fn jsdoc_comment() {
-        let allocator = Allocator::default();
-        let semantic = build_semantic(
-            &allocator,
-            r"
-            /** single line @k1 c1 @k2 */
-            /**
+        for (source_text, parsed, span_text, tag_len) in [
+            ("/** single line @k1 c1 @k2 */", "single line", " single line ", 2),
+            (
+                "/**
              * multi
              * line
              * @k1 c1a
@@ -97,39 +96,102 @@ line2
              * @k2 c2
              * @k3 c3a
              * c3b
-             */
-            /** * list */
-            ",
-        );
-        let mut jsdocs = semantic.jsdoc().iter_all();
+             */",
+                "multi\nline",
+                "\n             * multi\n             * line\n             * ",
+                3,
+            ),
+            (" /** * list */ ", "* list", " * list ", 0),
+            ("/***/", "", "", 0),
+            ("/****/", "*", "*", 0),
+            ("/*****/", "**", "**", 0),
+            (
+                "
+                    /**
+                      * * x
+                      ** y
+                      */
+",
+                "* x\n* y",
+                "\n                      * * x\n                      ** y\n                      ",
+                0,
+            ),
+            (
+                "
+    /** <- trim -> */
+",
+                "<- trim ->",
+                " <- trim -> ",
+                0,
+            ),
+            (
+                "
+             /**
+              * <- omit this, keep this -> *
+              */
+",
+                "<- omit this, keep this -> *",
+                "\n              * <- omit this, keep this -> *\n              ",
+                0,
+            ),
+            (
+                "
+        /**
+        this is
+        comment {@link link} ...
+        @x
+        */
+",
+                "this is\ncomment {@link link} ...",
+                "\n        this is\n        comment {@link link} ...\n        ",
+                1,
+            ),
+            (
+                "
+/**
+ * 日本語とか
+ * multibyte文字はどう⁉️
+ */
+",
+                "日本語とか\nmultibyte文字はどう⁉️",
+                "\n * 日本語とか\n * multibyte文字はどう⁉️\n ",
+                0,
+            ),
+            (
+                "
+/**\nhello {@see inline} source {@a 2}\n*/
+",
+                "hello {@see inline} source {@a 2}",
+                "\nhello {@see inline} source {@a 2}\n",
+                0,
+            ),
+            (
+                "
+    /** ハロー @comment だよ*/
+",
+                "ハロー",
+                " ハロー ",
+                1,
+            ),
+        ] {
+            let allocator = Allocator::default();
+            let semantic = build_semantic(&allocator, source_text);
+            let mut jsdocs = semantic.jsdoc().iter_all();
 
-        let jsdoc = jsdocs.next().unwrap();
-        let comment = jsdoc.comment();
-        assert_eq!(comment.parsed(), "single line");
-        assert_eq!(comment.span.source_text(semantic.source_text), " single line ");
-
-        let jsdoc = jsdocs.next().unwrap();
-        let comment = jsdoc.comment();
-        assert_eq!(comment.parsed(), "multi\nline");
-        assert_eq!(
-            comment.span.source_text(semantic.source_text),
-            "\n             * multi\n             * line\n             * "
-        );
-
-        let jsdoc = jsdocs.next().unwrap();
-        let comment = jsdoc.comment();
-        assert_eq!(comment.parsed(), "* list");
-        assert_eq!(comment.span.source_text(semantic.source_text), " * list ");
+            let jsdoc = jsdocs.next().unwrap();
+            let (comment, tags) = (jsdoc.comment(), jsdoc.tags());
+            assert_eq!(comment.parsed(), parsed);
+            assert_eq!(comment.span.source_text(semantic.source_text), span_text);
+            assert_eq!(tags.len(), tag_len);
+        }
     }
 
     #[test]
     fn jsdoc_tags() {
-        let allocator = Allocator::default();
-        let semantic = build_semantic(
-            &allocator,
-            r"
-            /** single line @k1 c1 @k2 */
-            /**
+        for (source_text, tag_len) in [
+            ("/** single line @k1 c1 @k2 */", 2),
+            (
+                "/**
              * multi
              * line
              * @k1 c1a
@@ -137,311 +199,173 @@ line2
              * @k2 c2
              * @k3 c3a
              * c3b
+             */",
+                3,
+            ),
+            (
+                "
+                /**
+                  * * x
+                  ** y
+                  */",
+                0,
+            ),
+            (" /** @foo @bar */", 2),
+            (" /**@*/ ", 1),
+            (" /** @aiue あいうえ @o お*/ ", 2),
+            (" /** @a @@ @d */ ", 4),
+            (
+                "
+            /**
+             * @x with asterisk
              */
-            ",
-        );
-        let mut jsdocs = semantic.jsdoc().iter_all();
+",
+                1,
+            ),
+            (
+                "
+                /**
+                @y without
+            asterisk
+                 */
+",
+                1,
+            ),
+            (
+                "
+        /**
+           @foo@bar
+        * @baz
+         */
+",
+                3,
+            ),
+        ] {
+            let allocator = Allocator::default();
+            let semantic = build_semantic(&allocator, source_text);
+            let mut jsdocs = semantic.jsdoc().iter_all();
 
-        let jsdoc = jsdocs.next().unwrap();
-        assert_eq!(jsdoc.tags().len(), 2);
-
-        let jsdoc = jsdocs.next().unwrap();
-        assert_eq!(jsdoc.tags().len(), 3);
+            let jsdoc = jsdocs.next().unwrap();
+            assert_eq!(jsdoc.tags().len(), tag_len);
+        }
     }
 
-    // fn parse_from_full_text(full_text: &str) -> JSDoc {
-    //     // Outside of markers can be trimmed
-    //     let source_text = full_text.trim().trim_start_matches("/**").trim_end_matches("*/");
-    //     let jsdoc = JSDoc::new(source_text, Span::new(3, 3));
-    //     jsdoc
-    // }
+    #[test]
+    fn parses_practical() {
+        let allocator = Allocator::default();
+        let semantic = build_semantic(
+            &allocator,
+            "/**
+              * @typedef {Object} User - a User account
+              * @property {string} displayName - the name used to show the user
+              * @property {number} id - a unique id
+              */
+            ",
+        );
+        let jsdoc = semantic.jsdoc().iter_all().next().unwrap();
 
-    // #[test]
-    // fn parses_jsdoc_comment() {
-        // for (full_text, expect_comment) in
-        //     [("/**hello*/", "hello"), ("/** hello full_text */", "hello full_text")]
-        // {
-        //     let jsdoc = parse_from_full_text(full_text);
-        //     let comment_part = jsdoc.comment();
-        //     assert_eq!(comment_part.parsed(), expect_comment.to_string());
-        //     println!("`{}`", comment_part.span.source_text(full_text));
-        // }
-        //         assert_eq!(
-        //             parse_from_full_text("/** hello full_text */"),
-        //             ("hello full_text".to_string(), vec![])
-        //         );
-        //         assert_eq!(parse_from_full_text("/***/"), (String::new(), vec![]));
-        //         assert_eq!(parse_from_full_text("/****/"), ("*".to_string(), vec![]));
-        //         assert_eq!(parse_from_full_text("/*****/"), ("**".to_string(), vec![]));
-        //         assert_eq!(
-        //             parse_from_full_text(
-        //                 "/**
-        //                   * * x
-        //                   ** y
-        //                   */"
-        //             )
-        //             .0,
-        //             "* x\n* y"
-        //         );
+        assert_eq!(jsdoc.comment().parsed(), "");
+        let mut tags = jsdoc.tags().iter();
+        assert_eq!(tags.len(), 3);
 
-        //         assert_eq!(parse_from_full_text("/** <- trim -> */").0, "<- trim ->");
-        //         assert_eq!(
-        //             parse_from_full_text(
-        //                 "
-        //         /**
-        //          * <- omit this, keep this -> *
-        //          */
-        //         "
-        //             )
-        //             .0,
-        //             "<- omit this, keep this -> *"
-        //         );
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind.parsed(), "typedef");
+        let (type_part, name_part, comment_part) = tag.type_name_comment();
+        let (type_part, name_part) = (type_part.unwrap(), name_part.unwrap());
+        assert_eq!(
+            (type_part.parsed(), name_part.parsed(), comment_part.parsed()),
+            ("Object", "User", "- a User account".to_string())
+        );
 
-        //         assert_eq!(
-        //             parse_from_full_text(
-        //                 "/**
-        // this is
-        // comment {@link link} ...
-        // @x
-        // */"
-        //             )
-        //             .0,
-        //             "this is\ncomment {@link link} ..."
-        //         );
-        //         assert_eq!(
-        //             parse_from_full_text(
-        //                 "/**
-        // 　　　　　　　　　* 日本語とか
-        // 　　　　　　　　　* multibyte文字はどう⁉️
-        //                   */"
-        //             )
-        //             .0,
-        //             "日本語とか\nmultibyte文字はどう⁉️"
-        //         );
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind.parsed(), "property");
+        let (type_part, name_part, comment_part) = tag.type_name_comment();
+        let (type_part, name_part) = (type_part.unwrap(), name_part.unwrap());
+        assert_eq!(
+            (type_part.parsed(), name_part.parsed(), comment_part.parsed()),
+            ("string", "displayName", "- the name used to show the user".to_string())
+        );
 
-        //         assert_eq!(
-        //             parse_from_full_text("/**\nhello {@see inline} source {@a 2}\n*/").0,
-        //             "hello {@see inline} source {@a 2}"
-        //         );
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind.parsed(), "property");
+        let (type_part, name_part, comment_part) = tag.type_name_comment();
+        let (type_part, name_part) = (type_part.unwrap(), name_part.unwrap());
+        assert_eq!(
+            (type_part.parsed(), name_part.parsed(), comment_part.parsed()),
+            ("number", "id", "- a unique id".to_string())
+        );
+    }
 
-        //         assert_eq!(parse_from_full_text("/** ハロー @comment だよ*/").0, "ハロー");
-    // }
+    #[test]
+    fn parses_practical_with_multibyte() {
+        let allocator = Allocator::default();
+        let semantic = build_semantic(
+            &allocator,
+            "/**
+                  * flat tree data on expanded state
+                  *
+                  * @export
+                  * @template T
+                  * @param {*} data : table data
+                  * @param {string} childrenColumnName : 指定树形结构的列名
+                  * @param {Set<Key>} expandedKeys : 展开的行对应的keys
+                  * @param {GetRowKey<T>} getRowKey  : 获取当前rowKey的方法
+                  * @returns flattened data
+                  */",
+        );
+        let jsdoc = semantic.jsdoc().iter_all().next().unwrap();
 
-    //     #[test]
-    //     fn parses_jsdoc_tags() {
-    //         assert_eq!(
-    //             parse_from_full_text("/**@deprecated*/").1,
-    //             vec![parse_jsdoc_tag("@deprecated")]
-    //         );
-    //         assert_eq!(
-    //             parse_from_full_text("/**@foo since 2024 */").1,
-    //             vec![parse_jsdoc_tag("@foo since 2024 ")]
-    //         );
+        assert_eq!(jsdoc.comment().parsed(), "flat tree data on expanded state");
+        let mut tags = jsdoc.tags().iter();
+        assert_eq!(tags.len(), 7);
 
-    //         assert_eq!(
-    //             parse_from_full_text("/** @foo @bar */").1,
-    //             vec![parse_jsdoc_tag("@foo "), parse_jsdoc_tag("@bar ")]
-    //         );
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind.parsed(), "export");
+        assert_eq!(tag.comment().parsed(), "");
 
-    //         assert_eq!(parse_from_full_text("/**@*/").1, vec![parse_jsdoc_tag("@")]);
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind.parsed(), "template");
+        assert_eq!(tag.comment().parsed(), "T");
 
-    //         assert_eq!(
-    //             parse_from_full_text("/** @aiue あいうえ @o お*/").1,
-    //             vec![parse_jsdoc_tag("@aiue あいうえ "), parse_jsdoc_tag("@o お")],
-    //         );
-    //         assert_eq!(
-    //             parse_from_full_text("/** @a @@ @d */").1,
-    //             vec![
-    //                 parse_jsdoc_tag("@a "),
-    //                 parse_jsdoc_tag("@"),
-    //                 parse_jsdoc_tag("@ "),
-    //                 parse_jsdoc_tag("@d ")
-    //             ],
-    //         );
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind.parsed(), "param");
+        let (type_part, name_part, comment_part) = tag.type_name_comment();
+        let (type_part, name_part) = (type_part.unwrap(), name_part.unwrap());
+        assert_eq!(
+            (type_part.parsed(), name_part.parsed(), comment_part.parsed()),
+            ("*", "data", ": table data".to_string())
+        );
 
-    //         assert_eq!(
-    //             parse_from_full_text(
-    //                 "/** @yo
-    //     */"
-    //             )
-    //             .1,
-    //             vec![parse_jsdoc_tag("@yo\n    ")]
-    //         );
-    //         assert_eq!(
-    //             parse_from_full_text(
-    //                 "/**
-    //                     *     @foo
-    //                           */"
-    //             )
-    //             .1,
-    //             vec![parse_jsdoc_tag("@foo\n                          ")]
-    //         );
-    //         assert_eq!(
-    //             parse_from_full_text(
-    //                 "
-    //         /**
-    //          * @x with asterisk
-    //          */
-    //                 "
-    //             )
-    //             .1,
-    //             vec![parse_jsdoc_tag("@x with asterisk\n         ")]
-    //         );
-    //         assert_eq!(
-    //             parse_from_full_text(
-    //                 "
-    //             /**
-    //             @y without
-    //         asterisk
-    //              */
-    //                     "
-    //             )
-    //             .1,
-    //             vec![parse_jsdoc_tag("@y without\n        asterisk\n             ")]
-    //         );
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind.parsed(), "param");
+        let (type_part, name_part, comment_part) = tag.type_name_comment();
+        let (type_part, name_part) = (type_part.unwrap(), name_part.unwrap());
+        assert_eq!(
+            (type_part.parsed(), name_part.parsed(), comment_part.parsed()),
+            ("string", "childrenColumnName", ": 指定树形结构的列名".to_string())
+        );
 
-    //         assert_eq!(
-    //             parse_from_full_text(
-    //                 "
-    //     /**
-    //        @foo@bar
-    //     * @baz
-    //      */
-    //             "
-    //             )
-    //             .1,
-    //             vec![
-    //                 parse_jsdoc_tag("@foo"),
-    //                 parse_jsdoc_tag("@bar\n    * "),
-    //                 parse_jsdoc_tag("@baz\n     ")
-    //             ]
-    //         );
-    //         assert_eq!(
-    //             parse_from_full_text(
-    //                 "/**
-    //                       * @one
-    //                   *
-    //                   * ...
-    //               *
-    //                       * @two */"
-    //             )
-    //             .1,
-    //             vec![
-    //                 parse_jsdoc_tag("@one\n                  *\n                  * ...\n              *\n                      * "),
-    //                 parse_jsdoc_tag("@two ")
-    //             ]
-    //         );
-    //         assert_eq!(
-    //             parse_from_full_text(
-    //                 "/**
-    //                   * ...
-    //                   * @hey you!
-    //                   *   Are you OK?
-    //                   * @yes I'm fine
-    //                   */"
-    //             )
-    //             .1,
-    //             vec![
-    //                 parse_jsdoc_tag(
-    //                     "@hey you!\n                  *   Are you OK?\n                  * "
-    //                 ),
-    //                 parse_jsdoc_tag("@yes I'm fine\n                  ")
-    //             ]
-    //         );
-    //     }
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind.parsed(), "param");
+        let (type_part, name_part, comment_part) = tag.type_name_comment();
+        let (type_part, name_part) = (type_part.unwrap(), name_part.unwrap());
+        assert_eq!(
+            (type_part.parsed(), name_part.parsed(), comment_part.parsed()),
+            ("Set<Key>", "expandedKeys", ": 展开的行对应的keys".to_string())
+        );
 
-    //     #[test]
-    //     fn parses_practical() {
-    //         let jsdoc = parse_from_full_text(
-    //             "
-    // /**
-    //  * @typedef {Object} User - a User account
-    //  * @property {string} displayName - the name used to show the user
-    //  * @property {number} id - a unique id
-    //  */
-    // ",
-    //         );
-    //         let mut tags = jsdoc.1.iter();
-    //         let tag = tags.next().unwrap();
-    //         assert_eq!(tag.kind, "typedef");
-    //         let tag = tags.next().unwrap();
-    //         assert_eq!(tag.kind, "property");
-    //         let tag = tags.next().unwrap();
-    //         assert_eq!(tag.kind, "property");
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind.parsed(), "param");
+        let (type_part, name_part, comment_part) = tag.type_name_comment();
+        let (type_part, name_part) = (type_part.unwrap(), name_part.unwrap());
+        assert_eq!(
+            (type_part.parsed(), name_part.parsed(), comment_part.parsed()),
+            ("GetRowKey<T>", "getRowKey", ": 获取当前rowKey的方法".to_string())
+        );
 
-    //         let jsdoc = parse_from_full_text(
-    //             "
-    // /**
-    //  * Adds two numbers together
-    //  * @param {number} a The first number
-    //  * @param {number} b The second number
-    //  * @returns {number}
-    //  */
-    // ",
-    //         );
-    //         let mut tags = jsdoc.1.iter();
-    //         let tag = tags.next().unwrap();
-    //         assert_eq!(tag.kind, "param");
-    //         let tag = tags.next().unwrap();
-    //         assert_eq!(tag.kind, "param");
-    //         let tag = tags.next().unwrap();
-    //         assert_eq!(tag.kind, "returns");
-    //     }
-
-    //     #[test]
-    //     fn parses_practical_with_multibyte() {
-    //         let jsdoc = parse_from_full_text(
-    //             "/**
-    //               * flat tree data on expanded state
-    //               *
-    //               * @export
-    //               * @template T
-    //               * @param {*} data : table data
-    //               * @param {string} childrenColumnName : 指定树形结构的列名
-    //               * @param {Set<Key>} expandedKeys : 展开的行对应的keys
-    //               * @param {GetRowKey<T>} getRowKey  : 获取当前rowKey的方法
-    //               * @returns flattened data
-    //               */",
-    //         );
-    //         assert_eq!(jsdoc.0, "flat tree data on expanded state");
-    //         let mut tags = jsdoc.1.iter();
-    //         assert_eq!(tags.len(), 7);
-
-    //         let tag = tags.next().unwrap();
-    //         assert_eq!(tag.kind, "export");
-    //         assert_eq!(tag.comment(), "");
-
-    //         let tag = tags.next().unwrap();
-    //         assert_eq!(tag.kind, "template");
-    //         assert_eq!(tag.comment(), "T");
-
-    //         let tag = tags.next().unwrap();
-    //         assert_eq!(tag.kind, "param");
-    //         assert_eq!(tag.type_name_comment(), (Some("*"), Some("data"), ": table data".to_string()));
-
-    //         let tag = tags.next().unwrap();
-    //         assert_eq!(tag.kind, "param");
-    //         assert_eq!(
-    //             tag.type_name_comment(),
-    //             (Some("string"), Some("childrenColumnName"), ": 指定树形结构的列名".to_string())
-    //         );
-
-    //         let tag = tags.next().unwrap();
-    //         assert_eq!(tag.kind, "param");
-    //         assert_eq!(
-    //             tag.type_name_comment(),
-    //             (Some("Set<Key>"), Some("expandedKeys"), ": 展开的行对应的keys".to_string())
-    //         );
-
-    //         let tag = tags.next().unwrap();
-    //         assert_eq!(tag.kind, "param");
-    //         assert_eq!(
-    //             tag.type_name_comment(),
-    //             (Some("GetRowKey<T>"), Some("getRowKey"), ": 获取当前rowKey的方法".to_string())
-    //         );
-
-    //         let tag = tags.next().unwrap();
-    //         assert_eq!(tag.kind, "returns");
-    //         assert_eq!(tag.type_comment(), (None, "flattened data".to_string()));
-    //     }
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind.parsed(), "returns");
+        let (type_part, comment_part) = tag.type_comment();
+        assert_eq!((type_part, comment_part.parsed()), (None, "flattened data".to_string()));
+    }
 }

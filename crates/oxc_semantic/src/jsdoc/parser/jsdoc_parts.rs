@@ -92,7 +92,7 @@ impl<'a> JSDocTagKindPart<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct JSDocTagTypePart<'a> {
     raw: &'a str,
     pub span: Span,
@@ -111,7 +111,7 @@ impl<'a> JSDocTagTypePart<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct JSDocTagTypeNamePart<'a> {
     raw: &'a str,
     pub span: Span,
