@@ -5,6 +5,14 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.12.2] - 2024-04-08
+
+### Features
+
+- Optional JSONSourceMap fileds (#2910)
+- Add methods to mutate SourceMap (#2909)
+- Add SourceMapBuilder file (#2908)
+
 ## [0.11.1] - 2024-04-03
 
 ### Bug Fixes
