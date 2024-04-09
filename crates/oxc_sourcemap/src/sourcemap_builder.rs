@@ -70,6 +70,7 @@ impl SourceMapBuilder {
         SourceMap::new(
             self.file,
             self.names,
+            None,
             self.sources,
             Some(self.source_contents),
             self.tokens,

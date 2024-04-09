@@ -78,6 +78,7 @@ impl ConcatSourceMapBuilder {
         SourceMap::new(
             None,
             self.names,
+            None,
             self.sources,
             Some(self.source_contents),
             self.tokens,
@@ -91,6 +92,7 @@ fn test_concat_sourcemap_builder() {
     let sm1 = SourceMap::new(
         None,
         vec!["foo".into(), "foo2".into()],
+        None,
         vec!["foo.js".into()],
         None,
         vec![Token::new(1, 1, 1, 1, Some(0), Some(0))],
@@ -99,6 +101,7 @@ fn test_concat_sourcemap_builder() {
     let sm2 = SourceMap::new(
         None,
         vec!["bar".into()],
+        None,
         vec!["bar.js".into()],
         None,
         vec![Token::new(1, 1, 1, 1, Some(0), Some(0))],
@@ -112,6 +115,7 @@ fn test_concat_sourcemap_builder() {
     let sm = SourceMap::new(
         None,
         vec!["foo".into(), "foo2".into(), "bar".into()],
+        None,
         vec!["foo.js".into(), "bar.js".into()],
         None,
         vec![Token::new(1, 1, 1, 1, Some(0), Some(0)), Token::new(3, 1, 1, 1, Some(1), Some(2))],
