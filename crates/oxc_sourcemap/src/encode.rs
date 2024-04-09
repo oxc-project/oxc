@@ -47,6 +47,12 @@ pub fn encode(sourcemap: &SourceMap) -> Result<String> {
             .map_err(Error::from)?;
         buf.push_str(&quote_source_contents.join(","));
     }
+    if let Some(x_google_ignore_list) = &sourcemap.x_google_ignore_list {
+        buf.push_str("],\"x_google_ignoreList\":[");
+        let x_google_ignore_list =
+            x_google_ignore_list.iter().map(ToString::to_string).collect::<Vec<_>>();
+        buf.push_str(&x_google_ignore_list.join(","));
+    }
     buf.push_str("],\"mappings\":\"");
     buf.push_str(&serialize_sourcemap_mappings(sourcemap));
     buf.push_str("\"}");
@@ -164,7 +170,7 @@ fn test_encode() {
 #[test]
 fn test_encode_escape_string() {
     // '\0' should be escaped.
-    let sm = SourceMap::new(
+    let mut sm = SourceMap::new(
         None,
         vec!["\0".into()],
         None,
@@ -173,8 +179,9 @@ fn test_encode_escape_string() {
         vec![],
         None,
     );
+    sm.set_x_google_ignore_list(vec![0]);
     assert_eq!(
         sm.to_json_string().unwrap(),
-        r#"{"version":3,"names":["\u0000"],"sources":["\u0000"],"sourcesContent":["\u0000"],"mappings":""}"#
+        r#"{"version":3,"names":["\u0000"],"sources":["\u0000"],"sourcesContent":["\u0000"],"x_google_ignoreList":[0],"mappings":""}"#
     );
 }

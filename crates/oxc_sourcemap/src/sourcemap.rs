@@ -16,6 +16,7 @@ pub struct SourceMap {
     pub(crate) source_contents: Option<Vec<Arc<str>>>,
     pub(crate) tokens: Vec<Token>,
     pub(crate) token_chunks: Option<Vec<TokenChunk>>,
+    pub(crate) x_google_ignore_list: Option<Vec<u32>>,
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -29,7 +30,16 @@ impl SourceMap {
         tokens: Vec<Token>,
         token_chunks: Option<Vec<TokenChunk>>,
     ) -> Self {
-        Self { file, names, source_root, sources, source_contents, tokens, token_chunks }
+        Self {
+            file,
+            names,
+            source_root,
+            sources,
+            source_contents,
+            tokens,
+            token_chunks,
+            x_google_ignore_list: None,
+        }
     }
 
     /// Convert `SourceMap` to vlq sourcemap string.
@@ -67,6 +77,11 @@ impl SourceMap {
 
     pub fn get_source_root(&self) -> Option<&str> {
         self.source_root.as_deref()
+    }
+
+    /// Set `x_google_ignoreList`.
+    pub fn set_x_google_ignore_list(&mut self, x_google_ignore_list: Vec<u32>) {
+        self.x_google_ignore_list = Some(x_google_ignore_list);
     }
 
     pub fn get_names(&self) -> impl Iterator<Item = &str> {
