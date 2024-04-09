@@ -147,8 +147,11 @@ impl NoCycle {
 
         for module_record_ref in &module_record.loaded_modules {
             let resolved_absolute_path = &module_record_ref.resolved_absolute_path;
-            let was_imported_as_type =
-                &module_record_ref.import_entries.iter().all(|entry| entry.is_type);
+            let was_imported_as_type = &module_record
+                .import_entries
+                .iter()
+                .filter(|entry| entry.module_request.name() == module_record_ref.key())
+                .all(|entry| entry.is_type);
             if self.ignore_types && *was_imported_as_type {
                 continue;
             }
@@ -227,6 +230,10 @@ fn test() {
         ),
         (
             r#"import { foo } from "./typescript/ts-types-depth-two";"#,
+            Some(json!([{"ignoreTypes":true}])),
+        ),
+        (
+            r#"import { foo } from "./typescript/ts-depth-type-and-value-imports";"#,
             Some(json!([{"ignoreTypes":true}])),
         ),
         // Flow not supported
