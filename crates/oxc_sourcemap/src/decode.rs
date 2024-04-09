@@ -8,6 +8,7 @@ use crate::{SourceMap, Token};
 struct JSONSourceMap {
     file: Option<String>,
     mappings: Option<String>,
+    source_root: Option<String>,
     sources: Option<Vec<Option<String>>>,
     sources_content: Option<Vec<Option<String>>>,
     names: Option<Vec<String>>,
@@ -18,6 +19,7 @@ pub fn decode(value: &str) -> Result<SourceMap> {
     let file = json.file.map(Into::into);
     let names =
         json.names.map(|v| v.into_iter().map(Into::into).collect::<Vec<_>>()).unwrap_or_default();
+    let source_root = json.source_root.map(Into::into);
     let sources = json
         .sources
         .map(|v| v.into_iter().map(Option::unwrap_or_default).map(Into::into).collect::<Vec<_>>())
@@ -26,7 +28,7 @@ pub fn decode(value: &str) -> Result<SourceMap> {
         .sources_content
         .map(|v| v.into_iter().map(Option::unwrap_or_default).map(Into::into).collect::<Vec<_>>());
     let tokens = decode_mapping(&json.mappings.unwrap_or_default(), names.len(), sources.len())?;
-    Ok(SourceMap::new(file, names, sources, source_contents, tokens, None))
+    Ok(SourceMap::new(file, names, source_root, sources, source_contents, tokens, None))
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -140,6 +142,7 @@ fn test_decode_sourcemap() {
         "mappings": "AAAA,GAAIA,GAAI,EACR,IAAIA,GAAK,EAAG,CACVC,MAAM"
     }"#;
     let sm = SourceMap::from_json_string(input).unwrap();
+    assert_eq!(sm.get_source_root(), Some("x"));
     let mut iter = sm.get_source_view_tokens().filter(|token| token.get_name_id().is_some());
     assert_eq!(iter.next().unwrap().to_tuple(), (Some("coolstuff.js"), 0, 4, Some("x")));
     assert_eq!(iter.next().unwrap().to_tuple(), (Some("coolstuff.js"), 1, 4, Some("x")));

@@ -11,6 +11,7 @@ use std::sync::Arc;
 pub struct SourceMap {
     pub(crate) file: Option<Arc<str>>,
     pub(crate) names: Vec<Arc<str>>,
+    pub(crate) source_root: Option<String>,
     pub(crate) sources: Vec<Arc<str>>,
     pub(crate) source_contents: Option<Vec<Arc<str>>>,
     pub(crate) tokens: Vec<Token>,
@@ -22,12 +23,13 @@ impl SourceMap {
     pub fn new(
         file: Option<Arc<str>>,
         names: Vec<Arc<str>>,
+        source_root: Option<String>,
         sources: Vec<Arc<str>>,
         source_contents: Option<Vec<Arc<str>>>,
         tokens: Vec<Token>,
         token_chunks: Option<Vec<TokenChunk>>,
     ) -> Self {
-        Self { file, names, sources, source_contents, tokens, token_chunks }
+        Self { file, names, source_root, sources, source_contents, tokens, token_chunks }
     }
 
     /// Convert `SourceMap` to vlq sourcemap string.
@@ -61,6 +63,10 @@ impl SourceMap {
 
     pub fn set_file(&mut self, file: &str) {
         self.file = Some(file.into());
+    }
+
+    pub fn get_source_root(&self) -> Option<&str> {
+        self.source_root.as_deref()
     }
 
     pub fn get_names(&self) -> impl Iterator<Item = &str> {
@@ -224,6 +230,7 @@ fn test_sourcemap_source_view_token() {
     let sm = SourceMap::new(
         None,
         vec!["foo".into()],
+        None,
         vec!["foo.js".into()],
         None,
         vec![Token::new(1, 1, 1, 1, Some(0), Some(0))],
