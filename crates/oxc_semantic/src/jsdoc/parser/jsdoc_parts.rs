@@ -10,52 +10,7 @@ impl<'a> JSDocCommentPart<'a> {
         Self { raw: part_content, span }
     }
 
-    // Consider the following JSDoc:
-    //
-    // ```
-    // /**
-    //  * @kind1 comment
-    //  * ...
-    //  */
-    // /** @kind2 comment ... */
-    // ```
-    //
-    // In this case, `comment_part.span` will be:
-    // - `@kind1`: `comment\n * ...\n * `
-    // - `@kind2`: `comment ... `
-    //
-    // The problem is...
-    //
-    // If passed `Span` for Miette's `Diagnostic` is single line,
-    // it will render nice underline for the span range.
-    // But if the span is multiline, it will just render arrow mark at the start of each line.
-    //
-    // ```
-    // ╭─▶ * @kind1 comment
-    // |   * ...
-    // ╰─▶ */
-    // ```
-    //
-    // It's too verbose and may not fit for linter diagnostics.
-    //
-    // Even if with single line, the underline is not the same as `parsed()` range.
-    // `parsed()` does not include leading and trailing whitespaces.
-    //
-    // To solve these problems, just indicate the trimmed first line of the comment.
-    pub fn span_first_line(&self) -> Span {
-        // Multiline
-        if let Some(first_line_end) = self.raw.find('\n') {
-            // -1 for `\n`
-            let span_end = first_line_end.checked_sub(1).unwrap_or_default();
-            return Span::new(
-                self.span.start,
-                self.span.start + u32::try_from(span_end).unwrap_or_default(),
-            );
-        }
-
-        // Single line
-        self.span
-    }
+    // TODO: span_trimmed
 
     pub fn parsed(&self) -> String {
         // If single line, there is no leading `*`
@@ -196,6 +151,7 @@ mod test {
                 "1\n2\n3",
             ),
         ] {
+            // `Span` is not used in this test
             let comment_part = JSDocCommentPart::new(actual, SPAN);
             assert_eq!(comment_part.parsed(), expect);
         }
