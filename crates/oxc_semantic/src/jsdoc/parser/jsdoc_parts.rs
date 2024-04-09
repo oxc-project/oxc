@@ -14,15 +14,15 @@ impl<'a> JSDocCommentPart<'a> {
     //
     // ```
     // /**
-    //  * @kind1 com
-    //  * ment...
+    //  * @kind1 comment
+    //  * ...
     //  */
-    // /** @kind2 com ment */
+    // /** @kind2 comment ... */
     // ```
     //
     // In this case, `comment_part.span` will be:
-    // - `@kind1`: `com\n * ment...\n * `
-    // - `@kind2`: `com ment `
+    // - `@kind1`: `comment\n * ...\n * `
+    // - `@kind2`: `comment ... `
     //
     // The problem is...
     //
@@ -31,8 +31,8 @@ impl<'a> JSDocCommentPart<'a> {
     // But if the span is multiline, it will just render arrow mark at the start of each line.
     //
     // ```
-    // ╭─▶ * @kind1 com
-    // |   * ment...
+    // ╭─▶ * @kind1 comment
+    // |   * ...
     // ╰─▶ */
     // ```
     //
