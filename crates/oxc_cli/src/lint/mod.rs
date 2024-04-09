@@ -145,6 +145,7 @@ impl Runner for LintRunner {
             number_of_errors: diagnostic_service.errors_count(),
             max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
             deny_warnings: warning_options.deny_warnings,
+            print_summary: diagnostic_service.is_graphical_output(),
         })
     }
 }
