@@ -4,7 +4,11 @@ use serde::Deserialize;
 #[serde(rename_all = "camelCase")]
 pub struct TypeScriptOptions;
 
-/// [plugin-transform-typescript](https://babeljs.io/docs/babel-plugin-transform-typescript)
+/// [Preset TypeScript](https://babeljs.io/docs/babel-preset-typescript)
+///
+/// This preset includes the following plugins:
+///
+/// * [transform-typescript](https://babeljs.io/docs/babel-plugin-transform-typescript)
 ///
 /// This plugin adds support for the types syntax used by the TypeScript programming language.
 /// However, this plugin does not add the ability to type-check the JavaScript passed to it.

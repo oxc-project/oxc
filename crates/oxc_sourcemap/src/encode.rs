@@ -16,6 +16,11 @@ pub fn encode(sourcemap: &SourceMap) -> Result<String> {
         buf.push_str(file);
         buf.push_str("\",");
     }
+    if let Some(source_root) = sourcemap.get_source_root() {
+        buf.push_str("\"sourceRoot\":\"");
+        buf.push_str(source_root);
+        buf.push_str("\",");
+    }
     buf.push_str("\"names\":[");
     let names = sourcemap
         .names
@@ -144,6 +149,7 @@ fn test_encode() {
     let input = r#"{
         "version": 3,
         "sources": ["coolstuff.js"],
+        "sourceRoot": "x",
         "names": ["x","alert"],
         "mappings": "AAAA,GAAIA,GAAI,EACR,IAAIA,GAAK,EAAG,CACVC,MAAM"
     }"#;
@@ -161,6 +167,7 @@ fn test_encode_escape_string() {
     let sm = SourceMap::new(
         None,
         vec!["\0".into()],
+        None,
         vec!["\0".into()],
         Some(vec!["\0".into()]),
         vec![],

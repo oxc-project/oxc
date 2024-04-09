@@ -6,10 +6,17 @@ use crate::{SourceMap, Token};
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct JSONSourceMap {
+    // An optional name of the generated code that this source map is associated with.
     file: Option<String>,
+    // A string with the encoded mapping data.
     mappings: Option<String>,
+    // An optional source root, useful for relocating source files on a server or removing repeated values in the “sources” entry.  This value is prepended to the individual entries in the “source” field.
+    source_root: Option<String>,
+    // A list of original sources used by the “mappings” entry.
     sources: Option<Vec<Option<String>>>,
+    // An optional list of source content, useful when the “source” can’t be hosted. The contents are listed in the same order as the sources in line 5. “null” may be used if some original sources should be retrieved by name.
     sources_content: Option<Vec<Option<String>>>,
+    // A list of symbol names used by the “mappings” entry.
     names: Option<Vec<String>>,
 }
 
@@ -18,6 +25,7 @@ pub fn decode(value: &str) -> Result<SourceMap> {
     let file = json.file.map(Into::into);
     let names =
         json.names.map(|v| v.into_iter().map(Into::into).collect::<Vec<_>>()).unwrap_or_default();
+    let source_root = json.source_root.map(Into::into);
     let sources = json
         .sources
         .map(|v| v.into_iter().map(Option::unwrap_or_default).map(Into::into).collect::<Vec<_>>())
@@ -26,7 +34,7 @@ pub fn decode(value: &str) -> Result<SourceMap> {
         .sources_content
         .map(|v| v.into_iter().map(Option::unwrap_or_default).map(Into::into).collect::<Vec<_>>());
     let tokens = decode_mapping(&json.mappings.unwrap_or_default(), names.len(), sources.len())?;
-    Ok(SourceMap::new(file, names, sources, source_contents, tokens, None))
+    Ok(SourceMap::new(file, names, source_root, sources, source_contents, tokens, None))
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -140,6 +148,7 @@ fn test_decode_sourcemap() {
         "mappings": "AAAA,GAAIA,GAAI,EACR,IAAIA,GAAK,EAAG,CACVC,MAAM"
     }"#;
     let sm = SourceMap::from_json_string(input).unwrap();
+    assert_eq!(sm.get_source_root(), Some("x"));
     let mut iter = sm.get_source_view_tokens().filter(|token| token.get_name_id().is_some());
     assert_eq!(iter.next().unwrap().to_tuple(), (Some("coolstuff.js"), 0, 4, Some("x")));
     assert_eq!(iter.next().unwrap().to_tuple(), (Some("coolstuff.js"), 1, 4, Some("x")));

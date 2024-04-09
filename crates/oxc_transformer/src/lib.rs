@@ -9,10 +9,7 @@
 mod compiler_assumptions;
 // Plugins: <https://babeljs.io/docs/plugins-list>
 mod decorators;
-mod react_display_name;
-mod react_jsx;
-mod react_jsx_self;
-mod react_jsx_source;
+mod react;
 mod typescript;
 
 use oxc_allocator::Allocator;
@@ -24,10 +21,10 @@ use oxc_span::SourceType;
 pub use crate::{
     compiler_assumptions::CompilerAssumptions,
     decorators::{Decorators, DecoratorsOptions},
-    react_display_name::{ReactDisplayName, ReactDisplayNameOptions},
-    react_jsx::{ReactJsx, ReactJsxOptions},
-    react_jsx_self::{ReactJsxSelf, ReactJsxSelfOptions},
-    react_jsx_source::{ReactJsxSource, ReactJsxSourceOptions},
+    react::{
+        React, ReactDisplayName, ReactDisplayNameOptions, ReactJsx, ReactJsxSelf, ReactJsxSource,
+        ReactJsxSourceOptions, ReactOptions,
+    },
     typescript::{TypeScript, TypeScriptOptions},
 };
 
@@ -40,12 +37,14 @@ pub struct TransformOptions {
     pub assumptions: CompilerAssumptions,
 
     // Plugins
+    /// [proposal-decorators](https://babeljs.io/docs/babel-plugin-proposal-decorators)
     pub decorators: DecoratorsOptions,
+
+    /// [preset-typescript](https://babeljs.io/docs/babel-preset-typescript)
     pub typescript: TypeScriptOptions,
-    pub react_jsx: ReactJsxOptions,
-    pub react_display_name: ReactDisplayNameOptions,
-    pub react_jsx_self: ReactJsxSelfOptions,
-    pub react_jsx_source: ReactJsxSourceOptions,
+
+    /// [preset-react](https://babeljs.io/docs/babel-preset-react)
+    pub react: ReactOptions,
 }
 
 #[allow(unused)]
@@ -55,15 +54,9 @@ pub struct Transformer<'a> {
     semantic: Semantic<'a>,
     options: TransformOptions,
 
-    // Stage 3
     decorators: Decorators,
-    // [preset-typescript](https://babeljs.io/docs/babel-preset-typescript)
     typescript: TypeScript,
-    // [preset-react](https://babeljs.io/docs/babel-preset-react)
-    react_display_name: ReactDisplayName,
-    react_jsx: ReactJsx,
-    react_jsx_self: ReactJsxSelf,
-    react_jsx_source: ReactJsxSource,
+    react: React,
 }
 
 impl<'a> Transformer<'a> {
@@ -80,10 +73,7 @@ impl<'a> Transformer<'a> {
             options,
             decorators: Decorators::default(),
             typescript: TypeScript::default(),
-            react_display_name: ReactDisplayName::default(),
-            react_jsx: ReactJsx::default(),
-            react_jsx_self: ReactJsxSelf::default(),
-            react_jsx_source: ReactJsxSource::default(),
+            react: React::default(),
         }
     }
 

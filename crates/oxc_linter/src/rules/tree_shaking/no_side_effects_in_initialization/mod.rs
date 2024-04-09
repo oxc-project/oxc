@@ -99,19 +99,19 @@ fn test() {
         "const x = []",
         "const x = [ext,ext]",
         "const x = [1,,2,]",
-        // // ArrayPattern
+        // ArrayPattern
         "const [x] = []",
         "const [,x,] = []",
-        // // ArrowFunctionExpression
+        // ArrowFunctionExpression
         "const x = a=>{a(); ext()}",
-        // // ArrowFunctionExpression when called
+        // ArrowFunctionExpression when called
         "(()=>{})()",
         "(a=>{})()",
         "((...a)=>{})()",
         "(({a})=>{})()",
-        // // ArrowFunctionExpression when mutated
+        // ArrowFunctionExpression when mutated
         "const x = ()=>{}; x.y = 1",
-        // // AssignmentExpression
+        // AssignmentExpression
         "var x;x = {}",
         "var x;x += 1",
         "const x = {}; x.y = 1",
@@ -124,19 +124,19 @@ fn test() {
         "const {x: y = ext} = {}",
         "const {[ext]: x = ext} = {}",
         "const x = ()=>{}, {y = x()} = {}",
-        // // BinaryExpression
-        // "const x = 1 + 2",
-        // "if (1-1) ext()",
-        // // BlockStatement
-        // "{}",
-        // "const x = ()=>{};{const x = ext}x()",
-        // "const x = ext;{const x = ()=>{}; x()}",
-        // // BreakStatement
-        // "while(true){break}",
-        // // CallExpression
+        // BinaryExpression
+        "const x = 1 + 2",
+        "if (1-1) ext()",
+        // BlockStatement
+        "{}",
+        "const x = ()=>{};{const x = ext}x()",
+        "const x = ext;{const x = ()=>{}; x()}",
+        // BreakStatement
+        "while(true){break}",
+        // CallExpression
         "(a=>{const y = a})(ext, ext)",
         "const x = ()=>{}, y = ()=>{}; x(y())",
-        // // CatchClause
+        // CatchClause
         "try {} catch (error) {}",
         "const x = ()=>{}; try {} catch (error) {const x = ext}; x()",
         "const x = ext; try {} catch (error) {const x = ()=>{}; x()}",
@@ -393,12 +393,12 @@ fn test() {
         // AwaitExpression
         "const x = async ()=>{await ext()}; x()",
         // // BinaryExpression
-        // "const x = 1 + ext()",
-        // "const x = ext() + 1",
-        // // BlockStatement
-        // "{ext()}",
+        "const x = 1 + ext()",
+        "const x = ext() + 1",
+        // BlockStatement
+        "{ext()}",
         // "var x=()=>{};{var x=ext}x()",
-        // "var x=ext;{x(); var x=()=>{}}",
+        "var x=ext;{x(); var x=()=>{}}",
         // CallExpression
         "(()=>{})(ext(), 1)",
         "(()=>{})(1, ext())",

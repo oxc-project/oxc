@@ -1,6 +1,4 @@
-mod options;
-
-pub use self::options::ReactJsxOptions;
+pub use super::options::ReactOptions;
 
 /// [plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx)
 ///
@@ -18,11 +16,11 @@ pub use self::options::ReactJsxOptions;
 #[derive(Debug, Default)]
 pub struct ReactJsx {
     #[allow(unused)]
-    options: ReactJsxOptions,
+    options: ReactOptions,
 }
 
 impl ReactJsx {
-    pub fn new(options: ReactJsxOptions) -> Self {
+    pub fn new(options: ReactOptions) -> Self {
         Self { options }
     }
 }
