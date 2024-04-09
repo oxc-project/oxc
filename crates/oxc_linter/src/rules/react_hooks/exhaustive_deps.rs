@@ -342,6 +342,9 @@ fn check_expression<'a>(
         Expression::Identifier(ident) => {
             deps.insert(Dependency { iref: ident, chain: vec![] });
         }
+        Expression::AwaitExpression(expr) => {
+            check_expression(&expr.argument, ctx, deps, component_scope_id);
+        }
         Expression::MemberExpression(member_expr) => {
             check_member_expression(member_expr, ctx, deps, component_scope_id)
         }
@@ -349,6 +352,10 @@ fn check_expression<'a>(
             for entry in &arrow_fn.body.statements {
                 check_statement(entry, ctx, deps, component_scope_id);
             }
+        }
+        Expression::BinaryExpression(bin_expr) => {
+            check_expression(&bin_expr.left, ctx, deps, component_scope_id);
+            check_expression(&bin_expr.right, ctx, deps, component_scope_id);
         }
         Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
             ChainElement::CallExpression(call_expr) => {
@@ -404,7 +411,7 @@ fn check_call_expression<'a>(
     deps: &mut DependencyList<'a>,
     component_scope_id: ScopeId,
 ) {
-    println!("check_call_expression {:?}", call_expr);
+    // println!("check_call_expression {:?}", call_expr);
     check_expression(&call_expr.callee, ctx, deps, component_scope_id);
 
     for arg in &call_expr.arguments {
@@ -425,6 +432,7 @@ fn check_member_expression<'a>(
 ) {
     let mut object = member_expr.object();
 
+    println!("FUT");
     dbg!(&object);
 
     while let Expression::MemberExpression(expr) = object {
@@ -435,6 +443,14 @@ fn check_member_expression<'a>(
     if let Expression::CallExpression(call_expr) = object {
         check_call_expression(&call_expr, ctx, deps, component_scope_id);
     }
+
+    if let Expression::ParenthesizedExpression(par_expr) = object {
+        check_expression(&par_expr.expression, ctx, deps, component_scope_id);
+    }
+
+    // if let Expression::ParenthesizedExpression(par_expr) = &member_expr {
+    //     check_expression(&par_expr.expression, ctx, deps, component_scope_id);
+    // }
 
     // TODO: check arguments
     // TODO: final span to cover all the expression.
@@ -548,7 +564,7 @@ fn is_stable_value(node: &AstNode, name: &Atom) -> bool {
                 return false;
             };
 
-            if init_name == "useRef" {
+            if init_name == "useRef" || init_name == "useCallback" {
                 return true;
             }
 
@@ -574,7 +590,7 @@ fn is_stable_value(node: &AstNode, name: &Atom) -> bool {
 
             return false;
         }
-        AstKind::FormalParameter(_) => return false,
+        // AstKind::FormalParameter(_) => return false,
         AstKind::Function(_) => return true,
         _ => {
             println!("TODO(is_stable_value) {:?}", node);
@@ -1450,7 +1466,7 @@ fn test() {
             }, 1000);
             return () => clearInterval(id);
           }, []);
- {
+
           return <h1>{count}</h1>;
         }",
         r"function withStuff(increment) {
