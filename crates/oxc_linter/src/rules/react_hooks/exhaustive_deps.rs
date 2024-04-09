@@ -479,16 +479,28 @@ fn is_identifier_a_dependency(
     let reference = semantic.symbols().get_reference(reference_id);
     let node = semantic.nodes().get_node(reference.node_id());
 
+    let mut effect_scope_id = scopes.get_parent_id(node.scope_id()).unwrap();
+
+    while scopes.get_parent_id(effect_scope_id).unwrap() != component_scope_id {
+        effect_scope_id = scopes.get_parent_id(effect_scope_id).unwrap();
+    }
+
+    if scopes.descendants(effect_scope_id).any(|id| id == declaration.scope_id()) {
+        return false;
+    }
+
     if declaration.scope_id() == node.scope_id()
         || scopes.descendants(node.scope_id()).any(|id| id == declaration.scope_id())
     {
         return false;
     } else {
         println!(
-            "name {:?} decl scope {:?}, node scope {:?}",
+            "name {:?} decl scope {:?}, node scope {:?} effect scope {:?} comp scope {:?}",
             ident.name,
             declaration.scope_id(),
-            node.scope_id()
+            node.scope_id(),
+            effect_scope_id,
+            component_scope_id
         );
         // dbg!(scopes.descendants(node.scope_id()).collect());
     }
@@ -1438,7 +1450,7 @@ fn test() {
             }, 1000);
             return () => clearInterval(id);
           }, []);
-
+ {
           return <h1>{count}</h1>;
         }",
         r"function withStuff(increment) {
@@ -1474,18 +1486,18 @@ fn test() {
             </>
           );
         }",
-        // r"function Example() {
-        //   const foo = useCallback(() => {
-        //     foo();
-        //   }, []);
-        // }",
-        // r"function Example({ prop }) {
-        //   const foo = useCallback(() => {
-        //     if (prop) {
-        //       foo();
-        //     }
-        //   }, [prop]);
-        // }",
+        r"function Example() {
+          const foo = useCallback(() => {
+            foo();
+          }, []);
+        }",
+        r"function Example({ prop }) {
+          const foo = useCallback(() => {
+            if (prop) {
+              foo();
+            }
+          }, [prop]);
+        }",
         r"function Hello() {
           const [state, setState] = useState(0);
           useEffect(() => {
