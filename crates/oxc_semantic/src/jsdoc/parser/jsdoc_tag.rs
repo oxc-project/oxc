@@ -85,8 +85,8 @@ impl<'a> JSDocTag<'a> {
     pub fn type_comment(&self) -> (Option<JSDocTagTypePart<'a>>, JSDocCommentPart<'a>) {
         let (type_part, comment_part) = match utils::find_type_range(self.body_raw) {
             Some((t_start, t_end)) => {
-                // +1 for whitespace
-                let c_start = self.body_raw.len().min(t_end + 1);
+                // Include whitespace for comment trimming
+                let c_start = t_end;
                 (
                     Some(JSDocTagTypePart::new(
                         &self.body_raw[t_start..t_end],
@@ -148,8 +148,8 @@ impl<'a> JSDocTag<'a> {
 
         let (name_part, comment_part) = match utils::find_token_range(name_comment_content) {
             Some((n_start, n_end)) => {
-                // +1 for whitespace
-                let c_start = name_comment_content.len().min(n_end + 1);
+                // Include whitespace for comment trimming
+                let c_start = n_end;
                 (
                     Some(JSDocTagTypeNamePart::new(
                         &name_comment_content[n_start..n_end],
@@ -295,22 +295,22 @@ mod test {
 
         let comment = tags.next().unwrap().comment();
         assert_eq!(comment.parsed(), "");
-        assert_eq!(comment.span.source_text(semantic.source_text), "");
+        assert_eq!(comment.span.source_text(semantic.source_text), " ");
         // assert_eq!(comment.span_first_line().source_text(semantic.source_text), "");
         let comment = tags.next().unwrap().comment();
-        assert_eq!(comment.span.source_text(semantic.source_text), "c2 ");
+        assert_eq!(comment.span.source_text(semantic.source_text), " c2 ");
         assert_eq!(comment.parsed(), "c2");
         // TODO: trim this!
         // assert_eq!(comment.span_first_line().source_text(semantic.source_text), "c2 ");
         let comment = tags.next().unwrap().comment();
         assert_eq!(
             comment.span.source_text(semantic.source_text),
-            "     * c3a\n     * c3b\n     * "
+            "\n     * c3a\n     * c3b\n     * "
         );
         assert_eq!(comment.parsed(), "c3a\nc3b");
         // assert_eq!(comment.span_first_line().source_text(semantic.source_text), "");
         let comment = tags.next().unwrap().comment();
-        assert_eq!(comment.span.source_text(semantic.source_text), "c4 w/ {@inline}!\n     ");
+        assert_eq!(comment.span.source_text(semantic.source_text), " c4 w/ {@inline}!\n     ");
         assert_eq!(comment.parsed(), "c4 w/ {@inline}!");
         // assert_eq!(comment.span_first_line().source_text(semantic.source_text), "c4 w/ {@inline}!");
     }

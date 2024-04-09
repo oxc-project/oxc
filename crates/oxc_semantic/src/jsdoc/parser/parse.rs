@@ -84,27 +84,25 @@ fn parse_jsdoc_tag(tag_content: &str, jsdoc_tag_span: Span) -> JSDocTag {
         ),
     );
 
-    // Includes splitter whitespace to distinguish these cases:
-    // ```
-    // /**
-    //  * @k * <- should not omit */
-    //
-    // /**
-    //  * @k
-    //  * <- should omit */
-    // ```
-    // If not included, both body_part will starts with `* <- ...`!
-    //
-    // It does not affect the output since it will be trimmed later.
-    let body_content = &tag_content[k_end..];
-    // +1 for whitespace, which is noted above
-    let b_start = k_end + 1;
-
     JSDocTag::new(
         kind,
-        body_content,
+        // Body part is the rest of the tag_content.
+        //
+        // It needs to include splitter whitespace to distinguish these cases as comment:
+        // ```
+        // /**
+        //  * @k * <- should not omit */
+        //
+        // /**
+        //  * @k
+        //  * <- should omit */
+        // ```
+        // If not included, both body_part will starts with `* <- ...` and fails to trim.
+        //
+        // It does not affect other cases since it will be skipped for type and type name.
+        &tag_content[k_end..],
         Span::new(
-            jsdoc_tag_span.start + u32::try_from(b_start).unwrap_or_default(),
+            jsdoc_tag_span.start + u32::try_from(k_end).unwrap_or_default(),
             jsdoc_tag_span.end,
         ),
     )
