@@ -1,4 +1,4 @@
-// For now, just returns inside of most outer braces
+// For now, just returns the most outer braces
 pub fn find_type_range(s: &str) -> Option<(usize, usize)> {
     let mut start = None;
     let mut brace_count = 0;
@@ -39,7 +39,7 @@ pub fn find_token_range(s: &str) -> Option<(usize, usize)> {
         }
     }
 
-    // Everything is a name
+    // Everything is a token
     if let Some(start) = start {
         return Some((start, s.len()));
     }
@@ -51,80 +51,12 @@ pub fn find_token_range(s: &str) -> Option<(usize, usize)> {
 mod test {
     use super::{find_token_range, find_type_range};
 
-    //     #[test]
-    //     fn trim_jsdoc_comments() {
-    //         for (actual, expect) in [
-    //             ("", ""),
-    //             ("hello  ", "hello"),
-    //             ("  * single line", "* single line"),
-    //             (" * ", "*"),
-    //             (" * * ", "* *"),
-    //             ("***", "***"),
-    //             (
-    //                 "
-    //   trim
-    // ", "trim",
-    //             ),
-    //             (
-    //                 "
-
-    // ", "",
-    //             ),
-    //             (
-    //                 "
-    //                 *
-    //                 *
-    //                 ",
-    //                 "",
-    //             ),
-    //             (
-    //                 "
-    //  * asterisk
-    // ",
-    //                 "asterisk",
-    //             ),
-    //             (
-    //                 "
-    //  * * li
-    //  * * li
-    // ",
-    //                 "* li\n* li",
-    //             ),
-    //             (
-    //                 "
-    // * list
-    // * list
-    // ",
-    //                 "list\nlist",
-    //             ),
-    //             (
-    //                 "
-    //  * * 1
-    //  ** 2
-    // ",
-    //                 "* 1\n* 2",
-    //             ),
-    //             (
-    //                 "
-    // 1
-
-    // 2
-
-    // 3
-    //             ",
-    //                 "1\n2\n3",
-    //             ),
-    //         ] {
-    //             assert_eq!(trim_comment(actual), expect);
-    //         }
-    //     }
-
     #[test]
     fn extract_type_part_range() {
         for (actual, expect) in [
             ("{t1}", Some("{t1}")),
             (" { t2 } ", Some("{ t2 }")),
-            ("{{ t3: string }}", Some("{{ t3: string }}")),
+            ("x{{ t3: string }}x", Some("{{ t3: string }}")),
             ("{t4} name", Some("{t4}")),
             (" {t5} ", Some("{t5}")),
             ("{t6 x", None),

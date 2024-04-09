@@ -10,33 +10,40 @@ impl<'a> JSDocCommentPart<'a> {
         Self { raw: part_content, span }
     }
 
-    // For example, `comment_part.span` in the following JSDoc will be:
+    // Consider the following JSDoc:
+    //
     // ```
     // /**
-    //  * @kind1 bar
-    //  * baz...
-    //  * @kind2
+    //  * @kind1 com
+    //  * ment...
     //  */
+    // /** @kind2 com ment */
     // ```
-    // for `@kind1`: `bar\n * baz...\n * `
-    // for `@kind2`: `\n `
+    //
+    // In this case, `comment_part.span` will be:
+    // - `@kind1`: `com\n * ment...\n * `
+    // - `@kind2`: `com ment `
+    //
+    // The problem is...
     //
     // If passed `Span` for Miette's `Diagnostic` is single line,
     // it will render nice underline for the span range.
-    // ```
-    //     * @kind bar... @kind2
-    //             ------
-    // ````
-    //
     // But if the span is multiline, it will just render arrow mark at the start of each line.
+    //
     // ```
-    // ╭─▶ * @kind1 bar
-    // ╰─▶ * @kind2
+    // ╭─▶ * @kind1 com
+    // |   * ment...
+    // ╰─▶ */
     // ```
     //
     // It's too verbose and may not fit for linter diagnostics.
-    // So instead, provide the first line span to indicate the span range.
+    //
+    // Even if with single line, the underline is not the same as `parsed()` range.
+    // `parsed()` does not include leading and trailing whitespaces.
+    //
+    // To solve these problems, just indicate the trimmed first line of the comment.
     pub fn span_first_line(&self) -> Span {
+        // Multiline
         if let Some(first_line_end) = self.raw.find('\n') {
             // -1 for `\n`
             let span_end = first_line_end.checked_sub(1).unwrap_or_default();
@@ -46,14 +53,13 @@ impl<'a> JSDocCommentPart<'a> {
             );
         }
 
+        // Single line
         self.span
     }
 
     pub fn parsed(&self) -> String {
-        let lines = self.raw.lines();
-
         // If single line, there is no leading `*`
-        if lines.clone().count() == 1 {
+        if self.raw.lines().count() == 1 {
             return self.raw.trim().to_string();
         }
 
@@ -117,5 +123,81 @@ impl<'a> JSDocTagTypeNamePart<'a> {
 
     pub fn parsed(&self) -> &str {
         self.raw
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::JSDocCommentPart;
+    use oxc_span::SPAN;
+
+    #[test]
+    fn comment_part_parsed() {
+        for (actual, expect) in [
+            ("", ""),
+            ("hello  ", "hello"),
+            ("  * single line", "* single line"),
+            (" * ", "*"),
+            (" * * ", "* *"),
+            ("***", "***"),
+            (
+                "
+      trim
+    ",
+                "trim",
+            ),
+            (
+                "
+
+    ", "",
+            ),
+            (
+                "
+                    *
+                    *
+                    ",
+                "",
+            ),
+            (
+                "
+     * asterisk
+    ",
+                "asterisk",
+            ),
+            (
+                "
+     * * li
+     * * li
+    ",
+                "* li\n* li",
+            ),
+            (
+                "
+    * list
+    * list
+    ",
+                "list\nlist",
+            ),
+            (
+                "
+     * * 1
+     ** 2
+    ",
+                "* 1\n* 2",
+            ),
+            (
+                "
+    1
+
+    2
+
+    3
+                ",
+                "1\n2\n3",
+            ),
+        ] {
+            let comment_part = JSDocCommentPart::new(actual, SPAN);
+            assert_eq!(comment_part.parsed(), expect);
+        }
     }
 }
