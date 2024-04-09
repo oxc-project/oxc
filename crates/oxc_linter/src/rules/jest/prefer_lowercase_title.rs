@@ -187,7 +187,7 @@ impl PreferLowercaseTitle {
             return;
         };
 
-        if ignores.contains(&jest_fn_call.name.to_string()) {
+        if ignores.contains(&jest_fn_call.name.as_ref()) {
             return;
         }
 
@@ -222,7 +222,7 @@ impl PreferLowercaseTitle {
                 UnexpectedLowercase(string_expr.value.to_compact_str(), string_expr.span),
                 || {
                     let mut content = ctx.codegen();
-                    content.print_str(first_char.to_ascii_lowercase().to_string().as_bytes());
+                    content.print_str(first_char.to_ascii_uppercase().to_string().as_bytes());
                     Fix::new(
                         content.into_source_text(),
                         Span::new(string_expr.span.start + 1, string_expr.span.start + 2),
@@ -262,33 +262,23 @@ impl PreferLowercaseTitle {
         }
     }
 
-    fn populate_ignores(ignore: &[String]) -> Vec<String> {
-        let mut ignores: Vec<String> = vec![];
+    fn populate_ignores(ignore: &[String]) -> Vec<&str> {
+        let mut ignores: Vec<&str> = vec![];
         let test_case_name = ["fit", "it", "xit", "test", "xtest"];
         let describe_alias = ["describe", "fdescribe", "xdescribe"];
         let test_name = "test";
         let it_name = "it";
 
-        if ignore.contains(&"describe".to_string()) {
-            ignores.extend(describe_alias.iter().map(|alias| (*alias).to_string()));
+        if ignore.iter().any(|alias| alias == "describe") {
+            ignores.extend(describe_alias.iter());
         }
 
-        if ignore.contains(&test_name.to_string()) {
-            ignores.extend(
-                test_case_name
-                    .iter()
-                    .filter(|alias| alias.ends_with(test_name))
-                    .map(|alias| (*alias).to_string()),
-            );
+        if ignore.iter().any(|alias| alias == test_name) {
+            ignores.extend(test_case_name.iter().filter(|alias| alias.ends_with(test_name)));
         }
 
-        if ignore.contains(&it_name.to_string()) {
-            ignores.extend(
-                test_case_name
-                    .iter()
-                    .filter(|alias| alias.ends_with(it_name))
-                    .map(|alias| (*alias).to_string()),
-            );
+        if ignore.iter().any(|alias| alias == it_name) {
+            ignores.extend(test_case_name.iter().filter(|alias| alias.ends_with(it_name)));
         }
 
         ignores
