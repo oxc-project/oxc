@@ -1,6 +1,7 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_semantic::AstNodeId;
 use oxc_span::Span;
+use oxc_syntax::operator::BinaryOperator;
 
 use crate::LintContext;
 
@@ -8,6 +9,40 @@ use crate::LintContext;
 pub enum Value {
     Boolean(bool),
     Number(f64),
+    String(StringValue),
+    Unknown,
+}
+
+// We only care if it is falsy value (empty string).
+pub enum StringValue {
+    Empty,
+    NonEmpty,
+}
+
+impl Value {
+    pub fn new(expr: &Expression) -> Value {
+        match expr {
+            Expression::BooleanLiteral(bool_lit) => Value::Boolean(bool_lit.value),
+            Expression::NumericLiteral(num_lit) => Value::Number(num_lit.value),
+            Expression::StringLiteral(str_lit) => {
+                if str_lit.value.is_empty() {
+                    Value::String(StringValue::Empty)
+                } else {
+                    Value::String(StringValue::NonEmpty)
+                }
+            }
+            Expression::TemplateLiteral(template_lit) => {
+                if !template_lit.is_no_substitution_template() {
+                    Value::Unknown
+                } else if template_lit.quasi().is_some_and(|s| s == "") {
+                    Value::String(StringValue::Empty)
+                } else {
+                    Value::String(StringValue::NonEmpty)
+                }
+            }
+            _ => Value::Unknown,
+        }
+    }
 }
 
 pub fn get_write_expr<'a, 'b>(
@@ -42,4 +77,22 @@ pub fn has_pure_notation(span: Span, ctx: &LintContext) -> bool {
     let raw = span.source_text(ctx.semantic().source_text());
 
     raw.contains("@__PURE__") || raw.contains("#__PURE__")
+}
+
+/// Port from https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/463fa1f0bef7caa2b231a38b9c3557051f506c92/src/rules/no-side-effects-in-initialization.ts#L136-L161
+pub fn calculate_binary_operation(op: BinaryOperator, left: Value, right: Value) -> Value {
+    match op {
+        BinaryOperator::Addition => match (left, right) {
+            (Value::Number(a), Value::Number(b)) => Value::Number(a + b),
+            (Value::String(str1), Value::String(str2)) => {
+                if matches!(str1, StringValue::Empty) && matches!(str2, StringValue::Empty) {
+                    Value::String(StringValue::Empty)
+                } else {
+                    Value::String(StringValue::NonEmpty)
+                }
+            }
+            _ => Value::Unknown,
+        },
+        _ => Value::Unknown,
+    }
 }

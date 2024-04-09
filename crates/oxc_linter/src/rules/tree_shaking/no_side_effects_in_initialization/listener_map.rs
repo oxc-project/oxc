@@ -3,11 +3,11 @@ use std::cell::{Cell, RefCell};
 use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, AssignmentTarget,
-        BindingPattern, BindingPatternKind, CallExpression, ComputedMemberExpression, Declaration,
-        Expression, FormalParameter, Function, IdentifierReference, MemberExpression,
-        ModuleDeclaration, NewExpression, ParenthesizedExpression, PrivateFieldExpression, Program,
-        SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression,
-        VariableDeclarator,
+        BinaryExpression, BindingPattern, BindingPatternKind, CallExpression,
+        ComputedMemberExpression, Declaration, Expression, FormalParameter, Function,
+        IdentifierReference, MemberExpression, ModuleDeclaration, NewExpression,
+        ParenthesizedExpression, PrivateFieldExpression, Program, SimpleAssignmentTarget,
+        Statement, StaticMemberExpression, ThisExpression, VariableDeclarator,
     },
     AstKind,
 };
@@ -17,7 +17,7 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     ast_util::{get_declaration_of_variable, get_symbol_id_of_variable},
-    utils::{get_write_expr, has_pure_notation, no_effects, Value},
+    utils::{calculate_binary_operation, get_write_expr, has_pure_notation, no_effects, Value},
     LintContext,
 };
 
@@ -51,8 +51,8 @@ pub trait ListenerMap {
     fn report_effects_when_assigned(&self, _options: &NodeListenerOptions) {}
     fn report_effects_when_called(&self, _options: &NodeListenerOptions) {}
     fn report_effects_when_mutated(&self, _options: &NodeListenerOptions) {}
-    fn get_value_and_report_effects(&self, _options: &NodeListenerOptions) -> Option<Value> {
-        None
+    fn get_value_and_report_effects(&self, _options: &NodeListenerOptions) -> Value {
+        Value::Unknown
     }
 }
 
@@ -96,6 +96,9 @@ impl<'a> ListenerMap for Statement<'a> {
                 stmt.finalizer.iter().for_each(|finalizer| {
                     finalizer.body.iter().for_each(|stmt| stmt.report_effects(options));
                 });
+            }
+            Self::BlockStatement(stmt) => {
+                stmt.body.iter().for_each(|stmt| stmt.report_effects(options));
             }
             _ => {}
         }
@@ -224,6 +227,9 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::AwaitExpression(expr) => {
                 expr.argument.report_effects(options);
             }
+            Self::BinaryExpression(expr) => {
+                expr.get_value_and_report_effects(options);
+            }
             Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
             | Self::Identifier(_)
@@ -281,6 +287,18 @@ impl<'a> ListenerMap for Expression<'a> {
             }
         }
     }
+    fn get_value_and_report_effects(&self, options: &NodeListenerOptions) -> Value {
+        match self {
+            Self::BooleanLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::TemplateLiteral(_) => Value::new(self),
+            _ => {
+                self.report_effects(options);
+                Value::Unknown
+            }
+        }
+    }
 }
 
 // which kind of Expression defines `report_effects_when_called` method.
@@ -295,6 +313,14 @@ fn defined_custom_report_effects_when_called(expr: &Expression) -> bool {
             | Expression::Identifier(_)
             | Expression::MemberExpression(_)
     )
+}
+
+impl<'a> ListenerMap for BinaryExpression<'a> {
+    fn get_value_and_report_effects(&self, options: &NodeListenerOptions) -> Value {
+        let left = self.left.get_value_and_report_effects(options);
+        let right = self.right.get_value_and_report_effects(options);
+        calculate_binary_operation(self.operator, left, right)
+    }
 }
 
 impl ListenerMap for ThisExpression {
@@ -331,7 +357,7 @@ impl<'a> ListenerMap for ParenthesizedExpression<'a> {
     fn report_effects_when_mutated(&self, options: &NodeListenerOptions) {
         self.expression.report_effects_when_mutated(options);
     }
-    fn get_value_and_report_effects(&self, options: &NodeListenerOptions) -> Option<Value> {
+    fn get_value_and_report_effects(&self, options: &NodeListenerOptions) -> Value {
         self.expression.get_value_and_report_effects(options)
     }
 }

@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ReactJsxOptions {
+pub struct ReactOptions {
     // Both Runtimes
     //
     /// Decides which runtime to use.
@@ -53,7 +53,7 @@ pub struct ReactJsxOptions {
     // `useBuiltIns` and `useSpread` are deprecated in babel 8.
 }
 
-impl Default for ReactJsxOptions {
+impl Default for ReactOptions {
     fn default() -> Self {
         Self {
             runtime: ReactJsxRuntime::default(),

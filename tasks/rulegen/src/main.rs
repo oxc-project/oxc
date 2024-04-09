@@ -166,15 +166,10 @@ impl<'a> Visit<'a> for TestCase<'a> {
                     PropertyKey::Identifier(ident) if ident.name == "code" => {
                         self.code = match &prop.value {
                             Expression::StringLiteral(s) => Some(s.value.to_string()),
-                            // eslint-plugin-jest use dedent to strips indentation from multi-line strings
-                            // eslint-plugin-unicon use outdent to removes leading indentation from ES6 template strings
                             Expression::TaggedTemplateExpression(tag_expr) => {
-                                let Expression::Identifier(ident) = &tag_expr.tag else {
-                                    continue;
-                                };
-                                if ident.name != "dedent" && ident.name != "outdent" {
-                                    continue;
-                                }
+                                // There are `dedent`(in eslint-plugin-jest), `outdent`(in eslint-plugin-unicorn) and `noFormat`(in typescript-eslint)
+                                // are known to be used to format test cases for their own purposes.
+                                // We read the quasi of tagged template directly also for the future usage.
                                 tag_expr.quasi.quasi().map(ToString::to_string)
                             }
                             Expression::TemplateLiteral(tag_expr) => {

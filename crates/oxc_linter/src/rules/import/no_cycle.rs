@@ -26,6 +26,8 @@ struct NoCycleDiagnostic(#[label] Span, String);
 pub struct NoCycle {
     /// maximum dependency depth to traverse
     max_depth: u32,
+    /// ignore type only imports
+    ignore_types: bool,
     /// ignore external modules
     #[allow(unused)]
     ignore_external: bool,
@@ -38,6 +40,7 @@ impl Default for NoCycle {
     fn default() -> Self {
         Self {
             max_depth: u32::MAX,
+            ignore_types: false,
             ignore_external: false,
             allow_unsafe_dynamic_cyclic_dependency: false,
         }
@@ -82,6 +85,10 @@ impl Rule for NoCycle {
                 .and_then(serde_json::Value::as_number)
                 .and_then(serde_json::Number::as_u64)
                 .map_or(u32::MAX, |n| n as u32),
+            ignore_types: obj
+                .and_then(|v| v.get("ignoreTypes"))
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or_default(),
             ignore_external: obj
                 .and_then(|v| v.get("ignoreExternal"))
                 .and_then(serde_json::Value::as_bool)
@@ -140,6 +147,16 @@ impl NoCycle {
 
         for module_record_ref in &module_record.loaded_modules {
             let resolved_absolute_path = &module_record_ref.resolved_absolute_path;
+            if self.ignore_types {
+                let was_imported_as_type = &module_record
+                    .import_entries
+                    .iter()
+                    .filter(|entry| entry.module_request.name() == module_record_ref.key())
+                    .all(|entry| entry.is_type);
+                if *was_imported_as_type {
+                    continue;
+                }
+            }
             if !state.traversed.insert(resolved_absolute_path.clone()) {
                 continue;
             }
@@ -204,6 +221,22 @@ fn test() {
         (
             r#"import { foo } from "./es6/depth-one-dynamic"; // #2265 4"#,
             Some(json!([{"allowUnsafeDynamicCyclicDependency":true}])),
+        ),
+        (
+            r#"import { foo } from "./typescript/ts-types-only-importing-type";"#,
+            Some(json!([{"ignoreTypes":true}])),
+        ),
+        (
+            r#"import { foo } from "./typescript/ts-types-only-importing-multiple-types";"#,
+            Some(json!([{"ignoreTypes":true}])),
+        ),
+        (
+            r#"import { foo } from "./typescript/ts-types-depth-two";"#,
+            Some(json!([{"ignoreTypes":true}])),
+        ),
+        (
+            r#"import { foo } from "./typescript/ts-depth-type-and-value-imports";"#,
+            Some(json!([{"ignoreTypes":true}])),
         ),
         // Flow not supported
         // (r#"import { bar } from "./flow-types""#, None),
@@ -309,6 +342,11 @@ fn test() {
         // (r#"import { bar } from "./flow-types-depth-one""#, None),
         (r#"import { foo } from "./intermediate-ignore""#, None),
         (r#"import { foo } from "./ignore""#, None),
+        (r#"import { foo } from "./typescript/ts-types-only-importing-type";"#, None),
+        (
+            r#"import { foo } from "./typescript/ts-types-some-type-imports";"#,
+            Some(json!([{"ignoreTypes":true}])),
+        ),
     ];
 
     Tester::new(NoCycle::NAME, pass, fail)
