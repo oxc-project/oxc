@@ -7,6 +7,7 @@ use crate::{token::Token, SourceMap};
 /// The `SourceMapBuilder` is a helper to generate sourcemap.
 #[derive(Debug, Default)]
 pub struct SourceMapBuilder {
+    pub(crate) file: Option<Arc<str>>,
     pub(crate) names_map: FxHashMap<Arc<str>, u32>,
     pub(crate) names: Vec<Arc<str>>,
     pub(crate) sources: Vec<Arc<str>>,
@@ -61,9 +62,13 @@ impl SourceMapBuilder {
         self.tokens.push(Token::new(dst_line, dst_col, src_line, src_col, src_id, name_id));
     }
 
+    pub fn set_file(&mut self, file: &str) {
+        self.file = Some(file.into());
+    }
+
     pub fn into_sourcemap(self) -> SourceMap {
         SourceMap::new(
-            None,
+            self.file,
             self.names,
             self.sources,
             Some(self.source_contents),
@@ -78,12 +83,13 @@ fn test_sourcemap_builder() {
     let mut builder = SourceMapBuilder::default();
     builder.set_source_and_content("baz.js", "");
     builder.add_name("x");
+    builder.set_file("file");
 
     let sm = builder.into_sourcemap();
     assert_eq!(sm.get_source(0), Some("baz.js"));
     assert_eq!(sm.get_name(0), Some("x"));
+    assert_eq!(sm.get_file(), Some("file"));
 
-    let expected =
-        r#"{"version":3,"names":["x"],"sources":["baz.js"],"sourcesContent":[""],"mappings":""}"#;
+    let expected = r#"{"version":3,"file":"file","names":["x"],"sources":["baz.js"],"sourcesContent":[""],"mappings":""}"#;
     assert_eq!(expected, sm.to_json_string().unwrap());
 }
