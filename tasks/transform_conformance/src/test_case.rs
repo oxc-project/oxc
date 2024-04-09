@@ -14,8 +14,7 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
 use oxc_transformer::{
-    DecoratorsOptions, ReactDisplayNameOptions, ReactJsxOptions, ReactJsxSelfOptions,
-    ReactJsxSourceOptions, TransformOptions, Transformer, TypeScriptOptions,
+    DecoratorsOptions, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
 };
 
 use crate::{fixture_root, root, TestRunnerEnv};
@@ -96,21 +95,9 @@ pub trait TestCase {
                 .get_plugin("transform-typescript")
                 .map(get_options::<TypeScriptOptions>)
                 .unwrap_or_default(),
-            react_display_name: options
-                .get_plugin("transform-react-display-name")
-                .map(get_options::<ReactDisplayNameOptions>)
-                .unwrap_or_default(),
-            react_jsx: options
+            react: options
                 .get_plugin("transform-react-jsx")
-                .map(get_options::<ReactJsxOptions>)
-                .unwrap_or_default(),
-            react_jsx_self: options
-                .get_plugin("transform-react-jsx-self")
-                .map(get_options::<ReactJsxSelfOptions>)
-                .unwrap_or_default(),
-            react_jsx_source: options
-                .get_plugin("transform-react-jsx-source")
-                .map(get_options::<ReactJsxSourceOptions>)
+                .map(get_options::<ReactOptions>)
                 .unwrap_or_default(),
         }
     }

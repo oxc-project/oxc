@@ -52,6 +52,10 @@ impl DiagnosticService {
         self.reporter = DiagnosticReporter::new_json();
     }
 
+    pub fn is_graphical_output(&self) -> bool {
+        matches!(self.reporter, DiagnosticReporter::Graphical { .. })
+    }
+
     #[must_use]
     pub fn with_quiet(mut self, yes: bool) -> Self {
         self.quiet = yes;

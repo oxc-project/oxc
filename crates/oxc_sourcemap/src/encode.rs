@@ -16,6 +16,11 @@ pub fn encode(sourcemap: &SourceMap) -> Result<String> {
         buf.push_str(file);
         buf.push_str("\",");
     }
+    if let Some(source_root) = sourcemap.get_source_root() {
+        buf.push_str("\"sourceRoot\":\"");
+        buf.push_str(source_root);
+        buf.push_str("\",");
+    }
     buf.push_str("\"names\":[");
     let names = sourcemap
         .names
@@ -41,6 +46,12 @@ pub fn encode(sourcemap: &SourceMap) -> Result<String> {
             .collect::<std::result::Result<Vec<_>, serde_json::Error>>()
             .map_err(Error::from)?;
         buf.push_str(&quote_source_contents.join(","));
+    }
+    if let Some(x_google_ignore_list) = &sourcemap.x_google_ignore_list {
+        buf.push_str("],\"x_google_ignoreList\":[");
+        let x_google_ignore_list =
+            x_google_ignore_list.iter().map(ToString::to_string).collect::<Vec<_>>();
+        buf.push_str(&x_google_ignore_list.join(","));
     }
     buf.push_str("],\"mappings\":\"");
     buf.push_str(&serialize_sourcemap_mappings(sourcemap));
@@ -144,6 +155,7 @@ fn test_encode() {
     let input = r#"{
         "version": 3,
         "sources": ["coolstuff.js"],
+        "sourceRoot": "x",
         "names": ["x","alert"],
         "mappings": "AAAA,GAAIA,GAAI,EACR,IAAIA,GAAK,EAAG,CACVC,MAAM"
     }"#;
@@ -158,16 +170,18 @@ fn test_encode() {
 #[test]
 fn test_encode_escape_string() {
     // '\0' should be escaped.
-    let sm = SourceMap::new(
+    let mut sm = SourceMap::new(
         None,
         vec!["\0".into()],
+        None,
         vec!["\0".into()],
         Some(vec!["\0".into()]),
         vec![],
         None,
     );
+    sm.set_x_google_ignore_list(vec![0]);
     assert_eq!(
         sm.to_json_string().unwrap(),
-        r#"{"version":3,"names":["\u0000"],"sources":["\u0000"],"sourcesContent":["\u0000"],"mappings":""}"#
+        r#"{"version":3,"names":["\u0000"],"sources":["\u0000"],"sourcesContent":["\u0000"],"x_google_ignoreList":[0],"mappings":""}"#
     );
 }
