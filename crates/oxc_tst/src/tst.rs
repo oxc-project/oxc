@@ -11,10 +11,10 @@ use oxc_ast::AstOwnedKind;
 use oxc_semantic::AstNodeId;
 use oxc_span::Atom;
 
-use crate::tst_node::*;
+use crate::tst_path::*;
 use crate::tst_visit::VisitTransform;
 
-type NodesMap<'a> = Rc<RwLock<HashMap<AstNodeId, TstNode<'a>>>>;
+type NodesMap<'a> = Rc<RwLock<HashMap<AstNodeId, TstPath<'a>>>>;
 
 pub enum MutationKind {
     Keep,
@@ -22,32 +22,21 @@ pub enum MutationKind {
     Replace,
 }
 
-pub struct TstContext<'a> {
+pub struct TransformContext<'a> {
     allocator: &'a Allocator,
 
     /// Map of all nodes by their ID.
     // nodes: DashMap<AstNodeId, TstNode<'a>>,
     nodes: NodesMap<'a>,
 
-    // Duplicate this data to avoid ownership issues
-    current_id: AstNodeId,
-    parent_id: AstNodeId,
-    parent_ids: Vec<AstNodeId>,
-    children_ids: TstNodeChildren,
+    pub path: TstPath<'a>,
 }
 
 // HELPERS ACCESSING NODES
 
-impl<'a> TstContext<'a> {
-    pub fn new(allocator: &'a Allocator, nodes: NodesMap<'a>) -> Self {
-        Self {
-            allocator,
-            nodes,
-            current_id: AstNodeId::new(0),
-            parent_id: AstNodeId::new(0),
-            parent_ids: vec![],
-            children_ids: TstNodeChildren::None,
-        }
+impl<'a> TransformContext<'a> {
+    pub fn new(allocator: &'a Allocator, nodes: NodesMap<'a>, path: TstPath<'a>) -> Self {
+        Self { allocator, nodes, path }
     }
 
     #[inline]
@@ -82,21 +71,21 @@ impl<'a> TstContext<'a> {
         Atom::from(String::from_str_in(value, self.allocator).into_bump_str())
     }
 
-    pub fn query_parent_node<T>(&self, op: impl FnOnce(&TstNode<'a>) -> T) -> T {
+    pub fn query_parent_path<T>(&self, op: impl FnOnce(&TstPath<'a>) -> T) -> T {
         let nodes = self.nodes.read().unwrap();
-        let parent = nodes.get(&self.parent_id).unwrap();
+        let parent = nodes.get(&self.path.parent_id).unwrap();
 
         op(parent)
     }
 
     pub fn query_parent<T>(&self, op: impl FnOnce(&AstOwnedKind<'a>) -> T) -> T {
-        self.query_parent_node(|node| op(node.node.as_ref().unwrap()))
+        self.query_parent_path(|path| op(path.as_node()))
     }
 
-    pub fn query_ancestors_nodes<T>(&self, op: impl Fn(&TstNode<'a>) -> Option<T>) -> Option<T> {
+    pub fn query_ancestor_paths<T>(&self, op: impl Fn(&TstPath<'a>) -> Option<T>) -> Option<T> {
         let nodes = self.nodes.read().unwrap();
 
-        for parent_id in &self.parent_ids {
+        for parent_id in &self.path.parent_ids {
             let parent = nodes.get(parent_id).unwrap();
             let result = op(parent);
 
@@ -109,7 +98,26 @@ impl<'a> TstContext<'a> {
     }
 
     pub fn query_ancestors<T>(&self, op: impl Fn(&AstOwnedKind<'a>) -> Option<T>) -> Option<T> {
-        self.query_ancestors_nodes(|node| op(&node.node.as_ref().unwrap()))
+        self.query_ancestor_paths(|path| op(path.as_node()))
+    }
+
+    pub fn query_children_paths<T>(&self, op: impl Fn(&TstPath<'a>) -> Option<T>) -> Option<T> {
+        let nodes = self.nodes.read().unwrap();
+
+        for child_id in self.path.children_ids.get_ids() {
+            let child = nodes.get(child_id).unwrap();
+            let result = op(child);
+
+            if result.is_some() {
+                return result;
+            }
+        }
+
+        None
+    }
+
+    pub fn query_children<T>(&self, op: impl Fn(&AstOwnedKind<'a>) -> Option<T>) -> Option<T> {
+        self.query_children_paths(|path| op(path.as_node()))
     }
 
     pub fn mutate_node(
@@ -118,9 +126,9 @@ impl<'a> TstContext<'a> {
         mut op: impl FnMut(&mut AstOwnedKind<'a>) -> MutationKind,
     ) -> MutationKind {
         let mut nodes = self.nodes.write().unwrap();
-        let node = nodes.get_mut(&id).unwrap();
+        let path = nodes.get_mut(&id).unwrap();
 
-        if let Some(inner_node) = &mut node.node {
+        if let Some(inner_node) = &mut path.node {
             return op(inner_node);
         }
 
@@ -173,18 +181,18 @@ impl<'a> Tst<'a> {
         self.transformers.push(Box::new(transformer));
     }
 
-    pub fn create_node(&mut self) -> TstNode<'a> {
+    pub fn create_path(&mut self) -> TstPath<'a> {
         let parent_id = self.current_ids_stack.last().cloned().unwrap_or(self.current_id);
         let parent_ids = self.current_ids_stack.clone();
 
         self.current_id += 1;
 
-        TstNode {
+        TstPath {
             node: None,
             id: self.current_id,
             parent_id,
             parent_ids,
-            children_ids: TstNodeChildren::None,
+            children_ids: TstChildren::None,
         }
     }
 
@@ -196,7 +204,7 @@ impl<'a> Tst<'a> {
         self.current_ids_stack.pop();
     }
 
-    pub fn add_node(&mut self, node: TstNode<'a>) -> AstNodeId {
+    pub fn add_node(&mut self, node: TstPath<'a>) -> AstNodeId {
         let id = node.id.clone();
 
         self.nodes.write().unwrap().insert(id, node);
@@ -228,24 +236,19 @@ impl<'a> Tst<'a> {
     }
 
     pub fn do_transform(&mut self, id: AstNodeId) {
-        let mut context = TstContext::new(&self.allocator, Rc::clone(&self.nodes));
-
         // Extract the inner node and ID references, then release
         // the lock so that we can acquire write access on the map
         // when running the transformers!
-        let mut inner_node = {
+        let (mut node, path) = {
             let mut nodes = self.nodes.write().unwrap();
-            let node = nodes.get_mut(&id).unwrap();
+            let path = nodes.get_mut(&id).unwrap();
 
-            context.current_id = id;
-            context.parent_id = node.parent_id;
-            context.parent_ids = node.parent_ids.clone();
-            context.children_ids = node.children_ids.clone();
-
-            node.node.take()
+            (path.node.take(), path.clone())
         };
 
-        if let Some(inner_node) = &mut inner_node {
+        let mut context = TransformContext::new(&self.allocator, Rc::clone(&self.nodes), path);
+
+        if let Some(inner_node) = &mut node {
             match inner_node {
                 AstOwnedKind::Program(inner) => {
                     for t in &mut self.transformers {
@@ -268,21 +271,25 @@ impl<'a> Tst<'a> {
 
         // The node has potentially been mutated,
         // so let's inject the inner node back into our map!
-        if inner_node.is_some() {
-            self.nodes.write().unwrap().get_mut(&id).unwrap().node = inner_node;
+        if node.is_some() {
+            self.nodes.write().unwrap().get_mut(&id).unwrap().node = node;
         }
 
         // Now we can loop over all the children, and ensure the
         // ownership on the map is legitimate!
-        match context.children_ids {
-            TstNodeChildren::None => {}
-            TstNodeChildren::One(child_id) => {
+        match context.path.children_ids {
+            TstChildren::None => {}
+            TstChildren::One(child_id) => {
                 self.do_transform(child_id);
             }
-            TstNodeChildren::Many(child_ids) => {
+            TstChildren::Many(child_ids) => {
                 for child_id in child_ids {
                     self.do_transform(child_id);
                 }
+            }
+            TstChildren::LeftRight(left_id, right_id) => {
+                self.do_transform(left_id);
+                self.do_transform(right_id);
             }
         }
     }

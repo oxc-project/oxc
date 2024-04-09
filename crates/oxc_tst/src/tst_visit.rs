@@ -4,22 +4,23 @@ use oxc_ast::ast::{BlockStatement, NumericLiteral, Program};
 use oxc_ast::AstOwnedKind;
 use oxc_span::Span;
 
-use crate::tst::{MutationKind, TstContext};
+use crate::tst::{MutationKind, TransformContext};
 
 pub trait VisitTransform<'a>: Debug {
-    fn transform_program(&mut self, program: &mut Program<'a>, context: &mut TstContext<'a>) {}
+    fn transform_program(&mut self, program: &mut Program<'a>, context: &mut TransformContext<'a>) {
+    }
 
     fn transform_block_statement(
         &mut self,
         block: &mut BlockStatement<'a>,
-        context: &mut TstContext<'a>,
+        context: &mut TransformContext<'a>,
     ) {
     }
 
     fn transform_numeric_literal(
         &mut self,
         num: &mut NumericLiteral<'a>,
-        context: &mut TstContext<'a>,
+        context: &mut TransformContext<'a>,
     ) {
     }
 }
@@ -31,15 +32,15 @@ impl<'a> VisitTransform<'a> for NumericSeparators {
     fn transform_numeric_literal(
         &mut self,
         num: &mut NumericLiteral<'a>,
-        context: &mut TstContext<'a>,
+        context: &mut TransformContext<'a>,
     ) {
         let in_program =
             context.query_ancestors(|node| Some(matches!(node, AstOwnedKind::Program(_))));
 
         dbg!("in_program", in_program);
 
-        let in_block_statement = context.query_ancestors_nodes(|node| {
-            if matches!(node.as_kind(), AstOwnedKind::BlockStatement(_)) {
+        let in_block_statement = context.query_ancestor_paths(|node| {
+            if matches!(node.as_node(), AstOwnedKind::BlockStatement(_)) {
                 Some(node.id)
             } else {
                 None

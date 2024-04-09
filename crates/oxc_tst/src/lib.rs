@@ -1,3 +1,3 @@
 mod tst;
-mod tst_node;
+mod tst_path;
 mod tst_visit;
