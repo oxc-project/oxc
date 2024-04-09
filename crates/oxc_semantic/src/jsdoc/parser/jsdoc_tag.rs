@@ -200,11 +200,10 @@ mod test {
 
     #[test]
     fn jsdoc_tag_span() {
-        let allocator = Allocator::default();
-        let semantic = build_semantic(
-            &allocator,
-            r"
-                /** single line @k1 c1 */
+        for (source_text, tag_span_texts) in [
+            ("/** single line @k1 c1 */", vec!["@k1 c1 "]),
+            (
+                "
                 /**
                  * multi
                  * line @k1 c1
@@ -215,72 +214,96 @@ mod test {
                  * c4b
                  */
                 ",
-        );
-        let mut jsdocs = semantic.jsdoc().iter_all();
+                vec![
+                    "@k1 c1\n                 * ",
+                    "@k2 c2a\n                 * c2b\n                 * ",
+                    "@k3 c3\n                 * ",
+                    "@k4 c4a\n                 * c4b\n                 ",
+                ],
+            ),
+        ] {
+            let allocator = Allocator::default();
+            let semantic = build_semantic(&allocator, source_text);
+            let mut jsdocs = semantic.jsdoc().iter_all();
+            let jsdoc = jsdocs.next().unwrap();
 
-        let jsdoc = jsdocs.next().unwrap();
-        let mut tags = jsdoc.tags().iter();
-        let tag = tags.next().unwrap();
-        assert_eq!(tag.span.source_text(semantic.source_text), "@k1 c1 ");
-
-        let jsdoc = jsdocs.next().unwrap();
-        let mut tags = jsdoc.tags().iter();
-        let tag = tags.next().unwrap();
-        assert_eq!(tag.span.source_text(semantic.source_text), "@k1 c1\n                 * ");
-        let tag = tags.next().unwrap();
-        assert_eq!(
-            tag.span.source_text(semantic.source_text),
-            "@k2 c2a\n                 * c2b\n                 * "
-        );
-        let tag = tags.next().unwrap();
-        assert_eq!(tag.span.source_text(semantic.source_text), "@k3 c3\n                 * ");
-        let tag = tags.next().unwrap();
-        assert_eq!(
-            tag.span.source_text(semantic.source_text),
-            "@k4 c4a\n                 * c4b\n                 "
-        );
+            let tag_spans = jsdoc
+                .tags()
+                .iter()
+                .map(|t| t.span.source_text(semantic.source_text))
+                .collect::<Vec<_>>();
+            assert_eq!(tag_spans, tag_span_texts);
+        }
     }
 
     #[test]
     fn jsdoc_tag_kind() {
-        let allocator = Allocator::default();
-        let semantic = build_semantic(
-            &allocator,
-            r"
+        for (source_text, tag_kinds) in [
+            ("/** single line @k1 c1 @k2 */", vec!["k1", "k2"]),
+            (
+                "/**
+             * multi
+             * line
+             * @k1 c1a
+             * c1b
+             * @k2 c2
+             * @k3 c3a
+             * c3b
+             */",
+                vec!["k1", "k2", "k3"],
+            ),
+            (
+                "
                 /**
-                 * multi
-                 * line @k1 c1
-                 * @かいんど2 c2a
-                 * c2b
-                 *   @k3 c3 @k4 c4a
-                 * c4b
+                  * * x
+                  ** y
+                  */",
+                vec![],
+            ),
+            (" /** @foo @bar */", vec!["foo", "bar"]),
+            (" /**@*/ ", vec![""]),
+            (" /** @あいう え @お ！*/ ", vec!["あいう", "お"]),
+            (" /** @a @@ @d */ ", vec!["a", "", "", "d"]),
+            (
+                "
+            /**
+             * @x with asterisk
+             */
+",
+                vec!["x"],
+            ),
+            (
+                "
+                /**
+                @y without
+            asterisk
                  */
-                ",
-        );
-        let mut jsdocs = semantic.jsdoc().iter_all();
-        let jsdoc = jsdocs.next().unwrap();
-        let mut tags = jsdoc.tags().iter();
+",
+                vec!["y"],
+            ),
+            (
+                "
+        /**
+           @foo@bar
+        * @baz
+         */
+",
+                vec!["foo", "bar", "baz"],
+            ),
+        ] {
+            let allocator = Allocator::default();
+            let semantic = build_semantic(&allocator, source_text);
+            let mut jsdocs = semantic.jsdoc().iter_all();
 
-        let tag = tags.next().unwrap();
-        assert_eq!(tag.kind.span.source_text(semantic.source_text), "@k1");
-        assert_eq!(tag.kind.parsed(), "k1");
-        let tag = tags.next().unwrap();
-        assert_eq!(tag.kind.span.source_text(semantic.source_text), "@かいんど2");
-        assert_eq!(tag.kind.parsed(), "かいんど2");
-        let tag = tags.next().unwrap();
-        assert_eq!(tag.kind.span.source_text(semantic.source_text), "@k3");
-        assert_eq!(tag.kind.parsed(), "k3");
-        let tag = tags.next().unwrap();
-        assert_eq!(tag.kind.span.source_text(semantic.source_text), "@k4");
-        assert_eq!(tag.kind.parsed(), "k4");
+            let jsdoc = jsdocs.next().unwrap();
+            assert_eq!(jsdoc.tags().iter().map(|t| t.kind.parsed()).collect::<Vec<_>>(), tag_kinds);
+        }
     }
 
     #[test]
     fn jsdoc_tag_comment() {
-        let allocator = Allocator::default();
-        let semantic = build_semantic(
-            &allocator,
-            r"
+        for (source_text, tag_comments) in [(
+            "
     /**
      * @k1 @k2 c2 @k3
      * c3a
@@ -288,31 +311,28 @@ mod test {
      * @k4 c4 w/ {@inline}!
      */
                 ",
-        );
-        let mut jsdocs = semantic.jsdoc().iter_all();
-        let jsdoc = jsdocs.next().unwrap();
-        let mut tags = jsdoc.tags().iter();
+            vec![
+                (String::new(), " "),
+                ("c2".to_string(), " c2 "),
+                ("c3a\nc3b".to_string(), "\n     * c3a\n     * c3b\n     * "),
+                ("c4 w/ {@inline}!".to_string(), " c4 w/ {@inline}!\n     "),
+            ],
+        )] {
+            let allocator = Allocator::default();
+            let semantic = build_semantic(&allocator, source_text);
+            let mut jsdocs = semantic.jsdoc().iter_all();
+            let jsdoc = jsdocs.next().unwrap();
 
-        let comment = tags.next().unwrap().comment();
-        assert_eq!(comment.parsed(), "");
-        assert_eq!(comment.span.source_text(semantic.source_text), " ");
-        // assert_eq!(comment.span_first_line().source_text(semantic.source_text), "");
-        let comment = tags.next().unwrap().comment();
-        assert_eq!(comment.span.source_text(semantic.source_text), " c2 ");
-        assert_eq!(comment.parsed(), "c2");
-        // TODO: trim this!
-        // assert_eq!(comment.span_first_line().source_text(semantic.source_text), "c2 ");
-        let comment = tags.next().unwrap().comment();
-        assert_eq!(
-            comment.span.source_text(semantic.source_text),
-            "\n     * c3a\n     * c3b\n     * "
-        );
-        assert_eq!(comment.parsed(), "c3a\nc3b");
-        // assert_eq!(comment.span_first_line().source_text(semantic.source_text), "");
-        let comment = tags.next().unwrap().comment();
-        assert_eq!(comment.span.source_text(semantic.source_text), " c4 w/ {@inline}!\n     ");
-        assert_eq!(comment.parsed(), "c4 w/ {@inline}!");
-        // assert_eq!(comment.span_first_line().source_text(semantic.source_text), "c4 w/ {@inline}!");
+            assert_eq!(
+                jsdoc
+                    .tags()
+                    .iter()
+                    .map(super::JSDocTag::comment)
+                    .map(|c| (c.parsed(), c.span.source_text(semantic.source_text)))
+                    .collect::<Vec<(_, _)>>(),
+                tag_comments
+            );
+        }
     }
 
     //     #[test]

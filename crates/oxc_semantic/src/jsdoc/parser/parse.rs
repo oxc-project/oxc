@@ -76,6 +76,7 @@ fn parse_jsdoc_tag(tag_content: &str, jsdoc_tag_span: Span) -> JSDocTag {
     // This surely exists, at least `@` itself
     let (k_start, k_end) = utils::find_token_range(tag_content).unwrap();
 
+    // Kind: @xxx
     let kind = JSDocTagKindPart::new(
         &tag_content[k_start..k_end],
         Span::new(
@@ -84,27 +85,24 @@ fn parse_jsdoc_tag(tag_content: &str, jsdoc_tag_span: Span) -> JSDocTag {
         ),
     );
 
-    JSDocTag::new(
-        kind,
-        // Body part is the rest of the tag_content.
-        //
-        // It needs to include splitter whitespace to distinguish these cases for comment trimming.
-        // ```
-        // /**
-        //  * @k * <- should not omit
-        //  */
-        // /**
-        //  * @k
-        //  * <- should omit
-        //  */
-        // ```
-        // If not included, both body_part will starts with `* <- ...` and fails to trim.
-        //
-        // It does not affect other cases since it will be skipped for type and type name.
-        &tag_content[k_end..],
-        Span::new(
-            jsdoc_tag_span.start + u32::try_from(k_end).unwrap_or_default(),
-            jsdoc_tag_span.end,
-        ),
-    )
+    // Body part: the rest of the tag content.
+    // Splitter whitespace should be included to distinguish these cases for comment parser.
+    // ```
+    // /**
+    //  * @k * <- should not omit
+    //  */
+    // /**
+    //  * @k
+    //  * <- should omit
+    //  */
+    // ```
+    // If not included, both body content will start with `* <- ...` and fails to parse(trim).
+    // This is only for comment parser, it will be ignored for type and type name parser.
+    let body_content = &tag_content[k_end..];
+    let body_span = Span::new(
+        jsdoc_tag_span.start + u32::try_from(k_end).unwrap_or_default(),
+        jsdoc_tag_span.end,
+    );
+
+    JSDocTag::new(kind, body_content, body_span)
 }
