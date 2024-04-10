@@ -87,7 +87,7 @@ impl Rule for CheckAccess {
                 let comment = tag.comment();
                 if kind == resolved_access_tag_name && !ACCESS_LEVELS.contains(&comment.parsed()) {
                     ctx.diagnostic(CheckAccessDiagnostic::InvalidAccessLevel(
-                        tag.kind.span.merge(&comment.span_first_line()),
+                        comment.span_trimmed_first_line(),
                     ));
                 }
 
