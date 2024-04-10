@@ -10,7 +10,65 @@ impl<'a> JSDocCommentPart<'a> {
         Self { raw: part_content, span }
     }
 
-    // TODO: span_trimmed
+    // For example, `Span` for the following comment part:
+    // ```
+    // /**
+    //  * @kind1 COMMENT
+    //  * WILL BE ...
+    //  * @kind2 C2
+    //  * @kind3
+    //  */
+    // ```
+    // is ` COMMENT\n * WILL BE ...\n * `.
+    //
+    // It includes whitespace and line breaks.
+    // And it also includes leading `*` prefixes in every line, even in a single line tag.
+    // (comment `Span` for `kind2` is ` C2\n * `)
+    //
+    // Since these are trimmed by `parsed()` output, this raw `Span` may not be suitable for linter diagnostics.
+    //
+    // And if the passed `Span` for miette diagnostics is multiline,
+    // it will just render arrow markers which is not intuitive.
+    // (It renders a nice undeline for single line span, but not for multiline)
+    // ```
+    // ╭─▶ * @kind1 COMMENT
+    // │   * WILL BE ...
+    // ╰─▶ * @kind2 C2
+    // ```
+    //
+    // So instead, just indicate the first visible line of the comment part.
+    // ```
+    //     * @kind1 COMMENT
+    //              ───────
+    //     * WILL BE ...
+    //     * @kind2 C2
+    // ```
+    // It may not be perfect for multiline, but for single line, which is probably the majority, it is enough.
+    pub fn span_trimmed_first_line(&self) -> Span {
+        if self.raw.trim().is_empty() {
+            return Span::new(self.span.start, self.span.start);
+        }
+
+        let base_len = self.raw.len();
+        if self.raw.lines().count() == 1 {
+            let trimmed_start_offset = base_len - self.raw.trim_start().len();
+            let trimmed_end_offset = base_len - self.raw.trim_end().len();
+
+            return Span::new(
+                self.span.start + u32::try_from(trimmed_start_offset).unwrap_or_default(),
+                self.span.end - u32::try_from(trimmed_end_offset).unwrap_or_default(),
+            );
+        }
+
+        let start_trimmed = self.raw.trim_start();
+        let trimmed_start_offset = base_len - start_trimmed.len();
+        let trimmed_end_offset =
+            trimmed_start_offset + start_trimmed.find(|c| c == '\n').unwrap_or(0);
+        Span::new(
+            self.span.start + u32::try_from(trimmed_start_offset).unwrap_or_default(),
+            self.span.start + u32::try_from(trimmed_end_offset).unwrap_or_default(),
+        )
+    }
 
     pub fn parsed(&self) -> String {
         // If single line, there is no leading `*`
@@ -87,7 +145,7 @@ impl<'a> JSDocTagTypeNamePart<'a> {
 #[cfg(test)]
 mod test {
     use super::{JSDocCommentPart, JSDocTagKindPart, JSDocTagTypeNamePart, JSDocTagTypePart};
-    use oxc_span::SPAN;
+    use oxc_span::{Span, SPAN};
 
     #[test]
     fn comment_part_parsed() {
@@ -157,6 +215,35 @@ mod test {
             // `Span` is not used in this test
             let comment_part = JSDocCommentPart::new(actual, SPAN);
             assert_eq!(comment_part.parsed(), expect);
+        }
+    }
+
+    #[test]
+    fn comment_part_span_trimmed() {
+        for (actual, expect) in [
+            ("", ""),
+            ("\n", ""),
+            ("\n\n\n", ""),
+            ("...", "..."),
+            ("c1\n", "c1"),
+            ("\nc2\n", "c2"),
+            (" c 3\n", "c 3"),
+            ("\nc4\n * ...\n ", "c4"),
+            (
+                "
+ extra text
+* 
+",
+                "extra text",
+            ),
+            ("
+ * foo
+ * bar
+", "* foo")
+        ] {
+            let comment_part =
+                JSDocCommentPart::new(actual, Span::new(0, u32::try_from(actual.len()).unwrap()));
+            assert_eq!(comment_part.span_trimmed_first_line().source_text(actual), expect);
         }
     }
 
