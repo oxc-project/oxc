@@ -1,5 +1,7 @@
 use serde::Deserialize;
 
+use oxc_ast::ast::*;
+
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TypeScriptOptions;
@@ -35,4 +37,9 @@ impl TypeScript {
     pub fn new(options: TypeScriptOptions) -> Self {
         Self { options }
     }
+}
+
+// Transformers
+impl TypeScript {
+    pub fn transform_statement(&mut self, _stmt: &mut Statement<'_>) {}
 }

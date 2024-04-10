@@ -16,6 +16,10 @@ pub struct SourceMap {
     pub(crate) source_contents: Option<Vec<Arc<str>>>,
     pub(crate) tokens: Vec<Token>,
     pub(crate) token_chunks: Option<Vec<TokenChunk>>,
+    /// Identifies third-party sources (such as framework code or bundler-generated code), allowing developers to avoid code that they don't want to see or step through, without having to configure this beforehand.
+    /// The `x_google_ignoreList` field refers to the `sources` array, and lists the indices of all the known third-party sources in that source map.
+    /// When parsing the source map, developer tools can use this to determine sections of the code that the browser loads and runs that could be automatically ignore-listed.
+    pub(crate) x_google_ignore_list: Option<Vec<u32>>,
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -29,7 +33,16 @@ impl SourceMap {
         tokens: Vec<Token>,
         token_chunks: Option<Vec<TokenChunk>>,
     ) -> Self {
-        Self { file, names, source_root, sources, source_contents, tokens, token_chunks }
+        Self {
+            file,
+            names,
+            source_root,
+            sources,
+            source_contents,
+            tokens,
+            token_chunks,
+            x_google_ignore_list: None,
+        }
     }
 
     /// Convert `SourceMap` to vlq sourcemap string.
@@ -67,6 +80,11 @@ impl SourceMap {
 
     pub fn get_source_root(&self) -> Option<&str> {
         self.source_root.as_deref()
+    }
+
+    /// Set `x_google_ignoreList`.
+    pub fn set_x_google_ignore_list(&mut self, x_google_ignore_list: Vec<u32>) {
+        self.x_google_ignore_list = Some(x_google_ignore_list);
     }
 
     pub fn get_names(&self) -> impl Iterator<Item = &str> {
