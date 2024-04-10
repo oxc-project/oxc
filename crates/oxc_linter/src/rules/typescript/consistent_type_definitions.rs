@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{ExportDefaultDeclarationKind, ModifierKind, TSType},
+    ast::{ExportDefaultDeclarationKind, TSType},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -91,7 +91,7 @@ impl Rule for ConsistentTypeDefinitions {
                     ctx.diagnostic(ConsistentTypeDefinitionsDiagnostic(
                         "type",
                         "interface",
-                        decl.span,
+                        Span::new(decl.span.start, decl.span.start + 9),
                     ))
                 }
                 _ => {}
@@ -100,11 +100,17 @@ impl Rule for ConsistentTypeDefinitions {
             AstKind::TSInterfaceDeclaration(decl)
                 if self.config == ConsistentTypeDefinitionsConfig::Type =>
             {
-                let mut start = decl.span.start;
-                if decl.modifiers.is_contains_declare() {
-                    start = start + 8;
-                }
-                ctx.diagnostic(ConsistentTypeDefinitionsDiagnostic("type", "interface", Span::new(start, start + 9)))
+                let start = if decl.modifiers.is_contains_declare() {
+                    decl.span.start + 8
+                } else {
+                    decl.span.start
+                };
+
+                ctx.diagnostic(ConsistentTypeDefinitionsDiagnostic(
+                    "type",
+                    "interface",
+                    Span::new(start, start + 9),
+                ))
             }
             _ => {}
         }
