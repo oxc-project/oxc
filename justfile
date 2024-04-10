@@ -13,6 +13,9 @@ alias c := coverage
 init:
   cargo binstall cargo-watch cargo-insta cargo-edit typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
 
+init-js:
+  corepack enable pnpm
+
 # When ready, run the same CI commands
 ready:
   git diff --exit-code --quiet
@@ -21,6 +24,14 @@ ready:
   just check
   just test
   just lint
+  git status
+
+# Ready, but for JS
+ready-js:
+  git diff --exit-code --quiet
+  just fmt-js
+  just check-js
+  just build-js
   git status
 
 # Clone or update submodules
@@ -45,9 +56,21 @@ fmt:
   cargo fmt
   taplo format
 
+# Format JS files
+fmt-js:
+  pnpm --dir ./npm/oxc-typecheck format
+
 # Run cargo check
 check:
   cargo ck
+
+# Install JS dependencies
+check-js:
+  pnpm --dir ./npm/oxc-typecheck i
+
+# Build JS projects
+build-js:
+  pnpm --dir ./npm/oxc-typecheck build
 
 # Run all the tests
 test:
@@ -56,6 +79,10 @@ test:
 # Lint the whole project
 lint:
   cargo lint -- --deny warnings
+
+# Lint JS projects
+lint-js:
+  pnpm --dir ./npm/oxc-typecheck typecheck
 
 # Run all the conformance tests. See `tasks/coverage`, `tasks/transform_conformance`, `tasks/minsize`
 coverage:
@@ -131,6 +158,11 @@ new-n-rule name:
 # Upgrade all Rust dependencies
 upgrade:
   cargo upgrade --incompatible
+
+# Upgrade all JS dependencies
+upgrade-js:
+  cd ./npm/oxc-typecheck && corepack up
+  pnpm --dir ./npm/oxc-typecheck update --latest
 
 clone-submodule dir url sha:
   git clone --depth=1 {{url}} {{dir}} || true
