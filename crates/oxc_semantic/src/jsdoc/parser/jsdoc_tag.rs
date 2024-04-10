@@ -42,7 +42,7 @@ impl<'a> JSDocTag<'a> {
     }
 
     /// Use for various simple tags like `@access`, `@deprecated`, ...etc.
-    /// comment can be multiline.
+    /// Comment can be multiline.
     ///
     /// Variants:
     /// ```
@@ -73,7 +73,7 @@ impl<'a> JSDocTag<'a> {
     }
 
     /// Use for `@yields`, `@returns`, ...etc.
-    /// comment can be multiline.
+    /// Comment can be multiline.
     ///
     /// Variants:
     /// ```
@@ -111,7 +111,7 @@ impl<'a> JSDocTag<'a> {
     }
 
     /// Use for `@param`, `@property`, `@typedef`, ...etc.
-    /// comment can be multiline.
+    /// Comment can be multiline.
     ///
     /// Variants:
     /// ```
@@ -299,6 +299,7 @@ mod test {
                 ("", "\n             "),
             ),
             ("/**@k5 c5 w/ {@inline}!*/", ("c5 w/ {@inline}!", " c5 w/ {@inline}!")),
+            (" /**@k6 */ ", ("", " ")),
             (" /**@*/ ", ("", "")),
             (" /**@@*/ ", ("", "")),
             (" /** @あいう え */ ", ("え", " え ")),
@@ -318,6 +319,7 @@ mod test {
     #[test]
     fn jsdoc_tag_type() {
         for (source_text, parsed_type_part) in [
+            ("/** @k0 */", None),
             ("/** @k1 {t1} */", Some(("t1", "{t1}"))),
             ("/** @k1 {} */", Some(("", "{}"))),
             (

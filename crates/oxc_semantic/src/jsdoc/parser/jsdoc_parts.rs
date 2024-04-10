@@ -1,5 +1,6 @@
 use oxc_span::Span;
 
+/// Used for `JSDoc.comment` and `JSDocTag.comment`
 #[derive(Debug, Clone, Copy)]
 pub struct JSDocCommentPart<'a> {
     raw: &'a str,
@@ -70,6 +71,7 @@ impl<'a> JSDocCommentPart<'a> {
         )
     }
 
+    /// Returns the content of the comment part without leading `*` in each line.
     pub fn parsed(&self) -> String {
         // If single line, there is no leading `*`
         if self.raw.lines().count() == 1 {
@@ -86,7 +88,6 @@ impl<'a> JSDocCommentPart<'a> {
     }
 }
 
-/// `kind` can be any string like `param`, `type`, `whatever`, ...etc.
 #[derive(Debug, Clone, Copy)]
 pub struct JSDocTagKindPart<'a> {
     raw: &'a str,
@@ -100,6 +101,7 @@ impl<'a> JSDocTagKindPart<'a> {
         Self { raw: part_content, span }
     }
 
+    /// Returns `kind`, it can be any string like `param`, `type`, `whatever`, ...etc.
     pub fn parsed(&self) -> &'a str {
         // +1 for `@`
         &self.raw[1..]
@@ -119,6 +121,7 @@ impl<'a> JSDocTagTypePart<'a> {
         Self { raw: part_content, span }
     }
 
+    /// Returns the type content without `{` and `}`.
     pub fn parsed(&self) -> &'a str {
         // +1 for `{`, -1 for `}`
         &self.raw[1..self.raw.len() - 1]
@@ -137,6 +140,7 @@ impl<'a> JSDocTagTypeNamePart<'a> {
         Self { raw: part_content, span }
     }
 
+    /// Returns the type name itself.
     pub fn parsed(&self) -> &'a str {
         self.raw
     }
