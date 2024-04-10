@@ -85,7 +85,7 @@ impl Rule for ConsistentTypeDefinitions {
                         "interface",
                         "type",
                         Span::new(start, start + 4),
-                    ))
+                    ));
                 }
                 _ => {}
             },
@@ -98,7 +98,7 @@ impl Rule for ConsistentTypeDefinitions {
                         "type",
                         "interface",
                         Span::new(decl.span.start, decl.span.start + 9),
-                    ))
+                    ));
                 }
                 _ => {}
             },
@@ -116,7 +116,7 @@ impl Rule for ConsistentTypeDefinitions {
                     "type",
                     "interface",
                     Span::new(start, start + 9),
-                ))
+                ));
             }
             _ => {}
         }
