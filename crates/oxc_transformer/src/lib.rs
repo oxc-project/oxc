@@ -1,3 +1,5 @@
+#![allow(clippy::wildcard_imports)]
+
 //! Transformer / Transpiler
 //!
 //! References:
@@ -13,7 +15,10 @@ mod react;
 mod typescript;
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast::Program;
+use oxc_ast::{
+    ast::*,
+    visit::{walk_mut, VisitMut},
+};
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 use oxc_span::SourceType;
@@ -54,9 +59,10 @@ pub struct Transformer<'a> {
     semantic: Semantic<'a>,
     options: TransformOptions,
 
-    decorators: Decorators,
-    typescript: TypeScript,
-    react: React,
+    // NOTE: all callbacks must run in order.
+    x0_typescript: TypeScript,
+    x1_react: React,
+    x2_decorators: Decorators,
 }
 
 impl<'a> Transformer<'a> {
@@ -71,16 +77,30 @@ impl<'a> Transformer<'a> {
             source_type,
             semantic,
             options,
-            decorators: Decorators::default(),
-            typescript: TypeScript::default(),
-            react: React::default(),
+            x0_typescript: TypeScript::default(),
+            x1_react: React::default(),
+            x2_decorators: Decorators::default(),
         }
     }
 
     /// # Errors
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
-    pub fn build(self, _program: &mut Program<'a>) -> Result<(), Vec<Error>> {
+    pub fn build(mut self, program: &mut Program<'a>) -> Result<(), Vec<Error>> {
+        self.visit_program(program);
         Ok(())
+    }
+}
+
+impl<'a> VisitMut<'a> for Transformer<'a> {
+    fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
+        self.x0_typescript.transform_statement(stmt);
+        self.x2_decorators.transform_statement(stmt);
+        walk_mut::walk_statement_mut(self, stmt);
+    }
+
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+        self.x1_react.transform_expression(expr);
+        walk_mut::walk_expression_mut(self, expr);
     }
 }

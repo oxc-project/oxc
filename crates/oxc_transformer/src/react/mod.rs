@@ -4,6 +4,8 @@ mod jsx_self;
 mod jsx_source;
 mod options;
 
+use oxc_ast::ast::*;
+
 pub use self::{
     display_name::{ReactDisplayName, ReactDisplayNameOptions},
     jsx::ReactJsx,
@@ -28,6 +30,7 @@ pub struct React {
     display_name: ReactDisplayName,
 }
 
+// Constructors
 impl React {
     pub fn new(&mut self, options: ReactOptions) -> &mut Self {
         self.jsx = ReactJsx::new(options);
@@ -47,5 +50,20 @@ impl React {
     pub fn with_display_name(&mut self, options: ReactDisplayNameOptions) -> &mut Self {
         self.display_name = ReactDisplayName::new(options);
         self
+    }
+}
+
+// Transformers
+impl React {
+    pub fn transform_expression(&mut self, expr: &mut Expression<'_>) {
+        match expr {
+            Expression::JSXElement(_e) => {
+                // *expr = unimplemented!();
+            }
+            Expression::JSXFragment(_e) => {
+                // *expr = unimplemented!();
+            }
+            _ => {}
+        }
     }
 }
