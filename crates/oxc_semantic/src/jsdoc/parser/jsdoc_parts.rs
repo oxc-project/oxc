@@ -37,6 +37,7 @@ pub struct JSDocTagKindPart<'a> {
 impl<'a> JSDocTagKindPart<'a> {
     pub fn new(part_content: &'a str, span: Span) -> Self {
         debug_assert!(part_content.starts_with('@'));
+        debug_assert!(part_content.trim() == part_content);
 
         Self { raw: part_content, span }
     }
@@ -73,6 +74,8 @@ pub struct JSDocTagTypeNamePart<'a> {
 }
 impl<'a> JSDocTagTypeNamePart<'a> {
     pub fn new(part_content: &'a str, span: Span) -> Self {
+        debug_assert!(part_content.trim() == part_content);
+
         Self { raw: part_content, span }
     }
 
@@ -83,7 +86,7 @@ impl<'a> JSDocTagTypeNamePart<'a> {
 
 #[cfg(test)]
 mod test {
-    use super::JSDocCommentPart;
+    use super::{JSDocCommentPart, JSDocTagKindPart, JSDocTagTypeNamePart, JSDocTagTypePart};
     use oxc_span::SPAN;
 
     #[test]
@@ -154,6 +157,35 @@ mod test {
             // `Span` is not used in this test
             let comment_part = JSDocCommentPart::new(actual, SPAN);
             assert_eq!(comment_part.parsed(), expect);
+        }
+    }
+
+    #[test]
+    fn kind_part_parsed() {
+        for (actual, expect) in [("@foo", "foo"), ("@", "")] {
+            // `Span` is not used in this test
+            let kind_part = JSDocTagKindPart::new(actual, SPAN);
+            assert_eq!(kind_part.parsed(), expect);
+        }
+    }
+
+    #[test]
+    fn type_part_parsed() {
+        for (actual, expect) in
+            [("{string}", "string"), ("{{x:1}}", "{x:1}"), ("{[1,2,3]}", "[1,2,3]")]
+        {
+            // `Span` is not used in this test
+            let type_part = JSDocTagTypePart::new(actual, SPAN);
+            assert_eq!(type_part.parsed(), expect);
+        }
+    }
+
+    #[test]
+    fn type_name_part_parsed() {
+        for (actual, expect) in [("foo", "foo"), ("Bar", "Bar")] {
+            // `Span` is not used in this test
+            let type_name_part = JSDocTagTypeNamePart::new(actual, SPAN);
+            assert_eq!(type_name_part.parsed(), expect);
         }
     }
 }
