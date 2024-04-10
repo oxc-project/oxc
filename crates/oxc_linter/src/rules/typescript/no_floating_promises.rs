@@ -1,9 +1,14 @@
+use oxc_ast::{
+    ast::{CallExpression, ChainElement, Expression, ExpressionStatement},
+    AstKind,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -63,7 +68,90 @@ impl Rule for NoFloatingPromises {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ExpressionStatement(stmt) = node.kind() else { return };
+        if self.ignore_iife && is_async_iife(stmt) {
+            return;
+        }
+
+        let result = match &stmt.expression {
+            Expression::ChainExpression(chain) => {
+                self.is_unhandled_promise_chain(&chain.expression, ctx)
+            }
+            expr => self.is_unhandled_promise(expr, ctx),
+        };
+
+        // Handle result
+        todo!()
+    }
+}
+
+impl NoFloatingPromises {
+    fn is_unhandled_promise<'a>(&self, node: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
+        if let Expression::SequenceExpression(expr) = node {
+            // TODO: needs to return first unhandled
+            return expr.expressions.iter().all(|e| !self.is_unhandled_promise(e, ctx));
+        }
+
+        if !self.ignore_void {
+            if let Expression::UnaryExpression(expr) = node {
+                if expr.operator == UnaryOperator::Void {
+                    return self.is_unhandled_promise(&expr.argument, ctx);
+                }
+            }
+        }
+
+        // TODO
+        // if isPromiseArray(node, ctx) {
+        //     return true; // { promiseArray: true };
+        // }
+
+        // TODO
+        // if !isPromiseLike(node, ctx) {
+        //     return false;
+        // }
+
+        match node {
+            Expression::CallExpression(expr) => is_unhandled_call_expression(expr),
+            Expression::ConditionalExpression(_) => todo!(),
+            Expression::MemberExpression(_)
+            | Expression::Identifier(_)
+            | Expression::NewExpression(_) => todo!(),
+            Expression::LogicalExpression(_) => todo!(),
+
+            _ => false,
+        }
+    }
+
+    fn is_unhandled_promise_chain<'a>(
+        &self,
+        node: &ChainElement<'a>,
+        ctx: &LintContext<'a>,
+    ) -> bool {
+        // TODO
+        // if isPromiseArray(node, ctx) {
+        //     return true; // { promiseArray: true };
+        // }
+
+        // TODO
+        // if !isPromiseLike(node, ctx) {
+        //     return false;
+        // }
+
+        match node {
+            ChainElement::CallExpression(expr) => is_unhandled_call_expression(expr),
+            ChainElement::MemberExpression(_) => todo!(),
+        }
+    }
+}
+
+fn is_async_iife<'a>(node: &ExpressionStatement<'a>) -> bool {
+    let Expression::CallExpression(ref expr) = node.expression else { return false };
+    expr.callee.is_function()
+}
+
+fn is_unhandled_call_expression<'a>(node: &CallExpression<'a>) -> bool {
+    todo!()
 }
 
 #[test]
