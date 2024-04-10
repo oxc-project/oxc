@@ -104,4 +104,19 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.x1_react.transform_expression(expr);
         walk_mut::walk_expression_mut(self, expr);
     }
+
+    fn visit_variable_declarator(&mut self, declarator: &mut VariableDeclarator<'a>) {
+        self.x1_react.transform_variable_declarator(declarator);
+        walk_mut::walk_variable_declarator_mut(self, declarator);
+    }
+
+    fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
+        self.x1_react.transform_object_property(prop);
+        walk_mut::walk_object_property_mut(self, prop);
+    }
+
+    fn visit_export_default_declaration(&mut self, decl: &mut ExportDefaultDeclaration<'a>) {
+        self.x1_react.transform_export_default_declaration(decl);
+        walk_mut::walk_export_default_declaration_mut(self, decl);
+    }
 }
