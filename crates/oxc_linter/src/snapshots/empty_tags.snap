@@ -57,11 +57,11 @@ expression: empty_tags
   help: `@private` tag should not have body.
 
   ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
-   ╭─[empty_tags.tsx:3:23]
- 2 │                   /**
- 3 │                    * @internal {someType}
-   ·                                ──────────
- 4 │                    */
+   ╭─[empty_tags.tsx:4:20]
+ 3 │                    * @internal
+ 4 │                    * foo
+   ·                    ─────
+ 5 │                    */
    ╰────
   help: `@internal` tag should not have body.
 
