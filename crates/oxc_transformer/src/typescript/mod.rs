@@ -1,6 +1,10 @@
+use std::rc::Rc;
+
 use serde::Deserialize;
 
 use oxc_ast::ast::*;
+
+use crate::context::Ctx;
 
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -27,19 +31,19 @@ pub struct TypeScriptOptions;
 ///
 /// In:  `const x: number = 0;`
 /// Out: `const x = 0;`
-#[derive(Debug, Default)]
-pub struct TypeScript {
-    #[allow(unused)]
+#[allow(unused)]
+pub struct TypeScript<'a> {
     options: TypeScriptOptions,
+    ctx: Ctx<'a>,
 }
 
-impl TypeScript {
-    pub fn new(options: TypeScriptOptions) -> Self {
-        Self { options }
+impl<'a> TypeScript<'a> {
+    pub fn new(options: TypeScriptOptions, ctx: &Ctx<'a>) -> Self {
+        Self { options, ctx: Rc::clone(ctx) }
     }
 }
 
 // Transformers
-impl TypeScript {
-    pub fn transform_statement(&mut self, _stmt: &mut Statement<'_>) {}
+impl<'a> TypeScript<'a> {
+    pub fn transform_statement(&mut self, _stmt: &mut Statement<'a>) {}
 }

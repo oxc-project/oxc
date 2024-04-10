@@ -9,10 +9,13 @@
 
 // Core
 mod compiler_assumptions;
-// Plugins: <https://babeljs.io/docs/plugins-list>
+mod context;
+// Presets: <https://babel.dev/docs/presets>
 mod decorators;
 mod react;
 mod typescript;
+
+use std::rc::Rc;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{
@@ -26,12 +29,11 @@ use oxc_span::SourceType;
 pub use crate::{
     compiler_assumptions::CompilerAssumptions,
     decorators::{Decorators, DecoratorsOptions},
-    react::{
-        React, ReactDisplayName, ReactDisplayNameOptions, ReactJsx, ReactJsxSelf, ReactJsxSource,
-        ReactJsxSourceOptions, ReactOptions,
-    },
+    react::{React, ReactDisplayName, ReactJsx, ReactJsxSelf, ReactJsxSource, ReactOptions},
     typescript::{TypeScript, TypeScriptOptions},
 };
+
+use crate::context::{Ctx, TransformCtx};
 
 #[allow(unused)]
 #[derive(Debug, Default, Clone)]
@@ -54,15 +56,11 @@ pub struct TransformOptions {
 
 #[allow(unused)]
 pub struct Transformer<'a> {
-    allocator: &'a Allocator,
-    source_type: SourceType,
-    semantic: Semantic<'a>,
-    options: TransformOptions,
-
+    ctx: Ctx<'a>,
     // NOTE: all callbacks must run in order.
-    x0_typescript: TypeScript,
-    x1_react: React,
-    x2_decorators: Decorators,
+    x0_typescript: TypeScript<'a>,
+    x1_react: React<'a>,
+    x2_decorators: Decorators<'a>,
 }
 
 impl<'a> Transformer<'a> {
@@ -72,14 +70,12 @@ impl<'a> Transformer<'a> {
         semantic: Semantic<'a>,
         options: TransformOptions,
     ) -> Self {
+        let ctx = Rc::new(TransformCtx::new(allocator, source_type, semantic));
         Self {
-            allocator,
-            source_type,
-            semantic,
-            options,
-            x0_typescript: TypeScript::default(),
-            x1_react: React::default(),
-            x2_decorators: Decorators::default(),
+            ctx: Rc::clone(&ctx),
+            x0_typescript: TypeScript::new(options.typescript, &ctx),
+            x1_react: React::new(options.react, &ctx),
+            x2_decorators: Decorators::new(options.decorators, &ctx),
         }
     }
 
@@ -88,7 +84,12 @@ impl<'a> Transformer<'a> {
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
     pub fn build(mut self, program: &mut Program<'a>) -> Result<(), Vec<Error>> {
         self.visit_program(program);
-        Ok(())
+        let errors = self.ctx.take_errors();
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
     }
 }
 

@@ -4,14 +4,15 @@ mod jsx_self;
 mod jsx_source;
 mod options;
 
+use std::rc::Rc;
+
 use oxc_ast::ast::*;
 
+use crate::context::Ctx;
+
 pub use self::{
-    display_name::{ReactDisplayName, ReactDisplayNameOptions},
-    jsx::ReactJsx,
-    jsx_self::{ReactJsxSelf, ReactJsxSelfOptions},
-    jsx_source::{ReactJsxSource, ReactJsxSourceOptions},
-    options::ReactOptions,
+    display_name::ReactDisplayName, jsx::ReactJsx, jsx_self::ReactJsxSelf,
+    jsx_source::ReactJsxSource, options::ReactOptions,
 };
 
 /// [Preset React](https://babel.dev/docs/babel-preset-react)
@@ -22,40 +23,31 @@ pub use self::{
 /// * [plugin-transform-react-jsx-self](https://babeljs.io/docs/babel-plugin-transform-react-jsx-self)
 /// * [plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx)
 /// * [plugin-transform-react-display-name](https://babeljs.io/docs/babel-plugin-transform-react-display-name)
-#[derive(Default)]
-pub struct React {
-    jsx: ReactJsx,
-    jsx_self: ReactJsxSelf,
-    jsx_source: ReactJsxSource,
-    display_name: ReactDisplayName,
+#[allow(unused)]
+pub struct React<'a> {
+    ctx: Ctx<'a>,
+    jsx: ReactJsx<'a>,
+    jsx_self: ReactJsxSelf<'a>,
+    jsx_source: ReactJsxSource<'a>,
+    display_name: ReactDisplayName<'a>,
 }
 
 // Constructors
-impl React {
-    pub fn new(&mut self, options: ReactOptions) -> &mut Self {
-        self.jsx = ReactJsx::new(options);
-        self
-    }
-
-    pub fn with_jsx_self(&mut self, options: ReactJsxSelfOptions) -> &mut Self {
-        self.jsx_self = ReactJsxSelf::new(options);
-        self
-    }
-
-    pub fn with_jsx_source(&mut self, options: ReactJsxSourceOptions) -> &mut Self {
-        self.jsx_source = ReactJsxSource::new(options);
-        self
-    }
-
-    pub fn with_display_name(&mut self, options: ReactDisplayNameOptions) -> &mut Self {
-        self.display_name = ReactDisplayName::new(options);
-        self
+impl<'a> React<'a> {
+    pub fn new(options: ReactOptions, ctx: &Ctx<'a>) -> Self {
+        Self {
+            ctx: Rc::clone(ctx),
+            jsx: ReactJsx::new(options, ctx),
+            jsx_self: ReactJsxSelf::new(ctx),
+            jsx_source: ReactJsxSource::new(ctx),
+            display_name: ReactDisplayName::new(ctx),
+        }
     }
 }
 
 // Transformers
-impl React {
-    pub fn transform_expression(&mut self, expr: &mut Expression<'_>) {
+impl<'a> React<'a> {
+    pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
             Expression::JSXElement(_e) => {
                 // *expr = unimplemented!();

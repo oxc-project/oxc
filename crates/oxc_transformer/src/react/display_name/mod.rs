@@ -1,8 +1,6 @@
-use serde::Deserialize;
+use std::rc::Rc;
 
-#[derive(Debug, Default, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ReactDisplayNameOptions;
+use crate::context::Ctx;
 
 /// [plugin-transform-react-display-name](https://babeljs.io/docs/babel-plugin-transform-react-display-name)
 ///
@@ -12,14 +10,13 @@ pub struct ReactDisplayNameOptions;
 ///
 /// In: `var bar = createReactClass({});`
 /// Out: `var bar = createReactClass({ displayName: "bar" });`
-#[derive(Debug, Default)]
-pub struct ReactDisplayName {
-    #[allow(unused)]
-    options: ReactDisplayNameOptions,
+#[allow(unused)]
+pub struct ReactDisplayName<'a> {
+    ctx: Ctx<'a>,
 }
 
-impl ReactDisplayName {
-    pub fn new(options: ReactDisplayNameOptions) -> Self {
-        Self { options }
+impl<'a> ReactDisplayName<'a> {
+    pub fn new(ctx: &Ctx<'a>) -> Self {
+        Self { ctx: Rc::clone(ctx) }
     }
 }

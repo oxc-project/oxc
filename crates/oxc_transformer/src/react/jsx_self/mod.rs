@@ -1,8 +1,6 @@
-use serde::Deserialize;
+use std::rc::Rc;
 
-#[derive(Debug, Default, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ReactJsxSelfOptions;
+use crate::context::Ctx;
 
 /// [plugin-transform-react-jsx-self](https://babeljs.io/docs/babel-plugin-transform-react-jsx-self)
 ///
@@ -12,14 +10,13 @@ pub struct ReactJsxSelfOptions;
 ///
 /// In: `<sometag />`
 /// Out: `<sometag __self={this} />`
-#[derive(Debug, Default)]
-pub struct ReactJsxSelf {
-    #[allow(unused)]
-    options: ReactJsxSelfOptions,
+#[allow(unused)]
+pub struct ReactJsxSelf<'a> {
+    ctx: Ctx<'a>,
 }
 
-impl ReactJsxSelf {
-    pub fn new(options: ReactJsxSelfOptions) -> Self {
-        Self { options }
+impl<'a> ReactJsxSelf<'a> {
+    pub fn new(ctx: &Ctx<'a>) -> Self {
+        Self { ctx: Rc::clone(ctx) }
     }
 }
