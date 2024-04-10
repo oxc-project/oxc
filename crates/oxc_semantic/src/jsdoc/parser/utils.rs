@@ -1,20 +1,4 @@
-pub fn trim_comment(s: &str) -> String {
-    let lines = s.lines();
-
-    // If single line, there is no leading `*`
-    if lines.clone().count() == 1 {
-        return s.trim().to_string();
-    }
-
-    s.lines()
-        // Trim leading the first `*` in each line
-        .map(|line| line.trim().strip_prefix('*').unwrap_or(line).trim())
-        .filter(|line| !line.is_empty())
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
-// For now, just returns inside of most outer braces
+// For now, just returns the most outer braces
 pub fn find_type_range(s: &str) -> Option<(usize, usize)> {
     let mut start = None;
     let mut brace_count = 0;
@@ -24,7 +8,7 @@ pub fn find_type_range(s: &str) -> Option<(usize, usize)> {
                 brace_count += 1;
 
                 if start.is_none() {
-                    start = Some(idx + 1);
+                    start = Some(idx);
                 }
             }
             '}' => {
@@ -32,7 +16,7 @@ pub fn find_type_range(s: &str) -> Option<(usize, usize)> {
 
                 if brace_count == 0 {
                     if let Some(start) = start {
-                        return Some((start, idx));
+                        return Some((start, idx + 1));
                     }
                 }
             }
@@ -55,7 +39,7 @@ pub fn find_token_range(s: &str) -> Option<(usize, usize)> {
         }
     }
 
-    // Everything is a name
+    // Everything is a token
     if let Some(start) = start {
         return Some((start, s.len()));
     }
@@ -65,90 +49,21 @@ pub fn find_token_range(s: &str) -> Option<(usize, usize)> {
 
 #[cfg(test)]
 mod test {
-    use super::{find_token_range, find_type_range, trim_comment};
-
-    #[test]
-    fn trim_jsdoc_comments() {
-        for (actual, expect) in [
-            ("", ""),
-            ("hello  ", "hello"),
-            ("  * single line", "* single line"),
-            (" * ", "*"),
-            (" * * ", "* *"),
-            ("***", "***"),
-            (
-                "
-  trim
-", "trim",
-            ),
-            (
-                "
-
-", "",
-            ),
-            (
-                "
-                *
-                *
-                ",
-                "",
-            ),
-            (
-                "
- * asterisk
-",
-                "asterisk",
-            ),
-            (
-                "
- * * li
- * * li
-",
-                "* li\n* li",
-            ),
-            (
-                "
-* list
-* list
-",
-                "list\nlist",
-            ),
-            (
-                "
- * * 1
- ** 2 
-",
-                "* 1\n* 2",
-            ),
-            (
-                "
-1
-
-2
-
-
-3
-            ",
-                "1\n2\n3",
-            ),
-        ] {
-            assert_eq!(trim_comment(actual), expect);
-        }
-    }
+    use super::{find_token_range, find_type_range};
 
     #[test]
     fn extract_type_part_range() {
         for (actual, expect) in [
-            ("{t1}", Some("t1")),
-            (" { t2 } ", Some(" t2 ")),
-            ("{{ t3: string }}", Some("{ t3: string }")),
-            ("{t4} name", Some("t4")),
-            (" {t5} ", Some("t5")),
+            ("{t1}", Some("{t1}")),
+            (" { t2 } ", Some("{ t2 }")),
+            ("x{{ t3: string }}x", Some("{{ t3: string }}")),
+            ("{t4} name", Some("{t4}")),
+            (" {t5} ", Some("{t5}")),
             ("{t6 x", None),
             ("t7", None),
             ("{{t8}", None),
             ("", None),
-            ("{[ true, false ]}", Some("[ true, false ]")),
+            ("{[ true, false ]}", Some("{[ true, false ]}")),
         ] {
             assert_eq!(find_type_range(actual).map(|(s, e)| &actual[s..e]), expect);
         }
