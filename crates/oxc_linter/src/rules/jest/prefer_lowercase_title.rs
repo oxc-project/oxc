@@ -222,7 +222,7 @@ impl PreferLowercaseTitle {
                 UnexpectedLowercase(string_expr.value.to_compact_str(), string_expr.span),
                 || {
                     let mut content = ctx.codegen();
-                    content.print_str(first_char.to_ascii_uppercase().to_string().as_bytes());
+                    content.print_str(first_char.to_ascii_lowercase().to_string().as_bytes());
                     Fix::new(
                         content.into_source_text(),
                         Span::new(string_expr.span.start + 1, string_expr.span.start + 2),
