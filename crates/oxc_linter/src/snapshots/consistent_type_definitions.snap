@@ -5,35 +5,34 @@ expression: consistent_type_definitions
   ⚠ typescript-eslint(consistent-type-definitions):
    ╭─[consistent_type_definitions.tsx:1:1]
  1 │ type T = { x: number; };
-   · ────────────┬───────────
-   ·             ╰── Use an `interface` instead of a `type`
+   · ──┬─
+   ·   ╰── Use an `interface` instead of a `type`
    ╰────
   help: Use an `interface` instead of a `type`
 
   ⚠ typescript-eslint(consistent-type-definitions):
    ╭─[consistent_type_definitions.tsx:1:1]
  1 │ type T={ x: number; };
-   · ───────────┬──────────
-   ·            ╰── Use an `interface` instead of a `type`
+   · ──┬─
+   ·   ╰── Use an `interface` instead of a `type`
    ╰────
   help: Use an `interface` instead of a `type`
 
   ⚠ typescript-eslint(consistent-type-definitions):
    ╭─[consistent_type_definitions.tsx:1:1]
  1 │ type T=                         { x: number; };
-   · ───────────────────────┬───────────────────────
-   ·                        ╰── Use an `interface` instead of a `type`
+   · ──┬─
+   ·   ╰── Use an `interface` instead of a `type`
    ╰────
   help: Use an `interface` instead of a `type`
 
   ⚠ typescript-eslint(consistent-type-definitions):
    ╭─[consistent_type_definitions.tsx:2:11]
- 1 │     
- 2 │ ╭─▶             export type W<T> = {
- 3 │ │                 x: T;
- 4 │ ├─▶             };
-   · ╰──── Use an `interface` instead of a `type`
- 5 │                       
+ 1 │ 
+ 2 │             export type W<T> = {
+   ·                    ──┬─
+   ·                      ╰── Use an `interface` instead of a `type`
+ 3 │               x: T;
    ╰────
   help: Use an `interface` instead of a `type`
 
@@ -138,14 +137,12 @@ expression: consistent_type_definitions
   help: Use an `type` instead of a `interface`
 
   ⚠ typescript-eslint(consistent-type-definitions):
-   ╭─[consistent_type_definitions.tsx:2:11]
- 1 │     
- 2 │ ╭─▶             export declare type Test = {
- 3 │ │                 foo: string;
- 4 │ │                 bar: string;
- 5 │ ├─▶             };
-   · ╰──── Use an `interface` instead of a `type`
- 6 │                       
+   ╭─[consistent_type_definitions.tsx:2:19]
+ 1 │ 
+ 2 │             export declare type Test = {
+   ·                            ──┬─
+   ·                              ╰── Use an `interface` instead of a `type`
+ 3 │               foo: string;
    ╰────
   help: Use an `interface` instead of a `type`
 

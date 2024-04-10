@@ -71,14 +71,20 @@ impl Rule for ConsistentTypeDefinitions {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::TSTypeAliasDeclaration(typ) => match &typ.type_annotation {
+            AstKind::TSTypeAliasDeclaration(decl) => match &decl.type_annotation {
                 TSType::TSTypeLiteral(_)
                     if self.config == ConsistentTypeDefinitionsConfig::Interface =>
                 {
+                    let start = if decl.modifiers.is_contains_declare() {
+                        decl.span.start + 8
+                    } else {
+                        decl.span.start
+                    };
+
                     ctx.diagnostic(ConsistentTypeDefinitionsDiagnostic(
                         "interface",
                         "type",
-                        typ.span,
+                        Span::new(start, start + 4),
                     ))
                 }
                 _ => {}
