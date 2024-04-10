@@ -16,6 +16,7 @@ pub mod partial_loader;
 pub mod rule;
 mod rules;
 mod service;
+mod typecheck;
 mod utils;
 
 use rustc_hash::FxHashMap;

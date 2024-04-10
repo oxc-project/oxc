@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/swcrc",
+  "jsc": {
+    "parser": {
+      "syntax": "typescript",
+      "dynamicImport": true
+    },
+    "baseUrl": "./src/",
+    "target": "es2022",
+    "keepClassNames": true
+  },
+  "isModule": true,
+  "minify": false,
+  "module": {
+    "type": "es6",
+    "strict": true,
+    "noInterop": true
+  }
+}

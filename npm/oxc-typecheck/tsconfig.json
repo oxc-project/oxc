@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "esModuleInterop": true,
+    "lib": ["ES2022"],
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "noImplicitReturns": true,
+    "paths": {},
+    "pretty": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "ES2022",
+    // specifically disable declarations for the plugin
+    // see reasoning in packages/eslint-plugin/rules.d.ts
+    "declaration": false,
+    "declarationMap": false,
+    "outDir": "./dist",
+    "composite": false,
+    "rootDir": "."
+  },
+  "include": ["src", "typings"]
+}

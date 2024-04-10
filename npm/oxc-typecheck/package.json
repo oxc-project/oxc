@@ -1,0 +1,42 @@
+{
+  "name": "oxc-typecheck",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Type Check Server for the JavaScript Oxidation Compiler",
+  "keywords": [],
+  "author": "Boshen and oxc contributors",
+  "license": "MIT",
+  "homepage": "https://oxc-project.github.io",
+  "bugs": "https://github.com/oxc-project/oxc/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oxc-project/oxc",
+    "directory": "npm/oxc-typecheck"
+  },
+  "bin": "./dist/server.js",
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  },
+  "files": ["./dist"],
+  "scripts": {
+    "start": "node ./dist/server.js",
+    "build": "swc --delete-dir-on-start --copy-files --out-dir dist --strip-leading-paths ./src",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "format": "biome format --write ."
+  },
+  "dependencies": {
+    "ts-api-utils": "^1.3.0",
+    "typescript": "^5.4.4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.6.4",
+    "@swc/cli": "^0.3.12",
+    "@swc/core": "^1.4.13",
+    "@types/node": "^20.12.6"
+  },
+  "packageManager": "pnpm@8.15.6+sha256.01c01eeb990e379b31ef19c03e9d06a14afa5250b82e81303f88721c99ff2e6f",
+  "engines": {
+    "node": ">=20.*"
+  },
+  "os": ["darwin", "win32", "linux"]
+}
