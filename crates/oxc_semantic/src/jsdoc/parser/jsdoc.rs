@@ -79,7 +79,7 @@ line2
             let mut jsdocs = semantic.jsdoc().iter_all();
 
             let jsdoc = jsdocs.next().unwrap();
-            assert_eq!(jsdoc.span.source_text(semantic.source_text), span_text);
+            assert_eq!(jsdoc.span.source_text(source_text), span_text);
         }
     }
 
@@ -181,7 +181,7 @@ line2
             let jsdoc = jsdocs.next().unwrap();
             let (comment, tags) = (jsdoc.comment(), jsdoc.tags());
             assert_eq!(comment.parsed(), parsed);
-            assert_eq!(comment.span.source_text(semantic.source_text), span_text);
+            assert_eq!(comment.span.source_text(source_text), span_text);
             assert_eq!(tags.len(), tag_len);
         }
     }

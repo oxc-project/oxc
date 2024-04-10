@@ -42,7 +42,7 @@ impl<'a> JSDocTagKindPart<'a> {
         Self { raw: part_content, span }
     }
 
-    pub fn parsed(&self) -> &str {
+    pub fn parsed(&self) -> &'a str {
         // +1 for `@`
         &self.raw[1..]
     }
@@ -61,7 +61,7 @@ impl<'a> JSDocTagTypePart<'a> {
         Self { raw: part_content, span }
     }
 
-    pub fn parsed(&self) -> &str {
+    pub fn parsed(&self) -> &'a str {
         // +1 for `{`, -1 for `}`
         &self.raw[1..self.raw.len() - 1]
     }
@@ -79,7 +79,7 @@ impl<'a> JSDocTagTypeNamePart<'a> {
         Self { raw: part_content, span }
     }
 
-    pub fn parsed(&self) -> &str {
+    pub fn parsed(&self) -> &'a str {
         self.raw
     }
 }
@@ -162,7 +162,7 @@ mod test {
 
     #[test]
     fn kind_part_parsed() {
-        for (actual, expect) in [("@foo", "foo"), ("@", "")] {
+        for (actual, expect) in [("@foo", "foo"), ("@", ""), ("@かいんど", "かいんど")] {
             // `Span` is not used in this test
             let kind_part = JSDocTagKindPart::new(actual, SPAN);
             assert_eq!(kind_part.parsed(), expect);
@@ -171,9 +171,15 @@ mod test {
 
     #[test]
     fn type_part_parsed() {
-        for (actual, expect) in
-            [("{string}", "string"), ("{{x:1}}", "{x:1}"), ("{[1,2,3]}", "[1,2,3]")]
-        {
+        for (actual, expect) in [
+            ("{}", ""),
+            ("{-}", "-"),
+            ("{string}", "string"),
+            ("{ string}", " string"),
+            ("{ bool  }", " bool  "),
+            ("{{x:1}}", "{x:1}"),
+            ("{[1,2,3]}", "[1,2,3]"),
+        ] {
             // `Span` is not used in this test
             let type_part = JSDocTagTypePart::new(actual, SPAN);
             assert_eq!(type_part.parsed(), expect);
@@ -182,7 +188,7 @@ mod test {
 
     #[test]
     fn type_name_part_parsed() {
-        for (actual, expect) in [("foo", "foo"), ("Bar", "Bar")] {
+        for (actual, expect) in [("foo", "foo"), ("Bar", "Bar"), ("変数", "変数")] {
             // `Span` is not used in this test
             let type_name_part = JSDocTagTypeNamePart::new(actual, SPAN);
             assert_eq!(type_name_part.parsed(), expect);
