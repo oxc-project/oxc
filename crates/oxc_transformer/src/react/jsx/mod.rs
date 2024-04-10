@@ -1,3 +1,7 @@
+use std::rc::Rc;
+
+use crate::context::Ctx;
+
 pub use super::options::ReactOptions;
 
 /// [plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx)
@@ -13,14 +17,14 @@ pub use super::options::ReactOptions;
 ///
 /// * <https://babeljs.io/docs/babel-plugin-transform-react-jsx>
 /// * <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-react-jsx>
-#[derive(Debug, Default)]
-pub struct ReactJsx {
-    #[allow(unused)]
+#[allow(unused)]
+pub struct ReactJsx<'a> {
     options: ReactOptions,
+    ctx: Ctx<'a>,
 }
 
-impl ReactJsx {
-    pub fn new(options: ReactOptions) -> Self {
-        Self { options }
+impl<'a> ReactJsx<'a> {
+    pub fn new(options: ReactOptions, ctx: &Ctx<'a>) -> Self {
+        Self { options, ctx: Rc::clone(ctx) }
     }
 }

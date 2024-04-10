@@ -1,18 +1,15 @@
-use serde::Deserialize;
+use std::rc::Rc;
 
-#[derive(Debug, Default, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ReactJsxSourceOptions;
+use crate::context::Ctx;
 
 /// [plugin-transform-react-jsx-source](https://babeljs.io/docs/babel-plugin-transform-react-jsx-source)
-#[derive(Debug, Default)]
-pub struct ReactJsxSource {
-    #[allow(unused)]
-    options: ReactJsxSourceOptions,
+#[allow(unused)]
+pub struct ReactJsxSource<'a> {
+    ctx: Ctx<'a>,
 }
 
-impl ReactJsxSource {
-    pub fn new(options: ReactJsxSourceOptions) -> Self {
-        Self { options }
+impl<'a> ReactJsxSource<'a> {
+    pub fn new(ctx: &Ctx<'a>) -> Self {
+        Self { ctx: Rc::clone(ctx) }
     }
 }
