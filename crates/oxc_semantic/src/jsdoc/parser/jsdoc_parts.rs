@@ -236,10 +236,13 @@ mod test {
 ",
                 "extra text",
             ),
-            ("
+            (
+                "
  * foo
  * bar
-", "* foo")
+",
+                "* foo",
+            ),
         ] {
             let comment_part =
                 JSDocCommentPart::new(actual, Span::new(0, u32::try_from(actual.len()).unwrap()));

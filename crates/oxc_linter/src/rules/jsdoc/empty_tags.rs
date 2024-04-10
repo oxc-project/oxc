@@ -116,7 +116,10 @@ impl Rule for EmptyTags {
                     continue;
                 }
 
-                ctx.diagnostic(EmptyTagsDiagnostic(comment.span_trimmed_first_line(), kind.to_string()));
+                ctx.diagnostic(EmptyTagsDiagnostic(
+                    comment.span_trimmed_first_line(),
+                    kind.to_string(),
+                ));
             }
         }
     }

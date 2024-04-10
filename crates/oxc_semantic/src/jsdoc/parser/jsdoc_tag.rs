@@ -351,20 +351,29 @@ mod test {
         for (source_text, parsed_type_part, parsed_comment_part) in [
             ("/** @k */", None, ("", " ")),
             ("/** @k1 {t1} c1 */", Some(("t1", "{t1}")), ("c1", " c1 ")),
-            ("/** @k2 
-{t2} */", Some(("t2", "{t2}")), ("", " ")),
+            (
+                "/** @k2 
+{t2} */",
+                Some(("t2", "{t2}")),
+                ("", " "),
+            ),
             ("/** @k3  c3 */", None, ("c3", "  c3 ")),
             ("/** @k4\nc4 foo */", None, ("c4 foo", "\nc4 foo ")),
-            ("/** @k5
+            (
+                "/** @k5
 {t5}
-c5 */", Some(("t5", "{t5}")), ("c5", "\nc5 ")),
+c5 */",
+                Some(("t5", "{t5}")),
+                ("c5", "\nc5 "),
+            ),
             ("/** @k6 {t6} - c6 */", Some(("t6", "{t6}")), ("- c6", " - c6 ")),
         ] {
             let allocator = Allocator::default();
             let semantic = build_semantic(&allocator, source_text);
             let mut jsdocs = semantic.jsdoc().iter_all();
 
-            let (type_part, comment_part) = jsdocs.next().unwrap().tags().first().unwrap().type_comment();
+            let (type_part, comment_part) =
+                jsdocs.next().unwrap().tags().first().unwrap().type_comment();
             assert_eq!(
                 type_part.map(|t| (t.parsed(), t.span.source_text(source_text))),
                 parsed_type_part
@@ -379,25 +388,45 @@ c5 */", Some(("t5", "{t5}")), ("c5", "\nc5 ")),
     #[test]
     fn jsdoc_tag_type_name_comment() {
         for (source_text, parsed_type_part, parsed_type_name_part, parsed_comment_part) in [
-            ("/** @k */", None,None, ("", " ")),
-            ("/** @k\n\n*/", None,None, ("", "\n\n")),
+            ("/** @k */", None, None, ("", " ")),
+            ("/** @k\n\n*/", None, None, ("", "\n\n")),
             ("/** @k1 {t1} n1 c1 */", Some(("t1", "{t1}")), Some(("n1", "n1")), ("c1", " c1 ")),
             ("/** @k2 {t2} n2*/", Some(("t2", "{t2}")), Some(("n2", "n2")), ("", "")),
             ("/** @k3 n3 c3 */", None, Some(("n3", "n3")), ("c3", " c3 ")),
-            ("/** @k4 n4 c4
-...*/", None, Some(("n4", "n4")), ("c4\n...", " c4\n...")),
-            ("/** @k5 {t5} n5 - c5 */", Some(("t5", "{t5}")), Some(("n5", "n5")), ("- c5", " - c5 ")),
-            ("/** @k6
+            (
+                "/** @k4 n4 c4
+...*/",
+                None,
+                Some(("n4", "n4")),
+                ("c4\n...", " c4\n..."),
+            ),
+            (
+                "/** @k5 {t5} n5 - c5 */",
+                Some(("t5", "{t5}")),
+                Some(("n5", "n5")),
+                ("- c5", " - c5 "),
+            ),
+            (
+                "/** @k6
 {t6}
 n6
-c6 */", Some(("t6", "{t6}")), Some(("n6", "n6")), ("c6", "\nc6 ")),
-            ("/** @k7
+c6 */",
+                Some(("t6", "{t6}")),
+                Some(("n6", "n6")),
+                ("c6", "\nc6 "),
+            ),
+            (
+                "/** @k7
 
 {t7}
 
 n7
 
-c7 */", Some(("t7", "{t7}")), Some(("n7", "n7")), ("c7", "\n\nc7 ")),
+c7 */",
+                Some(("t7", "{t7}")),
+                Some(("n7", "n7")),
+                ("c7", "\n\nc7 "),
+            ),
             ("/** @k8 {t8} */", Some(("t8", "{t8}")), None, ("", "")),
             ("/** @k8 n8 */", None, Some(("n8", "n8")), ("", " ")),
         ] {
@@ -405,7 +434,8 @@ c7 */", Some(("t7", "{t7}")), Some(("n7", "n7")), ("c7", "\n\nc7 ")),
             let semantic = build_semantic(&allocator, source_text);
             let mut jsdocs = semantic.jsdoc().iter_all();
 
-            let (type_part, type_name_part, comment_part) = jsdocs.next().unwrap().tags().first().unwrap().type_name_comment();
+            let (type_part, type_name_part, comment_part) =
+                jsdocs.next().unwrap().tags().first().unwrap().type_name_comment();
             assert_eq!(
                 type_part.map(|t| (t.parsed(), t.span.source_text(source_text))),
                 parsed_type_part
