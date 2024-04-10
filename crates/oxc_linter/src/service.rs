@@ -20,6 +20,10 @@ use oxc_span::{SourceType, VALID_EXTENSIONS};
 
 use crate::{
     partial_loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
+    typecheck::{
+        requests::{FileRequest, OpenRequest},
+        start_typecheck_server, TSServerClient,
+    },
     Fixer, LintContext, Linter, Message,
 };
 
@@ -129,7 +133,7 @@ pub struct Runtime {
     paths: FxHashSet<Box<Path>>,
     linter: Linter,
     resolver: Option<Resolver>,
-    type_checker: Option<()>,
+    type_checker: Option<Mutex<TSServerClient>>,
     module_map: ModuleMap,
     cache_state: CacheState,
 }
@@ -138,8 +142,7 @@ impl Runtime {
     fn new(linter: Linter, options: LintServiceOptions) -> Self {
         let tsconfig = options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json")));
         let resolver = linter.options().import_plugin.then(|| Self::get_resolver(tsconfig));
-        // TODO: create type-checker
-        let type_checker = linter.options.type_info.then(|| ());
+        let type_checker = linter.options.type_info.then(|| Mutex::new(Self::get_type_checker()));
         Self {
             cwd: options.cwd,
             paths: options.paths.iter().cloned().collect(),
@@ -167,6 +170,11 @@ impl Runtime {
             tsconfig,
             ..ResolveOptions::default()
         })
+    }
+
+    fn get_type_checker() -> TSServerClient {
+        // TODO: get actual path from somewhere. And gracefully handle errors.
+        start_typecheck_server("./npm/oxc-typecheck/dist/server.js").unwrap()
     }
 
     fn get_source_type_and_text(
@@ -347,9 +355,29 @@ impl Runtime {
             return semantic_ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
         };
 
+        if let Some(ref type_checker) = self.type_checker {
+            // TODO: do something about unwrap
+            let mut type_checker = type_checker.lock().unwrap();
+            type_checker
+                .open(OpenRequest {
+                    file: path.to_string_lossy().as_ref(),
+                    file_content: Some(&source_text),
+                })
+                .unwrap();
+        }
+
+        // TODO: Make type_checker part of lint context
         let lint_ctx =
             LintContext::new(path.to_path_buf().into_boxed_path(), &Rc::new(semantic_ret.semantic));
-        self.linter.run(lint_ctx)
+        let result = self.linter.run(lint_ctx);
+
+        if let Some(ref type_checker) = self.type_checker {
+            // TODO: do something about unwrap
+            let mut type_checker = type_checker.lock().unwrap();
+            type_checker.close(FileRequest { file: path.to_string_lossy().as_ref() }).unwrap();
+        }
+
+        result
     }
 
     fn init_cache_state(&self, path: &Path) -> bool {
