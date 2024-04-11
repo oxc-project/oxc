@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use oxc_ast::{
     ast::{
         AssignmentTarget, Expression, MemberExpression, MethodDefinitionKind,
@@ -104,7 +106,7 @@ fn get_outer_member_expression<'a, 'b>(
     assignment: &'b SimpleAssignmentTarget<'a>,
 ) -> Option<&'b StaticMemberExpression<'a>> {
     if let SimpleAssignmentTarget::MemberAssignmentTarget(member_expr) = assignment {
-        match &member_expr.0 {
+        match member_expr.deref() {
             MemberExpression::StaticMemberExpression(expr) => {
                 let mut node = expr;
                 loop {
@@ -137,7 +139,7 @@ fn get_static_member_expression_obj<'a, 'b>(
     expression: &'b Expression<'a>,
 ) -> Option<&'b StaticMemberExpression<'a>> {
     match expression {
-        Expression::MemberExpression(member_expr) => match &member_expr.0 {
+        Expression::MemberExpression(member_expr) => match member_expr.deref() {
             MemberExpression::StaticMemberExpression(expr) => Some(expr),
             _ => None,
         },

@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use oxc_ast::{
     ast::{Argument, Expression, MemberExpression},
     AstKind,
@@ -66,13 +68,13 @@ impl Rule for PreferModernDomApis {
             return;
         };
 
-        let Expression::MemberExpression(oxc_allocator::Box(
-            MemberExpression::StaticMemberExpression(member_expr),
-        )) = &call_expr.callee
-        else {
+        let Expression::MemberExpression(member_expr) = &call_expr.callee else {
             return;
         };
 
+        let MemberExpression::StaticMemberExpression(member_expr) = member_expr.deref() else {
+            return;
+        };
         let method = member_expr.property.name.as_str();
 
         if is_method_call(

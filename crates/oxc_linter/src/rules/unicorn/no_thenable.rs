@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
@@ -128,7 +130,7 @@ impl Rule for NoThenable {
                         SimpleAssignmentTarget::MemberAssignmentTarget(target),
                     ),
                 ..
-            }) => match &target.0 {
+            }) => match target.deref() {
                 MemberExpression::ComputedMemberExpression(expr) => {
                     if let Some(span) = check_expression(&expr.expression, ctx) {
                         ctx.diagnostic(NoThenableDiagnostic::Class(span));

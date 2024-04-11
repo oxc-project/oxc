@@ -1,9 +1,10 @@
-use oxc_allocator::Box as OBox;
+use std::ops::Deref;
+
 use oxc_ast::{
     ast::{
         ArrayExpressionElement, AssignmentTarget, AssignmentTargetMaybeDefault,
-        AssignmentTargetPattern, AssignmentTargetProperty, ChainElement, ChainExpression,
-        Expression, MemberExpression, ObjectProperty, ObjectPropertyKind, SimpleAssignmentTarget,
+        AssignmentTargetPattern, AssignmentTargetProperty, Expression, MemberExpression,
+        ObjectProperty, ObjectPropertyKind, SimpleAssignmentTarget,
     },
     AstKind,
 };
@@ -250,18 +251,15 @@ impl NoSelfAssign {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(id1)
                 if id1.init.is_none() =>
             {
-                if let ObjectPropertyKind::ObjectProperty(OBox(ObjectProperty {
-                    method: false,
-                    value: expr,
-                    span,
-                    key,
-                    ..
-                })) = right
-                {
-                    if key.static_name().is_some_and(|name| name == id1.binding.name) {
-                        if let Expression::Identifier(id2) = expr.without_parenthesized() {
-                            if id1.binding.name == id2.name {
-                                ctx.diagnostic(NoSelfAssignDiagnostic(*span));
+                if let ObjectPropertyKind::ObjectProperty(obj_prop) = right {
+                    if let ObjectProperty { method: false, value: expr, span, key, .. } =
+                        obj_prop.deref()
+                    {
+                        if key.static_name().is_some_and(|name| name == id1.binding.name) {
+                            if let Expression::Identifier(id2) = expr.without_parenthesized() {
+                                if id1.binding.name == id2.name {
+                                    ctx.diagnostic(NoSelfAssignDiagnostic(*span));
+                                }
                             }
                         }
                     }
@@ -274,17 +272,14 @@ impl NoSelfAssign {
                         return;
                     }
                 };
-                if let ObjectPropertyKind::ObjectProperty(OBox(ObjectProperty {
-                    method: false,
-                    value: expr,
-                    key,
-                    ..
-                })) = right
-                {
-                    let property_name = property.name.static_name();
-                    let key_name = key.static_name();
-                    if property_name.is_some() && property_name == key_name {
-                        self.each_self_assignment(left, expr, ctx);
+                if let ObjectPropertyKind::ObjectProperty(obj_prop) = right {
+                    if let ObjectProperty { method: false, value: expr, key, .. } = obj_prop.deref()
+                    {
+                        let property_name = property.name.static_name();
+                        let key_name = key.static_name();
+                        if property_name.is_some() && property_name == key_name {
+                            self.each_self_assignment(left, expr, ctx);
+                        }
                     }
                 }
             }

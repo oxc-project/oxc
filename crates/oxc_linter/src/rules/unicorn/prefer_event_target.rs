@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -60,7 +62,7 @@ impl Rule for PreferEventTarget {
                     return;
                 };
 
-                if ident as *const _ != callee_ident.0 as *const _ {
+                if ident as *const _ != callee_ident.deref() as *const _ {
                     return;
                 }
             }

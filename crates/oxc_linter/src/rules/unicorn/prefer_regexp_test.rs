@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use oxc_ast::{
     ast::{Argument, Expression, MemberExpression},
     AstKind,
@@ -82,7 +84,7 @@ impl Rule for PreferRegexpTest {
                 };
 
                 // Check if the `test` of the for statement is the same node as the call expression.
-                if call_expr2.0 as *const _ != call_expr as *const _ {
+                if call_expr2.deref() as *const _ != call_expr as *const _ {
                     return;
                 }
             }
@@ -92,7 +94,7 @@ impl Rule for PreferRegexpTest {
                 };
 
                 // Check if the `test` of the conditional expression is the same node as the call expression.
-                if call_expr2.0 as *const _ != call_expr as *const _ {
+                if call_expr2.deref() as *const _ != call_expr as *const _ {
                     return;
                 }
             }
