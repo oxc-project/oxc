@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr};
 
 use bpaf::Bpaf;
 use oxc_linter::AllowWarnDeny;
@@ -136,8 +136,7 @@ pub struct WarningOptions {
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
     /// Use a specific output format (default, json)
-    // last flag is the default
-    #[bpaf(long, short, flag(OutputFormat::Json, OutputFormat::Default))]
+    #[bpaf(long, short, fallback(OutputFormat::Default))]
     pub format: OutputFormat,
 }
 
@@ -145,6 +144,16 @@ pub struct OutputOptions {
 pub enum OutputFormat {
     Default,
     Json,
+}
+
+impl FromStr for OutputFormat {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "json" => Self::Json,
+            _ => Self::Default,
+        })
+    }
 }
 
 /// Enable Plugins
@@ -304,6 +313,7 @@ mod lint_options {
     fn format() {
         let options = get_lint_options("-f json");
         assert_eq!(options.output_options.format, OutputFormat::Json);
+        assert!(options.paths.is_empty());
     }
 
     #[test]
