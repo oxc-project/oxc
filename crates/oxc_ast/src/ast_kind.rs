@@ -159,6 +159,18 @@ ast_kinds! {
     TSTypeReference(&'a TSTypeReference<'a>),
     TSUnionType(&'a TSUnionType<'a>),
     TSVoidKeyword(&'a TSVoidKeyword),
+    TSBigIntKeyword(&'a TSBigIntKeyword),
+    TSBooleanKeyword(&'a TSBooleanKeyword),
+    TSNeverKeyword(&'a TSNeverKeyword),
+    TSNumberKeyword(&'a TSNumberKeyword),
+    TSObjectKeyword(&'a TSObjectKeyword),
+    TSStringKeyword(&'a TSStringKeyword),
+    TSSymbolKeyword(&'a TSSymbolKeyword),
+    TSThisType(&'a TSThisType),
+    TSUndefinedKeyword(&'a TSUndefinedKeyword),
+    TSUnknownKeyword(&'a TSUnknownKeyword),
+    TSInferType(&'a TSInferType<'a>),
+    TSTemplateLiteralType(&'a TSTemplateLiteralType<'a>),
 
     TSIndexedAccessType(&'a TSIndexedAccessType<'a>),
 
@@ -185,6 +197,7 @@ ast_kinds! {
     TSTypeParameterDeclaration(&'a TSTypeParameterDeclaration<'a>),
     TSTypeParameterInstantiation(&'a TSTypeParameterInstantiation<'a>),
     TSImportType(&'a TSImportType<'a>),
+    TSNamedTupleMember(&'a TSNamedTupleMember<'a>),
 
     TSPropertySignature(&'a TSPropertySignature<'a>),
 }
@@ -241,6 +254,22 @@ impl<'a> AstKind<'a> {
                 | Self::TSLiteralType(_)
                 | Self::TSTypeReference(_)
                 | Self::TSMethodSignature(_)
+                | Self::TSNullKeyword(_)
+                | Self::TSTypeLiteral(_)
+                | Self::TSUnionType(_)
+                | Self::TSVoidKeyword(_)
+                | Self::TSBigIntKeyword(_)
+                | Self::TSBooleanKeyword(_)
+                | Self::TSNeverKeyword(_)
+                | Self::TSNumberKeyword(_)
+                | Self::TSObjectKeyword(_)
+                | Self::TSStringKeyword(_)
+                | Self::TSSymbolKeyword(_)
+                | Self::TSThisType(_)
+                | Self::TSUndefinedKeyword(_)
+                | Self::TSUnknownKeyword(_)
+                | Self::TSInferType(_)
+                | Self::TSTemplateLiteralType(_)
         )
     }
 
@@ -477,6 +506,18 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSTypeReference(x) => x.span,
             Self::TSUnionType(x) => x.span,
             Self::TSVoidKeyword(x) => x.span,
+            Self::TSBigIntKeyword(x) => x.span,
+            Self::TSBooleanKeyword(x) => x.span,
+            Self::TSNeverKeyword(x) => x.span,
+            Self::TSNumberKeyword(x) => x.span,
+            Self::TSObjectKeyword(x) => x.span,
+            Self::TSStringKeyword(x) => x.span,
+            Self::TSSymbolKeyword(x) => x.span,
+            Self::TSThisType(x) => x.span,
+            Self::TSUndefinedKeyword(x) => x.span,
+            Self::TSUnknownKeyword(x) => x.span,
+            Self::TSInferType(x) => x.span,
+            Self::TSTemplateLiteralType(x) => x.span,
 
             Self::TSIndexedAccessType(x) => x.span,
 
@@ -502,6 +543,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSTypeParameterDeclaration(x) => x.span,
             Self::TSTypeParameterInstantiation(x) => x.span,
             Self::TSImportType(x) => x.span,
+            Self::TSNamedTupleMember(x) => x.span,
 
             Self::TSPropertySignature(x) => x.span,
         }
@@ -664,6 +706,18 @@ impl<'a> AstKind<'a> {
             Self::TSTypeReference(_) => "TSTypeReference".into(),
             Self::TSUnionType(_) => "TSUnionType".into(),
             Self::TSVoidKeyword(_) => "TSVoidKeyword".into(),
+            Self::TSBigIntKeyword(_) => "TSBigIntKeyword".into(),
+            Self::TSBooleanKeyword(_) => "TSBooleanKeyword".into(),
+            Self::TSNeverKeyword(_) => "TSNeverKeyword".into(),
+            Self::TSNumberKeyword(_) => "TSNumberKeyword".into(),
+            Self::TSObjectKeyword(_) => "TSObjectKeyword".into(),
+            Self::TSStringKeyword(_) => "TSStringKeyword".into(),
+            Self::TSSymbolKeyword(_) => "TSSymbolKeyword".into(),
+            Self::TSThisType(_) => "TSThisType".into(),
+            Self::TSUndefinedKeyword(_) => "TSUndefinedKeyword".into(),
+            Self::TSUnknownKeyword(_) => "TSUnknownKeyword".into(),
+            Self::TSInferType(_) => "TSInferType".into(),
+            Self::TSTemplateLiteralType(_) => "TSTemplateLiteralType".into(),
 
             Self::TSIndexedAccessType(_) => "TSIndexedAccessType".into(),
 
@@ -690,6 +744,7 @@ impl<'a> AstKind<'a> {
             Self::TSTypeParameterDeclaration(_) => "TSTypeParameterDeclaration".into(),
             Self::TSTypeParameterInstantiation(_) => "TSTypeParameterInstantiation".into(),
             Self::TSImportType(_) => "TSImportType".into(),
+            Self::TSNamedTupleMember(_) => "TSNamedTupleMember".into(),
 
             Self::TSPropertySignature(_) => "TSPropertySignature".into(),
         }
