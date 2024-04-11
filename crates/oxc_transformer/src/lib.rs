@@ -15,7 +15,7 @@ mod decorators;
 mod react;
 mod typescript;
 
-use std::rc::Rc;
+use std::{path::Path, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{
@@ -24,7 +24,6 @@ use oxc_ast::{
 };
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
-use oxc_span::SourceType;
 
 pub use crate::{
     compiler_assumptions::CompilerAssumptions,
@@ -66,11 +65,11 @@ pub struct Transformer<'a> {
 impl<'a> Transformer<'a> {
     pub fn new(
         allocator: &'a Allocator,
-        source_type: SourceType,
+        source_path: &Path,
         semantic: Semantic<'a>,
         options: TransformOptions,
     ) -> Self {
-        let ctx = Rc::new(TransformCtx::new(allocator, source_type, semantic));
+        let ctx = Rc::new(TransformCtx::new(allocator, source_path, semantic));
         Self {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, &ctx),

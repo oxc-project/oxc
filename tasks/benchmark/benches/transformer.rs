@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use oxc_parser::Parser;
@@ -23,9 +25,14 @@ fn bench_transformer(criterion: &mut Criterion) {
                     SemanticBuilder::new(source_text, source_type).build(&program).semantic;
                 let program = allocator.alloc(program);
                 let transform_options = TransformOptions::default();
-                Transformer::new(&allocator, source_type, semantic, transform_options)
-                    .build(program)
-                    .unwrap();
+                Transformer::new(
+                    &allocator,
+                    Path::new(&file.file_name),
+                    semantic,
+                    transform_options,
+                )
+                .build(program)
+                .unwrap();
                 allocator
             });
         });
