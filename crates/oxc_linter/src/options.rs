@@ -175,6 +175,8 @@ impl TryFrom<&Number> for AllowWarnDeny {
     }
 }
 
+const IMPORT_PLUGIN_NAME: &str = "import";
+const JSDOC_PLUGIN_NAME: &str = "jsdoc";
 const JEST_PLUGIN_NAME: &str = "jest";
 const JSX_A11Y_PLUGIN_NAME: &str = "jsx_a11y";
 const NEXTJS_PLUGIN_NAME: &str = "nextjs";
@@ -244,7 +246,7 @@ impl LintOptions {
         Ok((rules, settings, env))
     }
 
-    // get final filtered rules by reading `self.jest_plugin` and `self.jsx_a11y_plugin`
+    // get final filtered rules by reading `self.xxx_plugin`
     fn get_filtered_rules(&self) -> Vec<RuleEnum> {
         let mut rules = RULES.clone();
 
@@ -254,6 +256,8 @@ impl LintOptions {
             }
         };
 
+        may_exclude_plugin_rules(self.import_plugin, IMPORT_PLUGIN_NAME);
+        may_exclude_plugin_rules(self.jsdoc_plugin, JSDOC_PLUGIN_NAME);
         may_exclude_plugin_rules(self.jest_plugin, JEST_PLUGIN_NAME);
         may_exclude_plugin_rules(self.jsx_a11y_plugin, JSX_A11Y_PLUGIN_NAME);
         may_exclude_plugin_rules(self.nextjs_plugin, NEXTJS_PLUGIN_NAME);
