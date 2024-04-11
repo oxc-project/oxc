@@ -117,13 +117,14 @@ impl<'a> ReactDisplayName<'a> {
     /// Add key value `displayName: name` to the `React.createClass` object.
     fn add_display_name(&self, obj_expr: &mut ObjectExpression<'a>, name: Atom<'a>) {
         const DISPLAY_NAME: &str = "displayName";
+        // Not safe with existing display name.
         let not_safe = obj_expr.properties.iter().any(|prop| {
             matches!(prop, ObjectPropertyKind::ObjectProperty(p) if p.key.static_name().is_some_and(|name| name == DISPLAY_NAME))
         });
         if not_safe {
             return;
         }
-        let prop = {
+        let object_property = {
             let kind = PropertyKind::Init;
             let identifier_name = IdentifierName::new(SPAN, self.ctx.ast.new_atom(DISPLAY_NAME));
             let key = self.ctx.ast.property_key_identifier(identifier_name);
@@ -131,6 +132,6 @@ impl<'a> ReactDisplayName<'a> {
             let value = self.ctx.ast.literal_string_expression(string_literal);
             self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false)
         };
-        obj_expr.properties.insert(0, ObjectPropertyKind::ObjectProperty(prop));
+        obj_expr.properties.insert(0, ObjectPropertyKind::ObjectProperty(object_property));
     }
 }
