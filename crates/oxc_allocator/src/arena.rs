@@ -87,7 +87,7 @@ where
 
 impl<'alloc, T: Hash> Hash for Box<'alloc, T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.hash(state);
+        self.deref().hash(state);
     }
 }
 
@@ -195,6 +195,8 @@ impl<'alloc, T: Hash> Hash for Vec<'alloc, T> {
 
 #[cfg(test)]
 mod test {
+    use std::hash::{DefaultHasher, Hash, Hasher};
+
     use crate::{Allocator, Box, Vec};
 
     #[test]
@@ -212,6 +214,21 @@ mod test {
         let b = Box::new_in("x", &allocator);
         let b = format!("{b:?}");
         assert_eq!(b, "\"x\"");
+    }
+
+    #[test]
+    fn box_hash() {
+        fn hash(val: &impl Hash) -> u64 {
+            let mut hasher = DefaultHasher::default();
+            val.hash(&mut hasher);
+            hasher.finish()
+        }
+
+        let allocator = Allocator::default();
+        let a = Box::new_in("x", &allocator);
+        let b = Box::new_in("x", &allocator);
+
+        assert_eq!(hash(&a), hash(&b));
     }
 
     #[test]
