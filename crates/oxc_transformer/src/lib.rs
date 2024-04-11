@@ -17,7 +17,7 @@ mod typescript;
 
 use std::{path::Path, rc::Rc};
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{
     ast::*,
     visit::{walk_mut, VisitMut},
@@ -81,7 +81,7 @@ impl<'a> Transformer<'a> {
     /// # Errors
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
-    pub fn build(mut self, program: &mut Program<'a>) -> Result<(), Vec<Error>> {
+    pub fn build(mut self, program: &mut Program<'a>) -> Result<(), std::vec::Vec<Error>> {
         self.visit_program(program);
         let errors = self.ctx.take_errors();
         if errors.is_empty() {
@@ -93,8 +93,12 @@ impl<'a> Transformer<'a> {
 }
 
 impl<'a> VisitMut<'a> for Transformer<'a> {
+    fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        self.x0_typescript.transform_statements(stmts);
+        walk_mut::walk_statements_mut(self, stmts);
+    }
+
     fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
-        self.x0_typescript.transform_statement(stmt);
         self.x2_decorators.transform_statement(stmt);
         walk_mut::walk_statement_mut(self, stmt);
     }
