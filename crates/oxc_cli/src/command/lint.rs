@@ -155,6 +155,10 @@ pub struct EnablePlugins {
     #[bpaf(switch, hide_usage)]
     pub import_plugin: bool,
 
+    /// Enable the experimental jsdoc plugin and detect JSDoc problems
+    #[bpaf(switch, hide_usage)]
+    pub jsdoc_plugin: bool,
+
     /// Enable the Jest plugin and detect test problems
     #[bpaf(switch, hide_usage)]
     pub jest_plugin: bool,

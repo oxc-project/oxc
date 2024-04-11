@@ -24,6 +24,7 @@ pub struct LintOptions {
     pub fix: bool,
     pub timing: bool,
     pub import_plugin: bool,
+    pub jsdoc_plugin: bool,
     pub jest_plugin: bool,
     pub jsx_a11y_plugin: bool,
     pub nextjs_plugin: bool,
@@ -39,6 +40,7 @@ impl Default for LintOptions {
             fix: false,
             timing: false,
             import_plugin: false,
+            jsdoc_plugin: false,
             jest_plugin: false,
             jsx_a11y_plugin: false,
             nextjs_plugin: false,
@@ -78,6 +80,12 @@ impl LintOptions {
     #[must_use]
     pub fn with_import_plugin(mut self, yes: bool) -> Self {
         self.import_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_jsdoc_plugin(mut self, yes: bool) -> Self {
+        self.jsdoc_plugin = yes;
         self
     }
 
