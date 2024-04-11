@@ -60,8 +60,8 @@ lint:
 # Run all the conformance tests. See `tasks/coverage`, `tasks/transform_conformance`, `tasks/minsize`
 coverage:
   cargo coverage
-  cargo run --release -p oxc_transform_conformance -- --exec
-  cargo run --release -p oxc_prettier_conformance
+  cargo run -p oxc_transform_conformance -- --exec
+  cargo run -p oxc_prettier_conformance
   # cargo minsize
 
 # Get code coverage

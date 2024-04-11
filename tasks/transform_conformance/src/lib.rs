@@ -89,9 +89,9 @@ const CASES: &[&str] = &[
     // "babel-plugin-transform-new-target",
     // // ES3
     // "babel-plugin-transform-property-literals",
-    // // TypeScript
-    // "babel-plugin-transform-typescript",
-    // // React
+    // TypeScript
+    "babel-plugin-transform-typescript",
+    // React
     // "babel-plugin-transform-react-jsx",
     "babel-plugin-transform-react-display-name",
     // // Proposal
