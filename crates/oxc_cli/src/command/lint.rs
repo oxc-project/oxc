@@ -149,10 +149,11 @@ pub enum OutputFormat {
 impl FromStr for OutputFormat {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
-            "json" => Self::Json,
-            _ => Self::Default,
-        })
+        match s {
+            "json" => Ok(Self::Json),
+            "default" => Ok(Self::Default),
+            _ => Err(format!("'{s}' is not a known format")),
+        }
     }
 }
 
@@ -314,6 +315,15 @@ mod lint_options {
         let options = get_lint_options("-f json");
         assert_eq!(options.output_options.format, OutputFormat::Json);
         assert!(options.paths.is_empty());
+    }
+
+    #[test]
+    fn format_error() {
+        let args = "-f asdf".split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
+        let result = lint_command().run_inner(args.as_slice());
+        assert!(result.is_err_and(
+            |err| err.unwrap_stderr() == "couldn't parse `asdf`: 'asdf' is not a known format"
+        ));
     }
 
     #[test]
