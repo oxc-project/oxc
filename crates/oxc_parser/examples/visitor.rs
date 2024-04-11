@@ -2,8 +2,8 @@ use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{
-    ast::{Class, Function},
-    visit::walk::{walk_class, walk_function},
+    ast::{Class, Function, TSImportType},
+    visit::walk,
     Visit,
 };
 use oxc_parser::Parser;
@@ -30,7 +30,7 @@ fn main() -> std::io::Result<()> {
 
     let program = ret.program;
 
-    let mut ast_pass = ASTPass::default();
+    let mut ast_pass = CountASTNodes::default();
     ast_pass.visit_program(&program);
     println!("{ast_pass:?}");
 
@@ -38,19 +38,25 @@ fn main() -> std::io::Result<()> {
 }
 
 #[derive(Debug, Default)]
-struct ASTPass {
-    number_of_functions: usize,
-    number_of_classes: usize,
+struct CountASTNodes {
+    functions: usize,
+    classes: usize,
+    ts_import_types: usize,
 }
 
-impl<'a> Visit<'a> for ASTPass {
+impl<'a> Visit<'a> for CountASTNodes {
     fn visit_function(&mut self, func: &Function<'a>, flags: Option<ScopeFlags>) {
-        self.number_of_functions += 1;
-        walk_function(self, func, flags);
+        self.functions += 1;
+        walk::walk_function(self, func, flags);
     }
 
     fn visit_class(&mut self, class: &Class<'a>) {
-        self.number_of_classes += 1;
-        walk_class(self, class);
+        self.classes += 1;
+        walk::walk_class(self, class);
+    }
+
+    fn visit_ts_import_type(&mut self, ty: &TSImportType<'a>) {
+        self.ts_import_types += 1;
+        walk::walk_ts_import_type(self, ty);
     }
 }

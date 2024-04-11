@@ -151,28 +151,29 @@ ast_kinds! {
 
     // NOTE: make sure add these to AstKind::is_type below
     TSAnyKeyword(&'a TSAnyKeyword),
-    TSIntersectionType(&'a TSIntersectionType<'a>),
-    TSLiteralType(&'a TSLiteralType<'a>),
-    TSMethodSignature(&'a TSMethodSignature<'a>),
-    TSNullKeyword(&'a TSNullKeyword),
-    TSTypeLiteral(&'a TSTypeLiteral<'a>),
-    TSTypeReference(&'a TSTypeReference<'a>),
-    TSUnionType(&'a TSUnionType<'a>),
-    TSVoidKeyword(&'a TSVoidKeyword),
     TSBigIntKeyword(&'a TSBigIntKeyword),
     TSBooleanKeyword(&'a TSBooleanKeyword),
     TSNeverKeyword(&'a TSNeverKeyword),
+    TSNullKeyword(&'a TSNullKeyword),
     TSNumberKeyword(&'a TSNumberKeyword),
     TSObjectKeyword(&'a TSObjectKeyword),
     TSStringKeyword(&'a TSStringKeyword),
     TSSymbolKeyword(&'a TSSymbolKeyword),
-    TSThisType(&'a TSThisType),
     TSUndefinedKeyword(&'a TSUndefinedKeyword),
     TSUnknownKeyword(&'a TSUnknownKeyword),
-    TSInferType(&'a TSInferType<'a>),
-    TSTemplateLiteralType(&'a TSTemplateLiteralType<'a>),
+    TSVoidKeyword(&'a TSVoidKeyword),
 
+    // NOTE: make sure add these to AstKind::is_type below
     TSIndexedAccessType(&'a TSIndexedAccessType<'a>),
+    TSInferType(&'a TSInferType<'a>),
+    TSIntersectionType(&'a TSIntersectionType<'a>),
+    TSLiteralType(&'a TSLiteralType<'a>),
+    TSMethodSignature(&'a TSMethodSignature<'a>),
+    TSTemplateLiteralType(&'a TSTemplateLiteralType<'a>),
+    TSThisType(&'a TSThisType),
+    TSTypeLiteral(&'a TSTypeLiteral<'a>),
+    TSTypeReference(&'a TSTypeReference<'a>),
+    TSUnionType(&'a TSUnionType<'a>),
 
     TSAsExpression(&'a TSAsExpression<'a>),
     TSSatisfiesExpression(&'a TSSatisfiesExpression<'a>),
@@ -247,30 +248,14 @@ impl<'a> AstKind<'a> {
                 | Self::LabelIdentifier(_))
     }
 
+    #[rustfmt::skip]
     pub fn is_type(self) -> bool {
-        matches!(
-            self,
-            Self::TSIntersectionType(_)
-                | Self::TSLiteralType(_)
-                | Self::TSTypeReference(_)
-                | Self::TSMethodSignature(_)
-                | Self::TSNullKeyword(_)
-                | Self::TSTypeLiteral(_)
-                | Self::TSUnionType(_)
-                | Self::TSVoidKeyword(_)
-                | Self::TSBigIntKeyword(_)
-                | Self::TSBooleanKeyword(_)
-                | Self::TSNeverKeyword(_)
-                | Self::TSNumberKeyword(_)
-                | Self::TSObjectKeyword(_)
-                | Self::TSStringKeyword(_)
-                | Self::TSSymbolKeyword(_)
-                | Self::TSThisType(_)
-                | Self::TSUndefinedKeyword(_)
-                | Self::TSUnknownKeyword(_)
-                | Self::TSInferType(_)
-                | Self::TSTemplateLiteralType(_)
-        )
+        matches!(self, Self::TSAnyKeyword(_) | Self::TSBigIntKeyword(_) | Self::TSBooleanKeyword(_) | Self::TSNeverKeyword(_)
+                | Self::TSNullKeyword(_) | Self::TSNumberKeyword(_) | Self::TSObjectKeyword(_) | Self::TSStringKeyword(_)
+                | Self::TSSymbolKeyword(_) | Self::TSUndefinedKeyword(_) | Self::TSUnknownKeyword(_) | Self::TSVoidKeyword(_)
+                | Self::TSIndexedAccessType(_) | Self::TSInferType(_) | Self::TSIntersectionType(_) | Self::TSLiteralType(_)
+                | Self::TSMethodSignature(_) | Self::TSTemplateLiteralType(_) | Self::TSThisType(_) | Self::TSTypeLiteral(_)
+                | Self::TSTypeReference(_) | Self::TSUnionType(_))
     }
 
     pub fn is_literal(self) -> bool {
