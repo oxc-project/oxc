@@ -740,16 +740,36 @@ pub trait Visit<'a>: Sized {
         walk_ts_array_type(self, ty);
     }
 
-    fn visit_ts_null_keyword(&mut self, ty: &TSNullKeyword) {
-        walk_ts_null_keyword(self, ty);
+    fn visit_ts_big_int_keyword(&mut self, ty: &TSBigIntKeyword) {
+        walk_ts_big_int_keyword(self, ty);
     }
 
     fn visit_ts_any_keyword(&mut self, ty: &TSAnyKeyword) {
         walk_ts_any_keyword(self, ty);
     }
 
+    fn visit_ts_null_keyword(&mut self, ty: &TSNullKeyword) {
+        walk_ts_null_keyword(self, ty);
+    }
+
     fn visit_ts_void_keyword(&mut self, ty: &TSVoidKeyword) {
         walk_ts_void_keyword(self, ty);
+    }
+
+    fn visit_ts_boolean_keyword(&mut self, ty: &TSBooleanKeyword) {
+        walk_ts_boolean_keyword(self, ty);
+    }
+
+    fn visit_ts_never_keyword(&mut self, ty: &TSNeverKeyword) {
+        walk_ts_never_keyword(self, ty);
+    }
+
+    fn visit_ts_number_keyword(&mut self, ty: &TSNumberKeyword) {
+        walk_ts_number_keyword(self, ty);
+    }
+
+    fn visit_ts_object_keyword(&mut self, ty: &TSObjectKeyword) {
+        walk_ts_object_keyword(self, ty);
     }
 
     fn visit_ts_intersection_type(&mut self, ty: &TSIntersectionType<'a>) {
@@ -2605,25 +2625,45 @@ pub mod walk {
 
     pub fn walk_ts_type<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSType<'a>) {
         match ty {
+            // Keyword
             TSType::TSAnyKeyword(ty) => visitor.visit_ts_any_keyword(ty),
+            TSType::TSBigIntKeyword(ty) => visitor.visit_ts_big_int_keyword(ty),
+            TSType::TSBooleanKeyword(ty) => visitor.visit_ts_boolean_keyword(ty),
+            TSType::TSNeverKeyword(ty) => visitor.visit_ts_never_keyword(ty),
             TSType::TSNullKeyword(ty) => visitor.visit_ts_null_keyword(ty),
+            TSType::TSNumberKeyword(ty) => visitor.visit_ts_number_keyword(ty),
+            TSType::TSObjectKeyword(ty) => visitor.visit_ts_object_keyword(ty),
+            TSType::TSStringKeyword(_ty) => { /* TODO */ }
+            TSType::TSSymbolKeyword(_ty) => { /* TODO */ }
+            TSType::TSUndefinedKeyword(_ty) => { /* TODO */ }
+            TSType::TSUnknownKeyword(_ty) => { /* TODO */ }
             TSType::TSVoidKeyword(ty) => visitor.visit_ts_void_keyword(ty),
-            TSType::TSIntersectionType(ty) => visitor.visit_ts_intersection_type(ty),
-            TSType::TSTypeReference(ty) => visitor.visit_ts_type_reference(ty),
-            TSType::TSUnionType(ty) => visitor.visit_ts_union_type(ty),
-            TSType::TSLiteralType(ty) => visitor.visit_ts_literal_type(ty),
+            // Type
             TSType::TSArrayType(ty) => visitor.visit_ts_array_type(ty),
             TSType::TSConditionalType(ty) => visitor.visit_ts_conditional_type(ty),
             TSType::TSConstructorType(ty) => visitor.visit_ts_constructor_type(ty),
             TSType::TSFunctionType(ty) => visitor.visit_ts_function_type(ty),
+            TSType::TSImportType(ty) => visitor.visit_ts_import_type(ty),
+            TSType::TSIndexedAccessType(ty) => visitor.visit_ts_indexed_access_type(ty),
+            TSType::TSInferType(_ty) => { /* TODO */ }
+            TSType::TSIntersectionType(ty) => visitor.visit_ts_intersection_type(ty),
+            TSType::TSLiteralType(ty) => visitor.visit_ts_literal_type(ty),
             TSType::TSMappedType(ty) => visitor.visit_ts_mapped_type(ty),
+            TSType::TSTemplateLiteralType(_ty) => { /* TODO */ }
+            TSType::TSThisType(_ty) => { /* TODO */ }
             TSType::TSTupleType(ty) => visitor.visit_ts_tuple_type(ty),
             TSType::TSTypeOperatorType(ty) => visitor.visit_ts_type_operator_type(ty),
-            TSType::TSTypePredicate(ty) => visitor.visit_ts_type_predicate(ty),
+            TSType::TSUnionType(ty) => visitor.visit_ts_union_type(ty),
+            // Compound
+            TSType::TSNamedTupleMember(_ty) => { /* TODO */ }
+            TSType::TSQualifiedName(_ty) => { /* TODO */ }
             TSType::TSTypeLiteral(ty) => visitor.visit_ts_type_literal(ty),
-            TSType::TSIndexedAccessType(ty) => visitor.visit_ts_indexed_access_type(ty),
+            TSType::TSTypePredicate(ty) => visitor.visit_ts_type_predicate(ty),
             TSType::TSTypeQuery(ty) => visitor.visit_ts_type_query(ty),
-            _ => {}
+            TSType::TSTypeReference(ty) => visitor.visit_ts_type_reference(ty),
+            // JSDoc
+            TSType::JSDocNullableType(_ty) => { /* TODO */ }
+            TSType::JSDocUnknownType(_ty) => { /* TODO */ }
         }
     }
 
@@ -2748,14 +2788,44 @@ pub mod walk {
         visitor.visit_ts_type(&ty.element_type);
     }
 
+    pub fn walk_ts_any_keyword<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSAnyKeyword) {
+        let kind = AstKind::TSAnyKeyword(visitor.alloc(ty));
+        visitor.enter_node(kind);
+        visitor.leave_node(kind);
+    }
+
+    pub fn walk_ts_big_int_keyword<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSBigIntKeyword) {
+        let kind = AstKind::TSBigIntKeyword(visitor.alloc(ty));
+        visitor.enter_node(kind);
+        visitor.leave_node(kind);
+    }
+
+    pub fn walk_ts_boolean_keyword<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSBooleanKeyword) {
+        let kind = AstKind::TSBooleanKeyword(visitor.alloc(ty));
+        visitor.enter_node(kind);
+        visitor.leave_node(kind);
+    }
+
+    pub fn walk_ts_never_keyword<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSNeverKeyword) {
+        let kind = AstKind::TSNeverKeyword(visitor.alloc(ty));
+        visitor.enter_node(kind);
+        visitor.leave_node(kind);
+    }
+
     pub fn walk_ts_null_keyword<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSNullKeyword) {
         let kind = AstKind::TSNullKeyword(visitor.alloc(ty));
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
-    pub fn walk_ts_any_keyword<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSAnyKeyword) {
-        let kind = AstKind::TSAnyKeyword(visitor.alloc(ty));
+    pub fn walk_ts_number_keyword<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSNumberKeyword) {
+        let kind = AstKind::TSNumberKeyword(visitor.alloc(ty));
+        visitor.enter_node(kind);
+        visitor.leave_node(kind);
+    }
+
+    pub fn walk_ts_object_keyword<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSObjectKeyword) {
+        let kind = AstKind::TSObjectKeyword(visitor.alloc(ty));
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }

@@ -151,16 +151,22 @@ ast_kinds! {
 
     // NOTE: make sure add these to AstKind::is_type below
     TSAnyKeyword(&'a TSAnyKeyword),
+    TSBigIntKeyword(&'a TSBigIntKeyword),
+    TSBooleanKeyword(&'a TSBooleanKeyword),
+    TSNeverKeyword(&'a TSNeverKeyword),
+    TSNullKeyword(&'a TSNullKeyword),
+    TSNumberKeyword(&'a TSNumberKeyword),
+    TSObjectKeyword(&'a TSObjectKeyword),
+    TSVoidKeyword(&'a TSVoidKeyword),
+
+    // NOTE: make sure add these to AstKind::is_type below
+    TSIndexedAccessType(&'a TSIndexedAccessType<'a>),
     TSIntersectionType(&'a TSIntersectionType<'a>),
     TSLiteralType(&'a TSLiteralType<'a>),
     TSMethodSignature(&'a TSMethodSignature<'a>),
-    TSNullKeyword(&'a TSNullKeyword),
     TSTypeLiteral(&'a TSTypeLiteral<'a>),
     TSTypeReference(&'a TSTypeReference<'a>),
     TSUnionType(&'a TSUnionType<'a>),
-    TSVoidKeyword(&'a TSVoidKeyword),
-
-    TSIndexedAccessType(&'a TSIndexedAccessType<'a>),
 
     TSAsExpression(&'a TSAsExpression<'a>),
     TSSatisfiesExpression(&'a TSSatisfiesExpression<'a>),
@@ -234,14 +240,12 @@ impl<'a> AstKind<'a> {
                 | Self::LabelIdentifier(_))
     }
 
+    #[rustfmt::skip]
     pub fn is_type(self) -> bool {
-        matches!(
-            self,
-            Self::TSIntersectionType(_)
-                | Self::TSLiteralType(_)
-                | Self::TSTypeReference(_)
-                | Self::TSMethodSignature(_)
-        )
+        matches!(self, Self::TSAnyKeyword(_) | Self::TSBigIntKeyword(_) | Self::TSBooleanKeyword(_) | Self::TSNeverKeyword(_)
+                | Self::TSNullKeyword(_) | Self::TSNumberKeyword(_) | Self::TSObjectKeyword(_) | Self::TSVoidKeyword(_)
+                | Self::TSIndexedAccessType(_) | Self::TSIntersectionType(_) | Self::TSLiteralType(_) | Self::TSMethodSignature(_)
+                | Self::TSTypeLiteral(_) | Self::TSTypeReference(_) | Self::TSUnionType(_))
     }
 
     pub fn is_literal(self) -> bool {
@@ -469,14 +473,20 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSModuleBlock(x) => x.span,
 
             Self::TSAnyKeyword(x) => x.span,
+            Self::TSBigIntKeyword(x) => x.span,
+            Self::TSBooleanKeyword(x) => x.span,
+            Self::TSNeverKeyword(x) => x.span,
+            Self::TSNullKeyword(x) => x.span,
+            Self::TSNumberKeyword(x) => x.span,
+            Self::TSObjectKeyword(x) => x.span,
+            Self::TSVoidKeyword(x) => x.span,
+
             Self::TSIntersectionType(x) => x.span,
             Self::TSLiteralType(x) => x.span,
             Self::TSMethodSignature(x) => x.span,
-            Self::TSNullKeyword(x) => x.span,
             Self::TSTypeLiteral(x) => x.span,
             Self::TSTypeReference(x) => x.span,
             Self::TSUnionType(x) => x.span,
-            Self::TSVoidKeyword(x) => x.span,
 
             Self::TSIndexedAccessType(x) => x.span,
 
@@ -656,14 +666,20 @@ impl<'a> AstKind<'a> {
             Self::TSModuleBlock(_) => "TSModuleBlock".into(),
 
             Self::TSAnyKeyword(_) => "TSAnyKeyword".into(),
+            Self::TSBigIntKeyword(_) => "TSBigIntKeyword".into(),
+            Self::TSBooleanKeyword(_) => "TSBooleanKeyword".into(),
+            Self::TSNeverKeyword(_) => "TSNeverKeyword".into(),
+            Self::TSNullKeyword(_) => "TSNullKeyword".into(),
+            Self::TSNumberKeyword(_) => "TSNumberKeyword".into(),
+            Self::TSObjectKeyword(_) => "TSObjectKeyword".into(),
+            Self::TSVoidKeyword(_) => "TSVoidKeyword".into(),
+
             Self::TSIntersectionType(_) => "TSIntersectionType".into(),
             Self::TSLiteralType(_) => "TSLiteralType".into(),
             Self::TSMethodSignature(_) => "TSMethodSignature".into(),
-            Self::TSNullKeyword(_) => "TSNullKeyword".into(),
             Self::TSTypeLiteral(_) => "TSTypeLiteral".into(),
             Self::TSTypeReference(_) => "TSTypeReference".into(),
             Self::TSUnionType(_) => "TSUnionType".into(),
-            Self::TSVoidKeyword(_) => "TSVoidKeyword".into(),
 
             Self::TSIndexedAccessType(_) => "TSIndexedAccessType".into(),
 
