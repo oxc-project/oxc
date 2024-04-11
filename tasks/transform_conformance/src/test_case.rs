@@ -19,6 +19,7 @@ use oxc_transformer::{
 
 use crate::{fixture_root, root, TestRunnerEnv};
 
+#[derive(Debug)]
 pub enum TestCaseKind {
     Transform(ConformanceTestCase),
     Exec(ExecTestCase),
@@ -159,6 +160,7 @@ pub trait TestCase {
     }
 }
 
+#[derive(Debug)]
 pub struct ConformanceTestCase {
     path: PathBuf,
     options: BabelOptions,
@@ -284,6 +286,7 @@ impl TestCase for ConformanceTestCase {
     }
 }
 
+#[derive(Debug)]
 pub struct ExecTestCase {
     path: PathBuf,
     options: BabelOptions,
