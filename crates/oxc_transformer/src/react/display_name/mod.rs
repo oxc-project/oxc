@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use oxc_allocator::Box;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstType};
 use oxc_span::{Atom, SPAN};
 
 use crate::context::Ctx;
@@ -50,7 +50,10 @@ impl<'a> ReactDisplayName<'a> {
             }
             _ => return,
         };
-        self.add_display_name(obj_expr, name);
+        // this is just an example
+        if self.ctx.is_parent(AstType::BlockStatement) {
+            self.add_display_name(obj_expr, name);
+        }
     }
 
     /// `let foo = React.createClass({})`

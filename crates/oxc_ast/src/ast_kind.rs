@@ -5,7 +5,7 @@ use crate::ast::*;
 
 macro_rules! ast_kinds {
     { $($ident:ident($type:ty),)* } => (
-        #[derive(Debug, Clone, Copy)]
+        #[derive(Debug, Clone, Copy, PartialEq)]
         pub enum AstType {
             $($ident,)*
         }

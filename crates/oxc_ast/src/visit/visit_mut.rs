@@ -21,6 +21,8 @@ pub trait VisitMut<'a>: Sized {
         walk_program_mut(self, program);
     }
 
+    fn leave_program(&mut self, _program: &mut Program<'a>) {}
+
     /* ----------  Statement ---------- */
 
     fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
@@ -30,6 +32,8 @@ pub trait VisitMut<'a>: Sized {
     fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
         walk_statement_mut(self, stmt);
     }
+
+    fn leave_statement(&mut self, _stmt: &mut Statement<'a>) {}
 
     fn visit_block_statement(&mut self, stmt: &mut BlockStatement<'a>) {
         walk_block_statement_mut(self, stmt);
@@ -126,6 +130,8 @@ pub trait VisitMut<'a>: Sized {
     fn visit_directive(&mut self, directive: &mut Directive<'a>) {
         walk_directive_mut(self, directive);
     }
+
+    fn leave_directive(&mut self, _directive: &mut Directive<'a>) {}
 
     /* ----------  Declaration ---------- */
 
@@ -842,6 +848,7 @@ pub mod walk_mut {
 
         visitor.leave_node(kind);
         visitor.leave_scope();
+        visitor.leave_program(program);
     }
 
     /* ----------  Statement ---------- */
@@ -878,7 +885,9 @@ pub mod walk_mut {
 
             Statement::ModuleDeclaration(decl) => visitor.visit_module_declaration(decl),
             Statement::Declaration(decl) => visitor.visit_declaration(decl),
-        }
+        };
+
+        visitor.leave_statement(stmt);
     }
 
     pub fn walk_block_statement_mut<'a, V: VisitMut<'a>>(
@@ -1193,6 +1202,7 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_string_literal(&mut directive.expression);
         visitor.leave_node(kind);
+        visitor.leave_directive(directive);
     }
 
     /* ----------  Declaration ---------- */

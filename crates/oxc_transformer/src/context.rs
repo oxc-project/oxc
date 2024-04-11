@@ -1,7 +1,7 @@
 use std::{cell::RefCell, mem, path::Path, rc::Rc};
 
 use oxc_allocator::Allocator;
-use oxc_ast::AstBuilder;
+use oxc_ast::{AstBuilder, AstType};
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 
@@ -16,6 +16,8 @@ pub struct TransformCtx<'a> {
     filename: String,
 
     errors: RefCell<Vec<Error>>,
+
+    stack: RefCell<Vec<AstType>>,
 }
 
 impl<'a> TransformCtx<'a> {
@@ -25,7 +27,7 @@ impl<'a> TransformCtx<'a> {
             .file_stem() // omit file extension
             .map_or_else(|| String::from("unknown"), |name| name.to_string_lossy().to_string());
         let errors = RefCell::new(vec![]);
-        Self { ast, semantic, filename, errors }
+        Self { ast, semantic, filename, errors, stack: RefCell::new(vec![]) }
     }
 
     pub fn take_errors(&self) -> Vec<Error> {
@@ -40,5 +42,21 @@ impl<'a> TransformCtx<'a> {
     #[allow(unused)]
     pub fn error<T: Into<Error>>(&self, error: T) {
         self.errors.borrow_mut().push(error.into());
+    }
+
+    pub fn push_stack(&self, kind: AstType) {
+        self.stack.borrow_mut().push(kind);
+    }
+
+    pub fn pop_stack(&self) {
+        self.stack.borrow_mut().pop();
+    }
+
+    pub fn is_parent(&self, kind: AstType) -> bool {
+        self.stack.borrow().last().map_or(false, |parent| parent == &kind)
+    }
+
+    pub fn is_ancestor(&self, kind: AstType) -> bool {
+        self.stack.borrow().iter().any(|parent| parent == &kind)
     }
 }

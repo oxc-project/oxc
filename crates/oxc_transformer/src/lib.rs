@@ -93,6 +93,14 @@ impl<'a> Transformer<'a> {
 }
 
 impl<'a> VisitMut<'a> for Transformer<'a> {
+    fn enter_node(&mut self, kind: oxc_ast::AstType) {
+        self.ctx.push_stack(kind);
+    }
+
+    fn leave_node(&mut self, _kind: oxc_ast::AstType) {
+        self.ctx.pop_stack();
+    }
+
     fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
         self.x0_typescript.transform_statement(stmt);
         self.x2_decorators.transform_statement(stmt);
