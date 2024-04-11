@@ -43,7 +43,7 @@ fn main() {
 
     let program = allocator.alloc(ret.program);
     let transform_options = TransformOptions::default();
-    Transformer::new(&allocator, source_type, semantic, transform_options).build(program).unwrap();
+    Transformer::new(&allocator, path, semantic, transform_options).build(program).unwrap();
 
     let printed = Codegen::<false>::new("", &source_text, CodegenOptions::default())
         .build(program)

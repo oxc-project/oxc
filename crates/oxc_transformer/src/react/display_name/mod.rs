@@ -82,7 +82,7 @@ impl<'a> ReactDisplayName<'a> {
     ) {
         let ExportDefaultDeclarationKind::Expression(expr) = &mut decl.declaration else { return };
         let Some(obj_expr) = Self::get_object_from_create_class(expr) else { return };
-        let name = self.ctx.ast.new_atom("input"); // TODO: use the filename
+        let name = self.ctx.ast.new_atom(self.ctx.filename());
         self.add_display_name(obj_expr, name);
     }
 }
