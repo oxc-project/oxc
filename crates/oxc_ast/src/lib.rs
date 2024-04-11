@@ -73,4 +73,10 @@ fn size_asserts() {
 }
 
 #[test]
-fn variance_asserts() {}
+fn lifetime_variance() {
+    use crate::ast;
+
+    fn _assert_program_variant_lifetime<'a: 'b, 'b>(program: ast::Program<'a>) -> ast::Program<'b> {
+        program
+    }
+}

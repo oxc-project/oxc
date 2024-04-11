@@ -95,12 +95,6 @@ impl<'alloc, T: Hash> Hash for Box<'alloc, T> {
 #[derive(Debug, PartialEq, Eq)]
 pub struct Vec<'alloc, T>(vec::Vec<T, &'alloc Bump>);
 
-fn _variance_asserts() {
-    fn test_fn<'a: 'b, 'b>(program: Vec<'a, ()>) -> Vec<'b, ()> {
-        program
-    }
-}
-
 impl<'alloc, T> Vec<'alloc, T> {
     #[inline]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
@@ -244,5 +238,15 @@ mod test {
         v.push("x");
         let v = serde_json::to_string(&v).unwrap();
         assert_eq!(v, "[\"x\"]");
+    }
+
+    #[test]
+    fn lifetime_variance() {
+        fn _assert_box_variant_lifetime<'a: 'b, 'b, T>(program: Box<'a, T>) -> Box<'b, T> {
+            program
+        }
+        fn _assert_vec_variant_lifetime<'a: 'b, 'b, T>(program: Vec<'a, T>) -> Vec<'b, T> {
+            program
+        }
     }
 }
