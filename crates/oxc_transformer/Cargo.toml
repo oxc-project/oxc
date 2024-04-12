@@ -24,6 +24,9 @@ oxc_span        = { workspace = true }
 oxc_allocator   = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_diagnostics = { workspace = true }
+oxc_syntax      = { workspace = true }
+
+rustc-hash = { workspace = true }
 
 serde = { workspace = true, features = ["derive"] }
 

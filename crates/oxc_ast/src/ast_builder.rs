@@ -822,6 +822,14 @@ impl<'a> AstBuilder<'a> {
         self.alloc(FormalParameters { span, kind, items, rest })
     }
 
+    pub fn plain_formal_parameter(
+        &self,
+        span: Span,
+        pattern: BindingPattern<'a>,
+    ) -> FormalParameter<'a> {
+        self.formal_parameter(span, pattern, None, false, false, self.new_vec())
+    }
+
     pub fn formal_parameter(
         &self,
         span: Span,
@@ -841,6 +849,29 @@ impl<'a> AstBuilder<'a> {
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> TSThisParameter<'a> {
         TSThisParameter { span, this, type_annotation }
+    }
+
+    pub fn plain_function(
+        &self,
+        r#type: FunctionType,
+        span: Span,
+        id: Option<BindingIdentifier<'a>>,
+        params: Box<'a, FormalParameters<'a>>,
+        body: Option<Box<'a, FunctionBody<'a>>>,
+    ) -> Box<'a, Function<'a>> {
+        self.function(
+            r#type,
+            span,
+            id,
+            false,
+            false,
+            None,
+            params,
+            body,
+            None,
+            None,
+            Modifiers::empty(),
+        )
     }
 
     pub fn function(

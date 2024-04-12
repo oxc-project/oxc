@@ -1,7 +1,10 @@
+mod namespace;
+
 use std::rc::Rc;
 
 use serde::Deserialize;
 
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::context::Ctx;
@@ -43,7 +46,9 @@ impl<'a> TypeScript<'a> {
     }
 }
 
-// Transformers
+// Transforms
 impl<'a> TypeScript<'a> {
-    pub fn transform_statement(&mut self, _stmt: &mut Statement<'a>) {}
+    pub fn transform_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        self.transform_statements_for_namespace(stmts);
+    }
 }
