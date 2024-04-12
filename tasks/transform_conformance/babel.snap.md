@@ -1,16 +1,15 @@
-Passed: 77/178
+Passed: 76/178
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-plugin-transform-typescript (60/158)
+# babel-plugin-transform-typescript (59/158)
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
-* class/declare/input.ts
 * class/decorated-declare-properties/input.ts
 * class/parameter-properties/input.ts
 * class/parameter-properties-late-super/input.ts
@@ -23,6 +22,8 @@ Passed: 77/178
 * declarations/erased/input.ts
 * declarations/export-declare-enum/input.ts
 * declarations/nested-namespace/input.mjs
+* exports/declare-namespace/input.ts
+* exports/declare-shadowed/input.ts
 * exports/declared-types/input.ts
 * exports/export-const-enums/input.ts
 * exports/export-type/input.ts
@@ -33,9 +34,9 @@ Passed: 77/178
 * exports/imported-types/input.ts
 * exports/imported-types-only-remove-type-imports/input.ts
 * exports/issue-9916-3/input.ts
+* exports/simple/input.ts
 * exports/type-only-export-specifier-1/input.ts
 * exports/type-only-export-specifier-2/input.ts
-* exports/type-only-export-specifier-3/input.ts
 * function/overloads-exports/input.mjs
 * imports/elide-injected/input.ts
 * imports/elide-preact/input.ts
@@ -56,15 +57,12 @@ Passed: 77/178
 * imports/import=-declaration/input.ts
 * imports/import=-module/input.ts
 * imports/import=-module-to-cjs/input.ts
-* imports/only-remove-type-imports/input.ts
 * imports/parameter-decorators/input.ts
 * imports/property-signature/input.ts
 * imports/type-only-export-specifier-1/input.ts
 * imports/type-only-export-specifier-2/input.ts
-* imports/type-only-import-specifier-1/input.ts
 * imports/type-only-import-specifier-2/input.ts
 * imports/type-only-import-specifier-3/input.ts
-* imports/type-only-import-specifier-4/input.ts
 * namespace/alias/input.ts
 * namespace/ambient-module-nested/input.ts
 * namespace/ambient-module-nested-exported/input.ts
@@ -74,7 +72,10 @@ Passed: 77/178
 * namespace/clobber-export/input.ts
 * namespace/clobber-import/input.ts
 * namespace/contentious-names/input.ts
+* namespace/declare/input.ts
+* namespace/declare-global-nested-namespace/input.ts
 * namespace/empty-removed/input.ts
+* namespace/export/input.ts
 * namespace/export-type-only/input.ts
 * namespace/module-nested/input.ts
 * namespace/module-nested-export/input.ts

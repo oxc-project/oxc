@@ -113,6 +113,17 @@ pub enum Expression<'a> {
 }
 
 impl<'a> Expression<'a> {
+    pub fn is_typescript_syntax(&self) -> bool {
+        matches!(
+            self,
+            Self::TSAsExpression(_)
+                | Self::TSSatisfiesExpression(_)
+                | Self::TSTypeAssertion(_)
+                | Self::TSNonNullExpression(_)
+                | Self::TSInstantiationExpression(_)
+        )
+    }
+
     pub fn is_primary_expression(&self) -> bool {
         self.is_literal()
             || matches!(
@@ -1289,6 +1300,7 @@ impl<'a> Declaration<'a> {
             _ => true,
         }
     }
+
     pub fn modifiers(&self) -> Option<&Modifiers<'a>> {
         match self {
             Declaration::VariableDeclaration(decl) => Some(&decl.modifiers),
@@ -1659,6 +1671,10 @@ impl<'a> BindingPattern<'a> {
     pub fn new_with_kind(kind: BindingPatternKind<'a>) -> Self {
         Self { kind, type_annotation: None, optional: false }
     }
+
+    pub fn get_identifier(&self) -> Option<&Atom<'a>> {
+        self.kind.get_identifier()
+    }
 }
 
 #[derive(Debug, Hash)]
@@ -1679,6 +1695,14 @@ pub enum BindingPatternKind<'a> {
 }
 
 impl<'a> BindingPatternKind<'a> {
+    pub fn get_identifier(&self) -> Option<&Atom<'a>> {
+        match self {
+            Self::BindingIdentifier(ident) => Some(&ident.name),
+            Self::AssignmentPattern(assign) => assign.left.get_identifier(),
+            _ => None,
+        }
+    }
+
     pub fn is_destructuring_pattern(&self) -> bool {
         matches!(self, Self::ObjectPattern(_) | Self::ArrayPattern(_))
     }
@@ -1809,8 +1833,10 @@ pub struct Function<'a> {
 
 impl<'a> Function<'a> {
     pub fn is_typescript_syntax(&self) -> bool {
-        self.r#type == FunctionType::TSDeclareFunction
-            || self.body.is_none()
+        matches!(
+            self.r#type,
+            FunctionType::TSDeclareFunction | FunctionType::TSEmptyBodyFunctionExpression
+        ) || self.body.is_none()
             || self.modifiers.contains(ModifierKind::Declare)
     }
 
