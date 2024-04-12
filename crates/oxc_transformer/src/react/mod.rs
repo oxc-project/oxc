@@ -30,6 +30,7 @@ pub struct React<'a> {
     jsx_self: ReactJsxSelf<'a>,
     jsx_source: ReactJsxSource<'a>,
     display_name: ReactDisplayName<'a>,
+    development: bool,
 }
 
 // Constructors
@@ -39,9 +40,10 @@ impl<'a> React<'a> {
         Self {
             ctx: Rc::clone(ctx),
             jsx: ReactJsx::new(options, ctx),
-            jsx_self: ReactJsxSelf::new(development, ctx),
+            jsx_self: ReactJsxSelf::new(ctx),
             jsx_source: ReactJsxSource::new(ctx),
             display_name: ReactDisplayName::new(ctx),
+            development,
         }
     }
 }
@@ -78,7 +80,10 @@ impl<'a> React<'a> {
         self.display_name.transform_export_default_declaration(decl);
     }
 
-    pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
-        self.jsx_self.transform_jsx_opening_element(elem);
+    pub fn transform_jsx_opening_element(&self, elem: &mut JSXOpeningElement<'a>) {
+        if self.development {
+            self.jsx_self.transform_jsx_opening_element(elem);
+            self.jsx_source.transform_jsx_opening_element(elem);
+        }
     }
 }
