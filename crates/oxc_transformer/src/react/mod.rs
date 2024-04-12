@@ -21,7 +21,7 @@ pub use self::{
 ///
 /// * [plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx)
 /// * [plugin-transform-react-jsx-self](https://babeljs.io/docs/babel-plugin-transform-react-jsx-self)
-/// * [plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx)
+/// * [plugin-transform-react-jsx-source](https://babel.dev/docs/babel-plugin-transform-react-jsx-source)
 /// * [plugin-transform-react-display-name](https://babeljs.io/docs/babel-plugin-transform-react-display-name)
 #[allow(unused)]
 pub struct React<'a> {
@@ -50,7 +50,7 @@ impl<'a> React<'a> {
 
 // Transforms
 impl<'a> React<'a> {
-    pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
+    pub fn transform_expression(&self, expr: &mut Expression<'a>) {
         match expr {
             Expression::AssignmentExpression(e) => {
                 self.display_name.transform_assignment_expression(e);
@@ -65,18 +65,15 @@ impl<'a> React<'a> {
         }
     }
 
-    pub fn transform_variable_declarator(&mut self, declarator: &mut VariableDeclarator<'a>) {
+    pub fn transform_variable_declarator(&self, declarator: &mut VariableDeclarator<'a>) {
         self.display_name.transform_variable_declarator(declarator);
     }
 
-    pub fn transform_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
+    pub fn transform_object_property(&self, prop: &mut ObjectProperty<'a>) {
         self.display_name.transform_object_property(prop);
     }
 
-    pub fn transform_export_default_declaration(
-        &mut self,
-        decl: &mut ExportDefaultDeclaration<'a>,
-    ) {
+    pub fn transform_export_default_declaration(&self, decl: &mut ExportDefaultDeclaration<'a>) {
         self.display_name.transform_export_default_declaration(decl);
     }
 

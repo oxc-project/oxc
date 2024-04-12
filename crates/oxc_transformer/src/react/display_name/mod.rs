@@ -54,7 +54,7 @@ impl<'a> ReactDisplayName<'a> {
     }
 
     /// `let foo = React.createClass({})`
-    pub fn transform_variable_declarator(&mut self, declarator: &mut VariableDeclarator<'a>) {
+    pub fn transform_variable_declarator(&self, declarator: &mut VariableDeclarator<'a>) {
         let Some(init_expr) = declarator.init.as_mut() else { return };
         let Some(obj_expr) = Self::get_object_from_create_class(init_expr) else {
             return;
@@ -67,7 +67,7 @@ impl<'a> ReactDisplayName<'a> {
     }
 
     /// `{foo: React.createClass({})}`
-    pub fn transform_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
+    pub fn transform_object_property(&self, prop: &mut ObjectProperty<'a>) {
         let Some(obj_expr) = Self::get_object_from_create_class(&mut prop.value) else { return };
         let Some(name) = prop.key.static_name() else { return };
         let name = self.ctx.ast.new_atom(&name);
@@ -76,10 +76,7 @@ impl<'a> ReactDisplayName<'a> {
 
     /// `export default React.createClass({})`
     /// Uses the current file name as the display name.
-    pub fn transform_export_default_declaration(
-        &mut self,
-        decl: &mut ExportDefaultDeclaration<'a>,
-    ) {
+    pub fn transform_export_default_declaration(&self, decl: &mut ExportDefaultDeclaration<'a>) {
         let ExportDefaultDeclarationKind::Expression(expr) = &mut decl.declaration else { return };
         let Some(obj_expr) = Self::get_object_from_create_class(expr) else { return };
         let name = self.ctx.ast.new_atom(self.ctx.filename());
