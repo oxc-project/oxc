@@ -1,7 +1,7 @@
-Passed: 76/177
+Passed: 76/178
 
 # All Passed:
-
+* babel-plugin-transform-react-jsx-source
 
 
 # babel-plugin-transform-typescript (60/158)
@@ -107,7 +107,8 @@ Passed: 76/177
 # babel-plugin-transform-react-display-name (15/16)
 * display-name/nested/input.js
 
-# babel-plugin-transform-react-jsx-self (1/3)
+# babel-plugin-transform-react-jsx-self (0/3)
 * react-source/arrow-function/input.js
+* react-source/basic-sample/input.js
 * react-source/disable-with-super/input.js
 
