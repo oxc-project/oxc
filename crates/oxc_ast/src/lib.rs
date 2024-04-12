@@ -71,3 +71,12 @@ fn size_asserts() {
     assert_eq_size!(ast::TSLiteral, [u8; 16]);
     assert_eq_size!(ast::TSType, [u8; 16]);
 }
+
+#[test]
+fn lifetime_variance() {
+    use crate::ast;
+
+    fn _assert_program_variant_lifetime<'a: 'b, 'b>(program: ast::Program<'a>) -> ast::Program<'b> {
+        program
+    }
+}

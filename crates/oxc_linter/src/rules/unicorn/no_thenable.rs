@@ -128,7 +128,7 @@ impl Rule for NoThenable {
                         SimpleAssignmentTarget::MemberAssignmentTarget(target),
                     ),
                 ..
-            }) => match &target.0 {
+            }) => match &**target {
                 MemberExpression::ComputedMemberExpression(expr) => {
                     if let Some(span) = check_expression(&expr.expression, ctx) {
                         ctx.diagnostic(NoThenableDiagnostic::Class(span));

@@ -81,7 +81,7 @@ impl<'a> ListenerMap for Statement<'a> {
             }
             Self::ModuleDeclaration(decl) => {
                 if matches!(
-                    decl.0,
+                    &**decl,
                     ModuleDeclaration::ExportAllDeclaration(_)
                         | ModuleDeclaration::ImportDeclaration(_)
                 ) {

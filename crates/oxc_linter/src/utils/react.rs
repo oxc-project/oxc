@@ -52,7 +52,7 @@ pub fn has_jsx_prop_lowercase<'a, 'b>(
 
 pub fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXAttributeValue<'a>> {
     if let JSXAttributeItem::Attribute(attr) = item {
-        attr.0.value.as_ref()
+        attr.value.as_ref()
     } else {
         None
     }

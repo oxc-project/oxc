@@ -213,7 +213,8 @@ impl PreferToBe {
         let Some(Expression::MemberExpression(mem_expr)) = matcher.parent else {
             return;
         };
-        let is_cmp_mem_expr = matches!(mem_expr.0, MemberExpression::ComputedMemberExpression(_));
+
+        let is_cmp_mem_expr = matches!(&**mem_expr, MemberExpression::ComputedMemberExpression(_));
         let modifiers = jest_expect_fn_call.modifiers();
         let maybe_not_modifier = modifiers.iter().find(|modifier| modifier.is_name_equal("not"));
 
