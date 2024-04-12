@@ -1,5 +1,3 @@
-
-
 use oxc_ast::{
     ast::{Argument, CallExpression, Expression, MemberExpression},
     AstKind,
@@ -216,8 +214,7 @@ impl PreferToBe {
             return;
         };
 
-        let is_cmp_mem_expr =
-            matches!(&**mem_expr, MemberExpression::ComputedMemberExpression(_));
+        let is_cmp_mem_expr = matches!(&**mem_expr, MemberExpression::ComputedMemberExpression(_));
         let modifiers = jest_expect_fn_call.modifiers();
         let maybe_not_modifier = modifiers.iter().find(|modifier| modifier.is_name_equal("not"));
 

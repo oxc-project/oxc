@@ -1,5 +1,3 @@
-
-
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},

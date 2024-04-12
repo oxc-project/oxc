@@ -1,6 +1,4 @@
-use std::{
-    cell::{Cell, RefCell},
-};
+use std::cell::{Cell, RefCell};
 
 use oxc_ast::{
     ast::{

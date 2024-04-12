@@ -1,5 +1,3 @@
-
-
 use oxc_ast::{
     ast::{Argument, Expression, MemberExpression},
     AstKind,

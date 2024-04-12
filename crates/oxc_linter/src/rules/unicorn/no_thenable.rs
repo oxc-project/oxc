@@ -1,5 +1,3 @@
-
-
 use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
