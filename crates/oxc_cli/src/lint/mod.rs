@@ -95,6 +95,7 @@ impl Runner for LintRunner {
             .with_config_path(config)
             .with_fix(fix_options.fix)
             .with_import_plugin(enable_plugins.import_plugin)
+            .with_jsdoc_plugin(enable_plugins.jsdoc_plugin)
             .with_jest_plugin(enable_plugins.jest_plugin)
             .with_jsx_a11y_plugin(enable_plugins.jsx_a11y_plugin)
             .with_nextjs_plugin(enable_plugins.nextjs_plugin)
