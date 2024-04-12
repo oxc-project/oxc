@@ -35,10 +35,11 @@ pub struct React<'a> {
 // Constructors
 impl<'a> React<'a> {
     pub fn new(options: ReactOptions, ctx: &Ctx<'a>) -> Self {
+        let development = options.development;
         Self {
             ctx: Rc::clone(ctx),
             jsx: ReactJsx::new(options, ctx),
-            jsx_self: ReactJsxSelf::new(ctx),
+            jsx_self: ReactJsxSelf::new(development, ctx),
             jsx_source: ReactJsxSource::new(ctx),
             display_name: ReactDisplayName::new(ctx),
         }
@@ -75,5 +76,9 @@ impl<'a> React<'a> {
         decl: &mut ExportDefaultDeclaration<'a>,
     ) {
         self.display_name.transform_export_default_declaration(decl);
+    }
+
+    pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
+        self.jsx_self.transform_jsx_opening_element(elem);
     }
 }
