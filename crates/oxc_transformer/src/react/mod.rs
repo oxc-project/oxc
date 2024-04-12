@@ -45,10 +45,13 @@ impl<'a> React<'a> {
     }
 }
 
-// Transformers
+// Transforms
 impl<'a> React<'a> {
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
+            Expression::AssignmentExpression(e) => {
+                self.display_name.transform_assignment_expression(e);
+            }
             Expression::JSXElement(_e) => {
                 // *expr = unimplemented!();
             }
@@ -57,5 +60,20 @@ impl<'a> React<'a> {
             }
             _ => {}
         }
+    }
+
+    pub fn transform_variable_declarator(&mut self, declarator: &mut VariableDeclarator<'a>) {
+        self.display_name.transform_variable_declarator(declarator);
+    }
+
+    pub fn transform_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
+        self.display_name.transform_object_property(prop);
+    }
+
+    pub fn transform_export_default_declaration(
+        &mut self,
+        decl: &mut ExportDefaultDeclaration<'a>,
+    ) {
+        self.display_name.transform_export_default_declaration(decl);
     }
 }

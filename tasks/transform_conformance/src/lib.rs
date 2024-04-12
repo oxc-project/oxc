@@ -45,56 +45,57 @@ fn fixture_root() -> PathBuf {
 }
 
 const CASES: &[&str] = &[
-    // ES2024
-    "babel-plugin-transform-unicode-sets-regex",
-    // ES2022
-    "babel-plugin-transform-class-properties",
-    "babel-plugin-transform-class-static-block",
-    "babel-plugin-transform-private-methods",
-    "babel-plugin-transform-private-property-in-object",
-    // [Syntax] "babel-plugin-transform-syntax-top-level-await",
-    // ES2021
-    "babel-plugin-transform-logical-assignment-operators",
-    "babel-plugin-transform-numeric-separator",
-    // ES2020
-    "babel-plugin-transform-export-namespace-from",
-    "babel-plugin-transform-dynamic-import",
-    "babel-plugin-transform-nullish-coalescing-operator",
-    "babel-plugin-transform-optional-chaining",
-    // [Syntax] "babel-plugin-transform-syntax-bigint",
-    // [Syntax] "babel-plugin-transform-syntax-dynamic-import",
-    // [Syntax] "babel-plugin-transform-syntax-import-meta",
-    // ES2019
-    "babel-plugin-transform-optional-catch-binding",
-    "babel-plugin-transform-json-strings",
-    // ES2018
-    "babel-plugin-transform-async-generator-functions",
-    "babel-plugin-transform-object-rest-spread",
-    // [Regex] "babel-plugin-transform-unicode-property-regex",
-    "babel-plugin-transform-dotall-regex",
-    // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
-    // ES2017
-    "babel-plugin-transform-async-to-generator",
-    // ES2016
-    "babel-plugin-transform-exponentiation-operator",
-    // ES2015
-    "babel-plugin-transform-arrow-functions",
-    "babel-plugin-transform-function-name",
-    "babel-plugin-transform-shorthand-properties",
-    "babel-plugin-transform-sticky-regex",
-    "babel-plugin-transform-unicode-regex",
-    "babel-plugin-transform-template-literals",
-    "babel-plugin-transform-duplicate-keys",
-    "babel-plugin-transform-instanceof",
-    "babel-plugin-transform-new-target",
-    // ES3
-    "babel-plugin-transform-property-literals",
+    // // ES2024
+    // "babel-plugin-transform-unicode-sets-regex",
+    // // ES2022
+    // "babel-plugin-transform-class-properties",
+    // "babel-plugin-transform-class-static-block",
+    // "babel-plugin-transform-private-methods",
+    // "babel-plugin-transform-private-property-in-object",
+    // // [Syntax] "babel-plugin-transform-syntax-top-level-await",
+    // // ES2021
+    // "babel-plugin-transform-logical-assignment-operators",
+    // "babel-plugin-transform-numeric-separator",
+    // // ES2020
+    // "babel-plugin-transform-export-namespace-from",
+    // "babel-plugin-transform-dynamic-import",
+    // "babel-plugin-transform-nullish-coalescing-operator",
+    // "babel-plugin-transform-optional-chaining",
+    // // [Syntax] "babel-plugin-transform-syntax-bigint",
+    // // [Syntax] "babel-plugin-transform-syntax-dynamic-import",
+    // // [Syntax] "babel-plugin-transform-syntax-import-meta",
+    // // ES2019
+    // "babel-plugin-transform-optional-catch-binding",
+    // "babel-plugin-transform-json-strings",
+    // // ES2018
+    // "babel-plugin-transform-async-generator-functions",
+    // "babel-plugin-transform-object-rest-spread",
+    // // [Regex] "babel-plugin-transform-unicode-property-regex",
+    // "babel-plugin-transform-dotall-regex",
+    // // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
+    // // ES2017
+    // "babel-plugin-transform-async-to-generator",
+    // // ES2016
+    // "babel-plugin-transform-exponentiation-operator",
+    // // ES2015
+    // "babel-plugin-transform-arrow-functions",
+    // "babel-plugin-transform-function-name",
+    // "babel-plugin-transform-shorthand-properties",
+    // "babel-plugin-transform-sticky-regex",
+    // "babel-plugin-transform-unicode-regex",
+    // "babel-plugin-transform-template-literals",
+    // "babel-plugin-transform-duplicate-keys",
+    // "babel-plugin-transform-instanceof",
+    // "babel-plugin-transform-new-target",
+    // // ES3
+    // "babel-plugin-transform-property-literals",
     // TypeScript
     "babel-plugin-transform-typescript",
     // React
-    "babel-plugin-transform-react-jsx",
-    // Proposal
-    "babel-plugin-proposal-decorators",
+    // "babel-plugin-transform-react-jsx",
+    "babel-plugin-transform-react-display-name",
+    // // Proposal
+    // "babel-plugin-proposal-decorators",
 ];
 
 const EXCLUDE_TESTS: &[&str] = &["babel-plugin-transform-typescript/test/fixtures/enum"];

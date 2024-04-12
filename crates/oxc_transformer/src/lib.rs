@@ -15,7 +15,7 @@ mod decorators;
 mod react;
 mod typescript;
 
-use std::rc::Rc;
+use std::{path::Path, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{
@@ -24,7 +24,6 @@ use oxc_ast::{
 };
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
-use oxc_span::SourceType;
 
 pub use crate::{
     compiler_assumptions::CompilerAssumptions,
@@ -66,11 +65,11 @@ pub struct Transformer<'a> {
 impl<'a> Transformer<'a> {
     pub fn new(
         allocator: &'a Allocator,
-        source_type: SourceType,
+        source_path: &Path,
         semantic: Semantic<'a>,
         options: TransformOptions,
     ) -> Self {
-        let ctx = Rc::new(TransformCtx::new(allocator, source_type, semantic));
+        let ctx = Rc::new(TransformCtx::new(allocator, source_path, semantic));
         Self {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, &ctx),
@@ -103,5 +102,20 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         self.x1_react.transform_expression(expr);
         walk_mut::walk_expression_mut(self, expr);
+    }
+
+    fn visit_variable_declarator(&mut self, declarator: &mut VariableDeclarator<'a>) {
+        self.x1_react.transform_variable_declarator(declarator);
+        walk_mut::walk_variable_declarator_mut(self, declarator);
+    }
+
+    fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
+        self.x1_react.transform_object_property(prop);
+        walk_mut::walk_object_property_mut(self, prop);
+    }
+
+    fn visit_export_default_declaration(&mut self, decl: &mut ExportDefaultDeclaration<'a>) {
+        self.x1_react.transform_export_default_declaration(decl);
+        walk_mut::walk_export_default_declaration_mut(self, decl);
     }
 }

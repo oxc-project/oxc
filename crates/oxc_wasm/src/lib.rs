@@ -190,7 +190,7 @@ impl Oxc {
         // Only lint if there are not syntax errors
         if run_options.lint() && self.diagnostics.borrow().is_empty() {
             let semantic = Rc::new(semantic_ret.semantic);
-            let lint_ctx = LintContext::new(path.into_boxed_path(), &semantic);
+            let lint_ctx = LintContext::new(path.clone().into_boxed_path(), &semantic);
             let linter_ret = Linter::default().run(lint_ctx);
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);
@@ -233,8 +233,7 @@ impl Oxc {
                 .build(program)
                 .semantic;
             let options = TransformOptions::default();
-            let result =
-                Transformer::new(&allocator, source_type, semantic, options).build(program);
+            let result = Transformer::new(&allocator, &path, semantic, options).build(program);
             if let Err(errs) = result {
                 self.save_diagnostics(errs);
             }

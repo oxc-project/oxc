@@ -10,7 +10,7 @@ use oxc_tasks_common::TestFiles;
 fn bench_sourcemap(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("sourcemap");
 
-    for file in TestFiles::minimal().files() {
+    for file in TestFiles::complicated_one(1).files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
         let source_type = SourceType::from_path(&file.file_name).unwrap();
         group.bench_with_input(id, &file.source_text, |b, source_text| {
@@ -18,7 +18,7 @@ fn bench_sourcemap(criterion: &mut Criterion) {
             let program = Parser::new(&allocator, source_text, source_type).parse().program;
             let codegen_options =
                 CodegenOptions { enable_source_map: true, ..CodegenOptions::default() };
-            b.iter_with_large_drop(|| {
+            b.iter(|| {
                 let CodegenReturn { source_map, source_text } = Codegen::<false>::new(
                     file.file_name.as_str(),
                     source_text,

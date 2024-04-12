@@ -28,6 +28,9 @@ jobs:
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
+        with:
+          shared-key: 'codecov'
+          save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@v2
