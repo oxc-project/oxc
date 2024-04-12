@@ -2,23 +2,286 @@
 source: crates/oxc_linter/src/tester.rs
 expression: max_len
 ---
-  ⚠ eslint(max-len): Line is too long (current length: 145, maximum: 80)
+  ⚠ This line has a length of 86. Maximum allowed is 80.
    ╭─[max_len.tsx:1:1]
- 1 │ const longLine = "This is a sentence that is deliberately made to go beyond the typical 80 character limit to show that the linting rule works.";
-   · ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 1 │                                                                             var i = 1;
+   · ──────────────────────────────────────────────────────────────────────────────────────
    ╰────
   help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
 
-  ⚠ eslint(max-len): Line is too long (current length: 139, maximum: 80)
+  ⚠ This line has a length of 24. Maximum allowed is 10.
    ╭─[max_len.tsx:1:1]
- 1 │ // This comment is definitely too long for a single line and should be broken up according to the max len rule which we expect to fail here
-   · ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 1 │ var x = 5, y = 2, z = 5;
+   · ────────────────────────
    ╰────
   help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
 
-  ⚠ eslint(max-len): Line is too long (current length: 145, maximum: 80)
+  ⚠ This line has a length of 22. Maximum allowed is 15.
    ╭─[max_len.tsx:1:1]
- 1 │ const anotherLongLine = "Lines of code or comments should not extend beyond the 80 characters in length to be easily readable and maintainable.";
-   · ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 1 │             var i = 1;
+   · ──────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 22. Maximum allowed is 15.
+   ╭─[max_len.tsx:1:1]
+ 1 │             var i = 1;
+   · ──────────────────────
+ 2 │             var j = 1;
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 22. Maximum allowed is 15.
+   ╭─[max_len.tsx:2:1]
+ 1 │             var i = 1;
+ 2 │             var j = 1;
+   · ──────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 56. Maximum allowed is 20.
+   ╭─[max_len.tsx:1:1]
+ 1 │ var /*this is a long non-removed inline comment*/ i = 1;
+   · ────────────────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 54. Maximum allowed is 20.
+   ╭─[max_len.tsx:1:1]
+ 1 │ var foobar = 'this line isn\'t matched by the regexp';
+   · ──────────────────────────────────────────────────────
+ 2 │ var fizzbuzz = 'but this one is matched by the regexp';
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 30. Maximum allowed is 10.
+   ╭─[max_len.tsx:1:1]
+ 1 │ var longLine = 'will trigger'; // even with a comment
+   · ─────────────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 62. Maximum allowed is 40.
+   ╭─[max_len.tsx:1:1]
+ 1 │ var foo = module.exports = {}; // really long trailing comment
+   · ──────────────────────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 57. Maximum allowed is 40.
+   ╭─[max_len.tsx:1:1]
+ 1 │ foo('http://example.com/this/is/?a=longish&url=in#here');
+   · ─────────────────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 53. Maximum allowed is 40.
+   ╭─[max_len.tsx:1:1]
+ 1 │ foo(bar(bazz('this is a long'), 'line of'), 'stuff');
+   · ─────────────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a comment length of 49. Maximum allowed is 20.
+   ╭─[max_len.tsx:1:1]
+ 1 │ // A comment that exceeds the max comment length.
+   · ─────────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a comment length of 119. Maximum allowed is 80.
+   ╭─[max_len.tsx:1:1]
+ 1 │ // A comment that exceeds the max comment length and the max code length, but will fail for being too long of a comment
+   · ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 49. Maximum allowed is 20.
+   ╭─[max_len.tsx:1:1]
+ 1 │ // A comment that exceeds the max comment length.
+   · ─────────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 73. Maximum allowed is 40.
+   ╭─[max_len.tsx:1:1]
+ 1 │ //This is very long comment with more than 40 characters which is invalid
+   · ─────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a comment length of 29. Maximum allowed is 28.
+   ╭─[max_len.tsx:2:1]
+ 1 │ function foo() {
+ 2 │ //this line has 29 characters
+   · ─────────────────────────────
+ 3 │ }
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a comment length of 33. Maximum allowed is 32.
+   ╭─[max_len.tsx:2:1]
+ 1 │ function foo() {
+ 2 │     //this line has 33 characters
+   · ─────────────────────────────────
+ 3 │ }
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a comment length of 29. Maximum allowed is 28.
+   ╭─[max_len.tsx:2:1]
+ 1 │ function foo() {
+ 2 │ /*this line has 29 characters
+   · ─────────────────────────────
+ 3 │ and this one has 32 characters*/
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a comment length of 32. Maximum allowed is 28.
+   ╭─[max_len.tsx:3:1]
+ 2 │ /*this line has 29 characters
+ 3 │ and this one has 32 characters*/
+   · ────────────────────────────────
+ 4 │ }
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a comment length of 33. Maximum allowed is 32.
+   ╭─[max_len.tsx:2:1]
+ 1 │ function foo() {
+ 2 │     /*this line has 33 characters
+   · ─────────────────────────────────
+ 3 │     and this one has 36 characters*/
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a comment length of 36. Maximum allowed is 32.
+   ╭─[max_len.tsx:3:1]
+ 2 │     /*this line has 33 characters
+ 3 │     and this one has 36 characters*/
+   · ────────────────────────────────────
+ 4 │ }
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 40. Maximum allowed is 39.
+   ╭─[max_len.tsx:2:1]
+ 1 │ function foo() {
+ 2 │     var a; /*this line has 40 characters
+   · ────────────────────────────────────────
+ 3 │     and this one has 36 characters*/
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a comment length of 36. Maximum allowed is 35.
+   ╭─[max_len.tsx:3:1]
+ 2 │     var a; /*this line has 40 characters
+ 3 │     and this one has 36 characters*/
+   · ────────────────────────────────────
+ 4 │ }
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a comment length of 33. Maximum allowed is 32.
+   ╭─[max_len.tsx:2:1]
+ 1 │ function foo() {
+ 2 │     /*this line has 33 characters
+   · ─────────────────────────────────
+ 3 │     and this one has 43 characters*/ var a;
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 43. Maximum allowed is 42.
+   ╭─[max_len.tsx:3:1]
+ 2 │     /*this line has 33 characters
+ 3 │     and this one has 43 characters*/ var a;
+   · ───────────────────────────────────────────
+ 4 │ }
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 51. Maximum allowed is 20.
+   ╭─[max_len.tsx:2:1]
+ 1 │ // This commented line has precisely 51 characters.
+ 2 │ var x = 'This line also has exactly 51 characters';
+   · ───────────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 39. Maximum allowed is 29.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var foo = veryLongIdentifier;
+ 2 │ var bar = 'this is a very long string';
+   · ───────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 45. Maximum allowed is 29.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var foo = veryLongIdentifier;
+ 2 │ var bar = /this is a very very long pattern/;
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 57. Maximum allowed is 29.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var foo = veryLongIdentifier;
+ 2 │ var bar = new RegExp('this is a very very long pattern');
+   · ─────────────────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 39. Maximum allowed is 29.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var foo = veryLongIdentifier;
+ 2 │ var bar = "this is a very long string";
+   · ───────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 39. Maximum allowed is 29.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var foo = veryLongIdentifier;
+ 2 │ var bar = `this is a very long string`;
+   · ───────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 37. Maximum allowed is 29.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var foo = veryLongIdentifier;
+ 2 │ var bar = `this is a very long string
+   · ─────────────────────────────────────
+ 3 │ and this is another line that is very long`;
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 44. Maximum allowed is 29.
+   ╭─[max_len.tsx:3:1]
+ 2 │ var bar = `this is a very long string
+ 3 │ and this is another line that is very long`;
+   · ────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 58. Maximum allowed is 29.
+   ╭─[max_len.tsx:1:1]
+ 1 │ var foo = <div>this is a very very very long string</div>;
+   · ──────────────────────────────────────────────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 12. Maximum allowed is 10.
+   ╭─[max_len.tsx:1:1]
+ 1 │ '🙁😁😟☹️😣😖😩😱👎'
+   · ───────────────────
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 1. Maximum allowed is 0.
+   ╭─[max_len.tsx:1:1]
+ 1 │ a
+   · ─
    ╰────
   help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
