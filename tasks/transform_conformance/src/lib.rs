@@ -94,6 +94,7 @@ const CASES: &[&str] = &[
     // React
     // "babel-plugin-transform-react-jsx",
     "babel-plugin-transform-react-display-name",
+    "babel-plugin-transform-react-jsx-self",
     // // Proposal
     // "babel-plugin-proposal-decorators",
 ];

@@ -227,6 +227,12 @@ pub struct JSXIdentifier<'a> {
     pub name: Atom<'a>,
 }
 
+impl<'a> JSXIdentifier<'a> {
+    pub fn new(span: Span, name: Atom<'a>) -> Self {
+        Self { span, name }
+    }
+}
+
 // 1.4 JSX Children
 
 /// JSX Child

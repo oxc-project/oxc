@@ -122,4 +122,9 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.x1_react.transform_export_default_declaration(decl);
         walk_mut::walk_export_default_declaration_mut(self, decl);
     }
+
+    fn visit_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
+        self.x1_react.transform_jsx_opening_element(elem);
+        walk_mut::walk_jsx_opening_element_mut(self, elem);
+    }
 }
