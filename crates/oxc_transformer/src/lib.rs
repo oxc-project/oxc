@@ -10,6 +10,7 @@
 // Core
 mod compiler_assumptions;
 mod context;
+mod options;
 // Presets: <https://babel.dev/docs/presets>
 mod decorators;
 mod react;
@@ -26,34 +27,17 @@ use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 
 pub use crate::{
-    compiler_assumptions::CompilerAssumptions,
-    decorators::{Decorators, DecoratorsOptions},
-    react::{React, ReactDisplayName, ReactJsx, ReactJsxSelf, ReactJsxSource, ReactOptions},
-    typescript::{TypeScript, TypeScriptOptions},
+    compiler_assumptions::CompilerAssumptions, decorators::DecoratorsOptions,
+    options::TransformOptions, react::ReactOptions, typescript::TypeScriptOptions,
 };
 
-use crate::context::{Ctx, TransformCtx};
+use crate::{
+    context::{Ctx, TransformCtx},
+    decorators::Decorators,
+    react::React,
+    typescript::TypeScript,
+};
 
-#[allow(unused)]
-#[derive(Debug, Default, Clone)]
-pub struct TransformOptions {
-    // Core
-    /// Set assumptions in order to produce smaller output.
-    /// For more information, check the [assumptions](https://babel.dev/docs/assumptions) documentation page.
-    pub assumptions: CompilerAssumptions,
-
-    // Plugins
-    /// [proposal-decorators](https://babeljs.io/docs/babel-plugin-proposal-decorators)
-    pub decorators: DecoratorsOptions,
-
-    /// [preset-typescript](https://babeljs.io/docs/babel-preset-typescript)
-    pub typescript: TypeScriptOptions,
-
-    /// [preset-react](https://babeljs.io/docs/babel-preset-react)
-    pub react: ReactOptions,
-}
-
-#[allow(unused)]
 pub struct Transformer<'a> {
     ctx: Ctx<'a>,
     // NOTE: all callbacks must run in order.
