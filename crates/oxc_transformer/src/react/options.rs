@@ -5,6 +5,15 @@ use serde::Deserialize;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReactOptions {
+    #[serde(skip)]
+    pub display_name_plugin: bool,
+
+    #[serde(skip)]
+    pub jsx_self_plugin: bool,
+
+    #[serde(skip)]
+    pub jsx_source_plugin: bool,
+
     // Both Runtimes
     //
     /// Decides which runtime to use.
@@ -56,6 +65,9 @@ pub struct ReactOptions {
 impl Default for ReactOptions {
     fn default() -> Self {
         Self {
+            display_name_plugin: false,
+            jsx_self_plugin: false,
+            jsx_source_plugin: false,
             runtime: ReactJsxRuntime::default(),
             development: default_as_true(),
             pure: default_as_true(),

@@ -86,6 +86,15 @@ pub trait TestCase {
             value.and_then(|v| serde_json::from_value::<T>(v).ok()).unwrap_or_default()
         }
         let options = self.options();
+
+        let mut react = options
+            .get_plugin("transform-react-jsx")
+            .map(get_options::<ReactOptions>)
+            .unwrap_or_default();
+        react.display_name_plugin = options.get_plugin("transform-react-display-name").is_some();
+        react.jsx_self_plugin = options.get_plugin("transform-react-jsx-self").is_some();
+        react.jsx_source_plugin = options.get_plugin("transform-react-jsx-source").is_some();
+
         TransformOptions {
             assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
             decorators: options
@@ -96,10 +105,7 @@ pub trait TestCase {
                 .get_plugin("transform-typescript")
                 .map(get_options::<TypeScriptOptions>)
                 .unwrap_or_default(),
-            react: options
-                .get_plugin("transform-react-jsx")
-                .map(get_options::<ReactOptions>)
-                .unwrap_or_default(),
+            react,
         }
     }
 
