@@ -31,7 +31,7 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn alloc<T>(&self, value: T) -> Box<'a, T> {
-        Box::new_in(value, &self.allocator)
+        Box::new_in(value, self.allocator)
     }
 
     #[inline]

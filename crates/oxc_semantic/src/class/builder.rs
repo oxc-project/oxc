@@ -42,13 +42,13 @@ impl ClassTableBuilder {
         for element in &class.body {
             match element {
                 ClassElement::PropertyDefinition(definition) => {
-                    self.declare_class_property(&definition);
+                    self.declare_class_property(definition);
                 }
                 ClassElement::MethodDefinition(definition) => {
-                    self.declare_class_method(&definition);
+                    self.declare_class_method(definition);
                 }
                 ClassElement::AccessorProperty(definition) => {
-                    self.declare_class_accessor(&definition);
+                    self.declare_class_accessor(definition);
                 }
                 _ => {}
             }

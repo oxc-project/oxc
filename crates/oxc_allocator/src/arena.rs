@@ -46,6 +46,7 @@ impl<'alloc, T: ?Sized> ops::Deref for Box<'alloc, T> {
 
     #[allow(unsafe_code)]
     fn deref(&self) -> &T {
+        // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
         unsafe { self.0.as_ref() }
     }
 }
@@ -53,6 +54,7 @@ impl<'alloc, T: ?Sized> ops::Deref for Box<'alloc, T> {
 impl<'alloc, T: ?Sized> ops::DerefMut for Box<'alloc, T> {
     #[allow(unsafe_code)]
     fn deref_mut(&mut self) -> &mut T {
+        // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
         unsafe { self.0.as_mut() }
     }
 }
@@ -108,7 +110,7 @@ impl<'alloc, T> Vec<'alloc, T> {
 
     #[inline]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
-        let mut vec = vec::Vec::new_in(allocator.deref());
+        let mut vec = vec::Vec::new_in(&**allocator);
         vec.extend(iter);
         Self(vec)
     }

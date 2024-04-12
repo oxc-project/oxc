@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use oxc_ast::{
     ast::{
         ArrayExpressionElement, AssignmentTarget, AssignmentTargetMaybeDefault,
@@ -253,7 +251,7 @@ impl NoSelfAssign {
             {
                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = right {
                     if let ObjectProperty { method: false, value: expr, span, key, .. } =
-                        obj_prop.deref()
+                        &**obj_prop
                     {
                         if key.static_name().is_some_and(|name| name == id1.binding.name) {
                             if let Expression::Identifier(id2) = expr.without_parenthesized() {
@@ -273,8 +271,7 @@ impl NoSelfAssign {
                     }
                 };
                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = right {
-                    if let ObjectProperty { method: false, value: expr, key, .. } = obj_prop.deref()
-                    {
+                    if let ObjectProperty { method: false, value: expr, key, .. } = &**obj_prop {
                         let property_name = property.name.static_name();
                         let key_name = key.static_name();
                         if property_name.is_some() && property_name == key_name {

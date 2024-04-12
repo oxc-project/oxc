@@ -1,4 +1,4 @@
-use std::ops::Deref;
+
 
 use oxc_ast::{
     ast::{Argument, Expression, MemberExpression},
@@ -72,7 +72,7 @@ impl Rule for PreferModernDomApis {
             return;
         };
 
-        let MemberExpression::StaticMemberExpression(member_expr) = member_expr.deref() else {
+        let MemberExpression::StaticMemberExpression(member_expr) = &**member_expr else {
             return;
         };
         let method = member_expr.property.name.as_str();

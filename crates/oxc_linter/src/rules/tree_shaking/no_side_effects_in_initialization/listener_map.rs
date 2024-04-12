@@ -1,6 +1,5 @@
 use std::{
     cell::{Cell, RefCell},
-    ops::Deref,
 };
 
 use oxc_ast::{
@@ -84,7 +83,7 @@ impl<'a> ListenerMap for Statement<'a> {
             }
             Self::ModuleDeclaration(decl) => {
                 if matches!(
-                    decl.deref(),
+                    &**decl,
                     ModuleDeclaration::ExportAllDeclaration(_)
                         | ModuleDeclaration::ImportDeclaration(_)
                 ) {

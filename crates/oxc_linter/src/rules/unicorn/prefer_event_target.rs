@@ -1,4 +1,4 @@
-use std::ops::Deref;
+
 
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
@@ -62,7 +62,7 @@ impl Rule for PreferEventTarget {
                     return;
                 };
 
-                if ident as *const _ != callee_ident.deref() as *const _ {
+                if ident as *const _ != std::ptr::addr_of!(**callee_ident) {
                     return;
                 }
             }
