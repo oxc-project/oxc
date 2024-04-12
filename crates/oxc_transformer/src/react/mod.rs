@@ -25,6 +25,7 @@ pub use self::{
 /// * [plugin-transform-react-display-name](https://babeljs.io/docs/babel-plugin-transform-react-display-name)
 #[allow(unused)]
 pub struct React<'a> {
+    options: Rc<ReactOptions>,
     ctx: Ctx<'a>,
     jsx: ReactJsx<'a>,
     jsx_self: ReactJsxSelf<'a>,
@@ -37,9 +38,11 @@ pub struct React<'a> {
 impl<'a> React<'a> {
     pub fn new(options: ReactOptions, ctx: &Ctx<'a>) -> Self {
         let development = options.development;
+        let options = Rc::new(options);
         Self {
+            options: Rc::clone(&options),
             ctx: Rc::clone(ctx),
-            jsx: ReactJsx::new(options, ctx),
+            jsx: ReactJsx::new(&options, ctx),
             jsx_self: ReactJsxSelf::new(ctx),
             jsx_source: ReactJsxSource::new(ctx),
             display_name: ReactDisplayName::new(ctx),
@@ -53,7 +56,9 @@ impl<'a> React<'a> {
     pub fn transform_expression(&self, expr: &mut Expression<'a>) {
         match expr {
             Expression::AssignmentExpression(e) => {
-                self.display_name.transform_assignment_expression(e);
+                if self.options.display_name_plugin {
+                    self.display_name.transform_assignment_expression(e);
+                }
             }
             Expression::JSXElement(_e) => {
                 // *expr = unimplemented!();
@@ -66,21 +71,31 @@ impl<'a> React<'a> {
     }
 
     pub fn transform_variable_declarator(&self, declarator: &mut VariableDeclarator<'a>) {
-        self.display_name.transform_variable_declarator(declarator);
+        if self.options.display_name_plugin {
+            self.display_name.transform_variable_declarator(declarator);
+        }
     }
 
     pub fn transform_object_property(&self, prop: &mut ObjectProperty<'a>) {
-        self.display_name.transform_object_property(prop);
+        if self.options.display_name_plugin {
+            self.display_name.transform_object_property(prop);
+        }
     }
 
     pub fn transform_export_default_declaration(&self, decl: &mut ExportDefaultDeclaration<'a>) {
-        self.display_name.transform_export_default_declaration(decl);
+        if self.options.display_name_plugin {
+            self.display_name.transform_export_default_declaration(decl);
+        }
     }
 
     pub fn transform_jsx_opening_element(&self, elem: &mut JSXOpeningElement<'a>) {
         if self.development {
-            self.jsx_self.transform_jsx_opening_element(elem);
-            self.jsx_source.transform_jsx_opening_element(elem);
+            if self.options.jsx_self_plugin {
+                self.jsx_self.transform_jsx_opening_element(elem);
+            }
+            if self.options.jsx_source_plugin {
+                self.jsx_source.transform_jsx_opening_element(elem);
+            }
         }
     }
 }
