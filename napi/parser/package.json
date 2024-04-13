@@ -9,7 +9,6 @@
   "devDependencies": {
     "@napi-rs/cli": "^2.18.0",
     "es-module-lexer": "^1.4.1",
-    "flatbuffers": "^23.5.26",
     "tinybench": "^2.6.0"
   },
   "engines": {
