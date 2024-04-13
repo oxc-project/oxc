@@ -20,7 +20,7 @@ use crate::Allocator;
 /// A Box without Drop.
 /// This is used for over coming self-referential structs.
 /// It is a memory leak if the boxed value has a `Drop` implementation.
-pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<&'alloc T>);
+pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
 impl<'alloc, T> Box<'alloc, T> {
     #[allow(unsafe_code)]
