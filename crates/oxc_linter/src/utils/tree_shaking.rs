@@ -79,7 +79,7 @@ pub fn has_pure_notation(span: Span, ctx: &LintContext) -> bool {
     raw.contains("@__PURE__") || raw.contains("#__PURE__")
 }
 
-/// Port from https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/463fa1f0bef7caa2b231a38b9c3557051f506c92/src/rules/no-side-effects-in-initialization.ts#L136-L161
+/// Port from <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/463fa1f0bef7caa2b231a38b9c3557051f506c92/src/rules/no-side-effects-in-initialization.ts#L136-L161>
 pub fn calculate_binary_operation(op: BinaryOperator, left: Value, right: Value) -> Value {
     match op {
         BinaryOperator::Addition => match (left, right) {

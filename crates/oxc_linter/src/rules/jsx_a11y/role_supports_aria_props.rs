@@ -103,7 +103,7 @@ impl Rule for RoleSupportsAriaProps {
     }
 }
 
-/// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/getImplicitRole.js
+/// ref: <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/getImplicitRole.js>
 fn get_implicit_role<'a>(
     node: &'a JSXOpeningElement<'a>,
     element_type: &str,

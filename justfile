@@ -21,6 +21,7 @@ ready:
   just check
   just test
   just lint
+  just doc
   git status
 
 # Clone or update submodules
@@ -56,6 +57,10 @@ test:
 # Lint the whole project
 lint:
   cargo lint -- --deny warnings
+
+doc:
+  RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
+
 
 # Run all the conformance tests. See `tasks/coverage`, `tasks/transform_conformance`, `tasks/minsize`
 coverage:

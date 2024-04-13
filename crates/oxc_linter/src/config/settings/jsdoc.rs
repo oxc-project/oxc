@@ -1,7 +1,7 @@
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-/// https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md
+/// <https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md>
 #[derive(Debug, Deserialize, Default)]
 pub struct JSDocPluginSettings {
     /// For all rules but NOT apply to `check-access` and `empty-tags` rule

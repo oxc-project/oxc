@@ -1030,7 +1030,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.sequence_expression(self.end_span(span), expressions))
     }
 
-    /// `AwaitExpression`[Yield] :
+    /// ``AwaitExpression`[Yield]` :
     ///     await `UnaryExpression`[?Yield, +Await]
     fn parse_await_expression(&mut self, lhs_span: Span) -> Result<Expression<'a>> {
         let span = self.start_span();

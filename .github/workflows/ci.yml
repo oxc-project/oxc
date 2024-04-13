@@ -183,7 +183,7 @@ jobs:
           docs: true
 
       - name: Run doc
-        run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps
+        run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
 
   test:
     name: Test

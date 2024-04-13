@@ -179,7 +179,7 @@ pub fn print_call_arguments<'a>(
     Doc::Group(Group::new(parts).with_break(should_break))
 }
 
-/// * Reference https://github.com/prettier/prettier/blob/main/src/language-js/print/call-arguments.js#L247-L272
+/// * Reference <https://github.com/prettier/prettier/blob/main/src/language-js/print/call-arguments.js#L247-L272>
 fn should_expand_first_arg<'a>(arguments: &Vec<'a, Argument<'a>>) -> bool {
     if arguments.len() != 2 {
         return false;

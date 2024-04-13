@@ -441,7 +441,7 @@ impl<'a> Printer<'a> {
     }
 
     /// Reference:
-    /// * https://github.com/prettier/prettier/blob/main/src/document/utils.js#L156-L185
+    /// * <https://github.com/prettier/prettier/blob/main/src/document/utils.js#L156-L185>
     pub fn propagate_breaks(doc: &mut Doc<'_>) -> bool {
         let check_array = |arr: &mut oxc_allocator::Vec<'_, Doc<'_>>| {
             arr.iter_mut().rev().any(|doc| Self::propagate_breaks(doc))
