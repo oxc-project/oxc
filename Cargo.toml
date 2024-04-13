@@ -172,7 +172,9 @@ unicode-width       = "0.1.11"
 ignored = ["napi"]
 
 [profile.dev]
-debug = 1 # "limited" debug, speed up compilation; debug info without type or variable-level information.
+# Disabling debug info speeds up local and CI builds,
+# and we don't rely on it for debugging that much.
+debug = false
 
 [profile.release.package.oxc_wasm]
 opt-level = 'z'
