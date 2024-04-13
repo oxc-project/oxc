@@ -227,6 +227,7 @@ mod unicorn {
     pub mod no_array_for_each;
     pub mod no_array_reduce;
     pub mod no_await_expression_member;
+    pub mod no_await_in_promise_methods;
     pub mod no_console_spaces;
     pub mod no_document_cookie;
     pub mod no_empty_file;
@@ -527,6 +528,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_array_for_each,
     unicorn::no_array_reduce,
     unicorn::no_await_expression_member,
+    unicorn::no_await_in_promise_methods,
     unicorn::no_console_spaces,
     unicorn::no_document_cookie,
     unicorn::no_empty_file,
@@ -548,7 +550,6 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_typeof_undefined,
     unicorn::no_unnecessary_await,
     unicorn::no_unreadable_array_destructuring,
-    unicorn::prefer_node_protocol,
     unicorn::no_unreadable_iife,
     unicorn::no_useless_fallback_in_spread,
     unicorn::no_useless_length_check,
@@ -565,6 +566,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_blob_reading_methods,
     unicorn::prefer_code_point,
     unicorn::prefer_date_now,
+    unicorn::prefer_node_protocol,
     unicorn::prefer_dom_node_append,
     unicorn::prefer_dom_node_dataset,
     unicorn::prefer_dom_node_remove,
