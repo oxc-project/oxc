@@ -79,7 +79,7 @@ impl<'a> Transformer<'a> {
 impl<'a> VisitMut<'a> for Transformer<'a> {
     fn visit_program(&mut self, program: &mut Program<'a>) {
         walk_mut::walk_program_mut(self, program);
-
+        self.x1_react.transform_program_on_exit(program);
         self.x0_typescript.transform_program_on_exit(program);
     }
 

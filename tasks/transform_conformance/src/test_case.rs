@@ -87,13 +87,33 @@ pub trait TestCase {
         }
         let options = self.options();
 
-        let mut react = options
-            .get_plugin("transform-react-jsx")
-            .map(get_options::<ReactOptions>)
-            .unwrap_or_default();
-        react.display_name_plugin = options.get_plugin("transform-react-display-name").is_some();
-        react.jsx_self_plugin = options.get_plugin("transform-react-jsx-self").is_some();
-        react.jsx_source_plugin = options.get_plugin("transform-react-jsx-source").is_some();
+        let react = options.get_preset("react").map_or_else(
+            || {
+                let mut react_options = options
+                    .get_plugin("transform-react-jsx")
+                    .map(|options| {
+                        let mut options = get_options::<ReactOptions>(options);
+                        options.jsx_plugin = true;
+                        options
+                    })
+                    .unwrap_or_default();
+                react_options.display_name_plugin =
+                    options.get_plugin("transform-react-display-name").is_some();
+                react_options.jsx_self_plugin =
+                    options.get_plugin("transform-react-jsx-self").is_some();
+                react_options.jsx_source_plugin =
+                    options.get_plugin("transform-react-jsx-source").is_some();
+                react_options
+            },
+            |options| {
+                let mut react_options = get_options::<ReactOptions>(options);
+                react_options.jsx_plugin = true;
+                react_options.jsx_self_plugin = true;
+                react_options.jsx_source_plugin = true;
+                react_options.display_name_plugin = true;
+                react_options
+            },
+        );
 
         TransformOptions {
             assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
@@ -263,10 +283,10 @@ impl TestCase for ConformanceTestCase {
         let passed =
             transformed_code == output || (!output.is_empty() && actual_errors.contains(&output));
         if filtered {
-            println!("Input:\n");
-            println!("{input}\n");
             println!("Options:");
             println!("{transform_options:#?}\n");
+            println!("Input:\n");
+            println!("{input}\n");
             if babel_options.throws.is_some() {
                 println!("Expected Errors:\n");
                 println!("{output}\n");
