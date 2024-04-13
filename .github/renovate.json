@@ -6,8 +6,12 @@
     "crates/oxc_linter/fixtures/**"
   ],
   "assignees": ["@Boshen"],
-   "regexManagers": [
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "customManagers": [
     {
+      "customType": "regex",
       "fileMatch": ["^rust-toolchain\\.toml?$"],
       "matchStrings": [
         "channel\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+(\\.\\d+)?)\""
@@ -49,8 +53,5 @@
       "matchManagers": ["npm"],
       "enabled": false
     }
-  ],
-  "lockFileMaintenance": {
-    "enabled": true
-  }
+  ]
 }
