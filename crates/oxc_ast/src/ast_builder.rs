@@ -52,6 +52,11 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
+    pub fn new_vec_from_iter<T, I: IntoIterator<Item = T>>(&self, iter: I) -> Vec<'a, T> {
+        Vec::from_iter_in(iter, self.allocator)
+    }
+
+    #[inline]
     pub fn new_str(&self, value: &str) -> &'a str {
         String::from_str_in(value, self.allocator).into_bump_str()
     }
@@ -208,6 +213,14 @@ impl<'a> AstBuilder<'a> {
 
     pub fn literal_template_expression(&self, literal: TemplateLiteral<'a>) -> Expression<'a> {
         Expression::TemplateLiteral(self.alloc(literal))
+    }
+
+    pub fn identifier_name(&self, span: Span, name: &str) -> IdentifierName<'a> {
+        IdentifierName::new(span, self.new_atom(name))
+    }
+
+    pub fn identifier_reference(&self, span: Span, name: &str) -> IdentifierReference<'a> {
+        IdentifierReference::new(span, self.new_atom(name))
     }
 
     pub fn identifier_reference_expression(
@@ -1193,6 +1206,22 @@ impl<'a> AstBuilder<'a> {
             export_kind,
             with_clause,
         })
+    }
+
+    pub fn plain_export_named_declaration(
+        &self,
+        span: Span,
+        specifiers: Vec<'a, ExportSpecifier<'a>>,
+        source: Option<StringLiteral<'a>>,
+    ) -> Box<'a, ExportNamedDeclaration<'a>> {
+        self.export_named_declaration(
+            span,
+            None,
+            specifiers,
+            source,
+            ImportOrExportKind::Value,
+            None,
+        )
     }
 
     /* ---------- JSX ----------------- */
