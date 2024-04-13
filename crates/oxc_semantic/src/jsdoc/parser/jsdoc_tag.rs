@@ -445,6 +445,12 @@ c7 */",
                 Some(("[n = 13]", "[n = 13]")),
                 ("c13", " c13 "),
             ),
+            (
+                "/** @param {t14} [n14] - opt */",
+                Some(("t14", "{t14}")),
+                Some(("[n14]", "[n14]")),
+                ("- opt", " - opt "),
+            ),
         ] {
             let allocator = Allocator::default();
             let semantic = build_semantic(&allocator, source_text);

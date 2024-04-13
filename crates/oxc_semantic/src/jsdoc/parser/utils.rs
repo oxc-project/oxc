@@ -105,6 +105,13 @@ mod test {
             ("{{t8}", None),
             ("", None),
             ("{[ true, false ]}", Some("{[ true, false ]}")),
+            (
+                "{{
+t9a: string;
+t9b: number;
+}}",
+                Some("{{\nt9a: string;\nt9b: number;\n}}"),
+            ),
         ] {
             assert_eq!(find_type_range(actual).map(|(s, e)| &actual[s..e]), expect);
         }
@@ -117,7 +124,7 @@ mod test {
             ("n1", Some("n1")),
             (" n2 ", Some("n2")),
             (" n3 n3", Some("n3")),
-            ("n4\n", Some("n4")),
+            ("[n4]\n", Some("[n4]")),
             ("[n5 = 1]", Some("[n5 = 1]")),
             ("  [n6 = [1,[2, [3]]]]  ", Some("[n6 = [1,[2, [3]]]]")),
             (r#"[n7 = "foo bar"]"#, Some(r#"[n7 = "foo bar"]"#)),
@@ -126,6 +133,8 @@ mod test {
             (r#"[ n10 = ["{}", "[]"] ]"#, Some(r#"[ n10 = ["{}", "[]"] ]"#)),
             ("[n11... c11", Some("[n11... c11")),
             ("[n12[]\nc12", Some("[n12[]\nc12")),
+            ("n12.n12", Some("n12.n12")),
+            ("n13[].n13", Some("n13[].n13")),
         ] {
             assert_eq!(find_type_name_range(actual).map(|(s, e)| &actual[s..e]), expect);
         }
