@@ -89,6 +89,7 @@ oxc_tasks_common = { path = "tasks/common" }
 
 napi        = "2"
 napi-derive = "2"
+napi-build  = "2"
 
 assert-unchecked    = "0.1.2"
 allocator-api2      = "0.2.16"
@@ -147,13 +148,11 @@ console             = "0.15.8"
 encoding_rs         = "0.8.33"
 encoding_rs_io      = "0.1.7"
 env_logger          = { version = "0.11.3", default-features = false }
-flexbuffers         = "2.0.0"
 globset             = "0.4.14"
 humansize           = "2.1.3"
 json-strip-comments = "1.0.2"
 log                 = "0.4.21"
 memchr              = "2.7.2"
-napi-build          = "2"
 once_cell           = "1.19.0"
 ouroboros           = "0.18.3"
 owo-colors          = "4.0.0"
@@ -164,6 +163,9 @@ serde_yaml          = "0.9.34"
 similar             = "2.5.0"
 textwrap            = "0.16.0"
 unicode-width       = "0.1.11"
+
+[workspace.metadata.cargo-shear]
+ignored = ["napi"]
 
 [profile.dev]
 debug = 1 # "limited" debug, speed up compilation; debug info without type or variable-level information.
