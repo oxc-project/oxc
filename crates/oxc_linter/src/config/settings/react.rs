@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-/// https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-
+/// <https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc->
 #[derive(Debug, Deserialize, Default)]
 pub struct ReactPluginSettings {
     #[serde(default)]

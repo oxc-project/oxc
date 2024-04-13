@@ -85,7 +85,7 @@ impl PreferToHaveLength {
                 let Expression::CallExpression(expr_call_expr) = mem_expr.object() else {
                     return;
                 };
-                match &mem_expr.0 {
+                match &**mem_expr {
                     MemberExpression::ComputedMemberExpression(_) => Self::check_and_fix(
                         call_expr,
                         expr_call_expr,

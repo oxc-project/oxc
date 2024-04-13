@@ -26,5 +26,6 @@ impl<'a> Decorators<'a> {
 
 // Transformers
 impl<'a> Decorators<'a> {
-    pub fn transform_statement(&mut self, _stmt: &mut Statement<'_>) {}
+    #[allow(clippy::unused_self)]
+    pub fn transform_statement(&self, _stmt: &mut Statement<'_>) {}
 }

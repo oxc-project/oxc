@@ -31,7 +31,7 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn alloc<T>(&self, value: T) -> Box<'a, T> {
-        Box(self.allocator.alloc(value))
+        Box::new_in(value, self.allocator)
     }
 
     #[inline]
@@ -49,6 +49,11 @@ impl<'a> AstBuilder<'a> {
         let mut vec = self.new_vec_with_capacity(1);
         vec.push(value);
         vec
+    }
+
+    #[inline]
+    pub fn new_vec_from_iter<T, I: IntoIterator<Item = T>>(&self, iter: I) -> Vec<'a, T> {
+        Vec::from_iter_in(iter, self.allocator)
     }
 
     #[inline]
@@ -111,7 +116,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         source_type: SourceType,
-        directives: Vec<'a, Directive>,
+        directives: Vec<'a, Directive<'a>>,
         hashbang: Option<Hashbang<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
@@ -150,7 +155,7 @@ impl<'a> AstBuilder<'a> {
     pub fn template_literal(
         &self,
         span: Span,
-        quasis: Vec<'a, TemplateElement>,
+        quasis: Vec<'a, TemplateElement<'a>>,
         expressions: Vec<'a, Expression<'a>>,
     ) -> TemplateLiteral<'a> {
         TemplateLiteral { span, quasis, expressions }
@@ -208,6 +213,14 @@ impl<'a> AstBuilder<'a> {
 
     pub fn literal_template_expression(&self, literal: TemplateLiteral<'a>) -> Expression<'a> {
         Expression::TemplateLiteral(self.alloc(literal))
+    }
+
+    pub fn identifier_name(&self, span: Span, name: &str) -> IdentifierName<'a> {
+        IdentifierName::new(span, self.new_atom(name))
+    }
+
+    pub fn identifier_reference(&self, span: Span, name: &str) -> IdentifierReference<'a> {
+        IdentifierReference::new(span, self.new_atom(name))
     }
 
     pub fn identifier_reference_expression(
@@ -906,7 +919,7 @@ impl<'a> AstBuilder<'a> {
     pub fn function_body(
         &self,
         span: Span,
-        directives: Vec<'a, Directive>,
+        directives: Vec<'a, Directive<'a>>,
         statements: Vec<'a, Statement<'a>>,
     ) -> Box<'a, FunctionBody<'a>> {
         self.alloc(FunctionBody { span, directives, statements })
@@ -1148,7 +1161,7 @@ impl<'a> AstBuilder<'a> {
     pub fn import_declaration(
         &self,
         span: Span,
-        specifiers: Option<Vec<'a, ImportDeclarationSpecifier>>,
+        specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
         with_clause: Option<WithClause<'a>>,
         import_kind: ImportOrExportKind,
@@ -1180,7 +1193,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         declaration: Option<Declaration<'a>>,
-        specifiers: Vec<'a, ExportSpecifier>,
+        specifiers: Vec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
         with_clause: Option<WithClause<'a>>,
@@ -1193,6 +1206,22 @@ impl<'a> AstBuilder<'a> {
             export_kind,
             with_clause,
         })
+    }
+
+    pub fn plain_export_named_declaration(
+        &self,
+        span: Span,
+        specifiers: Vec<'a, ExportSpecifier<'a>>,
+        source: Option<StringLiteral<'a>>,
+    ) -> Box<'a, ExportNamedDeclaration<'a>> {
+        self.export_named_declaration(
+            span,
+            None,
+            specifiers,
+            source,
+            ImportOrExportKind::Value,
+            None,
+        )
     }
 
     /* ---------- JSX ----------------- */

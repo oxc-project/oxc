@@ -90,10 +90,15 @@ const CASES: &[&str] = &[
     // // ES3
     // "babel-plugin-transform-property-literals",
     // TypeScript
+    "babel-preset-typescript",
     "babel-plugin-transform-typescript",
     // React
-    // "babel-plugin-transform-react-jsx",
+    "babel-preset-react",
+    "babel-plugin-transform-react-jsx",
     "babel-plugin-transform-react-display-name",
+    "babel-plugin-transform-react-jsx-self",
+    "babel-plugin-transform-react-jsx-source",
+    "babel-plugin-transform-react-jsx-development",
     // // Proposal
     // "babel-plugin-proposal-decorators",
 ];
@@ -163,28 +168,23 @@ impl TestRunner {
                                 return None;
                             }
                         }
-
                         if EXCLUDE_TESTS.iter().any(|p| path.to_string_lossy().contains(p)) {
                             return None;
                         }
-
-                        let test_case = TestCaseKind::from_path(path);
-                        if let Some(test_case) = test_case {
-                            if test_case.skip_test_case() {
-                                return None;
-                            }
-
-                            return Some(test_case);
-                        }
-                        None
+                        TestCaseKind::from_path(path)
+                            .filter(|test_case| !test_case.skip_test_case())
                     })
                     .partition(|p| matches!(p, TestCaseKind::Transform(_)));
 
             transform_paths.sort_unstable_by(|a, b| a.path().cmp(b.path()));
             exec_paths.sort_unstable_by(|a, b| a.path().cmp(b.path()));
 
-            transform_files.insert((*case).to_string(), transform_paths);
-            exec_files.insert((*case).to_string(), exec_paths);
+            if !transform_paths.is_empty() {
+                transform_files.insert((*case).to_string(), transform_paths);
+            }
+            if !exec_paths.is_empty() {
+                exec_files.insert((*case).to_string(), exec_paths);
+            }
         }
 
         (transform_files, exec_files)
@@ -198,11 +198,6 @@ impl TestRunner {
         let mut all_passed_count = 0;
 
         for (case, test_cases) in paths {
-            // Skip empty test cases, e.g. some cases do not have `exec.js` file.
-            if test_cases.is_empty() {
-                continue;
-            }
-
             let case_root = root.join(&case).join("test/fixtures");
             let num_of_tests = test_cases.len();
             total += num_of_tests;

@@ -11,7 +11,7 @@ use std::ops::Deref;
 /// TS type is `Record<string, RuleConf>`
 ///   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
 ///   - type RuleConf = SeverityConf | [SeverityConf, ...any[]];
-/// https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L12
+/// <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L12>
 #[derive(Debug, Clone, Default)]
 pub struct ESLintRules(Vec<ESLintRule>);
 

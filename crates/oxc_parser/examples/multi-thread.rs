@@ -34,7 +34,7 @@ struct AST {
     allocator: Allocator,
     source_text: Arc<str>,
     #[borrows(allocator, source_text)]
-    #[not_covariant]
+    #[covariant]
     ast: &'this BumpaloProgram<'this>,
 }
 
@@ -79,9 +79,7 @@ fn main() {
         let ast = ast_rx.recv().unwrap();
         let index = ast.borrow_index();
         println!("received ast({index}) in {:?} at {}", thread::current().id(), timestamp());
-        ast.with_ast(|bumpalo_program| {
-            println!("AST span: {:?}", bumpalo_program.0.span);
-        });
+        println!("AST span: {:?}", ast.borrow_ast().0.span);
     }
 }
 

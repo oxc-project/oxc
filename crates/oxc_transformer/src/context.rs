@@ -37,6 +37,7 @@ impl<'a> TransformCtx<'a> {
     }
 
     /// Add an Error
+    #[allow(unused)]
     pub fn error<T: Into<Error>>(&self, error: T) {
         self.errors.borrow_mut().push(error.into());
     }

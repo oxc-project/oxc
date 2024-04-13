@@ -19,12 +19,12 @@ pub use super::options::ReactOptions;
 /// * <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-react-jsx>
 #[allow(unused)]
 pub struct ReactJsx<'a> {
-    options: ReactOptions,
+    options: Rc<ReactOptions>,
     ctx: Ctx<'a>,
 }
 
 impl<'a> ReactJsx<'a> {
-    pub fn new(options: ReactOptions, ctx: &Ctx<'a>) -> Self {
-        Self { options, ctx: Rc::clone(ctx) }
+    pub fn new(options: &Rc<ReactOptions>, ctx: &Ctx<'a>) -> Self {
+        Self { options: Rc::clone(options), ctx: Rc::clone(ctx) }
     }
 }

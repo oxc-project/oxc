@@ -47,8 +47,8 @@ impl<'a> AstroPartialLoader<'a> {
         ))
     }
 
-    /// In .astro files, you can add client-side JavaScript by adding one (or more) <script> tags.
-    /// https://docs.astro.build/en/guides/client-side-scripts/#using-script-in-astro
+    /// In .astro files, you can add client-side JavaScript by adding one (or more) `<script>` tags.
+    /// <https://docs.astro.build/en/guides/client-side-scripts/#using-script-in-astro>
     fn parse_scripts(&self, start: usize) -> Vec<JavaScriptSource<'a>> {
         let script_start_finder = Finder::new(SCRIPT_START);
         let script_end_finder = Finder::new(SCRIPT_END);

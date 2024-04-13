@@ -6,10 +6,30 @@
     "crates/oxc_linter/fixtures/**"
   ],
   "assignees": ["@Boshen"],
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^rust-toolchain\\.toml?$"],
+      "matchStrings": [
+        "channel\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+(\\.\\d+)?)\""
+      ],
+      "depNameTemplate": "rust",
+      "lookupNameTemplate": "rust-lang/rust",
+      "datasourceTemplate": "github-releases"
+    }
+  ],
   "packageRules": [
     {
       "groupName": "github-actions",
       "matchManagers": ["github-actions"]
+    },
+    {
+      "groupName": "rust toolchain",
+      "matchManagers": ["regex"],
+      "matchPackageNames": ["rust"]
     },
     {
       "groupName": "rust crates",
@@ -33,8 +53,5 @@
       "matchManagers": ["npm"],
       "enabled": false
     }
-  ],
-  "lockFileMaintenance": {
-    "enabled": true
-  }
+  ]
 }

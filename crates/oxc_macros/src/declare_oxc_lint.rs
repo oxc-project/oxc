@@ -76,13 +76,16 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     TokenStream::from(output)
 }
 
-fn parse_attr<const LEN: usize>(path: [&'static str; LEN], attr: &Attribute) -> Option<LitStr> {
+fn parse_attr<'a, const LEN: usize>(
+    path: [&'static str; LEN],
+    attr: &'a Attribute,
+) -> Option<&'a LitStr> {
     if let Meta::NameValue(name_value) = &attr.meta {
         let path_idents = name_value.path.segments.iter().map(|segment| &segment.ident);
         if itertools::equal(path_idents, path) {
             if let Expr::Lit(expr_lit) = &name_value.value {
                 if let Lit::Str(s) = &expr_lit.lit {
-                    return Some(s.clone());
+                    return Some(s);
                 }
             }
         }

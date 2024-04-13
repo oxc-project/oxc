@@ -1,13 +1,8 @@
-#![allow(clippy::trailing_empty_array)]
-
 mod module_lexer;
 
 use std::sync::Arc;
 
-use flexbuffers::FlexbufferSerializer;
-use napi::bindgen_prelude::Buffer;
 use napi_derive::napi;
-use serde::Serialize;
 
 use oxc_allocator::Allocator;
 pub use oxc_ast::ast::Program;
@@ -128,24 +123,6 @@ pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseR
         .collect::<Vec<Comment>>();
 
     ParseResult { program, comments, errors }
-}
-
-/// Returns a binary AST in flexbuffers format.
-/// This is a POC API. Error handling is not done yet.
-///
-/// # Panics
-///
-/// * File extension is invalid
-/// * FlexbufferSerializer serialization error
-#[allow(clippy::needless_pass_by_value)]
-#[napi]
-pub fn parse_sync_buffer(source_text: String, options: Option<ParserOptions>) -> Buffer {
-    let options = options.unwrap_or_default();
-    let allocator = Allocator::default();
-    let ret = parse(&allocator, &source_text, &options);
-    let mut serializer = FlexbufferSerializer::new();
-    ret.program.serialize(&mut serializer).unwrap();
-    serializer.take_buffer().into()
 }
 
 /// # Panics

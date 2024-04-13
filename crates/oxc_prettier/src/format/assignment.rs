@@ -307,7 +307,7 @@ fn is_object_property_with_short_key<'a>(
     true
 }
 
-/// https://github.com/prettier/prettier/blob/eebf0e4b5ec8ac24393c56ced4b4819d4c551f31/src/language-js/print/assignment.js#L182
+/// <https://github.com/prettier/prettier/blob/eebf0e4b5ec8ac24393c56ced4b4819d4c551f31/src/language-js/print/assignment.js#L182>
 fn should_break_after_operator<'a>(
     p: &Prettier<'a>,
     expr: &Expression<'a>,
