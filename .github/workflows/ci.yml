@@ -108,6 +108,7 @@ jobs:
         uses: taiki-e/install-action@cargo-deny
 
       - uses: ./.github/actions/rustup
+        if: steps.filter.outputs.src == 'true'
         with:
           restore-cache: false
 
@@ -119,10 +120,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - '**/*.rs'
+              - '**/Cargo.toml'
+              - 'Cargo.lock'
       - uses: ./.github/actions/rustup
+        with:
+          restore-cache: false
+        if: steps.filter.outputs.src == 'true'
       - uses: cargo-bins/cargo-binstall@main
+        if: steps.filter.outputs.src == 'true'
       - run: cargo binstall --no-confirm cargo-shear
+        if: steps.filter.outputs.src == 'true'
       - run: cargo shear
+        if: steps.filter.outputs.src == 'true'
 
   format:
     name: Format
