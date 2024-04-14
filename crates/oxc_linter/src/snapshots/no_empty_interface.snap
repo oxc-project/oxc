@@ -8,6 +8,11 @@ expression: no_empty_interface
    · ────────────────
    ╰────
 
+  × Expected `{` but found `EOF`
+   ╭─[no_empty_interface.tsx:1:25]
+ 1 │ interface Foo extends {}
+   ╰────
+
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
    ╭─[no_empty_interface.tsx:6:4]
  5 │ 
