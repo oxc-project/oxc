@@ -1,8 +1,10 @@
+mod diagnostics;
+
 use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{CompactStr, SPAN};
+use oxc_span::{CompactStr, GetSpan, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
     xml_entities::XML_ENTITIES,
@@ -14,6 +16,11 @@ pub use super::{
     jsx_self::ReactJsxSelf,
     jsx_source::ReactJsxSource,
     options::{ReactJsxRuntime, ReactOptions},
+};
+
+use self::diagnostics::{
+    ImportSourceCannotBeSet, NamespaceDoesNotSupport, PragmaAndPragmaFragCannotBeSet,
+    SpreadChildrenAreNotSupported, ValuelessKey,
 };
 
 /// [plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx)
@@ -99,7 +106,7 @@ impl<'a> ReactJsx<'a> {
     pub fn add_runtime_imports(&mut self, program: &mut Program<'a>) {
         if self.options.runtime.is_classic() {
             if self.options.import_source != "react" {
-                // self.ctx.error(ImportSourceCannotBeSet);
+                self.ctx.error(ImportSourceCannotBeSet);
             }
             return;
         }
@@ -107,7 +114,7 @@ impl<'a> ReactJsx<'a> {
         if self.options.pragma != "React.createElement"
             || self.options.pragma_frag != "React.Fragment"
         {
-            // self.ctx.error(PragmaAndPragmaFragCannotBeSet);
+            self.ctx.error(PragmaAndPragmaFragCannotBeSet);
             return;
         }
 
@@ -332,9 +339,9 @@ impl<'a> ReactJsx<'a> {
                         }
                     }
                     JSXAttributeItem::Attribute(attr) if attr.is_key() => {
-                        // if attr.value.is_none() {
-                        // self.ctx.error(ValuelessKey(attr.name.span()));
-                        // }
+                        if attr.value.is_none() {
+                            self.ctx.error(ValuelessKey(attr.name.span()));
+                        }
                         // In automatic mode, extract the key before spread prop,
                         // and add it to the third argument later.
                         if is_automatic && !has_key_after_props_spread {
@@ -431,9 +438,9 @@ impl<'a> ReactJsx<'a> {
                 self.transform_jsx_member_expression(member_expr)
             }
             JSXElementName::NamespacedName(name) => {
-                // if self.options.throw_if_namespace {
-                // self.ctx.error(NamespaceDoesNotSupport(name.span));
-                // }
+                if self.options.throw_if_namespace {
+                    self.ctx.error(NamespaceDoesNotSupport(name.span));
+                }
                 let name = self.ast().new_atom(&name.to_string());
                 let string_literal = StringLiteral::new(SPAN, name);
                 self.ast().literal_string_expression(string_literal)
@@ -610,8 +617,8 @@ impl<'a> ReactJsx<'a> {
             },
             JSXChild::Element(e) => Some(self.transform_jsx(&JSXElementOrFragment::Element(e))),
             JSXChild::Fragment(e) => Some(self.transform_jsx(&JSXElementOrFragment::Fragment(e))),
-            JSXChild::Spread(_e) => {
-                // self.ctx.error(SpreadChildrenAreNotSupported(e.span));
+            JSXChild::Spread(e) => {
+                self.ctx.error(SpreadChildrenAreNotSupported(e.span));
                 None
             }
         }
