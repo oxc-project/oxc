@@ -1,10 +1,10 @@
-Passed: 213/408
+Passed: 200/374
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-typescript (4/23)
+# babel-preset-typescript (4/22)
 * flow-compat/js-invalid/input.js
 * flow-compat/js-valid/input.js
 * flow-compat/ts-invalid/input.ts
@@ -13,7 +13,6 @@ Passed: 213/408
 * flow-compat/tsx-valid/input.tsx
 * jsx-compat/js-valid/input.js
 * jsx-compat/ts-invalid/input.ts
-* jsx-compat/ts-invalid-babel-7/input.ts
 * jsx-compat/tsx-valid/input.tsx
 * node-extensions/import-in-cts/input.cts
 * node-extensions/type-assertion-in-cts/input.cts
@@ -25,7 +24,7 @@ Passed: 213/408
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (59/164)
+# babel-plugin-transform-typescript (49/149)
 * class/abstract-allowDeclareFields-false/input.ts
 * class/abstract-allowDeclareFields-true/input.ts
 * class/abstract-class-decorated/input.ts
@@ -33,10 +32,7 @@ Passed: 213/408
 * class/abstract-class-decorated-parameter/input.ts
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
-* class/accessor-allowDeclareFields-true-babel-7/input.ts
-* class/declare-not-enabled-babel-7/input.ts
 * class/decorated-declare-properties/input.ts
-* class/field-not-initialized-babel-7/input.ts
 * class/parameter-properties/input.ts
 * class/parameter-properties-late-super/input.ts
 * class/parameter-properties-with-class/input.ts
@@ -45,8 +41,6 @@ Passed: 213/408
 * class/parameter-properties-with-super/input.ts
 * class/private-method-override-transform-private/input.ts
 * class/transform-properties-declare-wrong-order/input.ts
-* class/uninitialized-definite-babel-7/input.ts
-* class/uninitialized-definite-with-declare-disabled-babel-7/input.ts
 * declarations/erased/input.ts
 * declarations/export-declare-enum/input.ts
 * declarations/nested-namespace/input.mjs
@@ -132,13 +126,12 @@ Passed: 213/408
 * regression/15768/input.ts
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-preset-react (2/14)
+# babel-preset-react (2/13)
 * preset-options/development/input.js
 * preset-options/development-runtime-automatic/input.js
 * preset-options/development-runtime-automatic-windows/input.js
 * preset-options/development-windows/input.js
 * preset-options/empty-options/input.js
-* preset-options/empty-options-babel-7/input.js
 * preset-options/runtime-automatic/input.js
 * preset-options/runtime-classic/input.js
 * preset-options/runtime-classic-pragma-no-frag/input.js
@@ -146,21 +139,13 @@ Passed: 213/408
 * regression/another-preset-with-custom-jsx-keep-source-self/input.mjs
 * regression/runtime-classic-allow-multiple-source-self/input.mjs
 
-# babel-plugin-transform-react-jsx (131/161)
+# babel-plugin-transform-react-jsx (128/148)
 * autoImport/auto-import-react-source-type-module/input.js
 * autoImport/complicated-scope-module/input.js
 * autoImport/react-defined/input.js
-* react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
 * react/arrow-functions/input.js
-* react/assignment-babel-7/input.js
-* react/avoids-spread-babel-7/input.js
-* react/does-not-add-source-self-babel-7/input.mjs
-* react/handle-spread-with-proto-babel-7/input.js
 * react/optimisation.react.constant-elements/input.js
 * react/should-add-quotes-es3/input.js
-* react/wraps-props-in-react-spread-for-first-spread-attributes-babel-7/input.js
-* react/wraps-props-in-react-spread-for-last-spread-attributes-babel-7/input.js
-* react/wraps-props-in-react-spread-for-middle-spread-attributes-babel-7/input.js
 * react-automatic/arrow-functions/input.js
 * react-automatic/concatenates-adjacent-string-literals/input.js
 * react-automatic/does-not-add-source-self-automatic/input.mjs
@@ -171,12 +156,10 @@ Passed: 213/408
 * react-automatic/should-add-quotes-es3/input.js
 * react-automatic/should-allow-nested-fragments/input.js
 * react-automatic/should-escape-xhtml-jsxtext/input.js
-* react-automatic/should-escape-xhtml-jsxtext-babel-7/input.js
 * react-automatic/should-handle-attributed-elements/input.js
 * react-automatic/should-have-correct-comma-in-nested-children/input.js
 * react-automatic/should-properly-handle-keys/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
-* runtime/defaults-to-classis-babel-7/input.js
 
 # babel-plugin-transform-react-display-name (15/16)
 * display-name/nested/input.js
@@ -185,12 +168,11 @@ Passed: 213/408
 * react-source/arrow-function/input.js
 * react-source/disable-with-super/input.js
 
-# babel-plugin-transform-react-jsx-development (0/26)
+# babel-plugin-transform-react-jsx-development (0/22)
 * cross-platform/disallow-__self-as-jsx-attribute/input.js
 * cross-platform/disallow-__source-as-jsx-attribute/input.js
 * linux/auto-import-dev/input.js
 * linux/classic-runtime/input.js
-* linux/classic-runtime-babel-7/input.js
 * linux/fragments/input.js
 * linux/handle-fragments-with-key/input.js
 * linux/handle-nonstatic-children/input.js
@@ -199,10 +181,8 @@ Passed: 213/408
 * linux/source-and-self-defined/input.js
 * linux/within-derived-classes-constructor/input.js
 * linux/within-ts-module-block/input.ts
-* linux/within-ts-module-block-babel-7/input.ts
 * windows/auto-import-dev-windows/input.js
 * windows/classic-runtime-windows/input.js
-* windows/classic-runtime-windows-babel-7/input.js
 * windows/fragments-windows/input.js
 * windows/handle-fragments-with-key-windows/input.js
 * windows/handle-nonstatic-children-windows/input.js
@@ -211,5 +191,4 @@ Passed: 213/408
 * windows/source-and-self-defined-windows/input.js
 * windows/within-derived-classes-constructor-windows/input.js
 * windows/within-ts-module-block/input.ts
-* windows/within-ts-module-block-babel-7/input.ts
 

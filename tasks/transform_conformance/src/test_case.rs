@@ -131,6 +131,18 @@ pub trait TestCase {
             return true;
         }
 
+        let dir = self.path().parent().unwrap();
+        // Skip Babel 7 specific tests
+        // https://github.com/babel/babel/issues/10746
+        // We implement Babel 8 breaking changes under the BABEL_8_BREAKING env flag.
+        // To test the breaking changes, please duplicate the affected tests with the -babel-7 suffix and add BABEL_8_BREAKING: false to test options.
+        if dir
+            .file_name()
+            .is_some_and(|file_name| file_name.to_string_lossy().ends_with("-babel-7"))
+        {
+            return true;
+        }
+
         // Skip deprecated react options
         if options.babel_8_breaking.is_some_and(|b| b) {
             if let Ok(options) = self.transform_options() {
@@ -154,7 +166,6 @@ pub trait TestCase {
 
         // babel skip test cases that in a directory starting with a dot
         // https://github.com/babel/babel/blob/0effd92d886b7135469d23612ceba6414c721673/packages/babel-helper-fixtures/src/index.ts#L223
-        let dir = self.path().parent().unwrap();
         if dir.file_name().is_some_and(|n| n.to_string_lossy().starts_with('.')) {
             return true;
         }
