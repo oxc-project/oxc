@@ -39,6 +39,20 @@ expression: no_unnecessary_type_constraint
 
   ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "any" does nothing and is unnecessary
    ╭─[no_unnecessary_type_constraint.tsx:1:15]
+ 1 │ const data = <T extends any>() => {};
+   ·               ─         ───
+   ╰────
+  help: Remove the unnecessary "any" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "any" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:15]
+ 1 │ const data = <T extends any>() => {};
+   ·               ─         ───
+   ╰────
+  help: Remove the unnecessary "any" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "any" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:15]
  1 │ const data = <T extends any,>() => {};
    ·               ─         ───
    ╰────
@@ -122,16 +136,20 @@ expression: no_unnecessary_type_constraint
   help: Remove the unnecessary "unknown" constraint
 
   ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "unknown" does nothing and is unnecessary
-   ╭─[no_unnecessary_type_constraint.tsx:1:21]
- 1 │ class Data { member<T extends unknown>() {} }
-   ·                     ─         ───────
+   ╭─[no_unnecessary_type_constraint.tsx:3:13]
+ 2 │             class Data {
+ 3 │               member<T extends unknown>() {}
+   ·                      ─         ───────
+ 4 │             }
    ╰────
   help: Remove the unnecessary "unknown" constraint
 
   ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "unknown" does nothing and is unnecessary
-   ╭─[no_unnecessary_type_constraint.tsx:1:29]
- 1 │ const Data = class { member<T extends unknown>() {} };
-   ·                             ─         ───────
+   ╭─[no_unnecessary_type_constraint.tsx:3:13]
+ 2 │             const Data = class {
+ 3 │               member<T extends unknown>() {}
+   ·                      ─         ───────
+ 4 │             };
    ╰────
   help: Remove the unnecessary "unknown" constraint
 

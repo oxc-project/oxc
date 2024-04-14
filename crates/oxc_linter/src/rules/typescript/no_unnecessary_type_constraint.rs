@@ -82,9 +82,12 @@ fn test() {
         "function data<T extends number>() {}",
         "function data<T extends number | string>() {}",
         "function data<T extends any | number>() {}",
-        "type X = any; function data<T extends X>() {}",
+        "
+			type TODO = any;
+			function data<T extends TODO>() {}
+			    ",
         "const data = () => {};",
-        "const data = <T, >() => {};",
+        "const data = <T,>() => {};",
         "const data = <T, U>() => {};",
         "const data = <T extends number>() => {};",
         "const data = <T extends number | string>() => {};",
@@ -95,6 +98,8 @@ fn test() {
         "function data<T extends any, U>() {}",
         "function data<T, U extends any>() {}",
         "function data<T extends any, U extends T>() {}",
+        "const data = <T extends any>() => {};",
+        "const data = <T extends any>() => {};",
         "const data = <T extends any>() => {};",
         "const data = <T extends any,>() => {};",
         "const data = <T extends any, >() => {};",
@@ -107,8 +112,16 @@ fn test() {
         "const data = <T extends unknown>() => {};",
         "class Data<T extends unknown> {}",
         "const Data = class<T extends unknown> {};",
-        "class Data { member<T extends unknown>() {} }",
-        "const Data = class { member<T extends unknown>() {} };",
+        "
+			class Data {
+			  member<T extends unknown>() {}
+			}
+			      ",
+        "
+			const Data = class {
+			  member<T extends unknown>() {}
+			};
+			      ",
         "interface Data<T extends unknown> {}",
         "type Data<T extends unknown> = {};",
     ];
