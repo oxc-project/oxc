@@ -17,4 +17,8 @@ pub enum ProtocolError {
     ParseInt(#[from] std::num::ParseIntError),
     #[error(transparent)]
     SerdeJson(#[from] serde_json::Error),
+    #[error("command failed")]
+    CommandFailed(String),
+    #[error("missing result")]
+    ResultMissing,
 }

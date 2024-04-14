@@ -360,7 +360,7 @@ impl Runtime {
             // TODO: do something about unwrap
             let mut type_checker = type_checker.lock().unwrap();
             type_checker
-                .open(OpenRequest {
+                .open(&OpenRequest {
                     file: path.to_string_lossy().as_ref(),
                     file_content: Some(&source_text),
                 })
@@ -377,7 +377,7 @@ impl Runtime {
         if let Some(ref type_checker) = self.type_checker {
             // TODO: do something about unwrap
             let mut type_checker = type_checker.lock().unwrap();
-            type_checker.close(FileRequest { file: path.to_string_lossy().as_ref() }).unwrap();
+            type_checker.close(&FileRequest { file: path.to_string_lossy().as_ref() }).unwrap();
         }
 
         result

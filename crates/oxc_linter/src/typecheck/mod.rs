@@ -1,6 +1,7 @@
 pub(self) mod client;
 pub(self) mod protocol_error;
 pub mod requests;
+pub mod response;
 pub(self) mod utils;
 
 #[cfg(windows)]

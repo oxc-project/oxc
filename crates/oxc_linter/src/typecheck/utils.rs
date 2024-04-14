@@ -1,6 +1,13 @@
+use serde::Deserialize;
+
+use crate::typecheck::response::Response;
+
 use super::{ProtocolError, EOL_LENGTH};
 
-pub fn read_message(mut result_stream: impl std::io::Read) -> Result<String, ProtocolError> {
+pub fn read_message<T>(mut result_stream: impl std::io::Read) -> Result<T, ProtocolError>
+where
+    T: for<'de> Deserialize<'de>,
+{
     const PREFIX_LENGTH: usize = 16;
 
     let mut buf = [0u8; 40]; // ["Content-Length: " + usize + "\r\n\r\n"]
@@ -38,8 +45,9 @@ pub fn read_message(mut result_stream: impl std::io::Read) -> Result<String, Pro
                             result_stream.read_exact(msg_writer)?;
                             msg.truncate(length);
 
-                            let msg_str = String::from_utf8(msg)?;
-                            return Ok(msg_str);
+                            let mut deserializer = serde_json::Deserializer::from_slice(&msg);
+                            let response = Response::<'_, T>::deserialize(&mut deserializer)?;
+                            return Result::<T, ProtocolError>::from(response);
                         }
                         _ => return Err(ProtocolError::UnexpectedCharacter),
                     }
@@ -55,6 +63,8 @@ pub fn read_message(mut result_stream: impl std::io::Read) -> Result<String, Pro
 
 #[cfg(test)]
 mod test {
+    use crate::typecheck::response::StatusResponse;
+
     use super::*;
 
     const EOL_STR: &'static str = if EOL_LENGTH == 1 { "\n" } else { "\r\n" };
@@ -78,8 +88,8 @@ mod test {
         let msg = r#"{"seq":0,"type":"response","command":"status","request_seq":0,"success":true,"body":{"version":"5.3.3"}}"#;
         let str = format!("{}{}", ["Content-Length: 105", "", msg].join("\r\n"), EOL_STR);
         let mut buf = str.as_bytes();
-        let result = read_message(&mut buf).unwrap();
-        assert_eq!(result, msg);
+        let result: StatusResponse = read_message(&mut buf).unwrap();
+        assert_eq!(result, StatusResponse { version: "5.3.3".into() });
     }
 
     #[test]
@@ -90,8 +100,8 @@ mod test {
             iter: [b"Content-Length: 105\r\n\r\n".as_slice(), msg_chunk.as_bytes()].into_iter(),
         };
 
-        let result = read_message(reader).unwrap();
-        assert_eq!(result, msg);
+        let result: StatusResponse = read_message(reader).unwrap();
+        assert_eq!(result, StatusResponse { version: "5.3.3".into() });
     }
 
     #[test]
@@ -103,8 +113,8 @@ mod test {
                 .into_iter(),
         };
 
-        let result = read_message(reader).unwrap();
-        assert_eq!(result, msg);
+        let result: StatusResponse = read_message(reader).unwrap();
+        assert_eq!(result, StatusResponse { version: "5.3.3".into() });
     }
 
     #[test]
@@ -116,7 +126,7 @@ mod test {
                 .into_iter(),
         };
 
-        let result = read_message(reader).unwrap();
-        assert_eq!(result, msg);
+        let result: StatusResponse = read_message(reader).unwrap();
+        assert_eq!(result, StatusResponse { version: "5.3.3".into() });
     }
 }

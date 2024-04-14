@@ -1,6 +1,6 @@
 use std::process::{Child, ChildStdin, ChildStdout};
 
-use super::{requests::*, utils::read_message, ProtocolError};
+use super::{requests::*, response::*, utils::read_message, ProtocolError};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -15,11 +15,10 @@ pub struct TSServerClient<W: std::io::Write, R: std::io::Read> {
 }
 
 impl<W: std::io::Write, R: std::io::Read> TSServerClient<W, R> {
-    pub fn status(&mut self) -> Result<String, ProtocolError> {
+    pub fn status(&mut self) -> Result<StatusResponse, ProtocolError> {
         self.send_command("status", None)?;
 
-        let response = read_message(&mut self.result_stream)?;
-        Ok(response)
+        read_message(&mut self.result_stream)
     }
 
     pub fn exit(&mut self) -> Result<(), ProtocolError> {
@@ -27,48 +26,52 @@ impl<W: std::io::Write, R: std::io::Read> TSServerClient<W, R> {
             return Ok(());
         }
 
-        let _ = self.send_command("exit", None);
-
-        self.running = false;
-        self.server.wait()?;
+        let result = self.send_command("exit", None);
+        if result.is_ok() {
+            self.running = false;
+            self.server.wait()?;
+        } else {
+            self.server.kill()?;
+        }
 
         Ok(())
     }
 
-    pub fn open(&mut self, opts: OpenRequest<'_>) -> Result<(), ProtocolError> {
+    pub fn open(&mut self, opts: &OpenRequest<'_>) -> Result<(), ProtocolError> {
         let args = serde_json::to_string(&opts)?;
         self.send_command("open", Some(args.as_str()))?;
-        Ok(())
+
+        read_message(&mut self.result_stream)
     }
 
-    pub fn close(&mut self, opts: FileRequest<'_>) -> Result<(), ProtocolError> {
+    pub fn close(&mut self, opts: &FileRequest<'_>) -> Result<(), ProtocolError> {
         let args = serde_json::to_string(&opts)?;
         self.send_command("close", Some(args.as_str()))?;
-        Ok(())
+
+        read_message(&mut self.result_stream)
     }
 
-    pub fn get_node(&mut self, opts: NodeRequest<'_>) -> Result<String, ProtocolError> {
+    pub fn get_node(&mut self, opts: &NodeRequest<'_>) -> Result<NodeResponse, ProtocolError> {
         let args = serde_json::to_string(&opts)?;
         self.send_command("getNode", Some(args.as_str()))?;
 
-        let response = read_message(&mut self.result_stream)?;
-        Ok(response)
+        read_message(&mut self.result_stream)
     }
 
-    pub fn is_promise_array(&mut self, opts: NodeRequest<'_>) -> Result<String, ProtocolError> {
+    pub fn is_promise_array(&mut self, opts: &NodeRequest<'_>) -> Result<bool, ProtocolError> {
         let args = serde_json::to_string(&opts)?;
         self.send_command("noFloatingPromises::isPromiseArray", Some(args.as_str()))?;
 
-        let response = read_message(&mut self.result_stream)?;
-        Ok(response)
+        let response = read_message::<BoolResponse>(&mut self.result_stream)?;
+        Ok(response.result)
     }
 
-    pub fn is_promise_like(&mut self, opts: NodeRequest<'_>) -> Result<String, ProtocolError> {
+    pub fn is_promise_like(&mut self, opts: &NodeRequest<'_>) -> Result<bool, ProtocolError> {
         let args = serde_json::to_string(&opts)?;
         self.send_command("noFloatingPromises::isPromiseLike", Some(args.as_str()))?;
 
-        let response = read_message(&mut self.result_stream)?;
-        Ok(response)
+        let response = read_message::<BoolResponse>(&mut self.result_stream)?;
+        Ok(response.result)
     }
 
     fn send_command(&mut self, command: &str, args: Option<&str>) -> Result<(), std::io::Error> {
