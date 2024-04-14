@@ -128,6 +128,7 @@ fn test() {
 
     let fail = vec![
         ("interface Foo {}", None),
+        ("interface Foo extends {}", None),
         (
             "
 			interface Foo {
