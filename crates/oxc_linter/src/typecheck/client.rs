@@ -74,6 +74,17 @@ impl<W: std::io::Write, R: std::io::Read> TSServerClient<W, R> {
         Ok(response.result)
     }
 
+    pub fn is_valid_rejection_handler(
+        &mut self,
+        opts: &NodeRequest<'_>,
+    ) -> Result<bool, ProtocolError> {
+        let args = serde_json::to_string(&opts)?;
+        self.send_command("noFloatingPromises::isValidRejectionHandler", Some(args.as_str()))?;
+
+        let response = read_message::<BoolResponse>(&mut self.result_stream)?;
+        Ok(response.result)
+    }
+
     fn send_command(&mut self, command: &str, args: Option<&str>) -> Result<(), std::io::Error> {
         self.seq += 1;
         let seq = self.seq;

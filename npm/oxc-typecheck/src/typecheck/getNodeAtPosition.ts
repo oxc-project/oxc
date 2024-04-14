@@ -4,6 +4,7 @@ import ts from 'typescript';
 import { forEach, hasJSDocNodes } from './utils.js';
 
 // TODO: consider obtaining array of child indexes directly from AST in Rust and just doing getChildAt(idx) instead
+// TODO: cache the result, since it is very likely we need to evaluate the same node multiple times
 export function getNodeAtPosition(
   sourceFile: ts.SourceFile,
   { pos, end }: ts.ReadonlyTextRange,

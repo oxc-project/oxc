@@ -61,6 +61,15 @@ export function isPromiseLike(
   return false;
 }
 
+export function isValidRejectionHandler(
+  checker: ts.TypeChecker,
+  rejectionHandler: ts.Node,
+): boolean {
+  return (
+    checker.getTypeAtLocation(rejectionHandler).getCallSignatures().length > 0
+  );
+}
+
 function hasMatchingSignature(
   type: ts.Type,
   matcher: (signature: ts.Signature) => boolean,

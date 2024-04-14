@@ -69,6 +69,22 @@ export const handlers: Record<string, (req: any) => Result> = {
       result,
     });
   },
+  'noFloatingPromises::isValidRejectionHandler': ({
+    arguments: { file, span },
+  }: NodeRequest) => {
+    const program = useProgramFromProjectService(service, file);
+    if (!program) {
+      throw new Error('failed to create TS program');
+    }
+
+    const node = getNodeAtPosition(program.ast, span);
+    const checker = program.program.getTypeChecker();
+
+    const result = noFloatingPromises.isValidRejectionHandler(checker, node);
+    return requiredResponse({
+      result,
+    });
+  },
 };
 
 export interface Result {
