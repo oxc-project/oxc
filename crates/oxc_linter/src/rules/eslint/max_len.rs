@@ -1,4 +1,3 @@
-use once_cell::sync::Lazy;
 use oxc_ast::{AstKind, CommentKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
