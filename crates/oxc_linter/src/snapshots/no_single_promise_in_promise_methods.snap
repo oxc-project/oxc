@@ -1,0 +1,366 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_single_promise_in_promise_methods
+---
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([(0, promise)])
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:39]
+ 1 │ async function * foo() {await Promise.all([yield promise])}
+   ·                                       ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:39]
+ 1 │ async function * foo() {await Promise.all([yield* promise])}
+   ·                                       ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([() => promise,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([a ? b : c,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x ??= y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x ||= y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x &&= y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x |= y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x ^= y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x ??= y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x ||= y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x &&= y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x | y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x ^ y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x & y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x !== y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x == y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x in y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x >>> y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x + y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x / y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x ** y,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([promise,],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([getPromise(),],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([promises[0],],)
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([await promise])
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.any()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.any([promise])
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.race()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.race([promise])
+   ·               ────
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([new Promise(() => {})])
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:16]
+ 1 │ +await Promise.all([+1])
+   ·                ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:2:23]
+ 1 │ 
+ 2 │         await Promise.all([(x,y)])
+   ·                       ───
+ 3 │         [0].toString()
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([promise,],)
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:3:11]
+ 2 │         foo
+ 3 │         Promise.all([(0, promise),],)
+   ·                 ───
+ 4 │         
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:3:17]
+ 2 │         foo
+ 3 │         Promise.all([[array][0],],)
+   ·                 ───
+ 4 │         
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([promise]).then()
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([1]).then()
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([1.]).then()
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([.1]).then()
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([(0, promise)]).then()
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:25]
+ 1 │ const _ = () => Promise.all([ a ?? b ,],)
+   ·                         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([ {a} = 1 ,],)
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([ function () {} ,],)
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([ class {} ,],)
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([ new Foo ,],).then()
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([ new Foo ,],).toString
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:13]
+ 1 │ foo(Promise.all([promise]))
+   ·             ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([promise]).foo = 1
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([promise])[0] ||= 1
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([undefined]).then()
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([null]).then()
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.

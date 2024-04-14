@@ -227,6 +227,7 @@ mod unicorn {
     pub mod no_array_for_each;
     pub mod no_array_reduce;
     pub mod no_await_expression_member;
+    pub mod no_await_in_promise_methods;
     pub mod no_console_spaces;
     pub mod no_document_cookie;
     pub mod no_empty_file;
@@ -241,6 +242,7 @@ mod unicorn {
     pub mod no_null;
     pub mod no_object_as_default_parameter;
     pub mod no_process_exit;
+    pub mod no_single_promise_in_promise_methods;
     pub mod no_static_only_class;
     pub mod no_thenable;
     pub mod no_this_assignment;
@@ -516,7 +518,6 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_expect,
     jest::valid_title,
     unicorn::catch_error_name,
-    unicorn::prefer_node_protocol,
     unicorn::empty_brace_spaces,
     unicorn::error_message,
     unicorn::escape_case,
@@ -524,9 +525,10 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::filename_case,
     unicorn::new_for_builtins,
     unicorn::no_abusive_eslint_disable,
-    unicorn::no_array_reduce,
     unicorn::no_array_for_each,
+    unicorn::no_array_reduce,
     unicorn::no_await_expression_member,
+    unicorn::no_await_in_promise_methods,
     unicorn::no_console_spaces,
     unicorn::no_document_cookie,
     unicorn::no_empty_file,
@@ -541,6 +543,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_null,
     unicorn::no_object_as_default_parameter,
     unicorn::no_process_exit,
+    unicorn::no_single_promise_in_promise_methods,
     unicorn::no_static_only_class,
     unicorn::no_thenable,
     unicorn::no_this_assignment,
@@ -551,6 +554,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_useless_fallback_in_spread,
     unicorn::no_useless_length_check,
     unicorn::no_useless_promise_resolve_reject,
+    unicorn::no_useless_spread,
     unicorn::no_useless_switch_case,
     unicorn::no_zero_fractions,
     unicorn::number_literal_case,
@@ -562,6 +566,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_blob_reading_methods,
     unicorn::prefer_code_point,
     unicorn::prefer_date_now,
+    unicorn::prefer_node_protocol,
     unicorn::prefer_dom_node_append,
     unicorn::prefer_dom_node_dataset,
     unicorn::prefer_dom_node_remove,
@@ -573,7 +578,6 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_modern_dom_apis,
     unicorn::prefer_modern_math_apis,
     unicorn::prefer_native_coercion_functions,
-    unicorn::no_useless_spread,
     unicorn::prefer_number_properties,
     unicorn::prefer_optional_catch_binding,
     unicorn::prefer_prototype_methods,

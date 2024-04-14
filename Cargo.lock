@@ -1333,6 +1333,7 @@ dependencies = [
  "oxc_sourcemap",
  "oxc_span",
  "oxc_tasks_common",
+ "oxc_transformer",
  "phf",
  "pico-args",
  "project-root",
