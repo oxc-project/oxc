@@ -11,8 +11,6 @@ use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
 
-static URL_REGEXP: Lazy<Regex> = Lazy::new(|| Regex::new(r"[^:/?#]:\/\/[^?#]").unwrap());
-static TAB_REGEXP: Lazy<Regex> = Lazy::new(|| Regex::new(r"\t").unwrap());
 // the len of "//" "/*" "/*"
 static COMMENT_LENGTH: u32 = 2;
 
@@ -230,30 +228,29 @@ fn is_comment(
 
 impl MaxLen {
     fn compute_line_length(line: &str, tab_width: usize) -> usize {
-        let mut extra_character_count: isize = 0;
-        for cap in TAB_REGEXP.captures_iter(line) {
-            if let Some(match_) = cap.get(0) {
-                let start: isize = match_.start().try_into().unwrap_or(isize::MAX);
+        let mut extra_character_count: usize = 0;
+        let mut last_index: usize = 0; // Record the position after the previous segment
 
-                let total_offset = start + extra_character_count;
-                let tab_width_isize: isize = tab_width.try_into().unwrap_or(isize::MAX);
+        for segment in line.split('\t').enumerate() {
+            let (segment_index, segment) = segment;
+            let segment_length = segment.chars().count();
 
+            // Only add to last_index if not on the first segment (since split will not find a tab at the start of the string)
+            if segment_index > 0 {
+                let total_offset = last_index + extra_character_count;
                 let previous_tab_stop_offset =
-                    if tab_width != 0 { total_offset % tab_width_isize } else { 0 };
+                    if tab_width != 0 { total_offset % tab_width } else { 0 };
 
-                let space_count = tab_width_isize - previous_tab_stop_offset;
-                extra_character_count += space_count - 1; // -1 for the replaced tab
+                let space_count = tab_width - previous_tab_stop_offset;
+                extra_character_count += space_count; // Add the additional space count due to a tab
             }
+
+            // Update last_index to the current position after adding the segment length
+            last_index += segment_length;
         }
 
-        let line_count = line.chars().count();
-        let extra_characters: usize = if extra_character_count > 0 {
-            extra_character_count.try_into().unwrap_or(0)
-        } else {
-            0
-        };
-
-        line_count + extra_characters
+        // Calculate the full length of the line including extra spaces added due to tabs
+        last_index + extra_character_count
     }
 
     fn check_is_in_line(strings_or_literals: &[Span], line_span: Span) -> bool {
@@ -276,7 +273,9 @@ impl MaxLen {
             }
         }
 
-        if ignore_options.urls && URL_REGEXP.is_match(text_to_measure) {
+        if ignore_options.urls
+            && (text_to_measure.contains("http://") || text_to_measure.contains("https://"))
+        {
             return true;
         }
 
