@@ -148,6 +148,10 @@ impl<'a> AstBuilder<'a> {
         BooleanLiteral { span, value }
     }
 
+    pub fn string_literal(&self, span: Span, name: &str) -> StringLiteral<'a> {
+        StringLiteral::new(span, self.new_atom(name))
+    }
+
     pub fn bigint_literal(&self, span: Span, raw: Atom<'a>, base: BigintBase) -> BigIntLiteral<'a> {
         BigIntLiteral { span, raw, base }
     }

@@ -6,6 +6,9 @@ use serde::Deserialize;
 #[serde(rename_all = "camelCase")]
 pub struct ReactOptions {
     #[serde(skip)]
+    pub jsx_plugin: bool,
+
+    #[serde(skip)]
     pub display_name_plugin: bool,
 
     #[serde(skip)]
@@ -65,6 +68,7 @@ pub struct ReactOptions {
 impl Default for ReactOptions {
     fn default() -> Self {
         Self {
+            jsx_plugin: false,
             display_name_plugin: false,
             jsx_self_plugin: false,
             jsx_source_plugin: false,
@@ -100,10 +104,20 @@ fn default_for_pragma_frag() -> Cow<'static, str> {
 ///
 /// Auto imports the functions that JSX transpiles to.
 /// classic does not automatic import anything.
-#[derive(Debug, Default, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize)]
 pub enum ReactJsxRuntime {
     Classic,
     /// The default runtime is switched to automatic in Babel 8.
     #[default]
     Automatic,
+}
+
+impl ReactJsxRuntime {
+    pub fn is_classic(self) -> bool {
+        self == Self::Classic
+    }
+
+    pub fn is_automatic(self) -> bool {
+        self == Self::Automatic
+    }
 }

@@ -53,18 +53,28 @@ impl<'a> React<'a> {
 
 // Transforms
 impl<'a> React<'a> {
-    pub fn transform_expression(&self, expr: &mut Expression<'a>) {
+    pub fn transform_program_on_exit(&mut self, program: &mut Program<'a>) {
+        if self.options.jsx_plugin {
+            self.jsx.transform_program_on_exit(program);
+        }
+    }
+
+    pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
             Expression::AssignmentExpression(e) => {
                 if self.options.display_name_plugin {
                     self.display_name.transform_assignment_expression(e);
                 }
             }
-            Expression::JSXElement(_e) => {
-                // *expr = unimplemented!();
+            Expression::JSXElement(e) => {
+                if self.options.jsx_plugin {
+                    *expr = self.jsx.transform_jsx_element(e);
+                }
             }
-            Expression::JSXFragment(_e) => {
-                // *expr = unimplemented!();
+            Expression::JSXFragment(e) => {
+                if self.options.jsx_plugin {
+                    *expr = self.jsx.transform_jsx_fragment(e);
+                }
             }
             _ => {}
         }
