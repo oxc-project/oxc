@@ -133,7 +133,7 @@ pub struct Runtime {
     paths: FxHashSet<Box<Path>>,
     linter: Linter,
     resolver: Option<Resolver>,
-    type_checker: Option<Mutex<TSServerClient>>,
+    type_checker: Option<Arc<Mutex<TSServerClient>>>,
     module_map: ModuleMap,
     cache_state: CacheState,
 }
@@ -142,7 +142,8 @@ impl Runtime {
     fn new(linter: Linter, options: LintServiceOptions) -> Self {
         let tsconfig = options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json")));
         let resolver = linter.options().import_plugin.then(|| Self::get_resolver(tsconfig));
-        let type_checker = linter.options.type_info.then(|| Mutex::new(Self::get_type_checker()));
+        let type_checker =
+            linter.options.type_info.then(|| Arc::new(Mutex::new(Self::get_type_checker())));
         Self {
             cwd: options.cwd,
             paths: options.paths.iter().cloned().collect(),
@@ -366,9 +367,11 @@ impl Runtime {
                 .unwrap();
         }
 
-        // TODO: Make type_checker part of lint context
-        let lint_ctx =
-            LintContext::new(path.to_path_buf().into_boxed_path(), &Rc::new(semantic_ret.semantic));
+        let lint_ctx = LintContext::new(
+            path.to_path_buf().into_boxed_path(),
+            &Rc::new(semantic_ret.semantic),
+            self.type_checker.clone(),
+        );
         let result = self.linter.run(lint_ctx);
 
         if let Some(ref type_checker) = self.type_checker {

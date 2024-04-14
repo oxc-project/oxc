@@ -190,7 +190,8 @@ impl Oxc {
         // Only lint if there are not syntax errors
         if run_options.lint() && self.diagnostics.borrow().is_empty() {
             let semantic = Rc::new(semantic_ret.semantic);
-            let lint_ctx = LintContext::new(path.into_boxed_path(), &semantic);
+            // TODO: create type checker
+            let lint_ctx = LintContext::new(path.into_boxed_path(), &semantic, None);
             let linter_ret = Linter::default().run(lint_ctx);
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);

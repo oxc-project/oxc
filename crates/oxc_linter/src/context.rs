@@ -1,4 +1,9 @@
-use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
+use std::{
+    cell::RefCell,
+    path::Path,
+    rc::Rc,
+    sync::{Arc, Mutex},
+};
 
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::Error;
@@ -9,6 +14,7 @@ use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{Fix, Message},
     javascript_globals::GLOBALS,
+    typecheck::TSServerClient,
     ESLintEnv, ESLintSettings,
 };
 
@@ -29,10 +35,16 @@ pub struct LintContext<'a> {
     settings: Arc<ESLintSettings>,
 
     env: Arc<ESLintEnv>,
+
+    type_checker: Option<Arc<Mutex<TSServerClient>>>,
 }
 
 impl<'a> LintContext<'a> {
-    pub fn new(file_path: Box<Path>, semantic: &Rc<Semantic<'a>>) -> Self {
+    pub fn new(
+        file_path: Box<Path>,
+        semantic: &Rc<Semantic<'a>>,
+        type_checker: Option<Arc<Mutex<TSServerClient>>>,
+    ) -> Self {
         let disable_directives =
             DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias()).build();
         Self {
@@ -44,6 +56,7 @@ impl<'a> LintContext<'a> {
             file_path,
             settings: Arc::new(ESLintSettings::default()),
             env: Arc::new(ESLintEnv::default()),
+            type_checker,
         }
     }
 
@@ -107,6 +120,15 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn with_rule_name(&mut self, name: &'static str) {
         self.current_rule_name = name;
+    }
+
+    pub fn use_type_checker<F, R>(&self, run: F) -> R
+    where
+        F: FnOnce(&mut TSServerClient) -> R,
+    {
+        // Unwrap is safe here, since rules requiring type checker will not run unless type checker is created
+        let mut type_checker = self.type_checker.as_ref().unwrap().lock().unwrap();
+        run(&mut type_checker)
     }
 
     /* Diagnostics */
