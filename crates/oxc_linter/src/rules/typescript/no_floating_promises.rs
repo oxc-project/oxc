@@ -1,5 +1,7 @@
 use oxc_ast::{
-    ast::{CallExpression, ChainElement, Expression, ExpressionStatement},
+    ast::{
+        Argument, CallExpression, ChainElement, Expression, ExpressionStatement, MemberExpression,
+    },
     AstKind,
 };
 use oxc_diagnostics::{
@@ -10,7 +12,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, typecheck::requests::NodeRequest, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, or end with a call to .then with a rejection handler.")]
@@ -86,11 +88,50 @@ impl Rule for NoFloatingPromises {
     }
 }
 
+#[derive(Debug)]
+enum PromiseState {
+    Handled,
+    Unhandled,
+    UnhandledPromiseArray,
+    UnhandledNonFunctionHandler,
+}
+
+impl PromiseState {
+    fn is_unhandled(&self) -> bool {
+        match self {
+            PromiseState::Handled => false,
+            _ => true,
+        }
+    }
+
+    fn promise_array(&self) -> bool {
+        match self {
+            PromiseState::UnhandledPromiseArray => true,
+            _ => false,
+        }
+    }
+
+    fn non_function_handler(&self) -> bool {
+        match self {
+            PromiseState::UnhandledNonFunctionHandler => true,
+            _ => false,
+        }
+    }
+}
+
 impl NoFloatingPromises {
-    fn is_unhandled_promise<'a>(&self, node: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
+    fn is_unhandled_promise<'a>(
+        &self,
+        node: &Expression<'a>,
+        ctx: &LintContext<'a>,
+    ) -> PromiseState {
         if let Expression::SequenceExpression(expr) = node {
-            // TODO: needs to return first unhandled
-            return expr.expressions.iter().all(|e| !self.is_unhandled_promise(e, ctx));
+            let unhandled = expr
+                .expressions
+                .iter()
+                .map(|e| self.is_unhandled_promise(e, ctx))
+                .find(|r| r.is_unhandled());
+            return unhandled.unwrap_or(PromiseState::Handled);
         }
 
         if !self.ignore_void {
@@ -101,25 +142,31 @@ impl NoFloatingPromises {
             }
         }
 
-        // TODO
-        // if isPromiseArray(node, ctx) {
-        //     return true; // { promiseArray: true };
-        // }
+        let path = ctx.file_path().to_string_lossy();
+        let request = NodeRequest { file: path.as_ref(), span: node.get_span().into() };
+        // TODO: do something about unwrap
+        let is_promise_array =
+            ctx.use_type_checker(|type_checker| type_checker.is_promise_array(&request)).unwrap();
+        if is_promise_array {
+            return PromiseState::UnhandledPromiseArray;
+        }
 
-        // TODO
-        // if !isPromiseLike(node, ctx) {
-        //     return false;
-        // }
+        // TODO: do something about unwrap
+        let is_promise_like =
+            ctx.use_type_checker(|type_checker| type_checker.is_promise_like(&request)).unwrap();
+        if !is_promise_like {
+            return PromiseState::Handled;
+        }
 
         match node {
-            Expression::CallExpression(expr) => is_unhandled_call_expression(expr),
+            Expression::CallExpression(expr) => self.is_unhandled_call_expression(expr, ctx),
             Expression::ConditionalExpression(_) => todo!(),
             Expression::MemberExpression(_)
             | Expression::Identifier(_)
             | Expression::NewExpression(_) => todo!(),
             Expression::LogicalExpression(_) => todo!(),
 
-            _ => false,
+            _ => PromiseState::Handled,
         }
     }
 
@@ -127,21 +174,59 @@ impl NoFloatingPromises {
         &self,
         node: &ChainElement<'a>,
         ctx: &LintContext<'a>,
-    ) -> bool {
-        // TODO
-        // if isPromiseArray(node, ctx) {
-        //     return true; // { promiseArray: true };
-        // }
+    ) -> PromiseState {
+        let path = ctx.file_path().to_string_lossy();
+        let request = NodeRequest { file: path.as_ref(), span: node.get_span().into() };
+        // TODO: do something about unwrap
+        let is_promise_array =
+            ctx.use_type_checker(|type_checker| type_checker.is_promise_array(&request)).unwrap();
+        if is_promise_array {
+            return PromiseState::UnhandledPromiseArray;
+        }
 
-        // TODO
-        // if !isPromiseLike(node, ctx) {
-        //     return false;
-        // }
+        // TODO: do something about unwrap
+        let is_promise_like =
+            ctx.use_type_checker(|type_checker| type_checker.is_promise_like(&request)).unwrap();
+        if !is_promise_like {
+            return PromiseState::Handled;
+        }
 
         match node {
-            ChainElement::CallExpression(expr) => is_unhandled_call_expression(expr),
+            ChainElement::CallExpression(expr) => self.is_unhandled_call_expression(expr, ctx),
             ChainElement::MemberExpression(_) => todo!(),
         }
+    }
+
+    fn is_unhandled_call_expression<'a>(
+        &self,
+        node: &CallExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) -> PromiseState {
+        // If the outer expression is a call, a `.catch()` or `.then()` with
+        // rejection handler handles the promise.
+
+        if let Some(catch) = get_rejection_handler_from_catch_call(node) {
+            if is_valid_rejection_handler(catch, ctx) {
+                return PromiseState::Handled;
+            }
+            return PromiseState::UnhandledNonFunctionHandler;
+        }
+
+        if let Some(then) = get_rejection_handler_from_then_call(node) {
+            if is_valid_rejection_handler(then, ctx) {
+                return PromiseState::Handled;
+            }
+            return PromiseState::UnhandledNonFunctionHandler;
+        }
+
+        // `x.finally()` is transparent to resolution of the promise, so check `x`.
+        // ("object" in this context is the `x` in `x.finally()`)
+        if let Some(finally) = get_object_from_finally_call(node) {
+            return self.is_unhandled_promise(finally, ctx);
+        }
+
+        // All other cases are unhandled.
+        PromiseState::Unhandled
     }
 }
 
@@ -150,8 +235,76 @@ fn is_async_iife<'a>(node: &ExpressionStatement<'a>) -> bool {
     expr.callee.is_function()
 }
 
-fn is_unhandled_call_expression<'a>(node: &CallExpression<'a>) -> bool {
-    todo!()
+fn get_rejection_handler_from_catch_call<'a, 'b>(
+    node: &'b CallExpression<'a>,
+) -> Option<&'b Argument<'a>> {
+    if let Expression::MemberExpression(callee) = &node.callee {
+        match &callee.0 {
+            MemberExpression::ComputedMemberExpression(expr)
+                if expr.expression.is_specific_string_literal("catch") =>
+            {
+                node.arguments.first()
+            }
+            MemberExpression::StaticMemberExpression(expr) if expr.property.name == "catch" => {
+                node.arguments.first()
+            }
+            _ => None,
+        }
+    } else {
+        None
+    }
+}
+
+fn get_rejection_handler_from_then_call<'a, 'b>(
+    node: &'b CallExpression<'a>,
+) -> Option<&'b Argument<'a>> {
+    if let Expression::MemberExpression(callee) = &node.callee {
+        match &callee.0 {
+            MemberExpression::ComputedMemberExpression(expr)
+                if expr.expression.is_specific_string_literal("then") =>
+            {
+                node.arguments.get(2)
+            }
+            MemberExpression::StaticMemberExpression(expr) if expr.property.name == "then" => {
+                node.arguments.get(2)
+            }
+            _ => None,
+        }
+    } else {
+        None
+    }
+}
+
+fn get_object_from_finally_call<'a, 'b>(
+    node: &'b CallExpression<'a>,
+) -> Option<&'b Expression<'a>> {
+    if let Expression::MemberExpression(callee) = &node.callee {
+        match &callee.0 {
+            MemberExpression::ComputedMemberExpression(expr)
+                if expr.expression.is_specific_string_literal("finally") =>
+            {
+                Some(callee.object())
+            }
+            MemberExpression::StaticMemberExpression(expr) if expr.property.name == "finally" => {
+                Some(callee.object())
+            }
+            _ => None,
+        }
+    } else {
+        None
+    }
+}
+
+fn is_valid_rejection_handler<'a>(node: &Argument<'a>, ctx: &LintContext<'a>) -> bool {
+    let path = ctx.file_path().to_string_lossy();
+    // TODO: do something about unwrap
+    ctx.use_type_checker(|type_checker| {
+        type_checker.is_valid_rejection_handler(&NodeRequest {
+            file: path.as_ref(),
+            span: node.get_span().into(),
+        })
+    })
+    .unwrap()
 }
 
 #[test]
