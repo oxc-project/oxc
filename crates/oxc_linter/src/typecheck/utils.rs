@@ -46,7 +46,7 @@ where
                             msg.truncate(length);
 
                             let mut deserializer = serde_json::Deserializer::from_slice(&msg);
-                            let response = Response::<'_, T>::deserialize(&mut deserializer)?;
+                            let response = Response::<T>::deserialize(&mut deserializer)?;
                             return Result::<T, ProtocolError>::from(response);
                         }
                         _ => return Err(ProtocolError::UnexpectedCharacter),
@@ -128,5 +128,18 @@ mod test {
 
         let result: StatusResponse = read_message(reader).unwrap();
         assert_eq!(result, StatusResponse { version: "5.3.3".into() });
+    }
+
+    #[test]
+    fn given_error_response_then_deserializes_into_error() {
+        let msg = r#"{"seq":0,"type":"response","command":"status","request_seq":0,"success":false,"message":"Error processing request.\n at bar (foo.js:123:45)"}"#;
+        let str = format!("{}{}", ["Content-Length: 142", "", msg].join("\r\n"), EOL_STR);
+        let mut buf = str.as_bytes();
+        let result = read_message::<StatusResponse>(&mut buf).unwrap_err();
+        if let ProtocolError::CommandFailed(error) = result {
+            assert_eq!(error, "Error processing request.\n at bar (foo.js:123:45)");
+        } else {
+            panic!("{:#?}", result)
+        }
     }
 }

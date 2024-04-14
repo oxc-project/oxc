@@ -3,25 +3,25 @@ use serde::Deserialize;
 use super::ProtocolError;
 
 #[derive(Debug, Deserialize)]
-pub(super) struct Response<'a, T> {
+pub(super) struct Response<T> {
     // pub seq: usize,
     // #[serde(rename = "type")]
     // pub kind: &'a str,
     // pub command: &'a str,
     // pub request_seq: usize,
     pub success: bool,
+    #[serde(default = "Option::default")]
     pub body: Option<T>,
-    pub message: Option<&'a str>,
+    #[serde(default = "Option::default")]
+    pub message: Option<String>,
 }
 
-impl<'a, T> From<Response<'a, T>> for Result<T, ProtocolError> {
-    fn from(value: Response<'a, T>) -> Self {
+impl<'a, T> From<Response<T>> for Result<T, ProtocolError> {
+    fn from(value: Response<T>) -> Self {
         if value.success {
             value.body.ok_or_else(|| ProtocolError::ResultMissing)
         } else {
-            Self::Err(ProtocolError::CommandFailed(
-                value.message.unwrap_or("unknown error").to_owned(),
-            ))
+            Self::Err(ProtocolError::CommandFailed(value.message.unwrap_or("unknown error".into())))
         }
     }
 }
