@@ -4,9 +4,9 @@ use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, AssignmentTarget,
         BinaryExpression, BindingPattern, BindingPatternKind, CallExpression, Class, ClassBody,
-        ClassElement, ComputedMemberExpression, Declaration, Expression, FormalParameter, Function,
-        IdentifierReference, MemberExpression, ModuleDeclaration, NewExpression,
-        ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey,
+        ClassElement, ComputedMemberExpression, ConditionalExpression, Declaration, Expression,
+        FormalParameter, Function, IdentifierReference, MemberExpression, ModuleDeclaration,
+        NewExpression, ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey,
         SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression,
         VariableDeclarator,
     },
@@ -100,6 +100,24 @@ impl<'a> ListenerMap for Statement<'a> {
             }
             Self::BlockStatement(stmt) => {
                 stmt.body.iter().for_each(|stmt| stmt.report_effects(options));
+            }
+            Self::IfStatement(stmt) => {
+                let test_result = stmt.test.get_value_and_report_effects(options);
+
+                if let Some(falsy) = test_result.get_falsy_value() {
+                    if falsy {
+                        if let Some(alternate) = &stmt.alternate {
+                            alternate.report_effects(options);
+                        }
+                    } else {
+                        stmt.consequent.report_effects(options);
+                    }
+                } else {
+                    stmt.consequent.report_effects(options);
+                    if let Some(alternate) = &stmt.alternate {
+                        alternate.report_effects(options);
+                    }
+                }
             }
             _ => {}
         }
@@ -319,6 +337,9 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::ClassExpression(expr) => {
                 expr.report_effects(options);
             }
+            Self::ConditionalExpression(expr) => {
+                expr.get_value_and_report_effects(options);
+            }
             Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
             | Self::Identifier(_)
@@ -373,6 +394,7 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::ClassExpression(expr) => {
                 expr.report_effects_when_called(options);
             }
+            Self::ConditionalExpression(expr) => expr.report_effects_when_called(options),
             _ => {
                 // Default behavior
                 options.ctx.diagnostic(NoSideEffectsDiagnostic::Call(self.span()));
@@ -385,6 +407,8 @@ impl<'a> ListenerMap for Expression<'a> {
             | Self::StringLiteral(_)
             | Self::NumericLiteral(_)
             | Self::TemplateLiteral(_) => Value::new(self),
+            Self::BinaryExpression(expr) => expr.get_value_and_report_effects(options),
+            Self::ConditionalExpression(expr) => expr.get_value_and_report_effects(options),
             _ => {
                 self.report_effects(options);
                 Value::Unknown
@@ -405,6 +429,38 @@ fn defined_custom_report_effects_when_called(expr: &Expression) -> bool {
             | Expression::Identifier(_)
             | Expression::MemberExpression(_)
     )
+}
+
+impl<'a> ListenerMap for ConditionalExpression<'a> {
+    fn get_value_and_report_effects(&self, options: &NodeListenerOptions) -> Value {
+        let test_result = self.test.get_value_and_report_effects(options);
+
+        if let Some(falsy) = test_result.get_falsy_value() {
+            if falsy {
+                self.alternate.get_value_and_report_effects(options)
+            } else {
+                self.consequent.get_value_and_report_effects(options)
+            }
+        } else {
+            self.consequent.report_effects(options);
+            self.alternate.report_effects(options);
+            test_result
+        }
+    }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        let test_result = self.test.get_value_and_report_effects(options);
+
+        if let Some(falsy) = test_result.get_falsy_value() {
+            if falsy {
+                self.alternate.report_effects_when_called(options);
+            } else {
+                self.consequent.report_effects_when_called(options);
+            }
+        } else {
+            self.consequent.report_effects_when_called(options);
+            self.alternate.report_effects_when_called(options);
+        }
+    }
 }
 
 impl<'a> ListenerMap for BinaryExpression<'a> {

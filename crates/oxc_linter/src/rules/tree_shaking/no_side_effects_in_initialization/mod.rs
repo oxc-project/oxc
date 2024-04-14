@@ -158,19 +158,19 @@ fn test() {
         "class x {y}",
         "class x {y = 1}",
         "class x {y = ext()}",
-        // // ConditionalExpression
-        // "const x = ext ? 1 : 2",
-        // "const x = true ? 1 : ext()",
-        // "const x = false ? ext() : 2",
-        // "if (true ? false : true) ext()",
-        // "ext ? 1 : ext.x",
-        // "ext ? ext.x : 1",
+        // ConditionalExpression
+        "const x = ext ? 1 : 2",
+        "const x = true ? 1 : ext()",
+        "const x = false ? ext() : 2",
+        "if (true ? false : true) ext()",
+        "ext ? 1 : ext.x",
+        "ext ? ext.x : 1",
         // // ConditionalExpression when called
-        // "const x = ()=>{}, y = ()=>{};(ext ? x : y)()",
-        // "const x = ()=>{}; (true ? x : ext)()",
-        // "const x = ()=>{}; (false ? ext : x)()",
-        // // ContinueStatement
-        // "while(true){continue}",
+        "const x = ()=>{}, y = ()=>{};(ext ? x : y)()",
+        "const x = ()=>{}; (true ? x : ext)()",
+        "const x = ()=>{}; (false ? ext : x)()",
+        // ContinueStatement
+        "while(true){continue}",
         // // DoWhileStatement
         // "do {} while(true)",
         // "do {} while(ext > 0)",
@@ -410,23 +410,23 @@ fn test() {
         "try {} catch (error) {ext()}",
         // TODO: check global function `ext` call when called `x()` in no strict mode
         // "var x=()=>{}; try {} catch (error) {var x=ext}; x()",
-        // // ClassBody
+        // ClassBody
         "class x {[ext()](){}}",
-        // // ClassBody when called
+        // ClassBody when called
         "class x {constructor(){ext()}}; new x()",
         "class x {constructor(){ext()}}; const y = new x()",
         "class x extends ext {}; const y =  new x()",
         "class y {constructor(){ext()}}; class x extends y {}; const z =  new x()",
         "class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; const z = new x()",
         "class y{}; class x extends y{constructor(){super()}}; const z = new x()",
-        // // ClassDeclaration
+        // ClassDeclaration
         "class x extends ext() {}",
         "class x {[ext()](){}}",
-        // // ClassDeclaration when called
+        // ClassDeclaration when called
         "class x {constructor(){ext()}}; new x()",
         "class x {constructor(){ext()}}; const y = new x()",
         "class x extends ext {}; const y = new x()",
-        // // ClassExpression
+        // ClassExpression
         "const x = class extends ext() {}",
         "const x = class {[ext()](){}}",
         // ClassExpression when called
@@ -437,11 +437,11 @@ fn test() {
         "class x {[ext()] = 1}",
         // ClassProperty when called
         "class x {y = ext()}; new x()",
-        // // ConditionalExpression
-        // "const x = ext() ? 1 : 2",
-        // "const x = ext ? ext() : 2",
-        // "const x = ext ? 1 : ext()",
-        // "if (false ? false : true) ext()",
+        // ConditionalExpression
+        "const x = ext() ? 1 : 2",
+        "const x = ext ? ext() : 2",
+        "const x = ext ? 1 : ext()",
+        "if (false ? false : true) ext()",
         // // ConditionalExpression when called
         // "const x = ()=>{}; (true ? ext : x)()",
         // "const x = ()=>{}; (false ? x : ext)()",
