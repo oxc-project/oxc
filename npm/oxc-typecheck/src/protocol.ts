@@ -1,5 +1,7 @@
 // Types matching tsserver: https://github.com/microsoft/TypeScript/blob/25a708cf633c6c8a66c86ca9e664c31bd8d145d0/src/server/protocol.ts#L182-L276
 
+import type ts from 'typescript';
+
 export interface Request {
   command: string;
   seq: number;
@@ -46,16 +48,6 @@ export interface NodeRequest extends Request {
   command: 'node';
   arguments: {
     file: string;
-    line: number;
-    col: number;
-    kind: string;
-  };
-}
-
-export interface LocationRequest extends Request {
-  arguments: {
-    file: string;
-    line: number;
-    col: number;
+    span: ts.ReadonlyTextRange;
   };
 }

@@ -1,16 +1,8 @@
 import * as noFloatingPromises from './rules/no-floating-promises.js';
-import {
-  FileRequest,
-  LocationRequest,
-  NodeRequest,
-  OpenRequest,
-} from './protocol.js';
+import { FileRequest, NodeRequest, OpenRequest } from './protocol.js';
 import { service } from './typecheck/createProjectService.js';
 import { useProgramFromProjectService } from './typecheck/useProgramFromProjectService.js';
-import {
-  getNodeAtPosition,
-  getParentOfKind,
-} from './typecheck/getNodeAtPosition.js';
+import { getNodeAtPosition } from './typecheck/getNodeAtPosition.js';
 import ts from 'typescript';
 
 export const handlers: Record<string, (req: any) => Result> = {
@@ -29,17 +21,13 @@ export const handlers: Record<string, (req: any) => Result> = {
     service.closeClientFile(file);
     return notRequired();
   },
-  getNode: ({ arguments: { file, line, col, kind } }: NodeRequest) => {
+  getNode: ({ arguments: { file, span } }: NodeRequest) => {
     const program = useProgramFromProjectService(service, file);
     if (!program) {
       throw new Error('failed to create TS program');
     }
 
-    const innerNode = getNodeAtPosition(program.ast, line, col);
-    const node = getParentOfKind(
-      innerNode,
-      ts.SyntaxKind[kind as keyof typeof ts.SyntaxKind],
-    );
+    const node = getNodeAtPosition(program.ast, span);
 
     const checker = program.program.getTypeChecker();
     const type = checker.getTypeAtLocation(node);
@@ -52,30 +40,28 @@ export const handlers: Record<string, (req: any) => Result> = {
     });
   },
   'noFloatingPromises::isPromiseArray': ({
-    arguments: { file, line, col },
-  }: LocationRequest) => {
+    arguments: { file, span },
+  }: NodeRequest) => {
     const program = useProgramFromProjectService(service, file);
     if (!program) {
       throw new Error('failed to create TS program');
     }
 
-    const innerNode = getNodeAtPosition(program.ast, line, col);
-    const node = getParentOfKind(innerNode, ts.SyntaxKind.CallExpression);
+    const node = getNodeAtPosition(program.ast, span);
     const checker = program.program.getTypeChecker();
 
     const result = noFloatingPromises.isPromiseArray(checker, node);
     return requiredResponse({ result });
   },
   'noFloatingPromises::isPromiseLike': ({
-    arguments: { file, line, col },
-  }: LocationRequest) => {
+    arguments: { file, span },
+  }: NodeRequest) => {
     const program = useProgramFromProjectService(service, file);
     if (!program) {
       throw new Error('failed to create TS program');
     }
 
-    const innerNode = getNodeAtPosition(program.ast, line, col);
-    const node = getParentOfKind(innerNode, ts.SyntaxKind.CallExpression);
+    const node = getNodeAtPosition(program.ast, span);
     const checker = program.program.getTypeChecker();
 
     const result = noFloatingPromises.isPromiseLike(checker, node);

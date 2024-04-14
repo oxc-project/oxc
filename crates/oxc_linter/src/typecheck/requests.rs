@@ -18,17 +18,20 @@ pub struct FileRequest<'a> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct NodeRequest<'a> {
-    pub file: &'a str,
-    pub line: usize,
-    pub col: usize,
-    pub kind: &'a str,
+pub struct Span {
+    pub pos: u32,
+    pub end: u32,
+}
+
+impl From<&oxc_span::Span> for Span {
+    fn from(value: &oxc_span::Span) -> Self {
+        Self { pos: value.start, end: value.end }
+    }
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct LocationRequest<'a> {
+pub struct NodeRequest<'a> {
     pub file: &'a str,
-    pub line: usize,
-    pub col: usize,
+    pub span: Span,
 }

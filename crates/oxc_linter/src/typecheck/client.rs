@@ -55,7 +55,7 @@ impl<W: std::io::Write, R: std::io::Read> TSServerClient<W, R> {
         Ok(response)
     }
 
-    pub fn is_promise_array(&mut self, opts: LocationRequest<'_>) -> Result<String, ProtocolError> {
+    pub fn is_promise_array(&mut self, opts: NodeRequest<'_>) -> Result<String, ProtocolError> {
         let args = serde_json::to_string(&opts)?;
         self.send_command("noFloatingPromises::isPromiseArray", Some(args.as_str()))?;
 
@@ -63,7 +63,7 @@ impl<W: std::io::Write, R: std::io::Read> TSServerClient<W, R> {
         Ok(response)
     }
 
-    pub fn is_promise_like(&mut self, opts: LocationRequest<'_>) -> Result<String, ProtocolError> {
+    pub fn is_promise_like(&mut self, opts: NodeRequest<'_>) -> Result<String, ProtocolError> {
         let args = serde_json::to_string(&opts)?;
         self.send_command("noFloatingPromises::isPromiseLike", Some(args.as_str()))?;
 

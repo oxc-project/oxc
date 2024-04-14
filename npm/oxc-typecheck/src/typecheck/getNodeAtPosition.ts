@@ -6,18 +6,10 @@ import { forEach, hasJSDocNodes } from './utils.js';
 // TODO: consider obtaining array of child indexes directly from AST in Rust and just doing getChildAt(idx) instead
 export function getNodeAtPosition(
   sourceFile: ts.SourceFile,
-  line: number,
-  character: number,
+  { pos, end }: ts.ReadonlyTextRange,
 ): ts.Node {
-  // TODO: mapping line to position can be done in Rust
-  const position = sourceFile.getPositionOfLineAndCharacter(line, character);
-
   const getContainingChild = (child: ts.Node): ts.Node | undefined => {
-    if (
-      child.pos <= position &&
-      (position < child.end ||
-        (position === child.end && child.kind === ts.SyntaxKind.EndOfFileToken))
-    ) {
+    if (child.pos <= pos && end <= child.end) {
       return child;
     }
 
@@ -36,13 +28,4 @@ export function getNodeAtPosition(
     }
     current = child;
   }
-}
-
-export function getParentOfKind(node: ts.Node, kind: ts.SyntaxKind): ts.Node {
-  let current = node;
-  while (current.kind !== kind && current.parent) {
-    current = current.parent;
-  }
-
-  return current;
 }
