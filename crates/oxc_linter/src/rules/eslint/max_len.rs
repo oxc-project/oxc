@@ -1,13 +1,11 @@
 use once_cell::sync::Lazy;
-use oxc_allocator::Allocator;
 use oxc_ast::{AstKind, CommentKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_parser::Parser;
-use oxc_span::{SourceType, Span};
+use oxc_span::Span;
 use regex::Regex;
 use serde_json::Value;
 
@@ -17,6 +15,14 @@ static URL_REGEXP: Lazy<Regex> = Lazy::new(|| Regex::new(r"[^:/?#]:\/\/[^?#]").u
 static TAB_REGEXP: Lazy<Regex> = Lazy::new(|| Regex::new(r"\t").unwrap());
 // the len of "//" "/*" "/*"
 static COMMENT_LENGTH: u32 = 2;
+
+struct IgnoreOptions {
+    pattern_re: Option<Regex>,
+    urls: bool,
+    strings: bool,
+    template_literals: bool,
+    reg_exp_literals: bool,
+}
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("This line has a length of {current_length:?}. Maximum allowed is {max:?}.")]
@@ -33,14 +39,7 @@ struct MaxLenDiagnostic {
 
 impl MaxLenDiagnostic {
     fn new(current_length: usize, max: usize, span: Span) -> Self {
-        Self {
-            current_length,
-            max,
-            span: Span::new(
-                u32::try_from(span.start).unwrap_or(u32::MAX),
-                u32::try_from(span.end).unwrap_or(u32::MAX),
-            ),
-        }
+        Self { current_length, max, span: Span::new(span.start, span.end) }
     }
 }
 
@@ -61,14 +60,7 @@ struct MaxCommentLenDiagnostic {
 
 impl MaxCommentLenDiagnostic {
     fn new(current_length: usize, max_comment: usize, span: Span) -> Self {
-        Self {
-            current_length,
-            max_comment,
-            span: Span::new(
-                u32::try_from(span.start).unwrap_or(u32::MAX),
-                u32::try_from(span.end).unwrap_or(u32::MAX),
-            ),
-        }
+        Self { current_length, max_comment, span: Span::new(span.start, span.end) }
     }
 }
 
@@ -103,7 +95,7 @@ impl Default for MaxLenConfig {
             code: 80,     // the default max length
             tab_width: 4, // the default tab width
             comments: 0,
-            ignore_pattern: "".to_string(),
+            ignore_pattern: String::new(),
             ignore_comments: false,
             ignore_trailing_comments: false,
             ignore_urls: false,
@@ -148,7 +140,7 @@ impl LiteralSpans {
         Self { strings: Vec::new(), template_literals: Vec::new(), reg_exp_literals: Vec::new() }
     }
 
-    fn collect_from_ctx<'a>(&mut self, ctx: &'a LintContext<'_>) {
+    fn collect_from_ctx(&mut self, ctx: &LintContext) {
         for node in ctx.semantic().nodes().iter() {
             match node.kind() {
                 AstKind::StringLiteral(node) => self.strings.push(node.span),
@@ -160,89 +152,111 @@ impl LiteralSpans {
     }
 }
 
-impl MaxLen {
-    // This method checks if a comment occurs in a line.
-    fn is_comment(
-        &self,
-        line_index: usize,
-        source_text: &str,
-        comments: &[(CommentKind, Span)],
-        line_span: &Span,
-    ) -> (bool, bool, bool) {
-        let mut has_comment = false;
-        let mut is_trailing = false;
-        let mut is_full_line_comment = false;
+// Find the line index of a given index
+fn find_line_index(index: usize, line_starts: &[usize]) -> usize {
+    line_starts.binary_search(&index).unwrap_or_else(|x| x - 1)
+}
 
-        for &(kind, span) in comments.iter() {
-            let comment_start_line = source_text[..span.start as usize].matches('\n').count();
-            let comment_end_line = source_text[..span.end as usize].matches('\n').count();
+fn is_comment(
+    line_index: usize,
+    source_text: &str,
+    line_starts: &[usize],
+    comments: &[(CommentKind, Span)],
+    line_span: Span,
+) -> (bool, bool, bool) {
+    let mut has_comment = false;
+    let mut is_trailing = false;
+    let mut is_full_line_comment = false;
 
-            match kind {
-                CommentKind::SingleLine if comment_start_line == line_index => {
-                    has_comment = true;
-                    // The start point of a SingleLine comment doesn't include the "//"
-                    // so we need to move 2 characters back when calculating.
-                    is_trailing = span.start - COMMENT_LENGTH > line_span.start
-                        && !source_text
-                            [line_span.start as usize..(span.start - COMMENT_LENGTH) as usize]
-                            .trim()
-                            .is_empty();
+    for &(kind, span) in comments {
+        let comment_start_line = find_line_index(span.start as usize, line_starts);
+        let comment_end_line = find_line_index(span.end as usize, line_starts);
 
-                    is_full_line_comment = !is_trailing;
+        match kind {
+            CommentKind::SingleLine if comment_start_line == line_index => {
+                has_comment = true;
+
+                // The start point of a SingleLine comment doesn't include the "//" or "/*"
+                // so we need to move 2 characters back when calculating.
+                let is_first_token_on_line = source_text
+                    [line_span.start as usize..(span.start - COMMENT_LENGTH) as usize]
+                    .trim()
+                    .is_empty();
+
+                if is_first_token_on_line {
+                    is_full_line_comment = true;
+                } else {
+                    is_trailing = true;
                 }
-                CommentKind::MultiLine
-                    if (comment_start_line <= line_index && comment_end_line >= line_index) =>
-                {
-                    has_comment = true;
-                    if comment_start_line == line_index {
-                        // Check if the multi-line comment ends on the current line
-                        // need to remove the len of "/*"
-                        is_trailing = span.start - COMMENT_LENGTH > line_span.start
-                            && !source_text
-                                [line_span.start as usize..(span.start - COMMENT_LENGTH) as usize]
-                                .trim()
-                                .is_empty();
+            }
+            CommentKind::MultiLine
+                if (comment_start_line <= line_index && comment_end_line >= line_index) =>
+            {
+                has_comment = true;
+                if comment_start_line == line_index {
+                    // The start point of a SingleLine comment doesn't include the "//" or "/*"
+                    // so we need to move 2 characters back when calculating.
+                    let is_first_token_on_line = source_text
+                        [line_span.start as usize..(span.start - COMMENT_LENGTH) as usize]
+                        .trim()
+                        .is_empty();
 
-                        is_full_line_comment = !is_trailing;
+                    // add the length of '/*'
+                    if is_first_token_on_line && line_span.end <= span.end + COMMENT_LENGTH {
+                        is_full_line_comment = true;
+                    } else if line_span.end <= span.end + COMMENT_LENGTH {
+                        is_trailing = true;
                     }
+                }
 
-                    if comment_end_line == line_index {
-                        // the end of a multi-line comment
-                        if line_span.end == span.end + COMMENT_LENGTH {
-                            is_full_line_comment = true;
-                            is_trailing = false;
-                        }
-                    }
-
-                    // the middle of a multi-line comment
-                    if comment_start_line < line_index && comment_end_line > line_index {
+                if comment_end_line == line_index {
+                    // the end of a multi-line comment
+                    if line_span.end == span.end + COMMENT_LENGTH {
                         is_full_line_comment = true;
                     }
                 }
-                _ => (),
-            }
-        }
 
-        (has_comment, is_trailing, is_full_line_comment)
+                // the middle of a multi-line comment
+                if comment_start_line < line_index && comment_end_line > line_index {
+                    is_full_line_comment = true;
+                }
+            }
+            _ => (),
+        }
     }
 
+    (has_comment, is_trailing, is_full_line_comment)
+}
+
+impl MaxLen {
     fn compute_line_length(line: &str, tab_width: usize) -> usize {
         let mut extra_character_count: isize = 0;
         for cap in TAB_REGEXP.captures_iter(line) {
             if let Some(match_) = cap.get(0) {
-                let total_offset = match_.start() as isize + extra_character_count;
-                let previous_tab_stop_offset =
-                    if tab_width != 0 { total_offset % tab_width as isize } else { 0 };
+                let start: isize = match_.start().try_into().unwrap_or(isize::MAX);
 
-                let space_count = tab_width as isize - previous_tab_stop_offset;
+                let total_offset = start + extra_character_count;
+                let tab_width_isize: isize = tab_width.try_into().unwrap_or(isize::MAX);
+
+                let previous_tab_stop_offset =
+                    if tab_width != 0 { total_offset % tab_width_isize } else { 0 };
+
+                let space_count = tab_width_isize - previous_tab_stop_offset;
                 extra_character_count += space_count - 1; // -1 for the replaced tab
             }
         }
 
-        (line.chars().count() as isize + extra_character_count) as usize
+        let line_count = line.chars().count();
+        let extra_characters: usize = if extra_character_count > 0 {
+            extra_character_count.try_into().unwrap_or(0)
+        } else {
+            0
+        };
+
+        line_count + extra_characters
     }
 
-    fn check_is_in_line(strings_or_literals: &Vec<Span>, line_span: &Span) -> bool {
+    fn check_is_in_line(strings_or_literals: &[Span], line_span: Span) -> bool {
         strings_or_literals.iter().any(|span| {
             (span.start >= line_span.start && line_span.end >= span.start) // in start
                 || (span.end >= line_span.start && line_span.end >= span.end) // in end
@@ -252,33 +266,29 @@ impl MaxLen {
 
     fn should_ignore_line(
         text_to_measure: &str,
-        ignore_pattern_re: &Option<Regex>,
-        ignore_urls: bool,
-        ignore_strings: bool,
-        ignore_template_literals: bool,
-        ignore_reg_exp_literals: bool,
         literal_spans: &LiteralSpans,
-        line_span: &Span,
+        line_span: Span,
+        ignore_options: &IgnoreOptions,
     ) -> bool {
-        if let Some(ignore_pattern_re) = ignore_pattern_re {
-            if ignore_pattern_re.is_match(text_to_measure) {
+        if let Some(pattern_re) = ignore_options.pattern_re.as_ref() {
+            if pattern_re.is_match(text_to_measure) {
                 return true;
             }
         }
 
-        if ignore_urls && URL_REGEXP.is_match(text_to_measure) {
+        if ignore_options.urls && URL_REGEXP.is_match(text_to_measure) {
             return true;
         }
 
-        if ignore_strings {
+        if ignore_options.strings {
             return Self::check_is_in_line(&literal_spans.strings, line_span);
         }
 
-        if ignore_template_literals {
+        if ignore_options.template_literals {
             return Self::check_is_in_line(&literal_spans.template_literals, line_span);
         }
 
-        if ignore_reg_exp_literals {
+        if ignore_options.reg_exp_literals {
             return Self::check_is_in_line(&literal_spans.reg_exp_literals, line_span);
         }
 
@@ -301,7 +311,9 @@ impl Rule for MaxLen {
         };
 
         let default_value = match param1 {
-            Some(Value::Number(n)) if n.is_u64() => n.as_u64().unwrap_or(80) as usize,
+            Some(Value::Number(n)) if n.is_u64() => {
+                usize::try_from(n.as_u64().unwrap_or_default()).unwrap_or(80)
+            }
             _ => 80,
         };
 
@@ -312,7 +324,9 @@ impl Rule for MaxLen {
             .map_or(default_value, |v| usize::try_from(v).unwrap_or(default_value));
 
         let default_value = match param2 {
-            Some(Value::Number(n)) if n.is_u64() => n.as_u64().unwrap_or(4) as usize,
+            Some(Value::Number(n)) if n.is_u64() => {
+                usize::try_from(n.as_u64().unwrap_or_default()).unwrap_or(4)
+            }
             _ => 4,
         };
 
@@ -380,38 +394,49 @@ impl Rule for MaxLen {
 
     fn run_once(&self, ctx: &LintContext) {
         let full_text = ctx.source_text();
-        let allocator = Allocator::default();
-        let source_type = SourceType::default().with_typescript(true);
+
+        // per line start index, used to find the line number of a given index, used in fn is_comment()
+        let mut line_starts: Vec<usize> = vec![0];
+        for (i, c) in full_text.char_indices() {
+            if c == '\n' {
+                line_starts.push(i + 1);
+            }
+        }
 
         let mut literal_spans = LiteralSpans::new();
         literal_spans.collect_from_ctx(ctx);
 
-        let parse_result = Parser::new(&allocator, full_text, source_type).parse();
         let comments = if self.comments > 0 || self.ignore_comments || self.ignore_trailing_comments
         {
-            parse_result.trivias.comments().collect::<Vec<_>>()
+            ctx.semantic().trivias().comments().collect::<Vec<_>>()
         } else {
             vec![]
         };
 
-        let ignore_pattern_re = if self.ignore_pattern.is_empty() {
+        let pattern_re = if self.ignore_pattern.is_empty() {
             None
         } else {
-            Regex::new(&self.ignore_pattern).map_or(None, Some)
+            Regex::new(&self.ignore_pattern).ok()
         };
 
-        let mut line_start_index = 0;
+        let mut line_start_index: u32 = 0;
         let max_comment_length = self.comments;
         for (line_index, line_text) in full_text.lines().enumerate() {
             let mut text_to_measure = line_text;
-            let line_end_index = line_start_index + line_text.len();
-            let line_span = Span::new(line_start_index as u32, line_end_index as u32);
-            let actual_code_length;
+            // Convert the length of line_text to u32 safely, handling any error.
+            let line_end_index = if let Ok(length) = u32::try_from(line_text.len()) {
+                line_start_index.saturating_add(length)
+            } else {
+                eprintln!("Length of line text is too large for u32");
+                continue;
+            };
+
+            let line_span = Span::new(line_start_index, line_end_index);
             let mut line_is_comment = false;
 
             if !comments.is_empty() {
                 let (has_comment, is_trailing, is_full_line_comment) =
-                    self.is_comment(line_index, full_text, &comments, &line_span);
+                    is_comment(line_index, full_text, &line_starts, &comments, line_span);
 
                 line_is_comment = is_full_line_comment;
 
@@ -454,20 +479,21 @@ impl Rule for MaxLen {
             // ignore strings and literals if set true
             if Self::should_ignore_line(
                 text_to_measure,
-                &ignore_pattern_re,
-                self.ignore_urls,
-                self.ignore_strings,
-                self.ignore_template_literals,
-                self.ignore_reg_exp_literals,
                 &literal_spans,
-                &line_span,
+                line_span,
+                &IgnoreOptions {
+                    pattern_re: pattern_re.clone(),
+                    urls: self.ignore_urls,
+                    strings: self.ignore_strings,
+                    template_literals: self.ignore_template_literals,
+                    reg_exp_literals: self.ignore_reg_exp_literals,
+                },
             ) {
                 line_start_index = line_end_index + 1;
                 continue;
             }
 
-            actual_code_length = Self::compute_line_length(&text_to_measure, self.tab_width);
-
+            let actual_code_length = Self::compute_line_length(text_to_measure, self.tab_width);
             let comment_length_applies = line_is_comment && max_comment_length > 0;
             if comment_length_applies {
                 if actual_code_length > max_comment_length {
@@ -484,7 +510,7 @@ impl Rule for MaxLen {
                 ctx.diagnostic(error);
             }
 
-            line_start_index = line_end_index + 1; // move to the start of next line
+            line_start_index = line_end_index.saturating_add(1); // move to the start of next line
         }
     }
 }
