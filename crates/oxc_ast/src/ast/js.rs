@@ -316,6 +316,51 @@ impl<'a> Expression<'a> {
             _ => false,
         }
     }
+
+    pub fn get_span(&self) -> &Span {
+        match self {
+            Expression::BooleanLiteral(e) => &e.span,
+            Expression::NullLiteral(e) => &e.span,
+            Expression::NumericLiteral(e) => &e.span,
+            Expression::BigintLiteral(e) => &e.span,
+            Expression::RegExpLiteral(e) => &e.span,
+            Expression::StringLiteral(e) => &e.span,
+            Expression::TemplateLiteral(e) => &e.span,
+            Expression::Identifier(e) => &e.span,
+            Expression::MetaProperty(e) => &e.span,
+            Expression::Super(e) => &e.span,
+            Expression::ArrayExpression(e) => &e.span,
+            Expression::ArrowFunctionExpression(e) => &e.span,
+            Expression::AssignmentExpression(e) => &e.span,
+            Expression::AwaitExpression(e) => &e.span,
+            Expression::BinaryExpression(e) => &e.span,
+            Expression::CallExpression(e) => &e.span,
+            Expression::ChainExpression(e) => &e.span,
+            Expression::ClassExpression(e) => &e.span,
+            Expression::ConditionalExpression(e) => &e.span,
+            Expression::FunctionExpression(e) => &e.span,
+            Expression::ImportExpression(e) => &e.span,
+            Expression::LogicalExpression(e) => &e.span,
+            Expression::MemberExpression(e) => e.get_span(),
+            Expression::NewExpression(e) => &e.span,
+            Expression::ObjectExpression(e) => &e.span,
+            Expression::ParenthesizedExpression(e) => &e.span,
+            Expression::SequenceExpression(e) => &e.span,
+            Expression::TaggedTemplateExpression(e) => &e.span,
+            Expression::ThisExpression(e) => &e.span,
+            Expression::UnaryExpression(e) => &e.span,
+            Expression::UpdateExpression(e) => &e.span,
+            Expression::YieldExpression(e) => &e.span,
+            Expression::PrivateInExpression(e) => &e.span,
+            Expression::JSXElement(e) => &e.span,
+            Expression::JSXFragment(e) => &e.span,
+            Expression::TSAsExpression(e) => &e.span,
+            Expression::TSSatisfiesExpression(e) => &e.span,
+            Expression::TSTypeAssertion(e) => &e.span,
+            Expression::TSNonNullExpression(e) => &e.span,
+            Expression::TSInstantiationExpression(e) => &e.span,
+        }
+    }
 }
 
 /// Identifier Name
@@ -718,6 +763,14 @@ impl<'a> MemberExpression<'a> {
         self.object().is_specific_id(object)
             && self.static_property_name().is_some_and(|p| p == property)
     }
+
+    pub fn get_span(&self) -> &Span {
+        match self {
+            MemberExpression::ComputedMemberExpression(e) => &e.span,
+            MemberExpression::StaticMemberExpression(e) => &e.span,
+            MemberExpression::PrivateFieldExpression(e) => &e.span,
+        }
+    }
 }
 
 /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
@@ -855,6 +908,13 @@ pub enum Argument<'a> {
 impl Argument<'_> {
     pub fn is_spread(&self) -> bool {
         matches!(self, Self::SpreadElement(_))
+    }
+
+    pub fn get_span(&self) -> &Span {
+        match self {
+            Argument::SpreadElement(e) => &e.span,
+            Argument::Expression(e) => e.get_span(),
+        }
     }
 }
 
@@ -1177,6 +1237,15 @@ pub struct ChainExpression<'a> {
 pub enum ChainElement<'a> {
     CallExpression(Box<'a, CallExpression<'a>>),
     MemberExpression(Box<'a, MemberExpression<'a>>),
+}
+
+impl<'a> ChainElement<'a> {
+    pub fn get_span(&self) -> &Span {
+        match self {
+            ChainElement::CallExpression(e) => &e.span,
+            ChainElement::MemberExpression(e) => e.get_span(),
+        }
+    }
 }
 
 /// Parenthesized Expression
