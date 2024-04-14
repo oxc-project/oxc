@@ -889,20 +889,20 @@ impl<'a> Compressor<'a> {
     pub(crate) fn fold_condition<'b>(&mut self, stmt: &'b mut Statement<'a>) {
         match stmt {
             Statement::WhileStatement(while_stmt) => {
-                let minimized_expr = self.fold_expression_in_condition(&mut while_stmt.0.test);
+                let minimized_expr = self.fold_expression_in_condition(&mut while_stmt.test);
 
                 if let Some(min_expr) = minimized_expr {
-                    while_stmt.0.test = min_expr;
+                    while_stmt.test = min_expr;
                 }
             }
             Statement::ForStatement(for_stmt) => {
-                let test_expr = for_stmt.0.test.as_mut();
+                let test_expr = for_stmt.test.as_mut();
 
                 if let Some(test_expr) = test_expr {
                     let minimized_expr = self.fold_expression_in_condition(test_expr);
 
                     if let Some(min_expr) = minimized_expr {
-                        for_stmt.0.test = Some(min_expr);
+                        for_stmt.test = Some(min_expr);
                     }
                 }
             }
@@ -917,10 +917,10 @@ impl<'a> Compressor<'a> {
         let folded_expr = match expr {
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::LogicalNot => {
-                    let should_fold = self.try_minimize_not(&mut unary_expr.0.argument);
+                    let should_fold = self.try_minimize_not(&mut unary_expr.argument);
 
                     if should_fold {
-                        Some(self.move_out_expression(&mut unary_expr.0.argument))
+                        Some(self.move_out_expression(&mut unary_expr.argument))
                     } else {
                         None
                     }
@@ -945,12 +945,12 @@ impl<'a> Compressor<'a> {
 
         match expr {
             Expression::BinaryExpression(binary_expr) => {
-                let new_op = binary_expr.0.operator.equality_inverse_operator();
+                let new_op = binary_expr.operator.equality_inverse_operator();
 
                 match new_op {
                     Some(new_op) => {
-                        binary_expr.0.operator = new_op;
-                        binary_expr.0.span = *span;
+                        binary_expr.operator = new_op;
+                        binary_expr.span = *span;
 
                         true
                     }

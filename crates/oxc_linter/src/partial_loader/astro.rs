@@ -24,7 +24,7 @@ impl<'a> AstroPartialLoader<'a> {
         results
     }
 
-    /// Parse `---` front matter block
+    /// Parse `---` frontmatter block
     #[allow(clippy::cast_possible_truncation)]
     fn parse_frontmatter(&self) -> Option<JavaScriptSource<'a>> {
         let split_finder = Finder::new(ASTRO_SPLIT);
@@ -47,8 +47,8 @@ impl<'a> AstroPartialLoader<'a> {
         ))
     }
 
-    /// In .astro files, you can add client-side JavaScript by adding one (or more) <script> tags.
-    /// https://docs.astro.build/en/guides/client-side-scripts/#using-script-in-astro
+    /// In .astro files, you can add client-side JavaScript by adding one (or more) `<script>` tags.
+    /// <https://docs.astro.build/en/guides/client-side-scripts/#using-script-in-astro>
     fn parse_scripts(&self, start: usize) -> Vec<JavaScriptSource<'a>> {
         let script_start_finder = Finder::new(SCRIPT_START);
         let script_end_finder = Finder::new(SCRIPT_END);
@@ -72,8 +72,13 @@ impl<'a> AstroPartialLoader<'a> {
             } else {
                 break;
             };
-            // find "</script>"
-            if let Some(offset) = script_end_finder.find(self.source_text[pointer..].as_bytes()) {
+            // check for the / of a self closing script tag
+            if let Some('/') = self.source_text.chars().nth(js_start - 2) {
+                js_end = pointer;
+            // find "</script>" if no self closing tag was found
+            } else if let Some(offset) =
+                script_end_finder.find(self.source_text[pointer..].as_bytes())
+            {
                 js_end = pointer + offset;
                 pointer += offset + SCRIPT_END.len();
             } else {
@@ -86,5 +91,88 @@ impl<'a> AstroPartialLoader<'a> {
             ));
         }
         results
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::{AstroPartialLoader, JavaScriptSource};
+
+    fn parse_astro(source_text: &str) -> Vec<JavaScriptSource<'_>> {
+        AstroPartialLoader::new(source_text).parse()
+    }
+
+    #[test]
+    fn test_parse_astro() {
+        let source_text = r#"
+        <h1>Welcome, world!</h1>
+
+        <script>
+            console.log("Hi");
+        </script>
+        "#;
+
+        let sources = parse_astro(source_text);
+        assert_eq!(sources.len(), 1);
+        assert_eq!(sources[0].source_text.trim(), r#"console.log("Hi");"#);
+    }
+
+    #[test]
+    fn test_parse_astro_with_fontmatter() {
+        let source_text = r#"
+        ---
+            const { message = 'Welcome, world!' } = Astro.props;
+        ---
+
+        <h1>Welcome, world!</h1>
+
+        <script>
+            console.log("Hi");
+        </script>
+        "#;
+
+        let sources = parse_astro(source_text);
+        assert_eq!(sources.len(), 2);
+        assert_eq!(
+            sources[0].source_text.trim(),
+            "const { message = 'Welcome, world!' } = Astro.props;"
+        );
+        assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
+    }
+
+    #[test]
+    fn test_parse_astro_with_inline_script() {
+        let source_text = r#"
+        <h1>Welcome, world!</h1>
+
+        <script is:inline src="https://my-analytics.com/script.js"></script>
+
+        <script>
+            console.log("Hi");
+        </script>
+        "#;
+
+        let sources = parse_astro(source_text);
+        assert_eq!(sources.len(), 2);
+        assert!(sources[0].source_text.is_empty());
+        assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
+    }
+
+    #[test]
+    fn test_parse_astro_with_inline_script_self_closing() {
+        let source_text = r#"
+        <h1>Welcome, world!</h1>
+
+        <script is:inline src="https://my-analytics.com/script.js" />
+
+        <script>
+            console.log("Hi");
+        </script>
+        "#;
+
+        let sources = parse_astro(source_text);
+        assert_eq!(sources.len(), 2);
+        assert!(sources[0].source_text.is_empty());
+        assert_eq!(sources[1].source_text.trim(), r#"console.log("Hi");"#);
     }
 }

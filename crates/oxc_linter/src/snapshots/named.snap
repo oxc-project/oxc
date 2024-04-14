@@ -51,27 +51,6 @@ expression: named
    ╰────
   help: does "./qc" have the export "ActionTypes1"?
 
-  ⚠ eslint-plugin-import(named): named import "a" not found
-   ╭─[index.js:1:9]
- 1 │ import {a, b, c, d, e} from './re-export'
-   ·         ─
-   ╰────
-  help: does "./re-export" have the export "a"?
-
-  ⚠ eslint-plugin-import(named): named import "b" not found
-   ╭─[index.js:1:12]
- 1 │ import {a, b, c, d, e} from './re-export'
-   ·            ─
-   ╰────
-  help: does "./re-export" have the export "b"?
-
-  ⚠ eslint-plugin-import(named): named import "d" not found
-   ╭─[index.js:1:18]
- 1 │ import {a, b, c, d, e} from './re-export'
-   ·                  ─
-   ╰────
-  help: does "./re-export" have the export "d"?
-
   ⚠ eslint-plugin-import(named): named import "e" not found
    ╭─[index.js:1:21]
  1 │ import {a, b, c, d, e} from './re-export'

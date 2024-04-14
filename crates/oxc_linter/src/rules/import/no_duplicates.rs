@@ -1,12 +1,15 @@
 use itertools::Itertools;
 use oxc_diagnostics::miette::{miette, LabeledSpan, Severity};
 use oxc_macros::declare_oxc_lint;
+use oxc_syntax::module_record::{ImportImportName, RequestedModule};
 
 use crate::{context::LintContext, rule::Rule};
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-unresolved.md>
+/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-duplicates.md>
 #[derive(Debug, Default, Clone)]
-pub struct NoDuplicates;
+pub struct NoDuplicates {
+    prefer_inline: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -17,30 +20,78 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDuplicates {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        Self {
+            prefer_inline: value
+                .get("preferInline")
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(false),
+        }
+    }
+
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.semantic().module_record();
 
         let groups = module_record
-            .loaded_modules
+            .requested_modules
             .iter()
-            .map(|r| (r.value().resolved_absolute_path.clone(), r.key().clone()))
+            .map(|(source, requested_modules)| {
+                let resolved_absolute_path = module_record.loaded_modules.get(source).map_or_else(
+                    || source.to_string(),
+                    |module| module.resolved_absolute_path.to_string_lossy().to_string(),
+                );
+                (resolved_absolute_path, requested_modules)
+            })
             .group_by(|r| r.0.clone());
 
-        for (_path, group) in &groups {
-            let labels = group
-                .into_iter()
-                .map(|(_path, specifier)| specifier)
-                .filter_map(|specifier| module_record.requested_modules.get(&specifier))
-                .flatten()
-                .map(|span| LabeledSpan::underline(*span))
-                .collect::<Vec<_>>();
-            if labels.len() > 1 {
-                ctx.diagnostic(miette!(
-                severity = Severity::Warning,
-                labels = labels,
-                "eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places"
-            ));
+        let check_duplicates = |requested_modules: Option<&Vec<&RequestedModule>>| {
+            if let Some(requested_modules) = requested_modules {
+                if requested_modules.len() > 1 {
+                    let labels = requested_modules
+                        .iter()
+                        .map(|requested_module| LabeledSpan::underline(requested_module.span()))
+                        .collect::<Vec<_>>();
+                    ctx.diagnostic(miette!(
+                            severity = Severity::Warning,
+                            labels = labels,
+                            "eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places"
+                        ));
+                }
             }
+        };
+
+        for (_path, group) in &groups {
+            let has_type_import = module_record.import_entries.iter().any(|entry| entry.is_type);
+            // When prefer_inline is false, 0 is value, 1 is type named, 2 is type default or type namespace
+            // When prefer_inline is true, 0 is value and type named, 2 is type default or type namespace
+            let import_entries_maps = group
+                .into_iter()
+                .flat_map(|(_path, requested_modules)| requested_modules)
+                .filter(|requested_module| requested_module.is_import())
+                .into_group_map_by(|requested_module| {
+                    // We should early return if there is no type import
+                    if !has_type_import {
+                        return 0;
+                    };
+                    for entry in &module_record.import_entries {
+                        if entry.module_request.span() != requested_module.span() {
+                            continue;
+                        }
+
+                        if entry.is_type {
+                            return match entry.import_name {
+                                ImportImportName::Name(_) => i8::from(!self.prefer_inline),
+                                ImportImportName::NamespaceObject
+                                | ImportImportName::Default(_) => 2,
+                            };
+                        }
+                    }
+                    0
+                });
+
+            check_duplicates(import_entries_maps.get(&0));
+            check_duplicates(import_entries_maps.get(&1));
+            check_duplicates(import_entries_maps.get(&2));
         }
     }
 }
@@ -48,159 +99,235 @@ impl Rule for NoDuplicates {
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use serde_json::json;
 
     let pass = vec![
-        r#"import "./malformed.js""#,
-        r"import { x } from './foo'; import { y } from './bar'",
-        r#"import foo from "234artaf"; import { shoop } from "234q25ad""#,
+        (r#"import "./malformed.js""#, None),
+        (r"import { x } from './foo'; import { y } from './bar'", None),
+        (r#"import foo from "234artaf"; import { shoop } from "234q25ad""#, None),
         // r#"import { x } from './foo'; import type { y } from './foo'"#,
         // TODO: considerQueryString
         // r#"import x from './bar?optionX'; import y from './bar?optionY';"#,
-        r"import x from './foo'; import y from './bar';",
+        (r"import x from './foo'; import y from './bar';", None),
         // TODO: separate namespace
         // r#"import * as ns from './foo'; import {y} from './foo'"#,
         // r#"import {y} from './foo'; import * as ns from './foo'"#,
         // TypeScript
-        // TODO: distinguish type imports in module record
-        // r#"import type { x } from './foo'; import y from './foo'"#,
-        // r#"import type x from './foo'; import type y from './bar'"#,
-        // r#"import type {x} from './foo'; import type {y} from './bar'"#,
-        // r#"import type x from './foo'; import type {y} from './foo'"#,
-        // r#"import type {} from './module';
-        // import {} from './module2';"#,
-        // r#"import type { Identifier } from 'module';
+        (r"import type { x } from './foo'; import y from './foo'", None),
+        (r"import type x from './foo'; import type y from './bar'", None),
+        (r"import type {x} from './foo'; import type {y} from './bar'", None),
+        (r"import type x from './foo'; import type {y} from './foo'", None),
+        (
+            r"import type {} from './module';
+        import {} from './module2';",
+            None,
+        ),
+        (
+            r"import type { Identifier } from 'module';
 
-        // declare module 'module2' {
-        // import type { Identifier } from 'module';
-        // }
+        declare module 'module2' {
+        import type { Identifier } from 'module';
+        }
 
-        // declare module 'module3' {
-        // import type { Identifier } from 'module';
-        // }"#,
-        // r#"import { type x } from './foo'; import y from './foo'"#,
-        // r#"import { type x } from './foo'; import { y } from './foo'"#,
-        // r#"import { type x } from './foo'; import type y from 'foo'"#,
+        declare module 'module3' {
+        import type { Identifier } from 'module';
+        }",
+            None,
+        ),
+        (r"import { type x } from './foo'; import y from './foo'", None),
+        (r"import { type x } from './foo'; import { y } from './foo'", None),
+        (r"import { type x } from './foo'; import type y from 'foo'", None),
+        (r"import { x } from './foo'; export { x } from './foo'", None),
     ];
 
     let fail = vec![
-        r"import { x } from './foo'; import { y } from './foo'",
-        r"import {x} from './foo'; import {y} from './foo'; import { z } from './foo'",
+        (r"import { x } from './foo'; import { y } from './foo'", None),
+        (r"import {x} from './foo'; import {y} from './foo'; import { z } from './foo'", None),
         // TODO:   settings: { 'import/resolve': { paths: [path.join(process.cwd(), 'tests', 'files')], }, },
         // r#"import { x } from './bar'; import { y } from 'bar';"#,
-        r"import x from './bar.js?optionX'; import y from './bar?optionX';",
-        r"import x from './bar?optionX'; import y from './bar?optionY';",
-        r"import x from './bar?optionX'; import y from './bar.js?optionX';",
-        // we can't figure out non-existent files
-        // r#"import foo from 'non-existent'; import bar from 'non-existent';"#,
-        // r#"import type { x } from './foo'; import type { y } from './foo'"#,
-        r"import './foo'; import './foo'",
-        r"import { x, /* x */ } from './foo'; import {//y
-y//y2
-} from './foo'",
-        r"import {x} from './foo'; import {} from './foo'",
-        r"import {a} from './foo'; import { a } from './foo'",
-        r"import {a,b} from './foo'; import { b, c } from './foo'; import {b,c,d} from './foo'",
-        r"import {a} from './foo'; import { a/*,b*/ } from './foo'",
-        r"import {a} from './foo'; import { a } from './foo'",
-        r"import {a,b} from './foo'; import { b, c } from './foo'; import {b,c,d} from './foo'",
-        r"import {a} from './foo'; import { a/*,b*/ } from './foo'",
-        r"import {x} from './foo'; import {} from './foo'; import {/*c*/} from './foo'; import {y} from './foo'",
-        r"import { } from './foo'; import {x} from './foo'",
-        r"import './foo'; import {x} from './foo'",
-        r"import'./foo'; import {x} from './foo'",
-        r"import './foo'; import { /*x*/} from './foo'; import {//y
-} from './foo'; import {z} from './foo'",
-        r"import './foo'; import def, {x} from './foo'",
-        r"import './foo'; import def from './foo'",
-        r"import def from './foo'; import {x} from './foo'",
-        r"import {x} from './foo'; import def from './foo'",
-        r"import{x} from './foo'; import def from './foo'",
-        r"import {x} from './foo'; import def, {y} from './foo'",
-        r"import * as ns1 from './foo'; import * as ns2 from './foo'",
-        r"import * as ns from './foo'; import {x} from './foo'; import {y} from './foo'",
-        r"import {x} from './foo'; import * as ns from './foo'; import {y} from './foo'; import './foo'",
-        r"// some-tool-disable-next-line
-        import {x} from './foo'
-        import {//y
-y} from './foo'",
-        r"import {x} from './foo'
-        // some-tool-disable-next-line
+        (r"import x from './bar.js?optionX'; import y from './bar?optionX';", None),
+        (r"import x from './bar?optionX'; import y from './bar?optionY';", None),
+        (r"import x from './bar?optionX'; import y from './bar.js?optionX';", None),
+        (r"import foo from 'non-existent'; import bar from 'non-existent';", None),
+        (r"import type { x } from './foo'; import type { y } from './foo'", None),
+        (r"import './foo'; import './foo'", None),
+        (
+            r"import { x, /* x */ } from './foo'; import {//y
+        y//y2
+        } from './foo'",
+            None,
+        ),
+        (r"import {x} from './foo'; import {} from './foo'", None),
+        (r"import {a} from './foo'; import { a } from './foo'", None),
+        (
+            r"import {a,b} from './foo'; import { b, c } from './foo'; import {b,c,d} from './foo'",
+            None,
+        ),
+        (r"import {a} from './foo'; import { a/*,b*/ } from './foo'", None),
+        (r"import {a} from './foo'; import { a } from './foo'", None),
+        (
+            r"import {a,b} from './foo'; import { b, c } from './foo'; import {b,c,d} from './foo'",
+            None,
+        ),
+        (r"import {a} from './foo'; import { a/*,b*/ } from './foo'", None),
+        (
+            r"import {x} from './foo'; import {} from './foo'; import {/*c*/} from './foo'; import {y} from './foo'",
+            None,
+        ),
+        (r"import { } from './foo'; import {x} from './foo'", None),
+        (r"import './foo'; import {x} from './foo'", None),
+        (r"import'./foo'; import {x} from './foo'", None),
+        (
+            r"import './foo'; import { /*x*/} from './foo'; import {//y
+        } from './foo'; import {z} from './foo'",
+            None,
+        ),
+        (r"import './foo'; import def, {x} from './foo'", None),
+        (r"import './foo'; import def from './foo'", None),
+        (r"import def from './foo'; import {x} from './foo'", None),
+        (r"import {x} from './foo'; import def from './foo'", None),
+        (r"import{x} from './foo'; import def from './foo'", None),
+        (r"import {x} from './foo'; import def, {y} from './foo'", None),
+        (r"import * as ns1 from './foo'; import * as ns2 from './foo'", None),
+        (r"import * as ns from './foo'; import {x} from './foo'; import {y} from './foo'", None),
+        (
+            r"import {x} from './foo'; import * as ns from './foo'; import {y} from './foo'; import './foo'",
+            None,
+        ),
+        (
+            r"// some-tool-disable-next-line
+            import {x} from './foo'
+            import {//y
+        y} from './foo'",
+            None,
+        ),
+        (
+            r"import {x} from './foo'
+            // some-tool-disable-next-line
+            import {y} from './foo'",
+            None,
+        ),
+        (
+            r"import {x} from './foo' // some-tool-disable-line
+            import {y} from './foo'",
+            None,
+        ),
+        (
+            r"import {x} from './foo'
+            import {y} from './foo' // some-tool-disable-line",
+            None,
+        ),
+        (
+            r"import {x} from './foo'
+            /* comment */ import {y} from './foo'",
+            None,
+        ),
+        (
+            r"import {x} from './foo'
+            import {y} from './foo' /* comment
+            multiline */",
+            None,
+        ),
+        (
+            r"import {x} from './foo'
+        import {y} from './foo'
+        // some-tool-disable-next-line",
+            None,
+        ),
+        (
+            r"import {x} from './foo'
+        // comment
+
         import {y} from './foo'",
-        r"import {x} from './foo' // some-tool-disable-line
-        import {y} from './foo'",
-        r"import {x} from './foo'
-        import {y} from './foo' // some-tool-disable-line",
-        r"import {x} from './foo'
-        /* comment */ import {y} from './foo'",
-        r"import {x} from './foo'
-        import {y} from './foo' /* comment
-        multiline */",
-        r"import {x} from './foo'
-import {y} from './foo'
-// some-tool-disable-next-line",
-        r"import {x} from './foo'
-// comment
+            None,
+        ),
+        (
+            r"import {x} from './foo'
+            import/* comment */{y} from './foo'",
+            None,
+        ),
+        (
+            r"import {x} from './foo'
+            import/* comment */'./foo'",
+            None,
+        ),
+        (
+            r"import {x} from './foo'
+            import{y}/* comment */from './foo'",
+            None,
+        ),
+        (
+            r"import {x} from './foo'
+            import{y}from/* comment */'./foo'",
+            None,
+        ),
+        (
+            r"import {x} from
+            // some-tool-disable-next-line
+            './foo'
+            import {y} from './foo'",
+            None,
+        ),
+        (
+            r"import { Foo } from './foo';
+        import { Bar } from './foo';
+        export const value = {}",
+            None,
+        ),
+        (
+            r"import { Foo } from './foo';
+        import Bar from './foo';
+        export const value = {}",
+            None,
+        ),
+        (
+            r"import {
+              DEFAULT_FILTER_KEYS,
+              BULK_DISABLED,
+            } from '../constants';
+            import React from 'react';
+            import {
+              BULK_ACTIONS_ENABLED
+            } from '../constants';
 
-import {y} from './foo'",
-        r"import {x} from './foo'
-        import/* comment */{y} from './foo'",
-        r"import {x} from './foo'
-        import/* comment */'./foo'",
-        r"import {x} from './foo'
-        import{y}/* comment */from './foo'",
-        r"import {x} from './foo'
-        import{y}from/* comment */'./foo'",
-        r"import {x} from
-        // some-tool-disable-next-line
-        './foo'
-        import {y} from './foo'",
-        r"import { Foo } from './foo';
-import { Bar } from './foo';
-export const value = {}",
-        r"import { Foo } from './foo';
-import Bar from './foo';
-export const value = {}",
-        r"import {
-          DEFAULT_FILTER_KEYS,
-          BULK_DISABLED,
-        } from '../constants';
-        import React from 'react';
-        import {
-          BULK_ACTIONS_ENABLED
-        } from '../constants';
+            const TestComponent = () => {
+              return <div>
+              </div>;
+            }
 
-        const TestComponent = () => {
-          return <div>
-          </div>;
-        }
+            export default TestComponent;",
+            None,
+        ),
+        (
+            r"import {A1,} from 'foo';
+            import {B1,} from 'foo';
+            import {C1,} from 'foo';
 
-        export default TestComponent;",
-        // TODO: figure out module imports
-        // r#"import {A1,} from 'foo';
-        // import {B1,} from 'foo';
-        // import {C1,} from 'foo';
-
-        // import {
-        // A2,
-        // } from 'bar';
-        // import {
-        // B2,
-        // } from 'bar';
-        // import {
-        // C2,
-        // } from 'bar';"#,
+            import {
+            A2,
+            } from 'bar';
+            import {
+            B2,
+            } from 'bar';
+            import {
+            C2,
+            } from 'bar';",
+            None,
+        ),
         // TypeScript
-        // TODO: distinguish type imports in module record
-        // r#"import type x from './foo'; import type y from './foo'"#,
-        // r#"import type x from './foo'; import type x from './foo'"#,
-        // r#"import type {x} from './foo'; import type {y} from './foo'"#,
-        // r#"import {type x} from './foo'; import type {y} from './foo'"#,
-        // r#"import {type x} from 'foo'; import type {y} from 'foo'"#,
-        // r#"import {type x} from 'foo'; import type {y} from 'foo'"#,
-        // r#"import {type x} from './foo'; import {type y} from './foo'"#,
-        // r#"import {type x} from './foo'; import {type y} from './foo'"#,
-        // r#"import {AValue, type x, BValue} from './foo'; import {type y} from './foo'"#,
-        // r#"import {AValue} from './foo'; import type {AType} from './foo'"#,
+        (r"import type x from './foo'; import type y from './foo'", None),
+        (r"import type x from './foo'; import type x from './foo'", None),
+        (r"import type {x} from './foo'; import type {y} from './foo'", None),
+        (r"import {type x} from './foo'; import type {y} from './foo'", None),
+        (r"import {type x} from 'foo'; import type {y} from 'foo'", None),
+        (r"import {type x} from 'foo'; import type {y} from 'foo'", None),
+        (r"import {type x} from './foo'; import {type y} from './foo'", None),
+        (r"import {type x} from './foo'; import {type y} from './foo'", None),
+        (r"import {AValue, type x, BValue} from './foo'; import {type y} from './foo'", None),
+        (
+            r"import {AValue} from './foo'; import type {AType} from './foo'",
+            Some(json!({ "preferInline": true })),
+        ),
     ];
 
     Tester::new(NoDuplicates::NAME, pass, fail)

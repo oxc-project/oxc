@@ -190,7 +190,7 @@ pub trait DocBuilder<'a> {
 
     #[inline]
     fn boxed(&self, doc: Doc<'a>) -> Box<'a, Doc<'a>> {
-        Box(self.allocator().alloc(doc))
+        Box::new_in(doc, self.allocator())
     }
 
     #[allow(unused)]

@@ -11,9 +11,11 @@ extend-exclude = [
   "crates/oxc_parser/src/lexer/byte_handlers.rs",
   "crates/oxc_linter/fixtures",
   "crates/oxc_linter/src/rules/jsx_a11y/img_redundant_alt.rs",
+  "crates/oxc_linter/src/rules/react/no_unknown_property.rs",
   "crates/oxc_syntax/src/xml_entities.rs",
   "**/*.snap",
   "pnpm-lock.yaml",
+  "**/*/CHANGELOG.md",
 ]
 
 [default.extend-words]

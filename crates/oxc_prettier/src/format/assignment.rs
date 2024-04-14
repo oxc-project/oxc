@@ -48,7 +48,9 @@ pub(super) fn print_variable_declarator<'a>(
 pub(super) enum AssignmentLikeNode<'a, 'b> {
     AssignmentExpression(&'b AssignmentExpression<'a>),
     VariableDeclarator(&'b VariableDeclarator<'a>),
+    #[allow(dead_code)]
     PropertyDefinition(&'b PropertyDefinition<'a>),
+    #[allow(dead_code)]
     AccessorProperty(&'b AccessorProperty<'a>),
     ObjectProperty(&'b ObjectProperty<'a>),
 }
@@ -305,7 +307,7 @@ fn is_object_property_with_short_key<'a>(
     true
 }
 
-/// https://github.com/prettier/prettier/blob/eebf0e4b5ec8ac24393c56ced4b4819d4c551f31/src/language-js/print/assignment.js#L182
+/// <https://github.com/prettier/prettier/blob/eebf0e4b5ec8ac24393c56ced4b4819d4c551f31/src/language-js/print/assignment.js#L182>
 fn should_break_after_operator<'a>(
     p: &Prettier<'a>,
     expr: &Expression<'a>,

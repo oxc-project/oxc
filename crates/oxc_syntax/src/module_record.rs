@@ -32,7 +32,7 @@ pub struct ModuleRecord {
     ///   import ModuleSpecifier
     ///   export ExportFromClause FromClause
     /// Keyed by ModuleSpecifier, valued by all node occurrences
-    pub requested_modules: IndexMap<CompactStr, Vec<Span>, BuildHasherDefault<FxHasher>>,
+    pub requested_modules: IndexMap<CompactStr, Vec<RequestedModule>, BuildHasherDefault<FxHasher>>,
 
     /// `[[LoadedModules]]`
     ///
@@ -128,11 +128,11 @@ impl NameSpan {
         Self { name, span }
     }
 
-    pub fn name(&self) -> &CompactStr {
+    pub const fn name(&self) -> &CompactStr {
         &self.name
     }
 
-    pub fn span(&self) -> Span {
+    pub const fn span(&self) -> Span {
         self.span
     }
 }
@@ -148,6 +148,8 @@ pub struct ImportEntry {
 
     /// The name that is used to locally access the imported value from within the importing module.
     pub local_name: NameSpan,
+
+    pub is_type: bool,
 }
 
 /// `ImportName` For `ImportEntry`
@@ -259,10 +261,43 @@ impl ExportLocalName {
     pub fn is_null(&self) -> bool {
         matches!(self, Self::Null)
     }
+
+    pub const fn name(&self) -> Option<&CompactStr> {
+        match self {
+            Self::Name(name) => Some(name.name()),
+            Self::Default(_) | Self::Null => None,
+        }
+    }
 }
 
 pub struct FunctionMeta {
     pub deprecated: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct RequestedModule {
+    span: Span,
+    is_type: bool,
+    /// is_import is true if the module is requested by an import statement.
+    is_import: bool,
+}
+
+impl RequestedModule {
+    pub fn new(span: Span, is_type: bool, is_import: bool) -> Self {
+        Self { span, is_type, is_import }
+    }
+
+    pub fn span(&self) -> Span {
+        self.span
+    }
+
+    pub fn is_type(&self) -> bool {
+        self.is_type
+    }
+
+    pub fn is_import(&self) -> bool {
+        self.is_import
+    }
 }
 
 #[cfg(test)]

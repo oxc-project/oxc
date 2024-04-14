@@ -1,9 +1,14 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_ast::{AstKind, Visit};
+use oxc_ast::{
+    ast::{Class, Function, TSImportType},
+    visit::walk,
+    Visit,
+};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
+use oxc_syntax::scope::ScopeFlags;
 
 // Instruction:
 // create a `test.js`,
@@ -25,7 +30,7 @@ fn main() -> std::io::Result<()> {
 
     let program = ret.program;
 
-    let mut ast_pass = ASTPass::default();
+    let mut ast_pass = CountASTNodes::default();
     ast_pass.visit_program(&program);
     println!("{ast_pass:?}");
 
@@ -33,21 +38,25 @@ fn main() -> std::io::Result<()> {
 }
 
 #[derive(Debug, Default)]
-struct ASTPass {
-    number_of_functions: usize,
-    number_of_classes: usize,
+struct CountASTNodes {
+    functions: usize,
+    classes: usize,
+    ts_import_types: usize,
 }
 
-impl<'a> Visit<'a> for ASTPass {
-    fn enter_node(&mut self, kind: AstKind<'a>) {
-        match kind {
-            AstKind::Function(_) => {
-                self.number_of_functions += 1;
-            }
-            AstKind::Class(_) => {
-                self.number_of_classes += 1;
-            }
-            _ => {}
-        }
+impl<'a> Visit<'a> for CountASTNodes {
+    fn visit_function(&mut self, func: &Function<'a>, flags: Option<ScopeFlags>) {
+        self.functions += 1;
+        walk::walk_function(self, func, flags);
+    }
+
+    fn visit_class(&mut self, class: &Class<'a>) {
+        self.classes += 1;
+        walk::walk_class(self, class);
+    }
+
+    fn visit_ts_import_type(&mut self, ty: &TSImportType<'a>) {
+        self.ts_import_types += 1;
+        walk::walk_ts_import_type(self, ty);
     }
 }

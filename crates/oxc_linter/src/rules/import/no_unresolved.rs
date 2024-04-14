@@ -32,7 +32,7 @@ impl Rule for NoUnresolved {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.semantic().module_record();
 
-        for (specifier, spans) in &module_record.requested_modules {
+        for (specifier, requested_modules) in &module_record.requested_modules {
             if module_record.loaded_modules.contains_key(specifier) {
                 continue;
             }
@@ -53,8 +53,13 @@ impl Rule for NoUnresolved {
             {
                 continue;
             }
-            for span in spans {
-                ctx.diagnostic(NoUnresolvedDiagnostic(*span));
+
+            for requested_module in requested_modules {
+                // ignore type-only imports and exports
+                if requested_module.is_type() {
+                    continue;
+                }
+                ctx.diagnostic(NoUnresolvedDiagnostic(requested_module.span()));
             }
         }
     }
@@ -101,6 +106,9 @@ fn test() {
         r"require(foo)",
         // Unsupported extensions
         r#"import "./test.png""#,
+        // ignore type-only imports and exports
+        r"import type { m } from 'mod'",
+        r"export type * from 'mod'",
     ];
 
     let fail = vec![
@@ -127,7 +135,7 @@ fn test() {
     ];
 
     Tester::new(NoUnresolved::NAME, pass, fail)
-        .change_rule_path("index.js")
+        .change_rule_path("index.ts")
         .with_import_plugin(true)
         .test_and_snapshot();
 }

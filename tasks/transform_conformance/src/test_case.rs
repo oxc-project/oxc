@@ -3,6 +3,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use serde::de::DeserializeOwned;
+use serde_json::Value;
+
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::Error;
@@ -11,14 +14,12 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
 use oxc_transformer::{
-    ArrowFunctionsOptions, DecoratorsOptions, NullishCoalescingOperatorOptions, ReactJsxOptions,
-    TransformOptions, TransformTarget, Transformer, TypescriptOptions,
+    DecoratorsOptions, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
 };
-use serde::de::DeserializeOwned;
-use serde_json::Value;
 
 use crate::{fixture_root, root, TestRunnerEnv};
 
+#[derive(Debug)]
 pub enum TestCaseKind {
     Transform(ConformanceTestCase),
     Exec(ExecTestCase),
@@ -84,46 +85,37 @@ pub trait TestCase {
         fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> T {
             value.and_then(|v| serde_json::from_value::<T>(v).ok()).unwrap_or_default()
         }
-
         let options = self.options();
+
+        let react = options.get_preset("react").map_or_else(
+            || {
+                let jsx_plugin = options.get_plugin("transform-react-jsx");
+                let has_jsx_plugin = jsx_plugin.as_ref().is_some();
+                let mut react_options =
+                    jsx_plugin.map(get_options::<ReactOptions>).unwrap_or_default();
+                react_options.jsx_plugin = has_jsx_plugin;
+                react_options.display_name_plugin =
+                    options.get_plugin("transform-react-display-name").is_some();
+                react_options.jsx_self_plugin =
+                    options.get_plugin("transform-react-jsx-self").is_some();
+                react_options.jsx_source_plugin =
+                    options.get_plugin("transform-react-jsx-source").is_some();
+                react_options
+            },
+            get_options::<ReactOptions>,
+        );
+
         TransformOptions {
-            target: TransformTarget::ESNext,
-            babel_8_breaking: options.babel_8_breaking,
+            assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
             decorators: options
                 .get_plugin("proposal-decorators")
-                .map(get_options::<DecoratorsOptions>),
-            react_jsx: options
-                .get_plugin("transform-react-jsx")
-                .map(get_options::<ReactJsxOptions>),
+                .map(get_options::<DecoratorsOptions>)
+                .unwrap_or_default(),
             typescript: options
                 .get_plugin("transform-typescript")
-                .map(get_options::<TypescriptOptions>),
-            assumptions: options.assumptions,
-            class_static_block: options.get_plugin("transform-class-static-block").is_some(),
-            instanceof: options.get_plugin("transform-instanceof").is_some(),
-            function_name: options.get_plugin("transform-function-name").is_some(),
-            arrow_functions: options
-                .get_plugin("transform-arrow-functions")
-                .map(get_options::<ArrowFunctionsOptions>),
-            logical_assignment_operators: options
-                .get_plugin("transform-logical-assignment-operators")
-                .is_some(),
-            nullish_coalescing_operator: options
-                .get_plugin("transform-nullish-coalescing-operator")
-                .map(get_options::<NullishCoalescingOperatorOptions>),
-            json_strings: options.get_plugin("transform-json-strings").is_some(),
-            optional_catch_binding: options
-                .get_plugin("transform-optional-catch-binding")
-                .is_some(),
-            exponentiation_operator: options
-                .get_plugin("transform-exponentiation-operator")
-                .is_some(),
-            shorthand_properties: options.get_plugin("transform-shorthand-properties").is_some(),
-            sticky_regex: options.get_plugin("transform-sticky-regex").is_some(),
-            template_literals: options.get_plugin("transform-template-literals").is_some(),
-            property_literals: options.get_plugin("transform-property-literals").is_some(),
-            duplicate_keys: options.get_plugin("transform-duplicate-keys").is_some(),
-            new_target: options.get_plugin("transform-new-target").is_some(),
+                .map(get_options::<TypeScriptOptions>)
+                .unwrap_or_default(),
+            react,
         }
     }
 
@@ -161,9 +153,7 @@ pub trait TestCase {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
 
-        let source_type = SourceType::from_path(path)
-            .unwrap()
-            .with_typescript(self.transform_options().typescript.is_some());
+        let source_type = SourceType::from_path(path).unwrap().with_typescript(false);
 
         let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
@@ -175,17 +165,18 @@ pub trait TestCase {
 
         let transformed_program = allocator.alloc(ret.program);
 
-        let result = Transformer::new(&allocator, source_type, semantic, self.transform_options())
+        let result = Transformer::new(&allocator, path, semantic, self.transform_options())
             .build(transformed_program);
 
         result.map(|()| {
-            Codegen::<false>::new(&source_text, CodegenOptions::default())
+            Codegen::<false>::new("", &source_text, CodegenOptions::default())
                 .build(transformed_program)
                 .source_text
         })
     }
 }
 
+#[derive(Debug)]
 pub struct ConformanceTestCase {
     path: PathBuf,
     options: BabelOptions,
@@ -230,7 +221,7 @@ impl TestCase for ConformanceTestCase {
             } else {
                 input_is_js && output_is_js
             })
-            .with_typescript(transform_options.typescript.is_some());
+            .with_typescript(false);
 
         if filtered {
             println!("input_path: {:?}", &self.path);
@@ -246,15 +237,16 @@ impl TestCase for ConformanceTestCase {
             .semantic;
         let program = allocator.alloc(ret.program);
         let transformer =
-            Transformer::new(&allocator, source_type, semantic, transform_options.clone());
+            Transformer::new(&allocator, &self.path, semantic, transform_options.clone());
 
         let codegen_options = CodegenOptions::default();
         let mut transformed_code = String::new();
         let mut actual_errors = String::new();
         let result = transformer.build(program);
         if result.is_ok() {
-            transformed_code =
-                Codegen::<false>::new(&input, codegen_options.clone()).build(program).source_text;
+            transformed_code = Codegen::<false>::new("", &input, codegen_options.clone())
+                .build(program)
+                .source_text;
         } else {
             actual_errors = result.err().unwrap().iter().map(ToString::to_string).collect();
         }
@@ -267,23 +259,24 @@ impl TestCase for ConformanceTestCase {
                 if let Some(throws) = &babel_options.throws {
                     return throws.to_string();
                 }
-                // The transformation should be equal to input.js If output.js does not exist.
-                let program = Parser::new(&allocator, &input, source_type).parse().program;
-                Codegen::<false>::new(&input, codegen_options.clone()).build(&program).source_text
+                String::default()
             },
             |output| {
                 // Get expected code by parsing the source text, so we can get the same code generated result.
                 let program = Parser::new(&allocator, &output, source_type).parse().program;
-                Codegen::<false>::new(&output, codegen_options.clone()).build(&program).source_text
+                Codegen::<false>::new("", &output, codegen_options.clone())
+                    .build(&program)
+                    .source_text
             },
         );
 
-        let passed = transformed_code == output || actual_errors.contains(&output);
+        let passed =
+            transformed_code == output || (!output.is_empty() && actual_errors.contains(&output));
         if filtered {
-            println!("Input:\n");
-            println!("{input}\n");
             println!("Options:");
             println!("{transform_options:#?}\n");
+            println!("Input:\n");
+            println!("{input}\n");
             if babel_options.throws.is_some() {
                 println!("Expected Errors:\n");
                 println!("{output}\n");
@@ -309,6 +302,7 @@ impl TestCase for ConformanceTestCase {
     }
 }
 
+#[derive(Debug)]
 pub struct ExecTestCase {
     path: PathBuf,
     options: BabelOptions,
@@ -334,7 +328,7 @@ impl ExecTestCase {
         let source_type = SourceType::from_path(&target_path).unwrap();
         let transformed_program =
             Parser::new(&allocator, &source_text, source_type).parse().program;
-        let result = Codegen::<false>::new(&source_text, CodegenOptions::default())
+        let result = Codegen::<false>::new("", &source_text, CodegenOptions::default())
             .build(&transformed_program)
             .source_text;
 

@@ -19,17 +19,15 @@ pub mod precedence;
 mod span;
 pub mod syntax_directed_operations;
 mod trivia;
-mod visit;
-mod visit_mut;
+pub mod visit;
 
 pub use num_bigint::BigUint;
 
 pub use crate::{
     ast_builder::AstBuilder,
-    ast_kind::AstKind,
+    ast_kind::{AstKind, AstType},
     trivia::{Comment, CommentKind, Trivias, TriviasMap},
-    visit::Visit,
-    visit_mut::VisitMut,
+    visit::{Visit, VisitMut},
 };
 
 // After experimenting with two types of boxed enum variants:
@@ -72,4 +70,13 @@ fn size_asserts() {
     assert_eq_size!(ast::AssignmentTargetProperty, [u8; 16]);
     assert_eq_size!(ast::TSLiteral, [u8; 16]);
     assert_eq_size!(ast::TSType, [u8; 16]);
+}
+
+#[test]
+fn lifetime_variance() {
+    use crate::ast;
+
+    fn _assert_program_variant_lifetime<'a: 'b, 'b>(program: ast::Program<'a>) -> ast::Program<'b> {
+        program
+    }
 }

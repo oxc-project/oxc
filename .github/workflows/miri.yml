@@ -6,12 +6,14 @@ on:
     types: [opened, synchronize]
     paths:
       - 'crates/oxc_parser/**'
+      - 'crates/oxc_allocator/**'
       - '.github/workflows/miri.yml'
   push:
     branches:
       - main
     paths:
       - 'crates/oxc_parser/**'
+      - 'crates/oxc_allocator/**'
       - '.github/workflows/miri.yml'
 
 concurrency:
@@ -24,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: taiki-e/checkout-action@v1
 
       - name: Install Rust
         uses: ./.github/actions/rustup

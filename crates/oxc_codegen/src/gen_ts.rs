@@ -539,12 +539,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
         p.wrap_quote(name, |p, _| p.print_str(name.as_bytes()));
         p.print_hard_space();
         match &self.body {
-            TSModuleDeclarationBody::TSModuleDeclaration(body) => {
+            Some(TSModuleDeclarationBody::TSModuleDeclaration(body)) => {
                 p.print_block_start(body.span.start);
                 body.gen(p, ctx);
                 p.print_block_end(body.span.end);
             }
-            TSModuleDeclarationBody::TSModuleBlock(body) => {
+            Some(TSModuleDeclarationBody::TSModuleBlock(body)) => {
                 p.print_block_start(body.span.start);
                 for item in &body.body {
                     p.print_semicolon_if_needed();
@@ -553,6 +553,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
                 p.print_semicolon_if_needed();
                 p.print_block_end(body.span.end);
             }
+            None => {}
         }
         if MINIFY {
             p.print_semicolon();

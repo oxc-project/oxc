@@ -122,12 +122,12 @@ impl TypeScriptFixtures {
         let semantic = semantic_ret.semantic;
         let transformed_program = allocator.alloc(parser_ret.program);
 
-        let result = Transformer::new(&allocator, source_type, semantic, Self::transform_options())
+        let result = Transformer::new(&allocator, path, semantic, Self::transform_options())
             .build(transformed_program);
 
         result
             .map(|()| {
-                Codegen::<false>::new(&source_text, CodegenOptions::default())
+                Codegen::<false>::new("", &source_text, CodegenOptions::default())
                     .build(transformed_program)
                     .source_text
             })

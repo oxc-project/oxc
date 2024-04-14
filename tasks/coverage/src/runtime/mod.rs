@@ -138,7 +138,7 @@ impl Case for CodegenRuntimeTest262Case {
                 let source_type = SourceType::default().with_module(is_module);
                 let allocator = Allocator::default();
                 let program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let mut text = Codegen::<false>::new(source_text, CodegenOptions::default())
+                let mut text = Codegen::<false>::new("", source_text, CodegenOptions::default())
                     .build(&program)
                     .source_text;
                 if is_only_strict {

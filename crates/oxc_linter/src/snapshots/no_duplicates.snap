@@ -33,6 +33,18 @@ expression: no_duplicates
    ╰────
 
   ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:17]
+ 1 │ import foo from 'non-existent'; import bar from 'non-existent';
+   ·                 ──────────────                  ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:24]
+ 1 │ import type { x } from './foo'; import type { y } from './foo'
+   ·                        ───────                         ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
    ╭─[index.ts:1:8]
  1 │ import './foo'; import './foo'
    ·        ───────         ───────
@@ -42,9 +54,9 @@ expression: no_duplicates
    ╭─[index.ts:1:28]
  1 │ import { x, /* x */ } from './foo'; import {//y
    ·                            ───────
- 2 │ y//y2
- 3 │ } from './foo'
-   ·        ───────
+ 2 │         y//y2
+ 3 │         } from './foo'
+   ·                ───────
    ╰────
 
   ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
@@ -161,8 +173,8 @@ expression: no_duplicates
    ╭─[index.ts:1:8]
  1 │ import './foo'; import { /*x*/} from './foo'; import {//y
    ·        ───────                       ───────
- 2 │ } from './foo'; import {z} from './foo'
-   ·        ───────                  ───────
+ 2 │         } from './foo'; import {z} from './foo'
+   ·                ───────                  ───────
    ╰────
 
   ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
@@ -220,139 +232,227 @@ expression: no_duplicates
    ╰────
 
   ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:2:25]
+   ╭─[index.ts:2:29]
  1 │ // some-tool-disable-next-line
- 2 │         import {x} from './foo'
-   ·                         ───────
- 3 │         import {//y
- 4 │ y} from './foo'
-   ·         ───────
+ 2 │             import {x} from './foo'
+   ·                             ───────
+ 3 │             import {//y
+ 4 │         y} from './foo'
+   ·                 ───────
    ╰────
 
   ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
    ·                 ───────
- 2 │         // some-tool-disable-next-line
- 3 │         import {y} from './foo'
-   ·                         ───────
+ 2 │             // some-tool-disable-next-line
+ 3 │             import {y} from './foo'
+   ·                             ───────
    ╰────
 
   ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo' // some-tool-disable-line
    ·                 ───────
+ 2 │             import {y} from './foo'
+   ·                             ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:17]
+ 1 │ import {x} from './foo'
+   ·                 ───────
+ 2 │             import {y} from './foo' // some-tool-disable-line
+   ·                             ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:17]
+ 1 │ import {x} from './foo'
+   ·                 ───────
+ 2 │             /* comment */ import {y} from './foo'
+   ·                                           ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:17]
+ 1 │ import {x} from './foo'
+   ·                 ───────
+ 2 │             import {y} from './foo' /* comment
+   ·                             ───────
+ 3 │             multiline */
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:17]
+ 1 │ import {x} from './foo'
+   ·                 ───────
  2 │         import {y} from './foo'
    ·                         ───────
+ 3 │         // some-tool-disable-next-line
    ╰────
 
   ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
    ╭─[index.ts:1:17]
  1 │ import {x} from './foo'
    ·                 ───────
- 2 │         import {y} from './foo' // some-tool-disable-line
-   ·                         ───────
-   ╰────
-
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:1:17]
- 1 │ import {x} from './foo'
-   ·                 ───────
- 2 │         /* comment */ import {y} from './foo'
-   ·                                       ───────
-   ╰────
-
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:1:17]
- 1 │ import {x} from './foo'
-   ·                 ───────
- 2 │         import {y} from './foo' /* comment
-   ·                         ───────
- 3 │         multiline */
-   ╰────
-
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:1:17]
- 1 │ import {x} from './foo'
-   ·                 ───────
- 2 │ import {y} from './foo'
-   ·                 ───────
- 3 │ // some-tool-disable-next-line
-   ╰────
-
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:1:17]
- 1 │ import {x} from './foo'
-   ·                 ───────
- 2 │ // comment
+ 2 │         // comment
  3 │ 
- 4 │ import {y} from './foo'
-   ·                 ───────
-   ╰────
-
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:1:17]
- 1 │ import {x} from './foo'
-   ·                 ───────
- 2 │         import/* comment */{y} from './foo'
-   ·                                     ───────
-   ╰────
-
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:1:17]
- 1 │ import {x} from './foo'
-   ·                 ───────
- 2 │         import/* comment */'./foo'
-   ·                            ───────
-   ╰────
-
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:1:17]
- 1 │ import {x} from './foo'
-   ·                 ───────
- 2 │         import{y}/* comment */from './foo'
-   ·                                    ───────
-   ╰────
-
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:1:17]
- 1 │ import {x} from './foo'
-   ·                 ───────
- 2 │         import{y}from/* comment */'./foo'
-   ·                                   ───────
-   ╰────
-
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:3:9]
- 2 │         // some-tool-disable-next-line
- 3 │         './foo'
-   ·         ───────
  4 │         import {y} from './foo'
    ·                         ───────
    ╰────
 
   ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:1:21]
- 1 │ import { Foo } from './foo';
-   ·                     ───────
- 2 │ import { Bar } from './foo';
-   ·                     ───────
- 3 │ export const value = {}
+   ╭─[index.ts:1:17]
+ 1 │ import {x} from './foo'
+   ·                 ───────
+ 2 │             import/* comment */{y} from './foo'
+   ·                                         ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:17]
+ 1 │ import {x} from './foo'
+   ·                 ───────
+ 2 │             import/* comment */'./foo'
+   ·                                ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:17]
+ 1 │ import {x} from './foo'
+   ·                 ───────
+ 2 │             import{y}/* comment */from './foo'
+   ·                                        ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:17]
+ 1 │ import {x} from './foo'
+   ·                 ───────
+ 2 │             import{y}from/* comment */'./foo'
+   ·                                       ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:3:13]
+ 2 │             // some-tool-disable-next-line
+ 3 │             './foo'
+   ·             ───────
+ 4 │             import {y} from './foo'
+   ·                             ───────
    ╰────
 
   ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
    ╭─[index.ts:1:21]
  1 │ import { Foo } from './foo';
    ·                     ───────
- 2 │ import Bar from './foo';
-   ·                 ───────
- 3 │ export const value = {}
+ 2 │         import { Bar } from './foo';
+   ·                             ───────
+ 3 │         export const value = {}
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:21]
+ 1 │ import { Foo } from './foo';
+   ·                     ───────
+ 2 │         import Bar from './foo';
+   ·                         ───────
+ 3 │         export const value = {}
    ╰────
 
   × Unexpected token
-    ╭─[index.ts:12:12]
- 11 │           return <div>
- 12 │           </div>;
-    ·            ─
- 13 │         }
+    ╭─[index.ts:12:16]
+ 11 │               return <div>
+ 12 │               </div>;
+    ·                ─
+ 13 │             }
     ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:19]
+ 1 │ import {A1,} from 'foo';
+   ·                   ─────
+ 2 │             import {B1,} from 'foo';
+   ·                               ─────
+ 3 │             import {C1,} from 'foo';
+   ·                               ─────
+ 4 │ 
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+    ╭─[index.ts:7:20]
+  6 │             A2,
+  7 │             } from 'bar';
+    ·                    ─────
+  8 │             import {
+  9 │             B2,
+ 10 │             } from 'bar';
+    ·                    ─────
+ 11 │             import {
+ 12 │             C2,
+ 13 │             } from 'bar';
+    ·                    ─────
+    ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:20]
+ 1 │ import type x from './foo'; import type y from './foo'
+   ·                    ───────                     ───────
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[index.ts:1:13]
+ 1 │ import type x from './foo'; import type x from './foo'
+   ·             ┬                           ┬
+   ·             │                           ╰── It can not be redeclared here
+   ·             ╰── `x` has already been declared here
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:22]
+ 1 │ import type {x} from './foo'; import type {y} from './foo'
+   ·                      ───────                       ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:22]
+ 1 │ import {type x} from './foo'; import type {y} from './foo'
+   ·                      ───────                       ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:22]
+ 1 │ import {type x} from 'foo'; import type {y} from 'foo'
+   ·                      ─────                       ─────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:22]
+ 1 │ import {type x} from 'foo'; import type {y} from 'foo'
+   ·                      ─────                       ─────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:22]
+ 1 │ import {type x} from './foo'; import {type y} from './foo'
+   ·                      ───────                       ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:22]
+ 1 │ import {type x} from './foo'; import {type y} from './foo'
+   ·                      ───────                       ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:38]
+ 1 │ import {AValue, type x, BValue} from './foo'; import {type y} from './foo'
+   ·                                      ───────                       ───────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:22]
+ 1 │ import {AValue} from './foo'; import type {AType} from './foo'
+   ·                      ───────                           ───────
+   ╰────

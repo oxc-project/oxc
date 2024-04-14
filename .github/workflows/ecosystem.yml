@@ -27,7 +27,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       - name: Install Rust
         uses: ./.github/actions/rustup
@@ -36,7 +36,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Build oxlint
-        run: cargo build --release -p oxc_cli --bin oxlint
+        run: cargo build --release -p oxc_cli --bin oxlint --features allocator
 
       - name: Upload Binary
         uses: actions/upload-artifact@v4
@@ -59,7 +59,7 @@ jobs:
             ref: master
     steps:
       - name: Clone ${{ matrix.repository }}
-        uses: actions/checkout@v4
+        uses: taiki-e/checkout-action@v1
         with:
           show-progress: false
           repository: ${{ matrix.repository }}

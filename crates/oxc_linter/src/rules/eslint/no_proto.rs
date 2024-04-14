@@ -36,7 +36,7 @@ declare_oxc_lint!(
     /// obj["__proto__"] = b;
     /// ```
     NoProto,
-    correctness
+    restriction
 );
 
 impl Rule for NoProto {

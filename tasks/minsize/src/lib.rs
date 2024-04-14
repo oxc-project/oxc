@@ -3,7 +3,6 @@ use std::{
     io::{self, Write},
 };
 
-use brotlic::{BlockSize, BrotliEncoderOptions, CompressorWriter, Quality, WindowSize};
 use flate2::{write::GzEncoder, Compression};
 use humansize::{format_size, DECIMAL};
 
@@ -29,26 +28,27 @@ pub fn run() -> Result<(), io::Error> {
 
     let mut out = String::new();
     out.push_str(&format!(
-        "{:width$} -> {:width$} -> {:width$}",
+        "{:width$} -> {:width$} -> {:width$}\n",
         "Original",
         "Minified",
         "Gzip",
         width = 10
     ));
-    out.push_str(&format!(" {:width$}\n", "Brotli", width = 10));
+
     for file in files.files() {
         let minified = minify_twice(file);
         let s = format!(
-            "{:width$} -> {:width$} -> {:width$} {:width$} {}\n\n",
+            "{:width$} -> {:width$} -> {:width$} {:width$}\n\n",
             format_size(file.source_text.len(), DECIMAL),
             format_size(minified.len(), DECIMAL),
             format_size(gzip_size(&minified), DECIMAL),
-            format_size(brotli_size(&minified), DECIMAL),
             &file.file_name,
             width = 10
         );
         out.push_str(&s);
     }
+
+    println!("{out}");
 
     let mut snapshot = File::create(path)?;
     snapshot.write_all(out.as_bytes())?;
@@ -73,26 +73,12 @@ fn minify(source_text: &str, source_type: SourceType, options: MinifierOptions) 
     let program = Parser::new(&allocator, source_text, source_type).parse().program;
     let program = allocator.alloc(program);
     Minifier::new(options).build(&allocator, program);
-    Codegen::<true>::new(source_text, CodegenOptions::default()).build(program).source_text
+    Codegen::<true>::new("", source_text, CodegenOptions::default()).build(program).source_text
 }
 
 fn gzip_size(s: &str) -> usize {
     let mut e = GzEncoder::new(Vec::new(), Compression::best());
     e.write_all(s.as_bytes()).unwrap();
     let s = e.finish().unwrap();
-    s.len()
-}
-
-fn brotli_size(s: &str) -> usize {
-    let encoder = BrotliEncoderOptions::new()
-        .quality(Quality::best())
-        .window_size(WindowSize::best())
-        .block_size(BlockSize::best())
-        .build()
-        .unwrap();
-
-    let mut e = CompressorWriter::with_encoder(encoder, Vec::new());
-    e.write_all(s.as_bytes()).unwrap();
-    let s = e.into_inner().unwrap();
     s.len()
 }

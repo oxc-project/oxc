@@ -17,7 +17,7 @@ use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode}
 )]
 struct DoubleComparisonsDiagnostic(#[label] pub Span, &'static str);
 
-/// https://rust-lang.github.io/rust-clippy/master/index.html#/double_comparisons
+/// <https://rust-lang.github.io/rust-clippy/master/index.html#/double_comparisons>
 #[derive(Debug, Default, Clone)]
 pub struct DoubleComparisons;
 

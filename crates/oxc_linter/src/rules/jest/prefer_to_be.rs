@@ -103,12 +103,8 @@ impl PreferToBe {
             return;
         };
 
-        let has_not_modifier = jest_expect_fn_call
-            .modifiers()
-            .iter()
-            .filter(|modifier| modifier.is_name_equal("not"))
-            .count()
-            > 0;
+        let has_not_modifier =
+            jest_expect_fn_call.modifiers().iter().any(|modifier| modifier.is_name_equal("not"));
 
         if has_not_modifier {
             if matcher.is_name_equal("toBeUndefined") {
@@ -217,7 +213,8 @@ impl PreferToBe {
         let Some(Expression::MemberExpression(mem_expr)) = matcher.parent else {
             return;
         };
-        let is_cmp_mem_expr = matches!(mem_expr.0, MemberExpression::ComputedMemberExpression(_));
+
+        let is_cmp_mem_expr = matches!(&**mem_expr, MemberExpression::ComputedMemberExpression(_));
         let modifiers = jest_expect_fn_call.modifiers();
         let maybe_not_modifier = modifiers.iter().find(|modifier| modifier.is_name_equal("not"));
 

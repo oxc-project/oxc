@@ -8,6 +8,7 @@ on:
       - '**/*.md'
       - '**/*.yml'
       - '!.github/workflows/ci.yml'
+      - '!.github/actions/clone-submodules/action.yml'
   push:
     branches:
       - main
@@ -15,10 +16,15 @@ on:
       - '**/*.md'
       - '**/*.yml'
       - '!.github/workflows/ci.yml'
+      - '!.github/actions/clone-submodules/action.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.ref_name != 'main' }}
+
+env:
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-D warnings"
 
 jobs:
   cache: # Warm cache factory for all other CI jobs
@@ -32,7 +38,7 @@ jobs:
           - os: macos-14
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
@@ -51,7 +57,7 @@ jobs:
     name: Check Wasm
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
@@ -82,7 +88,7 @@ jobs:
     name: Spell Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       - uses: crate-ci/typos@master
         with:
@@ -92,7 +98,7 @@ jobs:
     name: Cargo Deny
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       - uses: dorny/paths-filter@v3
         id: filter
@@ -106,6 +112,7 @@ jobs:
         uses: taiki-e/install-action@cargo-deny
 
       - uses: ./.github/actions/rustup
+        if: steps.filter.outputs.src == 'true'
         with:
           restore-cache: false
 
@@ -116,34 +123,31 @@ jobs:
     name: Check Unused Dependencies
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: taiki-e/checkout-action@v1
       - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
             src:
-              - 'Cargo.lock'
+              - '**/*.rs'
               - '**/Cargo.toml'
-
-      - name: Install cargo-machete
-        if: steps.filter.outputs.src == 'true'
-        uses: taiki-e/install-action@cargo-machete
-
-      - name: Install Rust
-        if: steps.filter.outputs.src == 'true'
-        uses: ./.github/actions/rustup
+              - 'Cargo.lock'
+      - uses: ./.github/actions/rustup
         with:
           restore-cache: false
-
-      - if: steps.filter.outputs.src == 'true'
-        run: cargo machete
+        if: steps.filter.outputs.src == 'true'
+      - uses: cargo-bins/cargo-binstall@main
+        if: steps.filter.outputs.src == 'true'
+      - run: cargo binstall --no-confirm cargo-shear
+        if: steps.filter.outputs.src == 'true'
+      - run: cargo shear
+        if: steps.filter.outputs.src == 'true'
 
   format:
     name: Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       - name: Install Rust
         uses: ./.github/actions/rustup
@@ -157,7 +161,7 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       - name: Install Rust
         uses: ./.github/actions/rustup
@@ -171,7 +175,7 @@ jobs:
     name: Doc
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       - name: Install Rust
         uses: ./.github/actions/rustup
@@ -179,7 +183,7 @@ jobs:
           docs: true
 
       - name: Run doc
-        run: RUSTDOCFLAGS='-D warnings' cargo doc
+        run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
 
   test:
     name: Test
@@ -192,7 +196,7 @@ jobs:
           - os: macos-14
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
       - name: Install Rust
         uses: ./.github/actions/rustup
       - run: cargo test --quiet
@@ -201,7 +205,7 @@ jobs:
     name: Conformance
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       - uses: dorny/paths-filter@v3
         id: filter

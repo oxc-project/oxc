@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_codegen"
-version                = "0.10.0"
+version                = "0.12.3"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -23,9 +23,9 @@ oxc_ast       = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_syntax    = { workspace = true }
-sourcemap     = { version = "7.1.1" }
+oxc_sourcemap = { workspace = true }
 bitflags      = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }
-base64     = "0.22.0"
+base64     = { workspace = true }
