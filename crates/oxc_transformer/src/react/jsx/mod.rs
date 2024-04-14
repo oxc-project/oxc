@@ -646,20 +646,18 @@ impl<'a> ReactJsx<'a> {
         let mut acc: Option<String> = None;
         let mut first_non_whitespace: Option<usize> = Some(0);
         let mut last_non_whitespace: Option<usize> = None;
-        let mut i: usize = 0;
-        for c in text.chars() {
+        for (index, c) in text.char_indices() {
             if is_line_terminator(c) {
                 if let (Some(first), Some(last)) = (first_non_whitespace, last_non_whitespace) {
-                    acc = Some(Self::add_line_of_jsx_text(acc, &text[first..=last]));
+                    acc = Some(Self::add_line_of_jsx_text(acc, &text[first..last]));
                 }
                 first_non_whitespace = None;
             } else if c != ' ' && !is_irregular_whitespace(c) {
-                last_non_whitespace = Some(i);
+                last_non_whitespace = Some(index + c.len_utf8());
                 if first_non_whitespace.is_none() {
-                    first_non_whitespace.replace(i);
+                    first_non_whitespace.replace(index);
                 }
             }
-            i += c.len_utf8();
         }
         if let Some(first) = first_non_whitespace {
             Some(Self::add_line_of_jsx_text(acc, &text[first..]))
@@ -682,14 +680,14 @@ impl<'a> ReactJsx<'a> {
     /// Code adapted from <https://github.com/microsoft/TypeScript/blob/514f7e639a2a8466c075c766ee9857a30ed4e196/src/compiler/transformers/jsx.ts#L617C1-L635>
     fn decode_entities(s: &str) -> String {
         let mut buffer = vec![];
-        let mut chars = s.bytes().enumerate();
+        let mut chars = s.char_indices();
         let mut prev = 0;
         while let Some((i, c)) = chars.next() {
-            if c == b'&' {
+            if c == '&' {
                 let start = i;
                 let mut end = None;
                 for (j, c) in chars.by_ref() {
-                    if c == b';' {
+                    if c == ';' {
                         end.replace(j);
                         break;
                     }
