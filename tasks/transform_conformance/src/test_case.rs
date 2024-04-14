@@ -89,14 +89,11 @@ pub trait TestCase {
 
         let react = options.get_preset("react").map_or_else(
             || {
-                let mut react_options = options
-                    .get_plugin("transform-react-jsx")
-                    .map(|options| {
-                        let mut options = get_options::<ReactOptions>(options);
-                        options.jsx_plugin = true;
-                        options
-                    })
-                    .unwrap_or_default();
+                let jsx_plugin = options.get_plugin("transform-react-jsx");
+                let has_jsx_plugin = jsx_plugin.as_ref().is_some();
+                let mut react_options =
+                    jsx_plugin.map(get_options::<ReactOptions>).unwrap_or_default();
+                react_options.jsx_plugin = has_jsx_plugin;
                 react_options.display_name_plugin =
                     options.get_plugin("transform-react-display-name").is_some();
                 react_options.jsx_self_plugin =
@@ -105,14 +102,7 @@ pub trait TestCase {
                     options.get_plugin("transform-react-jsx-source").is_some();
                 react_options
             },
-            |options| {
-                let mut react_options = get_options::<ReactOptions>(options);
-                react_options.jsx_plugin = true;
-                react_options.jsx_self_plugin = true;
-                react_options.jsx_source_plugin = true;
-                react_options.display_name_plugin = true;
-                react_options
-            },
+            get_options::<ReactOptions>,
         );
 
         TransformOptions {
