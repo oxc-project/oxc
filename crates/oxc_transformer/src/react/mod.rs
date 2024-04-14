@@ -99,13 +99,11 @@ impl<'a> React<'a> {
     }
 
     pub fn transform_jsx_opening_element(&self, elem: &mut JSXOpeningElement<'a>) {
-        if self.development {
-            if self.options.jsx_self_plugin {
-                self.jsx_self.transform_jsx_opening_element(elem);
-            }
-            if self.options.jsx_source_plugin {
-                self.jsx_source.transform_jsx_opening_element(elem);
-            }
+        if self.options.is_jsx_self_plugin_enabled() {
+            self.jsx_self.transform_jsx_opening_element(elem);
+        }
+        if self.options.is_jsx_source_plugin_enabled() {
+            self.jsx_source.transform_jsx_opening_element(elem);
         }
     }
 }

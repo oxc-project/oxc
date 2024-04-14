@@ -1,4 +1,4 @@
-Passed: 131/392
+Passed: 129/392
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -125,11 +125,13 @@ Passed: 131/392
 * regression/15768/input.ts
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-preset-react (4/13)
+# babel-preset-react (2/13)
 * preset-options/development/input.js
 * preset-options/development-runtime-automatic/input.js
 * preset-options/development-runtime-automatic-windows/input.js
 * preset-options/development-windows/input.js
+* preset-options/empty-options/input.js
+* preset-options/runtime-automatic/input.js
 * preset-options/runtime-classic/input.js
 * preset-options/runtime-classic-pragma-no-frag/input.js
 * regression/11294/input.mjs
