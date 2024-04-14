@@ -1,4 +1,4 @@
-Passed: 203/408
+Passed: 221/408
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -137,33 +137,18 @@ Passed: 203/408
 * regression/another-preset-with-custom-jsx-keep-source-self/input.mjs
 * regression/runtime-classic-allow-multiple-source-self/input.mjs
 
-# babel-plugin-transform-react-jsx (112/161)
+# babel-plugin-transform-react-jsx (130/161)
 * autoImport/auto-import-react-source-type-module/input.js
 * autoImport/complicated-scope-module/input.js
-* autoImport/import-source-pragma/input.js
 * autoImport/react-defined/input.js
-* pure/false-pragma-comment-automatic-runtime/input.js
-* pure/false-pragma-comment-classic-runtime/input.js
-* pure/true-pragma-comment-automatic-runtime/input.js
-* pure/true-pragma-comment-classic-runtime/input.js
-* pure/unset-pragma-comment-automatic-runtime/input.js
-* pure/unset-pragma-comment-classic-runtime/input.js
 * react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
 * react/arrow-functions/input.js
 * react/assignment-babel-7/input.js
 * react/avoids-spread-babel-7/input.js
 * react/does-not-add-source-self-babel-7/input.mjs
 * react/handle-spread-with-proto-babel-7/input.js
-* react/honor-custom-jsx-comment/input.js
-* react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
 * react/optimisation.react.constant-elements/input.js
-* react/pragma-works-with-no-space-at-the-end/input.js
 * react/should-add-quotes-es3/input.js
-* react/should-allow-jsx-docs-comment-with-pragma/input.js
-* react/should-allow-no-pragmafrag-if-frag-unused/input.js
-* react/should-allow-pragmafrag-and-frag/input.js
-* react/should-warn-when-importSource-is-set/input.js
-* react/should-warn-when-importSource-pragma-is-set/input.js
 * react/wraps-props-in-react-spread-for-first-spread-attributes-babel-7/input.js
 * react/wraps-props-in-react-spread-for-last-spread-attributes-babel-7/input.js
 * react/wraps-props-in-react-spread-for-middle-spread-attributes-babel-7/input.js
@@ -174,7 +159,6 @@ Passed: 203/408
 * react-automatic/handle-fragments-with-no-children/input.js
 * react-automatic/handle-static-children/input.js
 * react-automatic/optimisation.react.constant-elements/input.js
-* react-automatic/pragma-works-with-no-space-at-the-end/input.js
 * react-automatic/should-add-quotes-es3/input.js
 * react-automatic/should-allow-nested-fragments/input.js
 * react-automatic/should-escape-xhtml-jsxtext/input.js
@@ -183,10 +167,8 @@ Passed: 203/408
 * react-automatic/should-have-correct-comma-in-nested-children/input.js
 * react-automatic/should-properly-handle-keys/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
-* regression/pragma-frag-set-default-classic-runtime/input.js
 * runtime/defaults-to-classis-babel-7/input.js
 * runtime/invalid-runtime/input.js
-* runtime/pragma-runtime-classsic/input.js
 
 # babel-plugin-transform-react-display-name (15/16)
 * display-name/nested/input.js
