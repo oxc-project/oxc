@@ -5,7 +5,7 @@ use oxc_syntax::operator::BinaryOperator;
 
 use crate::LintContext;
 
-#[allow(dead_code)]
+#[derive(Copy, Clone)]
 pub enum Value {
     Boolean(bool),
     Number(f64),
@@ -14,6 +14,7 @@ pub enum Value {
 }
 
 // We only care if it is falsy value (empty string).
+#[derive(Copy, Clone)]
 pub enum StringValue {
     Empty,
     NonEmpty,
@@ -41,6 +42,14 @@ impl Value {
                 }
             }
             _ => Value::Unknown,
+        }
+    }
+    pub fn get_falsy_value(&self) -> Option<bool> {
+        match &self {
+            Value::Unknown => None,
+            Value::Boolean(boolean) => Some(!*boolean),
+            Value::Number(num) => Some(*num == 0.0),
+            Value::String(str) => Some(matches!(str, StringValue::Empty)),
         }
     }
 }
@@ -91,6 +100,10 @@ pub fn calculate_binary_operation(op: BinaryOperator, left: Value, right: Value)
                     Value::String(StringValue::NonEmpty)
                 }
             }
+            _ => Value::Unknown,
+        },
+        BinaryOperator::Subtraction => match (left, right) {
+            (Value::Number(a), Value::Number(b)) => Value::Number(a - b),
             _ => Value::Unknown,
         },
         _ => Value::Unknown,
