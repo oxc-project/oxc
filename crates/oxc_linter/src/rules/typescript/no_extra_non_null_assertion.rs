@@ -75,22 +75,51 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        "const foo: { bar: number } | null = null; const bar = foo!.bar; ",
-        "function foo(bar: number | undefined) { const a: number = bar!; }",
-        "function foo(bar?: { n: number }) { return bar?.n; }",
-        "checksCounter?.textContent!.trim(); ",
-        "function foo(key: string | null) { const obj = {}; return obj?.[key!]; }",
+        "
+			const foo: { bar: number } | null = null;
+			const bar = foo!.bar;
+			      ",
+        "
+			function foo(bar: number | undefined) {
+			  const a: number = bar!;
+			}
+			      ",
+        "
+			function foo(bar?: { n: number }) {
+			  return bar?.n;
+			}
+			      ",
+        "
+			checksCounter?.textContent!.trim();
+			      ",
+        "
+			function foo(key: string | null) {
+			  const obj = {};
+			  return obj?.[key!];
+			}
+			      ",
     ];
 
     let fail = vec![
-        "const foo: { bar: number } | null = null; const bar = foo!!.bar; ",
-        "function foo(bar: number | undefined) { const a: number = bar!!; }",
-        "function foo(bar?: { n: number }) { return bar!?.n; }",
-        "function foo(bar?: { n: number }) { return bar!?.(); }",
-        "const foo: { bar: number } | null = null; const bar = (foo!)!.bar;",
-        "function foo(bar?: { n: number }) { return (bar!)?.n; }",
-        "function foo(bar?: { n: number }) { return (bar)!?.n; }",
-        "function foo(bar?: { n: number }) { return (bar!)?.(); }",
+        "
+			const foo: { bar: number } | null = null;
+			const bar = foo!!.bar;
+			      ",
+        "
+			function foo(bar: number | undefined) {
+			  const a: number = bar!!;
+			}
+			      ",
+        "
+			function foo(bar?: { n: number }) {
+			  return bar!?.n;
+			}
+			      ",
+        "
+			function foo(bar?: { n: number }) {
+			  return bar!?.();
+			}
+			      ",
     ];
 
     Tester::new(NoExtraNonNullAssertion::NAME, pass, fail).test_and_snapshot();

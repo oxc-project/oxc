@@ -3,49 +3,33 @@ source: crates/oxc_linter/src/tester.rs
 expression: no_extra_non_null_assertion
 ---
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
-   ╭─[no_extra_non_null_assertion.tsx:1:58]
- 1 │ const foo: { bar: number } | null = null; const bar = foo!!.bar; 
-   ·                                                          ▲
+   ╭─[no_extra_non_null_assertion.tsx:3:19]
+ 2 │             const foo: { bar: number } | null = null;
+ 3 │             const bar = foo!!.bar;
+   ·                            ▲
+ 4 │                   
    ╰────
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
-   ╭─[no_extra_non_null_assertion.tsx:1:62]
- 1 │ function foo(bar: number | undefined) { const a: number = bar!!; }
-   ·                                                              ▲
+   ╭─[no_extra_non_null_assertion.tsx:3:27]
+ 2 │             function foo(bar: number | undefined) {
+ 3 │               const a: number = bar!!;
+   ·                                    ▲
+ 4 │             }
    ╰────
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
-   ╭─[no_extra_non_null_assertion.tsx:1:47]
- 1 │ function foo(bar?: { n: number }) { return bar!?.n; }
-   ·                                               ▲
+   ╭─[no_extra_non_null_assertion.tsx:3:16]
+ 2 │             function foo(bar?: { n: number }) {
+ 3 │               return bar!?.n;
+   ·                         ▲
+ 4 │             }
    ╰────
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
-   ╭─[no_extra_non_null_assertion.tsx:1:47]
- 1 │ function foo(bar?: { n: number }) { return bar!?.(); }
-   ·                                               ▲
-   ╰────
-
-  ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
-   ╭─[no_extra_non_null_assertion.tsx:1:59]
- 1 │ const foo: { bar: number } | null = null; const bar = (foo!)!.bar;
-   ·                                                           ▲
-   ╰────
-
-  ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
-   ╭─[no_extra_non_null_assertion.tsx:1:48]
- 1 │ function foo(bar?: { n: number }) { return (bar!)?.n; }
-   ·                                                ▲
-   ╰────
-
-  ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
-   ╭─[no_extra_non_null_assertion.tsx:1:49]
- 1 │ function foo(bar?: { n: number }) { return (bar)!?.n; }
-   ·                                                 ▲
-   ╰────
-
-  ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
-   ╭─[no_extra_non_null_assertion.tsx:1:48]
- 1 │ function foo(bar?: { n: number }) { return (bar!)?.(); }
-   ·                                                ▲
+   ╭─[no_extra_non_null_assertion.tsx:3:16]
+ 2 │             function foo(bar?: { n: number }) {
+ 3 │               return bar!?.();
+   ·                         ▲
+ 4 │             }
    ╰────
