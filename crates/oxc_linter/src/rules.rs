@@ -126,6 +126,7 @@ mod typescript {
     pub mod ban_ts_comment;
     pub mod ban_tslint_comment;
     pub mod ban_types;
+    pub mod consistent_type_definitions;
     pub mod no_duplicate_enum_values;
     pub mod no_empty_interface;
     pub mod no_explicit_any;
@@ -138,6 +139,7 @@ mod typescript {
     pub mod no_unsafe_declaration_merging;
     pub mod no_var_requires;
     pub mod prefer_as_const;
+    pub mod prefer_for_of;
     pub mod prefer_function_type;
     pub mod prefer_ts_expect_error;
     pub mod triple_slash_reference;
@@ -170,6 +172,8 @@ mod jest {
     pub mod prefer_comparison_matcher;
     pub mod prefer_equality_matcher;
     pub mod prefer_expect_resolves;
+    pub mod prefer_lowercase_title;
+    pub mod prefer_mock_promise_shorthand;
     pub mod prefer_spy_on;
     pub mod prefer_strict_equal;
     pub mod prefer_to_be;
@@ -224,6 +228,7 @@ mod unicorn {
     pub mod no_array_for_each;
     pub mod no_array_reduce;
     pub mod no_await_expression_member;
+    pub mod no_await_in_promise_methods;
     pub mod no_console_spaces;
     pub mod no_document_cookie;
     pub mod no_empty_file;
@@ -238,6 +243,7 @@ mod unicorn {
     pub mod no_null;
     pub mod no_object_as_default_parameter;
     pub mod no_process_exit;
+    pub mod no_single_promise_in_promise_methods;
     pub mod no_static_only_class;
     pub mod no_thenable;
     pub mod no_this_assignment;
@@ -351,6 +357,12 @@ mod nextjs {
     pub mod no_unwanted_polyfillio;
 }
 
+/// <https://github.com/gajus/eslint-plugin-jsdoc>
+mod jsdoc {
+    pub mod check_access;
+    pub mod empty_tags;
+}
+
 mod tree_shaking {
     pub mod no_side_effects_in_initialization;
 }
@@ -452,6 +464,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::ban_ts_comment,
     typescript::ban_tslint_comment,
     typescript::ban_types,
+    typescript::consistent_type_definitions,
     typescript::no_duplicate_enum_values,
     typescript::no_empty_interface,
     typescript::no_explicit_any,
@@ -464,6 +477,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_unsafe_declaration_merging,
     typescript::no_var_requires,
     typescript::prefer_as_const,
+    typescript::prefer_for_of,
     typescript::prefer_function_type,
     typescript::prefer_ts_expect_error,
     typescript::triple_slash_reference,
@@ -493,6 +507,8 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_comparison_matcher,
     jest::prefer_equality_matcher,
     jest::prefer_expect_resolves,
+    jest::prefer_lowercase_title,
+    jest::prefer_mock_promise_shorthand,
     jest::prefer_spy_on,
     jest::prefer_strict_equal,
     jest::prefer_to_be,
@@ -504,7 +520,6 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_expect,
     jest::valid_title,
     unicorn::catch_error_name,
-    unicorn::prefer_node_protocol,
     unicorn::empty_brace_spaces,
     unicorn::error_message,
     unicorn::escape_case,
@@ -512,9 +527,10 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::filename_case,
     unicorn::new_for_builtins,
     unicorn::no_abusive_eslint_disable,
-    unicorn::no_array_reduce,
     unicorn::no_array_for_each,
+    unicorn::no_array_reduce,
     unicorn::no_await_expression_member,
+    unicorn::no_await_in_promise_methods,
     unicorn::no_console_spaces,
     unicorn::no_document_cookie,
     unicorn::no_empty_file,
@@ -529,6 +545,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_null,
     unicorn::no_object_as_default_parameter,
     unicorn::no_process_exit,
+    unicorn::no_single_promise_in_promise_methods,
     unicorn::no_static_only_class,
     unicorn::no_thenable,
     unicorn::no_this_assignment,
@@ -539,6 +556,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_useless_fallback_in_spread,
     unicorn::no_useless_length_check,
     unicorn::no_useless_promise_resolve_reject,
+    unicorn::no_useless_spread,
     unicorn::no_useless_switch_case,
     unicorn::no_zero_fractions,
     unicorn::number_literal_case,
@@ -550,6 +568,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_blob_reading_methods,
     unicorn::prefer_code_point,
     unicorn::prefer_date_now,
+    unicorn::prefer_node_protocol,
     unicorn::prefer_dom_node_append,
     unicorn::prefer_dom_node_dataset,
     unicorn::prefer_dom_node_remove,
@@ -561,7 +580,6 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_modern_dom_apis,
     unicorn::prefer_modern_math_apis,
     unicorn::prefer_native_coercion_functions,
-    unicorn::no_useless_spread,
     unicorn::prefer_number_properties,
     unicorn::prefer_optional_catch_binding,
     unicorn::prefer_prototype_methods,
@@ -668,5 +686,7 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_document_import_in_page,
     nextjs::no_unwanted_polyfillio,
     nextjs::no_before_interactive_script_outside_document,
+    jsdoc::check_access,
+    jsdoc::empty_tags,
     tree_shaking::no_side_effects_in_initialization,
 }

@@ -1,21 +1,24 @@
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 
 use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, AssignmentTarget,
-        CallExpression, ComputedMemberExpression, Expression, FormalParameter, Function,
-        IdentifierReference, MemberExpression, ModuleDeclaration, ParenthesizedExpression,
-        PrivateFieldExpression, Program, SimpleAssignmentTarget, Statement, StaticMemberExpression,
+        BinaryExpression, BindingPattern, BindingPatternKind, CallExpression, Class, ClassBody,
+        ClassElement, ComputedMemberExpression, ConditionalExpression, Declaration, Expression,
+        FormalParameter, Function, IdentifierReference, MemberExpression, ModuleDeclaration,
+        NewExpression, ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey,
+        SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression,
+        VariableDeclarator,
     },
     AstKind,
 };
 use oxc_semantic::{AstNode, SymbolId};
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
 use crate::{
     ast_util::{get_declaration_of_variable, get_symbol_id_of_variable},
-    utils::{get_write_expr, no_effects, Value},
+    utils::{calculate_binary_operation, get_write_expr, has_pure_notation, no_effects, Value},
     LintContext,
 };
 
@@ -23,6 +26,8 @@ use super::NoSideEffectsDiagnostic;
 pub struct NodeListenerOptions<'a, 'b> {
     checked_mutated_nodes: RefCell<FxHashSet<SymbolId>>,
     ctx: &'b LintContext<'a>,
+    has_valid_this: Cell<bool>,
+    called_with_new: Cell<bool>,
 }
 
 impl<'a, 'b> NodeListenerOptions<'a, 'b> {
@@ -33,7 +38,12 @@ impl<'a, 'b> NodeListenerOptions<'a, 'b> {
 
 impl<'a, 'b> NodeListenerOptions<'a, 'b> {
     pub fn new(ctx: &'b LintContext<'a>) -> Self {
-        Self { checked_mutated_nodes: RefCell::new(FxHashSet::default()), ctx }
+        Self {
+            checked_mutated_nodes: RefCell::new(FxHashSet::default()),
+            ctx,
+            has_valid_this: Cell::new(false),
+            called_with_new: Cell::new(false),
+        }
     }
 }
 
@@ -42,8 +52,8 @@ pub trait ListenerMap {
     fn report_effects_when_assigned(&self, _options: &NodeListenerOptions) {}
     fn report_effects_when_called(&self, _options: &NodeListenerOptions) {}
     fn report_effects_when_mutated(&self, _options: &NodeListenerOptions) {}
-    fn get_value_and_report_effects(&self, _options: &NodeListenerOptions) -> Option<Value> {
-        None
+    fn get_value_and_report_effects(&self, _options: &NodeListenerOptions) -> Value {
+        Value::Unknown
     }
 }
 
@@ -62,13 +72,51 @@ impl<'a> ListenerMap for Statement<'a> {
             Self::BreakStatement(_) | Self::ContinueStatement(_) | Self::EmptyStatement(_) => {
                 no_effects();
             }
+            Self::Declaration(decl) => {
+                decl.report_effects(options);
+            }
+            Self::ReturnStatement(stmt) => {
+                if let Some(arg) = &stmt.argument {
+                    arg.report_effects(options);
+                }
+            }
             Self::ModuleDeclaration(decl) => {
                 if matches!(
-                    decl.0,
+                    &**decl,
                     ModuleDeclaration::ExportAllDeclaration(_)
                         | ModuleDeclaration::ImportDeclaration(_)
                 ) {
                     no_effects();
+                }
+            }
+            Self::TryStatement(stmt) => {
+                stmt.block.body.iter().for_each(|stmt| stmt.report_effects(options));
+                stmt.handler.iter().for_each(|handler| {
+                    handler.body.body.iter().for_each(|stmt| stmt.report_effects(options));
+                });
+                stmt.finalizer.iter().for_each(|finalizer| {
+                    finalizer.body.iter().for_each(|stmt| stmt.report_effects(options));
+                });
+            }
+            Self::BlockStatement(stmt) => {
+                stmt.body.iter().for_each(|stmt| stmt.report_effects(options));
+            }
+            Self::IfStatement(stmt) => {
+                let test_result = stmt.test.get_value_and_report_effects(options);
+
+                if let Some(falsy) = test_result.get_falsy_value() {
+                    if falsy {
+                        if let Some(alternate) = &stmt.alternate {
+                            alternate.report_effects(options);
+                        }
+                    } else {
+                        stmt.consequent.report_effects(options);
+                    }
+                } else {
+                    stmt.consequent.report_effects(options);
+                    if let Some(alternate) = &stmt.alternate {
+                        alternate.report_effects(options);
+                    }
                 }
             }
             _ => {}
@@ -88,6 +136,25 @@ impl<'a> ListenerMap for AstNode<'a> {
                     init.report_effects_when_called(options);
                 }
             }
+            AstKind::FormalParameter(param) => {
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::CallParameter(param.span));
+            }
+            AstKind::BindingRestElement(rest) => {
+                let start = rest.span.start + 3;
+                let end = rest.span.end;
+                options
+                    .ctx
+                    .diagnostic(NoSideEffectsDiagnostic::CallParameter(Span::new(start, end)));
+            }
+            AstKind::Function(function) => {
+                let old_val = options.has_valid_this.get();
+                options.has_valid_this.set(options.called_with_new.get());
+                function.report_effects_when_called(options);
+                options.has_valid_this.set(old_val);
+            }
+            AstKind::Class(class) => {
+                class.report_effects_when_called(options);
+            }
             _ => {}
         }
     }
@@ -99,7 +166,145 @@ impl<'a> ListenerMap for AstNode<'a> {
                     init.report_effects_when_mutated(options);
                 }
             }
+            AstKind::FormalParameter(param) => {
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::MutateParameter(param.span));
+            }
+            AstKind::BindingRestElement(rest) => {
+                let start = rest.span.start + 3;
+                let end = rest.span.end;
+                options
+                    .ctx
+                    .diagnostic(NoSideEffectsDiagnostic::MutateParameter(Span::new(start, end)));
+            }
             _ => {}
+        }
+    }
+}
+
+impl<'a> ListenerMap for Declaration<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        match self {
+            Self::VariableDeclaration(decl) => {
+                decl.declarations.iter().for_each(|decl| decl.report_effects(options));
+            }
+            Self::ClassDeclaration(decl) => {
+                decl.report_effects(options);
+            }
+            _ => {}
+        }
+    }
+}
+
+impl<'a> ListenerMap for Class<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        if let Some(super_class) = &self.super_class {
+            super_class.report_effects(options);
+        }
+        self.body.report_effects(options);
+    }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        if let Some(super_class) = &self.super_class {
+            super_class.report_effects_when_called(options);
+        }
+        self.body.report_effects_when_called(options);
+    }
+}
+
+impl<'a> ListenerMap for ClassBody<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.body.iter().for_each(|class_element| {
+            class_element.report_effects(options);
+        });
+    }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        let constructor = self.body.iter().find(|class_element| {
+            if let ClassElement::MethodDefinition(definition) = class_element {
+                return definition.kind.is_constructor();
+            }
+            false
+        });
+
+        if let Some(constructor) = constructor {
+            constructor.report_effects_when_called(options);
+        }
+
+        self.body
+            .iter()
+            .filter(|class_element| matches!(class_element, ClassElement::PropertyDefinition(_)))
+            .for_each(|property_definition| {
+                property_definition.report_effects_when_called(options);
+            });
+    }
+}
+
+impl<'a> ListenerMap for ClassElement<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        match self {
+            Self::MethodDefinition(method) => {
+                method.key.report_effects(options);
+            }
+            Self::PropertyDefinition(prop) => {
+                prop.key.report_effects(options);
+            }
+            _ => {}
+        }
+    }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        match self {
+            Self::MethodDefinition(method) => {
+                method.value.report_effects_when_called(options);
+            }
+            Self::PropertyDefinition(prop) => {
+                if let Some(value) = &prop.value {
+                    value.report_effects_when_called(options);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+impl<'a> ListenerMap for PropertyKey<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        match self {
+            Self::Expression(expr) => {
+                expr.report_effects(options);
+            }
+            _ => no_effects(),
+        }
+    }
+}
+
+impl<'a> ListenerMap for VariableDeclarator<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.id.report_effects(options);
+
+        if let Some(init) = &self.init {
+            init.report_effects(options);
+        }
+    }
+}
+
+impl<'a> ListenerMap for BindingPattern<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        match &self.kind {
+            BindingPatternKind::BindingIdentifier(_) => {}
+            BindingPatternKind::ArrayPattern(array) => {
+                array.elements.iter().for_each(|el| {
+                    if let Some(el) = el {
+                        el.report_effects(options);
+                    }
+                });
+            }
+            BindingPatternKind::ObjectPattern(object) => {
+                object.properties.iter().for_each(|prop| {
+                    prop.value.report_effects(options);
+                });
+            }
+            BindingPatternKind::AssignmentPattern(assign_p) => {
+                assign_p.left.report_effects(options);
+                assign_p.right.report_effects(options);
+            }
         }
     }
 }
@@ -119,6 +324,21 @@ impl<'a> ListenerMap for Expression<'a> {
             }
             Self::ParenthesizedExpression(expr) => {
                 expr.report_effects(options);
+            }
+            Self::NewExpression(expr) => {
+                expr.report_effects(options);
+            }
+            Self::AwaitExpression(expr) => {
+                expr.argument.report_effects(options);
+            }
+            Self::BinaryExpression(expr) => {
+                expr.get_value_and_report_effects(options);
+            }
+            Self::ClassExpression(expr) => {
+                expr.report_effects(options);
+            }
+            Self::ConditionalExpression(expr) => {
+                expr.get_value_and_report_effects(options);
             }
             Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
@@ -142,9 +362,12 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::CallExpression(expr) => {
                 expr.report_effects_when_mutated(options);
             }
+            Self::ThisExpression(expr) => {
+                expr.report_effects_when_mutated(options);
+            }
             _ => {
                 // Default behavior
-                options.ctx.diagnostic(NoSideEffectsDiagnostic::Mutation(self.span()));
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::Mutate(self.span()));
             }
         }
     }
@@ -157,7 +380,10 @@ impl<'a> ListenerMap for Expression<'a> {
                 expr.report_effects_when_called(options);
             }
             Self::FunctionExpression(expr) => {
+                let old_val = options.has_valid_this.get();
+                options.has_valid_this.set(options.called_with_new.get());
                 expr.report_effects_when_called(options);
+                options.has_valid_this.set(old_val);
             }
             Self::ArrowFunctionExpression(expr) => {
                 expr.report_effects_when_called(options);
@@ -165,9 +391,27 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::ParenthesizedExpression(expr) => {
                 expr.report_effects_when_called(options);
             }
+            Self::ClassExpression(expr) => {
+                expr.report_effects_when_called(options);
+            }
+            Self::ConditionalExpression(expr) => expr.report_effects_when_called(options),
             _ => {
                 // Default behavior
                 options.ctx.diagnostic(NoSideEffectsDiagnostic::Call(self.span()));
+            }
+        }
+    }
+    fn get_value_and_report_effects(&self, options: &NodeListenerOptions) -> Value {
+        match self {
+            Self::BooleanLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::TemplateLiteral(_) => Value::new(self),
+            Self::BinaryExpression(expr) => expr.get_value_and_report_effects(options),
+            Self::ConditionalExpression(expr) => expr.get_value_and_report_effects(options),
+            _ => {
+                self.report_effects(options);
+                Value::Unknown
             }
         }
     }
@@ -187,6 +431,67 @@ fn defined_custom_report_effects_when_called(expr: &Expression) -> bool {
     )
 }
 
+impl<'a> ListenerMap for ConditionalExpression<'a> {
+    fn get_value_and_report_effects(&self, options: &NodeListenerOptions) -> Value {
+        let test_result = self.test.get_value_and_report_effects(options);
+
+        if let Some(falsy) = test_result.get_falsy_value() {
+            if falsy {
+                self.alternate.get_value_and_report_effects(options)
+            } else {
+                self.consequent.get_value_and_report_effects(options)
+            }
+        } else {
+            self.consequent.report_effects(options);
+            self.alternate.report_effects(options);
+            test_result
+        }
+    }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        let test_result = self.test.get_value_and_report_effects(options);
+
+        if let Some(falsy) = test_result.get_falsy_value() {
+            if falsy {
+                self.alternate.report_effects_when_called(options);
+            } else {
+                self.consequent.report_effects_when_called(options);
+            }
+        } else {
+            self.consequent.report_effects_when_called(options);
+            self.alternate.report_effects_when_called(options);
+        }
+    }
+}
+
+impl<'a> ListenerMap for BinaryExpression<'a> {
+    fn get_value_and_report_effects(&self, options: &NodeListenerOptions) -> Value {
+        let left = self.left.get_value_and_report_effects(options);
+        let right = self.right.get_value_and_report_effects(options);
+        calculate_binary_operation(self.operator, left, right)
+    }
+}
+
+impl ListenerMap for ThisExpression {
+    fn report_effects_when_mutated(&self, options: &NodeListenerOptions) {
+        if !options.has_valid_this.get() {
+            options.ctx.diagnostic(NoSideEffectsDiagnostic::MutateOfThis(self.span));
+        }
+    }
+}
+
+impl<'a> ListenerMap for NewExpression<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        if has_pure_notation(self.span, options.ctx) {
+            return;
+        }
+        self.arguments.iter().for_each(|arg| arg.report_effects(options));
+        let old_val = options.called_with_new.get();
+        options.called_with_new.set(true);
+        self.callee.report_effects_when_called(options);
+        options.called_with_new.set(old_val);
+    }
+}
+
 impl<'a> ListenerMap for ParenthesizedExpression<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
         self.expression.report_effects(options);
@@ -200,7 +505,7 @@ impl<'a> ListenerMap for ParenthesizedExpression<'a> {
     fn report_effects_when_mutated(&self, options: &NodeListenerOptions) {
         self.expression.report_effects_when_mutated(options);
     }
-    fn get_value_and_report_effects(&self, options: &NodeListenerOptions) -> Option<Value> {
+    fn get_value_and_report_effects(&self, options: &NodeListenerOptions) -> Value {
         self.expression.get_value_and_report_effects(options)
     }
 }
@@ -215,6 +520,7 @@ impl<'a> ListenerMap for ArrowFunctionExpression<'a> {
 impl<'a> ListenerMap for Function<'a> {
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
         self.params.items.iter().for_each(|param| param.report_effects(options));
+
         if let Some(body) = &self.body {
             body.statements.iter().for_each(|stmt| stmt.report_effects(options));
         }
@@ -222,8 +528,8 @@ impl<'a> ListenerMap for Function<'a> {
 }
 
 impl<'a> ListenerMap for FormalParameter<'a> {
-    fn report_effects(&self, _options: &NodeListenerOptions) {
-        // TODO: Not work now, need report side effects.
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.pattern.report_effects(options);
     }
 }
 
@@ -231,7 +537,10 @@ impl<'a> ListenerMap for CallExpression<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
         self.arguments.iter().for_each(|arg| arg.report_effects(options));
         if defined_custom_report_effects_when_called(&self.callee) {
+            let old_value = options.called_with_new.get();
+            options.called_with_new.set(false);
             self.callee.report_effects_when_called(options);
+            options.called_with_new.set(old_value);
         } else {
             // TODO: Not work now
             options.ctx.diagnostic(NoSideEffectsDiagnostic::Call(self.callee.span()));
@@ -255,7 +564,7 @@ impl<'a> ListenerMap for CallExpression<'a> {
         }
     }
     fn report_effects_when_mutated(&self, options: &NodeListenerOptions) {
-        options.ctx.diagnostic(NoSideEffectsDiagnostic::MutationOfFunctionReturnValue(self.span));
+        options.ctx.diagnostic(NoSideEffectsDiagnostic::MutateFunctionReturnValue(self.span));
     }
 }
 
@@ -351,7 +660,7 @@ impl<'a> ListenerMap for IdentifierReference<'a> {
                 node.report_effects_when_mutated(options);
             }
         } else {
-            ctx.diagnostic(NoSideEffectsDiagnostic::MutationWithName(
+            ctx.diagnostic(NoSideEffectsDiagnostic::MutateWithName(
                 self.name.to_compact_str(),
                 self.span,
             ));

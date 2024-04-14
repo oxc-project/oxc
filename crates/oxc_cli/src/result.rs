@@ -23,6 +23,7 @@ pub struct LintResult {
     pub number_of_errors: usize,
     pub max_warnings_exceeded: bool,
     pub deny_warnings: bool,
+    pub print_summary: bool,
 }
 
 #[derive(Debug)]
@@ -51,30 +52,35 @@ impl Termination for CliRunResult {
                 number_of_errors,
                 max_warnings_exceeded,
                 deny_warnings,
+                print_summary,
             }) => {
-                let threads = rayon::current_num_threads();
-                let number_of_diagnostics = number_of_warnings + number_of_errors;
+                if print_summary {
+                    let threads = rayon::current_num_threads();
+                    let number_of_diagnostics = number_of_warnings + number_of_errors;
 
-                if number_of_diagnostics > 0 {
-                    println!();
+                    if number_of_diagnostics > 0 {
+                        println!();
+                    }
+
+                    let time = Self::get_execution_time(&duration);
+                    let s = if number_of_files == 1 { "" } else { "s" };
+                    println!(
+                        "Finished in {time} on {number_of_files} file{s} with {number_of_rules} rules using {threads} threads."
+                    );
+
+                    if max_warnings_exceeded {
+                        println!(
+                            "Exceeded maximum number of warnings. Found {number_of_warnings}."
+                        );
+                        return ExitCode::from(1);
+                    }
+
+                    println!(
+                        "Found {number_of_warnings} warning{} and {number_of_errors} error{}.",
+                        if number_of_warnings == 1 { "" } else { "s" },
+                        if number_of_errors == 1 { "" } else { "s" }
+                    );
                 }
-
-                let time = Self::get_execution_time(&duration);
-                let s = if number_of_files == 1 { "" } else { "s" };
-                println!(
-                    "Finished in {time} on {number_of_files} file{s} with {number_of_rules} rules using {threads} threads."
-                );
-
-                if max_warnings_exceeded {
-                    println!("Exceeded maximum number of warnings. Found {number_of_warnings}.");
-                    return ExitCode::from(1);
-                }
-
-                println!(
-                    "Found {number_of_warnings} warning{} and {number_of_errors} error{}.",
-                    if number_of_warnings == 1 { "" } else { "s" },
-                    if number_of_errors == 1 { "" } else { "s" }
-                );
 
                 let exit_code =
                     u8::from((number_of_warnings > 0 && deny_warnings) || number_of_errors > 0);

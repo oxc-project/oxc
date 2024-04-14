@@ -60,7 +60,7 @@ impl Rule for PreferEventTarget {
                     return;
                 };
 
-                if ident as *const _ != callee_ident.0 as *const _ {
+                if ident as *const _ != std::ptr::addr_of!(**callee_ident) {
                     return;
                 }
             }

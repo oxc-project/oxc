@@ -188,19 +188,19 @@ fn wrap_to_avoid_ambiguous_else(stmt: &Statement) -> bool {
     let mut current = stmt;
     loop {
         current = match current {
-            Statement::IfStatement(Box(IfStatement { alternate, .. })) => {
-                if let Some(stmt) = &alternate {
+            Statement::IfStatement(if_stmt) => {
+                if let Some(stmt) = &if_stmt.alternate {
                     stmt
                 } else {
                     return true;
                 }
             }
-            Statement::ForStatement(Box(ForStatement { body, .. }))
-            | Statement::ForOfStatement(Box(ForOfStatement { body, .. }))
-            | Statement::ForInStatement(Box(ForInStatement { body, .. }))
-            | Statement::WhileStatement(Box(WhileStatement { body, .. }))
-            | Statement::WithStatement(Box(WithStatement { body, .. }))
-            | Statement::LabeledStatement(Box(LabeledStatement { body, .. })) => body,
+            Statement::ForStatement(for_stmt) => &for_stmt.body,
+            Statement::ForOfStatement(for_of_stmt) => &for_of_stmt.body,
+            Statement::ForInStatement(for_in_stmt) => &for_in_stmt.body,
+            Statement::WhileStatement(while_stmt) => &while_stmt.body,
+            Statement::WithStatement(with_stmt) => &with_stmt.body,
+            Statement::LabeledStatement(labeled_stmt) => &labeled_stmt.body,
             _ => return false,
         }
     }
@@ -1114,7 +1114,10 @@ fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIF
     let dot = chars.iter().position(|&c| c == b'.');
     let u8_to_string = |num: &[u8]| {
         // SAFETY: criteria of `from_utf8_unchecked`.are met.
-        unsafe { String::from_utf8_unchecked(num.to_vec()) }
+        #[allow(unsafe_code)]
+        unsafe {
+            String::from_utf8_unchecked(num.to_vec())
+        }
     };
 
     if dot == Some(1) && chars[0] == b'0' {

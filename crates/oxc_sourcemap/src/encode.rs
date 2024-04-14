@@ -1,3 +1,4 @@
+use crate::error::{Error, Result};
 /// Port from https://github.com/getsentry/rust-sourcemap/blob/master/src/encoder.rs
 /// It is a helper for encode `SourceMap` to vlq sourcemap string, but here some different.
 /// - Quote `source_content` at parallel.
@@ -5,7 +6,9 @@
 use crate::{token::TokenChunk, SourceMap, Token};
 use rayon::prelude::*;
 
-pub fn encode(sourcemap: &SourceMap) -> String {
+// Here using `serde_json::to_string` to serialization `names/source_contents/sources`.
+// It will escape the string to avoid invalid JSON string.
+pub fn encode(sourcemap: &SourceMap) -> Result<String> {
     let mut buf = String::new();
     buf.push_str("{\"version\":3,");
     if let Some(file) = sourcemap.get_file() {
@@ -13,21 +16,47 @@ pub fn encode(sourcemap: &SourceMap) -> String {
         buf.push_str(file);
         buf.push_str("\",");
     }
+    if let Some(source_root) = sourcemap.get_source_root() {
+        buf.push_str("\"sourceRoot\":\"");
+        buf.push_str(source_root);
+        buf.push_str("\",");
+    }
     buf.push_str("\"names\":[");
-    buf.push_str(&sourcemap.names.iter().map(|x| format!("{x:?}")).collect::<Vec<_>>().join(","));
+    let names = sourcemap
+        .names
+        .iter()
+        .map(|x| serde_json::to_string(x.as_ref()))
+        .collect::<std::result::Result<Vec<_>, serde_json::Error>>()
+        .map_err(Error::from)?;
+    buf.push_str(&names.join(","));
     buf.push_str("],\"sources\":[");
-    buf.push_str(&sourcemap.sources.iter().map(|x| format!("{x:?}")).collect::<Vec<_>>().join(","));
+    let sources = sourcemap
+        .sources
+        .iter()
+        .map(|x| serde_json::to_string(x.as_ref()))
+        .collect::<std::result::Result<Vec<_>, serde_json::Error>>()
+        .map_err(Error::from)?;
+    buf.push_str(&sources.join(","));
     // Quote `source_content` at parallel.
     if let Some(source_contents) = &sourcemap.source_contents {
         buf.push_str("],\"sourcesContent\":[");
-        buf.push_str(
-            &source_contents.par_iter().map(|x| format!("{x:?}")).collect::<Vec<_>>().join(","),
-        );
+        let quote_source_contents = source_contents
+            .par_iter()
+            .map(|x| serde_json::to_string(x.as_ref()))
+            .collect::<std::result::Result<Vec<_>, serde_json::Error>>()
+            .map_err(Error::from)?;
+        buf.push_str(&quote_source_contents.join(","));
+    }
+    if let Some(x_google_ignore_list) = &sourcemap.x_google_ignore_list {
+        buf.push_str("],\"x_google_ignoreList\":[");
+        let x_google_ignore_list =
+            x_google_ignore_list.iter().map(ToString::to_string).collect::<Vec<_>>();
+        buf.push_str(&x_google_ignore_list.join(","));
     }
     buf.push_str("],\"mappings\":\"");
     buf.push_str(&serialize_sourcemap_mappings(sourcemap));
     buf.push_str("\"}");
-    buf
+    Ok(buf)
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -126,13 +155,33 @@ fn test_encode() {
     let input = r#"{
         "version": 3,
         "sources": ["coolstuff.js"],
+        "sourceRoot": "x",
         "names": ["x","alert"],
         "mappings": "AAAA,GAAIA,GAAI,EACR,IAAIA,GAAK,EAAG,CACVC,MAAM"
     }"#;
     let sm = SourceMap::from_json_string(input).unwrap();
-    let sm2 = SourceMap::from_json_string(&sm.to_json_string()).unwrap();
+    let sm2 = SourceMap::from_json_string(&sm.to_json_string().unwrap()).unwrap();
 
     for (tok1, tok2) in sm.get_tokens().zip(sm2.get_tokens()) {
         assert_eq!(tok1, tok2);
     }
+}
+
+#[test]
+fn test_encode_escape_string() {
+    // '\0' should be escaped.
+    let mut sm = SourceMap::new(
+        None,
+        vec!["\0".into()],
+        None,
+        vec!["\0".into()],
+        Some(vec!["\0".into()]),
+        vec![],
+        None,
+    );
+    sm.set_x_google_ignore_list(vec![0]);
+    assert_eq!(
+        sm.to_json_string().unwrap(),
+        r#"{"version":3,"names":["\u0000"],"sources":["\u0000"],"sourcesContent":["\u0000"],"x_google_ignoreList":[0],"mappings":""}"#
+    );
 }

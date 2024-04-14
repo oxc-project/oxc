@@ -1007,6 +1007,12 @@ pub enum ModifierKind {
     Override,
 }
 
+impl ModifierKind {
+    pub fn is_typescript_syntax(&self) -> bool {
+        !matches!(self, Self::Async | Self::Default | Self::Export | Self::Static)
+    }
+}
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -1042,6 +1048,12 @@ impl<'a> Modifiers<'a> {
 
     pub fn is_contains_declare(&self) -> bool {
         self.contains(ModifierKind::Declare)
+    }
+
+    pub fn remove_type_modifiers(&mut self) {
+        if let Some(list) = &mut self.0 {
+            list.retain(|m| !m.kind.is_typescript_syntax());
+        }
     }
 }
 

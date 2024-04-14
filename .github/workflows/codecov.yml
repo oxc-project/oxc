@@ -28,6 +28,9 @@ jobs:
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
+        with:
+          shared-key: 'codecov'
+          save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@v2
@@ -38,6 +41,9 @@ jobs:
         run: rustup component add llvm-tools-preview
 
       - name: Run
+        env:
+          # Increase stack size to 10MB, avoid `oxc_prettier` from stack overflowing when printing long assignment expressions.
+          RUST_MIN_STACK: 104857600
         run: cargo codecov --lcov --output-path lcov.info
 
       - name: Upload Artifact

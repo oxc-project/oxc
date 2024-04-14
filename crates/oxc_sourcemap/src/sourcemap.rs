@@ -7,14 +7,19 @@ use crate::{
 };
 use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SourceMap {
     pub(crate) file: Option<Arc<str>>,
     pub(crate) names: Vec<Arc<str>>,
+    pub(crate) source_root: Option<String>,
     pub(crate) sources: Vec<Arc<str>>,
     pub(crate) source_contents: Option<Vec<Arc<str>>>,
     pub(crate) tokens: Vec<Token>,
     pub(crate) token_chunks: Option<Vec<TokenChunk>>,
+    /// Identifies third-party sources (such as framework code or bundler-generated code), allowing developers to avoid code that they don't want to see or step through, without having to configure this beforehand.
+    /// The `x_google_ignoreList` field refers to the `sources` array, and lists the indices of all the known third-party sources in that source map.
+    /// When parsing the source map, developer tools can use this to determine sections of the code that the browser loads and runs that could be automatically ignore-listed.
+    pub(crate) x_google_ignore_list: Option<Vec<u32>>,
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -22,30 +27,47 @@ impl SourceMap {
     pub fn new(
         file: Option<Arc<str>>,
         names: Vec<Arc<str>>,
+        source_root: Option<String>,
         sources: Vec<Arc<str>>,
         source_contents: Option<Vec<Arc<str>>>,
         tokens: Vec<Token>,
         token_chunks: Option<Vec<TokenChunk>>,
     ) -> Self {
-        Self { file, names, sources, source_contents, tokens, token_chunks }
+        Self {
+            file,
+            names,
+            source_root,
+            sources,
+            source_contents,
+            tokens,
+            token_chunks,
+            x_google_ignore_list: None,
+        }
     }
 
     /// Convert `SourceMap` to vlq sourcemap string.
-    #[allow(clippy::missing_errors_doc)]
+    /// # Errors
+    ///
+    /// The `serde_json` deserialize Error.
     pub fn from_json_string(value: &str) -> Result<Self> {
         decode(value)
     }
 
     /// Convert the vlq sourcemap string to `SourceMap`.
-    pub fn to_json_string(&self) -> String {
+    /// # Errors
+    ///
+    /// The `serde_json` serialization Error.
+    pub fn to_json_string(&self) -> Result<String> {
         encode(self)
     }
 
     /// Convert `SourceMap` to vlq sourcemap data url.
-    pub fn to_data_url(&self) -> String {
-        let base_64_str =
-            base64_simd::Base64::STANDARD.encode_to_boxed_str(self.to_json_string().as_bytes());
-        format!("data:application/json;charset=utf-8;base64,{base_64_str}")
+    /// # Errors
+    ///
+    /// The `serde_json` serialization Error.
+    pub fn to_data_url(&self) -> Result<String> {
+        let base_64_str = base64_simd::STANDARD.encode_to_string(self.to_json_string()?.as_bytes());
+        Ok(format!("data:application/json;charset=utf-8;base64,{base_64_str}"))
     }
 
     pub fn get_file(&self) -> Option<&str> {
@@ -56,16 +78,35 @@ impl SourceMap {
         self.file = Some(file.into());
     }
 
+    pub fn get_source_root(&self) -> Option<&str> {
+        self.source_root.as_deref()
+    }
+
+    /// Set `x_google_ignoreList`.
+    pub fn set_x_google_ignore_list(&mut self, x_google_ignore_list: Vec<u32>) {
+        self.x_google_ignore_list = Some(x_google_ignore_list);
+    }
+
     pub fn get_names(&self) -> impl Iterator<Item = &str> {
-        self.names.iter().map(std::convert::AsRef::as_ref)
+        self.names.iter().map(AsRef::as_ref)
+    }
+
+    /// Adjust `sources`.
+    pub fn set_sources(&mut self, sources: Vec<&str>) {
+        self.sources = sources.into_iter().map(Into::into).collect();
     }
 
     pub fn get_sources(&self) -> impl Iterator<Item = &str> {
-        self.sources.iter().map(std::convert::AsRef::as_ref)
+        self.sources.iter().map(AsRef::as_ref)
+    }
+
+    /// Adjust `source_content`.
+    pub fn set_source_contents(&mut self, source_contents: Vec<&str>) {
+        self.source_contents = Some(source_contents.into_iter().map(Into::into).collect());
     }
 
     pub fn get_source_contents(&self) -> Option<impl Iterator<Item = &str>> {
-        self.source_contents.as_ref().map(|v| v.iter().map(std::convert::AsRef::as_ref))
+        self.source_contents.as_ref().map(|v| v.iter().map(AsRef::as_ref))
     }
 
     pub fn get_token(&self, index: u32) -> Option<&Token> {
@@ -87,17 +128,15 @@ impl SourceMap {
     }
 
     pub fn get_name(&self, id: u32) -> Option<&str> {
-        self.names.get(id as usize).map(std::convert::AsRef::as_ref)
+        self.names.get(id as usize).map(AsRef::as_ref)
     }
 
     pub fn get_source(&self, id: u32) -> Option<&str> {
-        self.sources.get(id as usize).map(std::convert::AsRef::as_ref)
+        self.sources.get(id as usize).map(AsRef::as_ref)
     }
 
     pub fn get_source_content(&self, id: u32) -> Option<&str> {
-        self.source_contents
-            .as_ref()
-            .and_then(|x| x.get(id as usize).map(std::convert::AsRef::as_ref))
+        self.source_contents.as_ref().and_then(|x| x.get(id as usize).map(AsRef::as_ref))
     }
 
     pub fn get_source_and_content(&self, id: u32) -> Option<(&str, &str)> {
@@ -209,6 +248,7 @@ fn test_sourcemap_source_view_token() {
     let sm = SourceMap::new(
         None,
         vec!["foo".into()],
+        None,
         vec!["foo.js".into()],
         None,
         vec![Token::new(1, 1, 1, 1, Some(0), Some(0))],
@@ -216,4 +256,16 @@ fn test_sourcemap_source_view_token() {
     );
     let mut source_view_tokens = sm.get_source_view_tokens();
     assert_eq!(source_view_tokens.next().unwrap().to_tuple(), (Some("foo.js"), 1, 1, Some("foo")));
+}
+
+#[test]
+fn test_mut_sourcemap() {
+    let mut sm = SourceMap::default();
+    sm.set_file("index.js");
+    sm.set_sources(vec!["foo.js"]);
+    sm.set_source_contents(vec!["foo"]);
+
+    assert_eq!(sm.get_file(), Some("index.js"));
+    assert_eq!(sm.get_source(0), Some("foo.js"));
+    assert_eq!(sm.get_source_content(0), Some("foo"));
 }

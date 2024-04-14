@@ -13,7 +13,6 @@ mod gen;
 mod gen_ts;
 mod operator;
 mod sourcemap_builder;
-use std::str::from_utf8_unchecked;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -72,7 +71,7 @@ pub struct Codegen<const MINIFY: bool> {
     /// Track the current indentation level
     indentation: u8,
 
-    sourcemap_builder: SourcemapBuilder,
+    sourcemap_builder: Option<SourcemapBuilder>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -89,10 +88,12 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         let source_len = source_text.len();
         let capacity = if MINIFY { source_len / 2 } else { source_len };
 
-        let mut sourcemap_builder = SourcemapBuilder::default();
-        if options.enable_source_map {
+        let sourcemap_builder = options.enable_source_map.then(|| {
+            let mut sourcemap_builder = SourcemapBuilder::default();
             sourcemap_builder.with_name_and_source(source_name, source_text);
-        }
+            sourcemap_builder
+        });
+
         Self {
             options,
             // mangler: None,
@@ -117,13 +118,16 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     pub fn build(mut self, program: &Program<'_>) -> CodegenReturn {
         program.gen(&mut self, Context::default());
         let source_text = self.into_source_text();
-        let source_map = self.sourcemap_builder.into_sourcemap();
+        let source_map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
         CodegenReturn { source_text, source_map }
     }
 
     pub fn into_source_text(&mut self) -> String {
         // SAFETY: criteria of `from_utf8_unchecked` are met.
-        unsafe { String::from_utf8_unchecked(std::mem::take(&mut self.code)) }
+        #[allow(unsafe_code)]
+        unsafe {
+            String::from_utf8_unchecked(std::mem::take(&mut self.code))
+        }
     }
 
     fn code(&self) -> &Vec<u8> {
@@ -178,8 +182,9 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     }
 
     fn peek_nth(&self, n: usize) -> Option<char> {
+        #[allow(unsafe_code)]
         // SAFETY: criteria of `from_utf8_unchecked` are met.
-        unsafe { from_utf8_unchecked(self.code()) }.chars().nth_back(n)
+        unsafe { std::str::from_utf8_unchecked(self.code()) }.chars().nth_back(n)
     }
 
     fn indent(&mut self) {
@@ -409,11 +414,15 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     }
 
     fn add_source_mapping(&mut self, position: u32) {
-        self.sourcemap_builder.add_source_mapping(&self.code, position, None);
+        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
+            sourcemap_builder.add_source_mapping(&self.code, position, None);
+        }
     }
 
     fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {
-        self.sourcemap_builder.add_source_mapping_for_name(&self.code, span, name);
+        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
+            sourcemap_builder.add_source_mapping_for_name(&self.code, span, name);
+        }
     }
 }
 

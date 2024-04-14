@@ -92,7 +92,7 @@ jobs:
         run: rustup target add ${{ matrix.target }}
 
       - name: Build with cross
-        run: cross build -p oxc_cli --bin oxlint --release --target=${{ matrix.target }}
+        run: cross build -p oxc_cli --bin oxlint --release --target=${{ matrix.target }} --features allocator
 
       # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binary

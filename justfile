@@ -21,6 +21,7 @@ ready:
   just check
   just test
   just lint
+  just doc
   git status
 
 # Clone or update submodules
@@ -57,11 +58,15 @@ test:
 lint:
   cargo lint -- --deny warnings
 
+doc:
+  RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
+
+
 # Run all the conformance tests. See `tasks/coverage`, `tasks/transform_conformance`, `tasks/minsize`
 coverage:
   cargo coverage
-  cargo run --release -p oxc_transform_conformance -- --exec
-  cargo run --release -p oxc_prettier_conformance
+  cargo run -p oxc_transform_conformance -- --exec
+  cargo run -p oxc_prettier_conformance
   # cargo minsize
 
 # Get code coverage

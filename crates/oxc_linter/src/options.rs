@@ -24,6 +24,7 @@ pub struct LintOptions {
     pub fix: bool,
     pub timing: bool,
     pub import_plugin: bool,
+    pub jsdoc_plugin: bool,
     pub jest_plugin: bool,
     pub jsx_a11y_plugin: bool,
     pub nextjs_plugin: bool,
@@ -39,6 +40,7 @@ impl Default for LintOptions {
             fix: false,
             timing: false,
             import_plugin: false,
+            jsdoc_plugin: false,
             jest_plugin: false,
             jsx_a11y_plugin: false,
             nextjs_plugin: false,
@@ -78,6 +80,12 @@ impl LintOptions {
     #[must_use]
     pub fn with_import_plugin(mut self, yes: bool) -> Self {
         self.import_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_jsdoc_plugin(mut self, yes: bool) -> Self {
+        self.jsdoc_plugin = yes;
         self
     }
 
@@ -167,6 +175,8 @@ impl TryFrom<&Number> for AllowWarnDeny {
     }
 }
 
+const IMPORT_PLUGIN_NAME: &str = "import";
+const JSDOC_PLUGIN_NAME: &str = "jsdoc";
 const JEST_PLUGIN_NAME: &str = "jest";
 const JSX_A11Y_PLUGIN_NAME: &str = "jsx_a11y";
 const NEXTJS_PLUGIN_NAME: &str = "nextjs";
@@ -236,7 +246,7 @@ impl LintOptions {
         Ok((rules, settings, env))
     }
 
-    // get final filtered rules by reading `self.jest_plugin` and `self.jsx_a11y_plugin`
+    // get final filtered rules by reading `self.xxx_plugin`
     fn get_filtered_rules(&self) -> Vec<RuleEnum> {
         let mut rules = RULES.clone();
 
@@ -246,6 +256,8 @@ impl LintOptions {
             }
         };
 
+        may_exclude_plugin_rules(self.import_plugin, IMPORT_PLUGIN_NAME);
+        may_exclude_plugin_rules(self.jsdoc_plugin, JSDOC_PLUGIN_NAME);
         may_exclude_plugin_rules(self.jest_plugin, JEST_PLUGIN_NAME);
         may_exclude_plugin_rules(self.jsx_a11y_plugin, JSX_A11Y_PLUGIN_NAME);
         may_exclude_plugin_rules(self.nextjs_plugin, NEXTJS_PLUGIN_NAME);

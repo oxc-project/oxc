@@ -18,8 +18,7 @@ impl<'a> SourcemapVisualizer<'a> {
         let mut source_log_map = FxHashMap::default();
         let source_contents_lines_map: FxHashMap<String, Option<Vec<Vec<u16>>>> = self
             .sourcemap
-            .sources
-            .iter()
+            .get_sources()
             .enumerate()
             .map(|(source_id, source)| {
                 (
@@ -34,7 +33,7 @@ impl<'a> SourcemapVisualizer<'a> {
 
         let mut s = String::new();
 
-        self.sourcemap.tokens.iter().reduce(|pre_token, token| {
+        self.sourcemap.get_tokens().reduce(|pre_token, token| {
             if let Some(source) =
                 pre_token.get_source_id().and_then(|id| self.sourcemap.get_source(id))
             {
@@ -49,18 +48,26 @@ impl<'a> SourcemapVisualizer<'a> {
                     });
 
                     // Print token
-                    s.push_str(&format!(
-                        "({}:{}-{}:{}) {:?}",
-                        pre_token.get_src_line(),
-                        pre_token.get_src_col(),
-                        token.get_src_line(),
-                        token.get_src_col(),
-                        Self::str_slice_by_token(
+                    if pre_token.get_source_id() == token.get_source_id() {
+                        s.push_str(&format!(
+                            "({}:{}-{}:{}) {:?}",
+                            pre_token.get_src_line(),
+                            pre_token.get_src_col(),
+                            token.get_src_line(),
+                            token.get_src_col(),
+                            Self::str_slice_by_token(
+                                source_contents_lines,
+                                (pre_token.get_src_line(), pre_token.get_src_col()),
+                                (token.get_src_line(), token.get_src_col())
+                            )
+                        ));
+                    } else if token.get_source_id().is_some() {
+                        Self::print_source_last_mapping(
+                            &mut s,
                             source_contents_lines,
                             (pre_token.get_src_line(), pre_token.get_src_col()),
-                            (token.get_src_line(), token.get_src_col())
-                        )
-                    ));
+                        );
+                    }
 
                     s.push_str(" --> ");
 
@@ -83,7 +90,44 @@ impl<'a> SourcemapVisualizer<'a> {
             token
         });
 
+        if let Some(last_token) =
+            self.sourcemap.get_token(self.sourcemap.get_tokens().count() as u32 - 1)
+        {
+            if let Some(Some(source_contents_lines)) = last_token
+                .get_source_id()
+                .and_then(|id| self.sourcemap.get_source(id))
+                .and_then(|source| source_contents_lines_map.get(source))
+            {
+                Self::print_source_last_mapping(
+                    &mut s,
+                    source_contents_lines,
+                    (last_token.get_src_line(), last_token.get_src_col()),
+                );
+            }
+            s.push_str(" --> ");
+            Self::print_source_last_mapping(
+                &mut s,
+                &output_lines,
+                (last_token.get_dst_line(), last_token.get_dst_col()),
+            );
+            s.push('\n');
+        }
+
         s
+    }
+
+    #[allow(clippy::cast_possible_truncation)]
+    fn print_source_last_mapping(s: &mut String, buff: &[Vec<u16>], start: (u32, u32)) {
+        let line = if buff.is_empty() { 0 } else { buff.len() as u32 - 1 };
+        let column = buff.last().map(|v| v.len() as u32).unwrap_or_default();
+        s.push_str(&format!(
+            "({}:{}-{}:{}) {:?}",
+            start.0,
+            start.1,
+            line,
+            column,
+            Self::str_slice_by_token(buff, start, (line, column))
+        ));
     }
 
     fn generate_line_utf16_tables(content: &str) -> Vec<Vec<u16>> {
@@ -113,8 +157,7 @@ impl<'a> SourcemapVisualizer<'a> {
         }
 
         let mut s = String::new();
-
-        for i in start.0..end.0 {
+        for i in start.0..=end.0 {
             let slice = &buff[i as usize];
             if i == start.0 {
                 s.push_str(&String::from_utf16(&slice[start.1 as usize..]).unwrap());
@@ -125,7 +168,8 @@ impl<'a> SourcemapVisualizer<'a> {
             }
         }
 
-        s
+        // Windows: Replace "\r\n" and replace with "\n"
+        s.replace('\r', "")
     }
 }
 
@@ -145,12 +189,13 @@ mod test {
         let output = "\n// shared.js\nconst a = 'shared.js';\n\n// index.js\nconst a$1 = 'index.js';\nconsole.log(a$1, a);\n";
         let visualizer = SourcemapVisualizer::new(output, &sourcemap);
         let visualizer_text = visualizer.into_visualizer_text();
+        println!("{visualizer_text}");
         assert_eq!(
             visualizer_text,
             r#"- shared.js
 (0:0-0:6) "const " --> (2:0-2:6) "\nconst"
 (0:6-0:10) "a = " --> (2:6-2:10) " a ="
-(0:10-1:0) "'shared.js'" --> (2:10-5:0) " 'shared.js';\n\n// index.js"
+(0:10-2:13) "'shared.js'\n\nexport { a }" --> (2:10-5:0) " 'shared.js';\n\n// index.js"
 - index.js
 (1:0-1:6) "\nconst" --> (5:0-5:6) "\nconst"
 (1:6-1:10) " a =" --> (5:6-5:12) " a$1 ="
@@ -159,6 +204,7 @@ mod test {
 (2:8-2:12) ".log" --> (6:8-6:12) ".log"
 (2:12-2:15) "(a," --> (6:12-6:17) "(a$1,"
 (2:15-2:18) " a2" --> (6:17-6:19) " a"
+(2:18-3:1) ")\n" --> (6:19-7:1) ");\n"
 "#
         );
     }

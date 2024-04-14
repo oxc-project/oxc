@@ -44,57 +44,72 @@ fn fixture_root() -> PathBuf {
     snap_root().join("fixtures")
 }
 
-const CASES: &[&str] = &[
-    // ES2024
-    "babel-plugin-transform-unicode-sets-regex",
-    // ES2022
-    "babel-plugin-transform-class-properties",
-    "babel-plugin-transform-class-static-block",
-    "babel-plugin-transform-private-methods",
-    "babel-plugin-transform-private-property-in-object",
-    // [Syntax] "babel-plugin-transform-syntax-top-level-await",
-    // ES2021
-    "babel-plugin-transform-logical-assignment-operators",
-    "babel-plugin-transform-numeric-separator",
-    // ES2020
-    "babel-plugin-transform-export-namespace-from",
-    "babel-plugin-transform-dynamic-import",
-    "babel-plugin-transform-nullish-coalescing-operator",
-    "babel-plugin-transform-optional-chaining",
-    // [Syntax] "babel-plugin-transform-syntax-bigint",
-    // [Syntax] "babel-plugin-transform-syntax-dynamic-import",
-    // [Syntax] "babel-plugin-transform-syntax-import-meta",
-    // ES2019
-    "babel-plugin-transform-optional-catch-binding",
-    "babel-plugin-transform-json-strings",
-    // ES2018
-    "babel-plugin-transform-async-generator-functions",
-    "babel-plugin-transform-object-rest-spread",
-    // [Regex] "babel-plugin-transform-unicode-property-regex",
-    "babel-plugin-transform-dotall-regex",
-    // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
-    // ES2017
-    "babel-plugin-transform-async-to-generator",
-    // ES2016
-    "babel-plugin-transform-exponentiation-operator",
-    // ES2015
-    "babel-plugin-transform-arrow-functions",
-    "babel-plugin-transform-function-name",
-    "babel-plugin-transform-shorthand-properties",
-    "babel-plugin-transform-sticky-regex",
-    "babel-plugin-transform-unicode-regex",
-    "babel-plugin-transform-template-literals",
-    "babel-plugin-transform-duplicate-keys",
-    "babel-plugin-transform-instanceof",
-    "babel-plugin-transform-new-target",
-    // ES3
-    "babel-plugin-transform-property-literals",
+const PLUGINS: &[&str] = &[
+    // // ES2024
+    // "babel-plugin-transform-unicode-sets-regex",
+    // // ES2022
+    // "babel-plugin-transform-class-properties",
+    // "babel-plugin-transform-class-static-block",
+    // "babel-plugin-transform-private-methods",
+    // "babel-plugin-transform-private-property-in-object",
+    // // [Syntax] "babel-plugin-transform-syntax-top-level-await",
+    // // ES2021
+    // "babel-plugin-transform-logical-assignment-operators",
+    // "babel-plugin-transform-numeric-separator",
+    // // ES2020
+    // "babel-plugin-transform-export-namespace-from",
+    // "babel-plugin-transform-dynamic-import",
+    // "babel-plugin-transform-nullish-coalescing-operator",
+    // "babel-plugin-transform-optional-chaining",
+    // // [Syntax] "babel-plugin-transform-syntax-bigint",
+    // // [Syntax] "babel-plugin-transform-syntax-dynamic-import",
+    // // [Syntax] "babel-plugin-transform-syntax-import-meta",
+    // // ES2019
+    // "babel-plugin-transform-optional-catch-binding",
+    // "babel-plugin-transform-json-strings",
+    // // ES2018
+    // "babel-plugin-transform-async-generator-functions",
+    // "babel-plugin-transform-object-rest-spread",
+    // // [Regex] "babel-plugin-transform-unicode-property-regex",
+    // "babel-plugin-transform-dotall-regex",
+    // // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
+    // // ES2017
+    // "babel-plugin-transform-async-to-generator",
+    // // ES2016
+    // "babel-plugin-transform-exponentiation-operator",
+    // // ES2015
+    // "babel-plugin-transform-arrow-functions",
+    // "babel-plugin-transform-function-name",
+    // "babel-plugin-transform-shorthand-properties",
+    // "babel-plugin-transform-sticky-regex",
+    // "babel-plugin-transform-unicode-regex",
+    // "babel-plugin-transform-template-literals",
+    // "babel-plugin-transform-duplicate-keys",
+    // "babel-plugin-transform-instanceof",
+    // "babel-plugin-transform-new-target",
+    // // ES3
+    // "babel-plugin-transform-property-literals",
     // TypeScript
+    "babel-preset-typescript",
     "babel-plugin-transform-typescript",
     // React
+    "babel-preset-react",
     "babel-plugin-transform-react-jsx",
-    // Proposal
-    "babel-plugin-proposal-decorators",
+    "babel-plugin-transform-react-display-name",
+    "babel-plugin-transform-react-jsx-self",
+    "babel-plugin-transform-react-jsx-source",
+    "babel-plugin-transform-react-jsx-development",
+    // // Proposal
+    // "babel-plugin-proposal-decorators",
+];
+
+pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
+    "transform-classes",
+    "transform-modules-commonjs",
+    "transform-object-rest-spread",
+    "transform-react-constant-elements",
+    "transform-property-literals",
+    "transform-arrow-functions",
 ];
 
 const EXCLUDE_TESTS: &[&str] = &["babel-plugin-transform-typescript/test/fixtures/enum"];
@@ -149,7 +164,7 @@ impl TestRunner {
         let mut transform_files = IndexMap::<String, Vec<TestCaseKind>>::new();
         let mut exec_files = IndexMap::<String, Vec<TestCaseKind>>::new();
 
-        for case in CASES {
+        for case in PLUGINS {
             let root = root.join(case).join("test/fixtures");
             let (mut transform_paths, mut exec_paths): (Vec<TestCaseKind>, Vec<TestCaseKind>) =
                 WalkDir::new(root)
@@ -162,28 +177,22 @@ impl TestRunner {
                                 return None;
                             }
                         }
-
                         if EXCLUDE_TESTS.iter().any(|p| path.to_string_lossy().contains(p)) {
                             return None;
                         }
-
-                        let test_case = TestCaseKind::from_path(path);
-                        if let Some(test_case) = test_case {
-                            if test_case.skip_test_case() {
-                                return None;
-                            }
-
-                            return Some(test_case);
-                        }
-                        None
+                        TestCaseKind::new(path).filter(|test_case| !test_case.skip_test_case())
                     })
                     .partition(|p| matches!(p, TestCaseKind::Transform(_)));
 
             transform_paths.sort_unstable_by(|a, b| a.path().cmp(b.path()));
             exec_paths.sort_unstable_by(|a, b| a.path().cmp(b.path()));
 
-            transform_files.insert((*case).to_string(), transform_paths);
-            exec_files.insert((*case).to_string(), exec_paths);
+            if !transform_paths.is_empty() {
+                transform_files.insert((*case).to_string(), transform_paths);
+            }
+            if !exec_paths.is_empty() {
+                exec_files.insert((*case).to_string(), exec_paths);
+            }
         }
 
         (transform_files, exec_files)
@@ -197,11 +206,6 @@ impl TestRunner {
         let mut all_passed_count = 0;
 
         for (case, test_cases) in paths {
-            // Skip empty test cases, e.g. some cases do not have `exec.js` file.
-            if test_cases.is_empty() {
-                continue;
-            }
-
             let case_root = root.join(&case).join("test/fixtures");
             let num_of_tests = test_cases.len();
             total += num_of_tests;

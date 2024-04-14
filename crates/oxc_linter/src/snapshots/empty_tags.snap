@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: empty_tags
+---
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:3:27]
+ 2 │                       /**
+ 3 │                        * @abstract extra text
+   ·                                    ──────────
+ 4 │                        */
+   ╰────
+  help: `@abstract` tag should not have body.
+
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:4:27]
+ 3 │                       /**
+ 4 │                        * @abstract extra text
+   ·                                    ──────────
+ 5 │                        */
+   ╰────
+  help: `@abstract` tag should not have body.
+
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:3:27]
+ 2 │                       /**
+ 3 │                        * @abstract extra text
+   ·                                    ──────────
+ 4 │                        * @inheritdoc
+   ╰────
+  help: `@abstract` tag should not have body.
+
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:5:24]
+ 4 │                        * @inheritdoc
+ 5 │                        * @async out of place
+   ·                                 ────────────
+ 6 │                        */
+   ╰────
+  help: `@async` tag should not have body.
+
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:3:24]
+ 2 │                       /**
+ 3 │                        * @event anEvent
+   ·                                 ───────
+ 4 │                        */
+   ╰────
+  help: `@event` tag should not have body.
+
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:3:22]
+ 2 │                   /**
+ 3 │                    * @private foo
+   ·                               ───
+ 4 │                    * bar
+   ╰────
+  help: `@private` tag should not have body.
+
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:4:20]
+ 3 │                    * @internal
+ 4 │                    * foo
+   ·                    ─────
+ 5 │                    */
+   ╰────
+  help: `@internal` tag should not have body.
+
+  ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
+   ╭─[empty_tags.tsx:3:22]
+ 2 │                   /**
+ 3 │                    * @private {someType}
+   ·                               ──────────
+ 4 │                    */
+   ╰────
+  help: `@private` tag should not have body.

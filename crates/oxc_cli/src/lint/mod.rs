@@ -95,6 +95,7 @@ impl Runner for LintRunner {
             .with_config_path(config)
             .with_fix(fix_options.fix)
             .with_import_plugin(enable_plugins.import_plugin)
+            .with_jsdoc_plugin(enable_plugins.jsdoc_plugin)
             .with_jest_plugin(enable_plugins.jest_plugin)
             .with_jsx_a11y_plugin(enable_plugins.jsx_a11y_plugin)
             .with_nextjs_plugin(enable_plugins.nextjs_plugin)
@@ -145,6 +146,7 @@ impl Runner for LintRunner {
             number_of_errors: diagnostic_service.errors_count(),
             max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
             deny_warnings: warning_options.deny_warnings,
+            print_summary: diagnostic_service.is_graphical_output(),
         })
     }
 }

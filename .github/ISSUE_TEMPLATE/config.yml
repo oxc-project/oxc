@@ -1,0 +1,12 @@
+contact_links:
+  - name: Github discussions
+    url: https://github.com/oxc-project/oxc/discussions
+    about: For general discussions.
+
+  - name: Discord server
+    url: https://discord.gg/9uXCAwqQZW
+    about: For lightweight questions.
+
+  - name: Website issues
+    url: https://github.com/oxc-project/oxc-project.github.io
+    about: For website issues.

@@ -22,6 +22,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.ref_name != 'main' }}
 
+env:
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-D warnings"
+
 jobs:
   cache: # Warm cache factory for all other CI jobs
     name: Check and Build
@@ -108,6 +112,7 @@ jobs:
         uses: taiki-e/install-action@cargo-deny
 
       - uses: ./.github/actions/rustup
+        if: steps.filter.outputs.src == 'true'
         with:
           restore-cache: false
 
@@ -119,30 +124,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-
       - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
             src:
-              - 'Cargo.lock'
+              - '**/*.rs'
               - '**/Cargo.toml'
-              - '.github/workflows/ci.yml'
-
-      - name: Install Rust Toolchain
+              - 'Cargo.lock'
+      - uses: ./.github/actions/rustup
+        with:
+          restore-cache: false
         if: steps.filter.outputs.src == 'true'
-        uses: ./.github/actions/rustup
-
-      - name: Install cargo-binstall
+      - uses: cargo-bins/cargo-binstall@main
         if: steps.filter.outputs.src == 'true'
-        uses: cargo-bins/cargo-binstall@main
-
-      - name: Install cargo-shear
+      - run: cargo binstall --no-confirm cargo-shear
         if: steps.filter.outputs.src == 'true'
-        run: cargo binstall --no-confirm cargo-shear
-
-      - if: steps.filter.outputs.src == 'true'
-        run: cargo shear
+      - run: cargo shear
+        if: steps.filter.outputs.src == 'true'
 
   format:
     name: Format
@@ -184,7 +183,7 @@ jobs:
           docs: true
 
       - name: Run doc
-        run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps
+        run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
 
   test:
     name: Test

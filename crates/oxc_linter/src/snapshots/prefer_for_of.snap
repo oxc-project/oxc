@@ -1,0 +1,139 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_for_of
+---
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (var a = 0; a < obj.arr.length; a++) { console.log(obj.arr[a]); }
+   ·      ──────────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (var b = 0; b < arr.length; b++) console.log(arr[b]);
+   ·      ──────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let a = 0; a < arr.length; a++) { console.log(arr[a]); }
+   ·      ──────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (var b = 0; b < arr.length; b++) console?.log(arr[b]);
+   ·      ──────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let a = 0; a < arr.length; a++) { console?.log(arr[a]); }
+   ·      ──────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let a = 0; a < arr.length; ++a) { arr[a].whatever(); }
+   ·      ──────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let x = 0; x < arr.length; x++) {}
+   ·      ──────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let x = 0; x < arr.length; x += 1) {}
+   ·      ─────────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let x = 0; x < arr.length; x = x + 1) {}
+   ·      ────────────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let x = 0; x < arr.length; x = 1 + x) {}
+   ·      ────────────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let shadow = 0; shadow < arr.length; shadow++) {
+   ·      ─────────────────────────────────────────────
+ 2 │             for (let shadow = 0; shadow < arr.length; shadow++) {}
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:2:18]
+ 1 │ for (let shadow = 0; shadow < arr.length; shadow++) {
+ 2 │             for (let shadow = 0; shadow < arr.length; shadow++) {}
+   ·                  ─────────────────────────────────────────────
+ 3 │         }
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let i = 0; i < arr.length; i++) { obj[arr[i]] = 1; }
+   ·      ──────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let i = 0; i < arr.length; i++) { delete obj[arr[i]]; }
+   ·      ──────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let i = 0; i < arr.length; i++) { [obj[arr[i]]] = [1]; }
+   ·      ──────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let i = 0; i < arr.length; i++) { [...obj[arr[i]]] = [1]; }
+   ·      ──────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let i = 0; i < arr.length; i++) { ({ foo: obj[arr[i]] } = { foo: 1 }); }
+   ·      ──────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let i = 0; i < this.item.length; ++i) { this.item[i]; }
+   ·      ────────────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.
+
+  ⚠ typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:24]
+ 1 │ function* gen() { for (let i = 0; i < this.array.length; ++i) { yield this.array[i]; } }
+   ·                        ─────────────────────────────────────
+   ╰────
+  help: Consider using a for-of loop for this simple iteration.

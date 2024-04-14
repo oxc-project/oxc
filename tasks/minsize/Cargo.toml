@@ -26,4 +26,3 @@ oxc_tasks_common = { workspace = true }
 flate2           = { workspace = true }
 
 humansize = { workspace = true }
-brotlic   = { workspace = true }
