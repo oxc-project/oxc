@@ -1,4 +1,4 @@
-Passed: 221/408
+Passed: 213/408
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -25,7 +25,9 @@ Passed: 221/408
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (68/164)
+# babel-plugin-transform-typescript (59/164)
+* class/abstract-allowDeclareFields-false/input.ts
+* class/abstract-allowDeclareFields-true/input.ts
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
@@ -43,6 +45,7 @@ Passed: 221/408
 * class/parameter-properties-with-super/input.ts
 * class/private-method-override-transform-private/input.ts
 * class/transform-properties-declare-wrong-order/input.ts
+* class/uninitialized-definite-babel-7/input.ts
 * class/uninitialized-definite-with-declare-disabled-babel-7/input.ts
 * declarations/erased/input.ts
 * declarations/export-declare-enum/input.ts
@@ -73,16 +76,20 @@ Passed: 221/408
 * imports/elision-rename/input.ts
 * imports/enum-id/input.ts
 * imports/enum-value/input.ts
+* imports/import-named-type/input.ts
+* imports/import-named-type-default-and-named/input.ts
 * imports/import-removed-exceptions/input.ts
 * imports/import-type/input.ts
 * imports/import-type-func-with-duplicate-name/input.ts
 * imports/import-type-not-removed/input.ts
 * imports/import=-module/input.ts
+* imports/only-remove-type-imports/input.ts
 * imports/property-signature/input.ts
 * imports/type-only-export-specifier-1/input.ts
 * imports/type-only-export-specifier-2/input.ts
 * imports/type-only-import-specifier-2/input.ts
 * imports/type-only-import-specifier-3/input.ts
+* imports/type-only-import-specifier-4/input.ts
 * namespace/alias/input.ts
 * namespace/ambient-module-nested/input.ts
 * namespace/ambient-module-nested-exported/input.ts
@@ -99,6 +106,7 @@ Passed: 221/408
 * namespace/export-type-only/input.ts
 * namespace/module-nested/input.ts
 * namespace/module-nested-export/input.ts
+* namespace/multiple/input.ts
 * namespace/mutable-fail/input.ts
 * namespace/namespace-flag/input.ts
 * namespace/namespace-nested-module/input.ts
@@ -108,6 +116,7 @@ Passed: 221/408
 * namespace/nested-shorthand/input.ts
 * namespace/nested-shorthand-export/input.ts
 * namespace/same-name/input.ts
+* namespace/undeclared/input.ts
 * optimize-const-enums/custom-values/input.ts
 * optimize-const-enums/custom-values-exported/input.ts
 * optimize-const-enums/declare/input.ts
@@ -137,7 +146,7 @@ Passed: 221/408
 * regression/another-preset-with-custom-jsx-keep-source-self/input.mjs
 * regression/runtime-classic-allow-multiple-source-self/input.mjs
 
-# babel-plugin-transform-react-jsx (130/161)
+# babel-plugin-transform-react-jsx (131/161)
 * autoImport/auto-import-react-source-type-module/input.js
 * autoImport/complicated-scope-module/input.js
 * autoImport/react-defined/input.js
@@ -168,7 +177,6 @@ Passed: 221/408
 * react-automatic/should-properly-handle-keys/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
 * runtime/defaults-to-classis-babel-7/input.js
-* runtime/invalid-runtime/input.js
 
 # babel-plugin-transform-react-display-name (15/16)
 * display-name/nested/input.js
