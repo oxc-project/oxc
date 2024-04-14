@@ -1,4 +1,4 @@
-Passed: 203/415
+Passed: 203/408
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -25,7 +25,7 @@ Passed: 203/415
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (68/168)
+# babel-plugin-transform-typescript (68/164)
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
@@ -62,7 +62,6 @@ Passed: 203/415
 * exports/type-only-export-specifier-1/input.ts
 * exports/type-only-export-specifier-2/input.ts
 * function/overloads-exports/input.mjs
-* imports/elide-injected/input.ts
 * imports/elide-preact/input.ts
 * imports/elide-react/input.ts
 * imports/elide-type-referenced-in-imports-equal-no/input.ts
@@ -78,9 +77,7 @@ Passed: 203/415
 * imports/import-type/input.ts
 * imports/import-type-func-with-duplicate-name/input.ts
 * imports/import-type-not-removed/input.ts
-* imports/import=-declaration/input.ts
 * imports/import=-module/input.ts
-* imports/parameter-decorators/input.ts
 * imports/property-signature/input.ts
 * imports/type-only-export-specifier-1/input.ts
 * imports/type-only-export-specifier-2/input.ts
@@ -122,7 +119,6 @@ Passed: 203/415
 * optimize-const-enums/local-shadowed/input.ts
 * optimize-const-enums/merged/input.ts
 * optimize-const-enums/merged-exported/input.ts
-* regression/10162/input.ts
 * regression/10338/input.ts
 * regression/15768/input.ts
 * variable-declaration/non-null-in-optional-chain/input.ts
@@ -141,7 +137,7 @@ Passed: 203/415
 * regression/another-preset-with-custom-jsx-keep-source-self/input.mjs
 * regression/runtime-classic-allow-multiple-source-self/input.mjs
 
-# babel-plugin-transform-react-jsx (112/163)
+# babel-plugin-transform-react-jsx (112/161)
 * autoImport/auto-import-react-source-type-module/input.js
 * autoImport/complicated-scope-module/input.js
 * autoImport/import-source-pragma/input.js
@@ -187,8 +183,6 @@ Passed: 203/415
 * react-automatic/should-have-correct-comma-in-nested-children/input.js
 * react-automatic/should-properly-handle-keys/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
-* regression/issue-12478-automatic/input.js
-* regression/issue-12478-classic/input.js
 * regression/pragma-frag-set-default-classic-runtime/input.js
 * runtime/defaults-to-classis-babel-7/input.js
 * runtime/invalid-runtime/input.js
@@ -201,10 +195,9 @@ Passed: 203/415
 * react-source/arrow-function/input.js
 * react-source/disable-with-super/input.js
 
-# babel-plugin-transform-react-jsx-development (0/27)
+# babel-plugin-transform-react-jsx-development (0/26)
 * cross-platform/disallow-__self-as-jsx-attribute/input.js
 * cross-platform/disallow-__source-as-jsx-attribute/input.js
-* cross-platform/generated-jsx/input.js
 * linux/auto-import-dev/input.js
 * linux/classic-runtime/input.js
 * linux/classic-runtime-babel-7/input.js
