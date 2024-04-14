@@ -44,7 +44,7 @@ fn fixture_root() -> PathBuf {
     snap_root().join("fixtures")
 }
 
-const CASES: &[&str] = &[
+const PLUGINS: &[&str] = &[
     // // ES2024
     // "babel-plugin-transform-unicode-sets-regex",
     // // ES2022
@@ -103,6 +103,9 @@ const CASES: &[&str] = &[
     // "babel-plugin-proposal-decorators",
 ];
 
+pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] =
+    &["transform-object-rest-spread", "transform-modules-commonjs"];
+
 const EXCLUDE_TESTS: &[&str] = &["babel-plugin-transform-typescript/test/fixtures/enum"];
 
 const CONFORMANCE_SNAPSHOT: &str = "babel.snap.md";
@@ -155,7 +158,7 @@ impl TestRunner {
         let mut transform_files = IndexMap::<String, Vec<TestCaseKind>>::new();
         let mut exec_files = IndexMap::<String, Vec<TestCaseKind>>::new();
 
-        for case in CASES {
+        for case in PLUGINS {
             let root = root.join(case).join("test/fixtures");
             let (mut transform_paths, mut exec_paths): (Vec<TestCaseKind>, Vec<TestCaseKind>) =
                 WalkDir::new(root)
@@ -171,8 +174,7 @@ impl TestRunner {
                         if EXCLUDE_TESTS.iter().any(|p| path.to_string_lossy().contains(p)) {
                             return None;
                         }
-                        TestCaseKind::from_path(path)
-                            .filter(|test_case| !test_case.skip_test_case())
+                        TestCaseKind::new(path).filter(|test_case| !test_case.skip_test_case())
                     })
                     .partition(|p| matches!(p, TestCaseKind::Transform(_)));
 

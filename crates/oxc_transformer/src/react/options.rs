@@ -21,7 +21,7 @@ fn default_for_pragma_frag() -> Cow<'static, str> {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct ReactOptions {
     #[serde(skip)]
     pub jsx_plugin: bool,
@@ -79,8 +79,16 @@ pub struct ReactOptions {
     /// Defaults to `React.Fragment`.
     #[serde(default = "default_for_pragma_frag")]
     pub pragma_frag: Cow<'static, str>,
-    //
-    // `useBuiltIns` and `useSpread` are deprecated in babel 8.
+
+    /// `useBuiltIns` is deprecated in Babel 8.
+    ///
+    /// This value is used to skip Babel tests, and is not used in oxc.
+    pub use_built_ins: Option<bool>,
+
+    /// `useSpread` is deprecated in Babel 8.
+    ///
+    /// This value is used to skip Babel tests, and is not used in oxc.
+    pub use_spread: Option<bool>,
 }
 
 impl Default for ReactOptions {
@@ -96,6 +104,8 @@ impl Default for ReactOptions {
             import_source: default_for_import_source(),
             pragma: default_for_pragma(),
             pragma_frag: default_for_pragma_frag(),
+            use_built_ins: None,
+            use_spread: None,
         }
     }
 }
