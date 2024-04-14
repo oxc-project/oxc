@@ -1,4 +1,3 @@
-use serde_json::Value;
 use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -6,6 +5,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -48,10 +48,9 @@ declare_oxc_lint!(
 
 impl Rule for NoEmptyInterface {
     fn from_configuration(value: Value) -> Self {
-        let allow_single_extends =
-            value.get(0).map_or(true, |config| {
-                config.get("allow_single_extends").and_then(Value::as_bool).unwrap_or_default()
-            });
+        let allow_single_extends = value.get(0).map_or(true, |config| {
+            config.get("allow_single_extends").and_then(Value::as_bool).unwrap_or_default()
+        });
 
         Self { allow_single_extends }
     }
