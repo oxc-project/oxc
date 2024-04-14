@@ -1,13 +1,17 @@
-mod babel;
-mod codegen;
-mod minifier;
-mod misc;
-mod prettier;
+// Core
 mod runtime;
-mod sourcemap;
 mod suite;
+// Suites
+mod babel;
+mod misc;
 mod test262;
 mod typescript;
+// Tools
+mod codegen;
+mod minifier;
+mod prettier;
+mod sourcemap;
+mod transformer;
 
 use std::{fs, path::PathBuf, process::Command, time::Duration};
 
@@ -24,6 +28,10 @@ use crate::{
     prettier::{PrettierBabelCase, PrettierMiscCase, PrettierTest262Case, PrettierTypeScriptCase},
     suite::Suite,
     test262::{Test262Case, Test262Suite},
+    transformer::{
+        TransformerBabelCase, TransformerMiscCase, TransformerTest262Case,
+        TransformerTypeScriptCase,
+    },
     typescript::{TypeScriptCase, TypeScriptSuite},
 };
 
@@ -50,6 +58,7 @@ impl AppArgs {
         self.run_parser();
         self.run_codegen();
         self.run_prettier();
+        self.run_transformer();
         // self.run_codegen_runtime();
         self.run_minifier();
     }
@@ -74,6 +83,13 @@ impl AppArgs {
         BabelSuite::<PrettierBabelCase>::new().run("prettier_babel", self);
         TypeScriptSuite::<PrettierTypeScriptCase>::new().run("prettier_typescript", self);
         MiscSuite::<PrettierMiscCase>::new().run("prettier_misc", self);
+    }
+
+    pub fn run_transformer(&self) {
+        Test262Suite::<TransformerTest262Case>::new().run("transformer_test262", self);
+        BabelSuite::<TransformerBabelCase>::new().run("transformer_babel", self);
+        TypeScriptSuite::<TransformerTypeScriptCase>::new().run("transformer_typescript", self);
+        MiscSuite::<TransformerMiscCase>::new().run("transformer_misc", self);
     }
 
     /// # Panics

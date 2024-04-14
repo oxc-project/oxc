@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_diagnostics"
-version                = "0.10.0"
+version                = "0.12.3"
 authors.workspace      = true
 description.workspace  = true
 edition.workspace      = true
@@ -21,6 +21,6 @@ doctest = false
 thiserror = { workspace = true }
 miette    = { workspace = true }
 
-unicode-width = "0.1.11"
-owo-colors    = { version = "4.0.0" }
-textwrap      = { version = "0.16.0" }
+unicode-width = { workspace = true }
+owo-colors    = { workspace = true }
+textwrap      = { workspace = true }

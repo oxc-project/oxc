@@ -2,7 +2,7 @@ use memchr::memmem::Finder;
 
 use oxc_span::SourceType;
 
-use super::{JavaScriptSource, SCRIPT_END, SCRIPT_START};
+use super::{find_script_closing_angle, JavaScriptSource, SCRIPT_END, SCRIPT_START};
 
 pub struct VuePartialLoader<'a> {
     source_text: &'a str,
@@ -18,9 +18,9 @@ impl<'a> VuePartialLoader<'a> {
     }
 
     /// Each *.vue file can contain at most
-    ///  * one <script> block (excluding <script setup>).
-    ///  * one <script setup> block (excluding normal <script>).
-    /// https://vuejs.org/api/sfc-spec.html#script
+    ///  * one `<script>` block (excluding `<script setup>`).
+    ///  * one `<script setup>` block (excluding normal `<script>`).
+    /// <https://vuejs.org/api/sfc-spec.html#script>
     fn parse_scripts(&self) -> Vec<JavaScriptSource<'a>> {
         let mut pointer = 0;
         let Some(result1) = self.parse_script(&mut pointer) else { return vec![] };
@@ -37,7 +37,7 @@ impl<'a> VuePartialLoader<'a> {
         *pointer += offset + SCRIPT_START.len();
 
         // find closing ">"
-        let offset = self.find_script_closing_angle(*pointer)?;
+        let offset = find_script_closing_angle(self.source_text, *pointer)?;
 
         // get ts and jsx attribute
         let content = &self.source_text[*pointer..*pointer + offset];
@@ -56,27 +56,6 @@ impl<'a> VuePartialLoader<'a> {
         let source_type =
             SourceType::default().with_module(true).with_typescript(is_ts).with_jsx(is_jsx);
         Some(JavaScriptSource::new(source_text, source_type, js_start))
-    }
-
-    /// Find closing angle for situations where there is another `>` in between.
-    /// e.g. `<script generic="T extends Record<string, string>">`
-    fn find_script_closing_angle(&self, pointer: usize) -> Option<usize> {
-        let mut numbers_of_open_angle = 0;
-        for (offset, c) in self.source_text[pointer..].char_indices() {
-            match c {
-                '>' => {
-                    if numbers_of_open_angle == 0 {
-                        return Some(offset);
-                    }
-                    numbers_of_open_angle -= 1;
-                }
-                '<' => {
-                    numbers_of_open_angle += 1;
-                }
-                _ => {}
-            }
-        }
-        None
     }
 }
 

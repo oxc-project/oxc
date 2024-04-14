@@ -1,9 +1,8 @@
-use oxc_allocator::Box as OBox;
 use oxc_ast::{
     ast::{
         ArrayExpressionElement, AssignmentTarget, AssignmentTargetMaybeDefault,
-        AssignmentTargetPattern, AssignmentTargetProperty, ChainElement, ChainExpression,
-        Expression, MemberExpression, ObjectProperty, ObjectPropertyKind, SimpleAssignmentTarget,
+        AssignmentTargetPattern, AssignmentTargetProperty, Expression, MemberExpression,
+        ObjectProperty, ObjectPropertyKind, SimpleAssignmentTarget,
     },
     AstKind,
 };
@@ -164,17 +163,11 @@ impl NoSelfAssign {
                 }
             }
         }
-
         if let AssignmentTarget::SimpleAssignmentTarget(
             SimpleAssignmentTarget::MemberAssignmentTarget(member_target),
         ) = &left
         {
-            if let Expression::MemberExpression(member_expr)
-            | Expression::ChainExpression(OBox(ChainExpression {
-                expression: ChainElement::MemberExpression(member_expr),
-                ..
-            })) = right.without_parenthesized()
-            {
+            if let Some(member_expr) = right.without_parenthesized().get_member_expr() {
                 if self.is_member_expression_same_reference(member_expr, member_target) {
                     ctx.diagnostic(NoSelfAssignDiagnostic(member_expr.span()));
                 }
@@ -199,18 +192,15 @@ impl NoSelfAssign {
             (Expression::MemberExpression(member1), Expression::MemberExpression(member2)) => {
                 self.is_member_expression_same_reference(member1, member2)
             }
-            (
-                Expression::ChainExpression(OBox(ChainExpression {
-                    expression: ChainElement::MemberExpression(member1),
-                    ..
-                }))
-                | Expression::MemberExpression(member1),
-                Expression::ChainExpression(OBox(ChainExpression {
-                    expression: ChainElement::MemberExpression(member2),
-                    ..
-                })),
-            ) => self.is_member_expression_same_reference(member1, member2),
-            _ => false,
+            _ => {
+                if let (Some(member1), Some(member2)) =
+                    (left.get_member_expr(), right.get_member_expr())
+                {
+                    self.is_member_expression_same_reference(member1, member2)
+                } else {
+                    false
+                }
+            }
         }
     }
 
@@ -259,18 +249,15 @@ impl NoSelfAssign {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(id1)
                 if id1.init.is_none() =>
             {
-                if let ObjectPropertyKind::ObjectProperty(OBox(ObjectProperty {
-                    method: false,
-                    value: expr,
-                    span,
-                    key,
-                    ..
-                })) = right
-                {
-                    if key.static_name().is_some_and(|name| name == id1.binding.name) {
-                        if let Expression::Identifier(id2) = expr.without_parenthesized() {
-                            if id1.binding.name == id2.name {
-                                ctx.diagnostic(NoSelfAssignDiagnostic(*span));
+                if let ObjectPropertyKind::ObjectProperty(obj_prop) = right {
+                    if let ObjectProperty { method: false, value: expr, span, key, .. } =
+                        &**obj_prop
+                    {
+                        if key.static_name().is_some_and(|name| name == id1.binding.name) {
+                            if let Expression::Identifier(id2) = expr.without_parenthesized() {
+                                if id1.binding.name == id2.name {
+                                    ctx.diagnostic(NoSelfAssignDiagnostic(*span));
+                                }
                             }
                         }
                     }
@@ -283,17 +270,13 @@ impl NoSelfAssign {
                         return;
                     }
                 };
-                if let ObjectPropertyKind::ObjectProperty(OBox(ObjectProperty {
-                    method: false,
-                    value: expr,
-                    key,
-                    ..
-                })) = right
-                {
-                    let property_name = property.name.static_name();
-                    let key_name = key.static_name();
-                    if property_name.is_some() && property_name == key_name {
-                        self.each_self_assignment(left, expr, ctx);
+                if let ObjectPropertyKind::ObjectProperty(obj_prop) = right {
+                    if let ObjectProperty { method: false, value: expr, key, .. } = &**obj_prop {
+                        let property_name = property.name.static_name();
+                        let key_name = key.static_name();
+                        if property_name.is_some() && property_name == key_name {
+                            self.each_self_assignment(left, expr, ctx);
+                        }
                     }
                 }
             }

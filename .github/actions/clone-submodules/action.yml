@@ -15,7 +15,7 @@ runs:
       with:
         repository: babel/babel
         path: tasks/coverage/babel
-        ref: eccbd203383487f6957dcf086aa83d773691560b
+        ref: acf3d17fdfe150a270c822581b709dddac4548ce
 
     - uses: actions/checkout@v4
       with:

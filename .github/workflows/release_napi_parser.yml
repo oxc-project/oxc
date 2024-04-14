@@ -19,7 +19,7 @@ jobs:
       version: ${{ env.version }}
       version_changed: ${{ steps.version.outputs.changed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       - name: Check version changes
         uses: EndBug/version-check@v2
@@ -81,7 +81,7 @@ jobs:
     name: Package ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       ### install musl dependencies ###
       #
@@ -163,7 +163,7 @@ jobs:
     needs:
       - build
     steps:
-      - uses: actions/checkout@v4
+      - uses: taiki-e/checkout-action@v1
 
       - name: Install Node.js
         uses: actions/setup-node@v4

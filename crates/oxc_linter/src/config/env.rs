@@ -2,10 +2,10 @@ use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
 /// Environment
-/// https://eslint.org/docs/latest/use/configure/language-options#using-configuration-files
+/// <https://eslint.org/docs/latest/use/configure/language-options#using-configuration-files>
 ///
 /// TS type is `Record<string, boolean>`
-/// https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L40
+/// <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L40>
 #[derive(Debug, Clone, Deserialize)]
 pub struct ESLintEnv(FxHashMap<String, bool>);
 

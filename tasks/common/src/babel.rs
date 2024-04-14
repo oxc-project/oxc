@@ -1,6 +1,5 @@
 use std::path::Path;
 
-use oxc_syntax::assumptions::CompilerAssumptions;
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -15,13 +14,15 @@ pub struct BabelOptions {
     #[serde(default)]
     pub plugins: Vec<Value>, // Can be a string or an array
     #[serde(default)]
+    pub presets: Vec<Value>, // Can be a string or an array
+    #[serde(default)]
     pub allow_return_outside_function: bool,
     #[serde(default)]
     pub allow_await_outside_function: bool,
     #[serde(default)]
     pub allow_undeclared_exports: bool,
     #[serde(default)]
-    pub assumptions: CompilerAssumptions,
+    pub assumptions: Value,
 }
 
 impl BabelOptions {
@@ -89,12 +90,21 @@ impl BabelOptions {
     /// * `Some<Some<Value>>` if the plugin exists with a config
     /// * `None` if the plugin does not exist
     pub fn get_plugin(&self, name: &str) -> Option<Option<Value>> {
-        self.plugins.iter().find_map(|v| match v {
+        self.plugins.iter().find_map(|v| Self::get_value(v, name))
+    }
+
+    pub fn get_preset(&self, name: &str) -> Option<Option<Value>> {
+        self.presets.iter().find_map(|v| Self::get_value(v, name))
+    }
+
+    #[allow(clippy::option_option)]
+    fn get_value(value: &Value, name: &str) -> Option<Option<Value>> {
+        match value {
             Value::String(s) if s == name => Some(None),
             Value::Array(a) if a.first().and_then(Value::as_str).is_some_and(|s| s == name) => {
                 Some(a.get(1).cloned())
             }
             _ => None,
-        })
+        }
     }
 }

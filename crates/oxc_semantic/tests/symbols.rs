@@ -27,6 +27,18 @@ fn test_function_simple() {
 }
 
 #[test]
+fn test_function_expressions() {
+    SemanticTester::js("const x = function y() {}")
+        .has_some_symbol("y")
+        .contains_flags(SymbolFlags::Function)
+        .test();
+    SemanticTester::js("const x = () => {}")
+        .has_some_symbol("x")
+        .contains_flags(SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable)
+        .test();
+}
+
+#[test]
 fn test_var_simple() {
     SemanticTester::js("let x; { let y; }")
         .has_some_symbol("x")
@@ -92,7 +104,7 @@ fn test_export_flag() {
     let tester = SemanticTester::js(
         "
         const a = 1;
-        export { a, b, c as d };
+        export { a, b as d };
         class b {}
         export default c;
         function c() {}

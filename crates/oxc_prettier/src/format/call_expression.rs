@@ -71,7 +71,7 @@ pub(super) fn print_call_expression<'a>(
     Doc::Group(Group::new(parts))
 }
 
-/// https://github.com/prettier/prettier/blob/7aecca5d6473d73f562ca3af874831315f8f2581/src/language-js/print/call-expression.js#L93-L116
+/// <https://github.com/prettier/prettier/blob/7aecca5d6473d73f562ca3af874831315f8f2581/src/language-js/print/call-expression.js#L93-L116>
 pub fn is_commons_js_or_amd_call<'a>(
     callee: &Expression<'a>,
     arguments: &Vec<'a, Argument<'a>>,

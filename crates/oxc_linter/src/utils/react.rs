@@ -52,7 +52,7 @@ pub fn has_jsx_prop_lowercase<'a, 'b>(
 
 pub fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXAttributeValue<'a>> {
     if let JSXAttributeItem::Attribute(attr) = item {
-        attr.0.value.as_ref()
+        attr.value.as_ref()
     } else {
         None
     }
@@ -224,7 +224,8 @@ pub fn get_parent_es6_component<'a, 'b>(ctx: &'b LintContext<'a>) -> Option<&'b 
 }
 
 /// Resolve element type(name) using jsx-a11y settings
-/// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/getElementType.js
+/// ref:
+/// <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/getElementType.js>
 pub fn get_element_type(context: &LintContext, element: &JSXOpeningElement) -> Option<String> {
     let JSXElementName::Identifier(ident) = &element.name else {
         return None;

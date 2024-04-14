@@ -1,7 +1,7 @@
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-/// https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations
+/// <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations>
 #[derive(Debug, Deserialize, Default)]
 pub struct JSXA11yPluginSettings {
     #[serde(rename = "polymorphicPropName")]

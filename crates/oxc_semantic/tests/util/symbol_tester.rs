@@ -59,6 +59,11 @@ impl<'a> SymbolTester<'a> {
         }
     }
 
+    /// Get inner resources without consuming `self`
+    pub fn inner(&self) -> (Rc<Semantic<'a>>, SymbolId) {
+        (Rc::clone(&self.semantic), *self.test_result.as_ref().unwrap())
+    }
+
     /// Checks if the resolved symbol contains all flags in `flags`, using [`SymbolFlags::contains()`]
     pub fn contains_flags(mut self, flags: SymbolFlags) -> Self {
         self.test_result = match self.test_result {
@@ -142,12 +147,46 @@ impl<'a> SymbolTester<'a> {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let binding = self.target_symbol_name.clone();
-                if self.semantic.module_record().exported_bindings.contains_key(binding.as_str())
-                    && self.semantic.scopes().get_root_binding(&binding) == Some(symbol_id)
+                let is_in_module_record =
+                    self.semantic.module_record().exported_bindings.contains_key(binding.as_str())
+                        && self.semantic.scopes().get_root_binding(&binding) == Some(symbol_id);
+                let has_export_flag = self.semantic.symbols().get_flag(symbol_id).is_export();
+                match (is_in_module_record, has_export_flag) {
+                    (false, false) => Err(miette!(
+                            "Expected {binding} to be exported. Symbol is not in module record and does not have SymbolFlags::Export"
+                        )),
+                    (false, true) => Err(miette!(
+                            "Expected {binding} to be exported. Symbol is not in module record, but has SymbolFlags::Export"
+                        )),
+                    (true, false) => Err(miette!(
+                            "Expected {binding} to be exported. Symbol is in module record, but does not have SymbolFlags::Export"
+                        )),
+                    (true, true) => Ok(symbol_id)
+                }
+            }
+            e => e,
+        };
+        self
+    }
+
+    #[allow(clippy::wrong_self_convention)]
+    pub fn is_not_exported(mut self) -> Self {
+        self.test_result = match self.test_result {
+            Ok(symbol_id) => {
+                let binding = self.target_symbol_name.clone();
+                if self.semantic.symbols().get_flag(symbol_id).contains(SymbolFlags::Export) {
+                    Err(miette!("Expected {binding} to not be exported. Symbol has export flag."))
+                } else if self
+                    .semantic
+                    .module_record()
+                    .exported_bindings
+                    .contains_key(binding.as_str())
                 {
-                    Ok(symbol_id)
+                    Err(miette!(
+                        "Expected {binding} to not be exported. Binding is in the module record"
+                    ))
                 } else {
-                    Err(miette!("Expected {binding} to be exported."))
+                    Ok(symbol_id)
                 }
             }
             e => e,

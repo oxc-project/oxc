@@ -32,6 +32,10 @@ fn root() -> PathBuf {
     project_root().join("tasks/coverage/babel/packages")
 }
 
+fn oxc_test_root() -> PathBuf {
+    project_root().join("tasks/transform_conformance/tests")
+}
+
 fn snap_root() -> PathBuf {
     project_root().join("tasks/transform_conformance")
 }
@@ -41,62 +45,70 @@ fn fixture_root() -> PathBuf {
 }
 
 const CASES: &[&str] = &[
-    // ES2024
-    "babel-plugin-transform-unicode-sets-regex",
-    // ES2022
-    "babel-plugin-transform-class-properties",
-    "babel-plugin-transform-class-static-block",
-    "babel-plugin-transform-private-methods",
-    "babel-plugin-transform-private-property-in-object",
-    // [Syntax] "babel-plugin-transform-syntax-top-level-await",
-    // ES2021
-    "babel-plugin-transform-logical-assignment-operators",
-    "babel-plugin-transform-numeric-separator",
-    // ES2020
-    "babel-plugin-transform-export-namespace-from",
-    "babel-plugin-transform-dynamic-import",
-    "babel-plugin-transform-nullish-coalescing-operator",
-    "babel-plugin-transform-optional-chaining",
-    // [Syntax] "babel-plugin-transform-syntax-bigint",
-    // [Syntax] "babel-plugin-transform-syntax-dynamic-import",
-    // [Syntax] "babel-plugin-transform-syntax-import-meta",
-    // ES2019
-    "babel-plugin-transform-optional-catch-binding",
-    "babel-plugin-transform-json-strings",
-    // ES2018
-    "babel-plugin-transform-async-generator-functions",
-    "babel-plugin-transform-object-rest-spread",
-    // [Regex] "babel-plugin-transform-unicode-property-regex",
-    "babel-plugin-transform-dotall-regex",
-    // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
-    // ES2017
-    "babel-plugin-transform-async-to-generator",
-    // ES2016
-    "babel-plugin-transform-exponentiation-operator",
-    // ES2015
-    "babel-plugin-transform-arrow-functions",
-    "babel-plugin-transform-function-name",
-    "babel-plugin-transform-shorthand-properties",
-    "babel-plugin-transform-sticky-regex",
-    "babel-plugin-transform-unicode-regex",
-    "babel-plugin-transform-template-literals",
-    "babel-plugin-transform-duplicate-keys",
-    "babel-plugin-transform-instanceof",
-    "babel-plugin-transform-new-target",
-    // ES3
-    "babel-plugin-transform-property-literals",
+    // // ES2024
+    // "babel-plugin-transform-unicode-sets-regex",
+    // // ES2022
+    // "babel-plugin-transform-class-properties",
+    // "babel-plugin-transform-class-static-block",
+    // "babel-plugin-transform-private-methods",
+    // "babel-plugin-transform-private-property-in-object",
+    // // [Syntax] "babel-plugin-transform-syntax-top-level-await",
+    // // ES2021
+    // "babel-plugin-transform-logical-assignment-operators",
+    // "babel-plugin-transform-numeric-separator",
+    // // ES2020
+    // "babel-plugin-transform-export-namespace-from",
+    // "babel-plugin-transform-dynamic-import",
+    // "babel-plugin-transform-nullish-coalescing-operator",
+    // "babel-plugin-transform-optional-chaining",
+    // // [Syntax] "babel-plugin-transform-syntax-bigint",
+    // // [Syntax] "babel-plugin-transform-syntax-dynamic-import",
+    // // [Syntax] "babel-plugin-transform-syntax-import-meta",
+    // // ES2019
+    // "babel-plugin-transform-optional-catch-binding",
+    // "babel-plugin-transform-json-strings",
+    // // ES2018
+    // "babel-plugin-transform-async-generator-functions",
+    // "babel-plugin-transform-object-rest-spread",
+    // // [Regex] "babel-plugin-transform-unicode-property-regex",
+    // "babel-plugin-transform-dotall-regex",
+    // // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
+    // // ES2017
+    // "babel-plugin-transform-async-to-generator",
+    // // ES2016
+    // "babel-plugin-transform-exponentiation-operator",
+    // // ES2015
+    // "babel-plugin-transform-arrow-functions",
+    // "babel-plugin-transform-function-name",
+    // "babel-plugin-transform-shorthand-properties",
+    // "babel-plugin-transform-sticky-regex",
+    // "babel-plugin-transform-unicode-regex",
+    // "babel-plugin-transform-template-literals",
+    // "babel-plugin-transform-duplicate-keys",
+    // "babel-plugin-transform-instanceof",
+    // "babel-plugin-transform-new-target",
+    // // ES3
+    // "babel-plugin-transform-property-literals",
     // TypeScript
+    "babel-preset-typescript",
     "babel-plugin-transform-typescript",
     // React
+    "babel-preset-react",
     "babel-plugin-transform-react-jsx",
-    // Proposal
-    "babel-plugin-proposal-decorators",
+    "babel-plugin-transform-react-display-name",
+    "babel-plugin-transform-react-jsx-self",
+    "babel-plugin-transform-react-jsx-source",
+    "babel-plugin-transform-react-jsx-development",
+    // // Proposal
+    // "babel-plugin-proposal-decorators",
 ];
 
 const EXCLUDE_TESTS: &[&str] = &["babel-plugin-transform-typescript/test/fixtures/enum"];
 
 const CONFORMANCE_SNAPSHOT: &str = "babel.snap.md";
+const OXC_CONFORMANCE_SNAPSHOT: &str = "oxc.snap.md";
 const EXEC_SNAPSHOT: &str = "babel_exec.snap.md";
+const OXC_EXEC_SNAPSHOT: &str = "oxc_exec.snap.md";
 
 struct SnapshotOption {
     paths: IndexMap<String, Vec<TestCaseKind>>,
@@ -116,17 +128,22 @@ impl TestRunner {
 
     /// # Panics
     pub fn run(self) {
-        let root = root();
-        let (transform_paths, exec_files) = Self::glob_files(&root, self.options.filter.as_ref());
-        self.generate_snapshot(SnapshotOption::new(transform_paths, CONFORMANCE_SNAPSHOT));
+        for (root, snapshot, exec_snapshot) in &[
+            (root(), CONFORMANCE_SNAPSHOT, EXEC_SNAPSHOT),
+            (oxc_test_root(), OXC_CONFORMANCE_SNAPSHOT, OXC_EXEC_SNAPSHOT),
+        ] {
+            let (transform_paths, exec_files) =
+                Self::glob_files(root, self.options.filter.as_ref());
+            self.generate_snapshot(root, SnapshotOption::new(transform_paths, snapshot));
 
-        if self.options.exec {
-            let fixture_root = fixture_root();
-            if !fixture_root.exists() {
-                fs::create_dir(&fixture_root).unwrap();
+            if self.options.exec {
+                let fixture_root = fixture_root();
+                if !fixture_root.exists() {
+                    fs::create_dir(&fixture_root).unwrap();
+                }
+                self.generate_snapshot(root, SnapshotOption::new(exec_files, exec_snapshot));
+                let _ = fs::remove_dir_all(fixture_root);
             }
-            self.generate_snapshot(SnapshotOption::new(exec_files, EXEC_SNAPSHOT));
-            let _ = fs::remove_dir_all(fixture_root);
         }
     }
 
@@ -151,34 +168,29 @@ impl TestRunner {
                                 return None;
                             }
                         }
-
                         if EXCLUDE_TESTS.iter().any(|p| path.to_string_lossy().contains(p)) {
                             return None;
                         }
-
-                        let test_case = TestCaseKind::from_path(path);
-                        if let Some(test_case) = test_case {
-                            if test_case.skip_test_case() {
-                                return None;
-                            }
-
-                            return Some(test_case);
-                        }
-                        None
+                        TestCaseKind::from_path(path)
+                            .filter(|test_case| !test_case.skip_test_case())
                     })
                     .partition(|p| matches!(p, TestCaseKind::Transform(_)));
 
             transform_paths.sort_unstable_by(|a, b| a.path().cmp(b.path()));
             exec_paths.sort_unstable_by(|a, b| a.path().cmp(b.path()));
 
-            transform_files.insert((*case).to_string(), transform_paths);
-            exec_files.insert((*case).to_string(), exec_paths);
+            if !transform_paths.is_empty() {
+                transform_files.insert((*case).to_string(), transform_paths);
+            }
+            if !exec_paths.is_empty() {
+                exec_files.insert((*case).to_string(), exec_paths);
+            }
         }
 
         (transform_files, exec_files)
     }
 
-    fn generate_snapshot(&self, option: SnapshotOption) {
+    fn generate_snapshot(&self, root: &Path, option: SnapshotOption) {
         let SnapshotOption { paths, dest } = option;
         let mut snapshot = String::new();
         let mut total = 0;
@@ -186,12 +198,7 @@ impl TestRunner {
         let mut all_passed_count = 0;
 
         for (case, test_cases) in paths {
-            // Skip empty test cases, e.g. some cases do not have `exec.js` file.
-            if test_cases.is_empty() {
-                continue;
-            }
-
-            let case_root = root().join(&case).join("test/fixtures");
+            let case_root = root.join(&case).join("test/fixtures");
             let num_of_tests = test_cases.len();
             total += num_of_tests;
 

@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-/// https://nextjs.org/docs/pages/building-your-application/configuring/eslint#eslint-plugin
+/// <https://nextjs.org/docs/pages/building-your-application/configuring/eslint#eslint-plugin>
 #[derive(Debug, Deserialize, Default)]
 pub struct NextPluginSettings {
     #[serde(default)]

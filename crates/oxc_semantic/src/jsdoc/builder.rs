@@ -156,7 +156,8 @@ impl<'a> JSDocBuilder<'a> {
         }
 
         // Remove the very first `*`
-        Some(JSDoc::new(&comment_content[1..]))
+        let jsdoc_span = Span::new(comment_span.start + 1, comment_span.end);
+        Some(JSDoc::new(&comment_content[1..], jsdoc_span))
     }
 }
 
@@ -428,11 +429,11 @@ mod test {
         // Should be [farthest, ..., nearest]
         let mut iter = jsdocs.iter();
         let c1 = iter.next().unwrap();
-        assert_eq!(c1.comment(), "c1");
+        assert_eq!(c1.comment().parsed(), "c1");
         let c2 = iter.next().unwrap();
-        assert_eq!(c2.comment(), "c2");
+        assert_eq!(c2.comment().parsed(), "c2");
         let c3 = iter.next().unwrap();
-        assert_eq!(c3.comment(), "c3");
+        assert_eq!(c3.comment().parsed(), "c3");
     }
 
     #[test]

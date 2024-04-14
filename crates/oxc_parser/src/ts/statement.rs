@@ -212,13 +212,11 @@ impl<'a> ParserImpl<'a> {
 
         let mut statements = self.ast.new_vec();
 
-        if self.at(Kind::LCurly) {
-            self.expect(Kind::LCurly)?;
+        self.expect(Kind::LCurly)?;
 
-            while !self.eat(Kind::RCurly) && !self.at(Kind::Eof) {
-                let stmt = self.parse_ts_module_item()?;
-                statements.push(stmt);
-            }
+        while !self.eat(Kind::RCurly) && !self.at(Kind::Eof) {
+            let stmt = self.parse_ts_module_item()?;
+            statements.push(stmt);
         }
 
         Ok(self.ast.ts_module_block(self.end_span(span), statements))
@@ -243,11 +241,14 @@ impl<'a> ParserImpl<'a> {
             let span = self.start_span();
             let decl =
                 self.parse_ts_namespace_or_module_declaration_body(span, kind, Modifiers::empty())?;
-            TSModuleDeclarationBody::TSModuleDeclaration(decl)
-        } else {
+            Some(TSModuleDeclarationBody::TSModuleDeclaration(decl))
+        } else if self.at(Kind::LCurly) {
             let block = self.parse_ts_module_block()?;
             self.asi()?;
-            TSModuleDeclarationBody::TSModuleBlock(block)
+            Some(TSModuleDeclarationBody::TSModuleBlock(block))
+        } else {
+            self.asi()?;
+            None
         };
 
         Ok(self.ast.ts_module_declaration(self.end_span(span), id, body, kind, modifiers))

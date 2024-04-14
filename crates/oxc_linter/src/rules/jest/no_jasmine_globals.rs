@@ -134,9 +134,7 @@ fn get_jasmine_property_name<'a>(member_expr: &'a MemberExpression<'a>) -> Optio
     if !is_jasmine_object {
         return None;
     }
-    let Some((span, property_name)) = member_expr.static_property_info() else {
-        return None;
-    };
+    let (span, property_name) = member_expr.static_property_info()?;
     Some((span, property_name))
 }
 

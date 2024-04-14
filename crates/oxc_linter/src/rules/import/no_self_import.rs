@@ -35,13 +35,13 @@ impl Rule for NoSelfImport {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.semantic().module_record();
         let resolved_absolute_path = &module_record.resolved_absolute_path;
-        for (request, spans) in &module_record.requested_modules {
+        for (request, requested_modules) in &module_record.requested_modules {
             let Some(remote_module_record_ref) = module_record.loaded_modules.get(request) else {
                 continue;
             };
             if remote_module_record_ref.value().resolved_absolute_path == *resolved_absolute_path {
-                for span in spans {
-                    ctx.diagnostic(NoSelfImportDiagnostic(*span));
+                for requested_module in requested_modules {
+                    ctx.diagnostic(NoSelfImportDiagnostic(requested_module.span()));
                 }
             }
         }

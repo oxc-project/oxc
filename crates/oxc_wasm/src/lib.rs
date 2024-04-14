@@ -14,7 +14,7 @@ use oxc::{
     parser::Parser,
     semantic::{ScopeId, Semantic, SemanticBuilder},
     span::SourceType,
-    transformer::{TransformOptions, TransformTarget, Transformer},
+    transformer::{TransformOptions, Transformer},
 };
 use oxc_linter::{LintContext, Linter};
 use oxc_prettier::{Prettier, PrettierOptions};
@@ -190,7 +190,7 @@ impl Oxc {
         // Only lint if there are not syntax errors
         if run_options.lint() && self.diagnostics.borrow().is_empty() {
             let semantic = Rc::new(semantic_ret.semantic);
-            let lint_ctx = LintContext::new(path.into_boxed_path(), &semantic);
+            let lint_ctx = LintContext::new(path.clone().into_boxed_path(), &semantic);
             let linter_ret = Linter::default().run(lint_ctx);
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);
@@ -232,10 +232,8 @@ impl Oxc {
                 .build_module_record(PathBuf::new(), program)
                 .build(program)
                 .semantic;
-            let options =
-                TransformOptions { target: TransformTarget::ES2015, ..TransformOptions::default() };
-            let result =
-                Transformer::new(&allocator, source_type, semantic, options).build(program);
+            let options = TransformOptions::default();
+            let result = Transformer::new(&allocator, &path, semantic, options).build(program);
             if let Err(errs) = result {
                 self.save_diagnostics(errs);
             }
@@ -272,9 +270,9 @@ impl Oxc {
             ..CodegenOptions::default()
         };
         self.codegen_text = if minifier_options.whitespace() {
-            Codegen::<true>::new(source_text, codegen_options).build(program).source_text
+            Codegen::<true>::new("", source_text, codegen_options).build(program).source_text
         } else {
-            Codegen::<false>::new(source_text, codegen_options).build(program).source_text
+            Codegen::<false>::new("", source_text, codegen_options).build(program).source_text
         };
 
         Ok(())

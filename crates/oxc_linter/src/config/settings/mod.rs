@@ -13,7 +13,7 @@ mod react;
 /// An object containing name-value pairs of information that should be available to all rules
 ///
 /// TS type is `Object`
-/// https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L53
+/// <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L53>
 /// But each plugin extends this with their own properties.
 #[derive(Debug, Deserialize, Default)]
 pub struct ESLintSettings {

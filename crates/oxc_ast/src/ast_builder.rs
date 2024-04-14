@@ -31,7 +31,7 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn alloc<T>(&self, value: T) -> Box<'a, T> {
-        Box(self.allocator.alloc(value))
+        Box::new_in(value, self.allocator)
     }
 
     #[inline]
@@ -52,6 +52,11 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
+    pub fn new_vec_from_iter<T, I: IntoIterator<Item = T>>(&self, iter: I) -> Vec<'a, T> {
+        Vec::from_iter_in(iter, self.allocator)
+    }
+
+    #[inline]
     pub fn new_str(&self, value: &str) -> &'a str {
         String::from_str_in(value, self.allocator).into_bump_str()
     }
@@ -65,7 +70,10 @@ impl<'a> AstBuilder<'a> {
         // SAFETY:
         // This should be safe as long as `src` is an reference from the allocator.
         // But honestly, I'm not really sure if this is safe.
-        unsafe { std::mem::transmute_copy(src) }
+        #[allow(unsafe_code)]
+        unsafe {
+            std::mem::transmute_copy(src)
+        }
     }
 
     /// Moves the expression out by replacing it with a null expression.
@@ -108,7 +116,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         source_type: SourceType,
-        directives: Vec<'a, Directive>,
+        directives: Vec<'a, Directive<'a>>,
         hashbang: Option<Hashbang<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
@@ -140,6 +148,10 @@ impl<'a> AstBuilder<'a> {
         BooleanLiteral { span, value }
     }
 
+    pub fn string_literal(&self, span: Span, name: &str) -> StringLiteral<'a> {
+        StringLiteral::new(span, self.new_atom(name))
+    }
+
     pub fn bigint_literal(&self, span: Span, raw: Atom<'a>, base: BigintBase) -> BigIntLiteral<'a> {
         BigIntLiteral { span, raw, base }
     }
@@ -147,7 +159,7 @@ impl<'a> AstBuilder<'a> {
     pub fn template_literal(
         &self,
         span: Span,
-        quasis: Vec<'a, TemplateElement>,
+        quasis: Vec<'a, TemplateElement<'a>>,
         expressions: Vec<'a, Expression<'a>>,
     ) -> TemplateLiteral<'a> {
         TemplateLiteral { span, quasis, expressions }
@@ -205,6 +217,14 @@ impl<'a> AstBuilder<'a> {
 
     pub fn literal_template_expression(&self, literal: TemplateLiteral<'a>) -> Expression<'a> {
         Expression::TemplateLiteral(self.alloc(literal))
+    }
+
+    pub fn identifier_name(&self, span: Span, name: &str) -> IdentifierName<'a> {
+        IdentifierName::new(span, self.new_atom(name))
+    }
+
+    pub fn identifier_reference(&self, span: Span, name: &str) -> IdentifierReference<'a> {
+        IdentifierReference::new(span, self.new_atom(name))
     }
 
     pub fn identifier_reference_expression(
@@ -819,6 +839,14 @@ impl<'a> AstBuilder<'a> {
         self.alloc(FormalParameters { span, kind, items, rest })
     }
 
+    pub fn plain_formal_parameter(
+        &self,
+        span: Span,
+        pattern: BindingPattern<'a>,
+    ) -> FormalParameter<'a> {
+        self.formal_parameter(span, pattern, None, false, false, self.new_vec())
+    }
+
     pub fn formal_parameter(
         &self,
         span: Span,
@@ -838,6 +866,29 @@ impl<'a> AstBuilder<'a> {
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> TSThisParameter<'a> {
         TSThisParameter { span, this, type_annotation }
+    }
+
+    pub fn plain_function(
+        &self,
+        r#type: FunctionType,
+        span: Span,
+        id: Option<BindingIdentifier<'a>>,
+        params: Box<'a, FormalParameters<'a>>,
+        body: Option<Box<'a, FunctionBody<'a>>>,
+    ) -> Box<'a, Function<'a>> {
+        self.function(
+            r#type,
+            span,
+            id,
+            false,
+            false,
+            None,
+            params,
+            body,
+            None,
+            None,
+            Modifiers::empty(),
+        )
     }
 
     pub fn function(
@@ -872,7 +923,7 @@ impl<'a> AstBuilder<'a> {
     pub fn function_body(
         &self,
         span: Span,
-        directives: Vec<'a, Directive>,
+        directives: Vec<'a, Directive<'a>>,
         statements: Vec<'a, Statement<'a>>,
     ) -> Box<'a, FunctionBody<'a>> {
         self.alloc(FunctionBody { span, directives, statements })
@@ -1114,7 +1165,7 @@ impl<'a> AstBuilder<'a> {
     pub fn import_declaration(
         &self,
         span: Span,
-        specifiers: Option<Vec<'a, ImportDeclarationSpecifier>>,
+        specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
         with_clause: Option<WithClause<'a>>,
         import_kind: ImportOrExportKind,
@@ -1146,7 +1197,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         declaration: Option<Declaration<'a>>,
-        specifiers: Vec<'a, ExportSpecifier>,
+        specifiers: Vec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
         with_clause: Option<WithClause<'a>>,
@@ -1159,6 +1210,22 @@ impl<'a> AstBuilder<'a> {
             export_kind,
             with_clause,
         })
+    }
+
+    pub fn plain_export_named_declaration(
+        &self,
+        span: Span,
+        specifiers: Vec<'a, ExportSpecifier<'a>>,
+        source: Option<StringLiteral<'a>>,
+    ) -> Box<'a, ExportNamedDeclaration<'a>> {
+        self.export_named_declaration(
+            span,
+            None,
+            specifiers,
+            source,
+            ImportOrExportKind::Value,
+            None,
+        )
     }
 
     /* ---------- JSX ----------------- */
@@ -1273,7 +1340,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         id: TSModuleDeclarationName<'a>,
-        body: TSModuleDeclarationBody<'a>,
+        body: Option<TSModuleDeclarationBody<'a>>,
         kind: TSModuleDeclarationKind,
         modifiers: Modifiers<'a>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {

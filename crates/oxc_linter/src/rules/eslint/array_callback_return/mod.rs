@@ -206,9 +206,7 @@ pub fn get_array_method_name<'a>(
                 }
 
                 // "methods",
-                let Some(method) = callee.static_property_name() else {
-                    return None;
-                };
+                let method = callee.static_property_name()?;
                 if let Some(&array_method) = TARGET_METHODS.get_key(method) {
                     // Check that current node is parent's first argument
                     if call.arguments.len() == 1 && is_nth_argument(call, current_node_arg, 0) {

@@ -68,7 +68,10 @@ impl<'a> Printer<'a> {
     pub fn build(mut self) -> String {
         self.print_doc_to_string();
         // SAFETY: We should have constructed valid UTF8 strings
-        unsafe { String::from_utf8_unchecked(self.out) }
+        #[allow(unsafe_code)]
+        unsafe {
+            String::from_utf8_unchecked(self.out)
+        }
     }
 
     /// Turn Doc into a string
@@ -438,7 +441,7 @@ impl<'a> Printer<'a> {
     }
 
     /// Reference:
-    /// * https://github.com/prettier/prettier/blob/main/src/document/utils.js#L156-L185
+    /// * <https://github.com/prettier/prettier/blob/main/src/document/utils.js#L156-L185>
     pub fn propagate_breaks(doc: &mut Doc<'_>) -> bool {
         let check_array = |arr: &mut oxc_allocator::Vec<'_, Doc<'_>>| {
             arr.iter_mut().rev().any(|doc| Self::propagate_breaks(doc))
