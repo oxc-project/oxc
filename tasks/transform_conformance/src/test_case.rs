@@ -149,11 +149,16 @@ pub trait TestCase {
 
         // babel skip test cases that in a directory starting with a dot
         // https://github.com/babel/babel/blob/0effd92d886b7135469d23612ceba6414c721673/packages/babel-helper-fixtures/src/index.ts#L223
-        if self.path().parent().is_some_and(|p| {
-            p.file_name().is_some_and(|n| n.to_str().map_or(false, |s| s.starts_with('.')))
-        }) {
+        let dir = self.path().parent().unwrap();
+        if dir.file_name().is_some_and(|n| n.to_string_lossy().starts_with('.')) {
             return true;
         }
+
+        // Skip custom plugin.js
+        if dir.join("plugin.js").exists() {
+            return true;
+        }
+
         false
     }
 
