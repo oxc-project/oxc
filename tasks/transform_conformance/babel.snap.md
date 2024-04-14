@@ -1,10 +1,10 @@
-Passed: 178/392
+Passed: 221/408
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-typescript (4/22)
+# babel-preset-typescript (4/23)
 * flow-compat/js-invalid/input.js
 * flow-compat/js-valid/input.js
 * flow-compat/ts-invalid/input.ts
@@ -13,6 +13,7 @@ Passed: 178/392
 * flow-compat/tsx-valid/input.tsx
 * jsx-compat/js-valid/input.js
 * jsx-compat/ts-invalid/input.ts
+* jsx-compat/ts-invalid-babel-7/input.ts
 * jsx-compat/tsx-valid/input.tsx
 * node-extensions/import-in-cts/input.cts
 * node-extensions/type-assertion-in-cts/input.cts
@@ -24,13 +25,16 @@ Passed: 178/392
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (59/158)
+# babel-plugin-transform-typescript (68/164)
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
+* class/accessor-allowDeclareFields-true-babel-7/input.ts
+* class/declare-not-enabled-babel-7/input.ts
 * class/decorated-declare-properties/input.ts
+* class/field-not-initialized-babel-7/input.ts
 * class/parameter-properties/input.ts
 * class/parameter-properties-late-super/input.ts
 * class/parameter-properties-with-class/input.ts
@@ -39,6 +43,7 @@ Passed: 178/392
 * class/parameter-properties-with-super/input.ts
 * class/private-method-override-transform-private/input.ts
 * class/transform-properties-declare-wrong-order/input.ts
+* class/uninitialized-definite-with-declare-disabled-babel-7/input.ts
 * declarations/erased/input.ts
 * declarations/export-declare-enum/input.ts
 * declarations/nested-namespace/input.mjs
@@ -50,7 +55,6 @@ Passed: 178/392
 * exports/export-type-from/input.ts
 * exports/export-type-star-from/input.ts
 * exports/export=/input.ts
-* exports/export=-to-cjs/input.ts
 * exports/imported-types/input.ts
 * exports/imported-types-only-remove-type-imports/input.ts
 * exports/issue-9916-3/input.ts
@@ -58,7 +62,6 @@ Passed: 178/392
 * exports/type-only-export-specifier-1/input.ts
 * exports/type-only-export-specifier-2/input.ts
 * function/overloads-exports/input.mjs
-* imports/elide-injected/input.ts
 * imports/elide-preact/input.ts
 * imports/elide-react/input.ts
 * imports/elide-type-referenced-in-imports-equal-no/input.ts
@@ -74,10 +77,7 @@ Passed: 178/392
 * imports/import-type/input.ts
 * imports/import-type-func-with-duplicate-name/input.ts
 * imports/import-type-not-removed/input.ts
-* imports/import=-declaration/input.ts
 * imports/import=-module/input.ts
-* imports/import=-module-to-cjs/input.ts
-* imports/parameter-decorators/input.ts
 * imports/property-signature/input.ts
 * imports/type-only-export-specifier-1/input.ts
 * imports/type-only-export-specifier-2/input.ts
@@ -119,18 +119,17 @@ Passed: 178/392
 * optimize-const-enums/local-shadowed/input.ts
 * optimize-const-enums/merged/input.ts
 * optimize-const-enums/merged-exported/input.ts
-* regression/10162/input.ts
 * regression/10338/input.ts
-* regression/11061/input.mjs
 * regression/15768/input.ts
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-preset-react (2/13)
+# babel-preset-react (2/14)
 * preset-options/development/input.js
 * preset-options/development-runtime-automatic/input.js
 * preset-options/development-runtime-automatic-windows/input.js
 * preset-options/development-windows/input.js
 * preset-options/empty-options/input.js
+* preset-options/empty-options-babel-7/input.js
 * preset-options/runtime-automatic/input.js
 * preset-options/runtime-classic/input.js
 * preset-options/runtime-classic-pragma-no-frag/input.js
@@ -138,36 +137,21 @@ Passed: 178/392
 * regression/another-preset-with-custom-jsx-keep-source-self/input.mjs
 * regression/runtime-classic-allow-multiple-source-self/input.mjs
 
-# babel-plugin-transform-react-jsx (96/156)
-* autoImport/after-polyfills-compiled-to-cjs/input.mjs
+# babel-plugin-transform-react-jsx (130/161)
 * autoImport/auto-import-react-source-type-module/input.js
 * autoImport/complicated-scope-module/input.js
-* autoImport/import-source-pragma/input.js
 * autoImport/react-defined/input.js
-* pure/false-pragma-comment-automatic-runtime/input.js
-* pure/false-pragma-comment-classic-runtime/input.js
-* pure/false-pragma-option-automatic-runtime/input.js
-* pure/true-pragma-comment-automatic-runtime/input.js
-* pure/true-pragma-comment-classic-runtime/input.js
-* pure/true-pragma-option-automatic-runtime/input.js
-* pure/unset-pragma-comment-automatic-runtime/input.js
-* pure/unset-pragma-comment-classic-runtime/input.js
-* pure/unset-pragma-option-automatic-runtime/input.js
+* react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
 * react/arrow-functions/input.js
-* react/honor-custom-jsx-comment/input.js
-* react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
+* react/assignment-babel-7/input.js
+* react/avoids-spread-babel-7/input.js
+* react/does-not-add-source-self-babel-7/input.mjs
+* react/handle-spread-with-proto-babel-7/input.js
 * react/optimisation.react.constant-elements/input.js
-* react/pragma-works-with-no-space-at-the-end/input.js
 * react/should-add-quotes-es3/input.js
-* react/should-allow-jsx-docs-comment-with-pragma/input.js
-* react/should-allow-no-pragmafrag-if-frag-unused/input.js
-* react/should-allow-pragmafrag-and-frag/input.js
-* react/should-disallow-spread-children/input.js
-* react/should-disallow-valueless-key/input.js
-* react/should-disallow-xml-namespacing/input.js
-* react/should-throw-error-namespaces-if-not-flag/input.js
-* react/should-warn-when-importSource-is-set/input.js
-* react/should-warn-when-importSource-pragma-is-set/input.js
+* react/wraps-props-in-react-spread-for-first-spread-attributes-babel-7/input.js
+* react/wraps-props-in-react-spread-for-last-spread-attributes-babel-7/input.js
+* react/wraps-props-in-react-spread-for-middle-spread-attributes-babel-7/input.js
 * react-automatic/arrow-functions/input.js
 * react-automatic/concatenates-adjacent-string-literals/input.js
 * react-automatic/does-not-add-source-self-automatic/input.mjs
@@ -175,30 +159,16 @@ Passed: 178/392
 * react-automatic/handle-fragments-with-no-children/input.js
 * react-automatic/handle-static-children/input.js
 * react-automatic/optimisation.react.constant-elements/input.js
-* react-automatic/pragma-works-with-no-space-at-the-end/input.js
 * react-automatic/should-add-quotes-es3/input.js
 * react-automatic/should-allow-nested-fragments/input.js
-* react-automatic/should-disallow-spread-children/input.js
-* react-automatic/should-disallow-valueless-key/input.js
-* react-automatic/should-disallow-xml-namespacing/input.js
 * react-automatic/should-escape-xhtml-jsxtext/input.js
+* react-automatic/should-escape-xhtml-jsxtext-babel-7/input.js
 * react-automatic/should-handle-attributed-elements/input.js
 * react-automatic/should-have-correct-comma-in-nested-children/input.js
 * react-automatic/should-properly-handle-keys/input.js
-* react-automatic/should-throw-error-namespaces-if-not-flag/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
-* react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
-* regression/issue-12478-automatic/input.js
-* regression/issue-12478-classic/input.js
-* regression/pragma-frag-set-default-classic-runtime/input.js
-* removed-options/invalid-use-builtins-false/input.js
-* removed-options/invalid-use-builtins-true/input.js
-* removed-options/invalid-use-spread-false/input.js
-* removed-options/invalid-use-spread-true/input.js
+* runtime/defaults-to-classis-babel-7/input.js
 * runtime/invalid-runtime/input.js
-* runtime/pragma-runtime-classsic/input.js
-* spread-transform/transform-to-babel-extend/input.js
-* spread-transform/transform-to-object-assign/input.js
 
 # babel-plugin-transform-react-display-name (15/16)
 * display-name/nested/input.js
@@ -207,12 +177,12 @@ Passed: 178/392
 * react-source/arrow-function/input.js
 * react-source/disable-with-super/input.js
 
-# babel-plugin-transform-react-jsx-development (0/23)
+# babel-plugin-transform-react-jsx-development (0/26)
 * cross-platform/disallow-__self-as-jsx-attribute/input.js
 * cross-platform/disallow-__source-as-jsx-attribute/input.js
-* cross-platform/generated-jsx/input.js
 * linux/auto-import-dev/input.js
 * linux/classic-runtime/input.js
+* linux/classic-runtime-babel-7/input.js
 * linux/fragments/input.js
 * linux/handle-fragments-with-key/input.js
 * linux/handle-nonstatic-children/input.js
@@ -221,8 +191,10 @@ Passed: 178/392
 * linux/source-and-self-defined/input.js
 * linux/within-derived-classes-constructor/input.js
 * linux/within-ts-module-block/input.ts
+* linux/within-ts-module-block-babel-7/input.ts
 * windows/auto-import-dev-windows/input.js
 * windows/classic-runtime-windows/input.js
+* windows/classic-runtime-windows-babel-7/input.js
 * windows/fragments-windows/input.js
 * windows/handle-fragments-with-key-windows/input.js
 * windows/handle-nonstatic-children-windows/input.js
@@ -231,4 +203,5 @@ Passed: 178/392
 * windows/source-and-self-defined-windows/input.js
 * windows/within-derived-classes-constructor-windows/input.js
 * windows/within-ts-module-block/input.ts
+* windows/within-ts-module-block-babel-7/input.ts
 

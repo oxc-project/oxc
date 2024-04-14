@@ -23,30 +23,28 @@ pub use self::{
 /// * [plugin-transform-react-jsx-self](https://babeljs.io/docs/babel-plugin-transform-react-jsx-self)
 /// * [plugin-transform-react-jsx-source](https://babel.dev/docs/babel-plugin-transform-react-jsx-source)
 /// * [plugin-transform-react-display-name](https://babeljs.io/docs/babel-plugin-transform-react-display-name)
-#[allow(unused)]
 pub struct React<'a> {
     options: Rc<ReactOptions>,
-    ctx: Ctx<'a>,
     jsx: ReactJsx<'a>,
     jsx_self: ReactJsxSelf<'a>,
     jsx_source: ReactJsxSource<'a>,
     display_name: ReactDisplayName<'a>,
-    development: bool,
 }
 
 // Constructors
 impl<'a> React<'a> {
     pub fn new(options: ReactOptions, ctx: &Ctx<'a>) -> Self {
-        let development = options.development;
+        let mut options = options;
+        if options.jsx_plugin {
+            options.update_with_comments(ctx);
+        }
         let options = Rc::new(options);
         Self {
             options: Rc::clone(&options),
-            ctx: Rc::clone(ctx),
             jsx: ReactJsx::new(&options, ctx),
             jsx_self: ReactJsxSelf::new(ctx),
             jsx_source: ReactJsxSource::new(ctx),
             display_name: ReactDisplayName::new(ctx),
-            development,
         }
     }
 }

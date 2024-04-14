@@ -17,7 +17,7 @@ use oxc_transformer::{
     DecoratorsOptions, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
 };
 
-use crate::{fixture_root, root, TestRunnerEnv};
+use crate::{fixture_root, root, TestRunnerEnv, PLUGINS_NOT_SUPPORTED_YET};
 
 #[derive(Debug)]
 pub enum TestCaseKind {
@@ -26,14 +26,7 @@ pub enum TestCaseKind {
 }
 
 impl TestCaseKind {
-    pub fn test(&self, filter: bool) -> bool {
-        match self {
-            Self::Transform(test_case) => test_case.test(filter),
-            Self::Exec(test_case) => test_case.test(filter),
-        }
-    }
-
-    pub fn from_path(path: &Path) -> Option<Self> {
+    pub fn new(path: &Path) -> Option<Self> {
         // in `exec` directory
         if path.parent().is_some_and(|path| path.file_name().is_some_and(|n| n == "exec"))
             && path.extension().is_some_and(|ext| VALID_EXTENSIONS.contains(&ext.to_str().unwrap()))
@@ -70,61 +63,76 @@ impl TestCaseKind {
             Self::Exec(exec_case) => &exec_case.path,
         }
     }
+
+    pub fn test(&self, filter: bool) -> bool {
+        match self {
+            Self::Transform(test_case) => test_case.test(filter),
+            Self::Exec(test_case) => test_case.test(filter),
+        }
+    }
+}
+
+fn transform_options(options: &BabelOptions) -> TransformOptions {
+    fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> T {
+        value.and_then(|v| serde_json::from_value::<T>(v).ok()).unwrap_or_default()
+    }
+
+    let react = options.get_preset("react").map_or_else(
+        || {
+            let jsx_plugin = options.get_plugin("transform-react-jsx");
+            let has_jsx_plugin = jsx_plugin.as_ref().is_some();
+            let mut react_options = jsx_plugin.map(get_options::<ReactOptions>).unwrap_or_default();
+            react_options.jsx_plugin = has_jsx_plugin;
+            react_options.display_name_plugin =
+                options.get_plugin("transform-react-display-name").is_some();
+            react_options.jsx_self_plugin =
+                options.get_plugin("transform-react-jsx-self").is_some();
+            react_options.jsx_source_plugin =
+                options.get_plugin("transform-react-jsx-source").is_some();
+            react_options
+        },
+        get_options::<ReactOptions>,
+    );
+
+    TransformOptions {
+        assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
+        decorators: options
+            .get_plugin("proposal-decorators")
+            .map(get_options::<DecoratorsOptions>)
+            .unwrap_or_default(),
+        typescript: options
+            .get_plugin("transform-typescript")
+            .map(get_options::<TypeScriptOptions>)
+            .unwrap_or_default(),
+        react,
+    }
 }
 
 pub trait TestCase {
-    fn new<P: Into<PathBuf>>(path: P) -> Self;
+    fn new(path: &Path) -> Self;
 
     fn options(&self) -> &BabelOptions;
+
+    fn transform_options(&self) -> &TransformOptions;
 
     fn test(&self, filtered: bool) -> bool;
 
     fn path(&self) -> &Path;
 
-    fn transform_options(&self) -> TransformOptions {
-        fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> T {
-            value.and_then(|v| serde_json::from_value::<T>(v).ok()).unwrap_or_default()
-        }
-        let options = self.options();
-
-        let react = options.get_preset("react").map_or_else(
-            || {
-                let jsx_plugin = options.get_plugin("transform-react-jsx");
-                let has_jsx_plugin = jsx_plugin.as_ref().is_some();
-                let mut react_options =
-                    jsx_plugin.map(get_options::<ReactOptions>).unwrap_or_default();
-                react_options.jsx_plugin = has_jsx_plugin;
-                react_options.display_name_plugin =
-                    options.get_plugin("transform-react-display-name").is_some();
-                react_options.jsx_self_plugin =
-                    options.get_plugin("transform-react-jsx-self").is_some();
-                react_options.jsx_source_plugin =
-                    options.get_plugin("transform-react-jsx-source").is_some();
-                react_options
-            },
-            get_options::<ReactOptions>,
-        );
-
-        TransformOptions {
-            assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
-            decorators: options
-                .get_plugin("proposal-decorators")
-                .map(get_options::<DecoratorsOptions>)
-                .unwrap_or_default(),
-            typescript: options
-                .get_plugin("transform-typescript")
-                .map(get_options::<TypeScriptOptions>)
-                .unwrap_or_default(),
-            react,
-        }
-    }
-
     fn skip_test_case(&self) -> bool {
         let options = self.options();
 
-        // Skip test cases that are not supported by babel 8
-        if let Some(b) = options.babel_8_breaking {
-            return !b;
+        // Skip plugins we don't support yet
+        if PLUGINS_NOT_SUPPORTED_YET.iter().any(|plugin| options.get_plugin(plugin).is_some()) {
+            return true;
+        }
+
+        // Skip deprecated react options
+        if options.babel_8_breaking.is_some_and(|b| b) {
+            let react_options = &self.transform_options().react;
+            if react_options.use_built_ins.is_some() || react_options.use_spread.is_some() {
+                return true;
+            }
         }
 
         // Legacy decorators is not supported by the parser
@@ -141,11 +149,16 @@ pub trait TestCase {
 
         // babel skip test cases that in a directory starting with a dot
         // https://github.com/babel/babel/blob/0effd92d886b7135469d23612ceba6414c721673/packages/babel-helper-fixtures/src/index.ts#L223
-        if self.path().parent().is_some_and(|p| {
-            p.file_name().is_some_and(|n| n.to_str().map_or(false, |s| s.starts_with('.')))
-        }) {
+        let dir = self.path().parent().unwrap();
+        if dir.file_name().is_some_and(|n| n.to_string_lossy().starts_with('.')) {
             return true;
         }
+
+        // Skip custom plugin.js
+        if dir.join("plugin.js").exists() {
+            return true;
+        }
+
         false
     }
 
@@ -165,7 +178,7 @@ pub trait TestCase {
 
         let transformed_program = allocator.alloc(ret.program);
 
-        let result = Transformer::new(&allocator, path, semantic, self.transform_options())
+        let result = Transformer::new(&allocator, path, semantic, self.transform_options().clone())
             .build(transformed_program);
 
         result.map(|()| {
@@ -180,17 +193,22 @@ pub trait TestCase {
 pub struct ConformanceTestCase {
     path: PathBuf,
     options: BabelOptions,
+    transform_options: TransformOptions,
 }
 
 impl TestCase for ConformanceTestCase {
-    fn new<P: Into<PathBuf>>(path: P) -> Self {
-        let path = path.into();
+    fn new(path: &Path) -> Self {
         let options = BabelOptions::from_path(path.parent().unwrap());
-        Self { path, options }
+        let transform_options = transform_options(&options);
+        Self { path: path.to_path_buf(), options, transform_options }
     }
 
     fn options(&self) -> &BabelOptions {
         &self.options
+    }
+
+    fn transform_options(&self) -> &TransformOptions {
+        &self.transform_options
     }
 
     fn path(&self) -> &Path {
@@ -306,6 +324,7 @@ impl TestCase for ConformanceTestCase {
 pub struct ExecTestCase {
     path: PathBuf,
     options: BabelOptions,
+    transform_options: TransformOptions,
 }
 
 impl ExecTestCase {
@@ -339,18 +358,22 @@ impl ExecTestCase {
 }
 
 impl TestCase for ExecTestCase {
+    fn new(path: &Path) -> Self {
+        let options = BabelOptions::from_path(path.parent().unwrap());
+        let transform_options = transform_options(&options);
+        Self { path: path.to_path_buf(), options, transform_options }
+    }
+
     fn options(&self) -> &BabelOptions {
         &self.options
     }
 
-    fn path(&self) -> &Path {
-        &self.path
+    fn transform_options(&self) -> &TransformOptions {
+        &self.transform_options
     }
 
-    fn new<P: Into<PathBuf>>(path: P) -> Self {
-        let path = path.into();
-        let options = BabelOptions::from_path(path.parent().unwrap());
-        Self { path, options }
+    fn path(&self) -> &Path {
+        &self.path
     }
 
     fn test(&self, filtered: bool) -> bool {
