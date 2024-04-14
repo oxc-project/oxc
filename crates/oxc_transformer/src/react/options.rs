@@ -115,6 +115,7 @@ impl ReactOptions {
 /// Auto imports the functions that JSX transpiles to.
 /// classic does not automatic import anything.
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum ReactJsxRuntime {
     Classic,
     /// The default runtime is switched to automatic in Babel 8.
