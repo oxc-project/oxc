@@ -10,7 +10,11 @@ use oxc_syntax::{
 
 use crate::context::Ctx;
 
-pub use super::options::{ReactJsxRuntime, ReactOptions};
+pub use super::{
+    jsx_self::ReactJsxSelf,
+    jsx_source::ReactJsxSource,
+    options::{ReactJsxRuntime, ReactOptions},
+};
 
 /// [plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx)
 ///
@@ -26,6 +30,9 @@ pub struct ReactJsx<'a> {
     options: Rc<ReactOptions>,
 
     ctx: Ctx<'a>,
+
+    jsx_self: ReactJsxSelf<'a>,
+    jsx_source: ReactJsxSource<'a>,
 
     // States
     imports: std::vec::Vec<Statement<'a>>,
@@ -53,6 +60,8 @@ impl<'a> ReactJsx<'a> {
         Self {
             options: Rc::clone(options),
             ctx: Rc::clone(ctx),
+            jsx_self: ReactJsxSelf::new(ctx),
+            jsx_source: ReactJsxSource::new(ctx),
             imports: vec![],
             require_jsx_runtime: false,
             jsx_runtime_importer,
@@ -372,6 +381,13 @@ impl<'a> ReactJsx<'a> {
                 };
                 properties.push(ObjectPropertyKind::ObjectProperty(object_property));
             }
+        }
+
+        if self.options.is_jsx_self_plugin_enabled() {
+            properties.push(self.jsx_self.get_object_property_kind_for_jsx_plugin());
+        }
+        if self.options.is_jsx_source_plugin_enabled() {
+            properties.push(self.jsx_source.get_object_property_kind_for_jsx_plugin());
         }
 
         self.add_import(e, has_key_after_props_spread, need_jsxs);
