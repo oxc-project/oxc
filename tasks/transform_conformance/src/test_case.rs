@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_diagnostics::Error;
+use oxc_diagnostics::{miette::miette, Error};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
@@ -72,40 +72,44 @@ impl TestCaseKind {
     }
 }
 
-fn transform_options(options: &BabelOptions) -> TransformOptions {
-    fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> T {
-        value.and_then(|v| serde_json::from_value::<T>(v).ok()).unwrap_or_default()
+fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOptions> {
+    fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> serde_json::Result<T> {
+        match value {
+            Some(v) => serde_json::from_value::<T>(v),
+            None => Ok(T::default()),
+        }
     }
 
-    let react = options.get_preset("react").map_or_else(
-        || {
-            let jsx_plugin = options.get_plugin("transform-react-jsx");
-            let has_jsx_plugin = jsx_plugin.as_ref().is_some();
-            let mut react_options = jsx_plugin.map(get_options::<ReactOptions>).unwrap_or_default();
-            react_options.jsx_plugin = has_jsx_plugin;
-            react_options.display_name_plugin =
-                options.get_plugin("transform-react-display-name").is_some();
-            react_options.jsx_self_plugin =
-                options.get_plugin("transform-react-jsx-self").is_some();
-            react_options.jsx_source_plugin =
-                options.get_plugin("transform-react-jsx-source").is_some();
-            react_options
-        },
-        get_options::<ReactOptions>,
-    );
+    let react = if let Some(options) = options.get_preset("react") {
+        get_options::<ReactOptions>(options)?
+    } else {
+        let jsx_plugin = options.get_plugin("transform-react-jsx");
+        let has_jsx_plugin = jsx_plugin.as_ref().is_some();
+        let mut react_options =
+            jsx_plugin.map(get_options::<ReactOptions>).transpose()?.unwrap_or_default();
+        react_options.jsx_plugin = has_jsx_plugin;
+        react_options.display_name_plugin =
+            options.get_plugin("transform-react-display-name").is_some();
+        react_options.jsx_self_plugin = options.get_plugin("transform-react-jsx-self").is_some();
+        react_options.jsx_source_plugin =
+            options.get_plugin("transform-react-jsx-source").is_some();
+        react_options
+    };
 
-    TransformOptions {
+    Ok(TransformOptions {
         assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
         decorators: options
             .get_plugin("proposal-decorators")
             .map(get_options::<DecoratorsOptions>)
+            .transpose()?
             .unwrap_or_default(),
         typescript: options
             .get_plugin("transform-typescript")
             .map(get_options::<TypeScriptOptions>)
+            .transpose()?
             .unwrap_or_default(),
         react,
-    }
+    })
 }
 
 pub trait TestCase {
@@ -113,7 +117,7 @@ pub trait TestCase {
 
     fn options(&self) -> &BabelOptions;
 
-    fn transform_options(&self) -> &TransformOptions;
+    fn transform_options(&self) -> &serde_json::Result<TransformOptions>;
 
     fn test(&self, filtered: bool) -> bool;
 
@@ -129,9 +133,10 @@ pub trait TestCase {
 
         // Skip deprecated react options
         if options.babel_8_breaking.is_some_and(|b| b) {
-            let react_options = &self.transform_options().react;
-            if react_options.use_built_ins.is_some() || react_options.use_spread.is_some() {
-                return true;
+            if let Ok(options) = self.transform_options() {
+                if options.react.use_built_ins.is_some() || options.react.use_spread.is_some() {
+                    return true;
+                }
             }
         }
 
@@ -163,6 +168,13 @@ pub trait TestCase {
     }
 
     fn transform(&self, path: &Path) -> Result<String, Vec<Error>> {
+        let transform_options = match self.transform_options() {
+            Ok(transform_options) => transform_options,
+            Err(json_err) => {
+                return Err(vec![miette!(format!("{json_err:?}"))]);
+            }
+        };
+
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
 
@@ -178,7 +190,7 @@ pub trait TestCase {
 
         let transformed_program = allocator.alloc(ret.program);
 
-        let result = Transformer::new(&allocator, path, semantic, self.transform_options().clone())
+        let result = Transformer::new(&allocator, path, semantic, transform_options.clone())
             .build(transformed_program);
 
         result.map(|()| {
@@ -193,7 +205,7 @@ pub trait TestCase {
 pub struct ConformanceTestCase {
     path: PathBuf,
     options: BabelOptions,
-    transform_options: TransformOptions,
+    transform_options: serde_json::Result<TransformOptions>,
 }
 
 impl TestCase for ConformanceTestCase {
@@ -207,7 +219,7 @@ impl TestCase for ConformanceTestCase {
         &self.options
     }
 
-    fn transform_options(&self) -> &TransformOptions {
+    fn transform_options(&self) -> &serde_json::Result<TransformOptions> {
         &self.transform_options
     }
 
@@ -230,8 +242,6 @@ impl TestCase for ConformanceTestCase {
             .as_ref()
             .is_some_and(|path| path.extension().and_then(std::ffi::OsStr::to_str) == Some("js"));
 
-        let transform_options = self.transform_options();
-
         let source_type = SourceType::from_path(&self.path)
             .unwrap()
             .with_script(if self.options.source_type.is_some() {
@@ -246,32 +256,45 @@ impl TestCase for ConformanceTestCase {
             println!("output_path: {output_path:?}");
         }
 
-        // Transform input.js
-        let ret = Parser::new(&allocator, &input, source_type).parse();
-        let semantic = SemanticBuilder::new(&input, source_type)
-            .with_trivias(ret.trivias)
-            .build_module_record(PathBuf::new(), &ret.program)
-            .build(&ret.program)
-            .semantic;
-        let program = allocator.alloc(ret.program);
-        let transformer =
-            Transformer::new(&allocator, &self.path, semantic, transform_options.clone());
-
         let codegen_options = CodegenOptions::default();
         let mut transformed_code = String::new();
         let mut actual_errors = String::new();
-        let result = transformer.build(program);
-        if result.is_ok() {
-            transformed_code = Codegen::<false>::new("", &input, codegen_options.clone())
-                .build(program)
-                .source_text;
-        } else {
-            actual_errors = result.err().unwrap().iter().map(ToString::to_string).collect();
-        }
+
+        let transform_options = match self.transform_options() {
+            Ok(transform_options) => {
+                let ret = Parser::new(&allocator, &input, source_type).parse();
+                let semantic = SemanticBuilder::new(&input, source_type)
+                    .with_trivias(ret.trivias)
+                    .build_module_record(PathBuf::new(), &ret.program)
+                    .build(&ret.program)
+                    .semantic;
+                let program = allocator.alloc(ret.program);
+                let transformer =
+                    Transformer::new(&allocator, &self.path, semantic, transform_options.clone());
+                let result = transformer.build(program);
+                if result.is_ok() {
+                    transformed_code = Codegen::<false>::new("", &input, codegen_options.clone())
+                        .build(program)
+                        .source_text;
+                } else {
+                    actual_errors = result.err().unwrap().iter().map(ToString::to_string).collect();
+                }
+                Some(transform_options.clone())
+            }
+            Err(json_err) => {
+                let error = format!("{json_err:?}");
+                if error.contains("expected `classic` or `automatic`") {
+                    actual_errors.push_str(r#"Runtime must be either "classic" or "automatic"."#);
+                } else {
+                    actual_errors.push_str(&error);
+                }
+                None
+            }
+        };
 
         let babel_options = self.options();
 
-        // Get output.js by using our codeg so code comparison can match.
+        // Get output.js by using our code gen so code comparison can match.
         let output = output_path.and_then(|path| fs::read_to_string(path).ok()).map_or_else(
             || {
                 if let Some(throws) = &babel_options.throws {
@@ -324,7 +347,7 @@ impl TestCase for ConformanceTestCase {
 pub struct ExecTestCase {
     path: PathBuf,
     options: BabelOptions,
-    transform_options: TransformOptions,
+    transform_options: serde_json::Result<TransformOptions>,
 }
 
 impl ExecTestCase {
@@ -368,7 +391,7 @@ impl TestCase for ExecTestCase {
         &self.options
     }
 
-    fn transform_options(&self) -> &TransformOptions {
+    fn transform_options(&self) -> &serde_json::Result<TransformOptions> {
         &self.transform_options
     }
 
