@@ -1,6 +1,6 @@
-Passed: 0/0
+Passed: 1/1
 
 # All Passed:
-
+* babel-plugin-transform-react-jsx
 
 
