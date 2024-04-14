@@ -1,4 +1,4 @@
-Passed: 191/415
+Passed: 203/415
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -141,20 +141,17 @@ Passed: 191/415
 * regression/another-preset-with-custom-jsx-keep-source-self/input.mjs
 * regression/runtime-classic-allow-multiple-source-self/input.mjs
 
-# babel-plugin-transform-react-jsx (100/163)
+# babel-plugin-transform-react-jsx (112/163)
 * autoImport/auto-import-react-source-type-module/input.js
 * autoImport/complicated-scope-module/input.js
 * autoImport/import-source-pragma/input.js
 * autoImport/react-defined/input.js
 * pure/false-pragma-comment-automatic-runtime/input.js
 * pure/false-pragma-comment-classic-runtime/input.js
-* pure/false-pragma-option-automatic-runtime/input.js
 * pure/true-pragma-comment-automatic-runtime/input.js
 * pure/true-pragma-comment-classic-runtime/input.js
-* pure/true-pragma-option-automatic-runtime/input.js
 * pure/unset-pragma-comment-automatic-runtime/input.js
 * pure/unset-pragma-comment-classic-runtime/input.js
-* pure/unset-pragma-option-automatic-runtime/input.js
 * react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
 * react/arrow-functions/input.js
 * react/assignment-babel-7/input.js
@@ -169,10 +166,6 @@ Passed: 191/415
 * react/should-allow-jsx-docs-comment-with-pragma/input.js
 * react/should-allow-no-pragmafrag-if-frag-unused/input.js
 * react/should-allow-pragmafrag-and-frag/input.js
-* react/should-disallow-spread-children/input.js
-* react/should-disallow-valueless-key/input.js
-* react/should-disallow-xml-namespacing/input.js
-* react/should-throw-error-namespaces-if-not-flag/input.js
 * react/should-warn-when-importSource-is-set/input.js
 * react/should-warn-when-importSource-pragma-is-set/input.js
 * react/wraps-props-in-react-spread-for-first-spread-attributes-babel-7/input.js
@@ -188,17 +181,12 @@ Passed: 191/415
 * react-automatic/pragma-works-with-no-space-at-the-end/input.js
 * react-automatic/should-add-quotes-es3/input.js
 * react-automatic/should-allow-nested-fragments/input.js
-* react-automatic/should-disallow-spread-children/input.js
-* react-automatic/should-disallow-valueless-key/input.js
-* react-automatic/should-disallow-xml-namespacing/input.js
 * react-automatic/should-escape-xhtml-jsxtext/input.js
 * react-automatic/should-escape-xhtml-jsxtext-babel-7/input.js
 * react-automatic/should-handle-attributed-elements/input.js
 * react-automatic/should-have-correct-comma-in-nested-children/input.js
 * react-automatic/should-properly-handle-keys/input.js
-* react-automatic/should-throw-error-namespaces-if-not-flag/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
-* react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
 * regression/issue-12478-automatic/input.js
 * regression/issue-12478-classic/input.js
 * regression/pragma-frag-set-default-classic-runtime/input.js

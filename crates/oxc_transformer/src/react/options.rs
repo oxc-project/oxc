@@ -46,6 +46,12 @@ pub struct ReactOptions {
     #[serde(default = "default_as_true")]
     pub development: bool,
 
+    /// Toggles whether or not to throw an error if a XML namespaced tag name is used.
+    ///
+    /// Though the JSX spec allows this, it is disabled by default since React's JSX does not currently have support for it.
+    #[serde(default = "default_as_true")]
+    pub throw_if_namespace: bool,
+
     /// Enables `@babel/plugin-transform-react-pure-annotations`.
     ///
     /// It will mark top-level React method calls as pure for tree shaking.
@@ -100,6 +106,7 @@ impl Default for ReactOptions {
             jsx_source_plugin: true,
             runtime: ReactJsxRuntime::default(),
             development: default_as_true(),
+            throw_if_namespace: default_as_true(),
             pure: default_as_true(),
             import_source: default_for_import_source(),
             pragma: default_for_pragma(),
