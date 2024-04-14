@@ -2,6 +2,8 @@ use std::borrow::Cow;
 
 use serde::Deserialize;
 
+use crate::Ctx;
+
 #[inline]
 fn default_as_true() -> bool {
     true
@@ -18,6 +20,29 @@ fn default_for_pragma() -> Cow<'static, str> {
 
 fn default_for_pragma_frag() -> Cow<'static, str> {
     Cow::Borrowed("React.Fragment")
+}
+
+/// Decides which runtime to use.
+///
+/// Auto imports the functions that JSX transpiles to.
+/// classic does not automatic import anything.
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ReactJsxRuntime {
+    Classic,
+    /// The default runtime is switched to automatic in Babel 8.
+    #[default]
+    Automatic,
+}
+
+impl ReactJsxRuntime {
+    pub fn is_classic(self) -> bool {
+        self == Self::Classic
+    }
+
+    pub fn is_automatic(self) -> bool {
+        self == Self::Automatic
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -125,27 +150,56 @@ impl ReactOptions {
     pub fn is_jsx_source_plugin_enabled(&self) -> bool {
         self.jsx_source_plugin && self.development
     }
-}
 
-/// Decides which runtime to use.
-///
-/// Auto imports the functions that JSX transpiles to.
-/// classic does not automatic import anything.
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum ReactJsxRuntime {
-    Classic,
-    /// The default runtime is switched to automatic in Babel 8.
-    #[default]
-    Automatic,
-}
+    /// Scan through all comments and find the following pragmas
+    ///
+    /// * @jsxRuntime classic / automatic
+    ///
+    /// The comment does not need to be a jsdoc,
+    /// otherwise `JSDoc` could be used instead.
+    ///
+    /// This behavior is aligned with babel.
+    pub(crate) fn update_with_comments(&mut self, ctx: &Ctx) {
+        let semantic = &ctx.semantic;
+        for (_, span) in semantic.trivias().comments() {
+            let mut comment = span.source_text(semantic.source_text()).trim_start();
+            // strip leading jsdoc comment `*` and then whitespaces
+            while let Some(cur_comment) = comment.strip_prefix('*') {
+                comment = cur_comment.trim_start();
+            }
+            // strip leading `@`
+            let Some(comment) = comment.strip_prefix('@') else { continue };
 
-impl ReactJsxRuntime {
-    pub fn is_classic(self) -> bool {
-        self == Self::Classic
-    }
+            // read jsxRuntime
+            match comment.strip_prefix("jsxRuntime").map(str::trim) {
+                Some("classic") => {
+                    self.runtime = ReactJsxRuntime::Classic;
+                    continue;
+                }
+                Some("automatic") => {
+                    self.runtime = ReactJsxRuntime::Automatic;
+                    continue;
+                }
+                _ => {}
+            }
 
-    pub fn is_automatic(self) -> bool {
-        self == Self::Automatic
+            // read jsxImportSource
+            if let Some(import_source) = comment.strip_prefix("jsxImportSource").map(str::trim) {
+                self.import_source = Cow::from(import_source.to_string());
+                continue;
+            }
+
+            // read jsxFrag
+            if let Some(pragma_frag) = comment.strip_prefix("jsxFrag").map(str::trim) {
+                self.pragma_frag = Cow::from(pragma_frag.to_string());
+                continue;
+            }
+
+            // Put this condition at the end to avoid breaking @jsxXX
+            // read jsx
+            if let Some(pragma) = comment.strip_prefix("jsx").map(str::trim) {
+                self.pragma = Cow::from(pragma.to_string());
+            }
+        }
     }
 }
