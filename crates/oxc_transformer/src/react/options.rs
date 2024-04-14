@@ -2,6 +2,24 @@ use std::borrow::Cow;
 
 use serde::Deserialize;
 
+#[inline]
+fn default_as_true() -> bool {
+    true
+}
+
+#[inline]
+fn default_for_import_source() -> Cow<'static, str> {
+    Cow::Borrowed("react")
+}
+
+fn default_for_pragma() -> Cow<'static, str> {
+    Cow::Borrowed("React.createElement")
+}
+
+fn default_for_pragma_frag() -> Cow<'static, str> {
+    Cow::Borrowed("React.Fragment")
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReactOptions {
@@ -68,10 +86,10 @@ pub struct ReactOptions {
 impl Default for ReactOptions {
     fn default() -> Self {
         Self {
-            jsx_plugin: false,
-            display_name_plugin: false,
-            jsx_self_plugin: false,
-            jsx_source_plugin: false,
+            jsx_plugin: true,
+            display_name_plugin: true,
+            jsx_self_plugin: true,
+            jsx_source_plugin: true,
             runtime: ReactJsxRuntime::default(),
             development: default_as_true(),
             pure: default_as_true(),
@@ -82,22 +100,14 @@ impl Default for ReactOptions {
     }
 }
 
-#[inline]
-fn default_as_true() -> bool {
-    true
-}
+impl ReactOptions {
+    pub fn is_jsx_self_plugin_enabled(&self) -> bool {
+        self.jsx_self_plugin && self.development
+    }
 
-#[inline]
-fn default_for_import_source() -> Cow<'static, str> {
-    Cow::Borrowed("react")
-}
-
-fn default_for_pragma() -> Cow<'static, str> {
-    Cow::Borrowed("React.createElement")
-}
-
-fn default_for_pragma_frag() -> Cow<'static, str> {
-    Cow::Borrowed("React.Fragment")
+    pub fn is_jsx_source_plugin_enabled(&self) -> bool {
+        self.jsx_source_plugin && self.development
+    }
 }
 
 /// Decides which runtime to use.
