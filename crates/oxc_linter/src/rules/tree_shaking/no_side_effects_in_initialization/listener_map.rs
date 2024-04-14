@@ -3,11 +3,12 @@ use std::cell::{Cell, RefCell};
 use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, AssignmentTarget,
-        BinaryExpression, BindingPattern, BindingPatternKind, CallExpression,
-        ComputedMemberExpression, Declaration, Expression, FormalParameter, Function,
+        BinaryExpression, BindingPattern, BindingPatternKind, CallExpression, Class, ClassBody,
+        ClassElement, ComputedMemberExpression, Declaration, Expression, FormalParameter, Function,
         IdentifierReference, MemberExpression, ModuleDeclaration, NewExpression,
-        ParenthesizedExpression, PrivateFieldExpression, Program, SimpleAssignmentTarget,
-        Statement, StaticMemberExpression, ThisExpression, VariableDeclarator,
+        ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey,
+        SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression,
+        VariableDeclarator,
     },
     AstKind,
 };
@@ -133,6 +134,9 @@ impl<'a> ListenerMap for AstNode<'a> {
                 function.report_effects_when_called(options);
                 options.has_valid_this.set(old_val);
             }
+            AstKind::Class(class) => {
+                class.report_effects_when_called(options);
+            }
             _ => {}
         }
     }
@@ -161,12 +165,94 @@ impl<'a> ListenerMap for AstNode<'a> {
 
 impl<'a> ListenerMap for Declaration<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
-        #[allow(clippy::single_match)]
         match self {
             Self::VariableDeclaration(decl) => {
                 decl.declarations.iter().for_each(|decl| decl.report_effects(options));
             }
+            Self::ClassDeclaration(decl) => {
+                decl.report_effects(options);
+            }
             _ => {}
+        }
+    }
+}
+
+impl<'a> ListenerMap for Class<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        if let Some(super_class) = &self.super_class {
+            super_class.report_effects(options);
+        }
+        self.body.report_effects(options);
+    }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        if let Some(super_class) = &self.super_class {
+            super_class.report_effects_when_called(options);
+        }
+        self.body.report_effects_when_called(options);
+    }
+}
+
+impl<'a> ListenerMap for ClassBody<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.body.iter().for_each(|class_element| {
+            class_element.report_effects(options);
+        });
+    }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        let constructor = self.body.iter().find(|class_element| {
+            if let ClassElement::MethodDefinition(definition) = class_element {
+                return definition.kind.is_constructor();
+            }
+            false
+        });
+
+        if let Some(constructor) = constructor {
+            constructor.report_effects_when_called(options);
+        }
+
+        self.body
+            .iter()
+            .filter(|class_element| matches!(class_element, ClassElement::PropertyDefinition(_)))
+            .for_each(|property_definition| {
+                property_definition.report_effects_when_called(options);
+            });
+    }
+}
+
+impl<'a> ListenerMap for ClassElement<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        match self {
+            Self::MethodDefinition(method) => {
+                method.key.report_effects(options);
+            }
+            Self::PropertyDefinition(prop) => {
+                prop.key.report_effects(options);
+            }
+            _ => {}
+        }
+    }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        match self {
+            Self::MethodDefinition(method) => {
+                method.value.report_effects_when_called(options);
+            }
+            Self::PropertyDefinition(prop) => {
+                if let Some(value) = &prop.value {
+                    value.report_effects_when_called(options);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+impl<'a> ListenerMap for PropertyKey<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        match self {
+            Self::Expression(expr) => {
+                expr.report_effects(options);
+            }
+            _ => no_effects(),
         }
     }
 }
@@ -230,6 +316,9 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::BinaryExpression(expr) => {
                 expr.get_value_and_report_effects(options);
             }
+            Self::ClassExpression(expr) => {
+                expr.report_effects(options);
+            }
             Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
             | Self::Identifier(_)
@@ -279,6 +368,9 @@ impl<'a> ListenerMap for Expression<'a> {
                 expr.report_effects_when_called(options);
             }
             Self::ParenthesizedExpression(expr) => {
+                expr.report_effects_when_called(options);
+            }
+            Self::ClassExpression(expr) => {
                 expr.report_effects_when_called(options);
             }
             _ => {
