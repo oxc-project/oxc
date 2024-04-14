@@ -46,7 +46,7 @@ jobs:
 
       - name: Deploy Website
         if: ${{ github.ref_name == 'main' }}
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: website/dist
