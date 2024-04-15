@@ -2,9 +2,9 @@ use proc_macro2::TokenStream as TokenStream2;
 
 use quote::{format_ident, quote};
 use syn::{
-    parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, AttrStyle, Attribute,
-    Field, Fields, GenericArgument, Generics, Ident, Item, ItemEnum, ItemStruct, Meta,
-    PathArguments, Token, Type, TypePath, Variant,
+    parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, Attribute, Field, Fields,
+    GenericArgument, Generics, Ident, Item, ItemEnum, ItemStruct, Meta, PathArguments, Token, Type,
+    TypePath, Variant,
 };
 
 pub fn ast_node(mut item: Item) -> TokenStream2 {
@@ -129,22 +129,22 @@ fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
     let ident = format_ident!("Traversable{}", item.ident);
     let generics = &item.generics;
 
-    let (outer_attrs, inner_attrs) =
-        item.attrs.iter().fold((Vec::new(), Vec::new()), |mut acc, attr| {
-            match &attr.style {
-                AttrStyle::Outer => acc.0.push(attr),
-                AttrStyle::Inner(_) => acc.1.push(attr),
-            }
-
-            acc
-        });
-    // let inner_attrs = item.attrs.into_iter().filter(|attr| matches!(attr.style, syn::AttrStyle::Inner));
+    // TODO: serialization attribute fails with `GCell`; But we may want to keep other attributes.
+    // let (outer_attrs, inner_attrs) =
+    //     item.attrs.iter().fold((Vec::new(), Vec::new()), |mut acc, attr| {
+    //         match &attr.style {
+    //             AttrStyle::Outer => acc.0.push(attr),
+    //             AttrStyle::Inner(_) => acc.1.push(attr),
+    //         }
+    //
+    //         acc
+    //     });
     let fields = transform_struct_fields(&item.fields);
 
     let output = quote! {
-        #(#outer_attrs)*
+        // #(#outer_attrs)*
         pub struct #ident #generics {
-            #(#inner_attrs)*
+            // #(#inner_attrs)*
             #fields
         }
 
@@ -154,7 +154,7 @@ fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
 }
 
 fn transform_struct_fields(fields: &Fields) -> Punctuated<Field, Token![,]> {
-    let Fields::Named(fields) = &fields else {
+    let Fields::Named(fields) = fields else {
         panic!("`ast_node` attribute only works with named structure fields");
     };
     fields.named.iter().map(ToOwned::to_owned).map(transform_struct_field).collect()
@@ -165,23 +165,37 @@ fn transform_struct_field(mut field: Field) -> Field {
         unreachable!("Should have been asserted at this point.");
     };
 
-    let ty_path_first = ty.path.segments.first().expect("already asserted");
-    let ty = match &ty_path_first.arguments {
-        // as the rule of thumb; if a type has lifetimes we should transform it to a traversable type.
-        PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. })
-            if args.iter().any(|arg| matches!(arg, GenericArgument::Lifetime(_))) =>
-        {
-            transform_type(ty)
-        }
-        _ => ty,
-    };
+    let ty = transform_generic_type(ty);
 
     field.ty = Type::Path(ty);
+    field.attrs.clear();
 
     field
 }
 
-fn transform_type(ty: TypePath) -> TypePath {
+fn transform_generic_type(ty: TypePath) -> TypePath {
+    let first_seg = ty.path.segments.first().expect("already asserted");
+    let ident = &first_seg.ident;
+    let args = &first_seg.arguments;
+
+    if ident == "Vec" {
+        return parse_quote!(crate::traverse::SharedVec #args);
+    } else if ident == "Box" {
+        return parse_quote!(crate::traverse::SharedBox #args);
+    }
+
+    let ty = match &first_seg.arguments {
+        // as the rule of thumb; if a type has lifetimes we should transform it to a traversable type.
+        PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. })
+            if args.iter().any(|arg| matches!(arg, GenericArgument::Lifetime(_))) =>
+        {
+            println!("EWE");
+            ty
+            // transform_generic_type(ty)
+        }
+        _ => ty,
+    };
+
     ty
 }
 
