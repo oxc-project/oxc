@@ -1,10 +1,10 @@
-Passed: 221/408
+Passed: 94/228
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-typescript (4/23)
+# babel-preset-typescript (4/22)
 * flow-compat/js-invalid/input.js
 * flow-compat/js-valid/input.js
 * flow-compat/ts-invalid/input.ts
@@ -13,7 +13,6 @@ Passed: 221/408
 * flow-compat/tsx-valid/input.tsx
 * jsx-compat/js-valid/input.js
 * jsx-compat/ts-invalid/input.ts
-* jsx-compat/ts-invalid-babel-7/input.ts
 * jsx-compat/tsx-valid/input.tsx
 * node-extensions/import-in-cts/input.cts
 * node-extensions/type-assertion-in-cts/input.cts
@@ -25,25 +24,21 @@ Passed: 221/408
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (68/164)
+# babel-plugin-transform-typescript (49/147)
+* class/abstract-allowDeclareFields-false/input.ts
+* class/abstract-allowDeclareFields-true/input.ts
 * class/abstract-class-decorated/input.ts
 * class/abstract-class-decorated-method/input.ts
 * class/abstract-class-decorated-parameter/input.ts
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
-* class/accessor-allowDeclareFields-true-babel-7/input.ts
-* class/declare-not-enabled-babel-7/input.ts
 * class/decorated-declare-properties/input.ts
-* class/field-not-initialized-babel-7/input.ts
 * class/parameter-properties/input.ts
 * class/parameter-properties-late-super/input.ts
-* class/parameter-properties-with-class/input.ts
-* class/parameter-properties-with-class-and-super/input.ts
 * class/parameter-properties-with-parameters/input.ts
 * class/parameter-properties-with-super/input.ts
 * class/private-method-override-transform-private/input.ts
 * class/transform-properties-declare-wrong-order/input.ts
-* class/uninitialized-definite-with-declare-disabled-babel-7/input.ts
 * declarations/erased/input.ts
 * declarations/export-declare-enum/input.ts
 * declarations/nested-namespace/input.mjs
@@ -73,16 +68,20 @@ Passed: 221/408
 * imports/elision-rename/input.ts
 * imports/enum-id/input.ts
 * imports/enum-value/input.ts
+* imports/import-named-type/input.ts
+* imports/import-named-type-default-and-named/input.ts
 * imports/import-removed-exceptions/input.ts
 * imports/import-type/input.ts
 * imports/import-type-func-with-duplicate-name/input.ts
 * imports/import-type-not-removed/input.ts
 * imports/import=-module/input.ts
+* imports/only-remove-type-imports/input.ts
 * imports/property-signature/input.ts
 * imports/type-only-export-specifier-1/input.ts
 * imports/type-only-export-specifier-2/input.ts
 * imports/type-only-import-specifier-2/input.ts
 * imports/type-only-import-specifier-3/input.ts
+* imports/type-only-import-specifier-4/input.ts
 * namespace/alias/input.ts
 * namespace/ambient-module-nested/input.ts
 * namespace/ambient-module-nested-exported/input.ts
@@ -99,6 +98,7 @@ Passed: 221/408
 * namespace/export-type-only/input.ts
 * namespace/module-nested/input.ts
 * namespace/module-nested-export/input.ts
+* namespace/multiple/input.ts
 * namespace/mutable-fail/input.ts
 * namespace/namespace-flag/input.ts
 * namespace/namespace-nested-module/input.ts
@@ -108,6 +108,7 @@ Passed: 221/408
 * namespace/nested-shorthand/input.ts
 * namespace/nested-shorthand-export/input.ts
 * namespace/same-name/input.ts
+* namespace/undeclared/input.ts
 * optimize-const-enums/custom-values/input.ts
 * optimize-const-enums/custom-values-exported/input.ts
 * optimize-const-enums/declare/input.ts
@@ -123,13 +124,12 @@ Passed: 221/408
 * regression/15768/input.ts
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-preset-react (2/14)
+# babel-preset-react (2/13)
 * preset-options/development/input.js
 * preset-options/development-runtime-automatic/input.js
 * preset-options/development-runtime-automatic-windows/input.js
 * preset-options/development-windows/input.js
 * preset-options/empty-options/input.js
-* preset-options/empty-options-babel-7/input.js
 * preset-options/runtime-automatic/input.js
 * preset-options/runtime-classic/input.js
 * preset-options/runtime-classic-pragma-no-frag/input.js
@@ -137,71 +137,18 @@ Passed: 221/408
 * regression/another-preset-with-custom-jsx-keep-source-self/input.mjs
 * regression/runtime-classic-allow-multiple-source-self/input.mjs
 
-# babel-plugin-transform-react-jsx (130/161)
+# babel-plugin-transform-react-jsx (34/37)
 * autoImport/auto-import-react-source-type-module/input.js
 * autoImport/complicated-scope-module/input.js
 * autoImport/react-defined/input.js
-* react/adds-appropriate-newlines-when-using-spread-attribute-babel-7/input.js
-* react/arrow-functions/input.js
-* react/assignment-babel-7/input.js
-* react/avoids-spread-babel-7/input.js
-* react/does-not-add-source-self-babel-7/input.mjs
-* react/handle-spread-with-proto-babel-7/input.js
-* react/optimisation.react.constant-elements/input.js
-* react/should-add-quotes-es3/input.js
-* react/wraps-props-in-react-spread-for-first-spread-attributes-babel-7/input.js
-* react/wraps-props-in-react-spread-for-last-spread-attributes-babel-7/input.js
-* react/wraps-props-in-react-spread-for-middle-spread-attributes-babel-7/input.js
-* react-automatic/arrow-functions/input.js
-* react-automatic/concatenates-adjacent-string-literals/input.js
-* react-automatic/does-not-add-source-self-automatic/input.mjs
-* react-automatic/handle-fragments/input.js
-* react-automatic/handle-fragments-with-no-children/input.js
-* react-automatic/handle-static-children/input.js
-* react-automatic/optimisation.react.constant-elements/input.js
-* react-automatic/should-add-quotes-es3/input.js
-* react-automatic/should-allow-nested-fragments/input.js
-* react-automatic/should-escape-xhtml-jsxtext/input.js
-* react-automatic/should-escape-xhtml-jsxtext-babel-7/input.js
-* react-automatic/should-handle-attributed-elements/input.js
-* react-automatic/should-have-correct-comma-in-nested-children/input.js
-* react-automatic/should-properly-handle-keys/input.js
-* react-automatic/should-throw-when-filter-is-specified/input.js
-* runtime/defaults-to-classis-babel-7/input.js
-* runtime/invalid-runtime/input.js
 
-# babel-plugin-transform-react-display-name (15/16)
+# babel-plugin-transform-react-display-name (3/4)
 * display-name/nested/input.js
 
-# babel-plugin-transform-react-jsx-self (1/3)
-* react-source/arrow-function/input.js
+# babel-plugin-transform-react-jsx-self (1/2)
 * react-source/disable-with-super/input.js
 
-# babel-plugin-transform-react-jsx-development (0/26)
+# babel-plugin-transform-react-jsx-development (0/2)
 * cross-platform/disallow-__self-as-jsx-attribute/input.js
 * cross-platform/disallow-__source-as-jsx-attribute/input.js
-* linux/auto-import-dev/input.js
-* linux/classic-runtime/input.js
-* linux/classic-runtime-babel-7/input.js
-* linux/fragments/input.js
-* linux/handle-fragments-with-key/input.js
-* linux/handle-nonstatic-children/input.js
-* linux/handle-static-children/input.js
-* linux/self-inside-arrow/input.mjs
-* linux/source-and-self-defined/input.js
-* linux/within-derived-classes-constructor/input.js
-* linux/within-ts-module-block/input.ts
-* linux/within-ts-module-block-babel-7/input.ts
-* windows/auto-import-dev-windows/input.js
-* windows/classic-runtime-windows/input.js
-* windows/classic-runtime-windows-babel-7/input.js
-* windows/fragments-windows/input.js
-* windows/handle-fragments-with-key-windows/input.js
-* windows/handle-nonstatic-children-windows/input.js
-* windows/handle-static-children-windows/input.js
-* windows/self-inside-arrow-windows/input.mjs
-* windows/source-and-self-defined-windows/input.js
-* windows/within-derived-classes-constructor-windows/input.js
-* windows/within-ts-module-block/input.ts
-* windows/within-ts-module-block-babel-7/input.ts
 
