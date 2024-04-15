@@ -4,6 +4,6 @@
   "devDependencies": {
     "axios": "^1.6.8",
     "express": "^4.18.3",
-    "tar": "^7.0.0"
+    "tar": "^6.2.0"
   }
 }
