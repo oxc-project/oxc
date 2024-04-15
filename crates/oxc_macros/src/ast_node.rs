@@ -1,9 +1,10 @@
 use proc_macro2::TokenStream as TokenStream2;
 
-use quote::{format_ident, quote};
+use quote::{format_ident, quote, ToTokens};
 use syn::{
-    parse_quote, punctuated::Punctuated, AttrStyle, Attribute, Field, Fields, Generics, Ident,
-    Item, ItemEnum, ItemStruct, Meta, Token, Variant,
+    parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, AttrStyle, Attribute,
+    Field, Fields, GenericArgument, Generics, Ident, Item, ItemEnum, ItemStruct, Meta,
+    PathArguments, Token, Type, Variant,
 };
 
 pub fn ast_node(mut item: Item) -> TokenStream2 {
@@ -36,6 +37,7 @@ pub fn ast_node(mut item: Item) -> TokenStream2 {
 
 fn modify_struct(item: &mut ItemStruct) -> NodeData {
     item.attrs.iter().for_each(validate_struct_attribute);
+    item.fields.iter().for_each(validate_field);
     // add the correct representation
     item.attrs.push(parse_quote!(#[repr(C)]));
     NodeData {
@@ -52,7 +54,7 @@ fn modify_enum(item: &mut ItemEnum) -> NodeData {
         item.variants.len() < 256,
         "`ast_node` enums are limited to the maximum of 256 variants."
     );
-    item.variants.iter().for_each(validate_enum_variant);
+    item.variants.iter().for_each(validate_variant);
 
     // add the correct representation
     item.attrs.push(parse_quote!(#[repr(C, u8)]));
@@ -101,7 +103,14 @@ fn validate_attribute(attr: &Attribute) {
     );
 }
 
-fn validate_enum_variant(var: &Variant) {
+fn validate_field(field: &Field) {
+    assert!(
+        matches!(&field.ty, Type::Path(ty) if ty.path.segments.len() == 1),
+        "Currently `ast_node` attribute only supports single segment type paths."
+    )
+}
+
+fn validate_variant(var: &Variant) {
     assert_ne!(
         var.ident, "Dummy",
         r#"Found a variant called `Dummy`,\
@@ -152,7 +161,25 @@ fn transform_struct_fields(fields: &Fields) -> Punctuated<Field, Token![,]> {
 }
 
 fn transform_struct_field(field: &Field) -> Field {
-    let field = field.clone();
+    let mut field = field.clone();
+
+    let Type::Path(ty) = field.ty else {
+        unreachable!("Should have been asserted at this point.");
+    };
+
+    let ty_path_first = ty.path.segments.first().expect("already asserted");
+    let ty = match &ty_path_first.arguments {
+        PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. })
+            if args.iter().any(|arg| matches!(arg, GenericArgument::Lifetime(_))) =>
+        {
+            // as the rule of thumb; if a type has lifetimes we should transform it to a traversable type.
+            println!("Transform type here");
+            ty
+        }
+        _ => ty,
+    };
+
+    field.ty = Type::Path(ty);
 
     field
 }
