@@ -1,4 +1,4 @@
-Passed: 94/228
+Passed: 94/219
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -24,21 +24,14 @@ Passed: 94/228
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (49/147)
+# babel-plugin-transform-typescript (49/138)
 * class/abstract-allowDeclareFields-false/input.ts
 * class/abstract-allowDeclareFields-true/input.ts
-* class/abstract-class-decorated/input.ts
-* class/abstract-class-decorated-method/input.ts
-* class/abstract-class-decorated-parameter/input.ts
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
-* class/decorated-declare-properties/input.ts
 * class/parameter-properties/input.ts
 * class/parameter-properties-late-super/input.ts
-* class/parameter-properties-with-parameters/input.ts
 * class/parameter-properties-with-super/input.ts
-* class/private-method-override-transform-private/input.ts
-* class/transform-properties-declare-wrong-order/input.ts
 * declarations/erased/input.ts
 * declarations/export-declare-enum/input.ts
 * declarations/nested-namespace/input.mjs
@@ -120,9 +113,7 @@ Passed: 94/228
 * optimize-const-enums/local-shadowed/input.ts
 * optimize-const-enums/merged/input.ts
 * optimize-const-enums/merged-exported/input.ts
-* regression/10338/input.ts
 * regression/15768/input.ts
-* variable-declaration/non-null-in-optional-chain/input.ts
 
 # babel-preset-react (2/13)
 * preset-options/development/input.js

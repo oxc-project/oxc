@@ -45,6 +45,8 @@ fn fixture_root() -> PathBuf {
 }
 
 const PLUGINS: &[&str] = &[
+    // syntax
+    "babel-plugin-syntax-jsx",
     // // ES2024
     // "babel-plugin-transform-unicode-sets-regex",
     // // ES2022
@@ -101,15 +103,6 @@ const PLUGINS: &[&str] = &[
     "babel-plugin-transform-react-jsx-development",
     // // Proposal
     // "babel-plugin-proposal-decorators",
-];
-
-pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
-    "transform-classes",
-    "transform-modules-commonjs",
-    "transform-object-rest-spread",
-    "transform-react-constant-elements",
-    "transform-property-literals",
-    "transform-arrow-functions",
 ];
 
 const EXCLUDE_TESTS: &[&str] = &["babel-plugin-transform-typescript/test/fixtures/enum"];

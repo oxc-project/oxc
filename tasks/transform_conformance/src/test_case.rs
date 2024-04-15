@@ -17,7 +17,7 @@ use oxc_transformer::{
     DecoratorsOptions, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
 };
 
-use crate::{fixture_root, root, TestRunnerEnv, PLUGINS_NOT_SUPPORTED_YET};
+use crate::{fixture_root, root, TestRunnerEnv, PLUGINS};
 
 #[derive(Debug)]
 pub enum TestCaseKind {
@@ -127,7 +127,17 @@ pub trait TestCase {
         let options = self.options();
 
         // Skip plugins we don't support yet
-        if PLUGINS_NOT_SUPPORTED_YET.iter().any(|plugin| options.get_plugin(plugin).is_some()) {
+        if options.plugins.iter().any(|value| {
+            if let Some(plugin_name) = match value {
+                Value::String(name) => Some(name.to_string()),
+                Value::Array(a) => a.first().and_then(Value::as_str).map(ToString::to_string),
+                _ => None,
+            } {
+                !PLUGINS.contains(&format!("babel-plugin-{plugin_name}").as_str())
+            } else {
+                false
+            }
+        }) {
             return true;
         }
 
