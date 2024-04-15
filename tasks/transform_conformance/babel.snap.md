@@ -1,4 +1,4 @@
-Passed: 94/228
+Passed: 93/227
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -137,7 +137,7 @@ Passed: 94/228
 * regression/another-preset-with-custom-jsx-keep-source-self/input.mjs
 * regression/runtime-classic-allow-multiple-source-self/input.mjs
 
-# babel-plugin-transform-react-jsx (34/37)
+# babel-plugin-transform-react-jsx (33/36)
 * autoImport/auto-import-react-source-type-module/input.js
 * autoImport/complicated-scope-module/input.js
 * autoImport/react-defined/input.js
