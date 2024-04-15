@@ -148,7 +148,7 @@ fn transform_struct_fields(fields: &Fields) -> Punctuated<Field, Token![,]> {
     let Fields::Named(fields) = &fields else {
         panic!("`ast_node` attribute only works with named structure fields");
     };
-    fields.named.iter().map(transform_struct_field).into_iter().collect()
+    fields.named.iter().map(transform_struct_field).collect()
 }
 
 fn transform_struct_field(field: &Field) -> Field {
