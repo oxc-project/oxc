@@ -15,6 +15,8 @@
 
 use std::cell::UnsafeCell;
 
+use oxc_allocator::Allocator;
+
 /// Access token for traversing AST.
 #[repr(transparent)]
 pub struct Token(());
@@ -53,9 +55,7 @@ pub struct GCell<T: ?Sized> {
 #[allow(dead_code)]
 impl<T> GCell<T> {
     pub const fn new(value: T) -> Self {
-        GCell {
-            value: UnsafeCell::new(value),
-        }
+        GCell { value: UnsafeCell::new(value) }
     }
 
     pub fn into_inner(self) -> T {
@@ -154,3 +154,16 @@ pub type SharedBox<'a, T> = &'a GCell<T>;
 /// Type alias for a shared Vec
 pub type SharedVec<'a, T> = oxc_allocator::Vec<'a, GCell<T>>;
 
+/// Trait to sugar `GCell::from_mut(allocator.alloc(t))` to `allocator.galloc(t)`.
+trait GCellAlloc {
+    #[allow(clippy::mut_from_ref)]
+    fn galloc<T>(&self, value: T) -> &mut GCell<T>;
+}
+
+impl GCellAlloc for Allocator {
+    /// Allocate `T` into arena and return a `&mut GCell` to it
+    #[inline]
+    fn galloc<T>(&self, value: T) -> &mut GCell<T> {
+        GCell::from_mut(self.alloc(value))
+    }
+}
