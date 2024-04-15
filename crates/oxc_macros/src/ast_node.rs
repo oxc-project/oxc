@@ -31,11 +31,24 @@ fn modify_struct(item: &mut ItemStruct) -> NodeData {
 
 fn modify_enum(item: &mut ItemEnum) -> NodeData {
     item.attrs.iter().for_each(validate_enum_attribute);
+
+    assert!(
+        item.variants.len() < 256,
+        "`ast_node` enums are limited to the maximum of 256 variants."
+    );
     item.variants.iter().for_each(validate_enum_variant);
+
     // add the correct representation
     item.attrs.push(parse_quote!(#[repr(C, u8)]));
+
     // add the dummy variant
     item.variants.insert(0, parse_quote!(Dummy));
+    // add explicit discriminants to all variants
+    item.variants
+        .iter_mut()
+        .enumerate()
+        .for_each(|(i, var)| var.discriminant = Some((parse_quote!(=), parse_quote!(#i as u8))));
+
     NodeData { ident: &item.ident, generics: &item.generics }
 }
 
@@ -81,7 +94,7 @@ fn validate_enum_variant(var: &Variant) {
     );
     assert!(
         var.discriminant.is_none(),
-        "using explicit enum discriminants is not allowed with `ast_node` attribute."
+        "Using explicit enum discriminants is not allowed with `ast_node` attribute."
     )
 }
 
