@@ -1,19 +1,16 @@
+use miette::{miette, LabeledSpan};
 use oxc_diagnostics::{
-    miette::{self, Diagnostic},
+    miette::{self, Diagnostic, Severity},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use rustc_hash::FxHashSet;
+use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 enum CheckPropertyNamesDiagnostic {
-    #[error("eslint-plugin-jsdoc(check-property-names): Duplicate @property found.")]
-    #[diagnostic(severity(warning), help("@property `{1}` is duplicated on the same block."))]
-    Duplicated(#[label] Span, String),
-
     #[error("eslint-plugin-jsdoc(check-property-names): No root defined for @property path.")]
     #[diagnostic(
         severity(warning),
@@ -67,7 +64,7 @@ impl Rule for CheckPropertyNames {
         let resolved_property_tag_name = settings.resolve_tag_name("property");
 
         for jsdoc in ctx.semantic().jsdoc().iter_all() {
-            let mut seen = FxHashSet::default();
+            let mut seen = FxHashMap::default();
             for tag in jsdoc.tags() {
                 if tag.kind.parsed() != resolved_property_tag_name {
                     continue;
@@ -80,13 +77,22 @@ impl Rule for CheckPropertyNames {
                 let type_name = name_part.parsed();
 
                 // Check duplicated
-                if seen.contains(&type_name) {
-                    ctx.diagnostic(CheckPropertyNamesDiagnostic::Duplicated(
-                        name_part.span,
-                        type_name.to_string(),
+                if let Some(duplicated_span) = seen.get(&type_name) {
+                    ctx.diagnostic(miette!(
+                        severity = Severity::Warning,
+                        labels = [duplicated_span, &name_part.span]
+                            .iter()
+                            .map(|span| LabeledSpan::at(
+                                (span.start as usize)..(span.end as usize),
+                                "Duplicated property".to_string(),
+                            ))
+                            .collect::<Vec<_>>(),
+                        help = format!("@property `{type_name}` is duplicated on the same block."),
+                        "eslint-plugin-jsdoc(check-property-names): Duplicate @property found."
                     ));
                 }
 
+                // Check property path has a root
                 if type_name.contains('.') {
                     let mut parts = type_name.split('.').collect::<Vec<_>>();
                     // `foo[].bar` -> `foo[]`
@@ -95,8 +101,7 @@ impl Rule for CheckPropertyNames {
                     // `foo[]` -> `foo`
                     let parent_name = parent_name.trim_end_matches("[]");
 
-                    // Check property has a root
-                    if !seen.contains(&parent_name) {
+                    if !seen.contains_key(&parent_name) {
                         ctx.diagnostic(CheckPropertyNamesDiagnostic::NoRoot(
                             name_part.span,
                             type_name.to_string(),
@@ -104,7 +109,7 @@ impl Rule for CheckPropertyNames {
                     }
                 }
 
-                seen.insert(type_name);
+                seen.insert(type_name, name_part.span);
             }
         }
     }
