@@ -70,12 +70,14 @@ impl<T: ?Sized> GCell<T> {
     #[inline]
     #[allow(unsafe_code)]
     pub fn borrow<'a>(&'a self, tk: &'a Token) -> &'a T {
+        // SAFETY: At any time there is only a single token for each AST.
         unsafe { &*self.value.get() }
     }
 
     #[inline]
     #[allow(unsafe_code)]
     pub fn borrow_mut<'a>(&'a self, tk: &'a mut Token) -> &'a mut T {
+        // SAFETY: At any time there is only a single token for each AST.
         unsafe { &mut *self.value.get() }
     }
 
@@ -87,12 +89,16 @@ impl<T: ?Sized> GCell<T> {
     #[inline]
     #[allow(unsafe_code)]
     pub fn get_mut(&mut self) -> &mut T {
+        // SAFETY: We have an exclusive mutable access to the cell.
         unsafe { &mut *self.value.get() }
     }
 
     #[inline]
     #[allow(unsafe_code)]
     pub fn from_mut(t: &mut T) -> &mut Self {
+        // TODO: @overlookmotel make sure this safety documentation is correct.
+        // SAFETY: A `GCell` always have the same alignment as its inner value,
+        // It is only a compile-time abstraction, So we can safely transmute between them.
         unsafe { &mut *(t as *mut T as *mut Self) }
     }
 }
@@ -102,6 +108,10 @@ impl<T> GCell<[T]> {
     #[inline]
     #[allow(unsafe_code)]
     pub fn as_slice_of_cells(&self) -> &[GCell<T>] {
+        // TODO: @overlookmotel make sure this safety documentation is correct.
+        // SAFETY: A `GCell` always have the same alignment as its inner value,
+        // It is only a compile-time abstraction, So we can safely transmute between them.
+        // There is no difference between slice of `GCell`s and `GCell` of slice.
         unsafe { &*(self as *const GCell<[T]> as *const [GCell<T>]) }
     }
 }
@@ -150,11 +160,12 @@ impl<T> From<T> for GCell<T> {
     }
 }
 
-// SAFETY: `GhostCell` is `Send` + `Sync`, so `GCell` can be too
 #[allow(unsafe_code)]
+// SAFETY: `GhostCell` is `Send` + `Sync`, so `GCell` can be too
 unsafe impl<T: ?Sized + Send> Send for GCell<T> {}
-// SAFETY: `GhostCell` is `Send` + `Sync`, so `GCell` can be too
+
 #[allow(unsafe_code)]
+// SAFETY: `GhostCell` is `Send` + `Sync`, so `GCell` can be too
 unsafe impl<T: ?Sized + Send + Sync> Sync for GCell<T> {}
 
 /// Type alias for a shared ref to a `GCell`.
