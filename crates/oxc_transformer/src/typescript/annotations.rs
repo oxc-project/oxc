@@ -5,7 +5,6 @@ use std::rc::Rc;
 use crate::context::Ctx;
 use crate::TypeScriptOptions;
 
-use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
@@ -127,51 +126,6 @@ impl<'a> TypeScriptAnnotations<'a> {
         }
     }
 
-    pub fn transform_arrow_expression(&mut self, expr: &mut ArrowFunctionExpression<'a>) {
-        expr.type_parameters = None;
-        expr.return_type = None;
-    }
-
-    pub fn transform_binding_pattern(&mut self, pat: &mut BindingPattern<'a>) {
-        pat.type_annotation = None;
-
-        if pat.kind.is_binding_identifier() {
-            pat.optional = false;
-        }
-    }
-
-    pub fn transform_call_expression(&mut self, expr: &mut CallExpression<'a>) {
-        expr.type_parameters = None;
-    }
-
-    pub fn transform_class(&mut self, class: &mut Class<'a>) {
-        class.type_parameters = None;
-        class.super_type_parameters = None;
-        class.implements = None;
-        class.modifiers.remove_type_modifiers();
-    }
-
-    pub fn transform_class_body(&mut self, body: &mut ClassBody<'a>) {
-        // Remove type only members
-        body.body.retain(|elem| match elem {
-            ClassElement::MethodDefinition(method) => {
-                matches!(method.r#type, MethodDefinitionType::MethodDefinition)
-                    || !method.value.is_typescript_syntax()
-            }
-            ClassElement::PropertyDefinition(prop) => {
-                if prop.value.as_ref().is_some_and(Expression::is_typescript_syntax)
-                    || prop.declare && prop.decorators.is_empty()
-                {
-                    false
-                } else {
-                    matches!(prop.r#type, PropertyDefinitionType::PropertyDefinition)
-                }
-            }
-            ClassElement::TSIndexSignature(_) => false,
-            _ => true,
-        });
-    }
-
     pub fn transform_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
         // Remove type only specifiers
         decl.specifiers.retain(|spec| !spec.export_kind.is_type());
@@ -181,40 +135,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         *expr = self.ctx.ast.copy(expr.get_inner_expression());
     }
 
-    pub fn transform_formal_parameter(&mut self, param: &mut FormalParameter<'a>) {
-        param.accessibility = None;
-    }
-
-    pub fn transform_function(
-        &mut self,
-        func: &mut Function<'a>,
-        _flags: Option<oxc_semantic::ScopeFlags>,
-    ) {
-        func.this_param = None;
-        func.type_parameters = None;
-        func.return_type = None;
-        func.modifiers.remove_type_modifiers();
-    }
-
-    pub fn transform_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
-        // Remove type only specifiers
-        if let Some(specifiers) = &mut decl.specifiers {
-            specifiers.retain(|spec| match spec {
-                ImportDeclarationSpecifier::ImportSpecifier(inner) => !inner.import_kind.is_type(),
-                _ => true,
-            });
-        }
-    }
-
-    pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
-        elem.type_parameters = None;
-    }
-
     pub fn transform_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
-        def.accessibility = None;
-        def.optional = false;
-        def.r#override = false;
-
         // Collects parameter properties so that we can add an assignment
         // for each of them in the constructor body.
         if def.kind == MethodDefinitionKind::Constructor {
@@ -242,46 +163,5 @@ impl<'a> TypeScriptAnnotations<'a> {
                     .extend(assigns);
             }
         }
-    }
-
-    pub fn transform_new_expression(&mut self, expr: &mut NewExpression<'a>) {
-        expr.type_parameters = None;
-    }
-
-    pub fn transform_property_definition(&mut self, def: &mut PropertyDefinition<'a>) {
-        assert!(
-            !(def.declare && def.value.is_some()),
-            "Fields with the 'declare' modifier cannot be initialized here, but only in the constructor"
-        );
-
-        assert!(
-            !(def.definite && def.value.is_some()),
-            "Definitely assigned fields cannot be initialized here, but only in the constructor"
-        );
-
-        def.accessibility = None;
-        def.declare = false;
-        def.definite = false;
-        def.r#override = false;
-        def.optional = false;
-        def.readonly = false;
-        def.type_annotation = None;
-    }
-
-    pub fn transform_statements_on_exit(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
-        // Remove TS specific statements
-        stmts.retain(|stmt| match stmt {
-            Statement::ExpressionStatement(s) => !s.expression.is_typescript_syntax(),
-            Statement::Declaration(s) => !s.is_typescript_syntax(),
-            // Ignore ModuleDeclaration as it's handled in the program
-            _ => true,
-        });
-    }
-
-    pub fn transform_tagged_template_expression(
-        &mut self,
-        expr: &mut TaggedTemplateExpression<'a>,
-    ) {
-        expr.type_parameters = None;
     }
 }

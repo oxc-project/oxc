@@ -43,7 +43,6 @@ Passed: 93/227
 * declarations/export-declare-enum/input.ts
 * declarations/nested-namespace/input.mjs
 * exports/declare-namespace/input.ts
-* exports/declare-shadowed/input.ts
 * exports/declared-types/input.ts
 * exports/export-const-enums/input.ts
 * exports/export-type/input.ts
@@ -79,6 +78,7 @@ Passed: 93/227
 * imports/property-signature/input.ts
 * imports/type-only-export-specifier-1/input.ts
 * imports/type-only-export-specifier-2/input.ts
+* imports/type-only-import-specifier-1/input.ts
 * imports/type-only-import-specifier-2/input.ts
 * imports/type-only-import-specifier-3/input.ts
 * imports/type-only-import-specifier-4/input.ts
