@@ -1500,6 +1500,7 @@ pub mod walk_mut {
             Expression::TSInstantiationExpression(expr) => {
                 visitor.visit_ts_instantiation_expression(expr);
             }
+            Expression::Dummy => { /* ignore */ }
         }
     }
 

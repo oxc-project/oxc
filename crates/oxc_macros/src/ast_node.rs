@@ -3,7 +3,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{
     parse_quote, punctuated::Punctuated, Attribute, Generics, Ident, Item, ItemEnum, ItemStruct,
-    Meta, Token,
+    Meta, Token, Variant,
 };
 
 pub fn ast_node(mut item: Item) -> TokenStream2 {
@@ -24,54 +24,61 @@ pub fn ast_node(mut item: Item) -> TokenStream2 {
 }
 
 fn modify_struct(item: &mut ItemStruct) -> NodeData {
-    validate_struct_attributes(&item.attrs);
+    item.attrs.iter().for_each(validate_struct_attribute);
+    // add the correct representation
     item.attrs.push(parse_quote!(#[repr(C)]));
     NodeData { ident: &item.ident, generics: &item.generics }
 }
 
 fn modify_enum(item: &mut ItemEnum) -> NodeData {
-    validate_enum_attributes(&item.attrs);
+    item.attrs.iter().for_each(validate_enum_attribute);
+    item.variants.iter().for_each(validate_enum_variant);
+    // add the correct representation
     item.attrs.push(parse_quote!(#[repr(C, u8)]));
+    // add the dummy variant
+    item.variants.insert(0, parse_quote!(Dummy));
     NodeData { ident: &item.ident, generics: &item.generics }
 }
 
-fn validate_struct_attributes<I>(attrs: &I)
-where
-    for<'a> &'a I: IntoIterator<Item = &'a Attribute>,
-{
+// validators
+
+fn validate_struct_attribute(attr: &Attribute) {
     // make sure that no structure derives Clone/Copy traits.
     // TODO: It will fail if there is a manual Clone/Copy traits implemented for the struct.
     // Negative traits (!Copy and !Clone) are nightly so I'm not sure how we can fully enforce it.
     assert!(
-        !attrs.into_iter().any(|attr| {
+        !{
             let args = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated);
             attr.path().is_ident("derive")
                 && args.is_ok_and(|args| {
                     args.iter()
                         .any(|arg| arg.path().is_ident("Clone") || arg.path().is_ident("Copy"))
                 })
-        }),
+        },
         "`ast_node` can't have Clone or Copy traits"
     );
 
-    validate_attributes(attrs);
+    validate_attribute(attr);
 }
 
-fn validate_enum_attributes<I>(attrs: &I)
-where
-    for<'a> &'a I: IntoIterator<Item = &'a Attribute>,
-{
+fn validate_enum_attribute(attr: &Attribute) {
     // TODO: Later on we may want to enforce deriving clone and copy traits for all enum types
-    validate_attributes(attrs);
+    validate_attribute(attr);
 }
 
-fn validate_attributes<I>(attrs: &I)
-where
-    for<'a> &'a I: IntoIterator<Item = &'a Attribute>,
-{
+fn validate_attribute(attr: &Attribute) {
     assert!(
-        !attrs.into_iter().any(|attr| attr.path().is_ident("repr")),
+        !attr.path().is_ident("repr"),
         "using `repr` attribute is not allowed with `ast_node`."
+    );
+}
+
+fn validate_enum_variant(var: &Variant) {
+    assert_ne!(
+        var.ident, "Dummy",
+        r#"Found a variant called `Dummy`,\
+           Please use another name,\
+           This variant identifier is reserved by `ast_node` attribute."#
     );
 }
 

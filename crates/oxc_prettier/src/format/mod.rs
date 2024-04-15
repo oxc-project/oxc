@@ -1280,6 +1280,7 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::TSTypeAssertion(expr) => expr.expression.format(p),
             Self::TSNonNullExpression(expr) => expr.expression.format(p),
             Self::TSInstantiationExpression(expr) => expr.expression.format(p),
+            Self::Dummy => unreachable!("Dummy should never reach the Format."),
         }
     }
 }

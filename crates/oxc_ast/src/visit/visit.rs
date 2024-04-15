@@ -1472,6 +1472,7 @@ pub mod walk {
             Expression::TSInstantiationExpression(expr) => {
                 visitor.visit_ts_instantiation_expression(expr);
             }
+            Expression::Dummy => { /* ignore */ }
         }
     }
 
