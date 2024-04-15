@@ -120,7 +120,7 @@ fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
     let ident = format_ident!("Traversable{}", item.ident);
     let generics = &item.generics;
 
-    let (outter_attrs, inner_attrs) =
+    let (outer_attrs, inner_attrs) =
         item.attrs.iter().fold((Vec::new(), Vec::new()), |mut acc, attr| {
             match &attr.style {
                 AttrStyle::Outer => acc.0.push(attr),
@@ -133,7 +133,7 @@ fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
     let fields = transform_struct_fields(&item.fields);
 
     let output = quote! {
-        #(#outter_attrs)*
+        #(#outer_attrs)*
         pub struct #ident #generics {
             #(#inner_attrs)*
             #fields
