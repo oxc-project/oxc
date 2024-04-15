@@ -107,7 +107,7 @@ fn validate_field(field: &Field) {
     assert!(
         matches!(&field.ty, Type::Path(ty) if ty.path.segments.len() == 1),
         "Currently `ast_node` attribute only supports single segment type paths."
-    )
+    );
 }
 
 fn validate_variant(var: &Variant) {
@@ -120,7 +120,7 @@ fn validate_variant(var: &Variant) {
     assert!(
         var.discriminant.is_none(),
         "Using explicit enum discriminants is not allowed with `ast_node` attribute."
-    )
+    );
 }
 
 // generators
@@ -184,14 +184,13 @@ fn transform_generic_type(ty: TypePath) -> TypePath {
         return parse_quote!(crate::traverse::SharedBox #args);
     }
 
-    let ty = match &first_seg.arguments {
+    let ty = match args {
         // as the rule of thumb; if a type has lifetimes we should transform it to a traversable type.
         PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. })
             if args.iter().any(|arg| matches!(arg, GenericArgument::Lifetime(_))) =>
         {
             println!("EWE");
             ty
-            // transform_generic_type(ty)
         }
         _ => ty,
     };
