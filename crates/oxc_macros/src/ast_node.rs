@@ -129,7 +129,7 @@ fn validate_variant(var: &Variant) {
 
     assert!(
         matches!(var.fields, Fields::Unnamed(_) | Fields::Unit),
-        "Currently, `ast_node` attribute only supports unamed and unit enum variants."
+        "Currently, `ast_node` attribute only supports unnamed and unit enum variants."
     );
 }
 

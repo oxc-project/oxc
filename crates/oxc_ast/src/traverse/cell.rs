@@ -3,8 +3,8 @@
 //!
 //! Based on `GhostCell`.
 //! All method implementations copied verbatim from original version by paper's authors
-//! https://gitlab.mpi-sws.org/FP/ghostcell/-/blob/master/ghostcell/src/lib.rs
-//! and `ghost_cell` crate https://docs.rs/ghost-cell .
+//! <https://gitlab.mpi-sws.org/FP/ghostcell/-/blob/master/ghostcell/src/lib.rs>
+//! and `ghost_cell` crate `<https://docs.rs/ghost-cell>`.
 //!
 //! Only difference is that instead of using a lifetime to constrain the life of access tokens,
 //! here we provide only an unsafe method `Token::new_unchecked` and the user must maintain
