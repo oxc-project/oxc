@@ -13,9 +13,7 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
-use oxc_transformer::{
-    DecoratorsOptions, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
-};
+use oxc_transformer::{ReactOptions, TransformOptions, Transformer, TypeScriptOptions};
 
 use crate::{fixture_root, root, TestRunnerEnv, PLUGINS_NOT_SUPPORTED_YET};
 
@@ -98,11 +96,6 @@ fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOpti
 
     Ok(TransformOptions {
         assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
-        decorators: options
-            .get_plugin("proposal-decorators")
-            .map(get_options::<DecoratorsOptions>)
-            .transpose()?
-            .unwrap_or_default(),
         typescript: options
             .get_plugin("transform-typescript")
             .map(get_options::<TypeScriptOptions>)
