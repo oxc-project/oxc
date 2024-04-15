@@ -67,7 +67,11 @@ fn modify_enum(item: &mut ItemEnum) -> NodeData {
         .enumerate()
         .for_each(|(i, var)| var.discriminant = Some((parse_quote!(=), parse_quote!(#i as u8))));
 
-    NodeData { ident: &item.ident, generics: &item.generics, traversable: quote!() }
+    NodeData {
+        ident: &item.ident,
+        generics: &item.generics,
+        traversable: generate_traversable_enum(item),
+    }
 }
 
 // validators
@@ -117,9 +121,15 @@ fn validate_variant(var: &Variant) {
            Please use another name,\
            This variant identifier is reserved by `ast_node` attribute."#
     );
+
     assert!(
         var.discriminant.is_none(),
         "Using explicit enum discriminants is not allowed with `ast_node` attribute."
+    );
+
+    assert!(
+        matches!(var.fields, Fields::Unnamed(_) | Fields::Unit),
+        "Currently, `ast_node` attribute only supports unamed and unit enum variants."
     );
 }
 
@@ -129,7 +139,8 @@ fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
     let ident = format_ident!("Traversable{}", item.ident);
     let generics = &item.generics;
 
-    // TODO: serialization attribute fails with `GCell`; But we may want to keep other attributes.
+    // TODO: traits like serialization, Debug and Hash fail with `GCell`;
+    // But we may want to keep other attributes.
     // let (outer_attrs, inner_attrs) =
     //     item.attrs.iter().fold((Vec::new(), Vec::new()), |mut acc, attr| {
     //         match &attr.style {
@@ -139,9 +150,11 @@ fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
     //
     //         acc
     //     });
-    let fields = transform_struct_fields(&item.fields);
+
+    let fields = transform_fields(&item.fields);
 
     let output = quote! {
+        #[repr(C)] // TODO: we can replace it with outer_attrs if we fix the issues with it.
         // #(#outer_attrs)*
         pub struct #ident #generics {
             // #(#inner_attrs)*
@@ -153,24 +166,72 @@ fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
     output
 }
 
-fn transform_struct_fields(fields: &Fields) -> Punctuated<Field, Token![,]> {
+fn generate_traversable_enum(item: &ItemEnum) -> TokenStream2 {
+    let ident = format_ident!("Traversable{}", item.ident);
+    let generics = &item.generics;
+
+    // TODO: traits like serialization, Debug and Hash fail with `GCell`;
+    // But we may want to keep other attributes.
+
+    let variants = transform_variants(&item.variants);
+
+    let output = quote! {
+        #[repr(C, u8)]
+        pub enum #ident #generics {
+            #variants
+        }
+
+    };
+
+    output
+}
+
+// transformers
+
+fn transform_fields(fields: &Fields) -> Punctuated<Field, Token![,]> {
     let Fields::Named(fields) = fields else {
         panic!("`ast_node` attribute only works with named structure fields");
     };
-    fields.named.iter().map(ToOwned::to_owned).map(transform_struct_field).collect()
+    fields.named.iter().map(ToOwned::to_owned).map(transform_field).collect()
 }
 
-fn transform_struct_field(mut field: Field) -> Field {
-    let Type::Path(ty) = field.ty else {
+fn transform_field(mut field: Field) -> Field {
+    field.ty = transform_type(field.ty);
+    field.attrs.clear();
+
+    field
+}
+
+fn transform_variants(variants: &Punctuated<Variant, Token![,]>) -> Punctuated<Variant, Token![,]> {
+    variants.into_iter().map(ToOwned::to_owned).map(transform_variant).collect()
+}
+
+fn transform_variant(mut variant: Variant) -> Variant {
+    let Fields::Unnamed(mut fields) = variant.fields else {
+        return variant;
+    };
+
+    fields.unnamed = fields
+        .unnamed
+        .into_iter()
+        .map(|mut field| {
+            field.ty = transform_type(field.ty);
+            field
+        })
+        .collect();
+
+    variant.fields = Fields::Unnamed(fields);
+    variant
+}
+
+fn transform_type(ty: Type) -> Type {
+    let Type::Path(ty) = ty else {
         unreachable!("Should have been asserted at this point.");
     };
 
     let ty = transform_generic_type(ty);
 
-    field.ty = Type::Path(ty);
-    field.attrs.clear();
-
-    field
+    Type::Path(ty)
 }
 
 fn transform_generic_type(ty: TypePath) -> TypePath {

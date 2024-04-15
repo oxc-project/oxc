@@ -5,7 +5,6 @@ mod orphan;
 #[allow(unused_imports)] // just for now
 pub use orphan::Orphan;
 
-#[allow(unused_imports)] // just for now
 pub use cell::{SharedBox, SharedVec};
 
 /// This trait is only for checking that we didn't forgot to add `ast_node` attribute to any
