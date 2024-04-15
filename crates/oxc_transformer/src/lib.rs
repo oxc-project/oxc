@@ -12,7 +12,6 @@ mod compiler_assumptions;
 mod context;
 mod options;
 // Presets: <https://babel.dev/docs/presets>
-mod decorators;
 mod react;
 mod typescript;
 
@@ -27,13 +26,12 @@ use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 
 pub use crate::{
-    compiler_assumptions::CompilerAssumptions, decorators::DecoratorsOptions,
-    options::TransformOptions, react::ReactOptions, typescript::TypeScriptOptions,
+    compiler_assumptions::CompilerAssumptions, options::TransformOptions, react::ReactOptions,
+    typescript::TypeScriptOptions,
 };
 
 use crate::{
     context::{Ctx, TransformCtx},
-    decorators::Decorators,
     react::React,
     typescript::TypeScript,
 };
@@ -43,7 +41,6 @@ pub struct Transformer<'a> {
     // NOTE: all callbacks must run in order.
     x0_typescript: TypeScript<'a>,
     x1_react: React<'a>,
-    x2_decorators: Decorators<'a>,
 }
 
 impl<'a> Transformer<'a> {
@@ -58,7 +55,6 @@ impl<'a> Transformer<'a> {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, &ctx),
             x1_react: React::new(options.react, &ctx),
-            x2_decorators: Decorators::new(options.decorators, &ctx),
         }
     }
 
@@ -189,12 +185,6 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         walk_mut::walk_statements_mut(self, stmts);
 
         self.x0_typescript.transform_statements_on_exit(stmts);
-    }
-
-    fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
-        self.x2_decorators.transform_statement(stmt);
-
-        walk_mut::walk_statement_mut(self, stmt);
     }
 
     fn visit_tagged_template_expression(&mut self, expr: &mut TaggedTemplateExpression<'a>) {
