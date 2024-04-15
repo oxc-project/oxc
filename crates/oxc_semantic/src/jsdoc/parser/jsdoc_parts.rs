@@ -124,7 +124,7 @@ impl<'a> JSDocTagTypePart<'a> {
     /// Returns the type content without `{` and `}`.
     pub fn parsed(&self) -> &'a str {
         // +1 for `{`, -1 for `}`
-        &self.raw[1..self.raw.len() - 1]
+        self.raw[1..self.raw.len() - 1].trim()
     }
 }
 
@@ -141,7 +141,13 @@ impl<'a> JSDocTagTypeNamePart<'a> {
     }
 
     /// Returns the type name itself.
+    /// `.raw` may be like `[foo = var]`, so extract the name
     pub fn parsed(&self) -> &'a str {
+        if self.raw.starts_with('[') {
+            let inner = self.raw.trim_start_matches('[').trim_end_matches(']').trim();
+            return inner.split_once('=').map_or(inner, |(v, _)| v.trim());
+        }
+
         self.raw
     }
 }
@@ -269,8 +275,8 @@ mod test {
             ("{}", ""),
             ("{-}", "-"),
             ("{string}", "string"),
-            ("{ string}", " string"),
-            ("{ bool  }", " bool  "),
+            ("{ string}", "string"),
+            ("{ bool  }", "bool"),
             ("{{x:1}}", "{x:1}"),
             ("{[1,2,3]}", "[1,2,3]"),
         ] {
@@ -282,7 +288,15 @@ mod test {
 
     #[test]
     fn type_name_part_parsed() {
-        for (actual, expect) in [("foo", "foo"), ("Bar", "Bar"), ("変数", "変数")] {
+        for (actual, expect) in [
+            ("foo", "foo"),
+            ("Bar", "Bar"),
+            ("変数", "変数"),
+            ("[opt]", "opt"),
+            ("[ opt2 ]", "opt2"),
+            ("[def1 = [ 1 ]]", "def1"),
+            (r#"[def2 = "foo bar"]"#, "def2"),
+        ] {
             // `Span` is not used in this test
             let type_name_part = JSDocTagTypeNamePart::new(actual, SPAN);
             assert_eq!(type_name_part.parsed(), expect);

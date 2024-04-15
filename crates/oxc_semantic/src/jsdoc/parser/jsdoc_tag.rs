@@ -146,7 +146,7 @@ impl<'a> JSDocTag<'a> {
                 None => (None, self.body_raw, self.body_span.start),
             };
 
-        let (name_part, comment_part) = match utils::find_token_range(name_comment_content) {
+        let (name_part, comment_part) = match utils::find_type_name_range(name_comment_content) {
             Some((n_start, n_end)) => {
                 // Include whitespace for comment trimming
                 let c_start = n_end;
@@ -327,7 +327,7 @@ mod test {
             {t2} */",
                 Some(("t2", "{t2}")),
             ),
-            ("/** @k3 { t3  } */", Some((" t3  ", "{ t3  }"))),
+            ("/** @k3 { t3  } */", Some(("t3", "{ t3  }"))),
             ("/** @k4 x{t4}y */", Some(("t4", "{t4}"))),
             ("/** @k5 {t5}} */", Some(("t5", "{t5}"))),
             ("/** @k6  */", None),
@@ -403,10 +403,10 @@ c5 */",
                 ("c4\n...", " c4\n..."),
             ),
             (
-                "/** @k5 {t5} n5 - c5 */",
+                "/** @k5  {t5}  n5  - c5 */",
                 Some(("t5", "{t5}")),
                 Some(("n5", "n5")),
-                ("- c5", " - c5 "),
+                ("- c5", "  - c5 "),
             ),
             (
                 "/** @k6
@@ -430,7 +430,27 @@ c7 */",
                 ("c7", "\n\nc7 "),
             ),
             ("/** @k8 {t8} */", Some(("t8", "{t8}")), None, ("", "")),
-            ("/** @k8 n8 */", None, Some(("n8", "n8")), ("", " ")),
+            ("/** @k9 n9 */", None, Some(("n9", "n9")), ("", " ")),
+            ("/** @property n[].n10 */", None, Some(("n[].n10", "n[].n10")), ("", " ")),
+            ("/** @property n.n11 */", None, Some(("n.n11", "n.n11")), ("", " ")),
+            (
+                r#"/** @property [cfg.n12="default value"] */"#,
+                None,
+                Some(("cfg.n12", r#"[cfg.n12="default value"]"#)),
+                ("", " "),
+            ),
+            (
+                "/** @property {t13} [n = 13] c13 */",
+                Some(("t13", "{t13}")),
+                Some(("n", "[n = 13]")),
+                ("c13", " c13 "),
+            ),
+            (
+                "/** @param {t14} [n14] - opt */",
+                Some(("t14", "{t14}")),
+                Some(("n14", "[n14]")),
+                ("- opt", " - opt "),
+            ),
         ] {
             let allocator = Allocator::default();
             let semantic = build_semantic(&allocator, source_text);
