@@ -1,4 +1,5 @@
 mod annotations;
+mod collector;
 mod namespace;
 
 use std::rc::Rc;
@@ -10,11 +11,15 @@ use oxc_ast::ast::*;
 
 use crate::context::Ctx;
 
-use self::annotations::TypeScriptAnnotations;
+use self::{annotations::TypeScriptAnnotations, collector::TypeScriptReferenceCollector};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TypeScriptOptions;
+pub struct TypeScriptOptions {
+    /// When set to true, the transform will only remove type-only imports (introduced in TypeScript 3.8).
+    /// This should only be used if you are using TypeScript >= 3.8.
+    only_remove_type_imports: bool,
+}
 
 /// [Preset TypeScript](https://babeljs.io/docs/babel-preset-typescript)
 ///
@@ -43,6 +48,7 @@ pub struct TypeScript<'a> {
     ctx: Ctx<'a>,
 
     annotations: TypeScriptAnnotations<'a>,
+    reference_collector: TypeScriptReferenceCollector<'a>,
 }
 
 impl<'a> TypeScript<'a> {
@@ -51,6 +57,7 @@ impl<'a> TypeScript<'a> {
 
         Self {
             annotations: TypeScriptAnnotations::new(&options, ctx),
+            reference_collector: TypeScriptReferenceCollector::new(),
             options,
             ctx: Rc::clone(ctx),
         }
@@ -60,7 +67,7 @@ impl<'a> TypeScript<'a> {
 // Transforms
 impl<'a> TypeScript<'a> {
     pub fn transform_program_on_exit(&self, program: &mut Program<'a>) {
-        self.annotations.transform_program_on_exit(program);
+        self.annotations.transform_program_on_exit(program, &self.reference_collector);
     }
 
     pub fn transform_arrow_expression(&mut self, expr: &mut ArrowFunctionExpression<'a>) {
@@ -84,7 +91,7 @@ impl<'a> TypeScript<'a> {
     }
 
     pub fn transform_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
-        self.annotations.transform_export_named_declaration(decl);
+        self.reference_collector.visit_transform_export_named_declaration(decl);
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
@@ -101,10 +108,6 @@ impl<'a> TypeScript<'a> {
         flags: Option<oxc_semantic::ScopeFlags>,
     ) {
         self.annotations.transform_function(func, flags);
-    }
-
-    pub fn transform_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
-        self.annotations.transform_import_declaration(decl);
     }
 
     pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
@@ -136,5 +139,13 @@ impl<'a> TypeScript<'a> {
         expr: &mut TaggedTemplateExpression<'a>,
     ) {
         self.annotations.transform_tagged_template_expression(expr);
+    }
+
+    pub fn transform_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
+        self.reference_collector.visit_identifier_reference(ident);
+    }
+
+    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>) {
+        self.annotations.transform_statement(stmt);
     }
 }
