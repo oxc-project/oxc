@@ -35,8 +35,9 @@ fn modify_enum(item: &mut ItemEnum) -> NodeData {
 }
 
 fn validate_struct_attributes<'a>(mut attrs: slice::Iter<'a, Attribute>) {
-    // make sure that no structure derives Clone/Copy trait.
-    // TODO: It might fail if there is a manual Clone/Copy trait implemented for the struct.
+    // make sure that no structure derives Clone/Copy traits.
+    // TODO: It will fail if there is a manual Clone/Copy traits implemented for the struct.
+    // Negative traits (!Copy and !Clone) are nightly so I'm not sure how we can fully enforce it.
     assert!(!attrs.any(|attr| {
         let args = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated);
         attr.path().is_ident("derive")
