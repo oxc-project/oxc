@@ -1,10 +1,10 @@
 use proc_macro2::TokenStream as TokenStream2;
 
-use quote::{format_ident, quote, ToTokens};
+use quote::{format_ident, quote};
 use syn::{
     parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, AttrStyle, Attribute,
     Field, Fields, GenericArgument, Generics, Ident, Item, ItemEnum, ItemStruct, Meta,
-    PathArguments, Token, Type, Variant,
+    PathArguments, Token, Type, TypePath, Variant,
 };
 
 pub fn ast_node(mut item: Item) -> TokenStream2 {
@@ -157,24 +157,21 @@ fn transform_struct_fields(fields: &Fields) -> Punctuated<Field, Token![,]> {
     let Fields::Named(fields) = &fields else {
         panic!("`ast_node` attribute only works with named structure fields");
     };
-    fields.named.iter().map(transform_struct_field).collect()
+    fields.named.iter().map(ToOwned::to_owned).map(transform_struct_field).collect()
 }
 
-fn transform_struct_field(field: &Field) -> Field {
-    let mut field = field.clone();
-
+fn transform_struct_field(mut field: Field) -> Field {
     let Type::Path(ty) = field.ty else {
         unreachable!("Should have been asserted at this point.");
     };
 
     let ty_path_first = ty.path.segments.first().expect("already asserted");
     let ty = match &ty_path_first.arguments {
+        // as the rule of thumb; if a type has lifetimes we should transform it to a traversable type.
         PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. })
             if args.iter().any(|arg| matches!(arg, GenericArgument::Lifetime(_))) =>
         {
-            // as the rule of thumb; if a type has lifetimes we should transform it to a traversable type.
-            println!("Transform type here");
-            ty
+            transform_type(ty)
         }
         _ => ty,
     };
@@ -182,6 +179,10 @@ fn transform_struct_field(field: &Field) -> Field {
     field.ty = Type::Path(ty);
 
     field
+}
+
+fn transform_type(ty: TypePath) -> TypePath {
+    ty
 }
 
 fn impl_traversable_test_trait(node: &NodeData) -> TokenStream2 {
