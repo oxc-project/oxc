@@ -15,7 +15,6 @@ pub fn ast_node(mut item: Item) -> TokenStream2 {
 
     let traversable_test_trait = impl_traversable_test_trait(&result);
 
-    // let ident = item;
     quote! {
         #item
 
@@ -80,6 +79,10 @@ fn validate_enum_variant(var: &Variant) {
            Please use another name,\
            This variant identifier is reserved by `ast_node` attribute."#
     );
+    assert!(
+        var.discriminant.is_none(),
+        "using explicit enum discriminants is not allowed with `ast_node` attribute."
+    )
 }
 
 fn impl_traversable_test_trait(node: &NodeData) -> TokenStream2 {

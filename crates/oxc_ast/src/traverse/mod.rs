@@ -2,6 +2,7 @@ mod ast;
 mod cell;
 mod orphan;
 
+#[allow(unused_imports)] // just for now
 pub use orphan::Orphan;
 
 /// This trait is only for checking that we didn't forgot to add `ast_node` attribute to any

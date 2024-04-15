@@ -1,3 +1,4 @@
+#![allow(dead_code)] // just for now
 use std::ops::Deref;
 
 /// Wrapper for AST nodes which have been disconnected from the AST.
@@ -14,6 +15,7 @@ impl<T> Orphan<T> {
     /// Wrap node to indicate it's disconnected from AST.
     /// SAFETY: Caller must ensure that `node` is not attached to the AST.
     #[inline]
+    #[allow(unsafe_code)]
     pub unsafe fn new(node: T) -> Self {
         Self(node)
     }

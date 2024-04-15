@@ -1,3 +1,4 @@
+#![allow(dead_code)] // just for now
 //! Cell type and token for traversing AST.
 //!
 //! Based on `GhostCell`.
@@ -41,6 +42,7 @@ impl Token {
     /// # SAFETY
     /// Caller must ensure only a single token is used with any AST at one time.
     #[inline]
+    #[allow(unsafe_code)]
     pub unsafe fn new_unchecked() -> Self {
         Self(())
     }
@@ -66,11 +68,13 @@ impl<T> GCell<T> {
 #[allow(dead_code, unused_variables)]
 impl<T: ?Sized> GCell<T> {
     #[inline]
+    #[allow(unsafe_code)]
     pub fn borrow<'a>(&'a self, tk: &'a Token) -> &'a T {
         unsafe { &*self.value.get() }
     }
 
     #[inline]
+    #[allow(unsafe_code)]
     pub fn borrow_mut<'a>(&'a self, tk: &'a mut Token) -> &'a mut T {
         unsafe { &mut *self.value.get() }
     }
@@ -81,11 +85,13 @@ impl<T: ?Sized> GCell<T> {
     }
 
     #[inline]
+    #[allow(unsafe_code)]
     pub fn get_mut(&mut self) -> &mut T {
         unsafe { &mut *self.value.get() }
     }
 
     #[inline]
+    #[allow(unsafe_code)]
     pub fn from_mut(t: &mut T) -> &mut Self {
         unsafe { &mut *(t as *mut T as *mut Self) }
     }
@@ -94,6 +100,7 @@ impl<T: ?Sized> GCell<T> {
 #[allow(dead_code)]
 impl<T> GCell<[T]> {
     #[inline]
+    #[allow(unsafe_code)]
     pub fn as_slice_of_cells(&self) -> &[GCell<T>] {
         unsafe { &*(self as *const GCell<[T]> as *const [GCell<T>]) }
     }
@@ -144,7 +151,10 @@ impl<T> From<T> for GCell<T> {
 }
 
 // SAFETY: `GhostCell` is `Send` + `Sync`, so `GCell` can be too
+#[allow(unsafe_code)]
 unsafe impl<T: ?Sized + Send> Send for GCell<T> {}
+// SAFETY: `GhostCell` is `Send` + `Sync`, so `GCell` can be too
+#[allow(unsafe_code)]
 unsafe impl<T: ?Sized + Send + Sync> Sync for GCell<T> {}
 
 /// Type alias for a shared ref to a `GCell`.

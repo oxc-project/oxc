@@ -1,3 +1,4 @@
+#![allow(dead_code)] // just for now
 use oxc_allocator::Allocator;
 
 /// AST builder for creating AST nodes for traversable AST
