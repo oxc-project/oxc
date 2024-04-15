@@ -4,6 +4,7 @@
 use std::{cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, Vec};
+use oxc_macros::ast_node;
 use oxc_span::{Atom, CompactStr, SourceType, Span};
 use oxc_syntax::{
     operator::{
@@ -36,6 +37,7 @@ export interface FormalParameterRest extends Span {
 }
 "#;
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -61,6 +63,7 @@ impl<'a> Program<'a> {
 }
 
 /// Expression
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
