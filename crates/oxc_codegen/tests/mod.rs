@@ -162,4 +162,9 @@ fn typescript() {
     test_ts("let x: string['length'] = 123;", "let x: string['length'] = 123;\n", false);
 
     test_ts("function isString(value: unknown): asserts value is string {\n\tif (typeof value !== 'string') {\n\t\tthrow new Error('Not a string');\n\t}\n}", "function isString(value: unknown): asserts value is string {\n\tif (typeof value !== 'string') {\n\t\tthrow new Error('Not a string');\n\t}\n}\n", false);
+
+    // type-only imports/exports
+    test_ts("import type { Foo } from 'foo';", "import type {Foo} from 'foo';\n", false);
+    test_ts("import { Foo, type Bar } from 'foo';", "import {Foo,type Bar} from 'foo';\n", false);
+    test_ts("export { Foo, type Bar } from 'foo';", "export { Foo, type Bar } from 'foo';", false);
 }
