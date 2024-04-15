@@ -1,9 +1,9 @@
 use proc_macro2::TokenStream as TokenStream2;
 
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::{
-    parse_quote, punctuated::Punctuated, Attribute, Generics, Ident, Item, ItemEnum, ItemStruct,
-    Meta, Token, Variant,
+    parse_quote, punctuated::Punctuated, AttrStyle, Attribute, Field, Fields, Generics, Ident,
+    Item, ItemEnum, ItemStruct, Meta, Token, Variant,
 };
 
 pub fn ast_node(mut item: Item) -> TokenStream2 {
@@ -15,10 +15,22 @@ pub fn ast_node(mut item: Item) -> TokenStream2 {
 
     let traversable_test_trait = impl_traversable_test_trait(&result);
 
+    let ident = result.ident;
+
+    let traversable_mod = format_ident!("traversable_{}", ident.to_string().to_lowercase());
+
+    let traversable = result.traversable;
+
     quote! {
         #item
 
         #traversable_test_trait
+
+        mod #traversable_mod {
+            use super::*;
+
+            #traversable
+        }
     }
 }
 
@@ -26,7 +38,11 @@ fn modify_struct(item: &mut ItemStruct) -> NodeData {
     item.attrs.iter().for_each(validate_struct_attribute);
     // add the correct representation
     item.attrs.push(parse_quote!(#[repr(C)]));
-    NodeData { ident: &item.ident, generics: &item.generics }
+    NodeData {
+        ident: &item.ident,
+        generics: &item.generics,
+        traversable: generate_traversable_struct(item),
+    }
 }
 
 fn modify_enum(item: &mut ItemEnum) -> NodeData {
@@ -49,7 +65,7 @@ fn modify_enum(item: &mut ItemEnum) -> NodeData {
         .enumerate()
         .for_each(|(i, var)| var.discriminant = Some((parse_quote!(=), parse_quote!(#i as u8))));
 
-    NodeData { ident: &item.ident, generics: &item.generics }
+    NodeData { ident: &item.ident, generics: &item.generics, traversable: quote!() }
 }
 
 // validators
@@ -63,7 +79,7 @@ fn validate_struct_attribute(attr: &Attribute) {
             let args = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated);
             attr.path().is_ident("derive")
                 && args.is_ok_and(|args| {
-                    args.iter()
+                    args.iter() // To be honest the Copy trait check here is redundant.
                         .any(|arg| arg.path().is_ident("Clone") || arg.path().is_ident("Copy"))
                 })
         },
@@ -98,6 +114,49 @@ fn validate_enum_variant(var: &Variant) {
     )
 }
 
+// generators
+
+fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
+    let ident = format_ident!("Traversable{}", item.ident);
+    let generics = &item.generics;
+
+    let (outter_attrs, inner_attrs) =
+        item.attrs.iter().fold((Vec::new(), Vec::new()), |mut acc, attr| {
+            match &attr.style {
+                AttrStyle::Outer => acc.0.push(attr),
+                AttrStyle::Inner(_) => acc.1.push(attr),
+            }
+
+            acc
+        });
+    // let inner_attrs = item.attrs.into_iter().filter(|attr| matches!(attr.style, syn::AttrStyle::Inner));
+    let fields = transform_struct_fields(&item.fields);
+
+    let output = quote! {
+        #(#outter_attrs)*
+        pub struct #ident #generics {
+            #(#inner_attrs)*
+            #fields
+        }
+
+    };
+
+    output
+}
+
+fn transform_struct_fields(fields: &Fields) -> Punctuated<Field, Token![,]> {
+    let Fields::Named(fields) = &fields else {
+        panic!("`ast_node` attribute only works with named structure fields");
+    };
+    fields.named.iter().map(transform_struct_field).into_iter().collect()
+}
+
+fn transform_struct_field(field: &Field) -> Field {
+    let field = field.clone();
+
+    field
+}
+
 fn impl_traversable_test_trait(node: &NodeData) -> TokenStream2 {
     let ident = node.ident;
     let generics = node.generics;
@@ -109,4 +168,5 @@ fn impl_traversable_test_trait(node: &NodeData) -> TokenStream2 {
 struct NodeData<'a> {
     ident: &'a Ident,
     generics: &'a Generics,
+    traversable: TokenStream2,
 }
