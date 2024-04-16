@@ -185,8 +185,10 @@ fn is_full_line_comment(
     let mut is_first_token_on_first_line = false;
 
     if span.start >= line_span.start && comment_start_line == line_index {
-        is_first_token_on_first_line =
-            line_text[..(span.start - line_span.start) as usize].trim().is_empty();
+        let diff = (span.start - line_span.start) as usize;
+        if line_text.len() >= diff {
+            is_first_token_on_first_line = line_text[..diff].trim().is_empty();
+        }
     }
 
     if (is_first_token_on_first_line || comment_start_line < line_index)
