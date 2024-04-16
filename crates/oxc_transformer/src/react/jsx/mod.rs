@@ -10,7 +10,7 @@ use oxc_syntax::{
     xml_entities::XML_ENTITIES,
 };
 
-use crate::context::Ctx;
+use crate::{context::Ctx, helpers::module_imports::NamedImport};
 
 pub use super::{
     jsx_self::ReactJsxSelf,
@@ -42,7 +42,6 @@ pub struct ReactJsx<'a> {
     jsx_source: ReactJsxSource<'a>,
 
     // States
-    imports: std::vec::Vec<Statement<'a>>,
     require_jsx_runtime: bool,
     jsx_runtime_importer: CompactStr,
     default_runtime: ReactJsxRuntime,
@@ -69,7 +68,6 @@ impl<'a> ReactJsx<'a> {
             ctx: Rc::clone(ctx),
             jsx_self: ReactJsxSelf::new(ctx),
             jsx_source: ReactJsxSource::new(ctx),
-            imports: vec![],
             require_jsx_runtime: false,
             jsx_runtime_importer,
             import_jsx: false,
@@ -118,7 +116,7 @@ impl<'a> ReactJsx<'a> {
             return;
         }
 
-        let imports = self.ctx.ast.new_vec_from_iter(self.imports.drain(..));
+        let imports = self.ctx.module_imports.get_import_statements();
         let index = program
             .body
             .iter()
@@ -154,13 +152,12 @@ impl<'a> ReactJsx<'a> {
     fn add_require_jsx_runtime(&mut self) {
         if !self.require_jsx_runtime {
             self.require_jsx_runtime = true;
-            let source = self.ast().string_literal(SPAN, self.jsx_runtime_importer.as_str());
-            self.add_require_statement("_reactJsxRuntime", source, false);
+            self.add_require_statement(
+                "_reactJsxRuntime",
+                self.jsx_runtime_importer.clone(),
+                false,
+            );
         }
-    }
-
-    fn get_jsx_runtime_source(&self) -> StringLiteral<'a> {
-        self.ast().string_literal(SPAN, self.jsx_runtime_importer.as_str())
     }
 
     fn add_import_jsx(&mut self) {
@@ -168,7 +165,7 @@ impl<'a> ReactJsx<'a> {
             self.add_require_jsx_runtime();
         } else if !self.import_jsx {
             self.import_jsx = true;
-            self.add_import_statement("jsx", "_jsx", self.get_jsx_runtime_source());
+            self.add_import_statement("jsx", "_jsx", self.jsx_runtime_importer.clone());
         }
     }
 
@@ -177,7 +174,7 @@ impl<'a> ReactJsx<'a> {
             self.add_require_jsx_runtime();
         } else if !self.import_jsxs {
             self.import_jsxs = true;
-            self.add_import_statement("jsxs", "_jsxs", self.get_jsx_runtime_source());
+            self.add_import_statement("jsxs", "_jsxs", self.jsx_runtime_importer.clone());
         }
     }
 
@@ -186,7 +183,7 @@ impl<'a> ReactJsx<'a> {
             self.add_require_jsx_runtime();
         } else if !self.import_fragment {
             self.import_fragment = true;
-            self.add_import_statement("Fragment", "_Fragment", self.get_jsx_runtime_source());
+            self.add_import_statement("Fragment", "_Fragment", self.jsx_runtime_importer.clone());
             self.add_import_jsx();
         }
     }
@@ -194,65 +191,23 @@ impl<'a> ReactJsx<'a> {
     fn add_import_create_element(&mut self) {
         if !self.import_create_element {
             self.import_create_element = true;
-            let source = self.ast().string_literal(SPAN, self.options.import_source.as_ref());
+            let source = self.options.import_source.as_ref();
             if self.is_script() {
-                self.add_require_statement("_react", source, true);
+                self.add_require_statement("_react", source.into(), true);
             } else {
-                self.add_import_statement("createElement", "_createElement", source);
+                self.add_import_statement("createElement", "_createElement", source.into());
             }
         }
     }
 
-    fn add_import_statement(&mut self, imported: &str, local: &str, source: StringLiteral<'a>) {
-        let mut specifiers = self.ast().new_vec_with_capacity(1);
-        let imported =
-            ModuleExportName::Identifier(IdentifierName::new(SPAN, self.ast().new_atom(imported)));
-        specifiers.push(ImportDeclarationSpecifier::ImportSpecifier(ImportSpecifier {
-            span: SPAN,
-            imported,
-            local: BindingIdentifier::new(SPAN, self.ast().new_atom(local)),
-            import_kind: ImportOrExportKind::Value,
-        }));
-        let value = ImportOrExportKind::Value;
-        let import_stmt =
-            self.ast().import_declaration(SPAN, Some(specifiers), source, None, value);
-        let decl = self.ast().module_declaration(ModuleDeclaration::ImportDeclaration(import_stmt));
-        self.imports.push(decl);
+    fn add_import_statement(&mut self, imported: &str, local: &str, source: CompactStr) {
+        let import = NamedImport::new(imported.into(), Some(local.into()));
+        self.ctx.module_imports.add_import(source, import);
     }
 
-    /// `var variable_name = require(source);`
-    fn add_require_statement(
-        &mut self,
-        variable_name: &str,
-        source: StringLiteral<'a>,
-        front: bool,
-    ) {
-        let var_kind = VariableDeclarationKind::Var;
-        let callee = {
-            let ident = IdentifierReference::new(SPAN, "require".into());
-            self.ctx.ast.identifier_reference_expression(ident)
-        };
-        let args = {
-            let arg = Argument::Expression(self.ast().literal_string_expression(source));
-            self.ctx.ast.new_vec_single(arg)
-        };
-        let id = {
-            let ident = BindingIdentifier::new(SPAN, self.ast().new_atom(variable_name));
-            self.ast().binding_pattern(self.ast().binding_pattern_identifier(ident), None, false)
-        };
-        let decl = {
-            let init = self.ast().call_expression(SPAN, callee, args, false, None);
-            let decl = self.ast().variable_declarator(SPAN, var_kind, id, Some(init), false);
-            self.ast().new_vec_single(decl)
-        };
-        let variable_declaration =
-            self.ast().variable_declaration(SPAN, var_kind, decl, Modifiers::empty());
-        let stmt = Statement::Declaration(Declaration::VariableDeclaration(variable_declaration));
-        if front {
-            self.imports.insert(0, stmt);
-        } else {
-            self.imports.push(stmt);
-        }
+    fn add_require_statement(&mut self, variable_name: &str, source: CompactStr, front: bool) {
+        let import = NamedImport::new(variable_name.into(), None);
+        self.ctx.module_imports.add_require(source, import, front);
     }
 }
 

@@ -1678,6 +1678,7 @@ dependencies = [
 name = "oxc_transformer"
 version = "0.12.3"
 dependencies = [
+ "indexmap",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",

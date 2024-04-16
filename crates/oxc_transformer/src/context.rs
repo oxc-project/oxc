@@ -5,6 +5,8 @@ use oxc_ast::AstBuilder;
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 
+use crate::helpers::module_imports::ModuleImports;
+
 pub type Ctx<'a> = Rc<TransformCtx<'a>>;
 
 pub struct TransformCtx<'a> {
@@ -16,6 +18,10 @@ pub struct TransformCtx<'a> {
     filename: String,
 
     errors: RefCell<Vec<Error>>,
+
+    // Helpers
+    /// Manage import statement globally
+    pub module_imports: ModuleImports<'a>,
 }
 
 impl<'a> TransformCtx<'a> {
@@ -25,7 +31,8 @@ impl<'a> TransformCtx<'a> {
             .file_stem() // omit file extension
             .map_or_else(|| String::from("unknown"), |name| name.to_string_lossy().to_string());
         let errors = RefCell::new(vec![]);
-        Self { ast, semantic, filename, errors }
+        let module_imports = ModuleImports::new(allocator);
+        Self { ast, semantic, filename, errors, module_imports }
     }
 
     pub fn take_errors(&self) -> Vec<Error> {
