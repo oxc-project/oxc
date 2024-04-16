@@ -10,10 +10,7 @@ use oxc_ast::ast::*;
 
 use crate::context::Ctx;
 
-pub use self::{
-    display_name::ReactDisplayName, jsx::ReactJsx, jsx_self::ReactJsxSelf,
-    jsx_source::ReactJsxSource, options::ReactOptions,
-};
+pub use self::{display_name::ReactDisplayName, jsx::ReactJsx, options::ReactOptions};
 
 /// [Preset React](https://babel.dev/docs/babel-preset-react)
 ///
@@ -26,8 +23,6 @@ pub use self::{
 pub struct React<'a> {
     options: Rc<ReactOptions>,
     jsx: ReactJsx<'a>,
-    jsx_self: ReactJsxSelf<'a>,
-    jsx_source: ReactJsxSource<'a>,
     display_name: ReactDisplayName<'a>,
 }
 
@@ -42,8 +37,6 @@ impl<'a> React<'a> {
         Self {
             options: Rc::clone(&options),
             jsx: ReactJsx::new(&options, ctx),
-            jsx_self: ReactJsxSelf::new(ctx),
-            jsx_source: ReactJsxSource::new(ctx),
             display_name: ReactDisplayName::new(ctx),
         }
     }
@@ -52,8 +45,13 @@ impl<'a> React<'a> {
 // Transforms
 impl<'a> React<'a> {
     pub fn transform_program_on_exit(&mut self, program: &mut Program<'a>) {
+        // TODO: PERF: These two transforms reallocathe program.statements,
+        // they should be combined so that allocation is computed only once for program.statements.
         if self.options.jsx_plugin {
             self.jsx.transform_program_on_exit(program);
+        }
+        if self.options.is_jsx_source_plugin_enabled() {
+            self.jsx.jsx_source.transform_program_on_exit(program);
         }
     }
 
@@ -96,12 +94,12 @@ impl<'a> React<'a> {
         }
     }
 
-    pub fn transform_jsx_opening_element(&self, elem: &mut JSXOpeningElement<'a>) {
+    pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
         if self.options.is_jsx_self_plugin_enabled() {
-            self.jsx_self.transform_jsx_opening_element(elem);
+            self.jsx.jsx_self.transform_jsx_opening_element(elem);
         }
         if self.options.is_jsx_source_plugin_enabled() {
-            self.jsx_source.transform_jsx_opening_element(elem);
+            self.jsx.jsx_source.transform_jsx_opening_element(elem);
         }
     }
 }

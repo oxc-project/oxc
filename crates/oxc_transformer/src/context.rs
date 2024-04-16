@@ -1,11 +1,16 @@
-use std::{cell::RefCell, mem, path::Path, rc::Rc};
+use std::{
+    cell::RefCell,
+    mem,
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 use oxc_allocator::Allocator;
 use oxc_ast::AstBuilder;
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 
-use crate::helpers::module_imports::ModuleImports;
+use crate::{helpers::module_imports::ModuleImports, TransformOptions};
 
 pub type Ctx<'a> = Rc<TransformCtx<'a>>;
 
@@ -17,6 +22,9 @@ pub struct TransformCtx<'a> {
     /// <https://babeljs.io/docs/options#filename>
     filename: String,
 
+    /// Source path in the form of `<CWD>/path/to/file/input.js`
+    source_path: PathBuf,
+
     errors: RefCell<Vec<Error>>,
 
     // Helpers
@@ -25,14 +33,28 @@ pub struct TransformCtx<'a> {
 }
 
 impl<'a> TransformCtx<'a> {
-    pub fn new(allocator: &'a Allocator, source_path: &Path, semantic: Semantic<'a>) -> Self {
-        let ast = AstBuilder::new(allocator);
+    pub fn new(
+        allocator: &'a Allocator,
+        source_path: &Path,
+        semantic: Semantic<'a>,
+        options: &TransformOptions,
+    ) -> Self {
         let filename = source_path
             .file_stem() // omit file extension
             .map_or_else(|| String::from("unknown"), |name| name.to_string_lossy().to_string());
-        let errors = RefCell::new(vec![]);
-        let module_imports = ModuleImports::new(allocator);
-        Self { ast, semantic, filename, errors, module_imports }
+
+        let source_path = source_path
+            .strip_prefix(&options.cwd)
+            .map_or_else(|_| source_path.to_path_buf(), |p| Path::new("<CWD>").join(p));
+
+        Self {
+            ast: AstBuilder::new(allocator),
+            semantic,
+            filename,
+            source_path,
+            errors: RefCell::new(vec![]),
+            module_imports: ModuleImports::new(allocator),
+        }
     }
 
     pub fn take_errors(&self) -> Vec<Error> {
@@ -41,6 +63,10 @@ impl<'a> TransformCtx<'a> {
 
     pub fn filename(&self) -> &str {
         &self.filename
+    }
+
+    pub fn source_path(&self) -> &Path {
+        &self.source_path
     }
 
     /// Add an Error

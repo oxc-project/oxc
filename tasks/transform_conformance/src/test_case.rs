@@ -15,7 +15,7 @@ use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
 use oxc_transformer::{ReactOptions, TransformOptions, Transformer, TypeScriptOptions};
 
-use crate::{fixture_root, root, TestRunnerEnv, PLUGINS_NOT_SUPPORTED_YET};
+use crate::{fixture_root, packages_root, TestRunnerEnv, PLUGINS_NOT_SUPPORTED_YET};
 
 #[derive(Debug)]
 pub enum TestCaseKind {
@@ -24,25 +24,25 @@ pub enum TestCaseKind {
 }
 
 impl TestCaseKind {
-    pub fn new(path: &Path) -> Option<Self> {
+    pub fn new(cwd: &Path, path: &Path) -> Option<Self> {
         // in `exec` directory
         if path.parent().is_some_and(|path| path.file_name().is_some_and(|n| n == "exec"))
             && path.extension().is_some_and(|ext| VALID_EXTENSIONS.contains(&ext.to_str().unwrap()))
         {
-            return Some(Self::Exec(ExecTestCase::new(path)));
+            return Some(Self::Exec(ExecTestCase::new(cwd, path)));
         }
         // named `exec.[ext]`
         if path.file_stem().is_some_and(|name| name == "exec")
             && path.extension().is_some_and(|ext| VALID_EXTENSIONS.contains(&ext.to_str().unwrap()))
         {
-            return Some(Self::Exec(ExecTestCase::new(path)));
+            return Some(Self::Exec(ExecTestCase::new(cwd, path)));
         }
 
         // named `input.[ext]``
         if path.file_stem().is_some_and(|name| name == "input")
             && path.extension().is_some_and(|ext| VALID_EXTENSIONS.contains(&ext.to_str().unwrap()))
         {
-            return Some(Self::Transform(ConformanceTestCase::new(path)));
+            return Some(Self::Transform(ConformanceTestCase::new(cwd, path)));
         }
 
         None
@@ -95,6 +95,7 @@ fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOpti
     };
 
     Ok(TransformOptions {
+        cwd: options.cwd.clone().unwrap(),
         assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
         typescript: options
             .get_plugin("transform-typescript")
@@ -106,7 +107,7 @@ fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOpti
 }
 
 pub trait TestCase {
-    fn new(path: &Path) -> Self;
+    fn new(cwd: &Path, path: &Path) -> Self;
 
     fn options(&self) -> &BabelOptions;
 
@@ -213,8 +214,9 @@ pub struct ConformanceTestCase {
 }
 
 impl TestCase for ConformanceTestCase {
-    fn new(path: &Path) -> Self {
-        let options = BabelOptions::from_path(path.parent().unwrap());
+    fn new(cwd: &Path, path: &Path) -> Self {
+        let mut options = BabelOptions::from_path(path.parent().unwrap());
+        options.cwd.replace(cwd.to_path_buf());
         let transform_options = transform_options(&options);
         Self { path: path.to_path_buf(), options, transform_options }
     }
@@ -361,10 +363,11 @@ impl ExecTestCase {
 
     fn write_to_test_files(&self, content: &str) -> PathBuf {
         let allocator = Allocator::default();
-        let new_file_name: String = normalize_path(self.path.strip_prefix(&root()).unwrap())
-            .split('/')
-            .collect::<Vec<&str>>()
-            .join("-");
+        let new_file_name: String =
+            normalize_path(self.path.strip_prefix(&packages_root()).unwrap())
+                .split('/')
+                .collect::<Vec<&str>>()
+                .join("-");
 
         let mut target_path = fixture_root().join(new_file_name);
         target_path.set_extension("test.js");
@@ -385,8 +388,9 @@ impl ExecTestCase {
 }
 
 impl TestCase for ExecTestCase {
-    fn new(path: &Path) -> Self {
-        let options = BabelOptions::from_path(path.parent().unwrap());
+    fn new(cwd: &Path, path: &Path) -> Self {
+        let mut options = BabelOptions::from_path(path.parent().unwrap());
+        options.cwd.replace(cwd.to_path_buf());
         let transform_options = transform_options(&options);
         Self { path: path.to_path_buf(), options, transform_options }
     }
