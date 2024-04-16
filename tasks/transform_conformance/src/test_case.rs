@@ -12,7 +12,7 @@ use oxc_diagnostics::{miette::miette, Error};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
-use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
+use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions, TestOs};
 use oxc_transformer::{ReactOptions, TransformOptions, Transformer, TypeScriptOptions};
 
 use crate::{fixture_root, packages_root, TestRunnerEnv, PLUGINS_NOT_SUPPORTED_YET};
@@ -119,6 +119,11 @@ pub trait TestCase {
 
     fn skip_test_case(&self) -> bool {
         let options = self.options();
+
+        // Skip windows
+        if options.os.as_ref().is_some_and(|os| os.iter().any(TestOs::is_windows)) {
+            return true;
+        }
 
         // Skip plugins we don't support yet
         if PLUGINS_NOT_SUPPORTED_YET.iter().any(|plugin| options.get_plugin(plugin).is_some()) {
