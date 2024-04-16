@@ -24,6 +24,23 @@ pub struct BabelOptions {
     pub allow_undeclared_exports: bool,
     #[serde(default)]
     pub assumptions: Value,
+    /// Babel test helper for running tests on specific operating systems
+    pub os: Option<Vec<TestOs>>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum TestOs {
+    Linux,
+    Win32,
+    Windows,
+    Darwin,
+}
+
+impl TestOs {
+    pub fn is_windows(&self) -> bool {
+        matches!(self, Self::Win32 | Self::Windows)
+    }
 }
 
 impl BabelOptions {
