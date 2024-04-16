@@ -14,6 +14,7 @@ mod options;
 // Presets: <https://babel.dev/docs/presets>
 mod react;
 mod typescript;
+mod utils;
 
 mod helpers {
     pub mod module_imports;
@@ -209,5 +210,10 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
         self.x0_typescript.transform_statement(stmt);
         walk_mut::walk_statement_mut(self, stmt);
+    }
+
+    fn visit_declaration(&mut self, decl: &mut Declaration<'a>) {
+        self.x0_typescript.transform_declaration(decl);
+        walk_mut::walk_declaration_mut(self, decl);
     }
 }
