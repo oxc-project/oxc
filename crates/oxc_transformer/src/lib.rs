@@ -15,6 +15,10 @@ mod options;
 mod react;
 mod typescript;
 
+mod helpers {
+    pub mod module_imports;
+}
+
 use std::{path::Path, rc::Rc};
 
 use oxc_allocator::{Allocator, Vec};

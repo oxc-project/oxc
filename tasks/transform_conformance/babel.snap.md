@@ -1,4 +1,4 @@
-Passed: 123/227
+Passed: 125/227
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -107,10 +107,8 @@ Passed: 123/227
 * regression/another-preset-with-custom-jsx-keep-source-self/input.mjs
 * regression/runtime-classic-allow-multiple-source-self/input.mjs
 
-# babel-plugin-transform-react-jsx (33/36)
-* autoImport/auto-import-react-source-type-module/input.js
+# babel-plugin-transform-react-jsx (35/36)
 * autoImport/complicated-scope-module/input.js
-* autoImport/react-defined/input.js
 
 # babel-plugin-transform-react-display-name (3/4)
 * display-name/nested/input.js
