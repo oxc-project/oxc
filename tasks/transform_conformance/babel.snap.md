@@ -1,4 +1,4 @@
-Passed: 125/227
+Passed: 126/227
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -24,7 +24,7 @@ Passed: 125/227
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (79/147)
+# babel-plugin-transform-typescript (80/147)
 * class/abstract-allowDeclareFields-false/input.ts
 * class/abstract-allowDeclareFields-true/input.ts
 * class/abstract-class-decorated/input.ts
@@ -47,7 +47,6 @@ Passed: 125/227
 * exports/export-type-star-from/input.ts
 * exports/export=/input.ts
 * function/overloads-exports/input.mjs
-* imports/elide-type-referenced-in-imports-equal-no/input.ts
 * imports/enum-id/input.ts
 * imports/enum-value/input.ts
 * imports/import=-module/input.ts

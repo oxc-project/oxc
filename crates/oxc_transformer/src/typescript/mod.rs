@@ -1,6 +1,7 @@
 mod annotations;
 mod collector;
 mod r#enum;
+mod module;
 mod namespace;
 
 use std::rc::Rc;
@@ -155,8 +156,7 @@ impl<'a> TypeScript<'a> {
             Declaration::TSImportEqualsDeclaration(ts_import_equals)
                 if ts_import_equals.import_kind.is_value() =>
             {
-                // TODO: support for transform_ts_import_equals function
-                // *decl = self.transform_ts_import_equals(ts_import_equals);
+                *decl = self.transform_ts_import_equals(ts_import_equals);
             }
             Declaration::TSEnumDeclaration(ts_enum_declaration) => {
                 if let Some(expr) = self.transform_ts_enum(ts_enum_declaration) {
