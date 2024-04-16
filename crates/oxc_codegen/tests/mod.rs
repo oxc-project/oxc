@@ -167,4 +167,7 @@ fn typescript() {
     test_ts("import type { Foo } from 'foo';", "import type {Foo} from 'foo';\n", false);
     test_ts("import { Foo, type Bar } from 'foo';", "import {Foo,type Bar} from 'foo';\n", false);
     test_ts("export { Foo, type Bar } from 'foo';", "export { Foo, type Bar } from 'foo';", false);
+
+    // declare
+    test_ts("declare class Foo {}", "declare class Foo {\n}\n", false);
 }

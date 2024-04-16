@@ -543,12 +543,17 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Declaration<'a> {
                 }
             }
             Self::ClassDeclaration(decl) => {
-                if p.options.enable_typescript || !decl.is_typescript_syntax() {
-                    p.print_indent();
-                    p.print_space_before_identifier();
-                    decl.gen(p, ctx);
-                    p.print_soft_newline();
+                if decl.is_declare() {
+                    if p.options.enable_typescript {
+                        p.print_str(b"declare ");
+                    } else {
+                        return;
+                    }
                 }
+                p.print_indent();
+                p.print_space_before_identifier();
+                decl.gen(p, ctx);
+                p.print_soft_newline();
             }
             Self::UsingDeclaration(declaration) => {
                 p.print_space_before_identifier();
