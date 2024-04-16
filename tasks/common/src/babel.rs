@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
 use serde_json::Value;
@@ -7,6 +7,7 @@ use serde_json::Value;
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BabelOptions {
+    pub cwd: Option<PathBuf>,
     #[serde(rename = "BABEL_8_BREAKING")]
     pub babel_8_breaking: Option<bool>,
     pub source_type: Option<String>,

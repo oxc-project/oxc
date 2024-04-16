@@ -38,8 +38,8 @@ pub struct ReactJsx<'a> {
 
     ctx: Ctx<'a>,
 
-    jsx_self: ReactJsxSelf<'a>,
-    jsx_source: ReactJsxSource<'a>,
+    pub(super) jsx_self: ReactJsxSelf<'a>,
+    pub(super) jsx_source: ReactJsxSource<'a>,
 
     // States
     require_jsx_runtime: bool,

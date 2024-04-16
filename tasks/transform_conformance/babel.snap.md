@@ -1,4 +1,4 @@
-Passed: 133/219
+Passed: 134/219
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -85,8 +85,7 @@ Passed: 133/219
 * regression/15768/input.ts
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-preset-react (7/11)
-* preset-options/development/input.js
+# babel-preset-react (8/11)
 * preset-options/development-runtime-automatic/input.js
 * preset-options/development-runtime-automatic-windows/input.js
 * preset-options/development-windows/input.js

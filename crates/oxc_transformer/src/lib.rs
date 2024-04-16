@@ -55,7 +55,7 @@ impl<'a> Transformer<'a> {
         semantic: Semantic<'a>,
         options: TransformOptions,
     ) -> Self {
-        let ctx = Rc::new(TransformCtx::new(allocator, source_path, semantic));
+        let ctx = Rc::new(TransformCtx::new(allocator, source_path, semantic, &options));
         Self {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, &ctx),
