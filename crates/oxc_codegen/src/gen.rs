@@ -724,6 +724,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_str(b"import ");
+        if p.options.enable_typescript && self.import_kind.is_type() {
+            p.print_str(b"type ");
+        }
         if let Some(specifiers) = &self.specifiers {
             if specifiers.is_empty() {
                 p.print(b'\'');
@@ -768,6 +771,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
                             }
                             in_block = true;
                             p.print(b'{');
+                        }
+
+                        if p.options.enable_typescript && spec.import_kind.is_type() {
+                            p.print_str(b"type ");
                         }
 
                         let imported_name = match &spec.imported {
@@ -842,6 +849,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
             return;
         }
         p.print_str(b"export ");
+        if p.options.enable_typescript && self.export_kind.is_type() {
+            p.print_str(b"type ");
+        }
         match &self.declaration {
             Some(decl) => decl.gen(p, ctx),
             None => {
@@ -866,6 +876,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportSpecifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if p.options.enable_typescript && self.export_kind.is_type() {
+            p.print_str(b"type ");
+        }
         self.local.gen(p, ctx);
         if self.local.name() != self.exported.name() {
             p.print_str(b" as ");
@@ -892,6 +905,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportAllDeclaration<'a> {
             return;
         }
         p.print_str(b"export ");
+        if p.options.enable_typescript && self.export_kind.is_type() {
+            p.print_str(b"type ");
+        }
         p.print(b'*');
 
         if let Some(exported) = &self.exported {

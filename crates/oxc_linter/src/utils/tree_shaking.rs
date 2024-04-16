@@ -5,7 +5,7 @@ use oxc_syntax::operator::BinaryOperator;
 
 use crate::LintContext;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Value {
     Boolean(bool),
     Number(f64),
@@ -14,7 +14,7 @@ pub enum Value {
 }
 
 // We only care if it is falsy value (empty string).
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum StringValue {
     Empty,
     NonEmpty,
@@ -49,7 +49,7 @@ impl Value {
             Value::Unknown => None,
             Value::Boolean(boolean) => Some(!*boolean),
             Value::Number(num) => Some(*num == 0.0),
-            Value::String(str) => Some(matches!(str, StringValue::Empty)),
+            Value::String(str) => Some(!matches!(str, StringValue::Empty)),
         }
     }
 }
@@ -89,6 +89,7 @@ pub fn has_pure_notation(span: Span, ctx: &LintContext) -> bool {
 }
 
 /// Port from <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/463fa1f0bef7caa2b231a38b9c3557051f506c92/src/rules/no-side-effects-in-initialization.ts#L136-L161>
+/// <https://tc39.es/ecma262/#sec-evaluatestringornumericbinaryexpression>
 pub fn calculate_binary_operation(op: BinaryOperator, left: Value, right: Value) -> Value {
     match op {
         BinaryOperator::Addition => match (left, right) {
@@ -106,6 +107,49 @@ pub fn calculate_binary_operation(op: BinaryOperator, left: Value, right: Value)
             (Value::Number(a), Value::Number(b)) => Value::Number(a - b),
             _ => Value::Unknown,
         },
+        // <https://tc39.es/ecma262/#sec-islessthan>
+        #[allow(clippy::single_match)]
+        BinaryOperator::LessThan => match (left, right) {
+            // <https://tc39.es/ecma262/#sec-numeric-types-number-lessThan>
+            (Value::Unknown, Value::Number(_)) | (Value::Number(_), Value::Unknown) => {
+                Value::Boolean(false)
+            }
+            (Value::Number(a), Value::Number(b)) => Value::Boolean(a < b),
+            _ => Value::Unknown,
+        },
         _ => Value::Unknown,
     }
+}
+
+#[test]
+fn test_calculate_binary_operation() {
+    use oxc_syntax::operator::BinaryOperator;
+
+    let fun = calculate_binary_operation;
+
+    // "+"
+    let op = BinaryOperator::Addition;
+    assert_eq!(fun(op, Value::Number(1.0), Value::Number(2.0),), Value::Number(3.0));
+    assert_eq!(
+        fun(op, Value::String(StringValue::Empty), Value::String(StringValue::Empty)),
+        Value::String(StringValue::Empty)
+    );
+    assert_eq!(
+        fun(op, Value::String(StringValue::Empty), Value::String(StringValue::NonEmpty)),
+        Value::String(StringValue::NonEmpty)
+    );
+
+    assert_eq!(
+        fun(op, Value::String(StringValue::NonEmpty), Value::String(StringValue::NonEmpty)),
+        Value::String(StringValue::NonEmpty)
+    );
+
+    // "-"
+    let op = BinaryOperator::Subtraction;
+    assert_eq!(fun(op, Value::Number(1.0), Value::Number(2.0),), Value::Number(-1.0));
+
+    // "<"
+    let op = BinaryOperator::LessThan;
+    assert_eq!(fun(op, Value::Number(1.0), Value::Number(2.0),), Value::Boolean(true));
+    assert_eq!(fun(op, Value::Unknown, Value::Number(2.0),), Value::Boolean(false));
 }

@@ -1,4 +1,4 @@
-Passed: 94/228
+Passed: 123/227
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -24,7 +24,7 @@ Passed: 94/228
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (49/147)
+# babel-plugin-transform-typescript (79/147)
 * class/abstract-allowDeclareFields-false/input.ts
 * class/abstract-allowDeclareFields-true/input.ts
 * class/abstract-class-decorated/input.ts
@@ -40,48 +40,18 @@ Passed: 94/228
 * class/private-method-override-transform-private/input.ts
 * class/transform-properties-declare-wrong-order/input.ts
 * declarations/erased/input.ts
-* declarations/export-declare-enum/input.ts
 * declarations/nested-namespace/input.mjs
-* exports/declare-namespace/input.ts
 * exports/declare-shadowed/input.ts
 * exports/declared-types/input.ts
 * exports/export-const-enums/input.ts
-* exports/export-type/input.ts
-* exports/export-type-from/input.ts
 * exports/export-type-star-from/input.ts
 * exports/export=/input.ts
-* exports/imported-types/input.ts
-* exports/imported-types-only-remove-type-imports/input.ts
-* exports/issue-9916-3/input.ts
-* exports/simple/input.ts
-* exports/type-only-export-specifier-1/input.ts
-* exports/type-only-export-specifier-2/input.ts
 * function/overloads-exports/input.mjs
-* imports/elide-preact/input.ts
-* imports/elide-react/input.ts
 * imports/elide-type-referenced-in-imports-equal-no/input.ts
-* imports/elide-typeof/input.ts
-* imports/elision/input.ts
-* imports/elision-export-type/input.ts
-* imports/elision-locations/input.ts
-* imports/elision-qualifiedname/input.ts
-* imports/elision-rename/input.ts
 * imports/enum-id/input.ts
 * imports/enum-value/input.ts
-* imports/import-named-type/input.ts
-* imports/import-named-type-default-and-named/input.ts
-* imports/import-removed-exceptions/input.ts
-* imports/import-type/input.ts
-* imports/import-type-func-with-duplicate-name/input.ts
-* imports/import-type-not-removed/input.ts
 * imports/import=-module/input.ts
-* imports/only-remove-type-imports/input.ts
-* imports/property-signature/input.ts
-* imports/type-only-export-specifier-1/input.ts
 * imports/type-only-export-specifier-2/input.ts
-* imports/type-only-import-specifier-2/input.ts
-* imports/type-only-import-specifier-3/input.ts
-* imports/type-only-import-specifier-4/input.ts
 * namespace/alias/input.ts
 * namespace/ambient-module-nested/input.ts
 * namespace/ambient-module-nested-exported/input.ts
@@ -137,7 +107,7 @@ Passed: 94/228
 * regression/another-preset-with-custom-jsx-keep-source-self/input.mjs
 * regression/runtime-classic-allow-multiple-source-self/input.mjs
 
-# babel-plugin-transform-react-jsx (34/37)
+# babel-plugin-transform-react-jsx (33/36)
 * autoImport/auto-import-react-source-type-module/input.js
 * autoImport/complicated-scope-module/input.js
 * autoImport/react-defined/input.js
