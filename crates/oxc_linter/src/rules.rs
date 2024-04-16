@@ -359,6 +359,7 @@ mod nextjs {
 /// <https://github.com/gajus/eslint-plugin-jsdoc>
 mod jsdoc {
     pub mod check_access;
+    pub mod check_property_names;
     pub mod empty_tags;
 }
 
@@ -685,6 +686,7 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_unwanted_polyfillio,
     nextjs::no_before_interactive_script_outside_document,
     jsdoc::check_access,
+    jsdoc::check_property_names,
     jsdoc::empty_tags,
     tree_shaking::no_side_effects_in_initialization,
 }
