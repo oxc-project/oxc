@@ -18,6 +18,8 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
+use crate::traverse::{SharedBox, SharedVec};
+
 use super::{jsx::*, literal::*, ts::*};
 
 #[cfg(feature = "serialize")]

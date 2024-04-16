@@ -55,7 +55,6 @@ fn modify_enum(item: &mut ItemEnum) -> NodeData {
         "`ast_node` enums are limited to the maximum of 256 variants."
     );
     item.variants.iter().for_each(validate_variant);
-
     // add the correct representation
     item.attrs.push(parse_quote!(#[repr(C, u8)]));
 
@@ -234,29 +233,53 @@ fn transform_type(ty: Type) -> Type {
     Type::Path(ty)
 }
 
-fn transform_generic_type(ty: TypePath) -> TypePath {
-    let first_seg = ty.path.segments.first().expect("already asserted");
-    let ident = &first_seg.ident;
-    let args = &first_seg.arguments;
+fn transform_generic_type(mut ty: TypePath) -> TypePath {
+    assert!(ty.path.segments.len() >= 1);
+    let seg = ty
+        .path
+        .segments
+        .pop()
+        .expect("Expected generic type with one or more path segments.")
+        .into_value();
 
-    if ident == "Vec" {
-        return parse_quote!(crate::traverse::SharedVec #args);
-    } else if ident == "Box" {
-        return parse_quote!(crate::traverse::SharedBox #args);
-    }
-
-    let ty = match args {
+    match seg.arguments {
         // as the rule of thumb; if a type has lifetimes we should transform it to a traversable type.
         PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. })
             if args.iter().any(|arg| matches!(arg, GenericArgument::Lifetime(_))) =>
         {
-            println!("EWE");
-            ty
+            let path = if seg.ident == "Vec" {
+                parse_quote!(::SharedVec)
+            } else if seg.ident == "Box" {
+                parse_quote!(::SharedBox)
+            } else if !is_special_type_name(&seg.ident) {
+                let new_ident = format_ident!("Traversable{}", seg.ident);
+                parse_quote!(::#new_ident)
+            } else {
+                let mut path = ty.path;
+                path.segments
+                    .push(syn::PathSegment { ident: seg.ident, arguments: PathArguments::None });
+                path
+            };
+
+            let args: Punctuated<GenericArgument, Token![,]> = args
+                .into_iter()
+                .map(|arg| match arg {
+                    GenericArgument::Type(ty) => GenericArgument::Type(transform_type(ty)),
+                    _ => arg,
+                })
+                .collect();
+
+            parse_quote!(#path <#args>)
+        }
+        PathArguments::Parenthesized(_) => {
+            panic!("`ast_node` does not support parenthesized types(eg. `Fn(u32) -> u32)`.");
         }
         _ => ty,
-    };
+    }
+}
 
-    ty
+fn is_special_type_name(ident: &Ident) -> bool {
+    ident == "Atom"
 }
 
 fn impl_traversable_test_trait(node: &NodeData) -> TokenStream2 {
