@@ -1,16 +1,10 @@
-Passed: 126/227
+Passed: 126/219
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-typescript (4/22)
-* flow-compat/js-invalid/input.js
-* flow-compat/js-valid/input.js
-* flow-compat/ts-invalid/input.ts
-* flow-compat/ts-valid/input.ts
-* flow-compat/tsx-invalid/input.tsx
-* flow-compat/tsx-valid/input.tsx
+# babel-preset-typescript (4/16)
 * jsx-compat/js-valid/input.js
 * jsx-compat/ts-invalid/input.ts
 * jsx-compat/tsx-valid/input.tsx
@@ -93,7 +87,7 @@ Passed: 126/227
 * regression/15768/input.ts
 * variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-preset-react (2/13)
+# babel-preset-react (2/11)
 * preset-options/development/input.js
 * preset-options/development-runtime-automatic/input.js
 * preset-options/development-runtime-automatic-windows/input.js
@@ -103,8 +97,6 @@ Passed: 126/227
 * preset-options/runtime-classic/input.js
 * preset-options/runtime-classic-pragma-no-frag/input.js
 * regression/11294/input.mjs
-* regression/another-preset-with-custom-jsx-keep-source-self/input.mjs
-* regression/runtime-classic-allow-multiple-source-self/input.mjs
 
 # babel-plugin-transform-react-jsx (35/36)
 * autoImport/complicated-scope-module/input.js
