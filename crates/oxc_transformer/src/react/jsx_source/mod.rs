@@ -7,6 +7,7 @@ use oxc_syntax::NumberBase;
 use crate::context::Ctx;
 
 const SOURCE: &str = "__source";
+const FILE_NAME_VAR: &str = "_jsxFileName";
 
 /// [plugin-transform-react-jsx-source](https://babeljs.io/docs/babel-plugin-transform-react-jsx-source)
 ///
@@ -20,18 +21,31 @@ const SOURCE: &str = "__source";
 /// TODO: get lineNumber and columnNumber from somewhere
 pub struct ReactJsxSource<'a> {
     ctx: Ctx<'a>,
+
+    /// Has `var _jsxFileName = "";` been added to program.statements?
+    should_add_jsx_file_name_variable: bool,
 }
 
 impl<'a> ReactJsxSource<'a> {
     pub fn new(ctx: &Ctx<'a>) -> Self {
-        Self { ctx: Rc::clone(ctx) }
+        Self { ctx: Rc::clone(ctx), should_add_jsx_file_name_variable: false }
     }
 
-    pub fn transform_jsx_opening_element(&self, elem: &mut JSXOpeningElement<'a>) {
+    pub fn transform_program_on_exit(&mut self, program: &mut Program<'a>) {
+        if !self.should_add_jsx_file_name_variable {
+            return;
+        }
+        let statement = self.get_var_file_name_statement();
+        program.body.insert(0, statement);
+    }
+
+    pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
+        self.should_add_jsx_file_name_variable = true;
         self.add_source_attribute(elem);
     }
 
-    pub fn get_object_property_kind_for_jsx_plugin(&self) -> ObjectPropertyKind<'a> {
+    pub fn get_object_property_kind_for_jsx_plugin(&mut self) -> ObjectPropertyKind<'a> {
+        self.should_add_jsx_file_name_variable = true;
         let kind = PropertyKind::Init;
         let ident = IdentifierName::new(SPAN, SOURCE.into());
         let key = self.ctx.ast.property_key_identifier(ident);
@@ -59,8 +73,8 @@ impl<'a> ReactJsxSource<'a> {
         let filename = {
             let name = IdentifierName::new(SPAN, "fileName".into());
             let key = self.ctx.ast.property_key_identifier(name);
-            let string = StringLiteral::new(SPAN, self.ctx.ast.new_atom(self.ctx.filename()));
-            let value = self.ctx.ast.literal_string_expression(string);
+            let ident = self.ctx.ast.identifier_reference(SPAN, FILE_NAME_VAR);
+            let value = self.ctx.ast.identifier_reference_expression(ident);
             self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false)
         };
 
@@ -85,5 +99,23 @@ impl<'a> ReactJsxSource<'a> {
         properties.push(ObjectPropertyKind::ObjectProperty(line_number));
         properties.push(ObjectPropertyKind::ObjectProperty(column_number));
         self.ctx.ast.object_expression(SPAN, properties, None)
+    }
+
+    fn get_var_file_name_statement(&self) -> Statement<'a> {
+        let var_kind = VariableDeclarationKind::Var;
+        let id = {
+            let ident = BindingIdentifier::new(SPAN, FILE_NAME_VAR.into());
+            let ident = self.ctx.ast.binding_pattern_identifier(ident);
+            self.ctx.ast.binding_pattern(ident, None, false)
+        };
+        let decl = {
+            let string =
+                self.ctx.ast.string_literal(SPAN, &self.ctx.source_path().to_string_lossy());
+            let init = self.ctx.ast.literal_string_expression(string);
+            let decl = self.ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
+            self.ctx.ast.new_vec_single(decl)
+        };
+        let var_decl = self.ctx.ast.variable_declaration(SPAN, var_kind, decl, Modifiers::empty());
+        Statement::Declaration(Declaration::VariableDeclaration(var_decl))
     }
 }

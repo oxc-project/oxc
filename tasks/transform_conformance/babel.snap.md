@@ -1,19 +1,11 @@
-Passed: 126/227
+Passed: 138/209
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-typescript (4/22)
-* flow-compat/js-invalid/input.js
-* flow-compat/js-valid/input.js
-* flow-compat/ts-invalid/input.ts
-* flow-compat/ts-valid/input.ts
-* flow-compat/tsx-invalid/input.tsx
-* flow-compat/tsx-valid/input.tsx
-* jsx-compat/js-valid/input.js
+# babel-preset-typescript (6/16)
 * jsx-compat/ts-invalid/input.ts
-* jsx-compat/tsx-valid/input.tsx
 * node-extensions/import-in-cts/input.cts
 * node-extensions/type-assertion-in-cts/input.cts
 * node-extensions/type-assertion-in-mts/input.mts
@@ -24,29 +16,18 @@ Passed: 126/227
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (80/147)
+# babel-plugin-transform-typescript (84/139)
 * class/abstract-allowDeclareFields-false/input.ts
 * class/abstract-allowDeclareFields-true/input.ts
-* class/abstract-class-decorated/input.ts
-* class/abstract-class-decorated-method/input.ts
-* class/abstract-class-decorated-parameter/input.ts
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
-* class/decorated-declare-properties/input.ts
 * class/parameter-properties/input.ts
 * class/parameter-properties-late-super/input.ts
-* class/parameter-properties-with-parameters/input.ts
 * class/parameter-properties-with-super/input.ts
-* class/private-method-override-transform-private/input.ts
-* class/transform-properties-declare-wrong-order/input.ts
-* declarations/erased/input.ts
-* declarations/nested-namespace/input.mjs
-* exports/declare-shadowed/input.ts
 * exports/declared-types/input.ts
 * exports/export-const-enums/input.ts
 * exports/export-type-star-from/input.ts
 * exports/export=/input.ts
-* function/overloads-exports/input.mjs
 * imports/enum-id/input.ts
 * imports/enum-value/input.ts
 * imports/import=-module/input.ts
@@ -91,20 +72,9 @@ Passed: 126/227
 * optimize-const-enums/merged-exported/input.ts
 * regression/10338/input.ts
 * regression/15768/input.ts
-* variable-declaration/non-null-in-optional-chain/input.ts
 
-# babel-preset-react (2/13)
-* preset-options/development/input.js
+# babel-preset-react (8/9)
 * preset-options/development-runtime-automatic/input.js
-* preset-options/development-runtime-automatic-windows/input.js
-* preset-options/development-windows/input.js
-* preset-options/empty-options/input.js
-* preset-options/runtime-automatic/input.js
-* preset-options/runtime-classic/input.js
-* preset-options/runtime-classic-pragma-no-frag/input.js
-* regression/11294/input.mjs
-* regression/another-preset-with-custom-jsx-keep-source-self/input.mjs
-* regression/runtime-classic-allow-multiple-source-self/input.mjs
 
 # babel-plugin-transform-react-jsx (35/36)
 * autoImport/complicated-scope-module/input.js

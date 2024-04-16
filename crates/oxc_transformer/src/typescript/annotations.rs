@@ -88,15 +88,10 @@ impl<'a> TypeScriptAnnotations<'a> {
 
                     decl.export_kind.is_type()
                         || ((decl.declaration.is_none()
-                            || decl.declaration.as_ref().is_some_and(|d| {
-                                d.modifiers().is_some_and(|modifiers| {
-                                    modifiers.contains(ModifierKind::Declare)
-                                }) || matches!(
-                                    d,
-                                    Declaration::TSInterfaceDeclaration(_)
-                                        | Declaration::TSTypeAliasDeclaration(_)
-                                )
-                            }))
+                            || decl
+                                .declaration
+                                .as_ref()
+                                .is_some_and(Declaration::is_typescript_syntax))
                             && decl.specifiers.is_empty())
                 }
                 ModuleDeclaration::ImportDeclaration(decl) => {
@@ -196,7 +191,6 @@ impl<'a> TypeScriptAnnotations<'a> {
         class.type_parameters = None;
         class.super_type_parameters = None;
         class.implements = None;
-        class.modifiers.remove_type_modifiers();
     }
 
     pub fn transform_class_body(&mut self, body: &mut ClassBody<'a>) {
@@ -236,7 +230,6 @@ impl<'a> TypeScriptAnnotations<'a> {
         func.this_param = None;
         func.type_parameters = None;
         func.return_type = None;
-        func.modifiers.remove_type_modifiers();
     }
 
     pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {

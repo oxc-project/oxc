@@ -67,8 +67,7 @@ pub struct ReactOptions {
 
     /// This toggles behavior specific to development, such as adding __source and __self.
     ///
-    /// Defaults to `true`.
-    #[serde(default = "default_as_true")]
+    /// Defaults to `false`.
     pub development: bool,
 
     /// Toggles whether or not to throw an error if a XML namespaced tag name is used.
@@ -127,10 +126,10 @@ impl Default for ReactOptions {
         Self {
             jsx_plugin: true,
             display_name_plugin: true,
-            jsx_self_plugin: true,
-            jsx_source_plugin: true,
+            jsx_self_plugin: false,
+            jsx_source_plugin: false,
             runtime: ReactJsxRuntime::default(),
-            development: default_as_true(),
+            development: false,
             throw_if_namespace: default_as_true(),
             pure: default_as_true(),
             import_source: default_for_import_source(),
@@ -144,11 +143,11 @@ impl Default for ReactOptions {
 
 impl ReactOptions {
     pub fn is_jsx_self_plugin_enabled(&self) -> bool {
-        self.jsx_self_plugin && self.development
+        self.jsx_self_plugin || self.development
     }
 
     pub fn is_jsx_source_plugin_enabled(&self) -> bool {
-        self.jsx_source_plugin && self.development
+        self.jsx_source_plugin || self.development
     }
 
     /// Scan through all comments and find the following pragmas
