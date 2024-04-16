@@ -480,6 +480,7 @@ impl Rule for MaxLen {
         let mut line_start_index: u32 = 0;
         let max_comment_length = self.comments;
         let mut cur_comment_index = 0;
+        let comments_len = updated_comments.len();
         for (line_index, line_text) in full_text.lines().enumerate() {
             let mut text_to_measure = line_text;
             // Convert the length of line_text to u32 safely, handling any error.
@@ -492,9 +493,9 @@ impl Rule for MaxLen {
 
             let line_span = Span::new(line_start_index, line_end_index);
             let mut line_is_comment = false;
-            if cur_comment_index < updated_comments.len() {
+            if cur_comment_index < comments_len {
                 let mut comment;
-                while cur_comment_index < updated_comments.len() {
+                while cur_comment_index < comments_len {
                     comment = &updated_comments[cur_comment_index];
                     if find_line_index(comment.1.start as usize, &line_starts) <= line_index {
                         cur_comment_index += 1;
