@@ -27,8 +27,8 @@ oxc_diagnostics = { workspace = true }
 oxc_syntax      = { workspace = true }
 
 rustc-hash = { workspace = true }
-
-serde = { workspace = true, features = ["derive"] }
+indexmap   = { workspace = true }
+serde      = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
 oxc_parser  = { workspace = true }
