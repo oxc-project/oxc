@@ -1,4 +1,4 @@
-Passed: 136/217
+Passed: 138/217
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -16,7 +16,7 @@ Passed: 136/217
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (82/147)
+# babel-plugin-transform-typescript (84/147)
 * class/abstract-allowDeclareFields-false/input.ts
 * class/abstract-allowDeclareFields-true/input.ts
 * class/abstract-class-decorated/input.ts
@@ -31,12 +31,10 @@ Passed: 136/217
 * class/parameter-properties-with-super/input.ts
 * class/private-method-override-transform-private/input.ts
 * class/transform-properties-declare-wrong-order/input.ts
-* declarations/nested-namespace/input.mjs
 * exports/declared-types/input.ts
 * exports/export-const-enums/input.ts
 * exports/export-type-star-from/input.ts
 * exports/export=/input.ts
-* function/overloads-exports/input.mjs
 * imports/enum-id/input.ts
 * imports/enum-value/input.ts
 * imports/import=-module/input.ts
