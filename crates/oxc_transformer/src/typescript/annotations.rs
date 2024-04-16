@@ -11,25 +11,17 @@ use oxc_span::{Atom, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use rustc_hash::FxHashSet;
 
+use super::collector::TypeScriptReferenceCollector;
+
 pub struct TypeScriptAnnotations<'a> {
     #[allow(dead_code)]
     options: Rc<TypeScriptOptions>,
     ctx: Ctx<'a>,
-
-    global_types: FxHashSet<String>,
 }
 
 impl<'a> TypeScriptAnnotations<'a> {
     pub fn new(options: &Rc<TypeScriptOptions>, ctx: &Ctx<'a>) -> Self {
-        Self {
-            options: Rc::clone(options),
-            ctx: Rc::clone(ctx),
-            global_types: FxHashSet::default(),
-        }
-    }
-
-    pub fn is_global_type(&self) -> bool {
-        self.global_types.contains("TODO")
+        Self { options: Rc::clone(options), ctx: Rc::clone(ctx) }
     }
 
     // Convert `export = expr` into `module.exports = expr`
@@ -73,57 +65,113 @@ impl<'a> TypeScriptAnnotations<'a> {
     }
 
     // Remove type only imports/exports
-    pub fn transform_program_on_exit(&self, program: &mut Program<'a>) {
+    pub fn transform_program_on_exit(
+        &self,
+        program: &mut Program<'a>,
+        references: &TypeScriptReferenceCollector,
+    ) {
+        let mut import_type_names = FxHashSet::default();
         let mut module_count = 0;
+        let mut removed_count = 0;
 
-        let body =
-            self.ctx.ast.move_statement_vec(&mut program.body).into_iter().filter_map(|stmt| {
-                // If an import/export declaration, remove all that are type-only
-                if let Statement::ModuleDeclaration(decl) = &stmt {
-                    let keep = match &**decl {
-                        ModuleDeclaration::ImportDeclaration(inner) => !inner.import_kind.is_type(),
-                        ModuleDeclaration::ExportAllDeclaration(inner) => {
-                            !inner.is_typescript_syntax()
-                        }
-                        ModuleDeclaration::ExportNamedDeclaration(inner) => {
-                            !(inner.is_typescript_syntax()
-                                || inner.specifiers.is_empty()
-                                || inner.specifiers.iter().all(|spec| spec.export_kind.is_type())
-                                || self.is_global_type())
-                        }
-                        ModuleDeclaration::ExportDefaultDeclaration(inner) => {
-                            !inner.is_typescript_syntax()
-                        }
-                        ModuleDeclaration::TSNamespaceExportDeclaration(_) => false,
+        program.body.retain_mut(|stmt| {
+            let Statement::ModuleDeclaration(module_decl) = stmt else {
+                return true;
+            };
 
-                        // Replace with `module.exports = expr`
-                        ModuleDeclaration::TSExportAssignment(exp) => {
-                            return Some(self.create_module_exports(exp));
-                        }
-                    };
+            let need_delete = match &mut **module_decl {
+                ModuleDeclaration::ExportNamedDeclaration(decl) => {
+                    decl.specifiers.retain(|specifier| {
+                        !(specifier.export_kind.is_type()
+                            || import_type_names.contains(specifier.exported.name()))
+                    });
 
-                    if keep {
-                        module_count += 1;
-                    } else {
-                        return None;
-                    }
+                    decl.export_kind.is_type()
+                        || ((decl.declaration.is_none()
+                            || decl.declaration.as_ref().is_some_and(|d| {
+                                d.modifiers().is_some_and(|modifiers| {
+                                    modifiers.contains(ModifierKind::Declare)
+                                }) || matches!(
+                                    d,
+                                    Declaration::TSInterfaceDeclaration(_)
+                                        | Declaration::TSTypeAliasDeclaration(_)
+                                )
+                            }))
+                            && decl.specifiers.is_empty())
                 }
+                ModuleDeclaration::ImportDeclaration(decl) => {
+                    let is_type = decl.import_kind.is_type();
 
-                Some(stmt)
-            });
+                    let is_specifiers_empty =
+                        decl.specifiers.as_ref().is_some_and(|s| s.is_empty());
 
-        program.body = self.ctx.ast.new_vec_from_iter(body);
+                    if let Some(specifiers) = &mut decl.specifiers {
+                        specifiers.retain(|specifier| match specifier {
+                            ImportDeclarationSpecifier::ImportSpecifier(s) => {
+                                if is_type || s.import_kind.is_type() {
+                                    import_type_names.insert(s.local.name.clone());
+                                    return false;
+                                }
+
+                                if self.options.only_remove_type_imports {
+                                    return true;
+                                }
+
+                                references.has_reference(&s.local.name)
+                            }
+                            ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
+                                if is_type {
+                                    import_type_names.insert(s.local.name.clone());
+                                    return false;
+                                }
+
+                                if self.options.only_remove_type_imports {
+                                    return true;
+                                }
+                                references.has_reference(&s.local.name)
+                            }
+                            ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
+                                if is_type {
+                                    import_type_names.insert(s.local.name.clone());
+                                }
+
+                                if self.options.only_remove_type_imports {
+                                    return true;
+                                }
+
+                                references.has_reference(&s.local.name)
+                            }
+                        });
+                    }
+
+                    decl.import_kind.is_type()
+                        || (!self.options.only_remove_type_imports
+                            && !is_specifiers_empty
+                            && decl
+                                .specifiers
+                                .as_ref()
+                                .is_some_and(|specifiers| specifiers.is_empty()))
+                }
+                _ => false,
+            };
+
+            if need_delete {
+                removed_count += 1;
+            } else {
+                module_count += 1;
+            }
+
+            !need_delete
+        });
 
         // Determine if we still have import/export statements, otherwise we
         // need to inject an empty statement (`export {}`) so that the file is
         // still considered a module
-        if module_count == 0 && self.ctx.semantic.source_type().is_module() {
-            // FIXME
-            // program.body.push(self.ctx.ast.module_declaration(
-            // ModuleDeclaration::ExportNamedDeclaration(
-            // self.ctx.ast.plain_export_named_declaration(SPAN, self.ctx.ast.new_vec(), None),
-            // ),
-            // ));
+        if module_count == 0 && removed_count > 0 {
+            let export_decl = ModuleDeclaration::ExportNamedDeclaration(
+                self.ctx.ast.plain_export_named_declaration(SPAN, self.ctx.ast.new_vec(), None),
+            );
+            program.body.push(self.ctx.ast.module_declaration(export_decl));
         }
     }
 
@@ -172,11 +220,6 @@ impl<'a> TypeScriptAnnotations<'a> {
         });
     }
 
-    pub fn transform_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
-        // Remove type only specifiers
-        decl.specifiers.retain(|spec| !spec.export_kind.is_type());
-    }
-
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
         *expr = self.ctx.ast.copy(expr.get_inner_expression());
     }
@@ -194,16 +237,6 @@ impl<'a> TypeScriptAnnotations<'a> {
         func.type_parameters = None;
         func.return_type = None;
         func.modifiers.remove_type_modifiers();
-    }
-
-    pub fn transform_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
-        // Remove type only specifiers
-        if let Some(specifiers) = &mut decl.specifiers {
-            specifiers.retain(|spec| match spec {
-                ImportDeclarationSpecifier::ImportSpecifier(inner) => !inner.import_kind.is_type(),
-                _ => true,
-            });
-        }
     }
 
     pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
@@ -283,5 +316,13 @@ impl<'a> TypeScriptAnnotations<'a> {
         expr: &mut TaggedTemplateExpression<'a>,
     ) {
         expr.type_parameters = None;
+    }
+
+    pub fn transform_statement(&mut self, decl: &mut Statement<'a>) {
+        if let Statement::ModuleDeclaration(module_decl) = decl {
+            if let ModuleDeclaration::TSExportAssignment(exp) = &mut **module_decl {
+                *decl = self.create_module_exports(exp);
+            }
+        }
     }
 }

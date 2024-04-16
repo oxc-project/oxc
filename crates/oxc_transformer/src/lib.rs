@@ -143,8 +143,6 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     }
 
     fn visit_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
-        self.x0_typescript.transform_import_declaration(decl);
-
         walk_mut::walk_import_declaration_mut(self, decl);
     }
 
@@ -197,5 +195,15 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.x1_react.transform_variable_declarator(declarator);
 
         walk_mut::walk_variable_declarator_mut(self, declarator);
+    }
+
+    fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
+        self.x0_typescript.transform_identifier_reference(ident);
+        walk_mut::walk_identifier_reference_mut(self, ident);
+    }
+
+    fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
+        self.x0_typescript.transform_statement(stmt);
+        walk_mut::walk_statement_mut(self, stmt);
     }
 }
