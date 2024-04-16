@@ -456,7 +456,7 @@ impl Rule for MaxLen {
         literal_spans.collect_from_ctx(ctx);
 
         let mut jsx_empty_spans: Vec<Span> = vec![];
-        // fll all jsx emtpy node(comment node) and get the span
+        // fll all jsx empty node(comment node) and get the span
         for ast_node in ctx.semantic().nodes().iter() {
             if let AstKind::JSXExpressionContainer(node) = ast_node.kind() {
                 if let JSXExpression::EmptyExpression(_) = node.expression {
