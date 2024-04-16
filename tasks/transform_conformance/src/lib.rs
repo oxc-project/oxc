@@ -108,12 +108,17 @@ const PLUGINS: &[&str] = &[
 ];
 
 pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
+    "proposal-decorators",
+    "transform-arrow-functions",
+    "transform-class-properties",
     "transform-classes",
     "transform-modules-commonjs",
     "transform-object-rest-spread",
-    "transform-react-constant-elements",
+    "transform-optional-chaining",
+    "transform-parameters",
+    "transform-private-methods",
     "transform-property-literals",
-    "transform-arrow-functions",
+    "transform-react-constant-elements",
 ];
 
 const EXCLUDE_TESTS: &[&str] = &["babel-plugin-transform-typescript/test/fixtures/enum"];
