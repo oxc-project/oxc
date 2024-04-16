@@ -285,3 +285,174 @@ expression: max_len
    · ─
    ╰────
   help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a comment length of 38. Maximum allowed is 37.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var jsx = (<>
+ 2 │   { /* this line has 38 characters */}
+   · ──────────────────────────────────────
+ 3 │ </>)
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a comment length of 44. Maximum allowed is 40.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var jsx = (<>
+ 2 │         { /* this line has 40 characters */}
+   · ────────────────────────────────────────────
+ 3 │ </>)
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 38. Maximum allowed is 15.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var jsx = (<>
+ 2 │ { 38/* this line has 38 characters */}
+   · ──────────────────────────────────────
+ 3 │ </>)
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 38. Maximum allowed is 37.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var jsx = (<>
+ 2 │ { 38/* this line has 38 characters */}
+   · ──────────────────────────────────────
+ 3 │ </>)
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 38. Maximum allowed is 37.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var jsx = (<>
+ 2 │ { 38/* this line has 38 characters */}
+   · ──────────────────────────────────────
+ 3 │ </>)
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 50. Maximum allowed is 49.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var jsx = (<>
+ 2 │    <> 50 </>{ 50/* this line has 50 characters */}
+   · ──────────────────────────────────────────────────
+ 3 │ </>)
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 44. Maximum allowed is 37.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var jsx = (<>
+ 2 │          {/* this line has 44 characters */}
+   · ────────────────────────────────────────────
+ 3 │   <> </> {/* this line has 44 characters */}
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 57. Maximum allowed is 56.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var jsx = <Foo
+ 2 │          attr = {a && b/* this line has 57 characters */}
+   · ─────────────────────────────────────────────────────────
+ 3 │ ></Foo>;
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 57. Maximum allowed is 56.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var jsx = <Foo
+ 2 │          attr = {/* this line has 57 characters */a && b}
+   · ─────────────────────────────────────────────────────────
+ 3 │ ></Foo>;
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 56. Maximum allowed is 55.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var jsx = <Foo
+ 2 │          attr = {a & b/* this line has 56 characters */}
+   · ────────────────────────────────────────────────────────
+ 3 │ ></Foo>;
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 51. Maximum allowed is 30.
+   ╭─[max_len.tsx:3:1]
+ 2 │          attr = 
+ 3 │           {a & b /* this line has 51 characters */}
+   · ───────────────────────────────────────────────────
+ 4 │ ></Foo>;
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 80. Maximum allowed is 79.
+   ╭─[max_len.tsx:3:1]
+ 2 │   {/* this line has 37 characters */}
+ 3 │   <> </> {/* this line with two separate comments */} {/* have 80 characters */}
+   · ────────────────────────────────────────────────────────────────────────────────
+ 4 │ </>)
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 87. Maximum allowed is 85.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var jsx = (<>
+ 2 │   <> </> {/* this line with two separate comments */} {/* have 87 characters */} <> </>
+   · ───────────────────────────────────────────────────────────────────────────────────────
+ 3 │ </>)
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 87. Maximum allowed is 37.
+   ╭─[max_len.tsx:3:1]
+ 2 │   {/* this line has 37 characters */}
+ 3 │   <> </> {/* this line with two separate comments */} {/* have 87 characters */} <> </>
+   · ───────────────────────────────────────────────────────────────────────────────────────
+ 4 │ </>)
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 119. Maximum allowed is 37.
+   ╭─[max_len.tsx:3:1]
+ 2 │   {/* this line has 37 characters */}
+ 3 │   <> </> {/* this line with two separate comments */} {/* have > 80 characters */ /* another comment in same braces */}
+   · ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 4 │ </>)
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 55. Maximum allowed is 37.
+   ╭─[max_len.tsx:3:1]
+ 2 │   {/* this line has 37 characters */}
+ 3 │   <> </> {/* this is not treated as a comment */ a & b} {/* trailing */ /* comments */}
+   · ───────────────────────────────────────────────────────────────────────────────────────
+ 4 │ </>)
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 55. Maximum allowed is 37.
+   ╭─[max_len.tsx:3:1]
+ 2 │   {/* this line has 37 characters */}
+ 3 │   <> </> {/* this is not treated as a comment */ a & b} {/* trailing */ /* comments */}
+   · ───────────────────────────────────────────────────────────────────────────────────────
+ 4 │ </>)
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 15. Maximum allowed is 14.
+   ╭─[max_len.tsx:2:1]
+ 1 │ var jsx = (<>
+ 2 │ 12345678901234{/*
+   · ─────────────────
+ 3 │ */}
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable
+
+  ⚠ This line has a length of 31. Maximum allowed is 30.
+   ╭─[max_len.tsx:3:1]
+ 2 │ {/*
+ 3 │ this line has 31 characters */}
+   · ───────────────────────────────
+ 4 │ </>)
+   ╰────
+  help: Consider breaking this line into multiple lines or shortening comments/codes where applicable

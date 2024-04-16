@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, CommentKind};
+use oxc_ast::{ast::JSXExpression, AstKind, CommentKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -9,9 +9,6 @@ use regex::Regex;
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
-
-// the len of "//" "/*" "/*"
-static COMMENT_LENGTH: u32 = 2;
 
 struct IgnoreOptions {
     pattern_re: Option<Regex>,
@@ -154,75 +151,48 @@ fn find_line_index(index: usize, line_starts: &[usize]) -> usize {
     line_starts.binary_search(&index).unwrap_or_else(|x| x - 1)
 }
 
-fn is_comment(
+fn is_trailing_comment(
     line_index: usize,
-    source_text: &str,
-    line_starts: &[usize],
-    comments: &[(CommentKind, Span)],
     line_span: Span,
-) -> (bool, bool, bool) {
-    let mut has_comment = false;
+    comment: &(CommentKind, Span),
+    line_starts: &[usize],
+) -> bool {
+    let (_, span) = comment;
+    let comment_start_line = find_line_index(span.start as usize, line_starts);
+    let comment_end_line = find_line_index(span.end as usize, line_starts);
     let mut is_trailing = false;
-    let mut is_full_line_comment = false;
 
-    for &(kind, span) in comments {
-        let comment_start_line = find_line_index(span.start as usize, line_starts);
-        let comment_end_line = find_line_index(span.end as usize, line_starts);
-
-        match kind {
-            CommentKind::SingleLine if comment_start_line == line_index => {
-                has_comment = true;
-
-                // The start point of a SingleLine comment doesn't include the "//" or "/*"
-                // so we need to move 2 characters back when calculating.
-                let is_first_token_on_line = source_text
-                    [line_span.start as usize..(span.start - COMMENT_LENGTH) as usize]
-                    .trim()
-                    .is_empty();
-
-                if is_first_token_on_line {
-                    is_full_line_comment = true;
-                } else {
-                    is_trailing = true;
-                }
-            }
-            CommentKind::MultiLine
-                if (comment_start_line <= line_index && comment_end_line >= line_index) =>
-            {
-                has_comment = true;
-                if comment_start_line == line_index {
-                    // The start point of a SingleLine comment doesn't include the "//" or "/*"
-                    // so we need to move 2 characters back when calculating.
-                    let is_first_token_on_line = source_text
-                        [line_span.start as usize..(span.start - COMMENT_LENGTH) as usize]
-                        .trim()
-                        .is_empty();
-
-                    // add the length of '/*'
-                    if is_first_token_on_line && line_span.end <= span.end + COMMENT_LENGTH {
-                        is_full_line_comment = true;
-                    } else if line_span.end <= span.end + COMMENT_LENGTH {
-                        is_trailing = true;
-                    }
-                }
-
-                if comment_end_line == line_index {
-                    // the end of a multi-line comment
-                    if line_span.end == span.end + COMMENT_LENGTH {
-                        is_full_line_comment = true;
-                    }
-                }
-
-                // the middle of a multi-line comment
-                if comment_start_line < line_index && comment_end_line > line_index {
-                    is_full_line_comment = true;
-                }
-            }
-            _ => (),
-        }
+    if (comment_start_line == line_index && line_index <= comment_end_line)
+        && (line_span.end == span.end || comment_end_line > line_index)
+    {
+        is_trailing = true;
     }
 
-    (has_comment, is_trailing, is_full_line_comment)
+    is_trailing
+}
+
+fn is_full_line_comment(
+    line_index: usize,
+    line_span: Span,
+    line_text: &str,
+    comment: &(CommentKind, Span),
+    line_starts: &[usize],
+) -> bool {
+    let (_, span) = comment;
+    let comment_start_line = find_line_index(span.start as usize, line_starts);
+    let comment_end_line = find_line_index(span.end as usize, line_starts);
+    let mut is_full_comment = false;
+
+    if ((comment_start_line == line_index
+        && line_text[..(span.start - line_span.start) as usize].trim().is_empty()) // is_first_token_on_line
+        || (comment_start_line < line_index))
+        && (comment_end_line > line_index
+            || (line_span.end == span.end && comment_end_line == line_index))
+    {
+        is_full_comment = true;
+    }
+
+    is_full_comment
 }
 
 impl MaxLen {
@@ -404,12 +374,86 @@ impl Rule for MaxLen {
         let mut literal_spans = LiteralSpans::new();
         literal_spans.collect_from_ctx(ctx);
 
-        let comments = if self.comments > 0 || self.ignore_comments || self.ignore_trailing_comments
-        {
-            ctx.semantic().trivias().comments().collect::<Vec<_>>()
-        } else {
-            vec![]
-        };
+        let comments: Vec<(CommentKind, Span)> =
+            ctx.semantic().trivias().comments().collect::<Vec<_>>();
+
+        let mut jsx_empty_spans: Vec<Span> = vec![];
+
+        // fll all jsx emtpy node(comment node) and get the span
+        for ast_node in ctx.semantic().nodes().iter() {
+            if let AstKind::JSXExpressionContainer(node) = ast_node.kind() {
+                if let JSXExpression::EmptyExpression(_) = node.expression {
+                    jsx_empty_spans.push(node.span);
+                }
+            }
+        }
+
+        let mut updated_comments: Vec<(CommentKind, Span)> = Vec::new();
+        let mut jsx_index = 0; // the point of jsx_empty_spans
+        let mut old_comments_index = 0; // the point of comments
+        let comment_length: u32 = 2; // the len of "//" "/*" "/*"
+
+        // Use two pointers to traverse comments and JSX empty nodes to generate new comment nodes.
+        while old_comments_index < comments.len() && jsx_index < jsx_empty_spans.len() {
+            let (kind, span) = &comments[old_comments_index];
+
+            let jsx_node = jsx_empty_spans[jsx_index];
+            let jsx_node_first_line = find_line_index(jsx_node.start as usize, &line_starts);
+            let jsx_node_last_line = find_line_index(jsx_node.end as usize, &line_starts);
+
+            // If the current comment is included by the jsx_empty_span.
+            if span.start >= jsx_node.start
+                && span.end <= jsx_node.end
+                && jsx_node_first_line == jsx_node_last_line
+            {
+                // If this is the first comment contained by the current jsx_empty_span, then add the jsx_empty_span to updated_comments.
+                if updated_comments.last().map_or(true, |last| last.1 != jsx_node) {
+                    updated_comments.push((*kind, jsx_node));
+                }
+
+                old_comments_index += 1; // move to next comment
+            } else if span.start > jsx_node.end {
+                // If the start position of the current comment is after the current jsx_empty_span, move to the next jsx_empty_span.
+                jsx_index += 1;
+            } else {
+                let new_span = match kind {
+                    CommentKind::SingleLine => {
+                        // If the current comment is not in any jsx_empty_span, add it directly to the result.
+                        // add the length of the comment to the start of the comment //
+                        Span::new(span.start - comment_length, span.end)
+                    }
+                    CommentKind::MultiLine => {
+                        // If the current comment is not in any jsx_empty_span, add it directly to the result.
+                        // add the length of the comment to the start of the comment /* and */
+                        Span::new(span.start - comment_length, span.end + comment_length)
+                    }
+                };
+
+                updated_comments.push((*kind, new_span));
+                old_comments_index += 1; // move to next comment
+            }
+        }
+
+        // After the traversal is complete, if there are remaining comments and they are not in any jsx_empty_span
+        // they also need to be added to the result.
+        for k in old_comments_index..comments.len() {
+            let (kind, span) = &comments[k];
+
+            let new_span = match kind {
+                CommentKind::SingleLine => {
+                    // If the current comment is not in any jsx_empty_span, add it directly to the result.
+                    // add the length of the comment to the start of the comment //
+                    Span::new(span.start - comment_length, span.end)
+                }
+                CommentKind::MultiLine => {
+                    // If the current comment is not in any jsx_empty_span, add it directly to the result.
+                    // add the length of the comment to the start of the comment /* and */
+                    Span::new(span.start - comment_length, span.end + comment_length)
+                }
+            };
+
+            updated_comments.push((*kind, new_span));
+        }
 
         let pattern_re = if self.ignore_pattern.is_empty() {
             None
@@ -419,6 +463,7 @@ impl Rule for MaxLen {
 
         let mut line_start_index: u32 = 0;
         let max_comment_length = self.comments;
+        let mut cur_comment_index = 0;
         for (line_index, line_text) in full_text.lines().enumerate() {
             let mut text_to_measure = line_text;
             // Convert the length of line_text to u32 safely, handling any error.
@@ -426,51 +471,55 @@ impl Rule for MaxLen {
                 line_start_index.saturating_add(length)
             } else {
                 eprintln!("Length of line text is too large for u32");
-                continue;
+                break;
             };
 
             let line_span = Span::new(line_start_index, line_end_index);
             let mut line_is_comment = false;
+            if cur_comment_index < updated_comments.len() {
+                let mut comment;
+                while cur_comment_index < updated_comments.len() {
+                    comment = &updated_comments[cur_comment_index];
+                    if find_line_index(comment.1.start as usize, &line_starts) <= line_index {
+                        cur_comment_index += 1;
+                    } else {
+                        break;
+                    }
+                }
 
-            if !comments.is_empty() {
-                let (has_comment, is_trailing, is_full_line_comment) =
-                    is_comment(line_index, full_text, &line_starts, &comments, line_span);
+                if cur_comment_index > 0 {
+                    cur_comment_index -= 1;
+                }
 
-                line_is_comment = is_full_line_comment;
+                comment = &updated_comments[cur_comment_index];
 
-                if has_comment {
-                    // ignore full line comments
-                    if is_full_line_comment && self.ignore_comments {
-                        line_start_index = line_end_index + 1;
-                        continue;
+                line_is_comment =
+                    is_full_line_comment(line_index, line_span, line_text, comment, &line_starts);
+
+                if line_is_comment && self.ignore_comments {
+                    line_start_index = line_end_index + 1;
+                    continue;
+                }
+
+                let mut is_trailing = !line_is_comment
+                    && is_trailing_comment(line_index, line_span, comment, &line_starts);
+                let mut last_index = cur_comment_index;
+                while (self.ignore_comments || self.ignore_trailing_comments) && is_trailing {
+                    let (_, span) = comment;
+                    text_to_measure =
+                        text_to_measure[..(span.start - line_span.start) as usize].trim_end();
+
+                    // last_index - 1 can't be less than 0
+                    if last_index == 0 {
+                        break;
                     }
 
-                    // is_trailing comment
-                    if (self.ignore_comments || self.ignore_trailing_comments) && is_trailing {
-                        for (kind, span) in comments.iter().rev() {
-                            if line_span.start <= span.start && line_span.end >= span.end {
-                                if kind == &CommentKind::SingleLine {
-                                    // move back the length of '//'
-                                    text_to_measure = text_to_measure[..(span.start
-                                        - line_span.start
-                                        - COMMENT_LENGTH)
-                                        as usize]
-                                        .trim_end();
-                                } else if kind == &CommentKind::MultiLine {
-                                    // add the length of '*/'
-                                    if text_to_measure.len() == (span.end + COMMENT_LENGTH) as usize
-                                    {
-                                        // move back the length of '/*'
-                                        text_to_measure = text_to_measure[..(span.start
-                                            - line_span.start
-                                            - COMMENT_LENGTH)
-                                            as usize]
-                                            .trim_end();
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    last_index -= 1;
+                    comment = &updated_comments[last_index];
+                    let new_span =
+                        Span::new(line_span.start, line_span.start + text_to_measure.len() as u32);
+
+                    is_trailing = is_trailing_comment(line_index, new_span, comment, &line_starts);
                 }
             }
 
@@ -491,7 +540,12 @@ impl Rule for MaxLen {
                 continue;
             }
 
-            let actual_code_length = Self::compute_line_length(text_to_measure, self.tab_width);
+            let actual_code_length = if self.tab_width == 0 {
+                text_to_measure.len()
+            } else {
+                Self::compute_line_length(text_to_measure, self.tab_width)
+            };
+
             let comment_length_applies = line_is_comment && max_comment_length > 0;
             if comment_length_applies {
                 if actual_code_length > max_comment_length {
@@ -675,11 +729,75 @@ fn test() {
         ),
         ("\tfoo", Some(json!([4, 0]))),
 
-        // TODO: support jsx
-        // (
-        //     "var jsx = (<>\n  { /* this line has 38 characters */}\n</>)",
-        //     Some(json!(["error", { "code": 15, "comments": "38" }])),
-        // ),
+        // jsx
+        (
+            "var jsx = (<>\n  { /* this line has 38 characters */}\n</>)",
+            Some(json!([15, { "comments": 38 }])),
+        ),
+        (
+            "var jsx = (<>\n\t\t{ /* this line has 40 characters */}\n</>)",
+            Some(json!([15, 4, { "comments": 44 }])),
+        ),
+        (
+            "var jsx = (<>\n  <> text </>{ /* this line has 49 characters */}\n</>)",
+            Some(json!([13, { "ignoreComments": true }])),
+        ),
+        (
+            "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line has 44 characters */}\n</>)",
+            Some(json!([44, { "comments": 37 }])),
+        ),
+        (
+            "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line has 44 characters */}\n</>)",
+            Some(json!([37, { "ignoreTrailingComments": true }])),
+        ),
+        (
+            "var jsx = <Foo\n         attr = {a && b/* this line has 57 characters */}\n></Foo>;",
+            Some(json!([57])),
+        ),
+        (
+            "var jsx = <Foo\n         attr = {/* this line has 57 characters */a && b}\n></Foo>;",
+            Some(json!([57])),
+        ),
+        (
+            "var jsx = <Foo\n         attr = \n          {a & b/* this line has 50 characters */}\n></Foo>;",
+            Some(json!([50])),
+        ),
+        (
+            "var jsx = (<>\n  <> </> {/* this line with two separate comments */} {/* have 80 characters */}\n</>)",
+            Some(json!([80])),
+        ),
+        (
+            "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line with two separate comments */} {/* have 80 characters */}\n</>)",
+            Some(json!([37, { "ignoreTrailingComments": true }])),
+        ),
+        (
+            "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line with two separate comments */} {/* have 80 characters */}\n</>)",
+            Some(json!([37, { "ignoreComments": true }])),
+        ),
+        (
+            "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line with two separate comments */} {/* have > 80 characters */ /* another comment in same braces */}\n</>)",
+            Some(json!([37, { "ignoreTrailingComments": true }])),
+        ),
+        (
+            "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line with two separate comments */} {/* have > 80 characters */ /* another comment in same braces */}\n</>)",
+            Some(json!([37, { "ignoreComments": true }])),
+        ),
+        (
+            "var jsx = (<>\n  {/*\n       this line has 34 characters\n   */}\n</>)",
+            Some(json!([33, { "comments": 34 }])),
+        ),
+        (
+            "var jsx = (<>\n  {/*\n       this line has 34 characters\n   */}\n</>)",
+            Some(json!([33, { "ignoreComments": true }])),
+        ),
+        (
+            "var jsx = (<>\n  {a & b /* this line has 34 characters\n   */}\n</>)",
+            Some(json!([33, { "ignoreTrailingComments": true }])),
+        ),
+        (
+            "var jsx = (<>\n  {a & b /* this line has 34 characters\n   */}\n</>)",
+            Some(json!([33, { "ignoreComments": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -794,11 +912,83 @@ fn test() {
             Some(json!([0])),
         ),
 
-        // TODO: support jsx
-        // (
-        //     "var jsx = (<>\n  { /* this line has 38 characters */}\n</>)",
-        //     Some(json!([15, { "comments": 37 }])),
-        // ),
+        // jsx
+        (
+            "var jsx = (<>\n  { /* this line has 38 characters */}\n</>)",
+            Some(json!([15, { "comments": 37 }])),
+        ),
+        (
+            "var jsx = (<>\n\t\t{ /* this line has 40 characters */}\n</>)",
+            Some(json!([15, 4, { "comments": 40 }])),
+        ),
+        (
+            "var jsx = (<>\n{ 38/* this line has 38 characters */}\n</>)",
+            Some(json!([15, { "comments": 38 }])),
+        ),
+        (
+            "var jsx = (<>\n{ 38/* this line has 38 characters */}\n</>)",
+            Some(json!([37, { "ignoreTrailingComments": true }])),
+        ),
+        (
+            "var jsx = (<>\n{ 38/* this line has 38 characters */}\n</>)",
+            Some(json!([37, { "ignoreComments": true }])),
+        ),
+        (
+            "var jsx = (<>\n   <> 50 </>{ 50/* this line has 50 characters */}\n</>)",
+            Some(json!([49, { "comments": 100 }])),
+        ),
+        (
+            "var jsx = (<>\n         {/* this line has 44 characters */}\n  <> </> {/* this line has 44 characters */}\n</>)",
+            Some(json!([37, { "ignoreTrailingComments": true }])),
+        ),
+        (
+            "var jsx = <Foo\n         attr = {a && b/* this line has 57 characters */}\n></Foo>;",
+            Some(json!([56])),
+        ),
+        (
+            "var jsx = <Foo\n         attr = {/* this line has 57 characters */a && b}\n></Foo>;",
+            Some(json!([56])),
+        ),
+        (
+            "var jsx = <Foo\n         attr = {a & b/* this line has 56 characters */}\n></Foo>;",
+            Some(json!([55, { "ignoreTrailingComments": true }])),
+        ),
+        (
+            "var jsx = <Foo\n         attr = \n          {a & b /* this line has 51 characters */}\n></Foo>;",
+            Some(json!([30, { "comments": 44 }])),
+        ),
+        (
+            "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line with two separate comments */} {/* have 80 characters */}\n</>)",
+            Some(json!([79])),
+        ),
+        (
+            "var jsx = (<>\n  <> </> {/* this line with two separate comments */} {/* have 87 characters */} <> </>\n</>)",
+            Some(json!([85, { "ignoreTrailingComments": true }])),
+        ),
+        (
+            "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line with two separate comments */} {/* have 87 characters */} <> </>\n</>)",
+            Some(json!([37, { "ignoreComments": true }])),
+        ),
+        (
+            "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line with two separate comments */} {/* have > 80 characters */ /* another comment in same braces */}\n</>)",
+            Some(json!([37])),
+        ),
+        (
+            "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this is not treated as a comment */ a & b} {/* trailing */ /* comments */}\n</>)",
+            Some(json!([37, { "ignoreTrailingComments": true }])),
+        ),
+        (
+            "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this is not treated as a comment */ a & b} {/* trailing */ /* comments */}\n</>)",
+            Some(json!([37, { "ignoreComments": true }])),
+        ),
+        (
+            "var jsx = (<>\n12345678901234{/*\n*/}\n</>)",
+            Some(json!([14, { "ignoreTrailingComments": true }])),
+        ),
+        (
+            "var jsx = (<>\n{/*\nthis line has 31 characters */}\n</>)",
+            Some(json!([30, { "comments": 100 }])),
+        ),
     ];
 
     Tester::new(MaxLen::NAME, pass, fail).test_and_snapshot();
