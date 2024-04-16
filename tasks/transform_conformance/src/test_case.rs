@@ -161,6 +161,13 @@ pub trait TestCase {
             return true;
         }
 
+        // Skip custom preset and flow
+        if options.presets.iter().any(|value| value.as_str().is_some_and(|s| s.starts_with("./")))
+            || options.get_preset("flow").is_some()
+        {
+            return true;
+        }
+
         false
     }
 
