@@ -188,7 +188,11 @@ pub trait TestCase {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
 
-        let source_type = SourceType::from_path(path).unwrap().with_typescript(false);
+        let source_type = SourceType::from_path(path).unwrap().with_typescript(
+            // Some babel test cases have a js extension, but contain typescript code.
+            // Therefore, if the typescript plugin exists, enable the typescript.
+            self.options().get_plugin("transform-typescript").is_some(),
+        );
 
         let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
@@ -260,7 +264,7 @@ impl TestCase for ConformanceTestCase {
             } else {
                 input_is_js && output_is_js
             })
-            .with_typescript(false);
+            .with_typescript(self.options.get_plugin("transform-typescript").is_some());
 
         if filtered {
             println!("input_path: {:?}", &self.path);
