@@ -195,64 +195,39 @@ fn is_full_line_comment(
     is_full_comment
 }
 
-impl MaxLen {
-    fn generate_updated_comments(
-        &self,
-        comments: &[(CommentKind, Span)],
-        jsx_empty_spans: &[Span],
-        line_starts: &[usize],
-    ) -> Vec<(CommentKind, Span)> {
-        let mut updated_comments: Vec<(CommentKind, Span)> = Vec::new();
-        let mut jsx_index = 0; // the point of jsx_empty_spans
-        let mut old_comments_index = 0; // the point of comments
-        let comment_length: u32 = 2; // the len of "//" "/*" "/*"
+fn generate_updated_comments(
+    comments: &[(CommentKind, Span)],
+    jsx_empty_spans: &[Span],
+    line_starts: &[usize],
+) -> Vec<(CommentKind, Span)> {
+    let mut updated_comments: Vec<(CommentKind, Span)> = Vec::new();
+    let mut jsx_index = 0; // the point of jsx_empty_spans
+    let mut old_comments_index = 0; // the point of comments
+    let comment_length: u32 = 2; // the len of "//" "/*" "/*"
 
-        // Use two pointers to traverse comments and JSX empty nodes to generate new comment nodes.
-        while old_comments_index < comments.len() && jsx_index < jsx_empty_spans.len() {
-            let (kind, span) = &comments[old_comments_index];
+    // Use two pointers to traverse comments and JSX empty nodes to generate new comment nodes.
+    while old_comments_index < comments.len() && jsx_index < jsx_empty_spans.len() {
+        let (kind, span) = &comments[old_comments_index];
 
-            let jsx_node = jsx_empty_spans[jsx_index];
-            let jsx_node_first_line = find_line_index(jsx_node.start as usize, &line_starts);
-            let jsx_node_last_line = find_line_index(jsx_node.end as usize, &line_starts);
+        let jsx_node = jsx_empty_spans[jsx_index];
+        let jsx_node_first_line = find_line_index(jsx_node.start as usize, line_starts);
+        let jsx_node_last_line = find_line_index(jsx_node.end as usize, line_starts);
 
-            // If the current comment is included by the jsx_empty_span.
-            if span.start >= jsx_node.start
-                && span.end <= jsx_node.end
-                && jsx_node_first_line == jsx_node_last_line
-            {
-                // If this is the first comment contained by the current jsx_empty_span, then add the jsx_empty_span to updated_comments.
-                if updated_comments.last().map_or(true, |last| last.1 != jsx_node) {
-                    updated_comments.push((*kind, jsx_node));
-                }
-
-                old_comments_index += 1; // move to next comment
-            } else if span.start > jsx_node.end {
-                // If the start position of the current comment is after the current jsx_empty_span, move to the next jsx_empty_span.
-                jsx_index += 1;
-            } else {
-                let new_span = match kind {
-                    CommentKind::SingleLine => {
-                        // If the current comment is not in any jsx_empty_span, add it directly to the result.
-                        // add the length of the comment to the start of the comment //
-                        Span::new(span.start - comment_length, span.end)
-                    }
-                    CommentKind::MultiLine => {
-                        // If the current comment is not in any jsx_empty_span, add it directly to the result.
-                        // add the length of the comment to the start of the comment /* and */
-                        Span::new(span.start - comment_length, span.end + comment_length)
-                    }
-                };
-
-                updated_comments.push((*kind, new_span));
-                old_comments_index += 1; // move to next comment
+        // If the current comment is included by the jsx_empty_span.
+        if span.start >= jsx_node.start
+            && span.end <= jsx_node.end
+            && jsx_node_first_line == jsx_node_last_line
+        {
+            // If this is the first comment contained by the current jsx_empty_span, then add the jsx_empty_span to updated_comments.
+            if updated_comments.last().map_or(true, |last| last.1 != jsx_node) {
+                updated_comments.push((*kind, jsx_node));
             }
-        }
 
-        // After the traversal is complete, if there are remaining comments and they are not in any jsx_empty_span
-        // they also need to be added to the result.
-        for k in old_comments_index..comments.len() {
-            let (kind, span) = &comments[k];
-
+            old_comments_index += 1; // move to next comment
+        } else if span.start > jsx_node.end {
+            // If the start position of the current comment is after the current jsx_empty_span, move to the next jsx_empty_span.
+            jsx_index += 1;
+        } else {
             let new_span = match kind {
                 CommentKind::SingleLine => {
                     // If the current comment is not in any jsx_empty_span, add it directly to the result.
@@ -267,10 +242,35 @@ impl MaxLen {
             };
 
             updated_comments.push((*kind, new_span));
+            old_comments_index += 1; // move to next comment
         }
-
-        updated_comments
     }
+
+    // After the traversal is complete, if there are remaining comments and they are not in any jsx_empty_span
+    // they also need to be added to the result.
+    for comment in comments.iter().skip(old_comments_index) {
+        let (kind, span) = &comment;
+
+        let new_span = match kind {
+            CommentKind::SingleLine => {
+                // If the current comment is not in any jsx_empty_span, add it directly to the result.
+                // add the length of the comment to the start of the comment //
+                Span::new(span.start - comment_length, span.end)
+            }
+            CommentKind::MultiLine => {
+                // If the current comment is not in any jsx_empty_span, add it directly to the result.
+                // add the length of the comment to the start of the comment /* and */
+                Span::new(span.start - comment_length, span.end + comment_length)
+            }
+        };
+
+        updated_comments.push((*kind, new_span));
+    }
+
+    updated_comments
+}
+
+impl MaxLen {
     fn compute_line_length(line: &str, tab_width: usize) -> usize {
         let mut extra_character_count: usize = 0;
         let mut last_index: usize = 0; // Record the position after the previous segment
@@ -459,7 +459,7 @@ impl Rule for MaxLen {
             }
         }
 
-        let updated_comments = self.generate_updated_comments(
+        let updated_comments = generate_updated_comments(
             &ctx.semantic().trivias().comments().collect::<Vec<_>>(),
             &jsx_empty_spans,
             &line_starts,
@@ -497,9 +497,7 @@ impl Rule for MaxLen {
                     }
                 }
 
-                if cur_comment_index > 0 {
-                    cur_comment_index -= 1;
-                }
+                cur_comment_index = cur_comment_index.saturating_sub(1);
 
                 comment = &updated_comments[cur_comment_index];
 
@@ -528,8 +526,8 @@ impl Rule for MaxLen {
                     last_index -= 1;
                     comment = &updated_comments[last_index];
 
-                    let new_span =
-                        Span::new(line_span.start, line_span.start + text_to_measure.len() as u32);
+                    let text_len = u32::try_from(text_to_measure.len()).unwrap_or(0);
+                    let new_span = Span::new(line_span.start, line_span.start + text_len);
 
                     is_trailing = is_trailing_comment(line_index, new_span, comment, &line_starts);
                 }
