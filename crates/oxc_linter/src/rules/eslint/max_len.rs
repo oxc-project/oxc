@@ -182,9 +182,14 @@ fn is_full_line_comment(
     let comment_start_line = find_line_index(span.start as usize, line_starts);
     let comment_end_line = find_line_index(span.end as usize, line_starts);
     let mut is_full_comment = false;
+    let mut is_first_token_on_line = false;
 
-    if ((comment_start_line == line_index
-        && line_text[..(span.start - line_span.start) as usize].trim().is_empty()) // is_first_token_on_line
+    if span.start >= line_span.start && comment_start_line == line_index {
+        is_first_token_on_line =
+            line_text[..(span.start - line_span.start) as usize].trim().is_empty();
+    }
+
+    if ((comment_start_line == line_index && is_first_token_on_line)
         || (comment_start_line < line_index))
         && (comment_end_line > line_index
             || (line_span.end == span.end && comment_end_line == line_index))
