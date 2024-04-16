@@ -5,7 +5,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -64,7 +64,7 @@ impl Rule for CheckPropertyNames {
         let resolved_property_tag_name = settings.resolve_tag_name("property");
 
         for jsdoc in ctx.semantic().jsdoc().iter_all() {
-            let mut seen = FxHashMap::default();
+            let mut seen: FxHashMap<&str, FxHashSet<Span>> = FxHashMap::default();
             for tag in jsdoc.tags() {
                 if tag.kind.parsed() != resolved_property_tag_name {
                     continue;
@@ -75,22 +75,6 @@ impl Rule for CheckPropertyNames {
                 };
 
                 let type_name = name_part.parsed();
-
-                // Check duplicated
-                if let Some(duplicated_span) = seen.get(&type_name) {
-                    ctx.diagnostic(miette!(
-                        severity = Severity::Warning,
-                        labels = [duplicated_span, &name_part.span]
-                            .iter()
-                            .map(|span| LabeledSpan::at(
-                                (span.start as usize)..(span.end as usize),
-                                "Duplicated property".to_string(),
-                            ))
-                            .collect::<Vec<_>>(),
-                        help = format!("@property `{type_name}` is duplicated on the same block."),
-                        "eslint-plugin-jsdoc(check-property-names): Duplicate @property found."
-                    ));
-                }
 
                 // Check property path has a root
                 if type_name.contains('.') {
@@ -109,7 +93,23 @@ impl Rule for CheckPropertyNames {
                     }
                 }
 
-                seen.insert(type_name, name_part.span);
+                // Check duplicated(report later)
+                seen.entry(type_name).or_default().insert(name_part.span);
+            }
+
+            for (type_name, spans) in seen.iter().filter(|(_, spans)| 1 < spans.len()) {
+                ctx.diagnostic(miette!(
+                    severity = Severity::Warning,
+                    labels = spans
+                        .iter()
+                        .map(|span| LabeledSpan::at(
+                            (span.start as usize)..(span.end as usize),
+                            "Duplicated property".to_string(),
+                        ))
+                        .collect::<Vec<_>>(),
+                    help = format!("@property `{type_name}` is duplicated on the same block."),
+                    "eslint-plugin-jsdoc(check-property-names): Duplicate @property found."
+                ));
             }
         }
     }
@@ -330,6 +330,7 @@ fn test() {
 			          /**
 			           * @typedef {SomeType} SomeTypedef
 			           * @property cfg
+			           * @property cfg.foo
 			           * @property cfg.foo
 			           * @property cfg.foo
 			           */

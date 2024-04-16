@@ -73,7 +73,10 @@ expression: check_property_names
  7 │                        * @property cfg.foo
    ·                                    ───┬───
    ·                                       ╰── Duplicated property
- 8 │                        */
+ 8 │                        * @property cfg.foo
+   ·                                    ───┬───
+   ·                                       ╰── Duplicated property
+ 9 │                        */
    ╰────
   help: @property `cfg.foo` is duplicated on the same block.
 
