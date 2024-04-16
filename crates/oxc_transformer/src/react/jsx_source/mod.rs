@@ -1,10 +1,14 @@
+mod diagnostics;
+
 use std::rc::Rc;
 
 use oxc_ast::ast::*;
-use oxc_span::SPAN;
+use oxc_span::{Span, SPAN};
 use oxc_syntax::NumberBase;
 
 use crate::context::Ctx;
+
+use self::diagnostics::DuplicateSourceProp;
 
 const SOURCE: &str = "__source";
 const FILE_NAME_VAR: &str = "_jsxFileName";
@@ -40,7 +44,6 @@ impl<'a> ReactJsxSource<'a> {
     }
 
     pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
-        self.should_add_jsx_file_name_variable = true;
         self.add_source_attribute(elem);
     }
 
@@ -53,12 +56,30 @@ impl<'a> ReactJsxSource<'a> {
         let obj = self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false);
         ObjectPropertyKind::ObjectProperty(obj)
     }
+
+    pub fn report_error(&self, span: Span) {
+        self.ctx.error(DuplicateSourceProp(span));
+    }
 }
 
 impl<'a> ReactJsxSource<'a> {
     /// `<sometag __source={ { fileName: 'this/file.js', lineNumber: 10, columnNumber: 1 } } />`
     ///           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    fn add_source_attribute(&self, elem: &mut JSXOpeningElement<'a>) {
+    fn add_source_attribute(&mut self, elem: &mut JSXOpeningElement<'a>) {
+        // Check if `__source` attribute already exists
+        for item in &elem.attributes {
+            if let JSXAttributeItem::Attribute(attribute) = item {
+                if let JSXAttributeName::Identifier(ident) = &attribute.name {
+                    if ident.name == SOURCE {
+                        self.report_error(ident.span);
+                        return;
+                    }
+                }
+            }
+        }
+
+        self.should_add_jsx_file_name_variable = true;
+
         let key = JSXAttributeName::Identifier(self.ctx.ast.jsx_identifier(SPAN, SOURCE.into()));
         let object = self.get_source_object();
         let expr = self.ctx.ast.jsx_expression_container(SPAN, JSXExpression::Expression(object));

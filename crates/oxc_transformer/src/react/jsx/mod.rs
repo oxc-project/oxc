@@ -279,6 +279,9 @@ impl<'a> ReactJsx<'a> {
         // The object properties for the second argument of `React.createElement`
         let mut properties = self.ast().new_vec();
 
+        let mut self_attr_span = None;
+        let mut source_attr_span = None;
+
         if let Some(attributes) = attributes {
             for attribute in attributes {
                 match attribute {
@@ -294,6 +297,14 @@ impl<'a> ReactJsx<'a> {
                         }
                     }
                     JSXAttributeItem::Attribute(attr) if attr.is_key() => {
+                        if matches!(&attr.name, JSXAttributeName::Identifier(ident) if ident.name == "__self")
+                        {
+                            self_attr_span = Some(attr.name.span());
+                        } else if matches!(&attr.name, JSXAttributeName::Identifier(ident) if ident.name == "__source")
+                        {
+                            source_attr_span = Some(attr.name.span());
+                        }
+
                         if attr.value.is_none() {
                             self.ctx.error(ValuelessKey(attr.name.span()));
                         }
@@ -346,10 +357,18 @@ impl<'a> ReactJsx<'a> {
         }
 
         if self.options.is_jsx_self_plugin_enabled() {
-            properties.push(self.jsx_self.get_object_property_kind_for_jsx_plugin());
+            if let Some(span) = self_attr_span {
+                self.jsx_self.report_error(span);
+            } else {
+                properties.push(self.jsx_self.get_object_property_kind_for_jsx_plugin());
+            }
         }
         if self.options.is_jsx_source_plugin_enabled() {
-            properties.push(self.jsx_source.get_object_property_kind_for_jsx_plugin());
+            if let Some(span) = source_attr_span {
+                self.jsx_source.report_error(span);
+            } else {
+                properties.push(self.jsx_source.get_object_property_kind_for_jsx_plugin());
+            }
         }
 
         self.add_import(e, has_key_after_props_spread, need_jsxs);
