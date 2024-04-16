@@ -104,8 +104,8 @@ impl<'a> ListenerMap for Statement<'a> {
             Self::IfStatement(stmt) => {
                 let test_result = stmt.test.get_value_and_report_effects(options);
 
-                if let Some(falsy) = test_result.get_falsy_value() {
-                    if falsy {
+                if let Some(is_falsy) = test_result.get_falsy_value() {
+                    if is_falsy {
                         if let Some(alternate) = &stmt.alternate {
                             alternate.report_effects(options);
                         }
@@ -118,6 +118,20 @@ impl<'a> ListenerMap for Statement<'a> {
                         alternate.report_effects(options);
                     }
                 }
+            }
+            Self::DoWhileStatement(stmt) => {
+                if stmt
+                    .test
+                    .get_value_and_report_effects(options)
+                    .get_falsy_value()
+                    .is_some_and(|is_falsy| is_falsy)
+                {
+                    return;
+                }
+                stmt.body.report_effects(options);
+            }
+            Self::DebuggerStatement(stmt) => {
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::Debugger(stmt.span));
             }
             _ => {}
         }
@@ -435,8 +449,8 @@ impl<'a> ListenerMap for ConditionalExpression<'a> {
     fn get_value_and_report_effects(&self, options: &NodeListenerOptions) -> Value {
         let test_result = self.test.get_value_and_report_effects(options);
 
-        if let Some(falsy) = test_result.get_falsy_value() {
-            if falsy {
+        if let Some(is_falsy) = test_result.get_falsy_value() {
+            if is_falsy {
                 self.alternate.get_value_and_report_effects(options)
             } else {
                 self.consequent.get_value_and_report_effects(options)

@@ -13,9 +13,7 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
-use oxc_transformer::{
-    DecoratorsOptions, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
-};
+use oxc_transformer::{ReactOptions, TransformOptions, Transformer, TypeScriptOptions};
 
 use crate::{fixture_root, root, TestRunnerEnv, PLUGINS_NOT_SUPPORTED_YET};
 
@@ -98,11 +96,6 @@ fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOpti
 
     Ok(TransformOptions {
         assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
-        decorators: options
-            .get_plugin("proposal-decorators")
-            .map(get_options::<DecoratorsOptions>)
-            .transpose()?
-            .unwrap_or_default(),
         typescript: options
             .get_plugin("transform-typescript")
             .map(get_options::<TypeScriptOptions>)
@@ -131,24 +124,16 @@ pub trait TestCase {
             return true;
         }
 
-        let dir = self.path().parent().unwrap();
-        // Skip Babel 7 specific tests
-        // https://github.com/babel/babel/issues/10746
-        // We implement Babel 8 breaking changes under the BABEL_8_BREAKING env flag.
-        // To test the breaking changes, please duplicate the affected tests with the -babel-7 suffix and add BABEL_8_BREAKING: false to test options.
-        if dir
-            .file_name()
-            .is_some_and(|file_name| file_name.to_string_lossy().ends_with("-babel-7"))
-        {
-            return true;
-        }
-
-        // Skip deprecated react options
-        if options.babel_8_breaking.is_some_and(|b| b) {
-            if let Ok(options) = self.transform_options() {
-                if options.react.use_built_ins.is_some() || options.react.use_spread.is_some() {
+        if let Some(b) = options.babel_8_breaking {
+            if b {
+                // Skip deprecated react options
+                if self.transform_options().as_ref().is_ok_and(|options| {
+                    options.react.use_built_ins.is_some() || options.react.use_spread.is_some()
+                }) {
                     return true;
                 }
+            } else {
+                return true;
             }
         }
 
@@ -166,6 +151,7 @@ pub trait TestCase {
 
         // babel skip test cases that in a directory starting with a dot
         // https://github.com/babel/babel/blob/0effd92d886b7135469d23612ceba6414c721673/packages/babel-helper-fixtures/src/index.ts#L223
+        let dir = self.path().parent().unwrap();
         if dir.file_name().is_some_and(|n| n.to_string_lossy().starts_with('.')) {
             return true;
         }
