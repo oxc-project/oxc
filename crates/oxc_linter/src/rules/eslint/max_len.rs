@@ -347,12 +347,12 @@ impl MaxLen {
 
 impl Rule for MaxLen {
     fn from_configuration(value: serde_json::Value) -> Self {
-        // support ["error", { "code": 80, "tabWidth": 4 }] == [80, 4]
-        // support ["error", { "code": 80, "tabWidth": 4, "ignoreComments": true }] == [80, 4, { "ignoreComments": true }]
-        let param1 = value.get(0);
-        let param2 = value.get(1);
-        let param3 = value.get(2);
-        let mut config = value.get(1);
+        // support ["error", { "code": 80, "tabWidth": 4 }] == ["error", 80, 4]
+        // support ["error", { "code": 80, "tabWidth": 4, "ignoreComments": true }] == ["error", 80, 4, { "ignoreComments": true }]
+        let param1 = value.get(1);
+        let param2 = value.get(2);
+        let param3 = value.get(3);
+        let mut config = value.get(2);
 
         config = match param3 {
             Some(Value::Object(_)) => param3,
@@ -744,267 +744,267 @@ fn test() {
             "var longNameLongName = '𝌆𝌆'",
             Some(json!(["error", { "code": 5, "ignorePattern": "𝌆{2}" }])),
         ),
-        ("\tfoo", Some(json!([4, 0]))),
+        ("\tfoo", Some(json!(["error", 4, 0]))),
 
         // jsx
         (
             "var jsx = (<>\n  { /* this line has 38 characters */}\n</>)",
-            Some(json!([15, { "comments": 38 }])),
+            Some(json!(["error", 15, { "comments": 38 }])),
         ),
         (
             "var jsx = (<>\n\t\t{ /* this line has 40 characters */}\n</>)",
-            Some(json!([15, 4, { "comments": 44 }])),
+            Some(json!(["error", 15, 4, { "comments": 44 }])),
         ),
         (
             "var jsx = (<>\n  <> text </>{ /* this line has 49 characters */}\n</>)",
-            Some(json!([13, { "ignoreComments": true }])),
+            Some(json!(["error", 13, { "ignoreComments": true }])),
         ),
         (
             "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line has 44 characters */}\n</>)",
-            Some(json!([44, { "comments": 37 }])),
+            Some(json!(["error", 44, { "comments": 37 }])),
         ),
         (
             "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line has 44 characters */}\n</>)",
-            Some(json!([37, { "ignoreTrailingComments": true }])),
+            Some(json!(["error", 37, { "ignoreTrailingComments": true }])),
         ),
         (
             "var jsx = <Foo\n         attr = {a && b/* this line has 57 characters */}\n></Foo>;",
-            Some(json!([57])),
+            Some(json!(["error", 57])),
         ),
         (
             "var jsx = <Foo\n         attr = {/* this line has 57 characters */a && b}\n></Foo>;",
-            Some(json!([57])),
+            Some(json!(["error", 57])),
         ),
         (
             "var jsx = <Foo\n         attr = \n          {a & b/* this line has 50 characters */}\n></Foo>;",
-            Some(json!([50])),
+            Some(json!(["error", 50])),
         ),
         (
             "var jsx = (<>\n  <> </> {/* this line with two separate comments */} {/* have 80 characters */}\n</>)",
-            Some(json!([80])),
+            Some(json!(["error", 80])),
         ),
         (
             "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line with two separate comments */} {/* have 80 characters */}\n</>)",
-            Some(json!([37, { "ignoreTrailingComments": true }])),
+            Some(json!(["error", 37, { "ignoreTrailingComments": true }])),
         ),
         (
             "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line with two separate comments */} {/* have 80 characters */}\n</>)",
-            Some(json!([37, { "ignoreComments": true }])),
+            Some(json!(["error", 37, { "ignoreComments": true }])),
         ),
         (
             "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line with two separate comments */} {/* have > 80 characters */ /* another comment in same braces */}\n</>)",
-            Some(json!([37, { "ignoreTrailingComments": true }])),
+            Some(json!(["error", 37, { "ignoreTrailingComments": true }])),
         ),
         (
             "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line with two separate comments */} {/* have > 80 characters */ /* another comment in same braces */}\n</>)",
-            Some(json!([37, { "ignoreComments": true }])),
+            Some(json!(["error", 37, { "ignoreComments": true }])),
         ),
         (
             "var jsx = (<>\n  {/*\n       this line has 34 characters\n   */}\n</>)",
-            Some(json!([33, { "comments": 34 }])),
+            Some(json!(["error", 33, { "comments": 34 }])),
         ),
         (
             "var jsx = (<>\n  {/*\n       this line has 34 characters\n   */}\n</>)",
-            Some(json!([33, { "ignoreComments": true }])),
+            Some(json!(["error", 33, { "ignoreComments": true }])),
         ),
         (
             "var jsx = (<>\n  {a & b /* this line has 34 characters\n   */}\n</>)",
-            Some(json!([33, { "ignoreTrailingComments": true }])),
+            Some(json!(["error", 33, { "ignoreTrailingComments": true }])),
         ),
         (
             "var jsx = (<>\n  {a & b /* this line has 34 characters\n   */}\n</>)",
-            Some(json!([33, { "ignoreComments": true }])),
+            Some(json!(["error", 33, { "ignoreComments": true }])),
         ),
     ];
 
     let fail = vec![
-        ("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tvar i = 1;", Some(json!([80]))),
-        ("var x = 5, y = 2, z = 5;", Some(json!([10, 4]))),
-        ("\t\t\tvar i = 1;", Some(json!([15, 4]))),
-        ("\t\t\tvar i = 1;\n\t\t\tvar j = 1;", Some(json!([15, 4]))),
+        ("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tvar i = 1;", Some(json!(["error", 80]))),
+        ("var x = 5, y = 2, z = 5;", Some(json!(["error", 10, 4]))),
+        ("\t\t\tvar i = 1;", Some(json!(["error", 15, 4]))),
+        ("\t\t\tvar i = 1;\n\t\t\tvar j = 1;", Some(json!(["error", 15, 4]))),
         (
             "var /*this is a long non-removed inline comment*/ i = 1;",
-            Some(json!([20, 4, { "ignoreComments": true }])),
+            Some(json!(["error", 20, 4, { "ignoreComments": true }])),
         ),
-        ("var foobar = 'this line isn\\'t matched by the regexp';\nvar fizzbuzz = 'but this one is matched by the regexp';\n", Some(json!([20, 4, { "ignorePattern": "fizzbuzz" }]))),
+        ("var foobar = 'this line isn\\'t matched by the regexp';\nvar fizzbuzz = 'but this one is matched by the regexp';\n", Some(json!(["error", 20, 4, { "ignorePattern": "fizzbuzz" }]))),
         (
             "var longLine = 'will trigger'; // even with a comment",
-            Some(json!([10, 4, { "ignoreComments": true }])),
+            Some(json!(["error", 10, 4, { "ignoreComments": true }])),
         ),
         (
             "var foo = module.exports = {}; // really long trailing comment",
-            Some(json!([40, 4])),
+            Some(json!(["error", 40, 4])),
         ),
         (
             "foo('http://example.com/this/is/?a=longish&url=in#here');",
-            Some(json!([40, 4])),
+            Some(json!(["error", 40, 4])),
         ),
         (
             "foo(bar(bazz('this is a long'), 'line of'), 'stuff');",
-            Some(json!([40, 4])),
+            Some(json!(["error", 40, 4])),
         ),
         (
             "// A comment that exceeds the max comment length.",
-            Some(json!([80, 4, { "comments": 20 }])),
+            Some(json!(["error", 80, 4, { "comments": 20 }])),
         ),
         (
             "// A comment that exceeds the max comment length and the max code length, but will fail for being too long of a comment",
-            Some(json!([40, 4, { "comments": 80 }])),
+            Some(json!(["error", 40, 4, { "comments": 80 }])),
         ),
-        ("// A comment that exceeds the max comment length.", Some(json!([20]))),
+        ("// A comment that exceeds the max comment length.", Some(json!(["error", 20]))),
         (
             "//This is very long comment with more than 40 characters which is invalid",
-            Some(json!([40, 4, { "ignoreTrailingComments": true }])),
+            Some(json!(["error", 40, 4, { "ignoreTrailingComments": true }])),
         ),
 
         // check indented comment lines
         (
             "function foo() {\n//this line has 29 characters\n}",
-            Some(json!([40, 4, { "comments": 28 }])),
+            Some(json!(["error", 40, 4, { "comments": 28 }])),
         ),
         (
             "function foo() {\n    //this line has 33 characters\n}",
-            Some(json!([40, 4, { "comments": 32 }])),
+            Some(json!(["error", 40, 4, { "comments": 32 }])),
         ),
         (
             "function foo() {\n/*this line has 29 characters\nand this one has 32 characters*/\n}",
-            Some(json!([40, 4, { "comments": 28 }])),
+            Some(json!(["error", 40, 4, { "comments": 28 }])),
         ),
         (
             "function foo() {\n    /*this line has 33 characters\n    and this one has 36 characters*/\n}",
-            Some(json!([40, 4, { "comments": 32 }])),
+            Some(json!(["error", 40, 4, { "comments": 32 }])),
         ),
         (
             "function foo() {\n    var a; /*this line has 40 characters\n    and this one has 36 characters*/\n}",
-            Some(json!([39, 4, { "comments": 35 }])),
+            Some(json!(["error", 39, 4, { "comments": 35 }])),
         ),
         (
             "function foo() {\n    /*this line has 33 characters\n    and this one has 43 characters*/ var a;\n}",
-            Some(json!([42, 4, { "comments": 32 }])),
+            Some(json!(["error", 42, 4, { "comments": 32 }])),
         ),
 
         // check comments with the same length as non-comments
         (
             "// This commented line has precisely 51 characters.\nvar x = 'This line also has exactly 51 characters';",
-            Some(json!([20, { "ignoreComments": true }])),
+            Some(json!(["error", 20, { "ignoreComments": true }])),
         ),
 
         // ignoreStrings and ignoreTemplateLiterals options
         (
             "var foo = veryLongIdentifier;\nvar bar = 'this is a very long string';",
-            Some(json!([29, { "ignoreStrings": false, "ignoreTemplateLiterals": true }])),
+            Some(json!(["error", 29, { "ignoreStrings": false, "ignoreTemplateLiterals": true }])),
         ),
         (
             "var foo = veryLongIdentifier;\nvar bar = /this is a very very long pattern/;",
-            Some(json!([29, { "ignoreStrings": false, "ignoreRegExpLiterals": false }])),
+            Some(json!(["error", 29, { "ignoreStrings": false, "ignoreRegExpLiterals": false }])),
         ),
         (
             "var foo = veryLongIdentifier;\nvar bar = new RegExp('this is a very very long pattern');",
-            Some(json!([29, { "ignoreStrings": false, "ignoreTemplateLiterals": true }])),
+            Some(json!(["error", 29, { "ignoreStrings": false, "ignoreTemplateLiterals": true }])),
         ),
         (
             "var foo = veryLongIdentifier;\nvar bar = \"this is a very long string\";",
-            Some(json!([29, { "ignoreStrings": false, "ignoreTemplateLiterals": true }])),
+            Some(json!(["error", 29, { "ignoreStrings": false, "ignoreTemplateLiterals": true }])),
         ),
         (
             "var foo = veryLongIdentifier;\nvar bar = `this is a very long string`;",
-            Some(json!([29, { "ignoreStrings": false, "ignoreTemplateLiterals": false }])),
+            Some(json!(["error", 29, { "ignoreStrings": false, "ignoreTemplateLiterals": false }])),
         ),
         (
             "var foo = veryLongIdentifier;\nvar bar = `this is a very long string\nand this is another line that is very long`;",
-            Some(json!([29, { "ignoreStrings": false, "ignoreTemplateLiterals": false }])),
+            Some(json!(["error", 29, { "ignoreStrings": false, "ignoreTemplateLiterals": false }])),
         ),
         (
             "var foo = <div>this is a very very very long string</div>;",
-            Some(json!([29, 4, { "ignoreStrings": true }])),
+            Some(json!(["error", 29, 4, { "ignoreStrings": true }])),
         ),
 
         // Multi-code-point unicode glyphs
         (
             "'🙁😁😟☹️😣😖😩😱👎'",
-            Some(json!([10])),
+            Some(json!(["error", 10])),
         ),
         (
             "a",
-            Some(json!([0])),
+            Some(json!(["error", 0])),
         ),
 
         // jsx
         (
             "var jsx = (<>\n  { /* this line has 38 characters */}\n</>)",
-            Some(json!([15, { "comments": 37 }])),
+            Some(json!(["error", 15, { "comments": 37 }])),
         ),
         (
             "var jsx = (<>\n\t\t{ /* this line has 40 characters */}\n</>)",
-            Some(json!([15, 4, { "comments": 40 }])),
+            Some(json!(["error", 15, 4, { "comments": 40 }])),
         ),
         (
             "var jsx = (<>\n{ 38/* this line has 38 characters */}\n</>)",
-            Some(json!([15, { "comments": 38 }])),
+            Some(json!(["error", 15, { "comments": 38 }])),
         ),
         (
             "var jsx = (<>\n{ 38/* this line has 38 characters */}\n</>)",
-            Some(json!([37, { "ignoreTrailingComments": true }])),
+            Some(json!(["error", 37, { "ignoreTrailingComments": true }])),
         ),
         (
             "var jsx = (<>\n{ 38/* this line has 38 characters */}\n</>)",
-            Some(json!([37, { "ignoreComments": true }])),
+            Some(json!(["error", 37, { "ignoreComments": true }])),
         ),
         (
             "var jsx = (<>\n   <> 50 </>{ 50/* this line has 50 characters */}\n</>)",
-            Some(json!([49, { "comments": 100 }])),
+            Some(json!(["error", 49, { "comments": 100 }])),
         ),
         (
             "var jsx = (<>\n         {/* this line has 44 characters */}\n  <> </> {/* this line has 44 characters */}\n</>)",
-            Some(json!([37, { "ignoreTrailingComments": true }])),
+            Some(json!(["error", 37, { "ignoreTrailingComments": true }])),
         ),
         (
             "var jsx = <Foo\n         attr = {a && b/* this line has 57 characters */}\n></Foo>;",
-            Some(json!([56])),
+            Some(json!(["error", 56])),
         ),
         (
             "var jsx = <Foo\n         attr = {/* this line has 57 characters */a && b}\n></Foo>;",
-            Some(json!([56])),
+            Some(json!(["error", 56])),
         ),
         (
             "var jsx = <Foo\n         attr = {a & b/* this line has 56 characters */}\n></Foo>;",
-            Some(json!([55, { "ignoreTrailingComments": true }])),
+            Some(json!(["error", 55, { "ignoreTrailingComments": true }])),
         ),
         (
             "var jsx = <Foo\n         attr = \n          {a & b /* this line has 51 characters */}\n></Foo>;",
-            Some(json!([30, { "comments": 44 }])),
+            Some(json!(["error", 30, { "comments": 44 }])),
         ),
         (
             "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line with two separate comments */} {/* have 80 characters */}\n</>)",
-            Some(json!([79])),
+            Some(json!(["error", 79])),
         ),
         (
             "var jsx = (<>\n  <> </> {/* this line with two separate comments */} {/* have 87 characters */} <> </>\n</>)",
-            Some(json!([85, { "ignoreTrailingComments": true }])),
+            Some(json!(["error", 85, { "ignoreTrailingComments": true }])),
         ),
         (
             "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line with two separate comments */} {/* have 87 characters */} <> </>\n</>)",
-            Some(json!([37, { "ignoreComments": true }])),
+            Some(json!(["error", 37, { "ignoreComments": true }])),
         ),
         (
             "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this line with two separate comments */} {/* have > 80 characters */ /* another comment in same braces */}\n</>)",
-            Some(json!([37])),
+            Some(json!(["error", 37])),
         ),
         (
             "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this is not treated as a comment */ a & b} {/* trailing */ /* comments */}\n</>)",
-            Some(json!([37, { "ignoreTrailingComments": true }])),
+            Some(json!(["error", 37, { "ignoreTrailingComments": true }])),
         ),
         (
             "var jsx = (<>\n  {/* this line has 37 characters */}\n  <> </> {/* this is not treated as a comment */ a & b} {/* trailing */ /* comments */}\n</>)",
-            Some(json!([37, { "ignoreComments": true }])),
+            Some(json!(["error", 37, { "ignoreComments": true }])),
         ),
         (
             "var jsx = (<>\n12345678901234{/*\n*/}\n</>)",
-            Some(json!([14, { "ignoreTrailingComments": true }])),
+            Some(json!(["error", 14, { "ignoreTrailingComments": true }])),
         ),
         (
             "var jsx = (<>\n{/*\nthis line has 31 characters */}\n</>)",
-            Some(json!([30, { "comments": 100 }])),
+            Some(json!(["error", 30, { "comments": 100 }])),
         ),
     ];
 
