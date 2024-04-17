@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
 use serde_json::Value;
@@ -7,6 +7,7 @@ use serde_json::Value;
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BabelOptions {
+    pub cwd: Option<PathBuf>,
     #[serde(rename = "BABEL_8_BREAKING")]
     pub babel_8_breaking: Option<bool>,
     pub source_type: Option<String>,
@@ -23,6 +24,23 @@ pub struct BabelOptions {
     pub allow_undeclared_exports: bool,
     #[serde(default)]
     pub assumptions: Value,
+    /// Babel test helper for running tests on specific operating systems
+    pub os: Option<Vec<TestOs>>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum TestOs {
+    Linux,
+    Win32,
+    Windows,
+    Darwin,
+}
+
+impl TestOs {
+    pub fn is_windows(&self) -> bool {
+        matches!(self, Self::Win32 | Self::Windows)
+    }
 }
 
 impl BabelOptions {

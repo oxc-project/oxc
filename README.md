@@ -205,7 +205,7 @@ If you are unable to contribute by code, you can still participate by:
 
 - My small tutorial on [how to write a JavaScript Parser in Rust](https://oxc-project.github.io/docs/learn/parser_in_rust/intro.html)
 - My small article [Pursuit of Performance on Building a JavaScript Compiler](https://oxc-project.github.io/docs/learn/performance.html)
-- [Practical Data Oriented Design](https://vimeo.com/649009599) video by Andrew Kelley
+- [And more](https://oxc-project.github.io/docs/learn/references.html)
 
 ## 🤝 Credits
 
