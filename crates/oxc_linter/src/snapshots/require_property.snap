@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: require_property
+---
+  ⚠ eslint-plugin-jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
+   ╭─[require_property.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @typedef {object} SomeTypedef
+   ·                          ─────────────────
+ 4 │                        */
+   ╰────
+  help: Consider adding a `@property` tag or replacing it with a more specific type.
+
+  ⚠ eslint-plugin-jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
+   ╭─[require_property.tsx:5:17]
+ 4 │                        * @property someProp A should pass but B should not
+ 5 │                        * @typedef {object} SomeTypedefB
+   ·                          ─────────────────
+ 6 │                        */
+   ╰────
+  help: Consider adding a `@property` tag or replacing it with a more specific type.
+
+  ⚠ eslint-plugin-jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
+   ╭─[require_property.tsx:4:17]
+ 3 │                       /**
+ 4 │                        * @typedef {object} SomeTypedef
+   ·                          ─────────────────
+ 5 │                        */
+   ╰────
+  help: Consider adding a `@property` tag or replacing it with a more specific type.
+
+  ⚠ eslint-plugin-jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
+   ╭─[require_property.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @typedef {PlainObject} SomeTypedef
+   ·                          ──────────────────────
+ 4 │                        */
+   ╰────
+  help: Consider adding a `@property` tag or replacing it with a more specific type.
+
+  ⚠ eslint-plugin-jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.
+   ╭─[require_property.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @namespace {Object} SomeName
+   ·                          ───────────────────
+ 4 │                        */
+   ╰────
+  help: Consider adding a `@property` tag or replacing it with a more specific type.

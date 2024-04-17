@@ -361,6 +361,7 @@ mod jsdoc {
     pub mod check_access;
     pub mod check_property_names;
     pub mod empty_tags;
+    pub mod require_property;
 }
 
 mod tree_shaking {
@@ -688,5 +689,6 @@ oxc_macros::declare_all_lint_rules! {
     jsdoc::check_access,
     jsdoc::check_property_names,
     jsdoc::empty_tags,
+    jsdoc::require_property,
     tree_shaking::no_side_effects_in_initialization,
 }
