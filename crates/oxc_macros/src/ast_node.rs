@@ -3,8 +3,8 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use syn::{
     parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, Attribute, Field, Fields,
-    GenericArgument, Generics, Ident, Item, ItemEnum, ItemStruct, Meta, PathArguments, Token, Type,
-    TypePath, Variant,
+    GenericArgument, Generics, Ident, Item, ItemEnum, ItemStruct, Meta, Path, PathArguments,
+    PathSegment, Token, Type, TypePath, TypeReference, Variant,
 };
 
 pub fn ast_node(mut item: Item) -> TokenStream2 {
@@ -14,7 +14,7 @@ pub fn ast_node(mut item: Item) -> TokenStream2 {
         _ => panic!("ast_node attribute can only be used on enums and structure types!"),
     };
 
-    let traversable_test_trait = impl_traversable_test_trait(&result);
+    // let traversable_test_trait = impl_traversable_test_trait(&result);
 
     let ident = result.ident;
 
@@ -22,17 +22,20 @@ pub fn ast_node(mut item: Item) -> TokenStream2 {
 
     let traversable = result.traversable;
 
-    quote! {
+    let output = quote! {
         #item
 
-        #traversable_test_trait
+        // #traversable_test_trait
 
         mod #traversable_mod {
             use super::*;
 
             #traversable
         }
-    }
+    };
+
+    dbg!(&output.to_string());
+    output
 }
 
 fn modify_struct(item: &mut ItemStruct) -> NodeData {
@@ -74,6 +77,8 @@ fn modify_enum(item: &mut ItemEnum) -> NodeData {
 }
 
 // validators
+// there are only here for early errors we still do some in-depth checks while generating the
+// traversable modules.
 
 fn validate_struct_attribute(attr: &Attribute) {
     // make sure that no structure derives Clone/Copy traits.
@@ -108,8 +113,12 @@ fn validate_attribute(attr: &Attribute) {
 
 fn validate_field(field: &Field) {
     assert!(
-        matches!(&field.ty, Type::Path(ty) if ty.path.segments.len() == 1),
-        "Currently `ast_node` attribute only supports single segment type paths."
+        match &field.ty {
+            Type::Path(ty) if ty.path.segments.len() == 1 => true,
+            Type::Reference(_) => true,
+            _ => false,
+        },
+        "Currently `ast_node` attribute only supports single segment type paths and references."
     );
 }
 
@@ -224,13 +233,24 @@ fn transform_variant(mut variant: Variant) -> Variant {
 }
 
 fn transform_type(ty: Type) -> Type {
-    let Type::Path(ty) = ty else {
-        unreachable!("Should have been asserted at this point.");
-    };
+    match ty {
+        Type::Path(ty) => transform_type_path(ty),
+        Type::Reference(ty) => transform_type_reference(ty),
+        _ => ty,
+    }
+}
 
+fn transform_type_path(ty: TypePath) -> Type {
     let ty = transform_generic_type(ty);
 
     Type::Path(ty)
+}
+
+fn transform_type_reference(mut ty: TypeReference) -> Type {
+    let elem = transform_type(*ty.elem);
+    ty.elem = Box::from(elem);
+
+    Type::Reference(ty)
 }
 
 fn transform_generic_type(mut ty: TypePath) -> TypePath {
@@ -242,23 +262,34 @@ fn transform_generic_type(mut ty: TypePath) -> TypePath {
         .expect("Expected generic type with one or more path segments.")
         .into_value();
 
+    fn recreate_original_path(mut path: Path, ident: Ident, arguments: PathArguments) -> Path {
+        path.segments.push(PathSegment { ident, arguments });
+        path
+    }
+
+    fn recreate_original_type(
+        mut ty: TypePath,
+        seg: PathSegment,
+        arguments: PathArguments,
+    ) -> TypePath {
+        ty.path = recreate_original_path(ty.path, seg.ident, arguments);
+        ty
+    }
+
     match seg.arguments {
         // as the rule of thumb; if a type has lifetimes we should transform it to a traversable type.
         PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. })
             if args.iter().any(|arg| matches!(arg, GenericArgument::Lifetime(_))) =>
         {
             let path = if seg.ident == "Vec" {
-                parse_quote!(::SharedVec)
+                parse_quote!(SharedVec)
             } else if seg.ident == "Box" {
-                parse_quote!(::SharedBox)
+                parse_quote!(SharedBox)
             } else if !is_special_type_name(&seg.ident) {
                 let new_ident = format_ident!("Traversable{}", seg.ident);
-                parse_quote!(::#new_ident)
+                parse_quote!(#new_ident)
             } else {
-                let mut path = ty.path;
-                path.segments
-                    .push(syn::PathSegment { ident: seg.ident, arguments: PathArguments::None });
-                path
+                recreate_original_path(ty.path, seg.ident, PathArguments::None)
             };
 
             let args: Punctuated<GenericArgument, Token![,]> = args
@@ -274,7 +305,7 @@ fn transform_generic_type(mut ty: TypePath) -> TypePath {
         PathArguments::Parenthesized(_) => {
             panic!("`ast_node` does not support parenthesized types(eg. `Fn(u32) -> u32)`.");
         }
-        _ => ty,
+        _ => recreate_original_type(ty, seg, PathArguments::None),
     }
 }
 

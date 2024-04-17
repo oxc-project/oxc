@@ -9,12 +9,15 @@ use std::{
 };
 
 use bitflags::bitflags;
+use oxc_macros::ast_node;
 use oxc_span::{Atom, Span};
 use oxc_syntax::{BigintBase, NumberBase};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
+
+use crate::traverse::{SharedBox, SharedVec};
 
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -59,6 +62,7 @@ impl NullLiteral {
     }
 }
 
+// TODO: clone should only be removed from traversable version.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]

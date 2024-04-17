@@ -39,7 +39,7 @@ export interface FormalParameterRest extends Span {
 }
 "#;
 
-#[ast_node]
+// #[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -65,7 +65,7 @@ impl<'a> Program<'a> {
 }
 
 /// Expression
-#[ast_node]
+// #[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -1262,6 +1262,7 @@ impl<'a> Statement<'a> {
     }
 }
 
+#[ast_node]
 /// Directive Prologue
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
