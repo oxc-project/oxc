@@ -34,6 +34,7 @@ impl<'a> GatherNodeParts<'a> for MemberExpression<'a> {
                 expr.object.gather(f);
                 expr.field.gather(f);
             }
+            MemberExpression::Dummy => {}
         }
     }
 }
@@ -43,6 +44,7 @@ impl<'a> GatherNodeParts<'a> for AssignmentTarget<'a> {
         match self {
             AssignmentTarget::SimpleAssignmentTarget(t) => t.gather(f),
             AssignmentTarget::AssignmentTargetPattern(_) => {}
+            AssignmentTarget::Dummy => {}
         }
     }
 }

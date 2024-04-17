@@ -12,6 +12,7 @@ impl<'a> PropName for ObjectPropertyKind<'a> {
         match self {
             ObjectPropertyKind::ObjectProperty(prop) => prop.prop_name(),
             ObjectPropertyKind::SpreadProperty(_) => None,
+            ObjectPropertyKind::Dummy => None,
         }
     }
 }
@@ -35,6 +36,7 @@ impl<'a> PropName for PropertyKey<'a> {
                 Expression::StringLiteral(lit) => Some((&lit.value, lit.span)),
                 _ => None,
             },
+            PropertyKey::Dummy => None,
         }
     }
 }

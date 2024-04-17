@@ -12,6 +12,7 @@ impl<'a> PrivateBoundIdentifiers for ClassElement<'a> {
             ClassElement::MethodDefinition(def) => def.private_bound_identifiers(),
             ClassElement::PropertyDefinition(def) => def.private_bound_identifiers(),
             ClassElement::AccessorProperty(def) => def.private_bound_identifiers(),
+            ClassElement::Dummy => None,
         }
     }
 }

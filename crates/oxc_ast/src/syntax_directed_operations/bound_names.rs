@@ -16,6 +16,7 @@ impl<'a> BoundNames<'a> for BindingPattern<'a> {
             BindingPatternKind::ArrayPattern(array) => array.bound_names(f),
             BindingPatternKind::ObjectPattern(object) => object.bound_names(f),
             BindingPatternKind::AssignmentPattern(assignment) => assignment.bound_names(f),
+            BindingPatternKind::Dummy => {}
         }
     }
 }
@@ -154,6 +155,7 @@ impl<'a> BoundNames<'a> for ImportDeclaration<'a> {
                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
                         f(&specifier.local);
                     }
+                    ImportDeclarationSpecifier::Dummy => {}
                 }
             }
         }

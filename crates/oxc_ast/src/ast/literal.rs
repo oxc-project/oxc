@@ -17,6 +17,7 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
+use crate::traverse::ast::*;
 use crate::traverse::{SharedBox, SharedVec};
 
 #[derive(Debug, Clone, Hash)]
@@ -63,6 +64,7 @@ impl NullLiteral {
 }
 
 // TODO: clone should only be removed from traversable version.
+#[ast_node]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -114,6 +116,7 @@ impl<'a> Hash for NumericLiteral<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -131,6 +134,7 @@ impl<'a> BigIntLiteral<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -143,6 +147,7 @@ pub struct RegExpLiteral<'a> {
     pub regex: RegExp<'a>,
 }
 
+#[ast_node]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct RegExp<'a> {

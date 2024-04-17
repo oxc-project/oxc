@@ -3,8 +3,8 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use syn::{
     parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, Attribute, Field, Fields,
-    GenericArgument, Ident, Item, ItemEnum, ItemStruct, Path, PathArguments, PathSegment, Token,
-    Type, TypePath, TypeReference, Variant,
+    GenericArgument, Ident, Item, ItemEnum, ItemStruct, Meta, Path, PathArguments, PathSegment,
+    Token, Type, TypePath, TypeReference, Variant,
 };
 
 pub fn ast_node(mut item: Item) -> TokenStream2 {
@@ -186,9 +186,16 @@ fn generate_traversable_enum(item: &ItemEnum) -> TokenStream2 {
 
     let variants = transform_variants(&item.variants);
 
+    let mut attributes: Vec<Attribute> = Vec::new();
+
+    if has_clone(&item.attrs) {
+        println!("HERE");
+        attributes.push(parse_quote!(#[derive(Clone)]));
+    }
+
     let output = quote! {
         #[repr(C, u8)]
-        #[derive(Clone, Copy)]
+        #(#attributes)*
         pub enum #ident #generics {
             #variants
         }
@@ -207,7 +214,20 @@ fn transform_fields(fields: &Fields) -> Punctuated<Field, Token![,]> {
     fields.named.iter().map(ToOwned::to_owned).map(transform_field).collect()
 }
 
+enum TypeHint {
+    None,
+    Box,
+    Vec,
+}
+
 fn transform_field(mut field: Field) -> Field {
+    let hint = field.attrs.iter().fold(TypeHint::None, |acc, attr| {
+        match attr.path() {
+            path if path.is_ident("box") => TypeHint::Box,
+            path if path.is_ident("vec") => TypeHint::Vec,
+            _ => acc,
+        }
+    });
     field.ty = transform_type(field.ty);
     field.attrs.clear();
 
@@ -228,11 +248,13 @@ fn transform_variant(mut variant: Variant) -> Variant {
         .into_iter()
         .map(|mut field| {
             field.ty = transform_type(field.ty);
+            field.attrs.clear();
             field
         })
         .collect();
 
     variant.fields = Fields::Unnamed(fields);
+    variant.attrs.clear();
     variant
 }
 
@@ -334,6 +356,14 @@ fn transform_generic_type(mut ty: TypePath) -> TypePath {
 
 fn is_special_type_name(ident: &Ident) -> bool {
     ident == "Atom"
+}
+
+fn has_clone(attrs: &Vec<Attribute>) -> bool {
+    attrs.iter().any(|attr| {
+        let args = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated);
+        attr.path().is_ident("derive")
+            && args.is_ok_and(|args| args.iter().any(|arg| arg.path().is_ident("Clone")))
+    })
 }
 
 // fn impl_traversable_test_trait(node: &NodeData) -> TokenStream2 {
