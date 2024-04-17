@@ -1,0 +1,192 @@
+use oxc_diagnostics::{
+    miette::{self, Diagnostic},
+    thiserror::Error,
+};
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+
+use crate::{context::LintContext, rule::Rule};
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("eslint-plugin-jsdoc(require-property-description): Missing description in @property tag.")]
+#[diagnostic(severity(warning), help("Add a description to this @property tag."))]
+struct RequirePropertyDescriptionDiagnostic(#[label] pub Span);
+
+#[derive(Debug, Default, Clone)]
+pub struct RequirePropertyDescription;
+
+declare_oxc_lint!(
+    /// ### What it does
+    /// Requires that all `@property` tags have descriptions.
+    ///
+    /// ### Why is this bad?
+    /// The description of a property should be documented.
+    ///
+    /// ### Example
+    /// ```javascript
+    /// // Passing
+    /// /**
+    ///  * @typedef {SomeType} SomeTypedef
+    ///  * @property {number} foo Foo.
+    ///  */
+    ///
+    /// // Failing
+    /// /**
+    ///  * @typedef {SomeType} SomeTypedef
+    ///  * @property {number} foo
+    ///  */
+    /// ```
+    RequirePropertyDescription,
+    correctness
+);
+
+impl Rule for RequirePropertyDescription {
+    fn run_once(&self, ctx: &LintContext) {
+        let settings = &ctx.settings().jsdoc;
+        let resolved_property_tag_name = settings.resolve_tag_name("property");
+
+        for jsdoc in ctx.semantic().jsdoc().iter_all() {
+            for tag in jsdoc.tags() {
+                let tag_kind = tag.kind;
+
+                if tag_kind.parsed() != resolved_property_tag_name {
+                    continue;
+                }
+                let (_, _, comment_part) = tag.type_name_comment();
+                if !comment_part.parsed().is_empty() {
+                    continue;
+                };
+
+                ctx.diagnostic(RequirePropertyDescriptionDiagnostic(tag_kind.span));
+            }
+        }
+    }
+}
+
+#[test]
+fn test() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        (
+            "
+			          /**
+			           * @typedef {SomeType} SomeTypedef
+			           */
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			          /**
+			           * @typedef {SomeType} SomeTypedef
+			           * @property foo Foo.
+			           */
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			          /**
+			           * @namespace {SomeType} SomeName
+			           * @property foo Foo.
+			           */
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			          /**
+			           * @class
+			           * @property foo Foo.
+			           */
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			      /**
+			       * Typedef with multi-line property type.
+			       *
+			       * @typedef {object} MyType
+			       * @property {function(
+			       *   number
+			       * )} numberEater Method which takes a number.
+			       */
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			          /**
+			           * @typedef {SomeType} SomeTypedef
+			           * @prop foo ok
+			           */
+			      ",
+            None,
+            Some(serde_json::json!({
+              "jsdoc": {
+                "tagNamePreference": {
+                  "property": "prop",
+                },
+              },
+            })),
+        ),
+    ];
+
+    let fail = vec![
+        (
+            "
+			          /**
+			           * @typedef {SomeType} SomeTypedef
+			           * @property foo
+			           */
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			          /**
+			           * @typedef {SomeType} SomeTypedef
+			           * @property {string}
+			           */
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			          /**
+			           * @typedef {SomeType} SomeTypedef
+			           * @property {string} foo
+			           */
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			          /**
+			           * @typedef {SomeType} SomeTypedef
+			           * @prop foo
+			           */
+			      ",
+            None,
+            Some(serde_json::json!({
+              "jsdoc": {
+                "tagNamePreference": {
+                  "property": "prop",
+                },
+              },
+            })),
+        ),
+    ];
+
+    Tester::new(RequirePropertyDescription::NAME, pass, fail).test_and_snapshot();
+}
