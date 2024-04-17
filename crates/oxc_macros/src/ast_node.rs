@@ -1,10 +1,10 @@
 use proc_macro2::TokenStream as TokenStream2;
 
-use quote::{format_ident, quote, ToTokens};
+use quote::{format_ident, quote};
 use syn::{
-    parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, AttrStyle, Attribute,
-    Expr, Field, Fields, GenericArgument, Generics, Ident, Item, ItemEnum, ItemStruct, Meta, Path,
-    PathArguments, PathSegment, Token, Type, TypePath, TypeReference, Variant,
+    parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, Attribute, Field, Fields,
+    GenericArgument, Ident, Item, ItemEnum, ItemStruct, Path, PathArguments, PathSegment, Token,
+    Type, TypePath, TypeReference, Variant,
 };
 
 pub fn ast_node(mut item: Item) -> TokenStream2 {
@@ -43,11 +43,7 @@ fn modify_struct(item: &mut ItemStruct) -> NodeData {
     item.fields.iter().for_each(validate_field);
     // add the correct representation
     item.attrs.push(parse_quote!(#[repr(C)]));
-    NodeData {
-        ident: &item.ident,
-        generics: &item.generics,
-        traversable: generate_traversable_struct(item),
-    }
+    NodeData { ident: &item.ident, traversable: generate_traversable_struct(item) }
 }
 
 fn modify_enum(item: &mut ItemEnum) -> NodeData {
@@ -69,11 +65,7 @@ fn modify_enum(item: &mut ItemEnum) -> NodeData {
         .enumerate()
         .for_each(|(i, var)| var.discriminant = Some((parse_quote!(=), parse_quote!(#i as u8))));
 
-    NodeData {
-        ident: &item.ident,
-        generics: &item.generics,
-        traversable: generate_traversable_enum(item),
-    }
+    NodeData { ident: &item.ident, traversable: generate_traversable_enum(item) }
 }
 
 // validators
@@ -174,7 +166,6 @@ fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
 
     let output = quote! {
         #[repr(C)] // TODO: we can replace it with outer_attrs if we fix the issues with it.
-        #[derive(Debug)]
         // #(#outer_attrs)*
         pub struct #ident #generics {
             // #(#inner_attrs)*
@@ -197,7 +188,7 @@ fn generate_traversable_enum(item: &ItemEnum) -> TokenStream2 {
 
     let output = quote! {
         #[repr(C, u8)]
-        #[derive(Debug, Clone, Copy)]
+        #[derive(Clone, Copy)]
         pub enum #ident #generics {
             #variants
         }
@@ -282,11 +273,22 @@ fn transform_generic_type(mut ty: TypePath) -> TypePath {
 
     fn recreate_original_type(
         mut ty: TypePath,
-        seg: PathSegment,
+        ident: Ident,
         arguments: PathArguments,
     ) -> TypePath {
-        ty.path = recreate_original_path(ty.path, seg.ident, arguments);
+        ty.path = recreate_original_path(ty.path, ident, arguments);
         ty
+    }
+
+    fn transform_args(
+        args: Punctuated<GenericArgument, Token![,]>,
+    ) -> Punctuated<GenericArgument, Token![,]> {
+        args.into_iter()
+            .map(|arg| match arg {
+                GenericArgument::Type(ty) => GenericArgument::Type(transform_type(ty)),
+                _ => arg,
+            })
+            .collect()
     }
 
     match seg.arguments {
@@ -305,41 +307,44 @@ fn transform_generic_type(mut ty: TypePath) -> TypePath {
                 recreate_original_path(ty.path, seg.ident, PathArguments::None)
             };
 
-            let args: Punctuated<GenericArgument, Token![,]> = args
-                .into_iter()
-                .map(|arg| match arg {
-                    GenericArgument::Type(ty) => GenericArgument::Type(transform_type(ty)),
-                    _ => arg,
-                })
-                .collect();
+            let args = transform_args(args);
 
             parse_quote!(#path <#args>)
+        }
+        PathArguments::AngleBracketed(angle_args @ AngleBracketedGenericArguments { .. }) => {
+            recreate_original_type(
+                ty,
+                seg.ident,
+                PathArguments::AngleBracketed(AngleBracketedGenericArguments {
+                    args: transform_args(angle_args.args),
+                    ..angle_args
+                }),
+            )
         }
         PathArguments::Parenthesized(_) => {
             panic!("`ast_node` does not support parenthesized types(eg. `Fn(u32) -> u32)`.");
         }
-        _ => recreate_original_type(ty, seg, PathArguments::None),
+        _ => recreate_original_type(ty, seg.ident, PathArguments::None),
     }
 }
 
-fn transform_derive_attribute(attr: Attribute) -> Attribute {
-    attr
-}
+// fn transform_derive_attribute(attr: Attribute) -> Attribute {
+//     attr
+// }
 
 fn is_special_type_name(ident: &Ident) -> bool {
     ident == "Atom"
 }
 
-fn impl_traversable_test_trait(node: &NodeData) -> TokenStream2 {
-    let ident = node.ident;
-    let generics = node.generics;
-    quote! {
-        impl #generics crate::traverse::TraversableTest for #ident #generics { }
-    }
-}
+// fn impl_traversable_test_trait(node: &NodeData) -> TokenStream2 {
+//     let ident = node.ident;
+//     let generics = node.generics;
+//     quote! {
+//         impl #generics crate::traverse::TraversableTest for #ident #generics { }
+//     }
+// }
 
 struct NodeData<'a> {
     ident: &'a Ident,
-    generics: &'a Generics,
     traversable: TokenStream2,
 }
