@@ -138,10 +138,10 @@ fn validate_variant(var: &Variant) {
 fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
     let ident = format_ident!("Traversable{}", item.ident);
     let generics = &item.generics;
-    let attrs_len = item.attrs.len();
 
     // TODO: traits like serialization, Debug and Hash fail with `GCell`;
     // But we may want to keep other attributes.
+    // let attrs_len = item.attrs.len();
     // let (outer_attrs, inner_attrs) = item
     //     .attrs
     //     .iter()
@@ -214,20 +214,18 @@ fn transform_fields(fields: &Fields) -> Punctuated<Field, Token![,]> {
     fields.named.iter().map(ToOwned::to_owned).map(transform_field).collect()
 }
 
-enum TypeHint {
-    None,
-    Box,
-    Vec,
-}
+// enum TypeHint {
+//     None,
+//     Box,
+//     Vec,
+// }
 
 fn transform_field(mut field: Field) -> Field {
-    let hint = field.attrs.iter().fold(TypeHint::None, |acc, attr| {
-        match attr.path() {
-            path if path.is_ident("box") => TypeHint::Box,
-            path if path.is_ident("vec") => TypeHint::Vec,
-            _ => acc,
-        }
-    });
+    // let hint = field.attrs.iter().fold(TypeHint::None, |acc, attr| match attr.path() {
+    //     path if path.is_ident("box") => TypeHint::Box,
+    //     path if path.is_ident("vec") => TypeHint::Vec,
+    //     _ => acc,
+    // });
     field.ty = transform_type(field.ty);
     field.attrs.clear();
 
@@ -280,14 +278,6 @@ fn transform_type_reference(mut ty: TypeReference) -> Type {
 }
 
 fn transform_generic_type(mut ty: TypePath) -> TypePath {
-    assert!(ty.path.segments.len() >= 1);
-    let seg = ty
-        .path
-        .segments
-        .pop()
-        .expect("Expected generic type with one or more path segments.")
-        .into_value();
-
     fn recreate_original_path(mut path: Path, ident: Ident, arguments: PathArguments) -> Path {
         path.segments.push(PathSegment { ident, arguments });
         path
@@ -312,6 +302,14 @@ fn transform_generic_type(mut ty: TypePath) -> TypePath {
             })
             .collect()
     }
+
+    assert!(!ty.path.segments.is_empty());
+    let seg = ty
+        .path
+        .segments
+        .pop()
+        .expect("Expected generic type with one or more path segments.")
+        .into_value();
 
     match seg.arguments {
         // as the rule of thumb; if a type has lifetimes we should transform it to a traversable type.
@@ -346,7 +344,7 @@ fn transform_generic_type(mut ty: TypePath) -> TypePath {
         PathArguments::Parenthesized(_) => {
             panic!("`ast_node` does not support parenthesized types(eg. `Fn(u32) -> u32)`.");
         }
-        _ => recreate_original_type(ty, seg.ident, PathArguments::None),
+        PathArguments::None => recreate_original_type(ty, seg.ident, PathArguments::None),
     }
 }
 
@@ -358,7 +356,7 @@ fn is_special_type_name(ident: &Ident) -> bool {
     ident == "Atom"
 }
 
-fn has_clone(attrs: &Vec<Attribute>) -> bool {
+fn has_clone(attrs: &[Attribute]) -> bool {
     attrs.iter().any(|attr| {
         let args = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated);
         attr.path().is_ident("derive")

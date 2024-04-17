@@ -11,8 +11,7 @@ impl<'a> PropName for ObjectPropertyKind<'a> {
     fn prop_name(&self) -> Option<(&str, Span)> {
         match self {
             ObjectPropertyKind::ObjectProperty(prop) => prop.prop_name(),
-            ObjectPropertyKind::SpreadProperty(_) => None,
-            ObjectPropertyKind::Dummy => None,
+            ObjectPropertyKind::SpreadProperty(_) | ObjectPropertyKind::Dummy => None,
         }
     }
 }
@@ -30,13 +29,12 @@ impl<'a> PropName for PropertyKey<'a> {
     fn prop_name(&self) -> Option<(&str, Span)> {
         match self {
             PropertyKey::Identifier(ident) => Some((&ident.name, ident.span)),
-            PropertyKey::PrivateIdentifier(_) => None,
             PropertyKey::Expression(expr) => match &expr {
                 Expression::Identifier(ident) => Some((&ident.name, ident.span)),
                 Expression::StringLiteral(lit) => Some((&lit.value, lit.span)),
                 _ => None,
             },
-            PropertyKey::Dummy => None,
+            PropertyKey::PrivateIdentifier(_) | PropertyKey::Dummy => None,
         }
     }
 }

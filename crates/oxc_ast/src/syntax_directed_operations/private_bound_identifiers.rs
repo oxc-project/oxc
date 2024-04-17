@@ -8,11 +8,12 @@ pub trait PrivateBoundIdentifiers {
 impl<'a> PrivateBoundIdentifiers for ClassElement<'a> {
     fn private_bound_identifiers(&self) -> Option<PrivateIdentifier> {
         match self {
-            ClassElement::StaticBlock(_) | ClassElement::TSIndexSignature(_) => None,
+            ClassElement::StaticBlock(_)
+            | ClassElement::TSIndexSignature(_)
+            | ClassElement::Dummy => None,
             ClassElement::MethodDefinition(def) => def.private_bound_identifiers(),
             ClassElement::PropertyDefinition(def) => def.private_bound_identifiers(),
             ClassElement::AccessorProperty(def) => def.private_bound_identifiers(),
-            ClassElement::Dummy => None,
         }
     }
 }

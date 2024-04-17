@@ -1,4 +1,5 @@
 #![allow(dead_code)] // just for now
+#![allow(unused_imports)]
 use crate::ast;
 use oxc_allocator::Allocator;
 

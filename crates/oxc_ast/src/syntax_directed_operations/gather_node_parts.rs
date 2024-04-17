@@ -43,8 +43,7 @@ impl<'a> GatherNodeParts<'a> for AssignmentTarget<'a> {
     fn gather<F: FnMut(Atom<'a>)>(&self, f: &mut F) {
         match self {
             AssignmentTarget::SimpleAssignmentTarget(t) => t.gather(f),
-            AssignmentTarget::AssignmentTargetPattern(_) => {}
-            AssignmentTarget::Dummy => {}
+            AssignmentTarget::AssignmentTargetPattern(_) | AssignmentTarget::Dummy => {}
         }
     }
 }

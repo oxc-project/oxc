@@ -18,7 +18,6 @@ use serde::Serialize;
 use tsify::Tsify;
 
 use crate::traverse::ast::*;
-use crate::traverse::{SharedBox, SharedVec};
 
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]

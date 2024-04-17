@@ -2196,8 +2196,7 @@ pub mod walk_mut {
             }
             JSXAttributeValue::Element(elem) => visitor.visit_jsx_element(elem),
             JSXAttributeValue::Fragment(elem) => visitor.visit_jsx_fragment(elem),
-            JSXAttributeValue::StringLiteral(_) => {}
-            JSXAttributeValue::Dummy => {}
+            JSXAttributeValue::StringLiteral(_) | JSXAttributeValue::Dummy => {}
         }
     }
 
@@ -2217,8 +2216,7 @@ pub mod walk_mut {
     ) {
         match expr {
             JSXExpression::Expression(expr) => visitor.visit_expression(expr),
-            JSXExpression::EmptyExpression(_) => {}
-            JSXExpression::Dummy => {}
+            JSXExpression::EmptyExpression(_) | JSXExpression::Dummy => {}
         }
     }
 
@@ -2480,8 +2478,7 @@ pub mod walk_mut {
             ModuleDeclaration::TSExportAssignment(decl) => {
                 visitor.visit_expression(&mut decl.expression);
             }
-            ModuleDeclaration::TSNamespaceExportDeclaration(_) => {}
-            ModuleDeclaration::Dummy => {}
+            ModuleDeclaration::TSNamespaceExportDeclaration(_) | ModuleDeclaration::Dummy => {}
         }
         visitor.leave_node(kind);
     }

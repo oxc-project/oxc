@@ -2121,8 +2121,7 @@ pub mod walk {
     pub fn walk_jsx_expression<'a, V: Visit<'a>>(visitor: &mut V, expr: &JSXExpression<'a>) {
         match expr {
             JSXExpression::Expression(expr) => visitor.visit_expression(expr),
-            JSXExpression::EmptyExpression(_) => {}
-            JSXExpression::Dummy => {}
+            JSXExpression::EmptyExpression(_) | JSXExpression::Dummy => {}
         }
     }
 
@@ -2334,8 +2333,7 @@ pub mod walk {
             ModuleDeclaration::TSExportAssignment(decl) => {
                 visitor.visit_expression(&decl.expression);
             }
-            ModuleDeclaration::TSNamespaceExportDeclaration(_) => {}
-            ModuleDeclaration::Dummy => {}
+            ModuleDeclaration::TSNamespaceExportDeclaration(_) | ModuleDeclaration::Dummy => {}
         }
         visitor.leave_node(kind);
     }
@@ -2696,6 +2694,7 @@ pub mod walk {
     }
 
     pub fn walk_ts_type<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSType<'a>) {
+        #[allow(clippy::match_same_arms)]
         match ty {
             // Keyword
             TSType::TSAnyKeyword(ty) => visitor.visit_ts_any_keyword(ty),
