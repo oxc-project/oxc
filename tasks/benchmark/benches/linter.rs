@@ -39,7 +39,8 @@ fn bench_linter(criterion: &mut Criterion) {
                     .with_jest_plugin(true)
                     .with_jsx_a11y_plugin(true)
                     .with_nextjs_plugin(true)
-                    .with_react_perf_plugin(true);
+                    .with_react_perf_plugin(true)
+                    .with_config_path(Some(env::current_dir().unwrap().join("eslint.config.json")));
                 let linter = Linter::from_options(lint_options).unwrap();
                 let semantic = Rc::new(semantic_ret.semantic);
                 b.iter(|| {
