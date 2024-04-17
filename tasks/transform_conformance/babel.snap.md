@@ -1,7 +1,8 @@
-Passed: 138/209
+Passed: 140/209
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
+* babel-plugin-transform-react-jsx-development
 
 
 # babel-preset-typescript (6/16)
@@ -84,8 +85,4 @@ Passed: 138/209
 
 # babel-plugin-transform-react-jsx-self (1/2)
 * react-source/disable-with-super/input.js
-
-# babel-plugin-transform-react-jsx-development (0/2)
-* cross-platform/disallow-__self-as-jsx-attribute/input.js
-* cross-platform/disallow-__source-as-jsx-attribute/input.js
 

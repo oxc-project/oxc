@@ -1,9 +1,13 @@
+mod diagnostics;
+
 use std::rc::Rc;
 
 use oxc_ast::ast::*;
-use oxc_span::SPAN;
+use oxc_span::{Span, SPAN};
 
 use crate::context::Ctx;
+
+use self::diagnostics::DuplicateSelfProp;
 
 const SELF: &str = "__self";
 
@@ -40,12 +44,28 @@ impl<'a> ReactJsxSelf<'a> {
         let obj = self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false);
         ObjectPropertyKind::ObjectProperty(obj)
     }
+
+    pub fn report_error(&self, span: Span) {
+        self.ctx.error(DuplicateSelfProp(span));
+    }
 }
 
 impl<'a> ReactJsxSelf<'a> {
     /// `<div __self={this} />`
     ///       ^^^^^^^^^^^^^
     fn add_self_this_attribute(&self, elem: &mut JSXOpeningElement<'a>) {
+        // Check if `__self` attribute already exists
+        for item in &elem.attributes {
+            if let JSXAttributeItem::Attribute(attribute) = item {
+                if let JSXAttributeName::Identifier(ident) = &attribute.name {
+                    if ident.name == SELF {
+                        self.report_error(ident.span);
+                        return;
+                    }
+                }
+            }
+        }
+
         let name = JSXAttributeName::Identifier(JSXIdentifier::new(SPAN, SELF.into()));
         let value = {
             let jsx_expr = JSXExpression::Expression(self.ctx.ast.this_expression(SPAN));
