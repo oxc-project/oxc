@@ -837,6 +837,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 self.visit_variable_declaration(decl);
             }
             ForStatementInit::Expression(expr) => self.visit_expression(expr),
+            ForStatementInit::Dummy => {}
         }
         self.leave_node(kind);
     }
@@ -1741,7 +1742,7 @@ impl<'a> SemanticBuilder<'a> {
                 let symbol_id = self
                     .scope
                     .get_bindings(self.current_scope_id)
-                    .get(module_declaration.id.name().as_str());
+                    .get(module_declaration.id.as_atom().as_str());
                 self.namespace_stack.push(*symbol_id.unwrap());
                 self.in_type_definition = true;
             }

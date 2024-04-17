@@ -479,6 +479,7 @@ fn check_module_declaration<'a>(
     }
 
     let text = match decl {
+        ModuleDeclaration::Dummy => "import dummy",
         ModuleDeclaration::ImportDeclaration(_) => "import statement",
         ModuleDeclaration::ExportAllDeclaration(_)
         | ModuleDeclaration::ExportDefaultDeclaration(_)

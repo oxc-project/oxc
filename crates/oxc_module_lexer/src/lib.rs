@@ -225,10 +225,11 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
                 ModuleExportName::Identifier(ident) => (ident.span.start, ident.span.end),
                 // +1 -1 to remove the string quotes
                 ModuleExportName::StringLiteral(s) => (s.span.start + 1, s.span.end - 1),
+                ModuleExportName::Dummy => (0, 0),
             };
             ExportSpecifier {
-                n: s.exported.name().clone(),
-                ln: decl.source.is_none().then(|| s.local.name().clone()),
+                n: s.exported.as_atom(),
+                ln: decl.source.is_none().then(|| s.local.as_atom()),
                 s: exported_start,
                 e: exported_end,
                 ls: Some(s.local.span().start),
@@ -248,10 +249,11 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
             ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref(),
             ExportDefaultDeclarationKind::Expression(_)
             | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
-            | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => None,
+            | ExportDefaultDeclarationKind::TSEnumDeclaration(_)
+            | ExportDefaultDeclarationKind::Dummy => None,
         };
         self.exports.push(ExportSpecifier {
-            n: decl.exported.name().clone(),
+            n: decl.exported.as_atom(),
             ln: ln.map(|id| id.name.clone()),
             s: decl.exported.span().start,
             e: decl.exported.span().end,
@@ -263,7 +265,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
     fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration<'a>) {
         // export * as ns from 'foo'
         if let Some(exported) = &decl.exported {
-            let n = exported.name().clone();
+            let n = exported.as_atom();
             let s = exported.span().start;
             let e = exported.span().end;
             self.exports.push(ExportSpecifier { n: n.clone(), ln: None, s, e, ls: None, le: None });

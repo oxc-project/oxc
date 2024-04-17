@@ -343,6 +343,7 @@ impl<'a> Binder for TSEnumMember<'a> {
             TSEnumMemberName::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
             TSEnumMemberName::NumericLiteral(n) => Cow::Owned(n.value.to_string()),
             TSEnumMemberName::ComputedPropertyName(_) => panic!("TODO: implement"),
+            TSEnumMemberName::Dummy => panic!("Attempted bind operation on a dummy node!"),
         };
         builder.declare_symbol(
             self.span,
@@ -364,7 +365,7 @@ impl<'a> Binder for TSModuleDeclaration<'a> {
         };
         builder.declare_symbol(
             self.span,
-            self.id.name(),
+            self.id.as_atom().as_str(),
             SymbolFlags::NameSpaceModule | ambient,
             SymbolFlags::None,
         );

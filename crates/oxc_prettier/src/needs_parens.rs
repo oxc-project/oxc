@@ -600,8 +600,9 @@ impl<'a> Prettier<'a> {
                     SimpleAssignmentTarget::TSTypeAssertion(e) => {
                         Self::starts_with_no_lookahead_token(&e.expression, span)
                     }
+                    SimpleAssignmentTarget::Dummy => false,
                 },
-                AssignmentTarget::AssignmentTargetPattern(_) => false,
+                AssignmentTarget::AssignmentTargetPattern(_) | AssignmentTarget::Dummy => false,
             },
             Expression::MemberExpression(e) => {
                 Self::starts_with_no_lookahead_token(e.object(), span)
@@ -624,7 +625,8 @@ impl<'a> Prettier<'a> {
             Expression::UpdateExpression(e) => {
                 !e.prefix
                     && match &e.argument {
-                        SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => false,
+                        SimpleAssignmentTarget::AssignmentTargetIdentifier(_)
+                        | SimpleAssignmentTarget::Dummy => false,
                         SimpleAssignmentTarget::MemberAssignmentTarget(e) => {
                             Self::starts_with_no_lookahead_token(e.object(), span)
                         }
@@ -653,6 +655,7 @@ impl<'a> Prettier<'a> {
                 ChainElement::MemberExpression(e) => {
                     Self::starts_with_no_lookahead_token(e.object(), span)
                 }
+                ChainElement::Dummy => false,
             },
             Expression::TSSatisfiesExpression(e) => {
                 Self::starts_with_no_lookahead_token(&e.expression, span)

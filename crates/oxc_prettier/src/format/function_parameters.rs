@@ -54,6 +54,7 @@ pub(super) fn should_hug_the_only_function_parameter(
                 _ => false,
             }
         }
+        BindingPatternKind::Dummy => false,
     }
 }
 

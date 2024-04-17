@@ -87,7 +87,7 @@ impl<'a> TypeScript<'a> {
             return false;
         }
 
-        let name = ts_module_decl.id.name().clone();
+        let name = ts_module_decl.id.as_atom();
 
         if state.names.insert(name.clone()) {
             let stmt = self.create_variable_declaration_statement(&name, is_export);
@@ -151,16 +151,16 @@ impl<'a> TypeScript<'a> {
             Some(TSModuleDeclarationBody::TSModuleBlock(ts_module_block)) => {
                 self.ctx.ast.move_statement_vec(&mut ts_module_block.body)
             }
-            None => self.ctx.ast.new_vec(),
+            Some(TSModuleDeclarationBody::Dummy) | None => self.ctx.ast.new_vec(),
         };
 
-        let name = block.id.name();
+        let name = block.id.as_atom();
 
         // `(function (_N) { var x; })(N || (N = {}))`;
         //  ^^^^^^^^^^^^^^^^^^^^^^^^^^
         let callee = {
             let body = self.ctx.ast.function_body(SPAN, self.ctx.ast.new_vec(), body_statements);
-            let arg_name = self.get_namespace_arg_name(state, name);
+            let arg_name = self.get_namespace_arg_name(state, &name);
             let params = {
                 let ident =
                     self.ctx.ast.binding_pattern_identifier(BindingIdentifier::new(SPAN, arg_name));

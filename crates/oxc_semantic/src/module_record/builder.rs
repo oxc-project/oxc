@@ -165,7 +165,8 @@ impl ModuleRecordBuilder {
                 self.visit_export_named_declaration(export_named_decl);
             }
             ModuleDeclaration::TSExportAssignment(_)
-            | ModuleDeclaration::TSNamespaceExportDeclaration(_) => { /* noop */ }
+            | ModuleDeclaration::TSNamespaceExportDeclaration(_)
+            | ModuleDeclaration::Dummy => { /* noop */ }
         }
     }
 
@@ -177,7 +178,7 @@ impl ModuleRecordBuilder {
                 let (import_name, local_name, is_type) = match specifier {
                     ImportDeclarationSpecifier::ImportSpecifier(specifier) => (
                         ImportImportName::Name(NameSpan::new(
-                            specifier.imported.name().to_compact_str(),
+                            specifier.imported.as_atom().to_compact_str(),
                             specifier.imported.span(),
                         )),
                         NameSpan::new(specifier.local.name.to_compact_str(), specifier.local.span),
@@ -193,6 +194,8 @@ impl ModuleRecordBuilder {
                         NameSpan::new(specifier.local.name.to_compact_str(), specifier.local.span),
                         decl.import_kind.is_type(),
                     ),
+                    // Ignore dummy nodes
+                    ImportDeclarationSpecifier::Dummy => continue,
                 };
                 self.add_import_entry(ImportEntry {
                     module_request: module_request.clone(),
@@ -219,7 +222,7 @@ impl ModuleRecordBuilder {
                 .map_or(ExportImportName::AllButDefault, |_| ExportImportName::All),
             export_name: decl.exported.as_ref().map_or(ExportExportName::Null, |exported_name| {
                 ExportExportName::Name(NameSpan::new(
-                    exported_name.name().to_compact_str(),
+                    exported_name.as_atom().to_compact_str(),
                     exported_name.span(),
                 ))
             }),
@@ -228,7 +231,7 @@ impl ModuleRecordBuilder {
         };
         self.add_export_entry(export_entry);
         if let Some(exported_name) = &decl.exported {
-            self.add_export_binding(exported_name.name().to_compact_str(), exported_name.span());
+            self.add_export_binding(exported_name.as_atom().to_compact_str(), exported_name.span());
         }
         self.add_module_request(
             &module_request,
@@ -250,7 +253,8 @@ impl ModuleRecordBuilder {
             ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.id.as_ref(),
             ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref(),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
-            | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => return,
+            | ExportDefaultDeclarationKind::TSEnumDeclaration(_)
+            | ExportDefaultDeclarationKind::Dummy => return,
         };
         let export_entry = ExportEntry {
             export_name: ExportExportName::Default(exported_name.span()),
@@ -308,12 +312,12 @@ impl ModuleRecordBuilder {
 
         for specifier in &decl.specifiers {
             let export_name = ExportExportName::Name(NameSpan::new(
-                specifier.exported.name().to_compact_str(),
+                specifier.exported.as_atom().to_compact_str(),
                 specifier.exported.span(),
             ));
             let import_name = if module_request.is_some() {
                 ExportImportName::Name(NameSpan::new(
-                    specifier.local.name().to_compact_str(),
+                    specifier.local.as_atom().to_compact_str(),
                     specifier.local.span(),
                 ))
             } else {
@@ -323,7 +327,7 @@ impl ModuleRecordBuilder {
                 ExportLocalName::Null
             } else {
                 ExportLocalName::Name(NameSpan::new(
-                    specifier.local.name().to_compact_str(),
+                    specifier.local.as_atom().to_compact_str(),
                     specifier.local.span(),
                 ))
             };
@@ -336,7 +340,7 @@ impl ModuleRecordBuilder {
             };
             self.add_export_entry(export_entry);
             self.add_export_binding(
-                specifier.exported.name().to_compact_str(),
+                specifier.exported.as_atom().to_compact_str(),
                 specifier.exported.span(),
             );
         }

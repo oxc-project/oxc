@@ -143,6 +143,8 @@ impl<'a> ParserImpl<'a> {
             BindingPatternKind::ObjectPattern(pat) => &mut pat.span,
             BindingPatternKind::ArrayPattern(pat) => &mut pat.span,
             BindingPatternKind::AssignmentPattern(pat) => &mut pat.span,
+            // Ignore dummy nodes
+            BindingPatternKind::Dummy => return,
         };
         pat_span.end = span.end;
     }

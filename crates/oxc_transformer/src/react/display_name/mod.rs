@@ -108,6 +108,7 @@ impl<'a> ReactDisplayName<'a> {
                 Expression::ObjectExpression(obj_expr) => Some(obj_expr),
                 _ => None,
             },
+            Argument::Dummy => None,
         }
     }
 

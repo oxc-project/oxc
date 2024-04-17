@@ -90,6 +90,7 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                     }
                 }
                 ArrayExpressionElement::Elision(_) => elements.push(None),
+                ArrayExpressionElement::Dummy => {}
             }
         }
 
@@ -145,6 +146,7 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
                         return Err(diagnostics::SpreadLastElement(spread.span).into());
                     }
                 }
+                ObjectPropertyKind::Dummy => {}
             }
         }
 

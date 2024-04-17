@@ -48,6 +48,7 @@ impl<'a, 'b> IsLiteralValue<'a, 'b> for ArrayExpressionElement<'a> {
             Self::SpreadElement(element) => element.is_literal_value(include_functions),
             Self::Expression(expr) => expr.is_literal_value(include_functions),
             Self::Elision(_) => true,
+            Self::Dummy => false,
         }
     }
 }
@@ -63,6 +64,7 @@ impl<'a, 'b> IsLiteralValue<'a, 'b> for ObjectPropertyKind<'a> {
         match self {
             Self::ObjectProperty(method) => method.is_literal_value(include_functions),
             Self::SpreadProperty(property) => property.is_literal_value(include_functions),
+            Self::Dummy => false,
         }
     }
 }
@@ -79,6 +81,7 @@ impl<'a, 'b> IsLiteralValue<'a, 'b> for PropertyKey<'a> {
         match self {
             Self::Identifier(_) | Self::PrivateIdentifier(_) => false,
             Self::Expression(expr) => expr.is_literal_value(include_functions),
+            Self::Dummy => false,
         }
     }
 }
@@ -186,7 +189,7 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for ArrayExpressionElement<'a> {
         match self {
             Self::SpreadElement(element) => element.check_for_state_change(check_for_new_objects),
             Self::Expression(expr) => expr.check_for_state_change(check_for_new_objects),
-            Self::Elision(_) => false,
+            Self::Elision(_) | Self::Dummy => false,
         }
     }
 }
@@ -198,6 +201,7 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for ObjectPropertyKind<'a> {
             Self::SpreadProperty(spread_element) => {
                 spread_element.check_for_state_change(check_for_new_objects)
             }
+            Self::Dummy => false,
         }
     }
 }
@@ -221,7 +225,7 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for ObjectProperty<'a> {
 impl<'a, 'b> CheckForStateChange<'a, 'b> for PropertyKey<'a> {
     fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
         match self {
-            Self::Identifier(_) | Self::PrivateIdentifier(_) => false,
+            Self::Identifier(_) | Self::PrivateIdentifier(_) | Self::Dummy => false,
             Self::Expression(expr) => expr.check_for_state_change(check_for_new_objects),
         }
     }

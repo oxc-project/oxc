@@ -265,6 +265,7 @@ impl<'a> ParserImpl<'a> {
                             ));
                         }
                     }
+                    ModuleExportName::Dummy => {}
                 }
             }
         }

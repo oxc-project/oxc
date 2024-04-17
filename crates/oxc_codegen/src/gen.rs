@@ -104,6 +104,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
             Self::TryStatement(stmt) => stmt.gen(p, ctx),
             Self::WhileStatement(stmt) => stmt.gen(p, ctx),
             Self::WithStatement(stmt) => stmt.gen(p, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -230,6 +231,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatement<'a> {
                     expr.gen_expr(p, Precedence::lowest(), ctx);
                 }
                 ForStatementInit::VariableDeclaration(var) => var.gen(p, ctx),
+                ForStatementInit::Dummy => {}
             }
         }
 
@@ -307,6 +309,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatementLeft<'a> {
                 );
                 p.wrap(wrap, |p| target.gen(p, ctx));
             }
+            ForStatementLeft::Dummy => {}
         }
     }
 }
@@ -519,6 +522,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ModuleDeclaration<'a> {
                     p.print_semicolon_after_statement();
                 }
             }
+            Self::Dummy => {}
         }
     }
 }
@@ -589,6 +593,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Declaration<'a> {
                     decl.gen(p, ctx);
                 }
             }
+            Self::Dummy => {}
         }
     }
 }
@@ -786,6 +791,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
                                 literal.gen(p, ctx);
                                 literal.value.as_bytes()
                             }
+                            ModuleExportName::Dummy => "Dummy ModuleExportName".as_bytes(),
                         };
 
                         let local_name = spec.local.name.as_bytes();
@@ -795,6 +801,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
                             spec.local.gen(p, ctx);
                         }
                     }
+                    ImportDeclarationSpecifier::Dummy => {}
                 }
             }
             if in_block {
@@ -836,6 +843,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportAttribute<'a> {
                 p.print_str(identifier.name.as_bytes());
             }
             ImportAttributeKey::StringLiteral(literal) => literal.gen(p, ctx),
+            ImportAttributeKey::Dummy => {}
         };
         p.print_colon();
         self.value.gen(p, ctx);
@@ -880,7 +888,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportSpecifier<'a> {
             p.print_str(b"type ");
         }
         self.local.gen(p, ctx);
-        if self.local.name() != self.exported.name() {
+        if self.local.as_atom() != self.exported.as_atom() {
             p.print_str(b" as ");
             self.exported.gen(p, ctx);
         }
@@ -894,6 +902,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ModuleExportName<'a> {
                 p.print_str(identifier.name.as_bytes());
             }
             Self::StringLiteral(literal) => literal.gen(p, ctx),
+            Self::Dummy => {}
         };
     }
 }
@@ -951,6 +960,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclarationKind<'a> {
             }
             Self::TSInterfaceDeclaration(interface) => interface.gen(p, ctx),
             Self::TSEnumDeclaration(enum_decl) => enum_decl.gen(p, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -1316,6 +1326,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for MemberExpression<'a> {
             }
             Self::StaticMemberExpression(expr) => expr.gen_expr(p, self.precedence(), ctx),
             Self::PrivateFieldExpression(expr) => expr.gen_expr(p, self.precedence(), ctx),
+            Self::Dummy => {}
         });
     }
 }
@@ -1385,6 +1396,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Argument<'a> {
         match self {
             Self::SpreadElement(elem) => elem.gen(p, ctx),
             Self::Expression(elem) => elem.gen_expr(p, Precedence::Assign, Context::default()),
+            Self::Dummy => {}
         }
     }
 }
@@ -1395,6 +1407,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayExpressionElement<'a> {
             Self::Expression(expr) => expr.gen_expr(p, Precedence::Assign, Context::default()),
             Self::SpreadElement(elem) => elem.gen(p, ctx),
             Self::Elision(_span) => {}
+            Self::Dummy => {}
         }
     }
 }
@@ -1454,6 +1467,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPropertyKind<'a> {
         match self {
             Self::ObjectProperty(prop) => prop.gen(p, ctx),
             Self::SpreadProperty(elem) => elem.gen(p, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -1525,6 +1539,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyKey<'a> {
             Self::Identifier(ident) => ident.gen(p, ctx),
             Self::PrivateIdentifier(ident) => ident.gen(p, ctx),
             Self::Expression(expr) => expr.gen_expr(p, Precedence::Assign, Context::default()),
+            Self::Dummy => {}
         }
     }
 }
@@ -1747,11 +1762,12 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for AssignmentExpression<'a> {
                         MemberExpression::PrivateFieldExpression(expression) => {
                             is_keyword(expression.field.name.as_str())
                         }
+                        MemberExpression::Dummy => false,
                     }
                 }
                 _ => false,
             },
-            AssignmentTarget::AssignmentTargetPattern(_) => false,
+            AssignmentTarget::AssignmentTargetPattern(_) | AssignmentTarget::Dummy => false,
         };
 
         let wrap = ((p.start_of_stmt == n || p.start_of_arrow_expr == n)
@@ -1779,6 +1795,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTarget<'a> {
                 target.gen_expr(p, Precedence::Assign, Context::default());
             }
             Self::AssignmentTargetPattern(pat) => pat.gen(p, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -1794,6 +1811,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for SimpleAssignmentTarget<'a> {
             Self::TSSatisfiesExpression(e) => e.expression.gen_expr(p, precedence, ctx),
             Self::TSNonNullExpression(e) => e.expression.gen_expr(p, precedence, ctx),
             Self::TSTypeAssertion(e) => e.gen_expr(p, precedence, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -1803,6 +1821,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetPattern<'a> {
         match self {
             Self::ArrayAssignmentTarget(target) => target.gen(p, ctx),
             Self::ObjectAssignmentTarget(target) => target.gen(p, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -1857,6 +1876,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetMaybeDefault<'a> {
         match self {
             Self::AssignmentTarget(target) => target.gen(p, ctx),
             Self::AssignmentTargetWithDefault(target) => target.gen(p, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -1874,6 +1894,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetProperty<'a> {
         match self {
             Self::AssignmentTargetPropertyIdentifier(ident) => ident.gen(p, ctx),
             Self::AssignmentTargetPropertyProperty(prop) => prop.gen(p, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -1902,6 +1923,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetPropertyProperty<'a
                 expr.gen_expr(p, Precedence::Assign, Context::default());
                 p.print(b']');
             }
+            PropertyKey::Dummy => {}
         }
         p.print_colon();
         self.binding.gen(p, ctx);
@@ -1990,6 +2012,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ChainExpression<'a> {
         match &self.expression {
             ChainElement::CallExpression(expr) => expr.gen_expr(p, precedence, ctx),
             ChainElement::MemberExpression(expr) => expr.gen_expr(p, precedence, ctx),
+            ChainElement::Dummy => {}
         }
     }
 }
@@ -2071,6 +2094,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ClassElement<'a> {
             Self::PropertyDefinition(elem) => elem.gen(p, ctx),
             Self::AccessorProperty(elem) => elem.gen(p, ctx),
             Self::TSIndexSignature(elem) => elem.gen(p, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -2087,6 +2111,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXMemberExpressionObject<'a> {
         match self {
             Self::Identifier(ident) => ident.gen(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.gen(p, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -2105,6 +2130,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXElementName<'a> {
             Self::Identifier(identifier) => identifier.gen(p, ctx),
             Self::NamespacedName(namespaced_name) => namespaced_name.gen(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.gen(p, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -2122,6 +2148,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeName<'a> {
         match self {
             Self::Identifier(ident) => ident.gen(p, ctx),
             Self::NamespacedName(namespaced_name) => namespaced_name.gen(p, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -2145,6 +2172,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXExpression<'a> {
         match self {
             Self::Expression(expr) => p.print_expression(expr),
             Self::EmptyExpression(expr) => expr.gen(p, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -2164,6 +2192,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeValue<'a> {
             Self::Element(el) => el.gen(p, ctx),
             Self::StringLiteral(lit) => lit.gen(p, ctx),
             Self::ExpressionContainer(expr_container) => expr_container.gen(p, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -2181,6 +2210,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeItem<'a> {
         match self {
             Self::Attribute(attr) => attr.gen(p, ctx),
             Self::SpreadAttribute(spread_attr) => spread_attr.gen(p, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -2259,6 +2289,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXChild<'a> {
             Self::Spread(spread) => p.print_expression(&spread.expression),
             Self::ExpressionContainer(expr_container) => expr_container.gen(p, ctx),
             Self::Text(text) => text.gen(p, ctx),
+            Self::Dummy => {}
         }
     }
 }
@@ -2431,6 +2462,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingPattern<'a> {
             BindingPatternKind::ObjectPattern(pattern) => pattern.gen(p, ctx),
             BindingPatternKind::ArrayPattern(pattern) => pattern.gen(p, ctx),
             BindingPatternKind::AssignmentPattern(pattern) => pattern.gen(p, ctx),
+            BindingPatternKind::Dummy => {}
         }
         if p.options.enable_typescript {
             if self.optional {
