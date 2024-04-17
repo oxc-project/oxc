@@ -1,9 +1,9 @@
 use proc_macro2::TokenStream as TokenStream2;
 
-use quote::{format_ident, quote};
+use quote::{format_ident, quote, ToTokens};
 use syn::{
     parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, AttrStyle, Attribute,
-    Field, Fields, GenericArgument, Generics, Ident, Item, ItemEnum, ItemStruct, Meta, Path,
+    Expr, Field, Fields, GenericArgument, Generics, Ident, Item, ItemEnum, ItemStruct, Meta, Path,
     PathArguments, PathSegment, Token, Type, TypePath, TypeReference, Variant,
 };
 
@@ -34,7 +34,7 @@ pub fn ast_node(mut item: Item) -> TokenStream2 {
         }
     };
 
-    dbg!(&output.to_string());
+    // dbg!(&output.to_string());
     output
 }
 
@@ -150,30 +150,31 @@ fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
 
     // TODO: traits like serialization, Debug and Hash fail with `GCell`;
     // But we may want to keep other attributes.
-    let (outer_attrs, inner_attrs) = item
-        .attrs
-        .iter()
-        .filter_map(|attr| {
-            if attr.path().is_ident("derive") {
-                Some(transform_derive_attribute(attr.clone()))
-            } else {
-                Some(attr.clone())
-            }
-        })
-        // allocate for worst possible case.
-        .fold((Vec::with_capacity(attrs_len), Vec::with_capacity(attrs_len)), |mut acc, attr| {
-            match &attr.style {
-                AttrStyle::Outer => acc.0.push(attr),
-                AttrStyle::Inner(_) => acc.1.push(attr),
-            }
-
-            acc
-        });
+    // let (outer_attrs, inner_attrs) = item
+    //     .attrs
+    //     .iter()
+    //     .filter_map(|attr| {
+    //         println!("HERE {},", attr.to_token_stream());
+    //         match attr.path() {
+    //             path if path.is_ident("derive") => Some(transform_derive_attribute(attr.clone())),
+    //             _ => Some(attr.clone()),
+    //         }
+    //     })
+    //     // allocate for worst possible case.
+    //     .fold((Vec::with_capacity(attrs_len), Vec::with_capacity(attrs_len)), |mut acc, attr| {
+    //         match &attr.style {
+    //             AttrStyle::Outer => acc.0.push(attr),
+    //             AttrStyle::Inner(_) => acc.1.push(attr),
+    //         }
+    //
+    //         acc
+    //     });
 
     let fields = transform_fields(&item.fields);
 
     let output = quote! {
         #[repr(C)] // TODO: we can replace it with outer_attrs if we fix the issues with it.
+        #[derive(Debug)]
         // #(#outer_attrs)*
         pub struct #ident #generics {
             // #(#inner_attrs)*
@@ -196,6 +197,7 @@ fn generate_traversable_enum(item: &ItemEnum) -> TokenStream2 {
 
     let output = quote! {
         #[repr(C, u8)]
+        #[derive(Debug, Clone, Copy)]
         pub enum #ident #generics {
             #variants
         }
