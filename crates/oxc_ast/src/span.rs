@@ -72,7 +72,7 @@ impl<'a> GetSpan for Expression<'a> {
             Self::TSTypeAssertion(e) => e.span,
             Self::TSNonNullExpression(e) => e.span,
             Self::TSInstantiationExpression(e) => e.span,
-            Self::Dummy => Span::default(),
+            // Self::Dummy => Span::default(),
         }
     }
 }

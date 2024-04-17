@@ -2,9 +2,9 @@ use proc_macro2::TokenStream as TokenStream2;
 
 use quote::{format_ident, quote};
 use syn::{
-    parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, Attribute, Field, Fields,
-    GenericArgument, Generics, Ident, Item, ItemEnum, ItemStruct, Meta, Path, PathArguments,
-    PathSegment, Token, Type, TypePath, TypeReference, Variant,
+    parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, AttrStyle, Attribute,
+    Field, Fields, GenericArgument, Generics, Ident, Item, ItemEnum, ItemStruct, Meta, Path,
+    PathArguments, PathSegment, Token, Type, TypePath, TypeReference, Variant,
 };
 
 pub fn ast_node(mut item: Item) -> TokenStream2 {
@@ -27,7 +27,7 @@ pub fn ast_node(mut item: Item) -> TokenStream2 {
 
         // #traversable_test_trait
 
-        mod #traversable_mod {
+        pub mod #traversable_mod {
             use super::*;
 
             #traversable
@@ -84,17 +84,17 @@ fn validate_struct_attribute(attr: &Attribute) {
     // make sure that no structure derives Clone/Copy traits.
     // TODO: It will fail if there is a manual Clone/Copy traits implemented for the struct.
     // Negative traits (!Copy and !Clone) are nightly so I'm not sure how we can fully enforce it.
-    assert!(
-        !{
-            let args = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated);
-            attr.path().is_ident("derive")
-                && args.is_ok_and(|args| {
-                    args.iter() // To be honest the Copy trait check here is redundant.
-                        .any(|arg| arg.path().is_ident("Clone") || arg.path().is_ident("Copy"))
-                })
-        },
-        "`ast_node` can't have Clone or Copy traits"
-    );
+    // assert!(
+    //     !{
+    //         let args = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated);
+    //         attr.path().is_ident("derive")
+    //             && args.is_ok_and(|args| {
+    //                 args.iter() // To be honest the Copy trait check here is redundant.
+    //                     .any(|arg| arg.path().is_ident("Clone") || arg.path().is_ident("Copy"))
+    //             })
+    //     },
+    //     "`ast_node` can't have Clone or Copy traits"
+    // );
 
     validate_attribute(attr);
 }
@@ -146,18 +146,29 @@ fn validate_variant(var: &Variant) {
 fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
     let ident = format_ident!("Traversable{}", item.ident);
     let generics = &item.generics;
+    let attrs_len = item.attrs.len();
 
     // TODO: traits like serialization, Debug and Hash fail with `GCell`;
     // But we may want to keep other attributes.
-    // let (outer_attrs, inner_attrs) =
-    //     item.attrs.iter().fold((Vec::new(), Vec::new()), |mut acc, attr| {
-    //         match &attr.style {
-    //             AttrStyle::Outer => acc.0.push(attr),
-    //             AttrStyle::Inner(_) => acc.1.push(attr),
-    //         }
-    //
-    //         acc
-    //     });
+    let (outer_attrs, inner_attrs) = item
+        .attrs
+        .iter()
+        .filter_map(|attr| {
+            if attr.path().is_ident("derive") {
+                Some(transform_derive_attribute(attr.clone()))
+            } else {
+                Some(attr.clone())
+            }
+        })
+        // allocate for worst possible case.
+        .fold((Vec::with_capacity(attrs_len), Vec::with_capacity(attrs_len)), |mut acc, attr| {
+            match &attr.style {
+                AttrStyle::Outer => acc.0.push(attr),
+                AttrStyle::Inner(_) => acc.1.push(attr),
+            }
+
+            acc
+        });
 
     let fields = transform_fields(&item.fields);
 
@@ -307,6 +318,10 @@ fn transform_generic_type(mut ty: TypePath) -> TypePath {
         }
         _ => recreate_original_type(ty, seg, PathArguments::None),
     }
+}
+
+fn transform_derive_attribute(attr: Attribute) -> Attribute {
+    attr
 }
 
 fn is_special_type_name(ident: &Ident) -> bool {

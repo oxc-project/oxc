@@ -7,14 +7,14 @@ macro_rules! ast_kinds {
     { $($ident:ident($type:ty),)* } => (
         #[derive(Debug, Clone, Copy)]
         pub enum AstType {
-            Dummy,
+            // Dummy,
             $($ident,)*
         }
 
         /// Untyped AST Node Kind
         #[derive(Debug, Clone, Copy)]
         pub enum AstKind<'a> {
-            Dummy,
+            // Dummy,
             $($ident($type),)*
         }
     )
@@ -310,7 +310,7 @@ impl<'a> AstKind<'a> {
 
     pub fn from_expression(e: &'a Expression<'a>) -> Self {
         match e {
-            Expression::Dummy => Self::Dummy,
+            // Expression::Dummy => Self::Dummy,
             Expression::BooleanLiteral(e) => Self::BooleanLiteral(e),
             Expression::NullLiteral(e) => Self::NullLiteral(e),
             Expression::NumericLiteral(e) => Self::NumericLiteral(e),
@@ -359,7 +359,7 @@ impl<'a> GetSpan for AstKind<'a> {
     #[allow(clippy::match_same_arms)]
     fn span(&self) -> Span {
         match self {
-            Self::Dummy => Span::default(),
+            // Self::Dummy => Span::default(),
             Self::Program(x) => x.span,
             Self::Directive(x) => x.span,
             Self::Hashbang(x) => x.span,
@@ -739,7 +739,7 @@ impl<'a> AstKind<'a> {
             Self::TSNamedTupleMember(_) => "TSNamedTupleMember".into(),
 
             Self::TSPropertySignature(_) => "TSPropertySignature".into(),
-            Self::Dummy => "Dummy".into(),
+            // Self::Dummy => "Dummy".into(),
         }
     }
 }

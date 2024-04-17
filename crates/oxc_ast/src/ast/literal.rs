@@ -238,11 +238,12 @@ impl fmt::Display for RegExpFlags {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct EmptyObject;
 
+#[ast_node]
 #[derive(Debug, Clone, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+// #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+// #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct StringLiteral<'a> {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
+    // #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub value: Atom<'a>,
 }

@@ -1262,8 +1262,10 @@ impl<'a> Statement<'a> {
     }
 }
 
-#[ast_node]
+use crate::traverse::ast::*;
+
 /// Directive Prologue
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
