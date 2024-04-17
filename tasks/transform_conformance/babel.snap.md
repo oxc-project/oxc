@@ -1,6 +1,7 @@
-Passed: 148/209
+Passed: 149/209
 
 # All Passed:
+* babel-plugin-transform-react-jsx
 * babel-plugin-transform-react-jsx-source
 * babel-plugin-transform-react-jsx-development
 
@@ -68,9 +69,6 @@ Passed: 148/209
 
 # babel-preset-react (8/9)
 * preset-options/development-runtime-automatic/input.js
-
-# babel-plugin-transform-react-jsx (35/36)
-* autoImport/complicated-scope-module/input.js
 
 # babel-plugin-transform-react-display-name (3/4)
 * display-name/nested/input.js

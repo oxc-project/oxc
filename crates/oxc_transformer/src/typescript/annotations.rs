@@ -26,7 +26,7 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     // Convert `export = expr` into `module.exports = expr`
     fn create_module_exports(&self, exp: &TSExportAssignment<'a>) -> Statement<'a> {
-        let ast = &self.ctx.ast;
+        let ast = &self.ctx.borrow().ast;
 
         ast.expression_statement(
             SPAN,
@@ -46,7 +46,7 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     // Creates `this.name = name`
     fn create_this_property_assignment(&self, name: &Atom<'a>) -> Statement<'a> {
-        let ast = &self.ctx.ast;
+        let ast = &self.ctx.borrow().ast;
 
         ast.expression_statement(
             SPAN,
@@ -164,9 +164,13 @@ impl<'a> TypeScriptAnnotations<'a> {
         // still considered a module
         if module_count == 0 && removed_count > 0 {
             let export_decl = ModuleDeclaration::ExportNamedDeclaration(
-                self.ctx.ast.plain_export_named_declaration(SPAN, self.ctx.ast.new_vec(), None),
+                self.ctx.borrow().ast.plain_export_named_declaration(
+                    SPAN,
+                    self.ctx.borrow().ast.new_vec(),
+                    None,
+                ),
             );
-            program.body.push(self.ctx.ast.module_declaration(export_decl));
+            program.body.push(self.ctx.borrow().ast.module_declaration(export_decl));
         }
     }
 
@@ -215,7 +219,7 @@ impl<'a> TypeScriptAnnotations<'a> {
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
-        *expr = self.ctx.ast.copy(expr.get_inner_expression());
+        *expr = self.ctx.borrow().ast.copy(expr.get_inner_expression());
     }
 
     pub fn transform_formal_parameter(&mut self, param: &mut FormalParameter<'a>) {
@@ -244,7 +248,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         // Collects parameter properties so that we can add an assignment
         // for each of them in the constructor body.
         if def.kind == MethodDefinitionKind::Constructor {
-            let mut assigns = self.ctx.ast.new_vec();
+            let mut assigns = self.ctx.borrow().ast.new_vec();
 
             for param in &def.value.params.items {
                 if param.pattern.type_annotation.is_none() {
@@ -259,10 +263,10 @@ impl<'a> TypeScriptAnnotations<'a> {
             if !assigns.is_empty() {
                 def.value
                     .body
-                    .get_or_insert(self.ctx.ast.function_body(
+                    .get_or_insert(self.ctx.borrow().ast.function_body(
                         SPAN,
-                        self.ctx.ast.new_vec(),
-                        self.ctx.ast.new_vec(),
+                        self.ctx.borrow().ast.new_vec(),
+                        self.ctx.borrow().ast.new_vec(),
                     ))
                     .statements
                     .extend(assigns);

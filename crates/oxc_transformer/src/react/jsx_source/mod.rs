@@ -51,14 +51,18 @@ impl<'a> ReactJsxSource<'a> {
         self.should_add_jsx_file_name_variable = true;
         let kind = PropertyKind::Init;
         let ident = IdentifierName::new(SPAN, SOURCE.into());
-        let key = self.ctx.ast.property_key_identifier(ident);
+        let key = self.ctx.borrow().ast.property_key_identifier(ident);
         let value = self.get_source_object();
-        let obj = self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false);
+        let obj = self
+            .ctx
+            .borrow()
+            .ast
+            .object_property(SPAN, kind, key, value, None, false, false, false);
         ObjectPropertyKind::ObjectProperty(obj)
     }
 
     pub fn report_error(&self, span: Span) {
-        self.ctx.error(DuplicateSourceProp(span));
+        self.ctx.borrow().error(DuplicateSourceProp(span));
     }
 }
 
@@ -80,11 +84,13 @@ impl<'a> ReactJsxSource<'a> {
 
         self.should_add_jsx_file_name_variable = true;
 
-        let key = JSXAttributeName::Identifier(self.ctx.ast.jsx_identifier(SPAN, SOURCE.into()));
+        let key =
+            JSXAttributeName::Identifier(self.ctx.borrow().ast.jsx_identifier(SPAN, SOURCE.into()));
         let object = self.get_source_object();
-        let expr = self.ctx.ast.jsx_expression_container(SPAN, JSXExpression::Expression(object));
+        let expr =
+            self.ctx.borrow().ast.jsx_expression_container(SPAN, JSXExpression::Expression(object));
         let value = JSXAttributeValue::ExpressionContainer(expr);
-        let attribute_item = self.ctx.ast.jsx_attribute(SPAN, key, Some(value));
+        let attribute_item = self.ctx.borrow().ast.jsx_attribute(SPAN, key, Some(value));
         elem.attributes.push(JSXAttributeItem::Attribute(attribute_item));
     }
 
@@ -93,50 +99,55 @@ impl<'a> ReactJsxSource<'a> {
 
         let filename = {
             let name = IdentifierName::new(SPAN, "fileName".into());
-            let key = self.ctx.ast.property_key_identifier(name);
-            let ident = self.ctx.ast.identifier_reference(SPAN, FILE_NAME_VAR);
-            let value = self.ctx.ast.identifier_reference_expression(ident);
-            self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false)
+            let key = self.ctx.borrow().ast.property_key_identifier(name);
+            let ident = self.ctx.borrow().ast.identifier_reference(SPAN, FILE_NAME_VAR);
+            let value = self.ctx.borrow().ast.identifier_reference_expression(ident);
+            self.ctx.borrow().ast.object_property(SPAN, kind, key, value, None, false, false, false)
         };
 
         let line_number = {
             let ident = IdentifierName::new(SPAN, "lineNumber".into());
-            let key = self.ctx.ast.property_key_identifier(ident);
-            let number = self.ctx.ast.number_literal(SPAN, 1.0, "1", NumberBase::Decimal);
-            let value = self.ctx.ast.literal_number_expression(number);
-            self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false)
+            let key = self.ctx.borrow().ast.property_key_identifier(ident);
+            let number = self.ctx.borrow().ast.number_literal(SPAN, 1.0, "1", NumberBase::Decimal);
+            let value = self.ctx.borrow().ast.literal_number_expression(number);
+            self.ctx.borrow().ast.object_property(SPAN, kind, key, value, None, false, false, false)
         };
 
         let column_number = {
             let ident = IdentifierName::new(SPAN, "columnNumber".into());
-            let key = self.ctx.ast.property_key_identifier(ident);
-            let number = self.ctx.ast.number_literal(SPAN, 1.0, "1", NumberBase::Decimal);
-            let value = self.ctx.ast.literal_number_expression(number);
-            self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false)
+            let key = self.ctx.borrow().ast.property_key_identifier(ident);
+            let number = self.ctx.borrow().ast.number_literal(SPAN, 1.0, "1", NumberBase::Decimal);
+            let value = self.ctx.borrow().ast.literal_number_expression(number);
+            self.ctx.borrow().ast.object_property(SPAN, kind, key, value, None, false, false, false)
         };
 
-        let mut properties = self.ctx.ast.new_vec();
+        let mut properties = self.ctx.borrow().ast.new_vec();
         properties.push(ObjectPropertyKind::ObjectProperty(filename));
         properties.push(ObjectPropertyKind::ObjectProperty(line_number));
         properties.push(ObjectPropertyKind::ObjectProperty(column_number));
-        self.ctx.ast.object_expression(SPAN, properties, None)
+        self.ctx.borrow().ast.object_expression(SPAN, properties, None)
     }
 
     fn get_var_file_name_statement(&self) -> Statement<'a> {
         let var_kind = VariableDeclarationKind::Var;
         let id = {
             let ident = BindingIdentifier::new(SPAN, FILE_NAME_VAR.into());
-            let ident = self.ctx.ast.binding_pattern_identifier(ident);
-            self.ctx.ast.binding_pattern(ident, None, false)
+            let ident = self.ctx.borrow().ast.binding_pattern_identifier(ident);
+            self.ctx.borrow().ast.binding_pattern(ident, None, false)
         };
         let decl = {
-            let string =
-                self.ctx.ast.string_literal(SPAN, &self.ctx.source_path().to_string_lossy());
-            let init = self.ctx.ast.literal_string_expression(string);
-            let decl = self.ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
-            self.ctx.ast.new_vec_single(decl)
+            let string = self
+                .ctx
+                .borrow()
+                .ast
+                .string_literal(SPAN, &self.ctx.borrow().source_path().to_string_lossy());
+            let init = self.ctx.borrow().ast.literal_string_expression(string);
+            let decl =
+                self.ctx.borrow().ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
+            self.ctx.borrow().ast.new_vec_single(decl)
         };
-        let var_decl = self.ctx.ast.variable_declaration(SPAN, var_kind, decl, Modifiers::empty());
+        let var_decl =
+            self.ctx.borrow().ast.variable_declaration(SPAN, var_kind, decl, Modifiers::empty());
         Statement::Declaration(Declaration::VariableDeclaration(var_decl))
     }
 }

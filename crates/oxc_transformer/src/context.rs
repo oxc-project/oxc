@@ -10,9 +10,9 @@ use oxc_ast::AstBuilder;
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 
-use crate::{helpers::module_imports::ModuleImports, TransformOptions};
+use crate::{helpers::module_imports::ModuleImports, naming::TransformerNaming, TransformOptions};
 
-pub type Ctx<'a> = Rc<TransformCtx<'a>>;
+pub type Ctx<'a> = Rc<RefCell<TransformCtx<'a>>>;
 
 pub struct TransformCtx<'a> {
     pub ast: AstBuilder<'a>,
@@ -30,6 +30,8 @@ pub struct TransformCtx<'a> {
     // Helpers
     /// Manage import statement globally
     pub module_imports: ModuleImports<'a>,
+
+    pub naming: TransformerNaming<'a>,
 }
 
 impl<'a> TransformCtx<'a> {
@@ -54,6 +56,7 @@ impl<'a> TransformCtx<'a> {
             source_path,
             errors: RefCell::new(vec![]),
             module_imports: ModuleImports::new(allocator),
+            naming: TransformerNaming::new(allocator),
         }
     }
 

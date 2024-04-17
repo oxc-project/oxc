@@ -12,6 +12,7 @@ mod compiler_assumptions;
 mod context;
 mod options;
 // Presets: <https://babel.dev/docs/presets>
+mod naming;
 mod react;
 mod typescript;
 mod utils;
@@ -20,12 +21,13 @@ mod helpers {
     pub mod module_imports;
 }
 
-use std::{path::Path, rc::Rc};
+use std::{cell::RefCell, path::Path, rc::Rc};
 
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{
     ast::*,
     visit::{walk_mut, VisitMut},
+    Visit,
 };
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
@@ -55,7 +57,8 @@ impl<'a> Transformer<'a> {
         semantic: Semantic<'a>,
         options: TransformOptions,
     ) -> Self {
-        let ctx = Rc::new(TransformCtx::new(allocator, source_path, semantic, &options));
+        let ctx =
+            Rc::new(RefCell::new(TransformCtx::new(allocator, source_path, semantic, &options)));
         Self {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, &ctx),
@@ -68,7 +71,7 @@ impl<'a> Transformer<'a> {
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
     pub fn build(mut self, program: &mut Program<'a>) -> Result<(), std::vec::Vec<Error>> {
         self.visit_program(program);
-        let errors = self.ctx.take_errors();
+        let errors = self.ctx.borrow().take_errors();
         if errors.is_empty() {
             Ok(())
         } else {
@@ -79,6 +82,7 @@ impl<'a> Transformer<'a> {
 
 impl<'a> VisitMut<'a> for Transformer<'a> {
     fn visit_program(&mut self, program: &mut Program<'a>) {
+        self.ctx.borrow_mut().naming.visit_program(program);
         walk_mut::walk_program_mut(self, program);
         self.x1_react.transform_program_on_exit(program);
         self.x0_typescript.transform_program_on_exit(program);

@@ -43,7 +43,7 @@ impl<'a> ReactDisplayName<'a> {
                 SimpleAssignmentTarget::MemberAssignmentTarget(target),
             ) => {
                 if let Some(name) = target.static_property_name() {
-                    self.ctx.ast.new_atom(name)
+                    self.ctx.borrow().ast.new_atom(name)
                 } else {
                     return;
                 }
@@ -70,7 +70,7 @@ impl<'a> ReactDisplayName<'a> {
     pub fn transform_object_property(&self, prop: &mut ObjectProperty<'a>) {
         let Some(obj_expr) = Self::get_object_from_create_class(&mut prop.value) else { return };
         let Some(name) = prop.key.static_name() else { return };
-        let name = self.ctx.ast.new_atom(&name);
+        let name = self.ctx.borrow().ast.new_atom(&name);
         self.add_display_name(obj_expr, name);
     }
 
@@ -79,7 +79,7 @@ impl<'a> ReactDisplayName<'a> {
     pub fn transform_export_default_declaration(&self, decl: &mut ExportDefaultDeclaration<'a>) {
         let ExportDefaultDeclarationKind::Expression(expr) = &mut decl.declaration else { return };
         let Some(obj_expr) = Self::get_object_from_create_class(expr) else { return };
-        let name = self.ctx.ast.new_atom(self.ctx.filename());
+        let name = self.ctx.borrow().ast.new_atom(self.ctx.borrow().filename());
         self.add_display_name(obj_expr, name);
     }
 }
@@ -123,11 +123,12 @@ impl<'a> ReactDisplayName<'a> {
         }
         let object_property = {
             let kind = PropertyKind::Init;
-            let identifier_name = IdentifierName::new(SPAN, self.ctx.ast.new_atom(DISPLAY_NAME));
-            let key = self.ctx.ast.property_key_identifier(identifier_name);
+            let identifier_name =
+                IdentifierName::new(SPAN, self.ctx.borrow().ast.new_atom(DISPLAY_NAME));
+            let key = self.ctx.borrow().ast.property_key_identifier(identifier_name);
             let string_literal = StringLiteral::new(SPAN, name);
-            let value = self.ctx.ast.literal_string_expression(string_literal);
-            self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false)
+            let value = self.ctx.borrow().ast.literal_string_expression(string_literal);
+            self.ctx.borrow().ast.object_property(SPAN, kind, key, value, None, false, false, false)
         };
         obj_expr.properties.insert(0, ObjectPropertyKind::ObjectProperty(object_property));
     }

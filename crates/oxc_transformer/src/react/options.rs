@@ -159,7 +159,7 @@ impl ReactOptions {
     ///
     /// This behavior is aligned with babel.
     pub(crate) fn update_with_comments(&mut self, ctx: &Ctx) {
-        let semantic = &ctx.semantic;
+        let semantic = &ctx.borrow().semantic;
         for (_, span) in semantic.trivias().comments() {
             let mut comment = span.source_text(semantic.source_text()).trim_start();
             // strip leading jsdoc comment `*` and then whitespaces

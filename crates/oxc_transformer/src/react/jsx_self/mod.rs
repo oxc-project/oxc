@@ -39,14 +39,18 @@ impl<'a> ReactJsxSelf<'a> {
     pub fn get_object_property_kind_for_jsx_plugin(&self) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
         let ident = IdentifierName::new(SPAN, SELF.into());
-        let key = self.ctx.ast.property_key_identifier(ident);
-        let value = self.ctx.ast.this_expression(SPAN);
-        let obj = self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false);
+        let key = self.ctx.borrow().ast.property_key_identifier(ident);
+        let value = self.ctx.borrow().ast.this_expression(SPAN);
+        let obj = self
+            .ctx
+            .borrow()
+            .ast
+            .object_property(SPAN, kind, key, value, None, false, false, false);
         ObjectPropertyKind::ObjectProperty(obj)
     }
 
     pub fn report_error(&self, span: Span) {
-        self.ctx.error(DuplicateSelfProp(span));
+        self.ctx.borrow().error(DuplicateSelfProp(span));
     }
 }
 
@@ -68,12 +72,12 @@ impl<'a> ReactJsxSelf<'a> {
 
         let name = JSXAttributeName::Identifier(JSXIdentifier::new(SPAN, SELF.into()));
         let value = {
-            let jsx_expr = JSXExpression::Expression(self.ctx.ast.this_expression(SPAN));
-            let container = self.ctx.ast.jsx_expression_container(SPAN, jsx_expr);
+            let jsx_expr = JSXExpression::Expression(self.ctx.borrow().ast.this_expression(SPAN));
+            let container = self.ctx.borrow().ast.jsx_expression_container(SPAN, jsx_expr);
             JSXAttributeValue::ExpressionContainer(container)
         };
         let attribute = {
-            let attribute = self.ctx.ast.jsx_attribute(SPAN, name, Some(value));
+            let attribute = self.ctx.borrow().ast.jsx_attribute(SPAN, name, Some(value));
             JSXAttributeItem::Attribute(attribute)
         };
         elem.attributes.push(attribute);

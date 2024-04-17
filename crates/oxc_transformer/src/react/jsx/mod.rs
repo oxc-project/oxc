@@ -1,6 +1,6 @@
 mod diagnostics;
 
-use std::rc::Rc;
+use std::{cell::Ref, rc::Rc};
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
@@ -9,6 +9,7 @@ use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
     xml_entities::XML_ENTITIES,
 };
+use rustc_hash::FxHashMap;
 
 use crate::{context::Ctx, helpers::module_imports::NamedImport};
 
@@ -50,6 +51,8 @@ pub struct ReactJsx<'a> {
     import_jsxs: bool,
     import_fragment: bool,
     import_create_element: bool,
+
+    import_names: FxHashMap<String, CompactStr>,
 }
 
 // Transforms
@@ -75,6 +78,8 @@ impl<'a> ReactJsx<'a> {
             import_fragment: false,
             import_create_element: false,
             default_runtime,
+
+            import_names: FxHashMap::default(),
         }
     }
 
@@ -91,11 +96,11 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn is_script(&self) -> bool {
-        self.ctx.semantic.source_type().is_script()
+        self.ctx.borrow_mut().semantic.source_type().is_script()
     }
 
-    fn ast(&self) -> &AstBuilder<'a> {
-        &self.ctx.ast
+    pub fn ast(&self) -> Ref<'_, AstBuilder<'a>> {
+        Ref::map(self.ctx.borrow(), |ctx| &ctx.ast)
     }
 }
 
@@ -104,7 +109,7 @@ impl<'a> ReactJsx<'a> {
     pub fn add_runtime_imports(&mut self, program: &mut Program<'a>) {
         if self.options.runtime.is_classic() {
             if self.options.import_source != "react" {
-                self.ctx.error(ImportSourceCannotBeSet);
+                self.ctx.borrow().error(ImportSourceCannotBeSet);
             }
             return;
         }
@@ -112,17 +117,27 @@ impl<'a> ReactJsx<'a> {
         if self.options.pragma != "React.createElement"
             || self.options.pragma_frag != "React.Fragment"
         {
-            self.ctx.error(PragmaAndPragmaFragCannotBeSet);
+            self.ctx.borrow().error(PragmaAndPragmaFragCannotBeSet);
             return;
         }
 
-        let imports = self.ctx.module_imports.get_import_statements();
+        let imports = self.ctx.borrow().module_imports.get_import_statements();
         let index = program
             .body
             .iter()
             .rposition(|stmt| matches!(stmt, Statement::ModuleDeclaration(m) if m.is_import()))
             .map_or(0, |i| i + 1);
         program.body.splice(index..index, imports);
+    }
+
+    fn get_name(&mut self, name: &str) -> CompactStr {
+        if let Some(name) = self.import_names.get(name) {
+            return name.clone();
+        }
+
+        let unique_name = self.ctx.borrow_mut().naming.generate_uid(name);
+        self.import_names.insert(name.to_string(), unique_name.clone());
+        unique_name
     }
 
     fn add_import<'b>(
@@ -152,11 +167,8 @@ impl<'a> ReactJsx<'a> {
     fn add_require_jsx_runtime(&mut self) {
         if !self.require_jsx_runtime {
             self.require_jsx_runtime = true;
-            self.add_require_statement(
-                "_reactJsxRuntime",
-                self.jsx_runtime_importer.clone(),
-                false,
-            );
+            let name = self.get_name("reactJsxRuntime");
+            self.add_require_statement(name, self.jsx_runtime_importer.clone(), false);
         }
     }
 
@@ -165,7 +177,8 @@ impl<'a> ReactJsx<'a> {
             self.add_require_jsx_runtime();
         } else if !self.import_jsx {
             self.import_jsx = true;
-            self.add_import_statement("jsx", "_jsx", self.jsx_runtime_importer.clone());
+            let name = self.get_name("jsx");
+            self.add_import_statement("jsx", name, self.jsx_runtime_importer.clone());
         }
     }
 
@@ -174,7 +187,8 @@ impl<'a> ReactJsx<'a> {
             self.add_require_jsx_runtime();
         } else if !self.import_jsxs {
             self.import_jsxs = true;
-            self.add_import_statement("jsxs", "_jsxs", self.jsx_runtime_importer.clone());
+            let name = self.get_name("jsxs");
+            self.add_import_statement("jsxs", name, self.jsx_runtime_importer.clone());
         }
     }
 
@@ -183,7 +197,8 @@ impl<'a> ReactJsx<'a> {
             self.add_require_jsx_runtime();
         } else if !self.import_fragment {
             self.import_fragment = true;
-            self.add_import_statement("Fragment", "_Fragment", self.jsx_runtime_importer.clone());
+            let name = self.get_name("Fragment");
+            self.add_import_statement("Fragment", name, self.jsx_runtime_importer.clone());
             self.add_import_jsx();
         }
     }
@@ -191,23 +206,30 @@ impl<'a> ReactJsx<'a> {
     fn add_import_create_element(&mut self) {
         if !self.import_create_element {
             self.import_create_element = true;
-            let source = self.options.import_source.as_ref();
+            let source = CompactStr::from(self.options.import_source.as_ref());
             if self.is_script() {
-                self.add_require_statement("_react", source.into(), true);
+                let name = self.get_name("react");
+                self.add_require_statement(name, source, true);
             } else {
-                self.add_import_statement("createElement", "_createElement", source.into());
+                let name = self.get_name("createElement");
+                self.add_import_statement("createElement", name, source);
             }
         }
     }
 
-    fn add_import_statement(&mut self, imported: &str, local: &str, source: CompactStr) {
-        let import = NamedImport::new(imported.into(), Some(local.into()));
-        self.ctx.module_imports.add_import(source, import);
+    fn add_import_statement(&mut self, imported: &str, local: CompactStr, source: CompactStr) {
+        let import = NamedImport::new(imported.into(), Some(local));
+        self.ctx.borrow().module_imports.add_import(source, import);
     }
 
-    fn add_require_statement(&mut self, variable_name: &str, source: CompactStr, front: bool) {
-        let import = NamedImport::new(variable_name.into(), None);
-        self.ctx.module_imports.add_require(source, import, front);
+    fn add_require_statement(
+        &mut self,
+        variable_name: CompactStr,
+        source: CompactStr,
+        front: bool,
+    ) {
+        let import = NamedImport::new(variable_name, None);
+        self.ctx.borrow().module_imports.add_require(source, import, front);
     }
 }
 
@@ -306,7 +328,7 @@ impl<'a> ReactJsx<'a> {
                         }
 
                         if attr.value.is_none() {
-                            self.ctx.error(ValuelessKey(attr.name.span()));
+                            self.ctx.borrow().error(ValuelessKey(attr.name.span()));
                         }
                         // In automatic mode, extract the key before spread prop,
                         // and add it to the third argument later.
@@ -405,7 +427,7 @@ impl<'a> ReactJsx<'a> {
                     self.ast().literal_string_expression(string)
                 } else {
                     let ident = IdentifierReference::new(SPAN, ident.name.clone());
-                    self.ctx.ast.identifier_reference_expression(ident)
+                    self.ctx.borrow().ast.identifier_reference_expression(ident)
                 }
             }
             JSXElementName::MemberExpression(member_expr) => {
@@ -413,7 +435,7 @@ impl<'a> ReactJsx<'a> {
             }
             JSXElementName::NamespacedName(name) => {
                 if self.options.throw_if_namespace {
-                    self.ctx.error(NamespaceDoesNotSupport(name.span));
+                    self.ctx.borrow().error(NamespaceDoesNotSupport(name.span));
                 }
                 let name = self.ast().new_atom(&name.to_string());
                 let string_literal = StringLiteral::new(SPAN, name);
@@ -422,7 +444,7 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
-    fn get_fragment(&self) -> Expression<'a> {
+    fn get_fragment(&mut self) -> Expression<'a> {
         match self.options.runtime {
             ReactJsxRuntime::Classic => {
                 if self.options.pragma_frag == "React.Fragment" {
@@ -435,16 +457,23 @@ impl<'a> ReactJsx<'a> {
             }
             ReactJsxRuntime::Automatic => {
                 if self.is_script() {
-                    self.get_static_member_expression("_reactJsxRuntime", "Fragment")
+                    let name = self.get_name("reactJsxRuntime");
+                    self.get_static_member_expression(&name, "Fragment")
                 } else {
-                    let ident = IdentifierReference::new(SPAN, "_Fragment".into());
+                    let name = self.get_name("Fragment");
+                    let ident =
+                        IdentifierReference::new(SPAN, self.ctx.borrow().ast.new_atom(&name));
                     self.ast().identifier_reference_expression(ident)
                 }
             }
         }
     }
 
-    fn get_create_element(&self, has_key_after_props_spread: bool, jsxs: bool) -> Expression<'a> {
+    fn get_create_element(
+        &mut self,
+        has_key_after_props_spread: bool,
+        jsxs: bool,
+    ) -> Expression<'a> {
         match self.options.runtime {
             ReactJsxRuntime::Classic => {
                 if self.options.pragma == "React.createElement" {
@@ -457,26 +486,30 @@ impl<'a> ReactJsx<'a> {
             }
             ReactJsxRuntime::Automatic => {
                 let name = if self.is_script() {
-                    if has_key_after_props_spread {
+                    CompactStr::from(if has_key_after_props_spread {
                         "createElement"
                     } else if jsxs {
                         "jsxs"
                     } else {
                         "jsx"
-                    }
+                    })
                 } else if has_key_after_props_spread {
-                    "_createElement"
+                    self.get_name("createElement")
                 } else if jsxs {
-                    "_jsxs"
+                    self.get_name("jsxs")
                 } else {
-                    "_jsx"
+                    self.get_name("jsx")
                 };
                 if self.is_script() {
-                    let object_ident_name =
-                        if has_key_after_props_spread { "_react" } else { "_reactJsxRuntime" };
-                    self.get_static_member_expression(object_ident_name, name)
+                    let object_ident_name = if has_key_after_props_spread {
+                        self.get_name("react")
+                    } else {
+                        self.get_name("reactJsxRuntime")
+                    };
+                    self.get_static_member_expression(&object_ident_name, &name)
                 } else {
-                    let ident = IdentifierReference::new(SPAN, name.into());
+                    let ident =
+                        IdentifierReference::new(SPAN, self.ctx.borrow().ast.new_atom(&name));
                     self.ast().identifier_reference_expression(ident)
                 }
             }
@@ -592,7 +625,7 @@ impl<'a> ReactJsx<'a> {
             JSXChild::Element(e) => Some(self.transform_jsx(&JSXElementOrFragment::Element(e))),
             JSXChild::Fragment(e) => Some(self.transform_jsx(&JSXElementOrFragment::Fragment(e))),
             JSXChild::Spread(e) => {
-                self.ctx.error(SpreadChildrenAreNotSupported(e.span));
+                self.ctx.borrow().error(SpreadChildrenAreNotSupported(e.span));
                 None
             }
         }
