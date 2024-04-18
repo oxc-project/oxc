@@ -1,7 +1,8 @@
-Passed: 138/209
+Passed: 148/209
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
+* babel-plugin-transform-react-jsx-development
 
 
 # babel-preset-typescript (6/16)
@@ -16,9 +17,7 @@ Passed: 138/209
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (84/139)
-* class/abstract-allowDeclareFields-false/input.ts
-* class/abstract-allowDeclareFields-true/input.ts
+# babel-plugin-transform-typescript (92/139)
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
 * class/parameter-properties/input.ts
@@ -32,7 +31,6 @@ Passed: 138/209
 * imports/enum-value/input.ts
 * imports/import=-module/input.ts
 * imports/type-only-export-specifier-2/input.ts
-* namespace/alias/input.ts
 * namespace/ambient-module-nested/input.ts
 * namespace/ambient-module-nested-exported/input.ts
 * namespace/canonical/input.ts
@@ -41,14 +39,10 @@ Passed: 138/209
 * namespace/clobber-export/input.ts
 * namespace/clobber-import/input.ts
 * namespace/contentious-names/input.ts
-* namespace/declare/input.ts
-* namespace/declare-global-nested-namespace/input.ts
 * namespace/empty-removed/input.ts
-* namespace/export/input.ts
 * namespace/export-type-only/input.ts
 * namespace/module-nested/input.ts
 * namespace/module-nested-export/input.ts
-* namespace/multiple/input.ts
 * namespace/mutable-fail/input.ts
 * namespace/namespace-flag/input.ts
 * namespace/namespace-nested-module/input.ts
@@ -58,7 +52,6 @@ Passed: 138/209
 * namespace/nested-shorthand/input.ts
 * namespace/nested-shorthand-export/input.ts
 * namespace/same-name/input.ts
-* namespace/undeclared/input.ts
 * optimize-const-enums/custom-values/input.ts
 * optimize-const-enums/custom-values-exported/input.ts
 * optimize-const-enums/declare/input.ts
@@ -84,8 +77,4 @@ Passed: 138/209
 
 # babel-plugin-transform-react-jsx-self (1/2)
 * react-source/disable-with-super/input.js
-
-# babel-plugin-transform-react-jsx-development (0/2)
-* cross-platform/disallow-__self-as-jsx-attribute/input.js
-* cross-platform/disallow-__source-as-jsx-attribute/input.js
 

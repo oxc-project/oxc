@@ -16,7 +16,7 @@ use crate::context::Ctx;
 use self::{annotations::TypeScriptAnnotations, collector::TypeScriptReferenceCollector};
 
 #[derive(Debug, Default, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct TypeScriptOptions {
     /// When set to true, the transform will only remove type-only imports (introduced in TypeScript 3.8).
     /// This should only be used if you are using TypeScript >= 3.8.

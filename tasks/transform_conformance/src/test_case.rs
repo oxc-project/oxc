@@ -85,6 +85,7 @@ fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOpti
         let has_jsx_plugin = jsx_plugin.as_ref().is_some();
         let mut react_options =
             jsx_plugin.map(get_options::<ReactOptions>).transpose()?.unwrap_or_default();
+        react_options.development = options.get_plugin("transform-react-jsx-development").is_some();
         react_options.jsx_plugin = has_jsx_plugin;
         react_options.display_name_plugin =
             options.get_plugin("transform-react-display-name").is_some();
@@ -292,17 +293,21 @@ impl TestCase for ConformanceTestCase {
                         .build(program)
                         .source_text;
                 } else {
-                    actual_errors = result.err().unwrap().iter().map(ToString::to_string).collect();
+                    let error = result
+                        .err()
+                        .unwrap()
+                        .iter()
+                        .map(ToString::to_string)
+                        .collect::<Vec<_>>()
+                        .join("\n");
+
+                    actual_errors = get_babel_error(error);
                 }
                 Some(transform_options.clone())
             }
             Err(json_err) => {
-                let error = format!("{json_err:?}");
-                if error.contains("expected `classic` or `automatic`") {
-                    actual_errors.push_str(r#"Runtime must be either "classic" or "automatic"."#);
-                } else {
-                    actual_errors.push_str(&error);
-                }
+                let error = json_err.to_string();
+                actual_errors = get_babel_error(error);
                 None
             }
         };
@@ -347,6 +352,8 @@ impl TestCase for ConformanceTestCase {
                 println!("{output}\n");
                 println!("Transformed:\n");
                 println!("{transformed_code}");
+                println!("Errors:\n");
+                println!("{actual_errors}\n");
                 if !passed {
                     println!("Diff:\n");
                     print_diff_in_terminal(&output, &transformed_code);
@@ -428,5 +435,17 @@ impl TestCase for ExecTestCase {
         }
 
         passed
+    }
+}
+
+fn get_babel_error(error: String) -> String {
+    if error == "unknown variant `invalidOption`, expected `classic` or `automatic`" {
+        "Runtime must be either \"classic\" or \"automatic\".".to_string()
+    } else if error == "Duplicate __self prop found." {
+        "Duplicate __self prop found. You are most likely using the deprecated transform-react-jsx-self Babel plugin. Both __source and __self are automatically set when using the automatic runtime. Please remove transform-react-jsx-source and transform-react-jsx-self from your Babel config.".to_string()
+    } else if error == "Duplicate __source prop found." {
+        "Duplicate __source prop found. You are most likely using the deprecated transform-react-jsx-source Babel plugin. Both __source and __self are automatically set when using the automatic runtime. Please remove transform-react-jsx-source and transform-react-jsx-self from your Babel config.".to_string()
+    } else {
+        error
     }
 }
