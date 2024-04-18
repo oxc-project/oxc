@@ -1,6 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, ArrayExpression, ArrayExpressionElement, CallExpression, Expression},
-    AstKind,
+    ast::{Argument, ArrayExpression, ArrayExpressionElement, CallExpression, Expression}, dummy, AstKind
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -373,6 +372,7 @@ fn innermost_paren_arg_span(arg: &Argument) -> Span {
     match arg {
         Argument::Expression(expr) => expr.without_parenthesized().span(),
         Argument::SpreadElement(spread_elem) => spread_elem.argument.span(),
+        Argument::Dummy => dummy!(unreachable),
     }
 }
 

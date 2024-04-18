@@ -1,6 +1,6 @@
 use oxc_ast::{
     ast::{Argument, CallExpression, Expression, MemberExpression},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -167,6 +167,7 @@ fn build_code(expr: &CallExpression, ctx: &LintContext) -> (String, Span) {
                 }
             }
             MemberExpression::PrivateFieldExpression(_) => {}
+            MemberExpression::Dummy => dummy!(unreachable),
         }
     }
 

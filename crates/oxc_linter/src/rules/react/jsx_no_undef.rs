@@ -3,7 +3,7 @@ use oxc_ast::{
         JSXElementName, JSXIdentifier, JSXMemberExpression, JSXMemberExpressionObject,
         JSXOpeningElement,
     },
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -42,6 +42,7 @@ fn get_member_ident<'a>(expr: &'a JSXMemberExpression<'a>) -> &'a JSXIdentifier 
     match expr.object {
         JSXMemberExpressionObject::Identifier(ref ident) => ident,
         JSXMemberExpressionObject::MemberExpression(ref next_expr) => get_member_ident(next_expr),
+        JSXMemberExpressionObject::Dummy => dummy!(unreachable),
     }
 }
 fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a JSXIdentifier> {
@@ -53,6 +54,7 @@ fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a JSXIdent
         }
         JSXElementName::Identifier(_) | JSXElementName::NamespacedName(_) => None,
         JSXElementName::MemberExpression(expr) => Some(get_member_ident(expr)),
+        JSXElementName::Dummy => dummy!(unreachable),
     }
 }
 

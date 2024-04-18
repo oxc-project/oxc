@@ -1,6 +1,6 @@
 use oxc_ast::{
     ast::{Argument, Expression, MemberExpression},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -78,6 +78,7 @@ impl Rule for UninvokedArrayCallback {
             MemberExpression::ComputedMemberExpression(expr) => expr.expression.span(),
             MemberExpression::StaticMemberExpression(expr) => expr.property.span,
             MemberExpression::PrivateFieldExpression(expr) => expr.field.span,
+            MemberExpression::Dummy => dummy!(unreachable),
         };
         ctx.diagnostic(UninvokedArrayCallbackDiagnostic(property_span, new_expr.span));
     }

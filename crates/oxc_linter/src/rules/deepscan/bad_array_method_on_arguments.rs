@@ -1,6 +1,5 @@
 use oxc_ast::{
-    ast::{Expression, MemberExpression},
-    AstKind,
+    ast::{Expression, MemberExpression}, dummy, AstKind
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -97,6 +96,7 @@ impl Rule for BadArrayMethodOnArguments {
                 }
             }
             MemberExpression::PrivateFieldExpression(_) => {}
+            MemberExpression::Dummy => dummy!(unreachable)
         }
     }
 }

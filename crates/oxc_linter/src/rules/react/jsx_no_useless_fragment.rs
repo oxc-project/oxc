@@ -3,7 +3,7 @@ use oxc_ast::{
         Expression, JSXAttributeItem, JSXAttributeName, JSXChild, JSXElement, JSXElementName,
         JSXExpression, JSXFragment, JSXMemberExpressionObject, JSXOpeningElement,
     },
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -171,6 +171,7 @@ fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
             return ident.name.as_str() == "React";
         }
         JSXElementName::NamespacedName(_) => false,
+        JSXElementName::Dummy => dummy!(unreachable),
     }
 }
 

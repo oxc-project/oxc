@@ -1,6 +1,5 @@
 use oxc_ast::{
-    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement},
-    AstKind,
+    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement}, dummy, AstKind
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -178,6 +177,7 @@ fn check_jsx_element_is_key_before_spread<'a>(jsx_elem: &JSXElement<'a>, ctx: &L
                 }
             }
             JSXAttributeItem::SpreadAttribute(_) => spread_idx = Some(i),
+            JSXAttributeItem::Dummy => dummy!(unreachable),
         }
         if key_idx_span.map(|x| x.0).is_some() && spread_idx.is_some() {
             break;

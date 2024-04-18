@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{dummy, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -77,6 +77,7 @@ impl Rule for NoStaticOnlyClass {
                 oxc_ast::ast::ClassElement::AccessorProperty(_)
                 | oxc_ast::ast::ClassElement::StaticBlock(_)
                 | oxc_ast::ast::ClassElement::TSIndexSignature(_) => {}
+                oxc_ast::ast::ClassElement::Dummy => dummy!(unreachable),
             }
 
             if node.r#static() {

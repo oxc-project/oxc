@@ -1,6 +1,6 @@
 use oxc_ast::{
     ast::{Argument, CallExpression, Expression, NewExpression},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -77,6 +77,7 @@ impl Rule for ErrorMessage {
                 && match arg {
                     Argument::Expression(_) => false,
                     Argument::SpreadElement(_) => true,
+                    Argument::Dummy => dummy!(unreachable),
                 }
         }) {
             return;
@@ -96,6 +97,7 @@ impl Rule for ErrorMessage {
             Argument::SpreadElement(_) => {
                 return;
             }
+            Argument::Dummy => dummy!(unreachable),
         };
 
         match arg {

@@ -1,6 +1,6 @@
 use oxc_ast::{
     ast::{BindingPattern, BindingPatternKind},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -83,6 +83,7 @@ fn get_param_references_count(binding_pat: &BindingPattern, ctx: &LintContext) -
 
             count
         }
+        BindingPatternKind::Dummy => dummy!(unreachable),
     }
 }
 

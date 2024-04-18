@@ -3,7 +3,7 @@ use oxc_ast::{
         AssignmentTarget, Expression, MemberExpression, MethodDefinitionKind,
         SimpleAssignmentTarget, StaticMemberExpression,
     },
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -125,6 +125,7 @@ fn get_outer_member_expression<'a, 'b>(
             }
             MemberExpression::PrivateFieldExpression(_)
             | MemberExpression::ComputedMemberExpression(_) => {}
+            MemberExpression::Dummy => dummy!(unreachable),
         }
     }
 

@@ -2,8 +2,7 @@ use oxc_ast::{
     ast::{
         ClassElement, Declaration, ExportDefaultDeclarationKind, Expression, FunctionType,
         ModuleDeclaration, PropertyKey, Statement, TSSignature,
-    },
-    AstKind,
+    }, dummy, AstKind
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -99,6 +98,7 @@ fn get_kind_from_key(key: &PropertyKey) -> MethodKind {
             | Expression::NullLiteral(_) => MethodKind::Quoted,
             _ => MethodKind::Expression,
         },
+        PropertyKey::Dummy => dummy!(unreachable)
     }
 }
 

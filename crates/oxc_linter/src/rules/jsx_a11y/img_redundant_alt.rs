@@ -135,6 +135,7 @@ impl Rule for ImgRedundantAlt {
         let alt_attribute_name_span = match alt_attribute_name {
             JSXAttributeName::Identifier(iden) => iden.span,
             JSXAttributeName::NamespacedName(namespaced_name) => namespaced_name.span,
+            JSXAttributeName::Dummy => dummy!(unreachable),
         };
 
         match alt_attribute {

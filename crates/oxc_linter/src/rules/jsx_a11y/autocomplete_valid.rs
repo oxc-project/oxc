@@ -6,7 +6,7 @@ use crate::{
 };
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -193,6 +193,7 @@ impl Rule for AutocompleteValid {
             let attr = match autocomplete_prop {
                 JSXAttributeItem::Attribute(attr) => attr,
                 JSXAttributeItem::SpreadAttribute(_) => return,
+                JSXAttributeItem::Dummy => dummy!(unreachable),
             };
             let Some(JSXAttributeValue::StringLiteral(autocomplete_values)) = &attr.value else {
                 return;

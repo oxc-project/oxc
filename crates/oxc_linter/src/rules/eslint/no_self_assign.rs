@@ -4,7 +4,7 @@ use oxc_ast::{
         AssignmentTargetPattern, AssignmentTargetProperty, Expression, MemberExpression,
         ObjectProperty, ObjectPropertyKind, SimpleAssignmentTarget,
     },
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -162,6 +162,10 @@ impl NoSelfAssign {
                     }
                 }
             }
+            AssignmentTarget::Dummy
+            | AssignmentTarget::AssignmentTargetPattern(AssignmentTargetPattern::Dummy) => {
+                dummy!(unreachable)
+            }
         }
         if let AssignmentTarget::SimpleAssignmentTarget(
             SimpleAssignmentTarget::MemberAssignmentTarget(member_target),
@@ -269,6 +273,7 @@ impl NoSelfAssign {
                     AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(_) => {
                         return;
                     }
+                    AssignmentTargetMaybeDefault::Dummy => dummy!(unreachable),
                 };
                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = right {
                     if let ObjectProperty { method: false, value: expr, key, .. } = &**obj_prop {
@@ -281,6 +286,7 @@ impl NoSelfAssign {
                 }
             }
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => {}
+            AssignmentTargetProperty::Dummy => dummy!(unreachable),
         }
     }
 }

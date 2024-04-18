@@ -1,6 +1,6 @@
 use std::hash::{Hash, Hasher};
 
-use oxc_ast::AstKind;
+use oxc_ast::{dummy, AstKind};
 use oxc_semantic::{AstNode, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
@@ -166,6 +166,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for Argument<'a> {
         match self {
             Self::SpreadElement(element) => element.is_constant(in_boolean_position, ctx),
             Self::Expression(expr) => expr.is_constant(in_boolean_position, ctx),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -176,6 +177,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for ArrayExpressionElement<'a> {
             Self::SpreadElement(element) => element.is_constant(in_boolean_position, ctx),
             Self::Expression(expr) => expr.is_constant(in_boolean_position, ctx),
             Self::Elision(_) => true,
+            Self::Dummy => dummy!(),
         }
     }
 }

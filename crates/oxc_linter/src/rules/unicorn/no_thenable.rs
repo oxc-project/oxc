@@ -5,7 +5,7 @@ use oxc_ast::{
         ModuleDeclaration, ModuleExportName, ObjectPropertyKind, PropertyKey,
         SimpleAssignmentTarget, VariableDeclarator,
     },
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -117,6 +117,7 @@ impl Rule for NoThenable {
                                 ctx.diagnostic(NoThenableDiagnostic::Export(lit.span));
                             }
                         }
+                        ModuleExportName::Dummy => dummy!(unreachable),
                     }
                 }
             }
@@ -140,6 +141,7 @@ impl Rule for NoThenable {
                     }
                 }
                 MemberExpression::PrivateFieldExpression(_) => {}
+                MemberExpression::Dummy => dummy!(unreachable),
             },
             _ => {}
         }
@@ -231,6 +233,7 @@ fn check_binding_pattern(pat: &BindingPatternKind, ctx: &LintContext) {
         BindingPatternKind::AssignmentPattern(assign) => {
             check_binding_pattern(&assign.left.kind, ctx);
         }
+        BindingPatternKind::Dummy => dummy!(unreachable),
     }
 }
 

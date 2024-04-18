@@ -2,8 +2,7 @@ use oxc_ast::{
     ast::{
         Argument, Expression, JSXAttributeItem, JSXAttributeName, JSXElementName,
         ObjectPropertyKind, PropertyKey,
-    },
-    AstKind,
+    }, dummy, AstKind
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -81,6 +80,7 @@ impl Rule for VoidDomElementsNoChildren {
                             iden.name == "children" || iden.name == "dangerouslySetInnerHTML"
                         }
                         JSXAttributeItem::SpreadAttribute(_) => false,
+                        JSXAttributeItem::Dummy => dummy!(unreachable),
                     });
 
                 if !jsx_el.children.is_empty() || has_children_attribute_or_danger {
@@ -128,6 +128,7 @@ impl Rule for VoidDomElementsNoChildren {
                             _ => false,
                         },
                         ObjectPropertyKind::SpreadProperty(_) => false,
+                        ObjectPropertyKind::Dummy => dummy!(unreachable),
                     });
 
                 if call_expr.arguments.get(2).is_some() || has_children_prop_or_danger {
