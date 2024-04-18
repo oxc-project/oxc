@@ -315,10 +315,10 @@ line2
              * This is normal comment, `@xxx` should not parsed as tag.
              *
              * @example ```ts
-             /** @comment */ 
-            @decoratorInComment
-            class Foo { }
-            ```
+                // @comment
+                @decoratorInComment
+                class Foo { }
+               ```
              */
             ",
         );
