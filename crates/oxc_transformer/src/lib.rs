@@ -12,6 +12,7 @@ mod compiler_assumptions;
 mod context;
 mod options;
 // Presets: <https://babel.dev/docs/presets>
+mod es2024;
 mod react;
 mod typescript;
 mod utils;
@@ -22,6 +23,7 @@ mod helpers {
 
 use std::{path::Path, rc::Rc};
 
+use es2024::Es2024;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{
     ast::*,
@@ -43,9 +45,12 @@ use crate::{
 
 pub struct Transformer<'a> {
     ctx: Ctx<'a>,
+
     // NOTE: all callbacks must run in order.
     x0_typescript: TypeScript<'a>,
     x1_react: React<'a>,
+    // x2_decorators,
+    x3_es2024: Es2024<'a>,
 }
 
 impl<'a> Transformer<'a> {
@@ -60,6 +65,7 @@ impl<'a> Transformer<'a> {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, &ctx),
             x1_react: React::new(options.react, &ctx),
+            x3_es2024: Es2024::new(&ctx),
         }
     }
 
@@ -182,6 +188,12 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.x0_typescript.transform_property_definition(def);
 
         walk_mut::walk_property_definition_mut(self, def);
+    }
+
+    fn visit_reg_expr_literal(&mut self, lit: &mut RegExpLiteral<'a>) {
+        self.x3_es2024.transform_reg_expr_literal(lit);
+
+        walk_mut::walk_reg_expr_literal_mut(self, lit);
     }
 
     fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
