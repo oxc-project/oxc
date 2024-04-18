@@ -86,7 +86,7 @@ impl std::ops::Deref for MaxLen {
 impl Default for MaxLenConfig {
     fn default() -> Self {
         Self {
-            code: 200,     // the default max length
+            code: 200,    // the default max length
             tab_width: 4, // the default tab width
             comments: 0,
             ignore_pattern: String::new(),
