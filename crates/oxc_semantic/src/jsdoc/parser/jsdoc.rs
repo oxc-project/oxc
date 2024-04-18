@@ -306,7 +306,7 @@ line2
     }
 
     #[test]
-    fn parses_with_codeblock() {
+    fn parses_with_backticks() {
         let allocator = Allocator::default();
         let semantic = build_semantic(
             &allocator,
@@ -316,7 +316,7 @@ line2
              *
              * @example ```ts
              /** @comment */ 
-            @decorator
+            @decoratorInComment
             class Foo { }
             ```
              */
