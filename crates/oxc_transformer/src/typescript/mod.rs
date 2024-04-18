@@ -1,5 +1,6 @@
 mod annotations;
 mod collector;
+mod diagnostics;
 mod r#enum;
 mod module;
 mod namespace;
