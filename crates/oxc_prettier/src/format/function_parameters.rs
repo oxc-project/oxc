@@ -1,4 +1,4 @@
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{ast::*, dummy, AstKind};
 
 use crate::{
     comments::CommentFlags,
@@ -54,7 +54,7 @@ pub(super) fn should_hug_the_only_function_parameter(
                 _ => false,
             }
         }
-        BindingPatternKind::Dummy => false,
+        BindingPatternKind::Dummy => dummy!(),
     }
 }
 

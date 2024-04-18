@@ -1,3 +1,4 @@
+use oxc_ast::dummy;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{
     ast::*,
@@ -479,7 +480,7 @@ fn check_module_declaration<'a>(
     }
 
     let text = match decl {
-        ModuleDeclaration::Dummy => "import dummy",
+        ModuleDeclaration::Dummy => dummy!(panic),
         ModuleDeclaration::ImportDeclaration(_) => "import statement",
         ModuleDeclaration::ExportAllDeclaration(_)
         | ModuleDeclaration::ExportDefaultDeclaration(_)

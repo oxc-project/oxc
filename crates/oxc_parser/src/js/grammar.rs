@@ -1,6 +1,6 @@
 //! Cover Grammar for Destructuring Assignment
 
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, dummy};
 use oxc_diagnostics::Result;
 use oxc_span::GetSpan;
 
@@ -90,7 +90,7 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                     }
                 }
                 ArrayExpressionElement::Elision(_) => elements.push(None),
-                ArrayExpressionElement::Dummy => {}
+                ArrayExpressionElement::Dummy => dummy!(),
             }
         }
 
@@ -146,7 +146,7 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
                         return Err(diagnostics::SpreadLastElement(spread.span).into());
                     }
                 }
-                ObjectPropertyKind::Dummy => {}
+                ObjectPropertyKind::Dummy => dummy!(),
             }
         }
 

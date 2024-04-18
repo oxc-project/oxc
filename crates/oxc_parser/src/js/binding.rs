@@ -1,5 +1,5 @@
 use oxc_allocator::Box;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, dummy};
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
@@ -144,7 +144,7 @@ impl<'a> ParserImpl<'a> {
             BindingPatternKind::ArrayPattern(pat) => &mut pat.span,
             BindingPatternKind::AssignmentPattern(pat) => &mut pat.span,
             // Ignore dummy nodes
-            BindingPatternKind::Dummy => return,
+            BindingPatternKind::Dummy => return dummy!(),
         };
         pat_span.end = span.end;
     }

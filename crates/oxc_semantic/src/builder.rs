@@ -2,6 +2,7 @@
 
 use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 
+use oxc_ast::dummy;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
 use oxc_diagnostics::Error;
@@ -837,7 +838,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 self.visit_variable_declaration(decl);
             }
             ForStatementInit::Expression(expr) => self.visit_expression(expr),
-            ForStatementInit::Dummy => {}
+            ForStatementInit::Dummy => dummy!(),
         }
         self.leave_node(kind);
     }

@@ -1,4 +1,4 @@
-use crate::ast::*;
+use crate::{ast::*, dummy};
 
 /// [`PrivateBoundIdentifiers`](https://tc39.es/ecma262/#sec-static-semantics-privateboundidentifiers)
 pub trait PrivateBoundIdentifiers {
@@ -8,12 +8,11 @@ pub trait PrivateBoundIdentifiers {
 impl<'a> PrivateBoundIdentifiers for ClassElement<'a> {
     fn private_bound_identifiers(&self) -> Option<PrivateIdentifier> {
         match self {
-            ClassElement::StaticBlock(_)
-            | ClassElement::TSIndexSignature(_)
-            | ClassElement::Dummy => None,
+            ClassElement::StaticBlock(_) | ClassElement::TSIndexSignature(_) => None,
             ClassElement::MethodDefinition(def) => def.private_bound_identifiers(),
             ClassElement::PropertyDefinition(def) => def.private_bound_identifiers(),
             ClassElement::AccessorProperty(def) => def.private_bound_identifiers(),
+            ClassElement::Dummy => dummy!(),
         }
     }
 }

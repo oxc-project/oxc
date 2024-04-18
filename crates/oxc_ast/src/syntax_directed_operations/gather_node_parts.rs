@@ -1,4 +1,4 @@
-use crate::ast::*;
+use crate::{ast::*, dummy};
 use oxc_span::Atom;
 
 // TODO: <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L61>
@@ -34,7 +34,7 @@ impl<'a> GatherNodeParts<'a> for MemberExpression<'a> {
                 expr.object.gather(f);
                 expr.field.gather(f);
             }
-            MemberExpression::Dummy => {}
+            MemberExpression::Dummy => dummy!(),
         }
     }
 }
@@ -43,7 +43,8 @@ impl<'a> GatherNodeParts<'a> for AssignmentTarget<'a> {
     fn gather<F: FnMut(Atom<'a>)>(&self, f: &mut F) {
         match self {
             AssignmentTarget::SimpleAssignmentTarget(t) => t.gather(f),
-            AssignmentTarget::AssignmentTargetPattern(_) | AssignmentTarget::Dummy => {}
+            AssignmentTarget::AssignmentTargetPattern(_) => {}
+            AssignmentTarget::Dummy => dummy!(),
         }
     }
 }

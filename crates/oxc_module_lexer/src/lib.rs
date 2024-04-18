@@ -2,12 +2,15 @@
 //!
 //! * <https://github.com/guybedford/es-module-lexer>
 
-use oxc_ast::visit::walk::{
-    walk_export_all_declaration, walk_export_named_declaration, walk_import_declaration,
-    walk_import_expression, walk_meta_property, walk_module_declaration, walk_statement,
-};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, syntax_directed_operations::BoundNames, Visit};
+use oxc_ast::{
+    dummy,
+    visit::walk::{
+        walk_export_all_declaration, walk_export_named_declaration, walk_import_declaration,
+        walk_import_expression, walk_meta_property, walk_module_declaration, walk_statement,
+    },
+};
 use oxc_span::{Atom, GetSpan};
 
 #[derive(Debug, Clone)]
@@ -225,7 +228,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
                 ModuleExportName::Identifier(ident) => (ident.span.start, ident.span.end),
                 // +1 -1 to remove the string quotes
                 ModuleExportName::StringLiteral(s) => (s.span.start + 1, s.span.end - 1),
-                ModuleExportName::Dummy => (0, 0),
+                ModuleExportName::Dummy => dummy!(),
             };
             ExportSpecifier {
                 n: s.exported.as_atom(),
@@ -249,8 +252,8 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
             ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref(),
             ExportDefaultDeclarationKind::Expression(_)
             | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
-            | ExportDefaultDeclarationKind::TSEnumDeclaration(_)
-            | ExportDefaultDeclarationKind::Dummy => None,
+            | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => None,
+            ExportDefaultDeclarationKind::Dummy => dummy!(),
         };
         self.exports.push(ExportSpecifier {
             n: decl.exported.as_atom(),

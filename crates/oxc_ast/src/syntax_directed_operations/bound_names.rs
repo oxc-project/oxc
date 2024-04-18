@@ -1,4 +1,4 @@
-use crate::ast::*;
+use crate::{ast::*, dummy};
 
 /// [`BoundName`](https://tc39.es/ecma262/#sec-static-semantics-boundnames)
 pub trait BoundName<'a> {
@@ -16,7 +16,7 @@ impl<'a> BoundNames<'a> for BindingPattern<'a> {
             BindingPatternKind::ArrayPattern(array) => array.bound_names(f),
             BindingPatternKind::ObjectPattern(object) => object.bound_names(f),
             BindingPatternKind::AssignmentPattern(assignment) => assignment.bound_names(f),
-            BindingPatternKind::Dummy => {}
+            BindingPatternKind::Dummy => dummy!(),
         }
     }
 }
@@ -155,7 +155,7 @@ impl<'a> BoundNames<'a> for ImportDeclaration<'a> {
                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
                         f(&specifier.local);
                     }
-                    ImportDeclarationSpecifier::Dummy => {}
+                    ImportDeclarationSpecifier::Dummy => dummy!(),
                 }
             }
         }

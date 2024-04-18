@@ -1,6 +1,6 @@
 use oxc_span::Span;
 
-use crate::ast::*;
+use crate::{ast::*, dummy};
 
 /// [`PropName`](https://tc39.es/ecma262/#sec-static-semantics-propname)
 pub trait PropName {
@@ -11,7 +11,8 @@ impl<'a> PropName for ObjectPropertyKind<'a> {
     fn prop_name(&self) -> Option<(&str, Span)> {
         match self {
             ObjectPropertyKind::ObjectProperty(prop) => prop.prop_name(),
-            ObjectPropertyKind::SpreadProperty(_) | ObjectPropertyKind::Dummy => None,
+            ObjectPropertyKind::SpreadProperty(_) => None,
+            ObjectPropertyKind::Dummy => dummy!(),
         }
     }
 }
@@ -34,7 +35,8 @@ impl<'a> PropName for PropertyKey<'a> {
                 Expression::StringLiteral(lit) => Some((&lit.value, lit.span)),
                 _ => None,
             },
-            PropertyKey::PrivateIdentifier(_) | PropertyKey::Dummy => None,
+            PropertyKey::PrivateIdentifier(_) => None,
+            PropertyKey::Dummy => dummy!(),
         }
     }
 }

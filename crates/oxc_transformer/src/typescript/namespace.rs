@@ -3,7 +3,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use super::TypeScript;
 
 use oxc_allocator::{Box, Vec};
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, dummy};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 
@@ -151,7 +151,8 @@ impl<'a> TypeScript<'a> {
             Some(TSModuleDeclarationBody::TSModuleBlock(ts_module_block)) => {
                 self.ctx.ast.move_statement_vec(&mut ts_module_block.body)
             }
-            Some(TSModuleDeclarationBody::Dummy) | None => self.ctx.ast.new_vec(),
+            Some(TSModuleDeclarationBody::Dummy) => dummy!(panic),
+            None => self.ctx.ast.new_vec(),
         };
 
         let name = block.id.as_atom();

@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use oxc_ast::dummy;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, syntax_directed_operations::BoundNames};
 use oxc_span::{CompactStr, GetSpan, Span};
@@ -165,8 +166,8 @@ impl ModuleRecordBuilder {
                 self.visit_export_named_declaration(export_named_decl);
             }
             ModuleDeclaration::TSExportAssignment(_)
-            | ModuleDeclaration::TSNamespaceExportDeclaration(_)
-            | ModuleDeclaration::Dummy => { /* noop */ }
+            | ModuleDeclaration::TSNamespaceExportDeclaration(_) => { /* noop */ }
+            ModuleDeclaration::Dummy => dummy!(),
         }
     }
 
@@ -254,7 +255,7 @@ impl ModuleRecordBuilder {
             ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref(),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
             | ExportDefaultDeclarationKind::TSEnumDeclaration(_)
-            | ExportDefaultDeclarationKind::Dummy => return,
+            | ExportDefaultDeclarationKind::Dummy => return dummy!(),
         };
         let export_entry = ExportEntry {
             export_name: ExportExportName::Default(exported_name.span()),

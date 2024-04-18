@@ -3,7 +3,7 @@ mod diagnostics;
 use std::rc::Rc;
 
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{ast::*, dummy, AstBuilder};
 use oxc_span::{CompactStr, GetSpan, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
@@ -555,7 +555,7 @@ impl<'a> ReactJsx<'a> {
                     properties.push(object_property);
                 }
             },
-            JSXAttributeItem::Dummy => {}
+            JSXAttributeItem::Dummy => dummy!(),
         }
     }
 
@@ -592,7 +592,8 @@ impl<'a> ReactJsx<'a> {
             JSXChild::Text(text) => self.transform_jsx_text(text.value.as_str()),
             JSXChild::ExpressionContainer(e) => match &e.expression {
                 JSXExpression::Expression(e) => Some(self.ast().copy(e)),
-                JSXExpression::EmptyExpression(_) | JSXExpression::Dummy => None,
+                JSXExpression::EmptyExpression(_) => None,
+                JSXExpression::Dummy => dummy!(),
             },
             JSXChild::Element(e) => Some(self.transform_jsx(&JSXElementOrFragment::Element(e))),
             JSXChild::Fragment(e) => Some(self.transform_jsx(&JSXElementOrFragment::Fragment(e))),
@@ -600,7 +601,7 @@ impl<'a> ReactJsx<'a> {
                 self.ctx.error(SpreadChildrenAreNotSupported(e.span));
                 None
             }
-            JSXChild::Dummy => None,
+            JSXChild::Dummy => dummy!(),
         }
     }
 
