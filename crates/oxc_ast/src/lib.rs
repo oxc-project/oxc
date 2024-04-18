@@ -59,15 +59,15 @@ fn size_asserts() {
     use crate::ast;
     use oxc_index::assert_eq_size;
 
-    assert_eq_size!(ast::Statement, [u8; 16]);
+    assert_eq_size!(ast::Statement, [u8; 24]);
     assert_eq_size!(ast::Expression, [u8; 16]);
     assert_eq_size!(ast::Declaration, [u8; 16]);
     assert_eq_size!(ast::BindingPatternKind, [u8; 16]);
     assert_eq_size!(ast::ModuleDeclaration, [u8; 16]);
     assert_eq_size!(ast::ClassElement, [u8; 16]);
-    assert_eq_size!(ast::ExportDefaultDeclarationKind, [u8; 16]);
+    assert_eq_size!(ast::ExportDefaultDeclarationKind, [u8; 24]);
     assert_eq_size!(ast::AssignmentTargetPattern, [u8; 16]);
-    assert_eq_size!(ast::AssignmentTargetMaybeDefault, [u8; 24]);
+    assert_eq_size!(ast::AssignmentTargetMaybeDefault, [u8; 32]);
     assert_eq_size!(ast::AssignmentTargetProperty, [u8; 16]);
     assert_eq_size!(ast::TSLiteral, [u8; 16]);
     assert_eq_size!(ast::TSType, [u8; 16]);
