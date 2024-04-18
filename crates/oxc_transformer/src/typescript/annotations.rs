@@ -17,11 +17,19 @@ pub struct TypeScriptAnnotations<'a> {
     #[allow(dead_code)]
     options: Rc<TypeScriptOptions>,
     ctx: Ctx<'a>,
+    /// Assignments to be added to the constructor body
+    assignments: Vec<'a, Statement<'a>>,
+    has_super_call: bool,
 }
 
 impl<'a> TypeScriptAnnotations<'a> {
     pub fn new(options: &Rc<TypeScriptOptions>, ctx: &Ctx<'a>) -> Self {
-        Self { options: Rc::clone(options), ctx: Rc::clone(ctx) }
+        Self {
+            has_super_call: false,
+            assignments: ctx.ast.new_vec(),
+            options: Rc::clone(options),
+            ctx: Rc::clone(ctx),
+        }
     }
 
     // Convert `export = expr` into `module.exports = expr`
@@ -237,35 +245,44 @@ impl<'a> TypeScriptAnnotations<'a> {
     }
 
     pub fn transform_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
-        def.accessibility = None;
-        def.optional = false;
-        def.r#override = false;
-
         // Collects parameter properties so that we can add an assignment
         // for each of them in the constructor body.
         if def.kind == MethodDefinitionKind::Constructor {
-            let mut assigns = self.ctx.ast.new_vec();
-
             for param in &def.value.params.items {
-                if param.pattern.type_annotation.is_none() {
+                if !param.is_public() {
                     continue;
                 }
 
                 if let Some(id) = param.pattern.get_identifier() {
-                    assigns.push(self.create_this_property_assignment(id));
+                    let assignment = self.create_this_property_assignment(id);
+                    self.assignments.push(assignment);
                 }
             }
+        }
 
-            if !assigns.is_empty() {
+        def.accessibility = None;
+        def.optional = false;
+        def.r#override = false;
+    }
+
+    pub fn transform_method_definition_on_exit(&mut self, def: &mut MethodDefinition<'a>) {
+        if def.kind == MethodDefinitionKind::Constructor && !self.assignments.is_empty() {
+            // When the constructor doesn't have a super call,
+            // we simply add assignments to the bottom of the function body
+            if self.has_super_call {
+                self.assignments.clear();
+            } else {
                 def.value
                     .body
-                    .get_or_insert(self.ctx.ast.function_body(
-                        SPAN,
-                        self.ctx.ast.new_vec(),
-                        self.ctx.ast.new_vec(),
-                    ))
+                    .get_or_insert_with(|| {
+                        self.ctx.ast.function_body(
+                            SPAN,
+                            self.ctx.ast.new_vec(),
+                            self.ctx.ast.new_vec(),
+                        )
+                    })
                     .statements
-                    .extend(assigns);
+                    .extend(self.assignments.drain(..));
             }
         }
     }
@@ -302,6 +319,52 @@ impl<'a> TypeScriptAnnotations<'a> {
             // Ignore ModuleDeclaration as it's handled in the program
             _ => true,
         });
+
+        // Add assignments after super calls
+        if !self.assignments.is_empty() {
+            let mut super_indexes = vec![];
+            for (index, stmt) in stmts.iter().rev().enumerate() {
+                if matches!(stmt, Statement::ExpressionStatement(stmt) if stmt.expression.is_super_call_expression())
+                {
+                    super_indexes.push(index);
+                }
+            }
+            if !super_indexes.is_empty() {
+                self.has_super_call = true;
+                for index in super_indexes.iter().rev() {
+                    stmts.splice((index + 1)..=*index, self.ctx.ast.copy(&self.assignments));
+                }
+            }
+        }
+    }
+
+    /// Transform if statement's consequent and alternate to block statements if they are super calls
+    /// ```ts
+    /// if (true) super() else super();
+    /// // to
+    /// if (true) { super() } else { super() }
+    /// ```
+    pub fn transform_if_statement(&mut self, stmt: &mut IfStatement<'a>) {
+        if !self.assignments.is_empty() {
+            if matches!(&stmt.consequent, Statement::ExpressionStatement(expr) if expr.expression.is_super_call_expression())
+            {
+                stmt.consequent =
+                    self.ctx.ast.block_statement(self.ctx.ast.block(
+                        SPAN,
+                        self.ctx.ast.new_vec_single(self.ctx.ast.copy(&stmt.consequent)),
+                    ));
+            }
+            if let Some(alternate) = &stmt.alternate {
+                if matches!(alternate, Statement::ExpressionStatement(expr) if expr.expression.is_super_call_expression())
+                {
+                    stmt.alternate =
+                        Some(self.ctx.ast.block_statement(self.ctx.ast.block(
+                            SPAN,
+                            self.ctx.ast.new_vec_single(self.ctx.ast.copy(alternate)),
+                        )));
+                }
+            }
+        }
     }
 
     pub fn transform_tagged_template_expression(

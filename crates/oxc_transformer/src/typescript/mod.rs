@@ -120,6 +120,10 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_method_definition(def);
     }
 
+    pub fn transform_method_definition_on_exit(&mut self, def: &mut MethodDefinition<'a>) {
+        self.annotations.transform_method_definition_on_exit(def);
+    }
+
     pub fn transform_new_expression(&mut self, expr: &mut NewExpression<'a>) {
         self.annotations.transform_new_expression(expr);
     }
@@ -134,6 +138,10 @@ impl<'a> TypeScript<'a> {
 
     pub fn transform_statements_on_exit(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         self.annotations.transform_statements_on_exit(stmts);
+    }
+
+    pub fn transform_if_statement(&mut self, stmt: &mut IfStatement<'a>) {
+        self.annotations.transform_if_statement(stmt);
     }
 
     pub fn transform_tagged_template_expression(

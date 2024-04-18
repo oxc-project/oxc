@@ -162,6 +162,8 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         self.x0_typescript.transform_method_definition(def);
 
         walk_mut::walk_method_definition_mut(self, def);
+
+        self.x0_typescript.transform_method_definition_on_exit(def);
     }
 
     fn visit_new_expression(&mut self, expr: &mut NewExpression<'a>) {
@@ -215,5 +217,10 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     fn visit_declaration(&mut self, decl: &mut Declaration<'a>) {
         self.x0_typescript.transform_declaration(decl);
         walk_mut::walk_declaration_mut(self, decl);
+    }
+
+    fn visit_if_statement(&mut self, stmt: &mut IfStatement<'a>) {
+        self.x0_typescript.transform_if_statement(stmt);
+        walk_mut::walk_if_statement_mut(self, stmt);
     }
 }
