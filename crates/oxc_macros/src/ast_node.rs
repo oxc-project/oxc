@@ -46,7 +46,7 @@ fn modify_enum(item: &mut ItemEnum) -> NodeData {
     item.attrs.iter().for_each(validate_attribute);
 
     assert!(
-        item.variants.len() < 256,
+        item.variants.len() < 255,
         "`ast_node` enums are limited to the maximum of 256 variants."
     );
     item.variants.iter().for_each(validate_variant);
