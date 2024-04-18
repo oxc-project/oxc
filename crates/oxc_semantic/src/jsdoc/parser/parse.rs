@@ -24,6 +24,7 @@ pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (JSDocCommentPar
     let mut comment_found = false;
     // Parser local offsets, not for global span
     let (mut start, mut end) = (0, 0);
+
     let mut chars = source_text.chars().peekable();
     while let Some(ch) = chars.next() {
         let can_parse = !(in_braces || in_backticks);
@@ -35,7 +36,7 @@ pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (JSDocCommentPar
             // (for nested code blocks)
             // But for now, 4, 6, ... backticks are not handled here to keep things simple...
             '`' => {
-                if chars.peek().map_or(false, |&c| c != '`') {
+                if chars.peek().is_some_and(|&c| c != '`') {
                     in_backticks = !in_backticks;
                 }
             }
