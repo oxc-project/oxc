@@ -15,6 +15,7 @@ use serde::Serialize;
 use tsify::Tsify;
 
 use super::{js::*, literal::*};
+use crate::dummy;
 use crate::traverse::ast::*;
 use crate::traverse::{SharedBox, SharedVec};
 
@@ -487,7 +488,7 @@ impl GetSpan for TSTypeName<'_> {
         match self {
             TSTypeName::IdentifierReference(ident) => ident.span,
             TSTypeName::QualifiedName(name) => name.span,
-            TSTypeName::Dummy => Span::default(),
+            TSTypeName::Dummy => dummy!(),
         }
     }
 }

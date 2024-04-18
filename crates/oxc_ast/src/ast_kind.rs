@@ -2,6 +2,7 @@ use oxc_span::{Atom, GetSpan, Span};
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
+use crate::dummy;
 
 macro_rules! ast_kinds {
     { $($ident:ident($type:ty),)* } => (
@@ -536,7 +537,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSNamedTupleMember(x) => x.span,
 
             Self::TSPropertySignature(x) => x.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }

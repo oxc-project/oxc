@@ -18,8 +18,8 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
-use crate::traverse::ast::*;
 use crate::traverse::{SharedBox, SharedVec};
+use crate::{dummy, traverse::ast::*};
 
 use super::{jsx::*, literal::*, ts::*};
 
@@ -311,8 +311,9 @@ impl<'a> Expression<'a> {
     pub fn get_member_expr(&self) -> Option<&MemberExpression<'a>> {
         match self.get_inner_expression() {
             Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
-                ChainElement::CallExpression(_) | ChainElement::Dummy => None,
+                ChainElement::CallExpression(_) => None,
                 ChainElement::MemberExpression(member_expr) => Some(member_expr),
+                ChainElement::Dummy => dummy!(),
             },
             Expression::MemberExpression(member_expr) => Some(member_expr),
             _ => None,
@@ -529,7 +530,7 @@ impl<'a> PropertyKey<'a> {
     pub fn static_name(&self) -> Option<CompactStr> {
         match self {
             Self::Identifier(ident) => Some(ident.name.to_compact_str()),
-            Self::PrivateIdentifier(_) | Self::Dummy => None,
+            Self::PrivateIdentifier(_) => None,
             Self::Expression(expr) => match expr {
                 Expression::StringLiteral(lit) => Some(lit.value.to_compact_str()),
                 Expression::RegExpLiteral(lit) => Some(lit.regex.to_string().into()),
@@ -544,6 +545,7 @@ impl<'a> PropertyKey<'a> {
                     .map(Atom::to_compact_str),
                 _ => None,
             },
+            Self::Dummy => dummy!(),
         }
     }
 
@@ -686,7 +688,7 @@ impl<'a> MemberExpression<'a> {
             MemberExpression::ComputedMemberExpression(expr) => expr.optional,
             MemberExpression::StaticMemberExpression(expr) => expr.optional,
             MemberExpression::PrivateFieldExpression(expr) => expr.optional,
-            MemberExpression::Dummy => false,
+            MemberExpression::Dummy => dummy!(),
         }
     }
 
@@ -713,7 +715,8 @@ impl<'a> MemberExpression<'a> {
                 _ => None,
             },
             MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.as_str()),
-            MemberExpression::PrivateFieldExpression(_) | MemberExpression::Dummy => None,
+            MemberExpression::PrivateFieldExpression(_) => None,
+            MemberExpression::Dummy => dummy!(),
         }
     }
 
@@ -733,17 +736,19 @@ impl<'a> MemberExpression<'a> {
             MemberExpression::StaticMemberExpression(expr) => {
                 Some((expr.property.span, &expr.property.name))
             }
-            MemberExpression::PrivateFieldExpression(_) | MemberExpression::Dummy => None,
+            MemberExpression::PrivateFieldExpression(_) => None,
+            MemberExpression::Dummy => dummy!(),
         }
     }
 
     pub fn through_optional_is_specific_member_access(&self, object: &str, property: &str) -> bool {
         let object_matches = match self.object().without_parenthesized() {
             Expression::ChainExpression(x) => match &x.expression {
-                ChainElement::CallExpression(_) | ChainElement::Dummy => false,
+                ChainElement::CallExpression(_) => false,
                 ChainElement::MemberExpression(me) => {
                     me.object().without_parenthesized().is_specific_id(object)
                 }
+                ChainElement::Dummy => dummy!(),
             },
             x => x.is_specific_id(object),
         };
@@ -1152,7 +1157,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
         let target = match self {
             Self::AssignmentTarget(target) => target,
             Self::AssignmentTargetWithDefault(target) => &target.binding,
-            Self::Dummy => return None,
+            Self::Dummy => return dummy!(),
         };
 
         if let AssignmentTarget::SimpleAssignmentTarget(
@@ -2191,30 +2196,30 @@ pub enum ClassElement<'a> {
 impl<'a> ClassElement<'a> {
     pub fn r#static(&self) -> bool {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) | Self::Dummy => false,
+            Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
             Self::MethodDefinition(def) => def.r#static,
             Self::PropertyDefinition(def) => def.r#static,
             Self::AccessorProperty(def) => def.r#static,
+            Self::Dummy => dummy!(),
         }
     }
 
     pub fn computed(&self) -> bool {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) | Self::Dummy => false,
+            Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
             Self::MethodDefinition(def) => def.computed,
             Self::PropertyDefinition(def) => def.computed,
             Self::AccessorProperty(def) => def.computed,
+            Self::Dummy => dummy!(),
         }
     }
 
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         match self {
-            Self::StaticBlock(_)
-            | Self::TSIndexSignature(_)
-            | Self::AccessorProperty(_)
-            | Self::Dummy => None,
+            Self::StaticBlock(_) | Self::TSIndexSignature(_) | Self::AccessorProperty(_) => None,
             Self::MethodDefinition(def) => def.accessibility,
             Self::PropertyDefinition(def) => def.accessibility,
+            Self::Dummy => dummy!(),
         }
     }
 
@@ -2223,27 +2228,29 @@ impl<'a> ClassElement<'a> {
             Self::TSIndexSignature(_)
             | Self::StaticBlock(_)
             | Self::PropertyDefinition(_)
-            | Self::AccessorProperty(_)
-            | Self::Dummy => None,
+            | Self::AccessorProperty(_) => None,
             Self::MethodDefinition(def) => Some(def.kind),
+            Self::Dummy => dummy!(),
         }
     }
 
     pub fn property_key(&self) -> Option<&PropertyKey<'a>> {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) | Self::Dummy => None,
+            Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
             Self::MethodDefinition(def) => Some(&def.key),
             Self::PropertyDefinition(def) => Some(&def.key),
             Self::AccessorProperty(def) => Some(&def.key),
+            Self::Dummy => dummy!(),
         }
     }
 
     pub fn static_name(&self) -> Option<CompactStr> {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) | Self::Dummy => None,
+            Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
             Self::MethodDefinition(def) => def.key.static_name(),
             Self::PropertyDefinition(def) => def.key.static_name(),
             Self::AccessorProperty(def) => def.key.static_name(),
+            Self::Dummy => dummy!(),
         }
     }
 
@@ -2256,9 +2263,9 @@ impl<'a> ClassElement<'a> {
             Self::PropertyDefinition(_)
             | Self::StaticBlock(_)
             | Self::AccessorProperty(_)
-            | Self::TSIndexSignature(_)
-            | Self::Dummy => false,
+            | Self::TSIndexSignature(_) => false,
             Self::MethodDefinition(method) => method.value.body.is_none(),
+            Self::Dummy => dummy!(),
         }
     }
 
@@ -2278,7 +2285,8 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(method) => !method.decorators.is_empty(),
             Self::PropertyDefinition(property) => !property.decorators.is_empty(),
             Self::AccessorProperty(property) => !property.decorators.is_empty(),
-            Self::StaticBlock(_) | Self::TSIndexSignature(_) | Self::Dummy => false,
+            Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -2435,8 +2443,8 @@ impl<'a> ModuleDeclaration<'a> {
             Self::ExportNamedDeclaration(decl) => decl.source.as_ref(),
             Self::ExportDefaultDeclaration(_)
             | Self::TSExportAssignment(_)
-            | Self::TSNamespaceExportDeclaration(_)
-            | Self::Dummy => None,
+            | Self::TSNamespaceExportDeclaration(_) => None,
+            Self::Dummy => dummy!(),
         }
     }
 
@@ -2447,8 +2455,8 @@ impl<'a> ModuleDeclaration<'a> {
             Self::ExportNamedDeclaration(decl) => decl.with_clause.as_ref(),
             Self::ExportDefaultDeclaration(_)
             | Self::TSExportAssignment(_)
-            | Self::TSNamespaceExportDeclaration(_)
-            | Self::Dummy => None,
+            | Self::TSNamespaceExportDeclaration(_) => None,
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -2687,7 +2695,8 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             ExportDefaultDeclarationKind::ClassDeclaration(class) => class.is_typescript_syntax(),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
             | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => true,
-            ExportDefaultDeclarationKind::Expression(_) | Self::Dummy => false,
+            ExportDefaultDeclarationKind::Expression(_) => false,
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -2732,7 +2741,7 @@ impl<'a> ModuleExportName<'a> {
         match self {
             Self::Identifier(identifier) => Some(&identifier.name),
             Self::StringLiteral(literal) => Some(&literal.value),
-            Self::Dummy => None,
+            Self::Dummy => dummy!(),
         }
     }
 

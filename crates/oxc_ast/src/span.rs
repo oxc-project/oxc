@@ -1,6 +1,6 @@
 use oxc_span::{GetSpan, Span};
 
-use crate::ast::*;
+use crate::{ast::*, dummy};
 
 impl<'a> GetSpan for Statement<'a> {
     fn span(&self) -> Span {
@@ -25,7 +25,7 @@ impl<'a> GetSpan for Statement<'a> {
             Self::WithStatement(stmt) => stmt.span,
             Self::ModuleDeclaration(decl) => decl.span(),
             Self::Declaration(decl) => decl.span(),
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -73,7 +73,7 @@ impl<'a> GetSpan for Expression<'a> {
             Self::TSTypeAssertion(e) => e.span,
             Self::TSNonNullExpression(e) => e.span,
             Self::TSInstantiationExpression(e) => e.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -91,7 +91,7 @@ impl<'a> GetSpan for BindingPatternKind<'a> {
             Self::ObjectPattern(pat) => pat.span,
             Self::ArrayPattern(pat) => pat.span,
             Self::AssignmentPattern(pat) => pat.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -103,7 +103,7 @@ impl<'a> GetSpan for BindingPattern<'a> {
             BindingPatternKind::ObjectPattern(pat) => pat.span,
             BindingPatternKind::ArrayPattern(pat) => pat.span,
             BindingPatternKind::AssignmentPattern(pat) => pat.span,
-            BindingPatternKind::Dummy => Span::default(),
+            BindingPatternKind::Dummy => dummy!(),
         }
     }
 }
@@ -122,7 +122,7 @@ impl<'a> GetSpan for ClassElement<'a> {
             Self::PropertyDefinition(def) => def.span,
             Self::AccessorProperty(def) => def.span,
             Self::TSIndexSignature(sig) => sig.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -133,7 +133,7 @@ impl<'a> GetSpan for PropertyKey<'a> {
             Self::Identifier(ident) => ident.span,
             Self::PrivateIdentifier(ident) => ident.span,
             Self::Expression(expr) => expr.span(),
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -144,7 +144,7 @@ impl<'a> GetSpan for MemberExpression<'a> {
             Self::ComputedMemberExpression(expr) => expr.span,
             Self::StaticMemberExpression(expr) => expr.span,
             Self::PrivateFieldExpression(expr) => expr.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -154,7 +154,7 @@ impl<'a> GetSpan for ImportAttributeKey<'a> {
         match self {
             Self::Identifier(identifier) => identifier.span,
             Self::StringLiteral(literal) => literal.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -164,7 +164,7 @@ impl<'a> GetSpan for ModuleExportName<'a> {
         match self {
             Self::Identifier(identifier) => identifier.span,
             Self::StringLiteral(literal) => literal.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -178,7 +178,7 @@ impl<'a> GetSpan for ModuleDeclaration<'a> {
             Self::ExportNamedDeclaration(decl) => decl.span,
             Self::TSExportAssignment(decl) => decl.span,
             Self::TSNamespaceExportDeclaration(decl) => decl.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -195,7 +195,7 @@ impl<'a> GetSpan for Declaration<'a> {
             Self::TSEnumDeclaration(decl) => decl.span,
             Self::TSModuleDeclaration(decl) => decl.span,
             Self::TSImportEqualsDeclaration(decl) => decl.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -205,7 +205,7 @@ impl<'a> GetSpan for TSModuleDeclarationName<'a> {
         match self {
             Self::Identifier(ident) => ident.span,
             Self::StringLiteral(lit) => lit.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -215,7 +215,7 @@ impl<'a> GetSpan for ObjectPropertyKind<'a> {
         match self {
             Self::ObjectProperty(p) => p.span,
             Self::SpreadProperty(p) => p.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -225,7 +225,7 @@ impl<'a> GetSpan for AssignmentTarget<'a> {
         match self {
             Self::SimpleAssignmentTarget(target) => target.span(),
             Self::AssignmentTargetPattern(pat) => pat.span(),
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -235,7 +235,7 @@ impl<'a> GetSpan for AssignmentTargetProperty<'a> {
         match self {
             Self::AssignmentTargetPropertyIdentifier(identifier) => identifier.span,
             Self::AssignmentTargetPropertyProperty(literal) => literal.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -245,7 +245,7 @@ impl<'a> GetSpan for Argument<'a> {
         match self {
             Self::SpreadElement(e) => e.span,
             Self::Expression(expr) => expr.span(),
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -256,7 +256,7 @@ impl<'a> GetSpan for ArrayExpressionElement<'a> {
             Self::SpreadElement(e) => e.span,
             Self::Expression(expr) => expr.span(),
             Self::Elision(elision) => elision.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -267,7 +267,7 @@ impl<'a> GetSpan for ForStatementInit<'a> {
             Self::VariableDeclaration(x) => x.span,
             Self::Expression(x) => x.span(),
             Self::UsingDeclaration(x) => x.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -278,7 +278,7 @@ impl<'a> GetSpan for ForStatementLeft<'a> {
             Self::VariableDeclaration(x) => x.span,
             Self::AssignmentTarget(x) => x.span(),
             Self::UsingDeclaration(x) => x.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -292,7 +292,7 @@ impl<'a> GetSpan for SimpleAssignmentTarget<'a> {
             Self::TSSatisfiesExpression(expr) => expr.span,
             Self::TSNonNullExpression(expr) => expr.span,
             Self::TSTypeAssertion(expr) => expr.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -303,7 +303,7 @@ impl<'a> GetSpan for JSXElementName<'a> {
             Self::Identifier(ident) => ident.span,
             Self::NamespacedName(name) => name.span,
             Self::MemberExpression(expr) => expr.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -322,7 +322,7 @@ impl<'a> GetSpan for TSSignature<'a> {
             Self::TSCallSignatureDeclaration(decl) => decl.span,
             Self::TSConstructSignatureDeclaration(decl) => decl.span,
             Self::TSMethodSignature(sig) => sig.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -365,7 +365,7 @@ impl<'a> GetSpan for TSType<'a> {
             Self::TSObjectKeyword(t) => t.span,
             Self::JSDocNullableType(t) => t.span,
             Self::JSDocUnknownType(t) => t.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -378,7 +378,7 @@ impl<'a> GetSpan for ExportDefaultDeclarationKind<'a> {
             Self::FunctionDeclaration(x) => x.span,
             Self::TSEnumDeclaration(x) => x.span,
             Self::TSInterfaceDeclaration(x) => x.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -389,7 +389,7 @@ impl<'a> GetSpan for ImportDeclarationSpecifier<'a> {
             Self::ImportSpecifier(specifier) => specifier.span,
             Self::ImportDefaultSpecifier(specifier) => specifier.span,
             Self::ImportNamespaceSpecifier(specifier) => specifier.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -402,7 +402,7 @@ impl<'a> GetSpan for JSXChild<'a> {
             Self::Text(text) => text.span,
             Self::Fragment(fragment) => fragment.span,
             Self::Spread(spread) => spread.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -412,7 +412,7 @@ impl<'a> GetSpan for AssignmentTargetPattern<'a> {
         match &self {
             Self::ArrayAssignmentTarget(x) => x.span,
             Self::ObjectAssignmentTarget(x) => x.span,
-            Self::Dummy => Span::default(),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -422,7 +422,7 @@ impl<'a> GetSpan for JSXAttributeItem<'a> {
         match &self {
             JSXAttributeItem::Attribute(attr) => attr.span,
             JSXAttributeItem::SpreadAttribute(attr) => attr.span,
-            JSXAttributeItem::Dummy => Span::default(),
+            JSXAttributeItem::Dummy => dummy!(),
         }
     }
 }
@@ -432,7 +432,7 @@ impl<'a> GetSpan for JSXExpression<'a> {
         match &self {
             JSXExpression::Expression(expr) => expr.span(),
             JSXExpression::EmptyExpression(exmpty_expr) => exmpty_expr.span,
-            JSXExpression::Dummy => Span::default(),
+            JSXExpression::Dummy => dummy!(),
         }
     }
 }
@@ -442,7 +442,7 @@ impl<'a> GetSpan for JSXAttributeName<'a> {
         match &self {
             JSXAttributeName::Identifier(ident) => ident.span,
             JSXAttributeName::NamespacedName(namespaced_name) => namespaced_name.span,
-            JSXAttributeName::Dummy => Span::default(),
+            JSXAttributeName::Dummy => dummy!(),
         }
     }
 }
@@ -454,7 +454,7 @@ impl<'a> GetSpan for JSXAttributeValue<'a> {
             JSXAttributeValue::ExpressionContainer(container) => container.span,
             JSXAttributeValue::Fragment(fragment) => fragment.span,
             JSXAttributeValue::Element(element) => element.span,
-            JSXAttributeValue::Dummy => Span::default(),
+            JSXAttributeValue::Dummy => dummy!(),
         }
     }
 }
@@ -464,7 +464,7 @@ impl<'a> GetSpan for JSXMemberExpressionObject<'a> {
         match &self {
             JSXMemberExpressionObject::Identifier(ident) => ident.span,
             JSXMemberExpressionObject::MemberExpression(expr) => expr.span,
-            JSXMemberExpressionObject::Dummy => Span::default(),
+            JSXMemberExpressionObject::Dummy => dummy!(),
         }
     }
 }

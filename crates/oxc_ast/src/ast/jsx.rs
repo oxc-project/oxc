@@ -13,6 +13,7 @@ use tsify::Tsify;
 
 use super::{js::*, literal::*, ts::*};
 
+use crate::dummy;
 use crate::traverse::ast::*;
 use crate::traverse::{SharedBox, SharedVec};
 
@@ -134,7 +135,7 @@ impl<'a> JSXMemberExpression<'a> {
         match &self.object {
             JSXMemberExpressionObject::Identifier(ident) => Some(ident),
             JSXMemberExpressionObject::MemberExpression(expr) => expr.get_object_identifier(),
-            JSXMemberExpressionObject::Dummy => None,
+            JSXMemberExpressionObject::Dummy => dummy!(),
         }
     }
 }
