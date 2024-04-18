@@ -14,8 +14,6 @@ pub fn ast_node(mut item: Item) -> TokenStream2 {
         _ => panic!("ast_node attribute can only be used on enums and structure types!"),
     };
 
-    // let traversable_test_trait = impl_traversable_test_trait(&result);
-
     let ident = result.ident;
 
     let traversable_mod = format_ident!("traversable_{}", ident.to_string().to_lowercase());
@@ -24,8 +22,6 @@ pub fn ast_node(mut item: Item) -> TokenStream2 {
 
     let output = quote! {
         #item
-
-        // #traversable_test_trait
 
         pub mod #traversable_mod {
             use super::*;
@@ -39,7 +35,7 @@ pub fn ast_node(mut item: Item) -> TokenStream2 {
 }
 
 fn modify_struct(item: &mut ItemStruct) -> NodeData {
-    item.attrs.iter().for_each(validate_struct_attribute);
+    item.attrs.iter().for_each(validate_attribute);
     item.fields.iter().for_each(validate_field);
     // add the correct representation
     item.attrs.push(parse_quote!(#[repr(C)]));
@@ -47,7 +43,7 @@ fn modify_struct(item: &mut ItemStruct) -> NodeData {
 }
 
 fn modify_enum(item: &mut ItemEnum) -> NodeData {
-    item.attrs.iter().for_each(validate_enum_attribute);
+    item.attrs.iter().for_each(validate_attribute);
 
     assert!(
         item.variants.len() < 256,
@@ -71,30 +67,6 @@ fn modify_enum(item: &mut ItemEnum) -> NodeData {
 // validators
 // there are only here for early errors we still do some in-depth checks while generating the
 // traversable modules.
-
-fn validate_struct_attribute(attr: &Attribute) {
-    // make sure that no structure derives Clone/Copy traits.
-    // TODO: It will fail if there is a manual Clone/Copy traits implemented for the struct.
-    // Negative traits (!Copy and !Clone) are nightly so I'm not sure how we can fully enforce it.
-    // assert!(
-    //     !{
-    //         let args = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated);
-    //         attr.path().is_ident("derive")
-    //             && args.is_ok_and(|args| {
-    //                 args.iter() // To be honest the Copy trait check here is redundant.
-    //                     .any(|arg| arg.path().is_ident("Clone") || arg.path().is_ident("Copy"))
-    //             })
-    //     },
-    //     "`ast_node` can't have Clone or Copy traits"
-    // );
-
-    validate_attribute(attr);
-}
-
-fn validate_enum_attribute(attr: &Attribute) {
-    // TODO: Later on we may want to enforce deriving clone and copy traits for all enum types
-    validate_attribute(attr);
-}
 
 fn validate_attribute(attr: &Attribute) {
     assert!(
@@ -214,18 +186,7 @@ fn transform_fields(fields: &Fields) -> Punctuated<Field, Token![,]> {
     fields.named.iter().map(ToOwned::to_owned).map(transform_field).collect()
 }
 
-// enum TypeHint {
-//     None,
-//     Box,
-//     Vec,
-// }
-
 fn transform_field(mut field: Field) -> Field {
-    // let hint = field.attrs.iter().fold(TypeHint::None, |acc, attr| match attr.path() {
-    //     path if path.is_ident("box") => TypeHint::Box,
-    //     path if path.is_ident("vec") => TypeHint::Vec,
-    //     _ => acc,
-    // });
     field.ty = transform_type(field.ty);
     field.attrs.clear();
 
@@ -363,14 +324,6 @@ fn has_clone(attrs: &[Attribute]) -> bool {
             && args.is_ok_and(|args| args.iter().any(|arg| arg.path().is_ident("Clone")))
     })
 }
-
-// fn impl_traversable_test_trait(node: &NodeData) -> TokenStream2 {
-//     let ident = node.ident;
-//     let generics = node.generics;
-//     quote! {
-//         impl #generics crate::traverse::TraversableTest for #ident #generics { }
-//     }
-// }
 
 struct NodeData<'a> {
     ident: &'a Ident,
