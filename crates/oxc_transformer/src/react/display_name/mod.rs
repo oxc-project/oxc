@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use oxc_allocator::Box;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, dummy};
 use oxc_span::{Atom, SPAN};
 
 use crate::context::Ctx;
@@ -108,7 +108,7 @@ impl<'a> ReactDisplayName<'a> {
                 Expression::ObjectExpression(obj_expr) => Some(obj_expr),
                 _ => None,
             },
-            Argument::Dummy => None,
+            Argument::Dummy => dummy!(),
         }
     }
 
