@@ -30,7 +30,6 @@ pub struct JSDocPluginSettings {
 
     #[serde(default, rename = "tagNamePreference")]
     tag_name_preference: FxHashMap<String, TagNamePreference>,
-    
     // Not planning to support for now
     // min_lines: number
     // max_lines: number
