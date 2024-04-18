@@ -1,7 +1,7 @@
 use std::mem;
 
 use oxc_allocator::{Box, Vec};
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, dummy};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator},
@@ -115,6 +115,7 @@ impl<'a> TypeScript<'a> {
                 TSEnumMemberName::StringLiteral(str) => (&str.value, str.span),
                 TSEnumMemberName::ComputedPropertyName(..)
                 | TSEnumMemberName::NumericLiteral(..) => unreachable!(),
+                TSEnumMemberName::Dummy => dummy!(panic),
             };
 
             let mut init = self

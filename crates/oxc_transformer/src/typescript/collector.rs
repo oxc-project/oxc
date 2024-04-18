@@ -29,7 +29,7 @@ impl<'a> TypeScriptReferenceCollector<'a> {
 
         for specifier in &decl.specifiers {
             if specifier.export_kind.is_value() {
-                self.names.insert(specifier.local.name().clone());
+                self.names.insert(specifier.local.as_atom());
             }
         }
     }

@@ -6,7 +6,7 @@ use crate::context::Ctx;
 use crate::TypeScriptOptions;
 
 use oxc_allocator::Vec;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, dummy};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use rustc_hash::FxHashSet;
@@ -71,7 +71,9 @@ impl<'a> TypeScriptAnnotations<'a> {
                 ModuleDeclaration::ExportNamedDeclaration(decl) => {
                     decl.specifiers.retain(|specifier| {
                         !(specifier.export_kind.is_type()
-                            || import_type_names.contains(specifier.exported.name()))
+                            || import_type_names.contains(
+                                specifier.exported.name().unwrap_or_else(|| dummy!(panic)),
+                            ))
                     });
 
                     decl.export_kind.is_type()
@@ -124,6 +126,7 @@ impl<'a> TypeScriptAnnotations<'a> {
 
                                 references.has_reference(&s.local.name)
                             }
+                            ImportDeclarationSpecifier::Dummy => dummy!(panic),
                         });
                     }
 
