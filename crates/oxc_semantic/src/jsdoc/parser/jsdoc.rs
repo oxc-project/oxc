@@ -304,4 +304,30 @@ line2
         let (type_part, comment_part) = tag.type_comment();
         assert_eq!((type_part, comment_part.parsed()), (None, "flattened data".to_string()));
     }
+
+    #[test]
+    fn parses_with_codeblock() {
+        let allocator = Allocator::default();
+        let semantic = build_semantic(
+            &allocator,
+            "
+            /**
+             * This is normal comment, `@xxx` should not parsed as tag.
+             *
+             * @example ```ts
+             /** @comment */ 
+            @decorator
+            class Foo { }
+            ```
+             */
+            ",
+        );
+        let jsdoc = semantic.jsdoc().iter_all().next().unwrap();
+
+        let mut tags = jsdoc.tags().iter();
+        assert_eq!(tags.len(), 1);
+
+        let tag = tags.next().unwrap();
+        assert_eq!(tag.kind.parsed(), "example");
+    }
 }
