@@ -202,15 +202,7 @@ fn transform_variant(mut variant: Variant) -> Variant {
         return variant;
     };
 
-    fields.unnamed = fields
-        .unnamed
-        .into_iter()
-        .map(|mut field| {
-            field.ty = transform_type(field.ty);
-            field.attrs.clear();
-            field
-        })
-        .collect();
+    fields.unnamed = fields.unnamed.into_iter().map(transform_field).collect();
 
     variant.fields = Fields::Unnamed(fields);
     variant.attrs.clear();
