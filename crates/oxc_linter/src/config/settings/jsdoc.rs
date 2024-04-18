@@ -30,11 +30,11 @@ pub struct JSDocPluginSettings {
 
     #[serde(default, rename = "tagNamePreference")]
     tag_name_preference: FxHashMap<String, TagNamePreference>,
-    //
-    // Not planning to support?
+    
+    // Not planning to support for now
     // min_lines: number
     // max_lines: number
-    // mode: string
+    // mode: string("typescript" | "closure" | "jsdoc")
     //
     // TODO: Need more investigation to understand these usage...
     //
@@ -72,7 +72,7 @@ pub struct JSDocPluginSettings {
 }
 
 impl JSDocPluginSettings {
-    pub fn is_blocked_tag_name(&self, tag_name: &str) -> Option<String> {
+    pub fn check_blocked_tag_name(&self, tag_name: &str) -> Option<String> {
         match self.tag_name_preference.get(tag_name) {
             Some(TagNamePreference::FalseOnly(_)) => Some(format!("Unexpected tag `@{tag_name}`")),
             Some(
@@ -83,15 +83,30 @@ impl JSDocPluginSettings {
         }
     }
 
-    pub fn resolve_tag_name(&self, tag_name: &str) -> String {
-        match self.tag_name_preference.get(tag_name) {
+    pub fn list_preferred_tag_names(&self) -> Vec<String> {
+        self.tag_name_preference
+            .iter()
+            .filter_map(|(_, pref)| match pref {
+                TagNamePreference::TagNameOnly(replacement)
+                | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. } => {
+                    Some(replacement.to_string())
+                }
+                _ => None,
+            })
+            .collect()
+    }
+
+    /// Resolve original, known tag name to user preferred name
+    /// If not defined, return original name
+    pub fn resolve_tag_name(&self, original_name: &str) -> String {
+        match self.tag_name_preference.get(original_name) {
             Some(
                 TagNamePreference::TagNameOnly(replacement)
                 | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. },
             ) => replacement.to_string(),
             _ => {
                 // https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md#default-preferred-aliases
-                match tag_name {
+                match original_name {
                     "virtual" => "abstract",
                     "extends" => "augments",
                     "constructor" => "class",
@@ -108,7 +123,7 @@ impl JSDocPluginSettings {
                     "return" => "returns",
                     "exception" => "throws",
                     "yield" => "yields",
-                    _ => tag_name,
+                    _ => original_name,
                 }
                 .to_string()
             }
@@ -194,9 +209,29 @@ mod test {
     }
 
     #[test]
-    fn is_blocked_tag_name() {
+    fn list_preferred_tag_names() {
         let settings = JSDocPluginSettings::deserialize(&serde_json::json!({})).unwrap();
-        assert_eq!(settings.is_blocked_tag_name("foo"), None);
+        assert_eq!(settings.list_preferred_tag_names().len(), 0);
+
+        let settings = JSDocPluginSettings::deserialize(&serde_json::json!({
+            "tagNamePreference": {
+                "foo": "bar",
+                "virtual": "overridedefault",
+                "replace": { "message": "noop", "replacement": "noop" },
+                "blocked": { "message": "noop"  },
+                "blocked2": false
+            }
+        }))
+        .unwrap();
+        let mut preferred = settings.list_preferred_tag_names();
+        preferred.sort_unstable();
+        assert_eq!(preferred, vec!["bar", "noop", "overridedefault"]);
+    }
+
+    #[test]
+    fn check_blocked_tag_name() {
+        let settings = JSDocPluginSettings::deserialize(&serde_json::json!({})).unwrap();
+        assert_eq!(settings.check_blocked_tag_name("foo"), None);
 
         let settings = JSDocPluginSettings::deserialize(&serde_json::json!({
             "tagNamePreference": {
@@ -206,8 +241,11 @@ mod test {
             }
         }))
         .unwrap();
-        assert_eq!(settings.is_blocked_tag_name("foo"), Some("Unexpected tag `@foo`".to_string()));
-        assert_eq!(settings.is_blocked_tag_name("bar"), Some("do not use bar".to_string()));
-        assert_eq!(settings.is_blocked_tag_name("baz"), Some("baz is noop now".to_string()));
+        assert_eq!(
+            settings.check_blocked_tag_name("foo"),
+            Some("Unexpected tag `@foo`".to_string())
+        );
+        assert_eq!(settings.check_blocked_tag_name("bar"), Some("do not use bar".to_string()));
+        assert_eq!(settings.check_blocked_tag_name("baz"), Some("baz is noop now".to_string()));
     }
 }
