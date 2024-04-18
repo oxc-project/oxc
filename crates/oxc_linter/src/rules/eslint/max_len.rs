@@ -86,7 +86,7 @@ impl std::ops::Deref for MaxLen {
 impl Default for MaxLenConfig {
     fn default() -> Self {
         Self {
-            code: 80,    // the default max length
+            code: 80,     // the default max length
             tab_width: 4, // the default tab width
             comments: 0,
             ignore_pattern: String::new(),
@@ -127,11 +127,17 @@ struct LiteralSpans {
     strings: Vec<Span>,
     template_literals: Vec<Span>,
     reg_exp_literals: Vec<Span>,
+    jsx_empty_spans: Vec<Span>,
 }
 
 impl LiteralSpans {
     fn new() -> Self {
-        Self { strings: Vec::new(), template_literals: Vec::new(), reg_exp_literals: Vec::new() }
+        Self {
+            strings: Vec::new(),
+            template_literals: Vec::new(),
+            reg_exp_literals: Vec::new(),
+            jsx_empty_spans: Vec::new(),
+        }
     }
 
     fn collect_from_ctx(&mut self, ctx: &LintContext) {
@@ -140,6 +146,11 @@ impl LiteralSpans {
                 AstKind::StringLiteral(node) => self.strings.push(node.span),
                 AstKind::TemplateLiteral(node) => self.template_literals.push(node.span),
                 AstKind::RegExpLiteral(node) => self.reg_exp_literals.push(node.span),
+                AstKind::JSXExpressionContainer(node) => {
+                    if let JSXExpression::EmptyExpression(_) = node.expression {
+                        self.jsx_empty_spans.push(node.span);
+                    }
+                }
                 _ => {}
             }
         }
@@ -455,19 +466,9 @@ impl Rule for MaxLen {
         let mut literal_spans = LiteralSpans::new();
         literal_spans.collect_from_ctx(ctx);
 
-        let mut jsx_empty_spans: Vec<Span> = vec![];
-        // fll all jsx empty node(comment node) and get the span
-        for ast_node in ctx.semantic().nodes().iter() {
-            if let AstKind::JSXExpressionContainer(node) = ast_node.kind() {
-                if let JSXExpression::EmptyExpression(_) = node.expression {
-                    jsx_empty_spans.push(node.span);
-                }
-            }
-        }
-
         let updated_comments = generate_updated_comments(
             &ctx.semantic().trivias().comments().collect::<Vec<_>>(),
-            &jsx_empty_spans,
+            &literal_spans.jsx_empty_spans,
             &line_starts,
         );
 
