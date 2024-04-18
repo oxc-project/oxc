@@ -1,4 +1,4 @@
-use oxc_ast::{ast::JSXAttributeItem, AstKind};
+use oxc_ast::{ast::JSXAttributeItem, dummy, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -57,6 +57,7 @@ impl Rule for Scope {
                 JSXAttributeItem::SpreadAttribute(_) => {
                     return;
                 }
+                JSXAttributeItem::Dummy => dummy!(unreachable),
             },
             None => {
                 return;

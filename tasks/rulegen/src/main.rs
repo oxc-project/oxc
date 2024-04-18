@@ -13,7 +13,7 @@ use oxc_ast::{
         ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression, StringLiteral,
         TaggedTemplateExpression, TemplateLiteral,
     },
-    Visit,
+    dummy, Visit,
 };
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
@@ -228,6 +228,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
                     _ => continue,
                 },
                 ObjectPropertyKind::SpreadProperty(_) => continue,
+                ObjectPropertyKind::Dummy => dummy!(),
             }
         }
     }

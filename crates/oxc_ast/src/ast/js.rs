@@ -2728,6 +2728,14 @@ impl<'a> fmt::Display for ModuleExportName<'a> {
 }
 
 impl<'a> ModuleExportName<'a> {
+    pub fn name(&self) -> Option<&Atom<'a>> {
+        match self {
+            Self::Identifier(identifier) => Some(&identifier.name),
+            Self::StringLiteral(literal) => Some(&literal.value),
+            Self::Dummy => None,
+        }
+    }
+
     pub fn as_atom(&self) -> Atom<'a> {
         match self {
             Self::Identifier(identifier) => identifier.name.clone(),

@@ -1,6 +1,5 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement},
-    AstKind,
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement}, dummy, AstKind
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -64,6 +63,7 @@ fn is_aria_hidden_true(attr: &JSXAttributeItem) -> bool {
             _ => false,
         },
         JSXAttributeItem::SpreadAttribute(_) => false,
+        JSXAttributeItem::Dummy => dummy!(unreachable),
     }
 }
 

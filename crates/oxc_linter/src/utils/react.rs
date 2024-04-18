@@ -3,7 +3,7 @@ use oxc_ast::{
         CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
         JSXChild, JSXElement, JSXElementName, JSXExpression, JSXOpeningElement,
     },
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_semantic::{AstNode, SymbolFlags};
 
@@ -32,6 +32,7 @@ pub fn has_jsx_prop<'a, 'b>(
 
             name.name.as_str() == target_prop
         }
+        JSXAttributeItem::Dummy => dummy!(unreachable),
     })
 }
 
@@ -46,6 +47,7 @@ pub fn has_jsx_prop_lowercase<'a, 'b>(
 
             name.name.as_str().to_lowercase() == target_prop.to_lowercase()
         }
+        JSXAttributeItem::Dummy => dummy!(unreachable),
     })
 }
 
@@ -63,6 +65,7 @@ pub fn get_jsx_attribute_name(attr: &JSXAttributeName) -> String {
             format!("{}:{}", name.namespace.name, name.property.name)
         }
         JSXAttributeName::Identifier(ident) => ident.name.to_string(),
+        JSXAttributeName::Dummy => "Dummy JSXAttributeName".to_string(),
     }
 }
 

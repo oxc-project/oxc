@@ -1,4 +1,4 @@
-use oxc_ast::{ast::JSXAttributeItem, AstKind};
+use oxc_ast::{ast::JSXAttributeItem, dummy, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -62,6 +62,7 @@ fn check_and_diagnose(attr: &JSXAttributeItem, ctx: &LintContext<'_>) {
             }
         }),
         JSXAttributeItem::SpreadAttribute(_) => {}
+        JSXAttributeItem::Dummy => dummy!(unreachable),
     }
 }
 
