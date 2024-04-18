@@ -275,6 +275,10 @@ impl<'a> Expression<'a> {
         matches!(self, Expression::CallExpression(_))
     }
 
+    pub fn is_super_call_expression(&self) -> bool {
+        matches!(self, Expression::CallExpression(expr) if matches!(&expr.callee, Expression::Super(_)))
+    }
+
     pub fn is_call_like_expression(&self) -> bool {
         self.is_call_expression()
             && matches!(self, Expression::NewExpression(_) | Expression::ImportExpression(_))
@@ -1908,6 +1912,12 @@ pub struct FormalParameter<'a> {
     pub readonly: bool,
     pub r#override: bool,
     pub decorators: Vec<'a, Decorator<'a>>,
+}
+
+impl<'a> FormalParameter<'a> {
+    pub fn is_public(&self) -> bool {
+        matches!(self.accessibility, Some(TSAccessibility::Public))
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
