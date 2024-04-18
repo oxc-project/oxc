@@ -2,7 +2,10 @@ use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 
-use super::{diagnostics::ImportEqualsRequireUnsupported, TypeScript};
+use super::{
+    diagnostics::{ExportAssignmentUnsupported, ImportEqualsRequireUnsupported},
+    TypeScript,
+};
 
 impl<'a> TypeScript<'a> {
     fn transform_ts_type_name(&self, type_name: &mut TSTypeName<'a>) -> Expression<'a> {
@@ -69,5 +72,15 @@ impl<'a> TypeScript<'a> {
             self.ctx.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
 
         Declaration::VariableDeclaration(variable_declaration)
+    }
+
+    pub fn transform_ts_export_assignment(
+        &mut self,
+        export_assignment: &mut TSExportAssignment<'a>,
+    ) {
+        println!("{:?}", self.ctx.source_type());
+        if self.ctx.source_type().is_module() {
+            self.ctx.error(ExportAssignmentUnsupported(export_assignment.span));
+        }
     }
 }

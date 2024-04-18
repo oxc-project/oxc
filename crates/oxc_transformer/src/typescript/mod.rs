@@ -156,10 +156,6 @@ impl<'a> TypeScript<'a> {
         self.reference_collector.visit_identifier_reference(ident);
     }
 
-    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>) {
-        self.annotations.transform_statement(stmt);
-    }
-
     pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
         match decl {
             Declaration::TSImportEqualsDeclaration(ts_import_equals)
@@ -173,6 +169,12 @@ impl<'a> TypeScript<'a> {
                 }
             }
             _ => {}
+        }
+    }
+
+    pub fn transform_module_declaration(&mut self, module_decl: &mut ModuleDeclaration<'a>) {
+        if let ModuleDeclaration::TSExportAssignment(ts_export_assignment) = &mut *module_decl {
+            self.transform_ts_export_assignment(ts_export_assignment);
         }
     }
 }
