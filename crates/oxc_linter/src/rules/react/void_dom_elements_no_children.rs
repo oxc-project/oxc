@@ -2,7 +2,8 @@ use oxc_ast::{
     ast::{
         Argument, Expression, JSXAttributeItem, JSXAttributeName, JSXElementName,
         ObjectPropertyKind, PropertyKey,
-    }, dummy, AstKind
+    },
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},

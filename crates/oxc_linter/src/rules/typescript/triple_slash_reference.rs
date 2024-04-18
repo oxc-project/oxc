@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use oxc_ast::{
-    ast::{Declaration, ModuleDeclaration, Statement, TSModuleReference}, dummy, AstKind
+    ast::{Declaration, ModuleDeclaration, Statement, TSModuleReference},
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -145,7 +146,7 @@ impl Rule for TripleSlashReference {
                                 }
                             }
                             TSModuleReference::TypeName(_) => {}
-                            TSModuleReference::Dummy => dummy!(unreachable)
+                            TSModuleReference::Dummy => dummy!(unreachable),
                         }
                     }
                     Statement::ModuleDeclaration(st) => {

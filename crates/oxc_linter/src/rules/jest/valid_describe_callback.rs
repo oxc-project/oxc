@@ -1,5 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, Expression, FunctionBody, Statement}, dummy, AstKind
+    ast::{Argument, Expression, FunctionBody, Statement},
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -141,7 +142,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
         Argument::SpreadElement(spreed_element) => {
             diagnostic(ctx, spreed_element.span, Message::SecondArgumentMustBeFunction);
         }
-        Argument::Dummy => dummy!(unreachable)
+        Argument::Dummy => dummy!(unreachable),
     }
 }
 

@@ -1,5 +1,6 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement}, dummy, AstKind
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement},
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},

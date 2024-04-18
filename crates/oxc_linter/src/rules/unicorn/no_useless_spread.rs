@@ -1,5 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, ArrayExpression, ArrayExpressionElement, CallExpression, Expression}, dummy, AstKind
+    ast::{Argument, ArrayExpression, ArrayExpressionElement, CallExpression, Expression},
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},

@@ -3,7 +3,8 @@ use std::{borrow::Cow, cmp::Ordering};
 use oxc_ast::{
     ast::{
         Argument, CallExpression, Expression, IdentifierName, IdentifierReference, MemberExpression,
-    }, dummy, AstKind
+    },
+    dummy, AstKind,
 };
 use oxc_semantic::AstNode;
 use oxc_span::{Atom, Span};
