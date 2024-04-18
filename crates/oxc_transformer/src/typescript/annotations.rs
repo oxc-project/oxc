@@ -32,26 +32,6 @@ impl<'a> TypeScriptAnnotations<'a> {
         }
     }
 
-    // Convert `export = expr` into `module.exports = expr`
-    fn create_module_exports(&self, exp: &TSExportAssignment<'a>) -> Statement<'a> {
-        let ast = &self.ctx.ast;
-
-        ast.expression_statement(
-            SPAN,
-            ast.assignment_expression(
-                SPAN,
-                AssignmentOperator::Assign,
-                ast.simple_assignment_target_member_expression(ast.static_member(
-                    SPAN,
-                    ast.identifier_reference_expression(ast.identifier_reference(SPAN, "module")),
-                    ast.identifier_name(SPAN, "exports"),
-                    false,
-                )),
-                ast.copy(&exp.expression),
-            ),
-        )
-    }
-
     // Creates `this.name = name`
     fn create_this_property_assignment(&self, name: &Atom<'a>) -> Statement<'a> {
         let ast = &self.ctx.ast;
@@ -315,7 +295,6 @@ impl<'a> TypeScriptAnnotations<'a> {
         // Remove TS specific statements
         stmts.retain(|stmt| match stmt {
             Statement::ExpressionStatement(s) => !s.expression.is_typescript_syntax(),
-            Statement::Declaration(s) => !s.is_typescript_syntax(),
             // Ignore ModuleDeclaration as it's handled in the program
             _ => true,
         });
@@ -372,13 +351,5 @@ impl<'a> TypeScriptAnnotations<'a> {
         expr: &mut TaggedTemplateExpression<'a>,
     ) {
         expr.type_parameters = None;
-    }
-
-    pub fn transform_statement(&mut self, decl: &mut Statement<'a>) {
-        if let Statement::ModuleDeclaration(module_decl) = decl {
-            if let ModuleDeclaration::TSExportAssignment(exp) = &mut **module_decl {
-                *decl = self.create_module_exports(exp);
-            }
-        }
     }
 }

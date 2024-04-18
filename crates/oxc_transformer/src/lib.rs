@@ -210,7 +210,6 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     }
 
     fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
-        self.x0_typescript.transform_statement(stmt);
         walk_mut::walk_statement_mut(self, stmt);
     }
 
@@ -222,5 +221,10 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     fn visit_if_statement(&mut self, stmt: &mut IfStatement<'a>) {
         self.x0_typescript.transform_if_statement(stmt);
         walk_mut::walk_if_statement_mut(self, stmt);
+    }
+
+    fn visit_module_declaration(&mut self, decl: &mut ModuleDeclaration<'a>) {
+        self.x0_typescript.transform_module_declaration(decl);
+        walk_mut::walk_module_declaration_mut(self, decl);
     }
 }
