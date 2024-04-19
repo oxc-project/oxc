@@ -117,7 +117,7 @@ impl<'a> AstNodes<'a> {
     /// Set the root node,
     /// SAFETY:
     /// The root `AstNode` should always point to a `Program` and this should be the real root of
-    /// the tree, It isn't possible to staticly check for this so user should think about it before
+    /// the tree, It isn't possible to statically check for this so user should think about it before
     /// using.
     #[allow(unsafe_code)]
     pub(super) unsafe fn set_root(&mut self, root: &AstNode<'a>) {
