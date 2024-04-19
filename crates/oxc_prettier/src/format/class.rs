@@ -221,8 +221,8 @@ fn should_print_semicolon_after_class_property<'a>(
     }
 
     match next_node {
-        ClassElement::StaticBlock(_) => false,
         ClassElement::PropertyDefinition(property_definition) => property_definition.computed,
+        ClassElement::StaticBlock(_) => false,
         ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => true,
         ClassElement::MethodDefinition(method_definition) => {
             let is_async = method_definition.value.r#async;

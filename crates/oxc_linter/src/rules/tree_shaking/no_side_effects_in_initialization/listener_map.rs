@@ -727,7 +727,7 @@ impl<'a> ListenerMap for AssignmentTarget<'a> {
             Self::SimpleAssignmentTarget(target) => {
                 target.report_effects_when_assigned(options);
             }
-            Self::AssignmentTargetPattern(_) => {}
+            Self::AssignmentTargetPattern(_pattern) => {}
             Self::Dummy => dummy!(unreachable),
         }
     }

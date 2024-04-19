@@ -30,12 +30,12 @@ impl<'a> PropName for PropertyKey<'a> {
     fn prop_name(&self) -> Option<(&str, Span)> {
         match self {
             PropertyKey::Identifier(ident) => Some((&ident.name, ident.span)),
+            PropertyKey::PrivateIdentifier(_) => None,
             PropertyKey::Expression(expr) => match &expr {
                 Expression::Identifier(ident) => Some((&ident.name, ident.span)),
                 Expression::StringLiteral(lit) => Some((&lit.value, lit.span)),
                 _ => None,
             },
-            PropertyKey::PrivateIdentifier(_) => None,
             PropertyKey::Dummy => dummy!(),
         }
     }

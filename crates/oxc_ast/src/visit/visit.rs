@@ -2699,7 +2699,6 @@ pub mod walk {
     }
 
     pub fn walk_ts_type<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSType<'a>) {
-        #[allow(clippy::match_same_arms)]
         match ty {
             // Keyword
             TSType::TSAnyKeyword(ty) => visitor.visit_ts_any_keyword(ty),
