@@ -514,7 +514,7 @@ export var Animals = (Animals => {
 # typescript/tests/cases/conformance/enums/enumMerging.ts
 ```typescript
 let M1;
-(function(M1) {
+(function(_M1) {
 	var EConst1 = (EConst1 => {
 		const A = 3;
 		EConst1[EConst1['A'] = A] = 'A';
@@ -538,7 +538,7 @@ let M1;
 	var x = [EConst1.A, EConst1.B, EConst1.C, EConst1.D, EConst1.E, EConst1.F];
 })(M1 || (M1 = {}));
 let M2;
-(function(M2) {
+(function(_M2) {
 	var EComp2 = (EComp2 => {
 		const A = 'foo'.length;
 		EComp2[EComp2['A'] = A] = 'A';
@@ -562,7 +562,7 @@ let M2;
 	var x = [EComp2.A, EComp2.B, EComp2.C, EComp2.D, EComp2.E, EComp2.F];
 })(M2 || (M2 = {}));
 let M4;
-(function(M4) {
+(function(_M4) {
 	var Color = (Color => {
 		const Red = 0;
 		Color[Color['Red'] = Red] = 'Red';
@@ -575,7 +575,7 @@ let M4;
 	M4.Color = Color;
 })(M4 || (M4 = {}));
 let M5;
-(function(M5) {
+(function(_M5) {
 	var Color = (Color => {
 		const Red = 0;
 		Color[Color['Red'] = Red] = 'Red';
@@ -588,7 +588,7 @@ let M5;
 	M5.Color = Color;
 })(M5 || (M5 = {}));
 let M6;
-(function(M6) {
+(function(_M6) {
 	var t = A.Color.Yellow;
 	t = A.Color.Red;
 })(M6 || (M6 = {}));
@@ -598,7 +598,7 @@ let M6;
 # typescript/tests/cases/conformance/enums/enumMergingErrors.ts
 ```typescript
 let M;
-(function(M) {
+(function(_M) {
 	var E1 = (E1 => {
 		const A = 0;
 		E1[E1['A'] = A] = 'A';
@@ -619,7 +619,7 @@ let M;
 	M.E3 = E3;
 })(M || (M = {}));
 let M;
-(function(M) {
+(function(_M) {
 	var E1 = (E1 => {
 		const B = 'foo'.length;
 		E1[E1['B'] = B] = 'B';
@@ -640,7 +640,7 @@ let M;
 	M.E3 = E3;
 })(M || (M = {}));
 let M;
-(function(M) {
+(function(_M) {
 	var E1 = (E1 => {
 		const C = 0;
 		E1[E1['C'] = C] = 'C';
@@ -661,7 +661,7 @@ let M;
 	M.E3 = E3;
 })(M || (M = {}));
 let M1;
-(function(M1) {
+(function(_M1) {
 	var E1 = (E1 => {
 		const A = 0;
 		E1[E1['A'] = A] = 'A';
@@ -670,7 +670,7 @@ let M1;
 	M1.E1 = E1;
 })(M1 || (M1 = {}));
 let M1;
-(function(M1) {
+(function(_M1) {
 	var E1 = (E1 => {
 		const B = 0;
 		E1[E1['B'] = B] = 'B';
@@ -679,7 +679,7 @@ let M1;
 	M1.E1 = E1;
 })(M1 || (M1 = {}));
 let M1;
-(function(M1) {
+(function(_M1) {
 	var E1 = (E1 => {
 		const C = 0;
 		E1[E1['C'] = C] = 'C';
@@ -688,7 +688,7 @@ let M1;
 	M1.E1 = E1;
 })(M1 || (M1 = {}));
 let M2;
-(function(M2) {
+(function(_M2) {
 	var E1 = (E1 => {
 		const A = 0;
 		E1[E1['A'] = A] = 'A';
@@ -697,7 +697,7 @@ let M2;
 	M2.E1 = E1;
 })(M2 || (M2 = {}));
 let M2;
-(function(M2) {
+(function(_M2) {
 	var E1 = (E1 => {
 		const B = 0;
 		E1[E1['B'] = B] = 'B';
@@ -706,7 +706,7 @@ let M2;
 	M2.E1 = E1;
 })(M2 || (M2 = {}));
 let M2;
-(function(M2) {
+(function(_M2) {
 	var E1 = (E1 => {
 		const C = 0;
 		E1[E1['C'] = C] = 'C';

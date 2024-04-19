@@ -1,4 +1,4 @@
-Passed: 143/209
+Passed: 145/209
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -17,7 +17,7 @@ Passed: 143/209
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (87/139)
+# babel-plugin-transform-typescript (89/139)
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
 * class/parameter-properties/input.ts
@@ -40,7 +40,6 @@ Passed: 143/209
 * namespace/clobber-import/input.ts
 * namespace/contentious-names/input.ts
 * namespace/declare/input.ts
-* namespace/declare-global-nested-namespace/input.ts
 * namespace/empty-removed/input.ts
 * namespace/export/input.ts
 * namespace/export-type-only/input.ts
@@ -56,7 +55,6 @@ Passed: 143/209
 * namespace/nested-shorthand/input.ts
 * namespace/nested-shorthand-export/input.ts
 * namespace/same-name/input.ts
-* namespace/undeclared/input.ts
 * optimize-const-enums/custom-values/input.ts
 * optimize-const-enums/custom-values-exported/input.ts
 * optimize-const-enums/declare/input.ts

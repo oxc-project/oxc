@@ -254,10 +254,10 @@ impl<'a> TypeScript<'a> {
             let body = self.ctx.ast.function_body(SPAN, self.ctx.ast.new_vec(), stmts);
             // let arg_name = self.get_namespace_arg_name(state, name);
             let params = {
-                let ident = self
-                    .ctx
-                    .ast
-                    .binding_pattern_identifier(BindingIdentifier::new(SPAN, arg_name.clone()));
+                let ident = self.ctx.ast.binding_pattern_identifier(BindingIdentifier::new(
+                    SPAN,
+                    self.ctx.ast.new_atom(&format!("_{arg_name}")),
+                ));
                 let pattern = self.ctx.ast.binding_pattern(ident, None, false);
                 let items =
                     self.ctx.ast.new_vec_single(self.ctx.ast.plain_formal_parameter(SPAN, pattern));
