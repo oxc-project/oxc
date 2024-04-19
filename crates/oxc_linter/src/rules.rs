@@ -69,6 +69,7 @@ mod eslint {
     pub mod no_duplicate_case;
     pub mod no_empty;
     pub mod no_empty_character_class;
+    pub mod no_empty_function;
     pub mod no_empty_pattern;
     pub mod no_empty_static_block;
     pub mod no_eq_null;
@@ -425,6 +426,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_duplicate_case,
     eslint::no_empty,
     eslint::no_empty_character_class,
+    eslint::no_empty_function,
     eslint::no_empty_pattern,
     eslint::no_empty_static_block,
     eslint::no_eval,
