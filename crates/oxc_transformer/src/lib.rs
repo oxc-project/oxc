@@ -33,8 +33,8 @@ use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 
 pub use crate::{
-    compiler_assumptions::CompilerAssumptions, options::TransformOptions, react::ReactOptions,
-    typescript::TypeScriptOptions,
+    compiler_assumptions::CompilerAssumptions, es2022::Es2022Options, options::TransformOptions,
+    react::ReactOptions, typescript::TypeScriptOptions,
 };
 
 use crate::{

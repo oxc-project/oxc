@@ -12,7 +12,7 @@ pub struct ClassStaticBlock<'a> {
 
 impl<'a> ClassStaticBlock<'a> {
     pub fn new(ctx: &Ctx<'a>) -> Self {
-        Self { ctx: Rc::clone(&ctx) }
+        Self { ctx: Rc::clone(ctx) }
     }
 
     pub fn transform_class_body(&mut self, body: &mut ClassBody<'a>) {
@@ -29,7 +29,7 @@ impl<'a> ClassStaticBlock<'a> {
 
         let mut generate_id = || -> String {
             let mut id = "_".to_owned();
-            let mut i = 0;
+            let mut i = 1;
 
             while private_names.contains(&id) {
                 i += 1;
@@ -41,7 +41,7 @@ impl<'a> ClassStaticBlock<'a> {
             id
         };
 
-        let stmts = ast.move_vec(&mut body.body).into_iter().filter_map(|stmt| {
+        let stmts = ast.move_vec(&mut body.body).into_iter().map(|stmt| {
             if let ClassElement::StaticBlock(mut block) = stmt {
                 let private_id = generate_id();
 
@@ -60,7 +60,7 @@ impl<'a> ClassStaticBlock<'a> {
                     ast.build_iife(SPAN, ast.move_vec(&mut block.body))
                 };
 
-                Some(ast.class_property(
+                ast.class_property(
                     PropertyDefinitionType::PropertyDefinition,
                     SPAN,
                     ast.property_key_private_identifier(ast.private_identifier(SPAN, &private_id)),
@@ -68,9 +68,9 @@ impl<'a> ClassStaticBlock<'a> {
                     false,
                     true,
                     ast.new_vec(),
-                ))
+                )
             } else {
-                Some(stmt)
+                stmt
             }
         });
 

@@ -1,6 +1,7 @@
-Passed: 153/209
+Passed: 160/216
 
 # All Passed:
+* babel-plugin-transform-class-static-block
 * babel-plugin-transform-react-jsx-source
 * babel-plugin-transform-react-jsx-development
 

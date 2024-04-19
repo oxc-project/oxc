@@ -53,7 +53,7 @@ const PLUGINS: &[&str] = &[
     // "babel-plugin-transform-unicode-sets-regex",
     // // ES2022
     // "babel-plugin-transform-class-properties",
-    // "babel-plugin-transform-class-static-block",
+    "babel-plugin-transform-class-static-block",
     // "babel-plugin-transform-private-methods",
     // "babel-plugin-transform-private-property-in-object",
     // // [Syntax] "babel-plugin-transform-syntax-top-level-await",
