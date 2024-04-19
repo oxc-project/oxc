@@ -30,17 +30,51 @@ impl<'a> TypeScript<'a> {
 
         // TODO: do not move if there is no namespace
         for stmt in self.ctx.ast.move_statement_vec(stmts) {
-            if let Statement::Declaration(Declaration::TSModuleDeclaration(decl)) = stmt {
-                if !decl.modifiers.is_contains_declare() {
-                    let name = decl.id.name().clone();
-                    if let Some(transformed_stmt) = self.handle_nested(decl.unbox()) {
-                        new_stmts.push(self.create_variable_declaration(&name));
-                        new_stmts.push(transformed_stmt);
+            match stmt {
+                Statement::Declaration(Declaration::TSModuleDeclaration(decl)) => {
+                    if !decl.modifiers.is_contains_declare() {
+                        let name = decl.id.name().clone();
+                        if let Some(transformed_stmt) = self.handle_nested(decl.unbox()) {
+                            new_stmts.push(Statement::Declaration(
+                                self.create_variable_declaration(&name),
+                            ));
+                            new_stmts.push(transformed_stmt);
+                        }
                     }
                 }
-            } else {
-                new_stmts.push(stmt);
-            };
+                Statement::ModuleDeclaration(ref module_decl) => {
+                    if let ModuleDeclaration::ExportNamedDeclaration(export_decl) = &**module_decl {
+                        if let Some(Declaration::TSModuleDeclaration(decl)) =
+                            &export_decl.declaration
+                        {
+                            if !decl.modifiers.is_contains_declare() {
+                                let name = decl.id.name().clone();
+                                if let Some(transformed_stmt) =
+                                    self.handle_nested(self.ctx.ast.copy(decl))
+                                {
+                                    new_stmts.push(self.ctx.ast.module_declaration(
+                                        ModuleDeclaration::ExportNamedDeclaration(
+                                            self.ctx.ast.export_named_declaration(
+                                                SPAN,
+                                                Some(self.create_variable_declaration(&name)),
+                                                self.ctx.ast.new_vec(),
+                                                None,
+                                                ImportOrExportKind::Value,
+                                                None,
+                                            ),
+                                        ),
+                                    ));
+                                    new_stmts.push(transformed_stmt);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+
+                    new_stmts.push(stmt);
+                }
+                _ => new_stmts.push(stmt),
+            }
         }
 
         *stmts = new_stmts;
@@ -75,7 +109,9 @@ impl<'a> TypeScript<'a> {
                     if let Some(transformed) = self.handle_nested(decl.unbox()) {
                         is_empty = false;
                         if !names.insert(module_name.clone()) {
-                            new_stmts.push(self.create_variable_declaration(&module_name));
+                            new_stmts.push(Statement::Declaration(
+                                self.create_variable_declaration(&module_name),
+                            ));
                         }
                         new_stmts.push(transformed);
                     }
@@ -207,7 +243,7 @@ impl<'a> TypeScript<'a> {
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     //                         ^^^^^^^
-    fn create_variable_declaration(&self, name: &Atom<'a>) -> Statement<'a> {
+    fn create_variable_declaration(&self, name: &Atom<'a>) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
         let declarators = {
             let ident = BindingIdentifier::new(SPAN, name.clone());
@@ -216,13 +252,12 @@ impl<'a> TypeScript<'a> {
             let decl = self.ctx.ast.variable_declarator(SPAN, kind, binding, None, false);
             self.ctx.ast.new_vec_single(decl)
         };
-        let decl = Declaration::VariableDeclaration(self.ctx.ast.variable_declaration(
+        Declaration::VariableDeclaration(self.ctx.ast.variable_declaration(
             SPAN,
             kind,
             declarators,
             Modifiers::empty(),
-        ));
-        Statement::Declaration(decl)
+        ))
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
