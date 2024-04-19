@@ -1,0 +1,31 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_barrel_file
+---
+  ⚠ eslint-plugin-import(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
+   ╭─[index.js:1:1]
+ 1 │ ╭─▶ export * from "foo";
+ 2 │ ╰─▶            export * from "bar";
+   ╰────
+  help: For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>
+
+  ⚠ eslint-plugin-import(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
+   ╭─[index.js:1:1]
+ 1 │ ╭─▶ export { foo } from "foo";
+ 2 │ ╰─▶            export { bar } from "bar";
+   ╰────
+  help: For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>
+
+  ⚠ eslint-plugin-import(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
+   ╭─[index.js:1:1]
+ 1 │ export { default as module1 } from "./module1";
+   · ───────────────────────────────────────────────
+   ╰────
+  help: For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>
+
+  ⚠ eslint-plugin-import(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
+   ╭─[index.js:1:1]
+ 1 │ ╭─▶ import { foo, bar, baz } from "../feature";
+ 2 │ ╰─▶            export { foo, bar, baz };
+   ╰────
+  help: For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>

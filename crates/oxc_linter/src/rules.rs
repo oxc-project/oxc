@@ -333,6 +333,7 @@ mod oxc {
     pub mod erasing_op;
     pub mod misrefactored_assign_op;
     pub mod no_accumulating_spread;
+    pub mod no_barrel_file;
     pub mod only_used_in_recursion;
 }
 
@@ -671,6 +672,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::erasing_op,
     oxc::misrefactored_assign_op,
     oxc::no_accumulating_spread,
+    oxc::no_barrel_file,
     oxc::only_used_in_recursion,
     nextjs::google_font_display,
     nextjs::google_font_preconnect,
