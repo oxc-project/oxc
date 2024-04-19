@@ -45,7 +45,8 @@ const readAllImplementedRuleNames = async () => {
 const NOT_SUPPORTED_RULE_NAMES = new Set([
   "eslint/no-dupe-args", // superseded by strict mode
   "eslint/no-octal", // superseded by strict mode
-  "eslint/no-with" // superseded by strict mode
+  "eslint/no-with", // superseded by strict mode
+  "import/no-unresolved" // Will always contain false positives due to module resolution complexity
 ]);
 
 /**
