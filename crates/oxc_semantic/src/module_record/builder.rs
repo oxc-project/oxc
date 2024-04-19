@@ -254,8 +254,8 @@ impl ModuleRecordBuilder {
             ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.id.as_ref(),
             ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref(),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
-            | ExportDefaultDeclarationKind::TSEnumDeclaration(_)
-            | ExportDefaultDeclarationKind::Dummy => return dummy!(),
+            | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => return,
+            ExportDefaultDeclarationKind::Dummy => return dummy!(),
         };
         let export_entry = ExportEntry {
             export_name: ExportExportName::Default(exported_name.span()),
