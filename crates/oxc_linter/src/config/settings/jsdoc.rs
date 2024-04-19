@@ -70,7 +70,38 @@ pub struct JSDocPluginSettings {
     // }[]
 }
 
+// https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md#default-preferred-aliases
+fn get_default_aliased_tag_name(original_name: &str) -> Option<String> {
+    let aliased_name = match original_name {
+        "virtual" => "abstract",
+        "extends" => "augments",
+        "constructor" => "class",
+        "const" => "constant",
+        "defaultvalue" => "default",
+        "desc" => "description",
+        "host" => "external",
+        "fileoverview" | "overview" => "file",
+        "emits" => "fires",
+        "func" | "method" => "function",
+        "var" => "member",
+        "arg" | "argument" => "param",
+        "prop" => "property",
+        "return" => "returns",
+        "exception" => "throws",
+        "yield" => "yields",
+        _ => original_name,
+    }
+    .to_string();
+
+    if aliased_name != original_name {
+        return Some(aliased_name);
+    }
+    None
+}
+
 impl JSDocPluginSettings {
+    /// Only for `check-tag-names` rule
+    /// Return `Some(reason)` if blocked
     pub fn check_blocked_tag_name(&self, tag_name: &str) -> Option<String> {
         match self.tag_name_preference.get(tag_name) {
             Some(TagNamePreference::FalseOnly(_)) => Some(format!("Unexpected tag `@{tag_name}`.")),
@@ -78,8 +109,26 @@ impl JSDocPluginSettings {
             _ => None,
         }
     }
+    /// Only for `check-tag-names` rule
+    /// Return `Some(reason)` if replacement found, include default alias
+    pub fn check_preferred_tag_name(&self, original_name: &str) -> Option<String> {
+        let reason = |preferred_name: &str| -> String {
+            format!("Replace tag `@{original_name}` with `@{preferred_name}`.")
+        };
 
-    pub fn list_preferred_tag_names(&self) -> Vec<String> {
+        match self.tag_name_preference.get(original_name) {
+            Some(TagNamePreference::TagNameOnly(preferred_name)) => Some(reason(preferred_name)),
+            Some(TagNamePreference::ObjectWithMessageAndReplacement { message, .. }) => {
+                Some(message.to_string())
+            }
+            _ => get_default_aliased_tag_name(original_name)
+                .filter(|preferred_name| preferred_name != original_name)
+                .map(|preferred_name| reason(&preferred_name)),
+        }
+    }
+    /// Only for `check-tag-names` rule
+    /// Return all user replacement tag names
+    pub fn list_user_defined_tag_names(&self) -> Vec<String> {
         self.tag_name_preference
             .iter()
             .filter_map(|(_, pref)| match pref {
@@ -100,27 +149,7 @@ impl JSDocPluginSettings {
                 TagNamePreference::TagNameOnly(replacement)
                 | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. },
             ) => replacement.to_string(),
-            // https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md#default-preferred-aliases
-            _ => match original_name {
-                "virtual" => "abstract",
-                "extends" => "augments",
-                "constructor" => "class",
-                "const" => "constant",
-                "defaultvalue" => "default",
-                "desc" => "description",
-                "host" => "external",
-                "fileoverview" | "overview" => "file",
-                "emits" => "fires",
-                "func" | "method" => "function",
-                "var" => "member",
-                "arg" | "argument" => "param",
-                "prop" => "property",
-                "return" => "returns",
-                "exception" => "throws",
-                "yield" => "yields",
-                _ => original_name,
-            }
-            .to_string(),
+            _ => get_default_aliased_tag_name(original_name).unwrap_or(original_name.to_string()),
         }
     }
 }
@@ -135,7 +164,6 @@ fn default_true() -> bool {
 #[serde(untagged)]
 enum TagNamePreference {
     TagNameOnly(String),
-    #[allow(dead_code)] // `message` is not used for now
     ObjectWithMessageAndReplacement {
         message: String,
         replacement: String,
@@ -204,9 +232,9 @@ mod test {
     }
 
     #[test]
-    fn list_preferred_tag_names() {
+    fn list_user_defined_tag_names() {
         let settings = JSDocPluginSettings::deserialize(&serde_json::json!({})).unwrap();
-        assert_eq!(settings.list_preferred_tag_names().len(), 0);
+        assert_eq!(settings.list_user_defined_tag_names().len(), 0);
 
         let settings = JSDocPluginSettings::deserialize(&serde_json::json!({
             "tagNamePreference": {
@@ -218,7 +246,7 @@ mod test {
             }
         }))
         .unwrap();
-        let mut preferred = settings.list_preferred_tag_names();
+        let mut preferred = settings.list_user_defined_tag_names();
         preferred.sort_unstable();
         assert_eq!(preferred, vec!["bar", "noop", "overridedefault"]);
     }
@@ -242,5 +270,28 @@ mod test {
         );
         assert_eq!(settings.check_blocked_tag_name("bar"), Some("do not use bar".to_string()));
         assert_eq!(settings.check_blocked_tag_name("baz"), None);
+    }
+
+    #[test]
+    fn check_preferred_tag_name() {
+        let settings = JSDocPluginSettings::deserialize(&serde_json::json!({})).unwrap();
+        assert_eq!(settings.check_preferred_tag_name("foo"), None);
+
+        let settings = JSDocPluginSettings::deserialize(&serde_json::json!({
+            "tagNamePreference": {
+                "foo": false,
+                "bar": { "message": "do not use bar" },
+                "baz": { "message": "baz is noop now", "replacement": "noop" },
+                "qux": "quux"
+            }
+        }))
+        .unwrap();
+        assert_eq!(settings.check_preferred_tag_name("foo"), None,);
+        assert_eq!(settings.check_preferred_tag_name("bar"), None);
+        assert_eq!(settings.check_preferred_tag_name("baz"), Some("baz is noop now".to_string()));
+        assert_eq!(
+            settings.check_preferred_tag_name("qux"),
+            Some("Replace tag `@qux` with `@quux`.".to_string())
+        );
     }
 }

@@ -153,7 +153,7 @@ impl Rule for CheckTagNames {
         let settings = &ctx.settings().jsdoc;
         let config = &self.0;
 
-        let user_preferred_tags = settings.list_preferred_tag_names();
+        let user_preferred_tags = settings.list_user_defined_tag_names();
 
         // TODO: typed, d.ts
         // TODO: Bundle multiple diagnostics into one?
@@ -168,31 +168,21 @@ impl Rule for CheckTagNames {
                     continue;
                 }
 
-                // If valid JSX tags, skip
-                if config.jsx_tags && JSX_TAGS.contains(tag_name) {
+                // If user preferred, skip
+                if user_preferred_tags.contains(&tag_name.to_string()) {
                     continue;
                 }
-
-                let is_valid = config.defined_tags.contains(&tag_name.to_string())
-                    || VALID_BLOCK_TAGS.contains(tag_name);
 
                 // If valid
-                if is_valid {
+                if config.jsx_tags && JSX_TAGS.contains(tag_name)
+                    || config.defined_tags.contains(&tag_name.to_string())
+                    || VALID_BLOCK_TAGS.contains(tag_name)
+                {
                     // But preferred, report to use it
-                    let preferred_name = settings.resolve_tag_name(tag_name);
-                    if preferred_name != tag_name {
-                        ctx.diagnostic(CheckTagNamesDiagnostic(
-                            tag.kind.span,
-                            format!("Replace tag `@{tag_name}` with `@{preferred_name}`."),
-                        ));
-                        continue;
+                    if let Some(reason) = settings.check_preferred_tag_name(tag_name) {
+                        ctx.diagnostic(CheckTagNamesDiagnostic(tag.kind.span, reason));
                     }
 
-                    continue;
-                }
-
-                // If invalid but user preferred, skip
-                if user_preferred_tags.contains(&tag_name.to_string()) {
                     continue;
                 }
 
