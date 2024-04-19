@@ -119,7 +119,7 @@ declare_oxc_lint!(
     /// const tooLongExample = "This line is an example of a line that stretches far beyond the conventional length and could be hard to read.";
     /// ```
     MaxLen,
-    pedantic
+    style
 );
 
 // Define a structure to store the spans.
