@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -97,6 +96,9 @@ const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf_set! {
 "memberof!",
 "mixes",
 "mixin",
+// Undocumented, but exists
+// https://github.com/jsdoc/jsdoc/blob/a08ac18a11f5b0d93421d1e8ecf632468db2d045/packages/jsdoc-tag/lib/definitions/core.js#L374
+"modifies",
 "module",
 "name",
 "namespace",
@@ -122,7 +124,20 @@ const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf_set! {
 "typedef",
 "variation",
 "version",
-"yields"
+"yields",
+// TypeScript specific
+"import",
+"internal",
+"overload",
+"satisfies",
+"template",
+};
+
+const JSX_TAGS: phf::Set<&'static str> = phf_set! {
+"jsx",
+"jsxFrag",
+"jsxImportSource",
+"jsxRuntime",
 };
 
 impl Rule for CheckTagNames {
@@ -137,43 +152,55 @@ impl Rule for CheckTagNames {
     fn run_once(&self, ctx: &LintContext) {
         let settings = &ctx.settings().jsdoc;
         let config = &self.0;
-        println!("👻 {config:?}");
-        println!("👻 {settings:?}");
 
         let user_preferred_tags = settings.list_preferred_tag_names();
-        let is_valid_tag = |tag_name: &str| {
-            if config.defined_tags.contains(&tag_name.to_string())
-                || user_preferred_tags.contains(&tag_name.to_string())
-            {
-                return true;
-            }
-
-            if VALID_BLOCK_TAGS.contains(&settings.resolve_tag_name(tag_name)) {
-                return true;
-            }
-            false
-        };
 
         // TODO: typed, d.ts
+        // TODO: Bundle multiple diagnostics into one?
+        // TODO: Test for all tags...?
         for jsdoc in ctx.semantic().jsdoc().iter_all() {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();
-                println!("👻 {tag_name}");
 
-                if let Some(message) = settings.is_blocked_tag_name(tag_name) {
-                    ctx.diagnostic(CheckTagNamesDiagnostic(tag.kind.span, message));
+                // If explicitly blocked, report
+                if let Some(reason) = settings.check_blocked_tag_name(tag_name) {
+                    ctx.diagnostic(CheckTagNamesDiagnostic(tag.kind.span, reason));
                     continue;
                 }
-                println!("  => not blocked");
 
-                if !is_valid_tag(tag_name) {
-                    ctx.diagnostic(CheckTagNamesDiagnostic(
-                        tag.kind.span,
-                        format!("`@{tag_name}` is invalid tag name."),
-                    ));
+                // If valid JSX tags, skip
+                if config.jsx_tags && JSX_TAGS.contains(tag_name) {
                     continue;
                 }
-                println!("  => is valid");
+
+                let is_valid = config.defined_tags.contains(&tag_name.to_string())
+                    || VALID_BLOCK_TAGS.contains(tag_name);
+
+                // If valid
+                if is_valid {
+                    // But preferred, report to use it
+                    let preferred_name = settings.resolve_tag_name(tag_name);
+                    if preferred_name != tag_name {
+                        ctx.diagnostic(CheckTagNamesDiagnostic(
+                            tag.kind.span,
+                            format!("Replace tag `@{tag_name}` with `@{preferred_name}`."),
+                        ));
+                        continue;
+                    }
+
+                    continue;
+                }
+
+                // If invalid but user preferred, skip
+                if user_preferred_tags.contains(&tag_name.to_string()) {
+                    continue;
+                }
+
+                // Otherwise, report
+                ctx.diagnostic(CheckTagNamesDiagnostic(
+                    tag.kind.span,
+                    format!("`@{tag_name}` is invalid tag name."),
+                ));
             }
         }
     }
@@ -184,6 +211,182 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+("
+			          /**
+			           * @param foo (pass: valid name)
+			           */
+			          function quux (foo) {
+			
+			          }
+			      ", None, None),
+("
+			          /**
+			           * @memberof! foo (pass: valid name)
+			           */
+			          function quux (foo) {
+			
+			          }
+			      ", None, None),
+("
+			          /**
+			           * @arg foo (pass: invalid name but user preferred)
+			           */
+			          function quux (foo) {
+			
+			          }
+			      ", None, Some(serde_json::json!({
+        "jsdoc": {
+          "tagNamePreference": {
+            "param": "arg",
+          },
+        },
+      }))),
+("
+			          /**
+			           * @bar foo (pass: invalid name but defined)
+			           */
+			          function quux (foo) {
+			
+			          }
+			      ", Some(serde_json::json!([
+        {
+          "definedTags": [
+            "bar",
+          ],
+        },
+      ])), None),
+("
+			          /**
+			           * @baz @bar foo (pass: invalid names but defined)
+			           */
+			          function quux (foo) {
+			
+			          }
+			      ", Some(serde_json::json!([
+        {
+          "definedTags": [
+            "baz", "bar",
+          ],
+        },
+      ])), None),
+("
+			          /**
+			           * @baz @bar foo (pass: invalid names but user preferred)
+			           */
+			          function quux (foo) {
+			
+			          }
+			      ", None, Some(serde_json::json!({
+        "jsdoc": {
+          "tagNamePreference": {
+            "param": "baz",
+            "returns": {
+              "message": "Prefer `bar`",
+              "replacement": "bar",
+            },
+            "todo": false,
+          },
+        },
+      }))),
+("
+			      /**
+			       * @returns (pass: valid name)
+			       */
+			      function quux (foo) {}
+			      ", None, None),
+("", None, None),
+("
+			          /**
+			           * (pass: no tag)
+			           */
+			          function quux (foo) {
+			
+			          }
+			      ", None, None),
+("
+			          /**
+			           * @todo (pass: valid name)
+			           */
+			          function quux () {
+			
+			          }
+			      ", None, None),
+("
+			          /**
+			           * @extends Foo (pass: invalid name but user preferred)
+			           */
+			          function quux () {
+			
+			          }
+			      ", None, Some(serde_json::json!({
+        "jsdoc": {
+          "tagNamePreference": {
+            "augments": {
+              "message": "@extends is to be used over @augments.",
+              "replacement": "extends",
+            },
+          },
+        },
+      }))),
+("
+			          /**
+			           * (Set tag name preference to itself to get aliases to
+			           *   work along with main tag name.)
+			           * @augments Bar
+			           * @extends Foo (pass: invalid name but user preferred)
+			           */
+			          function quux () {
+			          }
+			      ", None, Some(serde_json::json!({
+        "jsdoc": {
+          "tagNamePreference": {
+            "extends": "extends",
+          },
+        },
+      }))),
+("
+			      /**
+			       * Registers the `target` class as a transient dependency; each time the dependency is resolved a new instance will be created.
+			       *
+			       * @param target - The class / constructor function to register as transient.
+			       *
+			       * @example ```ts
+			      @transient()
+			      class Foo { }
+			      ```
+			       * @param Time for a new tag (pass: valid names)
+			       */
+			      export function transient<T>(target?: T): T {
+			        // ...
+			      }
+			", None, None),
+("
+			        /** @jsx h */
+			        /** @jsxFrag Fragment */
+			        /** @jsxImportSource preact */
+			        /** @jsxRuntime automatic (pass: valid jsx names)*/
+			      ", Some(serde_json::json!([
+        {
+          "jsxTags": true,
+        },
+      ])), None),
+("
+			      /**
+			       * @internal (pass: valid name)
+			       */
+			      ", None, Some(serde_json::json!({
+        "jsdoc": {
+        },
+      }))),
+("
+			        /**
+			         * @overload
+			         * @satisfies (pass: valid names)
+			         */
+			      ", None, Some(serde_json::json!({
+        "jsdoc": {
+        },
+      }))),
 //         ("
 // 			        /** @default 0 */
 // 			        let a;
@@ -250,200 +453,6 @@ fn test() {
 //           "typed": true,
 //         },
 //       ])), None),
-("
-			          /**
-			           * @param foo
-			           */
-			          function quux (foo) {
-			
-			          }
-			      ", None, None),
-("
-			          /**
-			           * @memberof! foo
-			           */
-			          function quux (foo) {
-			
-			          }
-			      ", None, None),
-("
-			          /**
-			           * @arg foo
-			           */
-			          function quux (foo) {
-			
-			          }
-			      ", None, Some(serde_json::json!({
-        "jsdoc": {
-          "tagNamePreference": {
-            "param": "arg",
-          },
-        },
-      }))),
-("
-			          /**
-			           * @bar foo
-			           */
-			          function quux (foo) {
-			
-			          }
-			      ", Some(serde_json::json!([
-        {
-          "definedTags": [
-            "bar",
-          ],
-        },
-      ])), None),
-("
-			          /**
-			           * @baz @bar foo
-			           */
-			          function quux (foo) {
-			
-			          }
-			      ", Some(serde_json::json!([
-        {
-          "definedTags": [
-            "baz", "bar",
-          ],
-        },
-      ])), None),
-("
-			          /**
-			           * @baz @bar foo
-			           */
-			          function quux (foo) {
-			
-			          }
-			      ", None, Some(serde_json::json!({
-        "jsdoc": {
-          "tagNamePreference": {
-            "param": "baz",
-            "returns": {
-              "message": "Prefer `bar`",
-              "replacement": "bar",
-            },
-            "todo": false,
-          },
-        },
-      }))),
-("
-			      /**
-			       * @returns
-			       */
-			      function quux (foo) {}
-			      ", None, None),
-("", None, None),
-("
-			          /**
-			           *
-			           */
-			          function quux (foo) {
-			
-			          }
-			      ", None, None),
-("
-			          /**
-			           * @todo
-			           */
-			          function quux () {
-			
-			          }
-			      ", None, None),
-("
-			          /**
-			           * @extends Foo
-			           */
-			          function quux () {
-			
-			          }
-			      ", None, Some(serde_json::json!({
-        "jsdoc": {
-          "tagNamePreference": {
-            "augments": {
-              "message": "@extends is to be used over @augments.",
-              "replacement": "extends",
-            },
-          },
-        },
-      }))),
-("
-			          /**
-			           * (Set tag name preference to itself to get aliases to
-			           *   work along with main tag name.)
-			           * @augments Bar
-			           * @extends Foo
-			           */
-			          function quux () {
-			          }
-			      ", None, Some(serde_json::json!({
-        "jsdoc": {
-          "tagNamePreference": {
-            "extends": "extends",
-          },
-        },
-      }))),
-("
-			      /**
-			       * Registers the `target` class as a transient dependency; each time the dependency is resolved a new instance will be created.
-			       *
-			       * @param target - The class / constructor function to register as transient.
-			       *
-			       * @example ```ts
-			      @transient()
-			      class Foo { }
-			      ```
-			       * @param Time for a new tag
-			       */
-			      export function transient<T>(target?: T): T {
-			        // ...
-			      }
-			", None, None),
-("
-			        /** @jsx h */
-			        /** @jsxFrag Fragment */
-			        /** @jsxImportSource preact */
-			        /** @jsxRuntime automatic */
-			      ", Some(serde_json::json!([
-        {
-          "jsxTags": true,
-        },
-      ])), None),
-("
-			      /**
-			       * @internal
-			       */
-			      ", None, Some(serde_json::json!({
-        "jsdoc": {
-        },
-      }))),
-("
-			        interface WebTwain {
-			          /**
-			           * Converts the images specified by the indices to base64 synchronously.
-			           * @function WebTwain#ConvertToBase64
-			           * @returns {Base64Result}
-			
-			          ConvertToBase64(): Base64Result;
-			          */
-			
-			          /**
-			           * Converts the images specified by the indices to base64 asynchronously.
-			           * @function WebTwain#ConvertToBase64
-			           * @returns {boolean}
-			           */
-			          ConvertToBase64(): boolean;
-			        }
-			      ", None, None),
-("
-			        /**
-			         * @overload
-			         * @satisfies
-			         */
-			      ", None, Some(serde_json::json!({
-        "jsdoc": {
-        },
-      }))),
 // ("
 // 			        /**
 // 			         * @module
@@ -457,6 +466,353 @@ fn test() {
     ];
 
     let fail = vec![
+        (
+            "
+        			        /** @typoo {string} (fail: invalid name) */
+        			        let a;
+        			      ",
+            None,
+            None,
+        ),
+        (
+            "
+        			          /**
+        			           * @Param (fail: invalid name)
+        			           */
+        			          function quux () {
+			
+        			          }
+        			      ",
+            None,
+            None,
+        ),
+        (
+            "
+        			          /**
+        			           * @foo (fail: invalid name)
+        			           */
+        			          function quux () {
+			
+        			          }
+        			      ",
+            None,
+            None,
+        ),
+        (
+            "
+        			          /**
+        			           * @arg foo (fail: invalid name, default aliased)
+        			           */
+        			          function quux (foo) {
+			
+        			          }
+        			      ",
+            None,
+            None,
+        ),
+        (
+            "
+        			          /**
+        			           * @param foo (fail: valid name but user preferred)
+        			           */
+        			          function quux (foo) {
+
+        			          }
+        			      ",
+            None,
+            Some(serde_json::json!({
+              "jsdoc": {
+                "tagNamePreference": {
+                  "param": "arg",
+                },
+              },
+            })),
+        ),
+        (
+            "
+        			          /**
+        			           * @constructor foo (fail: invalid name and user preferred)
+        			           */
+        			          function quux (foo) {
+
+        			          }
+        			      ",
+            None,
+            Some(serde_json::json!({
+              "jsdoc": {
+                "tagNamePreference": {
+                  "constructor": "cons",
+                },
+              },
+            })),
+        ),
+        (
+            "
+        			          /**
+        			           * @arg foo
+        			           */
+        			          function quux (foo) {
+
+        			          }
+        			      ",
+            None,
+            Some(serde_json::json!({
+              "jsdoc": {
+                "tagNamePreference": {
+                  "arg": "somethingDifferent",
+                },
+              },
+            })),
+        ),
+        (
+            "
+        			          /**
+        			           * @param foo
+        			           */
+        			          function quux (foo) {
+
+        			          }
+        			      ",
+            None,
+            Some(serde_json::json!({
+              "jsdoc": {
+                "tagNamePreference": {
+                  "param": "parameter",
+                },
+              },
+            })),
+        ),
+        (
+            "
+        			          /**
+        			           * @bar foo
+        			           */
+        			          function quux (foo) {
+
+        			          }
+        			      ",
+            None,
+            None,
+        ),
+        (
+            "
+        			          /**
+        			           * @baz @bar foo
+        			           */
+        			          function quux (foo) {
+
+        			          }
+        			      ",
+            Some(serde_json::json!([
+              {
+                "definedTags": [
+                  "bar",
+                ],
+              },
+            ])),
+            None,
+        ),
+        (
+            "
+        			            /**
+        			             * @bar
+        			             * @baz
+        			             */
+        			            function quux (foo) {
+
+        			            }
+        			        ",
+            Some(serde_json::json!([
+              {
+                "definedTags": [
+                  "bar",
+                ],
+              },
+            ])),
+            None,
+        ),
+        (
+            "
+        			          /**
+        			           * @todo
+        			           */
+        			          function quux () {
+
+        			          }
+        			      ",
+            None,
+            Some(serde_json::json!({
+              "jsdoc": {
+                "tagNamePreference": {
+                  "todo": false,
+                },
+              },
+            })),
+        ),
+        (
+            "
+        			          /**
+        			           * @todo
+        			           */
+        			          function quux () {
+
+        			          }
+        			      ",
+            None,
+            Some(serde_json::json!({
+              "jsdoc": {
+                "tagNamePreference": {
+                  "todo": {
+                    "message": "Please resolve to-dos or add to the tracker",
+                  },
+                },
+              },
+            })),
+        ),
+        (
+            "
+        			          /**
+        			           * @todo
+        			           */
+        			          function quux () {
+
+        			          }
+        			      ",
+            None,
+            Some(serde_json::json!({
+              "jsdoc": {
+                "tagNamePreference": {
+                  "todo": {
+                    "message": "Please use x-todo instead of todo",
+                    "replacement": "x-todo",
+                  },
+                },
+              },
+            })),
+        ),
+        (
+            "
+        			          /**
+        			           * @todo
+        			           */
+        			          function quux () {
+
+        			          }
+        			      ",
+            None,
+            Some(serde_json::json!({
+              "jsdoc": {
+                "tagNamePreference": {
+                  "todo": "55",
+                },
+              },
+            })),
+        ),
+        (
+            "
+        			          /**
+        			           * @property {object} a
+        			           * @prop {boolean} b
+        			           */
+        			          function quux () {
+
+        			          }
+        			      ",
+            None,
+            None,
+        ),
+        (
+            "
+        			          /**
+        			           * @abc foo
+        			           * @abcd bar
+        			           */
+        			          function quux () {
+
+        			          }
+        			      ",
+            Some(serde_json::json!([
+              {
+                "definedTags": [
+                  "abcd",
+                ],
+              },
+            ])),
+            Some(serde_json::json!({
+              "jsdoc": {
+                "tagNamePreference": {
+                  "abc": "abcd",
+                },
+              },
+            })),
+        ),
+        (
+            "
+        			          /**
+        			           * @abc
+        			           * @abcd
+        			           */
+        			          function quux () {
+
+        			          }
+        			      ",
+            None,
+            Some(serde_json::json!({
+              "jsdoc": {
+                "tagNamePreference": {
+                  "abc": "abcd",
+                },
+              },
+            })),
+        ),
+        (
+            "
+        			        /** @jsx h */
+        			        /** @jsxFrag Fragment */
+        			        /** @jsxImportSource preact */
+        			        /** @jsxRuntime automatic */
+        			      ",
+            None,
+            None,
+        ),
+        (
+            "
+        			      /**
+        			       * @constructor
+        			       */
+        			      function Test() {
+        			        this.works = false;
+        			      }
+        			      ",
+            None,
+            Some(serde_json::json!({
+              "jsdoc": {
+                "tagNamePreference": {
+                  "returns": "return",
+                },
+              },
+            })),
+        ),
+        (
+            "
+        			          /**
+        			           * @todo
+        			           */
+        			          function quux () {
+
+        			          }
+        			      ",
+            None,
+            Some(serde_json::json!({
+              "jsdoc": {
+                "tagNamePreference": {
+                  "todo": {
+                    "message": "Please don\"t use todo",
+                  },
+                },
+              },
+            })),
+        ),
         // (
         //     "/** @type {string} */let a;
         // 			      ",
@@ -536,334 +892,6 @@ fn test() {
         //     ])),
         //     None,
         // ),
-        (
-            "
-        			        /** @typoo {string} */
-        			        let a;
-        			      ",
-            None,
-            None,
-        ),
-        (
-            "
-        			          /**
-        			           * @Param
-        			           */
-        			          function quux () {
-			
-        			          }
-        			      ",
-            None,
-            None,
-        ),
-        (
-            "
-        			          /**
-        			           * @foo
-        			           */
-        			          function quux () {
-			
-        			          }
-        			      ",
-            None,
-            None,
-        ),
-        (
-            "
-        			          /**
-        			           * @arg foo
-        			           */
-        			          function quux (foo) {
-			
-        			          }
-        			      ",
-            None,
-            None,
-        ),
-        // (
-        //     "
-        // 			          /**
-        // 			           * @param foo
-        // 			           */
-        // 			          function quux (foo) {
-
-        // 			          }
-        // 			      ",
-        //     None,
-        //     Some(serde_json::json!({
-        //       "jsdoc": {
-        //         "tagNamePreference": {
-        //           "param": "arg",
-        //         },
-        //       },
-        //     })),
-        // ),
-        // (
-        //     "
-        // 			          /**
-        // 			           * @constructor foo
-        // 			           */
-        // 			          function quux (foo) {
-
-        // 			          }
-        // 			      ",
-        //     None,
-        //     Some(serde_json::json!({
-        //       "jsdoc": {
-        //         "tagNamePreference": {
-        //           "constructor": "cons",
-        //         },
-        //       },
-        //     })),
-        // ),
-        // (
-        //     "
-        // 			          /**
-        // 			           * @arg foo
-        // 			           */
-        // 			          function quux (foo) {
-
-        // 			          }
-        // 			      ",
-        //     None,
-        //     Some(serde_json::json!({
-        //       "jsdoc": {
-        //         "tagNamePreference": {
-        //           "arg": "somethingDifferent",
-        //         },
-        //       },
-        //     })),
-        // ),
-        // (
-        //     "
-        // 			          /**
-        // 			           * @param foo
-        // 			           */
-        // 			          function quux (foo) {
-
-        // 			          }
-        // 			      ",
-        //     None,
-        //     Some(serde_json::json!({
-        //       "jsdoc": {
-        //         "tagNamePreference": {
-        //           "param": "parameter",
-        //         },
-        //       },
-        //     })),
-        // ),
-        // (
-        //     "
-        // 			          /**
-        // 			           * @bar foo
-        // 			           */
-        // 			          function quux (foo) {
-
-        // 			          }
-        // 			      ",
-        //     None,
-        //     None,
-        // ),
-        // (
-        //     "
-        // 			          /**
-        // 			           * @baz @bar foo
-        // 			           */
-        // 			          function quux (foo) {
-
-        // 			          }
-        // 			      ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "definedTags": [
-        //           "bar",
-        //         ],
-        //       },
-        //     ])),
-        //     None,
-        // ),
-        // (
-        //     "
-        // 			            /**
-        // 			             * @bar
-        // 			             * @baz
-        // 			             */
-        // 			            function quux (foo) {
-
-        // 			            }
-        // 			        ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "definedTags": [
-        //           "bar",
-        //         ],
-        //       },
-        //     ])),
-        //     None,
-        // ),
-        // (
-        //     "
-        // 			          /**
-        // 			           * @todo
-        // 			           */
-        // 			          function quux () {
-
-        // 			          }
-        // 			      ",
-        //     None,
-        //     Some(serde_json::json!({
-        //       "jsdoc": {
-        //         "tagNamePreference": {
-        //           "todo": false,
-        //         },
-        //       },
-        //     })),
-        // ),
-        // (
-        //     "
-        // 			          /**
-        // 			           * @todo
-        // 			           */
-        // 			          function quux () {
-
-        // 			          }
-        // 			      ",
-        //     None,
-        //     Some(serde_json::json!({
-        //       "jsdoc": {
-        //         "tagNamePreference": {
-        //           "todo": {
-        //             "message": "Please resolve to-dos or add to the tracker",
-        //           },
-        //         },
-        //       },
-        //     })),
-        // ),
-        // (
-        //     "
-        // 			          /**
-        // 			           * @todo
-        // 			           */
-        // 			          function quux () {
-
-        // 			          }
-        // 			      ",
-        //     None,
-        //     Some(serde_json::json!({
-        //       "jsdoc": {
-        //         "tagNamePreference": {
-        //           "todo": {
-        //             "message": "Please use x-todo instead of todo",
-        //             "replacement": "x-todo",
-        //           },
-        //         },
-        //       },
-        //     })),
-        // ),
-        // (
-        //     "
-        // 			          /**
-        // 			           * @todo
-        // 			           */
-        // 			          function quux () {
-
-        // 			          }
-        // 			      ",
-        //     None,
-        //     Some(serde_json::json!({
-        //       "jsdoc": {
-        //         "tagNamePreference": {
-        //           "todo": 55,
-        //         },
-        //       },
-        //     })),
-        // ),
-        // (
-        //     "
-        // 			          /**
-        // 			           * @property {object} a
-        // 			           * @prop {boolean} b
-        // 			           */
-        // 			          function quux () {
-
-        // 			          }
-        // 			      ",
-        //     None,
-        //     None,
-        // ),
-        // (
-        //     "
-        // 			          /**
-        // 			           * @abc foo
-        // 			           * @abcd bar
-        // 			           */
-        // 			          function quux () {
-
-        // 			          }
-        // 			      ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "definedTags": [
-        //           "abcd",
-        //         ],
-        //       },
-        //     ])),
-        //     Some(serde_json::json!({
-        //       "jsdoc": {
-        //         "tagNamePreference": {
-        //           "abc": "abcd",
-        //         },
-        //       },
-        //     })),
-        // ),
-        // (
-        //     "
-        // 			          /**
-        // 			           * @abc
-        // 			           * @abcd
-        // 			           */
-        // 			          function quux () {
-
-        // 			          }
-        // 			      ",
-        //     None,
-        //     Some(serde_json::json!({
-        //       "jsdoc": {
-        //         "tagNamePreference": {
-        //           "abc": "abcd",
-        //         },
-        //       },
-        //     })),
-        // ),
-        ("", None, None),
-        // (
-        //     "
-        // 			        /** @jsx h */
-        // 			        /** @jsxFrag Fragment */
-        // 			        /** @jsxImportSource preact */
-        // 			        /** @jsxRuntime automatic */
-        // 			      ",
-        //     None,
-        //     None,
-        // ),
-        // (
-        //     "
-        // 			      /**
-        // 			       * @constructor
-        // 			       */
-        // 			      function Test() {
-        // 			        this.works = false;
-        // 			      }
-        // 			      ",
-        //     None,
-        //     Some(serde_json::json!({
-        //       "jsdoc": {
-        //         "tagNamePreference": {
-        //           "returns": "return",
-        //         },
-        //       },
-        //     })),
-        // ),
         // (
         //     "
         // 			      /** @typedef {Object} MyObject
@@ -912,26 +940,6 @@ fn test() {
         //       },
         //     ])),
         //     None,
-        // ),
-        // (
-        //     "
-        // 			          /**
-        // 			           * @todo
-        // 			           */
-        // 			          function quux () {
-
-        // 			          }
-        // 			      ",
-        //     None,
-        //     Some(serde_json::json!({
-        //       "jsdoc": {
-        //         "tagNamePreference": {
-        //           "todo": {
-        //             "message": "Please don\"t use todo",
-        //           },
-        //         },
-        //       },
-        //     })),
         // ),
     ];
 

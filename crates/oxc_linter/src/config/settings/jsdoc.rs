@@ -73,11 +73,8 @@ pub struct JSDocPluginSettings {
 impl JSDocPluginSettings {
     pub fn check_blocked_tag_name(&self, tag_name: &str) -> Option<String> {
         match self.tag_name_preference.get(tag_name) {
-            Some(TagNamePreference::FalseOnly(_)) => Some(format!("Unexpected tag `@{tag_name}`")),
-            Some(
-                TagNamePreference::ObjectWithMessage { message }
-                | TagNamePreference::ObjectWithMessageAndReplacement { message, .. },
-            ) => Some(message.to_string()),
+            Some(TagNamePreference::FalseOnly(_)) => Some(format!("Unexpected tag `@{tag_name}`.")),
+            Some(TagNamePreference::ObjectWithMessage { message }) => Some(message.to_string()),
             _ => None,
         }
     }
@@ -103,29 +100,27 @@ impl JSDocPluginSettings {
                 TagNamePreference::TagNameOnly(replacement)
                 | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. },
             ) => replacement.to_string(),
-            _ => {
-                // https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md#default-preferred-aliases
-                match original_name {
-                    "virtual" => "abstract",
-                    "extends" => "augments",
-                    "constructor" => "class",
-                    "const" => "constant",
-                    "defaultvalue" => "default",
-                    "desc" => "description",
-                    "host" => "external",
-                    "fileoverview" | "overview" => "file",
-                    "emits" => "fires",
-                    "func" | "method" => "function",
-                    "var" => "member",
-                    "arg" | "argument" => "param",
-                    "prop" => "property",
-                    "return" => "returns",
-                    "exception" => "throws",
-                    "yield" => "yields",
-                    _ => original_name,
-                }
-                .to_string()
+            // https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md#default-preferred-aliases
+            _ => match original_name {
+                "virtual" => "abstract",
+                "extends" => "augments",
+                "constructor" => "class",
+                "const" => "constant",
+                "defaultvalue" => "default",
+                "desc" => "description",
+                "host" => "external",
+                "fileoverview" | "overview" => "file",
+                "emits" => "fires",
+                "func" | "method" => "function",
+                "var" => "member",
+                "arg" | "argument" => "param",
+                "prop" => "property",
+                "return" => "returns",
+                "exception" => "throws",
+                "yield" => "yields",
+                _ => original_name,
             }
+            .to_string(),
         }
     }
 }
@@ -140,6 +135,7 @@ fn default_true() -> bool {
 #[serde(untagged)]
 enum TagNamePreference {
     TagNameOnly(String),
+    #[allow(dead_code)] // `message` is not used for now
     ObjectWithMessageAndReplacement {
         message: String,
         replacement: String,
@@ -242,9 +238,9 @@ mod test {
         .unwrap();
         assert_eq!(
             settings.check_blocked_tag_name("foo"),
-            Some("Unexpected tag `@foo`".to_string())
+            Some("Unexpected tag `@foo`.".to_string())
         );
         assert_eq!(settings.check_blocked_tag_name("bar"), Some("do not use bar".to_string()));
-        assert_eq!(settings.check_blocked_tag_name("baz"), Some("baz is noop now".to_string()));
+        assert_eq!(settings.check_blocked_tag_name("baz"), None);
     }
 }
