@@ -78,7 +78,6 @@ impl<'a> TypeScript<'a> {
         &mut self,
         export_assignment: &mut TSExportAssignment<'a>,
     ) {
-        println!("{:?}", self.ctx.source_type());
         if self.ctx.source_type().is_module() {
             self.ctx.error(ExportAssignmentUnsupported(export_assignment.span));
         }
