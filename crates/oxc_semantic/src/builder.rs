@@ -197,9 +197,17 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         let ast_node = AstNode::new(kind, self.current_scope_id, self.cfg.current_node_ix, flags);
-        let parent_node_id =
-            if matches!(kind, AstKind::Program(_)) { None } else { Some(self.current_node_id) };
-        self.current_node_id = self.nodes.add_node(ast_node, parent_node_id);
+        self.current_node_id = if matches!(kind, AstKind::Program(_)) {
+            let id = self.nodes.add_node(ast_node, None);
+            #[allow(unsafe_code)]
+            // SAFETY: `ast_node` is a `Program` and hence the root of the tree.
+            unsafe {
+                self.nodes.set_root(&ast_node)
+            }
+            id
+        } else {
+            self.nodes.add_node(ast_node, Some(self.current_node_id))
+        };
     }
 
     fn pop_ast_node(&mut self) {
