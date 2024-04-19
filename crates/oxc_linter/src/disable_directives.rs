@@ -51,9 +51,9 @@ pub struct DisableDirectivesBuilder<'a, 'b> {
     trivias: &'b Trivias,
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule<'a>>,
-    /// Start of `eslint-disable`
+    /// Start of `eslint-disable` or `oxlint-disable`
     disable_all_start: Option<u32>,
-    /// Start of `eslint-disable rule_name`
+    /// Start of `eslint-disable` or `oxlint-disable` rule_name`
     disable_start_map: FxHashMap<&'a str, u32>,
     /// Spans of comments that disable all rules
     disable_all_comments: Vec<Span>,
@@ -97,7 +97,9 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
             let text = span.source_text(self.source_text);
             let text = text.trim_start();
 
-            if let Some(text) = text.strip_prefix("eslint-disable") {
+            if let Some(text) =
+                text.strip_prefix("eslint-disable").or_else(|| text.strip_prefix("oxlint-disable"))
+            {
                 // `eslint-disable`
                 if text.trim().is_empty() {
                     if self.disable_all_start.is_none() {
@@ -165,7 +167,9 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
                 continue;
             }
 
-            if let Some(text) = text.strip_prefix("eslint-enable") {
+            if let Some(text) =
+                text.strip_prefix("eslint-enable").or_else(|| text.strip_prefix("oxlint-enable"))
+            {
                 // `eslint-enable`
                 if text.trim().is_empty() {
                     if let Some(start) = self.disable_all_start.take() {
@@ -206,152 +210,162 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
 fn test() {
     use crate::tester::Tester;
 
-    // [Disabling Rules](https://eslint.org/docs/latest/use/configure/rules#disabling-rules)
-    // Using configuration comments
-    let pass = vec![
+    for prefix in ["eslint", "oxlint"] {
+        // [Disabling Rules](https://eslint.org/docs/latest/use/configure/rules#disabling-rules)
+        // Using configuration comments
+        let pass = vec![
         // To disable rule warnings in a part of a file, use block comments in the following format:
-        "
-        /* eslint-disable */
+        format!("
+        /* {prefix}-disable */
             debugger;
-        /* eslint-enable */
-        ",
+        /* {prefix}-enable */
+        "),
         // You can also disable or enable warnings for specific rules:
-        "
-        /* eslint-disable no-debugger, no-console */
+        format!("
+        /* {prefix}-disable no-debugger, no-console */
             debugger;
-        /* eslint-enable no-debugger, no-console */
-        ",
+        /* {prefix}-enable no-debugger, no-console */
+        "),
         // To disable rule warnings in an entire file, put a /* eslint-disable */ block comment at the top of the file:
-        "
-        /* eslint-disable */
+        format!("
+        /* {prefix}-disable */
             debugger;
-        ",
+        "),
         // You can also disable or enable specific rules for an entire file:
-        "
-        /* eslint-disable no-debugger */
+        format!("
+        /* {prefix}-disable no-debugger */
             debugger;
-        ",
+        "),
         // To ensure that a rule is never applied (regardless of any future enable/disable lines):
         // This is not supported.
         // "
         // /* eslint no-debugger: \"off\" */
         //     debugger;
-        // ",
+        // "),
         // To disable all rules on a specific line, use a line or block comment in one of the following formats:
-        "debugger; // eslint-disable-line
-            debugger; // eslint-disable-line
+        format!("debugger; // {prefix}-disable-line
+            debugger; // {prefix}-disable-line
 
-            // eslint-disable-next-line
+            // {prefix}-disable-next-line
             debugger;
 
-            /* eslint-disable-next-line */
+            /* {prefix}-disable-next-line */
             debugger;
 
-            debugger; /* eslint-disable-line */
-        ",
+            debugger; /* {prefix}-disable-line */
+        "),
         // To disable a specific rule on a specific line:
-        "
-            debugger; // eslint-disable-line no-debugger
+        format!("
+            debugger; // {prefix}-disable-line no-debugger
 
-            // eslint-disable-next-line no-debugger
+            // {prefix}-disable-next-line no-debugger
             debugger;
 
-            debugger; /* eslint-disable-line no-debugger */
+            debugger; /* {prefix}-disable-line no-debugger */
 
-            /* eslint-disable-next-line no-debugger */
+            /* {prefix}-disable-next-line no-debugger */
             debugger;
-        ",
+        "),
         // To disable multiple rules on a specific line:
-        "
-            debugger; // eslint-disable-line no-debugger, quotes, semi
+        format!("
+            debugger; // {prefix}-disable-line no-debugger, quotes, semi
 
-            // eslint-disable-next-line no-debugger, quotes, semi
+            // {prefix}-disable-next-line no-debugger, quotes, semi
             debugger;
 
-            debugger; /* eslint-disable-line no-debugger, quotes, semi */
+            debugger; /* {prefix}-disable-line no-debugger, quotes, semi */
 
-            /* eslint-disable-next-line no-debugger, quotes, semi */
+            /* {prefix}-disable-next-line no-debugger, quotes, semi */
             debugger;
 
-            /* eslint-disable-next-line
+            /* {prefix}-disable-next-line
               no-debugger,
               quotes,
               semi
             */
             debugger;
-        ",
+        "),
         // To disable all rules twice:
-        "
-        /* eslint-disable */
+        format!("
+        /* {prefix}-disable */
             debugger;
-        /* eslint-disable */
+        /* {prefix}-disable */
             debugger;
-        ",
+        "),
         // To disable a rule twice:
-        "
-        /* eslint-disable no-debugger */
+        format!("
+        /* {prefix}-disable no-debugger */
             debugger;
-        /* eslint-disable no-debugger */
+        /* {prefix}-disable no-debugger */
             debugger;
-        ",
+        "),
         // Comment descriptions
-        "
-            // eslint-disable-next-line no-debugger -- Here's a description about why this configuration is necessary.
+        format!("
+            // {prefix}-disable-next-line no-debugger -- Here's a description about why this configuration is necessary.
             debugger;
 
-            /* eslint-disable-next-line no-debugger --
+            /* {prefix}-disable-next-line no-debugger --
              * Here's a very long description about why this configuration is necessary
              * along with some additional information
             **/
             debugger;
-        "
+        ")
     ];
 
-    let fail = vec![
-        "debugger",
+        let fail = vec![
+            "debugger".to_string(),
+            format!(
+                "
+            debugger; // {prefix}-disable-line no-alert
+
+            // {prefix}-disable-next-line no-alert
+            debugger;
+
+            debugger; /* {prefix}-disable-line no-alert */
+
+            /* {prefix}-disable-next-line no-alert */
+            debugger;
         "
-            debugger; // eslint-disable-line no-alert
+            ),
+            format!(
+                "
+            debugger; // {prefix}-disable-line no-alert, quotes, semi
 
-            // eslint-disable-next-line no-alert
+            // {prefix}-disable-next-line no-alert, quotes, semi
             debugger;
 
-            debugger; /* eslint-disable-line no-alert */
+            debugger; /* {prefix}-disable-line no-alert, quotes, semi */
 
-            /* eslint-disable-next-line no-alert */
-            debugger;
-        ",
-        "
-            debugger; // eslint-disable-line no-alert, quotes, semi
-
-            // eslint-disable-next-line no-alert, quotes, semi
+            /* {prefix}-disable-next-line no-alert, quotes, semi */
             debugger;
 
-            debugger; /* eslint-disable-line no-alert, quotes, semi */
-
-            /* eslint-disable-next-line no-alert, quotes, semi */
-            debugger;
-
-            /* eslint-disable-next-line
+            /* {prefix}-disable-next-line
               no-alert,
               quotes,
               semi
             */
             debugger;
-        ",
         "
-            /* eslint-disable-next-line no-debugger --
+            ),
+            format!(
+                "
+            /* {prefix}-disable-next-line no-debugger --
              * Here's a very long description about why this configuration is necessary
              * along with some additional information
             **/
             debugger;
             debugger;
-        ",
         "
-            // eslint-disable-next-line no-debugger
+            ),
+            format!(
+                "
+            // {prefix}-disable-next-line no-debugger
             debugger;
             debugger;
-        ",
-    ];
+        "
+            ),
+        ];
 
-    Tester::new("no-debugger", pass, fail).test();
+        Tester::new("no-debugger", pass, fail).test();
+    }
 }
