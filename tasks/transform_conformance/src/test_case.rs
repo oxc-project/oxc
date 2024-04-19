@@ -97,8 +97,9 @@ fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOpti
         react_options
     };
 
-    let mut es2022 = Es2022Options::default();
-    es2022.class_static_block_plugin = options.get_plugin("transform-class-static-block").is_some();
+    let es2022 = Es2022Options {
+        class_static_block_plugin: options.get_plugin("transform-class-static-block").is_some(),
+    };
 
     Ok(TransformOptions {
         cwd: options.cwd.clone().unwrap(),
