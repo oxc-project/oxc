@@ -35,6 +35,12 @@ impl From<&str> for TestCase {
     }
 }
 
+impl From<String> for TestCase {
+    fn from(source: String) -> Self {
+        Self { source, ..Self::default() }
+    }
+}
+
 impl From<(&str, Option<Value>)> for TestCase {
     fn from((source, config): (&str, Option<Value>)) -> Self {
         Self { source: source.to_string(), config, ..Self::default() }
