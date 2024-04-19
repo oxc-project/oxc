@@ -202,7 +202,7 @@ impl<'a> SemanticBuilder<'a> {
             #[allow(unsafe_code)]
             // SAFETY: `ast_node` is a `Program` and hence the root of the tree.
             unsafe {
-                self.nodes.set_root(&ast_node)
+                self.nodes.set_root(&ast_node);
             }
             id
         } else {
