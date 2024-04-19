@@ -25,24 +25,22 @@ The Oxidation Compiler is creating a collection of high-performance tools for Ja
 
 Oxc is building a parser, linter, formatter, transpiler, minifier, resolver ... all written in Rust.
 
-## 💡 Philosophy
+## 🙋Who's using Oxc?
 
-This project shares the same philosophies as [Biome][biome] and [Ruff][ruff].
+- [Rolldown] uses the [oxc][docs-oxc-url] crate for parsing.
+- [Rspack][rspack], [Rolldown][rolldown], and [Biome][biome] uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
 
-1. JavaScript tooling could be rewritten in a more performant language.
-2. An integrated toolchain can tap into efficiencies that are not available to a disparate set of tools.
+## ⚡️ Linter Quick Start
 
-## ⚡️ Quick Start
+The linter is ready to catch mistakes for you. It comes with 91 rules turned on by default (out of 300 in total) and no configuration is required.
 
-The linter is ready to catch mistakes for you. It comes with over 60 default rules and no configuration is required.
-
-To start using, install [oxlint][npm-oxlint] or via `npx`:
+To get started, run [oxlint][npm-oxlint] or via `npx`:
 
 ```bash
 npx oxlint@latest
 ```
 
-To give you an idea of its capabilities, here is an example from the [vscode] repository, which finishes linting 4000+ files in 0.5 seconds.
+To give you an idea of its capabilities, here is an example from the [vscode] repository, which finishes linting 4800+ files in 0.7 seconds.
 
 <p float="left" align="left">
   <img src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/linter-screenshot.png" width="60%">
@@ -66,7 +64,8 @@ Individual crates are published, you may use them to build your own JavaScript t
 
 - The umbrella crate [oxc][docs-oxc-url] exports all public crates from this repository.
 - The AST and parser crates [oxc_ast][docs-ast-url] and [oxc_parser][docs-parser-url] are production ready.
-- See `crates/*/examples` for example usage.
+- The resolver crate [oxc_resolver][docs-resolver-url] for module resolution is also production ready.
+- Example usages of these crates can be found in their respective `crates/*/examples` directory.
 
 While Rust has gained a reputation for its comparatively slower compilation speed,
 we have dedicated significant effort to fine-tune the Rust compilation speed.
@@ -74,11 +73,15 @@ Our aim is to minimize any impact on your development workflow,
 ensuring that developing your own Oxc based tools remains a smooth and efficient experience.
 
 This is demonstrated by our [CI runs](https://github.com/oxc-project/oxc/actions/workflows/ci.yml?query=branch%3Amain),
-where warm runs complete in 5 minutes.
+where warm runs complete in 3 minutes.
 
 ### Node.js
 
-- You may use the parser via napi: [oxc-parser][npm-napi]
+- via napi: [oxc-parser][npm-napi]
+
+### Wasm
+
+- [@oxc-parser/wasm](https://www.npmjs.com/package/@oxc-parser/wasm)
 
 ---
 
@@ -110,7 +113,7 @@ This clear distinction greatly enhances the development experience by aligning m
 
 #### 🏆 Parser Performance
 
-Our [benchmark][parser-benchmark] reveals that the Oxc parser surpasses the speed of the [swc] parser by approximately 2 times and the [Biome] parser by 3 times.
+Our [benchmark][parser-benchmark] reveals that the Oxc parser surpasses the speed of the [swc] parser by approximately 3 times and the [Biome][biome] parser by 5 times.
 
 <details>
   <summary>How is it so fast?</summary>
@@ -156,14 +159,14 @@ this lets you run the linter without a Node.js installation in your CI.
 ### 🔸 Resolver
 
 Module resolution plays a crucial role in JavaScript tooling, especially for tasks like multi-file analysis or bundling. However, it can often become a performance bottleneck.
-To address this, we are actively working on porting [enhanced-resolve].
+To address this, we developed [oxc_resolver][docs-resolver-url].
 
-The resolver is production-ready and is currently being used in Rspack. Usage and examples can be found in its own [repository](https://github.com/oxc-project/oxc_resolver).
+The resolver is production-ready and is currently being used in [Rspack][rspack] and [Rolldown][rolldown]. Usage and examples can be found in its own [repository](https://github.com/oxc-project/oxc_resolver).
 
-### 🔸 Transpiler
+### 🔸 Transformer (Transpiler)
 
-A transpiler is responsible for turning higher versions of ECMAScript to a lower version that can be used in older browsers.
-We are currently focusing on an esnext to es2015 transpiler. See the [umbrella issue](https://github.com/oxc-project/oxc/issues/974) for details.
+A transformer is responsible for turning higher versions of ECMAScript to a lower version that can be used in older browsers.
+We are currently focusing on the architecture. See [Milestone 1](https://github.com/oxc-project/oxc/issues/2859) for details.
 
 ### 🔸 Minifier
 
@@ -216,39 +219,11 @@ This project was incubated with the assistance of these exceptional mentors and 
 - [quick-lint-js](https://quick-lint-js.com) - [@strager](https://github.com/strager)
 - [elm-review](https://package.elm-lang.org/packages/jfmengels/elm-review/latest) - [@jfmengels](https://github.com/jfmengels)
 
-Special thanks go to
-
-- [@domonji](https://github.com/domonji) for contribution to the TypeScript parser
-- [@guan-wy](https://github.com/guan-wy) for the [project logo](https://github.com/Boshen/oxc-assets)
-
-And also
-
-- [@kaleidawave](https://github.com/kaleidawave) for [Ezno Type Checker](https://github.com/kaleidawave/ezno)
-- [@zackradisic](https://github.com/zackradisic) for [tyvm](https://github.com/zackradisic/tyvm)
-
 ## 📖 License
 
 Oxc is free and open-source software licensed under the [MIT License](./LICENSE).
 
-Oxc partially copies code from the following projects, their licenses are listed in [**Third-party library licenses**](./THIRD-PARTY-LICENSE).
-
-| Project                                                                                       | License                                                                                                                                                                         |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [eslint/eslint](https://github.com/eslint/eslint)                                             | [MIT](https://github.com/eslint/eslint/blob/main/LICENSE)                                                                                                                       |
-| [typescript-eslint/typescript-eslint](https://github.com/typescript-eslint/typescript-eslint) | [MIT](https://github.com/typescript-eslint/typescript-eslint/blob/main/LICENSE)                                                                                                 |
-| [import-js/eslint-plugin-import](https://github.com/import-js/eslint-plugin-import)           | [MIT](https://github.com/import-js/eslint-plugin-import/blob/main/LICENSE)                                                                                                      |
-| [jest-community/eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)     | [MIT](https://github.com/jest-community/eslint-plugin-jest/blob/main/LICENSE)                                                                                                   |
-| [microsoft/TypeScript](https://github.com/microsoft/TypeScript)                               | [Apache 2.0](https://github.com/microsoft/TypeScript/blob/main/LICENSE.txt)                                                                                                     |
-| [biomejs/biome](https://github.com/biomejs/biome)                                             | [MIT](https://github.com/biomejs/biome/blob/main/LICENSE-MIT)                                                                                                                   |
-| [mozilla-spidermonkey/jsparagus](https://github.com/mozilla-spidermonkey/jsparagus)           | [MIT](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-MIT) [Apache 2.0](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-APACHE-2.0) |
-| [prettier/prettier](https://github.com/prettier/prettier)                                     | [MIT](https://github.com/prettier/prettier/blob/main/LICENSE)                                                                                                                   |
-| [acorn](https://github.com/acornjs/acorn)                                                     | [MIT](https://github.com/acornjs/acorn/blob/master/acorn/LICENSE)                                                                                                               |
-| [zkat/miette](https://github.com/zkat/miette)                                                 | [Apache 2.0](https://github.com/zkat/miette/blob/main/LICENSE)                                                                                                                  |
-| [sindresorhus/globals](https://github.com/sindresorhus/globals)                               | [MIT](https://github.com/sindresorhus/globals/blob/main/license)                                                                                                                |
-| [terser](https://github.com/terser/terser)                                                    | [BSD](https://github.com/terser/terser/blob/master/LICENSE)                                                                                                                     |
-| [evanw/esbuild](https://github.com/evanw/esbuild)                                             | [MIT](https://github.com/evanw/esbuild/blob/main/LICENSE.md)                                                                                                                    |
-| [google/closure-compiler](https://github.com/google/closure-compiler)                         | [Apache 2.0](https://github.com/google/closure-compiler#closure-compiler-license)                                                                                               |
-| [tdewolff/minify](https://github.com/tdewolff/minify)                                         | [MIT](https://github.com/tdewolff/minify/blob/master/LICENSE)                                                                                                                   |
+Oxc ports or copies code from other open source projects, their licenses are listed in [**Third-party library licenses**](./THIRD-PARTY-LICENSE).
 
 [discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=Discord
 [discord-url]: https://discord.gg/9uXCAwqQZW
@@ -274,6 +249,7 @@ Oxc partially copies code from the following projects, their licenses are listed
 [docs-oxc-url]: https://docs.rs/oxc
 [docs-ast-url]: https://docs.rs/oxc_ast
 [docs-parser-url]: https://docs.rs/oxc_parser
+[docs-resolver-url]: https://docs.rs/oxc_resolver
 [Boshen]: https://github.com/boshen
 [CompactString]: https://github.com/ParkMyCar/compact_str
 [ESLint]: https://eslint.org/
@@ -281,8 +257,6 @@ Oxc partially copies code from the following projects, their licenses are listed
 [babel]: https://babel.dev
 [bumpalo]: https://docs.rs/bumpalo
 [contributors]: https://github.com/oxc-project/oxc/graphs/contributors
-[docs-ast]: https://docs.rs/oxc/latest/oxc/ast/index.html
-[docs-parser]: https://docs.rs/oxc/latest/oxc/parser/index.html
 [enhanced-resolve]: https://github.com/webpack/enhanced-resolve
 [esbuild]: https://esbuild.github.io/
 [eslint-plugin-import]: https://www.npmjs.com/package/eslint-plugin-import
@@ -301,3 +275,5 @@ Oxc partially copies code from the following projects, their licenses are listed
 [terser]: https://terser.org
 [vscode]: https://github.com/microsoft/vscode
 [@typescript-eslint]: https://typescript-eslint.io
+[rspack]: https://www.rspack.dev
+[rolldown]: https://rolldown.rs
