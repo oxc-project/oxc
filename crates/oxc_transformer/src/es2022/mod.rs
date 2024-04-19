@@ -31,6 +31,8 @@ impl<'a> Es2022<'a> {
     }
 
     pub fn transform_class_body(&mut self, body: &mut ClassBody<'a>) {
-        self.class_static_block.transform_class_body(body);
+        if self.options.class_static_block_plugin {
+            self.class_static_block.transform_class_body(body);
+        }
     }
 }

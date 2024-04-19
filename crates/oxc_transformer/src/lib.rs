@@ -191,10 +191,6 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         walk_mut::walk_property_definition_mut(self, def);
     }
 
-    fn visit_reg_expr_literal(&mut self, lit: &mut RegExpLiteral<'a>) {
-        walk_mut::walk_reg_expr_literal_mut(self, lit);
-    }
-
     fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         self.x0_typescript.transform_statements(stmts);
 
