@@ -480,13 +480,13 @@ fn check_module_declaration<'a>(
     }
 
     let text = match decl {
-        ModuleDeclaration::Dummy => dummy!(panic),
         ModuleDeclaration::ImportDeclaration(_) => "import statement",
         ModuleDeclaration::ExportAllDeclaration(_)
         | ModuleDeclaration::ExportDefaultDeclaration(_)
         | ModuleDeclaration::ExportNamedDeclaration(_)
         | ModuleDeclaration::TSExportAssignment(_)
         | ModuleDeclaration::TSNamespaceExportDeclaration(_) => "export statement",
+        ModuleDeclaration::Dummy => dummy!(panic),
     };
     let start = decl.span().start;
     let span = Span::new(start, start + 6);
