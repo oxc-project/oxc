@@ -76,6 +76,10 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
+    pub fn move_vec<T>(&self, stmts: &mut Vec<'a, T>) -> Vec<'a, T> {
+        mem::replace(stmts, self.new_vec())
+    }
+
     /// Moves the expression out by replacing it with a null expression.
     pub fn move_expression(&self, expr: &mut Expression<'a>) -> Expression<'a> {
         let null_literal = NullLiteral::new(expr.span());
@@ -1156,6 +1160,14 @@ impl<'a> AstBuilder<'a> {
         PropertyKey::Expression(expr)
     }
 
+    pub fn property_key_private_identifier(&self, ident: PrivateIdentifier<'a>) -> PropertyKey<'a> {
+        PropertyKey::PrivateIdentifier(self.alloc(ident))
+    }
+
+    pub fn private_identifier(&self, span: Span, name: &str) -> PrivateIdentifier<'a> {
+        PrivateIdentifier { span, name: self.new_atom(name) }
+    }
+
     /* ---------- Modules ---------- */
 
     pub fn module_declaration(&self, decl: ModuleDeclaration<'a>) -> Statement<'a> {
@@ -1872,5 +1884,33 @@ impl<'a> AstBuilder<'a> {
 
     pub fn js_doc_unknown_type(&self, span: Span) -> TSType<'a> {
         TSType::JSDocUnknownType(self.alloc(JSDocUnknownType { span }))
+    }
+
+    /* ---------- Patterns ---------- */
+
+    pub fn build_iife(&self, span: Span, statements: Vec<'a, Statement<'a>>) -> Expression<'a> {
+        self.call_expression(
+            span,
+            self.parenthesized_expression(
+                span,
+                self.arrow_function_expression(
+                    span,
+                    false,
+                    false,
+                    self.formal_parameters(
+                        span,
+                        FormalParameterKind::ArrowFormalParameters,
+                        self.new_vec(),
+                        None,
+                    ),
+                    self.function_body(span, self.new_vec(), statements),
+                    None,
+                    None,
+                ),
+            ),
+            self.new_vec(),
+            false,
+            None,
+        )
     }
 }

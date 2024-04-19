@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use crate::es2022::Es2022Options;
 use crate::{
     compiler_assumptions::CompilerAssumptions, react::ReactOptions, typescript::TypeScriptOptions,
 };
@@ -24,4 +25,7 @@ pub struct TransformOptions {
 
     /// [preset-react](https://babeljs.io/docs/babel-preset-react)
     pub react: ReactOptions,
+
+    // [es2022](https://babeljs.io/docs/babel-preset-env)
+    pub es2022: Es2022Options,
 }

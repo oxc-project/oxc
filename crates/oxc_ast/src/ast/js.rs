@@ -2126,6 +2126,15 @@ impl<'a> ClassElement<'a> {
         matches!(self, Self::PropertyDefinition(_) | Self::AccessorProperty(_))
     }
 
+    pub fn is_private(&self) -> bool {
+        match self {
+            Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
+            Self::MethodDefinition(def) => def.key.is_private_identifier(),
+            Self::PropertyDefinition(def) => def.key.is_private_identifier(),
+            Self::AccessorProperty(def) => def.key.is_private_identifier(),
+        }
+    }
+
     pub fn is_ts_empty_body_function(&self) -> bool {
         match self {
             Self::PropertyDefinition(_)

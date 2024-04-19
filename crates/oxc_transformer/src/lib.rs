@@ -12,7 +12,7 @@ mod compiler_assumptions;
 mod context;
 mod options;
 // Presets: <https://babel.dev/docs/presets>
-mod es2024;
+mod es2022;
 mod react;
 mod typescript;
 mod utils;
@@ -23,7 +23,7 @@ mod helpers {
 
 use std::{path::Path, rc::Rc};
 
-use es2024::Es2024;
+use es2022::Es2022;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{
     ast::*,
@@ -50,7 +50,7 @@ pub struct Transformer<'a> {
     x0_typescript: TypeScript<'a>,
     x1_react: React<'a>,
     // x2_decorators,
-    x3_es2024: Es2024<'a>,
+    x3_es2022: Es2022<'a>,
 }
 
 impl<'a> Transformer<'a> {
@@ -65,7 +65,7 @@ impl<'a> Transformer<'a> {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, &ctx),
             x1_react: React::new(options.react, &ctx),
-            x3_es2024: Es2024::new(&ctx),
+            x3_es2022: Es2022::new(options.es2022, &ctx),
         }
     }
 
@@ -118,6 +118,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
 
     fn visit_class_body(&mut self, body: &mut ClassBody<'a>) {
         self.x0_typescript.transform_class_body(body);
+        self.x3_es2022.transform_class_body(body);
 
         walk_mut::walk_class_body_mut(self, body);
     }
@@ -191,8 +192,6 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     }
 
     fn visit_reg_expr_literal(&mut self, lit: &mut RegExpLiteral<'a>) {
-        self.x3_es2024.transform_reg_expr_literal(lit);
-
         walk_mut::walk_reg_expr_literal_mut(self, lit);
     }
 
