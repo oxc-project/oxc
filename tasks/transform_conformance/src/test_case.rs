@@ -267,8 +267,8 @@ impl TestCase for ConformanceTestCase {
             })
             .with_typescript(self.options.get_plugin("transform-typescript").is_some());
 
+        println!("input_path: {:?}", &self.path);
         if filtered {
-            println!("input_path: {:?}", &self.path);
             println!("output_path: {output_path:?}");
         }
 

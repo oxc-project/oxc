@@ -34,7 +34,7 @@ impl<'a> TypeScript<'a> {
                 Statement::Declaration(Declaration::TSModuleDeclaration(decl)) => {
                     if !decl.modifiers.is_contains_declare() {
                         let name = decl.id.name().clone();
-                        if let Some(transformed_stmt) = self.handle_nested(decl.unbox()) {
+                        if let Some(transformed_stmt) = self.handle_nested(decl.unbox(), None) {
                             new_stmts.push(Statement::Declaration(
                                 self.create_variable_declaration(&name),
                             ));
@@ -50,7 +50,7 @@ impl<'a> TypeScript<'a> {
                             if !decl.modifiers.is_contains_declare() {
                                 let name = decl.id.name().clone();
                                 if let Some(transformed_stmt) =
-                                    self.handle_nested(self.ctx.ast.copy(decl))
+                                    self.handle_nested(self.ctx.ast.copy(decl), None)
                                 {
                                     new_stmts.push(self.ctx.ast.module_declaration(
                                         ModuleDeclaration::ExportNamedDeclaration(
@@ -80,11 +80,15 @@ impl<'a> TypeScript<'a> {
         *stmts = new_stmts;
     }
 
-    fn handle_nested(&self, decl: TSModuleDeclaration<'a>) -> Option<Statement<'a>> {
+    fn handle_nested(
+        &self,
+        decl: TSModuleDeclaration<'a>,
+        parent_export: Option<Expression<'a>>,
+    ) -> Option<Statement<'a>> {
         let mut names: FxHashSet<Atom<'a>> = FxHashSet::default();
         let real_name = decl.id.name();
 
-        let name = real_name.clone(); // path.scope.generateUid(realName.name);
+        let name = self.ctx.ast.new_atom(&format!("_{}", real_name.clone())); // path.scope.generateUid(realName.name);
 
         let namespace_top_level =
             if let Some(TSModuleDeclarationBody::TSModuleBlock(block)) = decl.body {
@@ -106,7 +110,12 @@ impl<'a> TypeScript<'a> {
             match stmt {
                 Statement::Declaration(Declaration::TSModuleDeclaration(decl)) => {
                     let module_name = decl.id.name().clone();
-                    if let Some(transformed) = self.handle_nested(decl.unbox()) {
+                    if let Some(transformed) = self.handle_nested(
+                        decl.unbox(),
+                        Some(self.ctx.ast.identifier_reference_expression(
+                            IdentifierReference::new(SPAN, name.clone()),
+                        )),
+                    ) {
                         is_empty = false;
                         if !names.insert(module_name.clone()) {
                             new_stmts.push(Statement::Declaration(
@@ -126,8 +135,8 @@ impl<'a> TypeScript<'a> {
                 Statement::Declaration(decl) if decl.is_typescript_syntax() => {
                     is_empty = true;
                 }
-                Statement::ModuleDeclaration(decl) => match decl.unbox() {
-                    ModuleDeclaration::ExportNamedDeclaration(export_decl) => {
+                Statement::ModuleDeclaration(decl) => {
+                    if let ModuleDeclaration::ExportNamedDeclaration(export_decl) = decl.unbox() {
                         let export_decl = export_decl.unbox();
                         if let Some(decl) = export_decl.declaration {
                             match decl {
@@ -139,7 +148,7 @@ impl<'a> TypeScript<'a> {
                                         &name,
                                         &mut names,
                                         &mut new_stmts,
-                                    )
+                                    );
                                 }
                                 Declaration::FunctionDeclaration(func_decl) => {
                                     is_empty = false;
@@ -149,7 +158,7 @@ impl<'a> TypeScript<'a> {
                                         &name,
                                         &mut names,
                                         &mut new_stmts,
-                                    )
+                                    );
                                 }
                                 Declaration::ClassDeclaration(class_decl) => {
                                     is_empty = false;
@@ -159,7 +168,7 @@ impl<'a> TypeScript<'a> {
                                         &name,
                                         &mut names,
                                         &mut new_stmts,
-                                    )
+                                    );
                                 }
                                 Declaration::VariableDeclaration(var_decl) => {
                                     is_empty = false;
@@ -167,6 +176,23 @@ impl<'a> TypeScript<'a> {
                                         self.handle_variable_declaration(var_decl.unbox(), &name);
                                     for stmt in stmts {
                                         new_stmts.push(stmt);
+                                    }
+                                }
+                                Declaration::TSModuleDeclaration(module_decl) => {
+                                    let module_name = module_decl.id.name().clone();
+                                    if let Some(transformed) = self.handle_nested(
+                                        module_decl.unbox(),
+                                        Some(self.ctx.ast.identifier_reference_expression(
+                                            IdentifierReference::new(SPAN, name.clone()),
+                                        )),
+                                    ) {
+                                        is_empty = false;
+                                        if !names.insert(module_name.clone()) {
+                                            new_stmts.push(Statement::Declaration(
+                                                self.create_variable_declaration(&name),
+                                            ));
+                                        }
+                                        new_stmts.push(transformed);
                                     }
                                 }
                                 _ => {}
@@ -179,8 +205,7 @@ impl<'a> TypeScript<'a> {
                             )));
                         }
                     }
-                    _ => {}
-                },
+                }
                 stmt => {
                     is_empty = false;
                     new_stmts.push(stmt);
@@ -193,7 +218,7 @@ impl<'a> TypeScript<'a> {
         }
 
         let name = decl.id.name();
-        let namespace = self.transform_namespace(name, real_name, new_stmts);
+        let namespace = self.transform_namespace(name, real_name, new_stmts, parent_export);
         Some(namespace)
     }
 
@@ -267,6 +292,7 @@ impl<'a> TypeScript<'a> {
         arg_name: &Atom<'a>,
         real_name: &Atom<'a>,
         stmts: Vec<'a, Statement<'a>>,
+        parent_export: Option<Expression<'a>>,
         // state: &mut State<'a>,
         // block: &mut Box<'a, TSModuleDeclaration<'a>>,
     ) -> Statement<'a> {
@@ -314,17 +340,34 @@ impl<'a> TypeScript<'a> {
             self.ctx.ast.parenthesized_expression(SPAN, function_expr)
         };
 
-        // `(function (_N) { var x; })(N || (N = {}))`;
-        //                             ^^^^^^^^^^^^^
+        // (function (_N) { var M; (function (_M) { var x; })(M || (M = _N.M || (_N.M = {})));})(N || (N = {}));
+        //                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    ^^^^^^^^^^^^^^
+        //                                                   Nested namespace arguments         Normal namespace arguments
         let arguments = {
+            // M
             let logical_left = {
                 let ident = IdentifierReference::new(SPAN, real_name.clone());
                 self.ctx.ast.identifier_reference_expression(ident)
             };
-            let logical_right = {
-                let assign_left = self.ctx.ast.simple_assignment_target_identifier(
-                    IdentifierReference::new(SPAN, real_name.clone()),
-                );
+
+            // (_N.M = {})
+            let mut logical_right = {
+                let assign_left = if let Some(parent_export) = self.ctx.ast.copy(&parent_export) {
+                    self.ctx.ast.simple_assignment_target_member_expression(
+                        self.ctx.ast.static_member(
+                            SPAN,
+                            parent_export,
+                            self.ctx.ast.identifier_name(SPAN, real_name),
+                            false,
+                        ),
+                    )
+                } else {
+                    self.ctx.ast.simple_assignment_target_identifier(IdentifierReference::new(
+                        SPAN,
+                        real_name.clone(),
+                    ))
+                };
+
                 let assign_right =
                     self.ctx.ast.object_expression(SPAN, self.ctx.ast.new_vec(), None);
                 let op = AssignmentOperator::Assign;
@@ -332,6 +375,32 @@ impl<'a> TypeScript<'a> {
                     self.ctx.ast.assignment_expression(SPAN, op, assign_left, assign_right);
                 self.ctx.ast.parenthesized_expression(SPAN, assign_expr)
             };
+
+            // (M = _N.M || (_N.M = {}))
+            if let Some(parent_export) = parent_export {
+                let assign_left = self.ctx.ast.simple_assignment_target_identifier(
+                    IdentifierReference::new(SPAN, real_name.clone()),
+                );
+
+                let assign_right = self.ctx.ast.logical_expression(
+                    SPAN,
+                    self.ctx.ast.static_member_expression(
+                        SPAN,
+                        parent_export,
+                        self.ctx.ast.identifier_name(SPAN, real_name),
+                        false,
+                    ),
+                    LogicalOperator::Or,
+                    logical_right,
+                );
+
+                let op = AssignmentOperator::Assign;
+                logical_right = self.ctx.ast.parenthesized_expression(
+                    SPAN,
+                    self.ctx.ast.assignment_expression(SPAN, op, assign_left, assign_right),
+                );
+            }
+
             self.ctx.ast.new_vec_single(Argument::Expression(self.ctx.ast.logical_expression(
                 SPAN,
                 logical_left,

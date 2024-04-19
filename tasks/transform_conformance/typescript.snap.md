@@ -524,7 +524,7 @@ let M1;
 		EConst1[EConst1['C'] = C] = 'C';
 		return EConst1;
 	})(EConst1 || {});
-	M1.EConst1 = EConst1;
+	_M1.EConst1 = EConst1;
 	var EConst1 = (EConst1 => {
 		const D = 7;
 		EConst1[EConst1['D'] = D] = 'D';
@@ -534,7 +534,7 @@ let M1;
 		EConst1[EConst1['F'] = F] = 'F';
 		return EConst1;
 	})(EConst1 || {});
-	M1.EConst1 = EConst1;
+	_M1.EConst1 = EConst1;
 	var x = [EConst1.A, EConst1.B, EConst1.C, EConst1.D, EConst1.E, EConst1.F];
 })(M1 || (M1 = {}));
 let M2;
@@ -548,7 +548,7 @@ let M2;
 		EComp2[EComp2['C'] = C] = 'C';
 		return EComp2;
 	})(EComp2 || {});
-	M2.EComp2 = EComp2;
+	_M2.EComp2 = EComp2;
 	var EComp2 = (EComp2 => {
 		const D = 'foo'.length;
 		EComp2[EComp2['D'] = D] = 'D';
@@ -558,7 +558,7 @@ let M2;
 		EComp2[EComp2['F'] = F] = 'F';
 		return EComp2;
 	})(EComp2 || {});
-	M2.EComp2 = EComp2;
+	_M2.EComp2 = EComp2;
 	var x = [EComp2.A, EComp2.B, EComp2.C, EComp2.D, EComp2.E, EComp2.F];
 })(M2 || (M2 = {}));
 let M4;
@@ -572,7 +572,7 @@ let M4;
 		Color[Color['Blue'] = Blue] = 'Blue';
 		return Color;
 	})(Color || {});
-	M4.Color = Color;
+	_M4.Color = Color;
 })(M4 || (M4 = {}));
 let M5;
 (function(_M5) {
@@ -585,10 +585,18 @@ let M5;
 		Color[Color['Blue'] = Blue] = 'Blue';
 		return Color;
 	})(Color || {});
-	M5.Color = Color;
+	_M5.Color = Color;
 })(M5 || (M5 = {}));
 let M6;
 (function(_M6) {
+	(function(_A) {
+		var Color = (Color => {
+			const Yellow = 1;
+			Color[Color['Yellow'] = Yellow] = 'Yellow';
+			return Color;
+		})(Color || {});
+		_A.Color = Color;
+	})(A || (A = _M6.A || (_M6.A = {})));
 	var t = A.Color.Yellow;
 	t = A.Color.Red;
 })(M6 || (M6 = {}));
@@ -604,19 +612,19 @@ let M;
 		E1[E1['A'] = A] = 'A';
 		return E1;
 	})(E1 || {});
-	M.E1 = E1;
+	_M.E1 = E1;
 	var E2 = (E2 => {
 		const C = 0;
 		E2[E2['C'] = C] = 'C';
 		return E2;
 	})(E2 || {});
-	M.E2 = E2;
+	_M.E2 = E2;
 	var E3 = (E3 => {
 		const A = 0;
 		E3[E3['A'] = A] = 'A';
 		return E3;
 	})(E3 || {});
-	M.E3 = E3;
+	_M.E3 = E3;
 })(M || (M = {}));
 let M;
 (function(_M) {
@@ -625,19 +633,19 @@ let M;
 		E1[E1['B'] = B] = 'B';
 		return E1;
 	})(E1 || {});
-	M.E1 = E1;
+	_M.E1 = E1;
 	var E2 = (E2 => {
 		const B = 'foo'.length;
 		E2[E2['B'] = B] = 'B';
 		return E2;
 	})(E2 || {});
-	M.E2 = E2;
+	_M.E2 = E2;
 	var E3 = (E3 => {
 		const C = 0;
 		E3[E3['C'] = C] = 'C';
 		return E3;
 	})(E3 || {});
-	M.E3 = E3;
+	_M.E3 = E3;
 })(M || (M = {}));
 let M;
 (function(_M) {
@@ -646,19 +654,19 @@ let M;
 		E1[E1['C'] = C] = 'C';
 		return E1;
 	})(E1 || {});
-	M.E1 = E1;
+	_M.E1 = E1;
 	var E2 = (E2 => {
 		const A = 0;
 		E2[E2['A'] = A] = 'A';
 		return E2;
 	})(E2 || {});
-	M.E2 = E2;
+	_M.E2 = E2;
 	var E3 = (E3 => {
 		const B = 'foo'.length;
 		E3[E3['B'] = B] = 'B';
 		return E3;
 	})(E3 || {});
-	M.E3 = E3;
+	_M.E3 = E3;
 })(M || (M = {}));
 let M1;
 (function(_M1) {
@@ -667,7 +675,7 @@ let M1;
 		E1[E1['A'] = A] = 'A';
 		return E1;
 	})(E1 || {});
-	M1.E1 = E1;
+	_M1.E1 = E1;
 })(M1 || (M1 = {}));
 let M1;
 (function(_M1) {
@@ -676,7 +684,7 @@ let M1;
 		E1[E1['B'] = B] = 'B';
 		return E1;
 	})(E1 || {});
-	M1.E1 = E1;
+	_M1.E1 = E1;
 })(M1 || (M1 = {}));
 let M1;
 (function(_M1) {
@@ -685,7 +693,7 @@ let M1;
 		E1[E1['C'] = C] = 'C';
 		return E1;
 	})(E1 || {});
-	M1.E1 = E1;
+	_M1.E1 = E1;
 })(M1 || (M1 = {}));
 let M2;
 (function(_M2) {
@@ -694,7 +702,7 @@ let M2;
 		E1[E1['A'] = A] = 'A';
 		return E1;
 	})(E1 || {});
-	M2.E1 = E1;
+	_M2.E1 = E1;
 })(M2 || (M2 = {}));
 let M2;
 (function(_M2) {
@@ -703,7 +711,7 @@ let M2;
 		E1[E1['B'] = B] = 'B';
 		return E1;
 	})(E1 || {});
-	M2.E1 = E1;
+	_M2.E1 = E1;
 })(M2 || (M2 = {}));
 let M2;
 (function(_M2) {
@@ -712,7 +720,7 @@ let M2;
 		E1[E1['C'] = C] = 'C';
 		return E1;
 	})(E1 || {});
-	M2.E1 = E1;
+	_M2.E1 = E1;
 })(M2 || (M2 = {}));
 
 ```
