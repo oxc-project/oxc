@@ -1,5 +1,5 @@
 use ignore::gitignore::Gitignore;
-use std::{env, io::BufWriter, time::Instant, vec::Vec};
+use std::{env, io::BufWriter, time::Instant};
 
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
