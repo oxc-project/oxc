@@ -217,7 +217,7 @@ pub struct TSTypeOperator<'a> {
     pub type_annotation: TSType<'a>,
 }
 
-#[derive(Debug, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum TSTypeOperatorOperator {
@@ -520,7 +520,7 @@ pub struct TSTypeAliasDeclaration<'a> {
     pub modifiers: Modifiers<'a>,
 }
 
-#[derive(Debug, Hash, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum TSAccessibility {
@@ -612,7 +612,7 @@ pub struct TSCallSignatureDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
 }
 
-#[derive(Debug, Clone, Copy, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum TSMethodSignatureKind {
@@ -867,7 +867,7 @@ pub struct TSMappedType<'a> {
     pub readonly: TSMappedTypeModifierOperator,
 }
 
-#[derive(Debug, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub enum TSMappedTypeModifierOperator {

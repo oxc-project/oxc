@@ -12,7 +12,7 @@ pub mod scope;
 pub mod symbol;
 pub mod xml_entities;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NumberBase {
     Float,
     Decimal,
@@ -27,7 +27,7 @@ impl NumberBase {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BigintBase {
     Decimal,
     Binary,
