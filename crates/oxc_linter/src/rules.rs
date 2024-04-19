@@ -19,7 +19,6 @@ mod import {
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
     pub mod no_self_import;
-    pub mod no_unresolved;
     pub mod no_unused_modules;
 }
 
@@ -45,6 +44,7 @@ mod eslint {
     pub mod for_direction;
     pub mod getter_return;
     pub mod guard_for_in;
+    pub mod max_len;
     pub mod max_lines;
     pub mod max_params;
     pub mod no_array_constructor;
@@ -391,6 +391,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::for_direction,
     eslint::getter_return,
     eslint::guard_for_in,
+    eslint::max_len,
     eslint::max_lines,
     eslint::max_params,
     eslint::no_ternary,
@@ -636,7 +637,6 @@ oxc_macros::declare_all_lint_rules! {
     import::no_named_as_default,
     import::no_named_as_default_member,
     import::no_self_import,
-    import::no_unresolved,
     import::no_unused_modules,
     import::no_duplicates,
     import::no_default_export,

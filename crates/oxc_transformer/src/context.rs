@@ -9,6 +9,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::AstBuilder;
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
+use oxc_span::SourceType;
 
 use crate::{helpers::module_imports::ModuleImports, TransformOptions};
 
@@ -73,5 +74,9 @@ impl<'a> TransformCtx<'a> {
     #[allow(unused)]
     pub fn error<T: Into<Error>>(&self, error: T) {
         self.errors.borrow_mut().push(error.into());
+    }
+
+    pub fn source_type(&self) -> &SourceType {
+        self.semantic.source_type()
     }
 }
