@@ -5,6 +5,16 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.12.4] - 2024-04-19
+
+### Features
+
+- Insert this assignment after the super call (#3018)
+- React jsx transform (#2961)
+- Start on TypeScript annotation removal (#2951)
+- Implement react-jsx-self (#2946)
+- Transform TypeScript namespace (#2942)
+
 ## [0.12.3] - 2024-04-11
 
 ### Features
