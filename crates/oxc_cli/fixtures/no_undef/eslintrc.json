@@ -1,5 +1,8 @@
 {
   "rules": {
     "no-undef": "warn"
+  },
+  "globals": {
+    "foo": "readonly"
   }
 }

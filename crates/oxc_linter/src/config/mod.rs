@@ -1,5 +1,6 @@
 mod env;
 pub mod errors;
+mod globals;
 mod rules;
 mod settings;
 
@@ -15,16 +16,19 @@ use self::errors::{
     FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseConfigPropertyError,
     FailedToParseJsonc,
 };
-pub use self::{env::ESLintEnv, rules::ESLintRules, settings::ESLintSettings};
+pub use self::{
+    env::ESLintEnv, globals::ESLintGlobals, rules::ESLintRules, settings::ESLintSettings,
+};
 
 /// ESLint Config
-/// <https://eslint.org/docs/latest/use/configure/configuration-files-new#configuration-objects>
+/// <https://eslint.org/docs/v8.x/use/configure/configuration-files>
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct ESLintConfig {
     pub(crate) rules: ESLintRules,
     pub(crate) settings: ESLintSettings,
     pub(crate) env: ESLintEnv,
+    pub(crate) globals: ESLintGlobals,
 }
 
 impl ESLintConfig {
@@ -174,13 +178,15 @@ mod test {
                     }
                 },
             },
-            "env": { "browser": true, }
+            "env": { "browser": true, },
+            "globals": { "foo": "readonly", }
         }));
         assert!(config.is_ok());
 
-        let ESLintConfig { rules, settings, env } = config.unwrap();
+        let ESLintConfig { rules, settings, env, globals } = config.unwrap();
         assert!(!rules.is_empty());
         assert_eq!(settings.jsx_a11y.polymorphic_prop_name, Some("role".to_string()));
         assert_eq!(env.iter().count(), 1);
+        assert!(globals.is_enabled("foo"));
     }
 }
