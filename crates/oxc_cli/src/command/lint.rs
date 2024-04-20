@@ -144,6 +144,7 @@ pub struct OutputOptions {
 pub enum OutputFormat {
     Default,
     Json,
+    Unix,
 }
 
 impl FromStr for OutputFormat {
@@ -152,6 +153,7 @@ impl FromStr for OutputFormat {
         match s {
             "json" => Ok(Self::Json),
             "default" => Ok(Self::Default),
+            "unix" => Ok(Self::Unix),
             _ => Err(format!("'{s}' is not a known format")),
         }
     }
