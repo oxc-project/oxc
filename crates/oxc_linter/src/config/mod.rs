@@ -19,17 +19,18 @@ pub use self::{env::ESLintEnv, rules::ESLintRules, settings::ESLintSettings};
 
 /// ESLint Config
 /// <https://eslint.org/docs/latest/use/configure/configuration-files-new#configuration-objects>
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
 pub struct ESLintConfig {
-    #[serde(default)]
-    rules: ESLintRules,
-    #[serde(default)]
-    settings: ESLintSettings,
-    #[serde(default)]
-    env: ESLintEnv,
+    pub(crate) rules: ESLintRules,
+    pub(crate) settings: ESLintSettings,
+    pub(crate) env: ESLintEnv,
 }
 
 impl ESLintConfig {
+    /// # Errors
+    ///
+    /// * Parse Failure
     pub fn from_file(path: &Path) -> Result<Self, Report> {
         let mut string = std::fs::read_to_string(path).map_err(|e| {
             FailedToParseConfigError(vec![Error::new(FailedToOpenFileError(path.to_path_buf(), e))])
@@ -64,10 +65,6 @@ impl ESLintConfig {
         })?;
 
         Ok(config)
-    }
-
-    pub fn properties(self) -> (ESLintSettings, ESLintEnv) {
-        (self.settings, self.env)
     }
 
     #[allow(clippy::option_if_let_else)]

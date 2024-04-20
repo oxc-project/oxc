@@ -78,12 +78,12 @@ fn test() {
 
     fn settings() -> serde_json::Value {
         serde_json::json!({
-            "jsx-a11y": {
+            "settings": { "jsx-a11y": {
                 "components": {
                     "Blink": "blink",
                     "Marquee": "marquee"
                 }
-            }
+            } }
         })
     }
 
