@@ -61,7 +61,6 @@ lint:
 doc:
   RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
 
-
 # Run all the conformance tests. See `tasks/coverage`, `tasks/transform_conformance`, `tasks/minsize`
 coverage:
   cargo coverage
@@ -91,6 +90,10 @@ autoinherit:
 test-transform:
   cargo run -p oxc_transform_conformance
   cargo run -p oxc_transform_conformance -- --exec
+
+# Build oxlint in release build
+oxlint:
+  cargo build --release -p oxc_cli --bin oxlint --features allocator
 
 # Generate the JavaScript global variables. See `tasks/javascript_globals`
 javascript-globals:
