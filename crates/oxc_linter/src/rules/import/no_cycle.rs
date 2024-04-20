@@ -113,8 +113,11 @@ impl Rule for NoCycle {
             let help = stack
                 .iter()
                 .map(|(specifier, path)| {
-                    let path =
-                        path.strip_prefix(&cwd).unwrap().to_string_lossy().replace('\\', "/");
+                    let path = path
+                        .strip_prefix(&cwd)
+                        .unwrap_or(path)
+                        .to_string_lossy()
+                        .replace('\\', "/");
                     format!("-> {specifier} - {path}")
                 })
                 .collect::<Vec<_>>()
