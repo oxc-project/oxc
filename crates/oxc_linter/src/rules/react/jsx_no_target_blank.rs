@@ -489,20 +489,20 @@ fn test() {
         (
             r#"<Link target="_blank" href={ dynamicLink }></Link>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "never" }])),
-            Some(serde_json::json!({ "react": { "linkComponents": ["Link"] } })),
+            Some(serde_json::json!({ "settings": { "react": { "linkComponents": ["Link"] } } })),
         ),
         (
             r#"<Link target="_blank" to={ dynamicLink }></Link>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "never" }])),
             Some(
-                serde_json::json!({"react": { "linkComponents": [{ "name": "Link", "linkAttribute": "to" }] }}),
+                serde_json::json!({"settings": { "react": { "linkComponents": [{ "name": "Link", "linkAttribute": "to" }] } }}),
             ),
         ),
         (
             r#"<Link target="_blank" to={ dynamicLink }></Link>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "never" }])),
             Some(
-                serde_json::json!({ "react": { "linkComponents": [{ "name": "Link", "linkAttribute": ["to"] }] }}),
+                serde_json::json!({ "settings": { "react": { "linkComponents": [{ "name": "Link", "linkAttribute": ["to"] }] } }}),
             ),
         ),
         (
@@ -683,13 +683,13 @@ fn test() {
         (
             r#"<Link target="_blank" href={ dynamicLink }></Link>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "always"}])),
-            Some(serde_json::json!({ "react": { "linkComponents": ["Link"] } })),
+            Some(serde_json::json!({ "settings": { "react": { "linkComponents": ["Link"] } } })),
         ),
         (
             r#"<Link target="_blank" to={ dynamicLink }></Link>"#,
             Some(serde_json::json!([{ "enforceDynamicLinks": "always" }])),
             Some(
-                serde_json::json!({ "react": { "linkComponents": [{ "name": "Link", "linkAttribute": "to" }] } }),
+                serde_json::json!({ "settings": { "react": { "linkComponents": [{ "name": "Link", "linkAttribute": "to" }] } } }),
             ),
         ),
         (

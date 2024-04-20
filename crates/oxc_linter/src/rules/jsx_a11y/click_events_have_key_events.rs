@@ -137,11 +137,11 @@ fn test() {
             r"<Footer onClick={doFoo} />",
             None,
             Some(serde_json::json!({
-                "jsx-a11y": {
+                "settings": { "jsx-a11y": {
                     "components": {
                         "Footer": "footer",
                     }
-                }
+                } }
             })),
             None,
         ),

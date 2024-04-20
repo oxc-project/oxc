@@ -130,11 +130,11 @@ fn test() {
 			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings": { "jsdoc": {
                 "tagNamePreference": {
                   "property": "prop",
                 },
-              },
+              } },
             })),
         ),
     ];
@@ -179,11 +179,11 @@ fn test() {
 			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings": { "jsdoc": {
                 "tagNamePreference": {
                   "property": "prop",
                 },
-              },
+              } },
             })),
         ),
     ];

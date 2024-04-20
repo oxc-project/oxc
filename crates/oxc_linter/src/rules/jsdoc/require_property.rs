@@ -135,11 +135,11 @@ fn test() {
 			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings": { "jsdoc": {
                 "tagNamePreference": {
                   "property": "prop",
                 },
-              },
+              } },
             })),
         ),
         (
@@ -201,7 +201,7 @@ fn test() {
 			           * @property {anotherType} yetAnotherProp This with a type and desc.
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -250,11 +250,11 @@ fn test() {
 			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings": { "jsdoc": {
                 "tagNamePreference": {
                   "property": "prop",
                 },
-              },
+              } },
             })),
         ),
         (

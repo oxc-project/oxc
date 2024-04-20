@@ -1,5 +1,10 @@
 use std::path::PathBuf;
 
+use rustc_hash::FxHashSet;
+use serde_json::{Number, Value};
+
+use oxc_diagnostics::Error;
+
 use crate::{
     config::{
         errors::{
@@ -9,11 +14,8 @@ use crate::{
         ESLintConfig,
     },
     rules::RULES,
-    ESLintEnv, ESLintSettings, RuleCategory, RuleEnum,
+    RuleCategory, RuleEnum,
 };
-use oxc_diagnostics::Error;
-use rustc_hash::FxHashSet;
-use serde_json::{Number, Value};
 
 #[derive(Debug)]
 pub struct LintOptions {
@@ -29,7 +31,6 @@ pub struct LintOptions {
     pub jsx_a11y_plugin: bool,
     pub nextjs_plugin: bool,
     pub react_perf_plugin: bool,
-    pub env: ESLintEnv,
 }
 
 impl Default for LintOptions {
@@ -45,7 +46,6 @@ impl Default for LintOptions {
             jsx_a11y_plugin: false,
             nextjs_plugin: false,
             react_perf_plugin: false,
-            env: ESLintEnv::default(),
         }
     }
 }
@@ -110,12 +110,6 @@ impl LintOptions {
     #[must_use]
     pub fn with_react_perf_plugin(mut self, yes: bool) -> Self {
         self.react_perf_plugin = yes;
-        self
-    }
-
-    #[must_use]
-    pub fn with_env(mut self, env: Vec<String>) -> Self {
-        self.env = ESLintEnv::from_vec(env);
         self
     }
 }
@@ -186,9 +180,7 @@ impl LintOptions {
     /// # Errors
     ///
     /// * Returns `Err` if there are any errors parsing the configuration file.
-    pub fn derive_rules_and_settings_and_env(
-        &self,
-    ) -> Result<(Vec<RuleEnum>, ESLintSettings, ESLintEnv), Error> {
+    pub fn derive_rules_and_config(&self) -> Result<(Vec<RuleEnum>, ESLintConfig), Error> {
         let config =
             self.config_path.as_ref().map(|path| ESLintConfig::from_file(path)).transpose()?;
 
@@ -238,12 +230,10 @@ impl LintOptions {
 
         let mut rules = rules.into_iter().collect::<Vec<_>>();
 
-        let (settings, env) = config.map(ESLintConfig::properties).unwrap_or_default();
-
         // for stable diagnostics output ordering
         rules.sort_unstable_by_key(RuleEnum::name);
 
-        Ok((rules, settings, env))
+        Ok((rules, config.unwrap_or_default()))
     }
 
     // get final filtered rules by reading `self.xxx_plugin`

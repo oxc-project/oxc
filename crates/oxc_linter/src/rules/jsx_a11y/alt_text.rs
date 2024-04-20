@@ -465,7 +465,9 @@ fn test() {
         (
             r#"<SomeComponent as="img" aria-label="" />"#,
             None,
-            Some(serde_json::json!({ "jsx-a11y": { "polymorphicPropName": "as" } })),
+            Some(
+                serde_json::json!({ "settings": { "jsx-a11y": { "polymorphicPropName": "as" } } }),
+            ),
         ),
         (r"<object />", None, None),
         (r"<object><div aria-hidden /></object>", None, None),

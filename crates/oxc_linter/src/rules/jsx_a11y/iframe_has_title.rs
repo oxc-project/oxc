@@ -134,11 +134,11 @@ fn test() {
             r"<FooComponent title='Unique title' />",
             None,
             Some(serde_json::json!({
-              "jsx-a11y": {
+              "settings": { "jsx-a11y": {
                 "components": {
                   "FooComponent": "iframe",
                 },
-              },
+              }, }
             })),
         ),
     ];
@@ -159,11 +159,11 @@ fn test() {
             r"<FooComponent />",
             None,
             Some(serde_json::json!({
-              "jsx-a11y": {
+              "settings": { "jsx-a11y": {
                 "components": {
                   "FooComponent": "iframe",
                 },
-              },
+              }, }
             })),
         ),
     ];
