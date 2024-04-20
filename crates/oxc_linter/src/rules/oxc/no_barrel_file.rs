@@ -76,18 +76,29 @@ fn test() {
         r#"export type * from "foo";"#,
         r#"export type { foo } from "foo";"#,
         r#"export type * from "foo";
-           export type { bar } from bar;"#,
+           export type { bar } from "bar";"#,
+        r#"import { foo, bar, baz } from "../feature";
+           export { foo };
+           export { bar };"#,
     ];
 
     let fail = vec![
         r#"export * from "foo";
-           export * from "bar";"#,
+           export * from "bar";
+           export * from "baz";
+           export * from "qux";"#,
         r#"export { foo } from "foo";
-           export { bar } from "bar";"#,
-        r#"export { default as module1 } from "./module1";"#,
-        r#"export { foo, type Bar } from "foo";"#,
-        r#"import { foo, bar, baz } from "../feature";
-           export { foo, bar, baz };"#,
+           export { bar } from "bar";
+           export { baz } from "baz";
+           export { qux } from "qux";"#,
+        r#"export { default as module1 } from "./module1";
+           export { default as module2 } from "./module2";
+           export { default as module3 } from "./module3";
+           export { default as module4 } from "./module4";"#,
+        r#"export { foo, type Foo } from "foo";
+           export { bar, type Bar } from "bar";
+           export { baz, type Baz } from "baz";
+           export { qux, type Qux } from "qux";"#,
     ];
 
     Tester::new(NoBarrelFile::NAME, pass, fail)

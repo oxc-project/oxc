@@ -3,29 +3,37 @@ source: crates/oxc_linter/src/tester.rs
 expression: no_barrel_file
 ---
   ⚠ eslint-plugin-import(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
-   ╭─[index.js:1:1]
+   ╭─[index.ts:1:1]
  1 │ ╭─▶ export * from "foo";
- 2 │ ╰─▶            export * from "bar";
+ 2 │ │              export * from "bar";
+ 3 │ │              export * from "baz";
+ 4 │ ╰─▶            export * from "qux";
    ╰────
   help: For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>
 
   ⚠ eslint-plugin-import(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
-   ╭─[index.js:1:1]
+   ╭─[index.ts:1:1]
  1 │ ╭─▶ export { foo } from "foo";
- 2 │ ╰─▶            export { bar } from "bar";
+ 2 │ │              export { bar } from "bar";
+ 3 │ │              export { baz } from "baz";
+ 4 │ ╰─▶            export { qux } from "qux";
    ╰────
   help: For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>
 
   ⚠ eslint-plugin-import(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
-   ╭─[index.js:1:1]
- 1 │ export { default as module1 } from "./module1";
-   · ───────────────────────────────────────────────
+   ╭─[index.ts:1:1]
+ 1 │ ╭─▶ export { default as module1 } from "./module1";
+ 2 │ │              export { default as module2 } from "./module2";
+ 3 │ │              export { default as module3 } from "./module3";
+ 4 │ ╰─▶            export { default as module4 } from "./module4";
    ╰────
   help: For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>
 
   ⚠ eslint-plugin-import(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
-   ╭─[index.js:1:1]
- 1 │ ╭─▶ import { foo, bar, baz } from "../feature";
- 2 │ ╰─▶            export { foo, bar, baz };
+   ╭─[index.ts:1:1]
+ 1 │ ╭─▶ export { foo, type Foo } from "foo";
+ 2 │ │              export { bar, type Bar } from "bar";
+ 3 │ │              export { baz, type Baz } from "baz";
+ 4 │ ╰─▶            export { qux, type Qux } from "qux";
    ╰────
   help: For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>
