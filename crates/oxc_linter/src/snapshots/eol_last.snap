@@ -1,0 +1,74 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: eol_last
+---
+  ⚠ eslint(eol-last): "Newline required at end of file but not found.".
+   ╭─[eol_last.tsx:1:13]
+ 1 │ var a = 123;
+   ╰────
+
+  ⚠ eslint(eol-last): "Newline required at end of file but not found.".
+   ╭─[eol_last.tsx:2:4]
+ 1 │ var a = 123;
+ 2 │    
+   ╰────
+
+  ⚠ eslint(eol-last): "Newline not allowed at end of file.".
+   ╭─[eol_last.tsx:1:13]
+ 1 │ var a = 123;
+   ·             ─
+   ╰────
+
+  ⚠ eslint(eol-last): "Newline not allowed at end of file.".
+   ╭─[eol_last.tsx:1:13]
+ 1 │ var a = 123;
+   ·             ─
+   ╰────
+
+  ⚠ eslint(eol-last): "Newline not allowed at end of file.".
+   ╭─[eol_last.tsx:1:13]
+ 1 │ ╭─▶ var a = 123;
+ 2 │ ╰─▶ 
+   ╰────
+
+  ⚠ eslint(eol-last): "Newline not allowed at end of file.".
+   ╭─[eol_last.tsx:2:13]
+ 1 │ var a = 123;
+ 2 │ var b = 456;
+   ·             ─
+   ╰────
+
+  ⚠ eslint(eol-last): "Newline not allowed at end of file.".
+   ╭─[eol_last.tsx:2:13]
+ 1 │ var a = 123;
+ 2 │ var b = 456;
+   ·             ─
+   ╰────
+
+  ⚠ eslint(eol-last): "Newline not allowed at end of file.".
+   ╭─[eol_last.tsx:1:13]
+ 1 │ ╭─▶ var a = 123;
+ 2 │ ╰─▶ 
+   ╰────
+
+  ⚠ eslint(eol-last): "Newline required at end of file but not found.".
+   ╭─[eol_last.tsx:1:13]
+ 1 │ var a = 123;
+   ╰────
+
+  ⚠ eslint(eol-last): "Newline required at end of file but not found.".
+   ╭─[eol_last.tsx:2:4]
+ 1 │ var a = 123;
+ 2 │    
+   ╰────
+
+  ⚠ eslint(eol-last): "Newline required at end of file but not found.".
+   ╭─[eol_last.tsx:1:13]
+ 1 │ var a = 123;
+   ╰────
+
+  ⚠ eslint(eol-last): "Newline required at end of file but not found.".
+   ╭─[eol_last.tsx:2:4]
+ 1 │ var a = 123;
+ 2 │    
+   ╰────

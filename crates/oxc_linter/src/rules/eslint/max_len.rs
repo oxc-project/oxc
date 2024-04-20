@@ -19,7 +19,9 @@ struct IgnoreOptions {
 }
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("This line has a length of {current_length:?}. Maximum allowed is {max:?}.")]
+#[error(
+    "eslint(max-len): This line has a length of {current_length:?}. Maximum allowed is {max:?}."
+)]
 #[diagnostic(
     severity(warning),
     help("Consider breaking this line into multiple lines or shortening comments/codes where applicable")
@@ -39,7 +41,7 @@ impl MaxLenDiagnostic {
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
-    "This line has a comment length of {current_length:?}. Maximum allowed is {max_comment:?}."
+    "eslint(max-len): This line has a comment length of {current_length:?}. Maximum allowed is {max_comment:?}."
 )]
 #[diagnostic(
     severity(warning),

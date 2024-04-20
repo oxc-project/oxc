@@ -40,6 +40,7 @@ mod eslint {
     pub mod constructor_super;
     pub mod default_case_last;
     pub mod default_param_last;
+    pub mod eol_last;
     pub mod eqeqeq;
     pub mod for_direction;
     pub mod getter_return;
@@ -463,6 +464,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::require_yield,
     eslint::use_isnan,
     eslint::valid_typeof,
+    eslint::eol_last,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
     typescript::ban_ts_comment,
