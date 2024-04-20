@@ -10,7 +10,7 @@ use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
-    "eslint-plugin-import(no-barrel-file): \
+    "oxc(no-barrel-file): \
             Avoid barrel files, they slow down performance, \
             and cause large module graphs with modules that go unused."
 )]
