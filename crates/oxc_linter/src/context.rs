@@ -9,7 +9,7 @@ use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{Fix, Message},
     javascript_globals::GLOBALS,
-    ESLintConfig, ESLintEnv, ESLintSettings,
+    ESLintConfig, ESLintEnv, ESLintGlobals, ESLintSettings,
 };
 
 pub struct LintContext<'a> {
@@ -26,7 +26,7 @@ pub struct LintContext<'a> {
 
     file_path: Box<Path>,
 
-    pub eslint_config: Arc<ESLintConfig>,
+    eslint_config: Arc<ESLintConfig>,
 }
 
 impl<'a> LintContext<'a> {
@@ -76,12 +76,16 @@ impl<'a> LintContext<'a> {
         &self.file_path
     }
 
-    pub fn env(&self) -> &ESLintEnv {
-        &self.eslint_config.env
-    }
-
     pub fn settings(&self) -> &ESLintSettings {
         &self.eslint_config.settings
+    }
+
+    pub fn globals(&self) -> &ESLintGlobals {
+        &self.eslint_config.globals
+    }
+
+    pub fn env(&self) -> &ESLintEnv {
+        &self.eslint_config.env
     }
 
     pub fn env_contains_var(&self, var: &str) -> bool {

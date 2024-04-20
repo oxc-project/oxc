@@ -30,7 +30,7 @@ pub use crate::{
     service::{LintService, LintServiceOptions},
 };
 use crate::{
-    config::{ESLintEnv, ESLintSettings},
+    config::{ESLintEnv, ESLintGlobals, ESLintSettings},
     fixer::Fix,
     fixer::{Fixer, Message},
     rule::RuleCategory,
