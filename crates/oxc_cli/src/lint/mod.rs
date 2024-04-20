@@ -163,6 +163,7 @@ impl LintRunner {
         match output_options.format {
             OutputFormat::Default => {}
             OutputFormat::Json => diagnostic_service.set_json_reporter(),
+            OutputFormat::Unix => diagnostic_service.set_unix_reporter(),
         }
 
         diagnostic_service
