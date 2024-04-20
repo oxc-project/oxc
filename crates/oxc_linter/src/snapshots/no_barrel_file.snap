@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_barrel_file
 ---
-  ⚠ eslint-plugin-import(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
+  ⚠ oxc(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
    ╭─[index.ts:1:1]
  1 │ ╭─▶ export * from "foo";
  2 │ │              export * from "bar";
@@ -11,7 +11,7 @@ expression: no_barrel_file
    ╰────
   help: For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>
 
-  ⚠ eslint-plugin-import(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
+  ⚠ oxc(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
    ╭─[index.ts:1:1]
  1 │ ╭─▶ export { foo } from "foo";
  2 │ │              export { bar } from "bar";
@@ -20,7 +20,7 @@ expression: no_barrel_file
    ╰────
   help: For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>
 
-  ⚠ eslint-plugin-import(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
+  ⚠ oxc(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
    ╭─[index.ts:1:1]
  1 │ ╭─▶ export { default as module1 } from "./module1";
  2 │ │              export { default as module2 } from "./module2";
@@ -29,7 +29,7 @@ expression: no_barrel_file
    ╰────
   help: For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>
 
-  ⚠ eslint-plugin-import(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
+  ⚠ oxc(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
    ╭─[index.ts:1:1]
  1 │ ╭─▶ export { foo, type Foo } from "foo";
  2 │ │              export { bar, type Bar } from "bar";
