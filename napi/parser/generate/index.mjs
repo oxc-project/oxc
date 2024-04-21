@@ -32,9 +32,6 @@ class DeserializerGenerator {
 
 const programType = init();
 
-// TODO: Make `Atom` transparent type in Rust type def
-getTypeByName('Atom').transparent = true;
-
 function customDeserializer(typeName, deserialize) {
     const type = getTypeByName(typeName);
     type.generateDeserializerCall = Kind.prototype.generateDeserializerCall;
