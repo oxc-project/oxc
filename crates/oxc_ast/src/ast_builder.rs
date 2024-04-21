@@ -1306,8 +1306,12 @@ impl<'a> AstBuilder<'a> {
         JSXExpressionContainer { span, expression }
     }
 
-    pub fn jsx_spread_child(&self, span: Span, expression: Expression<'a>) -> JSXSpreadChild<'a> {
-        JSXSpreadChild { span, expression }
+    pub fn jsx_spread_child(
+        &self,
+        span: Span,
+        expression: Expression<'a>,
+    ) -> Box<'a, JSXSpreadChild<'a>> {
+        self.alloc(JSXSpreadChild { span, expression })
     }
 
     pub fn jsx_empty_expression(&self, span: Span) -> JSXEmptyExpression {
@@ -1335,8 +1339,8 @@ impl<'a> AstBuilder<'a> {
         JSXIdentifier { span, name }
     }
 
-    pub fn jsx_text(&self, span: Span, value: Atom<'a>) -> JSXText<'a> {
-        JSXText { span, value }
+    pub fn jsx_text(&self, span: Span, value: Atom<'a>) -> Box<'a, JSXText<'a>> {
+        self.alloc(JSXText { span, value })
     }
 
     /* ---------- TypeScript ---------- */

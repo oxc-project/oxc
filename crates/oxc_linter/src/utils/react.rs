@@ -107,10 +107,13 @@ pub fn object_has_accessible_child(ctx: &LintContext, node: &JSXElement<'_>) -> 
     node.children.iter().any(|child| match child {
         JSXChild::Text(text) => !text.value.is_empty(),
         JSXChild::Element(el) => !is_hidden_from_screen_reader(ctx, &el.opening_element),
-        JSXChild::ExpressionContainer(JSXExpressionContainer {
-            expression: JSXExpression::Expression(expr),
-            ..
-        }) => !expr.is_undefined() && !expr.is_null(),
+        JSXChild::ExpressionContainer(container) => {
+            if let JSXExpression::Expression(expr) = &container.expression {
+                !expr.is_undefined() && !expr.is_null()
+            } else {
+                false
+            }
+        }
         _ => false,
     }) || has_jsx_prop_lowercase(&node.opening_element, "dangerouslySetInnerHTML").is_some()
         || has_jsx_prop_lowercase(&node.opening_element, "children").is_some()

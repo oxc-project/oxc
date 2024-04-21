@@ -214,10 +214,11 @@ impl<'a> ParserImpl<'a> {
                 self.parse_jsx_spread_child().map(JSXChild::Spread).map(Some)
             }
             // {expr}
-            Kind::LCurly => self
-                .parse_jsx_expression_container(/* is_jsx_child */ true)
-                .map(JSXChild::ExpressionContainer)
-                .map(Some),
+            Kind::LCurly => {
+                self.parse_jsx_expression_container(/* is_jsx_child */ true).map(|expr_container| {
+                    Some(JSXChild::ExpressionContainer(self.ast.alloc(expr_container)))
+                })
+            }
             // text
             Kind::JSXText => Ok(Some(JSXChild::Text(self.parse_jsx_text()))),
             _ => Err(self.unexpected()),
@@ -269,7 +270,7 @@ impl<'a> ParserImpl<'a> {
 
     /// `JSXChildExpression` :
     ///   { ... `AssignmentExpression` }
-    fn parse_jsx_spread_child(&mut self) -> Result<JSXSpreadChild<'a>> {
+    fn parse_jsx_spread_child(&mut self) -> Result<Box<'a, JSXSpreadChild<'a>>> {
         let span = self.start_span();
         self.bump_any(); // bump `{`
         self.expect(Kind::Dot3)?;
@@ -374,7 +375,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.jsx_identifier(span, name.into()))
     }
 
-    fn parse_jsx_text(&mut self) -> JSXText<'a> {
+    fn parse_jsx_text(&mut self) -> Box<'a, JSXText<'a>> {
         let span = self.start_span();
         let value = Atom::from(self.cur_string());
         self.bump_any();

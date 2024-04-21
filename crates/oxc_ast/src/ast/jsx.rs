@@ -240,11 +240,11 @@ impl<'a> JSXIdentifier<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXChild<'a> {
-    Text(JSXText<'a>),
+    Text(Box<'a, JSXText<'a>>),
     Element(Box<'a, JSXElement<'a>>),
     Fragment(Box<'a, JSXFragment<'a>>),
-    ExpressionContainer(JSXExpressionContainer<'a>),
-    Spread(JSXSpreadChild<'a>),
+    ExpressionContainer(Box<'a, JSXExpressionContainer<'a>>),
+    Spread(Box<'a, JSXSpreadChild<'a>>),
 }
 
 #[derive(Debug, Hash)]
