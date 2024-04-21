@@ -284,10 +284,22 @@ impl<'a> SemanticBuilder<'a> {
         Some(symbol_id)
     }
 
-    pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
+    pub fn declare_reference(
+        &mut self,
+        reference: Reference,
+        add_unresolved_reference: bool,
+    ) -> ReferenceId {
         let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
-        self.scope.add_unresolved_reference(self.current_scope_id, reference_name, reference_id);
+        if add_unresolved_reference {
+            self.scope.add_unresolved_reference(
+                self.current_scope_id,
+                reference_name,
+                reference_id,
+            );
+        } else {
+            self.resolve_reference_ids(reference_name.clone(), vec![reference_id]);
+        }
         reference_id
     }
 
@@ -313,18 +325,22 @@ impl<'a> SemanticBuilder<'a> {
             .drain()
             .collect::<Vec<(_, Vec<_>)>>();
 
+        for (name, reference_ids) in all_references {
+            self.resolve_reference_ids(name, reference_ids);
+        }
+    }
+
+    fn resolve_reference_ids(&mut self, name: CompactStr, reference_ids: Vec<ReferenceId>) {
         let parent_scope_id =
             self.scope.get_parent_id(self.current_scope_id).unwrap_or(self.current_scope_id);
 
-        for (name, reference_ids) in all_references {
-            if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, &name) {
-                for reference_id in &reference_ids {
-                    self.symbols.references[*reference_id].set_symbol_id(symbol_id);
-                }
-                self.symbols.resolved_references[symbol_id].extend(reference_ids);
-            } else {
-                self.scope.extend_unresolved_reference(parent_scope_id, name, reference_ids);
+        if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, &name) {
+            for reference_id in &reference_ids {
+                self.symbols.references[*reference_id].set_symbol_id(symbol_id);
             }
+            self.symbols.resolved_references[symbol_id].extend(reference_ids);
+        } else {
+            self.scope.extend_unresolved_reference(parent_scope_id, name, reference_ids);
         }
     }
 
@@ -1710,6 +1726,7 @@ impl<'a> SemanticBuilder<'a> {
                 element.bind(self);
             }
             AstKind::FormalParameters(_) => {
+                self.current_node_flags |= NodeFlags::Parameter;
                 self.remove_export_flag();
             }
             AstKind::FormalParameter(param) => {
@@ -1815,6 +1832,9 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.pop();
             }
+            AstKind::FormalParameters(_) => {
+                self.current_node_flags -= NodeFlags::Parameter;
+            }
             AstKind::TSModuleBlock(_) => {
                 self.namespace_stack.pop();
             }
@@ -1864,9 +1884,13 @@ impl<'a> SemanticBuilder<'a> {
 
     fn reference_identifier(&mut self, ident: &IdentifierReference) {
         let flag = self.resolve_reference_usages();
-        let reference =
-            Reference::new(ident.span, ident.name.to_compact_str(), self.current_node_id, flag);
-        let reference_id = self.declare_reference(reference);
+        let name = ident.name.to_compact_str();
+        let reference = Reference::new(ident.span, name.clone(), self.current_node_id, flag);
+        // `function foo({bar: identifier_reference}) {}`
+        //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved immediately
+        //                                          to avoid binding to variables inside the scope
+        let add_unresolved_reference = !self.current_node_flags.has_parameter();
+        let reference_id = self.declare_reference(reference, add_unresolved_reference);
         ident.reference_id.set(Some(reference_id));
     }
 
@@ -1897,7 +1921,7 @@ impl<'a> SemanticBuilder<'a> {
             self.current_node_id,
             ReferenceFlag::read(),
         );
-        self.declare_reference(reference);
+        self.declare_reference(reference, true);
     }
 
     fn is_not_expression_statement_parent(&self) -> bool {
