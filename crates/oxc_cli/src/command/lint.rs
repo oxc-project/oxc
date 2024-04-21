@@ -145,6 +145,7 @@ pub enum OutputFormat {
     Default,
     Json,
     Unix,
+    Checkstyle,
 }
 
 impl FromStr for OutputFormat {
@@ -154,6 +155,7 @@ impl FromStr for OutputFormat {
             "json" => Ok(Self::Json),
             "default" => Ok(Self::Default),
             "unix" => Ok(Self::Unix),
+            "checkstyle" => Ok(Self::Checkstyle),
             _ => Err(format!("'{s}' is not a known format")),
         }
     }
