@@ -11,6 +11,7 @@ type EventFn<'a> = dyn FnMut(ModuleGraphVisitorEvent, ModulePair, &ModuleRecord)
 type EnterFn<'a> = dyn FnMut(ModulePair, &ModuleRecord) + 'a;
 type LeaveFn<'a> = dyn FnMut(ModulePair, &ModuleRecord) + 'a;
 
+/// A builder for creating visitors that walk through the module graph
 pub struct ModuleGraphVisitorBuilder<'a, T> {
     max_depth: u32,
     filter: Option<Box<FilterFn<'a>>>,
@@ -20,11 +21,14 @@ pub struct ModuleGraphVisitorBuilder<'a, T> {
     _marker: PhantomData<T>,
 }
 
+/// Returning value of `visit_fold` closures, It will stop on returning a `Stop` variant,
+/// Otherwise it would continue with the iteration.
 pub enum VisitFoldWhile<T> {
     Stop(T),
     Next(T),
 }
 
+/// Indicates the type of event for `EventFn` closure.
 pub enum ModuleGraphVisitorEvent {
     Enter,
     Leave,
@@ -43,18 +47,21 @@ impl<T> VisitFoldWhile<T> {
 }
 
 impl<'a, T> ModuleGraphVisitorBuilder<'a, T> {
+    /// Sets the `self.max_depth`.
     #[must_use]
     pub fn max_depth(mut self, max_depth: u32) -> Self {
         self.max_depth = max_depth;
         self
     }
 
+    /// Sets the filter closure.
     #[must_use]
     pub fn filter<F: (Fn(ModulePair, &ModuleRecord) -> bool) + 'a>(mut self, filter: F) -> Self {
         self.filter = Some(Box::new(filter));
         self
     }
 
+    /// Sets the generic event closure.
     #[must_use]
     pub fn event<F: FnMut(ModuleGraphVisitorEvent, ModulePair, &ModuleRecord) + 'a>(
         mut self,
@@ -64,18 +71,21 @@ impl<'a, T> ModuleGraphVisitorBuilder<'a, T> {
         self
     }
 
+    /// Sets the enter module event closure.
     #[must_use]
     pub fn enter<F: FnMut(ModulePair, &ModuleRecord) + 'a>(mut self, enter: F) -> Self {
         self.enter = Some(Box::new(enter));
         self
     }
 
+    /// Sets the leave module event closure.
     #[must_use]
     pub fn leave<F: FnMut(ModulePair, &ModuleRecord) + 'a>(mut self, leave: F) -> Self {
         self.leave = Some(Box::new(leave));
         self
     }
 
+    /// Behaves similar to a flat fold_while iteration.
     pub fn visit_fold<V: Fn(T, ModulePair, &ModuleRecord) -> VisitFoldWhile<T>>(
         self,
         initial_value: T,
