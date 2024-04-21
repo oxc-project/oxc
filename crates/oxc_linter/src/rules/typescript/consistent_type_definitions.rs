@@ -161,7 +161,7 @@ impl Rule for ConsistentTypeDefinitions {
                         ),
                         || {
                             Fix::new(
-                                format!("type {name} = {body}\nexport default {name}{extends}"),
+                                format!("type {name} = {body}{extends}\nexport default {name}"),
                                 Span::new(exp.span.start, exp.span.end),
                             )
                         },
@@ -451,6 +451,22 @@ type Test = {
     foo(): number;
 }
 export default Test
+            ",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "
+export default interface Custom extends T {
+    baz(): string;
+    foo(): number;
+}
+            ",
+            "
+type Custom = {
+    baz(): string;
+    foo(): number;
+} & T
+export default Custom
             ",
             Some(serde_json::json!(["type"])),
         ),
