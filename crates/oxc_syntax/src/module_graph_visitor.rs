@@ -4,17 +4,28 @@ use oxc_span::CompactStr;
 
 use crate::module_record::ModuleRecord;
 
-pub struct ModuleGraphVisitorBuilder<T> {
+pub struct ModuleGraphVisitorBuilder<'a, T> {
     max_depth: u32,
-    filter: Option<Box<dyn Fn((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) -> bool>>,
-    enter: Option<Box<dyn Fn((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord)>>,
-    leave: Option<Box<dyn Fn((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord)>>,
+    filter: Option<Box<dyn Fn((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) -> bool + 'a>>,
+    event: Option<
+        Box<
+            dyn FnMut(ModuleGraphVisitorEvent, (&CompactStr, &Arc<ModuleRecord>), &ModuleRecord)
+                + 'a,
+        >,
+    >,
+    enter: Option<Box<dyn FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) + 'a>>,
+    leave: Option<Box<dyn FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) + 'a>>,
     _marker: PhantomData<T>,
 }
 
 pub enum VisitFoldWhile<T> {
     Stop(T),
     Next(T),
+}
+
+pub enum ModuleGraphVisitorEvent {
+    Enter,
+    Leave,
 }
 
 impl<T> VisitFoldWhile<T> {
@@ -29,13 +40,13 @@ impl<T> VisitFoldWhile<T> {
     }
 }
 
-impl<T> ModuleGraphVisitorBuilder<T> {
+impl<'a, T> ModuleGraphVisitorBuilder<'a, T> {
     pub fn max_depth(mut self, max_depth: u32) -> Self {
         self.max_depth = max_depth;
         self
     }
 
-    pub fn filter<'a, F: Fn((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) -> bool + 'static>(
+    pub fn filter<F: (Fn((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) -> bool) + 'a>(
         mut self,
         filter: F,
     ) -> Self {
@@ -43,7 +54,17 @@ impl<T> ModuleGraphVisitorBuilder<T> {
         self
     }
 
-    pub fn enter<'a, F: Fn((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) + 'static>(
+    pub fn event<
+        F: FnMut(ModuleGraphVisitorEvent, (&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) + 'a,
+    >(
+        mut self,
+        event: F,
+    ) -> Self {
+        self.event = Some(Box::new(event));
+        self
+    }
+
+    pub fn enter<F: FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) + 'a>(
         mut self,
         enter: F,
     ) -> Self {
@@ -51,7 +72,7 @@ impl<T> ModuleGraphVisitorBuilder<T> {
         self
     }
 
-    pub fn leave<'a, F: Fn((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) + 'static>(
+    pub fn leave<F: FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) + 'a>(
         mut self,
         leave: F,
     ) -> Self {
@@ -67,25 +88,25 @@ impl<T> ModuleGraphVisitorBuilder<T> {
         module: &ModuleRecord,
         visit: V,
     ) -> ModuleGraphVisitResult<T> {
-        let mut visitor = ModuleGraphVisitor {
-            traversed: HashSet::new(),
-            stack: Vec::new(),
-            max_depth: self.max_depth,
-        };
+        let mut visitor =
+            ModuleGraphVisitor { traversed: HashSet::new(), depth: 0, max_depth: self.max_depth };
         let filter = self.filter.unwrap_or_else(|| Box::new(|_, _| true));
+        let event = self.event.unwrap_or_else(|| Box::new(|_, _, _| {}));
         let enter = self.enter.unwrap_or_else(|| Box::new(|_, _| {}));
         let leave = self.leave.unwrap_or_else(|| Box::new(|_, _| {}));
-        let result = visitor.filter_fold_while(initial_value, module, filter, visit, enter, leave);
+        let result =
+            visitor.filter_fold_while(initial_value, module, filter, visit, event, enter, leave);
 
         ModuleGraphVisitResult::with_result(result, visitor)
     }
 }
 
-impl<T> Default for ModuleGraphVisitorBuilder<T> {
+impl<'a, T> Default for ModuleGraphVisitorBuilder<'a, T> {
     fn default() -> Self {
         Self {
             max_depth: u32::MAX,
             filter: None,
+            event: None,
             enter: None,
             leave: None,
             _marker: std::marker::PhantomData {},
@@ -96,25 +117,19 @@ impl<T> Default for ModuleGraphVisitorBuilder<T> {
 pub struct ModuleGraphVisitResult<T> {
     pub result: T,
     pub traversed: HashSet<PathBuf>,
-    pub stack: Vec<(CompactStr, PathBuf)>,
     pub max_depth: u32,
 }
 
 impl<T> ModuleGraphVisitResult<T> {
     fn with_result(result: T, visitor: ModuleGraphVisitor) -> Self {
-        Self {
-            result,
-            traversed: visitor.traversed,
-            stack: visitor.stack,
-            max_depth: visitor.max_depth,
-        }
+        Self { result, traversed: visitor.traversed, max_depth: visitor.max_depth }
     }
 }
 
 #[derive(Debug)]
 struct ModuleGraphVisitor {
     traversed: HashSet<PathBuf>,
-    stack: Vec<(CompactStr, PathBuf)>,
+    depth: u32,
     max_depth: u32,
 }
 
@@ -123,6 +138,7 @@ impl ModuleGraphVisitor {
         T,
         Filter: Fn((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) -> bool,
         Fold: FnMut(T, (&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) -> VisitFoldWhile<T>,
+        EventMod: FnMut(ModuleGraphVisitorEvent, (&CompactStr, &Arc<ModuleRecord>), &ModuleRecord),
         EnterMod: FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord),
         LeaveMod: FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord),
     >(
@@ -131,6 +147,7 @@ impl ModuleGraphVisitor {
         module_record: &ModuleRecord,
         filter: Filter,
         mut fold: Fold,
+        mut event: EventMod,
         mut enter: EnterMod,
         mut leave: LeaveMod,
     ) -> T {
@@ -140,6 +157,7 @@ impl ModuleGraphVisitor {
                 module_record,
                 &filter,
                 &mut fold,
+                &mut event,
                 &mut enter,
                 &mut leave,
             )
@@ -147,10 +165,12 @@ impl ModuleGraphVisitor {
         x
     }
 
-    pub(self) fn filter_fold_recursive<
+    #[allow(clippy::too_many_arguments)]
+    fn filter_fold_recursive<
         T,
         Filter: Fn((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) -> bool,
         Fold: FnMut(T, (&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) -> VisitFoldWhile<T>,
+        EventMod: FnMut(ModuleGraphVisitorEvent, (&CompactStr, &Arc<ModuleRecord>), &ModuleRecord),
         EnterMod: FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord),
         LeaveMod: FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord),
     >(
@@ -159,6 +179,7 @@ impl ModuleGraphVisitor {
         module_record: &ModuleRecord,
         filter: &Filter,
         fold: &mut Fold,
+        event: &mut EventMod,
         enter: &mut EnterMod,
         leave: &mut LeaveMod,
     ) -> VisitFoldWhile<T> {
@@ -172,9 +193,10 @@ impl ModuleGraphVisitor {
             };
         }
         for module_record_ref in &module_record.loaded_modules {
-            if self.stack.len() as u32 > self.max_depth {
+            if self.depth > self.max_depth {
                 return VisitFoldWhile::Stop(accumulator.into_inner());
             }
+
             let path = &module_record_ref.resolved_absolute_path;
             if !self.traversed.insert(path.clone()) {
                 continue;
@@ -184,7 +206,9 @@ impl ModuleGraphVisitor {
                 continue;
             }
 
-            self.stack.push((module_record_ref.key().clone(), path.clone()));
+            self.depth += 1;
+
+            event(ModuleGraphVisitorEvent::Enter, module_record_ref.pair(), module_record);
             enter(module_record_ref.pair(), module_record);
 
             accumulate!(fold(accumulator.into_inner(), module_record_ref.pair(), module_record));
@@ -193,13 +217,15 @@ impl ModuleGraphVisitor {
                 module_record_ref.value(),
                 filter,
                 fold,
+                event,
                 enter,
                 leave
             ));
 
+            event(ModuleGraphVisitorEvent::Leave, module_record_ref.pair(), module_record);
             leave(module_record_ref.pair(), module_record);
 
-            self.stack.pop();
+            self.depth -= 1;
         }
 
         accumulator
