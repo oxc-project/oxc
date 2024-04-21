@@ -4,11 +4,11 @@ use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, AssignmentTarget,
         BinaryExpression, BindingPattern, BindingPatternKind, CallExpression, Class, ClassBody,
-        ClassElement, ComputedMemberExpression, ConditionalExpression, Declaration, Expression,
-        FormalParameter, Function, IdentifierReference, MemberExpression, ModuleDeclaration,
-        NewExpression, ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey,
-        SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression,
-        VariableDeclarator,
+        ClassElement, ComputedMemberExpression, ConditionalExpression, Declaration,
+        ExportDefaultDeclarationKind, Expression, FormalParameter, Function, IdentifierReference,
+        MemberExpression, ModuleDeclaration, NewExpression, ParenthesizedExpression,
+        PrivateFieldExpression, Program, PropertyKey, SimpleAssignmentTarget, Statement,
+        StaticMemberExpression, ThisExpression, VariableDeclarator,
     },
     AstKind,
 };
@@ -18,7 +18,10 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     ast_util::{get_declaration_of_variable, get_symbol_id_of_variable},
-    utils::{calculate_binary_operation, get_write_expr, has_pure_notation, no_effects, Value},
+    utils::{
+        calculate_binary_operation, get_leading_tree_shaking_comment, get_write_expr,
+        has_pure_notation, no_effects, Value, COMMENT_NO_SIDE_EFFECT_WHEN_CALLED,
+    },
     LintContext,
 };
 
@@ -80,15 +83,25 @@ impl<'a> ListenerMap for Statement<'a> {
                     arg.report_effects(options);
                 }
             }
-            Self::ModuleDeclaration(decl) => {
-                if matches!(
-                    &**decl,
-                    ModuleDeclaration::ExportAllDeclaration(_)
-                        | ModuleDeclaration::ImportDeclaration(_)
-                ) {
+            Self::ModuleDeclaration(decl) => match &**decl {
+                ModuleDeclaration::ExportAllDeclaration(_)
+                | ModuleDeclaration::ImportDeclaration(_) => {
                     no_effects();
                 }
-            }
+                ModuleDeclaration::ExportDefaultDeclaration(b) => {
+                    if let ExportDefaultDeclarationKind::Expression(expr) = &b.declaration {
+                        if let Some(comment) =
+                            get_leading_tree_shaking_comment(expr.span(), options.ctx)
+                        {
+                            if comment.contains(COMMENT_NO_SIDE_EFFECT_WHEN_CALLED) {
+                                expr.report_effects_when_called(options);
+                            }
+                        }
+                        expr.report_effects(options);
+                    }
+                }
+                _ => {}
+            },
             Self::TryStatement(stmt) => {
                 stmt.block.body.iter().for_each(|stmt| stmt.report_effects(options));
                 stmt.handler.iter().for_each(|handler| {

@@ -181,15 +181,15 @@ fn test() {
         "const x = ()=>{}; do x(); while(true)",
         // EmptyStatement
         ";",
-        // // ExportAllDeclaration
-        // r#"export * from "import""#,
-        // // ExportDefaultDeclaration
-        // "export default ext",
-        // "const x = ext; export default x",
-        // "export default function(){}",
-        // "export default (function(){})",
-        // "const x = function(){}; export default /* tree-shaking no-side-effects-when-called */ x",
-        // "export default /* tree-shaking no-side-effects-when-called */ function(){}",
+        // ExportAllDeclaration
+        r#"export * from "import""#,
+        // ExportDefaultDeclaration
+        "export default ext",
+        "const x = ext; export default x",
+        "export default function(){}",
+        "export default (function(){})",
+        "const x = function(){}; export default /* tree-shaking no-side-effects-when-called */ x",
+        "export default /* tree-shaking no-side-effects-when-called */ function(){}",
         // // ExportNamedDeclaration
         // "export const x = ext",
         // "export function x(){ext()}",
@@ -456,10 +456,10 @@ fn test() {
         "do {} while(ext())",
         "do ext(); while(true)",
         "do {ext()} while(true)",
-        // // ExportDefaultDeclaration
-        // "export default ext()",
-        // "export default /* tree-shaking no-side-effects-when-called */ ext",
-        // "const x = ext; export default /* tree-shaking no-side-effects-when-called */ x",
+        // ExportDefaultDeclaration
+        "export default ext()",
+        "export default /* tree-shaking no-side-effects-when-called */ ext",
+        "const x = ext; export default /* tree-shaking no-side-effects-when-called */ x",
         // // ExportNamedDeclaration
         // "export const x = ext()",
         // "export const /* tree-shaking no-side-effects-when-called */ x = ext",
