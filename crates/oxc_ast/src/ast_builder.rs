@@ -1451,10 +1451,12 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_interface_heritages(
         &self,
         extends: Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>,
-    ) -> Vec<'a, Box<'a, TSInterfaceHeritage<'a>>> {
+    ) -> Vec<'a, TSInterfaceHeritage<'a>> {
         Vec::from_iter_in(
-            extends.into_iter().map(|(expression, type_parameters, span)| {
-                self.alloc(TSInterfaceHeritage { span, expression, type_parameters })
+            extends.into_iter().map(|(expression, type_parameters, span)| TSInterfaceHeritage {
+                span,
+                expression,
+                type_parameters,
             }),
             self.allocator,
         )
@@ -1635,7 +1637,7 @@ impl<'a> AstBuilder<'a> {
         id: BindingIdentifier<'a>,
         body: Box<'a, TSInterfaceBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        extends: Option<Vec<'a, Box<'a, TSInterfaceHeritage<'a>>>>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
         modifiers: Modifiers<'a>,
     ) -> Declaration<'a> {
         Declaration::TSInterfaceDeclaration(self.alloc(TSInterfaceDeclaration {

@@ -551,7 +551,7 @@ pub struct TSInterfaceDeclaration<'a> {
     pub id: BindingIdentifier<'a>,
     pub body: Box<'a, TSInterfaceBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    pub extends: Option<Vec<'a, Box<'a, TSInterfaceHeritage<'a>>>>,
+    pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
     /// Valid Modifiers: `export`, `default`, `declare`
     pub modifiers: Modifiers<'a>,
 }
