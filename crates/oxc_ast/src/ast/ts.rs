@@ -595,7 +595,7 @@ pub enum TSSignature<'a> {
 pub struct TSIndexSignature<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub parameters: Vec<'a, Box<'a, TSIndexSignatureName<'a>>>,
+    pub parameters: Vec<'a, TSIndexSignatureName<'a>>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
     pub readonly: bool,
 }

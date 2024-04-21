@@ -1110,7 +1110,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn parse_ts_index_signature_name(&mut self) -> Result<Box<'a, TSIndexSignatureName<'a>>> {
+    fn parse_ts_index_signature_name(&mut self) -> Result<TSIndexSignatureName<'a>> {
         let span = self.start_span();
         let name = self.parse_identifier_name()?.name;
         let type_annotation = self.parse_ts_type_annotation()?;
@@ -1119,11 +1119,11 @@ impl<'a> ParserImpl<'a> {
             return Err(self.unexpected());
         }
 
-        Ok(self.ast.alloc(TSIndexSignatureName {
+        Ok(TSIndexSignatureName {
             span: self.end_span(span),
             name,
             type_annotation: type_annotation.unwrap(),
-        }))
+        })
     }
 
     pub(crate) fn parse_class_element_modifiers(

@@ -1473,7 +1473,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_index_signature(
         &self,
         span: Span,
-        parameters: Vec<'a, Box<'a, TSIndexSignatureName<'a>>>,
+        parameters: Vec<'a, TSIndexSignatureName<'a>>,
         type_annotation: Box<'a, TSTypeAnnotation<'a>>,
         readonly: bool,
     ) -> TSSignature<'a> {
