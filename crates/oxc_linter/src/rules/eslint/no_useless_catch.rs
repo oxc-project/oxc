@@ -59,7 +59,7 @@ impl Rule for NoUselessCatch {
         let AstKind::TryStatement(try_stmt) = node.kind() else { return };
         let Some(catch_clause) = &try_stmt.handler else { return };
         let Some(BindingPatternKind::BindingIdentifier(binding_ident)) =
-            catch_clause.param.as_ref().map(|pattern| &pattern.kind)
+            catch_clause.param.as_ref().map(|param| &param.pattern.kind)
         else {
             return;
         };

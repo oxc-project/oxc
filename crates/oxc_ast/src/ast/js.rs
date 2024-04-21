@@ -1641,8 +1641,17 @@ pub struct TryStatement<'a> {
 pub struct CatchClause<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub param: Option<BindingPattern<'a>>,
+    pub param: Option<CatchParameter<'a>>,
     pub body: Box<'a, BlockStatement<'a>>,
+}
+
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+pub struct CatchParameter<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
+    pub span: Span,
+    pub pattern: BindingPattern<'a>,
 }
 
 /// Debugger Statement

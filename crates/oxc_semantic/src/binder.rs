@@ -248,7 +248,7 @@ impl<'a> Binder for CatchClause<'a> {
             // https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks
             // It is a Syntax Error if any element of the BoundNames of CatchParameter also occurs in the VarDeclaredNames of Block
             // unless CatchParameter is CatchParameter : BindingIdentifier
-            if let BindingPatternKind::BindingIdentifier(ident) = &param.kind {
+            if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
                 let includes = SymbolFlags::FunctionScopedVariable | SymbolFlags::CatchVariable;
                 let symbol_id = builder.declare_shadow_symbol(
                     &ident.name,
@@ -258,7 +258,7 @@ impl<'a> Binder for CatchClause<'a> {
                 );
                 ident.symbol_id.set(Some(symbol_id));
             } else {
-                param.bound_names(&mut |ident| {
+                param.pattern.bound_names(&mut |ident| {
                     let symbol_id = builder.declare_symbol(
                         ident.span,
                         &ident.name,
