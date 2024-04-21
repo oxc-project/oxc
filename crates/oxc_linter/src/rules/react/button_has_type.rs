@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
         Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression,
-        JSXExpressionContainer, ObjectPropertyKind,
+        ObjectPropertyKind,
     },
     AstKind,
 };
@@ -163,10 +163,13 @@ impl Rule for ButtonHasType {
 impl ButtonHasType {
     fn is_valid_button_type_prop(&self, item: &JSXAttributeItem) -> bool {
         match get_prop_value(item) {
-            Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-                expression: JSXExpression::Expression(expr),
-                ..
-            })) => self.is_valid_button_type_prop_expression(expr),
+            Some(JSXAttributeValue::ExpressionContainer(container)) => {
+                if let JSXExpression::Expression(expr) = &container.expression {
+                    self.is_valid_button_type_prop_expression(expr)
+                } else {
+                    false
+                }
+            }
             Some(JSXAttributeValue::StringLiteral(str)) => {
                 self.is_valid_button_type_prop_string_literal(str.value.as_str())
             }

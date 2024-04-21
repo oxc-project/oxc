@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Expression, JSXAttributeValue, JSXElementName, JSXExpression, JSXExpressionContainer},
+    ast::{Expression, JSXAttributeValue, JSXElementName, JSXExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -88,28 +88,27 @@ impl Rule for IframeHasTitle {
                     return;
                 }
             }
-            Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-                expression: JSXExpression::Expression(expr),
-                ..
-            })) => {
-                if expr.is_string_literal() {
-                    if let Expression::StringLiteral(str) = expr {
-                        if !str.value.as_str().is_empty() {
-                            return;
+            Some(JSXAttributeValue::ExpressionContainer(container)) => {
+                if let JSXExpression::Expression(expr) = &container.expression {
+                    if expr.is_string_literal() {
+                        if let Expression::StringLiteral(str) = expr {
+                            if !str.value.as_str().is_empty() {
+                                return;
+                            }
+                        }
+                        if let Expression::TemplateLiteral(tmpl) = expr {
+                            if !tmpl.quasis.is_empty()
+                                & !tmpl.expressions.is_empty()
+                                & tmpl.quasis.iter().any(|q| !q.value.raw.as_str().is_empty())
+                            {
+                                return;
+                            }
                         }
                     }
-                    if let Expression::TemplateLiteral(tmpl) = expr {
-                        if !tmpl.quasis.is_empty()
-                            & !tmpl.expressions.is_empty()
-                            & tmpl.quasis.iter().any(|q| !q.value.raw.as_str().is_empty())
-                        {
-                            return;
-                        }
-                    }
-                }
 
-                if expr.is_identifier_reference() & !expr.is_undefined() {
-                    return;
+                    if expr.is_identifier_reference() & !expr.is_undefined() {
+                        return;
+                    }
                 }
             }
             _ => {}

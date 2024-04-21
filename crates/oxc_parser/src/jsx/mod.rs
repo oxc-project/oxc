@@ -215,9 +215,9 @@ impl<'a> ParserImpl<'a> {
             }
             // {expr}
             Kind::LCurly => {
-                self.parse_jsx_expression_container(/* is_jsx_child */ true).map(|expr_container| {
-                    Some(JSXChild::ExpressionContainer(self.ast.alloc(expr_container)))
-                })
+                self.parse_jsx_expression_container(/* is_jsx_child */ true)
+                    .map(JSXChild::ExpressionContainer)
+                    .map(Some)
             }
             // text
             Kind::JSXText => Ok(Some(JSXChild::Text(self.parse_jsx_text()))),
@@ -229,7 +229,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_jsx_expression_container(
         &mut self,
         in_jsx_child: bool,
-    ) -> Result<JSXExpressionContainer<'a>> {
+    ) -> Result<Box<'a, JSXExpressionContainer<'a>>> {
         let span = self.start_span();
         self.bump_any(); // bump `{`
 
@@ -342,7 +342,9 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_jsx_attribute_value(&mut self) -> Result<JSXAttributeValue<'a>> {
         match self.cur_kind() {
-            Kind::Str => self.parse_literal_string().map(JSXAttributeValue::StringLiteral),
+            Kind::Str => self
+                .parse_literal_string()
+                .map(|str_lit| JSXAttributeValue::StringLiteral(self.ast.alloc(str_lit))),
             Kind::LCurly => {
                 let expr = self.parse_jsx_expression_container(/* is_jsx_child */ false)?;
                 Ok(JSXAttributeValue::ExpressionContainer(expr))

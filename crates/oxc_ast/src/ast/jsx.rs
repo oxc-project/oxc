@@ -212,8 +212,8 @@ pub enum JSXAttributeName<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXAttributeValue<'a> {
-    StringLiteral(StringLiteral<'a>),
-    ExpressionContainer(JSXExpressionContainer<'a>),
+    StringLiteral(Box<'a, StringLiteral<'a>>),
+    ExpressionContainer(Box<'a, JSXExpressionContainer<'a>>),
     Element(Box<'a, JSXElement<'a>>),
     Fragment(Box<'a, JSXFragment<'a>>),
 }

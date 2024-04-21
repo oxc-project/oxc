@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{JSXAttributeValue, JSXExpression, JSXExpressionContainer},
+    ast::{JSXAttributeValue, JSXExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -134,12 +134,11 @@ impl Rule for AriaRole {
                 };
 
                 match get_prop_value(aria_role) {
-                    Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-                        expression: JSXExpression::Expression(expr),
-                        ..
-                    })) => {
-                        if expr.is_undefined() || expr.is_null() {
-                            ctx.diagnostic(AriaRoleDiagnostic(attr.span, String::new()));
+                    Some(JSXAttributeValue::ExpressionContainer(container)) => {
+                        if let JSXExpression::Expression(expr) = &container.expression {
+                            if expr.is_undefined() || expr.is_null() {
+                                ctx.diagnostic(AriaRoleDiagnostic(attr.span, String::new()));
+                            }
                         }
                     }
                     Some(JSXAttributeValue::StringLiteral(str)) => {

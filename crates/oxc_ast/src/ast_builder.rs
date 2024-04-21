@@ -1302,8 +1302,8 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         expression: JSXExpression<'a>,
-    ) -> JSXExpressionContainer<'a> {
-        JSXExpressionContainer { span, expression }
+    ) -> Box<'a, JSXExpressionContainer<'a>> {
+        self.alloc(JSXExpressionContainer { span, expression })
     }
 
     pub fn jsx_spread_child(
