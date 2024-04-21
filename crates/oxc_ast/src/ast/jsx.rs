@@ -131,7 +131,7 @@ impl<'a> JSXMemberExpression<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXMemberExpressionObject<'a> {
-    Identifier(JSXIdentifier<'a>),
+    Identifier(Box<'a, JSXIdentifier<'a>>),
     MemberExpression(Box<'a, JSXMemberExpression<'a>>),
 }
 
