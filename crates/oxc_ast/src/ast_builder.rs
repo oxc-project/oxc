@@ -944,7 +944,7 @@ impl<'a> AstBuilder<'a> {
         body: Box<'a, ClassBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-        implements: Option<Vec<'a, Box<'a, TSClassImplements<'a>>>>,
+        implements: Option<Vec<'a, TSClassImplements<'a>>>,
         decorators: Vec<'a, Decorator<'a>>,
         modifiers: Modifiers<'a>,
     ) -> Box<'a, Class<'a>> {
@@ -1423,8 +1423,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: TSTypeName<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    ) -> Box<'a, TSClassImplements<'a>> {
-        self.alloc(TSClassImplements { span, expression, type_parameters })
+    ) -> TSClassImplements<'a> {
+        TSClassImplements { span, expression, type_parameters }
     }
 
     pub fn ts_type_parameter(

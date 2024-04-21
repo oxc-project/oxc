@@ -137,9 +137,7 @@ impl<'a> ParserImpl<'a> {
         Ok(Some(self.ast.ts_type_parameters(self.end_span(span), params)))
     }
 
-    pub(crate) fn parse_ts_implements_clause(
-        &mut self,
-    ) -> Result<Vec<'a, Box<'a, TSClassImplements<'a>>>> {
+    pub(crate) fn parse_ts_implements_clause(&mut self) -> Result<Vec<'a, TSClassImplements<'a>>> {
         self.expect(Kind::Implements)?;
         let first = self.parse_ts_implement_name()?;
         let mut implements = self.ast.new_vec();
@@ -483,7 +481,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.ts_type_reference(self.end_span(span), type_name, type_parameters))
     }
 
-    fn parse_ts_implement_name(&mut self) -> Result<Box<'a, TSClassImplements<'a>>> {
+    fn parse_ts_implement_name(&mut self) -> Result<TSClassImplements<'a>> {
         let span = self.start_span();
         let expression = self.parse_ts_type_name()?;
         let type_parameters =
