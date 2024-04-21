@@ -241,33 +241,27 @@ impl<'a> Binder for FormalParameter<'a> {
     }
 }
 
-impl<'a> Binder for CatchClause<'a> {
+impl<'a> Binder for CatchParameter<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let current_scope_id = builder.current_scope_id;
-        if let Some(param) = &self.param {
-            // https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks
-            // It is a Syntax Error if any element of the BoundNames of CatchParameter also occurs in the VarDeclaredNames of Block
-            // unless CatchParameter is CatchParameter : BindingIdentifier
-            if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
-                let includes = SymbolFlags::FunctionScopedVariable | SymbolFlags::CatchVariable;
-                let symbol_id = builder.declare_shadow_symbol(
-                    &ident.name,
+        // https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks
+        // It is a Syntax Error if any element of the BoundNames of CatchParameter also occurs in the VarDeclaredNames of Block
+        // unless CatchParameter is CatchParameter : BindingIdentifier
+        if let BindingPatternKind::BindingIdentifier(ident) = &self.pattern.kind {
+            let includes = SymbolFlags::FunctionScopedVariable | SymbolFlags::CatchVariable;
+            let symbol_id =
+                builder.declare_shadow_symbol(&ident.name, ident.span, current_scope_id, includes);
+            ident.symbol_id.set(Some(symbol_id));
+        } else {
+            self.pattern.bound_names(&mut |ident| {
+                let symbol_id = builder.declare_symbol(
                     ident.span,
-                    current_scope_id,
-                    includes,
+                    &ident.name,
+                    SymbolFlags::BlockScopedVariable | SymbolFlags::CatchVariable,
+                    SymbolFlags::BlockScopedVariableExcludes,
                 );
                 ident.symbol_id.set(Some(symbol_id));
-            } else {
-                param.pattern.bound_names(&mut |ident| {
-                    let symbol_id = builder.declare_symbol(
-                        ident.span,
-                        &ident.name,
-                        SymbolFlags::BlockScopedVariable | SymbolFlags::CatchVariable,
-                        SymbolFlags::BlockScopedVariableExcludes,
-                    );
-                    ident.symbol_id.set(Some(symbol_id));
-                });
-            }
+            });
         }
     }
 }
