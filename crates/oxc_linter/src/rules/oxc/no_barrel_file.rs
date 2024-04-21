@@ -5,6 +5,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::module_graph_visitor::{ModuleGraphVisitorBuilder, VisitFoldWhile};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -12,10 +13,11 @@ use crate::{context::LintContext, rule::Rule};
 #[error(
     "oxc(no-barrel-file): \
             Avoid barrel files, they slow down performance, \
-            and cause large module graphs with modules that go unused."
+            and cause large module graphs with modules that go unused.\n\
+            Loading this barrel file results in importing {1:?} modules."
 )]
 #[diagnostic(severity(warning), help("For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>"))]
-struct NoBarrelFileDiagnostic(#[label] pub Span);
+struct NoBarrelFileDiagnostic(#[label] pub Span, pub u32);
 
 /// Minimum amount of exports to consider module as barrelfile
 const AMOUNT_OF_EXPORTS_TO_CONSIDER_MODULE_AS_BARREL: u8 = 3;
@@ -49,7 +51,7 @@ declare_oxc_lint!(
 impl Rule for NoBarrelFile {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let semantic = ctx.semantic();
-        let mod_rec = semantic.module_record();
+        let module_record = semantic.module_record();
         let root = semantic.nodes().root_node();
 
         let AstKind::Program(program) = root.kind() else { unreachable!() };
@@ -58,12 +60,16 @@ impl Rule for NoBarrelFile {
             Statement::Declaration(_) => acc + 1,
             _ => acc,
         });
-        let exports = mod_rec.star_export_entries.len() + mod_rec.indirect_export_entries.len();
+        let exports =
+            module_record.star_export_entries.len() + module_record.indirect_export_entries.len();
 
         if exports > declarations
             && exports > AMOUNT_OF_EXPORTS_TO_CONSIDER_MODULE_AS_BARREL as usize
         {
-            ctx.diagnostic(NoBarrelFileDiagnostic(program.span));
+            let loaded_modules_count = ModuleGraphVisitorBuilder::default()
+                .visit_fold(0, module_record, |acc, _, _| VisitFoldWhile::Next(acc + 1))
+                .result;
+            ctx.diagnostic(NoBarrelFileDiagnostic(program.span, loaded_modules_count));
         }
     }
 }
@@ -83,10 +89,10 @@ fn test() {
     ];
 
     let fail = vec![
-        r#"export * from "foo";
-           export * from "bar";
-           export * from "baz";
-           export * from "qux";"#,
+        r#"export * from "./deep/a.js";
+           export * from "./deep/b.js";
+           export * from "./deep/c.js";
+           export * from "./deep/d.js";"#,
         r#"export { foo } from "foo";
            export { bar } from "bar";
            export { baz } from "baz";
