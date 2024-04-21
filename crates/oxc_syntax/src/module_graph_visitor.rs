@@ -4,17 +4,19 @@ use oxc_span::CompactStr;
 
 use crate::module_record::ModuleRecord;
 
+type ModulePair<'a> = (&'a CompactStr, &'a Arc<ModuleRecord>);
+
+type FilterFn<'a> = dyn Fn(ModulePair, &ModuleRecord) -> bool + 'a;
+type EventFn<'a> = dyn FnMut(ModuleGraphVisitorEvent, ModulePair, &ModuleRecord) + 'a;
+type EnterFn<'a> = dyn FnMut(ModulePair, &ModuleRecord) + 'a;
+type LeaveFn<'a> = dyn FnMut(ModulePair, &ModuleRecord) + 'a;
+
 pub struct ModuleGraphVisitorBuilder<'a, T> {
     max_depth: u32,
-    filter: Option<Box<dyn Fn((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) -> bool + 'a>>,
-    event: Option<
-        Box<
-            dyn FnMut(ModuleGraphVisitorEvent, (&CompactStr, &Arc<ModuleRecord>), &ModuleRecord)
-                + 'a,
-        >,
-    >,
-    enter: Option<Box<dyn FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) + 'a>>,
-    leave: Option<Box<dyn FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) + 'a>>,
+    filter: Option<Box<FilterFn<'a>>>,
+    event: Option<Box<EventFn<'a>>>,
+    enter: Option<Box<EnterFn<'a>>>,
+    leave: Option<Box<LeaveFn<'a>>>,
     _marker: PhantomData<T>,
 }
 
@@ -41,22 +43,20 @@ impl<T> VisitFoldWhile<T> {
 }
 
 impl<'a, T> ModuleGraphVisitorBuilder<'a, T> {
+    #[must_use]
     pub fn max_depth(mut self, max_depth: u32) -> Self {
         self.max_depth = max_depth;
         self
     }
 
-    pub fn filter<F: (Fn((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) -> bool) + 'a>(
-        mut self,
-        filter: F,
-    ) -> Self {
+    #[must_use]
+    pub fn filter<F: (Fn(ModulePair, &ModuleRecord) -> bool) + 'a>(mut self, filter: F) -> Self {
         self.filter = Some(Box::new(filter));
         self
     }
 
-    pub fn event<
-        F: FnMut(ModuleGraphVisitorEvent, (&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) + 'a,
-    >(
+    #[must_use]
+    pub fn event<F: FnMut(ModuleGraphVisitorEvent, ModulePair, &ModuleRecord) + 'a>(
         mut self,
         event: F,
     ) -> Self {
@@ -64,25 +64,19 @@ impl<'a, T> ModuleGraphVisitorBuilder<'a, T> {
         self
     }
 
-    pub fn enter<F: FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) + 'a>(
-        mut self,
-        enter: F,
-    ) -> Self {
+    #[must_use]
+    pub fn enter<F: FnMut(ModulePair, &ModuleRecord) + 'a>(mut self, enter: F) -> Self {
         self.enter = Some(Box::new(enter));
         self
     }
 
-    pub fn leave<F: FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) + 'a>(
-        mut self,
-        leave: F,
-    ) -> Self {
+    #[must_use]
+    pub fn leave<F: FnMut(ModulePair, &ModuleRecord) + 'a>(mut self, leave: F) -> Self {
         self.leave = Some(Box::new(leave));
         self
     }
 
-    pub fn visit_fold<
-        V: Fn(T, (&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) -> VisitFoldWhile<T>,
-    >(
+    pub fn visit_fold<V: Fn(T, ModulePair, &ModuleRecord) -> VisitFoldWhile<T>>(
         self,
         initial_value: T,
         module: &ModuleRecord,
@@ -134,13 +128,14 @@ struct ModuleGraphVisitor {
 }
 
 impl ModuleGraphVisitor {
-    pub(self) fn filter_fold_while<
+    #[allow(clippy::too_many_arguments)]
+    fn filter_fold_while<
         T,
-        Filter: Fn((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) -> bool,
-        Fold: FnMut(T, (&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) -> VisitFoldWhile<T>,
-        EventMod: FnMut(ModuleGraphVisitorEvent, (&CompactStr, &Arc<ModuleRecord>), &ModuleRecord),
-        EnterMod: FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord),
-        LeaveMod: FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord),
+        Filter: Fn(ModulePair, &ModuleRecord) -> bool,
+        Fold: FnMut(T, ModulePair, &ModuleRecord) -> VisitFoldWhile<T>,
+        EventMod: FnMut(ModuleGraphVisitorEvent, ModulePair, &ModuleRecord),
+        EnterMod: FnMut(ModulePair, &ModuleRecord),
+        LeaveMod: FnMut(ModulePair, &ModuleRecord),
     >(
         &mut self,
         initial_value: T,
@@ -151,28 +146,26 @@ impl ModuleGraphVisitor {
         mut enter: EnterMod,
         mut leave: LeaveMod,
     ) -> T {
-        let x = self
-            .filter_fold_recursive(
-                VisitFoldWhile::Next(initial_value),
-                module_record,
-                &filter,
-                &mut fold,
-                &mut event,
-                &mut enter,
-                &mut leave,
-            )
-            .into_inner();
-        x
+        self.filter_fold_recursive(
+            VisitFoldWhile::Next(initial_value),
+            module_record,
+            &filter,
+            &mut fold,
+            &mut event,
+            &mut enter,
+            &mut leave,
+        )
+        .into_inner()
     }
 
     #[allow(clippy::too_many_arguments)]
     fn filter_fold_recursive<
         T,
-        Filter: Fn((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) -> bool,
-        Fold: FnMut(T, (&CompactStr, &Arc<ModuleRecord>), &ModuleRecord) -> VisitFoldWhile<T>,
-        EventMod: FnMut(ModuleGraphVisitorEvent, (&CompactStr, &Arc<ModuleRecord>), &ModuleRecord),
-        EnterMod: FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord),
-        LeaveMod: FnMut((&CompactStr, &Arc<ModuleRecord>), &ModuleRecord),
+        Filter: Fn(ModulePair, &ModuleRecord) -> bool,
+        Fold: FnMut(T, ModulePair, &ModuleRecord) -> VisitFoldWhile<T>,
+        EventMod: FnMut(ModuleGraphVisitorEvent, ModulePair, &ModuleRecord),
+        EnterMod: FnMut(ModulePair, &ModuleRecord),
+        LeaveMod: FnMut(ModulePair, &ModuleRecord),
     >(
         &mut self,
         mut accumulator: VisitFoldWhile<T>,
