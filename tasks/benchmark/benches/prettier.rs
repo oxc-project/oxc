@@ -13,10 +13,10 @@ fn bench_prettier(criterion: &mut Criterion) {
             BenchmarkId::from_parameter(&file.file_name),
             &file.source_text,
             |b, source_text| {
+                let allocator1 = Allocator::default();
+                let mut allocator2 = Allocator::default();
+                let ret = Parser::new(&allocator1, source_text, source_type).parse();
                 b.iter(|| {
-                    let allocator1 = Allocator::default();
-                    let allocator2 = Allocator::default();
-                    let ret = Parser::new(&allocator1, source_text, source_type).parse();
                     let _ = Prettier::new(
                         &allocator2,
                         source_text,
@@ -24,6 +24,7 @@ fn bench_prettier(criterion: &mut Criterion) {
                         PrettierOptions::default(),
                     )
                     .build(&ret.program);
+                    allocator2.reset();
                 });
             },
         );
