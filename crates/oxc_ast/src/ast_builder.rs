@@ -395,10 +395,14 @@ impl<'a> AstBuilder<'a> {
     pub fn catch_clause(
         &self,
         span: Span,
-        param: Option<BindingPattern<'a>>,
+        param: Option<CatchParameter<'a>>,
         body: Box<'a, BlockStatement<'a>>,
     ) -> Box<'a, CatchClause<'a>> {
         self.alloc(CatchClause { span, param, body })
+    }
+
+    pub fn catch_parameter(&self, span: Span, pattern: BindingPattern<'a>) -> CatchParameter<'a> {
+        CatchParameter { span, pattern }
     }
 
     pub fn while_statement(

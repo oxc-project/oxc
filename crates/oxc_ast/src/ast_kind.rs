@@ -107,6 +107,7 @@ ast_kinds! {
     FunctionBody(&'a FunctionBody<'a>),
     FormalParameters(&'a FormalParameters<'a>),
     FormalParameter(&'a FormalParameter<'a>),
+    CatchParameter(&'a CatchParameter<'a>),
 
     Class(&'a Class<'a>),
     ClassBody(&'a ClassBody<'a>),
@@ -443,6 +444,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::FunctionBody(x) => x.span,
             Self::FormalParameters(x) => x.span,
             Self::FormalParameter(x) => x.span,
+            Self::CatchParameter(x) => x.span,
 
             Self::Class(x) => x.span,
             Self::ClassBody(x) => x.span,
@@ -640,6 +642,7 @@ impl<'a> AstKind<'a> {
             Self::FunctionBody(_) => "FunctionBody".into(),
             Self::FormalParameters(_) => "FormalParameters".into(),
             Self::FormalParameter(_) => "FormalParameter".into(),
+            Self::CatchParameter(_) => "CatchParameter".into(),
 
             Self::Class(c) => format!(
                 "Class({})",

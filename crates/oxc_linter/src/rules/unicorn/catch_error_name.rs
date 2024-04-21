@@ -84,32 +84,30 @@ impl Rule for CatchErrorName {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CatchClause(catch_node) = node.kind() {
-            if let Some(catch_param) = &catch_node.param {
-                if let oxc_ast::ast::BindingPatternKind::BindingIdentifier(binding_ident) =
-                    &catch_param.kind
-                {
-                    if self.is_name_allowed(&binding_ident.name) {
-                        return;
-                    }
-
-                    if binding_ident.name.starts_with('_') {
-                        if symbol_has_references(binding_ident.symbol_id.get(), ctx) {
-                            ctx.diagnostic(CatchErrorNameDiagnostic(
-                                binding_ident.name.to_compact_str(),
-                                self.name.clone(),
-                                binding_ident.span,
-                            ));
-                        }
-                        return;
-                    }
-
-                    ctx.diagnostic(CatchErrorNameDiagnostic(
-                        binding_ident.name.to_compact_str(),
-                        self.name.clone(),
-                        binding_ident.span,
-                    ));
+        if let AstKind::CatchParameter(catch_param) = node.kind() {
+            if let oxc_ast::ast::BindingPatternKind::BindingIdentifier(binding_ident) =
+                &catch_param.pattern.kind
+            {
+                if self.is_name_allowed(&binding_ident.name) {
+                    return;
                 }
+
+                if binding_ident.name.starts_with('_') {
+                    if symbol_has_references(binding_ident.symbol_id.get(), ctx) {
+                        ctx.diagnostic(CatchErrorNameDiagnostic(
+                            binding_ident.name.to_compact_str(),
+                            self.name.clone(),
+                            binding_ident.span,
+                        ));
+                    }
+                    return;
+                }
+
+                ctx.diagnostic(CatchErrorNameDiagnostic(
+                    binding_ident.name.to_compact_str(),
+                    self.name.clone(),
+                    binding_ident.span,
+                ));
             }
         }
 
