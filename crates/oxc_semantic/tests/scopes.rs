@@ -106,3 +106,18 @@ fn test_switch_case() {
     .has_number_of_references(1)
     .test();
 }
+
+#[test]
+fn test_function_parameters() {
+    SemanticTester::js(
+        "
+            const foo = 2;
+            function func(a = foo, b = a) {
+                const foo = 0;
+            }
+        ",
+    )
+    .has_root_symbol("foo")
+    .has_number_of_references(1)
+    .test();
+}
