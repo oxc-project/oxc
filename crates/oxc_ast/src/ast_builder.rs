@@ -1436,14 +1436,14 @@ impl<'a> AstBuilder<'a> {
         r#in: bool,
         out: bool,
         r#const: bool,
-    ) -> Box<'a, TSTypeParameter<'a>> {
-        self.alloc(TSTypeParameter { span, name, constraint, default, r#in, out, r#const })
+    ) -> TSTypeParameter<'a> {
+        TSTypeParameter { span, name, constraint, default, r#in, out, r#const }
     }
 
     pub fn ts_type_parameters(
         &self,
         span: Span,
-        params: Vec<'a, Box<'a, TSTypeParameter<'a>>>,
+        params: Vec<'a, TSTypeParameter<'a>>,
     ) -> Box<'a, TSTypeParameterDeclaration<'a>> {
         self.alloc(TSTypeParameterDeclaration { span, params })
     }

@@ -150,7 +150,7 @@ impl<'a> ParserImpl<'a> {
         Ok(implements)
     }
 
-    pub(crate) fn parse_ts_type_parameter(&mut self) -> Result<Box<'a, TSTypeParameter<'a>>> {
+    pub(crate) fn parse_ts_type_parameter(&mut self) -> Result<TSTypeParameter<'a>> {
         let span = self.start_span();
 
         let mut r#in = false;
@@ -632,7 +632,7 @@ impl<'a> ParserImpl<'a> {
         let name = self.parse_binding_identifier()?;
         self.expect(Kind::In)?;
         let constraint = self.parse_ts_type()?;
-        let type_parameter = self.ast.ts_type_parameter(
+        let type_parameter = self.ast.alloc(self.ast.ts_type_parameter(
             self.end_span(type_parameter_span),
             name,
             Some(constraint),
@@ -640,7 +640,7 @@ impl<'a> ParserImpl<'a> {
             false,
             false,
             false,
-        );
+        ));
 
         let name_type = if self.eat(Kind::As) { Some(self.parse_ts_type()?) } else { None };
         self.expect(Kind::RBrack)?;
@@ -854,7 +854,7 @@ impl<'a> ParserImpl<'a> {
 
         let constraint = self.try_parse(ParserImpl::parse_constraint_of_infer_type).unwrap_or(None);
 
-        let type_parameter = self.ast.ts_type_parameter(
+        let type_parameter = self.ast.alloc(self.ast.ts_type_parameter(
             self.end_span(parameter_span),
             name,
             constraint,
@@ -862,7 +862,7 @@ impl<'a> ParserImpl<'a> {
             false,
             false,
             false,
-        );
+        ));
 
         Ok(self.ast.ts_infer_type(self.end_span(span), type_parameter))
     }

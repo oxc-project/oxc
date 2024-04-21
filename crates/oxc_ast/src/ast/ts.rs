@@ -504,7 +504,7 @@ pub struct TSTypeParameter<'a> {
 pub struct TSTypeParameterDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub params: Vec<'a, Box<'a, TSTypeParameter<'a>>>,
+    pub params: Vec<'a, TSTypeParameter<'a>>,
 }
 
 #[derive(Debug, Hash)]
