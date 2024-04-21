@@ -20,17 +20,9 @@ pub const MAX_INLINE_LEN: usize = 16;
 /// Use [CompactStr] with [Atom::to_compact_str] or [Atom::into_compact_str] for the
 /// lifetimeless form.
 #[derive(Clone, Eq)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", serde(transparent))]
 pub struct Atom<'a>(&'a str);
-
-#[cfg(feature = "serialize")]
-impl<'a> Serialize for Atom<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(self.as_str())
-    }
-}
 
 impl<'a> Atom<'a> {
     #[inline]
