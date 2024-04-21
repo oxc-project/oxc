@@ -150,7 +150,7 @@ impl Rule for ConsistentTypeDefinitions {
                         String::new()
                     } else {
                         let joined_extends = extends_vec.join(" & ");
-                        format!(" & {}", joined_extends)
+                        format!(" & {joined_extends}")
                     };
 
                     ctx.diagnostic_with_fix(
@@ -208,7 +208,7 @@ impl Rule for ConsistentTypeDefinitions {
                     String::new()
                 } else {
                     let joined_extends = extends_vec.join(" & ");
-                    format!(" & {}", joined_extends)
+                    format!(" & {joined_extends}")
                 };
 
                 ctx.diagnostic_with_fix(
