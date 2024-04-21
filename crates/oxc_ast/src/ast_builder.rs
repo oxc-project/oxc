@@ -1624,7 +1624,7 @@ impl<'a> AstBuilder<'a> {
         Declaration::TSImportEqualsDeclaration(self.alloc(TSImportEqualsDeclaration {
             span,
             id,
-            module_reference: self.alloc(module_reference),
+            module_reference,
             import_kind,
         }))
     }
@@ -1862,6 +1862,70 @@ impl<'a> AstBuilder<'a> {
             asserts,
             type_annotation,
         }))
+    }
+
+    pub fn ts_enum_member_name_identifier(
+        &self,
+        ident: IdentifierName<'a>,
+    ) -> TSEnumMemberName<'a> {
+        TSEnumMemberName::Identifier(self.alloc(ident))
+    }
+
+    pub fn ts_enum_member_name_string_literal(
+        &self,
+        lit: StringLiteral<'a>,
+    ) -> TSEnumMemberName<'a> {
+        TSEnumMemberName::StringLiteral(self.alloc(lit))
+    }
+
+    pub fn ts_enum_member_name_computed_property_name(
+        &self,
+        expr: Expression<'a>,
+    ) -> TSEnumMemberName<'a> {
+        TSEnumMemberName::ComputedPropertyName(self.alloc(expr))
+    }
+
+    pub fn ts_enum_member_name_number_literal(
+        &self,
+        lit: NumericLiteral<'a>,
+    ) -> TSEnumMemberName<'a> {
+        TSEnumMemberName::NumericLiteral(self.alloc(lit))
+    }
+
+    pub fn ts_module_reference_external_module_reference(
+        &self,
+        reference: TSExternalModuleReference<'a>,
+    ) -> TSModuleReference<'a> {
+        TSModuleReference::ExternalModuleReference(self.alloc(reference))
+    }
+
+    pub fn ts_module_reference_type_name(
+        &self,
+        reference: TSTypeName<'a>,
+    ) -> TSModuleReference<'a> {
+        TSModuleReference::TypeName(self.alloc(reference))
+    }
+
+    pub fn ts_type_predicate_name_this(&self, ty: TSThisType) -> TSTypePredicateName<'a> {
+        TSTypePredicateName::This(ty)
+    }
+
+    pub fn ts_type_predicate_name_identifier(
+        &self,
+        ident: IdentifierName<'a>,
+    ) -> TSTypePredicateName<'a> {
+        TSTypePredicateName::Identifier(self.alloc(ident))
+    }
+
+    pub fn ts_type_query_expr_name_import_type(
+        &self,
+        ty: TSImportType<'a>,
+    ) -> TSTypeQueryExprName<'a> {
+        TSTypeQueryExprName::TSImportType(self.alloc(ty))
+    }
+
+    pub fn ts_type_query_expr_name_type_name(&self, ty: TSTypeName<'a>) -> TSTypeQueryExprName<'a> {
+        TSTypeQueryExprName::TSTypeName(ty)
     }
 
     /* JSDoc */

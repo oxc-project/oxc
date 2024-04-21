@@ -64,12 +64,12 @@ pub struct TSEnumMember<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSEnumMemberName<'a> {
-    Identifier(IdentifierName<'a>),
-    StringLiteral(StringLiteral<'a>),
+    Identifier(Box<'a, IdentifierName<'a>>),
+    StringLiteral(Box<'a, StringLiteral<'a>>),
     // Invalid Grammar `enum E { [computed] }`
-    ComputedPropertyName(Expression<'a>),
+    ComputedPropertyName(Box<'a, Expression<'a>>),
     // Invalid Grammar `enum E { 1 }`
-    NumericLiteral(NumericLiteral<'a>),
+    NumericLiteral(Box<'a, NumericLiteral<'a>>),
 }
 
 #[derive(Debug, Hash)]
@@ -686,7 +686,7 @@ pub struct TSTypePredicate<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
 pub enum TSTypePredicateName<'a> {
-    Identifier(IdentifierName<'a>),
+    Identifier(Box<'a, IdentifierName<'a>>),
     This(TSThisType),
 }
 
@@ -788,7 +788,7 @@ pub struct TSTypeQuery<'a> {
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSTypeQueryExprName<'a> {
     TSTypeName(TSTypeName<'a>),
-    TSImportType(TSImportType<'a>),
+    TSImportType(Box<'a, TSImportType<'a>>),
 }
 
 #[derive(Debug, Hash)]
@@ -926,7 +926,7 @@ pub struct TSImportEqualsDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: BindingIdentifier<'a>,
-    pub module_reference: Box<'a, TSModuleReference<'a>>,
+    pub module_reference: TSModuleReference<'a>,
     pub import_kind: ImportOrExportKind,
 }
 
@@ -934,8 +934,8 @@ pub struct TSImportEqualsDeclaration<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
 pub enum TSModuleReference<'a> {
-    TypeName(TSTypeName<'a>),
-    ExternalModuleReference(TSExternalModuleReference<'a>),
+    TypeName(Box<'a, TSTypeName<'a>>),
+    ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>),
 }
 
 #[derive(Debug, Hash)]

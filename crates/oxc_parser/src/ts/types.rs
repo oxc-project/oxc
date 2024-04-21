@@ -763,9 +763,11 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.expect(Kind::Typeof)?;
         let expr_name: TSTypeQueryExprName = if self.at(Kind::Import) {
-            TSTypeQueryExprName::TSImportType(self.parse_ts_import_type()?)
+            let node = self.parse_ts_import_type()?;
+            self.ast.ts_type_query_expr_name_import_type(node)
         } else {
-            TSTypeQueryExprName::TSTypeName(self.parse_ts_type_name()?)
+            let node = self.parse_ts_type_name()?;
+            self.ast.ts_type_query_expr_name_type_name(node)
         };
         let type_parameters = self.parse_ts_type_arguments()?;
         Ok(self.ast.ts_type_query_type(self.end_span(span), expr_name, type_parameters))
@@ -902,9 +904,10 @@ impl<'a> ParserImpl<'a> {
         let parameter_name = if self.at(Kind::This) {
             let span = self.start_span();
             self.bump_any();
-            TSTypePredicateName::This(TSThisType { span: self.end_span(span) })
+            self.ast.ts_type_predicate_name_this(TSThisType { span: self.end_span(span) })
         } else {
-            TSTypePredicateName::Identifier(self.parse_identifier_name()?)
+            let node = self.parse_identifier_name()?;
+            self.ast.ts_type_predicate_name_identifier(node)
         };
 
         if !asserts {
