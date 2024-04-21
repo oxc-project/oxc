@@ -9,7 +9,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("typescript-eslint(consistent-type-definitions):")]
@@ -81,11 +81,35 @@ impl Rule for ConsistentTypeDefinitions {
                         decl.span.start
                     };
 
-                    ctx.diagnostic(ConsistentTypeDefinitionsDiagnostic(
-                        "interface",
-                        "type",
-                        Span::new(start, start + 4),
-                    ));
+                    let name_span_start = &decl.id.span.start;
+                    let mut name_span_end = &decl.id.span.end;
+
+                    if let Some(params) = &decl.type_parameters {
+                        name_span_end = &params.span.end;
+                    };
+
+                    let name =
+                        &ctx.source_text()[*name_span_start as usize..*name_span_end as usize];
+
+                    if let TSType::TSTypeLiteral(type_ann) = &decl.type_annotation {
+                        let body_span = type_ann.span;
+                        let body =
+                            &ctx.source_text()[body_span.start as usize..body_span.end as usize];
+
+                        ctx.diagnostic_with_fix(
+                            ConsistentTypeDefinitionsDiagnostic(
+                                "interface",
+                                "type",
+                                Span::new(start, start + 4),
+                            ),
+                            || {
+                                Fix::new(
+                                    format!("interface {name} {body}"),
+                                    Span::new(start, decl.span.end),
+                                )
+                            },
+                        );
+                    }
                 }
                 _ => {}
             },
@@ -94,11 +118,54 @@ impl Rule for ConsistentTypeDefinitions {
                 ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
                     if self.config == ConsistentTypeDefinitionsConfig::Type =>
                 {
-                    ctx.diagnostic(ConsistentTypeDefinitionsDiagnostic(
-                        "type",
-                        "interface",
-                        Span::new(decl.span.start, decl.span.start + 9),
-                    ));
+                    let name_span_start = &decl.id.span.start;
+                    let mut name_span_end = &decl.id.span.end;
+
+                    if let Some(params) = &decl.type_parameters {
+                        name_span_end = &params.span.end;
+                    };
+
+                    let name =
+                        &ctx.source_text()[*name_span_start as usize..*name_span_end as usize];
+
+                    let body_span = &decl.body.span;
+                    let body = &ctx.source_text()[body_span.start as usize..body_span.end as usize];
+
+                    let extends_vec = {
+                        let mut concatenated_names: Vec<&str> = Vec::new();
+
+                        if let Some(extends) = decl.extends.as_deref() {
+                            for exp in extends {
+                                concatenated_names.push(
+                                    &ctx.source_text()
+                                        [exp.span.start as usize..exp.span.end as usize],
+                                );
+                            }
+                        }
+
+                        concatenated_names
+                    };
+
+                    let extends = if extends_vec.is_empty() {
+                        String::new()
+                    } else {
+                        let joined_extends = extends_vec.join(" & ");
+                        format!(" & {}", joined_extends)
+                    };
+
+                    ctx.diagnostic_with_fix(
+                        ConsistentTypeDefinitionsDiagnostic(
+                            "type",
+                            "interface",
+                            Span::new(decl.span.start, decl.span.start + 9),
+                        ),
+                        || {
+                            Fix::new(
+                                format!("type {name} = {body}\nexport default {name}{extends}"),
+                                Span::new(exp.span.start, exp.span.end),
+                            )
+                        },
+                    );
                 }
                 _ => {}
             },
@@ -112,11 +179,51 @@ impl Rule for ConsistentTypeDefinitions {
                     decl.span.start
                 };
 
-                ctx.diagnostic(ConsistentTypeDefinitionsDiagnostic(
-                    "type",
-                    "interface",
-                    Span::new(start, start + 9),
-                ));
+                let name_span_start = &decl.id.span.start;
+                let mut name_span_end = &decl.id.span.end;
+
+                if let Some(params) = &decl.type_parameters {
+                    name_span_end = &params.span.end;
+                };
+
+                let name = &ctx.source_text()[*name_span_start as usize..*name_span_end as usize];
+
+                let body_span = &decl.body.span;
+                let body = &ctx.source_text()[body_span.start as usize..body_span.end as usize];
+
+                let extends_vec = {
+                    let mut concatenated_names: Vec<&str> = Vec::new();
+
+                    if let Some(extends) = decl.extends.as_deref() {
+                        for exp in extends {
+                            concatenated_names.push(
+                                &ctx.source_text()[exp.span.start as usize..exp.span.end as usize],
+                            );
+                        }
+                    }
+
+                    concatenated_names
+                };
+                let extends = if extends_vec.is_empty() {
+                    String::new()
+                } else {
+                    let joined_extends = extends_vec.join(" & ");
+                    format!(" & {}", joined_extends)
+                };
+
+                ctx.diagnostic_with_fix(
+                    ConsistentTypeDefinitionsDiagnostic(
+                        "type",
+                        "interface",
+                        Span::new(start, start + 9),
+                    ),
+                    || {
+                        Fix::new(
+                            format!("type {name} = {body}{extends}"),
+                            Span::new(start, decl.span.end),
+                        )
+                    },
+                );
             }
             _ => {}
         }
@@ -255,5 +362,129 @@ fn test() {
         ),
     ];
 
-    Tester::new(ConsistentTypeDefinitions::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (
+            "type T = { x: number; };",
+            "interface T { x: number; }",
+            Some(serde_json::json!(["interface"])),
+        ),
+        (
+            "type T={ x: number; };",
+            "interface T { x: number; }",
+            Some(serde_json::json!(["interface"])),
+        ),
+        (
+            "type T=                         { x: number; };",
+            "interface T { x: number; }",
+            Some(serde_json::json!(["interface"])),
+        ),
+        (
+            "export type W<T> = {
+            x: T;
+          };",
+            "export interface W<T> {
+            x: T;
+          }",
+            Some(serde_json::json!(["interface"])),
+        ),
+        (
+            "interface T { x: number; }",
+            "type T = { x: number; }",
+            Some(serde_json::json!(["type"])),
+        ),
+        ("interface T{ x: number; }", "type T = { x: number; }", Some(serde_json::json!(["type"]))),
+        (
+            "interface A extends B, C { x: number; };",
+            "type A = { x: number; } & B & C;",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "interface A extends B<T1>, C<T2> { x: number; };",
+            "type A = { x: number; } & B<T1> & C<T2>;",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "export interface W<T> {
+                x: T;
+              }",
+            "export type W<T> = {
+                x: T;
+              }",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "namespace JSX {
+                interface Array<T> {
+                  foo(x: (x: number) => T): T[];
+                }
+              }",
+            "namespace JSX {
+                type Array<T> = {
+                  foo(x: (x: number) => T): T[];
+                }
+              }",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "global {
+                interface Array<T> {
+                  foo(x: (x: number) => T): T[];
+                }
+              }",
+            "global {
+                type Array<T> = {
+                  foo(x: (x: number) => T): T[];
+                }
+              }",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "
+export default interface Test {
+    baz(): string;
+    foo(): number;
+}
+            ",
+            "
+type Test = {
+    baz(): string;
+    foo(): number;
+}
+export default Test
+            ",
+            Some(serde_json::json!(["type"])),
+        ),
+        (
+            "
+export declare type Test = {
+    foo: string;
+    bar: string;
+};
+            ",
+            "
+export declare interface Test {
+    foo: string;
+    bar: string;
+}
+            ",
+            Some(serde_json::json!(["interface"])),
+        ),
+        (
+            "
+export declare interface Test {
+    foo: string;
+    bar: string;
+}
+            ",
+            "
+export declare type Test = {
+    foo: string;
+    bar: string;
+}
+            ",
+            Some(serde_json::json!(["type"])),
+        ),
+    ];
+
+    Tester::new(ConsistentTypeDefinitions::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
