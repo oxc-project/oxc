@@ -1732,8 +1732,9 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::FormalParameter(param) => {
                 param.bind(self);
             }
-            AstKind::CatchClause(clause) => {
-                clause.bind(self);
+            AstKind::CatchParameter(param) => {
+                self.current_node_flags |= NodeFlags::Parameter;
+                param.bind(self);
             }
             AstKind::TSModuleDeclaration(module_declaration) => {
                 module_declaration.bind(self);
@@ -1832,7 +1833,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.pop();
             }
-            AstKind::FormalParameters(_) => {
+            AstKind::FormalParameters(_) | AstKind::CatchParameter(_) => {
                 self.current_node_flags -= NodeFlags::Parameter;
             }
             AstKind::TSModuleBlock(_) => {

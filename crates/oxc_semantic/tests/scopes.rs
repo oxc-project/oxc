@@ -121,3 +121,19 @@ fn test_function_parameters() {
     .has_number_of_references(1)
     .test();
 }
+
+#[test]
+fn test_catch_clause_parameters() {
+    SemanticTester::js(
+        "
+            const a = 0;
+            try {
+            } catch ({ [a]: b }) {
+                const a = 1;
+            }
+        ",
+    )
+    .has_root_symbol("a")
+    .has_number_of_references(1)
+    .test();
+}
