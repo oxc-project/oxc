@@ -10,6 +10,9 @@ export class Enum extends Kind {
 
     calculateNiche() {
         if (this.variants.length === 0) return Niche.empty();
+        // TODO: Handle single-variant enums
+        // TODO: Handle enums where one of variants is same size as Enum i.e. discriminant is niched
+        // TODO: Handle nested enums
 
         let minDiscrim = Infinity, maxDiscrim = 0;
         for (const {discriminant} of this.variants) {
