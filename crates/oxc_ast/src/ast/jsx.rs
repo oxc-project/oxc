@@ -203,7 +203,7 @@ pub struct JSXSpreadAttribute<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXAttributeName<'a> {
-    Identifier(JSXIdentifier<'a>),
+    Identifier(Box<'a, JSXIdentifier<'a>>),
     NamespacedName(Box<'a, JSXNamespacedName<'a>>),
 }
 

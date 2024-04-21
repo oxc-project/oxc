@@ -337,7 +337,7 @@ impl<'a> ParserImpl<'a> {
             )));
         }
 
-        Ok(JSXAttributeName::Identifier(identifier))
+        Ok(JSXAttributeName::Identifier(self.ast.alloc(identifier)))
     }
 
     fn parse_jsx_attribute_value(&mut self) -> Result<JSXAttributeValue<'a>> {
