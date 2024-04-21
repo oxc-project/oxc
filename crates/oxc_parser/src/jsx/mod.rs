@@ -144,7 +144,7 @@ impl<'a> ParserImpl<'a> {
                 .map(JSXElementName::MemberExpression);
         }
 
-        Ok(JSXElementName::Identifier(identifier))
+        Ok(JSXElementName::Identifier(self.ast.alloc(identifier)))
     }
 
     /// `JSXMemberExpression` :

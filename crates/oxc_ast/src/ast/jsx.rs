@@ -83,7 +83,7 @@ pub struct JSXClosingFragment {
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXElementName<'a> {
     /// `<Apple />`
-    Identifier(JSXIdentifier<'a>),
+    Identifier(Box<'a, JSXIdentifier<'a>>),
     /// `<Apple:Orange />`
     NamespacedName(Box<'a, JSXNamespacedName<'a>>),
     /// `<Apple.Orange />`
