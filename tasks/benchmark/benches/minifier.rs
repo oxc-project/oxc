@@ -15,12 +15,11 @@ fn bench_minifier(criterion: &mut Criterion) {
             &file.source_text,
             |b, source_text| {
                 let options = MinifierOptions::default();
-                b.iter_with_large_drop(|| {
-                    let allocator = Allocator::default();
-                    let program = Parser::new(&allocator, source_text, source_type).parse().program;
-                    let program = allocator.alloc(program);
+                let allocator = Allocator::default();
+                let program = Parser::new(&allocator, source_text, source_type).parse().program;
+                let program = allocator.alloc(program);
+                b.iter(|| {
                     Minifier::new(options).build(&allocator, program);
-                    allocator
                 });
             },
         );
