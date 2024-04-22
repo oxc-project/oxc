@@ -465,6 +465,7 @@ impl<'a> ArrayExpressionElement<'a> {
 
 /// Array Expression Elision Element
 /// Serialized as `null` in JSON AST. See `serialize.rs`.
+#[ast_node]
 #[derive(Debug, Clone, Hash)]
 pub struct Elision {
     pub span: Span,
@@ -1756,6 +1757,7 @@ pub struct CatchClause<'a> {
     pub body: Box<'a, BlockStatement<'a>>,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
