@@ -7,20 +7,6 @@ use oxc_ast::{ast::*, syntax_directed_operations::BoundNames};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 
-#[derive(Default)]
-struct State<'a> {
-    /// Deduplicate the `let` declarations` for namespace concatenation.
-    /// `namespace foo {}; namespace {}` creates a single `let foo;`.
-    names: FxHashSet<Atom<'a>>,
-
-    /// Increment the argument name to avoid name clashes.
-    arg_names: FxHashMap<Atom<'a>, usize>,
-}
-
-fn is_namespace(decl: &Declaration<'_>) -> bool {
-    matches!(decl, Declaration::TSModuleDeclaration(decl) if !decl.modifiers.is_contains_declare())
-}
-
 // TODO:
 // 1. register scope for the newly created function: <https://github.com/babel/babel/blob/08b0472069cd207f043dd40a4d157addfdd36011/packages/babel-plugin-transform-typescript/src/namespace.ts#L38>
 impl<'a> TypeScript<'a> {
@@ -286,7 +272,7 @@ impl<'a> TypeScript<'a> {
     //                         ^^^^^^^
     fn create_variable_declaration(&self, name: &Atom<'a>) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
-        let declarators = {
+        let declarator = {
             let ident = BindingIdentifier::new(SPAN, name.clone());
             let pattern_kind = self.ctx.ast.binding_pattern_identifier(ident);
             let binding = self.ctx.ast.binding_pattern(pattern_kind, None, false);
@@ -296,7 +282,7 @@ impl<'a> TypeScript<'a> {
         Declaration::VariableDeclaration(self.ctx.ast.variable_declaration(
             SPAN,
             kind,
-            declarators,
+            declarator,
             Modifiers::empty(),
         ))
     }
@@ -428,13 +414,6 @@ impl<'a> TypeScript<'a> {
         self.ctx.ast.expression_statement(SPAN, expr)
     }
 
-    fn get_namespace_arg_name(&self, state: &mut State<'a>, name: &Atom<'a>) -> Atom<'a> {
-        let count = state.arg_names.entry(name.clone()).or_insert(0);
-        *count += 1;
-        let name = if *count > 1 { format!("_{name}{count}") } else { format!("_{name}") };
-        self.ctx.ast.new_atom(&name)
-    }
-
     fn add_declaration(
         &self,
         id: Option<Atom<'a>>,
@@ -443,10 +422,10 @@ impl<'a> TypeScript<'a> {
         names: &mut FxHashSet<Atom<'a>>,
         new_stmts: &mut Vec<'a, Statement<'a>>,
     ) {
-        if let Some(item_name) = id.clone() {
+        if let Some(item_name) = id {
             names.insert(item_name.clone());
             new_stmts.push(Statement::Declaration(decl));
-            let assignment_statement = self.create_assignment_statement(&name, &item_name);
+            let assignment_statement = self.create_assignment_statement(name, &item_name);
             new_stmts.push(assignment_statement);
         }
     }
