@@ -125,7 +125,7 @@ const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf_set! {
 "variation",
 "version",
 "yields",
-// TypeScript specific
+// TypeScript specific --
 "import",
 "internal",
 "overload",
@@ -138,6 +138,54 @@ const JSX_TAGS: phf::Set<&'static str> = phf_set! {
 "jsxFrag",
 "jsxImportSource",
 "jsxRuntime",
+};
+
+const ALWAYS_INVALID_TAGS_IF_TYPED: phf::Set<&'static str> = phf_set! {
+"augments",
+"callback",
+"class",
+"enum",
+"implements",
+"private",
+"property",
+"protected",
+"public",
+"readonly",
+"this",
+"type",
+"typedef",
+};
+const OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED: phf::Set<&'static str> = phf_set! {
+"abstract",
+"access",
+"class",
+"constant",
+"constructs",
+// I'm not sure but this seems to be allowed...
+// https://github.com/gajus/eslint-plugin-jsdoc/blob/e343ab5b1efaa59b07c600138aee070b4083857e/src/rules/checkTagNames.js#L140
+// "default",
+"enum",
+"export",
+"exports",
+"function",
+"global",
+"inherits",
+"instance",
+"interface",
+"member",
+"memberof",
+"memberOf",
+"method",
+"mixes",
+"mixin",
+"module",
+"name",
+"namespace",
+"override",
+"property",
+"requires",
+"static",
+"this",
 };
 
 impl Rule for CheckTagNames {
@@ -153,11 +201,19 @@ impl Rule for CheckTagNames {
         let settings = &ctx.settings().jsdoc;
         let config = &self.0;
 
-        let user_preferred_tags = settings.list_user_defined_tag_names();
+        let user_defined_tags = settings.list_user_defined_tag_names();
 
-        // TODO: typed, d.ts
+        let is_dts = ctx.file_path().to_str().map_or(false, |p| p.ends_with(".d.ts"));
+        // NOTE: Original rule seems to check `declare` context with visiting AST nodes.
+        // https://github.com/gajus/eslint-plugin-jsdoc/blob/e343ab5b1efaa59b07c600138aee070b4083857e/src/rules/checkTagNames.js#L121
+        // But...
+        // - No test case covers this(= only checks inside of `.d.ts`)
+        // - I never seen this usage before
+        // So, I leave this part out for now.
+        let is_declare = false;
+        let is_ambient = is_dts || is_declare;
+
         // TODO: Bundle multiple diagnostics into one?
-        // TODO: Test for all tags...?
         for jsdoc in ctx.semantic().jsdoc().iter_all() {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();
@@ -168,29 +224,56 @@ impl Rule for CheckTagNames {
                     continue;
                 }
 
-                // If user preferred, skip
-                if user_preferred_tags.contains(&tag_name.to_string()) {
+                // If user defined, skip
+                if user_defined_tags.contains(&tag_name.to_string()) {
                     continue;
                 }
 
-                // If valid
-                if config.jsx_tags && JSX_TAGS.contains(tag_name)
+                let is_valid = config.jsx_tags && JSX_TAGS.contains(tag_name)
                     || config.defined_tags.contains(&tag_name.to_string())
-                    || VALID_BLOCK_TAGS.contains(tag_name)
-                {
-                    // But preferred, report to use it
-                    if let Some(reason) = settings.check_preferred_tag_name(tag_name) {
-                        ctx.diagnostic(CheckTagNamesDiagnostic(tag.kind.span, reason));
+                    || VALID_BLOCK_TAGS.contains(tag_name);
+
+                // If invalid or unknown, report
+                if !is_valid {
+                    ctx.diagnostic(CheckTagNamesDiagnostic(
+                        tag.kind.span,
+                        format!("`@{tag_name}` is invalid tag name."),
+                    ));
+                    continue;
+                }
+
+                // If valid but preferred, report to use it
+                if let Some(reason) = settings.check_preferred_tag_name(tag_name) {
+                    ctx.diagnostic(CheckTagNamesDiagnostic(tag.kind.span, reason));
+                    continue;
+                }
+
+                // Additional check for `typed` mode
+                if config.typed {
+                    if ALWAYS_INVALID_TAGS_IF_TYPED.contains(tag_name) {
+                        ctx.diagnostic(CheckTagNamesDiagnostic(
+                            tag.kind.span,
+                            format!("`@{tag_name}` is redundant when using a type system."),
+                        ));
+                        continue;
                     }
 
-                    continue;
-                }
+                    if tag.kind.parsed() == "template" && tag.comment().parsed().is_empty() {
+                        ctx.diagnostic(CheckTagNamesDiagnostic(
+                                tag.kind.span,
+                                format!("`@{tag_name}` without a name is redundant when using a type system."),
+                            ));
+                        continue;
+                    }
 
-                // Otherwise, report
-                ctx.diagnostic(CheckTagNamesDiagnostic(
-                    tag.kind.span,
-                    format!("`@{tag_name}` is invalid tag name."),
-                ));
+                    if !is_ambient && OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED.contains(tag_name) {
+                        ctx.diagnostic(CheckTagNamesDiagnostic(
+                                tag.kind.span,
+                                format!("`@{tag_name}` is redundant outside of ambient(`declare` or `.d.ts`) contexts when using a type system."),
+                            ));
+                        continue;
+                    }
+                }
             }
         }
     }
@@ -377,82 +460,41 @@ fn test() {
         "jsdoc": {
         },
       }))),
-//         ("
-// 			        /** @default 0 */
-// 			        let a;
-// 			      ", Some(serde_json::json!([
-//         {
-//           "typed": true,
-//         },
-//       ])), None),
-// ("
-// 			        /** @default 0 */
-// 			        declare let a;
-// 			      ", Some(serde_json::json!([
-//         {
-//           "typed": true,
-//         },
-//       ])), None),
-// ("
-// 			        /** @abstract */
-// 			        let a;
-// 			      ", Some(serde_json::json!([
-//         {
-//           "typed": true,
-//         },
-//       ])), None),
-// ("
-// 			        /** @abstract */
-// 			        declare let a;
-// 			      ", Some(serde_json::json!([
-//         {
-//           "typed": true,
-//         },
-//       ])), None),
-// ("
-// 			        /** @abstract */
-// 			        { declare let a; }
-// 			      ", Some(serde_json::json!([
-//         {
-//           "typed": true,
-//         },
-//       ])), None),
-// ("
-// 			        function test() {
-// 			          /** @abstract */
-// 			          declare let a;
-// 			        }
-// 			      ", Some(serde_json::json!([
-//         {
-//           "typed": true,
-//         },
-//       ])), None),
-// ("
-// 			        /** @template name */
-// 			        let a;
-// 			      ", Some(serde_json::json!([
-//         {
-//           "typed": true,
-//         },
-//       ])), None),
-// ("
-// 			        /** @param param - takes information */
-// 			        function takesOne(param) {}
-// 			      ", Some(serde_json::json!([
-//         {
-//           "typed": true,
-//         },
-//       ])), None),
-// ("
-// 			        /**
-// 			         * @module
-// 			         * A comment related to the module
-// 			         */
-// 			      ", Some(serde_json::json!([
-//         {
-//           "typed": true,
-//         },
-//       ])), None)
+        (
+            "
+			        /**
+			         * @module
+			         * A comment related to the module
+			         */
+			      ",
+            None,
+            None,
+        ),
+        // Typed
+        ("
+      			        /** @default 0 */
+      			        let a;
+      			      ", Some(serde_json::json!([
+        {
+          "typed": true,
+        },
+      ])), None),
+("
+			        /** @template name */
+			        let a;
+			      ", Some(serde_json::json!([
+        {
+          "typed": true,
+        },
+      ])), None),
+("
+			        /** @param param - takes information */
+			        function takesOne(param) {}
+			      ", Some(serde_json::json!([
+        {
+          "typed": true,
+        },
+      ])), None),
     ];
 
     let fail = vec![
@@ -539,7 +581,7 @@ fn test() {
         (
             "
         			          /**
-        			           * @arg foo
+                               * @arg foo (fail: invalid name and user preferred)
         			           */
         			          function quux (foo) {
 
@@ -557,7 +599,7 @@ fn test() {
         (
             "
         			          /**
-        			           * @param foo
+        			           * @param foo (fail: valid name but user preferred)
         			           */
         			          function quux (foo) {
 
@@ -575,7 +617,7 @@ fn test() {
         (
             "
         			          /**
-        			           * @bar foo
+        			           * @bar foo (fail: invalid name)
         			           */
         			          function quux (foo) {
 
@@ -587,7 +629,7 @@ fn test() {
         (
             "
         			          /**
-        			           * @baz @bar foo
+        			           * @baz @bar foo (fail: invalid name)
         			           */
         			          function quux (foo) {
 
@@ -606,7 +648,7 @@ fn test() {
             "
         			            /**
         			             * @bar
-        			             * @baz
+        			             * @baz (fail: invalid name)
         			             */
         			            function quux (foo) {
 
@@ -624,7 +666,7 @@ fn test() {
         (
             "
         			          /**
-        			           * @todo
+        			           * @todo (fail: valid name but blocked)
         			           */
         			          function quux () {
 
@@ -642,7 +684,7 @@ fn test() {
         (
             "
         			          /**
-        			           * @todo
+        			           * @todo (fail: valid name but blocked)
         			           */
         			          function quux () {
 
@@ -662,7 +704,7 @@ fn test() {
         (
             "
         			          /**
-        			           * @todo
+        			           * @todo (fail: valid name but blocked)
         			           */
         			          function quux () {
 
@@ -683,26 +725,8 @@ fn test() {
         (
             "
         			          /**
-        			           * @todo
-        			           */
-        			          function quux () {
-
-        			          }
-        			      ",
-            None,
-            Some(serde_json::json!({
-              "jsdoc": {
-                "tagNamePreference": {
-                  "todo": "55",
-                },
-              },
-            })),
-        ),
-        (
-            "
-        			          /**
         			           * @property {object} a
-        			           * @prop {boolean} b
+        			           * @prop {boolean} b (fail: invalid name, default aliased)
         			           */
         			          function quux () {
 
@@ -714,7 +738,7 @@ fn test() {
         (
             "
         			          /**
-        			           * @abc foo
+        			           * @abc foo (fail: invalid name and user preferred)
         			           * @abcd bar
         			           */
         			          function quux () {
@@ -739,7 +763,7 @@ fn test() {
         (
             "
         			          /**
-        			           * @abc
+                               * @abc (fail: invalid name and user preferred)
         			           * @abcd
         			           */
         			          function quux () {
@@ -768,7 +792,7 @@ fn test() {
         (
             "
         			      /**
-        			       * @constructor
+        			       * @constructor (fail: invalid name)
         			       */
         			      function Test() {
         			        this.works = false;
@@ -786,7 +810,7 @@ fn test() {
         (
             "
         			          /**
-        			           * @todo
+        			           * @todo (fail: valid name but blocked)
         			           */
         			          function quux () {
 
@@ -797,141 +821,231 @@ fn test() {
               "jsdoc": {
                 "tagNamePreference": {
                   "todo": {
-                    "message": "Please don\"t use todo",
+                    "message": "Please don't use todo",
                   },
                 },
               },
             })),
         ),
-        // (
-        //     "/** @type {string} */let a;
-        // 			      ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "typed": true,
-        //       },
-        //     ])),
-        //     None,
-        // ),
-        // (
-        //     "
-        // 			        /**
-        // 			         * Existing comment.
-        // 			         *  @type {string}
-        // 			         */
-        // 			        let a;
-        // 			      ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "typed": true,
-        //       },
-        //     ])),
-        //     None,
-        // ),
-        // (
-        //     "
-        // 			        /** @abstract */
-        // 			        let a;
-        // 			      ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "typed": true,
-        //       },
-        //     ])),
-        //     None,
-        // ),
-        // (
-        //     "
-        // 			        const a = {
-        // 			          /** @abstract */
-        // 			          b: true,
-        // 			        };
-        // 			      ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "typed": true,
-        //       },
-        //     ])),
-        //     None,
-        // ),
-        // (
-        //     "
-        // 			        /** @template */
-        // 			        let a;
-        // 			      ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "typed": true,
-        //       },
-        //     ])),
-        //     None,
-        // ),
-        // (
-        //     "
-        // 			        /**
-        // 			         * Prior description.
-        // 			         *
-        // 			         * @template
-        // 			         */
-        // 			        let a;
-        // 			      ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "typed": true,
-        //       },
-        //     ])),
-        //     None,
-        // ),
-        // (
-        //     "
-        // 			      /** @typedef {Object} MyObject
-        // 			       * @property {string} id - my id
-        // 			       */
-        // 			      ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "typed": true,
-        //       },
-        //     ])),
-        //     None,
-        // ),
-        // (
-        //     "
-        // 			      /**
-        // 			       * @property {string} id - my id
-        // 			       */
-        // 			      ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "typed": true,
-        //       },
-        //     ])),
-        //     None,
-        // ),
-        // (
-        //     "
-        // 			      /** @typedef {Object} MyObject */
-        // 			      ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "typed": true,
-        //       },
-        //     ])),
-        //     None,
-        // ),
-        // (
-        //     "
-        // 			      /** @typedef {Object} MyObject
-        // 			       */
-        // 			      ",
-        //     Some(serde_json::json!([
-        //       {
-        //         "typed": true,
-        //       },
-        //     ])),
-        //     None,
-        // ),
+        // Typed
+        (
+            "
+			        /**
+			         * @module
+			         * A comment related to the module
+			         */
+			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "/** @type {string} */let a;
+        			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
+        			        /**
+        			         * Existing comment.
+        			         *  @type {string}
+        			         */
+        			        let a;
+        			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
+        			      /** @typedef {Object} MyObject
+        			       * @property {string} id - my id
+        			       */
+        			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
+        			      /**
+        			       * @property {string} id - my id
+        			       */
+        			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
+        			      /** @typedef {Object} MyObject */
+        			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
+        			      /** @typedef {Object} MyObject
+        			       */
+        			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
+        			        /** @abstract */
+        			        let a;
+        			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
+        			        const a = {
+        			          /** @abstract */
+        			          b: true,
+        			        };
+        			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
+        			        /** @template */
+        			        let a;
+        			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
+        			        /**
+        			         * Prior description.
+        			         *
+        			         * @template
+        			         */
+        			        let a;
+        			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
     ];
 
+    let dts_pass = vec![
+        (
+            "
+        			        /** @default 0 */
+        			        declare let a;
+        			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
+        			        /** @abstract */
+        			        let a;
+        			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
+        			        /** @abstract */
+        			        declare let a;
+        			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
+        			        /** @abstract */
+        			        { declare let a; }
+        			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
+        			        function test() {
+        			          /** @abstract */
+        			          declare let a;
+        			        }
+        			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+    ];
+    let dts_fail = vec![(
+        "
+        			        /** @typoo {string} (fail: invalid name) */
+        			        let a;
+        			      ",
+        None,
+        None,
+    )];
+
+    // Currently only 1 snapshot can be saved under a rule name
+    Tester::new(CheckTagNames::NAME, dts_pass, dts_fail).change_rule_path("test.d.ts").test();
     Tester::new(CheckTagNames::NAME, pass, fail).test_and_snapshot();
 }
