@@ -190,16 +190,16 @@ fn test() {
         "export default (function(){})",
         "const x = function(){}; export default /* tree-shaking no-side-effects-when-called */ x",
         "export default /* tree-shaking no-side-effects-when-called */ function(){}",
-        // // ExportNamedDeclaration
-        // "export const x = ext",
-        // "export function x(){ext()}",
-        // "const x = ext; export {x}",
-        // r#"export {x} from "import""#,
-        // r#"export {x as y} from "import""#,
-        // r#"export {x as default} from "import""#,
-        // "export const /* tree-shaking no-side-effects-when-called */ x = function(){}",
-        // "export function /* tree-shaking no-side-effects-when-called */ x(){}",
-        // "const x = function(){}; export {/* tree-shaking no-side-effects-when-called */ x}",
+        // ExportNamedDeclaration
+        "export const x = ext",
+        "export function x(){ext()}",
+        "const x = ext; export {x}",
+        r#"export {x} from "import""#,
+        r#"export {x as y} from "import""#,
+        r#"export {x as default} from "import""#,
+        "export const /* tree-shaking no-side-effects-when-called */ x = function(){}",
+        "export function /* tree-shaking no-side-effects-when-called */ x(){}",
+        "const x = function(){}; export {/* tree-shaking no-side-effects-when-called */ x}",
         // // ExpressionStatement
         // "const x = 1",
         // // ForInStatement
@@ -460,11 +460,11 @@ fn test() {
         "export default ext()",
         "export default /* tree-shaking no-side-effects-when-called */ ext",
         "const x = ext; export default /* tree-shaking no-side-effects-when-called */ x",
-        // // ExportNamedDeclaration
-        // "export const x = ext()",
-        // "export const /* tree-shaking no-side-effects-when-called */ x = ext",
-        // "export function /* tree-shaking no-side-effects-when-called */ x(){ext()}",
-        // "const x = ext; export {/* tree-shaking no-side-effects-when-called */ x}",
+        // ExportNamedDeclaration
+        "export const x = ext()",
+        "export const /* tree-shaking no-side-effects-when-called */ x = ext",
+        "export function /* tree-shaking no-side-effects-when-called */ x(){ext()}",
+        "const x = ext; export {/* tree-shaking no-side-effects-when-called */ x}",
         // // ExpressionStatement
         // "ext()",
         // // ForInStatement
