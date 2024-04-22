@@ -67,7 +67,7 @@ pub enum TSEnumMemberName<'a> {
     Identifier(Box<'a, IdentifierName<'a>>),
     StringLiteral(Box<'a, StringLiteral<'a>>),
     // Invalid Grammar `enum E { [computed] }`
-    ComputedPropertyName(Box<'a, Expression<'a>>),
+    ComputedPropertyName(Expression<'a>),
     // Invalid Grammar `enum E { 1 }`
     NumericLiteral(Box<'a, NumericLiteral<'a>>),
 }
@@ -934,7 +934,7 @@ pub struct TSImportEqualsDeclaration<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
 pub enum TSModuleReference<'a> {
-    TypeName(Box<'a, TSTypeName<'a>>),
+    TypeName(TSTypeName<'a>),
     ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>),
 }
 

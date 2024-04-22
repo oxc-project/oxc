@@ -1882,7 +1882,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         expr: Expression<'a>,
     ) -> TSEnumMemberName<'a> {
-        TSEnumMemberName::ComputedPropertyName(self.alloc(expr))
+        TSEnumMemberName::ComputedPropertyName(expr)
     }
 
     pub fn ts_enum_member_name_number_literal(
@@ -1903,7 +1903,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         reference: TSTypeName<'a>,
     ) -> TSModuleReference<'a> {
-        TSModuleReference::TypeName(self.alloc(reference))
+        TSModuleReference::TypeName(reference)
     }
 
     pub fn ts_type_predicate_name_this(&self, ty: TSThisType) -> TSTypePredicateName<'a> {
