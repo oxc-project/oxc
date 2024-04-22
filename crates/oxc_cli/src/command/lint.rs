@@ -55,11 +55,11 @@ pub struct LintOptions {
     /// ESLint configuration file (experimental)
     ///
     /// * only `.json` extension is supported
-    #[bpaf(long, short, argument("PATH"))]
+    #[bpaf(long, short, argument("./eslintrc.json"))]
     pub config: Option<PathBuf>,
 
     /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
-    #[bpaf(argument("PATH"))]
+    #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
 
     /// Single file, single path or list of paths
@@ -136,7 +136,7 @@ pub struct WarningOptions {
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
     /// Use a specific output format (default, json)
-    #[bpaf(long, short, fallback(OutputFormat::Default))]
+    #[bpaf(long, short, fallback(OutputFormat::Default), hide_usage)]
     pub format: OutputFormat,
 }
 
@@ -165,7 +165,8 @@ impl FromStr for OutputFormat {
 #[allow(clippy::struct_field_names)]
 #[derive(Debug, Clone, Bpaf)]
 pub struct EnablePlugins {
-    /// Enable the experimental import plugin and detect ESM problems
+    /// Enable the experimental import plugin and detect ESM problems.
+    /// It is recommended to use along side with the `--tsconfig` option.
     #[bpaf(switch, hide_usage)]
     pub import_plugin: bool,
 
