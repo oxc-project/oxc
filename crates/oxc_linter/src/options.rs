@@ -185,7 +185,7 @@ impl LintOptions {
                 AllowWarnDeny::Deny | AllowWarnDeny::Warn => {
                     match maybe_category {
                         Some(category) => rules.extend(
-                            all_rules.iter().filter(|rule| rule.category() == category).cloned(),
+                            RULES.iter().filter(|rule| rule.category() == category).cloned(),
                         ),
                         None => {
                             if name_or_category == "all" {
