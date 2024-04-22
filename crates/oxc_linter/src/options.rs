@@ -192,7 +192,7 @@ impl LintOptions {
                                 rules.extend(all_rules.iter().cloned());
                             } else {
                                 rules.extend(
-                                    all_rules
+                                    RULES
                                         .iter()
                                         .filter(|rule| rule.name() == name_or_category)
                                         .cloned(),
@@ -228,23 +228,25 @@ impl LintOptions {
         Ok((rules, config.unwrap_or_default()))
     }
 
-    // get final filtered rules by reading `self.xxx_plugin`
+    /// Get final filtered rules by reading `self.xxx_plugin`
     fn get_filtered_rules(&self) -> Vec<RuleEnum> {
-        let mut rules = RULES.clone();
-
-        let mut may_exclude_plugin_rules = |yes: bool, name: &str| {
-            if !yes {
-                rules.retain(|rule| rule.plugin_name() != name);
-            }
-        };
-
-        may_exclude_plugin_rules(self.import_plugin, IMPORT_PLUGIN_NAME);
-        may_exclude_plugin_rules(self.jsdoc_plugin, JSDOC_PLUGIN_NAME);
-        may_exclude_plugin_rules(self.jest_plugin, JEST_PLUGIN_NAME);
-        may_exclude_plugin_rules(self.jsx_a11y_plugin, JSX_A11Y_PLUGIN_NAME);
-        may_exclude_plugin_rules(self.nextjs_plugin, NEXTJS_PLUGIN_NAME);
-        may_exclude_plugin_rules(self.react_perf_plugin, REACT_PERF_PLUGIN_NAME);
-
-        rules
+        RULES
+            .iter()
+            .filter(|rule| {
+                if rule.category() == RuleCategory::Nursery {
+                    return false;
+                }
+                match rule.plugin_name() {
+                    IMPORT_PLUGIN_NAME if !self.import_plugin => false,
+                    JSDOC_PLUGIN_NAME if !self.jsdoc_plugin => false,
+                    JEST_PLUGIN_NAME if !self.jest_plugin => false,
+                    JSX_A11Y_PLUGIN_NAME if !self.jsx_a11y_plugin => false,
+                    NEXTJS_PLUGIN_NAME if !self.nextjs_plugin => false,
+                    REACT_PERF_PLUGIN_NAME if !self.react_perf_plugin => false,
+                    _ => true,
+                }
+            })
+            .cloned()
+            .collect::<Vec<_>>()
     }
 }
