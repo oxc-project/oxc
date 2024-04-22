@@ -44,7 +44,6 @@ mod eslint {
     pub mod for_direction;
     pub mod getter_return;
     pub mod guard_for_in;
-    pub mod max_len;
     pub mod max_lines;
     pub mod max_params;
     pub mod no_array_constructor;
@@ -391,7 +390,6 @@ oxc_macros::declare_all_lint_rules! {
     eslint::for_direction,
     eslint::getter_return,
     eslint::guard_for_in,
-    eslint::max_len,
     eslint::max_lines,
     eslint::max_params,
     eslint::no_ternary,
