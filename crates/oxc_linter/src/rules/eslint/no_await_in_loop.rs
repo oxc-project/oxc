@@ -136,14 +136,14 @@ impl NoAwaitInLoop {
                 }
 
                 if let Some(test) = &stmt.test {
-                    result = result || Self::node_matches_expr_span(span, test);
+                    result = Self::node_matches_expr_span(span, test);
                     if result {
                         return result;
                     }
                 }
 
                 if let Some(update) = &stmt.update {
-                    result = result || Self::node_matches_expr_span(span, update);
+                    result = Self::node_matches_expr_span(span, update);
                 }
 
                 result
