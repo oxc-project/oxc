@@ -185,14 +185,19 @@ impl LintOptions {
                 AllowWarnDeny::Deny | AllowWarnDeny::Warn => {
                     match maybe_category {
                         Some(category) => rules.extend(
-                            RULES.iter().filter(|rule| rule.category() == category).cloned(),
+                            all_rules.iter().filter(|rule| rule.category() == category).cloned(),
                         ),
                         None => {
                             if name_or_category == "all" {
-                                rules.extend(all_rules.iter().cloned());
+                                rules.extend(
+                                    all_rules
+                                        .iter()
+                                        .filter(|rule| rule.category() != RuleCategory::Nursery)
+                                        .cloned(),
+                                );
                             } else {
                                 rules.extend(
-                                    RULES
+                                    all_rules
                                         .iter()
                                         .filter(|rule| rule.name() == name_or_category)
                                         .cloned(),
@@ -232,19 +237,14 @@ impl LintOptions {
     fn get_filtered_rules(&self) -> Vec<RuleEnum> {
         RULES
             .iter()
-            .filter(|rule| {
-                if rule.category() == RuleCategory::Nursery {
-                    return false;
-                }
-                match rule.plugin_name() {
-                    IMPORT_PLUGIN_NAME if !self.import_plugin => false,
-                    JSDOC_PLUGIN_NAME if !self.jsdoc_plugin => false,
-                    JEST_PLUGIN_NAME if !self.jest_plugin => false,
-                    JSX_A11Y_PLUGIN_NAME if !self.jsx_a11y_plugin => false,
-                    NEXTJS_PLUGIN_NAME if !self.nextjs_plugin => false,
-                    REACT_PERF_PLUGIN_NAME if !self.react_perf_plugin => false,
-                    _ => true,
-                }
+            .filter(|rule| match rule.plugin_name() {
+                IMPORT_PLUGIN_NAME if !self.import_plugin => false,
+                JSDOC_PLUGIN_NAME if !self.jsdoc_plugin => false,
+                JEST_PLUGIN_NAME if !self.jest_plugin => false,
+                JSX_A11Y_PLUGIN_NAME if !self.jsx_a11y_plugin => false,
+                NEXTJS_PLUGIN_NAME if !self.nextjs_plugin => false,
+                REACT_PERF_PLUGIN_NAME if !self.react_perf_plugin => false,
+                _ => true,
             })
             .cloned()
             .collect::<Vec<_>>()
