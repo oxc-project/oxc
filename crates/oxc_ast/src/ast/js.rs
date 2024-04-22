@@ -429,6 +429,7 @@ pub struct ArrayExpression<'a> {
     pub elements: Vec<'a, ArrayExpressionElement<'a>>,
     /// Array trailing comma
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
+    #[cfg_attr(feature = "serialize", serde(skip))]
     pub trailing_comma: Option<Span>,
 }
 
@@ -458,11 +459,12 @@ impl<'a> ArrayExpressionElement<'a> {
 /// Object Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ObjectExpression<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub properties: Vec<'a, ObjectPropertyKind<'a>>,
+    #[cfg_attr(feature = "serialize", serde(skip))]
     pub trailing_comma: Option<Span>,
 }
 
@@ -1015,7 +1017,7 @@ pub enum AssignmentTargetPattern<'a> {
 // See serializer in serialize.rs
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ArrayAssignmentTarget<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
@@ -1026,6 +1028,7 @@ pub struct ArrayAssignmentTarget<'a> {
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
     #[cfg_attr(feature = "serialize", serde(skip))]
     pub rest: Option<AssignmentTargetRest<'a>>,
+    #[cfg_attr(feature = "serialize", serde(skip))]
     pub trailing_comma: Option<Span>,
 }
 
