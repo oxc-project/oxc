@@ -139,6 +139,9 @@ impl<'a> TypeScript<'a> {
                     if let ModuleDeclaration::ExportNamedDeclaration(export_decl) = decl.unbox() {
                         let export_decl = export_decl.unbox();
                         if let Some(decl) = export_decl.declaration {
+                            if decl.modifiers().is_some_and(Modifiers::is_contains_declare) {
+                                continue;
+                            }
                             match decl {
                                 Declaration::TSEnumDeclaration(enum_decl) => {
                                     is_empty = false;
