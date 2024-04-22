@@ -134,7 +134,7 @@ impl Rule for TripleSlashReference {
             for stmt in &program.body {
                 match stmt {
                     Statement::Declaration(Declaration::TSImportEqualsDeclaration(decl)) => {
-                        match *decl.module_reference {
+                        match decl.module_reference {
                             TSModuleReference::ExternalModuleReference(ref mod_ref) => {
                                 if let Some(v) =
                                     refs_for_import.get(mod_ref.expression.value.as_str())
