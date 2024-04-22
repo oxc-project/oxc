@@ -1,8 +1,7 @@
 use oxc_ast::{
     ast::{
         CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXChild, JSXElement, JSXElementName, JSXExpression, JSXExpressionContainer,
-        JSXOpeningElement,
+        JSXChild, JSXElement, JSXElementName, JSXExpression, JSXOpeningElement,
     },
     AstKind,
 };
@@ -94,10 +93,13 @@ pub fn is_hidden_from_screen_reader(ctx: &LintContext, node: &JSXOpeningElement)
     has_jsx_prop_lowercase(node, "aria-hidden").map_or(false, |v| match get_prop_value(v) {
         None => true,
         Some(JSXAttributeValue::StringLiteral(s)) if s.value == "true" => true,
-        Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-            expression: JSXExpression::Expression(expr),
-            ..
-        })) => expr.get_boolean_value().unwrap_or(false),
+        Some(JSXAttributeValue::ExpressionContainer(container)) => {
+            if let JSXExpression::Expression(expr) = &container.expression {
+                expr.get_boolean_value().unwrap_or(false)
+            } else {
+                false
+            }
+        }
         _ => false,
     })
 }
@@ -107,10 +109,13 @@ pub fn object_has_accessible_child(ctx: &LintContext, node: &JSXElement<'_>) -> 
     node.children.iter().any(|child| match child {
         JSXChild::Text(text) => !text.value.is_empty(),
         JSXChild::Element(el) => !is_hidden_from_screen_reader(ctx, &el.opening_element),
-        JSXChild::ExpressionContainer(JSXExpressionContainer {
-            expression: JSXExpression::Expression(expr),
-            ..
-        }) => !expr.is_undefined() && !expr.is_null(),
+        JSXChild::ExpressionContainer(container) => {
+            if let JSXExpression::Expression(expr) = &container.expression {
+                !expr.is_undefined() && !expr.is_null()
+            } else {
+                false
+            }
+        }
         _ => false,
     }) || has_jsx_prop_lowercase(&node.opening_element, "dangerouslySetInnerHTML").is_some()
         || has_jsx_prop_lowercase(&node.opening_element, "children").is_some()
@@ -252,15 +257,14 @@ pub fn get_element_type(context: &LintContext, element: &JSXOpeningElement) -> O
 pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
     match value {
         JSXAttributeValue::StringLiteral(str) => str.value.parse().or(Err(())),
-        JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-            expression: JSXExpression::Expression(expression),
-            ..
-        }) => match expression {
-            Expression::StringLiteral(str) => str.value.parse().or(Err(())),
-            Expression::TemplateLiteral(tmpl) => {
+        JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
+            JSXExpression::Expression(Expression::StringLiteral(str)) => {
+                str.value.parse().or(Err(()))
+            }
+            JSXExpression::Expression(Expression::TemplateLiteral(tmpl)) => {
                 tmpl.quasis.first().unwrap().value.raw.parse().or(Err(()))
             }
-            Expression::NumericLiteral(num) => Ok(num.value),
+            JSXExpression::Expression(Expression::NumericLiteral(num)) => Ok(num.value),
             _ => Err(()),
         },
         _ => Err(()),

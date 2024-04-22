@@ -83,7 +83,7 @@ pub struct JSXClosingFragment {
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXElementName<'a> {
     /// `<Apple />`
-    Identifier(JSXIdentifier<'a>),
+    Identifier(Box<'a, JSXIdentifier<'a>>),
     /// `<Apple:Orange />`
     NamespacedName(Box<'a, JSXNamespacedName<'a>>),
     /// `<Apple.Orange />`
@@ -131,7 +131,7 @@ impl<'a> JSXMemberExpression<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXMemberExpressionObject<'a> {
-    Identifier(JSXIdentifier<'a>),
+    Identifier(Box<'a, JSXIdentifier<'a>>),
     MemberExpression(Box<'a, JSXMemberExpression<'a>>),
 }
 
@@ -203,7 +203,7 @@ pub struct JSXSpreadAttribute<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXAttributeName<'a> {
-    Identifier(JSXIdentifier<'a>),
+    Identifier(Box<'a, JSXIdentifier<'a>>),
     NamespacedName(Box<'a, JSXNamespacedName<'a>>),
 }
 
@@ -212,8 +212,8 @@ pub enum JSXAttributeName<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXAttributeValue<'a> {
-    StringLiteral(StringLiteral<'a>),
-    ExpressionContainer(JSXExpressionContainer<'a>),
+    StringLiteral(Box<'a, StringLiteral<'a>>),
+    ExpressionContainer(Box<'a, JSXExpressionContainer<'a>>),
     Element(Box<'a, JSXElement<'a>>),
     Fragment(Box<'a, JSXFragment<'a>>),
 }
@@ -240,11 +240,11 @@ impl<'a> JSXIdentifier<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXChild<'a> {
-    Text(JSXText<'a>),
+    Text(Box<'a, JSXText<'a>>),
     Element(Box<'a, JSXElement<'a>>),
     Fragment(Box<'a, JSXFragment<'a>>),
-    ExpressionContainer(JSXExpressionContainer<'a>),
-    Spread(JSXSpreadChild<'a>),
+    ExpressionContainer(Box<'a, JSXExpressionContainer<'a>>),
+    Spread(Box<'a, JSXSpreadChild<'a>>),
 }
 
 #[derive(Debug, Hash)]

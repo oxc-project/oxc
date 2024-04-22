@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{JSXAttributeValue, JSXExpression, JSXExpressionContainer},
+    ast::{JSXAttributeValue, JSXExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -119,15 +119,14 @@ impl Rule for MouseEventsHaveKeyEvents {
                 }
 
                 match has_jsx_prop(jsx_opening_el, "onFocus").and_then(get_prop_value) {
-                    Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-                        expression: JSXExpression::Expression(expr),
-                        ..
-                    })) => {
-                        if expr.is_undefined() {
-                            ctx.diagnostic(MouseEventsHaveKeyEventsDiagnostic::MissOnFocus(
-                                jsx_attr.span(),
-                                String::from(handler),
-                            ));
+                    Some(JSXAttributeValue::ExpressionContainer(container)) => {
+                        if let JSXExpression::Expression(expr) = &container.expression {
+                            if expr.is_undefined() {
+                                ctx.diagnostic(MouseEventsHaveKeyEventsDiagnostic::MissOnFocus(
+                                    jsx_attr.span(),
+                                    String::from(handler),
+                                ));
+                            }
                         }
                     }
                     None => {
@@ -150,15 +149,14 @@ impl Rule for MouseEventsHaveKeyEvents {
                 }
 
                 match has_jsx_prop(jsx_opening_el, "onBlur").and_then(get_prop_value) {
-                    Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-                        expression: JSXExpression::Expression(expr),
-                        ..
-                    })) => {
-                        if expr.is_undefined() {
-                            ctx.diagnostic(MouseEventsHaveKeyEventsDiagnostic::MissOnBlur(
-                                jsx_attr.span(),
-                                String::from(handler),
-                            ));
+                    Some(JSXAttributeValue::ExpressionContainer(container)) => {
+                        if let JSXExpression::Expression(expr) = &container.expression {
+                            if expr.is_undefined() {
+                                ctx.diagnostic(MouseEventsHaveKeyEventsDiagnostic::MissOnBlur(
+                                    jsx_attr.span(),
+                                    String::from(handler),
+                                ));
+                            }
                         }
                     }
                     None => {

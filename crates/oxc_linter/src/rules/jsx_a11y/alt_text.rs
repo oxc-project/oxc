@@ -1,8 +1,5 @@
 use oxc_ast::{
-    ast::{
-        JSXAttributeItem, JSXAttributeValue, JSXElement, JSXExpression, JSXExpressionContainer,
-        JSXOpeningElement,
-    },
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXElement, JSXExpression, JSXOpeningElement},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -212,10 +209,13 @@ impl Rule for AltText {
 fn is_valid_alt_prop(item: &JSXAttributeItem<'_>) -> bool {
     match get_prop_value(item) {
         None => false,
-        Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-            expression: JSXExpression::Expression(expr),
-            ..
-        })) => !expr.is_null_or_undefined(),
+        Some(JSXAttributeValue::ExpressionContainer(container)) => {
+            if let JSXExpression::Expression(expr) = &container.expression {
+                !expr.is_null_or_undefined()
+            } else {
+                true
+            }
+        }
         _ => true,
     }
 }
@@ -229,10 +229,13 @@ fn aria_label_has_value<'a>(item: &'a JSXAttributeItem<'a>) -> bool {
     match get_prop_value(item) {
         None => false,
         Some(JSXAttributeValue::StringLiteral(s)) if s.value.is_empty() => false,
-        Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-            expression: JSXExpression::Expression(expr),
-            ..
-        })) => !expr.is_undefined(),
+        Some(JSXAttributeValue::ExpressionContainer(container)) => {
+            if let JSXExpression::Expression(expr) = &container.expression {
+                !expr.is_undefined()
+            } else {
+                true
+            }
+        }
         _ => true,
     }
 }
