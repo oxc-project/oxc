@@ -44,7 +44,6 @@ mod eslint {
     pub mod for_direction;
     pub mod getter_return;
     pub mod guard_for_in;
-    pub mod max_len;
     pub mod max_lines;
     pub mod max_params;
     pub mod no_array_constructor;
@@ -333,6 +332,7 @@ mod oxc {
     pub mod erasing_op;
     pub mod misrefactored_assign_op;
     pub mod no_accumulating_spread;
+    pub mod no_barrel_file;
     pub mod only_used_in_recursion;
 }
 
@@ -391,7 +391,6 @@ oxc_macros::declare_all_lint_rules! {
     eslint::for_direction,
     eslint::getter_return,
     eslint::guard_for_in,
-    eslint::max_len,
     eslint::max_lines,
     eslint::max_params,
     eslint::no_ternary,
@@ -672,6 +671,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::erasing_op,
     oxc::misrefactored_assign_op,
     oxc::no_accumulating_spread,
+    oxc::no_barrel_file,
     oxc::only_used_in_recursion,
     nextjs::google_font_display,
     nextjs::google_font_preconnect,

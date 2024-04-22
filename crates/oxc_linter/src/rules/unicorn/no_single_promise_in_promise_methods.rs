@@ -12,7 +12,7 @@ use oxc_span::Span;
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Wrapping single-element array with `Promise.{1}()` is unnecessary.")]
+#[error("eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.{1}()` is unnecessary.")]
 #[diagnostic(
     severity(warning),
     help("Either use the value directly, or switch to `Promise.resolve(…)`.")

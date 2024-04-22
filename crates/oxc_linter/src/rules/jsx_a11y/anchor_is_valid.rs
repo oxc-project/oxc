@@ -295,7 +295,7 @@ fn test() {
             r"<Link href='#foo' />",
             Some(serde_json::json!({ "validHrefs": ["#foo"] })),
             Some(
-                serde_json::json!({ "jsx-a11y": { "components": { "Anchor": "a", "Link": "a" } } }),
+                serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Anchor": "a", "Link": "a" } } } }),
             ),
         ),
         // (r#"<a {...props} />"#, Some(serde_json::json!(specialLink))),
@@ -578,7 +578,7 @@ fn test() {
             r"<Link href='#' onClick={() => void 0} />",
             None,
             Some(
-                serde_json::json!({ "jsx-a11y": { "components": { "Anchor": "a", "Link": "a" } } }),
+                serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Anchor": "a", "Link": "a" } } } }),
             ),
         ),
         // (r#"<a hrefLeft={undefined} />"#, Some(serde_json::json!(specialLink))),

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 151
 expression: prefer_expect_resolves
 ---
   ⚠ eslint-plugin-jest(prefer-expect-resolves): Prefer `await expect(...).resolves` over `expect(await ...)` syntax.

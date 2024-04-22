@@ -114,9 +114,6 @@ jobs:
     steps:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@v1
-        with:
-          show-progress: false
-          persist-credentials: false
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
@@ -195,9 +192,6 @@ jobs:
     steps:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@v1
-        with:
-          show-progress: false
-          persist-credentials: false
 
       - name: Install Node.js
         uses: actions/setup-node@v4

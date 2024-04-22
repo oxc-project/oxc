@@ -54,10 +54,21 @@ impl<'a> AstNode<'a> {
 }
 
 /// Untyped AST nodes flattened into an vec
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct AstNodes<'a> {
+    root: AstNodeId,
     nodes: IndexVec<AstNodeId, AstNode<'a>>,
     parent_ids: IndexVec<AstNodeId, Option<AstNodeId>>,
+}
+
+impl<'a> Default for AstNodes<'a> {
+    fn default() -> Self {
+        Self {
+            root: AstNodeId::new(0),
+            nodes: IndexVec::default(),
+            parent_ids: IndexVec::default(),
+        }
+    }
 }
 
 impl<'a> AstNodes<'a> {
@@ -96,6 +107,36 @@ impl<'a> AstNodes<'a> {
 
     pub fn get_node_mut(&mut self, ast_node_id: AstNodeId) -> &mut AstNode<'a> {
         &mut self.nodes[ast_node_id]
+    }
+
+    /// Get the root `AstNodeId`, It is always pointing to a `Program`.
+    pub fn root(&self) -> AstNodeId {
+        self.root
+    }
+
+    /// Set the root node,
+    /// SAFETY:
+    /// The root `AstNode` should always point to a `Program` and this should be the real root of
+    /// the tree, It isn't possible to statically check for this so user should think about it before
+    /// using.
+    #[allow(unsafe_code)]
+    pub(super) unsafe fn set_root(&mut self, root: &AstNode<'a>) {
+        match root.kind() {
+            AstKind::Program(_) => {
+                self.root = root.id();
+            }
+            _ => unreachable!("Expected a `Program` node as the root of the tree."),
+        }
+    }
+
+    /// Get the root node as immutable reference, It is always guaranteed to be a `Program`.
+    pub fn root_node(&self) -> &AstNode<'a> {
+        self.get_node(self.root())
+    }
+
+    /// Get the root node as mutable reference, It is always guaranteed to be a `Program`.
+    pub fn root_node_mut(&mut self) -> &mut AstNode<'a> {
+        self.get_node_mut(self.root())
     }
 
     /// Walk up the AST, iterating over each parent node.

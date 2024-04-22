@@ -1,4 +1,7 @@
-use std::{convert::From, ops::Deref};
+use std::{
+    convert::From,
+    ops::{Deref, DerefMut},
+};
 
 mod arena;
 
@@ -21,6 +24,12 @@ impl Deref for Allocator {
 
     fn deref(&self) -> &Self::Target {
         &self.bump
+    }
+}
+
+impl DerefMut for Allocator {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.bump
     }
 }
 

@@ -1641,8 +1641,17 @@ pub struct TryStatement<'a> {
 pub struct CatchClause<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub param: Option<BindingPattern<'a>>,
+    pub param: Option<CatchParameter<'a>>,
     pub body: Box<'a, BlockStatement<'a>>,
+}
+
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+pub struct CatchParameter<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
+    pub span: Span,
+    pub pattern: BindingPattern<'a>,
 }
 
 /// Debugger Statement
@@ -2016,7 +2025,7 @@ pub struct Class<'a> {
     pub body: Box<'a, ClassBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    pub implements: Option<Vec<'a, Box<'a, TSClassImplements<'a>>>>,
+    pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
     pub decorators: Vec<'a, Decorator<'a>>,
     /// Valid Modifiers: `export`, `abstract`
     pub modifiers: Modifiers<'a>,
@@ -2364,11 +2373,11 @@ pub struct ImportDeclaration<'a> {
 pub enum ImportDeclarationSpecifier<'a> {
     /// import {imported} from "source"
     /// import {imported as local} from "source"
-    ImportSpecifier(ImportSpecifier<'a>),
+    ImportSpecifier(Box<'a, ImportSpecifier<'a>>),
     /// import local from "source"
-    ImportDefaultSpecifier(ImportDefaultSpecifier<'a>),
+    ImportDefaultSpecifier(Box<'a, ImportDefaultSpecifier<'a>>),
     /// import * as local from "source"
-    ImportNamespaceSpecifier(ImportNamespaceSpecifier<'a>),
+    ImportNamespaceSpecifier(Box<'a, ImportNamespaceSpecifier<'a>>),
 }
 
 // import {imported} from "source"

@@ -9,7 +9,7 @@ use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{Fix, Message},
     javascript_globals::GLOBALS,
-    ESLintEnv, ESLintSettings,
+    ESLintConfig, ESLintEnv, ESLintGlobals, ESLintSettings,
 };
 
 pub struct LintContext<'a> {
@@ -26,9 +26,7 @@ pub struct LintContext<'a> {
 
     file_path: Box<Path>,
 
-    settings: Arc<ESLintSettings>,
-
-    env: Arc<ESLintEnv>,
+    eslint_config: Arc<ESLintConfig>,
 }
 
 impl<'a> LintContext<'a> {
@@ -42,8 +40,7 @@ impl<'a> LintContext<'a> {
             fix: false,
             current_rule_name: "",
             file_path,
-            settings: Arc::new(ESLintSettings::default()),
-            env: Arc::new(ESLintEnv::default()),
+            eslint_config: Arc::new(ESLintConfig::default()),
         }
     }
 
@@ -54,14 +51,8 @@ impl<'a> LintContext<'a> {
     }
 
     #[must_use]
-    pub fn with_settings(mut self, settings: &Arc<ESLintSettings>) -> Self {
-        self.settings = Arc::clone(settings);
-        self
-    }
-
-    #[must_use]
-    pub fn with_env(mut self, env: &Arc<ESLintEnv>) -> Self {
-        self.env = Arc::clone(env);
+    pub fn with_eslint_config(mut self, eslint_config: &Arc<ESLintConfig>) -> Self {
+        self.eslint_config = Arc::clone(eslint_config);
         self
     }
 
@@ -71,10 +62,6 @@ impl<'a> LintContext<'a> {
 
     pub fn disable_directives(&self) -> &DisableDirectives<'a> {
         &self.disable_directives
-    }
-
-    pub fn settings(&self) -> &ESLintSettings {
-        &self.settings
     }
 
     pub fn source_text(&self) -> &'a str {
@@ -89,12 +76,20 @@ impl<'a> LintContext<'a> {
         &self.file_path
     }
 
-    pub fn envs(&self) -> &ESLintEnv {
-        &self.env
+    pub fn settings(&self) -> &ESLintSettings {
+        &self.eslint_config.settings
+    }
+
+    pub fn globals(&self) -> &ESLintGlobals {
+        &self.eslint_config.globals
+    }
+
+    pub fn env(&self) -> &ESLintEnv {
+        &self.eslint_config.env
     }
 
     pub fn env_contains_var(&self, var: &str) -> bool {
-        for env in self.env.iter() {
+        for env in self.env().iter() {
             let env = GLOBALS.get(env).unwrap_or(&GLOBALS["builtin"]);
             if env.get(var).is_some() {
                 return true;

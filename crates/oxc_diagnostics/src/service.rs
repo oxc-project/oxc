@@ -52,6 +52,14 @@ impl DiagnosticService {
         self.reporter = DiagnosticReporter::new_json();
     }
 
+    pub fn set_unix_reporter(&mut self) {
+        self.reporter = DiagnosticReporter::new_unix();
+    }
+
+    pub fn set_checkstyle_reporter(&mut self) {
+        self.reporter = DiagnosticReporter::new_checkstyle();
+    }
+
     pub fn is_graphical_output(&self) -> bool {
         matches!(self.reporter, DiagnosticReporter::Graphical { .. })
     }

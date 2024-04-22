@@ -572,7 +572,7 @@ impl<'a> SourcePosition<'a> {
         // SAFETY:
         // Caller guarantees `self` is not at end of source text.
         // `Source` is created from a valid `&str`, so points to allocated, initialized memory.
-        // `Source` conceptually holds the source text `&str`, which guarantees to mutable references
+        // `Source` conceptually holds the source text `&str`, which guarantees no mutable references
         // to the same memory can exist, as that would violate Rust's aliasing rules.
         // Pointer is "dereferenceable" by definition as a `u8` is 1 byte and cannot span multiple objects.
         // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
@@ -590,7 +590,7 @@ impl<'a> SourcePosition<'a> {
         // SAFETY:
         // Caller guarantees `self` is not at no later than 2 bytes before end of source text.
         // `Source` is created from a valid `&str`, so points to allocated, initialized memory.
-        // `Source` conceptually holds the source text `&str`, which guarantees to mutable references
+        // `Source` conceptually holds the source text `&str`, which guarantees no mutable references
         // to the same memory can exist, as that would violate Rust's aliasing rules.
         // Pointer is "dereferenceable" by definition as a `u8` is 1 byte and cannot span multiple objects.
         // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).

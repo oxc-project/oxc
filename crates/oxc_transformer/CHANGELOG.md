@@ -5,6 +5,53 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.12.5] - 2024-04-22
+
+### Performance
+
+- Box typescript enum variants. (#3065)
+- Box enum variants (#3058)
+- Box `ImportDeclarationSpecifier` enum variants (#3061)
+
+## [0.12.4] - 2024-04-19
+
+### Features
+
+- Report error for export = <value> (#3021)
+- Reports error for import lib = require(...); (#3020)
+- Insert this assignment after the super call (#3018)
+- Reports duplicate __self/__source prop error (#3009)
+- Add "_jsxFileName" variable in jsx source plugin (#3000)
+- Support for transform TSImportEqualsDeclaration (#2998)
+- Support for transform enum (#2997)
+- Add import helpers to manage module imports (#2996)
+- Correct elide imports/exports statements (#2995)
+- Skip tests with plugin.js (#2978)
+- Add diagnostics to react transform (#2974)
+- Skip plugins we don't support yet (#2967)
+- Apply jsx self and source plugin inside jsx transform (#2966)
+- React jsx transform (#2961)
+- Start on TypeScript annotation removal (#2951)
+- Add the most basic plugin toggles (#2950)
+- Implement react-jsx-source (#2948)
+- Implement react-jsx-self (#2946)
+- Transform TypeScript namespace (#2942)
+- Add filename (#2941)
+
+### Bug Fixes
+
+- `TypeScriptOptions` deserialize should fallback to default (#3012)
+- Modifiers should not be removed (#3005)
+- React `development` default value should be false (#3002)
+- Deserialize ReactJsxRuntime with camelCase (#2972)
+- Turn on react preset by default (#2968)
+- Fix incorrect jsx whitespace text handling (#2969)
+
+### Refactor
+
+- Remove boilerplate code around decorators to reduce noise (#2991)
+- Clean up some code (#2949)
+
 ## [0.12.3] - 2024-04-11
 
 ### Features

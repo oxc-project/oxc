@@ -44,8 +44,10 @@ impl<'a> TypeScript<'a> {
             let binding = self.ctx.ast.binding_pattern(binding_pattern_kind, None, false);
             let decl_span = decl.span;
 
-            let init = match &mut *decl.module_reference {
-                TSModuleReference::TypeName(type_name) => self.transform_ts_type_name(type_name),
+            let init = match &mut decl.module_reference {
+                TSModuleReference::TypeName(type_name) => {
+                    self.transform_ts_type_name(&mut *type_name)
+                }
                 TSModuleReference::ExternalModuleReference(reference) => {
                     if self.ctx.source_type().is_module() {
                         self.ctx.error(ImportEqualsRequireUnsupported(decl_span));

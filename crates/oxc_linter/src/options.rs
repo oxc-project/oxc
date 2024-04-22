@@ -1,5 +1,10 @@
 use std::path::PathBuf;
 
+use rustc_hash::FxHashSet;
+use serde_json::{Number, Value};
+
+use oxc_diagnostics::Error;
+
 use crate::{
     config::{
         errors::{
@@ -9,11 +14,8 @@ use crate::{
         ESLintConfig,
     },
     rules::RULES,
-    ESLintEnv, ESLintSettings, RuleCategory, RuleEnum,
+    RuleCategory, RuleEnum,
 };
-use oxc_diagnostics::Error;
-use rustc_hash::FxHashSet;
-use serde_json::{Number, Value};
 
 #[derive(Debug)]
 pub struct LintOptions {
@@ -22,14 +24,12 @@ pub struct LintOptions {
     pub filter: Vec<(AllowWarnDeny, String)>,
     pub config_path: Option<PathBuf>,
     pub fix: bool,
-    pub timing: bool,
     pub import_plugin: bool,
     pub jsdoc_plugin: bool,
     pub jest_plugin: bool,
     pub jsx_a11y_plugin: bool,
     pub nextjs_plugin: bool,
     pub react_perf_plugin: bool,
-    pub env: ESLintEnv,
 }
 
 impl Default for LintOptions {
@@ -38,14 +38,12 @@ impl Default for LintOptions {
             filter: vec![(AllowWarnDeny::Deny, String::from("correctness"))],
             config_path: None,
             fix: false,
-            timing: false,
             import_plugin: false,
             jsdoc_plugin: false,
             jest_plugin: false,
             jsx_a11y_plugin: false,
             nextjs_plugin: false,
             react_perf_plugin: false,
-            env: ESLintEnv::default(),
         }
     }
 }
@@ -68,12 +66,6 @@ impl LintOptions {
     #[must_use]
     pub fn with_fix(mut self, yes: bool) -> Self {
         self.fix = yes;
-        self
-    }
-
-    #[must_use]
-    pub fn with_timing(mut self, yes: bool) -> Self {
-        self.timing = yes;
         self
     }
 
@@ -110,12 +102,6 @@ impl LintOptions {
     #[must_use]
     pub fn with_react_perf_plugin(mut self, yes: bool) -> Self {
         self.react_perf_plugin = yes;
-        self
-    }
-
-    #[must_use]
-    pub fn with_env(mut self, env: Vec<String>) -> Self {
-        self.env = ESLintEnv::from_vec(env);
         self
     }
 }
@@ -186,9 +172,7 @@ impl LintOptions {
     /// # Errors
     ///
     /// * Returns `Err` if there are any errors parsing the configuration file.
-    pub fn derive_rules_and_settings_and_env(
-        &self,
-    ) -> Result<(Vec<RuleEnum>, ESLintSettings, ESLintEnv), Error> {
+    pub fn derive_rules_and_config(&self) -> Result<(Vec<RuleEnum>, ESLintConfig), Error> {
         let config =
             self.config_path.as_ref().map(|path| ESLintConfig::from_file(path)).transpose()?;
 
@@ -205,7 +189,12 @@ impl LintOptions {
                         ),
                         None => {
                             if name_or_category == "all" {
-                                rules.extend(all_rules.iter().cloned());
+                                rules.extend(
+                                    all_rules
+                                        .iter()
+                                        .filter(|rule| rule.category() != RuleCategory::Nursery)
+                                        .cloned(),
+                                );
                             } else {
                                 rules.extend(
                                     all_rules
@@ -238,31 +227,26 @@ impl LintOptions {
 
         let mut rules = rules.into_iter().collect::<Vec<_>>();
 
-        let (settings, env) = config.map(ESLintConfig::properties).unwrap_or_default();
-
         // for stable diagnostics output ordering
         rules.sort_unstable_by_key(RuleEnum::name);
 
-        Ok((rules, settings, env))
+        Ok((rules, config.unwrap_or_default()))
     }
 
-    // get final filtered rules by reading `self.xxx_plugin`
+    /// Get final filtered rules by reading `self.xxx_plugin`
     fn get_filtered_rules(&self) -> Vec<RuleEnum> {
-        let mut rules = RULES.clone();
-
-        let mut may_exclude_plugin_rules = |yes: bool, name: &str| {
-            if !yes {
-                rules.retain(|rule| rule.plugin_name() != name);
-            }
-        };
-
-        may_exclude_plugin_rules(self.import_plugin, IMPORT_PLUGIN_NAME);
-        may_exclude_plugin_rules(self.jsdoc_plugin, JSDOC_PLUGIN_NAME);
-        may_exclude_plugin_rules(self.jest_plugin, JEST_PLUGIN_NAME);
-        may_exclude_plugin_rules(self.jsx_a11y_plugin, JSX_A11Y_PLUGIN_NAME);
-        may_exclude_plugin_rules(self.nextjs_plugin, NEXTJS_PLUGIN_NAME);
-        may_exclude_plugin_rules(self.react_perf_plugin, REACT_PERF_PLUGIN_NAME);
-
-        rules
+        RULES
+            .iter()
+            .filter(|rule| match rule.plugin_name() {
+                IMPORT_PLUGIN_NAME if !self.import_plugin => false,
+                JSDOC_PLUGIN_NAME if !self.jsdoc_plugin => false,
+                JEST_PLUGIN_NAME if !self.jest_plugin => false,
+                JSX_A11Y_PLUGIN_NAME if !self.jsx_a11y_plugin => false,
+                NEXTJS_PLUGIN_NAME if !self.nextjs_plugin => false,
+                REACT_PERF_PLUGIN_NAME if !self.react_perf_plugin => false,
+                _ => true,
+            })
+            .cloned()
+            .collect::<Vec<_>>()
     }
 }

@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 
@@ -103,7 +103,7 @@ impl<'a> SeparatedList<'a> for TSTupleElementList<'a> {
 }
 
 pub struct TSTypeParameterList<'a> {
-    pub params: Vec<'a, Box<'a, TSTypeParameter<'a>>>,
+    pub params: Vec<'a, TSTypeParameter<'a>>,
 }
 
 impl<'a> SeparatedList<'a> for TSTypeParameterList<'a> {

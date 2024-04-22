@@ -61,7 +61,6 @@ jobs:
       - name: Clone ${{ matrix.repository }}
         uses: taiki-e/checkout-action@v1
         with:
-          show-progress: false
           repository: ${{ matrix.repository }}
           ref: ${{ matrix.ref }}
           path: ./e2e

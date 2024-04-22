@@ -1,7 +1,7 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, GetSpan, Span};
 
 use super::{
     declaration::{VariableDeclarationContext, VariableDeclarationParent},
@@ -530,7 +530,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_catch_clause(&mut self) -> Result<Box<'a, CatchClause<'a>>> {
         let span = self.start_span();
         self.bump_any(); // advance `catch`
-        let param = if self.eat(Kind::LParen) {
+        let pattern = if self.eat(Kind::LParen) {
             let pattern = self.parse_binding_pattern(false)?;
             self.expect(Kind::RParen)?;
             Some(pattern)
@@ -538,6 +538,7 @@ impl<'a> ParserImpl<'a> {
             None
         };
         let body = self.parse_block()?;
+        let param = pattern.map(|pattern| self.ast.catch_parameter(pattern.kind.span(), pattern));
         Ok(self.ast.catch_clause(self.end_span(span), param, body))
     }
 

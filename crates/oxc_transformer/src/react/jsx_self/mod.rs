@@ -66,7 +66,8 @@ impl<'a> ReactJsxSelf<'a> {
             }
         }
 
-        let name = JSXAttributeName::Identifier(JSXIdentifier::new(SPAN, SELF.into()));
+        let name =
+            JSXAttributeName::Identifier(self.ctx.ast.alloc(JSXIdentifier::new(SPAN, SELF.into())));
         let value = {
             let jsx_expr = JSXExpression::Expression(self.ctx.ast.this_expression(SPAN));
             let container = self.ctx.ast.jsx_expression_container(SPAN, jsx_expr);

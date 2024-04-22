@@ -501,7 +501,7 @@ impl<'a> Format<'a> for CatchClause<'a> {
             parts.push(ss!("catch "));
             if let Some(param) = &self.param {
                 parts.push(ss!("("));
-                parts.push(format!(p, param));
+                parts.push(format!(p, param.pattern));
                 parts.push(ss!(") "));
             }
             parts.push(format!(p, self.body));

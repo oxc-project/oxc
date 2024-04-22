@@ -10,7 +10,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    rules::RULES, ESLintSettings, Fixer, LintOptions, LintService, LintServiceOptions, Linter,
+    rules::RULES, ESLintConfig, Fixer, LintOptions, LintService, LintServiceOptions, Linter,
     RuleEnum,
 };
 
@@ -24,8 +24,8 @@ enum TestResult {
 #[derive(Debug, Clone, Default)]
 pub struct TestCase {
     source: String,
-    config: Option<Value>,
-    settings: Option<Value>,
+    rule_config: Option<Value>,
+    eslint_config: Option<Value>,
     path: Option<PathBuf>,
 }
 
@@ -35,23 +35,34 @@ impl From<&str> for TestCase {
     }
 }
 
+impl From<String> for TestCase {
+    fn from(source: String) -> Self {
+        Self { source, ..Self::default() }
+    }
+}
+
 impl From<(&str, Option<Value>)> for TestCase {
-    fn from((source, config): (&str, Option<Value>)) -> Self {
-        Self { source: source.to_string(), config, ..Self::default() }
+    fn from((source, rule_config): (&str, Option<Value>)) -> Self {
+        Self { source: source.to_string(), rule_config, ..Self::default() }
     }
 }
 
 impl From<(&str, Option<Value>, Option<Value>)> for TestCase {
-    fn from((source, config, settings): (&str, Option<Value>, Option<Value>)) -> Self {
-        Self { source: source.to_string(), config, settings, ..Self::default() }
+    fn from((source, rule_config, eslint_config): (&str, Option<Value>, Option<Value>)) -> Self {
+        Self { source: source.to_string(), rule_config, eslint_config, ..Self::default() }
     }
 }
 
 impl From<(&str, Option<Value>, Option<Value>, Option<PathBuf>)> for TestCase {
     fn from(
-        (source, config, settings, path): (&str, Option<Value>, Option<Value>, Option<PathBuf>),
+        (source, rule_config, eslint_config, path): (
+            &str,
+            Option<Value>,
+            Option<Value>,
+            Option<PathBuf>,
+        ),
     ) -> Self {
-        Self { source: source.to_string(), config, settings, path }
+        Self { source: source.to_string(), rule_config, eslint_config, path }
     }
 }
 
@@ -153,16 +164,16 @@ impl Tester {
     }
 
     fn test_pass(&mut self) {
-        for TestCase { source, config, settings, path } in self.expect_pass.clone() {
-            let result = self.run(&source, config, false, &settings, &path);
+        for TestCase { source, rule_config, eslint_config, path } in self.expect_pass.clone() {
+            let result = self.run(&source, rule_config, &eslint_config, path, false);
             let passed = result == TestResult::Passed;
             assert!(passed, "expect test to pass: {source} {}", self.snapshot);
         }
     }
 
     fn test_fail(&mut self) {
-        for TestCase { source, config, settings, path } in self.expect_fail.clone() {
-            let result = self.run(&source, config, false, &settings, &path);
+        for TestCase { source, rule_config, eslint_config, path } in self.expect_fail.clone() {
+            let result = self.run(&source, rule_config, &eslint_config, path, false);
             let failed = result == TestResult::Failed;
             assert!(failed, "expect test to fail: {source}");
         }
@@ -170,7 +181,7 @@ impl Tester {
 
     fn test_fix(&mut self) {
         for (test, expected, config) in self.expect_fix.clone() {
-            let result = self.run(&test, config, true, &None, &None);
+            let result = self.run(&test, config, &None, None, true);
             if let TestResult::Fixed(fixed_str) = result {
                 assert_eq!(expected, fixed_str);
             } else {
@@ -182,16 +193,13 @@ impl Tester {
     fn run(
         &mut self,
         source_text: &str,
-        config: Option<Value>,
+        rule_config: Option<Value>,
+        eslint_config: &Option<Value>,
+        path: Option<PathBuf>,
         is_fix: bool,
-        settings: &Option<Value>,
-        path: &Option<PathBuf>,
     ) -> TestResult {
         let allocator = Allocator::default();
-        let rule = self.find_rule().read_json(config);
-        let lint_settings: ESLintSettings = settings
-            .as_ref()
-            .map_or_else(ESLintSettings::default, |v| ESLintSettings::deserialize(v).unwrap());
+        let rule = self.find_rule().read_json(rule_config);
         let options = LintOptions::default()
             .with_fix(is_fix)
             .with_import_plugin(self.import_plugin)
@@ -199,10 +207,13 @@ impl Tester {
             .with_jsx_a11y_plugin(self.jsx_a11y_plugin)
             .with_nextjs_plugin(self.nextjs_plugin)
             .with_react_perf_plugin(self.react_perf_plugin);
+        let eslint_config = eslint_config
+            .as_ref()
+            .map_or_else(ESLintConfig::default, |v| ESLintConfig::deserialize(v).unwrap());
         let linter = Linter::from_options(options)
             .unwrap()
             .with_rules(vec![rule])
-            .with_settings(lint_settings);
+            .with_eslint_config(eslint_config);
         let path_to_lint = if self.import_plugin {
             assert!(path.is_none(), "import plugin does not support path");
             self.current_working_directory.join(&self.rule_path)

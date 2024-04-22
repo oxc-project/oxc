@@ -395,10 +395,14 @@ impl<'a> AstBuilder<'a> {
     pub fn catch_clause(
         &self,
         span: Span,
-        param: Option<BindingPattern<'a>>,
+        param: Option<CatchParameter<'a>>,
         body: Box<'a, BlockStatement<'a>>,
     ) -> Box<'a, CatchClause<'a>> {
         self.alloc(CatchClause { span, param, body })
+    }
+
+    pub fn catch_parameter(&self, span: Span, pattern: BindingPattern<'a>) -> CatchParameter<'a> {
+        CatchParameter { span, pattern }
     }
 
     pub fn while_statement(
@@ -940,7 +944,7 @@ impl<'a> AstBuilder<'a> {
         body: Box<'a, ClassBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-        implements: Option<Vec<'a, Box<'a, TSClassImplements<'a>>>>,
+        implements: Option<Vec<'a, TSClassImplements<'a>>>,
         decorators: Vec<'a, Decorator<'a>>,
         modifiers: Modifiers<'a>,
     ) -> Box<'a, Class<'a>> {
@@ -1298,12 +1302,16 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         expression: JSXExpression<'a>,
-    ) -> JSXExpressionContainer<'a> {
-        JSXExpressionContainer { span, expression }
+    ) -> Box<'a, JSXExpressionContainer<'a>> {
+        self.alloc(JSXExpressionContainer { span, expression })
     }
 
-    pub fn jsx_spread_child(&self, span: Span, expression: Expression<'a>) -> JSXSpreadChild<'a> {
-        JSXSpreadChild { span, expression }
+    pub fn jsx_spread_child(
+        &self,
+        span: Span,
+        expression: Expression<'a>,
+    ) -> Box<'a, JSXSpreadChild<'a>> {
+        self.alloc(JSXSpreadChild { span, expression })
     }
 
     pub fn jsx_empty_expression(&self, span: Span) -> JSXEmptyExpression {
@@ -1331,8 +1339,8 @@ impl<'a> AstBuilder<'a> {
         JSXIdentifier { span, name }
     }
 
-    pub fn jsx_text(&self, span: Span, value: Atom<'a>) -> JSXText<'a> {
-        JSXText { span, value }
+    pub fn jsx_text(&self, span: Span, value: Atom<'a>) -> Box<'a, JSXText<'a>> {
+        self.alloc(JSXText { span, value })
     }
 
     /* ---------- TypeScript ---------- */
@@ -1419,8 +1427,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: TSTypeName<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    ) -> Box<'a, TSClassImplements<'a>> {
-        self.alloc(TSClassImplements { span, expression, type_parameters })
+    ) -> TSClassImplements<'a> {
+        TSClassImplements { span, expression, type_parameters }
     }
 
     pub fn ts_type_parameter(
@@ -1432,14 +1440,14 @@ impl<'a> AstBuilder<'a> {
         r#in: bool,
         out: bool,
         r#const: bool,
-    ) -> Box<'a, TSTypeParameter<'a>> {
-        self.alloc(TSTypeParameter { span, name, constraint, default, r#in, out, r#const })
+    ) -> TSTypeParameter<'a> {
+        TSTypeParameter { span, name, constraint, default, r#in, out, r#const }
     }
 
     pub fn ts_type_parameters(
         &self,
         span: Span,
-        params: Vec<'a, Box<'a, TSTypeParameter<'a>>>,
+        params: Vec<'a, TSTypeParameter<'a>>,
     ) -> Box<'a, TSTypeParameterDeclaration<'a>> {
         self.alloc(TSTypeParameterDeclaration { span, params })
     }
@@ -1447,10 +1455,12 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_interface_heritages(
         &self,
         extends: Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>,
-    ) -> Vec<'a, Box<'a, TSInterfaceHeritage<'a>>> {
+    ) -> Vec<'a, TSInterfaceHeritage<'a>> {
         Vec::from_iter_in(
-            extends.into_iter().map(|(expression, type_parameters, span)| {
-                self.alloc(TSInterfaceHeritage { span, expression, type_parameters })
+            extends.into_iter().map(|(expression, type_parameters, span)| TSInterfaceHeritage {
+                span,
+                expression,
+                type_parameters,
             }),
             self.allocator,
         )
@@ -1467,7 +1477,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_index_signature(
         &self,
         span: Span,
-        parameters: Vec<'a, Box<'a, TSIndexSignatureName<'a>>>,
+        parameters: Vec<'a, TSIndexSignatureName<'a>>,
         type_annotation: Box<'a, TSTypeAnnotation<'a>>,
         readonly: bool,
     ) -> TSSignature<'a> {
@@ -1620,7 +1630,7 @@ impl<'a> AstBuilder<'a> {
         Declaration::TSImportEqualsDeclaration(self.alloc(TSImportEqualsDeclaration {
             span,
             id,
-            module_reference: self.alloc(module_reference),
+            module_reference,
             import_kind,
         }))
     }
@@ -1631,7 +1641,7 @@ impl<'a> AstBuilder<'a> {
         id: BindingIdentifier<'a>,
         body: Box<'a, TSInterfaceBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        extends: Option<Vec<'a, Box<'a, TSInterfaceHeritage<'a>>>>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
         modifiers: Modifiers<'a>,
     ) -> Declaration<'a> {
         Declaration::TSInterfaceDeclaration(self.alloc(TSInterfaceDeclaration {
@@ -1858,6 +1868,70 @@ impl<'a> AstBuilder<'a> {
             asserts,
             type_annotation,
         }))
+    }
+
+    pub fn ts_enum_member_name_identifier(
+        &self,
+        ident: IdentifierName<'a>,
+    ) -> TSEnumMemberName<'a> {
+        TSEnumMemberName::Identifier(self.alloc(ident))
+    }
+
+    pub fn ts_enum_member_name_string_literal(
+        &self,
+        lit: StringLiteral<'a>,
+    ) -> TSEnumMemberName<'a> {
+        TSEnumMemberName::StringLiteral(self.alloc(lit))
+    }
+
+    pub fn ts_enum_member_name_computed_property_name(
+        &self,
+        expr: Expression<'a>,
+    ) -> TSEnumMemberName<'a> {
+        TSEnumMemberName::ComputedPropertyName(expr)
+    }
+
+    pub fn ts_enum_member_name_number_literal(
+        &self,
+        lit: NumericLiteral<'a>,
+    ) -> TSEnumMemberName<'a> {
+        TSEnumMemberName::NumericLiteral(self.alloc(lit))
+    }
+
+    pub fn ts_module_reference_external_module_reference(
+        &self,
+        reference: TSExternalModuleReference<'a>,
+    ) -> TSModuleReference<'a> {
+        TSModuleReference::ExternalModuleReference(self.alloc(reference))
+    }
+
+    pub fn ts_module_reference_type_name(
+        &self,
+        reference: TSTypeName<'a>,
+    ) -> TSModuleReference<'a> {
+        TSModuleReference::TypeName(reference)
+    }
+
+    pub fn ts_type_predicate_name_this(&self, ty: TSThisType) -> TSTypePredicateName<'a> {
+        TSTypePredicateName::This(ty)
+    }
+
+    pub fn ts_type_predicate_name_identifier(
+        &self,
+        ident: IdentifierName<'a>,
+    ) -> TSTypePredicateName<'a> {
+        TSTypePredicateName::Identifier(self.alloc(ident))
+    }
+
+    pub fn ts_type_query_expr_name_import_type(
+        &self,
+        ty: TSImportType<'a>,
+    ) -> TSTypeQueryExprName<'a> {
+        TSTypeQueryExprName::TSImportType(self.alloc(ty))
+    }
+
+    pub fn ts_type_query_expr_name_type_name(&self, ty: TSTypeName<'a>) -> TSTypeQueryExprName<'a> {
+        TSTypeQueryExprName::TSTypeName(ty)
     }
 
     /* JSDoc */

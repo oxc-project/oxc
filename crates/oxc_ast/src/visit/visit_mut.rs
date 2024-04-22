@@ -111,6 +111,10 @@ pub trait VisitMut<'a>: Sized {
         walk_catch_clause_mut(self, clause);
     }
 
+    fn visit_catch_parameter(&mut self, param: &mut CatchParameter<'a>) {
+        walk_catch_parameter_mut(self, param);
+    }
+
     fn visit_finally_clause(&mut self, clause: &mut BlockStatement<'a>) {
         walk_finally_clause_mut(self, clause);
     }
@@ -1147,11 +1151,21 @@ pub mod walk_mut {
         visitor.enter_scope(ScopeFlags::empty());
         visitor.enter_node(kind);
         if let Some(param) = &mut clause.param {
-            visitor.visit_binding_pattern(param);
+            visitor.visit_catch_parameter(param);
         }
         visitor.visit_statements(&mut clause.body.body);
         visitor.leave_node(kind);
         visitor.leave_scope();
+    }
+
+    pub fn walk_catch_parameter_mut<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        param: &mut CatchParameter<'a>,
+    ) {
+        let kind = AstType::CatchParameter;
+        visitor.enter_node(kind);
+        visitor.visit_binding_pattern(&mut param.pattern);
+        visitor.leave_node(kind);
     }
 
     pub fn walk_finally_clause_mut<'a, V: VisitMut<'a>>(

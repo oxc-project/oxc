@@ -5,6 +5,28 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.12.5] - 2024-04-22
+
+### Features
+
+- Add `CatchParameter` node (#3049)
+- Add root node to the `AstNodes` structure. (#3032)
+
+### Bug Fixes
+
+- Correctly resolve identifiers inside catch parameter initializers (#3050)
+- Correctly resolve identifiers inside parameter initializers (#3046)
+
+## [0.12.4] - 2024-04-19
+
+### Features
+
+- Handle optional type syntax for type name part (#2960)
+
+### Bug Fixes
+
+- Skip parsing `@` inside of backticks (#3017)
+
 ## [0.12.3] - 2024-04-11
 
 ### Refactor
