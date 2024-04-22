@@ -1215,7 +1215,7 @@ checksum = "caff54706df99d2a78a5a4e3455ff45448d81ef1bb63c22cd14052ca0e993a3f"
 
 [[package]]
 name = "oxc"
-version = "0.12.4"
+version = "0.12.5"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1233,7 +1233,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_allocator"
-version = "0.12.4"
+version = "0.12.5"
 dependencies = [
  "allocator-api2",
  "bumpalo",
@@ -1243,7 +1243,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.12.4"
+version = "0.12.5"
 dependencies = [
  "bitflags 2.5.0",
  "num-bigint",
@@ -1301,7 +1301,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_codegen"
-version = "0.12.4"
+version = "0.12.5"
 dependencies = [
  "base64 0.22.0",
  "bitflags 2.5.0",
@@ -1349,7 +1349,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.12.4"
+version = "0.12.5"
 dependencies = [
  "miette",
  "owo-colors",
@@ -1360,7 +1360,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_index"
-version = "0.12.4"
+version = "0.12.5"
 dependencies = [
  "index_vec",
  "static_assertions",
@@ -1445,7 +1445,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minifier"
-version = "0.12.4"
+version = "0.12.5"
 dependencies = [
  "insta",
  "itertools",
@@ -1489,7 +1489,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.12.4"
+version = "0.12.5"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.5.0",
@@ -1583,7 +1583,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.12.4"
+version = "0.12.5"
 dependencies = [
  "indexmap",
  "insta",
@@ -1605,7 +1605,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_sourcemap"
-version = "0.12.4"
+version = "0.12.5"
 dependencies = [
  "base64-simd",
  "rayon",
@@ -1616,7 +1616,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.12.4"
+version = "0.12.5"
 dependencies = [
  "compact_str",
  "miette",
@@ -1627,7 +1627,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.12.4"
+version = "0.12.5"
 dependencies = [
  "bitflags 2.5.0",
  "dashmap",
@@ -1676,7 +1676,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer"
-version = "0.12.4"
+version = "0.12.5"
 dependencies = [
  "indexmap",
  "oxc_allocator",

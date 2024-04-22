@@ -5,6 +5,24 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.12.5] - 2024-04-22
+
+### Features
+
+- Add `CatchParameter` node (#3049)
+
+### Performance
+
+- Box typescript enum variants. (#3065)
+- Box enum variants (#3058)
+- Box `ImportDeclarationSpecifier` enum variants (#3061)
+- Reduce indirection in AST types (#3051)
+
+### Refactor
+
+- Implement same traits on all fieldless enums (#3031)
+- Shorten code (#3027)
+
 ## [0.12.4] - 2024-04-19
 
 ### Features
