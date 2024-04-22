@@ -110,7 +110,7 @@ impl JSDocPluginSettings {
         }
     }
     /// Only for `check-tag-names` rule
-    /// Return `Some(reason)` if replacement found, include default alias
+    /// Return `Some(reason)` if replacement found or default aliased
     pub fn check_preferred_tag_name(&self, original_name: &str) -> Option<String> {
         let reason = |preferred_name: &str| -> String {
             format!("Replace tag `@{original_name}` with `@{preferred_name}`.")
@@ -128,20 +128,20 @@ impl JSDocPluginSettings {
     }
     /// Only for `check-tag-names` rule
     /// Return all user replacement tag names
-    pub fn list_user_defined_tag_names(&self) -> Vec<String> {
+    pub fn list_user_defined_tag_names(&self) -> Vec<&str> {
         self.tag_name_preference
             .iter()
             .filter_map(|(_, pref)| match pref {
                 TagNamePreference::TagNameOnly(replacement)
                 | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. } => {
-                    Some(replacement.to_string())
+                    Some(replacement.as_str())
                 }
                 _ => None,
             })
             .collect()
     }
 
-    /// Resolve original, known tag name to user preferred name
+    /// Resolve original, known tag name to user preferred, default aliased name
     /// If not defined, return original name
     pub fn resolve_tag_name(&self, original_name: &str) -> String {
         match self.tag_name_preference.get(original_name) {

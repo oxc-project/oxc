@@ -217,7 +217,7 @@ impl Rule for CheckTagNames {
                 let tag_name = tag.kind.parsed();
 
                 // If user explicitly allowed, skip
-                if user_defined_tags.contains(&tag_name.to_string())
+                if user_defined_tags.contains(&tag_name)
                     || config.defined_tags.contains(&tag_name.to_string())
                 {
                     continue;
