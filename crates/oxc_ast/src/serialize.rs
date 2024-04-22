@@ -64,7 +64,6 @@ impl<'a> Serialize for ArrayAssignmentTarget<'a> {
         let converted = SerArrayAssignmentTarget {
             span: self.span,
             elements: ElementsAndRest::new(&self.elements, &self.rest),
-            trailing_comma: self.trailing_comma,
         };
         converted.serialize(serializer)
     }
@@ -77,7 +76,6 @@ struct SerArrayAssignmentTarget<'a, 'b> {
     span: Span,
     elements:
         ElementsAndRest<'a, 'b, Option<AssignmentTargetMaybeDefault<'a>>, AssignmentTargetRest<'a>>,
-    trailing_comma: Option<Span>,
 }
 
 impl<'a> Serialize for ObjectAssignmentTarget<'a> {
