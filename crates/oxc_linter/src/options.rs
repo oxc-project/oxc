@@ -24,7 +24,6 @@ pub struct LintOptions {
     pub filter: Vec<(AllowWarnDeny, String)>,
     pub config_path: Option<PathBuf>,
     pub fix: bool,
-    pub timing: bool,
     pub import_plugin: bool,
     pub jsdoc_plugin: bool,
     pub jest_plugin: bool,
@@ -39,7 +38,6 @@ impl Default for LintOptions {
             filter: vec![(AllowWarnDeny::Deny, String::from("correctness"))],
             config_path: None,
             fix: false,
-            timing: false,
             import_plugin: false,
             jsdoc_plugin: false,
             jest_plugin: false,
@@ -68,12 +66,6 @@ impl LintOptions {
     #[must_use]
     pub fn with_fix(mut self, yes: bool) -> Self {
         self.fix = yes;
-        self
-    }
-
-    #[must_use]
-    pub fn with_timing(mut self, yes: bool) -> Self {
-        self.timing = yes;
         self
     }
 
