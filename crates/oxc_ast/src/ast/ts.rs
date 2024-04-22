@@ -504,7 +504,7 @@ pub struct TSTypeParameter<'a> {
 pub struct TSTypeParameterDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub params: Vec<'a, Box<'a, TSTypeParameter<'a>>>,
+    pub params: Vec<'a, TSTypeParameter<'a>>,
 }
 
 #[derive(Debug, Hash)]
@@ -551,7 +551,7 @@ pub struct TSInterfaceDeclaration<'a> {
     pub id: BindingIdentifier<'a>,
     pub body: Box<'a, TSInterfaceBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    pub extends: Option<Vec<'a, Box<'a, TSInterfaceHeritage<'a>>>>,
+    pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
     /// Valid Modifiers: `export`, `default`, `declare`
     pub modifiers: Modifiers<'a>,
 }
@@ -595,7 +595,7 @@ pub enum TSSignature<'a> {
 pub struct TSIndexSignature<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub parameters: Vec<'a, Box<'a, TSIndexSignatureName<'a>>>,
+    pub parameters: Vec<'a, TSIndexSignatureName<'a>>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
     pub readonly: bool,
 }

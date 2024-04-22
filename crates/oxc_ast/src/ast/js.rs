@@ -2025,7 +2025,7 @@ pub struct Class<'a> {
     pub body: Box<'a, ClassBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    pub implements: Option<Vec<'a, Box<'a, TSClassImplements<'a>>>>,
+    pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
     pub decorators: Vec<'a, Decorator<'a>>,
     /// Valid Modifiers: `export`, `abstract`
     pub modifiers: Modifiers<'a>,

@@ -9,7 +9,7 @@ use crate::{diagnostics, lexer::Kind, list::NormalList, ParserImpl, StatementCon
 type Extends<'a> =
     Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
 
-type Implements<'a> = Vec<'a, Box<'a, TSClassImplements<'a>>>;
+type Implements<'a> = Vec<'a, TSClassImplements<'a>>;
 
 /// Section 15.7 Class Definitions
 impl<'a> ParserImpl<'a> {
