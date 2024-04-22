@@ -441,18 +441,20 @@ pub enum ArrayExpressionElement<'a> {
     Expression(Expression<'a>),
     /// Array hole for sparse arrays
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
-    // Serialize as `null`. `serialize_elision` in serialize.rs.
-    #[cfg_attr(
-        feature = "serialize",
-        serde(serialize_with = "ArrayExpressionElement::serialize_elision")
-    )]
-    Elision(Span),
+    Elision(Elision),
 }
 
 impl<'a> ArrayExpressionElement<'a> {
     pub fn is_elision(&self) -> bool {
         matches!(self, Self::Elision(_))
     }
+}
+
+/// Array Expression Elision Element
+/// Serialized as `null` in JSON AST. See `serialize.rs`.
+#[derive(Debug, Clone, Hash)]
+pub struct Elision {
+    pub span: Span,
 }
 
 /// Object Expression

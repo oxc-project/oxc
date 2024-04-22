@@ -98,7 +98,7 @@ ast_kinds! {
     SimpleAssignmentTarget(&'a SimpleAssignmentTarget<'a>),
     AssignmentTargetWithDefault(&'a AssignmentTargetWithDefault<'a>),
     ArrayExpressionElement(&'a ArrayExpressionElement<'a>),
-    Elision(Span),
+    Elision(&'a Elision),
     ExpressionArrayElement(&'a Expression<'a>),
     SpreadElement(&'a SpreadElement<'a>),
     BindingRestElement(&'a BindingRestElement<'a>),
@@ -436,7 +436,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::SimpleAssignmentTarget(x) => x.span(),
             Self::AssignmentTargetWithDefault(x) => x.span,
             Self::SpreadElement(x) => x.span,
-            Self::Elision(span) => *span,
+            Self::Elision(x) => x.span,
             Self::ExpressionArrayElement(x) => x.span(),
             Self::BindingRestElement(x) => x.span,
 
