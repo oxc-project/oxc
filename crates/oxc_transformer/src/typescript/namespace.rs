@@ -90,17 +90,35 @@ impl<'a> TypeScript<'a> {
 
         let name = self.ctx.ast.new_atom(&format!("_{}", real_name.clone())); // path.scope.generateUid(realName.name);
 
-        let namespace_top_level =
-            if let Some(TSModuleDeclarationBody::TSModuleBlock(block)) = decl.body {
-                self.ctx.ast.move_statement_vec(&mut block.unbox().body)
-            } else {
-                // TODO:
+        let namespace_top_level = if let Some(body) = decl.body {
+            match body {
+                TSModuleDeclarationBody::TSModuleBlock(mut block) => {
+                    self.ctx.ast.move_statement_vec(&mut block.body)
+                }
                 // We handle `namespace X.Y {}` as if it was
                 //   namespace X {
                 //     export namespace Y {}
                 //   }
-                self.ctx.ast.new_vec()
-            };
+                TSModuleDeclarationBody::TSModuleDeclaration(declaration) => {
+                    self.ctx.ast.new_vec_single(self.ctx.ast.module_declaration(
+                        ModuleDeclaration::ExportNamedDeclaration(
+                            self.ctx.ast.export_named_declaration(
+                                SPAN,
+                                Some(Declaration::TSModuleDeclaration(
+                                    self.ctx.ast.copy(&declaration),
+                                )),
+                                self.ctx.ast.new_vec(),
+                                None,
+                                ImportOrExportKind::Value,
+                                None,
+                            ),
+                        ),
+                    ))
+                }
+            }
+        } else {
+            self.ctx.ast.new_vec()
+        };
 
         let mut is_empty = true;
 
@@ -175,11 +193,8 @@ impl<'a> TypeScript<'a> {
                                 }
                                 Declaration::VariableDeclaration(var_decl) => {
                                     is_empty = false;
-                                    let stmts =
-                                        self.handle_variable_declaration(var_decl.unbox(), &name);
-                                    for stmt in stmts {
-                                        new_stmts.push(stmt);
-                                    }
+                                    let stmt = self.handle_variable_declaration(var_decl, &name);
+                                    new_stmts.push(stmt);
                                 }
                                 Declaration::TSModuleDeclaration(module_decl) => {
                                     let module_name = module_decl.id.name().clone();
@@ -190,11 +205,9 @@ impl<'a> TypeScript<'a> {
                                         )),
                                     ) {
                                         is_empty = false;
-                                        if !names.insert(module_name.clone()) {
-                                            new_stmts.push(Statement::Declaration(
-                                                self.create_variable_declaration(&name),
-                                            ));
-                                        }
+                                        new_stmts.push(Statement::Declaration(
+                                            self.create_variable_declaration(&module_name),
+                                        ));
                                         new_stmts.push(transformed);
                                     }
                                 }
@@ -455,9 +468,32 @@ impl<'a> TypeScript<'a> {
     /// Convert `export const foo = 1` to `Namespace.foo = 1`;
     fn handle_variable_declaration(
         &self,
-        var_decl: VariableDeclaration<'a>,
+        mut var_decl: Box<'a, VariableDeclaration<'a>>,
         name: &Atom<'a>,
-    ) -> Vec<'a, Statement<'a>> {
-        self.ctx.ast.new_vec()
+    ) -> Statement<'a> {
+        var_decl.declarations.iter_mut().for_each(|declarator| {
+            let Some(property_name) = declarator.id.get_identifier() else {
+                return;
+            };
+            if let Some(init) = &declarator.init {
+                declarator.init = Some(self.ctx.ast.assignment_expression(
+                    SPAN,
+                    AssignmentOperator::Assign,
+                    self.ctx.ast.simple_assignment_target_member_expression(
+                        self.ctx.ast.static_member(
+                            SPAN,
+                            self.ctx.ast.identifier_reference_expression(IdentifierReference::new(
+                                SPAN,
+                                name.clone(),
+                            )),
+                            IdentifierName::new(SPAN, property_name.clone()),
+                            false,
+                        ),
+                    ),
+                    self.ctx.ast.copy(init),
+                ));
+            }
+        });
+        Statement::Declaration(Declaration::VariableDeclaration(var_decl))
     }
 }

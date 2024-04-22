@@ -589,6 +589,23 @@ let M5;
 })(M5 || (M5 = {}));
 let M6;
 (function(_M6) {
+	let A;
+	(function(_A) {
+		var Color = (Color => {
+			const Red = 0;
+			Color[Color['Red'] = Red] = 'Red';
+			const Green = 1 + Red;
+			Color[Color['Green'] = Green] = 'Green';
+			const Blue = 1 + Green;
+			Color[Color['Blue'] = Blue] = 'Blue';
+			return Color;
+		})(Color || {});
+		_A.Color = Color;
+	})(A || (A = _M6.A || (_M6.A = {})));
+})(M6 || (M6 = {}));
+let M6;
+(function(_M6) {
+	let A;
 	(function(_A) {
 		var Color = (Color => {
 			const Yellow = 1;
