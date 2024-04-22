@@ -218,31 +218,20 @@ impl Rule for CheckTagNames {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();
 
-                // If explicitly blocked, report
+                // If user explicitly allowed, skip
+                if user_defined_tags.contains(&tag_name.to_string())
+                    || config.defined_tags.contains(&tag_name.to_string())
+                {
+                    continue;
+                }
+
+                // If user explicitly blocked, report
                 if let Some(reason) = settings.check_blocked_tag_name(tag_name) {
                     ctx.diagnostic(CheckTagNamesDiagnostic(tag.kind.span, reason));
                     continue;
                 }
 
-                // If user defined, skip
-                if user_defined_tags.contains(&tag_name.to_string()) {
-                    continue;
-                }
-
-                let is_valid = config.jsx_tags && JSX_TAGS.contains(tag_name)
-                    || config.defined_tags.contains(&tag_name.to_string())
-                    || VALID_BLOCK_TAGS.contains(tag_name);
-
-                // If invalid or unknown, report
-                if !is_valid {
-                    ctx.diagnostic(CheckTagNamesDiagnostic(
-                        tag.kind.span,
-                        format!("`@{tag_name}` is invalid tag name."),
-                    ));
-                    continue;
-                }
-
-                // If valid but preferred, report to use it
+                // If preferred or default aliased, report to use it
                 if let Some(reason) = settings.check_preferred_tag_name(tag_name) {
                     ctx.diagnostic(CheckTagNamesDiagnostic(tag.kind.span, reason));
                     continue;
@@ -274,6 +263,17 @@ impl Rule for CheckTagNames {
                         continue;
                     }
                 }
+
+                // If invalid or unknown, report
+                let is_valid = (config.jsx_tags && JSX_TAGS.contains(tag_name))
+                    || VALID_BLOCK_TAGS.contains(tag_name);
+                if !is_valid {
+                    ctx.diagnostic(CheckTagNamesDiagnostic(
+                        tag.kind.span,
+                        format!("`@{tag_name}` is invalid tag name."),
+                    ));
+                    continue;
+                }
             }
         }
     }
@@ -300,20 +300,6 @@ fn test() {
 			
 			          }
 			      ", None, None),
-("
-			          /**
-			           * @arg foo (pass: invalid name but user preferred)
-			           */
-			          function quux (foo) {
-			
-			          }
-			      ", None, Some(serde_json::json!({
-        "jsdoc": {
-          "tagNamePreference": {
-            "param": "arg",
-          },
-        },
-      }))),
 ("
 			          /**
 			           * @bar foo (pass: invalid name but defined)
@@ -350,7 +336,7 @@ fn test() {
 			
 			          }
 			      ", None, Some(serde_json::json!({
-        "jsdoc": {
+        "settings": { "jsdoc": {
           "tagNamePreference": {
             "param": "baz",
             "returns": {
@@ -359,7 +345,21 @@ fn test() {
             },
             "todo": false,
           },
-        },
+        }},
+      }))),
+("
+			          /**
+			           * @arg foo (pass: invalid name but user preferred)
+			           */
+			          function quux (foo) {
+			
+			          }
+			      ", None, Some(serde_json::json!({
+        "settings" : { "jsdoc": {
+          "tagNamePreference": {
+            "param": "arg",
+          },
+        }},
       }))),
 ("
 			      /**
@@ -392,14 +392,14 @@ fn test() {
 			
 			          }
 			      ", None, Some(serde_json::json!({
-        "jsdoc": {
+        "settings" : { "jsdoc": {
           "tagNamePreference": {
             "augments": {
               "message": "@extends is to be used over @augments.",
               "replacement": "extends",
             },
           },
-        },
+        }},
       }))),
 ("
 			          /**
@@ -411,11 +411,11 @@ fn test() {
 			          function quux () {
 			          }
 			      ", None, Some(serde_json::json!({
-        "jsdoc": {
+        "settings" : { "jsdoc": {
           "tagNamePreference": {
             "extends": "extends",
           },
-        },
+        }},
       }))),
 ("
 			      /**
@@ -448,8 +448,7 @@ fn test() {
 			       * @internal (pass: valid name)
 			       */
 			      ", None, Some(serde_json::json!({
-        "jsdoc": {
-        },
+        "settings" : { "jsdoc": { }},
       }))),
 ("
 			        /**
@@ -457,8 +456,7 @@ fn test() {
 			         * @satisfies (pass: valid names)
 			         */
 			      ", None, Some(serde_json::json!({
-        "jsdoc": {
-        },
+        "settings" : { "jsdoc": { }},
       }))),
         (
             "
@@ -553,11 +551,11 @@ fn test() {
         			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings" : { "jsdoc": {
                 "tagNamePreference": {
                   "param": "arg",
                 },
-              },
+              }},
             })),
         ),
         (
@@ -571,11 +569,11 @@ fn test() {
         			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings" : { "jsdoc": {
                 "tagNamePreference": {
                   "constructor": "cons",
                 },
-              },
+              }},
             })),
         ),
         (
@@ -589,11 +587,11 @@ fn test() {
         			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings" : { "jsdoc": {
                 "tagNamePreference": {
                   "arg": "somethingDifferent",
                 },
-              },
+              }},
             })),
         ),
         (
@@ -607,11 +605,11 @@ fn test() {
         			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings" : { "jsdoc": {
                 "tagNamePreference": {
                   "param": "parameter",
                 },
-              },
+              }},
             })),
         ),
         (
@@ -674,11 +672,11 @@ fn test() {
         			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings" : { "jsdoc": {
                 "tagNamePreference": {
                   "todo": false,
                 },
-              },
+              }},
             })),
         ),
         (
@@ -692,13 +690,13 @@ fn test() {
         			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings" : { "jsdoc": {
                 "tagNamePreference": {
                   "todo": {
                     "message": "Please resolve to-dos or add to the tracker",
                   },
                 },
-              },
+              }},
             })),
         ),
         (
@@ -712,14 +710,14 @@ fn test() {
         			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings" : { "jsdoc": {
                 "tagNamePreference": {
                   "todo": {
                     "message": "Please use x-todo instead of todo",
                     "replacement": "x-todo",
                   },
                 },
-              },
+              }},
             })),
         ),
         (
@@ -753,11 +751,11 @@ fn test() {
               },
             ])),
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings" : { "jsdoc": {
                 "tagNamePreference": {
                   "abc": "abcd",
                 },
-              },
+              }},
             })),
         ),
         (
@@ -772,11 +770,11 @@ fn test() {
         			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings" : { "jsdoc": {
                 "tagNamePreference": {
                   "abc": "abcd",
                 },
-              },
+              }},
             })),
         ),
         (
@@ -800,11 +798,11 @@ fn test() {
         			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings" : { "jsdoc": {
                 "tagNamePreference": {
                   "returns": "return",
                 },
-              },
+              }},
             })),
         ),
         (
@@ -818,13 +816,13 @@ fn test() {
         			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings" : { "jsdoc": {
                 "tagNamePreference": {
                   "todo": {
                     "message": "Please don't use todo",
                   },
                 },
-              },
+              }},
             })),
         ),
         // Typed
@@ -1045,7 +1043,7 @@ fn test() {
         None,
     )];
 
+    Tester::new(CheckTagNames::NAME, pass, fail).test_and_snapshot();
     // Currently only 1 snapshot can be saved under a rule name
     Tester::new(CheckTagNames::NAME, dts_pass, dts_fail).change_rule_path("test.d.ts").test();
-    Tester::new(CheckTagNames::NAME, pass, fail).test_and_snapshot();
 }

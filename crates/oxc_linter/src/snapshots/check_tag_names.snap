@@ -36,7 +36,7 @@ expression: check_tag_names
    ·                                  ────
  4 │                                */
    ╰────
-  help: `@arg` is invalid tag name.
+  help: Replace tag `@arg` with `@param`.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
    ╭─[check_tag_names.tsx:3:25]
@@ -54,7 +54,7 @@ expression: check_tag_names
    ·                                  ────────────
  4 │                                */
    ╰────
-  help: `@constructor` is invalid tag name.
+  help: Replace tag `@constructor` with `@cons`.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
    ╭─[check_tag_names.tsx:3:34]
@@ -63,7 +63,7 @@ expression: check_tag_names
    ·                                  ────
  4 │                                */
    ╰────
-  help: `@arg` is invalid tag name.
+  help: Replace tag `@arg` with `@somethingDifferent`.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
    ╭─[check_tag_names.tsx:3:25]
@@ -135,7 +135,7 @@ expression: check_tag_names
    ·                                  ─────
  5 │                                */
    ╰────
-  help: `@prop` is invalid tag name.
+  help: Replace tag `@prop` with `@property`.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
    ╭─[check_tag_names.tsx:3:25]
@@ -144,7 +144,7 @@ expression: check_tag_names
    ·                                  ────
  4 │                                * @abcd bar
    ╰────
-  help: `@abc` is invalid tag name.
+  help: Replace tag `@abc` with `@abcd`.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
    ╭─[check_tag_names.tsx:3:34]
@@ -153,7 +153,7 @@ expression: check_tag_names
    ·                                  ────
  4 │                                * @abcd
    ╰────
-  help: `@abc` is invalid tag name.
+  help: Replace tag `@abc` with `@abcd`.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
    ╭─[check_tag_names.tsx:2:24]
@@ -198,7 +198,7 @@ expression: check_tag_names
    ·                              ────────────
  4 │                            */
    ╰────
-  help: `@constructor` is invalid tag name.
+  help: Replace tag `@constructor` with `@class`.
 
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
    ╭─[check_tag_names.tsx:3:25]
