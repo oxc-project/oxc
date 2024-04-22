@@ -107,10 +107,9 @@ impl<'a> ParserImpl<'a> {
     fn parse_import_default_specifier(&mut self) -> Result<ImportDeclarationSpecifier<'a>> {
         let span = self.start_span();
         let local = self.parse_binding_identifier()?;
-        Ok(ImportDeclarationSpecifier::ImportDefaultSpecifier(ImportDefaultSpecifier {
-            span: self.end_span(span),
-            local,
-        }))
+        Ok(ImportDeclarationSpecifier::ImportDefaultSpecifier(
+            self.ast.alloc(ImportDefaultSpecifier { span: self.end_span(span), local }),
+        ))
     }
 
     // import * as name from "module-name"
@@ -119,10 +118,9 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // advance `*`
         self.expect(Kind::As)?;
         let local = self.parse_binding_identifier()?;
-        Ok(ImportDeclarationSpecifier::ImportNamespaceSpecifier(ImportNamespaceSpecifier {
-            span: self.end_span(span),
-            local,
-        }))
+        Ok(ImportDeclarationSpecifier::ImportNamespaceSpecifier(
+            self.ast.alloc(ImportNamespaceSpecifier { span: self.end_span(span), local }),
+        ))
     }
 
     // import { export1 , export2 as alias2 , [...] } from "module-name";
@@ -384,7 +382,7 @@ impl<'a> ParserImpl<'a> {
     // ImportSpecifier :
     //   ImportedBinding
     //   ModuleExportName as ImportedBinding
-    pub(crate) fn parse_import_specifier(&mut self) -> Result<ImportSpecifier<'a>> {
+    pub(crate) fn parse_import_specifier(&mut self) -> Result<Box<'a, ImportSpecifier<'a>>> {
         let specifier_span = self.start_span();
         let peek_kind = self.peek_kind();
         let mut import_kind = ImportOrExportKind::Value;
@@ -415,7 +413,12 @@ impl<'a> ParserImpl<'a> {
             let imported = IdentifierName { span: local.span, name: local.name.clone() };
             (ModuleExportName::Identifier(imported), local)
         };
-        Ok(ImportSpecifier { span: self.end_span(specifier_span), imported, local, import_kind })
+        Ok(self.ast.alloc(ImportSpecifier {
+            span: self.end_span(specifier_span),
+            imported,
+            local,
+            import_kind,
+        }))
     }
 
     // ModuleExportName :

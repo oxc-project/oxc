@@ -2373,11 +2373,11 @@ pub struct ImportDeclaration<'a> {
 pub enum ImportDeclarationSpecifier<'a> {
     /// import {imported} from "source"
     /// import {imported as local} from "source"
-    ImportSpecifier(ImportSpecifier<'a>),
+    ImportSpecifier(Box<'a, ImportSpecifier<'a>>),
     /// import local from "source"
-    ImportDefaultSpecifier(ImportDefaultSpecifier<'a>),
+    ImportDefaultSpecifier(Box<'a, ImportDefaultSpecifier<'a>>),
     /// import * as local from "source"
-    ImportNamespaceSpecifier(ImportNamespaceSpecifier<'a>),
+    ImportNamespaceSpecifier(Box<'a, ImportNamespaceSpecifier<'a>>),
 }
 
 // import {imported} from "source"
