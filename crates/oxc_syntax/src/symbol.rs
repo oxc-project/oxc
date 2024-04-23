@@ -1,12 +1,13 @@
 use bitflags::bitflags;
 #[cfg(feature = "raw")]
-use layout_inspect::{defs::DefType, Inspect, TypesCollector};
+use layout_inspect::Inspect;
 use oxc_index::define_index_type;
 
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
 define_index_type! {
+    #[cfg_attr(feature = "raw", derive(Inspect))]
     pub struct SymbolId = u32;
 }
 
@@ -16,25 +17,6 @@ const TS_APPEND_CONTENT: &'static str = r#"
 export type SymbolId = number;
 export type SymbolFlags = unknown;
 "#;
-
-#[cfg(feature = "raw")]
-impl Inspect for SymbolId {
-    fn name() -> String {
-        <u32 as Inspect>::name()
-    }
-
-    fn size() -> Option<usize> {
-        <u32 as Inspect>::size()
-    }
-
-    fn align() -> Option<usize> {
-        <u32 as Inspect>::align()
-    }
-
-    fn def(collector: &mut TypesCollector) -> DefType {
-        <u32 as Inspect>::def(collector)
-    }
-}
 
 bitflags! {
     #[derive(Debug, Clone, Copy)]

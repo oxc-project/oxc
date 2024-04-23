@@ -9,6 +9,7 @@ use oxc_index::define_index_type;
 use serde::Serialize;
 
 define_index_type! {
+    #[cfg_attr(feature = "raw", derive(Inspect))]
     pub struct ReferenceId = u32;
 }
 
@@ -24,25 +25,6 @@ export type ReferenceFlag = {
     ReadWrite: 0b11
 }
 "#;
-
-#[cfg(feature = "raw")]
-impl Inspect for ReferenceId {
-    fn name() -> String {
-        <u32 as Inspect>::name()
-    }
-
-    fn size() -> Option<usize> {
-        <u32 as Inspect>::size()
-    }
-
-    fn align() -> Option<usize> {
-        <u32 as Inspect>::align()
-    }
-
-    fn def(collector: &mut TypesCollector) -> DefType {
-        <u32 as Inspect>::def(collector)
-    }
-}
 
 bitflags! {
     #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
