@@ -787,6 +787,14 @@ pub struct CallExpression<'a> {
 }
 
 impl<'a> CallExpression<'a> {
+    pub fn callee_name(&self) -> Option<&str> {
+        match &self.callee {
+            Expression::Identifier(ident) => Some(ident.name.as_str()),
+            Expression::MemberExpression(member) => member.static_property_name(),
+            _ => None,
+        }
+    }
+
     pub fn is_require_call(&self) -> bool {
         if self.arguments.len() != 1 {
             return false;
