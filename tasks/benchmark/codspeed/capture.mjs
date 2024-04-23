@@ -14,7 +14,7 @@ import fs from 'fs/promises';
 import {join as pathJoin} from 'path';
 import {pipeline} from 'stream/promises';
 import express from 'express';
-import tar from 'tar';
+import {extract} from 'tar';
 
 const DEFAULT_PORT = 3000,
     LISTEN_ATTEMPTS = 10;
@@ -50,7 +50,7 @@ app.put('/upload_archive', wrapHandler(async (req, res) => {
     await pipeline(req, stream);
 
     // Untar contents + delete tarball
-    await tar.extract({file: path, cwd: dataDir});
+    await extract({file: path, cwd: dataDir});
     await fs.rm(path);
 
     // Rename `.out` files + delete `.log` files
