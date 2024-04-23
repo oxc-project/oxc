@@ -31,6 +31,28 @@ impl<'a> TypeScript<'a> {
                         }
                     }
                 }
+                Statement::Declaration(Declaration::FunctionDeclaration(ref decl)) => {
+                    if let Some(ident) = &decl.id {
+                        names.insert(ident.name.clone());
+                    }
+                    new_stmts.push(stmt);
+                }
+                Statement::Declaration(Declaration::ClassDeclaration(ref decl)) => {
+                    if let Some(ident) = &decl.id {
+                        names.insert(ident.name.clone());
+                    }
+                    new_stmts.push(stmt);
+                }
+                Statement::Declaration(Declaration::TSEnumDeclaration(ref decl)) => {
+                    names.insert(decl.id.name.clone());
+                    new_stmts.push(stmt);
+                }
+                Statement::Declaration(Declaration::VariableDeclaration(ref decl)) => {
+                    decl.bound_names(&mut |id| {
+                        names.insert(id.name.clone());
+                    });
+                    new_stmts.push(stmt);
+                }
                 Statement::ModuleDeclaration(ref module_decl) => {
                     if let ModuleDeclaration::ExportNamedDeclaration(export_decl) = &**module_decl {
                         if let Some(Declaration::TSModuleDeclaration(decl)) =
@@ -41,6 +63,7 @@ impl<'a> TypeScript<'a> {
                                 if let Some(transformed_stmt) =
                                     self.handle_nested(self.ctx.ast.copy(decl), None)
                                 {
+                                    println!("{:?}", names);
                                     if names.insert(name.clone()) {
                                         new_stmts.push(self.ctx.ast.module_declaration(
                                             ModuleDeclaration::ExportNamedDeclaration(
@@ -61,7 +84,9 @@ impl<'a> TypeScript<'a> {
                             }
                         }
                     }
-
+                    module_decl.bound_names(&mut |id| {
+                        names.insert(id.name.clone());
+                    });
                     new_stmts.push(stmt);
                 }
                 _ => new_stmts.push(stmt),
