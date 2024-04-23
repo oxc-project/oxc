@@ -1,7 +1,6 @@
 //! Visit Mut Pattern
 
 use oxc_allocator::Vec;
-use oxc_span::Span;
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{ast::*, AstType};
@@ -227,8 +226,8 @@ pub trait VisitMut<'a>: Sized {
         walk_expression_array_element_mut(self, expr);
     }
 
-    fn visit_elision(&mut self, span: Span) {
-        walk_elision_mut(self, span);
+    fn visit_elision(&mut self, elision: &mut Elision) {
+        walk_elision_mut(self, elision);
     }
 
     fn visit_assignment_expression(&mut self, expr: &mut AssignmentExpression<'a>) {
@@ -1536,7 +1535,7 @@ pub mod walk_mut {
             ArrayExpressionElement::Expression(expr) => {
                 visitor.visit_expression_array_element(expr);
             }
-            ArrayExpressionElement::Elision(span) => visitor.visit_elision(*span),
+            ArrayExpressionElement::Elision(elision) => visitor.visit_elision(elision),
         }
         visitor.leave_node(kind);
     }
@@ -1571,7 +1570,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
-    pub fn walk_elision_mut<'a, V: VisitMut<'a>>(visitor: &mut V, _span: Span) {
+    pub fn walk_elision_mut<'a, V: VisitMut<'a>>(visitor: &mut V, _elision: &mut Elision) {
         let kind = AstType::Elision;
         visitor.enter_node(kind);
         visitor.leave_node(kind);

@@ -3,12 +3,13 @@ use std::cell::{Cell, RefCell};
 use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, AssignmentTarget,
-        BinaryExpression, BindingPattern, BindingPatternKind, CallExpression, Class, ClassBody,
-        ClassElement, ComputedMemberExpression, ConditionalExpression, Declaration,
-        ExportDefaultDeclarationKind, Expression, FormalParameter, Function, IdentifierReference,
-        MemberExpression, ModuleDeclaration, NewExpression, ParenthesizedExpression,
-        PrivateFieldExpression, Program, PropertyKey, SimpleAssignmentTarget, Statement,
-        StaticMemberExpression, ThisExpression, VariableDeclarator,
+        BinaryExpression, BindingIdentifier, BindingPattern, BindingPatternKind, CallExpression,
+        Class, ClassBody, ClassElement, ComputedMemberExpression, ConditionalExpression,
+        Declaration, ExportDefaultDeclarationKind, ExportSpecifier, Expression, FormalParameter,
+        Function, IdentifierReference, MemberExpression, ModuleDeclaration, ModuleExportName,
+        NewExpression, ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey,
+        SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression,
+        VariableDeclarator,
     },
     AstKind,
 };
@@ -19,8 +20,8 @@ use rustc_hash::FxHashSet;
 use crate::{
     ast_util::{get_declaration_of_variable, get_symbol_id_of_variable},
     utils::{
-        calculate_binary_operation, get_leading_tree_shaking_comment, get_write_expr,
-        has_pure_notation, no_effects, Value, COMMENT_NO_SIDE_EFFECT_WHEN_CALLED,
+        calculate_binary_operation, get_write_expr, has_comment_about_side_effect_check,
+        has_pure_notation, no_effects, Value,
     },
     LintContext,
 };
@@ -88,16 +89,21 @@ impl<'a> ListenerMap for Statement<'a> {
                 | ModuleDeclaration::ImportDeclaration(_) => {
                     no_effects();
                 }
-                ModuleDeclaration::ExportDefaultDeclaration(b) => {
-                    if let ExportDefaultDeclarationKind::Expression(expr) = &b.declaration {
-                        if let Some(comment) =
-                            get_leading_tree_shaking_comment(expr.span(), options.ctx)
-                        {
-                            if comment.contains(COMMENT_NO_SIDE_EFFECT_WHEN_CALLED) {
-                                expr.report_effects_when_called(options);
-                            }
+                ModuleDeclaration::ExportDefaultDeclaration(stmt) => {
+                    if let ExportDefaultDeclarationKind::Expression(expr) = &stmt.declaration {
+                        if has_comment_about_side_effect_check(expr.span(), options.ctx) {
+                            expr.report_effects_when_called(options);
                         }
                         expr.report_effects(options);
+                    }
+                }
+                ModuleDeclaration::ExportNamedDeclaration(stmt) => {
+                    stmt.specifiers.iter().for_each(|specifier| {
+                        specifier.report_effects(options);
+                    });
+
+                    if let Some(decl) = &stmt.declaration {
+                        decl.report_effects(options);
                     }
                 }
                 _ => {}
@@ -151,12 +157,39 @@ impl<'a> ListenerMap for Statement<'a> {
     }
 }
 
+impl<'a> ListenerMap for ExportSpecifier<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        let ctx = options.ctx;
+        let symbol_table = ctx.symbols();
+        if has_comment_about_side_effect_check(self.exported.span(), ctx) {
+            let ModuleExportName::Identifier(ident_name) = &self.exported else {
+                return;
+            };
+            let Some(symbol_id) = options.ctx.symbols().get_symbol_id_from_name(&ident_name.name)
+            else {
+                return;
+            };
+
+            for reference in symbol_table.get_resolved_references(symbol_id) {
+                if reference.is_write() {
+                    let node_id = reference.node_id();
+                    if let Some(expr) = get_write_expr(node_id, ctx) {
+                        expr.report_effects_when_called(options);
+                    }
+                }
+            }
+            let symbol_table = ctx.semantic().symbols();
+            let node = ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
+            node.report_effects_when_called(options);
+        }
+    }
+}
+
 // we don't need implement all AstNode
 // it's same as `reportSideEffectsInDefinitionWhenCalled` in eslint-plugin-tree-shaking
 // <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/463fa1f0bef7caa2b231a38b9c3557051f506c92/src/rules/no-side-effects-in-initialization.ts#L1070-L1080>
 impl<'a> ListenerMap for AstNode<'a> {
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
-        #[allow(clippy::single_match)]
         match self.kind() {
             AstKind::VariableDeclarator(decl) => {
                 if let Some(init) = &decl.init {
@@ -216,6 +249,13 @@ impl<'a> ListenerMap for Declaration<'a> {
             }
             Self::ClassDeclaration(decl) => {
                 decl.report_effects(options);
+            }
+            Self::FunctionDeclaration(function) => {
+                if let Some(id) = &function.id {
+                    if has_comment_about_side_effect_check(id.span, options.ctx) {
+                        id.report_effects_when_called(options);
+                    }
+                }
             }
             _ => {}
         }
@@ -305,6 +345,9 @@ impl<'a> ListenerMap for PropertyKey<'a> {
 impl<'a> ListenerMap for VariableDeclarator<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
         self.id.report_effects(options);
+        if has_comment_about_side_effect_check(self.id.span(), options.ctx) {
+            self.id.report_effects_when_called(options);
+        }
 
         if let Some(init) = &self.init {
             init.report_effects(options);
@@ -332,6 +375,34 @@ impl<'a> ListenerMap for BindingPattern<'a> {
                 assign_p.left.report_effects(options);
                 assign_p.right.report_effects(options);
             }
+        }
+    }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        if let BindingPatternKind::BindingIdentifier(ident) = &self.kind {
+            ident.report_effects_when_called(options);
+        }
+    }
+}
+
+impl<'a> ListenerMap for BindingIdentifier<'a> {
+    fn report_effects(&self, _options: &NodeListenerOptions) {
+        no_effects();
+    }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        let ctx = options.ctx;
+        if let Some(symbol_id) = self.symbol_id.get() {
+            let symbol_table = ctx.semantic().symbols();
+            for reference in symbol_table.get_resolved_references(symbol_id) {
+                if reference.is_write() {
+                    let node_id = reference.node_id();
+                    if let Some(expr) = get_write_expr(node_id, ctx) {
+                        expr.report_effects_when_called(options);
+                    }
+                }
+            }
+            let symbol_table = ctx.semantic().symbols();
+            let node = ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
+            node.report_effects_when_called(options);
         }
     }
 }

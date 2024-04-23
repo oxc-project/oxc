@@ -1,0 +1,87 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_await_in_loop
+---
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:38]
+ 1 │ async function foo() { while (baz) { await bar; } }
+   ·                                      ─────
+   ╰────
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:31]
+ 1 │ async function foo() { while (await foo()) {  } }
+   ·                               ─────
+   ╰────
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:42]
+ 1 │ async function foo() { while (baz) { for await (x of xs); } }
+   ·                                          ─────
+   ╰────
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:47]
+ 1 │ async function foo() { for (var bar of baz) { await bar; } }
+   ·                                               ─────
+   ╰────
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:45]
+ 1 │ async function foo() { for (var bar of baz) await bar; }
+   ·                                             ─────
+   ╰────
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:47]
+ 1 │ async function foo() { for (var bar in baz) { await bar; } }
+   ·                                               ─────
+   ╰────
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:50]
+ 1 │ async function foo() { for (var i; i < n; i++) { await bar; } }
+   ·                                                  ─────
+   ╰────
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:36]
+ 1 │ async function foo() { for (var i; await foo(i); i++) {  } }
+   ·                                    ─────
+   ╰────
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:47]
+ 1 │ async function foo() { for (var i; i < n; i = await bar) {  } }
+   ·                                               ─────
+   ╰────
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:29]
+ 1 │ async function foo() { do { await bar; } while (baz); }
+   ·                             ─────
+   ╰────
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:38]
+ 1 │ async function foo() { do { } while (await bar); }
+   ·                                      ─────
+   ╰────
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:54]
+ 1 │ async function foo() { while (true) { if (bar) { foo(await bar); } } }
+   ·                                                      ─────
+   ╰────
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:42]
+ 1 │ async function foo() { while (xyz || 5 > await x) {  } }
+   ·                                          ─────
+   ╰────
+
+  ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
+   ╭─[no_await_in_loop.tsx:1:60]
+ 1 │ async function foo() { for await (var x of xs) { while (1) await f(x) } }
+   ·                                                            ─────
+   ╰────

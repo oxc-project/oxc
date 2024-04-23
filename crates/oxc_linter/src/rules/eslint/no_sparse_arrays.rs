@@ -42,12 +42,12 @@ impl Rule for NoSparseArrays {
                 .elements
                 .iter()
                 .filter_map(|el| match el {
-                    ArrayExpressionElement::Elision(span) => Some(span),
+                    ArrayExpressionElement::Elision(elision) => Some(elision),
                     _ => None,
                 })
-                .map(|span| {
+                .map(|elision| {
                     LabeledSpan::at(
-                        (span.start as usize)..(span.start as usize),
+                        (elision.span.start as usize)..(elision.span.start as usize),
                         "unexpected comma",
                     )
                 })

@@ -48,6 +48,7 @@ mod eslint {
     pub mod max_params;
     pub mod no_array_constructor;
     pub mod no_async_promise_executor;
+    pub mod no_await_in_loop;
     pub mod no_bitwise;
     pub mod no_caller;
     pub mod no_case_declarations;
@@ -463,6 +464,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::require_yield,
     eslint::use_isnan,
     eslint::valid_typeof,
+    eslint::no_await_in_loop,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
     typescript::ban_ts_comment,

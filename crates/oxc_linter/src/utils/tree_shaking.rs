@@ -89,16 +89,23 @@ pub fn has_pure_notation(span: Span, ctx: &LintContext) -> bool {
 }
 
 const TREE_SHAKING_COMMENT_ID: &str = "tree-shaking";
-pub const COMMENT_NO_SIDE_EFFECT_WHEN_CALLED: &str = "no-side-effects-when-called";
+const COMMENT_NO_SIDE_EFFECT_WHEN_CALLED: &str = "no-side-effects-when-called";
 
 fn is_tree_shaking_comment(comment: &str) -> bool {
     comment.trim_start().starts_with(TREE_SHAKING_COMMENT_ID)
 }
 
+/// check if the `span` has a leading comment for opening side effect check.
+/// e.g. `export default /* tree-shaking no-side-effects-when-called */ ext`
+pub fn has_comment_about_side_effect_check(span: Span, ctx: &LintContext) -> bool {
+    get_leading_tree_shaking_comment(span, ctx)
+        .is_some_and(|comment| comment.contains(COMMENT_NO_SIDE_EFFECT_WHEN_CALLED))
+}
+
 /// Get the nearest comment before the `span`, return `None` if no leading comment is founded.
 ///
 ///  # Examples
-/// ```
+/// ```javascript
 /// /* valid comment for `a`  */ let a = 1;
 ///
 /// // valid comment for `b`

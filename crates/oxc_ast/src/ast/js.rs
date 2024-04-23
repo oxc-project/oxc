@@ -429,6 +429,7 @@ pub struct ArrayExpression<'a> {
     pub elements: Vec<'a, ArrayExpressionElement<'a>>,
     /// Array trailing comma
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
+    #[cfg_attr(feature = "serialize", serde(skip))]
     pub trailing_comma: Option<Span>,
 }
 
@@ -441,12 +442,7 @@ pub enum ArrayExpressionElement<'a> {
     Expression(Expression<'a>),
     /// Array hole for sparse arrays
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
-    // Serialize as `null`. `serialize_elision` in serialize.rs.
-    #[cfg_attr(
-        feature = "serialize",
-        serde(serialize_with = "ArrayExpressionElement::serialize_elision")
-    )]
-    Elision(Span),
+    Elision(Elision),
 }
 
 impl<'a> ArrayExpressionElement<'a> {
@@ -455,14 +451,22 @@ impl<'a> ArrayExpressionElement<'a> {
     }
 }
 
+/// Array Expression Elision Element
+/// Serialized as `null` in JSON AST. See `serialize.rs`.
+#[derive(Debug, Clone, Hash)]
+pub struct Elision {
+    pub span: Span,
+}
+
 /// Object Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ObjectExpression<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub properties: Vec<'a, ObjectPropertyKind<'a>>,
+    #[cfg_attr(feature = "serialize", serde(skip))]
     pub trailing_comma: Option<Span>,
 }
 
@@ -783,6 +787,14 @@ pub struct CallExpression<'a> {
 }
 
 impl<'a> CallExpression<'a> {
+    pub fn callee_name(&self) -> Option<&str> {
+        match &self.callee {
+            Expression::Identifier(ident) => Some(ident.name.as_str()),
+            Expression::MemberExpression(member) => member.static_property_name(),
+            _ => None,
+        }
+    }
+
     pub fn is_require_call(&self) -> bool {
         if self.arguments.len() != 1 {
             return false;
@@ -1015,7 +1027,7 @@ pub enum AssignmentTargetPattern<'a> {
 // See serializer in serialize.rs
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ArrayAssignmentTarget<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
@@ -1026,6 +1038,7 @@ pub struct ArrayAssignmentTarget<'a> {
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
     #[cfg_attr(feature = "serialize", serde(skip))]
     pub rest: Option<AssignmentTargetRest<'a>>,
+    #[cfg_attr(feature = "serialize", serde(skip))]
     pub trailing_comma: Option<Span>,
 }
 
