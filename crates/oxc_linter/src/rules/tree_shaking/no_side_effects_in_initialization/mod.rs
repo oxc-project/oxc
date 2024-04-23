@@ -200,14 +200,14 @@ fn test() {
         "export const /* tree-shaking no-side-effects-when-called */ x = function(){}",
         "export function /* tree-shaking no-side-effects-when-called */ x(){}",
         "const x = function(){}; export {/* tree-shaking no-side-effects-when-called */ x}",
-        // // ExpressionStatement
-        // "const x = 1",
-        // // ForInStatement
-        // "for(const x in ext){x = 1}",
-        // "let x; for(x in ext){}",
-        // // ForStatement
-        // "for(let i = 0; i < 3; i++){i++}",
-        // "for(;;){}",
+        // ExpressionStatement
+        "const x = 1",
+        // ForInStatement
+        "for(const x in ext){x = 1}",
+        "let x; for(x in ext){}",
+        // ForStatement
+        "for(let i = 0; i < 3; i++){i++}",
+        "for(;;){}",
         // // FunctionDeclaration
         // "function x(a){a(); ext()}",
         // // FunctionDeclaration when called
@@ -465,24 +465,24 @@ fn test() {
         "export const /* tree-shaking no-side-effects-when-called */ x = ext",
         "export function /* tree-shaking no-side-effects-when-called */ x(){ext()}",
         "const x = ext; export {/* tree-shaking no-side-effects-when-called */ x}",
-        // // ExpressionStatement
-        // "ext()",
-        // // ForInStatement
-        // "for(ext in {a: 1}){}",
-        // "for(const x in ext()){}",
-        // "for(const x in {a: 1}){ext()}",
-        // "for(const x in {a: 1}) ext()",
-        // // ForOfStatement
-        // "for(ext of {a: 1}){}",
-        // "for(const x of ext()){}",
-        // "for(const x of {a: 1}){ext()}",
-        // "for(const x of {a: 1}) ext()",
-        // // ForStatement
-        // "for(ext();;){}",
-        // "for(;ext();){}",
-        // "for(;true;ext()){}",
-        // "for(;true;) ext()",
-        // "for(;true;){ext()}",
+        // ExpressionStatement
+        "ext()",
+        // ForInStatement
+        "for(ext in {a: 1}){}",
+        "for(const x in ext()){}",
+        "for(const x in {a: 1}){ext()}",
+        "for(const x in {a: 1}) ext()",
+        // ForOfStatement
+        "for(ext of {a: 1}){}",
+        "for(const x of ext()){}",
+        "for(const x of {a: 1}){ext()}",
+        "for(const x of {a: 1}) ext()",
+        // ForStatement
+        "for(ext();;){}",
+        "for(;ext();){}",
+        "for(;true;ext()){}",
+        "for(;true;) ext()",
+        "for(;true;){ext()}",
         // // FunctionDeclaration when called
         // "function x(){ext()}; x()",
         // "function x(){ext()}; const y = new x()",
