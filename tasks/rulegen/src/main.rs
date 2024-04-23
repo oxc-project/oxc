@@ -103,7 +103,7 @@ impl<'a> TestCase<'a> {
                 );
                 let settings = self.settings.as_ref().map_or_else(
                     || "None".to_string(),
-                    |settings| format!("Some(serde_json::json!({settings}))"),
+                    |settings| format!(r#"Some(serde_json::json!({{ "settings": {settings} }}))"#),
                 );
                 let code_str = if code.contains('"') {
                     format!("r#\"{}\"#", code.replace("\\\"", "\""))
