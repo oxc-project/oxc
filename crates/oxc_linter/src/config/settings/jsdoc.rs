@@ -70,35 +70,6 @@ pub struct JSDocPluginSettings {
     // }[]
 }
 
-// https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md#default-preferred-aliases
-fn get_default_aliased_tag_name(original_name: &str) -> Option<String> {
-    let aliased_name = match original_name {
-        "virtual" => "abstract",
-        "extends" => "augments",
-        "constructor" => "class",
-        "const" => "constant",
-        "defaultvalue" => "default",
-        "desc" => "description",
-        "host" => "external",
-        "fileoverview" | "overview" => "file",
-        "emits" => "fires",
-        "func" | "method" => "function",
-        "var" => "member",
-        "arg" | "argument" => "param",
-        "prop" => "property",
-        "return" => "returns",
-        "exception" => "throws",
-        "yield" => "yields",
-        _ => original_name,
-    }
-    .to_string();
-
-    if aliased_name != original_name {
-        return Some(aliased_name);
-    }
-    None
-}
-
 impl JSDocPluginSettings {
     /// Only for `check-tag-names` rule
     /// Return `Some(reason)` if blocked
@@ -121,9 +92,34 @@ impl JSDocPluginSettings {
             Some(TagNamePreference::ObjectWithMessageAndReplacement { message, .. }) => {
                 Some(message.to_string())
             }
-            _ => get_default_aliased_tag_name(original_name)
-                .filter(|preferred_name| preferred_name != original_name)
-                .map(|preferred_name| reason(&preferred_name)),
+            _ => {
+                // https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md#default-preferred-aliases
+                let aliased_name = match original_name {
+                    "virtual" => "abstract",
+                    "extends" => "augments",
+                    "constructor" => "class",
+                    "const" => "constant",
+                    "defaultvalue" => "default",
+                    "desc" => "description",
+                    "host" => "external",
+                    "fileoverview" | "overview" => "file",
+                    "emits" => "fires",
+                    "func" | "method" => "function",
+                    "var" => "member",
+                    "arg" | "argument" => "param",
+                    "prop" => "property",
+                    "return" => "returns",
+                    "exception" => "throws",
+                    "yield" => "yields",
+                    _ => original_name,
+                };
+
+                if aliased_name != original_name {
+                    return Some(reason(aliased_name));
+                }
+
+                None
+            }
         }
     }
     /// Only for `check-tag-names` rule
@@ -141,7 +137,7 @@ impl JSDocPluginSettings {
             .collect()
     }
 
-    /// Resolve original, known tag name to user preferred, default aliased name
+    /// Resolve original, known tag name to user preferred name
     /// If not defined, return original name
     pub fn resolve_tag_name(&self, original_name: &str) -> String {
         match self.tag_name_preference.get(original_name) {
@@ -149,7 +145,7 @@ impl JSDocPluginSettings {
                 TagNamePreference::TagNameOnly(replacement)
                 | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. },
             ) => replacement.to_string(),
-            _ => get_default_aliased_tag_name(original_name).unwrap_or(original_name.to_string()),
+            _ => original_name.to_string(),
         }
     }
 }
@@ -210,9 +206,6 @@ mod test {
     fn resolve_tag_name() {
         let settings = JSDocPluginSettings::deserialize(&serde_json::json!({})).unwrap();
         assert_eq!(settings.resolve_tag_name("foo"), "foo".to_string());
-        assert_eq!(settings.resolve_tag_name("virtual"), "abstract".to_string());
-        assert_eq!(settings.resolve_tag_name("fileoverview"), "file".to_string());
-        assert_eq!(settings.resolve_tag_name("overview"), "file".to_string());
 
         let settings = JSDocPluginSettings::deserialize(&serde_json::json!({
             "tagNamePreference": {
