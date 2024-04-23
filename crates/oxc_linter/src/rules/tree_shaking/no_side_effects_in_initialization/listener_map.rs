@@ -5,11 +5,11 @@ use oxc_ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, AssignmentTarget,
         BinaryExpression, BindingIdentifier, BindingPattern, BindingPatternKind, CallExpression,
         Class, ClassBody, ClassElement, ComputedMemberExpression, ConditionalExpression,
-        Declaration, ExportDefaultDeclarationKind, ExportSpecifier, Expression, FormalParameter,
-        Function, IdentifierReference, MemberExpression, ModuleDeclaration, ModuleExportName,
-        NewExpression, ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey,
-        SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression,
-        VariableDeclarator,
+        Declaration, ExportDefaultDeclarationKind, ExportSpecifier, Expression, ForStatementInit,
+        ForStatementLeft, FormalParameter, Function, IdentifierReference, MemberExpression,
+        ModuleDeclaration, ModuleExportName, NewExpression, ParenthesizedExpression,
+        PrivateFieldExpression, Program, PropertyKey, SimpleAssignmentTarget, Statement,
+        StaticMemberExpression, ThisExpression, VariableDeclarator,
     },
     AstKind,
 };
@@ -152,7 +152,49 @@ impl<'a> ListenerMap for Statement<'a> {
             Self::DebuggerStatement(stmt) => {
                 options.ctx.diagnostic(NoSideEffectsDiagnostic::Debugger(stmt.span));
             }
+            Self::ForStatement(stmt) => {
+                if let Some(init) = &stmt.init {
+                    init.report_effects(options);
+                }
+                if let Some(test) = &stmt.test {
+                    test.report_effects(options);
+                }
+                if let Some(update) = &stmt.update {
+                    update.report_effects(options);
+                }
+                stmt.body.report_effects(options);
+            }
+            Self::ForInStatement(stmt) => {
+                if let ForStatementLeft::AssignmentTarget(assign) = &stmt.left {
+                    assign.report_effects_when_assigned(options);
+                }
+                stmt.right.report_effects(options);
+                stmt.body.report_effects(options);
+            }
+            Self::ForOfStatement(stmt) => {
+                if let ForStatementLeft::AssignmentTarget(assign) = &stmt.left {
+                    assign.report_effects_when_assigned(options);
+                }
+                stmt.right.report_effects(options);
+                stmt.body.report_effects(options);
+            }
             _ => {}
+        }
+    }
+}
+
+impl<'a> ListenerMap for ForStatementInit<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        match self {
+            Self::Expression(expr) => {
+                expr.report_effects(options);
+            }
+            Self::UsingDeclaration(decl) => {
+                decl.declarations.iter().for_each(|decl| decl.report_effects(options));
+            }
+            Self::VariableDeclaration(decl) => {
+                decl.declarations.iter().for_each(|decl| decl.report_effects(options));
+            }
         }
     }
 }
