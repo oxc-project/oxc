@@ -56,10 +56,11 @@ fn modify_enum(item: &mut ItemEnum) -> NodeData {
     // add the dummy variant
     item.variants.insert(0, parse_quote!(Dummy));
     // add explicit discriminants to all variants
-    item.variants
-        .iter_mut()
-        .enumerate()
-        .for_each(|(i, var)| var.discriminant = Some((parse_quote!(=), parse_quote!(#i as u8))));
+    item.variants.iter_mut().enumerate().for_each(|(i, var)| {
+        #[allow(clippy::cast_possible_truncation)]
+        let i = i as u8;
+        var.discriminant = Some((parse_quote!(=), parse_quote!(#i)));
+    });
 
     NodeData { ident: &item.ident, traversable: generate_traversable_enum(item) }
 }
