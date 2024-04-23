@@ -603,7 +603,6 @@ let M6;
 		_A.Color = Color;
 	})(A || (A = _M6.A || (_M6.A = {})));
 })(M6 || (M6 = {}));
-let M6;
 (function(_M6) {
 	let A;
 	(function(_A) {
@@ -643,7 +642,6 @@ let M;
 	})(E3 || {});
 	_M.E3 = E3;
 })(M || (M = {}));
-let M;
 (function(_M) {
 	var E1 = (E1 => {
 		const B = 'foo'.length;
@@ -664,7 +662,6 @@ let M;
 	})(E3 || {});
 	_M.E3 = E3;
 })(M || (M = {}));
-let M;
 (function(_M) {
 	var E1 = (E1 => {
 		const C = 0;
@@ -694,7 +691,6 @@ let M1;
 	})(E1 || {});
 	_M1.E1 = E1;
 })(M1 || (M1 = {}));
-let M1;
 (function(_M1) {
 	var E1 = (E1 => {
 		const B = 0;
@@ -703,7 +699,6 @@ let M1;
 	})(E1 || {});
 	_M1.E1 = E1;
 })(M1 || (M1 = {}));
-let M1;
 (function(_M1) {
 	var E1 = (E1 => {
 		const C = 0;
@@ -721,7 +716,6 @@ let M2;
 	})(E1 || {});
 	_M2.E1 = E1;
 })(M2 || (M2 = {}));
-let M2;
 (function(_M2) {
 	var E1 = (E1 => {
 		const B = 0;
@@ -730,7 +724,6 @@ let M2;
 	})(E1 || {});
 	_M2.E1 = E1;
 })(M2 || (M2 = {}));
-let M2;
 (function(_M2) {
 	var E1 = (E1 => {
 		const C = 0;

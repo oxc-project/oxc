@@ -1,4 +1,4 @@
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 
 use super::TypeScript;
 
@@ -12,6 +12,7 @@ use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 impl<'a> TypeScript<'a> {
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     pub(super) fn transform_statements_for_namespace(&self, stmts: &mut Vec<'a, Statement<'a>>) {
+        let mut names: FxHashSet<Atom<'a>> = FxHashSet::default();
         let mut new_stmts = self.ctx.ast.new_vec();
 
         // TODO: do not move if there is no namespace
@@ -21,9 +22,11 @@ impl<'a> TypeScript<'a> {
                     if !decl.modifiers.is_contains_declare() {
                         let name = decl.id.name().clone();
                         if let Some(transformed_stmt) = self.handle_nested(decl.unbox(), None) {
-                            new_stmts.push(Statement::Declaration(
-                                self.create_variable_declaration(&name),
-                            ));
+                            if names.insert(name.clone()) {
+                                new_stmts.push(Statement::Declaration(
+                                    self.create_variable_declaration(&name),
+                                ));
+                            }
                             new_stmts.push(transformed_stmt);
                         }
                     }
@@ -38,18 +41,20 @@ impl<'a> TypeScript<'a> {
                                 if let Some(transformed_stmt) =
                                     self.handle_nested(self.ctx.ast.copy(decl), None)
                                 {
-                                    new_stmts.push(self.ctx.ast.module_declaration(
-                                        ModuleDeclaration::ExportNamedDeclaration(
-                                            self.ctx.ast.export_named_declaration(
-                                                SPAN,
-                                                Some(self.create_variable_declaration(&name)),
-                                                self.ctx.ast.new_vec(),
-                                                None,
-                                                ImportOrExportKind::Value,
-                                                None,
+                                    if names.insert(name.clone()) {
+                                        new_stmts.push(self.ctx.ast.module_declaration(
+                                            ModuleDeclaration::ExportNamedDeclaration(
+                                                self.ctx.ast.export_named_declaration(
+                                                    SPAN,
+                                                    Some(self.create_variable_declaration(&name)),
+                                                    self.ctx.ast.new_vec(),
+                                                    None,
+                                                    ImportOrExportKind::Value,
+                                                    None,
+                                                ),
                                             ),
-                                        ),
-                                    ));
+                                        ));
+                                    }
                                     new_stmts.push(transformed_stmt);
                                     continue;
                                 }
@@ -121,7 +126,7 @@ impl<'a> TypeScript<'a> {
                         )),
                     ) {
                         is_empty = false;
-                        if !names.insert(module_name.clone()) {
+                        if names.insert(module_name.clone()) {
                             new_stmts.push(Statement::Declaration(
                                 self.create_variable_declaration(&module_name),
                             ));
@@ -191,9 +196,11 @@ impl<'a> TypeScript<'a> {
                                         )),
                                     ) {
                                         is_empty = false;
-                                        new_stmts.push(Statement::Declaration(
-                                            self.create_variable_declaration(&module_name),
-                                        ));
+                                        if names.insert(module_name.clone()) {
+                                            new_stmts.push(Statement::Declaration(
+                                                self.create_variable_declaration(&module_name),
+                                            ));
+                                        }
                                         new_stmts.push(transformed);
                                     }
                                 }
