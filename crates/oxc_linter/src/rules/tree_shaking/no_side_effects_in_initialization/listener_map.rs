@@ -195,6 +195,7 @@ impl<'a> ListenerMap for ForStatementInit<'a> {
             Self::VariableDeclaration(decl) => {
                 decl.declarations.iter().for_each(|decl| decl.report_effects(options));
             }
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
