@@ -361,6 +361,7 @@ mod nextjs {
 mod jsdoc {
     pub mod check_access;
     pub mod check_property_names;
+    pub mod check_tag_names;
     pub mod empty_tags;
     pub mod require_property;
     pub mod require_property_description;
@@ -693,6 +694,7 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_before_interactive_script_outside_document,
     jsdoc::check_access,
     jsdoc::check_property_names,
+    jsdoc::check_tag_names,
     jsdoc::empty_tags,
     jsdoc::require_property,
     jsdoc::require_property_type,
