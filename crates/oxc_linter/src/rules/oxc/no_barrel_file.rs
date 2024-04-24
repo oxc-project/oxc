@@ -52,7 +52,7 @@ impl Rule for NoBarrelFile {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let semantic = ctx.semantic();
         let module_record = semantic.module_record();
-        let root = semantic.nodes().root_node();
+        let Some(root) = ctx.nodes().iter().next() else { return };
 
         let AstKind::Program(program) = root.kind() else { unreachable!() };
 

@@ -32,8 +32,12 @@ fn bench_linter(criterion: &mut Criterion) {
                     .with_trivias(ret.trivias)
                     .build_module_record(PathBuf::new(), program)
                     .build(program);
+                let filter = vec![
+                    (AllowWarnDeny::Deny, "all".into()),
+                    (AllowWarnDeny::Deny, "nursery".into()),
+                ];
                 let lint_options = LintOptions::default()
-                    .with_filter(vec![(AllowWarnDeny::Deny, "all".into())])
+                    .with_filter(filter)
                     .with_import_plugin(true)
                     .with_jsdoc_plugin(true)
                     .with_jest_plugin(true)
