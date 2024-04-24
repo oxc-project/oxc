@@ -1,0 +1,317 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: check_tag_names
+---
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:2:24]
+ 1 │ 
+ 2 │                             /** @typoo {string} (fail: invalid name) */
+   ·                                 ──────
+ 3 │                             let a;
+   ╰────
+  help: `@typoo` is invalid tag name.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:25]
+ 2 │                               /**
+ 3 │                                * @Param (fail: invalid name)
+   ·                                  ──────
+ 4 │                                */
+   ╰────
+  help: `@Param` is invalid tag name.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:25]
+ 2 │                               /**
+ 3 │                                * @foo (fail: invalid name)
+   ·                                  ────
+ 4 │                                */
+   ╰────
+  help: `@foo` is invalid tag name.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:25]
+ 2 │                               /**
+ 3 │                                * @arg foo (fail: invalid name, default aliased)
+   ·                                  ────
+ 4 │                                */
+   ╰────
+  help: Replace tag `@arg` with `@param`.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:25]
+ 2 │                               /**
+ 3 │                                * @param foo (fail: valid name but user preferred)
+   ·                                  ──────
+ 4 │                                */
+   ╰────
+  help: Replace tag `@param` with `@arg`.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:25]
+ 2 │                               /**
+ 3 │                                * @constructor foo (fail: invalid name and user preferred)
+   ·                                  ────────────
+ 4 │                                */
+   ╰────
+  help: Replace tag `@constructor` with `@cons`.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:34]
+ 2 │                               /**
+ 3 │                                * @arg foo (fail: invalid name and user preferred)
+   ·                                  ────
+ 4 │                                */
+   ╰────
+  help: Replace tag `@arg` with `@somethingDifferent`.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:25]
+ 2 │                               /**
+ 3 │                                * @param foo (fail: valid name but user preferred)
+   ·                                  ──────
+ 4 │                                */
+   ╰────
+  help: Replace tag `@param` with `@parameter`.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:25]
+ 2 │                               /**
+ 3 │                                * @bar foo (fail: invalid name)
+   ·                                  ────
+ 4 │                                */
+   ╰────
+  help: `@bar` is invalid tag name.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:25]
+ 2 │                               /**
+ 3 │                                * @baz @bar foo (fail: invalid name)
+   ·                                  ────
+ 4 │                                */
+   ╰────
+  help: `@baz` is invalid tag name.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:4:27]
+ 3 │                                  * @bar
+ 4 │                                  * @baz (fail: invalid name)
+   ·                                    ────
+ 5 │                                  */
+   ╰────
+  help: `@baz` is invalid tag name.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:25]
+ 2 │                               /**
+ 3 │                                * @todo (fail: valid name but blocked)
+   ·                                  ─────
+ 4 │                                */
+   ╰────
+  help: Unexpected tag `@todo`.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:25]
+ 2 │                               /**
+ 3 │                                * @todo (fail: valid name but blocked)
+   ·                                  ─────
+ 4 │                                */
+   ╰────
+  help: Please resolve to-dos or add to the tracker
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:25]
+ 2 │                               /**
+ 3 │                                * @todo (fail: valid name but blocked)
+   ·                                  ─────
+ 4 │                                */
+   ╰────
+  help: Please use x-todo instead of todo
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:4:25]
+ 3 │                                * @property {object} a
+ 4 │                                * @prop {boolean} b (fail: invalid name, default aliased)
+   ·                                  ─────
+ 5 │                                */
+   ╰────
+  help: Replace tag `@prop` with `@property`.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:25]
+ 2 │                               /**
+ 3 │                                * @abc foo (fail: invalid name and user preferred)
+   ·                                  ────
+ 4 │                                * @abcd bar
+   ╰────
+  help: Replace tag `@abc` with `@abcd`.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:34]
+ 2 │                               /**
+ 3 │                                * @abc (fail: invalid name and user preferred)
+   ·                                  ────
+ 4 │                                * @abcd
+   ╰────
+  help: Replace tag `@abc` with `@abcd`.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:2:24]
+ 1 │ 
+ 2 │                             /** @jsx h */
+   ·                                 ────
+ 3 │                             /** @jsxFrag Fragment */
+   ╰────
+  help: `@jsx` is invalid tag name.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:24]
+ 2 │                             /** @jsx h */
+ 3 │                             /** @jsxFrag Fragment */
+   ·                                 ────────
+ 4 │                             /** @jsxImportSource preact */
+   ╰────
+  help: `@jsxFrag` is invalid tag name.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:4:24]
+ 3 │                             /** @jsxFrag Fragment */
+ 4 │                             /** @jsxImportSource preact */
+   ·                                 ────────────────
+ 5 │                             /** @jsxRuntime automatic */
+   ╰────
+  help: `@jsxImportSource` is invalid tag name.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:5:24]
+ 4 │                             /** @jsxImportSource preact */
+ 5 │                             /** @jsxRuntime automatic */
+   ·                                 ───────────
+ 6 │                           
+   ╰────
+  help: `@jsxRuntime` is invalid tag name.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:21]
+ 2 │                           /**
+ 3 │                            * @constructor (fail: invalid name)
+   ·                              ────────────
+ 4 │                            */
+   ╰────
+  help: Replace tag `@constructor` with `@class`.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:25]
+ 2 │                               /**
+ 3 │                                * @todo (fail: valid name but blocked)
+   ·                                  ─────
+ 4 │                                */
+   ╰────
+  help: Please don't use todo
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:15]
+ 2 │                     /**
+ 3 │                      * @module
+   ·                        ───────
+ 4 │                      * A comment related to the module
+   ╰────
+  help: `@module` is redundant outside of ambient(`declare` or `.d.ts`) contexts when using a type system.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:1:5]
+ 1 │ /** @type {string} */let a;
+   ·     ─────
+ 2 │                           
+   ╰────
+  help: `@type` is redundant when using a type system.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:4:24]
+ 3 │                              * Existing comment.
+ 4 │                              *  @type {string}
+   ·                                 ─────
+ 5 │                              */
+   ╰────
+  help: `@type` is redundant when using a type system.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:2:22]
+ 1 │ 
+ 2 │                           /** @typedef {Object} MyObject
+   ·                               ────────
+ 3 │                            * @property {string} id - my id
+   ╰────
+  help: `@typedef` is redundant when using a type system.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:21]
+ 2 │                           /** @typedef {Object} MyObject
+ 3 │                            * @property {string} id - my id
+   ·                              ─────────
+ 4 │                            */
+   ╰────
+  help: `@property` is redundant when using a type system.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:21]
+ 2 │                           /**
+ 3 │                            * @property {string} id - my id
+   ·                              ─────────
+ 4 │                            */
+   ╰────
+  help: `@property` is redundant when using a type system.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:2:22]
+ 1 │ 
+ 2 │                           /** @typedef {Object} MyObject */
+   ·                               ────────
+ 3 │                           
+   ╰────
+  help: `@typedef` is redundant when using a type system.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:2:22]
+ 1 │ 
+ 2 │                           /** @typedef {Object} MyObject
+   ·                               ────────
+ 3 │                            */
+   ╰────
+  help: `@typedef` is redundant when using a type system.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:2:24]
+ 1 │ 
+ 2 │                             /** @abstract */
+   ·                                 ─────────
+ 3 │                             let a;
+   ╰────
+  help: `@abstract` is redundant outside of ambient(`declare` or `.d.ts`) contexts when using a type system.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:3:26]
+ 2 │                             const a = {
+ 3 │                               /** @abstract */
+   ·                                   ─────────
+ 4 │                               b: true,
+   ╰────
+  help: `@abstract` is redundant outside of ambient(`declare` or `.d.ts`) contexts when using a type system.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:2:24]
+ 1 │ 
+ 2 │                             /** @template */
+   ·                                 ─────────
+ 3 │                             let a;
+   ╰────
+  help: `@template` without a name is redundant when using a type system.
+
+  ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
+   ╭─[check_tag_names.tsx:5:23]
+ 4 │                              *
+ 5 │                              * @template
+   ·                                ─────────
+ 6 │                              */
+   ╰────
+  help: `@template` without a name is redundant when using a type system.

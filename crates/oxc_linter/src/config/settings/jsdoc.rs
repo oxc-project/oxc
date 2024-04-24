@@ -71,41 +71,30 @@ pub struct JSDocPluginSettings {
 }
 
 impl JSDocPluginSettings {
+    /// Only for `check-tag-names` rule
+    /// Return `Some(reason)` if blocked
     pub fn check_blocked_tag_name(&self, tag_name: &str) -> Option<String> {
         match self.tag_name_preference.get(tag_name) {
-            Some(TagNamePreference::FalseOnly(_)) => Some(format!("Unexpected tag `@{tag_name}`")),
-            Some(
-                TagNamePreference::ObjectWithMessage { message }
-                | TagNamePreference::ObjectWithMessageAndReplacement { message, .. },
-            ) => Some(message.to_string()),
+            Some(TagNamePreference::FalseOnly(_)) => Some(format!("Unexpected tag `@{tag_name}`.")),
+            Some(TagNamePreference::ObjectWithMessage { message }) => Some(message.to_string()),
             _ => None,
         }
     }
+    /// Only for `check-tag-names` rule
+    /// Return `Some(reason)` if replacement found or default aliased
+    pub fn check_preferred_tag_name(&self, original_name: &str) -> Option<String> {
+        let reason = |preferred_name: &str| -> String {
+            format!("Replace tag `@{original_name}` with `@{preferred_name}`.")
+        };
 
-    pub fn list_preferred_tag_names(&self) -> Vec<String> {
-        self.tag_name_preference
-            .iter()
-            .filter_map(|(_, pref)| match pref {
-                TagNamePreference::TagNameOnly(replacement)
-                | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. } => {
-                    Some(replacement.to_string())
-                }
-                _ => None,
-            })
-            .collect()
-    }
-
-    /// Resolve original, known tag name to user preferred name
-    /// If not defined, return original name
-    pub fn resolve_tag_name(&self, original_name: &str) -> String {
         match self.tag_name_preference.get(original_name) {
-            Some(
-                TagNamePreference::TagNameOnly(replacement)
-                | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. },
-            ) => replacement.to_string(),
+            Some(TagNamePreference::TagNameOnly(preferred_name)) => Some(reason(preferred_name)),
+            Some(TagNamePreference::ObjectWithMessageAndReplacement { message, .. }) => {
+                Some(message.to_string())
+            }
             _ => {
                 // https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md#default-preferred-aliases
-                match original_name {
+                let aliased_name = match original_name {
                     "virtual" => "abstract",
                     "extends" => "augments",
                     "constructor" => "class",
@@ -123,9 +112,40 @@ impl JSDocPluginSettings {
                     "exception" => "throws",
                     "yield" => "yields",
                     _ => original_name,
+                };
+
+                if aliased_name != original_name {
+                    return Some(reason(aliased_name));
                 }
-                .to_string()
+
+                None
             }
+        }
+    }
+    /// Only for `check-tag-names` rule
+    /// Return all user replacement tag names
+    pub fn list_user_defined_tag_names(&self) -> Vec<&str> {
+        self.tag_name_preference
+            .iter()
+            .filter_map(|(_, pref)| match pref {
+                TagNamePreference::TagNameOnly(replacement)
+                | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. } => {
+                    Some(replacement.as_str())
+                }
+                _ => None,
+            })
+            .collect()
+    }
+
+    /// Resolve original, known tag name to user preferred name
+    /// If not defined, return original name
+    pub fn resolve_tag_name(&self, original_name: &str) -> String {
+        match self.tag_name_preference.get(original_name) {
+            Some(
+                TagNamePreference::TagNameOnly(replacement)
+                | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. },
+            ) => replacement.to_string(),
+            _ => original_name.to_string(),
         }
     }
 }
@@ -186,9 +206,6 @@ mod test {
     fn resolve_tag_name() {
         let settings = JSDocPluginSettings::deserialize(&serde_json::json!({})).unwrap();
         assert_eq!(settings.resolve_tag_name("foo"), "foo".to_string());
-        assert_eq!(settings.resolve_tag_name("virtual"), "abstract".to_string());
-        assert_eq!(settings.resolve_tag_name("fileoverview"), "file".to_string());
-        assert_eq!(settings.resolve_tag_name("overview"), "file".to_string());
 
         let settings = JSDocPluginSettings::deserialize(&serde_json::json!({
             "tagNamePreference": {
@@ -208,9 +225,9 @@ mod test {
     }
 
     #[test]
-    fn list_preferred_tag_names() {
+    fn list_user_defined_tag_names() {
         let settings = JSDocPluginSettings::deserialize(&serde_json::json!({})).unwrap();
-        assert_eq!(settings.list_preferred_tag_names().len(), 0);
+        assert_eq!(settings.list_user_defined_tag_names().len(), 0);
 
         let settings = JSDocPluginSettings::deserialize(&serde_json::json!({
             "tagNamePreference": {
@@ -222,7 +239,7 @@ mod test {
             }
         }))
         .unwrap();
-        let mut preferred = settings.list_preferred_tag_names();
+        let mut preferred = settings.list_user_defined_tag_names();
         preferred.sort_unstable();
         assert_eq!(preferred, vec!["bar", "noop", "overridedefault"]);
     }
@@ -242,9 +259,32 @@ mod test {
         .unwrap();
         assert_eq!(
             settings.check_blocked_tag_name("foo"),
-            Some("Unexpected tag `@foo`".to_string())
+            Some("Unexpected tag `@foo`.".to_string())
         );
         assert_eq!(settings.check_blocked_tag_name("bar"), Some("do not use bar".to_string()));
-        assert_eq!(settings.check_blocked_tag_name("baz"), Some("baz is noop now".to_string()));
+        assert_eq!(settings.check_blocked_tag_name("baz"), None);
+    }
+
+    #[test]
+    fn check_preferred_tag_name() {
+        let settings = JSDocPluginSettings::deserialize(&serde_json::json!({})).unwrap();
+        assert_eq!(settings.check_preferred_tag_name("foo"), None);
+
+        let settings = JSDocPluginSettings::deserialize(&serde_json::json!({
+            "tagNamePreference": {
+                "foo": false,
+                "bar": { "message": "do not use bar" },
+                "baz": { "message": "baz is noop now", "replacement": "noop" },
+                "qux": "quux"
+            }
+        }))
+        .unwrap();
+        assert_eq!(settings.check_preferred_tag_name("foo"), None,);
+        assert_eq!(settings.check_preferred_tag_name("bar"), None);
+        assert_eq!(settings.check_preferred_tag_name("baz"), Some("baz is noop now".to_string()));
+        assert_eq!(
+            settings.check_preferred_tag_name("qux"),
+            Some("Replace tag `@qux` with `@quux`.".to_string())
+        );
     }
 }
