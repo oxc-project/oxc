@@ -52,11 +52,11 @@ impl Rule for NoBarrelFile {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let semantic = ctx.semantic();
         let module_record = semantic.module_record();
-        let Some(root) = semantic.nodes().root_node() else {
-            // Return early if the semantic's root node isn't set.
-            // It usually means we are running on an empty or invalid file.
+        let root_id = semantic.nodes().root();
+        if root_id == usize::MAX {
             return;
-        };
+        }
+        let root = semantic.nodes().get_node(root_id);
 
         let AstKind::Program(program) = root.kind() else { unreachable!() };
 
