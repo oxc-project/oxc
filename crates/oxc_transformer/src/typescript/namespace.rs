@@ -171,6 +171,12 @@ impl<'a> TypeScript<'a> {
                     });
                     new_stmts.push(Statement::Declaration(Declaration::ClassDeclaration(decl)));
                 }
+                Statement::Declaration(Declaration::TSEnumDeclaration(enum_decl)) => {
+                    is_empty = false;
+                    names.insert(enum_decl.id.name.clone());
+                    new_stmts
+                        .push(Statement::Declaration(Declaration::TSEnumDeclaration(enum_decl)));
+                }
                 Statement::Declaration(decl) if decl.is_typescript_syntax() => {
                     is_empty = true;
                 }

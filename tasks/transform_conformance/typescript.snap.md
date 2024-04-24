@@ -515,6 +515,24 @@ export var Animals = (Animals => {
 ```typescript
 let M1;
 (function(_M1) {
+	var EImpl1 = (EImpl1 => {
+		const A = 0;
+		EImpl1[EImpl1['A'] = A] = 'A';
+		const B = 1 + A;
+		EImpl1[EImpl1['B'] = B] = 'B';
+		const C = 1 + B;
+		EImpl1[EImpl1['C'] = C] = 'C';
+		return EImpl1;
+	})(EImpl1 || {});
+	var EImpl1 = (EImpl1 => {
+		const D = 1;
+		EImpl1[EImpl1['D'] = D] = 'D';
+		const E = 1 + D;
+		EImpl1[EImpl1['E'] = E] = 'E';
+		const F = 1 + E;
+		EImpl1[EImpl1['F'] = F] = 'F';
+		return EImpl1;
+	})(EImpl1 || {});
 	var EConst1 = (EConst1 => {
 		const A = 3;
 		EConst1[EConst1['A'] = A] = 'A';
@@ -561,6 +579,25 @@ let M2;
 	_M2.EComp2 = EComp2;
 	var x = [EComp2.A, EComp2.B, EComp2.C, EComp2.D, EComp2.E, EComp2.F];
 })(M2 || (M2 = {}));
+let M3;
+(function(_M3) {
+	var EInit = (EInit => {
+		const A = 0;
+		EInit[EInit['A'] = A] = 'A';
+		const B = 1 + A;
+		EInit[EInit['B'] = B] = 'B';
+		return EInit;
+	})(EInit || {});
+	var EInit = (EInit => {
+		const C = 1;
+		EInit[EInit['C'] = C] = 'C';
+		const D = 1 + C;
+		EInit[EInit['D'] = D] = 'D';
+		const E = 1 + D;
+		EInit[EInit['E'] = E] = 'E';
+		return EInit;
+	})(EInit || {});
+})(M3 || (M3 = {}));
 let M4;
 (function(_M4) {
 	var Color = (Color => {
