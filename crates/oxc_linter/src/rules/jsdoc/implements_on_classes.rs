@@ -4,7 +4,6 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::JSDoc;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -106,14 +105,17 @@ impl Rule for ImplementsOnClasses {
         };
 
         let (mut implements_found, mut class_or_ctor_found) = (None, false);
-        for tag in jsdocs.iter().flat_map(JSDoc::tags) {
-            let tag_name = tag.kind.parsed();
+        for jsdoc in jsdocs {
+            for tag in jsdoc.tags() {
+                let tag_name = tag.kind.parsed();
 
-            if tag_name == resolved_implements_tag_name {
-                implements_found = Some(tag.kind.span);
-            }
-            if tag_name == resolved_class_tag_name || tag_name == resolved_constructor_tag_name {
-                class_or_ctor_found = true;
+                if tag_name == resolved_implements_tag_name {
+                    implements_found = Some(tag.kind.span);
+                }
+                if tag_name == resolved_class_tag_name || tag_name == resolved_constructor_tag_name
+                {
+                    class_or_ctor_found = true;
+                }
             }
         }
 
