@@ -52,38 +52,43 @@ declare_oxc_lint!(
     correctness
 );
 
-/// Get the root node of a function.
+/// Get the definition root node of a function.
+/// JSDoc often appears on the parent node of a function.
+///
 /// ```js
 /// /** FunctionDeclaration */
 /// function foo() {}
 ///
-/// /** VariableDeclaration > FunctionExpression */
+/// /** VariableDeclaration > VariableDeclarator > FunctionExpression */
 /// const bar = function() {}
 ///
-/// /** VariableDeclaration > ArrowFunctionExpression */
+/// /** VariableDeclaration > VariableDeclarator > ArrowFunctionExpression */
 /// const baz = () => {}
 /// ```
-fn get_function_root_node<'a, 'b>(
+fn get_function_definition_node<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b AstNode<'a>> {
     match node.kind() {
         AstKind::Function(f) if f.is_function_declaration() => return Some(node),
-        AstKind::ArrowFunctionExpression(_) => {}
         AstKind::Function(f) if f.is_expression() => {}
+        AstKind::ArrowFunctionExpression(_) => {}
         _ => return None,
     };
 
     let mut current_node = node;
-    loop {
-        match current_node.kind() {
-            AstKind::Program(_) => return None,
-            AstKind::VariableDeclaration(_) => return Some(current_node),
-            _ => {
-                current_node = ctx.nodes().parent_node(current_node.id())?;
+    while let Some(parent_node) = ctx.nodes().parent_node(current_node.id()) {
+        match parent_node.kind() {
+            // `MethodDefinition` is not a target
+            AstKind::VariableDeclarator(_) | AstKind::ParenthesizedExpression(_) => {
+                current_node = parent_node;
             }
+            AstKind::VariableDeclaration(_) => return Some(parent_node),
+            _ => return None,
         }
     }
+
+    None
 }
 
 impl Rule for ImplementsOnClasses {
@@ -94,8 +99,8 @@ impl Rule for ImplementsOnClasses {
         let resolved_class_tag_name = settings.resolve_tag_name("class");
         let resolved_constructor_tag_name = settings.resolve_tag_name("constructor");
 
-        let Some(jsdocs) =
-            get_function_root_node(node, ctx).and_then(|node| ctx.jsdoc().get_all_by_node(node))
+        let Some(jsdocs) = get_function_definition_node(node, ctx)
+            .and_then(|node| ctx.jsdoc().get_all_by_node(node))
         else {
             return;
         };
