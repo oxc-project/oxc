@@ -672,11 +672,11 @@ pub struct TemplateElementValue<'a> {
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum MemberExpression<'a> {
     /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
-    ComputedMemberExpression(ComputedMemberExpression<'a>),
+    ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>),
     /// `MemberExpression[?Yield, ?Await] . IdentifierName`
-    StaticMemberExpression(StaticMemberExpression<'a>),
+    StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>),
     /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
-    PrivateFieldExpression(PrivateFieldExpression<'a>),
+    PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>),
 }
 
 impl<'a> MemberExpression<'a> {

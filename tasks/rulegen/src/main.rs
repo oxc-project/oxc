@@ -476,12 +476,10 @@ fn find_parser_arguments<'a, 'b>(
     let Expression::MemberExpression(member_expr) = &call_expr.callee else {
         return None;
     };
-    let MemberExpression::StaticMemberExpression(StaticMemberExpression {
-        object, property, ..
-    }) = &**member_expr
-    else {
+    let MemberExpression::StaticMemberExpression(static_member_expr) = &**member_expr else {
         return None;
     };
+    let StaticMemberExpression { object, property, .. } = &**static_member_expr;
     match (object, call_expr.arguments.first()) {
         (Expression::Identifier(iden), Some(Argument::Expression(arg)))
             if iden.name == "parsers" && property.name == "all" =>

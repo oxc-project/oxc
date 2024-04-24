@@ -106,7 +106,7 @@ fn get_outer_member_expression<'a, 'b>(
     if let SimpleAssignmentTarget::MemberAssignmentTarget(member_expr) = assignment {
         match &**member_expr {
             MemberExpression::StaticMemberExpression(expr) => {
-                let mut node = expr;
+                let mut node = &**expr;
                 loop {
                     if node.object.is_null() {
                         return Some(node);

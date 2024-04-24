@@ -623,12 +623,12 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         optional: bool, // for optional chaining
     ) -> MemberExpression<'a> {
-        MemberExpression::ComputedMemberExpression(ComputedMemberExpression {
+        MemberExpression::ComputedMemberExpression(self.alloc(ComputedMemberExpression {
             span,
             object,
             expression,
             optional,
-        })
+        }))
     }
 
     pub fn computed_member_expression(
@@ -648,12 +648,12 @@ impl<'a> AstBuilder<'a> {
         property: IdentifierName<'a>,
         optional: bool, // for optional chaining
     ) -> MemberExpression<'a> {
-        MemberExpression::StaticMemberExpression(StaticMemberExpression {
+        MemberExpression::StaticMemberExpression(self.alloc(StaticMemberExpression {
             span,
             object,
             property,
             optional,
-        })
+        }))
     }
 
     pub fn static_member_expression(
@@ -673,12 +673,12 @@ impl<'a> AstBuilder<'a> {
         field: PrivateIdentifier<'a>,
         optional: bool,
     ) -> MemberExpression<'a> {
-        MemberExpression::PrivateFieldExpression(PrivateFieldExpression {
+        MemberExpression::PrivateFieldExpression(self.alloc(PrivateFieldExpression {
             span,
             object,
             field,
             optional,
-        })
+        }))
     }
 
     pub fn private_in_expression(
