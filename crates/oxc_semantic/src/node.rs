@@ -64,7 +64,7 @@ pub struct AstNodes<'a> {
 impl<'a> Default for AstNodes<'a> {
     fn default() -> Self {
         Self {
-            root: AstNodeId::new(0),
+            root: AstNodeId::new(usize::MAX),
             nodes: IndexVec::default(),
             parent_ids: IndexVec::default(),
         }
@@ -110,6 +110,7 @@ impl<'a> AstNodes<'a> {
     }
 
     /// Get the root `AstNodeId`, It is always pointing to a `Program`.
+    /// Returns `None` if root node isn't set.
     pub fn root(&self) -> AstNodeId {
         self.root
     }
@@ -130,11 +131,13 @@ impl<'a> AstNodes<'a> {
     }
 
     /// Get the root node as immutable reference, It is always guaranteed to be a `Program`.
+    /// Returns `None` if root node isn't set.
     pub fn root_node(&self) -> &AstNode<'a> {
         self.get_node(self.root())
     }
 
     /// Get the root node as mutable reference, It is always guaranteed to be a `Program`.
+    /// Returns `None` if root node isn't set.
     pub fn root_node_mut(&mut self) -> &mut AstNode<'a> {
         self.get_node_mut(self.root())
     }
