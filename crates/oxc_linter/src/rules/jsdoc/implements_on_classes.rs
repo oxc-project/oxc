@@ -13,7 +13,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 #[error(
     "eslint-plugin-jsdoc(implements-on-classes): `@implements` used on a non-constructor function"
 )]
-#[diagnostic(severity(warning), help("TODO"))]
+#[diagnostic(severity(warning), help("Add `@class` tag or use ES6 class syntax."))]
 struct ImplementsOnClassesDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -52,42 +52,70 @@ declare_oxc_lint!(
     correctness
 );
 
+/// Get the root node of a function.
+/// ```js
+/// /** FunctionDeclaration */
+/// function foo() {}
+///
+/// /** VariableDeclaration > FunctionExpression */
+/// const bar = function() {}
+///
+/// /** VariableDeclaration > ArrowFunctionExpression */
+/// const baz = () => {}
+/// ```
+fn get_function_root_node<'a, 'b>(
+    node: &'b AstNode<'a>,
+    ctx: &'b LintContext<'a>,
+) -> Option<&'b AstNode<'a>> {
+    match node.kind() {
+        AstKind::Function(f) if f.is_function_declaration() => return Some(node),
+        AstKind::ArrowFunctionExpression(_) => {}
+        AstKind::Function(f) if f.is_expression() => {}
+        _ => return None,
+    };
+
+    let mut current_node = node;
+    loop {
+        match current_node.kind() {
+            AstKind::Program(_) => return None,
+            AstKind::VariableDeclaration(_) => return Some(current_node),
+            _ => {
+                current_node = ctx.nodes().parent_node(current_node.id())?;
+            }
+        }
+    }
+}
+
 impl Rule for ImplementsOnClasses {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let jsdoc_finder = &ctx.jsdoc();
         let settings = &ctx.settings().jsdoc;
 
-        // TODO: Use resolved after fixing resolver to not aliased
         let resolved_implements_tag_name = settings.resolve_tag_name("implements");
-        // let resolved_class = settings.resolve_tag_name("class");
-        // let resolved_constructor = settings.resolve_tag_name("constructor");
+        let resolved_class_tag_name = settings.resolve_tag_name("class");
+        let resolved_constructor_tag_name = settings.resolve_tag_name("constructor");
 
-        let AstKind::Function(f) = node.kind() else {
-            return;
-        };
-        if !f.is_function_declaration() {
-            return;
-        }
-
-        // TODO: Look up parent for arrow function -> variable declaration
-        let Some(jsdocs) = jsdoc_finder.get_all_by_node(node) else {
+        let Some(jsdocs) =
+            get_function_root_node(node, ctx).and_then(|node| ctx.jsdoc().get_all_by_node(node))
+        else {
             return;
         };
 
-        let (mut implements_found, mut class_or_ctor_found) = (0, 0);
+        let (mut implements_found, mut class_or_ctor_found) = (None, false);
         for tag in jsdocs.iter().flat_map(JSDoc::tags) {
             let tag_name = tag.kind.parsed();
 
             if tag_name == resolved_implements_tag_name {
-                implements_found += 1;
+                implements_found = Some(tag.kind.span);
             }
-            if tag_name == "class" || tag_name == "constructor" {
-                class_or_ctor_found += 1;
+            if tag_name == resolved_class_tag_name || tag_name == resolved_constructor_tag_name {
+                class_or_ctor_found = true;
             }
         }
 
-        if 0 < implements_found && class_or_ctor_found == 0 {
-            ctx.diagnostic(ImplementsOnClassesDiagnostic(f.span));
+        if let Some(span) = implements_found {
+            if !class_or_ctor_found {
+                ctx.diagnostic(ImplementsOnClassesDiagnostic(span));
+            }
         }
     }
 }
@@ -175,6 +203,23 @@ fn test() {
 			      /**
 			       *
 			       */
+			      class quux {
+			        /**
+			         * @implements {SomeClass}
+			         */
+			        foo() {
+			
+			        }
+			      }
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			      /**
+			       *
+			       */
 			      function quux () {
 			
 			      }
@@ -235,7 +280,7 @@ fn test() {
 			       * @function
 			       * @implements {SomeClass}
 			       */
-			      function quux () {
+			      const quux = function() {
 			
 			      }
 			      ",
