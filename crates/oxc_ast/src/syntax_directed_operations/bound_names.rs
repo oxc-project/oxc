@@ -134,10 +134,10 @@ impl<'a> BoundNames<'a> for FormalParameter<'a> {
 
 impl<'a> BoundNames<'a> for ModuleDeclaration<'a> {
     fn bound_names<F: FnMut(&BindingIdentifier<'a>)>(&self, f: &mut F) {
-        match self {
-            ModuleDeclaration::ImportDeclaration(decl) => decl.bound_names(f),
-            ModuleDeclaration::ExportNamedDeclaration(decl) => decl.bound_names(f),
-            _ => {}
+        if let ModuleDeclaration::ImportDeclaration(decl) = &self {
+            decl.bound_names(f);
+        } else if let ModuleDeclaration::ExportNamedDeclaration(decl) = &self {
+            decl.bound_names(f);
         }
     }
 }
