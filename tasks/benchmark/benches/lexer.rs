@@ -27,14 +27,14 @@ fn bench_lexer(criterion: &mut Criterion) {
             BenchmarkId::from_parameter(&file.file_name),
             &file.source_text,
             |b, source_text| {
-                b.iter_with_large_drop(|| {
-                    // Include the allocator drop time to make time measurement consistent.
-                    // Otherwise the allocator will allocate huge memory chunks (by power of two) from the
-                    // system allocator, which makes time measurement unequal during long runs.
-                    let allocator = Allocator::default();
+                // Do not include initializing allocator in benchmark.
+                // User code would likely reuse the same allocator over and over to parse multiple files,
+                // so we do the same here.
+                let mut allocator = Allocator::default();
+                b.iter(|| {
                     let mut lexer = Lexer::new_for_benchmarks(&allocator, source_text, source_type);
                     while lexer.next_token().kind != Kind::Eof {}
-                    allocator
+                    allocator.reset();
                 });
             },
         );

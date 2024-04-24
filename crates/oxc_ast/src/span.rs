@@ -211,12 +211,7 @@ impl<'a> GetSpan for AssignmentTarget<'a> {
     fn span(&self) -> Span {
         match self {
             Self::SimpleAssignmentTarget(target) => target.span(),
-            Self::AssignmentTargetPattern(AssignmentTargetPattern::ArrayAssignmentTarget(pat)) => {
-                pat.span
-            }
-            Self::AssignmentTargetPattern(AssignmentTargetPattern::ObjectAssignmentTarget(pat)) => {
-                pat.span
-            }
+            Self::AssignmentTargetPattern(pat) => pat.span(),
         }
     }
 }
@@ -244,7 +239,7 @@ impl<'a> GetSpan for ArrayExpressionElement<'a> {
         match self {
             Self::SpreadElement(e) => e.span,
             Self::Expression(expr) => expr.span(),
-            Self::Elision(span) => *span,
+            Self::Elision(elision) => elision.span,
         }
     }
 }

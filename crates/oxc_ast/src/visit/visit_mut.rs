@@ -1,7 +1,6 @@
 //! Visit Mut Pattern
 
 use oxc_allocator::Vec;
-use oxc_span::Span;
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{ast::*, AstType};
@@ -109,6 +108,10 @@ pub trait VisitMut<'a>: Sized {
 
     fn visit_catch_clause(&mut self, clause: &mut CatchClause<'a>) {
         walk_catch_clause_mut(self, clause);
+    }
+
+    fn visit_catch_parameter(&mut self, param: &mut CatchParameter<'a>) {
+        walk_catch_parameter_mut(self, param);
     }
 
     fn visit_finally_clause(&mut self, clause: &mut BlockStatement<'a>) {
@@ -223,8 +226,8 @@ pub trait VisitMut<'a>: Sized {
         walk_expression_array_element_mut(self, expr);
     }
 
-    fn visit_elision(&mut self, span: Span) {
-        walk_elision_mut(self, span);
+    fn visit_elision(&mut self, elision: &mut Elision) {
+        walk_elision_mut(self, elision);
     }
 
     fn visit_assignment_expression(&mut self, expr: &mut AssignmentExpression<'a>) {
@@ -1147,11 +1150,21 @@ pub mod walk_mut {
         visitor.enter_scope(ScopeFlags::empty());
         visitor.enter_node(kind);
         if let Some(param) = &mut clause.param {
-            visitor.visit_binding_pattern(param);
+            visitor.visit_catch_parameter(param);
         }
         visitor.visit_statements(&mut clause.body.body);
         visitor.leave_node(kind);
         visitor.leave_scope();
+    }
+
+    pub fn walk_catch_parameter_mut<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        param: &mut CatchParameter<'a>,
+    ) {
+        let kind = AstType::CatchParameter;
+        visitor.enter_node(kind);
+        visitor.visit_binding_pattern(&mut param.pattern);
+        visitor.leave_node(kind);
     }
 
     pub fn walk_finally_clause_mut<'a, V: VisitMut<'a>>(
@@ -1522,7 +1535,7 @@ pub mod walk_mut {
             ArrayExpressionElement::Expression(expr) => {
                 visitor.visit_expression_array_element(expr);
             }
-            ArrayExpressionElement::Elision(span) => visitor.visit_elision(*span),
+            ArrayExpressionElement::Elision(elision) => visitor.visit_elision(elision),
         }
         visitor.leave_node(kind);
     }
@@ -1557,7 +1570,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
-    pub fn walk_elision_mut<'a, V: VisitMut<'a>>(visitor: &mut V, _span: Span) {
+    pub fn walk_elision_mut<'a, V: VisitMut<'a>>(visitor: &mut V, _elision: &mut Elision) {
         let kind = AstType::Elision;
         visitor.enter_node(kind);
         visitor.leave_node(kind);

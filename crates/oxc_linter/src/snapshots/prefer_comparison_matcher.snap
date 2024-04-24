@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 151
 expression: prefer_comparison_matcher
 ---
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers

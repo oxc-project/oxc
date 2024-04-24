@@ -5,7 +5,6 @@ use std::{
     panic::UnwindSafe,
     path::{Path, PathBuf},
     process::{Command, Stdio},
-    result::Result,
 };
 
 use console::Style;

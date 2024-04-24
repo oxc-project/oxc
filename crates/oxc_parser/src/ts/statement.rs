@@ -51,13 +51,21 @@ impl<'a> ParserImpl<'a> {
     fn parse_ts_enum_member_name(&mut self) -> Result<TSEnumMemberName<'a>> {
         match self.cur_kind() {
             Kind::LBrack => {
-                Ok(TSEnumMemberName::ComputedPropertyName(self.parse_computed_property_name()?))
+                let node = self.parse_computed_property_name()?;
+                Ok(self.ast.ts_enum_member_name_computed_property_name(node))
             }
-            Kind::Str => Ok(TSEnumMemberName::StringLiteral(self.parse_literal_string()?)),
+            Kind::Str => {
+                let node = self.parse_literal_string()?;
+                Ok(self.ast.ts_enum_member_name_string_literal(node))
+            }
             kind if kind.is_number() => {
-                Ok(TSEnumMemberName::NumericLiteral(self.parse_literal_number()?))
+                let node = self.parse_literal_number()?;
+                Ok(self.ast.ts_enum_member_name_number_literal(node))
             }
-            _ => Ok(TSEnumMemberName::Identifier(self.parse_identifier_name()?)),
+            _ => {
+                let node = self.parse_identifier_name()?;
+                Ok(self.ast.ts_enum_member_name_identifier(node))
+            }
         }
     }
 
@@ -374,12 +382,13 @@ impl<'a> ParserImpl<'a> {
             self.expect(Kind::LParen)?;
             let expression = self.parse_literal_string()?;
             self.expect(Kind::RParen)?;
-            TSModuleReference::ExternalModuleReference(TSExternalModuleReference {
+            self.ast.ts_module_reference_external_module_reference(TSExternalModuleReference {
                 span: self.end_span(reference_span),
                 expression,
             })
         } else {
-            TSModuleReference::TypeName(self.parse_ts_type_name()?)
+            let node = self.parse_ts_type_name()?;
+            self.ast.ts_module_reference_type_name(node)
         };
 
         self.asi()?;

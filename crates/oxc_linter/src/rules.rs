@@ -19,7 +19,6 @@ mod import {
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
     pub mod no_self_import;
-    pub mod no_unresolved;
     pub mod no_unused_modules;
 }
 
@@ -49,6 +48,7 @@ mod eslint {
     pub mod max_params;
     pub mod no_array_constructor;
     pub mod no_async_promise_executor;
+    pub mod no_await_in_loop;
     pub mod no_bitwise;
     pub mod no_caller;
     pub mod no_case_declarations;
@@ -333,6 +333,7 @@ mod oxc {
     pub mod erasing_op;
     pub mod misrefactored_assign_op;
     pub mod no_accumulating_spread;
+    pub mod no_barrel_file;
     pub mod only_used_in_recursion;
 }
 
@@ -360,6 +361,7 @@ mod nextjs {
 mod jsdoc {
     pub mod check_access;
     pub mod check_property_names;
+    pub mod check_tag_names;
     pub mod empty_tags;
     pub mod require_property;
     pub mod require_property_description;
@@ -462,6 +464,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::require_yield,
     eslint::use_isnan,
     eslint::valid_typeof,
+    eslint::no_await_in_loop,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
     typescript::ban_ts_comment,
@@ -635,7 +638,6 @@ oxc_macros::declare_all_lint_rules! {
     import::no_named_as_default,
     import::no_named_as_default_member,
     import::no_self_import,
-    import::no_unresolved,
     import::no_unused_modules,
     import::no_duplicates,
     import::no_default_export,
@@ -671,6 +673,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::erasing_op,
     oxc::misrefactored_assign_op,
     oxc::no_accumulating_spread,
+    oxc::no_barrel_file,
     oxc::only_used_in_recursion,
     nextjs::google_font_display,
     nextjs::google_font_preconnect,
@@ -691,6 +694,7 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_before_interactive_script_outside_document,
     jsdoc::check_access,
     jsdoc::check_property_names,
+    jsdoc::check_tag_names,
     jsdoc::empty_tags,
     jsdoc::require_property,
     jsdoc::require_property_type,

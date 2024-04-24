@@ -4,10 +4,10 @@ use serde::{
 };
 
 use crate::ast::{
-    ArrayAssignmentTarget, ArrayExpressionElement, ArrayPattern, AssignmentTargetMaybeDefault,
-    AssignmentTargetProperty, AssignmentTargetRest, BindingPattern, BindingPatternKind,
-    BindingProperty, BindingRestElement, FormalParameter, FormalParameterKind, FormalParameters,
-    ObjectAssignmentTarget, ObjectPattern, Program, RegExpFlags, TSTypeAnnotation,
+    ArrayAssignmentTarget, ArrayPattern, AssignmentTargetMaybeDefault, AssignmentTargetProperty,
+    AssignmentTargetRest, BindingPattern, BindingPatternKind, BindingProperty, BindingRestElement,
+    Elision, FormalParameter, FormalParameterKind, FormalParameters, ObjectAssignmentTarget,
+    ObjectPattern, Program, RegExpFlags, TSTypeAnnotation,
 };
 use oxc_allocator::{Box, Vec};
 use oxc_span::Span;
@@ -46,12 +46,11 @@ impl Serialize for RegExpFlags {
 }
 
 /// Serialize `ArrayExpressionElement::Elision` variant as `null` in JSON
-impl<'a> ArrayExpressionElement<'a> {
-    #[allow(clippy::trivially_copy_pass_by_ref)]
-    pub(crate) fn serialize_elision<S: Serializer>(
-        _span: &Span,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error> {
+impl Serialize for Elision {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         serializer.serialize_none()
     }
 }
@@ -64,7 +63,6 @@ impl<'a> Serialize for ArrayAssignmentTarget<'a> {
         let converted = SerArrayAssignmentTarget {
             span: self.span,
             elements: ElementsAndRest::new(&self.elements, &self.rest),
-            trailing_comma: self.trailing_comma,
         };
         converted.serialize(serializer)
     }
@@ -77,7 +75,6 @@ struct SerArrayAssignmentTarget<'a, 'b> {
     span: Span,
     elements:
         ElementsAndRest<'a, 'b, Option<AssignmentTargetMaybeDefault<'a>>, AssignmentTargetRest<'a>>,
-    trailing_comma: Option<Span>,
 }
 
 impl<'a> Serialize for ObjectAssignmentTarget<'a> {

@@ -98,7 +98,7 @@ ast_kinds! {
     SimpleAssignmentTarget(&'a SimpleAssignmentTarget<'a>),
     AssignmentTargetWithDefault(&'a AssignmentTargetWithDefault<'a>),
     ArrayExpressionElement(&'a ArrayExpressionElement<'a>),
-    Elision(Span),
+    Elision(&'a Elision),
     ExpressionArrayElement(&'a Expression<'a>),
     SpreadElement(&'a SpreadElement<'a>),
     BindingRestElement(&'a BindingRestElement<'a>),
@@ -107,6 +107,7 @@ ast_kinds! {
     FunctionBody(&'a FunctionBody<'a>),
     FormalParameters(&'a FormalParameters<'a>),
     FormalParameter(&'a FormalParameter<'a>),
+    CatchParameter(&'a CatchParameter<'a>),
 
     Class(&'a Class<'a>),
     ClassBody(&'a ClassBody<'a>),
@@ -435,7 +436,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::SimpleAssignmentTarget(x) => x.span(),
             Self::AssignmentTargetWithDefault(x) => x.span,
             Self::SpreadElement(x) => x.span,
-            Self::Elision(span) => *span,
+            Self::Elision(x) => x.span,
             Self::ExpressionArrayElement(x) => x.span(),
             Self::BindingRestElement(x) => x.span,
 
@@ -443,6 +444,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::FunctionBody(x) => x.span,
             Self::FormalParameters(x) => x.span,
             Self::FormalParameter(x) => x.span,
+            Self::CatchParameter(x) => x.span,
 
             Self::Class(x) => x.span,
             Self::ClassBody(x) => x.span,
@@ -640,6 +642,7 @@ impl<'a> AstKind<'a> {
             Self::FunctionBody(_) => "FunctionBody".into(),
             Self::FormalParameters(_) => "FormalParameters".into(),
             Self::FormalParameter(_) => "FormalParameter".into(),
+            Self::CatchParameter(_) => "CatchParameter".into(),
 
             Self::Class(c) => format!(
                 "Class({})",

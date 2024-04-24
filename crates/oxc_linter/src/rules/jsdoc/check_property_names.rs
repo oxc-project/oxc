@@ -318,7 +318,7 @@ fn test() {
 			           * @property cfg.foo
 			           */
 			          function quux ({foo, bar}) {
-			
+
 			          }
 			      ",
             None,
@@ -335,7 +335,7 @@ fn test() {
 			           * @property cfg.foo
 			           */
 			          quux ({foo, bar}) {
-			
+
 			          }
 			      }
 			      ",
@@ -352,7 +352,7 @@ fn test() {
 			           * @property baz
 			           */
 			          function quux ({foo, bar}, baz) {
-			
+
 			          }
 			      ",
             None,
@@ -368,7 +368,7 @@ fn test() {
 			           * @property baz
 			           */
 			          function quux ({foo, bar}, baz) {
-			
+
 			          }
 			      "#,
             None,
@@ -409,11 +409,11 @@ fn test() {
 			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings": { "jsdoc": {
                 "tagNamePreference": {
                   "property": "prop",
                 },
-              },
+              } },
             })),
         ),
     ];

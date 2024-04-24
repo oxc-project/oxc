@@ -1,4 +1,4 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{ast::Expression, AstKind, CommentKind};
 use oxc_semantic::AstNodeId;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
@@ -86,6 +86,87 @@ pub fn has_pure_notation(span: Span, ctx: &LintContext) -> bool {
     let raw = span.source_text(ctx.semantic().source_text());
 
     raw.contains("@__PURE__") || raw.contains("#__PURE__")
+}
+
+const TREE_SHAKING_COMMENT_ID: &str = "tree-shaking";
+const COMMENT_NO_SIDE_EFFECT_WHEN_CALLED: &str = "no-side-effects-when-called";
+
+fn is_tree_shaking_comment(comment: &str) -> bool {
+    comment.trim_start().starts_with(TREE_SHAKING_COMMENT_ID)
+}
+
+/// check if the `span` has a leading comment for opening side effect check.
+/// e.g. `export default /* tree-shaking no-side-effects-when-called */ ext`
+pub fn has_comment_about_side_effect_check(span: Span, ctx: &LintContext) -> bool {
+    get_leading_tree_shaking_comment(span, ctx)
+        .is_some_and(|comment| comment.contains(COMMENT_NO_SIDE_EFFECT_WHEN_CALLED))
+}
+
+/// Get the nearest comment before the `span`, return `None` if no leading comment is founded.
+///
+///  # Examples
+/// ```javascript
+/// /* valid comment for `a`  */ let a = 1;
+///
+/// // valid comment for `b`
+/// let b = 1;
+///
+/// // valid comment for `c`
+///
+///
+/// let c = 1;
+///
+/// let d = 1; /* invalid comment for `e` */
+/// let e = 2
+/// ```
+pub fn get_leading_tree_shaking_comment<'a>(span: Span, ctx: &LintContext<'a>) -> Option<&'a str> {
+    let (start, comment) = ctx.semantic().trivias().comments_range(..span.start).next_back()?;
+
+    let comment_text = {
+        let span = Span::new(*start, comment.end);
+        span.source_text(ctx.source_text())
+    };
+
+    if !is_tree_shaking_comment(comment_text) {
+        return None;
+    }
+
+    // If there are non-whitespace characters between the `comment`` and the `span`,
+    // we treat the `comment` not belongs to the `span`.
+    let only_whitespace = ctx.source_text()[comment.end as usize..span.start as usize]
+        .strip_prefix("*/") // for multi-line comment
+        .is_some_and(|s| s.trim().is_empty());
+
+    if !only_whitespace {
+        return None;
+    }
+
+    // Next step, we need make sure it's not the trailing comment of the previous line.
+    let mut current_line_start = span.start as usize;
+    for c in ctx.source_text()[..span.start as usize].chars().rev() {
+        if c == '\n' {
+            break;
+        }
+
+        current_line_start -= c.len_utf8();
+    }
+    let Ok(current_line_start) = u32::try_from(current_line_start) else {
+        return None;
+    };
+
+    if comment.end < current_line_start {
+        let previous_line =
+            ctx.source_text()[..comment.end as usize].lines().next_back().unwrap_or("");
+        let nothing_before_comment = previous_line
+            .trim()
+            .strip_prefix(if comment.kind == CommentKind::SingleLine { "//" } else { "/*" })
+            .is_some_and(|s| s.trim().is_empty());
+        if !nothing_before_comment {
+            return None;
+        }
+    }
+
+    Some(comment_text)
 }
 
 /// Port from <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/463fa1f0bef7caa2b231a38b9c3557051f506c92/src/rules/no-side-effects-in-initialization.ts#L136-L161>

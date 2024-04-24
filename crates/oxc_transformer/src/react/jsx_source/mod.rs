@@ -80,7 +80,9 @@ impl<'a> ReactJsxSource<'a> {
 
         self.should_add_jsx_file_name_variable = true;
 
-        let key = JSXAttributeName::Identifier(self.ctx.ast.jsx_identifier(SPAN, SOURCE.into()));
+        let key = JSXAttributeName::Identifier(
+            self.ctx.ast.alloc(self.ctx.ast.jsx_identifier(SPAN, SOURCE.into())),
+        );
         let object = self.get_source_object();
         let expr = self.ctx.ast.jsx_expression_container(SPAN, JSXExpression::Expression(object));
         let value = JSXAttributeValue::ExpressionContainer(expr);

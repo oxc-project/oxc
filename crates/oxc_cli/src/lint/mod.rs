@@ -1,5 +1,5 @@
 use ignore::gitignore::Gitignore;
-use std::{env, io::BufWriter, time::Instant, vec::Vec};
+use std::{env, io::BufWriter, time::Instant};
 
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
@@ -163,8 +163,9 @@ impl LintRunner {
         match output_options.format {
             OutputFormat::Default => {}
             OutputFormat::Json => diagnostic_service.set_json_reporter(),
+            OutputFormat::Unix => diagnostic_service.set_unix_reporter(),
+            OutputFormat::Checkstyle => diagnostic_service.set_checkstyle_reporter(),
         }
-
         diagnostic_service
     }
 }
@@ -307,7 +308,13 @@ mod test {
 
     #[test]
     fn eslintrc_no_undef() {
-        let args = &["-c", "fixtures/no_undef/eslintrc.json", "fixtures/no_undef/test.js"];
+        let args = &[
+            "-D",
+            "no-undef",
+            "-c",
+            "fixtures/no_undef/eslintrc.json",
+            "fixtures/no_undef/test.js",
+        ];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
@@ -316,8 +323,13 @@ mod test {
 
     #[test]
     fn eslintrc_no_env() {
-        let args =
-            &["-c", "fixtures/eslintrc_env/eslintrc_no_env.json", "fixtures/eslintrc_env/test.js"];
+        let args = &[
+            "-D",
+            "no-undef",
+            "-c",
+            "fixtures/eslintrc_env/eslintrc_no_env.json",
+            "fixtures/eslintrc_env/test.js",
+        ];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);

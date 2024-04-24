@@ -34,7 +34,7 @@ declare_oxc_lint!(
     ///
     /// ```
     NoEmptyStaticBlock,
-    suspicious
+    correctness
 );
 
 impl Rule for NoEmptyStaticBlock {

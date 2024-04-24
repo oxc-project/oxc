@@ -1,10 +1,6 @@
 #![allow(clippy::cast_possible_truncation)]
 
-use std::{
-    collections::HashSet,
-    ffi::OsStr,
-    path::{Component, Path, PathBuf},
-};
+use std::{ffi::OsStr, path::Component, sync::Arc};
 
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -12,7 +8,10 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use oxc_syntax::module_record::ModuleRecord;
+use oxc_syntax::{
+    module_graph_visitor::{ModuleGraphVisitorBuilder, ModuleGraphVisitorEvent, VisitFoldWhile},
+    module_record::ModuleRecord,
+};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -106,71 +105,57 @@ impl Rule for NoCycle {
         let needle = &module_record.resolved_absolute_path;
         let cwd = std::env::current_dir().unwrap();
 
-        let mut state = State::default();
-        if self.detect_cycle(&mut state, module_record, needle) {
-            let stack = &state.stack;
+        let mut stack = Vec::new();
+        let ignore_types = self.ignore_types;
+        let visitor_result = ModuleGraphVisitorBuilder::default()
+            .max_depth(self.max_depth)
+            .filter(move |(key, val): (&CompactStr, &Arc<ModuleRecord>), parent: &ModuleRecord| {
+                let path = &val.resolved_absolute_path;
+                let is_node_module = path
+                    .components()
+                    .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")));
+                let is_type_import = !ignore_types
+                    || !parent
+                        .import_entries
+                        .iter()
+                        .filter(|entry| entry.module_request.name() == key)
+                        .all(|entry| entry.is_type);
+
+                is_node_module || is_type_import
+            })
+            .event(|event, (key, val), _| match event {
+                ModuleGraphVisitorEvent::Enter => {
+                    stack.push((key.clone(), val.resolved_absolute_path.clone()));
+                }
+                ModuleGraphVisitorEvent::Leave => {
+                    stack.pop();
+                }
+            })
+            .visit_fold(false, module_record, |_, (_, val), _| {
+                let path = &val.resolved_absolute_path;
+                if path == needle {
+                    VisitFoldWhile::Stop(true)
+                } else {
+                    VisitFoldWhile::Next(false)
+                }
+            });
+
+        if visitor_result.result {
             let span = module_record.requested_modules.get(&stack[0].0).unwrap()[0].span();
             let help = stack
                 .iter()
                 .map(|(specifier, path)| {
-                    let path =
-                        path.strip_prefix(&cwd).unwrap().to_string_lossy().replace('\\', "/");
+                    let path = path
+                        .strip_prefix(&cwd)
+                        .unwrap_or(path)
+                        .to_string_lossy()
+                        .replace('\\', "/");
                     format!("-> {specifier} - {path}")
                 })
                 .collect::<Vec<_>>()
                 .join("\n");
             ctx.diagnostic(NoCycleDiagnostic(span, help));
         }
-    }
-}
-
-#[derive(Debug, Default)]
-struct State {
-    traversed: HashSet<PathBuf>,
-    stack: Vec<(CompactStr, PathBuf)>,
-}
-
-impl NoCycle {
-    fn detect_cycle(&self, state: &mut State, module_record: &ModuleRecord, needle: &Path) -> bool {
-        let path = &module_record.resolved_absolute_path;
-
-        if state.stack.len() as u32 > self.max_depth {
-            return false;
-        }
-
-        if path
-            .components()
-            .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")))
-        {
-            return false;
-        }
-
-        for module_record_ref in &module_record.loaded_modules {
-            let resolved_absolute_path = &module_record_ref.resolved_absolute_path;
-            if self.ignore_types {
-                let was_imported_as_type = &module_record
-                    .import_entries
-                    .iter()
-                    .filter(|entry| entry.module_request.name() == module_record_ref.key())
-                    .all(|entry| entry.is_type);
-                if *was_imported_as_type {
-                    continue;
-                }
-            }
-            if !state.traversed.insert(resolved_absolute_path.clone()) {
-                continue;
-            }
-            state.stack.push((module_record_ref.key().clone(), resolved_absolute_path.clone()));
-            if needle == resolved_absolute_path {
-                return true;
-            }
-            if self.detect_cycle(state, module_record_ref.value(), needle) {
-                return true;
-            }
-            state.stack.pop();
-        }
-
-        false
     }
 }
 

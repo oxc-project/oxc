@@ -275,6 +275,10 @@ impl<'a> Expression<'a> {
         matches!(self, Expression::CallExpression(_))
     }
 
+    pub fn is_super_call_expression(&self) -> bool {
+        matches!(self, Expression::CallExpression(expr) if matches!(&expr.callee, Expression::Super(_)))
+    }
+
     pub fn is_call_like_expression(&self) -> bool {
         self.is_call_expression()
             && matches!(self, Expression::NewExpression(_) | Expression::ImportExpression(_))
@@ -425,6 +429,7 @@ pub struct ArrayExpression<'a> {
     pub elements: Vec<'a, ArrayExpressionElement<'a>>,
     /// Array trailing comma
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
+    #[cfg_attr(feature = "serialize", serde(skip))]
     pub trailing_comma: Option<Span>,
 }
 
@@ -437,12 +442,7 @@ pub enum ArrayExpressionElement<'a> {
     Expression(Expression<'a>),
     /// Array hole for sparse arrays
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
-    // Serialize as `null`. `serialize_elision` in serialize.rs.
-    #[cfg_attr(
-        feature = "serialize",
-        serde(serialize_with = "ArrayExpressionElement::serialize_elision")
-    )]
-    Elision(Span),
+    Elision(Elision),
 }
 
 impl<'a> ArrayExpressionElement<'a> {
@@ -451,14 +451,22 @@ impl<'a> ArrayExpressionElement<'a> {
     }
 }
 
+/// Array Expression Elision Element
+/// Serialized as `null` in JSON AST. See `serialize.rs`.
+#[derive(Debug, Clone, Hash)]
+pub struct Elision {
+    pub span: Span,
+}
+
 /// Object Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ObjectExpression<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub properties: Vec<'a, ObjectPropertyKind<'a>>,
+    #[cfg_attr(feature = "serialize", serde(skip))]
     pub trailing_comma: Option<Span>,
 }
 
@@ -779,6 +787,14 @@ pub struct CallExpression<'a> {
 }
 
 impl<'a> CallExpression<'a> {
+    pub fn callee_name(&self) -> Option<&str> {
+        match &self.callee {
+            Expression::Identifier(ident) => Some(ident.name.as_str()),
+            Expression::MemberExpression(member) => member.static_property_name(),
+            _ => None,
+        }
+    }
+
     pub fn is_require_call(&self) -> bool {
         if self.arguments.len() != 1 {
             return false;
@@ -1011,7 +1027,7 @@ pub enum AssignmentTargetPattern<'a> {
 // See serializer in serialize.rs
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ArrayAssignmentTarget<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
@@ -1022,6 +1038,7 @@ pub struct ArrayAssignmentTarget<'a> {
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
     #[cfg_attr(feature = "serialize", serde(skip))]
     pub rest: Option<AssignmentTargetRest<'a>>,
+    #[cfg_attr(feature = "serialize", serde(skip))]
     pub trailing_comma: Option<Span>,
 }
 
@@ -1637,8 +1654,17 @@ pub struct TryStatement<'a> {
 pub struct CatchClause<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub param: Option<BindingPattern<'a>>,
+    pub param: Option<CatchParameter<'a>>,
     pub body: Box<'a, BlockStatement<'a>>,
+}
+
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+pub struct CatchParameter<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
+    pub span: Span,
+    pub pattern: BindingPattern<'a>,
 }
 
 /// Debugger Statement
@@ -1910,6 +1936,12 @@ pub struct FormalParameter<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
+impl<'a> FormalParameter<'a> {
+    pub fn is_public(&self) -> bool {
+        matches!(self.accessibility, Some(TSAccessibility::Public))
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum FormalParameterKind {
@@ -2006,7 +2038,7 @@ pub struct Class<'a> {
     pub body: Box<'a, ClassBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    pub implements: Option<Vec<'a, Box<'a, TSClassImplements<'a>>>>,
+    pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
     pub decorators: Vec<'a, Decorator<'a>>,
     /// Valid Modifiers: `export`, `abstract`
     pub modifiers: Modifiers<'a>,
@@ -2354,11 +2386,11 @@ pub struct ImportDeclaration<'a> {
 pub enum ImportDeclarationSpecifier<'a> {
     /// import {imported} from "source"
     /// import {imported as local} from "source"
-    ImportSpecifier(ImportSpecifier<'a>),
+    ImportSpecifier(Box<'a, ImportSpecifier<'a>>),
     /// import local from "source"
-    ImportDefaultSpecifier(ImportDefaultSpecifier<'a>),
+    ImportDefaultSpecifier(Box<'a, ImportDefaultSpecifier<'a>>),
     /// import * as local from "source"
-    ImportNamespaceSpecifier(ImportNamespaceSpecifier<'a>),
+    ImportNamespaceSpecifier(Box<'a, ImportNamespaceSpecifier<'a>>),
 }
 
 // import {imported} from "source"

@@ -85,7 +85,7 @@ impl<'a> ModuleImports<'a> {
         names: std::vec::Vec<NamedImport>,
     ) -> Statement<'a> {
         let specifiers = self.ast.new_vec_from_iter(names.into_iter().map(|name| {
-            ImportDeclarationSpecifier::ImportSpecifier(ImportSpecifier {
+            ImportDeclarationSpecifier::ImportSpecifier(self.ast.alloc(ImportSpecifier {
                 span: SPAN,
                 imported: ModuleExportName::Identifier(IdentifierName::new(
                     SPAN,
@@ -96,7 +96,7 @@ impl<'a> ModuleImports<'a> {
                     self.ast.new_atom(name.local.unwrap_or(name.imported).as_str()),
                 ),
                 import_kind: ImportOrExportKind::Value,
-            })
+            }))
         }));
         let import_stmt = self.ast.import_declaration(
             SPAN,

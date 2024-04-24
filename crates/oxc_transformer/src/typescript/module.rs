@@ -2,7 +2,10 @@ use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 
-use super::TypeScript;
+use super::{
+    diagnostics::{ExportAssignmentUnsupported, ImportEqualsRequireUnsupported},
+    TypeScript,
+};
 
 impl<'a> TypeScript<'a> {
     fn transform_ts_type_name(&self, type_name: &mut TSTypeName<'a>) -> Expression<'a> {
@@ -39,10 +42,17 @@ impl<'a> TypeScript<'a> {
             let binding_identifier = BindingIdentifier::new(SPAN, decl.id.name.clone());
             let binding_pattern_kind = self.ctx.ast.binding_pattern_identifier(binding_identifier);
             let binding = self.ctx.ast.binding_pattern(binding_pattern_kind, None, false);
+            let decl_span = decl.span;
 
-            let init = match &mut *decl.module_reference {
-                TSModuleReference::TypeName(type_name) => self.transform_ts_type_name(type_name),
+            let init = match &mut decl.module_reference {
+                TSModuleReference::TypeName(type_name) => {
+                    self.transform_ts_type_name(&mut *type_name)
+                }
                 TSModuleReference::ExternalModuleReference(reference) => {
+                    if self.ctx.source_type().is_module() {
+                        self.ctx.error(ImportEqualsRequireUnsupported(decl_span));
+                    }
+
                     let callee = self.ctx.ast.identifier_reference_expression(
                         IdentifierReference::new(SPAN, "require".into()),
                     );
@@ -64,5 +74,14 @@ impl<'a> TypeScript<'a> {
             self.ctx.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
 
         Declaration::VariableDeclaration(variable_declaration)
+    }
+
+    pub fn transform_ts_export_assignment(
+        &mut self,
+        export_assignment: &mut TSExportAssignment<'a>,
+    ) {
+        if self.ctx.source_type().is_module() {
+            self.ctx.error(ExportAssignmentUnsupported(export_assignment.span));
+        }
     }
 }

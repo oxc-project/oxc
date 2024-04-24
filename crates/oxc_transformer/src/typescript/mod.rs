@@ -1,5 +1,6 @@
 mod annotations;
 mod collector;
+mod diagnostics;
 mod r#enum;
 mod module;
 mod namespace;
@@ -120,6 +121,10 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_method_definition(def);
     }
 
+    pub fn transform_method_definition_on_exit(&mut self, def: &mut MethodDefinition<'a>) {
+        self.annotations.transform_method_definition_on_exit(def);
+    }
+
     pub fn transform_new_expression(&mut self, expr: &mut NewExpression<'a>) {
         self.annotations.transform_new_expression(expr);
     }
@@ -136,6 +141,10 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_statements_on_exit(stmts);
     }
 
+    pub fn transform_if_statement(&mut self, stmt: &mut IfStatement<'a>) {
+        self.annotations.transform_if_statement(stmt);
+    }
+
     pub fn transform_tagged_template_expression(
         &mut self,
         expr: &mut TaggedTemplateExpression<'a>,
@@ -145,10 +154,6 @@ impl<'a> TypeScript<'a> {
 
     pub fn transform_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
         self.reference_collector.visit_identifier_reference(ident);
-    }
-
-    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>) {
-        self.annotations.transform_statement(stmt);
     }
 
     pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
@@ -164,6 +169,12 @@ impl<'a> TypeScript<'a> {
                 }
             }
             _ => {}
+        }
+    }
+
+    pub fn transform_module_declaration(&mut self, module_decl: &mut ModuleDeclaration<'a>) {
+        if let ModuleDeclaration::TSExportAssignment(ts_export_assignment) = &mut *module_decl {
+            self.transform_ts_export_assignment(ts_export_assignment);
         }
     }
 }

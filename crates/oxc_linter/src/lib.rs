@@ -23,17 +23,18 @@ use std::{io::Write, rc::Rc, sync::Arc};
 
 use oxc_diagnostics::Report;
 
+pub use crate::{
+    config::ESLintConfig,
+    context::LintContext,
+    options::{AllowWarnDeny, LintOptions},
+    service::{LintService, LintServiceOptions},
+};
 use crate::{
-    config::{ESLintEnv, ESLintSettings},
+    config::{ESLintEnv, ESLintGlobals, ESLintSettings},
     fixer::Fix,
     fixer::{Fixer, Message},
     rule::RuleCategory,
     rules::{RuleEnum, RULES},
-};
-pub use crate::{
-    context::LintContext,
-    options::{AllowWarnDeny, LintOptions},
-    service::{LintService, LintServiceOptions},
 };
 use oxc_semantic::AstNode;
 
@@ -52,8 +53,7 @@ fn size_asserts() {
 pub struct Linter {
     rules: Vec<(/* rule name */ &'static str, RuleEnum)>,
     options: LintOptions,
-    settings: Arc<ESLintSettings>,
-    env: Arc<ESLintEnv>,
+    eslint_config: Arc<ESLintConfig>,
 }
 
 impl Default for Linter {
@@ -67,9 +67,9 @@ impl Linter {
     ///
     /// Returns `Err` if there are any errors parsing the configuration file.
     pub fn from_options(options: LintOptions) -> Result<Self, Report> {
-        let (rules, settings, env) = options.derive_rules_and_settings_and_env()?;
+        let (rules, eslint_config) = options.derive_rules_and_config()?;
         let rules = rules.into_iter().map(|rule| (rule.name(), rule)).collect();
-        Ok(Self { rules, options, settings: Arc::new(settings), env: Arc::new(env) })
+        Ok(Self { rules, options, eslint_config: Arc::new(eslint_config) })
     }
 
     #[must_use]
@@ -79,14 +79,14 @@ impl Linter {
     }
 
     #[must_use]
-    pub fn with_settings(mut self, settings: ESLintSettings) -> Self {
-        self.settings = Arc::new(settings);
+    pub fn with_eslint_config(mut self, eslint_config: ESLintConfig) -> Self {
+        self.eslint_config = Arc::new(eslint_config);
         self
     }
 
     #[must_use]
-    pub fn with_envs(mut self, env: ESLintEnv) -> Self {
-        self.env = Arc::new(env);
+    pub fn with_fix(mut self, yes: bool) -> Self {
+        self.options.fix = yes;
         self
     }
 
@@ -98,16 +98,9 @@ impl Linter {
         self.rules.len()
     }
 
-    #[must_use]
-    pub fn with_fix(mut self, yes: bool) -> Self {
-        self.options.fix = yes;
-        self
-    }
-
     pub fn run<'a>(&self, ctx: LintContext<'a>) -> Vec<Message<'a>> {
         let semantic = Rc::clone(ctx.semantic());
-        let mut ctx =
-            ctx.with_fix(self.options.fix).with_settings(&self.settings).with_env(&self.env);
+        let mut ctx = ctx.with_fix(self.options.fix).with_eslint_config(&self.eslint_config);
 
         for (rule_name, rule) in &self.rules {
             ctx.with_rule_name(rule_name);

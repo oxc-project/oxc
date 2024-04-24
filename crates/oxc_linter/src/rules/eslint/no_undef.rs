@@ -10,7 +10,7 @@ use oxc_syntax::operator::UnaryOperator;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-undef): Disallow the use of undeclared variables")]
+#[error("eslint(no-undef): Disallow the use of undeclared variables.")]
 #[diagnostic(severity(warning), help("'{0}' is not defined."))]
 struct NoUndefDiagnostic(CompactStr, #[label] pub Span);
 
@@ -47,22 +47,29 @@ impl Rule for NoUndef {
             .unwrap_or_default();
         Self { type_of }
     }
+
     fn run_once(&self, ctx: &LintContext) {
         let symbol_table = ctx.symbols();
 
         for reference_id_list in ctx.scopes().root_unresolved_references().values() {
             for &reference_id in reference_id_list {
                 let reference = symbol_table.get_reference(reference_id);
-                if ctx.env_contains_var(reference.name().as_str()) {
-                    return;
+                let name = reference.name();
+
+                if ctx.env_contains_var(name) {
+                    continue;
+                }
+
+                if ctx.globals().is_enabled(name.as_str()) {
+                    continue;
                 }
 
                 let node = ctx.nodes().get_node(reference.node_id());
                 if !self.type_of && has_typeof_operator(node, ctx) {
-                    return;
+                    continue;
                 }
 
-                ctx.diagnostic(NoUndefDiagnostic(reference.name().clone(), reference.span()));
+                ctx.diagnostic(NoUndefDiagnostic(name.clone(), reference.span()));
             }
         }
     }
@@ -81,53 +88,53 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("var a = 1, b = 2; a;", None),
-        // ("/*global b*/ function f() { b; }", None),
+        "var a = 1, b = 2; a;",
+        // "/*global b*/ function f() { b; }",
         // { code: "function f() { b; }", globals: { b: false } },
-        // ("/*global b a:false*/  a;  function f() { b; a; }", None),
-        ("function a(){}  a();", None),
-        ("function f(b) { b; }", None),
-        ("var a; a = 1; a++;", None),
-        ("var a; function f() { a = 1; }", None),
-        // ("/*global b:true*/ b++;", None),
-        // ("/*eslint-env browser*/ window;", None),
-        // ("/*eslint-env node*/ require(\"a\");", None),
-        ("Object; isNaN();", None),
-        ("toString()", None),
-        ("hasOwnProperty()", None),
-        ("function evilEval(stuffToEval) { var ultimateAnswer; ultimateAnswer = 42; eval(stuffToEval); }", None),
-        ("typeof a", None),
-        ("typeof (a)", None),
-        ("var b = typeof a", None),
-        ("typeof a === 'undefined'", None),
-        ("if (typeof a === 'undefined') {}", None),
-        ("function foo() { var [a, b=4] = [1, 2]; return {a, b}; }", None),
-        ("var toString = 1;", None),
-        ("function myFunc(...foo) {  return foo;}", None),
-        ("var React, App, a=1; React.render(<App attr={a} />);", None),
-        ("var console; [1,2,3].forEach(obj => {\n  console.log(obj);\n});", None),
-        ("var Foo; class Bar extends Foo { constructor() { super();  }}", None),
-        ("import Warning from '../lib/warning'; var warn = new Warning('text');", None),
-        ("import * as Warning from '../lib/warning'; var warn = new Warning('text');", None),
-        ("var a; [a] = [0];", None),
-        ("var a; ({a} = {});", None),
-        ("var a; ({b: a} = {});", None),
-        ("var obj; [obj.a, obj.b] = [0, 1];", None),
-        // ("URLSearchParams;", None),
-        // ("Intl;", None),
-        // ("IntersectionObserver;", None),
-        // ("Credential;", None),
-        // ("requestIdleCallback;", None),
-        // ("customElements;", None),
-        // ("PromiseRejectionEvent;", None),
-        ("(foo, bar) => { foo ||= WeakRef; bar ??= FinalizationRegistry; }", None),
-        // ("/*global b:false*/ function f() { b = 1; }", None),
+        // "/*global b a:false*/  a;  function f() { b; a; }",
+        "function a(){}  a();",
+        "function f(b) { b; }",
+        "var a; a = 1; a++;",
+        "var a; function f() { a = 1; }",
+        // "/*global b:true*/ b++;",
+        // "/*eslint-env browser*/ window;",
+        // "/*eslint-env node*/ require(\"a\");",
+        "Object; isNaN();",
+        "toString()",
+        "hasOwnProperty()",
+        "function evilEval(stuffToEval) { var ultimateAnswer; ultimateAnswer = 42; eval(stuffToEval); }",
+        "typeof a",
+        "typeof (a)",
+        "var b = typeof a",
+        "typeof a === 'undefined'",
+        "if (typeof a === 'undefined') {}",
+        "function foo() { var [a, b=4] = [1, 2]; return {a, b}; }",
+        "var toString = 1;",
+        "function myFunc(...foo) {  return foo;}",
+        "var React, App, a=1; React.render(<App attr={a} />);",
+        "var console; [1,2,3].forEach(obj => {\n  console.log(obj);\n});",
+        "var Foo; class Bar extends Foo { constructor() { super();  }}",
+        "import Warning from '../lib/warning'; var warn = new Warning('text');",
+        "import * as Warning from '../lib/warning'; var warn = new Warning('text');",
+        "var a; [a] = [0];",
+        "var a; ({a} = {});",
+        "var a; ({b: a} = {});",
+        "var obj; [obj.a, obj.b] = [0, 1];",
+        // "URLSearchParams;",
+        // "Intl;",
+        // "IntersectionObserver;",
+        // "Credential;",
+        // "requestIdleCallback;",
+        // "customElements;",
+        // "PromiseRejectionEvent;",
+        "(foo, bar) => { foo ||= WeakRef; bar ??= FinalizationRegistry; }",
+        // "/*global b:false*/ function f() { b = 1; }",
         // { code: "function f() { b = 1; }", globals: { b: false } },
-        // ("/*global b:false*/ function f() { b++; }", None),
-        // ("/*global b*/ b = 1;", None),
-        // ("/*global b:false*/ var b = 1;", None),
-        ("Array = 1;", None),
-        ("class A { constructor() { new.target; } }", None),
+        // "/*global b:false*/ function f() { b++; }",
+        // "/*global b*/ b = 1;",
+        // "/*global b:false*/ var b = 1;",
+        "Array = 1;",
+        "class A { constructor() { new.target; } }",
         // {
         //     code: "var {bacon, ...others} = stuff; foo(others)",
         //     parserOptions: {
@@ -135,55 +142,64 @@ fn test() {
         //     },
         //     globals: { stuff: false, foo: false }
         // },
-        ("export * as ns from \"source\"", None),
-        ("import.meta", None),
-        ("let a; class C { static {} } a;", None),
-        ("var a; class C { static {} } a;", None),
-        ("a; class C { static {} } var a;", None),
-        ("class C { static { C; } }", None),
-        ("const C = class { static { C; } }", None),
-        ("class C { static { a; } } var a;", None),
-        ("class C { static { a; } } let a;", None),
-        ("class C { static { var a; a; } }", None),
-        ("class C { static { a; var a; } }", None),
-        ("class C { static { a; { var a; } } }", None),
-        ("class C { static { let a; a; } }", None),
-        ("class C { static { a; let a; } }", None),
-        ("class C { static { function a() {} a; } }", None),
-        ("class C { static { a; function a() {} } }", None)
+        "export * as ns from \"source\"",
+        "import.meta",
+        "let a; class C { static {} } a;",
+        "var a; class C { static {} } a;",
+        "a; class C { static {} } var a;",
+        "class C { static { C; } }",
+        "const C = class { static { C; } }",
+        "class C { static { a; } } var a;",
+        "class C { static { a; } } let a;",
+        "class C { static { var a; a; } }",
+        "class C { static { a; var a; } }",
+        "class C { static { a; { var a; } } }",
+        "class C { static { let a; a; } }",
+        "class C { static { a; let a; } }",
+        "class C { static { function a() {} a; } }",
+        "class C { static { a; function a() {} } }"
     ];
 
     let fail = vec![
-        ("a = 1;", None),
-        (
-            "if (typeof anUndefinedVar === 'string') {}",
-            Some(serde_json::json!([{ "typeof": true }])),
-        ),
-        ("var a = b;", None),
-        ("function f() { b; }", None),
-        ("window;", None),
-        ("require(\"a\");", None),
-        ("var React; React.render(<img attr={a} />);", None),
-        ("var React, App; React.render(<App attr={a} />);", None),
-        ("[a] = [0];", None),
-        ("({a} = {});", None),
-        ("({b: a} = {});", None),
-        ("[obj.a, obj.b] = [0, 1];", None),
-        ("const c = 0; const a = {...b, c};", None),
-        ("class C { static { a; } }", None),
-        ("class C { static { { let a; } a; } }", None),
-        ("class C { static { { function a() {} } a; } }", None),
-        ("class C { static { function foo() { var a; }  a; } }", None),
-        ("class C { static { var a; } static { a; } }", None),
-        ("class C { static { let a; } static { a; } }", None),
-        ("class C { static { function a(){} } static { a; } }", None),
-        ("class C { static { var a; } foo() { a; } }", None),
-        ("class C { static { let a; } foo() { a; } }", None),
-        ("class C { static { var a; } [a]; }", None),
-        ("class C { static { let a; } [a]; }", None),
-        ("class C { static { function a() {} } [a]; }", None),
-        ("class C { static { var a; } } a;", None),
+        "a = 1;",
+        "var a = b;",
+        "function f() { b; }",
+        "window;",
+        "require(\"a\");",
+        "var React; React.render(<img attr={a} />);",
+        "var React, App; React.render(<App attr={a} />);",
+        "[a] = [0];",
+        "({a} = {});",
+        "({b: a} = {});",
+        "[obj.a, obj.b] = [0, 1];",
+        "const c = 0; const a = {...b, c};",
+        "class C { static { a; } }",
+        "class C { static { { let a; } a; } }",
+        "class C { static { { function a() {} } a; } }",
+        "class C { static { function foo() { var a; }  a; } }",
+        "class C { static { var a; } static { a; } }",
+        "class C { static { let a; } static { a; } }",
+        "class C { static { function a(){} } static { a; } }",
+        "class C { static { var a; } foo() { a; } }",
+        "class C { static { let a; } foo() { a; } }",
+        "class C { static { var a; } [a]; }",
+        "class C { static { let a; } [a]; }",
+        "class C { static { function a() {} } [a]; }",
+        "class C { static { var a; } } a;",
     ];
 
     Tester::new(NoUndef::NAME, pass, fail).test_and_snapshot();
+
+    let pass = vec![];
+    let fail = vec![(
+        "if (typeof anUndefinedVar === 'string') {}",
+        Some(serde_json::json!([{ "typeof": true }])),
+    )];
+
+    Tester::new(NoUndef::NAME, pass, fail).test();
+
+    let pass = vec![("foo", None, Some(serde_json::json!({ "globals": { "foo": "readonly" } })))];
+    let fail = vec![("foo", None, Some(serde_json::json!({ "globals": { "foo": "off" } })))];
+
+    Tester::new(NoUndef::NAME, pass, fail).test();
 }

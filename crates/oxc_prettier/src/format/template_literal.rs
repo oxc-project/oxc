@@ -1,4 +1,4 @@
-use oxc_ast::ast::{TemplateLiteral, *};
+use oxc_ast::ast::*;
 
 use crate::{
     doc::{Doc, DocBuilder},

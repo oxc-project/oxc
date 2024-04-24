@@ -111,7 +111,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -123,7 +123,7 @@ fn test() {
 			           * @access public
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -135,16 +135,16 @@ fn test() {
 			           * @accessLevel package
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings": { "jsdoc": {
                 "tagNamePreference": {
                   "access": "accessLevel",
                 },
-              },
+              } },
             })),
         ),
         (
@@ -165,7 +165,7 @@ fn test() {
 			           * @public
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -177,14 +177,14 @@ fn test() {
 			           * @private
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings": { "jsdoc": {
                 "ignorePrivate": true,
-              },
+              } },
             })),
         ),
         (
@@ -205,7 +205,7 @@ fn test() {
 			           * @access foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -217,14 +217,14 @@ fn test() {
 			           * @access foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings": { "jsdoc": {
                 "ignorePrivate": true,
-              },
+              } },
             })),
         ),
         (
@@ -238,11 +238,11 @@ fn test() {
         			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings": { "jsdoc": {
                 "tagNamePreference": {
                   "access": "accessLevel",
                 },
-              },
+              } },
             })),
         ),
         (
@@ -251,16 +251,16 @@ fn test() {
 			           * @access
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings": { "jsdoc": {
                 "tagNamePreference": {
                   "access": false,
                 },
-              },
+              } },
             })),
         ),
         (
@@ -282,7 +282,7 @@ fn test() {
 			           * @public
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -295,7 +295,7 @@ fn test() {
 			           * @access private
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -308,14 +308,14 @@ fn test() {
 			           * @access private
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings": { "jsdoc": {
                 "ignorePrivate": true,
-              },
+              } },
             })),
         ),
         (
@@ -325,7 +325,7 @@ fn test() {
 			           * @private
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -338,14 +338,14 @@ fn test() {
 			           * @private
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
             Some(serde_json::json!({
-              "jsdoc": {
+              "settings": { "jsdoc": {
                 "ignorePrivate": true,
-              },
+              } },
             })),
         ),
         (
@@ -355,7 +355,7 @@ fn test() {
 			           * @public
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,

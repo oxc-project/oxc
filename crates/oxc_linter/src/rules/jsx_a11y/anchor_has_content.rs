@@ -110,7 +110,9 @@ fn test() {
         (
             r"<Link>foo</Link>",
             None,
-            Some(serde_json::json!({ "jsx-a11y": { "components": { "Link": "a" } } })),
+            Some(
+                serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Link": "a" } } } }),
+            ),
         ),
         (r"<a title={title} />", None, None),
         (r"<a aria-label={ariaLabel} />", None, None),
@@ -124,7 +126,9 @@ fn test() {
         (
             r"<Link />",
             None,
-            Some(serde_json::json!({ "jsx-a11y": { "components": { "Link": "a" } } })),
+            Some(
+                serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Link": "a" } } } }),
+            ),
         ),
     ];
 

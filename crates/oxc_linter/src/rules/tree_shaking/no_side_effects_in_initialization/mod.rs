@@ -181,33 +181,33 @@ fn test() {
         "const x = ()=>{}; do x(); while(true)",
         // EmptyStatement
         ";",
-        // // ExportAllDeclaration
-        // r#"export * from "import""#,
-        // // ExportDefaultDeclaration
-        // "export default ext",
-        // "const x = ext; export default x",
-        // "export default function(){}",
-        // "export default (function(){})",
-        // "const x = function(){}; export default /* tree-shaking no-side-effects-when-called */ x",
-        // "export default /* tree-shaking no-side-effects-when-called */ function(){}",
-        // // ExportNamedDeclaration
-        // "export const x = ext",
-        // "export function x(){ext()}",
-        // "const x = ext; export {x}",
-        // r#"export {x} from "import""#,
-        // r#"export {x as y} from "import""#,
-        // r#"export {x as default} from "import""#,
-        // "export const /* tree-shaking no-side-effects-when-called */ x = function(){}",
-        // "export function /* tree-shaking no-side-effects-when-called */ x(){}",
-        // "const x = function(){}; export {/* tree-shaking no-side-effects-when-called */ x}",
-        // // ExpressionStatement
-        // "const x = 1",
-        // // ForInStatement
-        // "for(const x in ext){x = 1}",
-        // "let x; for(x in ext){}",
-        // // ForStatement
-        // "for(let i = 0; i < 3; i++){i++}",
-        // "for(;;){}",
+        // ExportAllDeclaration
+        r#"export * from "import""#,
+        // ExportDefaultDeclaration
+        "export default ext",
+        "const x = ext; export default x",
+        "export default function(){}",
+        "export default (function(){})",
+        "const x = function(){}; export default /* tree-shaking no-side-effects-when-called */ x",
+        "export default /* tree-shaking no-side-effects-when-called */ function(){}",
+        // ExportNamedDeclaration
+        "export const x = ext",
+        "export function x(){ext()}",
+        "const x = ext; export {x}",
+        r#"export {x} from "import""#,
+        r#"export {x as y} from "import""#,
+        r#"export {x as default} from "import""#,
+        "export const /* tree-shaking no-side-effects-when-called */ x = function(){}",
+        "export function /* tree-shaking no-side-effects-when-called */ x(){}",
+        "const x = function(){}; export {/* tree-shaking no-side-effects-when-called */ x}",
+        // ExpressionStatement
+        "const x = 1",
+        // ForInStatement
+        "for(const x in ext){x = 1}",
+        "let x; for(x in ext){}",
+        // ForStatement
+        "for(let i = 0; i < 3; i++){i++}",
+        "for(;;){}",
         // // FunctionDeclaration
         // "function x(a){a(); ext()}",
         // // FunctionDeclaration when called
@@ -456,33 +456,33 @@ fn test() {
         "do {} while(ext())",
         "do ext(); while(true)",
         "do {ext()} while(true)",
-        // // ExportDefaultDeclaration
-        // "export default ext()",
-        // "export default /* tree-shaking no-side-effects-when-called */ ext",
-        // "const x = ext; export default /* tree-shaking no-side-effects-when-called */ x",
-        // // ExportNamedDeclaration
-        // "export const x = ext()",
-        // "export const /* tree-shaking no-side-effects-when-called */ x = ext",
-        // "export function /* tree-shaking no-side-effects-when-called */ x(){ext()}",
-        // "const x = ext; export {/* tree-shaking no-side-effects-when-called */ x}",
-        // // ExpressionStatement
-        // "ext()",
-        // // ForInStatement
-        // "for(ext in {a: 1}){}",
-        // "for(const x in ext()){}",
-        // "for(const x in {a: 1}){ext()}",
-        // "for(const x in {a: 1}) ext()",
-        // // ForOfStatement
-        // "for(ext of {a: 1}){}",
-        // "for(const x of ext()){}",
-        // "for(const x of {a: 1}){ext()}",
-        // "for(const x of {a: 1}) ext()",
-        // // ForStatement
-        // "for(ext();;){}",
-        // "for(;ext();){}",
-        // "for(;true;ext()){}",
-        // "for(;true;) ext()",
-        // "for(;true;){ext()}",
+        // ExportDefaultDeclaration
+        "export default ext()",
+        "export default /* tree-shaking no-side-effects-when-called */ ext",
+        "const x = ext; export default /* tree-shaking no-side-effects-when-called */ x",
+        // ExportNamedDeclaration
+        "export const x = ext()",
+        "export const /* tree-shaking no-side-effects-when-called */ x = ext",
+        "export function /* tree-shaking no-side-effects-when-called */ x(){ext()}",
+        "const x = ext; export {/* tree-shaking no-side-effects-when-called */ x}",
+        // ExpressionStatement
+        "ext()",
+        // ForInStatement
+        "for(ext in {a: 1}){}",
+        "for(const x in ext()){}",
+        "for(const x in {a: 1}){ext()}",
+        "for(const x in {a: 1}) ext()",
+        // ForOfStatement
+        "for(ext of {a: 1}){}",
+        "for(const x of ext()){}",
+        "for(const x of {a: 1}){ext()}",
+        "for(const x of {a: 1}) ext()",
+        // ForStatement
+        "for(ext();;){}",
+        "for(;ext();){}",
+        "for(;true;ext()){}",
+        "for(;true;) ext()",
+        "for(;true;){ext()}",
         // // FunctionDeclaration when called
         // "function x(){ext()}; x()",
         // "function x(){ext()}; const y = new x()",

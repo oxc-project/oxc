@@ -64,12 +64,12 @@ pub struct TSEnumMember<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSEnumMemberName<'a> {
-    Identifier(IdentifierName<'a>),
-    StringLiteral(StringLiteral<'a>),
+    Identifier(Box<'a, IdentifierName<'a>>),
+    StringLiteral(Box<'a, StringLiteral<'a>>),
     // Invalid Grammar `enum E { [computed] }`
     ComputedPropertyName(Expression<'a>),
     // Invalid Grammar `enum E { 1 }`
-    NumericLiteral(NumericLiteral<'a>),
+    NumericLiteral(Box<'a, NumericLiteral<'a>>),
 }
 
 #[derive(Debug, Hash)]
@@ -217,7 +217,7 @@ pub struct TSTypeOperator<'a> {
     pub type_annotation: TSType<'a>,
 }
 
-#[derive(Debug, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum TSTypeOperatorOperator {
@@ -504,7 +504,7 @@ pub struct TSTypeParameter<'a> {
 pub struct TSTypeParameterDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub params: Vec<'a, Box<'a, TSTypeParameter<'a>>>,
+    pub params: Vec<'a, TSTypeParameter<'a>>,
 }
 
 #[derive(Debug, Hash)]
@@ -520,7 +520,7 @@ pub struct TSTypeAliasDeclaration<'a> {
     pub modifiers: Modifiers<'a>,
 }
 
-#[derive(Debug, Hash, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum TSAccessibility {
@@ -551,7 +551,7 @@ pub struct TSInterfaceDeclaration<'a> {
     pub id: BindingIdentifier<'a>,
     pub body: Box<'a, TSInterfaceBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    pub extends: Option<Vec<'a, Box<'a, TSInterfaceHeritage<'a>>>>,
+    pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
     /// Valid Modifiers: `export`, `default`, `declare`
     pub modifiers: Modifiers<'a>,
 }
@@ -595,7 +595,7 @@ pub enum TSSignature<'a> {
 pub struct TSIndexSignature<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub parameters: Vec<'a, Box<'a, TSIndexSignatureName<'a>>>,
+    pub parameters: Vec<'a, TSIndexSignatureName<'a>>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
     pub readonly: bool,
 }
@@ -612,7 +612,7 @@ pub struct TSCallSignatureDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
 }
 
-#[derive(Debug, Clone, Copy, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum TSMethodSignatureKind {
@@ -686,7 +686,7 @@ pub struct TSTypePredicate<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
 pub enum TSTypePredicateName<'a> {
-    Identifier(IdentifierName<'a>),
+    Identifier(Box<'a, IdentifierName<'a>>),
     This(TSThisType),
 }
 
@@ -788,7 +788,7 @@ pub struct TSTypeQuery<'a> {
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSTypeQueryExprName<'a> {
     TSTypeName(TSTypeName<'a>),
-    TSImportType(TSImportType<'a>),
+    TSImportType(Box<'a, TSImportType<'a>>),
 }
 
 #[derive(Debug, Hash)]
@@ -867,7 +867,7 @@ pub struct TSMappedType<'a> {
     pub readonly: TSMappedTypeModifierOperator,
 }
 
-#[derive(Debug, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub enum TSMappedTypeModifierOperator {
@@ -926,7 +926,7 @@ pub struct TSImportEqualsDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: BindingIdentifier<'a>,
-    pub module_reference: Box<'a, TSModuleReference<'a>>,
+    pub module_reference: TSModuleReference<'a>,
     pub import_kind: ImportOrExportKind,
 }
 
@@ -935,7 +935,7 @@ pub struct TSImportEqualsDeclaration<'a> {
 #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
 pub enum TSModuleReference<'a> {
     TypeName(TSTypeName<'a>),
-    ExternalModuleReference(TSExternalModuleReference<'a>),
+    ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>),
 }
 
 #[derive(Debug, Hash)]

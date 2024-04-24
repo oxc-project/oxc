@@ -46,17 +46,12 @@ declare_oxc_lint!(
 
 impl Rule for PreferOptionalCatchBinding {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CatchClause(catch_clause) = node.kind() else { return };
-
-        let Some(catch_param) = &catch_clause.param else { return };
-
-        let references_count = get_param_references_count(catch_param, ctx);
-
+        let AstKind::CatchParameter(catch_param) = node.kind() else { return };
+        let references_count = get_param_references_count(&catch_param.pattern, ctx);
         if references_count != 0 {
             return;
         }
-
-        ctx.diagnostic(PreferOptionalCatchBindingDiagnostic(catch_param.span()));
+        ctx.diagnostic(PreferOptionalCatchBindingDiagnostic(catch_param.pattern.span()));
     }
 }
 
@@ -105,7 +100,7 @@ fn test() {
     let fail = vec![
         r"try {} catch (_) {}",
         r"try {} catch (theRealErrorName) {}",
-        r"try    {    } catch    (e)  
+        r"try    {    } catch    (e)
 			  	  {    }",
         r"try {} catch(e) {}",
         r"try {} catch (e){}",

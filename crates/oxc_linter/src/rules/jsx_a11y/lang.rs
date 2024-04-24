@@ -1,8 +1,6 @@
 use language_tags::LanguageTag;
 use oxc_ast::{
-    ast::{
-        JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression, JSXExpressionContainer,
-    },
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -94,10 +92,13 @@ impl Rule for Lang {
 
 fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
     match get_prop_value(item) {
-        Some(JSXAttributeValue::ExpressionContainer(JSXExpressionContainer {
-            expression: JSXExpression::Expression(expr),
-            ..
-        })) => !expr.is_undefined(),
+        Some(JSXAttributeValue::ExpressionContainer(container)) => {
+            if let JSXExpression::Expression(expr) = &container.expression {
+                !expr.is_undefined()
+            } else {
+                true
+            }
+        }
         Some(JSXAttributeValue::StringLiteral(str)) => {
             let language_tag = LanguageTag::parse(str.value.as_str()).unwrap();
             language_tag.is_valid()
@@ -112,12 +113,12 @@ fn test() {
 
     fn settings() -> serde_json::Value {
         serde_json::json!({
-            "jsx-a11y": {
+            "settings": { "jsx-a11y": {
                 "polymorphicPropName": "as",
                 "components": {
                     "Foo": "html",
                 }
-            }
+            } }
         })
     }
 

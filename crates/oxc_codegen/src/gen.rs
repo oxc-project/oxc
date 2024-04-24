@@ -455,7 +455,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TryStatement<'a> {
             p.print_str(b"catch");
             if let Some(param) = &handler.param {
                 p.print_str(b"(");
-                param.gen(p, ctx);
+                param.pattern.gen(p, ctx);
                 p.print_str(b")");
             }
             p.print_block1(&handler.body, ctx);

@@ -7,7 +7,7 @@ import fs from 'fs/promises';
 import {join as pathJoin} from 'path';
 import {createHash} from 'crypto';
 import assert from 'assert';
-import tar from 'tar';
+import {create as createTar} from 'tar';
 import axios from 'axios';
 
 const METADATA_SUFFIX = '_metadata.json',
@@ -72,7 +72,7 @@ for (let {pid, path} of duplicates) {
 // ZIP combined profile directory
 console.log('Zipping combined profile directory');
 const archivePath = pathJoin(dataDir, 'archive.tar.gz');
-await tar.create({file: archivePath, gzip: true, cwd: outDir}, ['./']);
+await createTar({file: archivePath, gzip: true, cwd: outDir}, ['./']);
 
 // Get size + MD5 hash of archive
 console.log('Hashing ZIP');
