@@ -56,18 +56,14 @@ impl<'a> AstNode<'a> {
 /// Untyped AST nodes flattened into an vec
 #[derive(Debug)]
 pub struct AstNodes<'a> {
-    root: AstNodeId,
+    root: Option<AstNodeId>,
     nodes: IndexVec<AstNodeId, AstNode<'a>>,
     parent_ids: IndexVec<AstNodeId, Option<AstNodeId>>,
 }
 
 impl<'a> Default for AstNodes<'a> {
     fn default() -> Self {
-        Self {
-            root: AstNodeId::new(0),
-            nodes: IndexVec::default(),
-            parent_ids: IndexVec::default(),
-        }
+        Self { root: None, nodes: IndexVec::default(), parent_ids: IndexVec::default() }
     }
 }
 
@@ -110,7 +106,8 @@ impl<'a> AstNodes<'a> {
     }
 
     /// Get the root `AstNodeId`, It is always pointing to a `Program`.
-    pub fn root(&self) -> AstNodeId {
+    /// Returns `None` if root node isn't set.
+    pub fn root(&self) -> Option<AstNodeId> {
         self.root
     }
 
@@ -123,20 +120,22 @@ impl<'a> AstNodes<'a> {
     pub(super) unsafe fn set_root(&mut self, root: &AstNode<'a>) {
         match root.kind() {
             AstKind::Program(_) => {
-                self.root = root.id();
+                self.root = Some(root.id());
             }
             _ => unreachable!("Expected a `Program` node as the root of the tree."),
         }
     }
 
     /// Get the root node as immutable reference, It is always guaranteed to be a `Program`.
-    pub fn root_node(&self) -> &AstNode<'a> {
-        self.get_node(self.root())
+    /// Returns `None` if root node isn't set.
+    pub fn root_node(&self) -> Option<&AstNode<'a>> {
+        self.root().map(|id| self.get_node(id))
     }
 
     /// Get the root node as mutable reference, It is always guaranteed to be a `Program`.
-    pub fn root_node_mut(&mut self) -> &mut AstNode<'a> {
-        self.get_node_mut(self.root())
+    /// Returns `None` if root node isn't set.
+    pub fn root_node_mut(&mut self) -> Option<&mut AstNode<'a>> {
+        self.root().map(|id| self.get_node_mut(id))
     }
 
     /// Walk up the AST, iterating over each parent node.
