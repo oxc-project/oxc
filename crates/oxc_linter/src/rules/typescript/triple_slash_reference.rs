@@ -103,8 +103,8 @@ impl Rule for TripleSlashReference {
         }))
     }
     fn run_once(&self, ctx: &LintContext) {
-        let Some(root) = ctx.nodes().iter().next() else { return };
-        let AstKind::Program(program) = root.kind() else { return };
+        let Some(root) = ctx.nodes().root_node() else { return };
+        let AstKind::Program(program) = root.kind() else { unreachable!() };
 
         // We don't need to iterate over all comments since Triple-slash directives are only valid at the top of their containing file.
         // We are trying to get the first statement start potioin, falling back to the program end if statement does not exist
