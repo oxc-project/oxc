@@ -92,20 +92,20 @@ fn get_function_definition_node<'a, 'b>(
 
 impl Rule for ImplementsOnClasses {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let settings = &ctx.settings().jsdoc;
-
-        let resolved_implements_tag_name = settings.resolve_tag_name("implements");
-        let resolved_class_tag_name = settings.resolve_tag_name("class");
-        let resolved_constructor_tag_name = settings.resolve_tag_name("constructor");
-
         let Some(jsdocs) = get_function_definition_node(node, ctx)
             .and_then(|node| ctx.jsdoc().get_all_by_node(node))
         else {
             return;
         };
 
+        let settings = &ctx.settings().jsdoc;
+
+        let resolved_implements_tag_name = settings.resolve_tag_name("implements");
+        let resolved_class_tag_name = settings.resolve_tag_name("class");
+        let resolved_constructor_tag_name = settings.resolve_tag_name("constructor");
+
         let (mut implements_found, mut class_or_ctor_found) = (None, false);
-        for jsdoc in jsdocs {
+        for jsdoc in &jsdocs {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();
 
