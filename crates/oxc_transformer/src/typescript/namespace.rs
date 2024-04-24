@@ -13,46 +13,27 @@ impl<'a> TypeScript<'a> {
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     pub(super) fn transform_statements_for_namespace(&self, stmts: &mut Vec<'a, Statement<'a>>) {
         let mut names: FxHashSet<Atom<'a>> = FxHashSet::default();
-        let mut new_stmts = self.ctx.ast.new_vec();
+        let mut new_stmts = vec![];
 
-        // TODO: do not move if there is no namespace
-        for stmt in self.ctx.ast.move_statement_vec(stmts) {
+        for (index, stmt) in stmts.iter().enumerate() {
             match stmt {
                 Statement::Declaration(Declaration::TSModuleDeclaration(decl)) => {
                     if !decl.modifiers.is_contains_declare() {
                         let name = decl.id.name().clone();
-                        if let Some(transformed_stmt) = self.handle_nested(decl.unbox(), None) {
+                        if let Some(transformed_stmt) =
+                            self.handle_nested(self.ctx.ast.copy(decl), None)
+                        {
                             if names.insert(name.clone()) {
-                                new_stmts.push(Statement::Declaration(
-                                    self.create_variable_declaration(&name),
+                                new_stmts.push((
+                                    index,
+                                    Statement::Declaration(self.create_variable_declaration(&name)),
                                 ));
                             }
-                            new_stmts.push(transformed_stmt);
+                            new_stmts.push((index, transformed_stmt));
                         }
                     }
                 }
-                Statement::Declaration(Declaration::FunctionDeclaration(ref decl)) => {
-                    if let Some(ident) = &decl.id {
-                        names.insert(ident.name.clone());
-                    }
-                    new_stmts.push(stmt);
-                }
-                Statement::Declaration(Declaration::ClassDeclaration(ref decl)) => {
-                    if let Some(ident) = &decl.id {
-                        names.insert(ident.name.clone());
-                    }
-                    new_stmts.push(stmt);
-                }
-                Statement::Declaration(Declaration::TSEnumDeclaration(ref decl)) => {
-                    names.insert(decl.id.name.clone());
-                    new_stmts.push(stmt);
-                }
-                Statement::Declaration(Declaration::VariableDeclaration(ref decl)) => {
-                    decl.bound_names(&mut |id| {
-                        names.insert(id.name.clone());
-                    });
-                    new_stmts.push(stmt);
-                }
+
                 Statement::ModuleDeclaration(ref module_decl) => {
                     if let ModuleDeclaration::ExportNamedDeclaration(export_decl) = &**module_decl {
                         if let Some(Declaration::TSModuleDeclaration(decl)) =
@@ -63,22 +44,26 @@ impl<'a> TypeScript<'a> {
                                 if let Some(transformed_stmt) =
                                     self.handle_nested(self.ctx.ast.copy(decl), None)
                                 {
-                                    println!("{:?}", names);
                                     if names.insert(name.clone()) {
-                                        new_stmts.push(self.ctx.ast.module_declaration(
-                                            ModuleDeclaration::ExportNamedDeclaration(
-                                                self.ctx.ast.export_named_declaration(
-                                                    SPAN,
-                                                    Some(self.create_variable_declaration(&name)),
-                                                    self.ctx.ast.new_vec(),
-                                                    None,
-                                                    ImportOrExportKind::Value,
-                                                    None,
+                                        new_stmts.push((
+                                            index,
+                                            self.ctx.ast.module_declaration(
+                                                ModuleDeclaration::ExportNamedDeclaration(
+                                                    self.ctx.ast.export_named_declaration(
+                                                        SPAN,
+                                                        Some(
+                                                            self.create_variable_declaration(&name),
+                                                        ),
+                                                        self.ctx.ast.new_vec(),
+                                                        None,
+                                                        ImportOrExportKind::Value,
+                                                        None,
+                                                    ),
                                                 ),
                                             ),
                                         ));
                                     }
-                                    new_stmts.push(transformed_stmt);
+                                    new_stmts.push((index, transformed_stmt));
                                     continue;
                                 }
                             }
@@ -87,13 +72,38 @@ impl<'a> TypeScript<'a> {
                     module_decl.bound_names(&mut |id| {
                         names.insert(id.name.clone());
                     });
-                    new_stmts.push(stmt);
                 }
-                _ => new_stmts.push(stmt),
+                // Collect bindings from class, function, variable and enum declarations
+                Statement::Declaration(Declaration::FunctionDeclaration(ref decl)) => {
+                    if let Some(ident) = &decl.id {
+                        names.insert(ident.name.clone());
+                    }
+                }
+                Statement::Declaration(Declaration::ClassDeclaration(ref decl)) => {
+                    if let Some(ident) = &decl.id {
+                        names.insert(ident.name.clone());
+                    }
+                }
+                Statement::Declaration(Declaration::TSEnumDeclaration(ref decl)) => {
+                    names.insert(decl.id.name.clone());
+                }
+                Statement::Declaration(Declaration::VariableDeclaration(ref decl)) => {
+                    decl.bound_names(&mut |id| {
+                        names.insert(id.name.clone());
+                    });
+                }
+                _ => {}
             }
         }
 
-        *stmts = new_stmts;
+        let mut deleted_indexes = FxHashSet::default();
+        new_stmts.into_iter().rev().for_each(|(index, stmt)| {
+            // remove original statement
+            if deleted_indexes.insert(index) {
+                stmts.remove(index);
+            }
+            stmts.insert(index, stmt);
+        });
     }
 
     fn handle_nested(
