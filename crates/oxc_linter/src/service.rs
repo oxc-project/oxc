@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    env,
     ffi::OsStr,
     fs,
     path::{Path, PathBuf},
@@ -361,7 +362,7 @@ impl Runtime {
             let mut type_checker = type_checker.lock().unwrap();
             type_checker
                 .open(&OpenRequest {
-                    file: path.to_string_lossy().as_ref(),
+                    file: env::current_dir().unwrap().join(path).to_string_lossy().as_ref(),
                     file_content: Some(&source_text),
                 })
                 .unwrap();
