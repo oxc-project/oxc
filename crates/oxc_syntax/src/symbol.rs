@@ -5,6 +5,7 @@ use oxc_index::define_index_type;
 use serde::Serialize;
 
 define_index_type! {
+    #[derive(layout_inspect::Inspect)]
     pub struct SymbolId = u32;
 }
 

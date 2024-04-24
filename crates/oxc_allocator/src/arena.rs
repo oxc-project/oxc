@@ -93,6 +93,29 @@ impl<'alloc, T: Hash> Hash for Box<'alloc, T> {
     }
 }
 
+impl<'alloc, T: layout_inspect::Inspect + 'alloc> layout_inspect::Inspect for Box<'alloc, T> {
+    fn name() -> std::string::String {
+        "Box<".to_string() + &<T as layout_inspect::Inspect>::name() + ">"
+    }
+
+    fn size() -> Option<usize> {
+        Some(std::mem::size_of::<Self>())
+    }
+
+    fn align() -> Option<usize> {
+        Some(std::mem::align_of::<Self>())
+    }
+
+    fn def(collector: &mut layout_inspect::TypesCollector) -> layout_inspect::defs::DefType {
+        layout_inspect::defs::DefType::Box(layout_inspect::defs::DefBox {
+            name: <Self as layout_inspect::Inspect>::name(),
+            size: <Self as layout_inspect::Inspect>::size().unwrap(),
+            align: <Self as layout_inspect::Inspect>::align().unwrap(),
+            value_type_id: collector.collect::<T>(),
+        })
+    }
+}
+
 /// Bumpalo Vec
 #[derive(Debug, PartialEq, Eq)]
 pub struct Vec<'alloc, T>(vec::Vec<T, &'alloc Bump>);
@@ -192,6 +215,29 @@ impl<'alloc, T: Hash> Hash for Vec<'alloc, T> {
         for e in &self.0 {
             e.hash(state);
         }
+    }
+}
+
+impl<'alloc, T: layout_inspect::Inspect + 'alloc> layout_inspect::Inspect for Vec<'alloc, T> {
+    fn name() -> std::string::String {
+        "Vec<".to_string() + &<T as layout_inspect::Inspect>::name() + ">"
+    }
+
+    fn size() -> Option<usize> {
+        Some(std::mem::size_of::<Self>())
+    }
+
+    fn align() -> Option<usize> {
+        Some(std::mem::align_of::<Self>())
+    }
+
+    fn def(collector: &mut layout_inspect::TypesCollector) -> layout_inspect::defs::DefType {
+        layout_inspect::defs::DefType::Vec(layout_inspect::defs::DefVec {
+            name: <Self as layout_inspect::Inspect>::name(),
+            size: <Self as layout_inspect::Inspect>::size().unwrap(),
+            align: <Self as layout_inspect::Inspect>::align().unwrap(),
+            value_type_id: collector.collect::<T>(),
+        })
     }
 }
 

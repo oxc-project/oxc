@@ -233,7 +233,7 @@ pub struct TSTypeOperator<'a> {
     pub type_annotation: TSType<'a>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum TSTypeOperatorOperator {
@@ -566,7 +566,7 @@ pub struct TSTypeAliasDeclaration<'a> {
     pub modifiers: Modifiers<'a>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum TSAccessibility {
@@ -665,7 +665,7 @@ pub struct TSCallSignatureDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum TSMethodSignatureKind {
@@ -772,7 +772,7 @@ pub struct TSModuleDeclaration<'a> {
     pub modifiers: Modifiers<'a>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum TSModuleDeclarationKind {
@@ -942,7 +942,7 @@ pub struct TSMappedType<'a> {
     pub readonly: TSMappedTypeModifierOperator,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub enum TSMappedTypeModifierOperator {
@@ -1070,7 +1070,7 @@ impl<'a> Decorator<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub enum ModifierKind {
@@ -1097,7 +1097,7 @@ impl ModifierKind {
     }
 }
 
-#[derive(Debug, Hash)]
+#[derive(Debug, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct Modifier {
@@ -1106,7 +1106,7 @@ pub struct Modifier {
     pub kind: ModifierKind,
 }
 
-#[derive(Debug, Default, Hash)]
+#[derive(Debug, Default, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(transparent))]
 pub struct Modifiers<'a> {
@@ -1180,7 +1180,7 @@ pub struct TSInstantiationExpression<'a> {
     pub type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub enum ImportOrExportKind {

@@ -27,6 +27,8 @@ oxc_macros    = { workspace = true }
 bitflags   = { workspace = true }
 num-bigint = { workspace = true }
 
+layout_inspect = { workspace = true, features = ["unique_names"] }
+
 serde      = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }
 ryu-js     = { workspace = true, optional = true }

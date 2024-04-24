@@ -146,7 +146,7 @@ pub struct RegExpLiteral<'a> {
     pub regex: RegExp<'a>,
 }
 
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct RegExp<'a> {
     pub pattern: Atom<'a>,
@@ -237,7 +237,29 @@ impl fmt::Display for RegExpFlags {
     }
 }
 
-#[derive(Debug, Clone, Hash)]
+impl layout_inspect::Inspect for RegExpFlags {
+    fn name() -> String {
+        "RegExpFlags".to_string()
+    }
+
+    fn size() -> Option<usize> {
+        Some(std::mem::size_of::<Self>())
+    }
+
+    fn align() -> Option<usize> {
+        Some(std::mem::align_of::<Self>())
+    }
+
+    fn def(_collector: &mut layout_inspect::TypesCollector) -> layout_inspect::defs::DefType {
+        layout_inspect::defs::DefType::Primitive(layout_inspect::defs::DefPrimitive {
+            name: <Self as layout_inspect::Inspect>::name(),
+            size: <Self as layout_inspect::Inspect>::size().unwrap(),
+            align: <Self as layout_inspect::Inspect>::align().unwrap(),
+        })
+    }
+}
+
+#[derive(Debug, Clone, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct EmptyObject;
 

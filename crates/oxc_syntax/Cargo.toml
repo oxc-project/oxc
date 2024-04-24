@@ -29,6 +29,8 @@ indexmap         = { workspace = true }
 dashmap          = { workspace = true }
 phf              = { workspace = true, features = ["macros"] }
 
+layout_inspect = { workspace = true, features = ["unique_names"] }
+
 serde        = { workspace = true, features = ["derive"], optional = true }
 tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }

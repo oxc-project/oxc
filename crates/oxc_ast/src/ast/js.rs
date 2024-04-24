@@ -339,7 +339,7 @@ impl<'a> Expression<'a> {
 }
 
 /// Identifier Name
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Identifier"))]
 pub struct IdentifierName<'a> {
@@ -592,7 +592,7 @@ impl<'a> PropertyKey<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum PropertyKind {
@@ -650,7 +650,7 @@ pub struct TemplateElement<'a> {
 }
 
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/impatient-js/ch_template-literals.html#template-strings-cooked-vs-raw)
-#[derive(Debug, Hash)]
+#[derive(Debug, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct TemplateElementValue<'a> {
     /// A raw interpretation where backslashes do not have special meaning.
@@ -1418,7 +1418,7 @@ impl<'a> VariableDeclaration<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum VariableDeclarationKind {
@@ -1988,7 +1988,7 @@ impl<'a> Function<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum FunctionType {
     FunctionDeclaration,
@@ -2043,7 +2043,7 @@ impl<'a> FormalParameter<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
@@ -2167,7 +2167,7 @@ impl<'a> Class<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum ClassType {
     ClassDeclaration,
@@ -2313,7 +2313,7 @@ pub struct MethodDefinition<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum MethodDefinitionType {
     MethodDefinition,
@@ -2342,14 +2342,14 @@ pub struct PropertyDefinition<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum PropertyDefinitionType {
     PropertyDefinition,
     TSAbstractPropertyDefinition,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum MethodDefinitionKind {

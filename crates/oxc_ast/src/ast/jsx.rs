@@ -70,7 +70,7 @@ pub struct JSXFragment<'a> {
     pub children: Vec<'a, JSXChild<'a>>,
 }
 
-#[derive(Debug, Hash)]
+#[derive(Debug, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXOpeningFragment {
@@ -78,7 +78,7 @@ pub struct JSXOpeningFragment {
     pub span: Span,
 }
 
-#[derive(Debug, Hash)]
+#[derive(Debug, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXClosingFragment {

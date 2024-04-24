@@ -21,6 +21,7 @@ pub fn ast_node(mut item: Item) -> TokenStream2 {
     let traversable = result.traversable;
 
     let output = quote! {
+        #[derive(layout_inspect::Inspect)]
         #item
 
         pub mod #traversable_mod {

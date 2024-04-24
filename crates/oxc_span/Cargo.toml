@@ -22,6 +22,8 @@ doctest = false
 miette      = { workspace = true }
 compact_str = { workspace = true }
 
+layout_inspect = { workspace = true, features = ["unique_names"] }
+
 tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 serde        = { workspace = true, features = ["derive"], optional = true }

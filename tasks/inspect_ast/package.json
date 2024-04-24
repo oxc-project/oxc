@@ -1,0 +1,6 @@
+{
+  "name": "inspect_ast",
+  "version": "0.0.0",
+  "main": "lib/index.mjs",
+  "packageManager": "pnpm@9.0.5"
+}

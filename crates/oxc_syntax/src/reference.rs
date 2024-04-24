@@ -4,6 +4,7 @@ use oxc_index::define_index_type;
 use serde::Serialize;
 
 define_index_type! {
+    #[derive(layout_inspect::Inspect)]
     pub struct ReferenceId = u32;
 }
 
@@ -74,5 +75,27 @@ impl ReferenceFlag {
     /// The identifier is used in a type definition.
     pub const fn is_type(&self) -> bool {
         self.contains(Self::Type)
+    }
+}
+
+impl layout_inspect::Inspect for ReferenceFlag {
+    fn name() -> String {
+        "ReferenceFlag".to_string()
+    }
+
+    fn size() -> Option<usize> {
+        Some(std::mem::size_of::<Self>())
+    }
+
+    fn align() -> Option<usize> {
+        Some(std::mem::align_of::<Self>())
+    }
+
+    fn def(_collector: &mut layout_inspect::TypesCollector) -> layout_inspect::defs::DefType {
+        layout_inspect::defs::DefType::Primitive(layout_inspect::defs::DefPrimitive {
+            name: <Self as layout_inspect::Inspect>::name(),
+            size: <Self as layout_inspect::Inspect>::size().unwrap(),
+            align: <Self as layout_inspect::Inspect>::align().unwrap(),
+        })
     }
 }
