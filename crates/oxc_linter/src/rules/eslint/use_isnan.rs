@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, ChainElement, Expression},
+    ast::{Argument, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -153,7 +153,7 @@ fn is_target_callee<'a>(callee: &'a Expression<'a>) -> Option<&'static str> {
     }
 
     if let Expression::ChainExpression(chain) = callee {
-        if let ChainElement::MemberExpression(expr) = &chain.expression {
+        if let Some(expr) = chain.expression.as_member_expression() {
             return expr.static_property_name().and_then(|property| {
                 TARGET_METHODS.iter().find(|method| **method == property).copied()
             });

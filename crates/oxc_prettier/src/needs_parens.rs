@@ -654,8 +654,14 @@ impl<'a> Prettier<'a> {
                 ChainElement::CallExpression(e) => {
                     Self::starts_with_no_lookahead_token(&e.callee, span)
                 }
-                ChainElement::MemberExpression(e) => {
-                    Self::starts_with_no_lookahead_token(e.object(), span)
+                ChainElement::ComputedMemberExpression(e) => {
+                    Self::starts_with_no_lookahead_token(&e.object, span)
+                }
+                ChainElement::StaticMemberExpression(e) => {
+                    Self::starts_with_no_lookahead_token(&e.object, span)
+                }
+                ChainElement::PrivateFieldExpression(e) => {
+                    Self::starts_with_no_lookahead_token(&e.object, span)
                 }
                 ChainElement::Dummy => false,
             },

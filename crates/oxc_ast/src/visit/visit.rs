@@ -1636,10 +1636,18 @@ pub mod walk {
         visitor.leave_node(kind);
     }
 
+    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `MemberExpression` variants cannot panic
     pub fn walk_chain_element<'a, V: Visit<'a>>(visitor: &mut V, elem: &ChainElement<'a>) {
         match elem {
             ChainElement::CallExpression(expr) => visitor.visit_call_expression(expr),
-            ChainElement::MemberExpression(expr) => visitor.visit_member_expression(expr),
+
+            ChainElement::ComputedMemberExpression(_)
+            | ChainElement::StaticMemberExpression(_)
+            | ChainElement::PrivateFieldExpression(_) => {
+                let member_expr = elem.as_member_expression().unwrap();
+                visitor.visit_member_expression(member_expr);
+            }
+
             ChainElement::Dummy => dummy!(),
         }
     }

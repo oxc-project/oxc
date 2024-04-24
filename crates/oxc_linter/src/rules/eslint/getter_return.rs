@@ -96,7 +96,12 @@ impl GetterReturn {
                 Self::handle_member_expression(member_expr)
             }
             Expression::ChainExpression(ce) => match &ce.expression {
-                ChainElement::MemberExpression(me) => Self::handle_member_expression(me),
+                ChainElement::ComputedMemberExpression(_)
+                | ChainElement::StaticMemberExpression(_)
+                | ChainElement::PrivateFieldExpression(_) => {
+                    let member_expr = ce.expression.as_member_expression().unwrap();
+                    Self::handle_member_expression(member_expr)
+                }
                 ChainElement::CallExpression(_) => {
                     false // todo: make a test for this
                 }

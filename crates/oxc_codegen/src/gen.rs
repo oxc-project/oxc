@@ -2037,7 +2037,11 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ChainExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         match &self.expression {
             ChainElement::CallExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            ChainElement::MemberExpression(expr) => expr.gen_expr(p, precedence, ctx),
+            ChainElement::ComputedMemberExpression(_)
+            | ChainElement::StaticMemberExpression(_)
+            | ChainElement::PrivateFieldExpression(_) => {
+                self.expression.as_member_expression().unwrap().gen_expr(p, precedence, ctx);
+            }
             ChainElement::Dummy => dummy!(),
         }
     }

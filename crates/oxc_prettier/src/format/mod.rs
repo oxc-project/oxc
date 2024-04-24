@@ -2034,7 +2034,12 @@ impl<'a> Format<'a> for ChainElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::CallExpression(expr) => expr.format(p),
-            Self::MemberExpression(expr) => expr.format(p),
+            Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => {
+                let member_expr = self.as_member_expression().unwrap();
+                member_expr.format(p)
+            }
             Self::Dummy => dummy!(unreachable),
         }
     }

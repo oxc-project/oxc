@@ -283,7 +283,7 @@ impl<'a> Expression<'a> {
                 inner.as_member_expression().unwrap().is_specific_member_access(object, property)
             }
             Expression::ChainExpression(chain) => {
-                let ChainElement::MemberExpression(expr) = &chain.expression else {
+                let Some(expr) = chain.expression.as_member_expression() else {
                     return false;
                 };
                 expr.is_specific_member_access(object, property)
@@ -353,11 +353,7 @@ impl<'a> Expression<'a> {
     pub fn get_member_expr(&self) -> Option<&MemberExpression<'a>> {
         let inner = self.get_inner_expression();
         match inner {
-            Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
-                ChainElement::CallExpression(_) => None,
-                ChainElement::MemberExpression(member_expr) => Some(member_expr),
-                ChainElement::Dummy => dummy!(),
-            },
+            Expression::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
             _ => inner.as_member_expression(),
         }
     }
@@ -780,12 +776,16 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
+    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `MemberExpression` variants cannot panic
     pub fn through_optional_is_specific_member_access(&self, object: &str, property: &str) -> bool {
         let object_matches = match self.object().without_parenthesized() {
             Expression::ChainExpression(x) => match &x.expression {
                 ChainElement::CallExpression(_) => false,
-                ChainElement::MemberExpression(me) => {
-                    me.object().without_parenthesized().is_specific_id(object)
+                ChainElement::ComputedMemberExpression(_)
+                | ChainElement::StaticMemberExpression(_)
+                | ChainElement::PrivateFieldExpression(_) => {
+                    let member_expr = x.expression.as_member_expression().unwrap();
+                    member_expr.object().without_parenthesized().is_specific_id(object)
                 }
                 ChainElement::Dummy => dummy!(),
             },
@@ -1298,14 +1298,26 @@ pub struct ChainExpression<'a> {
     pub expression: ChainElement<'a>,
 }
 
-#[ast_node]
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum ChainElement<'a> {
-    CallExpression(Box<'a, CallExpression<'a>>),
-    MemberExpression(Box<'a, MemberExpression<'a>>),
+add_member_expression_variants! {
+    #[ast_node]
+    #[derive(Debug, Hash)]
+    #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+    #[cfg_attr(feature = "serialize", serde(untagged))]
+    pub enum ChainElement<'a> {
+        CallExpression(Box<'a, CallExpression<'a>>) = 0,
+
+        // `MemberExpression` variants added here by `add_member_expression_variants!` macro
+    }
 }
+
+shared_enum_variants!(
+    ChainElement,
+    MemberExpression,
+    is_member_expression,
+    as_member_expression,
+    as_member_expression_mut,
+    [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression,]
+);
 
 /// Parenthesized Expression
 #[ast_node]

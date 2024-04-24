@@ -52,8 +52,14 @@ impl Rule for NoNonNullAssertedOptionalChain {
             let inner = non_null_expr.expression.get_inner_expression();
             let chain_span = match inner {
                 Expression::ChainExpression(chain) => match &chain.expression {
-                    ChainElement::MemberExpression(member) if member.optional() => {
-                        Some(member.object().span())
+                    ChainElement::ComputedMemberExpression(member) if member.optional => {
+                        Some(member.object.span())
+                    }
+                    ChainElement::StaticMemberExpression(member) if member.optional => {
+                        Some(member.object.span())
+                    }
+                    ChainElement::PrivateFieldExpression(member) if member.optional => {
+                        Some(member.object.span())
                     }
                     ChainElement::CallExpression(call) if call.optional => Some(call.callee.span()),
                     _ => None,

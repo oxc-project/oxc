@@ -511,10 +511,7 @@ impl<'a> ParserImpl<'a> {
         match expr {
             _ if expr.is_member_expression() => {
                 let member_expr = MemberExpression::try_from(expr).unwrap();
-                self.ast.chain_expression(
-                    span,
-                    ChainElement::MemberExpression(self.ast.alloc(member_expr)),
-                )
+                self.ast.chain_expression(span, ChainElement::from(member_expr))
             }
             Expression::CallExpression(result) => {
                 self.ast.chain_expression(span, ChainElement::CallExpression(result))

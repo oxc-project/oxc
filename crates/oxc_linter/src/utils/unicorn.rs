@@ -4,8 +4,8 @@ use crate::LintContext;
 pub use self::boolean::*;
 use oxc_ast::{
     ast::{
-        BindingPatternKind, ChainElement, Expression, FormalParameters, FunctionBody,
-        LogicalExpression, MemberExpression, Statement,
+        BindingPatternKind, Expression, FormalParameters, FunctionBody, LogicalExpression,
+        MemberExpression, Statement,
     },
     AstKind,
 };
@@ -150,7 +150,7 @@ pub fn get_return_identifier_name<'a>(body: &'a FunctionBody<'_>) -> Option<&'a 
 pub fn is_same_reference(left: &Expression, right: &Expression, ctx: &LintContext) -> bool {
     if let Expression::ChainExpression(left_chain_expr) = left {
         if let Some(right_member_expr) = right.as_member_expression() {
-            if let ChainElement::MemberExpression(v) = &left_chain_expr.expression {
+            if let Some(v) = left_chain_expr.expression.as_member_expression() {
                 return is_same_member_expression(v, right_member_expr, ctx);
             }
         }
@@ -158,7 +158,7 @@ pub fn is_same_reference(left: &Expression, right: &Expression, ctx: &LintContex
 
     if let Some(left_chain_expr) = left.as_member_expression() {
         if let Expression::ChainExpression(right_member_expr) = right {
-            if let ChainElement::MemberExpression(v) = &right_member_expr.expression {
+            if let Some(v) = right_member_expr.expression.as_member_expression() {
                 return is_same_member_expression(left_chain_expr, v, ctx);
             }
         }
@@ -192,9 +192,8 @@ pub fn is_same_reference(left: &Expression, right: &Expression, ctx: &LintContex
             Expression::ChainExpression(left_chain_expr),
             Expression::ChainExpression(right_chain_expr),
         ) => {
-            if let ChainElement::MemberExpression(left_member_expr) = &left_chain_expr.expression {
-                if let ChainElement::MemberExpression(right_member_expr) =
-                    &right_chain_expr.expression
+            if let Some(left_member_expr) = left_chain_expr.expression.as_member_expression() {
+                if let Some(right_member_expr) = right_chain_expr.expression.as_member_expression()
                 {
                     return is_same_member_expression(left_member_expr, right_member_expr, ctx);
                 }
