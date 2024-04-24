@@ -1,9 +1,15 @@
-Passed: 157/209
+Passed: 274/347
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
-* babel-plugin-transform-react-jsx-development
 
+
+# babel-plugin-transform-arrow-functions (1/6)
+* assumption-newableArrowFunctions-false/basic/input.js
+* assumption-newableArrowFunctions-false/naming/input.js
+* assumption-newableArrowFunctions-false/self-referential/input.js
+* spec/newableArrowFunction-default/input.js
+* spec/newableArrowFunction-vs-spec-false/input.js
 
 # babel-preset-typescript (6/16)
 * jsx-compat/ts-invalid/input.ts
@@ -60,12 +66,30 @@ Passed: 157/209
 # babel-preset-react (8/9)
 * preset-options/development-runtime-automatic/input.js
 
-# babel-plugin-transform-react-jsx (35/36)
+# babel-plugin-transform-react-jsx (139/143)
 * autoImport/complicated-scope-module/input.js
+* react/weird-symbols/input.js
+* react-automatic/should-throw-when-filter-is-specified/input.js
+* react-automatic/weird-symbols/input.js
 
-# babel-plugin-transform-react-display-name (3/4)
+# babel-plugin-transform-react-display-name (15/16)
 * display-name/nested/input.js
 
-# babel-plugin-transform-react-jsx-self (1/2)
+# babel-plugin-transform-react-jsx-self (1/3)
+* react-source/arrow-function/input.js
 * react-source/disable-with-super/input.js
+
+# babel-plugin-transform-react-jsx-development (2/14)
+* linux/auto-import-dev/input.js
+* linux/classic-runtime/input.js
+* linux/fragments/input.js
+* linux/handle-fragments-with-key/input.js
+* linux/handle-nonstatic-children/input.js
+* linux/handle-static-children/input.js
+* linux/self-inside-arrow/input.mjs
+* linux/source-and-self-defined/input.js
+* linux/within-derived-classes-constructor/input.js
+* linux/within-ts-module-block/input.ts
+* windows/auto-import-dev-windows/input.js
+* windows/classic-runtime-windows/input.js
 

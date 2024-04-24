@@ -13,7 +13,9 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions, TestOs};
-use oxc_transformer::{ReactOptions, TransformOptions, Transformer, TypeScriptOptions};
+use oxc_transformer::{
+    ES2015Options, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
+};
 
 use crate::{fixture_root, packages_root, TestRunnerEnv, PLUGINS_NOT_SUPPORTED_YET};
 
@@ -95,6 +97,13 @@ fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOpti
         react_options
     };
 
+    let es2015 = ES2015Options {
+        arrow_function: options
+            .get_plugin("transform-arrow-functions")
+            .map(get_options)
+            .transpose()?,
+    };
+
     Ok(TransformOptions {
         cwd: options.cwd.clone().unwrap(),
         assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
@@ -104,6 +113,7 @@ fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOpti
             .transpose()?
             .unwrap_or_default(),
         react,
+        es2015,
     })
 }
 
