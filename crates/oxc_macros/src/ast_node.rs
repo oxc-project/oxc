@@ -2,9 +2,9 @@ use proc_macro2::TokenStream as TokenStream2;
 
 use quote::{format_ident, quote};
 use syn::{
-    parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, Attribute, Field, Fields,
-    GenericArgument, Ident, Item, ItemEnum, ItemStruct, Meta, Path, PathArguments, PathSegment,
-    Token, Type, TypePath, TypeReference, Variant,
+    parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, Attribute, Expr,
+    ExprGroup, ExprLit, Field, Fields, GenericArgument, Ident, Item, ItemEnum, ItemStruct, Lit,
+    Meta, Path, PathArguments, PathSegment, Token, Type, TypePath, TypeReference, Variant,
 };
 
 pub fn ast_node(mut item: Item) -> TokenStream2 {
@@ -47,21 +47,52 @@ fn modify_enum(item: &mut ItemEnum) -> NodeData {
     item.attrs.iter().for_each(validate_attribute);
 
     assert!(
-        item.variants.len() < 255,
-        "`ast_node` enums are limited to the maximum of 256 variants."
+        item.variants.len() <= 128,
+        "`ast_node` enums are limited to a maximum of 128 variants."
     );
     item.variants.iter().for_each(validate_variant);
     // add the correct representation
     item.attrs.push(parse_quote!(#[repr(C, u8)]));
 
-    // add the dummy variant
-    item.variants.insert(0, parse_quote!(Dummy));
     // add explicit discriminants to all variants
-    item.variants.iter_mut().enumerate().for_each(|(i, var)| {
-        #[allow(clippy::cast_possible_truncation)]
-        let i = i as u8;
-        var.discriminant = Some((parse_quote!(=), parse_quote!(#i)));
+    let mut next_discriminant = 0u8;
+    item.variants.iter_mut().for_each(|var| {
+        if let Some((.., expr)) = &var.discriminant {
+            // Explicit discriminant
+            let discriminant = match expr {
+                Expr::Lit(ExprLit { lit: Lit::Int(lit), .. }) => {
+                    Some(lit.base10_parse::<u8>().unwrap())
+                }
+                Expr::Group(ExprGroup { expr, .. }) => {
+                    if let Expr::Lit(ExprLit { lit: Lit::Int(lit), .. }) = &**expr {
+                        Some(lit.base10_parse::<u8>().unwrap())
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            };
+
+            if let Some(discriminant) = discriminant {
+                next_discriminant = discriminant + 1;
+            } else {
+                panic!("`ast_node` attribute only supports integers as explicit discriminators");
+            }
+        } else {
+            // No explicit discriminant - create discriminant following last
+            var.discriminant = Some((parse_quote!(=), parse_quote!(#next_discriminant)));
+            next_discriminant += 1;
+        };
     });
+
+    assert!(
+        next_discriminant <= 128,
+        "Explicit discriminants must be less than 128 and must not cause later unspecified discriminants to reach 128"
+    );
+
+    // add the dummy variant.
+    // using 128 as discriminant so other discriminants can be compared with cheap AND operations.
+    item.variants.push(parse_quote!(Dummy = 128));
 
     NodeData { ident: &item.ident, traversable: generate_traversable_enum(item) }
 }
@@ -94,11 +125,6 @@ fn validate_variant(var: &Variant) {
         r#"Found a variant called `Dummy`,\
            Please use another name,\
            This variant identifier is reserved by `ast_node` attribute."#
-    );
-
-    assert!(
-        var.discriminant.is_none(),
-        "Using explicit enum discriminants is not allowed with `ast_node` attribute."
     );
 
     assert!(
