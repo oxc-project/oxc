@@ -54,17 +54,11 @@ impl<'a> AstNode<'a> {
 }
 
 /// Untyped AST nodes flattened into an vec
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct AstNodes<'a> {
     root: Option<AstNodeId>,
     nodes: IndexVec<AstNodeId, AstNode<'a>>,
     parent_ids: IndexVec<AstNodeId, Option<AstNodeId>>,
-}
-
-impl<'a> Default for AstNodes<'a> {
-    fn default() -> Self {
-        Self { root: None, nodes: IndexVec::default(), parent_ids: IndexVec::default() }
-    }
 }
 
 impl<'a> AstNodes<'a> {
