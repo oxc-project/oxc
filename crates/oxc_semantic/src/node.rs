@@ -151,7 +151,6 @@ impl<'a> AstNodes<'a> {
         std::iter::successors(Some(ast_node_id), |node_id| parent_ids[*node_id])
     }
 
-    /// Adds an `AstNode` to the `AstNodes` tree and returns its `AstNodeId`.
     pub fn add_node(&mut self, node: AstNode<'a>, parent_id: Option<AstNodeId>) -> AstNodeId {
         let mut node = node;
         let ast_node_id = self.parent_ids.push(parent_id);
