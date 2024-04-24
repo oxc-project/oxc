@@ -154,12 +154,7 @@ impl<'a> TypeScript<'a> {
             match stmt {
                 Statement::Declaration(Declaration::TSModuleDeclaration(decl)) => {
                     let module_name = decl.id.name().clone();
-                    if let Some(transformed) = self.handle_nested(
-                        decl.unbox(),
-                        Some(self.ctx.ast.identifier_reference_expression(
-                            IdentifierReference::new(SPAN, name.clone()),
-                        )),
-                    ) {
+                    if let Some(transformed) = self.handle_nested(decl.unbox(), None) {
                         is_empty = false;
                         if names.insert(module_name.clone()) {
                             new_stmts.push(Statement::Declaration(
