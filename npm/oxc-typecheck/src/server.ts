@@ -40,6 +40,8 @@ function onMessage(message: string): void {
         false,
         'No content available.',
       );
+    } else {
+      doOutput({}, request.command, request.seq, true);
     }
   } catch (err) {
     doOutput(
@@ -48,9 +50,9 @@ function onMessage(message: string): void {
       request ? request.seq : 0,
       false,
       'Error processing request. ' +
-        (err as Error).message +
-        '\n' +
-        (err as Error).stack,
+      (err as Error).message +
+      '\n' +
+      (err as Error).stack,
     );
   }
 }

@@ -41,6 +41,9 @@ pub struct NodeResponse {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct EmptyResponse {}
+
+#[derive(Debug, Deserialize)]
 pub struct BoolResponse {
     pub result: bool,
 }

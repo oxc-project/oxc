@@ -41,14 +41,14 @@ impl<W: std::io::Write, R: std::io::Read> TSServerClient<W, R> {
         let args = serde_json::to_string(&opts)?;
         self.send_command("open", Some(args.as_str()))?;
 
-        read_message(&mut self.result_stream)
+        wait_done(&mut self.result_stream)
     }
 
     pub fn close(&mut self, opts: &FileRequest<'_>) -> Result<(), ProtocolError> {
         let args = serde_json::to_string(&opts)?;
         self.send_command("close", Some(args.as_str()))?;
 
-        read_message(&mut self.result_stream)
+        wait_done(&mut self.result_stream)
     }
 
     pub fn get_node(&mut self, opts: &NodeRequest<'_>) -> Result<NodeResponse, ProtocolError> {
@@ -94,6 +94,11 @@ impl<W: std::io::Write, R: std::io::Read> TSServerClient<W, R> {
 
         self.command_stream.write_all(msg.as_bytes())
     }
+}
+
+fn wait_done(result_stream: impl std::io::Read) -> Result<(), ProtocolError> {
+    read_message::<EmptyResponse>(result_stream)?;
+    Ok(())
 }
 
 #[derive(Debug, Error, Diagnostic)]
