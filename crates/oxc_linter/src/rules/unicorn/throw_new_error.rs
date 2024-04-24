@@ -60,17 +60,19 @@ impl Rule for ThrowNewError {
             return;
         };
 
-        match &call_expr.callee.without_parenthesized() {
+        let callee = call_expr.callee.without_parenthesized();
+        match callee {
             Expression::Identifier(v) => {
                 if !CUSTOM_ERROR_REGEX_PATTERN.is_match(&v.name) {
                     return;
                 }
             }
-            Expression::MemberExpression(v) => {
-                if v.is_computed() {
+            _ if callee.is_member_expression() => {
+                let member_expr = callee.as_member_expression().unwrap();
+                if member_expr.is_computed() {
                     return;
                 }
-                if let Some(v) = v.static_property_name() {
+                if let Some(v) = member_expr.static_property_name() {
                     if !CUSTOM_ERROR_REGEX_PATTERN.is_match(v) {
                         return;
                     }

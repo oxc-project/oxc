@@ -61,8 +61,8 @@ impl Rule for PreferDateNow {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
                 // `new Date().{getTime,valueOf}()`
-                if let Expression::MemberExpression(member_expr) =
-                    &call_expr.callee.without_parenthesized()
+                if let Some(member_expr) =
+                    call_expr.callee.without_parenthesized().as_member_expression()
                 {
                     if call_expr.arguments.is_empty()
                         && !member_expr.is_computed()

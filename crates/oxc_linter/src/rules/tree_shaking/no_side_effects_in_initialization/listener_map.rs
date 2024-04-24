@@ -565,7 +565,9 @@ fn defined_custom_report_effects_when_called(expr: &Expression) -> bool {
             | Expression::ConditionalExpression(_)
             | Expression::FunctionExpression(_)
             | Expression::Identifier(_)
-            | Expression::MemberExpression(_)
+            | Expression::ComputedMemberExpression(_)
+            | Expression::StaticMemberExpression(_)
+            | Expression::PrivateFieldExpression(_)
     )
 }
 

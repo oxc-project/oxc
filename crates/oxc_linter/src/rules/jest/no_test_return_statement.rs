@@ -106,7 +106,7 @@ fn check_test_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: 
     let Some(Expression::CallExpression(call_expr)) = &stmt.argument else {
         return;
     };
-    let Expression::MemberExpression(mem_expr) = &call_expr.callee else {
+    let Some(mem_expr) = call_expr.callee.as_member_expression() else {
         return;
     };
     let Expression::CallExpression(mem_call_expr) = mem_expr.object() else {

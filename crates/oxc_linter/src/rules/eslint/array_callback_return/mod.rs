@@ -185,16 +185,16 @@ pub fn get_array_method_name<'a>(
                 };
 
                 let callee = call.callee.get_inner_expression();
-                let callee = match callee {
-                    Expression::MemberExpression(member) => member,
-                    Expression::ChainExpression(chain) => {
-                        if let ChainElement::MemberExpression(member) = &chain.expression {
-                            member
-                        } else {
-                            return None;
-                        }
+                let callee = if let Some(member) = callee.as_member_expression() {
+                    member
+                } else if let Expression::ChainExpression(chain) = callee {
+                    if let ChainElement::MemberExpression(member) = &chain.expression {
+                        member
+                    } else {
+                        return None;
                     }
-                    _ => return None,
+                } else {
+                    return None;
                 };
 
                 // Array.from

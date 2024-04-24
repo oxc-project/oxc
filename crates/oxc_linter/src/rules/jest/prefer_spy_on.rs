@@ -73,17 +73,12 @@ impl Rule for PreferSpyOn {
             return;
         };
 
-        match right {
-            Expression::CallExpression(call_expr) => {
+        if let Expression::CallExpression(call_expr) = right {
+            Self::check_and_fix(assign_expr, call_expr, left_assign, node, ctx);
+        } else if let Some(mem_expr) = right.as_member_expression() {
+            if let Expression::CallExpression(call_expr) = mem_expr.object() {
                 Self::check_and_fix(assign_expr, call_expr, left_assign, node, ctx);
-            }
-            Expression::MemberExpression(mem_expr) => {
-                let Expression::CallExpression(call_expr) = mem_expr.object() else {
-                    return;
-                };
-                Self::check_and_fix(assign_expr, call_expr, left_assign, node, ctx);
-            }
-            _ => (),
+            };
         }
     }
 }
@@ -183,23 +178,28 @@ impl PreferSpyOn {
             return call_expr.arguments.first();
         }
 
-        match &call_expr.callee {
-            Expression::MemberExpression(mem_expr) => {
-                if let Some(call_expr) = Self::find_mem_expr(mem_expr) {
-                    return Self::get_jest_fn_call(call_expr);
-                }
-                None
+        if let Some(mem_expr) = call_expr.callee.as_member_expression() {
+            if let Some(call_expr) = Self::find_mem_expr(mem_expr) {
+                return Self::get_jest_fn_call(call_expr);
             }
-            Expression::CallExpression(call_expr) => Self::get_jest_fn_call(call_expr),
-            _ => None,
+        } else if let Expression::CallExpression(call_expr) = &call_expr.callee {
+            return Self::get_jest_fn_call(call_expr);
         }
+
+        None
     }
 
-    fn find_mem_expr<'a>(mem_expr: &'a MemberExpression<'a>) -> Option<&'a CallExpression<'a>> {
-        match mem_expr.object() {
-            Expression::CallExpression(call_expr) => Some(call_expr),
-            Expression::MemberExpression(mem_expr) => Self::find_mem_expr(mem_expr),
-            _ => None,
+    fn find_mem_expr<'a>(mut mem_expr: &'a MemberExpression<'a>) -> Option<&'a CallExpression<'a>> {
+        loop {
+            let object = mem_expr.object();
+            if let Expression::CallExpression(call_expr) = object {
+                return Some(call_expr);
+            }
+            if let Some(object_mem_expr) = object.as_member_expression() {
+                mem_expr = object_mem_expr;
+            } else {
+                return None;
+            }
         }
     }
 }

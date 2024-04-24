@@ -65,7 +65,7 @@ impl Rule for BadReplaceAllArg {
         };
 
         if !flags.contains(RegExpFlags::G) {
-            let Expression::MemberExpression(call_expr_callee) = &call_expr.callee else { return };
+            let Some(call_expr_callee) = call_expr.callee.as_member_expression() else { return };
             let Some((replace_all_span, _)) = call_expr_callee.static_property_info() else {
                 return;
             };

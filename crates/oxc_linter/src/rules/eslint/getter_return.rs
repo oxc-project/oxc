@@ -89,8 +89,12 @@ impl GetterReturn {
     }
 
     fn handle_actual_expression<'a>(callee: &'a Expression<'a>) -> bool {
-        match callee.without_parenthesized() {
-            Expression::MemberExpression(me) => Self::handle_member_expression(me),
+        let callee = callee.without_parenthesized();
+        match callee {
+            _ if callee.is_member_expression() => {
+                let member_expr = callee.as_member_expression().unwrap();
+                Self::handle_member_expression(member_expr)
+            }
             Expression::ChainExpression(ce) => match &ce.expression {
                 ChainElement::MemberExpression(me) => Self::handle_member_expression(me),
                 ChainElement::CallExpression(_) => {

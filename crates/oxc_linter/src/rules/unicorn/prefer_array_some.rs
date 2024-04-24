@@ -83,8 +83,8 @@ impl Rule for PreferArraySome {
                     return;
                 }
 
-                let Expression::MemberExpression(left_member_expr) =
-                    &bin_expr.left.without_parenthesized()
+                let Some(left_member_expr) =
+                    bin_expr.left.without_parenthesized().as_member_expression()
                 else {
                     return;
                 };

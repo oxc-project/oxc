@@ -46,7 +46,7 @@ impl Rule for PreferSpread {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
-        let Expression::MemberExpression(member_expr) = &call_expr.callee.without_parenthesized()
+        let Some(member_expr) = call_expr.callee.without_parenthesized().as_member_expression()
         else {
             return;
         };
@@ -184,8 +184,7 @@ fn is_not_array(expr: &Expression) -> bool {
     }
 
     if let Expression::CallExpression(call_expr) = expr {
-        if let Expression::MemberExpression(member_expr) = &call_expr.callee.without_parenthesized()
-        {
+        if let Some(member_expr) = call_expr.callee.without_parenthesized().as_member_expression() {
             if Some("join") == member_expr.static_property_name() && call_expr.arguments.len() < 2 {
                 return true;
             }
@@ -194,9 +193,11 @@ fn is_not_array(expr: &Expression) -> bool {
         return false;
     }
 
-    let ident = match expr.without_parenthesized() {
+    let expr = expr.without_parenthesized();
+    let ident = match expr {
         Expression::Identifier(ident) => ident.name.as_str(),
-        Expression::MemberExpression(member_expr) => {
+        _ if expr.is_member_expression() => {
+            let member_expr = expr.as_member_expression().unwrap();
             if let Some(v) = member_expr.static_property_name() {
                 v
             } else {

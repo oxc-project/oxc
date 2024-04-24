@@ -60,7 +60,7 @@ impl Rule for PreferQuerySelector {
             return;
         }
 
-        let Expression::MemberExpression(member_expr) = &call_expr.callee else {
+        let Some(member_expr) = call_expr.callee.as_member_expression() else {
             return;
         };
 

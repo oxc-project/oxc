@@ -7,7 +7,7 @@ use crate::{
     },
 };
 
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -113,7 +113,7 @@ impl NoRestrictedJestMethods {
             return;
         }
 
-        let Expression::MemberExpression(mem_expr) = &call_expr.callee else {
+        let Some(mem_expr) = call_expr.callee.as_member_expression() else {
             return;
         };
         let Some(property_name) = mem_expr.static_property_name() else {

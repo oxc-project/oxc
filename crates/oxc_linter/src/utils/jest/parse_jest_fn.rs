@@ -293,7 +293,10 @@ fn resolve_to_jest_fn<'a>(
 fn resolve_first_ident<'a>(expr: &'a Expression<'a>) -> Option<&'a IdentifierReference<'a>> {
     match expr {
         Expression::Identifier(ident) => Some(ident),
-        Expression::MemberExpression(member_expr) => resolve_first_ident(member_expr.object()),
+        _ if expr.is_member_expression() => {
+            let member_expr = expr.as_member_expression().unwrap();
+            resolve_first_ident(member_expr.object())
+        }
         Expression::CallExpression(call_expr) => resolve_first_ident(&call_expr.callee),
         Expression::TaggedTemplateExpression(tagged_expr) => resolve_first_ident(&tagged_expr.tag),
         _ => None,
@@ -444,7 +447,8 @@ fn get_node_chain<'a>(params: &NodeChainParams<'a>) -> Vec<KnownMemberExpression
     let NodeChainParams { expr, parent, parent_kind, grandparent_kind } = params;
 
     match expr {
-        Expression::MemberExpression(member_expr) => {
+        _ if expr.is_member_expression() => {
+            let member_expr = expr.as_member_expression().unwrap();
             let params = NodeChainParams {
                 expr: member_expr.object(),
                 parent: Some(expr),

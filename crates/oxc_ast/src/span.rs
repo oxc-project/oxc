@@ -71,7 +71,6 @@ impl<'a> GetSpan for Expression<'a> {
             Self::FunctionExpression(e) => e.span,
             Self::ImportExpression(e) => e.span,
             Self::LogicalExpression(e) => e.span,
-            Self::MemberExpression(e) => e.span(),
             Self::NewExpression(e) => e.span,
             Self::ObjectExpression(e) => e.span,
             Self::ParenthesizedExpression(e) => e.span,
@@ -88,6 +87,11 @@ impl<'a> GetSpan for Expression<'a> {
             Self::TSTypeAssertion(e) => e.span,
             Self::TSNonNullExpression(e) => e.span,
             Self::TSInstantiationExpression(e) => e.span,
+
+            Self::ComputedMemberExpression(e) => e.span,
+            Self::StaticMemberExpression(e) => e.span,
+            Self::PrivateFieldExpression(e) => e.span,
+
             Self::Dummy => dummy!(),
         }
     }

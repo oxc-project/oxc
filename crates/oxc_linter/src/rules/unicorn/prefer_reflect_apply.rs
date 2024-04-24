@@ -63,7 +63,7 @@ impl Rule for PreferReflectApply {
             return;
         };
 
-        let Expression::MemberExpression(member_expr) = &call_expr.callee else {
+        let Some(member_expr) = call_expr.callee.as_member_expression() else {
             return;
         };
 
@@ -85,11 +85,11 @@ impl Rule for PreferReflectApply {
         }
 
         if is_static_property_name_equal(member_expr, "call") {
-            let Expression::MemberExpression(member_expr_obj) = member_expr.object() else {
+            let Some(member_expr_obj) = member_expr.object().as_member_expression() else {
                 return;
             };
             if is_static_property_name_equal(member_expr_obj, "apply") {
-                let Expression::MemberExpression(member_expr_obj_obj) = member_expr_obj.object()
+                let Some(member_expr_obj_obj) = member_expr_obj.object().as_member_expression()
                 else {
                     return;
                 };

@@ -1477,6 +1477,7 @@ pub mod walk_mut {
 
     /* ----------  Expression ---------- */
 
+    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `MemberExpression` variants cannot panic
     pub fn walk_expression_mut<'a, V: VisitMut<'a>>(visitor: &mut V, expr: &mut Expression<'a>) {
         match expr {
             Expression::BigintLiteral(lit) => visitor.visit_bigint_literal(lit),
@@ -1502,7 +1503,6 @@ pub mod walk_mut {
             Expression::FunctionExpression(expr) => visitor.visit_function(expr, None),
             Expression::ImportExpression(expr) => visitor.visit_import_expression(expr),
             Expression::LogicalExpression(expr) => visitor.visit_logical_expression(expr),
-            Expression::MemberExpression(expr) => visitor.visit_member_expression(expr),
             Expression::NewExpression(expr) => visitor.visit_new_expression(expr),
             Expression::ObjectExpression(expr) => visitor.visit_object_expression(expr),
             Expression::ParenthesizedExpression(expr) => {
@@ -1528,6 +1528,14 @@ pub mod walk_mut {
             Expression::TSInstantiationExpression(expr) => {
                 visitor.visit_ts_instantiation_expression(expr);
             }
+
+            Expression::ComputedMemberExpression(_)
+            | Expression::StaticMemberExpression(_)
+            | Expression::PrivateFieldExpression(_) => {
+                let member_expr = expr.as_member_expression_mut().unwrap();
+                visitor.visit_member_expression(member_expr);
+            }
+
             Expression::Dummy => dummy!(),
         }
     }

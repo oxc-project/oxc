@@ -155,8 +155,8 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
         !expr.optional
             && expr.arguments.len() >= 3
             && !matches!(expr.arguments[0], Argument::SpreadElement(_))
-            && match expr.callee {
-                Expression::MemberExpression(ref me) => {
+            && match expr.callee.as_member_expression() {
+                Some(me) => {
                     me.object().get_identifier_reference().map_or(false, |ident_ref| {
                         ident_ref.name == "Reflect" || ident_ref.name == "Object"
                     }) && me.static_property_name() == Some("defineProperty")
@@ -176,8 +176,8 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
         !expr.optional
             && expr.arguments.len() == 1
             && matches!(expr.arguments[0], Argument::Expression(Expression::ArrayExpression(_)))
-            && match expr.callee {
-                Expression::MemberExpression(ref me) => {
+            && match expr.callee.as_member_expression() {
+                Some(me) => {
                     me.object()
                         .get_identifier_reference()
                         .map_or(false, |ident_ref| ident_ref.name == "Object")

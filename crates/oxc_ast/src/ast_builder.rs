@@ -613,7 +613,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn member_expression(&self, expr: MemberExpression<'a>) -> Expression<'a> {
-        Expression::MemberExpression(self.alloc(expr))
+        Expression::from(expr)
     }
 
     pub fn computed_member(

@@ -52,7 +52,7 @@ pub fn is_prototype_property(
     }
 
     // `Object.prototype.method` or `Array.prototype.method`
-    if let Expression::MemberExpression(member_expr_obj) = member_expr.object() {
+    if let Some(member_expr_obj) = member_expr.object().as_member_expression() {
         if let Expression::Identifier(iden) = member_expr_obj.object() {
             if member_expr_obj.static_property_name().is_some_and(|name| name == "prototype")
                 && object.is_some_and(|val| val == iden.name)
@@ -148,24 +148,23 @@ pub fn get_return_identifier_name<'a>(body: &'a FunctionBody<'_>) -> Option<&'a 
 }
 
 pub fn is_same_reference(left: &Expression, right: &Expression, ctx: &LintContext) -> bool {
-    match (left, right) {
-        (
-            Expression::ChainExpression(left_chain_expr),
-            Expression::MemberExpression(right_member_expr),
-        ) => {
+    if let Expression::ChainExpression(left_chain_expr) = left {
+        if let Some(right_member_expr) = right.as_member_expression() {
             if let ChainElement::MemberExpression(v) = &left_chain_expr.expression {
                 return is_same_member_expression(v, right_member_expr, ctx);
             }
         }
-        (
-            Expression::MemberExpression(left_chain_expr),
-            Expression::ChainExpression(right_member_expr),
-        ) => {
+    }
+
+    if let Some(left_chain_expr) = left.as_member_expression() {
+        if let Expression::ChainExpression(right_member_expr) = right {
             if let ChainElement::MemberExpression(v) = &right_member_expr.expression {
                 return is_same_member_expression(left_chain_expr, v, ctx);
             }
         }
+    }
 
+    match (left, right) {
         // super // this
         (Expression::Super(_), Expression::Super(_))
         | (Expression::ThisExpression(_), Expression::ThisExpression(_))
@@ -201,11 +200,13 @@ pub fn is_same_reference(left: &Expression, right: &Expression, ctx: &LintContex
                 }
             }
         }
-        (
-            Expression::MemberExpression(left_member_expr),
-            Expression::MemberExpression(right_member_expr),
-        ) => return is_same_member_expression(left_member_expr, right_member_expr, ctx),
         _ => {}
+    }
+
+    if let (Some(left_member_expr), Some(right_member_expr)) =
+        (left.as_member_expression(), right.as_member_expression())
+    {
+        return is_same_member_expression(left_member_expr, right_member_expr, ctx);
     }
 
     false

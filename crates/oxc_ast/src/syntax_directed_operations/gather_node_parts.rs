@@ -10,7 +10,7 @@ impl<'a> GatherNodeParts<'a> for Expression<'a> {
     fn gather<F: FnMut(Atom<'a>)>(&self, f: &mut F) {
         match self {
             Self::Identifier(ident) => f(ident.name.clone()),
-            Self::MemberExpression(expr) => expr.gather(f),
+            _ if self.is_member_expression() => self.as_member_expression().unwrap().gather(f),
             Self::AssignmentExpression(expr) => expr.left.gather(f),
             Self::UpdateExpression(expr) => expr.argument.gather(f),
             Self::StringLiteral(lit) => lit.gather(f),

@@ -9,9 +9,9 @@ use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, CallExpression, ExportDefaultDeclarationKind, Expression,
-        ExpressionStatement, MemberExpression, ObjectExpression, ObjectProperty,
-        ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression, StringLiteral,
-        TaggedTemplateExpression, TemplateLiteral,
+        ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
+        PropertyKey, Statement, StaticMemberExpression, StringLiteral, TaggedTemplateExpression,
+        TemplateLiteral,
     },
     dummy, Visit,
 };
@@ -141,7 +141,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
     }
 
     fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
-        if let Expression::MemberExpression(member_expr) = &expr.callee {
+        if let Some(member_expr) = expr.callee.as_member_expression() {
             if let Expression::ArrayExpression(array_expr) = member_expr.object() {
                 // ['class A {', '}'].join('\n')
                 let mut code = String::new();
@@ -180,12 +180,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
                                 if !call_expr.arguments.first().is_some_and(|arg|  matches!(arg, Argument::Expression(Expression::StringLiteral(string)) if string.value == "\n")) {
                                     continue;
                                 }
-                                let Expression::MemberExpression(member_expr) = &call_expr.callee
-                                else {
-                                    continue;
-                                };
-                                let MemberExpression::StaticMemberExpression(member) =
-                                    &**member_expr
+                                let Expression::StaticMemberExpression(member) = &call_expr.callee
                                 else {
                                     continue;
                                 };
@@ -413,7 +408,7 @@ impl<'a> Visit<'a> for State<'a> {
                 }
 
                 if let Expression::CallExpression(call_expr) = &prop.value {
-                    if let Expression::MemberExpression(_) = &call_expr.callee {
+                    if call_expr.callee.is_member_expression() {
                         // for eslint-plugin-react
                         if let Some(Argument::Expression(Expression::ArrayExpression(array_expr))) =
                             call_expr.arguments.first()
@@ -450,7 +445,7 @@ impl<'a> Visit<'a> for State<'a> {
 
                 // for eslint-plugin-react
                 if let Expression::CallExpression(call_expr) = &prop.value {
-                    if let Expression::MemberExpression(_) = &call_expr.callee {
+                    if call_expr.callee.is_member_expression() {
                         if let Some(Argument::Expression(Expression::ArrayExpression(array_expr))) =
                             call_expr.arguments.first()
                         {
@@ -473,10 +468,7 @@ fn find_parser_arguments<'a, 'b>(
     expr: &'b Expression<'a>,
 ) -> Option<&'b oxc_allocator::Vec<'a, Argument<'a>>> {
     let Expression::CallExpression(call_expr) = expr else { return None };
-    let Expression::MemberExpression(member_expr) = &call_expr.callee else {
-        return None;
-    };
-    let MemberExpression::StaticMemberExpression(static_member_expr) = &**member_expr else {
+    let Expression::StaticMemberExpression(static_member_expr) = &call_expr.callee else {
         return None;
     };
     let StaticMemberExpression { object, property, .. } = &**static_member_expr;
@@ -485,7 +477,7 @@ fn find_parser_arguments<'a, 'b>(
             if iden.name == "parsers" && property.name == "all" =>
         {
             if let Expression::CallExpression(call_expr) = arg {
-                if let Expression::MemberExpression(_) = &call_expr.callee {
+                if call_expr.callee.is_member_expression() {
                     return Some(&call_expr.arguments);
                 }
             }

@@ -321,7 +321,7 @@ fn is_simple_call_argument(node: &Expression, depth: usize) -> bool {
         false
     };
 
-    if let Expression::MemberExpression(expr) = node {
+    if let Some(expr) = node.as_member_expression() {
         return check_member_expression(expr);
     }
 

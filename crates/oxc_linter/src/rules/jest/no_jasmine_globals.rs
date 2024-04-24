@@ -100,7 +100,7 @@ fn diagnostic_assign_expr<'a>(expr: &'a AssignmentExpression<'a>, ctx: &LintCont
 }
 
 fn diagnostic_call_expr<'a>(expr: &'a CallExpression<'a>, ctx: &LintContext) {
-    if let Expression::MemberExpression(member_expr) = &expr.callee {
+    if let Some(member_expr) = expr.callee.as_member_expression() {
         let Some((span, property_name)) = get_jasmine_property_name(member_expr) else { return };
 
         JasmineProperty::from_str(property_name).map_or_else(

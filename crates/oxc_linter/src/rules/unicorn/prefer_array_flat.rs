@@ -229,7 +229,7 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
         return;
     };
 
-    if let Expression::MemberExpression(member_expr_obj) = member_expr.object() {
+    if let Some(member_expr_obj) = member_expr.object().as_member_expression() {
         let is_call_call = is_method_call(call_expr, None, Some(&["call"]), Some(2), Some(2));
 
         if (is_call_call || is_method_call(call_expr, None, Some(&["apply"]), Some(2), Some(2)))

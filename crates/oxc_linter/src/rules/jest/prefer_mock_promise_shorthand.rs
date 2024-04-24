@@ -61,7 +61,7 @@ impl Rule for PreferMockPromiseShorthand {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Expression::MemberExpression(mem_expr) = &call_expr.callee else {
+        let Some(mem_expr) = call_expr.callee.as_member_expression() else {
             return;
         };
 

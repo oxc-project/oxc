@@ -49,7 +49,7 @@ impl Rule for PreferArrayFlatMap {
         if !is_method_call(flat_call_expr, None, Some(&["flat"]), None, None) {
             return;
         }
-        let Expression::MemberExpression(member_expr) = &flat_call_expr.callee else { return };
+        let Some(member_expr) = flat_call_expr.callee.as_member_expression() else { return };
         let Expression::CallExpression(call_expr) = &member_expr.object().without_parenthesized()
         else {
             return;

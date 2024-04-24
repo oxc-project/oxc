@@ -145,21 +145,22 @@ fn is_nan_identifier<'a>(expr: &'a Expression<'a>) -> bool {
 fn is_target_callee<'a>(callee: &'a Expression<'a>) -> Option<&'static str> {
     const TARGET_METHODS: [&str; 2] = ["indexOf", "lastIndexOf"];
     let callee = callee.get_inner_expression();
-    match callee {
-        Expression::MemberExpression(expr) => expr.static_property_name().and_then(|property| {
+
+    if let Some(expr) = callee.as_member_expression() {
+        return expr.static_property_name().and_then(|property| {
             TARGET_METHODS.iter().find(|method| **method == property).copied()
-        }),
-        Expression::ChainExpression(chain) => {
-            if let ChainElement::MemberExpression(expr) = &chain.expression {
-                expr.static_property_name().and_then(|property| {
-                    TARGET_METHODS.iter().find(|method| **method == property).copied()
-                })
-            } else {
-                None
-            }
-        }
-        _ => None,
+        });
     }
+
+    if let Expression::ChainExpression(chain) = callee {
+        if let ChainElement::MemberExpression(expr) = &chain.expression {
+            return expr.static_property_name().and_then(|property| {
+                TARGET_METHODS.iter().find(|method| **method == property).copied()
+            });
+        }
+    }
+
+    None
 }
 
 #[test]

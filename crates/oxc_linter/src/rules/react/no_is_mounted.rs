@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{CallExpression, Expression},
-    AstKind,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -48,12 +45,10 @@ declare_oxc_lint!(
 
 impl Rule for NoIsMounted {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(CallExpression {
-            callee: Expression::MemberExpression(member_expr),
-            span,
-            ..
-        }) = node.kind()
-        else {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+        let Some(member_expr) = call_expr.callee.as_member_expression() else {
             return;
         };
 
@@ -68,7 +63,7 @@ impl Rule for NoIsMounted {
                 ctx.nodes().kind(ancestor),
                 AstKind::ObjectProperty(_) | AstKind::MethodDefinition(_)
             ) {
-                ctx.diagnostic(NoIsMountedDiagnostic(*span));
+                ctx.diagnostic(NoIsMountedDiagnostic(call_expr.span));
                 break;
             }
         }

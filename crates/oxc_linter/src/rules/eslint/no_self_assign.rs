@@ -191,20 +191,14 @@ impl NoSelfAssign {
             return true;
         }
 
-        match (left, right) {
-            (Expression::Identifier(id1), Expression::Identifier(id2)) => id1.name == id2.name,
-            (Expression::MemberExpression(member1), Expression::MemberExpression(member2)) => {
-                self.is_member_expression_same_reference(member1, member2)
-            }
-            _ => {
-                if let (Some(member1), Some(member2)) =
-                    (left.get_member_expr(), right.get_member_expr())
-                {
-                    self.is_member_expression_same_reference(member1, member2)
-                } else {
-                    false
-                }
-            }
+        if let (Expression::Identifier(id1), Expression::Identifier(id2)) = (left, right) {
+            return id1.name == id2.name;
+        }
+
+        if let (Some(member1), Some(member2)) = (left.get_member_expr(), right.get_member_expr()) {
+            self.is_member_expression_same_reference(member1, member2)
+        } else {
+            false
         }
     }
 

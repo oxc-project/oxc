@@ -76,47 +76,37 @@ impl PreferToHaveLength {
         else {
             return;
         };
-        let Expression::MemberExpression(static_expr) = &call_expr.callee else {
+        let Some(static_expr) = call_expr.callee.as_member_expression() else {
             return;
         };
 
-        match static_expr.object() {
-            Expression::MemberExpression(mem_expr) => {
-                let Expression::CallExpression(expr_call_expr) = mem_expr.object() else {
-                    return;
-                };
-                match &**mem_expr {
-                    MemberExpression::ComputedMemberExpression(_) => Self::check_and_fix(
-                        call_expr,
-                        expr_call_expr,
-                        &parsed_expect_call,
-                        Some("ComputedMember"),
-                        mem_expr.static_property_name(),
-                        ctx,
-                    ),
-                    MemberExpression::StaticMemberExpression(_) => Self::check_and_fix(
-                        call_expr,
-                        expr_call_expr,
-                        &parsed_expect_call,
-                        Some("StaticMember"),
-                        mem_expr.static_property_name(),
-                        ctx,
-                    ),
-                    MemberExpression::PrivateFieldExpression(_) => (),
-                    MemberExpression::Dummy => dummy!(unreachable),
-                };
-            }
-            Expression::CallExpression(expr_call_expr) => {
-                Self::check_and_fix(
+        let object = static_expr.object();
+        if let Some(mem_expr) = object.as_member_expression() {
+            let Expression::CallExpression(expr_call_expr) = mem_expr.object() else {
+                return;
+            };
+            match mem_expr {
+                MemberExpression::ComputedMemberExpression(_) => Self::check_and_fix(
                     call_expr,
                     expr_call_expr,
                     &parsed_expect_call,
-                    None,
-                    None,
+                    Some("ComputedMember"),
+                    mem_expr.static_property_name(),
                     ctx,
-                );
-            }
-            _ => (),
+                ),
+                MemberExpression::StaticMemberExpression(_) => Self::check_and_fix(
+                    call_expr,
+                    expr_call_expr,
+                    &parsed_expect_call,
+                    Some("StaticMember"),
+                    mem_expr.static_property_name(),
+                    ctx,
+                ),
+                MemberExpression::PrivateFieldExpression(_) => (),
+                MemberExpression::Dummy => dummy!(unreachable),
+            };
+        } else if let Expression::CallExpression(expr_call_expr) = object {
+            Self::check_and_fix(call_expr, expr_call_expr, &parsed_expect_call, None, None, ctx);
         }
     }
 
@@ -131,7 +121,10 @@ impl PreferToHaveLength {
         let Some(argument) = expr_call_expr.arguments.first() else {
             return;
         };
-        let Argument::Expression(Expression::MemberExpression(static_mem_expr)) = argument else {
+        let Argument::Expression(argument) = argument else {
+            return;
+        };
+        let Some(static_mem_expr) = argument.as_member_expression() else {
             return;
         };
         // Get property `name` field from expect(file.NAME) call

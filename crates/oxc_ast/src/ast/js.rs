@@ -66,58 +66,95 @@ impl<'a> Program<'a> {
     }
 }
 
-/// Expression
-#[ast_node]
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum Expression<'a> {
-    BooleanLiteral(Box<'a, BooleanLiteral>),
-    NullLiteral(Box<'a, NullLiteral>),
-    NumericLiteral(Box<'a, NumericLiteral<'a>>),
-    BigintLiteral(Box<'a, BigIntLiteral<'a>>),
-    RegExpLiteral(Box<'a, RegExpLiteral<'a>>),
-    StringLiteral(Box<'a, StringLiteral<'a>>),
-    TemplateLiteral(Box<'a, TemplateLiteral<'a>>),
+/// Macro to add `MemberExpression` variants to enum.
+/// Used for `Expression` and `MemberExpression` enums, as they share some variants.
+/// Discriminants start with 64, so that `Expression::is_declaration` is a single bitwise AND operation
+/// on the discriminant (`discriminant & 64`).
+macro_rules! add_member_expression_variants {
+    (
+        $(#[$attr:meta])*
+        pub enum $ty:ident<'a> {
+            $($variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+        }
+    ) => {
+        $(#[$attr])*
+        pub enum $ty<'a> {
+            $($variant_name($variant_type) = $variant_discrim,)*
 
-    Identifier(Box<'a, IdentifierReference<'a>>),
-
-    MetaProperty(Box<'a, MetaProperty<'a>>),
-    Super(Box<'a, Super>),
-
-    ArrayExpression(Box<'a, ArrayExpression<'a>>),
-    ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>),
-    AssignmentExpression(Box<'a, AssignmentExpression<'a>>),
-    AwaitExpression(Box<'a, AwaitExpression<'a>>),
-    BinaryExpression(Box<'a, BinaryExpression<'a>>),
-    CallExpression(Box<'a, CallExpression<'a>>),
-    ChainExpression(Box<'a, ChainExpression<'a>>),
-    ClassExpression(Box<'a, Class<'a>>),
-    ConditionalExpression(Box<'a, ConditionalExpression<'a>>),
-    FunctionExpression(Box<'a, Function<'a>>),
-    ImportExpression(Box<'a, ImportExpression<'a>>),
-    LogicalExpression(Box<'a, LogicalExpression<'a>>),
-    MemberExpression(Box<'a, MemberExpression<'a>>),
-    NewExpression(Box<'a, NewExpression<'a>>),
-    ObjectExpression(Box<'a, ObjectExpression<'a>>),
-    ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a>>),
-    SequenceExpression(Box<'a, SequenceExpression<'a>>),
-    TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a>>),
-    ThisExpression(Box<'a, ThisExpression>),
-    UnaryExpression(Box<'a, UnaryExpression<'a>>),
-    UpdateExpression(Box<'a, UpdateExpression<'a>>),
-    YieldExpression(Box<'a, YieldExpression<'a>>),
-    PrivateInExpression(Box<'a, PrivateInExpression<'a>>),
-
-    JSXElement(Box<'a, JSXElement<'a>>),
-    JSXFragment(Box<'a, JSXFragment<'a>>),
-
-    TSAsExpression(Box<'a, TSAsExpression<'a>>),
-    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>),
-    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>),
-    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>),
-    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>),
+            /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
+            ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>) = 64,
+            /// `MemberExpression[?Yield, ?Await] . IdentifierName`
+            StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>) = 65,
+            /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
+            PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>) = 66,
+        }
+    }
 }
+
+add_member_expression_variants! {
+    /// Expression
+    #[ast_node]
+    #[derive(Debug, Hash)]
+    #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+    #[cfg_attr(feature = "serialize", serde(untagged))]
+    pub enum Expression<'a> {
+        BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
+        NullLiteral(Box<'a, NullLiteral>) = 1,
+        NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
+        BigintLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
+        RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
+        StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
+        TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
+
+        Identifier(Box<'a, IdentifierReference<'a>>) = 7,
+
+        MetaProperty(Box<'a, MetaProperty<'a>>) = 8,
+        Super(Box<'a, Super>) = 9,
+
+        ArrayExpression(Box<'a, ArrayExpression<'a>>) = 10,
+        ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>) = 11,
+        AssignmentExpression(Box<'a, AssignmentExpression<'a>>) = 12,
+        AwaitExpression(Box<'a, AwaitExpression<'a>>) = 13,
+        BinaryExpression(Box<'a, BinaryExpression<'a>>) = 14,
+        CallExpression(Box<'a, CallExpression<'a>>) = 15,
+        ChainExpression(Box<'a, ChainExpression<'a>>) = 16,
+        ClassExpression(Box<'a, Class<'a>>) = 17,
+        ConditionalExpression(Box<'a, ConditionalExpression<'a>>) = 18,
+        FunctionExpression(Box<'a, Function<'a>>) = 19,
+        ImportExpression(Box<'a, ImportExpression<'a>>) = 20,
+        LogicalExpression(Box<'a, LogicalExpression<'a>>) = 21,
+        NewExpression(Box<'a, NewExpression<'a>>) = 22,
+        ObjectExpression(Box<'a, ObjectExpression<'a>>) = 23,
+        ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a>>) = 24,
+        SequenceExpression(Box<'a, SequenceExpression<'a>>) = 25,
+        TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a>>) = 26,
+        ThisExpression(Box<'a, ThisExpression>) = 27,
+        UnaryExpression(Box<'a, UnaryExpression<'a>>) = 28,
+        UpdateExpression(Box<'a, UpdateExpression<'a>>) = 29,
+        YieldExpression(Box<'a, YieldExpression<'a>>) = 30,
+        PrivateInExpression(Box<'a, PrivateInExpression<'a>>) = 31,
+
+        JSXElement(Box<'a, JSXElement<'a>>) = 32,
+        JSXFragment(Box<'a, JSXFragment<'a>>) = 33,
+
+        TSAsExpression(Box<'a, TSAsExpression<'a>>) = 34,
+        TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 35,
+        TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 36,
+        TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 37,
+        TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
+
+        // `MemberExpression` variants added here by `add_member_expression_variants!` macro
+    }
+}
+
+shared_enum_variants!(
+    Expression,
+    MemberExpression,
+    is_member_expression,
+    as_member_expression,
+    as_member_expression_mut,
+    [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression,]
+);
 
 impl<'a> Expression<'a> {
     pub fn is_typescript_syntax(&self) -> bool {
@@ -238,9 +275,13 @@ impl<'a> Expression<'a> {
         }
     }
 
+    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `MemberExpression` variants cannot panic
     pub fn is_specific_member_access(&self, object: &str, property: &str) -> bool {
-        match self.get_inner_expression() {
-            Expression::MemberExpression(expr) => expr.is_specific_member_access(object, property),
+        let inner = self.get_inner_expression();
+        match inner {
+            _ if inner.is_member_expression() => {
+                inner.as_member_expression().unwrap().is_specific_member_access(object, property)
+            }
             Expression::ChainExpression(chain) => {
                 let ChainElement::MemberExpression(expr) = &chain.expression else {
                     return false;
@@ -310,14 +351,14 @@ impl<'a> Expression<'a> {
     }
 
     pub fn get_member_expr(&self) -> Option<&MemberExpression<'a>> {
-        match self.get_inner_expression() {
+        let inner = self.get_inner_expression();
+        match inner {
             Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
                 ChainElement::CallExpression(_) => None,
                 ChainElement::MemberExpression(member_expr) => Some(member_expr),
                 ChainElement::Dummy => dummy!(),
             },
-            Expression::MemberExpression(member_expr) => Some(member_expr),
-            _ => None,
+            _ => inner.as_member_expression(),
         }
     }
 
@@ -665,18 +706,15 @@ pub struct TemplateElementValue<'a> {
     pub cooked: Option<Atom<'a>>,
 }
 
-/// <https://tc39.es/ecma262/#prod-MemberExpression>
-#[ast_node]
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum MemberExpression<'a> {
-    /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
-    ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>),
-    /// `MemberExpression[?Yield, ?Await] . IdentifierName`
-    StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>),
-    /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
-    PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>),
+add_member_expression_variants! {
+    /// <https://tc39.es/ecma262/#prod-MemberExpression>
+    #[ast_node]
+    #[derive(Debug, Hash)]
+    #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+    #[cfg_attr(feature = "serialize", serde(untagged))]
+    pub enum MemberExpression<'a> {
+        // `MemberExpression` variants added here by `add_member_expression_variants!` macro
+    }
 }
 
 impl<'a> MemberExpression<'a> {
@@ -823,8 +861,9 @@ impl<'a> CallExpression<'a> {
     pub fn callee_name(&self) -> Option<&str> {
         match &self.callee {
             Expression::Identifier(ident) => Some(ident.name.as_str()),
-            Expression::MemberExpression(member) => member.static_property_name(),
-            _ => None,
+            _ => {
+                self.callee.as_member_expression().and_then(MemberExpression::static_property_name)
+            }
         }
     }
 
@@ -849,11 +888,13 @@ impl<'a> CallExpression<'a> {
         // TODO: is 'Symbol' reference to global object
         match &self.callee {
             Expression::Identifier(id) => id.name == "Symbol",
-            Expression::MemberExpression(member) => {
-                matches!(member.object(), Expression::Identifier(id) if id.name == "Symbol")
-                    && member.static_property_name() == Some("for")
-            }
-            _ => false,
+            _ => match self.callee.as_member_expression() {
+                Some(member) => {
+                    matches!(member.object(), Expression::Identifier(id) if id.name == "Symbol")
+                        && member.static_property_name() == Some("for")
+                }
+                None => false,
+            },
         }
     }
 

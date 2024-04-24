@@ -172,7 +172,7 @@ const CREATE_CLASS: &str = "createReactClass";
 pub fn is_es5_component(node: &AstNode) -> bool {
     let AstKind::CallExpression(call_expr) = node.kind() else { return false };
 
-    if let Expression::MemberExpression(member_expr) = &call_expr.callee {
+    if let Some(member_expr) = call_expr.callee.as_member_expression() {
         if let Expression::Identifier(ident) = member_expr.object() {
             return ident.name == PRAGMA
                 && member_expr.static_property_name() == Some(CREATE_CLASS);
@@ -192,7 +192,7 @@ const PURE_COMPONENT: &str = "PureComponent";
 pub fn is_es6_component(node: &AstNode) -> bool {
     let AstKind::Class(class_expr) = node.kind() else { return false };
     if let Some(super_class) = &class_expr.super_class {
-        if let Expression::MemberExpression(member_expr) = super_class {
+        if let Some(member_expr) = super_class.as_member_expression() {
             if let Expression::Identifier(ident) = member_expr.object() {
                 return ident.name == PRAGMA
                     && member_expr

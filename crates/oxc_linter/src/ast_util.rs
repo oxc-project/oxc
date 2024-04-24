@@ -322,8 +322,7 @@ pub fn is_method_call<'a>(
         }
     }
 
-    let Expression::MemberExpression(member_expr) = &call_expr.callee.without_parenthesized()
-    else {
+    let Some(member_expr) = call_expr.callee.without_parenthesized().as_member_expression() else {
         return false;
     };
 
@@ -377,11 +376,7 @@ pub fn is_new_expression<'a>(
 pub fn call_expr_method_callee_info<'a>(
     call_expr: &'a CallExpression<'a>,
 ) -> Option<(Span, &'a str)> {
-    let Expression::MemberExpression(member_expr) = &call_expr.callee.without_parenthesized()
-    else {
-        return None;
-    };
-
+    let member_expr = call_expr.callee.without_parenthesized().as_member_expression()?;
     member_expr.static_property_info()
 }
 

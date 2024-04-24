@@ -104,7 +104,10 @@ fn check_simple_assignment_target<'a>(
 ) {
     if let Some(expression) = target.get_expression() {
         match expression.get_inner_expression() {
-            Expression::Identifier(_) | Expression::MemberExpression(_) => {}
+            Expression::Identifier(_)
+            | Expression::ComputedMemberExpression(_)
+            | Expression::StaticMemberExpression(_)
+            | Expression::PrivateFieldExpression(_) => {}
             _ => {
                 #[derive(Debug, Error, Diagnostic)]
                 #[error(

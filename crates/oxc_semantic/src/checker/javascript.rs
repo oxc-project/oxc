@@ -1139,10 +1139,8 @@ fn check_unary_expression<'a>(
             Expression::Identifier(ident) if ctx.strict_mode() => {
                 ctx.error(DeleteOfUnqualified(ident.span));
             }
-            Expression::MemberExpression(expr) => {
-                if let MemberExpression::PrivateFieldExpression(expr) = &**expr {
-                    ctx.error(DeletePrivateField(expr.span));
-                }
+            Expression::PrivateFieldExpression(expr) => {
+                ctx.error(DeletePrivateField(expr.span));
             }
             _ => {}
         }

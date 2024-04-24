@@ -126,7 +126,7 @@ impl PreferToContain {
     }
 
     fn is_fixable_includes_call_expression(call_expr: &CallExpression) -> bool {
-        let Expression::MemberExpression(mem_expr) = &call_expr.callee else {
+        let Some(mem_expr) = call_expr.callee.as_member_expression() else {
             return false;
         };
 

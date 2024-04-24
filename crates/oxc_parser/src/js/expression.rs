@@ -509,8 +509,12 @@ impl<'a> ParserImpl<'a> {
 
     fn map_to_chain_expression(&mut self, span: Span, expr: Expression<'a>) -> Expression<'a> {
         match expr {
-            Expression::MemberExpression(result) => {
-                self.ast.chain_expression(span, ChainElement::MemberExpression(result))
+            _ if expr.is_member_expression() => {
+                let member_expr = MemberExpression::try_from(expr).unwrap();
+                self.ast.chain_expression(
+                    span,
+                    ChainElement::MemberExpression(self.ast.alloc(member_expr)),
+                )
             }
             Expression::CallExpression(result) => {
                 self.ast.chain_expression(span, ChainElement::CallExpression(result))

@@ -1277,7 +1277,6 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::StringLiteral(lit) => lit.format(p),
             Self::Identifier(ident) => ident.format(p),
             Self::ThisExpression(expr) => expr.format(p),
-            Self::MemberExpression(expr) => expr.format(p),
             Self::CallExpression(expr) => expr.format(p),
             Self::ArrayExpression(expr) => expr.format(p),
             Self::ObjectExpression(expr) => expr.format(p),
@@ -1309,6 +1308,11 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::TSTypeAssertion(expr) => expr.expression.format(p),
             Self::TSNonNullExpression(expr) => expr.expression.format(p),
             Self::TSInstantiationExpression(expr) => expr.expression.format(p),
+
+            Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => self.as_member_expression().unwrap().format(p),
+
             Self::Dummy => dummy!(unreachable),
         }
     }

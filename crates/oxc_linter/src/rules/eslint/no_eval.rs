@@ -83,8 +83,12 @@ impl Rule for NoEval {
 
         loop {
             let (new_object, name) = match object {
-                Some(Expression::MemberExpression(member)) => {
-                    (Some(member.object().get_inner_expression()), member.static_property_name())
+                Some(object) if object.is_member_expression() => {
+                    let member_expr = object.as_member_expression().unwrap();
+                    (
+                        Some(member_expr.object().get_inner_expression()),
+                        member_expr.static_property_name(),
+                    )
                 }
                 Some(Expression::Identifier(ident)) => (None, Some(ident.name.as_str())),
                 Some(Expression::ThisExpression(_)) => (None, Some("this")),

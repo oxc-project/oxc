@@ -61,12 +61,11 @@ impl Rule for PreferPrototypeMethods {
         if call_expr.optional {
             return;
         }
-        if let Expression::MemberExpression(member_expr) = &call_expr.callee.without_parenthesized()
-        {
-            if member_expr.is_computed() || member_expr.optional() {
-                return;
-            }
-        }
+        match call_expr.callee.without_parenthesized() {
+            Expression::StaticMemberExpression(member_expr) if !member_expr.optional => {}
+            Expression::PrivateFieldExpression(member_expr) if !member_expr.optional => {}
+            _ => return,
+        };
 
         let mut method_expr: Option<&Expression> = None;
 
@@ -87,7 +86,7 @@ impl Rule for PreferPrototypeMethods {
         }
 
         let Some(method_expr) = method_expr else { return };
-        let Expression::MemberExpression(method_expr) = method_expr else { return };
+        let Some(method_expr) = method_expr.as_member_expression() else { return };
         let object_expr = method_expr.object().without_parenthesized();
 
         if !is_empty_array_expression(object_expr) && !is_empty_object_expression(object_expr) {

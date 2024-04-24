@@ -74,12 +74,8 @@ fn check_expression(expr: &Expression) -> Option<Span> {
                 return Some(expr.span);
             }
 
-            let Expression::MemberExpression(member_expr) = &expr.callee else {
-                return None;
-            };
-
+            let member_expr = expr.callee.as_member_expression()?;
             let property_name = MemberExpression::static_property_name(member_expr);
-
             if property_name == Some("bind") {
                 Some(expr.span)
             } else {

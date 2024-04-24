@@ -138,10 +138,7 @@ fn get_static_member_expression_obj<'a, 'b>(
     expression: &'b Expression<'a>,
 ) -> Option<&'b StaticMemberExpression<'a>> {
     match expression {
-        Expression::MemberExpression(member_expr) => match &**member_expr {
-            MemberExpression::StaticMemberExpression(expr) => Some(expr),
-            _ => None,
-        },
+        Expression::StaticMemberExpression(expr) => Some(expr),
         _ => None,
     }
 }

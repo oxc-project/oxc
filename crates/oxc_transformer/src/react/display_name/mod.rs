@@ -91,7 +91,10 @@ impl<'a> ReactDisplayName<'a> {
     ) -> Option<&'b mut Box<'a, ObjectExpression<'a>>> {
         let Expression::CallExpression(call_expr) = e else { return None };
         if match &call_expr.callee {
-            Expression::MemberExpression(e) => !e.is_specific_member_access("React", "createClass"),
+            _ if call_expr.callee.is_member_expression() => {
+                let member_expr = call_expr.callee.as_member_expression().unwrap();
+                !member_expr.is_specific_member_access("React", "createClass")
+            }
             Expression::Identifier(ident) => ident.name != "createReactClass",
             _ => true,
         } {

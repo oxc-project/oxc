@@ -995,7 +995,6 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
             Self::StringLiteral(lit) => lit.gen(p, ctx),
             Self::Identifier(ident) => ident.gen(p, ctx),
             Self::ThisExpression(expr) => expr.gen(p, ctx),
-            Self::MemberExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::CallExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::ArrayExpression(expr) => expr.gen(p, ctx),
             Self::ObjectExpression(expr) => expr.gen_expr(p, precedence, ctx),
@@ -1033,6 +1032,13 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
             Self::TSTypeAssertion(e) => e.gen_expr(p, precedence, ctx),
             Self::TSNonNullExpression(e) => e.expression.gen_expr(p, precedence, ctx),
             Self::TSInstantiationExpression(e) => e.expression.gen_expr(p, precedence, ctx),
+
+            Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => {
+                self.as_member_expression().unwrap().gen_expr(p, precedence, ctx);
+            }
+
             Self::Dummy => dummy!(),
         }
     }
@@ -2585,15 +2591,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Decorator<'a> {
         fn need_wrap(expr: &Expression) -> bool {
             match expr {
                 // "@foo"
-                Expression::Identifier(_) => false,
-                Expression::MemberExpression(member_expr) => {
-                    // "@foo.bar"
-                    // "@(foo['bar'])"
-                    matches!(&**member_expr, MemberExpression::ComputedMemberExpression(_))
-                }
+                // "@foo.bar"
+                // "@foo.#bar"
+                Expression::Identifier(_)
+                | Expression::StaticMemberExpression(_)
+                | Expression::PrivateFieldExpression(_) => false,
                 Expression::CallExpression(call_expr) => need_wrap(&call_expr.callee),
                 // "@(foo + bar)"
                 // "@(() => {})"
+                // "@(foo['bar'])"
                 _ => true,
             }
         }

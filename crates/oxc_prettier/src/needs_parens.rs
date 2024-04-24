@@ -488,17 +488,13 @@ impl<'a> Prettier<'a> {
             AstKind::NewExpression(new_expr) if new_expr.callee.span() == span => {
                 let mut object = &new_expr.callee;
                 loop {
-                    match object {
+                    object = match object {
                         Expression::CallExpression(_) => return true,
-                        Expression::MemberExpression(e) => {
-                            object = e.object();
-                        }
-                        Expression::TaggedTemplateExpression(e) => {
-                            object = &e.tag;
-                        }
-                        Expression::TSNonNullExpression(e) => {
-                            object = &e.expression;
-                        }
+                        Expression::ComputedMemberExpression(e) => &e.object,
+                        Expression::StaticMemberExpression(e) => &e.object,
+                        Expression::PrivateFieldExpression(e) => &e.object,
+                        Expression::TaggedTemplateExpression(e) => &e.tag,
+                        Expression::TSNonNullExpression(e) => &e.expression,
                         _ => return false,
                     }
                 }
@@ -604,8 +600,14 @@ impl<'a> Prettier<'a> {
                 },
                 AssignmentTarget::AssignmentTargetPattern(_) | AssignmentTarget::Dummy => false,
             },
-            Expression::MemberExpression(e) => {
-                Self::starts_with_no_lookahead_token(e.object(), span)
+            Expression::ComputedMemberExpression(e) => {
+                Self::starts_with_no_lookahead_token(&e.object, span)
+            }
+            Expression::StaticMemberExpression(e) => {
+                Self::starts_with_no_lookahead_token(&e.object, span)
+            }
+            Expression::PrivateFieldExpression(e) => {
+                Self::starts_with_no_lookahead_token(&e.object, span)
             }
             Expression::TaggedTemplateExpression(e) => {
                 if matches!(e.tag, Expression::FunctionExpression(_)) {

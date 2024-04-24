@@ -119,7 +119,7 @@ fn run<'a>(
             &[JestFnKind::General(JestGeneralFnKind::Test)],
         ) || rule.additional_test_block_functions.contains(&name)
         {
-            if let Expression::MemberExpression(member_expr) = &call_expr.callee {
+            if let Some(member_expr) = call_expr.callee.as_member_expression() {
                 let Some(property_name) = member_expr.static_property_name() else {
                     return;
                 };

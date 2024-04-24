@@ -108,7 +108,7 @@ fn assignment_target_eq_expr<'a>(
                 }
             }
             oxc_ast::ast::SimpleAssignmentTarget::MemberAssignmentTarget(member_expr) => {
-                if let Expression::MemberExpression(right_member_expr) = right_expr {
+                if let Some(right_member_expr) = right_expr.as_member_expression() {
                     is_same_member_expression(member_expr, right_member_expr, ctx)
                 } else {
                     false
