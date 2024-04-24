@@ -240,10 +240,12 @@ impl GetMethod for Declaration<'_> {
 
 impl GetMethod for Statement<'_> {
     fn get_method(&self) -> Option<Method> {
-        match self {
-            Statement::ModuleDeclaration(decl) => decl.get_method(),
-            _ if self.is_declaration() => self.as_declaration().unwrap().get_method(),
-            _ => None,
+        if let Some(decl) = self.as_module_declaration() {
+            decl.get_method()
+        } else if let Some(decl) = self.as_declaration() {
+            decl.get_method()
+        } else {
+            None
         }
     }
 }

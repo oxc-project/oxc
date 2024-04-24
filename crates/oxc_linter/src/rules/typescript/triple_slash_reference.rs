@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use oxc_ast::{
-    ast::{ModuleDeclaration, Statement, TSModuleReference},
+    ast::{Statement, TSModuleReference},
     dummy, AstKind,
 };
 use oxc_diagnostics::{
@@ -146,14 +146,12 @@ impl Rule for TripleSlashReference {
                         TSModuleReference::TypeName(_) => {}
                         TSModuleReference::Dummy => dummy!(unreachable),
                     },
-                    Statement::ModuleDeclaration(st) => {
-                        if let ModuleDeclaration::ImportDeclaration(ref decl) = **st {
-                            if let Some(v) = refs_for_import.get(decl.source.value.as_str()) {
-                                ctx.diagnostic(TripleSlashReferenceDiagnostic(
-                                    decl.source.value.to_string(),
-                                    *v,
-                                ));
-                            }
+                    Statement::ImportDeclaration(decl) => {
+                        if let Some(v) = refs_for_import.get(decl.source.value.as_str()) {
+                            ctx.diagnostic(TripleSlashReferenceDiagnostic(
+                                decl.source.value.to_string(),
+                                *v,
+                            ));
                         }
                     }
                     _ => {}

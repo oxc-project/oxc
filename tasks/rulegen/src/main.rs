@@ -9,7 +9,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, CallExpression, ExportDefaultDeclarationKind, Expression,
-        ExpressionStatement, MemberExpression, ModuleDeclaration, ObjectExpression, ObjectProperty,
+        ExpressionStatement, MemberExpression, ObjectExpression, ObjectProperty,
         ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression, StringLiteral,
         TaggedTemplateExpression, TemplateLiteral,
     },
@@ -348,14 +348,12 @@ impl<'a> Visit<'a> for State<'a> {
         match stmt {
             Statement::ExpressionStatement(expr_stmt) => self.visit_expression_statement(expr_stmt),
             // for eslint-plugin-jsdoc
-            Statement::ModuleDeclaration(mod_decl) => {
-                if let ModuleDeclaration::ExportDefaultDeclaration(export_decl) = &**mod_decl {
-                    if let ExportDefaultDeclarationKind::Expression(Expression::ObjectExpression(
-                        obj_expr,
-                    )) = &export_decl.declaration
-                    {
-                        self.visit_object_expression(obj_expr);
-                    }
+            Statement::ExportDefaultDeclaration(export_decl) => {
+                if let ExportDefaultDeclarationKind::Expression(Expression::ObjectExpression(
+                    obj_expr,
+                )) = &export_decl.declaration
+                {
+                    self.visit_object_expression(obj_expr);
                 }
             }
             _ => {}

@@ -63,11 +63,11 @@ impl<'a> TypeScriptAnnotations<'a> {
         let mut removed_count = 0;
 
         program.body.retain_mut(|stmt| {
-            let Statement::ModuleDeclaration(module_decl) = stmt else {
+            let Some(module_decl) = stmt.as_module_declaration_mut() else {
                 return true;
             };
 
-            let need_delete = match &mut **module_decl {
+            let need_delete = match module_decl {
                 ModuleDeclaration::ExportNamedDeclaration(decl) => {
                     decl.specifiers.retain(|specifier| {
                         !(specifier.export_kind.is_type()

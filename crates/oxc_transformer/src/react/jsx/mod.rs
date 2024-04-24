@@ -120,7 +120,7 @@ impl<'a> ReactJsx<'a> {
         let index = program
             .body
             .iter()
-            .rposition(|stmt| matches!(stmt, Statement::ModuleDeclaration(m) if m.is_import()))
+            .rposition(|stmt| matches!(stmt, Statement::ImportDeclaration(_)))
             .map_or(0, |i| i + 1);
         program.body.splice(index..index, imports);
     }

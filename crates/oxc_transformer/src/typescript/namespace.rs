@@ -29,12 +29,9 @@ impl<'a> TypeScript<'a> {
         // Only do the transform if a namespace declaration is found.
         if !stmts.iter().any(|stmt| match stmt {
             _ if stmt.is_declaration() => stmt.as_declaration().is_some_and(is_namespace),
-            Statement::ModuleDeclaration(decl) => match &**decl {
-                ModuleDeclaration::ExportNamedDeclaration(decl) => {
-                    decl.declaration.as_ref().is_some_and(is_namespace)
-                }
-                _ => false,
-            },
+            Statement::ExportNamedDeclaration(decl) => {
+                decl.declaration.as_ref().is_some_and(is_namespace)
+            }
             _ => false,
         }) {
             return;
@@ -65,19 +62,16 @@ impl<'a> TypeScript<'a> {
         let mut is_export = false;
         let ts_module_decl = match stmt {
             Statement::TSModuleDeclaration(ts_module_decl) => ts_module_decl,
-            Statement::ModuleDeclaration(decl) => match &mut **decl {
-                ModuleDeclaration::ExportNamedDeclaration(decl) => {
-                    if let Some(Declaration::TSModuleDeclaration(ts_module_decl)) =
-                        decl.declaration.as_mut()
-                    {
-                        is_export = true;
-                        ts_module_decl
-                    } else {
-                        return false;
-                    }
+            Statement::ExportNamedDeclaration(decl) => {
+                if let Some(Declaration::TSModuleDeclaration(ts_module_decl)) =
+                    decl.declaration.as_mut()
+                {
+                    is_export = true;
+                    ts_module_decl
+                } else {
+                    return false;
                 }
-                _ => return false,
-            },
+            }
             _ => return false,
         };
 

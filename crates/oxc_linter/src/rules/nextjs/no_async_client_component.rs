@@ -1,7 +1,5 @@
 use oxc_ast::{
-    ast::{
-        BindingPatternKind, ExportDefaultDeclarationKind, Expression, ModuleDeclaration, Statement,
-    },
+    ast::{BindingPatternKind, ExportDefaultDeclarationKind, Expression, Statement},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -45,11 +43,7 @@ impl Rule for NoAsyncClientComponent {
 
         if program.directives.iter().any(|directive| directive.directive.as_str() == "use client") {
             for node in &program.body {
-                let Statement::ModuleDeclaration(mod_decl) = &node else {
-                    continue;
-                };
-                let ModuleDeclaration::ExportDefaultDeclaration(export_default_decl) = &**mod_decl
-                else {
+                let Statement::ExportDefaultDeclaration(export_default_decl) = &node else {
                     continue;
                 };
 

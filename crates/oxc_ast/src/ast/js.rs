@@ -1306,7 +1306,93 @@ macro_rules! add_declaration_variants {
     }
 }
 
-add_declaration_variants! {
+/// Macro to add `ModuleDeclaration` variants to enum.
+/// Used for `Statement` and `ModuleDeclaration` enums, as they share some variants.
+/// Discriminants start with 64, so that `Statement::is_module_declaration` is
+/// a single bitwise AND operation on the discriminant (`discriminant & 64`).
+macro_rules! add_module_declaration_variants {
+    (
+        $(#[$attr:meta])*
+        pub enum $ty:ident<'a> {
+            $($variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+        }
+    ) => {
+        $(#[$attr])*
+        pub enum $ty<'a> {
+            $($variant_name($variant_type) = $variant_discrim,)*
+
+            /// import hello from './world.js';
+            /// import * as t from './world.js';
+            ImportDeclaration(Box<'a, ImportDeclaration<'a>>) = 64,
+            /// export * as numbers from '../numbers.js'
+            ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>) = 65,
+            /// export default 5;
+            ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a>>) = 66,
+            /// export {five} from './numbers.js';
+            /// export {six, seven};
+            ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>) = 67,
+
+            /// export = 5;
+            TSExportAssignment(Box<'a, TSExportAssignment<'a>>) = 68,
+            /// export as namespace React;
+            TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
+        }
+    }
+}
+
+/// Macro to add `Declaration` and `ModuleDeclaration` variants to enum.
+/// Used for `Statement`, as shares some variants with `Declaration` and `ModuleDeclaration`.
+/// Sadly rust does not allow nesting macros
+/// (`add_module_declaration_variants! { add_declaration_variants! { ... } }`)
+/// so have to have a separate macro for this.
+///
+/// # SAFETY
+/// This macro MUST contain identical content to `add_module_declaration_variants!` and
+/// `add_declaration_variants!` macros above.
+macro_rules! add_all_declaration_variants {
+    (
+        $(#[$attr:meta])*
+        pub enum $ty:ident<'a> {
+            $($variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+        }
+    ) => {
+        $(#[$attr])*
+        pub enum $ty<'a> {
+            $($variant_name($variant_type) = $variant_discrim,)*
+
+            // `Declaration` variants
+            VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
+            FunctionDeclaration(Box<'a, Function<'a>>) = 33,
+            ClassDeclaration(Box<'a, Class<'a>>) = 34,
+            UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 35,
+
+            TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 36,
+            TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 37,
+            TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 38,
+            TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 39,
+            TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
+
+            // `ModuleDeclaration` variants
+            /// import hello from './world.js';
+            /// import * as t from './world.js';
+            ImportDeclaration(Box<'a, ImportDeclaration<'a>>) = 64,
+            /// export * as numbers from '../numbers.js'
+            ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>) = 65,
+            /// export default 5;
+            ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a>>) = 66,
+            /// export {five} from './numbers.js';
+            /// export {six, seven};
+            ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>) = 67,
+
+            /// export = 5;
+            TSExportAssignment(Box<'a, TSExportAssignment<'a>>) = 68,
+            /// export as namespace React;
+            TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
+        }
+    }
+}
+
+add_all_declaration_variants! {
     /// Statements
     #[ast_node]
     #[derive(Debug, Hash)]
@@ -1333,9 +1419,8 @@ add_declaration_variants! {
         WhileStatement(Box<'a, WhileStatement<'a>>) = 16,
         WithStatement(Box<'a, WithStatement<'a>>) = 17,
 
-        ModuleDeclaration(Box<'a, ModuleDeclaration<'a>>) = 18,
-
-        // `Declaration` variants added here by `add_declaration_variants!` macro
+        // `Declaration` variants added here by `add_all_declaration_variants!` macro
+        // `ModuleDeclaration` variants added here by `add_all_declaration_variants!` macro
     }
 }
 
@@ -1355,6 +1440,22 @@ shared_enum_variants!(
         TSEnumDeclaration,
         TSModuleDeclaration,
         TSImportEqualsDeclaration,
+    ]
+);
+
+shared_enum_variants!(
+    Statement,
+    ModuleDeclaration,
+    is_module_declaration,
+    as_module_declaration,
+    as_module_declaration_mut,
+    [
+        ImportDeclaration,
+        ExportAllDeclaration,
+        ExportDefaultDeclaration,
+        ExportNamedDeclaration,
+        TSExportAssignment,
+        TSNamespaceExportDeclaration,
     ]
 );
 
@@ -2442,26 +2543,14 @@ pub struct StaticBlock<'a> {
     pub body: Vec<'a, Statement<'a>>,
 }
 
-#[ast_node]
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum ModuleDeclaration<'a> {
-    /// import hello from './world.js';
-    /// import * as t from './world.js';
-    ImportDeclaration(Box<'a, ImportDeclaration<'a>>),
-    /// export * as numbers from '../numbers.js'
-    ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>),
-    /// export default 5;
-    ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a>>),
-    /// export {five} from './numbers.js';
-    /// export {six, seven};
-    ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>),
-
-    /// export = 5;
-    TSExportAssignment(Box<'a, TSExportAssignment<'a>>),
-    /// export as namespace React;
-    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>),
+add_module_declaration_variants! {
+    #[ast_node]
+    #[derive(Debug, Hash)]
+    #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+    #[cfg_attr(feature = "serialize", serde(untagged))]
+    pub enum ModuleDeclaration<'a> {
+        // `ModuleDeclaration` variants added here by `add_module_declaration_variants!` macro
+    }
 }
 
 impl<'a> ModuleDeclaration<'a> {

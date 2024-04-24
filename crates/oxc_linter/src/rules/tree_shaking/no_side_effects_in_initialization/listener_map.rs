@@ -7,9 +7,9 @@ use oxc_ast::{
         Class, ClassBody, ClassElement, ComputedMemberExpression, ConditionalExpression,
         Declaration, ExportDefaultDeclarationKind, ExportSpecifier, Expression, ForStatementInit,
         ForStatementLeft, FormalParameter, Function, IdentifierReference, MemberExpression,
-        ModuleDeclaration, ModuleExportName, NewExpression, ParenthesizedExpression,
-        PrivateFieldExpression, Program, PropertyKey, SimpleAssignmentTarget, Statement,
-        StaticMemberExpression, ThisExpression, VariableDeclarator,
+        ModuleExportName, NewExpression, ParenthesizedExpression, PrivateFieldExpression, Program,
+        PropertyKey, SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression,
+        VariableDeclarator,
     },
     dummy, AstKind,
 };
@@ -84,30 +84,26 @@ impl<'a> ListenerMap for Statement<'a> {
                     arg.report_effects(options);
                 }
             }
-            Self::ModuleDeclaration(decl) => match &**decl {
-                ModuleDeclaration::ExportAllDeclaration(_)
-                | ModuleDeclaration::ImportDeclaration(_) => {
-                    no_effects();
-                }
-                ModuleDeclaration::ExportDefaultDeclaration(stmt) => {
-                    if let ExportDefaultDeclarationKind::Expression(expr) = &stmt.declaration {
-                        if has_comment_about_side_effect_check(expr.span(), options.ctx) {
-                            expr.report_effects_when_called(options);
-                        }
-                        expr.report_effects(options);
+            Self::ExportAllDeclaration(_) | Self::ImportDeclaration(_) => {
+                no_effects();
+            }
+            Self::ExportDefaultDeclaration(stmt) => {
+                if let ExportDefaultDeclarationKind::Expression(expr) = &stmt.declaration {
+                    if has_comment_about_side_effect_check(expr.span(), options.ctx) {
+                        expr.report_effects_when_called(options);
                     }
+                    expr.report_effects(options);
                 }
-                ModuleDeclaration::ExportNamedDeclaration(stmt) => {
-                    stmt.specifiers.iter().for_each(|specifier| {
-                        specifier.report_effects(options);
-                    });
+            }
+            Self::ExportNamedDeclaration(stmt) => {
+                stmt.specifiers.iter().for_each(|specifier| {
+                    specifier.report_effects(options);
+                });
 
-                    if let Some(decl) = &stmt.declaration {
-                        decl.report_effects(options);
-                    }
+                if let Some(decl) = &stmt.declaration {
+                    decl.report_effects(options);
                 }
-                _ => {}
-            },
+            }
             Self::TryStatement(stmt) => {
                 stmt.block.body.iter().for_each(|stmt| stmt.report_effects(options));
                 stmt.handler.iter().for_each(|handler| {

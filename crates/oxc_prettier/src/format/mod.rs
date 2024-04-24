@@ -116,13 +116,22 @@ impl<'a> Format<'a> for Statement<'a> {
             Self::ForStatement(stmt) => stmt.format(p),
             Self::IfStatement(stmt) => stmt.format(p),
             Self::LabeledStatement(stmt) => stmt.format(p),
-            Self::ModuleDeclaration(decl) => decl.format(p),
             Self::ReturnStatement(stmt) => stmt.format(p),
             Self::SwitchStatement(stmt) => stmt.format(p),
             Self::ThrowStatement(stmt) => stmt.format(p),
             Self::TryStatement(stmt) => stmt.format(p),
             Self::WhileStatement(stmt) => stmt.format(p),
             Self::WithStatement(stmt) => stmt.format(p),
+
+            Self::ImportDeclaration(_)
+            | Self::ExportAllDeclaration(_)
+            | Self::ExportDefaultDeclaration(_)
+            | Self::ExportNamedDeclaration(_)
+            | Self::TSExportAssignment(_)
+            | Self::TSNamespaceExportDeclaration(_) => {
+                self.as_module_declaration().unwrap().format(p)
+            }
+
             Self::VariableDeclaration(decl) => decl.format(p),
             Self::FunctionDeclaration(decl) => decl.format(p),
             Self::ClassDeclaration(decl) => decl.format(p),

@@ -882,7 +882,16 @@ pub mod walk_mut {
             Statement::WhileStatement(stmt) => visitor.visit_while_statement(stmt),
             Statement::WithStatement(stmt) => visitor.visit_with_statement(stmt),
 
-            Statement::ModuleDeclaration(decl) => visitor.visit_module_declaration(decl),
+            Statement::ImportDeclaration(_)
+            | Statement::ExportAllDeclaration(_)
+            | Statement::ExportDefaultDeclaration(_)
+            | Statement::ExportNamedDeclaration(_)
+            | Statement::TSExportAssignment(_)
+            | Statement::TSNamespaceExportDeclaration(_) => {
+                let decl = stmt.as_module_declaration_mut().unwrap();
+                visitor.visit_module_declaration(decl);
+            }
+
             Statement::VariableDeclaration(_)
             | Statement::FunctionDeclaration(_)
             | Statement::ClassDeclaration(_)

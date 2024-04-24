@@ -1159,7 +1159,7 @@ impl<'a> AstBuilder<'a> {
     /* ---------- Modules ---------- */
 
     pub fn module_declaration(&self, decl: ModuleDeclaration<'a>) -> Statement<'a> {
-        Statement::ModuleDeclaration(self.alloc(decl))
+        Statement::from(decl)
     }
 
     pub fn import_declaration(

@@ -23,7 +23,7 @@ impl ModuleRecordBuilder {
         // This avoids additional checks on TypeScript `TsModuleBlock` which
         // also has `ModuleDeclaration`s.
         for stmt in &program.body {
-            if let Statement::ModuleDeclaration(module_decl) = stmt {
+            if let Some(module_decl) = stmt.as_module_declaration() {
                 self.module_record.not_esm = false;
                 self.visit_module_declaration(module_decl);
             }
