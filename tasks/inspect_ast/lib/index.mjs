@@ -84,4 +84,14 @@ const structsThatNeedBoxing = Object.values(types).filter(type => (
 ));
 console.log('Structs that need boxing:', structsThatNeedBoxing.map(type => type.name));
 
+const nestedEnums = Object.values(types).flatMap((type) => {
+    if (type.kind !== 'enum') return [];
+    return type.variants.filter(({type: variantType}) => (
+        variantType?.kind === 'enum'
+        || (variantType?.kind === 'box' && variantType.value.kind === 'enum')
+    )).map(variant => `${type.name} -> ${variant.type.name}`);
+}).sort();
+console.log('Nested enums:');
+console.log(nestedEnums.join('\n'));
+
 // console.log(types.BindingPattern.dependents.map(t => t.name));
