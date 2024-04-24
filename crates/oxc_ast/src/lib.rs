@@ -60,7 +60,7 @@ fn size_asserts() {
     use crate::ast;
     use oxc_index::assert_eq_size;
 
-    assert_eq_size!(ast::Statement, [u8; 24]);
+    assert_eq_size!(ast::Statement, [u8; 16]);
     assert_eq_size!(ast::Expression, [u8; 16]);
     assert_eq_size!(ast::Declaration, [u8; 16]);
     assert_eq_size!(ast::BindingPatternKind, [u8; 16]);

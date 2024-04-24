@@ -159,8 +159,7 @@ impl<'a> TypeScript<'a> {
                     decls
                 };
                 let decl = self.ctx.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
-                let stmt: Statement<'_> =
-                    Statement::Declaration(Declaration::VariableDeclaration(decl));
+                let stmt: Statement<'_> = Statement::VariableDeclaration(decl);
 
                 statements.push(stmt);
             }

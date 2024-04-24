@@ -860,6 +860,7 @@ pub mod walk_mut {
         }
     }
 
+    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `Declaration` variants cannot panic
     pub fn walk_statement_mut<'a, V: VisitMut<'a>>(visitor: &mut V, stmt: &mut Statement<'a>) {
         match stmt {
             Statement::BlockStatement(stmt) => visitor.visit_block_statement(stmt),
@@ -882,7 +883,18 @@ pub mod walk_mut {
             Statement::WithStatement(stmt) => visitor.visit_with_statement(stmt),
 
             Statement::ModuleDeclaration(decl) => visitor.visit_module_declaration(decl),
-            Statement::Declaration(decl) => visitor.visit_declaration(decl),
+            Statement::VariableDeclaration(_)
+            | Statement::FunctionDeclaration(_)
+            | Statement::ClassDeclaration(_)
+            | Statement::UsingDeclaration(_)
+            | Statement::TSTypeAliasDeclaration(_)
+            | Statement::TSInterfaceDeclaration(_)
+            | Statement::TSEnumDeclaration(_)
+            | Statement::TSModuleDeclaration(_)
+            | Statement::TSImportEqualsDeclaration(_) => {
+                let decl = stmt.as_declaration_mut().unwrap();
+                visitor.visit_declaration(decl);
+            }
 
             Statement::Dummy => dummy!(),
         }

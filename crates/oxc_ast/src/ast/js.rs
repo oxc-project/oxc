@@ -21,6 +21,7 @@ use tsify::Tsify;
 use crate::traverse::{SharedBox, SharedVec};
 use crate::{dummy, traverse::ast::*};
 
+use super::shared_enum_variants;
 use super::{jsx::*, literal::*, ts::*};
 
 #[cfg(feature = "serialize")]
@@ -1276,35 +1277,86 @@ pub struct ParenthesizedExpression<'a> {
     pub expression: Expression<'a>,
 }
 
-/// Statements
-#[ast_node]
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum Statement<'a> {
-    // Statements
-    BlockStatement(Box<'a, BlockStatement<'a>>),
-    BreakStatement(Box<'a, BreakStatement<'a>>),
-    ContinueStatement(Box<'a, ContinueStatement<'a>>),
-    DebuggerStatement(Box<'a, DebuggerStatement>),
-    DoWhileStatement(Box<'a, DoWhileStatement<'a>>),
-    EmptyStatement(Box<'a, EmptyStatement>),
-    ExpressionStatement(Box<'a, ExpressionStatement<'a>>),
-    ForInStatement(Box<'a, ForInStatement<'a>>),
-    ForOfStatement(Box<'a, ForOfStatement<'a>>),
-    ForStatement(Box<'a, ForStatement<'a>>),
-    IfStatement(Box<'a, IfStatement<'a>>),
-    LabeledStatement(Box<'a, LabeledStatement<'a>>),
-    ReturnStatement(Box<'a, ReturnStatement<'a>>),
-    SwitchStatement(Box<'a, SwitchStatement<'a>>),
-    ThrowStatement(Box<'a, ThrowStatement<'a>>),
-    TryStatement(Box<'a, TryStatement<'a>>),
-    WhileStatement(Box<'a, WhileStatement<'a>>),
-    WithStatement(Box<'a, WithStatement<'a>>),
+/// Macro to add `Declaration` variants to enum.
+/// Used for `Statement` and `Declaration` enums, as they share some variants.
+/// Discriminants start with 32, so that `Statement::is_declaration` is a single bitwise AND operation
+/// on the discriminant (`discriminant & 32`).
+macro_rules! add_declaration_variants {
+    (
+        $(#[$attr:meta])*
+        pub enum $ty:ident<'a> {
+            $($variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+        }
+    ) => {
+        $(#[$attr])*
+        pub enum $ty<'a> {
+            $($variant_name($variant_type) = $variant_discrim,)*
 
-    ModuleDeclaration(Box<'a, ModuleDeclaration<'a>>),
-    Declaration(Declaration<'a>),
+            VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
+            FunctionDeclaration(Box<'a, Function<'a>>) = 33,
+            ClassDeclaration(Box<'a, Class<'a>>) = 34,
+            UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 35,
+
+            TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 36,
+            TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 37,
+            TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 38,
+            TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 39,
+            TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
+        }
+    }
 }
+
+add_declaration_variants! {
+    /// Statements
+    #[ast_node]
+    #[derive(Debug, Hash)]
+    #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+    #[cfg_attr(feature = "serialize", serde(untagged))]
+    pub enum Statement<'a> {
+        // Statements
+        BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
+        BreakStatement(Box<'a, BreakStatement<'a>>) = 1,
+        ContinueStatement(Box<'a, ContinueStatement<'a>>) = 2,
+        DebuggerStatement(Box<'a, DebuggerStatement>) = 3,
+        DoWhileStatement(Box<'a, DoWhileStatement<'a>>) = 4,
+        EmptyStatement(Box<'a, EmptyStatement>) = 5,
+        ExpressionStatement(Box<'a, ExpressionStatement<'a>>) = 6,
+        ForInStatement(Box<'a, ForInStatement<'a>>) = 7,
+        ForOfStatement(Box<'a, ForOfStatement<'a>>) = 8,
+        ForStatement(Box<'a, ForStatement<'a>>) = 9,
+        IfStatement(Box<'a, IfStatement<'a>>) = 10,
+        LabeledStatement(Box<'a, LabeledStatement<'a>>) = 11,
+        ReturnStatement(Box<'a, ReturnStatement<'a>>) = 12,
+        SwitchStatement(Box<'a, SwitchStatement<'a>>) = 13,
+        ThrowStatement(Box<'a, ThrowStatement<'a>>) = 14,
+        TryStatement(Box<'a, TryStatement<'a>>) = 15,
+        WhileStatement(Box<'a, WhileStatement<'a>>) = 16,
+        WithStatement(Box<'a, WithStatement<'a>>) = 17,
+
+        ModuleDeclaration(Box<'a, ModuleDeclaration<'a>>) = 18,
+
+        // `Declaration` variants added here by `add_declaration_variants!` macro
+    }
+}
+
+shared_enum_variants!(
+    Statement,
+    Declaration,
+    is_declaration,
+    as_declaration,
+    as_declaration_mut,
+    [
+        VariableDeclaration,
+        FunctionDeclaration,
+        ClassDeclaration,
+        UsingDeclaration,
+        TSTypeAliasDeclaration,
+        TSInterfaceDeclaration,
+        TSEnumDeclaration,
+        TSModuleDeclaration,
+        TSImportEqualsDeclaration,
+    ]
+);
 
 impl<'a> Statement<'a> {
     pub fn is_iteration_statement(&self) -> bool {
@@ -1356,22 +1408,15 @@ pub struct BlockStatement<'a> {
     pub body: Vec<'a, Statement<'a>>,
 }
 
-/// Declarations and the Variable Statement
-#[ast_node]
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum Declaration<'a> {
-    VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
-    FunctionDeclaration(Box<'a, Function<'a>>),
-    ClassDeclaration(Box<'a, Class<'a>>),
-    UsingDeclaration(Box<'a, UsingDeclaration<'a>>),
-
-    TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>),
-    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>),
-    TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>),
-    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>),
-    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>),
+add_declaration_variants! {
+    /// Declarations and the Variable Statement
+    #[ast_node]
+    #[derive(Debug, Hash)]
+    #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+    #[cfg_attr(feature = "serialize", serde(untagged))]
+    pub enum Declaration<'a> {
+        // `Declaration` variants added here by `with_declaration_variants!` macro
+    }
 }
 
 impl<'a> Declaration<'a> {

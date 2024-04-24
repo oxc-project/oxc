@@ -89,7 +89,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
             Self::BreakStatement(stmt) => stmt.gen(p, ctx),
             Self::ContinueStatement(stmt) => stmt.gen(p, ctx),
             Self::DebuggerStatement(stmt) => stmt.gen(p, ctx),
-            Self::Declaration(decl) => decl.gen(p, ctx),
             Self::DoWhileStatement(stmt) => stmt.gen(p, ctx),
             Self::EmptyStatement(stmt) => stmt.gen(p, ctx),
             Self::ExpressionStatement(stmt) => stmt.gen(p, ctx),
@@ -105,6 +104,17 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
             Self::TryStatement(stmt) => stmt.gen(p, ctx),
             Self::WhileStatement(stmt) => stmt.gen(p, ctx),
             Self::WithStatement(stmt) => stmt.gen(p, ctx),
+
+            Self::VariableDeclaration(_)
+            | Self::FunctionDeclaration(_)
+            | Self::ClassDeclaration(_)
+            | Self::UsingDeclaration(_)
+            | Self::TSTypeAliasDeclaration(_)
+            | Self::TSInterfaceDeclaration(_)
+            | Self::TSEnumDeclaration(_)
+            | Self::TSModuleDeclaration(_)
+            | Self::TSImportEqualsDeclaration(_) => self.as_declaration().unwrap().gen(p, ctx),
+
             Self::Dummy => dummy!(),
         }
     }

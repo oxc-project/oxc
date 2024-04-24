@@ -76,8 +76,8 @@ impl<'a> ListenerMap for Statement<'a> {
             Self::BreakStatement(_) | Self::ContinueStatement(_) | Self::EmptyStatement(_) => {
                 no_effects();
             }
-            Self::Declaration(decl) => {
-                decl.report_effects(options);
+            _ if self.is_declaration() => {
+                self.as_declaration().unwrap().report_effects(options);
             }
             Self::ReturnStatement(stmt) => {
                 if let Some(arg) = &stmt.argument {

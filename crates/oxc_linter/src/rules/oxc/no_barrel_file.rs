@@ -1,4 +1,4 @@
-use oxc_ast::{ast::Statement, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -56,10 +56,11 @@ impl Rule for NoBarrelFile {
 
         let AstKind::Program(program) = root.kind() else { unreachable!() };
 
-        let declarations = program.body.iter().fold(0, |acc, node| match node {
-            Statement::Declaration(_) => acc + 1,
-            _ => acc,
-        });
+        let declarations =
+            program
+                .body
+                .iter()
+                .fold(0, |acc, node| if node.is_declaration() { acc + 1 } else { acc });
         let exports =
             module_record.star_export_entries.len() + module_record.indirect_export_entries.len();
 

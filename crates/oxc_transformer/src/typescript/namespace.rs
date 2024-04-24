@@ -28,7 +28,7 @@ impl<'a> TypeScript<'a> {
     pub(super) fn transform_statements_for_namespace(&self, stmts: &mut Vec<'a, Statement<'a>>) {
         // Only do the transform if a namespace declaration is found.
         if !stmts.iter().any(|stmt| match stmt {
-            Statement::Declaration(decl) => is_namespace(decl),
+            _ if stmt.is_declaration() => stmt.as_declaration().is_some_and(is_namespace),
             Statement::ModuleDeclaration(decl) => match &**decl {
                 ModuleDeclaration::ExportNamedDeclaration(decl) => {
                     decl.declaration.as_ref().is_some_and(is_namespace)
@@ -64,9 +64,7 @@ impl<'a> TypeScript<'a> {
     ) -> bool {
         let mut is_export = false;
         let ts_module_decl = match stmt {
-            Statement::Declaration(Declaration::TSModuleDeclaration(ts_module_decl)) => {
-                ts_module_decl
-            }
+            Statement::TSModuleDeclaration(ts_module_decl) => ts_module_decl,
             Statement::ModuleDeclaration(decl) => match &mut **decl {
                 ModuleDeclaration::ExportNamedDeclaration(decl) => {
                     if let Some(Declaration::TSModuleDeclaration(ts_module_decl)) =
@@ -132,7 +130,7 @@ impl<'a> TypeScript<'a> {
                 ),
             ))
         } else {
-            Statement::Declaration(decl)
+            Statement::from(decl)
         }
     }
 

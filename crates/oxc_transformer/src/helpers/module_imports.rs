@@ -130,6 +130,6 @@ impl<'a> ModuleImports<'a> {
             self.ast.new_vec_single(decl)
         };
         let var_decl = self.ast.variable_declaration(SPAN, var_kind, decl, Modifiers::empty());
-        Statement::Declaration(Declaration::VariableDeclaration(var_decl))
+        Statement::VariableDeclaration(var_decl)
     }
 }
