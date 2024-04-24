@@ -267,50 +267,6 @@ impl<'a> TypeScript<'a> {
         Some(namespace)
     }
 
-    // fn transform_statement_for_namespace(
-    // &self,
-    // state: &mut State<'a>,
-    // new_stmts: &mut Vec<'a, Statement<'a>>,
-    // stmt: &mut Statement<'a>,
-    // ) -> bool {
-    // let mut is_export = false;
-    // let ts_module_decl = match stmt {
-    // Statement::Declaration(Declaration::TSModuleDeclaration(ts_module_decl)) => {
-    // ts_module_decl
-    // }
-    // Statement::ModuleDeclaration(decl) => match &mut **decl {
-    // ModuleDeclaration::ExportNamedDeclaration(decl) => {
-    // if let Some(Declaration::TSModuleDeclaration(ts_module_decl)) =
-    // decl.declaration.as_mut()
-    // {
-    // is_export = true;
-    // ts_module_decl
-    // } else {
-    // return false;
-    // }
-    // }
-    // _ => return false,
-    // },
-    // _ => return false,
-    // };
-
-    // if ts_module_decl.modifiers.is_contains_declare() {
-    // return false;
-    // }
-
-    // let name = ts_module_decl.id.name().clone();
-
-    // if state.names.insert(name.clone()) {
-    // let stmt = self.create_variable_declaration_statement(&name, is_export);
-    // new_stmts.push(stmt);
-    // }
-
-    // let arg_name = decl.id.name();
-    // let namespace = self.transform_namespace(arg_name, real_name, ts_module_decl);
-    // new_stmts.push(namespace);
-    // true
-    // }
-
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     //                         ^^^^^^^
     fn create_variable_declaration(&self, name: &Atom<'a>) -> Declaration<'a> {
@@ -338,22 +294,7 @@ impl<'a> TypeScript<'a> {
         real_name: &Atom<'a>,
         stmts: Vec<'a, Statement<'a>>,
         parent_export: Option<Expression<'a>>,
-        // state: &mut State<'a>,
-        // block: &mut Box<'a, TSModuleDeclaration<'a>>,
     ) -> Statement<'a> {
-        // let body_statements = match &mut block.body {
-        // Some(TSModuleDeclarationBody::TSModuleDeclaration(decl)) => {
-        // let transformed_module_block = self.transform_namespace(state, decl);
-        // self.ctx.ast.new_vec_single(transformed_module_block)
-        // }
-        // Some(TSModuleDeclarationBody::TSModuleBlock(ts_module_block)) => {
-        // self.ctx.ast.move_statement_vec(&mut ts_module_block.body)
-        // }
-        // None => self.ctx.ast.new_vec(),
-        // };
-
-        // let name = block.id.name();
-
         // `(function (_N) { var x; })(N || (N = {}))`;
         //  ^^^^^^^^^^^^^^^^^^^^^^^^^^
         let callee = {
