@@ -308,6 +308,10 @@ fn transform_generic_type(mut ty: TypePath) -> TypePath {
 
 fn is_special_type_name(ident: &Ident) -> bool {
     ident == "Atom"
+        || ident == "RegExp"
+        || ident == "TemplateElementValue"
+        || ident == "IdentifierName"
+        || ident == "Modifiers"
 }
 
 fn has_clone(attrs: &[Attribute]) -> bool {
