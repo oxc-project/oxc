@@ -136,7 +136,7 @@ ureq                = { version = "2.9.6", default-features = false }
 url                 = "2.5.0"
 walkdir             = "2.5.0"
 indexmap            = "2.2.6"
-index_vec           = "0.1.3"
+index_vec           = { git = "https://github.com/rzvxa/index_vec.git", branch= "non-zero-idx" }
 static_assertions   = "1.1.0"
 tracing-subscriber  = "0.3"
 insta               = "1.38.0"

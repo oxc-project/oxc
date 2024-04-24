@@ -90,7 +90,7 @@ impl<'a> SemanticBuilder<'a> {
             source_type,
             trivias: Rc::clone(&trivias),
             errors: RefCell::new(vec![]),
-            current_node_id: AstNodeId::new(0),
+            current_node_id: AstNodeId::new(1),
             current_node_flags: NodeFlags::empty(),
             current_symbol_flags: SymbolFlags::empty(),
             in_type_definition: false,

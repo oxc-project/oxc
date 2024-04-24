@@ -58,6 +58,7 @@ impl Rule for NoBarrelFile {
             return;
         };
 
+        dbg!(root);
         let AstKind::Program(program) = root.kind() else { unreachable!() };
 
         let declarations = program.body.iter().fold(0, |acc, node| match node {

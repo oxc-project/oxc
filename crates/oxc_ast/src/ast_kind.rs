@@ -13,6 +13,7 @@ macro_rules! ast_kinds {
         /// Untyped AST Node Kind
         #[derive(Debug, Clone, Copy)]
         pub enum AstKind<'a> {
+            Dummy,
             $($ident($type),)*
         }
     )
@@ -356,6 +357,7 @@ impl<'a> GetSpan for AstKind<'a> {
     #[allow(clippy::match_same_arms)]
     fn span(&self) -> Span {
         match self {
+            Self::Dummy => Span::new(0, 0),
             Self::Program(x) => x.span,
             Self::Directive(x) => x.span,
             Self::Hashbang(x) => x.span,
@@ -546,6 +548,7 @@ impl<'a> AstKind<'a> {
     /// usage of this method within your code.
     pub fn debug_name(&self) -> std::borrow::Cow<str> {
         match self {
+            Self::Dummy => "Dummy".into(),
             Self::Program(_) => "Program".into(),
             Self::Directive(d) => d.directive.as_ref().into(),
             Self::Hashbang(_) => "Hashbang".into(),

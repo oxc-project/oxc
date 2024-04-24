@@ -1,7 +1,7 @@
 use petgraph::stable_graph::NodeIndex;
 
 use oxc_ast::AstKind;
-use oxc_index::IndexVec;
+use oxc_index::{index_vec, IndexVec};
 
 use crate::scope::ScopeId;
 
@@ -25,7 +25,7 @@ pub struct AstNode<'a> {
 
 impl<'a> AstNode<'a> {
     pub fn new(kind: AstKind<'a>, scope_id: ScopeId, cfg_ix: NodeIndex, flags: NodeFlags) -> Self {
-        Self { id: AstNodeId::new(0), kind, cfg_ix, scope_id, flags }
+        Self { id: AstNodeId::new(1), kind, cfg_ix, scope_id, flags }
     }
 
     pub fn id(&self) -> AstNodeId {

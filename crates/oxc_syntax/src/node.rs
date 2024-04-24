@@ -1,8 +1,10 @@
-use bitflags::bitflags;
-use oxc_index::define_index_type;
+use std::num::NonZeroUsize;
 
-define_index_type! {
-    pub struct AstNodeId = usize;
+use bitflags::bitflags;
+use oxc_index::define_non_zero_index_type;
+
+define_non_zero_index_type! {
+    pub struct AstNodeId = NonZeroUsize;
 }
 
 #[cfg(feature = "serialize")]
