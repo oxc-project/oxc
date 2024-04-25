@@ -136,11 +136,11 @@ extern crate alloc;
 use core::fmt::Debug;
 use core::hash::Hash;
 
-pub mod idxslice;
+pub mod slice;
 pub mod indexing;
 pub mod vec;
 
-pub use idxslice::{IndexBox, IndexSlice};
+pub use slice::{IndexBox, IndexSlice};
 pub use indexing::{IdxRangeBounds, IdxSliceIndex};
 pub use vec::IndexVec;
 
