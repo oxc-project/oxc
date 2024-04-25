@@ -299,7 +299,6 @@ pub enum TSTupleElement<'a> {
     TSType(TSType<'a>),
     TSOptionalType(Box<'a, TSOptionalType<'a>>),
     TSRestType(Box<'a, TSRestType<'a>>),
-    TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>),
 }
 
 #[derive(Debug, Hash)]
