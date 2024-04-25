@@ -22,9 +22,7 @@ impl<'a> GetPrecedence for Expression<'a> {
             Self::AwaitExpression(expr) => expr.precedence(),
             Self::NewExpression(expr) => expr.precedence(),
             Self::CallExpression(expr) => expr.precedence(),
-            match_member_expression_variants!(Self) => {
-                self.as_member_expression().unwrap().precedence()
-            }
+            match_member_expression_variants!(Self) => self.to_member_expression().precedence(),
             _ => panic!("All cases should be covered"),
         }
     }

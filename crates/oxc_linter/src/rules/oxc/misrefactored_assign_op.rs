@@ -108,7 +108,7 @@ fn assignment_target_eq_expr<'a>(
                 }
             }
             match_member_expression_variants!(SimpleAssignmentTarget) => {
-                let member_expr = simple_assignment_target.as_member_expression().unwrap();
+                let member_expr = simple_assignment_target.to_member_expression();
                 if let Some(right_member_expr) = right_expr.as_member_expression() {
                     is_same_member_expression(member_expr, right_member_expr, ctx)
                 } else {

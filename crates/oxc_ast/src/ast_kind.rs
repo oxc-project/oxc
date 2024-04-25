@@ -309,7 +309,6 @@ impl<'a> AstKind<'a> {
         }
     }
 
-    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `MemberExpression` variants cannot panic
     pub fn from_expression(e: &'a Expression<'a>) -> Self {
         match e {
             Expression::BooleanLiteral(e) => Self::BooleanLiteral(e),
@@ -352,7 +351,7 @@ impl<'a> AstKind<'a> {
             Expression::TSNonNullExpression(e) => Self::TSNonNullExpression(e),
             Expression::TSInstantiationExpression(e) => Self::TSInstantiationExpression(e),
             match_member_expression_variants!(Expression) => {
-                Self::MemberExpression(e.as_member_expression().unwrap())
+                Self::MemberExpression(e.to_member_expression())
             }
             Expression::Dummy => Self::Dummy,
         }

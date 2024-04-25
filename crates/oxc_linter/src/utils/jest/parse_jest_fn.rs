@@ -294,7 +294,7 @@ fn resolve_first_ident<'a>(expr: &'a Expression<'a>) -> Option<&'a IdentifierRef
     match expr {
         Expression::Identifier(ident) => Some(ident),
         _ if expr.is_member_expression() => {
-            resolve_first_ident(expr.as_member_expression().unwrap().object())
+            resolve_first_ident(expr.to_member_expression().object())
         }
         Expression::CallExpression(call_expr) => resolve_first_ident(&call_expr.callee),
         Expression::TaggedTemplateExpression(tagged_expr) => resolve_first_ident(&tagged_expr.tag),
@@ -447,7 +447,7 @@ fn get_node_chain<'a>(params: &NodeChainParams<'a>) -> Vec<KnownMemberExpression
 
     match expr {
         _ if expr.is_member_expression() => {
-            let member_expr = expr.as_member_expression().unwrap();
+            let member_expr = expr.to_member_expression();
             let params = NodeChainParams {
                 expr: member_expr.object(),
                 parent: Some(expr),

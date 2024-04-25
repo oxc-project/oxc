@@ -104,9 +104,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
             Self::WhileStatement(stmt) => stmt.gen(p, ctx),
             Self::WithStatement(stmt) => stmt.gen(p, ctx),
             match_module_declaration_variants!(Self) => {
-                self.as_module_declaration().unwrap().gen(p, ctx);
+                self.to_module_declaration().gen(p, ctx);
             }
-            match_declaration_variants!(Self) => self.as_declaration().unwrap().gen(p, ctx),
+            match_declaration_variants!(Self) => self.to_declaration().gen(p, ctx),
             Self::Dummy => dummy!(),
         }
     }
@@ -1017,7 +1017,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
             Self::TSNonNullExpression(e) => e.expression.gen_expr(p, precedence, ctx),
             Self::TSInstantiationExpression(e) => e.expression.gen_expr(p, precedence, ctx),
             match_member_expression_variants!(Self) => {
-                self.as_member_expression().unwrap().gen_expr(p, precedence, ctx);
+                self.to_member_expression().gen_expr(p, precedence, ctx);
             }
             Self::Dummy => dummy!(),
         }
@@ -1806,7 +1806,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for SimpleAssignmentTarget<'a> {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.gen(p, ctx),
             match_member_expression_variants!(Self) => {
-                self.as_member_expression().unwrap().gen_expr(p, precedence, ctx);
+                self.to_member_expression().gen_expr(p, precedence, ctx);
             }
             Self::TSAsExpression(e) => e.gen_expr(p, precedence, ctx),
             Self::TSSatisfiesExpression(e) => e.expression.gen_expr(p, precedence, ctx),
@@ -2013,7 +2013,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ChainExpression<'a> {
         match &self.expression {
             ChainElement::CallExpression(expr) => expr.gen_expr(p, precedence, ctx),
             match_member_expression_variants!(ChainElement) => {
-                self.expression.as_member_expression().unwrap().gen_expr(p, precedence, ctx);
+                self.expression.to_member_expression().gen_expr(p, precedence, ctx);
             }
             ChainElement::Dummy => dummy!(),
         }

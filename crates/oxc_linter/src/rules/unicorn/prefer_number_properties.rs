@@ -123,7 +123,7 @@ fn extract_ident_from_expression<'b>(expr: &'b Expression<'_>) -> Option<&'b str
     match expr {
         Expression::Identifier(ident_name) => Some(ident_name.name.as_str()),
         _ if expr.is_member_expression() => {
-            let member_expr = expr.as_member_expression().unwrap();
+            let member_expr = expr.to_member_expression();
             let Expression::Identifier(ident_name) = member_expr.object() else {
                 return None;
             };

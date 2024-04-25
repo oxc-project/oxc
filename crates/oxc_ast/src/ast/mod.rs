@@ -7,9 +7,6 @@ mod ts;
 
 pub use self::{js::*, jsx::*, literal::*, ts::*};
 
-// TODO: `as_*` and `as_*_mut` should become `try_as_*` and `try_as_*_mut`.
-// Then `as_*` can be equivalent to `try_as_*().unwrap()` which is a common pattern.
-
 /// Macro to allow conversion between 2 enum types where they share some of the same variants.
 /// "Parent" enum contains all the "child"'s variants, plus parent contains further other variants.
 /// e.g. `Statement` and `Declaration`.
@@ -25,7 +22,10 @@ pub use self::{js::*, jsx::*, literal::*, ts::*};
 ///
 /// ```
 /// shared_enum_variants!(
-///     Statement, Declaration, is_declaration, as_declaration, as_declaration_mut,
+///     Statement, Declaration,
+///     is_declaration,
+///     as_declaration, as_declaration_mut,
+///     to_declaration, to_declaration_mut,
 ///     [VariableDeclaration, FunctionDeclaration]
 /// )
 /// ```
@@ -62,6 +62,22 @@ pub use self::{js::*, jsx::*, literal::*, ts::*};
 ///             None
 ///         }
 ///     }
+///
+///     /// Convert `&Statement` to `&Declaration`.
+///     /// # Panic
+///     /// Panics if not convertable.
+///     #[inline]
+///     pub fn to_declaration(&self) -> &Declaration<'a> {
+///         self.as_declaration().unwrap()
+///     }
+///
+///     /// Convert `&mut Statement` to `&mut Declaration`.
+///     /// # Panic
+///     /// Panics if not convertable.
+///     #[inline]
+///     pub fn to_declaration_mut(&mut self) -> Option<&mut Declaration<'a>> {
+///         self.as_declaration_mut().unwrap()
+///     }
 /// }
 ///
 /// impl<'a> TryFrom<Statement<'a>> for Declaration<'a> {
@@ -91,7 +107,10 @@ pub use self::{js::*, jsx::*, literal::*, ts::*};
 /// ```
 macro_rules! shared_enum_variants {
     (
-        $parent:ident, $child:ident, $is_child:ident, $as_child:ident, $as_child_mut:ident,
+        $parent:ident, $child:ident,
+        $is_child:ident,
+        $as_child:ident, $as_child_mut:ident,
+        $to_child:ident, $to_child_mut:ident,
         [$($variant:ident,)+]
     ) => {
         impl<'a> $parent<'a> {
@@ -128,6 +147,22 @@ macro_rules! shared_enum_variants {
                 } else {
                     None
                 }
+            }
+
+            #[doc = concat!("Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
+            #[doc = "# Panic"]
+            #[doc = "Panics if not convertable."]
+            #[inline]
+            pub fn $to_child(&self) -> &$child<'a> {
+                self.$as_child().unwrap()
+            }
+
+            #[doc = concat!("Convert `&mut ", stringify!($parent), "` to `&mut ", stringify!($child), "`.")]
+            #[doc = "# Panic"]
+            #[doc = "Panics if not convertable."]
+            #[inline]
+            pub fn $to_child_mut(&mut self) -> &mut $child<'a> {
+                self.$as_child_mut().unwrap()
             }
         }
 

@@ -223,6 +223,8 @@ shared_enum_variants!(
     is_ts_type,
     as_ts_type,
     as_ts_type_mut,
+    to_ts_type,
+    to_ts_type_mut,
     [
         TSAnyKeyword,
         TSBigIntKeyword,
@@ -1175,12 +1177,11 @@ impl<'a> Decorator<'a> {
     /// @decorator.a.b(xx)
     /// The name of the decorator is `decorator`
     /// ```
-    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `MemberExpression` variants cannot panic
     pub fn name(&self) -> Option<&str> {
         match &self.expression {
             Expression::Identifier(ident) => Some(&ident.name),
             expr if expr.is_member_expression() => {
-                self.expression.as_member_expression().unwrap().static_property_name()
+                self.expression.to_member_expression().static_property_name()
             }
             Expression::CallExpression(call) => {
                 call.callee.get_member_expr().map(|member| member.static_property_name())?

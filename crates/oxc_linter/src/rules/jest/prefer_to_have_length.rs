@@ -82,7 +82,7 @@ impl PreferToHaveLength {
 
         match static_expr.object() {
             expr if expr.is_member_expression() => {
-                let mem_expr = expr.as_member_expression().unwrap();
+                let mem_expr = expr.to_member_expression();
                 let Expression::CallExpression(expr_call_expr) = mem_expr.object() else {
                     return;
                 };

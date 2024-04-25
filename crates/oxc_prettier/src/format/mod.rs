@@ -122,10 +122,8 @@ impl<'a> Format<'a> for Statement<'a> {
             Self::TryStatement(stmt) => stmt.format(p),
             Self::WhileStatement(stmt) => stmt.format(p),
             Self::WithStatement(stmt) => stmt.format(p),
-            match_module_declaration_variants!(Self) => {
-                self.as_module_declaration().unwrap().format(p)
-            }
-            match_declaration_variants!(Self) => self.as_declaration().unwrap().format(p),
+            match_module_declaration_variants!(Self) => self.to_module_declaration().format(p),
+            match_declaration_variants!(Self) => self.to_declaration().format(p),
             Self::Dummy => dummy!(unreachable),
         }
     }
@@ -1293,9 +1291,7 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::TSTypeAssertion(expr) => expr.expression.format(p),
             Self::TSNonNullExpression(expr) => expr.expression.format(p),
             Self::TSInstantiationExpression(expr) => expr.expression.format(p),
-            match_member_expression_variants!(Self) => {
-                self.as_member_expression().unwrap().format(p)
-            }
+            match_member_expression_variants!(Self) => self.to_member_expression().format(p),
             Self::Dummy => dummy!(unreachable),
         }
     }
@@ -1830,9 +1826,7 @@ impl<'a> Format<'a> for SimpleAssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.format(p),
-            match_member_expression_variants!(Self) => {
-                self.as_member_expression().unwrap().format(p)
-            }
+            match_member_expression_variants!(Self) => self.to_member_expression().format(p),
             Self::TSAsExpression(expr) => expr.expression.format(p),
             Self::TSSatisfiesExpression(expr) => expr.expression.format(p),
             Self::TSNonNullExpression(expr) => expr.expression.format(p),
@@ -2019,9 +2013,7 @@ impl<'a> Format<'a> for ChainElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::CallExpression(expr) => expr.format(p),
-            match_member_expression_variants!(Self) => {
-                self.as_member_expression().unwrap().format(p)
-            }
+            match_member_expression_variants!(Self) => self.to_member_expression().format(p),
             Self::Dummy => dummy!(unreachable),
         }
     }

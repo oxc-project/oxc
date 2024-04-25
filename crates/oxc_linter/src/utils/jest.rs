@@ -272,7 +272,7 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
         }
         Expression::CallExpression(call_expr) => chain.extend(get_node_name_vec(&call_expr.callee)),
         _ if expr.is_member_expression() => {
-            let member_expr = expr.as_member_expression().unwrap();
+            let member_expr = expr.to_member_expression();
             chain.extend(get_node_name_vec(member_expr.object()));
             if let Some(name) = member_expr.static_property_name() {
                 chain.push(Cow::Borrowed(name));

@@ -906,7 +906,6 @@ pub mod walk {
         }
     }
 
-    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `Declaration` variants cannot panic
     pub fn walk_statement<'a, V: Visit<'a>>(visitor: &mut V, stmt: &Statement<'a>) {
         match stmt {
             Statement::BlockStatement(stmt) => visitor.visit_block_statement(stmt),
@@ -928,12 +927,10 @@ pub mod walk {
             Statement::WhileStatement(stmt) => visitor.visit_while_statement(stmt),
             Statement::WithStatement(stmt) => visitor.visit_with_statement(stmt),
             match_module_declaration_variants!(Statement) => {
-                let decl = stmt.as_module_declaration().unwrap();
-                visitor.visit_module_declaration(decl);
+                visitor.visit_module_declaration(stmt.to_module_declaration());
             }
             match_declaration_variants!(Statement) => {
-                let decl = stmt.as_declaration().unwrap();
-                visitor.visit_declaration(decl);
+                visitor.visit_declaration(stmt.to_declaration());
             }
             Statement::Dummy => dummy!(),
         }
@@ -1431,7 +1428,6 @@ pub mod walk {
 
     /* ----------  Expression ---------- */
 
-    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `MemberExpression` variants cannot panic
     pub fn walk_expression<'a, V: Visit<'a>>(visitor: &mut V, expr: &Expression<'a>) {
         match expr {
             Expression::BigintLiteral(lit) => visitor.visit_bigint_literal(lit),
@@ -1485,8 +1481,7 @@ pub mod walk {
                 visitor.visit_ts_instantiation_expression(expr);
             }
             match_member_expression_variants!(Expression) => {
-                let member_expr = expr.as_member_expression().unwrap();
-                visitor.visit_member_expression(member_expr);
+                visitor.visit_member_expression(expr.to_member_expression());
             }
             Expression::Dummy => dummy!(),
         }
@@ -1617,12 +1612,11 @@ pub mod walk {
         visitor.leave_node(kind);
     }
 
-    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `MemberExpression` variants cannot panic
     pub fn walk_chain_element<'a, V: Visit<'a>>(visitor: &mut V, elem: &ChainElement<'a>) {
         match elem {
             ChainElement::CallExpression(expr) => visitor.visit_call_expression(expr),
             match_member_expression_variants!(ChainElement) => {
-                visitor.visit_member_expression(elem.as_member_expression().unwrap());
+                visitor.visit_member_expression(elem.to_member_expression());
             }
             ChainElement::Dummy => dummy!(),
         }
@@ -1853,7 +1847,6 @@ pub mod walk {
         visitor.leave_node(kind);
     }
 
-    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `Declaration` variants cannot panic
     pub fn walk_simple_assignment_target<'a, V: Visit<'a>>(
         visitor: &mut V,
         target: &SimpleAssignmentTarget<'a>,
@@ -1865,7 +1858,7 @@ pub mod walk {
                 visitor.visit_identifier_reference(ident);
             }
             match_member_expression_variants!(SimpleAssignmentTarget) => {
-                visitor.visit_member_expression(target.as_member_expression().unwrap());
+                visitor.visit_member_expression(target.to_member_expression());
             }
             SimpleAssignmentTarget::TSAsExpression(expr) => {
                 visitor.visit_expression(&expr.expression);
@@ -2791,12 +2784,10 @@ pub mod walk {
         }
     }
 
-    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `TSType` variants cannot panic
     pub fn walk_ts_tuple_element<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSTupleElement<'a>) {
         match ty {
             match_ts_type_variants!(TSTupleElement) => {
-                let ty = ty.as_ts_type().unwrap();
-                visitor.visit_ts_type(ty);
+                visitor.visit_ts_type(ty.to_ts_type());
             }
             TSTupleElement::TSOptionalType(ty) => visitor.visit_ts_type(&ty.type_annotation),
             TSTupleElement::TSRestType(ty) => visitor.visit_ts_type(&ty.type_annotation),

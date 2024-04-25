@@ -154,7 +154,7 @@ impl Rule for PreferForOf {
             match &mem_expr.object() {
                 Expression::Identifier(id) => id.name.as_str(),
                 expr if expr.is_member_expression() => {
-                    match expr.as_member_expression().unwrap().static_property_name() {
+                    match expr.to_member_expression().static_property_name() {
                         Some(array_name) => array_name,
                         None => return,
                     }
@@ -201,7 +201,7 @@ impl Rule for PreferForOf {
             match mem_expr.object() {
                 Expression::Identifier(id) => id.name.as_str() != array_name,
                 expr if expr.is_member_expression() => {
-                    match expr.as_member_expression().unwrap().static_property_name() {
+                    match expr.to_member_expression().static_property_name() {
                         Some(prop_name) => prop_name != array_name,
                         None => true,
                     }

@@ -106,7 +106,7 @@ fn is_document_cookie_reference<'a, 'b>(
             true
         }
         _ if expr.is_member_expression() => {
-            let member_expr = expr.as_member_expression().unwrap();
+            let member_expr = expr.to_member_expression();
             let Some(static_prop_name) = member_expr.static_property_name() else { return false };
             if static_prop_name != "document" {
                 return false;

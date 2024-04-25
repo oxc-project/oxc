@@ -186,7 +186,7 @@ impl PreferSpyOn {
 
         match &call_expr.callee {
             expr if expr.is_member_expression() => {
-                let mem_expr = expr.as_member_expression().unwrap();
+                let mem_expr = expr.to_member_expression();
                 if let Some(call_expr) = Self::find_mem_expr(mem_expr) {
                     return Self::get_jest_fn_call(call_expr);
                 }

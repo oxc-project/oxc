@@ -111,7 +111,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
                             }
                             // handles "let a = globalThis.JSON; let b = a; a();"
                             Some(parent_expr) if parent_expr.is_member_expression() => {
-                                global_this_member(parent_expr.as_member_expression().unwrap())
+                                global_this_member(parent_expr.to_member_expression())
                             }
                             _ => None,
                         }
@@ -146,7 +146,7 @@ impl Rule for NoObjCalls {
 
             _ if callee.is_member_expression() => {
                 // handle new globalThis.Math(), globalThis.Math(), etc
-                let member_expr = callee.as_member_expression().unwrap();
+                let member_expr = callee.to_member_expression();
                 if let Some(global_member) = global_this_member(member_expr) {
                     if is_global_obj(global_member) {
                         ctx.diagnostic(NoObjCallsDiagnostic(global_member.into(), span));

@@ -79,7 +79,7 @@ impl Rule for PreferTypeError {
 fn is_type_checking_expr(expr: &Expression) -> bool {
     match expr {
         _ if expr.is_member_expression() => {
-            is_type_checking_member_expr(expr.as_member_expression().unwrap())
+            is_type_checking_member_expr(expr.to_member_expression())
         }
         Expression::CallExpression(call_expr) => is_typechecking_call_expr(call_expr),
         Expression::UnaryExpression(unary_expr) => {
@@ -115,8 +115,7 @@ fn is_typechecking_call_expr(call_expr: &CallExpression) -> bool {
             TYPE_CHECKING_GLOBAL_IDENTIFIERS.contains(ident.name.as_str())
         }
         callee if callee.is_member_expression() => {
-            let member_expr = callee.as_member_expression().unwrap();
-            if let Some(ident) = member_expr.static_property_name() {
+            if let Some(ident) = callee.to_member_expression().static_property_name() {
                 return TYPE_CHECKING_IDENTIFIERS.contains(ident);
             }
             false

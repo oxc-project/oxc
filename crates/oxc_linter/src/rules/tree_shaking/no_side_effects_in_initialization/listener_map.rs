@@ -77,7 +77,7 @@ impl<'a> ListenerMap for Statement<'a> {
                 no_effects();
             }
             _ if self.is_declaration() => {
-                self.as_declaration().unwrap().report_effects(options);
+                self.to_declaration().report_effects(options);
             }
             Self::ReturnStatement(stmt) => {
                 if let Some(arg) = &stmt.argument {
@@ -739,7 +739,7 @@ impl<'a> ListenerMap for SimpleAssignmentTarget<'a> {
                 ident.report_effects_when_assigned(options);
             }
             _ if self.is_member_expression() => {
-                self.as_member_expression().unwrap().report_effects_when_assigned(options);
+                self.to_member_expression().report_effects_when_assigned(options);
             }
             _ => {
                 // For remain TypeScript AST, just visit its expression

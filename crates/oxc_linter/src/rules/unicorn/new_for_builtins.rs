@@ -109,7 +109,7 @@ fn is_expr_global_builtin<'a, 'b>(
             Some(ident.name.as_str())
         }
         _ if expr.is_member_expression() => {
-            let member_expr = expr.as_member_expression().unwrap();
+            let member_expr = expr.to_member_expression();
             let Expression::Identifier(ident) = member_expr.object() else { return None };
 
             if !GLOBAL_OBJECT_NAMES.contains(ident.name.as_str()) {

@@ -168,6 +168,8 @@ shared_enum_variants!(
     is_member_expression,
     as_member_expression,
     as_member_expression_mut,
+    to_member_expression,
+    to_member_expression_mut,
     [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression,]
 );
 
@@ -290,11 +292,10 @@ impl<'a> Expression<'a> {
         }
     }
 
-    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `MemberExpression` variants cannot panic
     pub fn is_specific_member_access(&self, object: &str, property: &str) -> bool {
         match self.get_inner_expression() {
             expr if expr.is_member_expression() => {
-                expr.as_member_expression().unwrap().is_specific_member_access(object, property)
+                expr.to_member_expression().is_specific_member_access(object, property)
             }
             Expression::ChainExpression(chain) => {
                 let Some(expr) = chain.expression.as_member_expression() else {
@@ -790,13 +791,12 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `MemberExpression` variants cannot panic
     pub fn through_optional_is_specific_member_access(&self, object: &str, property: &str) -> bool {
         let object_matches = match self.object().without_parenthesized() {
             Expression::ChainExpression(x) => match &x.expression {
                 ChainElement::CallExpression(_) => false,
                 match_member_expression_variants!(ChainElement) => {
-                    let member_expr = x.expression.as_member_expression().unwrap();
+                    let member_expr = x.expression.to_member_expression();
                     member_expr.object().without_parenthesized().is_specific_id(object)
                 }
                 ChainElement::Dummy => dummy!(),
@@ -1112,6 +1112,8 @@ shared_enum_variants!(
     is_member_expression,
     as_member_expression,
     as_member_expression_mut,
+    to_member_expression,
+    to_member_expression_mut,
     [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression,]
 );
 
@@ -1341,6 +1343,8 @@ shared_enum_variants!(
     is_member_expression,
     as_member_expression,
     as_member_expression_mut,
+    to_member_expression,
+    to_member_expression_mut,
     [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression,]
 );
 
@@ -1552,6 +1556,8 @@ shared_enum_variants!(
     is_declaration,
     as_declaration,
     as_declaration_mut,
+    to_declaration,
+    to_declaration_mut,
     [
         VariableDeclaration,
         FunctionDeclaration,
@@ -1571,6 +1577,8 @@ shared_enum_variants!(
     is_module_declaration,
     as_module_declaration,
     as_module_declaration_mut,
+    to_module_declaration,
+    to_module_declaration_mut,
     [
         ImportDeclaration,
         ExportAllDeclaration,

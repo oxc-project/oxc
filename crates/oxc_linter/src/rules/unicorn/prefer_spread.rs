@@ -196,8 +196,7 @@ fn is_not_array(expr: &Expression) -> bool {
     let ident = match expr.without_parenthesized() {
         Expression::Identifier(ident) => ident.name.as_str(),
         expr if expr.is_member_expression() => {
-            let member_expr = expr.as_member_expression().unwrap();
-            if let Some(v) = member_expr.static_property_name() {
+            if let Some(v) = expr.to_member_expression().static_property_name() {
                 v
             } else {
                 return false;

@@ -67,7 +67,7 @@ impl Rule for ThrowNewError {
                 }
             }
             callee if callee.is_member_expression() => {
-                let member_expr = callee.as_member_expression().unwrap();
+                let member_expr = callee.to_member_expression();
                 if member_expr.is_computed() {
                     return;
                 }

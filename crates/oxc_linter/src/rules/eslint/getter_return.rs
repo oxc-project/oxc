@@ -91,11 +91,11 @@ impl GetterReturn {
     fn handle_actual_expression<'a>(callee: &'a Expression<'a>) -> bool {
         match callee.without_parenthesized() {
             expr if expr.is_member_expression() => {
-                Self::handle_member_expression(expr.as_member_expression().unwrap())
+                Self::handle_member_expression(expr.to_member_expression())
             }
             Expression::ChainExpression(ce) => match &ce.expression {
                 match_member_expression_variants!(ChainElement) => {
-                    Self::handle_member_expression(ce.expression.as_member_expression().unwrap())
+                    Self::handle_member_expression(ce.expression.to_member_expression())
                 }
                 ChainElement::CallExpression(_) => {
                     false // todo: make a test for this

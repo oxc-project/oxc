@@ -84,7 +84,7 @@ impl Rule for NoEval {
         loop {
             let (new_object, name) = match object {
                 Some(object) if object.is_member_expression() => {
-                    let member_expr = object.as_member_expression().unwrap();
+                    let member_expr = object.to_member_expression();
                     (
                         Some(member_expr.object().get_inner_expression()),
                         member_expr.static_property_name(),

@@ -375,7 +375,7 @@ fn is_poorly_breakable_member_or_call_chain<'a>(p: &Prettier<'a>, expr: &Express
             }
             _ if node.is_member_expression() => {
                 is_chain_expression = true;
-                Some(node.as_member_expression().unwrap().object())
+                Some(node.to_member_expression().object())
             }
             Expression::Identifier(_) | Expression::ThisExpression(_) => {
                 is_ident_or_this_expr = true;

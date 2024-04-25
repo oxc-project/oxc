@@ -606,10 +606,9 @@ impl<'a> Prettier<'a> {
                 },
                 AssignmentTarget::AssignmentTargetPattern(_) | AssignmentTarget::Dummy => false,
             },
-            _ if e.is_member_expression() => Self::starts_with_no_lookahead_token(
-                e.as_member_expression().unwrap().object(),
-                span,
-            ),
+            _ if e.is_member_expression() => {
+                Self::starts_with_no_lookahead_token(e.to_member_expression().object(), span)
+            }
             Expression::TaggedTemplateExpression(e) => {
                 if matches!(e.tag, Expression::FunctionExpression(_)) {
                     return false;
