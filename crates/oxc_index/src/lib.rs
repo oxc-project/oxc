@@ -187,6 +187,19 @@ pub trait Idx: Copy + 'static + Ord + Debug + Hash {
     fn index(self) -> usize;
 }
 
+pub trait NonZeroIdx: Copy + 'static + Ord + Debug + Hash {
+    /// Construct an Index from a `usize`. This is equivalent to `TryFrom<usize>`.
+    ///
+    /// Note that this will panic if `idx` does not fit or is 0 (unless checking has
+    /// been disabled, as mentioned above). Also note that `NonZeroIdx` implementations
+    /// are free to define what "fit" means as they desire.
+    #[allow(unsafe_code)]
+    unsafe fn from_usize(idx: usize) -> Self;
+
+    /// Get the underlying index. This is equivalent to `Into<usize>`
+    fn index(self) -> usize;
+}
+
 /// A macro equivalent to the stdlib's `vec![]`, but producing an `IndexVec`.
 #[macro_export]
 macro_rules! index_vec {
