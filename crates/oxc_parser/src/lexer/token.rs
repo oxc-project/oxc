@@ -35,7 +35,7 @@ pub struct Token {
 
 #[cfg(target_pointer_width = "64")]
 mod size_asserts {
-    oxc_index::assert_eq_size!(super::Token, [u8; 16]);
+    static_assertions::assert_eq_size!(super::Token, [u8; 16]);
 }
 
 impl Token {

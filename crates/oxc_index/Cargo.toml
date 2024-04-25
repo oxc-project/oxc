@@ -20,7 +20,6 @@ doctest = false
 
 [dependencies]
 serde             = { workspace = true }
-static_assertions = { workspace = true }
 
 [features]
 serialize = []

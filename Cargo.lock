@@ -1245,6 +1245,7 @@ dependencies = [
  "ryu-js",
  "serde",
  "serde_json",
+ "static_assertions",
  "tsify",
  "wasm-bindgen",
 ]
@@ -1354,7 +1355,6 @@ name = "oxc_index"
 version = "0.12.5"
 dependencies = [
  "serde",
- "static_assertions",
 ]
 
 [[package]]
@@ -1420,6 +1420,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+ "static_assertions",
  "url",
 ]
 
@@ -1490,12 +1491,12 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
- "oxc_index",
  "oxc_span",
  "oxc_syntax",
  "rustc-hash",
  "seq-macro",
  "serde_json",
+ "static_assertions",
 ]
 
 [[package]]

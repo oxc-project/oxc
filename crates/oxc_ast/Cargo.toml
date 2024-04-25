@@ -33,6 +33,8 @@ ryu-js     = { workspace = true, optional = true }
 tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 
+static_assertions = { workspace = true }
+
 [features]
 default = []
 serialize = [
