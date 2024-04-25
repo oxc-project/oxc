@@ -1,8 +1,5 @@
-mod ts_fixtures;
-
 use oxc_transform_conformance::{TestRunner, TestRunnerOptions};
 use pico_args::Arguments;
-use ts_fixtures::TypeScriptFixtures;
 
 fn main() {
     let mut args = Arguments::from_env();
@@ -13,5 +10,4 @@ fn main() {
     };
 
     TestRunner::new(options.clone()).run();
-    TypeScriptFixtures::new(options).run();
 }
