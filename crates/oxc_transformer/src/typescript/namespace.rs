@@ -12,6 +12,8 @@ use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 impl<'a> TypeScript<'a> {
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     pub(super) fn transform_program_for_namespace(&self, program: &mut Program<'a>) {
+        // namespace declaration is only allowed at the top level
+
         if !has_namespace(program.body.as_slice()) {
             return;
         }
