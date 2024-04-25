@@ -132,18 +132,23 @@ impl<'a> JSDocTagTypePart<'a> {
 pub struct JSDocTagTypeNamePart<'a> {
     raw: &'a str,
     pub span: Span,
+    pub optional: bool,
+    pub default: bool,
 }
 impl<'a> JSDocTagTypeNamePart<'a> {
     pub fn new(part_content: &'a str, span: Span) -> Self {
         debug_assert!(part_content.trim() == part_content);
 
-        Self { raw: part_content, span }
+        let optional = part_content.starts_with('[') && part_content.ends_with(']');
+        let default = part_content.contains('=');
+
+        Self { raw: part_content, span, optional, default }
     }
 
     /// Returns the type name itself.
     /// `.raw` may be like `[foo = var]`, so extract the name
     pub fn parsed(&self) -> &'a str {
-        if self.raw.starts_with('[') {
+        if self.optional {
             let inner = self.raw.trim_start_matches('[').trim_end_matches(']').trim();
             return inner.split_once('=').map_or(inner, |(v, _)| v.trim());
         }
