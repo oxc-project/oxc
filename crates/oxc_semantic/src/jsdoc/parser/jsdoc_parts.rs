@@ -140,7 +140,7 @@ impl<'a> JSDocTagTypeNamePart<'a> {
         debug_assert!(part_content.trim() == part_content);
 
         let optional = part_content.starts_with('[') && part_content.ends_with(']');
-        let default = part_content.contains('=');
+        let default = optional && part_content.contains('=');
 
         Self { raw: part_content, span, optional, default }
     }
