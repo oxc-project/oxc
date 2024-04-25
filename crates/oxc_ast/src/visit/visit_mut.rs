@@ -2975,7 +2975,6 @@ pub mod walk_mut {
             TSTupleElement::TSType(ty) => visitor.visit_ts_type(ty),
             TSTupleElement::TSOptionalType(ty) => visitor.visit_ts_type(&mut ty.type_annotation),
             TSTupleElement::TSRestType(ty) => visitor.visit_ts_type(&mut ty.type_annotation),
-            TSTupleElement::TSNamedTupleMember(ty) => visitor.visit_ts_type(&mut ty.element_type),
             TSTupleElement::Dummy => dummy!(),
         };
     }

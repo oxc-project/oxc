@@ -74,9 +74,9 @@ impl<'a> SeparatedList<'a> for TSTupleElementList<'a> {
             p.expect(Kind::Colon)?;
 
             let element_type = p.parse_ts_type()?;
-            self.elements.push(TSTupleElement::TSNamedTupleMember(p.ast.alloc(
+            self.elements.push(TSTupleElement::TSType(TSType::TSNamedTupleMember(p.ast.alloc(
                 TSNamedTupleMember { span: p.end_span(span), element_type, label, optional },
-            )));
+            ))));
 
             return Ok(());
         }
