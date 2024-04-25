@@ -117,6 +117,7 @@ pub enum TSLiteral<'a> {
 
 /// Macro to add `TSType` variants to enum.
 /// Used for `TSType` and `TSTupleElement` enums, as they share some variants.
+// TODO: Add `@inherit TSType` to the input to make it more explicit what this macro does.
 macro_rules! add_ts_type_variants {
     (
         $(#[$attr:meta])*
@@ -170,6 +171,7 @@ macro_rules! add_ts_type_variants {
     }
 }
 
+// TODO: Create similar macros for the other inherited enums
 #[macro_export]
 macro_rules! match_ts_type_variants {
     ($ty:ident) => {
@@ -212,6 +214,7 @@ macro_rules! match_ts_type_variants {
 }
 pub use match_ts_type_variants;
 
+// TODO: This should be created by `add_ts_type_variants!` macro, so as not to repeat the variants here
 shared_enum_variants!(
     TSTupleElement,
     TSType,

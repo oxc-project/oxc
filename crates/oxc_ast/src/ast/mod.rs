@@ -7,6 +7,9 @@ mod ts;
 
 pub use self::{js::*, jsx::*, literal::*, ts::*};
 
+// TODO: `as_*` and `as_*_mut` should become `try_as_*` and `try_as_*_mut`.
+// Then `as_*` can be equivalent to `try_as_*().unwrap()` which is a common pattern.
+
 /// Macro to allow conversion between 2 enum types where they share some of the same variants.
 /// "Parent" enum contains all the "child"'s variants, plus parent contains further other variants.
 /// e.g. `Statement` and `Declaration`.
