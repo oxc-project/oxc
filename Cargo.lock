@@ -759,15 +759,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "index_vec"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74086667896a940438f2118212f313abba4aff3831fef6f4b17d02add5c8bb60"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "indexmap"
 version = "2.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1362,7 +1353,7 @@ dependencies = [
 name = "oxc_index"
 version = "0.12.5"
 dependencies = [
- "index_vec",
+ "serde",
  "static_assertions",
 ]
 
