@@ -7,6 +7,9 @@ mod ts;
 
 pub use self::{js::*, jsx::*, literal::*, ts::*};
 
+// TODO: Make macro implement for multiple types simultaneously.
+// e.g. `shared_enum_variants!(MemberExpression, [Expression, SimpleAssignmentTarget, ChainElement], [ ... ])`
+
 /// Macro to allow conversion between 2 enum types where they share some of the same variants.
 /// "Parent" enum contains all the "child"'s variants, plus parent contains further other variants.
 /// e.g. `Statement` and `Declaration`.

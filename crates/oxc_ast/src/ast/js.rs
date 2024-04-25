@@ -105,6 +105,39 @@ macro_rules! match_member_expression_variants {
 }
 pub use match_member_expression_variants;
 
+shared_enum_variants!(
+    Expression,
+    MemberExpression,
+    is_member_expression,
+    as_member_expression,
+    as_member_expression_mut,
+    to_member_expression,
+    to_member_expression_mut,
+    [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression]
+);
+
+shared_enum_variants!(
+    SimpleAssignmentTarget,
+    MemberExpression,
+    is_member_expression,
+    as_member_expression,
+    as_member_expression_mut,
+    to_member_expression,
+    to_member_expression_mut,
+    [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression]
+);
+
+shared_enum_variants!(
+    ChainElement,
+    MemberExpression,
+    is_member_expression,
+    as_member_expression,
+    as_member_expression_mut,
+    to_member_expression,
+    to_member_expression_mut,
+    [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression]
+);
+
 add_member_expression_variants! {
     /// Expression
     #[ast_node]
@@ -161,17 +194,6 @@ add_member_expression_variants! {
         @inherit MemberExpression
     }
 }
-
-shared_enum_variants!(
-    Expression,
-    MemberExpression,
-    is_member_expression,
-    as_member_expression,
-    as_member_expression_mut,
-    to_member_expression,
-    to_member_expression_mut,
-    [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression]
-);
 
 impl<'a> Expression<'a> {
     pub fn is_typescript_syntax(&self) -> bool {
@@ -1106,17 +1128,6 @@ add_member_expression_variants! {
     }
 }
 
-shared_enum_variants!(
-    SimpleAssignmentTarget,
-    MemberExpression,
-    is_member_expression,
-    as_member_expression,
-    as_member_expression_mut,
-    to_member_expression,
-    to_member_expression_mut,
-    [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression]
-);
-
 impl<'a> SimpleAssignmentTarget<'a> {
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         match self {
@@ -1337,17 +1348,6 @@ add_member_expression_variants! {
     }
 }
 
-shared_enum_variants!(
-    ChainElement,
-    MemberExpression,
-    is_member_expression,
-    as_member_expression,
-    as_member_expression_mut,
-    to_member_expression,
-    to_member_expression_mut,
-    [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression]
-);
-
 /// Parenthesized Expression
 #[ast_node]
 #[derive(Debug, Hash)]
@@ -1408,6 +1408,27 @@ macro_rules! match_declaration_variants {
 }
 pub use match_declaration_variants;
 
+shared_enum_variants!(
+    Statement,
+    Declaration,
+    is_declaration,
+    as_declaration,
+    as_declaration_mut,
+    to_declaration,
+    to_declaration_mut,
+    [
+        VariableDeclaration,
+        FunctionDeclaration,
+        ClassDeclaration,
+        UsingDeclaration,
+        TSTypeAliasDeclaration,
+        TSInterfaceDeclaration,
+        TSEnumDeclaration,
+        TSModuleDeclaration,
+        TSImportEqualsDeclaration,
+    ]
+);
+
 /// Macro to add `ModuleDeclaration` variants to enum.
 /// Used for `Statement` and `ModuleDeclaration` enums, as they share some variants.
 /// Discriminants start with 64, so that `Statement::is_module_declaration` is
@@ -1458,6 +1479,24 @@ macro_rules! match_module_declaration_variants {
     };
 }
 pub use match_module_declaration_variants;
+
+shared_enum_variants!(
+    Statement,
+    ModuleDeclaration,
+    is_module_declaration,
+    as_module_declaration,
+    as_module_declaration_mut,
+    to_module_declaration,
+    to_module_declaration_mut,
+    [
+        ImportDeclaration,
+        ExportAllDeclaration,
+        ExportDefaultDeclaration,
+        ExportNamedDeclaration,
+        TSExportAssignment,
+        TSNamespaceExportDeclaration,
+    ]
+);
 
 /// Macro to add `Declaration` and `ModuleDeclaration` variants to enum.
 /// Used for `Statement`, as shares some variants with `Declaration` and `ModuleDeclaration`.
@@ -1549,45 +1588,6 @@ add_all_declaration_variants! {
         @inherit ModuleDeclaration
     }
 }
-
-shared_enum_variants!(
-    Statement,
-    Declaration,
-    is_declaration,
-    as_declaration,
-    as_declaration_mut,
-    to_declaration,
-    to_declaration_mut,
-    [
-        VariableDeclaration,
-        FunctionDeclaration,
-        ClassDeclaration,
-        UsingDeclaration,
-        TSTypeAliasDeclaration,
-        TSInterfaceDeclaration,
-        TSEnumDeclaration,
-        TSModuleDeclaration,
-        TSImportEqualsDeclaration,
-    ]
-);
-
-shared_enum_variants!(
-    Statement,
-    ModuleDeclaration,
-    is_module_declaration,
-    as_module_declaration,
-    as_module_declaration_mut,
-    to_module_declaration,
-    to_module_declaration_mut,
-    [
-        ImportDeclaration,
-        ExportAllDeclaration,
-        ExportDefaultDeclaration,
-        ExportNamedDeclaration,
-        TSExportAssignment,
-        TSNamespaceExportDeclaration,
-    ]
-);
 
 impl<'a> Statement<'a> {
     pub fn is_iteration_statement(&self) -> bool {
