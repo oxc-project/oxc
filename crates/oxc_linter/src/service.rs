@@ -1,6 +1,5 @@
 use std::{
     collections::HashMap,
-    env,
     ffi::OsStr,
     fs,
     path::{Path, PathBuf},
@@ -357,22 +356,24 @@ impl Runtime {
             return semantic_ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
         };
 
+        let lint_ctx = LintContext::new(
+            self.cwd.as_ref(),
+            path.to_path_buf().into_boxed_path(),
+            &Rc::new(semantic_ret.semantic),
+            self.type_checker.clone(),
+        );
+
         if let Some(ref type_checker) = self.type_checker {
             // TODO: do something about unwrap
             let mut type_checker = type_checker.lock().unwrap();
             type_checker
                 .open(&OpenRequest {
-                    file: env::current_dir().unwrap().join(path).to_string_lossy().as_ref(),
+                    file: lint_ctx.absolute_path(),
                     file_content: Some(&source_text),
                 })
                 .unwrap();
         }
 
-        let lint_ctx = LintContext::new(
-            path.to_path_buf().into_boxed_path(),
-            &Rc::new(semantic_ret.semantic),
-            self.type_checker.clone(),
-        );
         let result = self.linter.run(lint_ctx);
 
         if let Some(ref type_checker) = self.type_checker {

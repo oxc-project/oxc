@@ -1,4 +1,8 @@
-use std::{env, path::PathBuf, rc::Rc};
+use std::{
+    env,
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
@@ -39,7 +43,12 @@ fn bench_linter(criterion: &mut Criterion) {
                 let linter = Linter::from_options(lint_options).unwrap();
                 let semantic = Rc::new(semantic_ret.semantic);
                 b.iter(|| {
-                    linter.run(LintContext::new(PathBuf::from("").into_boxed_path(), &semantic))
+                    linter.run(LintContext::new(
+                        Path::new("./"),
+                        PathBuf::from("").into_boxed_path(),
+                        &semantic,
+                        None,
+                    ))
                 });
             },
         );

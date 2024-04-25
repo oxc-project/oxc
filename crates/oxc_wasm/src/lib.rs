@@ -3,7 +3,11 @@
 
 mod options;
 
-use std::{cell::RefCell, path::PathBuf, rc::Rc};
+use std::{
+    cell::RefCell,
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 use oxc::{
     allocator::Allocator,
@@ -191,7 +195,8 @@ impl Oxc {
         if run_options.lint() && self.diagnostics.borrow().is_empty() {
             let semantic = Rc::new(semantic_ret.semantic);
             // TODO: create type checker
-            let lint_ctx = LintContext::new(path.into_boxed_path(), &semantic, None);
+            let lint_ctx =
+                LintContext::new(Path::new("./"), path.into_boxed_path(), &semantic, None);
             let linter_ret = Linter::default().run(lint_ctx);
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);

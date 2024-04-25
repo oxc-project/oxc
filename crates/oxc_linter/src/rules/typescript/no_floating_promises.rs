@@ -142,8 +142,8 @@ impl NoFloatingPromises {
             }
         }
 
-        let path = ctx.file_path().to_string_lossy();
-        let request = NodeRequest { file: path.as_ref(), span: node.get_span().into() };
+        let path = ctx.absolute_path();
+        let request = NodeRequest { file: path, span: node.get_span().into() };
         // TODO: do something about unwrap
         let is_promise_array =
             ctx.use_type_checker(|type_checker| type_checker.is_promise_array(&request)).unwrap();
@@ -175,8 +175,8 @@ impl NoFloatingPromises {
         node: &ChainElement<'a>,
         ctx: &LintContext<'a>,
     ) -> PromiseState {
-        let path = ctx.file_path().to_string_lossy();
-        let request = NodeRequest { file: path.as_ref(), span: node.get_span().into() };
+        let path = ctx.absolute_path();
+        let request = NodeRequest { file: path, span: node.get_span().into() };
         // TODO: do something about unwrap
         let is_promise_array =
             ctx.use_type_checker(|type_checker| type_checker.is_promise_array(&request)).unwrap();
@@ -296,13 +296,11 @@ fn get_object_from_finally_call<'a, 'b>(
 }
 
 fn is_valid_rejection_handler<'a>(node: &Argument<'a>, ctx: &LintContext<'a>) -> bool {
-    let path = ctx.file_path().to_string_lossy();
+    let path = ctx.absolute_path();
     // TODO: do something about unwrap
     ctx.use_type_checker(|type_checker| {
-        type_checker.is_valid_rejection_handler(&NodeRequest {
-            file: path.as_ref(),
-            span: node.get_span().into(),
-        })
+        type_checker
+            .is_valid_rejection_handler(&NodeRequest { file: path, span: node.get_span().into() })
     })
     .unwrap()
 }

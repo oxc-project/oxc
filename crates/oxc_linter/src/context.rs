@@ -32,6 +32,8 @@ pub struct LintContext<'a> {
 
     file_path: Box<Path>,
 
+    absolute_path: Box<String>,
+
     settings: Arc<ESLintSettings>,
 
     env: Arc<ESLintEnv>,
@@ -41,12 +43,14 @@ pub struct LintContext<'a> {
 
 impl<'a> LintContext<'a> {
     pub fn new(
+        cwd: &Path,
         file_path: Box<Path>,
         semantic: &Rc<Semantic<'a>>,
         type_checker: Option<Arc<Mutex<TSServerClient>>>,
     ) -> Self {
         let disable_directives =
             DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias()).build();
+        let absolute_path = Box::new(cwd.join(file_path.as_ref()).to_string_lossy().into());
         Self {
             semantic: Rc::clone(semantic),
             diagnostics: RefCell::new(vec![]),
@@ -54,6 +58,7 @@ impl<'a> LintContext<'a> {
             fix: false,
             current_rule_name: "",
             file_path,
+            absolute_path,
             settings: Arc::new(ESLintSettings::default()),
             env: Arc::new(ESLintEnv::default()),
             type_checker,
@@ -100,6 +105,10 @@ impl<'a> LintContext<'a> {
 
     pub fn file_path(&self) -> &Path {
         &self.file_path
+    }
+
+    pub fn absolute_path(&self) -> &str {
+        &self.absolute_path.as_ref()
     }
 
     pub fn envs(&self) -> &ESLintEnv {

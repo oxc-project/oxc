@@ -300,6 +300,7 @@ impl IsolatedLintHandler {
             };
 
             let lint_ctx = LintContext::new(
+                Path::new("./"),
                 path.to_path_buf().into_boxed_path(),
                 &Rc::new(semantic_ret.semantic),
                 // TODO: create type checker

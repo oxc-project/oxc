@@ -314,16 +314,17 @@ mod test {
         let semantic_ret = SemanticBuilder::new("", source_type).build(program).semantic;
         let semantic_ret = Rc::new(semantic_ret);
 
+        let cwd = Path::new("./");
         let path = Path::new("foo.js");
-        let ctx = LintContext::new(Box::from(path), &semantic_ret, None);
+        let ctx = LintContext::new(&cwd, Box::from(path), &semantic_ret, None);
         assert!(!super::is_jest_file(&ctx));
 
         let path = Path::new("foo.test.js");
-        let ctx = LintContext::new(Box::from(path), &semantic_ret, None);
+        let ctx = LintContext::new(&cwd, Box::from(path), &semantic_ret, None);
         assert!(super::is_jest_file(&ctx));
 
         let path = Path::new("__tests__/foo/test.spec.js");
-        let ctx = LintContext::new(Box::from(path), &semantic_ret, None);
+        let ctx = LintContext::new(&cwd, Box::from(path), &semantic_ret, None);
         assert!(super::is_jest_file(&ctx));
     }
 }
