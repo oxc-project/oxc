@@ -1,0 +1,57 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_defaults
+---
+  ⚠ eslint-plugin-jsdoc(no-defaults): Defaults are not permitted.
+   ╭─[no_defaults.tsx:3:33]
+ 2 │                       /**
+ 3 │                        * @param {number} [foo="7"]
+   ·                                          ─────────
+ 4 │                        */
+   ╰────
+  help: Defaults are not permitted on `@param` tag.
+
+  ⚠ eslint-plugin-jsdoc(no-defaults): Defaults are not permitted.
+   ╭─[no_defaults.tsx:4:33]
+ 3 │                        * @param {number} foo
+ 4 │                        * @param {number} [bar = 1]
+   ·                                          ─────────
+ 5 │                        */
+   ╰────
+  help: Defaults are not permitted on `@param` tag.
+
+  ⚠ eslint-plugin-jsdoc(no-defaults): Defaults are not permitted.
+   ╭─[no_defaults.tsx:4:33]
+ 3 │                       /**
+ 4 │                        * @param {number} [foo="7"]
+   ·                                          ─────────
+ 5 │                        */
+   ╰────
+  help: Defaults are not permitted on `@param` tag.
+
+  ⚠ eslint-plugin-jsdoc(no-defaults): Defaults are not permitted.
+   ╭─[no_defaults.tsx:3:33]
+ 2 │                       /**
+ 3 │                        * @param {number} [foo="7"]
+   ·                                          ─────────
+ 4 │                        */
+   ╰────
+  help: Optional param names are not permitted on `@param` tag.
+
+  ⚠ eslint-plugin-jsdoc(no-defaults): Defaults are not permitted.
+   ╭─[no_defaults.tsx:3:33]
+ 2 │                       /**
+ 3 │                        * @param {number} [foo]
+   ·                                          ─────
+ 4 │                        */
+   ╰────
+  help: Optional param names are not permitted on `@param` tag.
+
+  ⚠ eslint-plugin-jsdoc(no-defaults): Defaults are not permitted.
+   ╭─[no_defaults.tsx:3:31]
+ 2 │                       /**
+ 3 │                        * @arg {number} [foo="7"]
+   ·                                        ─────────
+ 4 │                        */
+   ╰────
+  help: Defaults are not permitted on `@arg` tag.
