@@ -20,6 +20,10 @@ impl<'a> TypeScript<'a> {
 
         // Collect all binding names. Such as function name and class name.
         let mut names: FxHashSet<Atom<'a>> = FxHashSet::default();
+
+        // Recreate the statements vec for memory efficiency.
+        // Inserting the `let` declaration multiple times will reallocate the whole statements vec
+        // every time a namespace declaration is encountered.
         let mut new_stmts = self.ctx.ast.new_vec();
 
         for stmt in self.ctx.ast.move_statement_vec(&mut program.body) {

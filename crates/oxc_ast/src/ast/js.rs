@@ -2331,10 +2331,6 @@ impl<'a> ModuleDeclaration<'a> {
         matches!(self, Self::ExportDefaultDeclaration(_))
     }
 
-    pub fn is_named_export(&self) -> bool {
-        matches!(self, Self::ExportNamedDeclaration(_))
-    }
-
     pub fn source(&self) -> Option<&StringLiteral<'a>> {
         match self {
             Self::ImportDeclaration(decl) => Some(&decl.source),
