@@ -41,7 +41,7 @@ use oxc_semantic::AstNode;
 #[cfg(target_pointer_width = "64")]
 #[test]
 fn size_asserts() {
-    use oxc_index::assert_eq_size;
+    use static_assertions::assert_eq_size;
 
     // `RuleEnum` runs in a really tight loop, make sure it is small for CPU cache.
     // A reduction from 168 bytes to 16 results 15% performance improvement.

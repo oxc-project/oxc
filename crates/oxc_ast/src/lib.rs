@@ -56,7 +56,7 @@ pub use crate::{
 #[test]
 fn size_asserts() {
     use crate::ast;
-    use oxc_index::assert_eq_size;
+    use static_assertions::assert_eq_size;
 
     assert_eq_size!(ast::Statement, [u8; 16]);
     assert_eq_size!(ast::Expression, [u8; 16]);

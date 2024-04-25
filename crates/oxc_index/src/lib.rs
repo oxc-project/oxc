@@ -150,8 +150,6 @@ mod indexing;
 pub use idxslice::{IndexBox, IndexSlice};
 pub use indexing::{IdxRangeBounds, IdxSliceIndex};
 
-pub use static_assertions::*;
-
 #[macro_use]
 mod macros;
 
