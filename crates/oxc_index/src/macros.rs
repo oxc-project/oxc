@@ -185,6 +185,28 @@ macro_rules! define_index_type {
             @debug_fmt ["{}"]
             @max [(<$raw>::max_value() as usize)]
             @no_check_max [false]
+            @non_zero [false]
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! define_non_zero_index_type {
+    // public api
+    (
+        $(#[$attrs:meta])*
+        $v:vis struct $type:ident = $raw:ident;
+        $($CONFIG_NAME:ident = $value:expr;)* $(;)?
+    ) => {
+        $crate::__define_index_type_inner!{
+            @configs [$(($CONFIG_NAME; $value))*]
+            @attrs [$(#[$attrs])*]
+            @derives [#[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]]
+            @decl [$v struct $type ($raw)]
+            @debug_fmt ["{}"]
+            @max [(<$raw>::MAX.get() as usize)]
+            @no_check_max [false]
+            @non_zero [true]
         }
     };
 }
@@ -228,6 +250,83 @@ macro_rules! __internal_maybe_index_impl_serde {
 
 #[macro_export]
 #[doc(hidden)]
+macro_rules! __define_index_type_inner_impl_generic {
+    (@type[true] $type:ident $v:vis $raw:ident) => {
+        $crate::__define_non_zero_index_type_inner_impl!(@type $type $v $raw);
+    };
+    (@type[false] $type:ident $v:vis $raw:ident) => {
+        $crate::__define_index_type_inner_impl!(@type $type $v $raw);
+    };
+}
+
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __define_index_type_inner_impl {
+    (@type $type:ident $v:vis $raw:ident) => {
+            const _ENSURE_RAW_IS_UNSIGNED: [(); 0] = [(); <$raw>::MIN as usize];
+
+            /// Construct this index type from the wrapped integer type.
+            #[inline(always)]
+            $v fn from_raw(value: $raw) -> Self {
+                Self::from_usize(value as usize)
+            }
+
+            /// Construct from a usize without any checks.
+            #[inline(always)]
+            $v const fn from_usize_unchecked(value: usize) -> Self {
+                Self { _raw: value as $raw }
+            }
+
+            /// Construct this index type from a usize.
+            #[inline]
+            $v fn from_usize(value: usize) -> Self {
+                Self::check_index(value as usize);
+                Self { _raw: value as $raw }
+            }
+
+            /// Get the wrapped index as a usize.
+            #[inline(always)]
+            $v const fn index(self) -> usize {
+                self._raw as usize
+            }
+    };
+}
+
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __define_non_zero_index_type_inner_impl {
+    (@type $type:ident $v:vis $raw:ident) => {
+            const _ENSURE_RAW_IS_UNSIGNED: [(); 1] = [(); <$raw>::MIN.get() as usize];
+
+            /// Construct this index type from the wrapped integer type.
+            #[inline(always)]
+            $v fn from_raw(value: $raw) -> Self {
+                Self::from_usize(value.get() as usize)
+            }
+
+            /// Construct from a usize without any checks.
+            #[inline(always)]
+            $v const unsafe fn from_usize_unchecked(value: usize) -> Self {
+                Self { _raw: $raw::new_unchecked(value) }
+            }
+
+            /// Construct this index type from a usize.
+            #[inline]
+            $v fn from_usize(value: usize) -> Self {
+                Self::check_index(value as usize);
+                Self { _raw: $raw::new(value).unwrap() }
+            }
+
+            /// Get the wrapped index as a usize.
+            #[inline(always)]
+            $v const fn index(self) -> usize {
+                self._raw.get() as usize
+            }
+    };
+}
+
+#[macro_export]
+#[doc(hidden)]
 macro_rules! __define_index_type_inner {
     // DISABLE_MAX_INDEX_CHECK
     (
@@ -238,6 +337,7 @@ macro_rules! __define_index_type_inner {
         @debug_fmt [$dbg:expr]
         @max [$max:expr]
         @no_check_max [$_old_no_check_max:expr]
+        @non_zero [$non_zero:tt]
     ) => {
         $crate::__define_index_type_inner!{
             @configs [$(($CONFIG_NAME; $value))*]
@@ -247,6 +347,7 @@ macro_rules! __define_index_type_inner {
             @debug_fmt [$dbg]
             @max [$max]
             @no_check_max [$no_check_max]
+            @non_zero [$non_zero]
         }
     };
 
@@ -259,6 +360,7 @@ macro_rules! __define_index_type_inner {
         @debug_fmt [$dbg:expr]
         @max [$max:expr]
         @no_check_max [$cm:expr]
+        @non_zero [$non_zero:tt]
     ) => {
         $crate::__define_index_type_inner!{
             @configs [$(($CONFIG_NAME; $value))*]
@@ -268,6 +370,7 @@ macro_rules! __define_index_type_inner {
             @debug_fmt [$dbg]
             @max [$new_max]
             @no_check_max [$cm]
+            @non_zero [$non_zero]
         }
     };
 
@@ -280,6 +383,7 @@ macro_rules! __define_index_type_inner {
         @debug_fmt [$dbg:expr]
         @max [$max:expr]
         @no_check_max [$no_check_max:expr]
+        @non_zero [$non_zero:tt]
     ) => {
         $crate::__define_index_type_inner!{
             @configs [$(($CONFIG_NAME; $value))*]
@@ -289,6 +393,7 @@ macro_rules! __define_index_type_inner {
             @debug_fmt [$dbg]
             @max [$max]
             @no_check_max [$no_check_max]
+            @non_zero [$non_zero]
         }
         impl Default for $type {
             #[inline]
@@ -307,6 +412,7 @@ macro_rules! __define_index_type_inner {
         @debug_fmt [$old_dbg:expr]
         @max [$max:expr]
         @no_check_max [$no_check_max:expr]
+        @non_zero [$non_zero:tt]
     ) => {
         $crate::__define_index_type_inner!{
             @configs [$(($CONFIG_NAME; $value))*]
@@ -316,6 +422,7 @@ macro_rules! __define_index_type_inner {
             @debug_fmt [$dbg]
             @max [$max]
             @no_check_max [$no_check_max]
+            @non_zero [$non_zero]
         }
     };
 
@@ -328,6 +435,7 @@ macro_rules! __define_index_type_inner {
         @debug_fmt [$dbg:expr]
         @max [$max:expr]
         @no_check_max [$no_check_max:expr]
+        @non_zero [$non_zero:tt]
     ) => {
         $crate::__define_index_type_inner!{
             @configs [$(($CONFIG_NAME; $value))*]
@@ -337,6 +445,7 @@ macro_rules! __define_index_type_inner {
             @debug_fmt [$dbg]
             @max [$max]
             @no_check_max [$no_check_max]
+            @non_zero [$non_zero]
         }
 
         impl core::fmt::Display for $type {
@@ -355,6 +464,7 @@ macro_rules! __define_index_type_inner {
         @debug_fmt [$dbg:expr]
         @max [$max:expr]
         @no_check_max [$no_check_max:expr]
+        @non_zero [$non_zero:tt]
     ) => {
         $crate::__define_index_type_inner!{
             @configs [$(($CONFIG_NAME; $value))*]
@@ -364,6 +474,7 @@ macro_rules! __define_index_type_inner {
             @debug_fmt [$dbg]
             @max [$max]
             @no_check_max [$no_check_max]
+            @non_zero [$non_zero]
         }
         // Ensure they passed in true. This is... cludgey.
         const _: [(); 1] = [(); $val as usize];
@@ -391,6 +502,7 @@ macro_rules! __define_index_type_inner {
         @debug_fmt [$dbg:expr]
         @max [$max:expr]
         @no_check_max [$no_check_max:expr]
+        @non_zero [$non_zero:tt]
     ) => {
         $crate::unknown_define_index_type_option!($other);
     };
@@ -403,6 +515,7 @@ macro_rules! __define_index_type_inner {
         @debug_fmt [$dbg:expr]
         @max [$max:expr]
         @no_check_max [$no_check_max:expr]
+        @non_zero [$non_zero:tt]
     ) => {
 
         $(#[$derive])*
@@ -420,16 +533,12 @@ macro_rules! __define_index_type_inner {
             /// larger than MAX_INDEX?
             $v const CHECKS_MAX_INDEX: bool = !$no_check_max;
 
+            $crate::__define_index_type_inner_impl_generic!(@type[$non_zero] $type $v $raw);
+
             /// Construct this index type from a usize. Alias for `from_usize`.
             #[inline(always)]
             $v fn new(value: usize) -> Self {
                 Self::from_usize(value)
-            }
-
-            /// Construct this index type from the wrapped integer type.
-            #[inline(always)]
-            $v fn from_raw(value: $raw) -> Self {
-                Self::from_usize(value as usize)
             }
 
             /// Construct this index type from one in a different domain
@@ -438,29 +547,10 @@ macro_rules! __define_index_type_inner {
                 Self::from_usize(value.index())
             }
 
-            /// Construct from a usize without any checks.
-            #[inline(always)]
-            $v const fn from_usize_unchecked(value: usize) -> Self {
-                Self { _raw: value as $raw }
-            }
-
             /// Construct from the underlying type without any checks.
             #[inline(always)]
             $v const fn from_raw_unchecked(raw: $raw) -> Self {
                 Self { _raw: raw }
-            }
-
-            /// Construct this index type from a usize.
-            #[inline]
-            $v fn from_usize(value: usize) -> Self {
-                Self::check_index(value as usize);
-                Self { _raw: value as $raw }
-            }
-
-            /// Get the wrapped index as a usize.
-            #[inline(always)]
-            $v const fn index(self) -> usize {
-                self._raw as usize
             }
 
             /// Get the wrapped index.
@@ -476,8 +566,6 @@ macro_rules! __define_index_type_inner {
                     $crate::vec::__max_check_fail(v, Self::MAX_INDEX);
                 }
             }
-
-            const _ENSURE_RAW_IS_UNSIGNED: [(); 0] = [(); <$raw>::min_value() as usize];
         }
 
         impl core::fmt::Debug for $type {

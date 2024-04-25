@@ -8,7 +8,10 @@ use core::iter::{self, FromIterator};
 use core::marker::PhantomData;
 use core::slice;
 
-use crate::{Idx, IdxRangeBounds, IdxSliceIndex, IndexBox, IndexSlice};
+#[cfg(feature = "serialize")]
+use crate::IndexBox;
+
+use crate::{Idx, IdxRangeBounds, IdxSliceIndex, IndexSlice};
 
 /// A Vec that only accepts indices of a specific type.
 ///
