@@ -1438,6 +1438,19 @@ macro_rules! add_module_declaration_variants {
     }
 }
 
+#[macro_export]
+macro_rules! match_module_declaration_variants {
+    ($ty:ident) => {
+        $ty::ImportDeclaration(_)
+            | $ty::ExportAllDeclaration(_)
+            | $ty::ExportDefaultDeclaration(_)
+            | $ty::ExportNamedDeclaration(_)
+            | $ty::TSExportAssignment(_)
+            | $ty::TSNamespaceExportDeclaration(_)
+    };
+}
+pub use match_module_declaration_variants;
+
 /// Macro to add `Declaration` and `ModuleDeclaration` variants to enum.
 /// Used for `Statement`, as shares some variants with `Declaration` and `ModuleDeclaration`.
 /// Sadly rust does not allow nesting macros

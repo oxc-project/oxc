@@ -103,13 +103,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
             Self::TryStatement(stmt) => stmt.gen(p, ctx),
             Self::WhileStatement(stmt) => stmt.gen(p, ctx),
             Self::WithStatement(stmt) => stmt.gen(p, ctx),
-
-            Self::ImportDeclaration(_)
-            | Self::ExportAllDeclaration(_)
-            | Self::ExportDefaultDeclaration(_)
-            | Self::ExportNamedDeclaration(_)
-            | Self::TSExportAssignment(_)
-            | Self::TSNamespaceExportDeclaration(_) => {
+            match_module_declaration_variants!(Self) => {
                 self.as_module_declaration().unwrap().gen(p, ctx);
             }
             match_declaration_variants!(Self) => self.as_declaration().unwrap().gen(p, ctx),

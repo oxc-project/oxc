@@ -122,13 +122,7 @@ impl<'a> Format<'a> for Statement<'a> {
             Self::TryStatement(stmt) => stmt.format(p),
             Self::WhileStatement(stmt) => stmt.format(p),
             Self::WithStatement(stmt) => stmt.format(p),
-
-            Self::ImportDeclaration(_)
-            | Self::ExportAllDeclaration(_)
-            | Self::ExportDefaultDeclaration(_)
-            | Self::ExportNamedDeclaration(_)
-            | Self::TSExportAssignment(_)
-            | Self::TSNamespaceExportDeclaration(_) => {
+            match_module_declaration_variants!(Self) => {
                 self.as_module_declaration().unwrap().format(p)
             }
             match_declaration_variants!(Self) => self.as_declaration().unwrap().format(p),

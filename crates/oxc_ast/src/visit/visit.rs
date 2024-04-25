@@ -927,13 +927,7 @@ pub mod walk {
             Statement::TryStatement(stmt) => visitor.visit_try_statement(stmt),
             Statement::WhileStatement(stmt) => visitor.visit_while_statement(stmt),
             Statement::WithStatement(stmt) => visitor.visit_with_statement(stmt),
-
-            Statement::ImportDeclaration(_)
-            | Statement::ExportAllDeclaration(_)
-            | Statement::ExportDefaultDeclaration(_)
-            | Statement::ExportNamedDeclaration(_)
-            | Statement::TSExportAssignment(_)
-            | Statement::TSNamespaceExportDeclaration(_) => {
+            match_module_declaration_variants!(Statement) => {
                 let decl = stmt.as_module_declaration().unwrap();
                 visitor.visit_module_declaration(decl);
             }
