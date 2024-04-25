@@ -199,7 +199,7 @@ impl<I: Idx, T> IndexSlice<I, [T]> {
         self.raw.iter().enumerate().map(|(i, t)| (I::from_usize(i), t))
     }
 
-    /// Get an interator over all our indices.
+    /// Get an iterator over all our indices.
     #[inline(always)]
     pub fn indices(&self) -> iter::Map<Range<usize>, fn(usize) -> I> {
         (0..self.raw.len()).map(I::from_usize)

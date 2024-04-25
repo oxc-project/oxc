@@ -157,7 +157,7 @@ mod macros;
 #[cfg(any(test, feature = "example_generated"))]
 pub mod example_generated;
 
-/// Represents a wrapped value convertable to and from a `usize`.
+/// Represents a wrapped value convertible to and from a `usize`.
 ///
 /// Generally you implement this via the [`define_index_type!`] macro, rather
 /// than manually implementing it.
@@ -168,7 +168,7 @@ pub mod example_generated;
 /// `usize` to an `Idx` implementation might have to handle overflow.
 ///
 /// The way overflow is handled is up to the implementation of `Idx`, but it's
-/// generally panicing, unless it was turned off via the
+/// generally panicking, unless it was turned off via the
 /// `DISABLE_MAX_INDEX_CHECK` option in [`define_index_type!`]. If you need more
 /// subtle handling than this, then you're on your own (or, well, either handle
 /// it earlier, or pick a bigger index type).
