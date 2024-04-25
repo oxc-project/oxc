@@ -58,11 +58,18 @@ impl<'a> TypeScriptAnnotations<'a> {
         program: &mut Program<'a>,
         references: &TypeScriptReferenceCollector,
     ) {
-        let mut import_type_names = FxHashSet::default();
+        let mut type_names = FxHashSet::default();
         let mut module_count = 0;
         let mut removed_count = 0;
 
         program.body.retain_mut(|stmt| {
+            // fix namespace/export-type-only/input.ts
+            // The namespace is type only. So if its name appear in the ExportNamedDeclaration, we should remove it.
+            if let Statement::Declaration(Declaration::TSModuleDeclaration(decl)) = stmt {
+                type_names.insert(decl.id.name().clone());
+                return false;
+            }
+
             let Statement::ModuleDeclaration(module_decl) = stmt else {
                 return true;
             };
@@ -71,7 +78,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                 ModuleDeclaration::ExportNamedDeclaration(decl) => {
                     decl.specifiers.retain(|specifier| {
                         !(specifier.export_kind.is_type()
-                            || import_type_names.contains(specifier.exported.name()))
+                            || type_names.contains(specifier.exported.name()))
                     });
 
                     decl.export_kind.is_type()
@@ -92,7 +99,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                         specifiers.retain(|specifier| match specifier {
                             ImportDeclarationSpecifier::ImportSpecifier(s) => {
                                 if is_type || s.import_kind.is_type() {
-                                    import_type_names.insert(s.local.name.clone());
+                                    type_names.insert(s.local.name.clone());
                                     return false;
                                 }
 
@@ -104,7 +111,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                             }
                             ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
                                 if is_type {
-                                    import_type_names.insert(s.local.name.clone());
+                                    type_names.insert(s.local.name.clone());
                                     return false;
                                 }
 
@@ -115,7 +122,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                             }
                             ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
                                 if is_type {
-                                    import_type_names.insert(s.local.name.clone());
+                                    type_names.insert(s.local.name.clone());
                                 }
 
                                 if self.options.only_remove_type_imports {
@@ -295,6 +302,14 @@ impl<'a> TypeScriptAnnotations<'a> {
         // Remove TS specific statements
         stmts.retain(|stmt| match stmt {
             Statement::ExpressionStatement(s) => !s.expression.is_typescript_syntax(),
+            Statement::Declaration(s) => {
+                // Removed in transform_program_on_exit
+                if matches!(s, Declaration::TSModuleDeclaration(_)) {
+                    true
+                } else {
+                    !s.is_typescript_syntax()
+                }
+            }
             // Ignore ModuleDeclaration as it's handled in the program
             _ => true,
         });

@@ -1216,6 +1216,21 @@ impl<'a> AstBuilder<'a> {
         })
     }
 
+    pub fn plain_export_named_declaration_declaration(
+        &self,
+        span: Span,
+        declaration: Declaration<'a>,
+    ) -> Box<'a, ExportNamedDeclaration<'a>> {
+        self.export_named_declaration(
+            span,
+            Some(declaration),
+            self.new_vec(),
+            None,
+            ImportOrExportKind::Value,
+            None,
+        )
+    }
+
     pub fn plain_export_named_declaration(
         &self,
         span: Span,
