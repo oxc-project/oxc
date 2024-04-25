@@ -117,17 +117,18 @@ pub enum TSLiteral<'a> {
 
 /// Macro to add `TSType` variants to enum.
 /// Used for `TSType` and `TSTupleElement` enums, as they share some variants.
-// TODO: Add `@inherit TSType` to the input to make it more explicit what this macro does.
 macro_rules! add_ts_type_variants {
     (
         $(#[$attr:meta])*
         pub enum $ty:ident<'a> {
-            $($variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+            $($before_name:ident($before_type:ty) = $before_discrim:literal,)*
+            @$(inherit)*$(variants)* TSType
+            $($after_name:ident($after_type:ty) = $after_discrim:literal,)*
         }
     ) => {
         $(#[$attr])*
         pub enum $ty<'a> {
-            $($variant_name($variant_type) = $variant_discrim,)*
+            $($before_name($before_type) = $before_discrim,)*
 
             // Keyword
             TSAnyKeyword(Box<'a, TSAnyKeyword>) = 0,
@@ -167,6 +168,8 @@ macro_rules! add_ts_type_variants {
             // JSDoc
             JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 33,
             JSDocUnknownType(Box<'a, JSDocUnknownType>) = 34,
+
+            $($after_name($after_type) = $after_discrim,)*
         }
     }
 }
@@ -267,6 +270,7 @@ add_ts_type_variants! {
     #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
     pub enum TSType<'a> {
         // `TSType` variants added here by `add_ts_type_variants!` macro
+        @variants TSType
     }
 }
 
@@ -430,11 +434,12 @@ add_ts_type_variants! {
     #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
     #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
     pub enum TSTupleElement<'a> {
+        // `TSType` variants added here by `add_ts_type_variants!` macro
+        @inherit TSType
         // Discriminants start at 64, so that `TSTupleElement::is_ts_type` is a single
         // bitwise AND operation on the discriminant (`discriminant & 63 != 0`).
         TSOptionalType(Box<'a, TSOptionalType<'a>>) = 64,
         TSRestType(Box<'a, TSRestType<'a>>) = 65,
-        // `TSType` variants added here by `add_ts_type_variants!` macro
     }
 }
 

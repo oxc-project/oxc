@@ -74,12 +74,14 @@ macro_rules! add_member_expression_variants {
     (
         $(#[$attr:meta])*
         pub enum $ty:ident<'a> {
-            $($variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+            $($before_name:ident($before_type:ty) = $before_discrim:literal,)*
+            @$(inherit)*$(variants)* MemberExpression
+            $($after_name:ident($after_type:ty) = $after_discrim:literal,)*
         }
     ) => {
         $(#[$attr])*
         pub enum $ty<'a> {
-            $($variant_name($variant_type) = $variant_discrim,)*
+            $($before_name($before_type) = $before_discrim,)*
 
             /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
             ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>) = 64,
@@ -87,6 +89,8 @@ macro_rules! add_member_expression_variants {
             StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>) = 65,
             /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
             PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>) = 66,
+
+            $($after_name($after_type) = $after_discrim,)*
         }
     }
 }
@@ -144,6 +148,7 @@ add_member_expression_variants! {
         TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
 
         // `MemberExpression` variants added here by `add_member_expression_variants!` macro
+        @inherit MemberExpression
     }
 }
 
@@ -710,6 +715,7 @@ add_member_expression_variants! {
     #[cfg_attr(feature = "serialize", serde(untagged))]
     pub enum MemberExpression<'a> {
         // `MemberExpression` variants added here by `add_member_expression_variants!` macro
+        @variants MemberExpression
     }
 }
 
@@ -1085,7 +1091,10 @@ add_member_expression_variants! {
     #[cfg_attr(feature = "serialize", serde(untagged))]
     pub enum SimpleAssignmentTarget<'a> {
         AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>>) = 0,
+
         // `MemberExpression` variants added here by `add_member_expression_variants!` macro
+        @inherit MemberExpression
+
         TSAsExpression(Box<'a, TSAsExpression<'a>>) = 1,
         TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 2,
         TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
@@ -1318,6 +1327,7 @@ add_member_expression_variants! {
         CallExpression(Box<'a, CallExpression<'a>>) = 0,
 
         // `MemberExpression` variants added here by `add_member_expression_variants!` macro
+        @inherit MemberExpression
     }
 }
 
@@ -1349,12 +1359,14 @@ macro_rules! add_declaration_variants {
     (
         $(#[$attr:meta])*
         pub enum $ty:ident<'a> {
-            $($variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+            $($before_name:ident($before_type:ty) = $before_discrim:literal,)*
+            @$(inherit)*$(variants)* Declaration
+            $($after_name:ident($after_type:ty) = $after_discrim:literal,)*
         }
     ) => {
         $(#[$attr])*
         pub enum $ty<'a> {
-            $($variant_name($variant_type) = $variant_discrim,)*
+            $($before_name($before_type) = $before_discrim,)*
 
             VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
             FunctionDeclaration(Box<'a, Function<'a>>) = 33,
@@ -1366,6 +1378,8 @@ macro_rules! add_declaration_variants {
             TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 38,
             TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 39,
             TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
+
+            $($after_name($after_type) = $after_discrim,)*
         }
     }
 }
@@ -1378,12 +1392,14 @@ macro_rules! add_module_declaration_variants {
     (
         $(#[$attr:meta])*
         pub enum $ty:ident<'a> {
-            $($variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+            $($before_name:ident($before_type:ty) = $before_discrim:literal,)*
+            @$(inherit)*$(variants)* ModuleDeclaration
+            $($after_name:ident($after_type:ty) = $after_discrim:literal,)*
         }
     ) => {
         $(#[$attr])*
         pub enum $ty<'a> {
-            $($variant_name($variant_type) = $variant_discrim,)*
+            $($before_name($before_type) = $before_discrim,)*
 
             /// import hello from './world.js';
             /// import * as t from './world.js';
@@ -1400,6 +1416,8 @@ macro_rules! add_module_declaration_variants {
             TSExportAssignment(Box<'a, TSExportAssignment<'a>>) = 68,
             /// export as namespace React;
             TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
+
+            $($after_name($after_type) = $after_discrim,)*
         }
     }
 }
@@ -1417,12 +1435,15 @@ macro_rules! add_all_declaration_variants {
     (
         $(#[$attr:meta])*
         pub enum $ty:ident<'a> {
-            $($variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+            $($before_name:ident($before_type:ty) = $before_discrim:literal,)*
+            @$(inherit)*$(variants)* Declaration
+            @$(inherit)*$(variants)* ModuleDeclaration
+            $($after_name:ident($after_type:ty) = $after_discrim:literal,)*
         }
     ) => {
         $(#[$attr])*
         pub enum $ty<'a> {
-            $($variant_name($variant_type) = $variant_discrim,)*
+            $($before_name($before_type) = $before_discrim,)*
 
             // `Declaration` variants
             VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
@@ -1452,6 +1473,8 @@ macro_rules! add_all_declaration_variants {
             TSExportAssignment(Box<'a, TSExportAssignment<'a>>) = 68,
             /// export as namespace React;
             TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
+
+            $($after_name($after_type) = $after_discrim,)*
         }
     }
 }
@@ -1484,7 +1507,9 @@ add_all_declaration_variants! {
         WithStatement(Box<'a, WithStatement<'a>>) = 17,
 
         // `Declaration` variants added here by `add_all_declaration_variants!` macro
+        @inherit Declaration
         // `ModuleDeclaration` variants added here by `add_all_declaration_variants!` macro
+        @inherit ModuleDeclaration
     }
 }
 
@@ -1581,6 +1606,7 @@ add_declaration_variants! {
     #[cfg_attr(feature = "serialize", serde(untagged))]
     pub enum Declaration<'a> {
         // `Declaration` variants added here by `with_declaration_variants!` macro
+        @variants Declaration
     }
 }
 
@@ -2614,6 +2640,7 @@ add_module_declaration_variants! {
     #[cfg_attr(feature = "serialize", serde(untagged))]
     pub enum ModuleDeclaration<'a> {
         // `ModuleDeclaration` variants added here by `add_module_declaration_variants!` macro
+        @variants ModuleDeclaration
     }
 }
 
