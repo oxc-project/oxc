@@ -1,7 +1,7 @@
 parser_typescript Summary:
 AST Parsed     : 5240/5243 (99.94%)
 Positive Passed: 5233/5243 (99.81%)
-Negative Passed: 1062/4879 (21.77%)
+Negative Passed: 1065/4879 (21.83%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -1183,9 +1183,6 @@ Expect Syntax Error: "compiler/moduleAugmentationGlobal8.ts"
 Expect Syntax Error: "compiler/moduleAugmentationGlobal8_1.ts"
 Expect Syntax Error: "compiler/moduleClassArrayCodeGenTest.ts"
 Expect Syntax Error: "compiler/moduleCrashBug1.ts"
-Expect Syntax Error: "compiler/moduleElementsInWrongContext.ts"
-Expect Syntax Error: "compiler/moduleElementsInWrongContext2.ts"
-Expect Syntax Error: "compiler/moduleElementsInWrongContext3.ts"
 Expect Syntax Error: "compiler/moduleExports1.ts"
 Expect Syntax Error: "compiler/moduleImport.ts"
 Expect Syntax Error: "compiler/moduleNewExportBug.ts"
@@ -7671,6 +7668,142 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  26 │     member2 = 42;
     ╰────
 
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+   ╭─[compiler/moduleElementsInWrongContext.ts:2:5]
+ 1 │ {
+ 2 │     module M { }
+   ·     ────────────
+ 3 │     export namespace N {
+   ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+   ╭─[compiler/moduleElementsInWrongContext.ts:3:12]
+ 2 │         module M { }
+ 3 │ ╭─▶     export namespace N {
+ 4 │ │           export interface I { }
+ 5 │ ╰─▶     }
+ 6 │     
+   ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+   ╭─[compiler/moduleElementsInWrongContext.ts:7:5]
+ 6 │ 
+ 7 │     namespace Q.K { }
+   ·     ─────────────────
+ 8 │ 
+   ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+    ╭─[compiler/moduleElementsInWrongContext.ts:9:5]
+  8 │     
+  9 │ ╭─▶     declare module "ambient" {
+ 10 │ │   
+ 11 │ ╰─▶     }
+ 12 │     
+    ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+   ╭─[compiler/moduleElementsInWrongContext2.ts:2:5]
+ 1 │ function blah () {
+ 2 │     module M { }
+   ·     ────────────
+ 3 │     export namespace N {
+   ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+   ╭─[compiler/moduleElementsInWrongContext2.ts:2:5]
+ 1 │ function blah () {
+ 2 │     module M { }
+   ·     ────────────
+ 3 │     export namespace N {
+   ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+   ╭─[compiler/moduleElementsInWrongContext2.ts:3:12]
+ 2 │         module M { }
+ 3 │ ╭─▶     export namespace N {
+ 4 │ │           export interface I { }
+ 5 │ ╰─▶     }
+ 6 │     
+   ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+   ╭─[compiler/moduleElementsInWrongContext2.ts:3:12]
+ 2 │         module M { }
+ 3 │ ╭─▶     export namespace N {
+ 4 │ │           export interface I { }
+ 5 │ ╰─▶     }
+ 6 │     
+   ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+   ╭─[compiler/moduleElementsInWrongContext2.ts:7:5]
+ 6 │ 
+ 7 │     namespace Q.K { }
+   ·     ─────────────────
+ 8 │ 
+   ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+   ╭─[compiler/moduleElementsInWrongContext2.ts:7:5]
+ 6 │ 
+ 7 │     namespace Q.K { }
+   ·     ─────────────────
+ 8 │ 
+   ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+    ╭─[compiler/moduleElementsInWrongContext2.ts:9:5]
+  8 │     
+  9 │ ╭─▶     declare module "ambient" {
+ 10 │ │   
+ 11 │ ╰─▶     }
+ 12 │     
+    ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+    ╭─[compiler/moduleElementsInWrongContext2.ts:9:5]
+  8 │     
+  9 │ ╭─▶     declare module "ambient" {
+ 10 │ │   
+ 11 │ ╰─▶     }
+ 12 │     
+    ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+   ╭─[compiler/moduleElementsInWrongContext3.ts:3:9]
+ 2 │     {
+ 3 │         module M { }
+   ·         ────────────
+ 4 │         export namespace N {
+   ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+   ╭─[compiler/moduleElementsInWrongContext3.ts:4:16]
+ 3 │             module M { }
+ 4 │ ╭─▶         export namespace N {
+ 5 │ │               export interface I { }
+ 6 │ ╰─▶         }
+ 7 │     
+   ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+   ╭─[compiler/moduleElementsInWrongContext3.ts:8:9]
+ 7 │ 
+ 8 │         namespace Q.K { }
+   ·         ─────────────────
+ 9 │ 
+   ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+    ╭─[compiler/moduleElementsInWrongContext3.ts:10:9]
+  9 │     
+ 10 │ ╭─▶         declare module "ambient" {
+ 11 │ │   
+ 12 │ ╰─▶         }
+ 13 │     
+    ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/moduleKeywordRepeatError.ts:3:14]
  2 │ 
@@ -10200,6 +10333,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    · ────
  4 │     bing = true; // no error
    ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+    ╭─[compiler/withStatementErrors.ts:15:5]
+ 14 │     
+ 15 │     module M {} // error
+    ·     ───────────
+ 16 │         
+    ╰────
+
+  × A namespace declaration is only allowed at the top level of a namespace or module.
+    ╭─[compiler/withStatementErrors.ts:15:5]
+ 14 │     
+ 15 │     module M {} // error
+    ·     ───────────
+ 16 │         
+    ╰────
 
   × 'with' statements are not allowed
    ╭─[compiler/withStatementErrors.ts:3:1]
