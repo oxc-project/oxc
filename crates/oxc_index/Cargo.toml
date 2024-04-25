@@ -19,9 +19,7 @@ workspace = true
 doctest = false
 
 [dependencies]
-index_vec         = { workspace = true }
-static_assertions = { workspace = true }
+serde = { workspace = true }
 
 [features]
-default   = []
-serialize = ["index_vec/serde"]
+serialize = []

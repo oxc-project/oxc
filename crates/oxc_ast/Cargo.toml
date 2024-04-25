@@ -21,7 +21,6 @@ doctest = false
 oxc_allocator = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_syntax    = { workspace = true }
-oxc_index     = { workspace = true }
 
 bitflags   = { workspace = true }
 num-bigint = { workspace = true }
@@ -32,6 +31,8 @@ ryu-js     = { workspace = true, optional = true }
 
 tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
+
+static_assertions = { workspace = true }
 
 [features]
 default = []

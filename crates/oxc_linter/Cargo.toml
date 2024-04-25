@@ -28,7 +28,6 @@ oxc_macros      = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_syntax      = { workspace = true }
 oxc_codegen     = { workspace = true }
-oxc_index       = { workspace = true }
 oxc_resolver    = { workspace = true }
 
 rayon         = { workspace = true }
@@ -49,6 +48,8 @@ rust-lapper         = { workspace = true }
 once_cell           = { workspace = true }
 memchr              = { workspace = true }
 json-strip-comments = { workspace = true }
+
+static_assertions   = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
