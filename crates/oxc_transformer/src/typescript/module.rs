@@ -46,8 +46,8 @@ impl<'a> TypeScript<'a> {
             let decl_span = decl.span;
 
             let init = match &mut decl.module_reference {
-                TSModuleReference::TypeName(type_name) => {
-                    self.transform_ts_type_name(&mut *type_name)
+                type_name @ match_ts_type_name_variants!(TSModuleReference) => {
+                    self.transform_ts_type_name(&mut *type_name.to_ts_type_name_mut())
                 }
                 TSModuleReference::ExternalModuleReference(reference) => {
                     if self.ctx.source_type().is_module() {

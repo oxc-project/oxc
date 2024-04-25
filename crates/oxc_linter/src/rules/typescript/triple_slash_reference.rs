@@ -143,7 +143,8 @@ impl Rule for TripleSlashReference {
                                 ));
                             }
                         }
-                        TSModuleReference::TypeName(_) => {}
+                        TSModuleReference::IdentifierReference(_)
+                        | TSModuleReference::QualifiedName(_) => {}
                         TSModuleReference::Dummy => dummy!(unreachable),
                     },
                     Statement::ImportDeclaration(decl) => {

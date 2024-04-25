@@ -575,16 +575,71 @@ pub struct TSTypeReference<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
-/// TypeName:
-///     IdentifierReference
-///     NamespaceName . IdentifierReference
-#[ast_node]
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum TSTypeName<'a> {
-    IdentifierReference(Box<'a, IdentifierReference<'a>>),
-    QualifiedName(Box<'a, TSQualifiedName<'a>>),
+/// Macro to add `TSTypeName` variants to enum.
+/// Used for `TSTypeName`, `TSModuleReference` and `TSTypeQueryExprName` enums, as they share some variants.
+macro_rules! add_ts_type_name_variants {
+    (
+        $(#[$attr:meta])*
+        pub enum $ty:ident<'a> {
+            $($before_name:ident($before_type:ty) = $before_discrim:literal,)*
+            @$(inherit)*$(variants)* TSTypeName
+            $($after_name:ident($after_type:ty) = $after_discrim:literal,)*
+        }
+    ) => {
+        $(#[$attr])*
+        pub enum $ty<'a> {
+            $($before_name($before_type) = $before_discrim,)*
+
+            IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
+            QualifiedName(Box<'a, TSQualifiedName<'a>>) = 1,
+
+            $($after_name($after_type) = $after_discrim,)*
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! match_ts_type_name_variants {
+    ($ty:ident) => {
+        $ty::IdentifierReference(_) | $ty::QualifiedName(_)
+    };
+}
+pub use match_ts_type_name_variants;
+
+shared_enum_variants!(
+    TSModuleReference,
+    TSTypeName,
+    is_ts_type_name,
+    as_ts_type_name,
+    as_ts_type_name_mut,
+    to_ts_type_name,
+    to_ts_type_name_mut,
+    [IdentifierReference, QualifiedName,]
+);
+
+shared_enum_variants!(
+    TSTypeQueryExprName,
+    TSTypeName,
+    is_ts_type_name,
+    as_ts_type_name,
+    as_ts_type_name_mut,
+    to_ts_type_name,
+    to_ts_type_name_mut,
+    [IdentifierReference, QualifiedName,]
+);
+
+add_ts_type_name_variants! {
+    /// TypeName:
+    ///     IdentifierReference
+    ///     NamespaceName . IdentifierReference
+    #[ast_node]
+    #[derive(Debug, Hash)]
+    #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+    #[cfg_attr(feature = "serialize", serde(untagged))]
+    pub enum TSTypeName<'a> {
+        // `TSTypeName` variants added here by `add_ts_type_name_variants!` macro
+        @variants TSTypeName
+    }
 }
 
 impl<'a> TSTypeName<'a> {
@@ -969,13 +1024,16 @@ pub struct TSTypeQuery<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
-#[ast_node]
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum TSTypeQueryExprName<'a> {
-    TSTypeName(TSTypeName<'a>),
-    TSImportType(Box<'a, TSImportType<'a>>),
+add_ts_type_name_variants! {
+    #[ast_node]
+    #[derive(Debug, Hash)]
+    #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+    #[cfg_attr(feature = "serialize", serde(untagged))]
+    pub enum TSTypeQueryExprName<'a> {
+        // `TSTypeName` variants added here by `add_ts_type_name_variants!` macro
+        @inherit TSTypeName
+        TSImportType(Box<'a, TSImportType<'a>>) = 2,
+    }
 }
 
 #[ast_node]
@@ -1129,13 +1187,16 @@ pub struct TSImportEqualsDeclaration<'a> {
     pub import_kind: ImportOrExportKind,
 }
 
-#[ast_node]
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
-pub enum TSModuleReference<'a> {
-    TypeName(TSTypeName<'a>),
-    ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>),
+add_ts_type_name_variants! {
+    #[ast_node]
+    #[derive(Debug, Hash)]
+    #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+    #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
+    pub enum TSModuleReference<'a> {
+        // `TSTypeName` variants added here by `add_ts_type_name_variants!` macro
+        @inherit TSTypeName
+        ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>) = 2,
+    }
 }
 
 #[ast_node]

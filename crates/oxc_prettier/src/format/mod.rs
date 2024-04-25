@@ -994,7 +994,8 @@ impl<'a> Format<'a> for TSImportEqualsDeclaration<'a> {
 impl<'a> Format<'a> for TSModuleReference<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
-            TSModuleReference::TypeName(v) => v.format(p),
+            TSModuleReference::IdentifierReference(it) => format!(p, it),
+            TSModuleReference::QualifiedName(it) => format!(p, it),
             TSModuleReference::ExternalModuleReference(v) => v.format(p),
             TSModuleReference::Dummy => dummy!(unreachable),
         }

@@ -2696,7 +2696,9 @@ pub mod walk_mut {
         reference: &mut TSModuleReference<'a>,
     ) {
         match reference {
-            TSModuleReference::TypeName(name) => visitor.visit_ts_type_name(name),
+            name @ match_ts_type_name_variants!(TSModuleReference) => {
+                visitor.visit_ts_type_name(name.to_ts_type_name_mut());
+            }
             TSModuleReference::ExternalModuleReference(reference) => {
                 visitor.visit_ts_external_module_reference(reference);
             }
@@ -3205,7 +3207,9 @@ pub mod walk_mut {
         let kind = AstType::TSTypeQuery;
         visitor.enter_node(kind);
         match &mut ty.expr_name {
-            TSTypeQueryExprName::TSTypeName(name) => visitor.visit_ts_type_name(name),
+            name @ match_ts_type_name_variants!(TSTypeQueryExprName) => {
+                visitor.visit_ts_type_name(name.to_ts_type_name_mut());
+            }
             TSTypeQueryExprName::TSImportType(import) => visitor.visit_ts_import_type(import),
             TSTypeQueryExprName::Dummy => dummy!(),
         }

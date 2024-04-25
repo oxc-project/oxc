@@ -1903,7 +1903,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         reference: TSTypeName<'a>,
     ) -> TSModuleReference<'a> {
-        TSModuleReference::TypeName(reference)
+        TSModuleReference::from(reference)
     }
 
     pub fn ts_type_predicate_name_this(&self, ty: TSThisType) -> TSTypePredicateName<'a> {
@@ -1925,7 +1925,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn ts_type_query_expr_name_type_name(&self, ty: TSTypeName<'a>) -> TSTypeQueryExprName<'a> {
-        TSTypeQueryExprName::TSTypeName(ty)
+        TSTypeQueryExprName::from(ty)
     }
 
     /* JSDoc */

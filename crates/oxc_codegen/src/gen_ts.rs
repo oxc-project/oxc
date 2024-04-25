@@ -459,7 +459,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeQuery<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeQueryExprName<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            Self::TSTypeName(decl) => decl.gen(p, ctx),
+            match_ts_type_name_variants!(Self) => self.to_ts_type_name().gen(p, ctx),
             Self::TSImportType(decl) => decl.gen(p, ctx),
             Self::Dummy => dummy!(),
         }
@@ -697,9 +697,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleReference<'a> {
                 decl.expression.gen(p, ctx);
                 p.print_str(b")");
             }
-            Self::TypeName(decl) => {
-                decl.gen(p, ctx);
-            }
+            match_ts_type_name_variants!(Self) => self.to_ts_type_name().gen(p, ctx),
             Self::Dummy => dummy!(),
         }
     }
