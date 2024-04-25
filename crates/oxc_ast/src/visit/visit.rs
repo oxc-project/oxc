@@ -937,16 +937,7 @@ pub mod walk {
                 let decl = stmt.as_module_declaration().unwrap();
                 visitor.visit_module_declaration(decl);
             }
-
-            Statement::VariableDeclaration(_)
-            | Statement::FunctionDeclaration(_)
-            | Statement::ClassDeclaration(_)
-            | Statement::UsingDeclaration(_)
-            | Statement::TSTypeAliasDeclaration(_)
-            | Statement::TSInterfaceDeclaration(_)
-            | Statement::TSEnumDeclaration(_)
-            | Statement::TSModuleDeclaration(_)
-            | Statement::TSImportEqualsDeclaration(_) => {
+            match_declaration_variants!(Statement) => {
                 let decl = stmt.as_declaration().unwrap();
                 visitor.visit_declaration(decl);
             }

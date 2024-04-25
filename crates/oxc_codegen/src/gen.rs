@@ -112,17 +112,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
             | Self::TSNamespaceExportDeclaration(_) => {
                 self.as_module_declaration().unwrap().gen(p, ctx);
             }
-
-            Self::VariableDeclaration(_)
-            | Self::FunctionDeclaration(_)
-            | Self::ClassDeclaration(_)
-            | Self::UsingDeclaration(_)
-            | Self::TSTypeAliasDeclaration(_)
-            | Self::TSInterfaceDeclaration(_)
-            | Self::TSEnumDeclaration(_)
-            | Self::TSModuleDeclaration(_)
-            | Self::TSImportEqualsDeclaration(_) => self.as_declaration().unwrap().gen(p, ctx),
-
+            match_declaration_variants!(Self) => self.as_declaration().unwrap().gen(p, ctx),
             Self::Dummy => dummy!(),
         }
     }

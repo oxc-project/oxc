@@ -131,16 +131,7 @@ impl<'a> Format<'a> for Statement<'a> {
             | Self::TSNamespaceExportDeclaration(_) => {
                 self.as_module_declaration().unwrap().format(p)
             }
-
-            Self::VariableDeclaration(decl) => decl.format(p),
-            Self::FunctionDeclaration(decl) => decl.format(p),
-            Self::ClassDeclaration(decl) => decl.format(p),
-            Self::UsingDeclaration(decl) => decl.format(p),
-            Self::TSTypeAliasDeclaration(decl) => decl.format(p),
-            Self::TSInterfaceDeclaration(decl) => decl.format(p),
-            Self::TSEnumDeclaration(decl) => decl.format(p),
-            Self::TSModuleDeclaration(decl) => decl.format(p),
-            Self::TSImportEqualsDeclaration(decl) => decl.format(p),
+            match_declaration_variants!(Self) => self.as_declaration().unwrap().format(p),
             Self::Dummy => dummy!(unreachable),
         }
     }

@@ -1384,6 +1384,22 @@ macro_rules! add_declaration_variants {
     }
 }
 
+#[macro_export]
+macro_rules! match_declaration_variants {
+    ($ty:ident) => {
+        $ty::VariableDeclaration(_)
+            | $ty::FunctionDeclaration(_)
+            | $ty::ClassDeclaration(_)
+            | $ty::UsingDeclaration(_)
+            | $ty::TSTypeAliasDeclaration(_)
+            | $ty::TSInterfaceDeclaration(_)
+            | $ty::TSEnumDeclaration(_)
+            | $ty::TSModuleDeclaration(_)
+            | $ty::TSImportEqualsDeclaration(_)
+    };
+}
+pub use match_declaration_variants;
+
 /// Macro to add `ModuleDeclaration` variants to enum.
 /// Used for `Statement` and `ModuleDeclaration` enums, as they share some variants.
 /// Discriminants start with 64, so that `Statement::is_module_declaration` is
