@@ -53,7 +53,7 @@ impl<'a> GatherNodeParts<'a> for SimpleAssignmentTarget<'a> {
     fn gather<F: FnMut(Atom<'a>)>(&self, f: &mut F) {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.gather(f),
-            Self::MemberAssignmentTarget(expr) => expr.gather(f),
+            _ if self.is_member_expression() => self.as_member_expression().unwrap().gather(f),
             _ => {}
         }
     }

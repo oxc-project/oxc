@@ -39,11 +39,13 @@ impl<'a> ReactDisplayName<'a> {
             AssignmentTarget::SimpleAssignmentTarget(
                 SimpleAssignmentTarget::AssignmentTargetIdentifier(ident),
             ) => ident.name.clone(),
-            AssignmentTarget::SimpleAssignmentTarget(
-                SimpleAssignmentTarget::MemberAssignmentTarget(target),
-            ) => {
-                if let Some(name) = target.static_property_name() {
-                    self.ctx.ast.new_atom(name)
+            AssignmentTarget::SimpleAssignmentTarget(target) => {
+                if let Some(target) = target.as_member_expression() {
+                    if let Some(name) = target.static_property_name() {
+                        self.ctx.ast.new_atom(name)
+                    } else {
+                        return;
+                    }
                 } else {
                     return;
                 }

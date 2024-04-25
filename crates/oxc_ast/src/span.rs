@@ -306,11 +306,15 @@ impl<'a> GetSpan for SimpleAssignmentTarget<'a> {
     fn span(&self) -> Span {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.span,
-            Self::MemberAssignmentTarget(expr) => expr.span(),
             Self::TSAsExpression(expr) => expr.span,
             Self::TSSatisfiesExpression(expr) => expr.span,
             Self::TSNonNullExpression(expr) => expr.span,
             Self::TSTypeAssertion(expr) => expr.span,
+
+            Self::ComputedMemberExpression(expr) => expr.span,
+            Self::StaticMemberExpression(expr) => expr.span,
+            Self::PrivateFieldExpression(expr) => expr.span,
+
             Self::Dummy => dummy!(),
         }
     }

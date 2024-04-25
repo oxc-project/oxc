@@ -298,12 +298,12 @@ impl<'a> Prettier<'a> {
         for kind in self.stack.iter().rev() {
             if let AstKind::ForOfStatement(stmt) = kind {
                 if let ForStatementLeft::AssignmentTarget(
-                    AssignmentTarget::SimpleAssignmentTarget(
-                        SimpleAssignmentTarget::MemberAssignmentTarget(e),
-                    ),
+                    AssignmentTarget::SimpleAssignmentTarget(target),
                 ) = &stmt.left
                 {
-                    return Self::starts_with_no_lookahead_token(e.object(), ident.span);
+                    if let Some(e) = target.as_member_expression() {
+                        return Self::starts_with_no_lookahead_token(e.object(), ident.span);
+                    }
                 }
                 break;
             }
@@ -346,12 +346,12 @@ impl<'a> Prettier<'a> {
                 .map_or(false, |e| Self::starts_with_no_lookahead_token(e, ident.span)),
             AstKind::ForInStatement(stmt) => {
                 if let ForStatementLeft::AssignmentTarget(
-                    AssignmentTarget::SimpleAssignmentTarget(
-                        SimpleAssignmentTarget::MemberAssignmentTarget(e),
-                    ),
+                    AssignmentTarget::SimpleAssignmentTarget(target),
                 ) = &stmt.left
                 {
-                    return Self::starts_with_no_lookahead_token(e.object(), ident.span);
+                    if let Some(e) = target.as_member_expression() {
+                        return Self::starts_with_no_lookahead_token(e.object(), ident.span);
+                    }
                 }
                 false
             }
@@ -581,8 +581,14 @@ impl<'a> Prettier<'a> {
             Expression::AssignmentExpression(e) => match &e.left {
                 AssignmentTarget::SimpleAssignmentTarget(t) => match t {
                     SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => false,
-                    SimpleAssignmentTarget::MemberAssignmentTarget(e) => {
-                        Self::starts_with_no_lookahead_token(e.object(), span)
+                    SimpleAssignmentTarget::ComputedMemberExpression(e) => {
+                        Self::starts_with_no_lookahead_token(&e.object, span)
+                    }
+                    SimpleAssignmentTarget::StaticMemberExpression(e) => {
+                        Self::starts_with_no_lookahead_token(&e.object, span)
+                    }
+                    SimpleAssignmentTarget::PrivateFieldExpression(e) => {
+                        Self::starts_with_no_lookahead_token(&e.object, span)
                     }
                     SimpleAssignmentTarget::TSAsExpression(e) => {
                         Self::starts_with_no_lookahead_token(&e.expression, span)
@@ -629,8 +635,14 @@ impl<'a> Prettier<'a> {
                     && match &e.argument {
                         SimpleAssignmentTarget::AssignmentTargetIdentifier(_)
                         | SimpleAssignmentTarget::Dummy => false,
-                        SimpleAssignmentTarget::MemberAssignmentTarget(e) => {
-                            Self::starts_with_no_lookahead_token(e.object(), span)
+                        SimpleAssignmentTarget::ComputedMemberExpression(e) => {
+                            Self::starts_with_no_lookahead_token(&e.object, span)
+                        }
+                        SimpleAssignmentTarget::StaticMemberExpression(e) => {
+                            Self::starts_with_no_lookahead_token(&e.object, span)
+                        }
+                        SimpleAssignmentTarget::PrivateFieldExpression(e) => {
+                            Self::starts_with_no_lookahead_token(&e.object, span)
                         }
                         SimpleAssignmentTarget::TSAsExpression(e) => {
                             Self::starts_with_no_lookahead_token(&e.expression, span)

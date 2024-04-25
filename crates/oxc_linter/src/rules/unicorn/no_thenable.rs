@@ -1,9 +1,9 @@
 use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
-        BindingPatternKind, CallExpression, Declaration, Expression, MemberExpression,
-        ModuleDeclaration, ModuleExportName, ObjectPropertyKind, PropertyKey,
-        SimpleAssignmentTarget, VariableDeclarator,
+        BindingPatternKind, CallExpression, Declaration, Expression, ModuleDeclaration,
+        ModuleExportName, ObjectPropertyKind, PropertyKey, SimpleAssignmentTarget,
+        VariableDeclarator,
     },
     dummy, AstKind,
 };
@@ -124,24 +124,21 @@ impl Rule for NoThenable {
             AstKind::CallExpression(expr) => check_call_expression(expr, ctx),
             // foo.then = ...
             AstKind::AssignmentExpression(AssignmentExpression {
-                left:
-                    AssignmentTarget::SimpleAssignmentTarget(
-                        SimpleAssignmentTarget::MemberAssignmentTarget(target),
-                    ),
+                left: AssignmentTarget::SimpleAssignmentTarget(target),
                 ..
-            }) => match &**target {
-                MemberExpression::ComputedMemberExpression(expr) => {
+            }) => match target {
+                SimpleAssignmentTarget::ComputedMemberExpression(expr) => {
                     if let Some(span) = check_expression(&expr.expression, ctx) {
                         ctx.diagnostic(NoThenableDiagnostic::Class(span));
                     }
                 }
-                MemberExpression::StaticMemberExpression(expr) => {
+                SimpleAssignmentTarget::StaticMemberExpression(expr) => {
                     if expr.property.name == "then" {
                         ctx.diagnostic(NoThenableDiagnostic::Class(expr.span));
                     }
                 }
-                MemberExpression::PrivateFieldExpression(_) => {}
-                MemberExpression::Dummy => dummy!(unreachable),
+                SimpleAssignmentTarget::Dummy => dummy!(unreachable),
+                _ => {}
             },
             _ => {}
         }

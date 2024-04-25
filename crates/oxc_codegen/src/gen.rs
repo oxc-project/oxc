@@ -1772,24 +1772,19 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for AssignmentExpression<'a> {
                 SimpleAssignmentTarget::AssignmentTargetIdentifier(target) => {
                     is_keyword(target.name.as_str())
                 }
-                SimpleAssignmentTarget::MemberAssignmentTarget(target) => {
-                    let target = &**target;
-                    match target {
-                        MemberExpression::ComputedMemberExpression(expression) => {
-                            match &expression.object {
-                                Expression::Identifier(ident) => is_keyword(ident.name.as_str()),
-                                _ => false,
-                            }
-                        }
-                        MemberExpression::StaticMemberExpression(expression) => {
-                            is_keyword(expression.property.name.as_str())
-                        }
-                        MemberExpression::PrivateFieldExpression(expression) => {
-                            is_keyword(expression.field.name.as_str())
-                        }
-                        MemberExpression::Dummy => dummy!(),
+                SimpleAssignmentTarget::ComputedMemberExpression(expression) => {
+                    match &expression.object {
+                        Expression::Identifier(ident) => is_keyword(ident.name.as_str()),
+                        _ => false,
                     }
                 }
+                SimpleAssignmentTarget::StaticMemberExpression(expression) => {
+                    is_keyword(expression.property.name.as_str())
+                }
+                SimpleAssignmentTarget::PrivateFieldExpression(expression) => {
+                    is_keyword(expression.field.name.as_str())
+                }
+                SimpleAssignmentTarget::Dummy => dummy!(),
                 _ => false,
             },
             AssignmentTarget::AssignmentTargetPattern(_) => false,
@@ -1830,8 +1825,10 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for SimpleAssignmentTarget<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.gen(p, ctx),
-            Self::MemberAssignmentTarget(member_expr) => {
-                member_expr.gen_expr(p, precedence, ctx);
+            Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => {
+                self.as_member_expression().unwrap().gen_expr(p, precedence, ctx);
             }
             Self::TSAsExpression(e) => e.gen_expr(p, precedence, ctx),
             Self::TSSatisfiesExpression(e) => e.expression.gen_expr(p, precedence, ctx),

@@ -41,7 +41,7 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
             }
             _ if expr.is_member_expression() => {
                 let member_expr = MemberExpression::try_from(expr).unwrap();
-                Ok(SimpleAssignmentTarget::MemberAssignmentTarget(p.ast.alloc(member_expr)))
+                Ok(SimpleAssignmentTarget::from(member_expr))
             }
             Expression::ParenthesizedExpression(expr) => {
                 let span = expr.span;

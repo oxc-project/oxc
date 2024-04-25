@@ -738,8 +738,8 @@ impl<'a> ListenerMap for SimpleAssignmentTarget<'a> {
             Self::AssignmentTargetIdentifier(ident) => {
                 ident.report_effects_when_assigned(options);
             }
-            Self::MemberAssignmentTarget(member) => {
-                member.report_effects_when_assigned(options);
+            _ if self.is_member_expression() => {
+                self.as_member_expression().unwrap().report_effects_when_assigned(options);
             }
             _ => {
                 // For remain TypeScript AST, just visit its expression

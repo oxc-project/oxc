@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{AssignmentTarget, SimpleAssignmentTarget},
-    AstKind,
-};
+use oxc_ast::{ast::AssignmentTarget, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -46,10 +43,10 @@ impl Rule for PreferAddEventListener {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::AssignmentExpression(assignment_expr) = node.kind() else { return };
 
-        let AssignmentTarget::SimpleAssignmentTarget(
-            SimpleAssignmentTarget::MemberAssignmentTarget(member_expr),
-        ) = &assignment_expr.left
-        else {
+        let AssignmentTarget::SimpleAssignmentTarget(target) = &assignment_expr.left else {
+            return;
+        };
+        let Some(member_expr) = target.as_member_expression() else {
             return;
         };
 

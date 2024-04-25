@@ -167,13 +167,12 @@ impl NoSelfAssign {
                 dummy!(unreachable)
             }
         }
-        if let AssignmentTarget::SimpleAssignmentTarget(
-            SimpleAssignmentTarget::MemberAssignmentTarget(member_target),
-        ) = &left
-        {
-            if let Some(member_expr) = right.without_parenthesized().get_member_expr() {
-                if self.is_member_expression_same_reference(member_expr, member_target) {
-                    ctx.diagnostic(NoSelfAssignDiagnostic(member_expr.span()));
+        if let AssignmentTarget::SimpleAssignmentTarget(target) = &left {
+            if let Some(member_target) = target.as_member_expression() {
+                if let Some(member_expr) = right.without_parenthesized().get_member_expr() {
+                    if self.is_member_expression_same_reference(member_expr, member_target) {
+                        ctx.diagnostic(NoSelfAssignDiagnostic(member_expr.span()));
+                    }
                 }
             }
         }

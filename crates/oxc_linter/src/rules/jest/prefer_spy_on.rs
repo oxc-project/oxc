@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
         Argument, AssignmentExpression, AssignmentTarget, CallExpression, Expression,
-        MemberExpression, SimpleAssignmentTarget,
+        MemberExpression,
     },
     dummy, AstKind,
 };
@@ -66,10 +66,10 @@ impl Rule for PreferSpyOn {
         let left = &assign_expr.left;
         let right = &assign_expr.right;
 
-        let AssignmentTarget::SimpleAssignmentTarget(
-            SimpleAssignmentTarget::MemberAssignmentTarget(left_assign),
-        ) = left
-        else {
+        let AssignmentTarget::SimpleAssignmentTarget(target) = left else {
+            return;
+        };
+        let Some(left_assign) = target.as_member_expression() else {
             return;
         };
 

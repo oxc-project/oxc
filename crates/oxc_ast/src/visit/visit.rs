@@ -1877,6 +1877,7 @@ pub mod walk {
         visitor.leave_node(kind);
     }
 
+    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `Declaration` variants cannot panic
     pub fn walk_simple_assignment_target<'a, V: Visit<'a>>(
         visitor: &mut V,
         target: &SimpleAssignmentTarget<'a>,
@@ -1887,8 +1888,11 @@ pub mod walk {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
                 visitor.visit_identifier_reference(ident);
             }
-            SimpleAssignmentTarget::MemberAssignmentTarget(expr) => {
-                visitor.visit_member_expression(expr);
+            SimpleAssignmentTarget::ComputedMemberExpression(_)
+            | SimpleAssignmentTarget::StaticMemberExpression(_)
+            | SimpleAssignmentTarget::PrivateFieldExpression(_) => {
+                let member_expr = target.as_member_expression().unwrap();
+                visitor.visit_member_expression(member_expr);
             }
             SimpleAssignmentTarget::TSAsExpression(expr) => {
                 visitor.visit_expression(&expr.expression);

@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        AssignmentTarget, Expression, MemberExpression, MethodDefinitionKind,
-        SimpleAssignmentTarget, StaticMemberExpression,
+        AssignmentTarget, Expression, MethodDefinitionKind, SimpleAssignmentTarget,
+        StaticMemberExpression,
     },
     dummy, AstKind,
 };
@@ -103,33 +103,28 @@ fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bool {
 fn get_outer_member_expression<'a, 'b>(
     assignment: &'b SimpleAssignmentTarget<'a>,
 ) -> Option<&'b StaticMemberExpression<'a>> {
-    if let SimpleAssignmentTarget::MemberAssignmentTarget(member_expr) = assignment {
-        match &**member_expr {
-            MemberExpression::StaticMemberExpression(expr) => {
-                let mut node = &**expr;
-                loop {
-                    if node.object.is_null() {
-                        return Some(node);
-                    }
-
-                    if let Some(object) = get_static_member_expression_obj(&node.object) {
-                        if !object.property.name.is_empty() {
-                            node = object;
-
-                            continue;
-                        }
-                    }
-
+    match assignment {
+        SimpleAssignmentTarget::StaticMemberExpression(expr) => {
+            let mut node = &**expr;
+            loop {
+                if node.object.is_null() {
                     return Some(node);
                 }
-            }
-            MemberExpression::PrivateFieldExpression(_)
-            | MemberExpression::ComputedMemberExpression(_) => {}
-            MemberExpression::Dummy => dummy!(unreachable),
-        }
-    }
 
-    None
+                if let Some(object) = get_static_member_expression_obj(&node.object) {
+                    if !object.property.name.is_empty() {
+                        node = object;
+
+                        continue;
+                    }
+                }
+
+                return Some(node);
+            }
+        }
+        SimpleAssignmentTarget::Dummy => dummy!(unreachable),
+        _ => None,
+    }
 }
 
 // Because node.object is of type &Expression<'_>

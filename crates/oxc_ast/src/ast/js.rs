@@ -1078,18 +1078,29 @@ impl<'a> AssignmentTarget<'a> {
     }
 }
 
-#[ast_node]
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(untagged))]
-pub enum SimpleAssignmentTarget<'a> {
-    AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>>),
-    MemberAssignmentTarget(Box<'a, MemberExpression<'a>>),
-    TSAsExpression(Box<'a, TSAsExpression<'a>>),
-    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>),
-    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>),
-    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>),
+add_member_expression_variants! {
+    #[ast_node]
+    #[derive(Debug, Hash)]
+    #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+    #[cfg_attr(feature = "serialize", serde(untagged))]
+    pub enum SimpleAssignmentTarget<'a> {
+        AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>>) = 0,
+        // `MemberExpression` variants added here by `add_member_expression_variants!` macro
+        TSAsExpression(Box<'a, TSAsExpression<'a>>) = 1,
+        TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 2,
+        TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
+        TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
+    }
 }
+
+shared_enum_variants!(
+    SimpleAssignmentTarget,
+    MemberExpression,
+    is_member_expression,
+    as_member_expression,
+    as_member_expression_mut,
+    [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression,]
+);
 
 impl<'a> SimpleAssignmentTarget<'a> {
     pub fn get_expression(&self) -> Option<&Expression<'a>> {

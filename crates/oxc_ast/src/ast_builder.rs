@@ -530,9 +530,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         expr: MemberExpression<'a>,
     ) -> AssignmentTarget<'a> {
-        AssignmentTarget::SimpleAssignmentTarget(SimpleAssignmentTarget::MemberAssignmentTarget(
-            self.alloc(expr),
-        ))
+        AssignmentTarget::SimpleAssignmentTarget(SimpleAssignmentTarget::from(expr))
     }
 
     pub fn await_expression(&self, span: Span, argument: Expression<'a>) -> Expression<'a> {

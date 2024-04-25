@@ -1847,7 +1847,9 @@ impl<'a> Format<'a> for SimpleAssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.format(p),
-            Self::MemberAssignmentTarget(member_expr) => member_expr.format(p),
+            Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => self.as_member_expression().unwrap().format(p),
             Self::TSAsExpression(expr) => expr.expression.format(p),
             Self::TSSatisfiesExpression(expr) => expr.expression.format(p),
             Self::TSNonNullExpression(expr) => expr.expression.format(p),

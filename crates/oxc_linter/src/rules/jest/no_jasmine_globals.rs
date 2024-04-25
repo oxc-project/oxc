@@ -1,8 +1,5 @@
 use oxc_ast::{
-    ast::{
-        AssignmentExpression, AssignmentTarget, CallExpression, Expression, MemberExpression,
-        SimpleAssignmentTarget,
-    },
+    ast::{AssignmentExpression, AssignmentTarget, CallExpression, Expression, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -75,10 +72,10 @@ impl Rule for NoJasmineGlobals {
 }
 
 fn diagnostic_assign_expr<'a>(expr: &'a AssignmentExpression<'a>, ctx: &LintContext) {
-    if let AssignmentTarget::SimpleAssignmentTarget(
-        SimpleAssignmentTarget::MemberAssignmentTarget(member_expr),
-    ) = &expr.left
-    {
+    let AssignmentTarget::SimpleAssignmentTarget(target) = &expr.left else {
+        return;
+    };
+    if let Some(member_expr) = target.as_member_expression() {
         let Some((span, property_name)) = get_jasmine_property_name(member_expr) else { return };
 
         if property_name == "DEFAULT_TIMEOUT_INTERVAL" {

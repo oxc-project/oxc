@@ -1,6 +1,6 @@
 // Based on https://github.com/rust-lang/rust-clippy//blob/c9a43b18f11219fa70fe632b29518581fcd589c8/clippy_lints/src/operators/misrefactored_assign_op.rs
 use oxc_ast::{
-    ast::{AssignmentTarget, Expression},
+    ast::{AssignmentTarget, Expression, SimpleAssignmentTarget},
     dummy, AstKind,
 };
 use oxc_diagnostics::{
@@ -100,33 +100,36 @@ fn assignment_target_eq_expr<'a>(
 ) -> bool {
     if let AssignmentTarget::SimpleAssignmentTarget(simple_assignment_target) = assignment_target {
         return match simple_assignment_target {
-            oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
                 if let Expression::Identifier(right_ident) = right_expr {
                     ident.name == right_ident.name
                 } else {
                     false
                 }
             }
-            oxc_ast::ast::SimpleAssignmentTarget::MemberAssignmentTarget(member_expr) => {
+            SimpleAssignmentTarget::ComputedMemberExpression(_)
+            | SimpleAssignmentTarget::StaticMemberExpression(_)
+            | SimpleAssignmentTarget::PrivateFieldExpression(_) => {
+                let member_expr = simple_assignment_target.as_member_expression().unwrap();
                 if let Some(right_member_expr) = right_expr.as_member_expression() {
                     is_same_member_expression(member_expr, right_member_expr, ctx)
                 } else {
                     false
                 }
             }
-            oxc_ast::ast::SimpleAssignmentTarget::TSAsExpression(ts_expr) => {
+            SimpleAssignmentTarget::TSAsExpression(ts_expr) => {
                 is_same_reference(&ts_expr.expression, right_expr, ctx)
             }
-            oxc_ast::ast::SimpleAssignmentTarget::TSSatisfiesExpression(ts_expr) => {
+            SimpleAssignmentTarget::TSSatisfiesExpression(ts_expr) => {
                 is_same_reference(&ts_expr.expression, right_expr, ctx)
             }
-            oxc_ast::ast::SimpleAssignmentTarget::TSNonNullExpression(ts_expr) => {
+            SimpleAssignmentTarget::TSNonNullExpression(ts_expr) => {
                 is_same_reference(&ts_expr.expression, right_expr, ctx)
             }
-            oxc_ast::ast::SimpleAssignmentTarget::TSTypeAssertion(ts_expr) => {
+            SimpleAssignmentTarget::TSTypeAssertion(ts_expr) => {
                 is_same_reference(&ts_expr.expression, right_expr, ctx)
             }
-            oxc_ast::ast::SimpleAssignmentTarget::Dummy => dummy!(unreachable),
+            SimpleAssignmentTarget::Dummy => dummy!(unreachable),
         };
     }
 

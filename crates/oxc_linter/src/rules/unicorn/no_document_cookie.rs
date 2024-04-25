@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{AssignmentTarget, Expression, SimpleAssignmentTarget},
+    ast::{AssignmentTarget, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -59,10 +59,10 @@ impl Rule for NoDocumentCookie {
             return;
         };
 
-        let AssignmentTarget::SimpleAssignmentTarget(
-            SimpleAssignmentTarget::MemberAssignmentTarget(ident),
-        ) = &assignment_expr.left
-        else {
+        let AssignmentTarget::SimpleAssignmentTarget(target) = &assignment_expr.left else {
+            return;
+        };
+        let Some(ident) = target.as_member_expression() else {
             return;
         };
 
