@@ -172,20 +172,20 @@ macro_rules! index_box {
 #[macro_export]
 macro_rules! define_index_type {
     // public api for creating new NonZeroIdx types.
-    // keep in mind the `#[non_zero($primitive)]` attribute should come before others.
+    // keep in mind the `#[non_zero]` attribute should come before others.
     (
-        #[non_zero($primitive:ty)]
+        #[non_zero]
         $(#[$attrs:meta])*
-        $v:vis struct $type:ident = $raw:ty;
+        $v:vis struct $type:ident = $primitive:tt;
         $($CONFIG_NAME:ident = $value:expr;)* $(;)?
     ) => {
         $crate::__define_index_type_inner!{
             @configs [$(($CONFIG_NAME; $value))*]
             @attrs [$(#[$attrs])*]
             @derives [#[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]]
-            @decl [$v struct $type ($raw)]
+            @decl [$v struct $type ($crate::non_zero!($primitive))]
             @debug_fmt ["{}"]
-            @max [(<$raw>::MAX.get() as usize)]
+            @max [(<$crate::non_zero!($primitive)>::MAX.get() as usize)]
             @no_check_max [false]
             @non_zero [$primitive]
         }
@@ -206,6 +206,50 @@ macro_rules! define_index_type {
             @no_check_max [false]
             @non_zero [false]
         }
+    };
+}
+
+/// Wraps the given type in a `NonZero*` type.
+///
+/// TODO: replace me with `NonZero<T>` when it stabilized.
+#[macro_export]
+#[doc(hidden)]
+macro_rules! non_zero {
+    (u8) => {
+        std::num::NonZeroU8
+    };
+    (u16) => {
+        std::num::NonZeroU16
+    };
+    (u32) => {
+        std::num::NonZeroU32
+    };
+    (u64) => {
+        std::num::NonZeroU64
+    };
+    (u128) => {
+        std::num::NonZeroU128
+    };
+    (usize) => {
+        std::num::NonZeroUsize
+    };
+    (i8) => {
+        std::num::NonZeroI8
+    };
+    (i16) => {
+        std::num::NonZeroI16
+    };
+    (i32) => {
+        std::num::NonZeroI32
+    };
+    (i64) => {
+        std::num::NonZeroI64
+    };
+    (i128) => {
+        std::num::NonZeroI128
+    };
+    (isize) => {
+        std::num::NonZeroIsize
     };
 }
 
