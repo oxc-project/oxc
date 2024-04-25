@@ -80,7 +80,10 @@ impl<'a> Transformer<'a> {
 
 impl<'a> VisitMut<'a> for Transformer<'a> {
     fn visit_program(&mut self, program: &mut Program<'a>) {
+        self.x0_typescript.transform_program(program);
+
         walk_mut::walk_program_mut(self, program);
+
         self.x1_react.transform_program_on_exit(program);
         self.x0_typescript.transform_program_on_exit(program);
     }
@@ -186,8 +189,6 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     }
 
     fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
-        self.x0_typescript.transform_statements(stmts);
-
         walk_mut::walk_statements_mut(self, stmts);
 
         self.x0_typescript.transform_statements_on_exit(stmts);

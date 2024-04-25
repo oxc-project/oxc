@@ -1318,6 +1318,18 @@ impl<'a> Declaration<'a> {
         }
     }
 
+    pub fn id(&self) -> Option<&BindingIdentifier<'a>> {
+        match self {
+            Declaration::FunctionDeclaration(decl) => decl.id.as_ref(),
+            Declaration::ClassDeclaration(decl) => decl.id.as_ref(),
+            Declaration::TSTypeAliasDeclaration(decl) => Some(&decl.id),
+            Declaration::TSInterfaceDeclaration(decl) => Some(&decl.id),
+            Declaration::TSEnumDeclaration(decl) => Some(&decl.id),
+            Declaration::TSImportEqualsDeclaration(decl) => Some(&decl.id),
+            _ => None,
+        }
+    }
+
     pub fn modifiers(&self) -> Option<&Modifiers<'a>> {
         match self {
             Declaration::VariableDeclaration(decl) => Some(&decl.modifiers),
@@ -2317,6 +2329,10 @@ impl<'a> ModuleDeclaration<'a> {
 
     pub fn is_default_export(&self) -> bool {
         matches!(self, Self::ExportDefaultDeclaration(_))
+    }
+
+    pub fn is_named_export(&self) -> bool {
+        matches!(self, Self::ExportNamedDeclaration(_))
     }
 
     pub fn source(&self) -> Option<&StringLiteral<'a>> {

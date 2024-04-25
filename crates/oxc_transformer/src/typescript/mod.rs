@@ -69,6 +69,10 @@ impl<'a> TypeScript<'a> {
 
 // Transforms
 impl<'a> TypeScript<'a> {
+    pub fn transform_program(&self, program: &mut Program<'a>) {
+        self.transform_program_for_namespace(program);
+    }
+
     pub fn transform_program_on_exit(&self, program: &mut Program<'a>) {
         self.annotations.transform_program_on_exit(program, &self.reference_collector);
     }
@@ -131,10 +135,6 @@ impl<'a> TypeScript<'a> {
 
     pub fn transform_property_definition(&mut self, def: &mut PropertyDefinition<'a>) {
         self.annotations.transform_property_definition(def);
-    }
-
-    pub fn transform_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
-        self.transform_statements_for_namespace(stmts);
     }
 
     pub fn transform_statements_on_exit(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
