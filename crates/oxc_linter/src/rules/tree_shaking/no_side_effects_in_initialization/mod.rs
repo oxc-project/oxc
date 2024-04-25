@@ -86,8 +86,8 @@ declare_oxc_lint!(
 
 impl Rule for NoSideEffectsInInitialization {
     fn run_once(&self, ctx: &LintContext) {
-        let Some(root) = ctx.nodes().iter().next() else { return };
-        let AstKind::Program(program) = root.kind() else { return };
+        let Some(root) = ctx.nodes().root_node() else { return };
+        let AstKind::Program(program) = root.kind() else { unreachable!() };
         let node_listener_options = NodeListenerOptions::new(ctx);
         program.report_effects(&node_listener_options);
     }
