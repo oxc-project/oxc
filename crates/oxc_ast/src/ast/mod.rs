@@ -111,7 +111,7 @@ macro_rules! shared_enum_variants {
         $is_child:ident,
         $as_child:ident, $as_child_mut:ident,
         $to_child:ident, $to_child_mut:ident,
-        [$($variant:ident,)+]
+        [$($variant:ident),+ $(,)?]
     ) => {
         impl<'a> $parent<'a> {
             #[doc = concat!("Return if a `", stringify!($parent), "` is a `", stringify!($child), "`.")]

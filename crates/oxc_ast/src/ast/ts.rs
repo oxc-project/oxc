@@ -614,7 +614,7 @@ shared_enum_variants!(
     as_ts_type_name_mut,
     to_ts_type_name,
     to_ts_type_name_mut,
-    [IdentifierReference, QualifiedName,]
+    [IdentifierReference, QualifiedName]
 );
 
 shared_enum_variants!(
@@ -625,7 +625,7 @@ shared_enum_variants!(
     as_ts_type_name_mut,
     to_ts_type_name,
     to_ts_type_name_mut,
-    [IdentifierReference, QualifiedName,]
+    [IdentifierReference, QualifiedName]
 );
 
 add_ts_type_name_variants! {

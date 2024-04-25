@@ -75,7 +75,7 @@ macro_rules! add_member_expression_variants {
         $(#[$attr:meta])*
         pub enum $ty:ident<'a> {
             $($before_name:ident($before_type:ty) = $before_discrim:literal,)*
-            @$(inherit)*$(variants)* MemberExpression
+            @$(inherit)?$(variants)? MemberExpression
             $($after_name:ident($after_type:ty) = $after_discrim:literal,)*
         }
     ) => {
@@ -170,7 +170,7 @@ shared_enum_variants!(
     as_member_expression_mut,
     to_member_expression,
     to_member_expression_mut,
-    [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression,]
+    [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression]
 );
 
 impl<'a> Expression<'a> {
@@ -1114,7 +1114,7 @@ shared_enum_variants!(
     as_member_expression_mut,
     to_member_expression,
     to_member_expression_mut,
-    [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression,]
+    [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression]
 );
 
 impl<'a> SimpleAssignmentTarget<'a> {
@@ -1345,7 +1345,7 @@ shared_enum_variants!(
     as_member_expression_mut,
     to_member_expression,
     to_member_expression_mut,
-    [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression,]
+    [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression]
 );
 
 /// Parenthesized Expression
@@ -1368,7 +1368,7 @@ macro_rules! add_declaration_variants {
         $(#[$attr:meta])*
         pub enum $ty:ident<'a> {
             $($before_name:ident($before_type:ty) = $before_discrim:literal,)*
-            @$(inherit)*$(variants)* Declaration
+            @$(inherit)?$(variants)? Declaration
             $($after_name:ident($after_type:ty) = $after_discrim:literal,)*
         }
     ) => {
@@ -1417,7 +1417,7 @@ macro_rules! add_module_declaration_variants {
         $(#[$attr:meta])*
         pub enum $ty:ident<'a> {
             $($before_name:ident($before_type:ty) = $before_discrim:literal,)*
-            @$(inherit)*$(variants)* ModuleDeclaration
+            @$(inherit)?$(variants)? ModuleDeclaration
             $($after_name:ident($after_type:ty) = $after_discrim:literal,)*
         }
     ) => {
@@ -1473,8 +1473,8 @@ macro_rules! add_all_declaration_variants {
         $(#[$attr:meta])*
         pub enum $ty:ident<'a> {
             $($before_name:ident($before_type:ty) = $before_discrim:literal,)*
-            @$(inherit)*$(variants)* Declaration
-            @$(inherit)*$(variants)* ModuleDeclaration
+            @$(inherit)?$(variants)? Declaration
+            @$(inherit)?$(variants)? ModuleDeclaration
             $($after_name:ident($after_type:ty) = $after_discrim:literal,)*
         }
     ) => {
