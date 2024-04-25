@@ -47,8 +47,8 @@ impl Rule for NoEmptyFile {
         {
             return;
         }
-        let Some(root) = ctx.nodes().iter().next() else { return };
-        let AstKind::Program(program) = root.kind() else { return };
+        let Some(root) = ctx.nodes().root_node() else { return };
+        let AstKind::Program(program) = root.kind() else { unreachable!() };
 
         if program.body.iter().any(|node| !is_empty_stmt(node)) {
             return;
