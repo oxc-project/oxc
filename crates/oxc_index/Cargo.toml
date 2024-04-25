@@ -19,7 +19,7 @@ workspace = true
 doctest = false
 
 [dependencies]
-serde = { workspace = true }
+serde = { workspace = true, optional = true }
 
 [features]
-serialize = []
+serialize = ["dep:serde"]
