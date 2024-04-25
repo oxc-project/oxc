@@ -2967,12 +2967,16 @@ pub mod walk_mut {
         }
     }
 
+    #[allow(clippy::missing_panics_doc)] // `unwrap()` for `TSType` variants cannot panic
     pub fn walk_ts_tuple_element_mut<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         ty: &mut TSTupleElement<'a>,
     ) {
         match ty {
-            TSTupleElement::TSType(ty) => visitor.visit_ts_type(ty),
+            match_ts_type_variants!(TSTupleElement) => {
+                let ty = ty.as_ts_type_mut().unwrap();
+                visitor.visit_ts_type(ty);
+            }
             TSTupleElement::TSOptionalType(ty) => visitor.visit_ts_type(&mut ty.type_annotation),
             TSTupleElement::TSRestType(ty) => visitor.visit_ts_type(&mut ty.type_annotation),
             TSTupleElement::Dummy => dummy!(),

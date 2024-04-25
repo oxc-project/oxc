@@ -285,22 +285,17 @@ fn should_break(array: &Array) -> bool {
         }
         Array::TSTupleType(tuple) => {
             tuple.element_types.iter().enumerate().all(|(index, element)| {
-                let TSTupleElement::TSType(element) = element else { return false };
+                let TSTupleElement::TSTupleType(array) = element else {
+                    return false;
+                };
 
-                if let Some(TSTupleElement::TSType(next_element)) =
+                if let Some(next_element @ match_ts_type_variants!(TSTupleElement)) =
                     tuple.element_types.get(index + 1)
                 {
-                    if !matches!(
-                        (element, next_element),
-                        (TSType::TSTupleType(_), TSType::TSTupleType(_))
-                    ) {
+                    if !matches!(next_element, TSTupleElement::TSTupleType(_)) {
                         return false;
                     }
                 }
-
-                let TSType::TSTupleType(array) = element else {
-                    return false;
-                };
 
                 array.element_types.len() > 1
             })

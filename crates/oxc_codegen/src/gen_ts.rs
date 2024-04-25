@@ -507,8 +507,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSIndexSignature<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTupleElement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            TSTupleElement::TSType(ts_type) => {
-                ts_type.gen(p, ctx);
+            match_ts_type_variants!(TSTupleElement) => {
+                self.as_ts_type().unwrap().gen(p, ctx);
             }
             TSTupleElement::TSOptionalType(ts_type) => {
                 ts_type.type_annotation.gen(p, ctx);

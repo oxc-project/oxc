@@ -14,7 +14,7 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
-use super::{js::*, literal::*};
+use super::{js::*, literal::*, shared_enum_variants};
 use crate::dummy;
 use crate::traverse::ast::*;
 use crate::traverse::{SharedBox, SharedVec};
@@ -115,49 +115,156 @@ pub enum TSLiteral<'a> {
     UnaryExpression(Box<'a, UnaryExpression<'a>>),
 }
 
-#[ast_node]
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
-pub enum TSType<'a> {
-    // Keyword
-    TSAnyKeyword(Box<'a, TSAnyKeyword>),
-    TSBigIntKeyword(Box<'a, TSBigIntKeyword>),
-    TSBooleanKeyword(Box<'a, TSBooleanKeyword>),
-    TSNeverKeyword(Box<'a, TSNeverKeyword>),
-    TSNullKeyword(Box<'a, TSNullKeyword>),
-    TSNumberKeyword(Box<'a, TSNumberKeyword>),
-    TSObjectKeyword(Box<'a, TSObjectKeyword>),
-    TSStringKeyword(Box<'a, TSStringKeyword>),
-    TSSymbolKeyword(Box<'a, TSSymbolKeyword>),
-    TSThisType(Box<'a, TSThisType>),
-    TSUndefinedKeyword(Box<'a, TSUndefinedKeyword>),
-    TSUnknownKeyword(Box<'a, TSUnknownKeyword>),
-    TSVoidKeyword(Box<'a, TSVoidKeyword>),
-    // Compound
-    TSArrayType(Box<'a, TSArrayType<'a>>),
-    TSConditionalType(Box<'a, TSConditionalType<'a>>),
-    TSConstructorType(Box<'a, TSConstructorType<'a>>),
-    TSFunctionType(Box<'a, TSFunctionType<'a>>),
-    TSImportType(Box<'a, TSImportType<'a>>),
-    TSIndexedAccessType(Box<'a, TSIndexedAccessType<'a>>),
-    TSInferType(Box<'a, TSInferType<'a>>),
-    TSIntersectionType(Box<'a, TSIntersectionType<'a>>),
-    TSLiteralType(Box<'a, TSLiteralType<'a>>),
-    TSMappedType(Box<'a, TSMappedType<'a>>),
-    TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>),
-    TSQualifiedName(Box<'a, TSQualifiedName<'a>>),
-    TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>),
-    TSTupleType(Box<'a, TSTupleType<'a>>),
-    TSTypeLiteral(Box<'a, TSTypeLiteral<'a>>),
-    TSTypeOperatorType(Box<'a, TSTypeOperator<'a>>),
-    TSTypePredicate(Box<'a, TSTypePredicate<'a>>),
-    TSTypeQuery(Box<'a, TSTypeQuery<'a>>),
-    TSTypeReference(Box<'a, TSTypeReference<'a>>),
-    TSUnionType(Box<'a, TSUnionType<'a>>),
-    // JSDoc
-    JSDocNullableType(Box<'a, JSDocNullableType<'a>>),
-    JSDocUnknownType(Box<'a, JSDocUnknownType>),
+/// Macro to add `TSType` variants to enum.
+/// Used for `TSType` and `TSTupleElement` enums, as they share some variants.
+macro_rules! add_ts_type_variants {
+    (
+        $(#[$attr:meta])*
+        pub enum $ty:ident<'a> {
+            $($variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+        }
+    ) => {
+        $(#[$attr])*
+        pub enum $ty<'a> {
+            $($variant_name($variant_type) = $variant_discrim,)*
+
+            // Keyword
+            TSAnyKeyword(Box<'a, TSAnyKeyword>) = 0,
+            TSBigIntKeyword(Box<'a, TSBigIntKeyword>) = 1,
+            TSBooleanKeyword(Box<'a, TSBooleanKeyword>) = 2,
+            TSNeverKeyword(Box<'a, TSNeverKeyword>) = 3,
+            TSNullKeyword(Box<'a, TSNullKeyword>) = 4,
+            TSNumberKeyword(Box<'a, TSNumberKeyword>) = 5,
+            TSObjectKeyword(Box<'a, TSObjectKeyword>) = 6,
+            TSStringKeyword(Box<'a, TSStringKeyword>) = 7,
+            TSSymbolKeyword(Box<'a, TSSymbolKeyword>) = 8,
+            TSThisType(Box<'a, TSThisType>) = 9,
+            TSUndefinedKeyword(Box<'a, TSUndefinedKeyword>) = 10,
+            TSUnknownKeyword(Box<'a, TSUnknownKeyword>) = 11,
+            TSVoidKeyword(Box<'a, TSVoidKeyword>) = 12,
+            // Compound
+            TSArrayType(Box<'a, TSArrayType<'a>>) = 13,
+            TSConditionalType(Box<'a, TSConditionalType<'a>>) = 14,
+            TSConstructorType(Box<'a, TSConstructorType<'a>>) = 15,
+            TSFunctionType(Box<'a, TSFunctionType<'a>>) = 16,
+            TSImportType(Box<'a, TSImportType<'a>>) = 17,
+            TSIndexedAccessType(Box<'a, TSIndexedAccessType<'a>>) = 18,
+            TSInferType(Box<'a, TSInferType<'a>>) = 19,
+            TSIntersectionType(Box<'a, TSIntersectionType<'a>>) = 20,
+            TSLiteralType(Box<'a, TSLiteralType<'a>>) = 21,
+            TSMappedType(Box<'a, TSMappedType<'a>>) = 22,
+            TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>) = 23,
+            TSQualifiedName(Box<'a, TSQualifiedName<'a>>) = 24,
+            TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>) = 25,
+            TSTupleType(Box<'a, TSTupleType<'a>>) = 26,
+            TSTypeLiteral(Box<'a, TSTypeLiteral<'a>>) = 27,
+            TSTypeOperatorType(Box<'a, TSTypeOperator<'a>>) = 28,
+            TSTypePredicate(Box<'a, TSTypePredicate<'a>>) = 29,
+            TSTypeQuery(Box<'a, TSTypeQuery<'a>>) = 30,
+            TSTypeReference(Box<'a, TSTypeReference<'a>>) = 31,
+            TSUnionType(Box<'a, TSUnionType<'a>>) = 32,
+            // JSDoc
+            JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 33,
+            JSDocUnknownType(Box<'a, JSDocUnknownType>) = 34,
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! match_ts_type_variants {
+    ($ty:ident) => {
+        $ty::TSAnyKeyword(_)
+            | $ty::TSBigIntKeyword(_)
+            | $ty::TSBooleanKeyword(_)
+            | $ty::TSNeverKeyword(_)
+            | $ty::TSNullKeyword(_)
+            | $ty::TSNumberKeyword(_)
+            | $ty::TSObjectKeyword(_)
+            | $ty::TSStringKeyword(_)
+            | $ty::TSSymbolKeyword(_)
+            | $ty::TSThisType(_)
+            | $ty::TSUndefinedKeyword(_)
+            | $ty::TSUnknownKeyword(_)
+            | $ty::TSVoidKeyword(_)
+            | $ty::TSArrayType(_)
+            | $ty::TSConditionalType(_)
+            | $ty::TSConstructorType(_)
+            | $ty::TSFunctionType(_)
+            | $ty::TSImportType(_)
+            | $ty::TSIndexedAccessType(_)
+            | $ty::TSInferType(_)
+            | $ty::TSIntersectionType(_)
+            | $ty::TSLiteralType(_)
+            | $ty::TSMappedType(_)
+            | $ty::TSNamedTupleMember(_)
+            | $ty::TSQualifiedName(_)
+            | $ty::TSTemplateLiteralType(_)
+            | $ty::TSTupleType(_)
+            | $ty::TSTypeLiteral(_)
+            | $ty::TSTypeOperatorType(_)
+            | $ty::TSTypePredicate(_)
+            | $ty::TSTypeQuery(_)
+            | $ty::TSTypeReference(_)
+            | $ty::TSUnionType(_)
+            | $ty::JSDocNullableType(_)
+            | $ty::JSDocUnknownType(_)
+    };
+}
+pub use match_ts_type_variants;
+
+shared_enum_variants!(
+    TSTupleElement,
+    TSType,
+    is_ts_type,
+    as_ts_type,
+    as_ts_type_mut,
+    [
+        TSAnyKeyword,
+        TSBigIntKeyword,
+        TSBooleanKeyword,
+        TSNeverKeyword,
+        TSNullKeyword,
+        TSNumberKeyword,
+        TSObjectKeyword,
+        TSStringKeyword,
+        TSSymbolKeyword,
+        TSThisType,
+        TSUndefinedKeyword,
+        TSUnknownKeyword,
+        TSVoidKeyword,
+        TSArrayType,
+        TSConditionalType,
+        TSConstructorType,
+        TSFunctionType,
+        TSImportType,
+        TSIndexedAccessType,
+        TSInferType,
+        TSIntersectionType,
+        TSLiteralType,
+        TSMappedType,
+        TSNamedTupleMember,
+        TSQualifiedName,
+        TSTemplateLiteralType,
+        TSTupleType,
+        TSTypeLiteral,
+        TSTypeOperatorType,
+        TSTypePredicate,
+        TSTypeQuery,
+        TSTypeReference,
+        TSUnionType,
+        JSDocNullableType,
+        JSDocUnknownType,
+    ]
+);
+
+add_ts_type_variants! {
+    #[ast_node]
+    #[derive(Debug, Hash)]
+    #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+    #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
+    pub enum TSType<'a> {
+        // `TSType` variants added here by `add_ts_type_variants!` macro
+    }
 }
 
 impl<'a> TSType<'a> {
@@ -314,14 +421,18 @@ pub struct TSRestType<'a> {
     pub type_annotation: TSType<'a>,
 }
 
-#[ast_node]
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
-pub enum TSTupleElement<'a> {
-    TSType(TSType<'a>),
-    TSOptionalType(Box<'a, TSOptionalType<'a>>),
-    TSRestType(Box<'a, TSRestType<'a>>),
+add_ts_type_variants! {
+    #[ast_node]
+    #[derive(Debug, Hash)]
+    #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+    #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
+    pub enum TSTupleElement<'a> {
+        // Discriminants start at 64, so that `TSTupleElement::is_ts_type` is a single
+        // bitwise AND operation on the discriminant (`discriminant & 63 != 0`).
+        TSOptionalType(Box<'a, TSOptionalType<'a>>) = 64,
+        TSRestType(Box<'a, TSRestType<'a>>) = 65,
+        // `TSType` variants added here by `add_ts_type_variants!` macro
+    }
 }
 
 #[ast_node]
