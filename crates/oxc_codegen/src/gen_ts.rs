@@ -509,9 +509,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTupleElement<'a> {
                 p.print_str(b"...");
                 ts_type.type_annotation.gen(p, ctx);
             }
-            TSTupleElement::TSNamedTupleMember(ts_type) => {
-                ts_type.gen(p, ctx);
-            }
         }
     }
 }
