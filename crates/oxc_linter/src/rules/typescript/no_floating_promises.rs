@@ -15,9 +15,9 @@ use oxc_syntax::operator::UnaryOperator;
 use crate::{context::LintContext, rule::Rule, typecheck::requests::NodeRequest, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, or end with a call to .then with a rejection handler.")]
-#[diagnostic(severity(warning), help("Add `await` or `return`, call `.then()` with two arguments or `.catch()` with one argument."))]
-struct NoFloatingPromisesDiagnostic(#[label] pub Span);
+#[error("typescript-eslint(no-floating-promises): {0:?}")]
+#[diagnostic(severity(warning), help("{1:?}"))]
+struct NoFloatingPromisesDiagnostic(String, String, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoFloatingPromises {
@@ -84,7 +84,46 @@ impl Rule for NoFloatingPromises {
         };
 
         // Handle result
-        todo!()
+        let (msg, help_message) = match result {
+            PromiseState::Handled => {
+                return;
+            }
+            PromiseState::UnhandledPromiseArray => {
+                if self.ignore_void {
+                    ("Consider handling the promises' fulfillment or rejection with Promise.all or similar, or explicitly marking the expression as ignored with the `void` operator.", "An array of Promises may be unintentional.")
+                } else {
+                    ("Consider handling the promises' fulfillment or rejection with Promise.all or similar.", "An array of Promises may be unintentional.")
+                }
+            }
+            PromiseState::Unhandled => {
+                if self.ignore_void {
+                    (
+                      "Promises must be awaited, end with a call to .catch, or end with a call to .then with a rejection handler  or be explicitly marked as ignored with the `void` operator.",
+                      "Add void operator to ignore."
+                    )
+                } else {
+                    (
+                      "Promises must be awaited, end with a call to .catch, or end with a call to .then with a rejection handler.",
+                      "Add await operator."
+                    )
+                }
+            }
+            PromiseState::UnhandledNonFunctionHandler => {
+                if self.ignore_void {
+                    (
+                  "Promises must be awaited, end with a call to .catch, or end with a call to .then with a rejection handler  or be explicitly marked as ignored with the `void` operator. A rejection handler that is not a function will be ignored.",
+                  "Add void operator to ignore."
+                )
+                } else {
+                    (
+                  "Promises must be awaited, end with a call to .catch, or end with a call to .then with a rejection handler. A rejection handler that is not a function will be ignored.",
+                  "Add await operator."
+                )
+                }
+            }
+        };
+
+        ctx.diagnostic(NoFloatingPromisesDiagnostic(msg.into(), help_message.into(), stmt.span));
     }
 }
 
