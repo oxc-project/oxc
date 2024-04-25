@@ -2748,7 +2748,6 @@ pub mod walk {
             TSTupleElement::TSType(ty) => visitor.visit_ts_type(ty),
             TSTupleElement::TSOptionalType(ty) => visitor.visit_ts_type(&ty.type_annotation),
             TSTupleElement::TSRestType(ty) => visitor.visit_ts_type(&ty.type_annotation),
-            TSTupleElement::TSNamedTupleMember(ty) => visitor.visit_ts_type(&ty.element_type),
         };
     }
 
