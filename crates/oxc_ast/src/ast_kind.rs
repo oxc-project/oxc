@@ -351,13 +351,9 @@ impl<'a> AstKind<'a> {
             Expression::TSTypeAssertion(e) => Self::TSTypeAssertion(e),
             Expression::TSNonNullExpression(e) => Self::TSNonNullExpression(e),
             Expression::TSInstantiationExpression(e) => Self::TSInstantiationExpression(e),
-
-            Expression::ComputedMemberExpression(_)
-            | Expression::StaticMemberExpression(_)
-            | Expression::PrivateFieldExpression(_) => {
+            match_member_expression_variants!(Expression) => {
                 Self::MemberExpression(e.as_member_expression().unwrap())
             }
-
             Expression::Dummy => Self::Dummy,
         }
     }

@@ -1484,14 +1484,10 @@ pub mod walk {
             Expression::TSInstantiationExpression(expr) => {
                 visitor.visit_ts_instantiation_expression(expr);
             }
-
-            Expression::ComputedMemberExpression(_)
-            | Expression::StaticMemberExpression(_)
-            | Expression::PrivateFieldExpression(_) => {
+            match_member_expression_variants!(Expression) => {
                 let member_expr = expr.as_member_expression().unwrap();
                 visitor.visit_member_expression(member_expr);
             }
-
             Expression::Dummy => dummy!(),
         }
     }
@@ -1625,14 +1621,9 @@ pub mod walk {
     pub fn walk_chain_element<'a, V: Visit<'a>>(visitor: &mut V, elem: &ChainElement<'a>) {
         match elem {
             ChainElement::CallExpression(expr) => visitor.visit_call_expression(expr),
-
-            ChainElement::ComputedMemberExpression(_)
-            | ChainElement::StaticMemberExpression(_)
-            | ChainElement::PrivateFieldExpression(_) => {
-                let member_expr = elem.as_member_expression().unwrap();
-                visitor.visit_member_expression(member_expr);
+            match_member_expression_variants!(ChainElement) => {
+                visitor.visit_member_expression(elem.as_member_expression().unwrap());
             }
-
             ChainElement::Dummy => dummy!(),
         }
     }
@@ -1873,11 +1864,8 @@ pub mod walk {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
                 visitor.visit_identifier_reference(ident);
             }
-            SimpleAssignmentTarget::ComputedMemberExpression(_)
-            | SimpleAssignmentTarget::StaticMemberExpression(_)
-            | SimpleAssignmentTarget::PrivateFieldExpression(_) => {
-                let member_expr = target.as_member_expression().unwrap();
-                visitor.visit_member_expression(member_expr);
+            match_member_expression_variants!(SimpleAssignmentTarget) => {
+                visitor.visit_member_expression(target.as_member_expression().unwrap());
             }
             SimpleAssignmentTarget::TSAsExpression(expr) => {
                 visitor.visit_expression(&expr.expression);

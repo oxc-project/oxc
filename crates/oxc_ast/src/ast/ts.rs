@@ -174,7 +174,6 @@ macro_rules! add_ts_type_variants {
     }
 }
 
-// TODO: Create similar macros for the other inherited enums
 #[macro_export]
 macro_rules! match_ts_type_variants {
     ($ty:ident) => {
@@ -1180,7 +1179,7 @@ impl<'a> Decorator<'a> {
     pub fn name(&self) -> Option<&str> {
         match &self.expression {
             Expression::Identifier(ident) => Some(&ident.name),
-            _ if self.expression.is_member_expression() => {
+            expr if expr.is_member_expression() => {
                 self.expression.as_member_expression().unwrap().static_property_name()
             }
             Expression::CallExpression(call) => {

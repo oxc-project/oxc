@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        ChainElement, Expression, MemberExpression, MethodDefinitionKind, ObjectProperty,
-        PropertyKind,
+        match_member_expression_variants, ChainElement, Expression, MemberExpression,
+        MethodDefinitionKind, ObjectProperty, PropertyKind,
     },
     dummy, AstKind,
 };
@@ -89,18 +89,13 @@ impl GetterReturn {
     }
 
     fn handle_actual_expression<'a>(callee: &'a Expression<'a>) -> bool {
-        let callee = callee.without_parenthesized();
-        match callee {
-            _ if callee.is_member_expression() => {
-                let member_expr = callee.as_member_expression().unwrap();
-                Self::handle_member_expression(member_expr)
+        match callee.without_parenthesized() {
+            expr if expr.is_member_expression() => {
+                Self::handle_member_expression(expr.as_member_expression().unwrap())
             }
             Expression::ChainExpression(ce) => match &ce.expression {
-                ChainElement::ComputedMemberExpression(_)
-                | ChainElement::StaticMemberExpression(_)
-                | ChainElement::PrivateFieldExpression(_) => {
-                    let member_expr = ce.expression.as_member_expression().unwrap();
-                    Self::handle_member_expression(member_expr)
+                match_member_expression_variants!(ChainElement) => {
+                    Self::handle_member_expression(ce.expression.as_member_expression().unwrap())
                 }
                 ChainElement::CallExpression(_) => {
                     false // todo: make a test for this

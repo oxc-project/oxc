@@ -1512,14 +1512,10 @@ pub mod walk_mut {
             Expression::TSInstantiationExpression(expr) => {
                 visitor.visit_ts_instantiation_expression(expr);
             }
-
-            Expression::ComputedMemberExpression(_)
-            | Expression::StaticMemberExpression(_)
-            | Expression::PrivateFieldExpression(_) => {
+            match_member_expression_variants!(Expression) => {
                 let member_expr = expr.as_member_expression_mut().unwrap();
                 visitor.visit_member_expression(member_expr);
             }
-
             Expression::Dummy => dummy!(),
         }
     }
@@ -1680,14 +1676,9 @@ pub mod walk_mut {
     ) {
         match elem {
             ChainElement::CallExpression(expr) => visitor.visit_call_expression(expr),
-
-            ChainElement::ComputedMemberExpression(_)
-            | ChainElement::StaticMemberExpression(_)
-            | ChainElement::PrivateFieldExpression(_) => {
-                let member_expr = elem.as_member_expression_mut().unwrap();
-                visitor.visit_member_expression(member_expr);
+            match_member_expression_variants!(ChainElement) => {
+                visitor.visit_member_expression(elem.as_member_expression_mut().unwrap());
             }
-
             ChainElement::Dummy => dummy!(),
         }
     }
@@ -1952,11 +1943,8 @@ pub mod walk_mut {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
                 visitor.visit_identifier_reference(ident);
             }
-            SimpleAssignmentTarget::ComputedMemberExpression(_)
-            | SimpleAssignmentTarget::StaticMemberExpression(_)
-            | SimpleAssignmentTarget::PrivateFieldExpression(_) => {
-                let member_expr = target.as_member_expression_mut().unwrap();
-                visitor.visit_member_expression(member_expr);
+            match_member_expression_variants!(SimpleAssignmentTarget) => {
+                visitor.visit_member_expression(target.as_member_expression_mut().unwrap());
             }
             SimpleAssignmentTarget::TSAsExpression(expr) => {
                 visitor.visit_expression(&mut expr.expression);

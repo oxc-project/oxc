@@ -80,33 +80,44 @@ impl PreferToHaveLength {
             return;
         };
 
-        let object = static_expr.object();
-        if let Some(mem_expr) = object.as_member_expression() {
-            let Expression::CallExpression(expr_call_expr) = mem_expr.object() else {
-                return;
-            };
-            match mem_expr {
-                MemberExpression::ComputedMemberExpression(_) => Self::check_and_fix(
+        match static_expr.object() {
+            expr if expr.is_member_expression() => {
+                let mem_expr = expr.as_member_expression().unwrap();
+                let Expression::CallExpression(expr_call_expr) = mem_expr.object() else {
+                    return;
+                };
+                match mem_expr {
+                    MemberExpression::ComputedMemberExpression(_) => Self::check_and_fix(
+                        call_expr,
+                        expr_call_expr,
+                        &parsed_expect_call,
+                        Some("ComputedMember"),
+                        mem_expr.static_property_name(),
+                        ctx,
+                    ),
+                    MemberExpression::StaticMemberExpression(_) => Self::check_and_fix(
+                        call_expr,
+                        expr_call_expr,
+                        &parsed_expect_call,
+                        Some("StaticMember"),
+                        mem_expr.static_property_name(),
+                        ctx,
+                    ),
+                    MemberExpression::PrivateFieldExpression(_) => (),
+                    MemberExpression::Dummy => dummy!(unreachable),
+                };
+            }
+            Expression::CallExpression(expr_call_expr) => {
+                Self::check_and_fix(
                     call_expr,
                     expr_call_expr,
                     &parsed_expect_call,
-                    Some("ComputedMember"),
-                    mem_expr.static_property_name(),
+                    None,
+                    None,
                     ctx,
-                ),
-                MemberExpression::StaticMemberExpression(_) => Self::check_and_fix(
-                    call_expr,
-                    expr_call_expr,
-                    &parsed_expect_call,
-                    Some("StaticMember"),
-                    mem_expr.static_property_name(),
-                    ctx,
-                ),
-                MemberExpression::PrivateFieldExpression(_) => (),
-                MemberExpression::Dummy => dummy!(unreachable),
-            };
-        } else if let Expression::CallExpression(expr_call_expr) = object {
-            Self::check_and_fix(call_expr, expr_call_expr, &parsed_expect_call, None, None, ctx);
+                );
+            }
+            _ => (),
         }
     }
 

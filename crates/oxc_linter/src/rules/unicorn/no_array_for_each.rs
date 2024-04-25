@@ -73,8 +73,9 @@ impl Rule for NoArrayForEach {
                     }
                 }
                 _ if object.is_member_expression() => {
-                    let member_expr = object.as_member_expression().unwrap();
-                    if let Some(name) = member_expr.static_property_name() {
+                    if let Some(name) =
+                        object.as_member_expression().unwrap().static_property_name()
+                    {
                         if IGNORED_OBJECTS.contains(name) {
                             return;
                         }

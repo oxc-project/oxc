@@ -60,14 +60,13 @@ impl Rule for ThrowNewError {
             return;
         };
 
-        let callee = call_expr.callee.without_parenthesized();
-        match callee {
+        match call_expr.callee.without_parenthesized() {
             Expression::Identifier(v) => {
                 if !CUSTOM_ERROR_REGEX_PATTERN.is_match(&v.name) {
                     return;
                 }
             }
-            _ if callee.is_member_expression() => {
+            callee if callee.is_member_expression() => {
                 let member_expr = callee.as_member_expression().unwrap();
                 if member_expr.is_computed() {
                     return;

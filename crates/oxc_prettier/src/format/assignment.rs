@@ -373,17 +373,9 @@ fn is_poorly_breakable_member_or_call_chain<'a>(p: &Prettier<'a>, expr: &Express
                 call_expressions.push(call_expr);
                 Some(callee)
             }
-            Expression::ComputedMemberExpression(member_expr) => {
+            _ if node.is_member_expression() => {
                 is_chain_expression = true;
-                Some(&member_expr.object)
-            }
-            Expression::StaticMemberExpression(member_expr) => {
-                is_chain_expression = true;
-                Some(&member_expr.object)
-            }
-            Expression::PrivateFieldExpression(member_expr) => {
-                is_chain_expression = true;
-                Some(&member_expr.object)
+                Some(node.as_member_expression().unwrap().object())
             }
             Expression::Identifier(_) | Expression::ThisExpression(_) => {
                 is_ident_or_this_expr = true;

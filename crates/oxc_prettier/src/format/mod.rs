@@ -1293,11 +1293,9 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::TSTypeAssertion(expr) => expr.expression.format(p),
             Self::TSNonNullExpression(expr) => expr.expression.format(p),
             Self::TSInstantiationExpression(expr) => expr.expression.format(p),
-
-            Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_) => self.as_member_expression().unwrap().format(p),
-
+            match_member_expression_variants!(Self) => {
+                self.as_member_expression().unwrap().format(p)
+            }
             Self::Dummy => dummy!(unreachable),
         }
     }
@@ -1832,9 +1830,9 @@ impl<'a> Format<'a> for SimpleAssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.format(p),
-            Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_) => self.as_member_expression().unwrap().format(p),
+            match_member_expression_variants!(Self) => {
+                self.as_member_expression().unwrap().format(p)
+            }
             Self::TSAsExpression(expr) => expr.expression.format(p),
             Self::TSSatisfiesExpression(expr) => expr.expression.format(p),
             Self::TSNonNullExpression(expr) => expr.expression.format(p),
@@ -2021,11 +2019,8 @@ impl<'a> Format<'a> for ChainElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::CallExpression(expr) => expr.format(p),
-            Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_) => {
-                let member_expr = self.as_member_expression().unwrap();
-                member_expr.format(p)
+            match_member_expression_variants!(Self) => {
+                self.as_member_expression().unwrap().format(p)
             }
             Self::Dummy => dummy!(unreachable),
         }

@@ -294,8 +294,7 @@ fn resolve_first_ident<'a>(expr: &'a Expression<'a>) -> Option<&'a IdentifierRef
     match expr {
         Expression::Identifier(ident) => Some(ident),
         _ if expr.is_member_expression() => {
-            let member_expr = expr.as_member_expression().unwrap();
-            resolve_first_ident(member_expr.object())
+            resolve_first_ident(expr.as_member_expression().unwrap().object())
         }
         Expression::CallExpression(call_expr) => resolve_first_ident(&call_expr.callee),
         Expression::TaggedTemplateExpression(tagged_expr) => resolve_first_ident(&tagged_expr.tag),

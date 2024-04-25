@@ -606,15 +606,10 @@ impl<'a> Prettier<'a> {
                 },
                 AssignmentTarget::AssignmentTargetPattern(_) | AssignmentTarget::Dummy => false,
             },
-            Expression::ComputedMemberExpression(e) => {
-                Self::starts_with_no_lookahead_token(&e.object, span)
-            }
-            Expression::StaticMemberExpression(e) => {
-                Self::starts_with_no_lookahead_token(&e.object, span)
-            }
-            Expression::PrivateFieldExpression(e) => {
-                Self::starts_with_no_lookahead_token(&e.object, span)
-            }
+            _ if e.is_member_expression() => Self::starts_with_no_lookahead_token(
+                e.as_member_expression().unwrap().object(),
+                span,
+            ),
             Expression::TaggedTemplateExpression(e) => {
                 if matches!(e.tag, Expression::FunctionExpression(_)) {
                     return false;

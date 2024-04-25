@@ -151,16 +151,15 @@ impl Rule for PreferForOf {
                 return;
             }
 
-            let object = mem_expr.object();
-            if let Expression::Identifier(id) = object {
-                id.name.as_str()
-            } else if let Some(mem_expr) = object.as_member_expression() {
-                match mem_expr.static_property_name() {
-                    Some(array_name) => array_name,
-                    None => return,
+            match &mem_expr.object() {
+                Expression::Identifier(id) => id.name.as_str(),
+                expr if expr.is_member_expression() => {
+                    match expr.as_member_expression().unwrap().static_property_name() {
+                        Some(array_name) => array_name,
+                        None => return,
+                    }
                 }
-            } else {
-                return;
+                _ => return,
             }
         };
 
@@ -199,11 +198,10 @@ impl Rule for PreferForOf {
 
             let parent_kind = ref_parent.kind();
             let AstKind::MemberExpression(mem_expr) = parent_kind else { return true };
-            let object = mem_expr.object();
-            match object {
+            match mem_expr.object() {
                 Expression::Identifier(id) => id.name.as_str() != array_name,
-                _ if object.is_member_expression() => {
-                    match object.as_member_expression().unwrap().static_property_name() {
+                expr if expr.is_member_expression() => {
+                    match expr.as_member_expression().unwrap().static_property_name() {
                         Some(prop_name) => prop_name != array_name,
                         None => true,
                     }

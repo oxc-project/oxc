@@ -338,9 +338,8 @@ fn is_simple_call_argument(node: &Expression, depth: usize) -> bool {
     if let Expression::UpdateExpression(expr) = node {
         return match &expr.argument {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(target) => true,
-            _ if expr.argument.is_member_expression() => {
-                let target = expr.argument.as_member_expression().unwrap();
-                check_member_expression(target)
+            target if target.is_member_expression() => {
+                check_member_expression(target.as_member_expression().unwrap())
             }
             _ => return false,
         };

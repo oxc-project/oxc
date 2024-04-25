@@ -49,8 +49,7 @@ declare_oxc_lint!(
 impl Rule for NoNonNullAssertedOptionalChain {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::TSNonNullExpression(non_null_expr) = node.kind() {
-            let inner = non_null_expr.expression.get_inner_expression();
-            let chain_span = match inner {
+            let chain_span = match non_null_expr.expression.get_inner_expression() {
                 Expression::ChainExpression(chain) => match &chain.expression {
                     ChainElement::ComputedMemberExpression(member) if member.optional => {
                         Some(member.object.span())
@@ -77,8 +76,8 @@ impl Rule for NoNonNullAssertedOptionalChain {
                         None
                     }
                 }
-                _ if inner.is_member_expression() => {
-                    let member_expr = inner.as_member_expression().unwrap();
+                expr if expr.is_member_expression() => {
+                    let member_expr = expr.as_member_expression().unwrap();
                     if member_expr.optional() && !is_parent_member_or_call(node, ctx) {
                         Some(member_expr.object().span())
                     } else {

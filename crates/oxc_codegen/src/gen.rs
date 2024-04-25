@@ -1016,13 +1016,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
             Self::TSTypeAssertion(e) => e.gen_expr(p, precedence, ctx),
             Self::TSNonNullExpression(e) => e.expression.gen_expr(p, precedence, ctx),
             Self::TSInstantiationExpression(e) => e.expression.gen_expr(p, precedence, ctx),
-
-            Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_) => {
+            match_member_expression_variants!(Self) => {
                 self.as_member_expression().unwrap().gen_expr(p, precedence, ctx);
             }
-
             Self::Dummy => dummy!(),
         }
     }
@@ -1809,9 +1805,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for SimpleAssignmentTarget<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.gen(p, ctx),
-            Self::ComputedMemberExpression(_)
-            | Self::StaticMemberExpression(_)
-            | Self::PrivateFieldExpression(_) => {
+            match_member_expression_variants!(Self) => {
                 self.as_member_expression().unwrap().gen_expr(p, precedence, ctx);
             }
             Self::TSAsExpression(e) => e.gen_expr(p, precedence, ctx),
@@ -2018,9 +2012,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ChainExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         match &self.expression {
             ChainElement::CallExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            ChainElement::ComputedMemberExpression(_)
-            | ChainElement::StaticMemberExpression(_)
-            | ChainElement::PrivateFieldExpression(_) => {
+            match_member_expression_variants!(ChainElement) => {
                 self.expression.as_member_expression().unwrap().gen_expr(p, precedence, ctx);
             }
             ChainElement::Dummy => dummy!(),

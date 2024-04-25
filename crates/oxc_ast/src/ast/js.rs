@@ -95,6 +95,16 @@ macro_rules! add_member_expression_variants {
     }
 }
 
+#[macro_export]
+macro_rules! match_member_expression_variants {
+    ($ty:ident) => {
+        $ty::ComputedMemberExpression(_)
+            | $ty::StaticMemberExpression(_)
+            | $ty::PrivateFieldExpression(_)
+    };
+}
+pub use match_member_expression_variants;
+
 add_member_expression_variants! {
     /// Expression
     #[ast_node]
@@ -282,10 +292,9 @@ impl<'a> Expression<'a> {
 
     #[allow(clippy::missing_panics_doc)] // `unwrap()` for `MemberExpression` variants cannot panic
     pub fn is_specific_member_access(&self, object: &str, property: &str) -> bool {
-        let inner = self.get_inner_expression();
-        match inner {
-            _ if inner.is_member_expression() => {
-                inner.as_member_expression().unwrap().is_specific_member_access(object, property)
+        match self.get_inner_expression() {
+            expr if expr.is_member_expression() => {
+                expr.as_member_expression().unwrap().is_specific_member_access(object, property)
             }
             Expression::ChainExpression(chain) => {
                 let Some(expr) = chain.expression.as_member_expression() else {
@@ -356,10 +365,9 @@ impl<'a> Expression<'a> {
     }
 
     pub fn get_member_expr(&self) -> Option<&MemberExpression<'a>> {
-        let inner = self.get_inner_expression();
-        match inner {
+        match self.get_inner_expression() {
             Expression::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
-            _ => inner.as_member_expression(),
+            expr => expr.as_member_expression(),
         }
     }
 
@@ -787,9 +795,7 @@ impl<'a> MemberExpression<'a> {
         let object_matches = match self.object().without_parenthesized() {
             Expression::ChainExpression(x) => match &x.expression {
                 ChainElement::CallExpression(_) => false,
-                ChainElement::ComputedMemberExpression(_)
-                | ChainElement::StaticMemberExpression(_)
-                | ChainElement::PrivateFieldExpression(_) => {
+                match_member_expression_variants!(ChainElement) => {
                     let member_expr = x.expression.as_member_expression().unwrap();
                     member_expr.object().without_parenthesized().is_specific_id(object)
                 }
@@ -867,9 +873,7 @@ impl<'a> CallExpression<'a> {
     pub fn callee_name(&self) -> Option<&str> {
         match &self.callee {
             Expression::Identifier(ident) => Some(ident.name.as_str()),
-            _ => {
-                self.callee.as_member_expression().and_then(MemberExpression::static_property_name)
-            }
+            expr => expr.as_member_expression().and_then(MemberExpression::static_property_name),
         }
     }
 
@@ -894,7 +898,7 @@ impl<'a> CallExpression<'a> {
         // TODO: is 'Symbol' reference to global object
         match &self.callee {
             Expression::Identifier(id) => id.name == "Symbol",
-            _ => match self.callee.as_member_expression() {
+            expr => match expr.as_member_expression() {
                 Some(member) => {
                     matches!(member.object(), Expression::Identifier(id) if id.name == "Symbol")
                         && member.static_property_name() == Some("for")
