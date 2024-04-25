@@ -1,6 +1,6 @@
 use core::{fmt, iter, marker::PhantomData, ops::Range};
 
-use alloc::{boxed::Box, slice, vec::Vec, vec};
+use alloc::{boxed::Box, slice, vec, vec::Vec};
 
 use crate::{index_vec, vec::Enumerated, Idx, IdxRangeBounds, IdxSliceIndex, IndexVec};
 

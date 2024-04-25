@@ -18,6 +18,4 @@ oxc_index::define_index_type! {
 }
 
 #[test]
-fn test_idx_new_0() {
-
-}
+fn test_idx_new_0() {}
