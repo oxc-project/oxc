@@ -6,13 +6,16 @@ on:
     branches:
       - main
     paths:
-      - '**/*.md'
-      - '**/*.html'
+      - "**/*.md"
+      - "**/*.html"
+      - "!**/fixtures/**"
   pull_request:
     types: [opened, synchronize]
     paths:
-      - '**/*.md'
-      - '**/*.html'
+      - "./.github/workflows/link-check.yml"
+      - "**/*.md"
+      - "**/*.html"
+      - "!**/fixtures/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
