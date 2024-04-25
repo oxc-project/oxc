@@ -261,7 +261,7 @@ macro_rules! __internal_define_index_type_inner_impl_generic {
 #[doc(hidden)]
 macro_rules! __internal_define_index_type_inner_impl {
     (@type $type:ident $v:vis $raw:ident) => {
-            const _ENSURE_RAW_IS_UNSIGNED: [(); 0] = [(); <$raw>::MIN as usize];
+            const _ENSURE_RAW_IS_UNSIGNED: [(); 0] = [(); <$raw>::min_value() as usize];
 
             /// Construct this index type from the wrapped integer type.
             #[inline(always)]
