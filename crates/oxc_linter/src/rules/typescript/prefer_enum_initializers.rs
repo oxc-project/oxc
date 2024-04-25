@@ -18,13 +18,18 @@ pub struct PreferEnumInitializers;
 
 declare_oxc_lint!(
     /// ### What it does
-    ///
+    /// Require each enum member value to be explicitly initialized.
     ///
     /// ### Why is this bad?
-    ///
+    /// In projects where the value of `enum` members are important, allowing implicit values for enums can cause bugs if enums are modified over time.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```typescript
+    /// // wrong, the value of `Close` is not constant
+    /// enum Status {
+    ///  Open = 1,
+    ///  Close,
+    /// }
     /// ```
     PreferEnumInitializers,
     correctness
@@ -34,9 +39,9 @@ impl Rule for PreferEnumInitializers {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSEnumDeclaration(decl) = node.kind() else { return };
 
-        for member in decl.members.iter() {
+        for member in &decl.members {
             if member.initializer.is_none() {
-                ctx.diagnostic(PreferEnumInitializersDiagnostic(member.span))
+                ctx.diagnostic(PreferEnumInitializersDiagnostic(member.span));
             }
         }
     }
