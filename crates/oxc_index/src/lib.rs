@@ -1,4 +1,5 @@
-//! This crate helps with defining "newtype"-style wrappers around `usize` (or
+//! This crate is a fork of `index_vec`, <https://github.com/thomcc/index_vec>
+//! It helps with defining "newtype"-style wrappers around `usize` (or
 //! other integers), `Vec<T>`, and `[T]` so that some additional type safety can
 //! be gained at zero cost.
 //!
