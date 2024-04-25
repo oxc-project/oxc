@@ -172,11 +172,11 @@ macro_rules! index_box {
 #[macro_export]
 macro_rules! define_index_type {
     // public api for creating new NonZeroIdx types.
-    // keep in mind the `#[non_zero]` attribute should come before others.
+    // keep in mind the `#[non_zero($primitive)]` attribute should come before others.
     (
-        #[non_zero]
+        #[non_zero($primitive:ty)]
         $(#[$attrs:meta])*
-        $v:vis struct $type:ident = $raw:ident;
+        $v:vis struct $type:ident = $raw:ty;
         $($CONFIG_NAME:ident = $value:expr;)* $(;)?
     ) => {
         $crate::__define_index_type_inner!{
@@ -187,13 +187,13 @@ macro_rules! define_index_type {
             @debug_fmt ["{}"]
             @max [(<$raw>::MAX.get() as usize)]
             @no_check_max [false]
-            @non_zero [true]
+            @non_zero [$primitive]
         }
     };
     // public api for creating new Idx types.
     (
         $(#[$attrs:meta])*
-        $v:vis struct $type:ident = $raw:ident;
+        $v:vis struct $type:ident = $raw:ty;
         $($CONFIG_NAME:ident = $value:expr;)* $(;)?
     ) => {
         $crate::__define_index_type_inner!{
@@ -249,18 +249,18 @@ macro_rules! __internal_maybe_index_impl_serde {
 #[macro_export]
 #[doc(hidden)]
 macro_rules! __internal_define_index_type_inner_impl_generic {
-    (@type[true] $v:vis $type:ident($raw:ident)) => {
-        $crate::__internal_define_non_zero_index_type_inner_impl!(@type $type $v $raw);
+    (@type[$primitive:ty] $v:vis $type:ident($raw:ty)) => {
+        $crate::__internal_define_non_zero_index_type_inner_impl!(@type($type, $v, $raw, $primitive));
     };
-    (@type[false] $v:vis $type:ident($raw:ident)) => {
-        $crate::__internal_define_index_type_inner_impl!(@type $type $v $raw);
+    (@type[false] $v:vis $type:ident($raw:ty)) => {
+        $crate::__internal_define_index_type_inner_impl!(@type($type, $v, $raw));
     };
 }
 
 #[macro_export]
 #[doc(hidden)]
 macro_rules! __internal_define_index_type_inner_impl {
-    (@type $type:ident $v:vis $raw:ident) => {
+    (@type($type:ident, $v:vis, $raw:ty)) => {
             const _ENSURE_RAW_IS_UNSIGNED: [(); 0] = [(); <$raw>::min_value() as usize];
 
             /// Construct this index type from the wrapped integer type.
@@ -293,7 +293,7 @@ macro_rules! __internal_define_index_type_inner_impl {
 #[macro_export]
 #[doc(hidden)]
 macro_rules! __internal_define_non_zero_index_type_inner_impl {
-    (@type $type:ident $v:vis $raw:ident) => {
+    (@type($type:ident, $v:vis, $raw:ty, $primitive:ty)) => {
             const _ENSURE_RAW_IS_UNSIGNED: [(); 1] = [(); <$raw>::MIN.get() as usize];
 
             /// Construct this index type from the wrapped integer type.
@@ -305,14 +305,14 @@ macro_rules! __internal_define_non_zero_index_type_inner_impl {
             /// Construct from a usize without any checks.
             #[inline(always)]
             $v const unsafe fn from_usize_unchecked(value: usize) -> Self {
-                Self { _raw: $raw::new_unchecked(value) }
+                Self { _raw: <$raw>::new_unchecked(value as $primitive) }
             }
 
             /// Construct this index type from a usize.
             #[inline]
             $v fn from_usize(value: usize) -> Self {
                 Self::check_index(value as usize);
-                Self { _raw: $raw::new(value).unwrap() }
+                Self { _raw: <$raw>::new(value as $primitive).unwrap() }
             }
 
             /// Get the wrapped index as a usize.
@@ -331,7 +331,7 @@ macro_rules! __define_index_type_inner {
         @configs [(DISABLE_MAX_INDEX_CHECK; $no_check_max:expr) $(($CONFIG_NAME:ident; $value:expr))*]
         @attrs [$(#[$attrs:meta])*]
         @derives [$(#[$derive:meta])*]
-        @decl [$v:vis struct $type:ident ($raw:ident)]
+        @decl [$v:vis struct $type:ident ($raw:ty)]
         @debug_fmt [$dbg:expr]
         @max [$max:expr]
         @no_check_max [$_old_no_check_max:expr]
@@ -354,7 +354,7 @@ macro_rules! __define_index_type_inner {
         @configs [(MAX_INDEX; $new_max:expr) $(($CONFIG_NAME:ident; $value:expr))*]
         @attrs [$(#[$attrs:meta])*]
         @derives [$(#[$derive:meta])*]
-        @decl [$v:vis struct $type:ident ($raw:ident)]
+        @decl [$v:vis struct $type:ident ($raw:ty)]
         @debug_fmt [$dbg:expr]
         @max [$max:expr]
         @no_check_max [$cm:expr]
@@ -377,7 +377,7 @@ macro_rules! __define_index_type_inner {
         @configs [(DEFAULT; $default_expr:expr) $(($CONFIG_NAME:ident; $value:expr))*]
         @attrs [$(#[$attrs:meta])*]
         @derives [$(#[$derive:meta])*]
-        @decl [$v:vis struct $type:ident ($raw:ident)]
+        @decl [$v:vis struct $type:ident ($raw:ty)]
         @debug_fmt [$dbg:expr]
         @max [$max:expr]
         @no_check_max [$no_check_max:expr]
@@ -406,7 +406,7 @@ macro_rules! __define_index_type_inner {
         @configs [(DEBUG_FORMAT; $dbg:expr) $(($CONFIG_NAME:ident; $value:expr))*]
         @attrs [$(#[$attrs:meta])*]
         @derives [$(#[$derive:meta])*]
-        @decl [$v:vis struct $type:ident ($raw:ident)]
+        @decl [$v:vis struct $type:ident ($raw:ty)]
         @debug_fmt [$old_dbg:expr]
         @max [$max:expr]
         @no_check_max [$no_check_max:expr]
@@ -429,7 +429,7 @@ macro_rules! __define_index_type_inner {
         @configs [(DISPLAY_FORMAT; $format:expr) $(($CONFIG_NAME:ident; $value:expr))*]
         @attrs [$(#[$attrs:meta])*]
         @derives [$(#[$derive:meta])*]
-        @decl [$v:vis struct $type:ident ($raw:ident)]
+        @decl [$v:vis struct $type:ident ($raw:ty)]
         @debug_fmt [$dbg:expr]
         @max [$max:expr]
         @no_check_max [$no_check_max:expr]
@@ -458,7 +458,7 @@ macro_rules! __define_index_type_inner {
         @configs [(IMPL_RAW_CONVERSIONS; $val:expr) $(($CONFIG_NAME:ident; $value:expr))*]
         @attrs [$(#[$attrs:meta])*]
         @derives [$(#[$derive:meta])*]
-        @decl [$v:vis struct $type:ident ($raw:ident)]
+        @decl [$v:vis struct $type:ident ($raw:ty)]
         @debug_fmt [$dbg:expr]
         @max [$max:expr]
         @no_check_max [$no_check_max:expr]
@@ -496,7 +496,7 @@ macro_rules! __define_index_type_inner {
         @configs [($other:ident; $format:expr) $(($CONFIG_NAME:ident; $value:expr))*]
         @attrs [$(#[$attrs:meta])*]
         @derives [$(#[$derive:meta])*]
-        @decl [$v:vis struct $type:ident ($raw:ident)]
+        @decl [$v:vis struct $type:ident ($raw:ty)]
         @debug_fmt [$dbg:expr]
         @max [$max:expr]
         @no_check_max [$no_check_max:expr]
@@ -509,7 +509,7 @@ macro_rules! __define_index_type_inner {
         @configs []
         @attrs [$(#[$attrs:meta])*]
         @derives [$(#[$derive:meta])*]
-        @decl [$v:vis struct $type:ident ($raw:ident)]
+        @decl [$v:vis struct $type:ident ($raw:ty)]
         @debug_fmt [$dbg:expr]
         @max [$max:expr]
         @no_check_max [$no_check_max:expr]
