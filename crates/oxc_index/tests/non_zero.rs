@@ -12,7 +12,8 @@ oxc_index::define_index_type! {
     pub struct Index = usize;
 }
 
-oxc_index::define_non_zero_index_type! {
+oxc_index::define_index_type! {
+    #[non_zero]
     pub struct NonZeroIndex = NonZeroUsize;
 }
 

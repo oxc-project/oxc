@@ -171,7 +171,26 @@ macro_rules! index_box {
 /// ```
 #[macro_export]
 macro_rules! define_index_type {
-    // public api
+    // public api for creating new NonZeroIdx types.
+    // keep in mind the `#[non_zero]` attribute should come before others.
+    (
+        #[non_zero]
+        $(#[$attrs:meta])*
+        $v:vis struct $type:ident = $raw:ident;
+        $($CONFIG_NAME:ident = $value:expr;)* $(;)?
+    ) => {
+        $crate::__define_index_type_inner!{
+            @configs [$(($CONFIG_NAME; $value))*]
+            @attrs [$(#[$attrs])*]
+            @derives [#[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]]
+            @decl [$v struct $type ($raw)]
+            @debug_fmt ["{}"]
+            @max [(<$raw>::MAX.get() as usize)]
+            @no_check_max [false]
+            @non_zero [true]
+        }
+    };
+    // public api for creating new Idx types.
     (
         $(#[$attrs:meta])*
         $v:vis struct $type:ident = $raw:ident;
@@ -186,27 +205,6 @@ macro_rules! define_index_type {
             @max [(<$raw>::max_value() as usize)]
             @no_check_max [false]
             @non_zero [false]
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! define_non_zero_index_type {
-    // public api
-    (
-        $(#[$attrs:meta])*
-        $v:vis struct $type:ident = $raw:ident;
-        $($CONFIG_NAME:ident = $value:expr;)* $(;)?
-    ) => {
-        $crate::__define_index_type_inner!{
-            @configs [$(($CONFIG_NAME; $value))*]
-            @attrs [$(#[$attrs])*]
-            @derives [#[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]]
-            @decl [$v struct $type ($raw)]
-            @debug_fmt ["{}"]
-            @max [(<$raw>::MAX.get() as usize)]
-            @no_check_max [false]
-            @non_zero [true]
         }
     };
 }
