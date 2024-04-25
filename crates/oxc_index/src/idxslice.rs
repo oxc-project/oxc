@@ -1,5 +1,8 @@
-#[allow(clippy::wildcard_imports)]
-use super::*;
+use core::{fmt, iter, marker::PhantomData, ops::Range};
+
+use alloc::{boxed::Box, slice, vec::Vec, vec};
+
+use crate::{index_vec, vec::Enumerated, Idx, IdxRangeBounds, IdxSliceIndex, IndexVec};
 
 /// A slice that only accepts indices of a specific type. Note that the intended
 /// usage is as `IndexSlice<I, [T]>`.

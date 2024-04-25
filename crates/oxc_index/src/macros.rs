@@ -456,7 +456,7 @@ macro_rules! __define_index_type_inner {
             #[inline]
             $v fn check_index(v: usize) {
                 if Self::CHECKS_MAX_INDEX && (v > Self::MAX_INDEX) {
-                    $crate::__max_check_fail(v, Self::MAX_INDEX);
+                    $crate::vec::__max_check_fail(v, Self::MAX_INDEX);
                 }
             }
 
