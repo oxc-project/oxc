@@ -24,6 +24,7 @@ impl EarlyErrorTypeScript {
             AstKind::TSTypeParameterDeclaration(declaration) => {
                 check_ts_type_parameter_declaration(declaration, ctx);
             }
+            AstKind::TSModuleDeclaration(decl) => check_ts_module_declaration(decl, ctx),
             _ => {}
         }
     }
@@ -131,5 +132,29 @@ fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder<'a>
                 ctx.error(UnexpectedTypeAnnotation(type_annotation.span));
             }
         });
+    }
+}
+
+fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("A namespace declaration is only allowed at the top level of a namespace or module.")]
+    #[diagnostic()]
+    struct NotAllowedNamespaceDeclaration(#[label] Span);
+
+    // skip current node
+    for node in ctx.nodes.iter_parents(ctx.current_node_id).skip(1) {
+        match node.kind() {
+            AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::TSModuleDeclaration(_) => {
+                break
+            }
+            AstKind::ExportNamedDeclaration(_) | AstKind::ModuleDeclaration(_) => {
+                // export namespace N {}
+                // We need to check the parent of the parent
+                continue;
+            }
+            _ => {
+                ctx.error(NotAllowedNamespaceDeclaration(decl.span));
+            }
+        }
     }
 }
