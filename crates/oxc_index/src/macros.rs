@@ -250,18 +250,18 @@ macro_rules! __internal_maybe_index_impl_serde {
 
 #[macro_export]
 #[doc(hidden)]
-macro_rules! __define_index_type_inner_impl_generic {
-    (@type[true] $type:ident $v:vis $raw:ident) => {
-        $crate::__define_non_zero_index_type_inner_impl!(@type $type $v $raw);
+macro_rules! __internal_define_index_type_inner_impl_generic {
+    (@type[true] $v:vis $type:ident($raw:ident)) => {
+        $crate::__internal_define_non_zero_index_type_inner_impl!(@type $type $v $raw);
     };
-    (@type[false] $type:ident $v:vis $raw:ident) => {
-        $crate::__define_index_type_inner_impl!(@type $type $v $raw);
+    (@type[false] $v:vis $type:ident($raw:ident)) => {
+        $crate::__internal_define_index_type_inner_impl!(@type $type $v $raw);
     };
 }
 
 #[macro_export]
 #[doc(hidden)]
-macro_rules! __define_index_type_inner_impl {
+macro_rules! __internal_define_index_type_inner_impl {
     (@type $type:ident $v:vis $raw:ident) => {
             const _ENSURE_RAW_IS_UNSIGNED: [(); 0] = [(); <$raw>::MIN as usize];
 
@@ -294,7 +294,7 @@ macro_rules! __define_index_type_inner_impl {
 
 #[macro_export]
 #[doc(hidden)]
-macro_rules! __define_non_zero_index_type_inner_impl {
+macro_rules! __internal_define_non_zero_index_type_inner_impl {
     (@type $type:ident $v:vis $raw:ident) => {
             const _ENSURE_RAW_IS_UNSIGNED: [(); 1] = [(); <$raw>::MIN.get() as usize];
 
@@ -533,7 +533,7 @@ macro_rules! __define_index_type_inner {
             /// larger than MAX_INDEX?
             $v const CHECKS_MAX_INDEX: bool = !$no_check_max;
 
-            $crate::__define_index_type_inner_impl_generic!(@type[$non_zero] $type $v $raw);
+            $crate::__internal_define_index_type_inner_impl_generic!(@type[$non_zero] $v $type($raw));
 
             /// Construct this index type from a usize. Alias for `from_usize`.
             #[inline(always)]

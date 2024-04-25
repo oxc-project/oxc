@@ -8,8 +8,6 @@
 
 use std::num::NonZeroUsize;
 
-use oxc_index::{index_vec, IndexSlice, IndexVec};
-
 oxc_index::define_index_type! {
     pub struct Index = usize;
 }
