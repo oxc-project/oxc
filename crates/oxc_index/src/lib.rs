@@ -174,17 +174,17 @@ pub mod example_generated;
 /// it earlier, or pick a bigger index type).
 ///
 /// Note: I'm open for suggestions on how to handle this case, but do not want
-/// the typical cases (E.g. Idx is a newtyped usize or u32), to become more
+/// the typical cases (E.g. Idx is a newtyped `usize` or `u32`), to become more
 /// complex.
 pub trait Idx: Copy + 'static + Ord + Debug + Hash {
-    /// Construct an Index from a usize. This is equivalent to From<usize>.
+    /// Construct an Index from a `usize`. This is equivalent to `From<usize>`.
     ///
     /// Note that this will panic if `idx` does not fit (unless checking has
     /// been disabled, as mentioned above). Also note that `Idx` implementations
     /// are free to define what "fit" means as they desire.
     fn from_usize(idx: usize) -> Self;
 
-    /// Get the underlying index. This is equivalent to Into<usize>
+    /// Get the underlying index. This is equivalent to `Into<usize>`
     fn index(self) -> usize;
 }
 

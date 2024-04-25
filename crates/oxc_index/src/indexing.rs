@@ -54,10 +54,7 @@ macro_rules! range_slice {
             }
             #[inline]
             fn get_mut(self, slice: &mut IndexSlice<I, [T]>) -> Option<&mut Self::Output> {
-                slice
-                    .raw
-                    .get_mut(self.into_range())
-                    .map(IndexSlice::new_mut)
+                slice.raw.get_mut(self.into_range()).map(IndexSlice::new_mut)
             }
 
             #[inline]
