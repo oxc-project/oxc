@@ -1,0 +1,48 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: prefer_enum_initializers
+---
+  ⚠ typescript-eslint(prefer-enum-initializers):
+   ╭─[prefer_enum_initializers.tsx:3:6]
+ 2 │             enum Direction {
+ 3 │               Up,
+   ·               ──
+ 4 │             }
+   ╰────
+  help: 
+
+  ⚠ typescript-eslint(prefer-enum-initializers):
+   ╭─[prefer_enum_initializers.tsx:3:6]
+ 2 │             enum Direction {
+ 3 │               Up,
+   ·               ──
+ 4 │               Down,
+   ╰────
+  help: 
+
+  ⚠ typescript-eslint(prefer-enum-initializers):
+   ╭─[prefer_enum_initializers.tsx:4:6]
+ 3 │               Up,
+ 4 │               Down,
+   ·               ────
+ 5 │             }
+   ╰────
+  help: 
+
+  ⚠ typescript-eslint(prefer-enum-initializers):
+   ╭─[prefer_enum_initializers.tsx:4:6]
+ 3 │               Up = 'Up',
+ 4 │               Down,
+   ·               ────
+ 5 │             }
+   ╰────
+  help: 
+
+  ⚠ typescript-eslint(prefer-enum-initializers):
+   ╭─[prefer_enum_initializers.tsx:3:6]
+ 2 │             enum Direction {
+ 3 │               Up,
+   ·               ──
+ 4 │               Down = 'Down',
+   ╰────
+  help:

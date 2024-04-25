@@ -138,6 +138,7 @@ mod typescript {
     pub mod no_unsafe_declaration_merging;
     pub mod no_var_requires;
     pub mod prefer_as_const;
+    pub mod prefer_enum_initializers;
     pub mod prefer_for_of;
     pub mod prefer_function_type;
     pub mod prefer_ts_expect_error;
@@ -470,6 +471,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::array_type,
     typescript::ban_ts_comment,
     typescript::ban_tslint_comment,
+    typescript::prefer_enum_initializers,
     typescript::ban_types,
     typescript::consistent_type_definitions,
     typescript::no_duplicate_enum_values,
