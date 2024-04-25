@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: implements_on_classes
+---
+  ⚠ eslint-plugin-jsdoc(implements-on-classes): `@implements` used on a non-constructor function
+   ╭─[implements_on_classes.tsx:3:13]
+ 2 │                   /**
+ 3 │                    * @implements {SomeClass}
+   ·                      ───────────
+ 4 │                    */
+   ╰────
+  help: Add `@class` tag or use ES6 class syntax.
+
+  ⚠ eslint-plugin-jsdoc(implements-on-classes): `@implements` used on a non-constructor function
+   ╭─[implements_on_classes.tsx:3:13]
+ 2 │                   /**
+ 3 │                    * @implements {SomeClass}
+   ·                      ───────────
+ 4 │                    */
+   ╰────
+  help: Add `@class` tag or use ES6 class syntax.
+
+  ⚠ eslint-plugin-jsdoc(implements-on-classes): `@implements` used on a non-constructor function
+   ╭─[implements_on_classes.tsx:4:13]
+ 3 │                    * @function
+ 4 │                    * @implements {SomeClass}
+   ·                      ───────────
+ 5 │                    */
+   ╰────
+  help: Add `@class` tag or use ES6 class syntax.

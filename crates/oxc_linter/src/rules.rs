@@ -363,6 +363,7 @@ mod jsdoc {
     pub mod check_property_names;
     pub mod check_tag_names;
     pub mod empty_tags;
+    pub mod implements_on_classes;
     pub mod require_property;
     pub mod require_property_description;
     pub mod require_property_name;
@@ -696,6 +697,7 @@ oxc_macros::declare_all_lint_rules! {
     jsdoc::check_property_names,
     jsdoc::check_tag_names,
     jsdoc::empty_tags,
+    jsdoc::implements_on_classes,
     jsdoc::require_property,
     jsdoc::require_property_type,
     jsdoc::require_property_name,
