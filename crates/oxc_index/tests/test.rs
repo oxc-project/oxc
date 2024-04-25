@@ -1,4 +1,10 @@
-#![allow(clippy::assertions_on_constants, clippy::eq_op)]
+#![allow(
+    clippy::assertions_on_constants,
+    clippy::eq_op,
+    clippy::uninlined_format_args,
+    clippy::should_panic_without_expect,
+    clippy::cast_possible_truncation
+)]
 
 use oxc_index::{index_vec, IndexSlice, IndexVec};
 

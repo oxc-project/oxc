@@ -153,7 +153,6 @@ pub use static_assertions::*;
 
 #[macro_use]
 mod macros;
-pub use macros::*;
 
 #[cfg(any(test, feature = "example_generated"))]
 pub mod example_generated;
@@ -230,9 +229,9 @@ pub struct IndexVec<I: Idx, T> {
     _marker: PhantomData<fn(&I)>,
 }
 
-// Whether `IndexVec` is `Send` depends only on the data,
-// not the phantom data.
 #[allow(unsafe_code)]
+// SAFETY: Whether `IndexVec` is `Send` depends only on the data,
+// not the phantom data.
 unsafe impl<I: Idx, T> Send for IndexVec<I, T> where T: Send {}
 
 impl<I: Idx, T: fmt::Debug> fmt::Debug for IndexVec<I, T> {
@@ -349,6 +348,7 @@ impl<I: Idx, T> IndexVec<I, T> {
     #[inline]
     pub fn into_boxed_slice(self) -> alloc::boxed::Box<IndexSlice<I, [T]>> {
         let b = self.raw.into_boxed_slice();
+        // SAFETY: `IndexSlice` is a thin wrapper around `[T]` with the added marker for the index.
         #[allow(unsafe_code)]
         unsafe {
             Box::from_raw(Box::into_raw(b) as *mut IndexSlice<I, [T]>)
@@ -428,6 +428,7 @@ impl<I: Idx, T> IndexVec<I, T> {
     /// Splits the collection into two at the given index. See
     /// [`Vec::split_off`].
     #[inline]
+    #[must_use]
     pub fn split_off(&mut self, idx: I) -> Self {
         Self::from_vec(self.raw.split_off(idx.index()))
     }
