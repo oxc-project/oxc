@@ -1,3 +1,4 @@
+use oxc_ast::CommentKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -6,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, fixer::Fix, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 pub enum BanTsCommentDiagnostic {
@@ -15,6 +16,12 @@ pub enum BanTsCommentDiagnostic {
     )]
     #[diagnostic(severity(warning))]
     Comment(String, #[label] Span),
+
+    #[error(
+        "typescript-eslint(ban-ts-comment): Use \"@ts-expect-error\" instead of @ts-ignore, as \"@ts-ignore\" will do nothing if the following line is error-free."
+    )]
+    #[diagnostic(severity(warning), help("Replace \"@ts-ignore\" with \"@ts-expect-error\"."))]
+    IgnoreInsteadOfExpectError(String, #[label] Span),
 
     #[error("typescript-eslint(ban-ts-comment): Include a description after the @ts-{0} directive to explain why the @ts-{0} is necessary. The description must be {1} characters or longer.")]
     #[diagnostic(severity(warning))]
@@ -141,22 +148,48 @@ impl Rule for BanTsComment {
         let comments = ctx.semantic().trivias().comments();
         for (kind, span) in comments {
             let raw = span.source_text(ctx.semantic().source_text());
-
             if let Some(captures) = find_ts_comment_directive(raw, kind.is_single_line()) {
                 // safe to unwrap, if capture success, it can always capture one of the four directives
-                let (directive, description) = (captures.0, captures.1.trim());
+                let (directive, description) = (captures.0, captures.1);
+                if CommentKind::MultiLine == kind
+                    && (directive == "check" || directive == "nocheck")
+                {
+                    continue;
+                }
+
+                if raw.trim_start().starts_with('/')
+                    && (directive == "check" || directive == "nocheck")
+                {
+                    continue;
+                }
 
                 match self.option(directive) {
                     DirectiveConfig::Boolean(on) => {
                         if *on {
-                            ctx.diagnostic(BanTsCommentDiagnostic::Comment(
-                                directive.to_string(),
-                                span,
-                            ));
+                            if directive == "ignore" {
+                                ctx.diagnostic_with_fix(
+                                    BanTsCommentDiagnostic::IgnoreInsteadOfExpectError(
+                                        directive.to_string(),
+                                        span,
+                                    ),
+                                    || {
+                                        Fix::new(
+                                            raw.replace("@ts-ignore", "@ts-expect-error"),
+                                            span,
+                                        )
+                                    },
+                                );
+                            } else {
+                                ctx.diagnostic(BanTsCommentDiagnostic::Comment(
+                                    directive.to_string(),
+                                    span,
+                                ));
+                            }
                         }
                     }
                     config => {
-                        if (description.len() as u64) < self.minimum_description_length {
+                        let description_len = description.trim().len();
+                        if (description_len as u64) < self.minimum_description_length {
                             ctx.diagnostic(BanTsCommentDiagnostic::CommentRequiresDescription(
                                 directive.to_string(),
                                 self.minimum_description_length,
@@ -245,30 +278,73 @@ pub fn find_ts_comment_directive(raw: &str, single_line: bool) -> Option<(&str, 
 #[test]
 fn test() {
     use crate::tester::Tester;
-
+    // A total of 51 test cases passed successfully.
     let pass = vec![
+        // ts-expect-error
         ("// just a comment containing @ts-expect-error somewhere", None),
         (r"
-          /*
+            /*
             @ts-expect-error running with long description in a block
-          */
-		    ", None),
+            */
+		", None),
+        (r"
+            /* @ts-expect-error not on the last line
+            */
+        ", None),
+        (r"
+            /**
+             * @ts-expect-error not on the last line
+             */
+        ", None),
+        (r"
+            /* not on the last line
+            * @ts-expect-error
+            */
+        ", None),
+        (r"
+            /* @ts-expect-error
+            * not on the last line */
+        ", None),
         ("// @ts-expect-error", Some(serde_json::json!([{ "ts-expect-error": false }]))),
         ("// @ts-expect-error here is why the error is expected", Some(serde_json::json!([{"ts-expect-error": "allow-with-description"},]))),
+        (r"
+            /*
+            * @ts-expect-error here is why the error is expected */
+        ", Some(serde_json::json!([{"ts-expect-error": "allow-with-description"},]))),
         ("// @ts-expect-error exactly 21 characters", Some(serde_json::json!([
           {
             "ts-expect-error": "allow-with-description",
             "minimumDescriptionLength": 21,
           },
         ]))),
+        (r"
+            /*
+            * @ts-expect-error exactly 21 characters*/
+        ", Some(serde_json::json!([{
+            "ts-expect-error": "allow-with-description",
+            "minimumDescriptionLength": 21,
+        }]))),
         ("// @ts-expect-error: TS1234 because xyz", Some(serde_json::json!([
-        {
-          "ts-expect-error": {
-           "descriptionFormat": "^: TS\\d+ because .+$",
-          },
-         "minimumDescriptionLength" : 10,
-        },
-      ]))),
+            {
+                "ts-expect-error": {
+                    "descriptionFormat": "^: TS\\d+ because .+$",
+                },
+                "minimumDescriptionLength" : 10,
+            },
+       ]))),
+       (r"
+            /*
+            * @ts-expect-error: TS1234 because xyz */
+        ", Some(serde_json::json!([
+            {
+                "ts-expect-error": {
+                    "descriptionFormat": "^: TS\\d+ because .+$",
+                },
+                "minimumDescriptionLength" : 10,
+            },
+       ]))),
+       ("// @ts-expect-error 👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦", Some(serde_json::json!([{ "ts-expect-error": "allow-with-description" }]))),
+        // ts-ignore
        ("// just a comment containing @ts-ignore somewhere", None),
        ("// @ts-ignore", Some(serde_json::json!([{ "ts-ignore": false}]))),
        ("// @ts-ignore I think that I am exempted from any need to follow the rules!", Some(serde_json::json!([{ "ts-ignore": "allow-with-description" }]))),
@@ -276,71 +352,249 @@ fn test() {
          /*
           @ts-ignore running with long description in a block
          */
-			      ", Some(serde_json::json!([
-        {
-          "ts-ignore": "allow-with-description",
-         "minimumDescriptionLength": 21,
-        },
-      ]))),
-      ("// @ts-ignore: TS1234 because xyz", Some(serde_json::json!([
-        {
-          "ts-ignore": {
-           "descriptionFormat": "^: TS\\d+ because .+$",
-          },
-         "minimumDescriptionLength": 10,
-        },
-      ]))),
-      ("// just a comment containing @ts-nocheck somewhere", None),
-      ("// @ts-nocheck", Some(serde_json::json!([{ "ts-nocheck": false}]))),
-      ("// @ts-nocheck no doubt, people will put nonsense here from time to time just to get the rule to stop reporting, perhaps even long messages with other nonsense in them like other // @ts-nocheck or // @ts-ignore things", Some(serde_json::json!([{ "ts-nocheck": "allow-with-description" }]))),
-      (r"
-			  /*
-			    @ts-nocheck running with long description in a block
-			  */",
+		", Some(serde_json::json!([
+            {
+                "ts-ignore": "allow-with-description",
+                "minimumDescriptionLength": 21,
+            },
+        ]))),
+        (r"
+            /*
+             @ts-ignore
+            */
+        ", None),
+        (r"
+            /* @ts-ignore not on the last line
+            */
+        ", None),
+        (r"
+            /**
+             * @ts-ignore not on the last line
+             */
+        ", None),
+        (r"
+            /* not on the last line
+            * @ts-expect-error
+            */
+        ", None),
+        (r"
+            /* @ts-ignore
+            * not on the last line */
+        ", None),
+        ("// @ts-ignore: TS1234 because xyz", Some(serde_json::json!([
+            {
+                "ts-ignore": {
+                    "descriptionFormat": "^: TS\\d+ because .+$",
+                },
+                "minimumDescriptionLength": 10,
+            },
+        ]))),
+        ("// @ts-ignore 👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦", Some(serde_json::json!([
+            {
+                "ts-ignore": "allow-with-description"
+            },
+        ]))),
+        (r"
+            /*
+            * @ts-ignore here is why the error is expected */
+        ", Some(serde_json::json!([
+            {
+                "ts-ignore": "allow-with-description"
+            },
+        ]))),
+        ("// @ts-ignore exactly 21 characters", Some(serde_json::json!([
+            {
+                "ts-ignore": "allow-with-description",
+                "minimumDescriptionLength": 21,
+            },
+        ]))),
+        (r"
+            /*
+            * @ts-ignore exactly 21 characters*/
+        ", Some(serde_json::json!([
+            {
+                "ts-ignore": "allow-with-description",
+                "minimumDescriptionLength": 21,
+            },
+        ]))),
+        (r"
+            /*
+            * @ts-ignore: TS1234 because xyz */
+        ", Some(serde_json::json!([
+            {
+                "ts-ignore": {
+                    "descriptionFormat": "^: TS\\d+ because .+$",
+                },
+                "minimumDescriptionLength": 10,
+            },
+        ]))),
+        // ts-nocheck
+        ("// just a comment containing @ts-nocheck somewhere", None),
+        ("// @ts-nocheck", Some(serde_json::json!([{ "ts-nocheck": false}]))),
+        ("// @ts-nocheck no doubt, people will put nonsense here from time to time just to get the rule to stop reporting, perhaps even long messages with other nonsense in them like other // @ts-nocheck or // @ts-ignore things", Some(serde_json::json!([{ "ts-nocheck": "allow-with-description" }]))),
+        (r"
+        /*
+            @ts-nocheck running with long description in a block
+        */",
         Some(serde_json::json!([
-        {
-          "ts-nocheck": "allow-with-description",
-         "minimumDescriptionLength": 21,
-        },
-      ]))),
-      ("// @ts-nocheck: TS1234 because xyz", Some(serde_json::json!([
-        {
-          "ts-nocheck": {
-           "descriptionFormat": "^: TS\\d+ because .+$",
-          },
-         "minimumDescriptionLength": 10,
-        },
-      ]))),
-      ("// just a comment containing @ts-check somewhere", None),
-      (r"
-      /*
-        @ts-check running with long description in a block
-      */
-      ", None),
-      ("// @ts-check", Some(serde_json::json!([{ "ts-check": false}]))),
-      ("// @ts-check with a description and also with a no-op // @ts-ignore", Some(serde_json::json!([
-          {"ts-check": "allow-with-description", "minimumDescriptionLength": 3 },
-      ]))),
-      ("// @ts-check: TS1234 because xyz", Some(serde_json::json!([
-        {
-          "ts-check": {
-           "descriptionFormat": "^: TS\\d+ because .+$",
-          },
-         "minimumDescriptionLength": 10,
-        },
-      ]))),
+            {
+            "ts-nocheck": "allow-with-description",
+            "minimumDescriptionLength": 21,
+            },
+        ]))),
+        ("// @ts-nocheck: TS1234 because xyz", Some(serde_json::json!([
+            {
+            "ts-nocheck": {
+                "descriptionFormat": "^: TS\\d+ because .+$",
+            },
+            "minimumDescriptionLength": 10,
+            },
+        ]))),
+        ("// @ts-nocheck 👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦", Some(serde_json::json!([
+            {
+                "ts-nocheck": "allow-with-description",
+            },
+        ]))),
+        ("//// @ts-nocheck - pragma comments may contain 2 or 3 leading slashes", None),
+        (r"
+            /**
+             @ts-nocheck
+            */
+        ", None),
+        (r"
+            /*
+             @ts-nocheck
+            */
+        ", None),
+        ("/** @ts-nocheck */", None),
+        ("/* @ts-nocheck */", None),
+        // ts-check
+        ("// just a comment containing @ts-check somewhere", None),
+        (r"
+        /*
+            @ts-check running with long description in a block
+        */
+        ", None),
+        ("// @ts-check", Some(serde_json::json!([{ "ts-check": false}]))),
+        ("// @ts-check with a description and also with a no-op // @ts-ignore", Some(serde_json::json!([
+            {"ts-check": "allow-with-description", "minimumDescriptionLength": 3 },
+        ]))),
+        ("// @ts-check: TS1234 because xyz", Some(serde_json::json!([
+            {
+            "ts-check": {
+                "descriptionFormat": "^: TS\\d+ because .+$",
+            },
+            "minimumDescriptionLength": 10,
+            },
+        ]))),
+        ("// @ts-check 👨‍👩‍👧‍👦👨‍👩‍👧‍👦👨‍👩‍👧‍👦", Some(serde_json::json!([
+            {
+                "ts-check": "allow-with-description",
+            },
+        ]))),
+        ("//// @ts-check - pragma comments may contain 2 or 3 leading slashes", Some(serde_json::json!([
+            {
+                "ts-check": true,
+            },
+        ]))),
+        (r"
+            /**
+             @ts-check
+            */
+        ", Some(serde_json::json!([
+            {
+                "ts-check": true,
+            },
+        ]))),
+        (r"
+            /*
+             @ts-check
+            */
+        ", Some(serde_json::json!([
+            {
+                "ts-check": true,
+            },
+        ]))),
+        ("/** @ts-check */", Some(serde_json::json!([
+            {
+                "ts-check": true,
+            },
+        ]))),
+        ("/* @ts-check */", Some(serde_json::json!([
+            {
+                "ts-check": true,
+            },
+        ]))),
     ];
 
+    // A total of 57 test cases failed.
     let fail = vec![
+        // ts-expect-error
         ("// @ts-expect-error", Some(serde_json::json!([{ "ts-expect-error": true }]))),
         ("/* @ts-expect-error */", Some(serde_json::json!([{ "ts-expect-error": true}]))),
         (
             r"
 /*
-  @ts-expect-error
-*/
-            ",
+ @ts-expect-error */
+        ",
             Some(serde_json::json!([{ "ts-expect-error": true}])),
+        ),
+        (
+            r"
+/** on the last line
+ @ts-expect-error */
+        ",
+            Some(serde_json::json!([{ "ts-expect-error": true}])),
+        ),
+        (
+            r"
+/** on the last line
+ * @ts-expect-error */
+        ",
+            Some(serde_json::json!([{ "ts-expect-error": true}])),
+        ),
+        (
+            r"
+/**
+ * @ts-expect-error: TODO */
+        ",
+            Some(
+                serde_json::json!([{ "ts-expect-error": "allow-with-description", "minimumDescriptionLength": 10}]),
+            ),
+        ),
+        (
+            r"
+/**
+ * @ts-expect-error: TS1234 because xyz */
+        ",
+            Some(serde_json::json!([{
+            "ts-expect-error": {
+                "descriptionFormat": "^: TS\\d+ because .+$",
+              },
+              "minimumDescriptionLength": 25
+            }])),
+        ),
+        (
+            r"
+/**
+ * @ts-expect-error: TS1234 */
+        ",
+            Some(serde_json::json!([{
+            "ts-expect-error": {
+                "descriptionFormat": "^: TS\\d+ because .+$",
+              },
+            }])),
+        ),
+        (
+            r"
+/**
+ * @ts-expect-error    : TS1234 */
+        ",
+            Some(serde_json::json!([{
+            "ts-expect-error": {
+                "descriptionFormat": "^: TS\\d+ because .+$",
+              },
+            }])),
         ),
         ("/** @ts-expect-error */", Some(serde_json::json!([{ "ts-expect-error": true}]))),
         (
@@ -354,8 +608,8 @@ fn test() {
         (
             r"
 if (false) {
-  // @ts-expect-error: Unreachable code error
-  console.log('hello');
+    // @ts-expect-error: Unreachable code error
+    console.log('hello');
 }
           ",
             Some(serde_json::json!([{ "ts-expect-error": true}])),
@@ -398,30 +652,91 @@ if (false) {
               },
             ])),
         ),
-        ("// @ts-ignore", Some(serde_json::json!([{ "ts-ignore": true}]))),
+        (
+            "// @ts-expect-error    : TS1234 because xyz",
+            Some(serde_json::json!([
+              {
+                "ts-expect-error": {
+                 "descriptionFormat": "^: TS\\d+ because .+$",
+                },
+              },
+            ])),
+        ),
+        // ts-ignore
+        (
+            "// @ts-ignore",
+            Some(serde_json::json!([{ "ts-ignore": true, "ts-expect-error": true }])),
+        ),
+        (
+            "// @ts-ignore",
+            Some(
+                serde_json::json!([{ "ts-ignore": true, "ts-expect-error": "allow-with-description" }]),
+            ),
+        ),
         ("// @ts-ignore", None),
         ("/* @ts-ignore */", Some(serde_json::json!([{ "ts-ignore": true}]))),
         (
             r"
 /*
-  @ts-ignore
-*/
+ @ts-ignore */
             ",
             Some(serde_json::json!([{ "ts-ignore": true}])),
         ),
-        ("/** @ts-ignore */", Some(serde_json::json!([{ "ts-ignore": true}]))),
+        (
+            r"
+/** on the last line
+ @ts-ignore */
+            ",
+            Some(serde_json::json!([{ "ts-ignore": true}])),
+        ),
+        (
+            r"
+/** on the last line
+ * @ts-ignore */
+            ",
+            Some(serde_json::json!([{ "ts-ignore": true}])),
+        ),
+        (
+            "/** @ts-ignore */",
+            Some(serde_json::json!([{ "ts-ignore": true, "ts-expect-error": false }])),
+        ),
+        (
+            r"
+/**
+ * @ts-ignore: TODO */
+            ",
+            Some(
+                serde_json::json!([{ "ts-expect-error": "allow-with-description", "minimumDescriptionLength": 10 }]),
+            ),
+        ),
+        (
+            r"
+/**
+ * @ts-ignore: TS1234 because xyz */
+            ",
+            Some(serde_json::json!([{
+                "ts-expect-error": {
+                    "descriptionFormat": "^: TS\\d+ because .+$",
+                  },
+                  "minimumDescriptionLength": 25
+            }])),
+        ),
         ("// @ts-ignore: Suppress next line", None),
         ("/////@ts-ignore: Suppress next line", None),
         (
             r"
 if (false) {
-  // @ts-ignore: Unreachable code error
-  console.log('hello');
+    // @ts-ignore: Unreachable code error
+    console.log('hello');
 }
             ",
             None,
         ),
         ("// @ts-ignore", Some(serde_json::json!([{ "ts-ignore": "allow-with-description" }]))),
+        (
+            "// @ts-ignore         ",
+            Some(serde_json::json!([{ "ts-ignore": "allow-with-description" }])),
+        ),
         (
             "// @ts-ignore    .",
             Some(serde_json::json!([{ "ts-ignore": "allow-with-description" }])),
@@ -447,25 +762,25 @@ if (false) {
               },
             ])),
         ),
+        (
+            "// @ts-ignore    : TS1234 because xyz",
+            Some(serde_json::json!([
+              {
+                "ts-ignore": {
+                 "descriptionFormat": "^: TS\\d+ because .+$",
+                },
+              },
+            ])),
+        ),
+        // ts-nocheck
         ("// @ts-nocheck", Some(serde_json::json!([{ "ts-nocheck": true}]))),
         ("// @ts-nocheck", None),
-        ("/* @ts-nocheck */", Some(serde_json::json!([{ "ts-nocheck": true}]))),
-        (
-            r"
-/*
-  @ts-nocheck
-*/
-            ",
-            Some(serde_json::json!([{ "ts-nocheck": true}])),
-        ),
-        ("/** @ts-nocheck */", Some(serde_json::json!([{ "ts-nocheck": true}]))),
         ("// @ts-nocheck: Suppress next line", None),
-        ("/////@ts-nocheck: Suppress next line", None),
         (
             r"
 if (false) {
-  // @ts-nocheck: Unreachable code error
-  console.log('hello');
+    // @ts-nocheck: Unreachable code error
+    console.log('hello');
 }
             ",
             None,
@@ -492,24 +807,24 @@ if (false) {
               },
             ])),
         ),
-        ("// @ts-check", Some(serde_json::json!([{ "ts-check":true}]))),
-        ("/* @ts-check */", Some(serde_json::json!([{ "ts-check":true}]))),
         (
-            r"
-/*
-  @ts-check
-*/
-            ",
-            Some(serde_json::json!([{ "ts-check":true}])),
+            "// @ts-nocheck    : TS1234 because xyz",
+            Some(serde_json::json!([
+              {
+                "ts-nocheck": {
+                 "descriptionFormat": "^: TS\\d+ because .+$",
+                },
+              },
+            ])),
         ),
-        ("/** @ts-check */", Some(serde_json::json!([{ "ts-check":true}]))),
+        // ts-check
+        ("// @ts-check", Some(serde_json::json!([{ "ts-check": true}]))),
         ("// @ts-check: Suppress next line", Some(serde_json::json!([{ "ts-check":true}]))),
-        ("/////@ts-check: Suppress next line", Some(serde_json::json!([{ "ts-check":true}]))),
         (
             r"
 if (false) {
-  // @ts-check: Unreachable code error
-  console.log('hello');
+    // @ts-check: Unreachable code error
+    console.log('hello');
 }
             ",
             Some(serde_json::json!([{ "ts-check":true}])),
@@ -528,6 +843,16 @@ if (false) {
         ),
         (
             "// @ts-check: TS1234",
+            Some(serde_json::json!([
+              {
+                "ts-check": {
+                 "descriptionFormat": "^: TS\\d+ because .+$",
+                },
+              },
+            ])),
+        ),
+        (
+            "// @ts-check    : TS1234 because xyz",
             Some(serde_json::json!([
               {
                 "ts-check": {
