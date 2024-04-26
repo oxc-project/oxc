@@ -831,6 +831,24 @@ macro_rules! __internal_impl_partialeq {
             }
         }
     };
+
+    // TODO: REMOVE ME
+    // with default
+    (@ $Lhs: ty, $Rhs: ty) => {
+        impl<'a, 'b, A: Default, B, I: NonZeroIdx> PartialEq<$Rhs> for $Lhs
+        where
+            A: PartialEq<B>,
+        {
+            #[inline]
+            fn eq(&self, other: &$Rhs) -> bool {
+                self[..] == other[..]
+            }
+            #[inline]
+            fn ne(&self, other: &$Rhs) -> bool {
+                self[..] != other[..]
+            }
+        }
+    };
 }
 
 #[macro_export]
@@ -838,6 +856,30 @@ macro_rules! __internal_impl_partialeq {
 macro_rules! __internal_impl_partialeq2 {
     ($Lhs: ty, $Rhs: ty) => {
         impl<'a, 'b, A, B, I: NonZeroIdx, J: NonZeroIdx> PartialEq<$Rhs> for $Lhs
+        where
+            A: PartialEq<B>,
+        {
+            #[inline]
+            fn eq(&self, other: &$Rhs) -> bool {
+                self.raw[..] == other.raw[..]
+            }
+            #[inline]
+            fn ne(&self, other: &$Rhs) -> bool {
+                self.raw[..] != other.raw[..]
+            }
+        }
+    };
+
+    // TODO: REMOVE ME
+    // with default A
+    (@ $Lhs: ty, $Rhs: ty) => {
+        $crate::__internal_impl_partialeq2!(@@ $Lhs, $Rhs);
+    };
+
+    // TODO: REMOVE ME
+    // with default A and B
+    (@@ $Lhs: ty, $Rhs: ty) => {
+        impl<'a, 'b, A: Default, B: Default, I: NonZeroIdx, J: NonZeroIdx> PartialEq<$Rhs> for $Lhs
         where
             A: PartialEq<B>,
         {

@@ -45,7 +45,7 @@ impl<I: NonZeroIdx, T> NonZeroIdxSliceIndex<I, T> for I {
 
 macro_rules! range_slice {
     ($r:ty) => {
-        impl<I: NonZeroIdx, T> NonZeroIdxSliceIndex<I, T> for $r {
+        impl<I: NonZeroIdx, T: Default> NonZeroIdxSliceIndex<I, T> for $r {
             type Output = NonZeroIndexSlice<I, [T]>;
 
             #[inline]

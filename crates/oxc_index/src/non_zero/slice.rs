@@ -67,7 +67,7 @@ pub type NonZeroIndexBox<I, T> = Box<NonZeroIndexSlice<I, T>>;
 type SliceMapped<Iter, I, T> = iter::Map<Iter, fn(&[T]) -> &NonZeroIndexSlice<I, [T]>>;
 type SliceMappedMut<Iter, I, T> = iter::Map<Iter, fn(&mut [T]) -> &mut NonZeroIndexSlice<I, [T]>>;
 
-impl<I: NonZeroIdx, T> NonZeroIndexSlice<I, [T]> {
+impl<I: NonZeroIdx, T: Default> NonZeroIndexSlice<I, [T]> {
     /// Construct a new IdxSlice by wrapping an existing slice.
     #[inline(always)]
     pub fn new<S: AsRef<[T]> + ?Sized>(s: &S) -> &Self {
@@ -738,7 +738,7 @@ impl<I: NonZeroIdx, T: core::hash::Hash> core::hash::Hash for NonZeroIndexSlice<
     }
 }
 
-impl<I: NonZeroIdx, T> alloc::borrow::ToOwned for NonZeroIndexSlice<I, [T]>
+impl<I: NonZeroIdx, T: Default> alloc::borrow::ToOwned for NonZeroIndexSlice<I, [T]>
 where
     T: Clone,
 {
@@ -769,28 +769,28 @@ impl<'a, I: NonZeroIdx, T> IntoIterator for &'a mut NonZeroIndexSlice<I, [T]> {
     }
 }
 
-impl<I: NonZeroIdx, T> Default for &NonZeroIndexSlice<I, [T]> {
+impl<I: NonZeroIdx, T: Default> Default for &NonZeroIndexSlice<I, [T]> {
     #[inline]
     fn default() -> Self {
         NonZeroIndexSlice::new(&[])
     }
 }
 
-impl<I: NonZeroIdx, T> Default for &mut NonZeroIndexSlice<I, [T]> {
+impl<I: NonZeroIdx, T: Default> Default for &mut NonZeroIndexSlice<I, [T]> {
     #[inline]
     fn default() -> Self {
         NonZeroIndexSlice::new_mut(&mut [])
     }
 }
 
-impl<'a, I: NonZeroIdx, T> From<&'a [T]> for &'a NonZeroIndexSlice<I, [T]> {
+impl<'a, I: NonZeroIdx, T: Default> From<&'a [T]> for &'a NonZeroIndexSlice<I, [T]> {
     #[inline]
     fn from(a: &'a [T]) -> Self {
         NonZeroIndexSlice::new(a)
     }
 }
 
-impl<'a, I: NonZeroIdx, T> From<&'a mut [T]> for &'a mut NonZeroIndexSlice<I, [T]> {
+impl<'a, I: NonZeroIdx, T: Default> From<&'a mut [T]> for &'a mut NonZeroIndexSlice<I, [T]> {
     #[inline]
     fn from(a: &'a mut [T]) -> Self {
         NonZeroIndexSlice::new_mut(a)
@@ -822,7 +822,7 @@ impl<I: NonZeroIdx, A> AsMut<[A]> for NonZeroIndexSlice<I, [A]> {
     }
 }
 
-impl<I: NonZeroIdx, T: Clone> Clone for Box<NonZeroIndexSlice<I, [T]>> {
+impl<I: NonZeroIdx, T: Clone + Default> Clone for Box<NonZeroIndexSlice<I, [T]>> {
     #[inline]
     fn clone(&self) -> Self {
         // Suboptimal, I think.
@@ -830,14 +830,14 @@ impl<I: NonZeroIdx, T: Clone> Clone for Box<NonZeroIndexSlice<I, [T]>> {
     }
 }
 
-impl<I: NonZeroIdx, A> FromIterator<A> for Box<NonZeroIndexSlice<I, [A]>> {
+impl<I: NonZeroIdx, A: Default> FromIterator<A> for Box<NonZeroIndexSlice<I, [A]>> {
     #[inline]
     fn from_iter<T: IntoIterator<Item = A>>(iter: T) -> Self {
         iter.into_iter().collect::<NonZeroIndexVec<I, _>>().into_boxed_slice()
     }
 }
 
-impl<I: NonZeroIdx, A> IntoIterator for Box<NonZeroIndexSlice<I, [A]>> {
+impl<I: NonZeroIdx, A: Default> IntoIterator for Box<NonZeroIndexSlice<I, [A]>> {
     type Item = A;
     type IntoIter = vec::IntoIter<A>;
     #[inline]
@@ -847,7 +847,7 @@ impl<I: NonZeroIdx, A> IntoIterator for Box<NonZeroIndexSlice<I, [A]>> {
     }
 }
 
-impl<I: NonZeroIdx, A> Default for Box<NonZeroIndexSlice<I, [A]>> {
+impl<I: NonZeroIdx, A: Default> Default for Box<NonZeroIndexSlice<I, [A]>> {
     #[inline(always)]
     fn default() -> Self {
         non_zero_index_vec![].into()
