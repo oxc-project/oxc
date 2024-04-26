@@ -7,7 +7,7 @@ mod private_slice_index {
 /// This is the equivalent of the sealed `core::slice::SliceIndex` trait. It
 /// cannot be overridden from user, code nor should it normally need use
 /// directly (Outside of trait bounds, I guess).
-pub trait IdxSliceIndex<I: NonZeroIdx, T>: private_slice_index::Sealed {
+pub trait NonZeroIdxSliceIndex<I: NonZeroIdx, T>: private_slice_index::Sealed {
     type Output: ?Sized;
 
     fn get(self, slice: &NonZeroIndexSlice<I, [T]>) -> Option<&Self::Output>;
@@ -20,7 +20,7 @@ pub trait IdxSliceIndex<I: NonZeroIdx, T>: private_slice_index::Sealed {
 // Does this defeat the point of sealing?
 impl<I: NonZeroIdx> private_slice_index::Sealed for I {}
 
-impl<I: NonZeroIdx, T> IdxSliceIndex<I, T> for I {
+impl<I: NonZeroIdx, T> NonZeroIdxSliceIndex<I, T> for I {
     type Output = T;
 
     #[inline]
@@ -45,7 +45,7 @@ impl<I: NonZeroIdx, T> IdxSliceIndex<I, T> for I {
 
 macro_rules! range_slice {
     ($r:ty) => {
-        impl<I: NonZeroIdx, T> IdxSliceIndex<I, T> for $r {
+        impl<I: NonZeroIdx, T> NonZeroIdxSliceIndex<I, T> for $r {
             type Output = NonZeroIndexSlice<I, [T]>;
 
             #[inline]
@@ -82,7 +82,7 @@ range_slice!(core::ops::RangeInclusive<I>);
 range_slice!(core::ops::RangeToInclusive<I>);
 // range_slice!(core::ops::RangeFull);
 impl private_slice_index::Sealed for core::ops::RangeFull {}
-impl<I: NonZeroIdx, T> IdxSliceIndex<I, T> for core::ops::RangeFull {
+impl<I: NonZeroIdx, T> NonZeroIdxSliceIndex<I, T> for core::ops::RangeFull {
     type Output = NonZeroIndexSlice<I, [T]>;
 
     #[inline]
@@ -108,7 +108,7 @@ impl<I: NonZeroIdx, T> IdxSliceIndex<I, T> for core::ops::RangeFull {
 
 impl private_slice_index::Sealed for usize {}
 // As an ergonomic concession, implement this for `usize` as well, it's too painful without
-impl<I: NonZeroIdx, T> IdxSliceIndex<I, T> for usize {
+impl<I: NonZeroIdx, T> NonZeroIdxSliceIndex<I, T> for usize {
     type Output = T;
 
     #[inline]
@@ -137,7 +137,7 @@ impl<I: NonZeroIdx, T> IdxSliceIndex<I, T> for usize {
 ///
 /// IMO it's unfortunate that this needs to be present in the API, but it
 /// doesn't hurt that much.
-pub trait IdxRangeBounds<I>: private_range_bounds::Sealed
+pub trait NonZeroIdxRangeBounds<I>: private_range_bounds::Sealed
 where
     I: NonZeroIdx,
 {
@@ -156,7 +156,7 @@ impl<I: NonZeroIdx> private_range_bounds::Sealed for core::ops::RangeInclusive<I
 impl<I: NonZeroIdx> private_range_bounds::Sealed for core::ops::RangeToInclusive<I> {}
 impl private_range_bounds::Sealed for core::ops::RangeFull {}
 
-impl<I: NonZeroIdx> IdxRangeBounds<I> for core::ops::Range<I> {
+impl<I: NonZeroIdx> NonZeroIdxRangeBounds<I> for core::ops::Range<I> {
     type Range = core::ops::Range<usize>;
     #[inline]
     fn into_range(self) -> Self::Range {
@@ -164,7 +164,7 @@ impl<I: NonZeroIdx> IdxRangeBounds<I> for core::ops::Range<I> {
     }
 }
 
-impl<I: NonZeroIdx> IdxRangeBounds<I> for core::ops::RangeFrom<I> {
+impl<I: NonZeroIdx> NonZeroIdxRangeBounds<I> for core::ops::RangeFrom<I> {
     type Range = core::ops::RangeFrom<usize>;
     #[inline]
     fn into_range(self) -> Self::Range {
@@ -172,7 +172,7 @@ impl<I: NonZeroIdx> IdxRangeBounds<I> for core::ops::RangeFrom<I> {
     }
 }
 
-impl<I: NonZeroIdx> IdxRangeBounds<I> for core::ops::RangeFull {
+impl<I: NonZeroIdx> NonZeroIdxRangeBounds<I> for core::ops::RangeFull {
     type Range = core::ops::RangeFull;
     #[inline]
     fn into_range(self) -> Self::Range {
@@ -180,7 +180,7 @@ impl<I: NonZeroIdx> IdxRangeBounds<I> for core::ops::RangeFull {
     }
 }
 
-impl<I: NonZeroIdx> IdxRangeBounds<I> for core::ops::RangeTo<I> {
+impl<I: NonZeroIdx> NonZeroIdxRangeBounds<I> for core::ops::RangeTo<I> {
     type Range = core::ops::RangeTo<usize>;
     #[inline]
     fn into_range(self) -> Self::Range {
@@ -188,7 +188,7 @@ impl<I: NonZeroIdx> IdxRangeBounds<I> for core::ops::RangeTo<I> {
     }
 }
 
-impl<I: NonZeroIdx> IdxRangeBounds<I> for core::ops::RangeInclusive<I> {
+impl<I: NonZeroIdx> NonZeroIdxRangeBounds<I> for core::ops::RangeInclusive<I> {
     type Range = core::ops::RangeInclusive<usize>;
     #[inline]
     fn into_range(self) -> Self::Range {
@@ -196,7 +196,7 @@ impl<I: NonZeroIdx> IdxRangeBounds<I> for core::ops::RangeInclusive<I> {
     }
 }
 
-impl<I: NonZeroIdx> IdxRangeBounds<I> for core::ops::RangeToInclusive<I> {
+impl<I: NonZeroIdx> NonZeroIdxRangeBounds<I> for core::ops::RangeToInclusive<I> {
     type Range = core::ops::RangeToInclusive<usize>;
     #[inline]
     fn into_range(self) -> Self::Range {
@@ -207,7 +207,7 @@ impl<I: NonZeroIdx> IdxRangeBounds<I> for core::ops::RangeToInclusive<I> {
 impl<I, R, T> core::ops::Index<R> for NonZeroIndexSlice<I, [T]>
 where
     I: NonZeroIdx,
-    R: IdxSliceIndex<I, T>,
+    R: NonZeroIdxSliceIndex<I, T>,
 {
     type Output = R::Output;
     #[inline]
@@ -219,7 +219,7 @@ where
 impl<I, R, T> core::ops::IndexMut<R> for NonZeroIndexSlice<I, [T]>
 where
     I: NonZeroIdx,
-    R: IdxSliceIndex<I, T>,
+    R: NonZeroIdxSliceIndex<I, T>,
 {
     #[inline]
     fn index_mut(&mut self, index: R) -> &mut R::Output {

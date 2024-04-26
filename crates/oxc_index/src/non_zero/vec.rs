@@ -14,7 +14,7 @@ use super::slice::NonZeroIndexBox;
 use crate::{__internal_impl_partialeq, __internal_impl_partialeq2};
 
 use super::{
-    indexing::{IdxRangeBounds, IdxSliceIndex},
+    indexing::{NonZeroIdxRangeBounds, NonZeroIdxSliceIndex},
     slice::NonZeroIndexSlice,
     NonZeroIdx,
 };
@@ -85,7 +85,7 @@ impl<I: NonZeroIdx, T> NonZeroIndexVec<I, T> {
     ) -> vec::Splice<<It as IntoIterator>::IntoIter>
     where
         It: IntoIterator<Item = T>,
-        R: IdxRangeBounds<I>,
+        R: NonZeroIdxRangeBounds<I>,
     {
         self.raw.splice(range.into_range(), replace_with)
     }
@@ -93,7 +93,7 @@ impl<I: NonZeroIdx, T> NonZeroIndexVec<I, T> {
     /// Similar to `self.drain(r).enumerate()` but with indices of `I` and not
     /// `usize`.
     #[inline]
-    pub fn drain_enumerated<R: IdxRangeBounds<I>>(
+    pub fn drain_enumerated<R: NonZeroIdxRangeBounds<I>>(
         &mut self,
         range: R,
     ) -> NonZeroEnumerated<vec::Drain<'_, T>, I, T> {
@@ -163,7 +163,7 @@ impl<I: NonZeroIdx, T> NonZeroIndexVec<I, T> {
     /// See also [`NonZeroIndexVec::drain_enumerated`], which gives you indices (of the
     /// correct type) as you iterate.
     #[inline]
-    pub fn drain<R: IdxRangeBounds<I>>(&mut self, range: R) -> vec::Drain<'_, T> {
+    pub fn drain<R: NonZeroIdxRangeBounds<I>>(&mut self, range: R) -> vec::Drain<'_, T> {
         self.raw.drain(range.into_range())
     }
 
@@ -194,14 +194,14 @@ impl<I: NonZeroIdx, T> NonZeroIndexVec<I, T> {
 
     /// Get a ref to the item at the provided index, or None for out of bounds.
     #[inline]
-    pub fn get<J: IdxSliceIndex<I, T>>(&self, index: J) -> Option<&J::Output> {
+    pub fn get<J: NonZeroIdxSliceIndex<I, T>>(&self, index: J) -> Option<&J::Output> {
         index.get(self.as_slice())
     }
 
     /// Get a mut ref to the item at the provided index, or None for out of
     /// bounds
     #[inline]
-    pub fn get_mut<J: IdxSliceIndex<I, T>>(&mut self, index: J) -> Option<&mut J::Output> {
+    pub fn get_mut<J: NonZeroIdxSliceIndex<I, T>>(&mut self, index: J) -> Option<&mut J::Output> {
         index.get_mut(self.as_mut_slice())
     }
 

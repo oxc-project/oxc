@@ -4,7 +4,7 @@ use alloc::{boxed::Box, slice, vec, vec::Vec};
 
 use super::{
     super::non_zero_index_vec,
-    indexing::{IdxRangeBounds, IdxSliceIndex},
+    indexing::{NonZeroIdxRangeBounds, NonZeroIdxSliceIndex},
     vec::{NonZeroEnumerated, NonZeroIndexVec},
     NonZeroIdx,
 };
@@ -27,10 +27,10 @@ use super::{
 ///   replaced with ones that take NonZeroIdx.
 ///
 /// - Apis that take `R: RangeBounds<usize>` take an
-///   [`IdxRangeBounds<I>`][IdxRangeBounds], which is basically a
+///   [`NonZeroIdxRangeBounds<I>`][NonZeroIdxRangeBounds], which is basically a
 ///   `RangeBounds<I>`.
 /// - Apis that take `SliceIndex<usize>` take an
-///   [`IdxSliceIndex<I>`][IdxSliceIndex], which is basically a `SliceIndex<I>`.
+///   [`NonZeroIdxSliceIndex<I>`][NonZeroIdxSliceIndex], which is basically a `SliceIndex<I>`.
 ///
 /// - Most iterator functions where `the_iter().enumerate()` would refer to
 ///   indices have been given `_enumerated` variants. E.g.
@@ -449,7 +449,7 @@ impl<I: NonZeroIdx, T> NonZeroIndexSlice<I, [T]> {
     /// Copies elements from one part of the slice to another part of itself,
     /// using a memmove.
     #[inline]
-    pub fn copy_within<R: IdxRangeBounds<I>>(&mut self, src: R, dst: I)
+    pub fn copy_within<R: NonZeroIdxRangeBounds<I>>(&mut self, src: R, dst: I)
     where
         T: Copy,
     {
@@ -458,14 +458,14 @@ impl<I: NonZeroIdx, T> NonZeroIndexSlice<I, [T]> {
 
     /// Get a ref to the item at the provided index, or None for out of bounds.
     #[inline]
-    pub fn get<J: IdxSliceIndex<I, T>>(&self, index: J) -> Option<&J::Output> {
+    pub fn get<J: NonZeroIdxSliceIndex<I, T>>(&self, index: J) -> Option<&J::Output> {
         index.get(self)
     }
 
     /// Get a mut ref to the item at the provided index, or None for out of
     /// bounds
     #[inline]
-    pub fn get_mut<J: IdxSliceIndex<I, T>>(&mut self, index: J) -> Option<&mut J::Output> {
+    pub fn get_mut<J: NonZeroIdxSliceIndex<I, T>>(&mut self, index: J) -> Option<&mut J::Output> {
         index.get_mut(self)
     }
 
