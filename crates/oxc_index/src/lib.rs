@@ -144,8 +144,6 @@ pub use indexing::{IdxRangeBounds, IdxSliceIndex};
 pub use slice::{IndexBox, IndexSlice};
 pub use vec::IndexVec;
 
-use vec::IndexVecExt;
-
 #[macro_use]
 mod macros;
 
@@ -171,7 +169,7 @@ pub mod example_generated;
 /// Note: I'm open for suggestions on how to handle this case, but do not want
 /// the typical cases (E.g. Idx is a newtyped `usize` or `u32`), to become more
 /// complex.
-pub trait Idx: IndexVecExt<Self> + Copy + 'static + Ord + Debug + Hash {
+pub trait Idx: Copy + 'static + Ord + Debug + Hash {
     /// Construct an Index from a `usize`. This is equivalent to `From<usize>`.
     ///
     /// # Panics
@@ -214,8 +212,3 @@ pub trait Idx: IndexVecExt<Self> + Copy + 'static + Ord + Debug + Hash {
 /// it earlier, or pick a bigger index type).
 ///
 pub trait NonZeroIdx: Idx {}
-
-#[doc(hidden)]
-pub mod internal {
-    pub use super::alloc::vec::Vec;
-}
