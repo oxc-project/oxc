@@ -156,7 +156,9 @@ impl Rule for BanTsComment {
                     && (directive == "check" || directive == "nocheck")
                 {
                     continue;
-                } else if raw.trim_start().starts_with("/")
+                }
+
+                if raw.trim_start().starts_with('/')
                     && (directive == "check" || directive == "nocheck")
                 {
                     continue;
@@ -177,7 +179,7 @@ impl Rule for BanTsComment {
                                             span,
                                         )
                                     },
-                                )
+                                );
                             } else {
                                 ctx.diagnostic(BanTsCommentDiagnostic::Comment(
                                     directive.to_string(),
