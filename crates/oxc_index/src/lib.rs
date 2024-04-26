@@ -142,7 +142,7 @@ pub mod vec;
 
 pub use indexing::{IdxRangeBounds, IdxSliceIndex};
 pub use slice::{IndexBox, IndexSlice};
-pub use vec::IndexVec;
+pub use vec::{IndexVec, NonZeroIndexVec};
 
 #[macro_use]
 mod macros;
@@ -211,4 +211,16 @@ pub trait Idx: Copy + 'static + Ord + Debug + Hash {
 /// subtle handling than this, then you're on your own (or, well, either handle
 /// it earlier, or pick a bigger index type).
 ///
-pub trait NonZeroIdx: Idx {}
+pub trait NonZeroIdx: Copy + 'static + Ord + Debug + Hash {
+    /// Construct an Index from a `usize`. This is equivalent to `From<usize>`.
+    ///
+    /// # Panics
+    ///
+    /// Note that this will panic if `idx` does not fit (unless checking has
+    /// been disabled, as mentioned above). Also note that `NonZeroIdx` implementations
+    /// are free to define what "fit" means as they desire.
+    fn from_usize(idx: usize) -> Self;
+
+    /// Get the underlying index. This is equivalent to `Into<usize>`
+    fn index(self) -> usize;
+}

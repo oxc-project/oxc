@@ -11,7 +11,7 @@ use core::slice;
 #[cfg(feature = "serialize")]
 use crate::IndexBox;
 
-use crate::{Idx, IdxRangeBounds, IdxSliceIndex, IndexSlice};
+use crate::{Idx, IdxRangeBounds, IdxSliceIndex, IndexSlice, NonZeroIdx};
 
 /// A Vec that only accepts indices of a specific type.
 ///
@@ -593,4 +593,14 @@ impl<'de, I: Idx, T: serde::de::Deserialize<'de>> serde::de::Deserialize<'de> fo
     fn deserialize<D: serde::de::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         Box::<[T]>::deserialize(deserializer).map(Into::into)
     }
+}
+
+/// A Vec that only accepts indices of a specific non-zero type.
+///
+/// TODO
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct NonZeroIndexVec<I: NonZeroIdx, T> {
+    /// Our wrapped Vec.
+    pub raw: Vec<T>,
+    _marker: PhantomData<fn(&I)>,
 }

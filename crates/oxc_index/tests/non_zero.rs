@@ -6,6 +6,8 @@
     clippy::cast_possible_truncation
 )]
 
+use oxc_index::NonZeroIndexVec;
+
 oxc_index::define_index_type! {
     #[non_zero]
     pub struct NonZeroIdx8 = u8;
@@ -68,3 +70,9 @@ fn test_nz_idx_arith() {
     assert!(NonZeroIdx32::new(5) < 6usize);
     assert!(5usize < NonZeroIdx32::new(6));
 }
+
+// #[test]
+// fn test_non_zero_index_vec() {
+//     let mut vec: NonZeroIndexVec<NonZeroIdx8, u8> = NonZeroIndexVec::new();
+//     let idx = vec.push(1);
+// }

@@ -299,6 +299,13 @@ macro_rules! __internal_define_index_type_inner_impl_generic {
     (@type[false] $v:vis $type:ident($raw:ty)) => {
         $crate::__internal_define_index_type_inner_impl!(@type($type, $v, $raw));
     };
+
+    (@trait[$primitive:ty] $v:vis $type:ident($raw:ty)) => {
+        $crate::__internal_define_non_zero_index_type_inner_impl!(@trait($type, $v, $raw, $primitive));
+    };
+    (@trait[false] $v:vis $type:ident($raw:ty)) => {
+        $crate::__internal_define_index_type_inner_impl!(@trait($type, $v, $raw));
+    };
 }
 
 #[macro_export]
@@ -332,6 +339,21 @@ macro_rules! __internal_define_index_type_inner_impl {
                 self._raw as usize
             }
     };
+
+    (@trait($type:ident, $v:vis, $raw:ty)) => {
+        impl $crate::Idx for $type {
+            #[inline]
+            fn from_usize(value: usize) -> Self {
+                Self::from(value)
+            }
+
+            #[inline]
+            fn index(self) -> usize {
+                usize::from(self)
+            }
+        }
+
+    };
 }
 
 #[macro_export]
@@ -356,7 +378,11 @@ macro_rules! __internal_define_non_zero_index_type_inner_impl {
             #[inline]
             $v fn from_usize(value: usize) -> Self {
                 Self::check_index(value as usize);
-                Self { _raw: <$raw>::new(value as $primitive).unwrap() }
+                Self {
+                    _raw:
+                        <$raw>::new(value as $primitive)
+                        .expect("Attempt to initialize a non-zero index with a value of `zero`.")
+                }
             }
 
             /// Get the wrapped index as a usize.
@@ -364,6 +390,20 @@ macro_rules! __internal_define_non_zero_index_type_inner_impl {
             $v const fn index(self) -> usize {
                 self._raw.get() as usize
             }
+    };
+
+    (@trait($type:ident, $v:vis, $raw:ty, $primitive:ty)) => {
+        impl $crate::NonZeroIdx for $type {
+            #[inline]
+            fn from_usize(value: usize) -> Self {
+                Self::from(value)
+            }
+
+            #[inline]
+            fn index(self) -> usize {
+                usize::from(self)
+            }
+        }
     };
 }
 
@@ -565,7 +605,13 @@ macro_rules! __define_index_type_inner {
         #[repr(transparent)]
         $v struct $type { _raw: $raw }
 
+        // mixin the type specific trait implementations
+        $crate::__internal_define_index_type_inner_impl_generic!(@trait[$non_zero] $v $type($raw));
+
         impl $type {
+            // mixin the type specific implementation
+            $crate::__internal_define_index_type_inner_impl_generic!(@type[$non_zero] $v $type($raw));
+
             /// If `Self::CHECKS_MAX_INDEX` is true, we'll assert if trying to
             /// produce a value larger than this in any of the ctors that don't
             /// have `unchecked` in their name.
@@ -574,8 +620,6 @@ macro_rules! __define_index_type_inner {
             /// Does this index type assert if asked to construct an index
             /// larger than MAX_INDEX?
             $v const CHECKS_MAX_INDEX: bool = !$no_check_max;
-
-            $crate::__internal_define_index_type_inner_impl_generic!(@type[$non_zero] $v $type($raw));
 
             /// Construct this index type from a usize. Alias for `from_usize`.
             #[inline(always)]
@@ -731,18 +775,6 @@ macro_rules! __define_index_type_inner {
             #[inline]
             fn sub_assign(&mut self, other: $type) {
                 *self = *self - other;
-            }
-        }
-
-        impl $crate::Idx for $type {
-            #[inline]
-            fn from_usize(value: usize) -> Self {
-                Self::from(value)
-            }
-
-            #[inline]
-            fn index(self) -> usize {
-                usize::from(self)
             }
         }
 
