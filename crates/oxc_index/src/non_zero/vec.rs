@@ -64,6 +64,7 @@ impl<I: NonZeroIdx, T: Default> NonZeroIndexVec<I, T> {
         let len = vec.len() + 1;
         // See if `I::from_usize` might be upset by this length.
         let _ = I::from_usize(len);
+        panic!("HERE");
         // TODO: we should wrap our elements in `MaybeUninit` instead of enforcing default trait.
         vec.insert(0, T::default());
         NonZeroIndexVec {
