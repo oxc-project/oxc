@@ -6,7 +6,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::{self, Error},
+    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -142,20 +142,6 @@ impl PromiseState {
             _ => true,
         }
     }
-
-    fn promise_array(&self) -> bool {
-        match self {
-            PromiseState::UnhandledPromiseArray => true,
-            _ => false,
-        }
-    }
-
-    fn non_function_handler(&self) -> bool {
-        match self {
-            PromiseState::UnhandledNonFunctionHandler => true,
-            _ => false,
-        }
-    }
 }
 
 impl NoFloatingPromises {
@@ -199,12 +185,25 @@ impl NoFloatingPromises {
 
         match node {
             Expression::CallExpression(expr) => self.is_unhandled_call_expression(expr, ctx),
-            Expression::ConditionalExpression(_) => todo!(),
+            Expression::ConditionalExpression(expr) => {
+                let alternate_result = self.is_unhandled_promise(&expr.alternate, ctx);
+                if alternate_result.is_unhandled() {
+                    alternate_result
+                } else {
+                    self.is_unhandled_promise(&expr.consequent, ctx)
+                }
+            }
             Expression::MemberExpression(_)
             | Expression::Identifier(_)
-            | Expression::NewExpression(_) => todo!(),
-            Expression::LogicalExpression(_) => todo!(),
-
+            | Expression::NewExpression(_) => PromiseState::Unhandled,
+            Expression::LogicalExpression(expr) => {
+                let left_result = self.is_unhandled_promise(&expr.left, ctx);
+                if left_result.is_unhandled() {
+                    left_result
+                } else {
+                    self.is_unhandled_promise(&expr.right, ctx)
+                }
+            }
             _ => PromiseState::Handled,
         }
     }
@@ -232,7 +231,7 @@ impl NoFloatingPromises {
 
         match node {
             ChainElement::CallExpression(expr) => self.is_unhandled_call_expression(expr, ctx),
-            ChainElement::MemberExpression(_) => todo!(),
+            ChainElement::MemberExpression(_) => PromiseState::Unhandled,
         }
     }
 
