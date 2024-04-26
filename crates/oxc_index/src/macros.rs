@@ -1,3 +1,4 @@
+use super::alloc::vec::Vec;
 /// A macro equivalent to the stdlib's `vec![]`, but producing an `IndexVec`.
 #[macro_export]
 macro_rules! index_vec {
@@ -757,6 +758,29 @@ macro_rules! __define_index_type_inner {
             #[inline]
             fn from(value: usize) -> Self {
                 $type::from_usize(value)
+            }
+        }
+
+        impl $crate::vec::IndexVecExt<$type> for $type {
+            fn new_index_vec<T>() -> $crate::vec::IndexVec<Self, T> {
+                #[allow(unsafe_code)]
+                unsafe {
+                    Self::new_index_vec_from_vec_unchecked($crate::internal::Vec::new())
+                }
+            }
+
+            fn new_index_vec_from_vec<T>(vec: $crate::internal::Vec<T>) -> $crate::vec::IndexVec<Self, T> {
+                #[allow(unsafe_code)]
+                unsafe {
+                    Self::new_index_vec_from_vec_unchecked(vec)
+                }
+            }
+
+            fn new_index_vec_with_capacity<T>(capacity: usize) -> $crate::vec::IndexVec<Self, T> {
+                #[allow(unsafe_code)]
+                unsafe {
+                    Self::new_index_vec_from_vec_unchecked($crate::internal::Vec::with_capacity(capacity))
+                }
             }
         }
 

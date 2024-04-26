@@ -37,6 +37,18 @@ pub struct IndexVec<I: Idx, T> {
     _marker: PhantomData<fn(&I)>,
 }
 
+pub trait IndexVecExt<I: Idx> {
+    fn new_index_vec<T>() -> IndexVec<I, T>;
+    fn new_index_vec_from_vec<T>(vec: Vec<T>) -> IndexVec<I, T>;
+    fn new_index_vec_with_capacity<T>(capacity: usize) -> IndexVec<I, T>;
+
+    /// SAFETY: User should make sure the `IndexVec` would be valid in the context of its `Idx`.
+    #[allow(unsafe_code)]
+    unsafe fn new_index_vec_from_vec_unchecked<T>(raw: Vec<T>) -> IndexVec<I, T> {
+        IndexVec { raw, _marker: PhantomData {} }
+    }
+}
+
 #[allow(unsafe_code)]
 // SAFETY: Whether `IndexVec` is `Send` depends only on the data,
 // not the phantom data.
@@ -54,7 +66,7 @@ impl<I: Idx, T> IndexVec<I, T> {
     /// Construct a new IndexVec.
     #[inline]
     pub fn new() -> Self {
-        IndexVec { raw: Vec::new(), _marker: PhantomData }
+        I::new_index_vec()
     }
 
     /// Construct a `IndexVec` from a `Vec<T>`.
@@ -64,14 +76,14 @@ impl<I: Idx, T> IndexVec<I, T> {
     pub fn from_vec(vec: Vec<T>) -> Self {
         // See if `I::from_usize` might be upset by this length.
         let _ = I::from_usize(vec.len());
-        IndexVec { raw: vec, _marker: PhantomData }
+        I::new_index_vec_from_vec(vec)
     }
 
     /// Construct an IndexVec that can hold at least `capacity` items before
     /// reallocating. See [`Vec::with_capacity`].
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-        IndexVec { raw: Vec::with_capacity(capacity), _marker: PhantomData }
+        I::new_index_vec_with_capacity(capacity)
     }
 
     /// Similar to `self.into_iter().enumerate()` but with indices of `I` and

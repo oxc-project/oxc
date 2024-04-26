@@ -68,3 +68,9 @@ fn test_nz_idx_arith() {
     assert!(NonZeroIdx32::new(5) < 6usize);
     assert!(5usize < NonZeroIdx32::new(6));
 }
+
+#[test]
+#[should_panic]
+fn test_nz_idx_sub_panic() {
+    let _ = NonZeroIdx8::from_usize(1) - 1;
+}
