@@ -45,7 +45,7 @@ pub trait NonZeroIdx: Copy + 'static + Ord + Debug + Hash {
 
     /// Construct an Index from a `usize`. This is equivalent to `From<usize>`.
     ///
-    /// # SAFETY: `idx` shouldn't be `zero`. It should also fit.
+    /// # SAFETY `idx` shouldn't be `zero`. It should also fit.
     #[allow(unsafe_code)]
     unsafe fn from_usize_unchecked(idx: usize) -> Self;
 
