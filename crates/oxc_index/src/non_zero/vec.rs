@@ -8,15 +8,15 @@ use core::iter::{self, FromIterator};
 use core::marker::PhantomData;
 use core::slice;
 
-// #[cfg(feature = "serialize")]
-// use crate::IndexBox;
+#[cfg(feature = "serialize")]
+use super::slice::NonZeroIndexBox;
 
 use crate::{__internal_impl_partialeq, __internal_impl_partialeq2};
 
 use super::{
-    super::NonZeroIdx,
     indexing::{IdxRangeBounds, IdxSliceIndex},
     slice::NonZeroIndexSlice,
+    NonZeroIdx,
 };
 
 /// A Vec that only accepts indices of a specific non-zero type.
@@ -398,7 +398,9 @@ impl<'a, I: NonZeroIdx, T: Clone> From<&'a NonZeroIndexSlice<I, [T]>> for NonZer
         src.to_owned()
     }
 }
-impl<'a, I: NonZeroIdx, T: Clone> From<&'a mut NonZeroIndexSlice<I, [T]>> for NonZeroIndexVec<I, T> {
+impl<'a, I: NonZeroIdx, T: Clone> From<&'a mut NonZeroIndexSlice<I, [T]>>
+    for NonZeroIndexVec<I, T>
+{
     #[inline]
     fn from(src: &'a mut NonZeroIndexSlice<I, [T]>) -> Self {
         src.to_owned()
@@ -484,29 +486,29 @@ __internal_impl_partialeq! { NonZeroIndexVec<I, A>, Vec<B> }
 __internal_impl_partialeq! { NonZeroIndexVec<I, A>, &'b [B] }
 __internal_impl_partialeq! { NonZeroIndexVec<I, A>, &'b mut [B] }
 
-// __internal_impl_partialeq2! { NonZeroIndexVec<I, A>, &'b NonZeroIndexSlice<J, [B]> }
-// __internal_impl_partialeq2! { NonZeroIndexVec<I, A>, &'b mut NonZeroIndexSlice<J, [B]> }
+__internal_impl_partialeq2! { NonZeroIndexVec<I, A>, &'b NonZeroIndexSlice<J, [B]> }
+__internal_impl_partialeq2! { NonZeroIndexVec<I, A>, &'b mut NonZeroIndexSlice<J, [B]> }
 
-// __internal_impl_partialeq! { &'a NonZeroIndexSlice<I, [A]>, Vec<B> }
-// __internal_impl_partialeq! { &'a mut NonZeroIndexSlice<I, [A]>, Vec<B> }
+__internal_impl_partialeq! { &'a NonZeroIndexSlice<I, [A]>, Vec<B> }
+__internal_impl_partialeq! { &'a mut NonZeroIndexSlice<I, [A]>, Vec<B> }
 
-// __internal_impl_partialeq! { NonZeroIndexSlice<I, [A]>, &'b [B] }
-// __internal_impl_partialeq! { NonZeroIndexSlice<I, [A]>, &'b mut [B] }
+__internal_impl_partialeq! { NonZeroIndexSlice<I, [A]>, &'b [B] }
+__internal_impl_partialeq! { NonZeroIndexSlice<I, [A]>, &'b mut [B] }
 
-// __internal_impl_partialeq2! { &'a NonZeroIndexSlice<I, [A]>, NonZeroIndexVec<J, B> }
-// __internal_impl_partialeq2! { &'a mut NonZeroIndexSlice<I, [A]>, NonZeroIndexVec<J, B> }
+__internal_impl_partialeq2! { &'a NonZeroIndexSlice<I, [A]>, NonZeroIndexVec<J, B> }
+__internal_impl_partialeq2! { &'a mut NonZeroIndexSlice<I, [A]>, NonZeroIndexVec<J, B> }
 
-// __internal_impl_partialeq2! { NonZeroIndexSlice<I, [A]>, &'a NonZeroIndexSlice<J, [B]> }
-// __internal_impl_partialeq2! { NonZeroIndexSlice<I, [A]>, &'a mut NonZeroIndexSlice<J, [B]> }
+__internal_impl_partialeq2! { NonZeroIndexSlice<I, [A]>, &'a NonZeroIndexSlice<J, [B]> }
+__internal_impl_partialeq2! { NonZeroIndexSlice<I, [A]>, &'a mut NonZeroIndexSlice<J, [B]> }
 
 macro_rules! array_impls {
     ($($N: expr)+) => {$(
         __internal_impl_partialeq! { NonZeroIndexVec<I, A>, [B; $N] }
         __internal_impl_partialeq! { NonZeroIndexVec<I, A>, &'b [B; $N] }
-        // __internal_impl_partialeq! { NonZeroIndexSlice<I, [A]>, [B; $N] }
-        // __internal_impl_partialeq! { NonZeroIndexSlice<I, [A]>, &'b [B; $N] }
-        // impl_partialeq! { &'a NonZeroIndexSlice<I, [A]>, [B; $N] }
-        // impl_partialeq! { &'a NonZeroIndexSlice<I, [A]>, &'b [B; $N] }
+        __internal_impl_partialeq! { NonZeroIndexSlice<I, [A]>, [B; $N] }
+        __internal_impl_partialeq! { NonZeroIndexSlice<I, [A]>, &'b [B; $N] }
+        // __internal_impl_partialeq! { &'a NonZeroIndexSlice<I, [A]>, [B; $N] }
+        // __internal_impl_partialeq! { &'a NonZeroIndexSlice<I, [A]>, &'b [B; $N] }
     )+};
 }
 
@@ -540,18 +542,18 @@ impl<'de, I: NonZeroIdx, T: serde::de::Deserialize<'de>> serde::de::Deserialize<
     }
 }
 
-// #[cfg(feature = "serialize")]
-// impl<I: NonZeroIdx, T: serde::ser::Serialize> serde::ser::Serialize for IndexBox<I, T> {
-//     fn serialize<S: serde::ser::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-//         self.raw.serialize(serializer)
-//     }
-// }
-//
-// #[cfg(feature = "serialize")]
-// impl<'de, I: NonZeroIdx, T: serde::de::Deserialize<'de>> serde::de::Deserialize<'de>
-//     for IndexBox<I, [T]>
-// {
-//     fn deserialize<D: serde::de::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-//         Box::<[T]>::deserialize(deserializer).map(Into::into)
-//     }
-// }
+#[cfg(feature = "serialize")]
+impl<I: NonZeroIdx, T: serde::ser::Serialize> serde::ser::Serialize for NonZeroIndexBox<I, T> {
+    fn serialize<S: serde::ser::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.raw.serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl<'de, I: NonZeroIdx, T: serde::de::Deserialize<'de>> serde::de::Deserialize<'de>
+    for NonZeroIndexBox<I, [T]>
+{
+    fn deserialize<D: serde::de::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        Box::<[T]>::deserialize(deserializer).map(Into::into)
+    }
+}

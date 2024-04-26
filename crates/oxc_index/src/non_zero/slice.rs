@@ -61,8 +61,8 @@ impl<I: NonZeroIdx, T: fmt::Debug + ?Sized> fmt::Debug for NonZeroIndexSlice<I, 
         fmt::Debug::fmt(&self.raw, fmt)
     }
 }
-/// `IndexBox<I, [T]>`: An alias for indexed boxed slice.
-pub type IndexBox<I, T> = Box<NonZeroIndexSlice<I, T>>;
+/// `NonZeroIndexBox<I, [T]>`: An alias for indexed boxed slice.
+pub type NonZeroIndexBox<I, T> = Box<NonZeroIndexSlice<I, T>>;
 
 type SliceMapped<Iter, I, T> = iter::Map<Iter, fn(&[T]) -> &NonZeroIndexSlice<I, [T]>>;
 type SliceMappedMut<Iter, I, T> = iter::Map<Iter, fn(&mut [T]) -> &mut NonZeroIndexSlice<I, [T]>>;

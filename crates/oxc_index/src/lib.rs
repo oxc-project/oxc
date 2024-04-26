@@ -137,8 +137,8 @@ use core::fmt::Debug;
 use core::hash::Hash;
 
 pub mod non_zero;
-pub use non_zero::NonZeroIdx;
 pub use non_zero::vec::NonZeroIndexVec;
+pub use non_zero::NonZeroIdx;
 
 pub mod indexing;
 pub mod slice;
