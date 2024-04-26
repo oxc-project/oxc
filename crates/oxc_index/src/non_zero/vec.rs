@@ -27,7 +27,7 @@ use super::{
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NonZeroIndexVec<I: NonZeroIdx, T: Default> {
     /// Our wrapped Vec.
-    raw: Vec<T>,
+    pub(crate) raw: Vec<T>,
     _marker: PhantomData<fn(&I)>,
 }
 

@@ -47,7 +47,7 @@ use super::{
 #[repr(transparent)]
 pub struct NonZeroIndexSlice<I: NonZeroIdx, T: ?Sized> {
     _marker: PhantomData<fn(&I)>,
-    raw: T,
+    pub(crate) raw: T,
 }
 
 // TODO: we may want to remove this somehow. Won't work in upcoming rust versions.
