@@ -180,6 +180,7 @@ mod jest {
     pub mod prefer_to_contain;
     pub mod prefer_to_have_length;
     pub mod prefer_todo;
+    pub mod require_hook;
     pub mod require_to_throw_message;
     pub mod valid_describe_callback;
     pub mod valid_expect;
@@ -525,6 +526,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_to_contain,
     jest::prefer_to_have_length,
     jest::prefer_todo,
+    jest::require_hook,
     jest::require_to_throw_message,
     jest::valid_describe_callback,
     jest::valid_expect,
