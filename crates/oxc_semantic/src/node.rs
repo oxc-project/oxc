@@ -1,7 +1,7 @@
 use petgraph::stable_graph::NodeIndex;
 
 use oxc_ast::AstKind;
-use oxc_index::{IndexVec, NonZeroIndexVec};
+use oxc_index::NonZeroIndexVec;
 
 use crate::scope::ScopeId;
 
