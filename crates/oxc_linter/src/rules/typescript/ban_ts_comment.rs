@@ -911,6 +911,5 @@ if (false) {
         ),
     ];
 
-    dbg!(pass.len(), fail.len());
     Tester::new(BanTsComment::NAME, pass, fail).test_and_snapshot();
 }
