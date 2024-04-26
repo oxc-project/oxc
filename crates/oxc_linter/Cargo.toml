@@ -43,6 +43,7 @@ convert_case  = { workspace = true }
 language-tags = { workspace = true }
 mime_guess    = { workspace = true }
 url           = { workspace = true }
+unicode-segmentation = "1.11.0"
 
 rust-lapper         = { workspace = true }
 once_cell           = { workspace = true }

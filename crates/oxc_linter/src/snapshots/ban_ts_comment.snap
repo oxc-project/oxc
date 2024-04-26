@@ -18,9 +18,64 @@ expression: ban_ts_comment
    ╭─[ban_ts_comment.tsx:2:3]
  1 │     
  2 │ ╭─▶ /*
- 3 │ ╰─▶   @ts-expect-error
- 4 │     */
- 5 │                 
+ 3 │ ╰─▶  @ts-expect-error */
+ 4 │             
+   ╰────
+
+  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-expect-error because it alters compilation errors.
+   ╭─[ban_ts_comment.tsx:2:3]
+ 1 │     
+ 2 │ ╭─▶ /** on the last line
+ 3 │ ╰─▶  @ts-expect-error */
+ 4 │             
+   ╰────
+
+  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-expect-error because it alters compilation errors.
+   ╭─[ban_ts_comment.tsx:2:3]
+ 1 │     
+ 2 │ ╭─▶ /** on the last line
+ 3 │ ╰─▶  * @ts-expect-error */
+ 4 │             
+   ╰────
+
+  ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-expect-error directive to explain why the @ts-expect-error is necessary. The description must be 10 characters or longer.
+   ╭─[ban_ts_comment.tsx:2:3]
+ 1 │     
+ 2 │ ╭─▶ /**
+ 3 │ ╰─▶  * @ts-expect-error: TODO */
+ 4 │             
+   ╰────
+
+  ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-expect-error directive to explain why the @ts-expect-error is necessary. The description must be 25 characters or longer.
+   ╭─[ban_ts_comment.tsx:2:3]
+ 1 │     
+ 2 │ ╭─▶ /**
+ 3 │ ╰─▶  * @ts-expect-error: TS1234 because xyz */
+ 4 │             
+   ╰────
+
+  ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-expect-error directive must match the ^: TS\d+ because .+$ format.
+   ╭─[ban_ts_comment.tsx:2:3]
+ 1 │     
+ 2 │ ╭─▶ /**
+ 3 │ ╰─▶  * @ts-expect-error: TS1234 */
+ 4 │             
+   ╰────
+
+  ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-expect-error directive must match the ^: TS\d+ because .+$ format.
+   ╭─[ban_ts_comment.tsx:2:3]
+ 1 │     
+ 2 │ ╭─▶ /**
+ 3 │ ╰─▶  * @ts-expect-error    : TS1234 */
+ 4 │             
+   ╰────
+
+  ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-expect-error directive to explain why the @ts-expect-error is necessary. The description must be 3 characters or longer.
+   ╭─[ban_ts_comment.tsx:2:3]
+ 1 │     
+ 2 │ ╭─▶ /**
+ 3 │ ╰─▶  * @ts-expect-error 👨‍👩‍👧‍👦 */
+ 4 │             
    ╰────
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-expect-error because it alters compilation errors.
@@ -42,11 +97,11 @@ expression: ban_ts_comment
    ╰────
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-expect-error because it alters compilation errors.
-   ╭─[ban_ts_comment.tsx:3:5]
+   ╭─[ban_ts_comment.tsx:3:7]
  2 │ if (false) {
- 3 │   // @ts-expect-error: Unreachable code error
-   ·     ─────────────────────────────────────────
- 4 │   console.log('hello');
+ 3 │     // @ts-expect-error: Unreachable code error
+   ·       ─────────────────────────────────────────
+ 4 │     console.log('hello');
    ╰────
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-expect-error directive to explain why the @ts-expect-error is necessary. The description must be 3 characters or longer.
@@ -73,63 +128,131 @@ expression: ban_ts_comment
    ·   ─────────────────────────
    ╰────
 
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-ignore because it alters compilation errors.
+  ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-expect-error directive must match the ^: TS\d+ because .+$ format.
+   ╭─[ban_ts_comment.tsx:1:3]
+ 1 │ // @ts-expect-error    : TS1234 because xyz
+   ·   ─────────────────────────────────────────
+   ╰────
+
+  ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-expect-error directive to explain why the @ts-expect-error is necessary. The description must be 3 characters or longer.
+   ╭─[ban_ts_comment.tsx:1:3]
+ 1 │ // @ts-expect-error 👨‍👩‍👧‍👦
+   ·   ──────────────────────────
+   ╰────
+
+  ⚠ typescript-eslint(ban-ts-comment): Use "@ts-expect-error" instead of @ts-ignore, as "@ts-ignore" will do nothing if the following line is error-free.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-ignore
    ·   ───────────
    ╰────
+  help: Replace "@ts-ignore" with "@ts-expect-error".
 
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-ignore because it alters compilation errors.
+  ⚠ typescript-eslint(ban-ts-comment): Use "@ts-expect-error" instead of @ts-ignore, as "@ts-ignore" will do nothing if the following line is error-free.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-ignore
    ·   ───────────
    ╰────
+  help: Replace "@ts-ignore" with "@ts-expect-error".
 
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-ignore because it alters compilation errors.
+  ⚠ typescript-eslint(ban-ts-comment): Use "@ts-expect-error" instead of @ts-ignore, as "@ts-ignore" will do nothing if the following line is error-free.
+   ╭─[ban_ts_comment.tsx:1:3]
+ 1 │ // @ts-ignore
+   ·   ───────────
+   ╰────
+  help: Replace "@ts-ignore" with "@ts-expect-error".
+
+  ⚠ typescript-eslint(ban-ts-comment): Use "@ts-expect-error" instead of @ts-ignore, as "@ts-ignore" will do nothing if the following line is error-free.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ /* @ts-ignore */
    ·   ────────────
    ╰────
+  help: Replace "@ts-ignore" with "@ts-expect-error".
 
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-ignore because it alters compilation errors.
+  ⚠ typescript-eslint(ban-ts-comment): Use "@ts-expect-error" instead of @ts-ignore, as "@ts-ignore" will do nothing if the following line is error-free.
    ╭─[ban_ts_comment.tsx:2:3]
  1 │     
  2 │ ╭─▶ /*
- 3 │ ╰─▶   @ts-ignore
- 4 │     */
- 5 │                 
+ 3 │ ╰─▶  @ts-ignore */
+ 4 │                 
    ╰────
+  help: Replace "@ts-ignore" with "@ts-expect-error".
 
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-ignore because it alters compilation errors.
+  ⚠ typescript-eslint(ban-ts-comment): Use "@ts-expect-error" instead of @ts-ignore, as "@ts-ignore" will do nothing if the following line is error-free.
+   ╭─[ban_ts_comment.tsx:2:3]
+ 1 │     
+ 2 │ ╭─▶ /** on the last line
+ 3 │ ╰─▶  @ts-ignore */
+ 4 │                 
+   ╰────
+  help: Replace "@ts-ignore" with "@ts-expect-error".
+
+  ⚠ typescript-eslint(ban-ts-comment): Use "@ts-expect-error" instead of @ts-ignore, as "@ts-ignore" will do nothing if the following line is error-free.
+   ╭─[ban_ts_comment.tsx:2:3]
+ 1 │     
+ 2 │ ╭─▶ /** on the last line
+ 3 │ ╰─▶  * @ts-ignore */
+ 4 │                 
+   ╰────
+  help: Replace "@ts-ignore" with "@ts-expect-error".
+
+  ⚠ typescript-eslint(ban-ts-comment): Use "@ts-expect-error" instead of @ts-ignore, as "@ts-ignore" will do nothing if the following line is error-free.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ /** @ts-ignore */
    ·   ─────────────
    ╰────
+  help: Replace "@ts-ignore" with "@ts-expect-error".
 
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-ignore because it alters compilation errors.
+  ⚠ typescript-eslint(ban-ts-comment): Use "@ts-expect-error" instead of @ts-ignore, as "@ts-ignore" will do nothing if the following line is error-free.
+   ╭─[ban_ts_comment.tsx:2:3]
+ 1 │     
+ 2 │ ╭─▶ /**
+ 3 │ ╰─▶  * @ts-ignore: TODO */
+ 4 │                 
+   ╰────
+  help: Replace "@ts-ignore" with "@ts-expect-error".
+
+  ⚠ typescript-eslint(ban-ts-comment): Use "@ts-expect-error" instead of @ts-ignore, as "@ts-ignore" will do nothing if the following line is error-free.
+   ╭─[ban_ts_comment.tsx:2:3]
+ 1 │     
+ 2 │ ╭─▶ /**
+ 3 │ ╰─▶  * @ts-ignore: TS1234 because xyz */
+ 4 │                 
+   ╰────
+  help: Replace "@ts-ignore" with "@ts-expect-error".
+
+  ⚠ typescript-eslint(ban-ts-comment): Use "@ts-expect-error" instead of @ts-ignore, as "@ts-ignore" will do nothing if the following line is error-free.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-ignore: Suppress next line
    ·   ───────────────────────────────
    ╰────
+  help: Replace "@ts-ignore" with "@ts-expect-error".
 
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-ignore because it alters compilation errors.
+  ⚠ typescript-eslint(ban-ts-comment): Use "@ts-expect-error" instead of @ts-ignore, as "@ts-ignore" will do nothing if the following line is error-free.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ /////@ts-ignore: Suppress next line
    ·   ─────────────────────────────────
    ╰────
+  help: Replace "@ts-ignore" with "@ts-expect-error".
 
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-ignore because it alters compilation errors.
-   ╭─[ban_ts_comment.tsx:3:5]
+  ⚠ typescript-eslint(ban-ts-comment): Use "@ts-expect-error" instead of @ts-ignore, as "@ts-ignore" will do nothing if the following line is error-free.
+   ╭─[ban_ts_comment.tsx:3:7]
  2 │ if (false) {
- 3 │   // @ts-ignore: Unreachable code error
-   ·     ───────────────────────────────────
- 4 │   console.log('hello');
+ 3 │     // @ts-ignore: Unreachable code error
+   ·       ───────────────────────────────────
+ 4 │     console.log('hello');
    ╰────
+  help: Replace "@ts-ignore" with "@ts-expect-error".
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-ignore directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-ignore
    ·   ───────────
+   ╰────
+
+  ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-ignore directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer.
+   ╭─[ban_ts_comment.tsx:1:3]
+ 1 │ // @ts-ignore         
+   ·   ────────────────────
    ╰────
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-ignore directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer.
@@ -150,10 +273,16 @@ expression: ban_ts_comment
    ·   ───────────────────
    ╰────
 
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-nocheck because it alters compilation errors.
+  ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-ignore directive must match the ^: TS\d+ because .+$ format.
    ╭─[ban_ts_comment.tsx:1:3]
- 1 │ // @ts-nocheck
-   ·   ────────────
+ 1 │ // @ts-ignore    : TS1234 because xyz
+   ·   ───────────────────────────────────
+   ╰────
+
+  ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-ignore directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer.
+   ╭─[ban_ts_comment.tsx:1:3]
+ 1 │ // @ts-ignore 👨‍👩‍👧‍👦
+   ·   ────────────────────
    ╰────
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-nocheck because it alters compilation errors.
@@ -164,23 +293,8 @@ expression: ban_ts_comment
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-nocheck because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:1:3]
- 1 │ /* @ts-nocheck */
-   ·   ─────────────
-   ╰────
-
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-nocheck because it alters compilation errors.
-   ╭─[ban_ts_comment.tsx:2:3]
- 1 │     
- 2 │ ╭─▶ /*
- 3 │ ╰─▶   @ts-nocheck
- 4 │     */
- 5 │                 
-   ╰────
-
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-nocheck because it alters compilation errors.
-   ╭─[ban_ts_comment.tsx:1:3]
- 1 │ /** @ts-nocheck */
-   ·   ──────────────
+ 1 │ // @ts-nocheck
+   ·   ────────────
    ╰────
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-nocheck because it alters compilation errors.
@@ -190,17 +304,11 @@ expression: ban_ts_comment
    ╰────
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-nocheck because it alters compilation errors.
-   ╭─[ban_ts_comment.tsx:1:3]
- 1 │ /////@ts-nocheck: Suppress next line
-   ·   ──────────────────────────────────
-   ╰────
-
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-nocheck because it alters compilation errors.
-   ╭─[ban_ts_comment.tsx:3:5]
+   ╭─[ban_ts_comment.tsx:3:7]
  2 │ if (false) {
- 3 │   // @ts-nocheck: Unreachable code error
-   ·     ────────────────────────────────────
- 4 │   console.log('hello');
+ 3 │     // @ts-nocheck: Unreachable code error
+   ·       ────────────────────────────────────
+ 4 │     console.log('hello');
    ╰────
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-nocheck directive to explain why the @ts-nocheck is necessary. The description must be 3 characters or longer.
@@ -221,31 +329,22 @@ expression: ban_ts_comment
    ·   ────────────────────
    ╰────
 
+  ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-nocheck directive must match the ^: TS\d+ because .+$ format.
+   ╭─[ban_ts_comment.tsx:1:3]
+ 1 │ // @ts-nocheck    : TS1234 because xyz
+   ·   ────────────────────────────────────
+   ╰────
+
+  ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-nocheck directive to explain why the @ts-nocheck is necessary. The description must be 3 characters or longer.
+   ╭─[ban_ts_comment.tsx:1:3]
+ 1 │ // @ts-nocheck 👨‍👩‍👧‍👦
+   ·   ─────────────────────
+   ╰────
+
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-check because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-check
    ·   ──────────
-   ╰────
-
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-check because it alters compilation errors.
-   ╭─[ban_ts_comment.tsx:1:3]
- 1 │ /* @ts-check */
-   ·   ───────────
-   ╰────
-
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-check because it alters compilation errors.
-   ╭─[ban_ts_comment.tsx:2:3]
- 1 │     
- 2 │ ╭─▶ /*
- 3 │ ╰─▶   @ts-check
- 4 │     */
- 5 │                 
-   ╰────
-
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-check because it alters compilation errors.
-   ╭─[ban_ts_comment.tsx:1:3]
- 1 │ /** @ts-check */
-   ·   ────────────
    ╰────
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-check because it alters compilation errors.
@@ -255,17 +354,11 @@ expression: ban_ts_comment
    ╰────
 
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-check because it alters compilation errors.
-   ╭─[ban_ts_comment.tsx:1:3]
- 1 │ /////@ts-check: Suppress next line
-   ·   ────────────────────────────────
-   ╰────
-
-  ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-check because it alters compilation errors.
-   ╭─[ban_ts_comment.tsx:3:5]
+   ╭─[ban_ts_comment.tsx:3:7]
  2 │ if (false) {
- 3 │   // @ts-check: Unreachable code error
-   ·     ──────────────────────────────────
- 4 │   console.log('hello');
+ 3 │     // @ts-check: Unreachable code error
+   ·       ──────────────────────────────────
+ 4 │     console.log('hello');
    ╰────
 
   ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-check directive to explain why the @ts-check is necessary. The description must be 3 characters or longer.
@@ -284,4 +377,16 @@ expression: ban_ts_comment
    ╭─[ban_ts_comment.tsx:1:3]
  1 │ // @ts-check: TS1234
    ·   ──────────────────
+   ╰────
+
+  ⚠ typescript-eslint(ban-ts-comment): The description for the @ts-check directive must match the ^: TS\d+ because .+$ format.
+   ╭─[ban_ts_comment.tsx:1:3]
+ 1 │ // @ts-check    : TS1234 because xyz
+   ·   ──────────────────────────────────
+   ╰────
+
+  ⚠ typescript-eslint(ban-ts-comment): Include a description after the @ts-check directive to explain why the @ts-check is necessary. The description must be 3 characters or longer.
+   ╭─[ban_ts_comment.tsx:1:3]
+ 1 │ // @ts-check 👨‍👩‍👧‍👦
+   ·   ───────────────────
    ╰────
