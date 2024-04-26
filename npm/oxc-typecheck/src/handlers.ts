@@ -2,7 +2,10 @@ import * as noFloatingPromises from './rules/no-floating-promises.js';
 import { FileRequest, NodeRequest, OpenRequest } from './protocol.js';
 import { service } from './typecheck/createProjectService.js';
 import { useProgramFromProjectService } from './typecheck/useProgramFromProjectService.js';
-import { getNodeAtPosition } from './typecheck/getNodeAtPosition.js';
+import {
+  deleteNodeCache,
+  getNodeAtPosition,
+} from './typecheck/getNodeAtPosition.js';
 import ts from 'typescript';
 
 export const handlers: Record<string, (req: any) => Result> = {
@@ -19,6 +22,7 @@ export const handlers: Record<string, (req: any) => Result> = {
   },
   close: ({ arguments: { file } }: FileRequest) => {
     service.closeClientFile(file);
+    deleteNodeCache(file);
     return notRequired();
   },
   getNode: ({ arguments: { file, span } }: NodeRequest) => {

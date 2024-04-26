@@ -3,11 +3,13 @@
 import ts from 'typescript';
 import { forEach, hasJSDocNodes } from './utils.js';
 
+const cache = new Map<string, { pos: number; end: number; node: ts.Node }>();
+
 // TODO: consider obtaining array of child indexes directly from AST in Rust and just doing getChildAt(idx) instead
-// TODO: cache the result, since it is very likely we need to evaluate the same node multiple times
-export function getNodeAtPosition(
+function searchNodeAtPosition(
   sourceFile: ts.SourceFile,
-  { pos, end }: ts.ReadonlyTextRange,
+  pos: number,
+  end: number,
 ): ts.Node {
   const getContainingChild = (child: ts.Node): ts.Node | undefined => {
     if (child.pos <= pos && end <= child.end) {
@@ -29,4 +31,29 @@ export function getNodeAtPosition(
     }
     current = child;
   }
+}
+
+export function getNodeAtPosition(
+  sourceFile: ts.SourceFile,
+  { pos, end }: ts.ReadonlyTextRange,
+): ts.Node {
+  const cachedNode = cache.get(sourceFile.fileName);
+  if (cachedNode && cachedNode.pos === pos && cachedNode.end === end) {
+    return cachedNode.node;
+  }
+
+  const node = searchNodeAtPosition(sourceFile, pos, end);
+  if (cachedNode) {
+    cachedNode.pos = pos;
+    cachedNode.end = end;
+    cachedNode.node = node;
+  } else {
+    cache.set(sourceFile.fileName, { pos, end, node });
+  }
+
+  return node;
+}
+
+export function deleteNodeCache(fileName: string) {
+  cache.delete(fileName);
 }
