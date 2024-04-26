@@ -3,7 +3,7 @@ use core::{fmt, iter, marker::PhantomData, ops::Range};
 use alloc::{boxed::Box, slice, vec, vec::Vec};
 
 use super::{
-    super::index_vec,
+    super::non_zero_index_vec,
     indexing::{IdxRangeBounds, IdxSliceIndex},
     vec::{NonZeroEnumerated, NonZeroIndexVec},
     NonZeroIdx,
@@ -850,7 +850,6 @@ impl<I: NonZeroIdx, A> IntoIterator for Box<NonZeroIndexSlice<I, [A]>> {
 impl<I: NonZeroIdx, A> Default for Box<NonZeroIndexSlice<I, [A]>> {
     #[inline(always)]
     fn default() -> Self {
-        todo!()
-        // index_vec![].into()
+        non_zero_index_vec![].into()
     }
 }

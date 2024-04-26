@@ -15,6 +15,23 @@ macro_rules! index_box {
     }
 }
 
+/// A macro equivalent to the stdlib's `vec![]`, but producing an `IndexVec`.
+#[macro_export]
+macro_rules! non_zero_index_vec {
+    ($($tokens:tt)*) => {
+        $crate::NonZeroIndexVec::from_vec(vec![$($tokens)*])
+    }
+}
+
+/// A macro similar to the stdlib's `vec![]`, but producing an
+/// `Box<IndexSlice<I, [T]>>` (That is, an `IndexBox<I, [T]>`).
+#[macro_export]
+macro_rules! non_zero_index_box {
+    ($($tokens:tt)*) => {
+        $crate::NonZeroIndexVec::from_vec(vec![$($tokens)*]).into_boxed_slice()
+    }
+}
+
 /// Generate the boilerplate for a newtyped index struct, for use with
 /// `IndexVec`.
 ///
