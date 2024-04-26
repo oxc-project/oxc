@@ -1,14 +1,14 @@
 use petgraph::stable_graph::NodeIndex;
 
 use oxc_ast::AstKind;
-use oxc_index::IndexVec;
+use oxc_index::{IndexVec, NonZeroIndexVec};
 
 use crate::scope::ScopeId;
 
 pub use oxc_syntax::node::{AstNodeId, NodeFlags};
 
 /// Semantic node contains all the semantic information about an ast node.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct AstNode<'a> {
     id: AstNodeId,
     /// A pointer to the ast node, which resides in the `bumpalo` memory arena.
@@ -25,7 +25,7 @@ pub struct AstNode<'a> {
 
 impl<'a> AstNode<'a> {
     pub fn new(kind: AstKind<'a>, scope_id: ScopeId, cfg_ix: NodeIndex, flags: NodeFlags) -> Self {
-        Self { id: AstNodeId::new(0), kind, cfg_ix, scope_id, flags }
+        Self { id: AstNodeId::default(), kind, cfg_ix, scope_id, flags }
     }
 
     pub fn id(&self) -> AstNodeId {
@@ -57,8 +57,8 @@ impl<'a> AstNode<'a> {
 #[derive(Debug, Default)]
 pub struct AstNodes<'a> {
     root: Option<AstNodeId>,
-    nodes: IndexVec<AstNodeId, AstNode<'a>>,
-    parent_ids: IndexVec<AstNodeId, Option<AstNodeId>>,
+    nodes: NonZeroIndexVec<AstNodeId, AstNode<'a>>,
+    parent_ids: NonZeroIndexVec<AstNodeId, Option<AstNodeId>>,
 }
 
 impl<'a> AstNodes<'a> {

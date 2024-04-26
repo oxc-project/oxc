@@ -3,6 +3,7 @@ use oxc_index::define_index_type;
 
 define_index_type! {
     pub struct ScopeId = u32;
+    DEFAULT = ScopeId::new(0);
 }
 
 #[cfg(feature = "serialize")]

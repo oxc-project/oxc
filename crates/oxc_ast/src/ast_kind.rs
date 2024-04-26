@@ -11,8 +11,10 @@ macro_rules! ast_kinds {
         }
 
         /// Untyped AST Node Kind
-        #[derive(Debug, Clone, Copy)]
+        #[derive(Default, Debug, Clone, Copy)]
         pub enum AstKind<'a> {
+            #[default]
+            Dummy,
             $($ident($type),)*
         }
     )
@@ -533,6 +535,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSNamedTupleMember(x) => x.span,
 
             Self::TSPropertySignature(x) => x.span,
+            Self::Dummy => Span::default(),
         }
     }
 }
@@ -735,6 +738,7 @@ impl<'a> AstKind<'a> {
             Self::TSNamedTupleMember(_) => "TSNamedTupleMember".into(),
 
             Self::TSPropertySignature(_) => "TSPropertySignature".into(),
+            Self::Dummy => "Dummy".into(),
         }
     }
 }

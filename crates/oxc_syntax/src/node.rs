@@ -2,7 +2,9 @@ use bitflags::bitflags;
 use oxc_index::define_index_type;
 
 define_index_type! {
+    #[non_zero]
     pub struct AstNodeId = usize;
+    DEFAULT = AstNodeId::new(1);
 }
 
 #[cfg(feature = "serialize")]
@@ -18,7 +20,7 @@ export type NodeFlags = {
 "#;
 
 bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct NodeFlags: u8 {
         const JSDoc     = 1 << 0; // If the Node has a JSDoc comment attached
         const Class     = 1 << 1; // If Node is inside a class
