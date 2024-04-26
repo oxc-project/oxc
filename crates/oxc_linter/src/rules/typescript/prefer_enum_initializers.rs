@@ -1,17 +1,17 @@
-use oxc_ast::AstKind;
+use oxc_ast::{ast::TSEnumMemberName, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(prefer-enum-initializers):")]
-#[diagnostic(severity(warning), help(""))]
-struct PreferEnumInitializersDiagnostic(#[label] pub Span);
+#[error("typescript-eslint(prefer-enum-initializers):The value of the member {0:?} should be explicitly defined.")]
+#[diagnostic(severity(warning), help("Can be fixed to {0:?} = {1:?}."))]
+struct PreferEnumInitializersDiagnostic(CompactStr, usize, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferEnumInitializers;
@@ -32,16 +32,22 @@ declare_oxc_lint!(
     /// }
     /// ```
     PreferEnumInitializers,
-    correctness
+    pedantic
 );
 
 impl Rule for PreferEnumInitializers {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSEnumDeclaration(decl) = node.kind() else { return };
 
-        for member in &decl.members {
+        for (index, member) in decl.members.iter().enumerate() {
             if member.initializer.is_none() {
-                ctx.diagnostic(PreferEnumInitializersDiagnostic(member.span));
+                if let TSEnumMemberName::Identifier(i) = &member.id {
+                    ctx.diagnostic(PreferEnumInitializersDiagnostic(
+                        i.name.to_compact_str(),
+                        index + 1,
+                        member.span,
+                    ));
+                }
             }
         }
     }
