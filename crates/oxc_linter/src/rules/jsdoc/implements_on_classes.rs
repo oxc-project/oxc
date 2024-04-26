@@ -63,6 +63,10 @@ declare_oxc_lint!(
 ///
 /// /** VariableDeclaration > VariableDeclarator > ArrowFunctionExpression */
 /// const baz = () => {}
+///
+/// const q = 1,
+///       /** VariableDeclarator > ArrowFunctionExpression */
+///       uux = () => {}
 /// ```
 fn get_function_definition_node<'a, 'b>(
     node: &'b AstNode<'a>,

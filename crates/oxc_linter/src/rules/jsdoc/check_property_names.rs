@@ -69,8 +69,7 @@ impl Rule for CheckPropertyNames {
                 if tag.kind.parsed() != resolved_property_tag_name {
                     continue;
                 }
-                let (_, name_part, _) = tag.type_name_comment();
-                let Some(name_part) = name_part else {
+                let (_, Some(name_part), _) = tag.type_name_comment() else {
                     continue;
                 };
 
