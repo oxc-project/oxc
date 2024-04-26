@@ -6,7 +6,6 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
-use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule};
 
@@ -189,13 +188,7 @@ impl Rule for BanTsComment {
                         }
                     }
                     config => {
-                        let description_trim = description.trim();
-                        let description_len = if description_trim.chars().all(|c| c.is_ascii()) {
-                            description_trim.len()
-                        } else {
-                            UnicodeSegmentation::graphemes(description_trim, true).count()
-                        };
-
+                        let description_len = description.trim().len();
                         if (description_len as u64) < self.minimum_description_length {
                             ctx.diagnostic(BanTsCommentDiagnostic::CommentRequiresDescription(
                                 directive.to_string(),
@@ -603,15 +596,6 @@ fn test() {
               },
             }])),
         ),
-        (
-            r"
-/**
- * @ts-expect-error 👨‍👩‍👧‍👦 */
-        ",
-            Some(serde_json::json!([{
-                "ts-expect-error": "allow-with-description",
-            }])),
-        ),
         ("/** @ts-expect-error */", Some(serde_json::json!([{ "ts-expect-error": true}]))),
         (
             "// @ts-expect-error: Suppress next line",
@@ -675,14 +659,6 @@ if (false) {
                 "ts-expect-error": {
                  "descriptionFormat": "^: TS\\d+ because .+$",
                 },
-              },
-            ])),
-        ),
-        (
-            "// @ts-expect-error 👨‍👩‍👧‍👦",
-            Some(serde_json::json!([
-              {
-                "ts-expect-error": "allow-with-description",
               },
             ])),
         ),
@@ -796,14 +772,6 @@ if (false) {
               },
             ])),
         ),
-        (
-            "// @ts-ignore 👨‍👩‍👧‍👦",
-            Some(serde_json::json!([
-              {
-                "ts-ignore": "allow-with-description",
-              },
-            ])),
-        ),
         // ts-nocheck
         ("// @ts-nocheck", Some(serde_json::json!([{ "ts-nocheck": true}]))),
         ("// @ts-nocheck", None),
@@ -849,14 +817,6 @@ if (false) {
               },
             ])),
         ),
-        (
-            "// @ts-nocheck 👨‍👩‍👧‍👦",
-            Some(serde_json::json!([
-              {
-                "ts-nocheck": "allow-with-description",
-              },
-            ])),
-        ),
         // ts-check
         ("// @ts-check", Some(serde_json::json!([{ "ts-check": true}]))),
         ("// @ts-check: Suppress next line", Some(serde_json::json!([{ "ts-check":true}]))),
@@ -898,14 +858,6 @@ if (false) {
                 "ts-check": {
                  "descriptionFormat": "^: TS\\d+ because .+$",
                 },
-              },
-            ])),
-        ),
-        (
-            "// @ts-check 👨‍👩‍👧‍👦",
-            Some(serde_json::json!([
-              {
-                "ts-check": "allow-with-description",
               },
             ])),
         ),
