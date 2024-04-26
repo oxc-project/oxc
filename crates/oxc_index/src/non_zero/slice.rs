@@ -204,7 +204,7 @@ impl<I: NonZeroIdx, T: Default> NonZeroIndexSlice<I, [T]> {
     /// `usize`.
     #[inline(always)]
     pub fn iter_enumerated(&self) -> NonZeroEnumerated<slice::Iter<'_, T>, I, &T> {
-        self.raw.iter().enumerate().map(|(i, t)| (I::from_usize(i), t))
+        self.raw.iter().skip(1).enumerate().map(|(i, t)| (I::from_usize(i), t))
     }
 
     /// Get an iterator over all our indices.
@@ -217,7 +217,7 @@ impl<I: NonZeroIdx, T: Default> NonZeroIndexSlice<I, [T]> {
     /// `usize`.
     #[inline(always)]
     pub fn iter_mut_enumerated(&mut self) -> NonZeroEnumerated<slice::IterMut<'_, T>, I, &mut T> {
-        self.raw.iter_mut().enumerate().map(|(i, t)| (I::from_usize(i), t))
+        self.raw.iter_mut().skip(1).enumerate().map(|(i, t)| (I::from_usize(i), t))
     }
 
     /// Forwards to the slice's `sort` implementation.

@@ -1,7 +1,7 @@
 use alloc::borrow::{Cow, ToOwned};
 use alloc::boxed::Box;
+use alloc::vec;
 use alloc::vec::Vec;
-use alloc::vec::{self};
 use core::borrow::{Borrow, BorrowMut};
 use core::fmt;
 use core::hash::Hash;
@@ -43,16 +43,15 @@ impl<I: NonZeroIdx, T: fmt::Debug + Default> fmt::Debug for NonZeroIndexVec<I, T
 }
 
 pub(crate) type NonZeroEnumerated<Iter, I, T> =
-    iter::Map<iter::Enumerate<Iter>, fn((usize, T)) -> (I, T)>;
+    iter::Map<iter::Enumerate<iter::Skip<Iter>>, fn((usize, T)) -> (I, T)>;
 
 impl<I: NonZeroIdx, T: Default> NonZeroIndexVec<I, T> {
     /// Construct a new NonZeroIndexVec.
     #[inline]
     pub fn new() -> Self {
-        let mut raw = Vec::with_capacity(1);
         // TODO: replace with MaybeUninit::uninit()
         // fill the first element with `uninitialized` state.
-        raw.push(T::default());
+        let raw = vec![T::default()];
         NonZeroIndexVec { raw, _marker: PhantomData }
     }
 
@@ -78,14 +77,16 @@ impl<I: NonZeroIdx, T: Default> NonZeroIndexVec<I, T> {
     /// reallocating. See [`Vec::with_capacity`].
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-        NonZeroIndexVec { raw: Vec::with_capacity(capacity), _marker: PhantomData }
+        let mut raw = Vec::with_capacity(capacity + 1);
+        raw.insert(0, T::default());
+        NonZeroIndexVec { raw, _marker: PhantomData }
     }
 
     /// Similar to `self.into_iter().enumerate()` but with indices of `I` and
     /// not `usize`.
     #[inline(always)]
     pub fn into_iter_enumerated(self) -> NonZeroEnumerated<vec::IntoIter<T>, I, T> {
-        self.raw.into_iter().enumerate().map(|(i, t)| (I::from_usize(i), t))
+        self.raw.into_iter().skip(1).enumerate().map(|(i, t)| (I::from_usize(i), t))
     }
 
     /// Creates a splicing iterator that replaces the specified range in the
@@ -111,7 +112,7 @@ impl<I: NonZeroIdx, T: Default> NonZeroIndexVec<I, T> {
         &mut self,
         range: R,
     ) -> NonZeroEnumerated<vec::Drain<'_, T>, I, T> {
-        self.raw.drain(range.into_range()).enumerate().map(|(i, t)| (I::from_usize(i), t))
+        self.raw.drain(range.into_range()).skip(1).enumerate().map(|(i, t)| (I::from_usize(i), t))
     }
 
     /// Gives the next index that will be assigned when `push` is
