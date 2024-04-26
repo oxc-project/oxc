@@ -150,7 +150,9 @@ impl<I: NonZeroIdx, T: Default> NonZeroIndexVec<I, T> {
     /// Push a new item onto the vector, and return it's index.
     #[inline]
     pub fn push(&mut self, d: T) -> I {
-        let idx = I::from_usize(self.len());
+        // SAFETY: our index is always > 0 since the first element is reserved on construction.
+        #[allow(unsafe_code)]
+        let idx = unsafe { I::from_usize_unchecked(self.len()) };
         self.raw.push(d);
         idx
     }

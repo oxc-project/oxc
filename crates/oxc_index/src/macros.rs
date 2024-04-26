@@ -417,6 +417,12 @@ macro_rules! __internal_define_non_zero_index_type_inner_impl {
             }
 
             #[inline]
+            #[allow(unsafe_code)]
+            unsafe fn from_usize_unchecked(value: usize) -> Self {
+                Self::from_usize_unchecked(value)
+            }
+
+            #[inline]
             fn index(self) -> usize {
                 usize::from(self)
             }

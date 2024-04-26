@@ -43,6 +43,12 @@ pub trait NonZeroIdx: Copy + 'static + Ord + Debug + Hash {
     /// are free to define what "fit" means as they desire.
     fn from_usize(idx: usize) -> Self;
 
+    /// Construct an Index from a `usize`. This is equivalent to `From<usize>`.
+    ///
+    /// SAFETY: `idx` shouldn't be `zero`. It should also fit.
+    #[allow(unsafe_code)]
+    unsafe fn from_usize_unchecked(idx: usize) -> Self;
+
     /// Get the underlying index. This is equivalent to `Into<usize>`
     fn index(self) -> usize;
 }
