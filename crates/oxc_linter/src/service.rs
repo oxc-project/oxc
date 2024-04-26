@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    env,
     ffi::OsStr,
     fs,
     path::{Path, PathBuf},
@@ -175,7 +176,12 @@ impl Runtime {
 
     fn get_type_checker() -> TSServerClient {
         // TODO: get actual path from somewhere. And gracefully handle errors.
-        start_typecheck_server("./npm/oxc-typecheck/dist/server.js").unwrap()
+        let path = env::current_exe()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .join("../../npm/oxc-typecheck/dist/server.js");
+        start_typecheck_server(path.to_string_lossy().as_ref()).unwrap()
     }
 
     fn get_source_type_and_text(
