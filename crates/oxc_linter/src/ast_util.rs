@@ -413,3 +413,12 @@ pub fn is_global_require_call(call_expr: &CallExpression, ctx: &LintContext) -> 
         false
     }
 }
+
+pub fn is_function_node(node: &AstNode) -> bool {
+    match node.kind() {
+        AstKind::Function(f) if f.is_function_declaration() => true,
+        AstKind::Function(f) if f.is_expression() => true,
+        AstKind::ArrowFunctionExpression(_) => true,
+        _ => false,
+    }
+}
