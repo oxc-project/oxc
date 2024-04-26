@@ -59,19 +59,19 @@ impl<I: NonZeroIdx, T: Default> NonZeroIndexVec<I, T> {
     ///
     /// Panics if it's length is too large for our index type.
     #[inline]
-    pub fn from_vec(mut vec: Vec<T>) -> Self {
+    pub fn from_vec(vec: Vec<T>) -> Self {
         // we add one since we always keep the first element uninitialized.
         let len = vec.len() + 1;
         // See if `I::from_usize` might be upset by this length.
         let _ = I::from_usize(len);
         panic!("HERE");
-        // TODO: we should wrap our elements in `MaybeUninit` instead of enforcing default trait.
-        vec.insert(0, T::default());
-        NonZeroIndexVec {
-            // TODO: replace me with transmutation.
-            raw: vec,
-            _marker: PhantomData,
-        }
+        // // TODO: we should wrap our elements in `MaybeUninit` instead of enforcing default trait.
+        // vec.insert(0, T::default());
+        // NonZeroIndexVec {
+        //     // TODO: replace me with transmutation.
+        //     raw: vec,
+        //     _marker: PhantomData,
+        // }
     }
 
     /// Construct an NonZeroIndexVec that can hold at least `capacity` items before
