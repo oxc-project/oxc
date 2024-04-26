@@ -14,7 +14,10 @@ use oxc_ast::ast::*;
 
 use crate::context::Ctx;
 
-use self::{annotations::TypeScriptAnnotations, collector::TypeScriptReferenceCollector};
+use self::{
+    annotations::TypeScriptAnnotations, collector::TypeScriptReferenceCollector,
+    r#enum::TypeScriptEnum,
+};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -51,6 +54,7 @@ pub struct TypeScript<'a> {
     ctx: Ctx<'a>,
 
     annotations: TypeScriptAnnotations<'a>,
+    r#enum: TypeScriptEnum<'a>,
     reference_collector: TypeScriptReferenceCollector<'a>,
 }
 
@@ -60,6 +64,7 @@ impl<'a> TypeScript<'a> {
 
         Self {
             annotations: TypeScriptAnnotations::new(&options, ctx),
+            r#enum: TypeScriptEnum::new(ctx),
             reference_collector: TypeScriptReferenceCollector::new(),
             options,
             ctx: Rc::clone(ctx),
@@ -164,7 +169,7 @@ impl<'a> TypeScript<'a> {
                 *decl = self.transform_ts_import_equals(ts_import_equals);
             }
             Declaration::TSEnumDeclaration(ts_enum_declaration) => {
-                if let Some(expr) = self.transform_ts_enum(ts_enum_declaration) {
+                if let Some(expr) = self.r#enum.transform_ts_enum(ts_enum_declaration) {
                     *decl = expr;
                 }
             }

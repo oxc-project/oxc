@@ -1,4 +1,4 @@
-use std::mem;
+use std::{mem, rc::Rc};
 
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
@@ -7,12 +7,19 @@ use oxc_syntax::{
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     NumberBase,
 };
+use rustc_hash::FxHashMap;
 
-use crate::utils::is_valid_identifier;
+use crate::{context::Ctx, utils::is_valid_identifier};
 
-use super::TypeScript;
+pub struct TypeScriptEnum<'a> {
+    ctx: Ctx<'a>,
+    enums: FxHashMap<Atom<'a>, FxHashMap<Atom<'a>, NumbericAndString>>,
+}
 
-impl<'a> TypeScript<'a> {
+impl<'a> TypeScriptEnum<'a> {
+    pub fn new(ctx: &Ctx<'a>) -> Self {
+        Self { ctx: Rc::clone(ctx), enums: FxHashMap::default() }
+    }
     /// ```TypeScript
     /// enum Foo {
     ///   X
@@ -25,7 +32,7 @@ impl<'a> TypeScript<'a> {
     /// })(Foo || {});
     /// ```
     pub fn transform_ts_enum(
-        &self,
+        &mut self,
         decl: &mut Box<'a, TSEnumDeclaration<'a>>,
     ) -> Option<Declaration<'a>> {
         if decl.modifiers.contains(ModifierKind::Declare) {
@@ -95,18 +102,15 @@ impl<'a> TypeScript<'a> {
     }
 
     pub fn transform_ts_enum_members(
-        &self,
+        &mut self,
         members: &mut Vec<'a, TSEnumMember<'a>>,
         enum_name: &Atom<'a>,
     ) -> Vec<'a, Statement<'a>> {
-        let mut default_init = self.ctx.ast.literal_number_expression(NumericLiteral {
-            span: SPAN,
-            value: 0.0,
-            raw: "0",
-            base: NumberBase::Decimal,
-        });
         let mut statements = self.ctx.ast.new_vec();
         let mut prev_constant_value = Some(NumbericAndString::I64(-1));
+
+        let mut previous_enum_members =
+            self.enums.entry(enum_name.clone()).or_insert(FxHashMap::default()).clone();
 
         for member in members.iter_mut() {
             let (member_name, member_span) = match &member.id {
@@ -117,27 +121,39 @@ impl<'a> TypeScript<'a> {
             };
 
             let init = if let Some(initializer) = member.initializer.as_ref() {
-                let constant_value = computed_constant_value(initializer);
+                let constant_value = computed_constant_value(initializer, &previous_enum_members);
+
                 // prev_constant_value = constant_value
                 let init = match constant_value {
                     None => self.ctx.ast.copy(initializer),
-                    Some(NumbericAndString::F64(v)) => {
-                        prev_constant_value = Some(NumbericAndString::F64(v));
-                        self.get_numeric_literal_expression_f64(v)
-                    }
-                    Some(NumbericAndString::I64(v)) => {
-                        prev_constant_value = Some(NumbericAndString::I64(v));
-                        self.get_numeric_literal_expression_i64(v)
-                    }
-                    Some(NumbericAndString::String(str)) => {
-                        self.ctx.ast.literal_string_expression(StringLiteral {
-                            span: SPAN,
-                            value: self.ctx.ast.new_atom(&str),
-                        })
-                    }
-                    Some(NumbericAndString::Numberic((_, value))) => {
-                        prev_constant_value = Some(NumbericAndString::F64(value));
-                        self.get_numeric_literal_expression_f64(value)
+                    Some(constant_value) => {
+                        previous_enum_members.insert(member_name.clone(), constant_value.clone());
+                        match constant_value {
+                            NumbericAndString::F64(v) => {
+                                prev_constant_value = Some(NumbericAndString::F64(v));
+                                self.get_numeric_literal_expression_f64(v)
+                            }
+                            NumbericAndString::I64(v) => {
+                                prev_constant_value = Some(NumbericAndString::I64(v));
+                                self.get_numeric_literal_expression_i64(v)
+                            }
+                            NumbericAndString::String(str) => {
+                                self.ctx.ast.literal_string_expression(StringLiteral {
+                                    span: SPAN,
+                                    value: self.ctx.ast.new_atom(&str),
+                                })
+                            }
+                            NumbericAndString::Numberic((_, value)) => {
+                                prev_constant_value = Some(NumbericAndString::F64(value));
+                                self.get_numeric_literal_expression_f64(value)
+                            }
+                            NumbericAndString::Identifier(ident) => {
+                                println!("{:?}", ident);
+                                self.ctx.ast.identifier_reference_expression(
+                                    IdentifierReference::new(SPAN, self.ctx.ast.new_atom(&ident)),
+                                )
+                            }
+                        }
                     }
                 };
 
@@ -147,12 +163,16 @@ impl<'a> TypeScript<'a> {
                     Some(value) => match value {
                         NumbericAndString::I64(value) => {
                             let value = value + 1;
-                            prev_constant_value = Some(NumbericAndString::I64(value));
+                            let constant_value = NumbericAndString::I64(value);
+                            prev_constant_value = Some(constant_value.clone());
+                            previous_enum_members.insert(member_name.clone(), constant_value);
                             self.get_numeric_literal_expression_i64(value)
                         }
                         NumbericAndString::F64(value) => {
                             let value = value + 1.0;
-                            prev_constant_value = Some(NumbericAndString::F64(value));
+                            let constant_value = NumbericAndString::F64(value);
+                            prev_constant_value = Some(constant_value.clone());
+                            previous_enum_members.insert(member_name.clone(), constant_value);
                             self.get_numeric_literal_expression_f64(value)
                         }
                         _ => {
@@ -162,8 +182,6 @@ impl<'a> TypeScript<'a> {
                     None => todo!(),
                 }
             };
-
-            println!("{:?}", init);
 
             let is_str = init.is_string_literal();
 
@@ -220,17 +238,19 @@ impl<'a> TypeScript<'a> {
             statements.push(self.ctx.ast.expression_statement(member.span, expr));
 
             // 1 + Foo["x"]
-            default_init = {
-                let one = self.ctx.ast.literal_number_expression(NumericLiteral {
-                    span: SPAN,
-                    value: 1.0,
-                    raw: "1",
-                    base: NumberBase::Decimal,
-                });
+            // default_init = {
+            //     let one = self.ctx.ast.literal_number_expression(NumericLiteral {
+            //         span: SPAN,
+            //         value: 1.0,
+            //         raw: "1",
+            //         base: NumberBase::Decimal,
+            //     });
 
-                self.ctx.ast.binary_expression(SPAN, one, BinaryOperator::Addition, self_ref)
-            };
+            //     self.ctx.ast.binary_expression(SPAN, one, BinaryOperator::Addition, self_ref)
+            // };
         }
+
+        self.enums.insert(enum_name.clone(), previous_enum_members.clone());
 
         let enum_ref = self
             .ctx
@@ -289,7 +309,7 @@ impl<'a> TypeScript<'a> {
 //   function evaluate(path: NodePath): number | string | undefined {
 //     const expr = path.node;
 //     switch (expr.type) {
-//       case "MemberExpression":
+//       case "MemberExpression":z
 //         return evaluateRef(path, prevMembers, seen);
 //       case "StringLiteral":
 //         return expr.value;
@@ -439,31 +459,48 @@ enum NumbericAndString {
     Numberic((String, f64)),
     I64(i64),
     F64(f64),
+    Identifier(String),
     String(String),
 }
 
 fn computed_constant_value<'a>(
     expr: &Expression<'a>,
-    // prev_members: Option<PreviousEnumMembers>,
+    prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
     // seen: &mut HashSet<Identifier>,
 ) -> Option<NumbericAndString> {
-    evaluate(&expr)
+    evaluate(&expr, prev_members)
 }
 
-fn evalaute_ref<'a>(expr: &Expression<'a>) -> Option<Expression<'a>> {
+fn evalaute_ref<'a>(
+    expr: &Expression<'a>,
+    prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
+) -> Option<NumbericAndString> {
     match expr {
-        // Expression::MemberExpression(expr) => None,
-        // Expression::Identifier(ident) => None,
+        Expression::MemberExpression(expr) => None,
+        Expression::Identifier(ident) => {
+            if ident.name == "Infinity" || ident.name == "NaN" {
+                return Some(NumbericAndString::Identifier(ident.name.to_string()));
+            }
+
+            if let Some(value) = prev_members.get(&ident.name) {
+                return Some(value.clone());
+            }
+
+            None
+        }
         _ => None,
     }
 }
 
-fn evaluate<'a>(expr: &Expression<'a>) -> Option<NumbericAndString> {
+fn evaluate<'a>(
+    expr: &Expression<'a>,
+    prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
+) -> Option<NumbericAndString> {
     match expr {
-        // Expression::MemberExpression(member_expr) => evalaute_ref(expr),
-        // Expression::Identifier(ident) => evalaute_ref(expr),
-        Expression::BinaryExpression(expr) => eval_binary_expression(expr),
-        Expression::UnaryExpression(expr) => eval_unary_expression(expr),
+        Expression::MemberExpression(member_expr) => evalaute_ref(expr, &prev_members),
+        Expression::Identifier(ident) => evalaute_ref(expr, &prev_members),
+        Expression::BinaryExpression(expr) => eval_binary_expression(expr, &prev_members),
+        Expression::UnaryExpression(expr) => eval_unary_expression(expr, &prev_members),
         Expression::NumericLiteral(lit) => {
             Some(NumbericAndString::Numberic((lit.raw.to_string(), lit.value)))
         }
@@ -473,9 +510,12 @@ fn evaluate<'a>(expr: &Expression<'a>) -> Option<NumbericAndString> {
 }
 
 #[allow(clippy::cast_possible_truncation)]
-fn eval_binary_expression(expr: &BinaryExpression<'_>) -> Option<NumbericAndString> {
-    let left = evaluate(&expr.left)?;
-    let right = evaluate(&expr.right)?;
+fn eval_binary_expression(
+    expr: &BinaryExpression<'_>,
+    prev_members: &FxHashMap<Atom<'_>, NumbericAndString>,
+) -> Option<NumbericAndString> {
+    let left = evaluate(&expr.left, prev_members)?;
+    let right = evaluate(&expr.right, prev_members)?;
 
     if matches!(expr.operator, BinaryOperator::Addition)
         && (matches!(left, NumbericAndString::String(_))
@@ -486,6 +526,7 @@ fn eval_binary_expression(expr: &BinaryExpression<'_>) -> Option<NumbericAndStri
             NumbericAndString::String(left) => left,
             NumbericAndString::I64(v) => v.to_string(),
             NumbericAndString::F64(v) => v.to_string(),
+            NumbericAndString::Identifier(_) => unreachable!(),
         };
 
         let right_string = match right {
@@ -493,6 +534,7 @@ fn eval_binary_expression(expr: &BinaryExpression<'_>) -> Option<NumbericAndStri
             NumbericAndString::String(right) => right,
             NumbericAndString::I64(v) => v.to_string(),
             NumbericAndString::F64(v) => v.to_string(),
+            NumbericAndString::Identifier(_) => unreachable!(),
         };
 
         return Some(NumbericAndString::String(format!("{left_string}{right_string}")));
@@ -503,6 +545,7 @@ fn eval_binary_expression(expr: &BinaryExpression<'_>) -> Option<NumbericAndStri
         NumbericAndString::String(_) => return None,
         NumbericAndString::I64(v) => v as f64,
         NumbericAndString::F64(v) => v,
+        NumbericAndString::Identifier(ident) => return None,
     };
 
     let right = match right {
@@ -510,6 +553,7 @@ fn eval_binary_expression(expr: &BinaryExpression<'_>) -> Option<NumbericAndStri
         NumbericAndString::String(_) => return None,
         NumbericAndString::I64(v) => v as f64,
         NumbericAndString::F64(v) => v,
+        NumbericAndString::Identifier(ident) => return None,
     };
 
     match expr.operator {
@@ -531,14 +575,18 @@ fn eval_binary_expression(expr: &BinaryExpression<'_>) -> Option<NumbericAndStri
     }
 }
 
-fn eval_unary_expression(expr: &UnaryExpression<'_>) -> Option<NumbericAndString> {
-    let value = evaluate(&expr.argument)?;
+fn eval_unary_expression(
+    expr: &UnaryExpression<'_>,
+    prev_members: &FxHashMap<Atom<'_>, NumbericAndString>,
+) -> Option<NumbericAndString> {
+    let value = evaluate(&expr.argument, &prev_members)?;
 
-    let value = match value {
+    let value = match value.clone() {
         NumbericAndString::Numberic((_raw, value)) => value,
         NumbericAndString::I64(value) => value as f64,
         NumbericAndString::F64(value) => value,
         NumbericAndString::String(value) => unreachable!(),
+        NumbericAndString::Identifier(ident) => return Some(value),
     };
 
     match expr.operator {
