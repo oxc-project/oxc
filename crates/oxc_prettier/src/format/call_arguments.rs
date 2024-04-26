@@ -220,9 +220,9 @@ fn should_expand_last_arg(args: &Vec<'_, Argument<'_>>) -> bool {
             || !matches!(last_arg, Expression::ArrayExpression(_)))
 }
 
-fn is_hopefully_short_call_argument(node: &Expression) -> bool {
-    if let Expression::ParenthesizedExpression(expr) = node {
-        return is_hopefully_short_call_argument(&expr.expression);
+fn is_hopefully_short_call_argument(mut node: &Expression) -> bool {
+    while let Expression::ParenthesizedExpression(expr) = node {
+        node = &expr.expression;
     }
 
     if node.is_call_like_expression() {
