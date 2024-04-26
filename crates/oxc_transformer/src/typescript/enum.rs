@@ -34,7 +34,7 @@ impl<'a> TypeScriptEnum<'a> {
     pub fn transform_ts_enum(
         &mut self,
         decl: &mut Box<'a, TSEnumDeclaration<'a>>,
-    ) -> Option<Declaration<'a>> {
+    ) -> Option<Statement<'a>> {
         if decl.modifiers.contains(ModifierKind::Declare) {
             return None;
         }
@@ -63,6 +63,7 @@ impl<'a> TypeScriptEnum<'a> {
 
         // Foo[Foo["X"] = 0] = "X";
         let enum_name = decl.id.name.clone();
+        let is_already_declared = self.enums.contains_key(&enum_name);
         let statements = self.transform_ts_enum_members(&mut decl.members, &enum_name);
         let body = self.ctx.ast.function_body(decl.span, self.ctx.ast.new_vec(), statements);
         let r#type = FunctionType::FunctionExpression;
@@ -82,6 +83,16 @@ impl<'a> TypeScriptEnum<'a> {
 
         let call_expression = self.ctx.ast.call_expression(SPAN, callee, arguments, false, None);
 
+        if is_already_declared {
+            let op = AssignmentOperator::Assign;
+            let left = self.ctx.ast.simple_assignment_target_identifier(IdentifierReference::new(
+                SPAN,
+                enum_name.clone(),
+            ));
+            let expr = self.ctx.ast.assignment_expression(SPAN, op, left, call_expression);
+            return Some(self.ctx.ast.expression_statement(SPAN, expr));
+        }
+
         let kind = VariableDeclarationKind::Var;
         let decls = {
             let mut decls = self.ctx.ast.new_vec();
@@ -98,7 +109,7 @@ impl<'a> TypeScriptEnum<'a> {
         let variable_declaration =
             self.ctx.ast.variable_declaration(span, kind, decls, Modifiers::empty());
 
-        Some(Declaration::VariableDeclaration(variable_declaration))
+        Some(Statement::Declaration(Declaration::VariableDeclaration(variable_declaration)))
     }
 
     pub fn transform_ts_enum_members(
@@ -516,6 +527,13 @@ impl<'a> TypeScriptEnum<'a> {
             }
             Expression::StringLiteral(lit) => {
                 Some(NumbericAndString::String(lit.value.to_string()))
+            }
+            Expression::TemplateLiteral(lit) => {
+                let mut value = String::new();
+                for part in &lit.quasis {
+                    value.push_str(&part.value.raw);
+                }
+                Some(NumbericAndString::String(value))
             }
             _ => None,
         }

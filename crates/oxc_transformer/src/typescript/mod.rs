@@ -146,6 +146,19 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_statements_on_exit(stmts);
     }
 
+    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>) {
+        let new_stmt = match stmt {
+            Statement::Declaration(Declaration::TSEnumDeclaration(decl)) => {
+                self.r#enum.transform_ts_enum(decl)
+            }
+            _ => None,
+        };
+
+        if let Some(new_stmt) = new_stmt {
+            *stmt = new_stmt;
+        }
+    }
+
     pub fn transform_if_statement(&mut self, stmt: &mut IfStatement<'a>) {
         self.annotations.transform_if_statement(stmt);
     }
@@ -167,11 +180,6 @@ impl<'a> TypeScript<'a> {
                 if ts_import_equals.import_kind.is_value() =>
             {
                 *decl = self.transform_ts_import_equals(ts_import_equals);
-            }
-            Declaration::TSEnumDeclaration(ts_enum_declaration) => {
-                if let Some(expr) = self.r#enum.transform_ts_enum(ts_enum_declaration) {
-                    *decl = expr;
-                }
             }
             _ => {}
         }
