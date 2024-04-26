@@ -38,7 +38,7 @@ unsafe impl<I: NonZeroIdx, T: Default> Send for NonZeroIndexVec<I, T> where T: S
 
 impl<I: NonZeroIdx, T: fmt::Debug + Default> fmt::Debug for NonZeroIndexVec<I, T> {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Debug::fmt(&self.raw, fmt)
+        fmt::Debug::fmt(&self.raw[1..self.len()], fmt)
     }
 }
 
