@@ -7,7 +7,7 @@ pub mod vec;
 
 /// Represents a wrapped value convertible to and from a `usize`.
 ///
-/// Generally you implement this via the [`define_index_type!`] macro, rather
+/// Generally you implement this via the [`super::define_index_type!`] macro, rather
 /// than manually implementing it.
 ///
 /// # Overflow
@@ -17,7 +17,7 @@ pub mod vec;
 ///
 /// The way overflow is handled is up to the implementation of `NonZeroIdx`, but it's
 /// generally panicking, unless it was turned off via the
-/// `DISABLE_MAX_INDEX_CHECK` option in [`define_index_type!`]. If you need more
+/// `DISABLE_MAX_INDEX_CHECK` option in [`super::define_index_type!`]. If you need more
 /// subtle handling than this, then you're on your own (or, well, either handle
 /// it earlier, or pick a bigger index type).
 ///
@@ -29,7 +29,7 @@ pub mod vec;
 ///
 /// The way this is handled similar to `overflow` is up to the implementation of `NonZeroIdx`,
 /// but it's generally panicking, unless it was turned off via the
-/// `DISABLE_NON_ZERO_CHECK` option in [`define_index_type!`]. If you need more
+/// `DISABLE_NON_ZERO_CHECK` option in [`super::define_index_type!`]. If you need more
 /// subtle handling than this, then you're on your own (or, well, either handle
 /// it earlier, or pick a bigger index type).
 ///
