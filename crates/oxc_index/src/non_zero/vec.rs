@@ -8,76 +8,69 @@ use core::iter::{self, FromIterator};
 use core::marker::PhantomData;
 use core::slice;
 
-#[cfg(feature = "serialize")]
-use crate::IndexBox;
+// #[cfg(feature = "serialize")]
+// use crate::IndexBox;
 
-use crate::{Idx, IdxRangeBounds, IdxSliceIndex, IndexSlice};
+use crate::{__internal_impl_partialeq, __internal_impl_partialeq2};
 
-/// A Vec that only accepts indices of a specific type.
+use super::{
+    super::NonZeroIdx,
+    indexing::{IdxRangeBounds, IdxSliceIndex},
+    slice::NonZeroIndexSlice,
+};
+
+/// A Vec that only accepts indices of a specific non-zero type.
 ///
-/// This is a thin wrapper around `Vec`, to the point where the backing vec is a
-/// public property (called `raw`). This is in part because I know this API is
-/// not a complete mirror of Vec's (patches welcome). In the worst case, you can
-/// always do what you need to the Vec itself.
-///
-/// Note that this implements Deref/DerefMut to [`IndexSlice`], and so all the
-/// methods on IndexSlice are available as well. See it's documentation for some
-/// further information.
-///
-/// The following extensions to the Vec APIs are added (in addition to the ones
-/// mentioned in IndexSlice's documentation):
-///
-/// - [`IndexVec::next_idx`], [`IndexSlice::last_idx`] give the next and most
-///   recent index returned by `push`.
-/// - [`IndexVec::push`] returns the index the item was inserted at.
+/// TODO
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct IndexVec<I: Idx, T> {
+pub struct NonZeroIndexVec<I: NonZeroIdx, T> {
     /// Our wrapped Vec.
     pub raw: Vec<T>,
     _marker: PhantomData<fn(&I)>,
 }
 
 #[allow(unsafe_code)]
-// SAFETY: Whether `IndexVec` is `Send` depends only on the data,
+// SAFETY: Whether `NonZeroIndexVec` is `Send` depends only on the data,
 // not the phantom data.
-unsafe impl<I: Idx, T> Send for IndexVec<I, T> where T: Send {}
+unsafe impl<I: NonZeroIdx, T> Send for NonZeroIndexVec<I, T> where T: Send {}
 
-impl<I: Idx, T: fmt::Debug> fmt::Debug for IndexVec<I, T> {
+impl<I: NonZeroIdx, T: fmt::Debug> fmt::Debug for NonZeroIndexVec<I, T> {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Debug::fmt(&self.raw, fmt)
     }
 }
 
-pub(crate) type Enumerated<Iter, I, T> = iter::Map<iter::Enumerate<Iter>, fn((usize, T)) -> (I, T)>;
+pub(crate) type NonZeroEnumerated<Iter, I, T> =
+    iter::Map<iter::Enumerate<Iter>, fn((usize, T)) -> (I, T)>;
 
-impl<I: Idx, T> IndexVec<I, T> {
-    /// Construct a new IndexVec.
+impl<I: NonZeroIdx, T> NonZeroIndexVec<I, T> {
+    /// Construct a new NonZeroIndexVec.
     #[inline]
     pub fn new() -> Self {
-        IndexVec { raw: Vec::new(), _marker: PhantomData }
+        NonZeroIndexVec { raw: Vec::new(), _marker: PhantomData }
     }
 
-    /// Construct a `IndexVec` from a `Vec<T>`.
+    /// Construct a `NonZeroIndexVec` from a `Vec<T>`.
     ///
     /// Panics if it's length is too large for our index type.
     #[inline]
     pub fn from_vec(vec: Vec<T>) -> Self {
         // See if `I::from_usize` might be upset by this length.
         let _ = I::from_usize(vec.len());
-        IndexVec { raw: vec, _marker: PhantomData }
+        NonZeroIndexVec { raw: vec, _marker: PhantomData }
     }
 
-    /// Construct an IndexVec that can hold at least `capacity` items before
+    /// Construct an NonZeroIndexVec that can hold at least `capacity` items before
     /// reallocating. See [`Vec::with_capacity`].
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-        IndexVec { raw: Vec::with_capacity(capacity), _marker: PhantomData }
+        NonZeroIndexVec { raw: Vec::with_capacity(capacity), _marker: PhantomData }
     }
 
     /// Similar to `self.into_iter().enumerate()` but with indices of `I` and
     /// not `usize`.
     #[inline(always)]
-    pub fn into_iter_enumerated(self) -> Enumerated<vec::IntoIter<T>, I, T> {
+    pub fn into_iter_enumerated(self) -> NonZeroEnumerated<vec::IntoIter<T>, I, T> {
         self.raw.into_iter().enumerate().map(|(i, t)| (I::from_usize(i), t))
     }
 
@@ -103,7 +96,7 @@ impl<I: Idx, T> IndexVec<I, T> {
     pub fn drain_enumerated<R: IdxRangeBounds<I>>(
         &mut self,
         range: R,
-    ) -> Enumerated<vec::Drain<'_, T>, I, T> {
+    ) -> NonZeroEnumerated<vec::Drain<'_, T>, I, T> {
         self.raw.drain(range.into_range()).enumerate().map(|(i, t)| (I::from_usize(i), t))
     }
 
@@ -155,19 +148,19 @@ impl<I: Idx, T> IndexVec<I, T> {
 
     /// Converts the vector into an owned IdxSlice, dropping excess capacity.
     #[inline]
-    pub fn into_boxed_slice(self) -> alloc::boxed::Box<IndexSlice<I, [T]>> {
+    pub fn into_boxed_slice(self) -> alloc::boxed::Box<NonZeroIndexSlice<I, [T]>> {
         let b = self.raw.into_boxed_slice();
-        // SAFETY: `IndexSlice` is a thin wrapper around `[T]` with the added marker for the index.
+        // SAFETY: `NonZeroIndexSlice` is a thin wrapper around `[T]` with the added marker for the index.
         #[allow(unsafe_code)]
         unsafe {
-            Box::from_raw(Box::into_raw(b) as *mut IndexSlice<I, [T]>)
+            Box::from_raw(Box::into_raw(b) as *mut NonZeroIndexSlice<I, [T]>)
         }
     }
 
     /// Return an iterator that removes the items from the requested range. See
     /// [`Vec::drain`].
     ///
-    /// See also [`IndexVec::drain_enumerated`], which gives you indices (of the
+    /// See also [`NonZeroIndexVec::drain_enumerated`], which gives you indices (of the
     /// correct type) as you iterate.
     #[inline]
     pub fn drain<R: IdxRangeBounds<I>>(&mut self, range: R) -> vec::Drain<'_, T> {
@@ -265,7 +258,7 @@ impl<I: Idx, T> IndexVec<I, T> {
     ///
     /// See [`Vec::extend_from_slice`].
     #[inline]
-    pub fn extend_from_slice(&mut self, other: &IndexSlice<I, [T]>)
+    pub fn extend_from_slice(&mut self, other: &NonZeroIndexSlice<I, [T]>)
     where
         T: Clone,
     {
@@ -299,53 +292,53 @@ impl<I: Idx, T> IndexVec<I, T> {
         self.raw.dedup_by(same_bucket);
     }
 
-    /// Get a IndexSlice over this vector. See `as_raw_slice` for converting to
+    /// Get a NonZeroIndexSlice over this vector. See `as_raw_slice` for converting to
     /// a `&[T]` (or access `self.raw`).
     #[inline(always)]
-    pub fn as_slice(&self) -> &IndexSlice<I, [T]> {
-        IndexSlice::new(&self.raw)
+    pub fn as_slice(&self) -> &NonZeroIndexSlice<I, [T]> {
+        NonZeroIndexSlice::new(&self.raw)
     }
 
-    /// Get a mutable IndexSlice over this vector. See `as_raw_slice_mut` for
+    /// Get a mutable NonZeroIndexSlice over this vector. See `as_raw_slice_mut` for
     /// converting to a `&mut [T]` (or access `self.raw`).
     #[inline(always)]
-    pub fn as_mut_slice(&mut self) -> &mut IndexSlice<I, [T]> {
-        IndexSlice::new_mut(&mut self.raw)
+    pub fn as_mut_slice(&mut self) -> &mut NonZeroIndexSlice<I, [T]> {
+        NonZeroIndexSlice::new_mut(&mut self.raw)
     }
 }
 
-impl<I: Idx, T> Default for IndexVec<I, T> {
+impl<I: NonZeroIdx, T> Default for NonZeroIndexVec<I, T> {
     #[inline]
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<I: Idx, T> Extend<T> for IndexVec<I, T> {
+impl<I: NonZeroIdx, T> Extend<T> for NonZeroIndexVec<I, T> {
     #[inline]
     fn extend<J: IntoIterator<Item = T>>(&mut self, iter: J) {
         self.raw.extend(iter);
     }
 }
 
-impl<'a, I: Idx, T: 'a + Copy> Extend<&'a T> for IndexVec<I, T> {
+impl<'a, I: NonZeroIdx, T: 'a + Copy> Extend<&'a T> for NonZeroIndexVec<I, T> {
     #[inline]
     fn extend<J: IntoIterator<Item = &'a T>>(&mut self, iter: J) {
         self.raw.extend(iter);
     }
 }
 
-impl<I: Idx, T> FromIterator<T> for IndexVec<I, T> {
+impl<I: NonZeroIdx, T> FromIterator<T> for NonZeroIndexVec<I, T> {
     #[inline]
     fn from_iter<J>(iter: J) -> Self
     where
         J: IntoIterator<Item = T>,
     {
-        IndexVec { raw: FromIterator::from_iter(iter), _marker: PhantomData }
+        NonZeroIndexVec { raw: FromIterator::from_iter(iter), _marker: PhantomData }
     }
 }
 
-impl<I: Idx, T> IntoIterator for IndexVec<I, T> {
+impl<I: NonZeroIdx, T> IntoIterator for NonZeroIndexVec<I, T> {
     type Item = T;
     type IntoIter = vec::IntoIter<T>;
 
@@ -355,7 +348,7 @@ impl<I: Idx, T> IntoIterator for IndexVec<I, T> {
     }
 }
 
-impl<'a, I: Idx, T> IntoIterator for &'a IndexVec<I, T> {
+impl<'a, I: NonZeroIdx, T> IntoIterator for &'a NonZeroIndexVec<I, T> {
     type Item = &'a T;
     type IntoIter = slice::Iter<'a, T>;
 
@@ -365,7 +358,7 @@ impl<'a, I: Idx, T> IntoIterator for &'a IndexVec<I, T> {
     }
 }
 
-impl<'a, I: Idx, T> IntoIterator for &'a mut IndexVec<I, T> {
+impl<'a, I: NonZeroIdx, T> IntoIterator for &'a mut NonZeroIndexVec<I, T> {
     type Item = &'a mut T;
     type IntoIter = slice::IterMut<'a, T>;
 
@@ -375,51 +368,51 @@ impl<'a, I: Idx, T> IntoIterator for &'a mut IndexVec<I, T> {
     }
 }
 
-impl<I: Idx, T> From<IndexVec<I, T>> for Box<IndexSlice<I, [T]>> {
+impl<I: NonZeroIdx, T> From<NonZeroIndexVec<I, T>> for Box<NonZeroIndexSlice<I, [T]>> {
     #[inline]
-    fn from(src: IndexVec<I, T>) -> Self {
+    fn from(src: NonZeroIndexVec<I, T>) -> Self {
         src.into_boxed_slice()
     }
 }
 
-impl<I: Idx, T> From<Box<IndexSlice<I, [T]>>> for IndexVec<I, T> {
+impl<I: NonZeroIdx, T> From<Box<NonZeroIndexSlice<I, [T]>>> for NonZeroIndexVec<I, T> {
     #[inline]
-    fn from(src: Box<IndexSlice<I, [T]>>) -> Self {
+    fn from(src: Box<NonZeroIndexSlice<I, [T]>>) -> Self {
         src.into_vec()
     }
 }
 
-impl<'a, I: Idx, T> From<Cow<'a, IndexSlice<I, [T]>>> for IndexVec<I, T>
+impl<'a, I: NonZeroIdx, T> From<Cow<'a, NonZeroIndexSlice<I, [T]>>> for NonZeroIndexVec<I, T>
 where
-    IndexSlice<I, [T]>: ToOwned<Owned = IndexVec<I, T>>,
+    NonZeroIndexSlice<I, [T]>: ToOwned<Owned = NonZeroIndexVec<I, T>>,
 {
     #[inline]
-    fn from(s: Cow<'a, IndexSlice<I, [T]>>) -> IndexVec<I, T> {
+    fn from(s: Cow<'a, NonZeroIndexSlice<I, [T]>>) -> NonZeroIndexVec<I, T> {
         s.into_owned()
     }
 }
 
-impl<'a, I: Idx, T: Clone> From<&'a IndexSlice<I, [T]>> for IndexVec<I, T> {
+impl<'a, I: NonZeroIdx, T: Clone> From<&'a NonZeroIndexSlice<I, [T]>> for NonZeroIndexVec<I, T> {
     #[inline]
-    fn from(src: &'a IndexSlice<I, [T]>) -> Self {
+    fn from(src: &'a NonZeroIndexSlice<I, [T]>) -> Self {
         src.to_owned()
     }
 }
-impl<'a, I: Idx, T: Clone> From<&'a mut IndexSlice<I, [T]>> for IndexVec<I, T> {
+impl<'a, I: NonZeroIdx, T: Clone> From<&'a mut NonZeroIndexSlice<I, [T]>> for NonZeroIndexVec<I, T> {
     #[inline]
-    fn from(src: &'a mut IndexSlice<I, [T]>) -> Self {
+    fn from(src: &'a mut NonZeroIndexSlice<I, [T]>) -> Self {
         src.to_owned()
     }
 }
 
-impl<I: Idx, T> From<Vec<T>> for IndexVec<I, T> {
+impl<I: NonZeroIdx, T> From<Vec<T>> for NonZeroIndexVec<I, T> {
     #[inline]
     fn from(v: Vec<T>) -> Self {
         Self { raw: v, _marker: PhantomData }
     }
 }
 
-impl<I: Idx, T: Clone> Clone for IndexVec<I, T> {
+impl<I: NonZeroIdx, T: Clone> Clone for NonZeroIndexVec<I, T> {
     #[inline]
     fn clone(&self) -> Self {
         Self { raw: self.raw.clone(), _marker: PhantomData }
@@ -430,126 +423,90 @@ impl<I: Idx, T: Clone> Clone for IndexVec<I, T> {
     }
 }
 
-impl<I: Idx, A> AsRef<[A]> for IndexVec<I, A> {
+impl<I: NonZeroIdx, A> AsRef<[A]> for NonZeroIndexVec<I, A> {
     #[inline]
     fn as_ref(&self) -> &[A] {
         &self.raw
     }
 }
 
-impl<I: Idx, A> AsMut<[A]> for IndexVec<I, A> {
+impl<I: NonZeroIdx, A> AsMut<[A]> for NonZeroIndexVec<I, A> {
     #[inline]
     fn as_mut(&mut self) -> &mut [A] {
         &mut self.raw
     }
 }
 
-impl<I: Idx, A> AsRef<IndexSlice<I, [A]>> for IndexVec<I, A> {
+impl<I: NonZeroIdx, A> AsRef<NonZeroIndexSlice<I, [A]>> for NonZeroIndexVec<I, A> {
     #[inline]
-    fn as_ref(&self) -> &IndexSlice<I, [A]> {
-        IndexSlice::new(&self.raw)
+    fn as_ref(&self) -> &NonZeroIndexSlice<I, [A]> {
+        NonZeroIndexSlice::new(&self.raw)
     }
 }
 
-impl<I: Idx, A> AsMut<IndexSlice<I, [A]>> for IndexVec<I, A> {
+impl<I: NonZeroIdx, A> AsMut<NonZeroIndexSlice<I, [A]>> for NonZeroIndexVec<I, A> {
     #[inline]
-    fn as_mut(&mut self) -> &mut IndexSlice<I, [A]> {
-        IndexSlice::new_mut(&mut self.raw)
+    fn as_mut(&mut self) -> &mut NonZeroIndexSlice<I, [A]> {
+        NonZeroIndexSlice::new_mut(&mut self.raw)
     }
 }
 
-impl<I: Idx, A> core::ops::Deref for IndexVec<I, A> {
-    type Target = IndexSlice<I, [A]>;
+impl<I: NonZeroIdx, A> core::ops::Deref for NonZeroIndexVec<I, A> {
+    type Target = NonZeroIndexSlice<I, [A]>;
     #[inline]
-    fn deref(&self) -> &IndexSlice<I, [A]> {
-        IndexSlice::new(&self.raw)
+    fn deref(&self) -> &NonZeroIndexSlice<I, [A]> {
+        NonZeroIndexSlice::new(&self.raw)
     }
 }
 
-impl<I: Idx, A> core::ops::DerefMut for IndexVec<I, A> {
+impl<I: NonZeroIdx, A> core::ops::DerefMut for NonZeroIndexVec<I, A> {
     #[inline]
-    fn deref_mut(&mut self) -> &mut IndexSlice<I, [A]> {
-        IndexSlice::new_mut(&mut self.raw)
+    fn deref_mut(&mut self) -> &mut NonZeroIndexSlice<I, [A]> {
+        NonZeroIndexSlice::new_mut(&mut self.raw)
     }
 }
 
-impl<I: Idx, T> Borrow<IndexSlice<I, [T]>> for IndexVec<I, T> {
+impl<I: NonZeroIdx, T> Borrow<NonZeroIndexSlice<I, [T]>> for NonZeroIndexVec<I, T> {
     #[inline]
-    fn borrow(&self) -> &IndexSlice<I, [T]> {
+    fn borrow(&self) -> &NonZeroIndexSlice<I, [T]> {
         self.as_slice()
     }
 }
 
-impl<I: Idx, T> BorrowMut<IndexSlice<I, [T]>> for IndexVec<I, T> {
+impl<I: NonZeroIdx, T> BorrowMut<NonZeroIndexSlice<I, [T]>> for NonZeroIndexVec<I, T> {
     #[inline]
-    fn borrow_mut(&mut self) -> &mut IndexSlice<I, [T]> {
+    fn borrow_mut(&mut self) -> &mut NonZeroIndexSlice<I, [T]> {
         self.as_mut_slice()
     }
 }
 
-macro_rules! impl_partialeq {
-    ($Lhs: ty, $Rhs: ty) => {
-        impl<'a, 'b, A, B, I: Idx> PartialEq<$Rhs> for $Lhs
-        where
-            A: PartialEq<B>,
-        {
-            #[inline]
-            fn eq(&self, other: &$Rhs) -> bool {
-                self[..] == other[..]
-            }
-            #[inline]
-            fn ne(&self, other: &$Rhs) -> bool {
-                self[..] != other[..]
-            }
-        }
-    };
-}
+__internal_impl_partialeq! { NonZeroIndexVec<I, A>, Vec<B> }
+__internal_impl_partialeq! { NonZeroIndexVec<I, A>, &'b [B] }
+__internal_impl_partialeq! { NonZeroIndexVec<I, A>, &'b mut [B] }
 
-macro_rules! impl_partialeq2 {
-    ($Lhs: ty, $Rhs: ty) => {
-        impl<'a, 'b, A, B, I: Idx, J: Idx> PartialEq<$Rhs> for $Lhs
-        where
-            A: PartialEq<B>,
-        {
-            #[inline]
-            fn eq(&self, other: &$Rhs) -> bool {
-                self.raw[..] == other.raw[..]
-            }
-            #[inline]
-            fn ne(&self, other: &$Rhs) -> bool {
-                self.raw[..] != other.raw[..]
-            }
-        }
-    };
-}
+// __internal_impl_partialeq2! { NonZeroIndexVec<I, A>, &'b NonZeroIndexSlice<J, [B]> }
+// __internal_impl_partialeq2! { NonZeroIndexVec<I, A>, &'b mut NonZeroIndexSlice<J, [B]> }
 
-impl_partialeq! { IndexVec<I, A>, Vec<B> }
-impl_partialeq! { IndexVec<I, A>, &'b [B] }
-impl_partialeq! { IndexVec<I, A>, &'b mut [B] }
+// __internal_impl_partialeq! { &'a NonZeroIndexSlice<I, [A]>, Vec<B> }
+// __internal_impl_partialeq! { &'a mut NonZeroIndexSlice<I, [A]>, Vec<B> }
 
-impl_partialeq2! { IndexVec<I, A>, &'b IndexSlice<J, [B]> }
-impl_partialeq2! { IndexVec<I, A>, &'b mut IndexSlice<J, [B]> }
+// __internal_impl_partialeq! { NonZeroIndexSlice<I, [A]>, &'b [B] }
+// __internal_impl_partialeq! { NonZeroIndexSlice<I, [A]>, &'b mut [B] }
 
-impl_partialeq! { &'a IndexSlice<I, [A]>, Vec<B> }
-impl_partialeq! { &'a mut IndexSlice<I, [A]>, Vec<B> }
+// __internal_impl_partialeq2! { &'a NonZeroIndexSlice<I, [A]>, NonZeroIndexVec<J, B> }
+// __internal_impl_partialeq2! { &'a mut NonZeroIndexSlice<I, [A]>, NonZeroIndexVec<J, B> }
 
-impl_partialeq! { IndexSlice<I, [A]>, &'b [B] }
-impl_partialeq! { IndexSlice<I, [A]>, &'b mut [B] }
-
-impl_partialeq2! { &'a IndexSlice<I, [A]>, IndexVec<J, B> }
-impl_partialeq2! { &'a mut IndexSlice<I, [A]>, IndexVec<J, B> }
-
-impl_partialeq2! { IndexSlice<I, [A]>, &'a IndexSlice<J, [B]> }
-impl_partialeq2! { IndexSlice<I, [A]>, &'a mut IndexSlice<J, [B]> }
+// __internal_impl_partialeq2! { NonZeroIndexSlice<I, [A]>, &'a NonZeroIndexSlice<J, [B]> }
+// __internal_impl_partialeq2! { NonZeroIndexSlice<I, [A]>, &'a mut NonZeroIndexSlice<J, [B]> }
 
 macro_rules! array_impls {
     ($($N: expr)+) => {$(
-        impl_partialeq! { IndexVec<I, A>, [B; $N] }
-        impl_partialeq! { IndexVec<I, A>, &'b [B; $N] }
-        impl_partialeq! { IndexSlice<I, [A]>, [B; $N] }
-        impl_partialeq! { IndexSlice<I, [A]>, &'b [B; $N] }
-        // impl_partialeq! { &'a IndexSlice<I, [A]>, [B; $N] }
-        // impl_partialeq! { &'a IndexSlice<I, [A]>, &'b [B; $N] }
+        __internal_impl_partialeq! { NonZeroIndexVec<I, A>, [B; $N] }
+        __internal_impl_partialeq! { NonZeroIndexVec<I, A>, &'b [B; $N] }
+        // __internal_impl_partialeq! { NonZeroIndexSlice<I, [A]>, [B; $N] }
+        // __internal_impl_partialeq! { NonZeroIndexSlice<I, [A]>, &'b [B; $N] }
+        // impl_partialeq! { &'a NonZeroIndexSlice<I, [A]>, [B; $N] }
+        // impl_partialeq! { &'a NonZeroIndexSlice<I, [A]>, &'b [B; $N] }
     )+};
 }
 
@@ -568,29 +525,33 @@ pub fn __max_check_fail(u: usize, max: usize) -> ! {
 }
 
 #[cfg(feature = "serialize")]
-impl<I: Idx, T: serde::ser::Serialize> serde::ser::Serialize for IndexVec<I, T> {
+impl<I: NonZeroIdx, T: serde::ser::Serialize> serde::ser::Serialize for NonZeroIndexVec<I, T> {
     fn serialize<S: serde::ser::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.raw.serialize(serializer)
     }
 }
 
 #[cfg(feature = "serialize")]
-impl<'de, I: Idx, T: serde::de::Deserialize<'de>> serde::de::Deserialize<'de> for IndexVec<I, T> {
+impl<'de, I: NonZeroIdx, T: serde::de::Deserialize<'de>> serde::de::Deserialize<'de>
+    for NonZeroIndexVec<I, T>
+{
     fn deserialize<D: serde::de::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         Vec::deserialize(deserializer).map(Self::from_vec)
     }
 }
 
-#[cfg(feature = "serialize")]
-impl<I: Idx, T: serde::ser::Serialize> serde::ser::Serialize for IndexBox<I, T> {
-    fn serialize<S: serde::ser::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.raw.serialize(serializer)
-    }
-}
-
-#[cfg(feature = "serialize")]
-impl<'de, I: Idx, T: serde::de::Deserialize<'de>> serde::de::Deserialize<'de> for IndexBox<I, [T]> {
-    fn deserialize<D: serde::de::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Box::<[T]>::deserialize(deserializer).map(Into::into)
-    }
-}
+// #[cfg(feature = "serialize")]
+// impl<I: NonZeroIdx, T: serde::ser::Serialize> serde::ser::Serialize for IndexBox<I, T> {
+//     fn serialize<S: serde::ser::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+//         self.raw.serialize(serializer)
+//     }
+// }
+//
+// #[cfg(feature = "serialize")]
+// impl<'de, I: NonZeroIdx, T: serde::de::Deserialize<'de>> serde::de::Deserialize<'de>
+//     for IndexBox<I, [T]>
+// {
+//     fn deserialize<D: serde::de::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+//         Box::<[T]>::deserialize(deserializer).map(Into::into)
+//     }
+// }

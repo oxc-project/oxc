@@ -795,3 +795,43 @@ macro_rules! __define_index_type_inner {
         $crate::__internal_maybe_index_impl_serde!($type);
     };
 }
+
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __internal_impl_partialeq {
+    ($Lhs: ty, $Rhs: ty) => {
+        impl<'a, 'b, A, B, I: NonZeroIdx> PartialEq<$Rhs> for $Lhs
+        where
+            A: PartialEq<B>,
+        {
+            #[inline]
+            fn eq(&self, other: &$Rhs) -> bool {
+                self[..] == other[..]
+            }
+            #[inline]
+            fn ne(&self, other: &$Rhs) -> bool {
+                self[..] != other[..]
+            }
+        }
+    };
+}
+
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __internal_impl_partialeq2 {
+    ($Lhs: ty, $Rhs: ty) => {
+        impl<'a, 'b, A, B, I: NonZeroIdx, J: NonZeroIdx> PartialEq<$Rhs> for $Lhs
+        where
+            A: PartialEq<B>,
+        {
+            #[inline]
+            fn eq(&self, other: &$Rhs) -> bool {
+                self.raw[..] == other.raw[..]
+            }
+            #[inline]
+            fn ne(&self, other: &$Rhs) -> bool {
+                self.raw[..] != other.raw[..]
+            }
+        }
+    };
+}
