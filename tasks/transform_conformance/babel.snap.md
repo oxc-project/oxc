@@ -1,4 +1,4 @@
-Passed: 168/226
+Passed: 169/226
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -17,7 +17,7 @@ Passed: 168/226
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (112/156)
+# babel-plugin-transform-typescript (113/156)
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
 * enum/enum-merging-inner-references/input.ts
@@ -26,7 +26,6 @@ Passed: 168/226
 * enum/mix-references/input.ts
 * enum/non-foldable-constant/input.ts
 * enum/non-scoped/input.ts
-* enum/outer-references/input.ts
 * enum/scoped/input.ts
 * enum/string-value-template/input.ts
 * enum/ts5.0-const-foldable/input.ts

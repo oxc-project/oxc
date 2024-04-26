@@ -121,7 +121,8 @@ impl<'a> TypeScriptEnum<'a> {
             };
 
             let init = if let Some(initializer) = member.initializer.as_ref() {
-                let constant_value = computed_constant_value(initializer, &previous_enum_members);
+                let constant_value =
+                    self.computed_constant_value(initializer, &previous_enum_members);
 
                 // prev_constant_value = constant_value
                 let init = match constant_value {
@@ -463,137 +464,153 @@ enum NumbericAndString {
     String(String),
 }
 
-fn computed_constant_value<'a>(
-    expr: &Expression<'a>,
-    prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
-    // seen: &mut HashSet<Identifier>,
-) -> Option<NumbericAndString> {
-    evaluate(&expr, prev_members)
-}
-
-fn evalaute_ref<'a>(
-    expr: &Expression<'a>,
-    prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
-) -> Option<NumbericAndString> {
-    match expr {
-        Expression::MemberExpression(expr) => None,
-        Expression::Identifier(ident) => {
-            if ident.name == "Infinity" || ident.name == "NaN" {
-                return Some(NumbericAndString::Identifier(ident.name.to_string()));
-            }
-
-            if let Some(value) = prev_members.get(&ident.name) {
-                return Some(value.clone());
-            }
-
-            None
-        }
-        _ => None,
+impl<'a> TypeScriptEnum<'a> {
+    fn computed_constant_value(
+        &self,
+        expr: &Expression<'a>,
+        prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
+        // seen: &mut HashSet<Identifier>,
+    ) -> Option<NumbericAndString> {
+        self.evaluate(&expr, prev_members)
     }
-}
 
-fn evaluate<'a>(
-    expr: &Expression<'a>,
-    prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
-) -> Option<NumbericAndString> {
-    match expr {
-        Expression::MemberExpression(member_expr) => evalaute_ref(expr, &prev_members),
-        Expression::Identifier(ident) => evalaute_ref(expr, &prev_members),
-        Expression::BinaryExpression(expr) => eval_binary_expression(expr, &prev_members),
-        Expression::UnaryExpression(expr) => eval_unary_expression(expr, &prev_members),
-        Expression::NumericLiteral(lit) => {
-            Some(NumbericAndString::Numberic((lit.raw.to_string(), lit.value)))
+    fn evalaute_ref(
+        &self,
+        expr: &Expression<'a>,
+        prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
+    ) -> Option<NumbericAndString> {
+        match expr {
+            Expression::MemberExpression(expr) => {
+                let Expression::Identifier(ident) = expr.object() else { return None };
+                let Some(members) = self.enums.get(&ident.name) else { return None };
+                let property = expr.static_property_name()?;
+                return members.get(property).cloned();
+            }
+            Expression::Identifier(ident) => {
+                if ident.name == "Infinity" || ident.name == "NaN" {
+                    return Some(NumbericAndString::Identifier(ident.name.to_string()));
+                }
+
+                if let Some(value) = prev_members.get(&ident.name) {
+                    return Some(value.clone());
+                }
+
+                None
+            }
+            _ => None,
         }
-        Expression::StringLiteral(lit) => Some(NumbericAndString::String(lit.value.to_string())),
-        _ => None,
     }
-}
 
-#[allow(clippy::cast_possible_truncation)]
-fn eval_binary_expression(
-    expr: &BinaryExpression<'_>,
-    prev_members: &FxHashMap<Atom<'_>, NumbericAndString>,
-) -> Option<NumbericAndString> {
-    let left = evaluate(&expr.left, prev_members)?;
-    let right = evaluate(&expr.right, prev_members)?;
+    fn evaluate(
+        &self,
+        expr: &Expression<'a>,
+        prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
+    ) -> Option<NumbericAndString> {
+        match expr {
+            Expression::MemberExpression(member_expr) => self.evalaute_ref(expr, &prev_members),
+            Expression::Identifier(ident) => self.evalaute_ref(expr, &prev_members),
+            Expression::BinaryExpression(expr) => self.eval_binary_expression(expr, &prev_members),
+            Expression::UnaryExpression(expr) => self.eval_unary_expression(expr, &prev_members),
+            Expression::NumericLiteral(lit) => {
+                Some(NumbericAndString::Numberic((lit.raw.to_string(), lit.value)))
+            }
+            Expression::StringLiteral(lit) => {
+                Some(NumbericAndString::String(lit.value.to_string()))
+            }
+            _ => None,
+        }
+    }
 
-    if matches!(expr.operator, BinaryOperator::Addition)
-        && (matches!(left, NumbericAndString::String(_))
-            || matches!(right, NumbericAndString::String(_)))
-    {
-        let left_string = match left {
-            NumbericAndString::Numberic(left) => left.0.to_string(),
-            NumbericAndString::String(left) => left,
-            NumbericAndString::I64(v) => v.to_string(),
-            NumbericAndString::F64(v) => v.to_string(),
-            NumbericAndString::Identifier(_) => unreachable!(),
+    #[allow(clippy::cast_possible_truncation)]
+    fn eval_binary_expression(
+        &self,
+        expr: &BinaryExpression<'a>,
+        prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
+    ) -> Option<NumbericAndString> {
+        let left = self.evaluate(&expr.left, prev_members)?;
+        let right = self.evaluate(&expr.right, prev_members)?;
+
+        if matches!(expr.operator, BinaryOperator::Addition)
+            && (matches!(left, NumbericAndString::String(_))
+                || matches!(right, NumbericAndString::String(_)))
+        {
+            let left_string = match left {
+                NumbericAndString::Numberic(left) => left.0.to_string(),
+                NumbericAndString::String(left) => left,
+                NumbericAndString::I64(v) => v.to_string(),
+                NumbericAndString::F64(v) => v.to_string(),
+                NumbericAndString::Identifier(_) => unreachable!(),
+            };
+
+            let right_string = match right {
+                NumbericAndString::Numberic(right) => right.0.to_string(),
+                NumbericAndString::String(right) => right,
+                NumbericAndString::I64(v) => v.to_string(),
+                NumbericAndString::F64(v) => v.to_string(),
+                NumbericAndString::Identifier(_) => unreachable!(),
+            };
+
+            return Some(NumbericAndString::String(format!("{left_string}{right_string}")));
+        }
+
+        let left = match left {
+            NumbericAndString::Numberic(left) => left.1,
+            NumbericAndString::String(_) => return None,
+            NumbericAndString::I64(v) => v as f64,
+            NumbericAndString::F64(v) => v,
+            NumbericAndString::Identifier(ident) => return None,
         };
 
-        let right_string = match right {
-            NumbericAndString::Numberic(right) => right.0.to_string(),
-            NumbericAndString::String(right) => right,
-            NumbericAndString::I64(v) => v.to_string(),
-            NumbericAndString::F64(v) => v.to_string(),
-            NumbericAndString::Identifier(_) => unreachable!(),
+        let right = match right {
+            NumbericAndString::Numberic(right) => right.1,
+            NumbericAndString::String(_) => return None,
+            NumbericAndString::I64(v) => v as f64,
+            NumbericAndString::F64(v) => v,
+            NumbericAndString::Identifier(ident) => return None,
         };
 
-        return Some(NumbericAndString::String(format!("{left_string}{right_string}")));
-    }
-
-    let left = match left {
-        NumbericAndString::Numberic(left) => left.1,
-        NumbericAndString::String(_) => return None,
-        NumbericAndString::I64(v) => v as f64,
-        NumbericAndString::F64(v) => v,
-        NumbericAndString::Identifier(ident) => return None,
-    };
-
-    let right = match right {
-        NumbericAndString::Numberic(right) => right.1,
-        NumbericAndString::String(_) => return None,
-        NumbericAndString::I64(v) => v as f64,
-        NumbericAndString::F64(v) => v,
-        NumbericAndString::Identifier(ident) => return None,
-    };
-
-    match expr.operator {
-        BinaryOperator::BitwiseOR => Some(NumbericAndString::I64(left as i64 | right as i64)),
-        BinaryOperator::BitwiseAnd => Some(NumbericAndString::I64(left as i64 & right as i64)),
-        BinaryOperator::ShiftRight => Some(NumbericAndString::I64(left as i64 >> right as i64)),
-        BinaryOperator::ShiftRightZeroFill => {
-            Some(NumbericAndString::I64(left as i64 >> right as i64))
+        match expr.operator {
+            BinaryOperator::BitwiseOR => Some(NumbericAndString::I64(left as i64 | right as i64)),
+            BinaryOperator::BitwiseAnd => Some(NumbericAndString::I64(left as i64 & right as i64)),
+            BinaryOperator::ShiftRight => Some(NumbericAndString::I64(left as i64 >> right as i64)),
+            BinaryOperator::ShiftRightZeroFill => {
+                Some(NumbericAndString::I64(left as i64 >> right as i64))
+            }
+            BinaryOperator::ShiftLeft => {
+                Some(NumbericAndString::I64((left as i64) << right as i64))
+            }
+            BinaryOperator::BitwiseXOR => Some(NumbericAndString::I64(left as i64 ^ right as i64)),
+            BinaryOperator::Multiplication => Some(NumbericAndString::F64(left * right)),
+            BinaryOperator::Division => Some(NumbericAndString::F64(left / right)),
+            BinaryOperator::Addition => Some(NumbericAndString::F64(left + right)),
+            BinaryOperator::Subtraction => Some(NumbericAndString::F64(left - right)),
+            BinaryOperator::Remainder => Some(NumbericAndString::F64(left % right)),
+            BinaryOperator::Exponential => Some(NumbericAndString::F64(left.powf(right))),
+            _ => None,
         }
-        BinaryOperator::ShiftLeft => Some(NumbericAndString::I64((left as i64) << right as i64)),
-        BinaryOperator::BitwiseXOR => Some(NumbericAndString::I64(left as i64 ^ right as i64)),
-        BinaryOperator::Multiplication => Some(NumbericAndString::F64(left * right)),
-        BinaryOperator::Division => Some(NumbericAndString::F64(left / right)),
-        BinaryOperator::Addition => Some(NumbericAndString::F64(left + right)),
-        BinaryOperator::Subtraction => Some(NumbericAndString::F64(left - right)),
-        BinaryOperator::Remainder => Some(NumbericAndString::F64(left % right)),
-        BinaryOperator::Exponential => Some(NumbericAndString::F64(left.powf(right))),
-        _ => None,
     }
-}
 
-fn eval_unary_expression(
-    expr: &UnaryExpression<'_>,
-    prev_members: &FxHashMap<Atom<'_>, NumbericAndString>,
-) -> Option<NumbericAndString> {
-    let value = evaluate(&expr.argument, &prev_members)?;
+    fn eval_unary_expression(
+        &self,
+        expr: &UnaryExpression<'a>,
+        prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
+    ) -> Option<NumbericAndString> {
+        let value = self.evaluate(&expr.argument, &prev_members)?;
 
-    let value = match value.clone() {
-        NumbericAndString::Numberic((_raw, value)) => value,
-        NumbericAndString::I64(value) => value as f64,
-        NumbericAndString::F64(value) => value,
-        NumbericAndString::String(value) => unreachable!(),
-        NumbericAndString::Identifier(ident) => return Some(value),
-    };
+        let value = match value.clone() {
+            NumbericAndString::Numberic((_raw, value)) => value,
+            NumbericAndString::I64(value) => value as f64,
+            NumbericAndString::F64(value) => value,
+            NumbericAndString::String(value) => unreachable!(),
+            NumbericAndString::Identifier(ident) => return Some(value),
+        };
 
-    match expr.operator {
-        UnaryOperator::UnaryPlus => Some(NumbericAndString::F64(value)),
-        UnaryOperator::UnaryNegation => Some(NumbericAndString::F64(-value)),
-        UnaryOperator::LogicalNot => Some(NumbericAndString::I64(!(value as i64))),
-        UnaryOperator::BitwiseNot => Some(NumbericAndString::I64(!(value as i64))),
-        _ => None,
+        match expr.operator {
+            UnaryOperator::UnaryPlus => Some(NumbericAndString::F64(value)),
+            UnaryOperator::UnaryNegation => Some(NumbericAndString::F64(-value)),
+            UnaryOperator::LogicalNot => Some(NumbericAndString::I64(!(value as i64))),
+            UnaryOperator::BitwiseNot => Some(NumbericAndString::I64(!(value as i64))),
+            _ => None,
+        }
     }
 }
