@@ -4,7 +4,7 @@ use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
-    operator::{AssignmentOperator, BinaryOperator, LogicalOperator},
+    operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     NumberBase,
 };
 
@@ -37,10 +37,8 @@ impl<'a> TypeScript<'a> {
         let kind = self.ctx.ast.binding_pattern_identifier(ident);
         let id = self.ctx.ast.binding_pattern(kind, None, false);
 
-        let mut params = self.ctx.ast.new_vec();
-
         // ((Foo) => {
-        params.push(self.ctx.ast.formal_parameter(
+        let mut params = self.ctx.ast.new_vec_single(self.ctx.ast.formal_parameter(
             SPAN,
             id,
             None,
@@ -60,11 +58,11 @@ impl<'a> TypeScript<'a> {
         let enum_name = decl.id.name.clone();
         let statements = self.transform_ts_enum_members(&mut decl.members, &enum_name);
         let body = self.ctx.ast.function_body(decl.span, self.ctx.ast.new_vec(), statements);
+        let r#type = FunctionType::FunctionExpression;
+        let callee = self.ctx.ast.plain_function(r#type, SPAN, None, params, Some(body));
+        let callee = Expression::FunctionExpression(callee);
 
-        let callee =
-            self.ctx.ast.arrow_function_expression(SPAN, false, false, params, body, None, None);
-
-        // })(Foo || {});
+        // }(Foo || {});
         let mut arguments = self.ctx.ast.new_vec();
         let op = LogicalOperator::Or;
         let left = self
@@ -108,6 +106,7 @@ impl<'a> TypeScript<'a> {
             base: NumberBase::Decimal,
         });
         let mut statements = self.ctx.ast.new_vec();
+        let mut prev_constant_value = Some(NumbericAndString::I64(-1));
 
         for member in members.iter_mut() {
             let (member_name, member_span) = match &member.id {
@@ -117,10 +116,54 @@ impl<'a> TypeScript<'a> {
                 | TSEnumMemberName::NumericLiteral(..) => unreachable!(),
             };
 
-            let mut init = self
-                .ctx
-                .ast
-                .move_expression(member.initializer.as_mut().unwrap_or(&mut default_init));
+            let init = if let Some(initializer) = member.initializer.as_ref() {
+                let constant_value = computed_constant_value(initializer);
+                // prev_constant_value = constant_value
+                let init = match constant_value {
+                    None => self.ctx.ast.copy(initializer),
+                    Some(NumbericAndString::F64(v)) => {
+                        prev_constant_value = Some(NumbericAndString::F64(v));
+                        self.get_numeric_literal_expression_f64(v)
+                    }
+                    Some(NumbericAndString::I64(v)) => {
+                        prev_constant_value = Some(NumbericAndString::I64(v));
+                        self.get_numeric_literal_expression_i64(v)
+                    }
+                    Some(NumbericAndString::String(str)) => {
+                        self.ctx.ast.literal_string_expression(StringLiteral {
+                            span: SPAN,
+                            value: self.ctx.ast.new_atom(&str),
+                        })
+                    }
+                    Some(NumbericAndString::Numberic((_, value))) => {
+                        prev_constant_value = Some(NumbericAndString::F64(value));
+                        self.get_numeric_literal_expression_f64(value)
+                    }
+                };
+
+                init
+            } else {
+                match prev_constant_value {
+                    Some(value) => match value {
+                        NumbericAndString::I64(value) => {
+                            let value = value + 1;
+                            prev_constant_value = Some(NumbericAndString::I64(value));
+                            self.get_numeric_literal_expression_i64(value)
+                        }
+                        NumbericAndString::F64(value) => {
+                            let value = value + 1.0;
+                            prev_constant_value = Some(NumbericAndString::F64(value));
+                            self.get_numeric_literal_expression_f64(value)
+                        }
+                        _ => {
+                            unreachable!()
+                        }
+                    },
+                    None => todo!(),
+                }
+            };
+
+            println!("{:?}", init);
 
             let is_str = init.is_string_literal();
 
@@ -135,34 +178,6 @@ impl<'a> TypeScript<'a> {
                     .literal_string_expression(StringLiteral::new(SPAN, member_name.clone()));
                 self.ctx.ast.computed_member_expression(SPAN, obj, expr, false)
             };
-
-            if is_valid_identifier(member_name, true) {
-                let ident = IdentifierReference::new(member_span, member_name.clone());
-
-                self_ref = self.ctx.ast.identifier_reference_expression(ident.clone());
-                let init =
-                    mem::replace(&mut init, self.ctx.ast.identifier_reference_expression(ident));
-
-                let kind = VariableDeclarationKind::Const;
-                let decls = {
-                    let mut decls = self.ctx.ast.new_vec();
-
-                    let binding_identifier = BindingIdentifier::new(SPAN, member_name.clone());
-                    let binding_pattern_kind =
-                        self.ctx.ast.binding_pattern_identifier(binding_identifier);
-                    let binding = self.ctx.ast.binding_pattern(binding_pattern_kind, None, false);
-                    let decl =
-                        self.ctx.ast.variable_declarator(SPAN, kind, binding, Some(init), false);
-
-                    decls.push(decl);
-                    decls
-                };
-                let decl = self.ctx.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
-                let stmt: Statement<'_> =
-                    Statement::Declaration(Declaration::VariableDeclaration(decl));
-
-                statements.push(stmt);
-            }
 
             // Foo["x"] = init
             let member_expr = {
@@ -226,5 +241,311 @@ impl<'a> TypeScript<'a> {
         statements.push(return_stmt);
 
         statements
+    }
+
+    fn get_numeric_literal_expression_f64(&self, value: f64) -> Expression<'a> {
+        let is_negative = value < 0.0;
+        let value = if is_negative { -value } else { value };
+
+        let expr = self.ctx.ast.literal_number_expression(NumericLiteral {
+            span: SPAN,
+            value,
+            raw: self.ctx.ast.new_str(&value.to_string()),
+            base: NumberBase::Decimal,
+        });
+
+        if is_negative {
+            self.ctx.ast.unary_expression(SPAN, UnaryOperator::UnaryNegation, expr)
+        } else {
+            expr
+        }
+    }
+
+    fn get_numeric_literal_expression_i64(&self, value: i64) -> Expression<'a> {
+        let is_negative = value < 0;
+        let value = if is_negative { -value } else { value };
+        let expr = self.ctx.ast.literal_number_expression(NumericLiteral {
+            span: SPAN,
+            value: value as f64,
+            raw: self.ctx.ast.new_str(&value.to_string()),
+            base: NumberBase::Decimal,
+        });
+        if is_negative {
+            self.ctx.ast.unary_expression(SPAN, UnaryOperator::UnaryNegation, expr)
+        } else {
+            expr
+        }
+    }
+}
+
+// // Based on the TypeScript repository's `computeConstantValue` in `checker.ts`.
+// function computeConstantValue(
+//   path: NodePath,
+//   prevMembers?: PreviousEnumMembers,
+//   seen: Set<t.Identifier> = new Set(),
+// ): number | string | undefined {
+//   return evaluate(path);
+
+//   function evaluate(path: NodePath): number | string | undefined {
+//     const expr = path.node;
+//     switch (expr.type) {
+//       case "MemberExpression":
+//         return evaluateRef(path, prevMembers, seen);
+//       case "StringLiteral":
+//         return expr.value;
+//       case "UnaryExpression":
+//         return evalUnaryExpression(path as NodePath<t.UnaryExpression>);
+//       case "BinaryExpression":
+//         return evalBinaryExpression(path as NodePath<t.BinaryExpression>);
+//       case "NumericLiteral":
+//         return expr.value;
+//       case "ParenthesizedExpression":
+//         return evaluate(path.get("expression"));
+//       case "Identifier":
+//         return evaluateRef(path, prevMembers, seen);
+//       case "TemplateLiteral": {
+//         if (expr.quasis.length === 1) {
+//           return expr.quasis[0].value.cooked;
+//         }
+
+//         const paths = (path as NodePath<t.TemplateLiteral>).get("expressions");
+//         const quasis = expr.quasis;
+//         let str = "";
+
+//         for (let i = 0; i < quasis.length; i++) {
+//           str += quasis[i].value.cooked;
+
+//           if (i + 1 < quasis.length) {
+//             const value = evaluateRef(paths[i], prevMembers, seen);
+//             if (value === undefined) return undefined;
+//             str += value;
+//           }
+//         }
+//         return str;
+//       }
+//       default:
+//         return undefined;
+//     }
+//   }
+
+//   function evaluateRef(
+//     path: NodePath,
+//     prevMembers: PreviousEnumMembers,
+//     seen: Set<t.Identifier>,
+//   ): number | string | undefined {
+//     if (path.isMemberExpression()) {
+//       const expr = path.node;
+
+//       const obj = expr.object;
+//       const prop = expr.property;
+//       if (
+//         !t.isIdentifier(obj) ||
+//         (expr.computed ? !t.isStringLiteral(prop) : !t.isIdentifier(prop))
+//       ) {
+//         return;
+//       }
+//       const bindingIdentifier = path.scope.getBindingIdentifier(obj.name);
+//       const data = ENUMS.get(bindingIdentifier);
+//       if (!data) return;
+//       // @ts-expect-error checked above
+//       return data.get(prop.computed ? prop.value : prop.name);
+//     } else if (path.isIdentifier()) {
+//       const name = path.node.name;
+
+//       if (["Infinity", "NaN"].includes(name)) {
+//         return Number(name);
+//       }
+
+//       let value = prevMembers?.get(name);
+//       if (value !== undefined) {
+//         return value;
+//       }
+
+//       if (seen.has(path.node)) return;
+//       seen.add(path.node);
+
+//       value = computeConstantValue(path.resolve(), prevMembers, seen);
+//       prevMembers?.set(name, value);
+//       return value;
+//     }
+//   }
+
+//   function evalUnaryExpression(
+//     path: NodePath<t.UnaryExpression>,
+//   ): number | string | undefined {
+//     const value = evaluate(path.get("argument"));
+//     if (value === undefined) {
+//       return undefined;
+//     }
+
+//     switch (path.node.operator) {
+//       case "+":
+//         return value;
+//       case "-":
+//         return -value;
+//       case "~":
+//         return ~value;
+//       default:
+//         return undefined;
+//     }
+//   }
+
+//   function evalBinaryExpression(
+//     path: NodePath<t.BinaryExpression>,
+//   ): number | string | undefined {
+//     const left = evaluate(path.get("left")) as any;
+//     if (left === undefined) {
+//       return undefined;
+//     }
+//     const right = evaluate(path.get("right")) as any;
+//     if (right === undefined) {
+//       return undefined;
+//     }
+
+//     switch (path.node.operator) {
+//       case "|":
+//         return left | right;
+//       case "&":
+//         return left & right;
+//       case ">>":
+//         return left >> right;
+//       case ">>>":
+//         return left >>> right;
+//       case "<<":
+//         return left << right;
+//       case "^":
+//         return left ^ right;
+//       case "*":
+//         return left * right;
+//       case "/":
+//         return left / right;
+//       case "+":
+//         return left + right;
+//       case "-":
+//         return left - right;
+//       case "%":
+//         return left % right;
+//       case "**":
+//         return left ** right;
+//       default:
+//         return undefined;
+//     }
+//   }
+// }
+//
+
+#[derive(Debug, Clone)]
+enum NumbericAndString {
+    Numberic((String, f64)),
+    I64(i64),
+    F64(f64),
+    String(String),
+}
+
+fn computed_constant_value<'a>(
+    expr: &Expression<'a>,
+    // prev_members: Option<PreviousEnumMembers>,
+    // seen: &mut HashSet<Identifier>,
+) -> Option<NumbericAndString> {
+    evaluate(&expr)
+}
+
+fn evalaute_ref<'a>(expr: &Expression<'a>) -> Option<Expression<'a>> {
+    match expr {
+        // Expression::MemberExpression(expr) => None,
+        // Expression::Identifier(ident) => None,
+        _ => None,
+    }
+}
+
+fn evaluate<'a>(expr: &Expression<'a>) -> Option<NumbericAndString> {
+    match expr {
+        // Expression::MemberExpression(member_expr) => evalaute_ref(expr),
+        // Expression::Identifier(ident) => evalaute_ref(expr),
+        Expression::BinaryExpression(expr) => eval_binary_expression(expr),
+        Expression::UnaryExpression(expr) => eval_unary_expression(expr),
+        Expression::NumericLiteral(lit) => {
+            Some(NumbericAndString::Numberic((lit.raw.to_string(), lit.value)))
+        }
+        Expression::StringLiteral(lit) => Some(NumbericAndString::String(lit.value.to_string())),
+        _ => None,
+    }
+}
+
+#[allow(clippy::cast_possible_truncation)]
+fn eval_binary_expression(expr: &BinaryExpression<'_>) -> Option<NumbericAndString> {
+    let left = evaluate(&expr.left)?;
+    let right = evaluate(&expr.right)?;
+
+    if matches!(expr.operator, BinaryOperator::Addition)
+        && (matches!(left, NumbericAndString::String(_))
+            || matches!(right, NumbericAndString::String(_)))
+    {
+        let left_string = match left {
+            NumbericAndString::Numberic(left) => left.0.to_string(),
+            NumbericAndString::String(left) => left,
+            NumbericAndString::I64(v) => v.to_string(),
+            NumbericAndString::F64(v) => v.to_string(),
+        };
+
+        let right_string = match right {
+            NumbericAndString::Numberic(right) => right.0.to_string(),
+            NumbericAndString::String(right) => right,
+            NumbericAndString::I64(v) => v.to_string(),
+            NumbericAndString::F64(v) => v.to_string(),
+        };
+
+        return Some(NumbericAndString::String(format!("{left_string}{right_string}")));
+    }
+
+    let left = match left {
+        NumbericAndString::Numberic(left) => left.1,
+        NumbericAndString::String(_) => return None,
+        NumbericAndString::I64(v) => v as f64,
+        NumbericAndString::F64(v) => v,
+    };
+
+    let right = match right {
+        NumbericAndString::Numberic(right) => right.1,
+        NumbericAndString::String(_) => return None,
+        NumbericAndString::I64(v) => v as f64,
+        NumbericAndString::F64(v) => v,
+    };
+
+    match expr.operator {
+        BinaryOperator::BitwiseOR => Some(NumbericAndString::I64(left as i64 | right as i64)),
+        BinaryOperator::BitwiseAnd => Some(NumbericAndString::I64(left as i64 & right as i64)),
+        BinaryOperator::ShiftRight => Some(NumbericAndString::I64(left as i64 >> right as i64)),
+        BinaryOperator::ShiftRightZeroFill => {
+            Some(NumbericAndString::I64(left as i64 >> right as i64))
+        }
+        BinaryOperator::ShiftLeft => Some(NumbericAndString::I64((left as i64) << right as i64)),
+        BinaryOperator::BitwiseXOR => Some(NumbericAndString::I64(left as i64 ^ right as i64)),
+        BinaryOperator::Multiplication => Some(NumbericAndString::F64(left * right)),
+        BinaryOperator::Division => Some(NumbericAndString::F64(left / right)),
+        BinaryOperator::Addition => Some(NumbericAndString::F64(left + right)),
+        BinaryOperator::Subtraction => Some(NumbericAndString::F64(left - right)),
+        BinaryOperator::Remainder => Some(NumbericAndString::F64(left % right)),
+        BinaryOperator::Exponential => Some(NumbericAndString::F64(left.powf(right))),
+        _ => None,
+    }
+}
+
+fn eval_unary_expression(expr: &UnaryExpression<'_>) -> Option<NumbericAndString> {
+    let value = evaluate(&expr.argument)?;
+
+    let value = match value {
+        NumbericAndString::Numberic((_raw, value)) => value,
+        NumbericAndString::I64(value) => value as f64,
+        NumbericAndString::F64(value) => value,
+        NumbericAndString::String(value) => unreachable!(),
+    };
+
+    match expr.operator {
+        UnaryOperator::UnaryPlus => Some(NumbericAndString::F64(value)),
+        UnaryOperator::UnaryNegation => Some(NumbericAndString::F64(-value)),
+        UnaryOperator::LogicalNot => Some(NumbericAndString::I64(!(value as i64))),
+        UnaryOperator::BitwiseNot => Some(NumbericAndString::I64(!(value as i64))),
+        _ => None,
     }
 }
