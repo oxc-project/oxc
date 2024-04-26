@@ -4,7 +4,8 @@ use oxc_index::define_index_type;
 define_index_type! {
     #[non_zero]
     pub struct AstNodeId = usize;
-    DEFAULT = AstNodeId::new(1);
+    // SAFETY: 1 > 0.
+    DEFAULT =  #[allow(unsafe_code)] unsafe {AstNodeId::from_usize_unchecked(1)};
 }
 
 #[cfg(feature = "serialize")]
