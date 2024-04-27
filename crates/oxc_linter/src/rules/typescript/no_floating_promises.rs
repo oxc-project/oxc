@@ -91,7 +91,7 @@ impl Rule for NoFloatingPromises {
 
         // Handle result
         let (msg, help_message) = match result {
-            PromiseState::Handled => {
+            PromiseState::Handled | PromiseState::Failed => {
                 return;
             }
             PromiseState::UnhandledPromiseArray => {
@@ -139,12 +139,13 @@ enum PromiseState {
     Unhandled,
     UnhandledPromiseArray,
     UnhandledNonFunctionHandler,
+    Failed,
 }
 
 impl PromiseState {
     fn is_unhandled(&self) -> bool {
         match self {
-            PromiseState::Handled => false,
+            PromiseState::Handled | PromiseState::Failed => false,
             _ => true,
         }
     }
@@ -177,16 +178,24 @@ impl NoFloatingPromises {
         let request = NodeRequest { file: path, span: node.get_span().into() };
         // TODO: do something about unwrap
         let is_promise_array =
-            ctx.use_type_checker(|type_checker| type_checker.is_promise_array(&request)).unwrap();
-        if is_promise_array {
-            return PromiseState::UnhandledPromiseArray;
+            ctx.use_type_checker(|type_checker| type_checker.is_promise_array(&request));
+        if let Ok(is_promise_array) = is_promise_array {
+            if is_promise_array {
+                return PromiseState::UnhandledPromiseArray;
+            }
+        } else {
+            return PromiseState::Failed;
         }
 
         // TODO: do something about unwrap
         let is_promise_like =
-            ctx.use_type_checker(|type_checker| type_checker.is_promise_like(&request)).unwrap();
-        if !is_promise_like {
-            return PromiseState::Handled;
+            ctx.use_type_checker(|type_checker| type_checker.is_promise_like(&request));
+        if let Ok(is_promise_like) = is_promise_like {
+            if !is_promise_like {
+                return PromiseState::Handled;
+            }
+        } else {
+            return PromiseState::Failed;
         }
 
         match node {
@@ -223,16 +232,24 @@ impl NoFloatingPromises {
         let request = NodeRequest { file: path, span: node.get_span().into() };
         // TODO: do something about unwrap
         let is_promise_array =
-            ctx.use_type_checker(|type_checker| type_checker.is_promise_array(&request)).unwrap();
-        if is_promise_array {
-            return PromiseState::UnhandledPromiseArray;
+            ctx.use_type_checker(|type_checker| type_checker.is_promise_array(&request));
+        if let Ok(is_promise_array) = is_promise_array {
+            if is_promise_array {
+                return PromiseState::UnhandledPromiseArray;
+            }
+        } else {
+            return PromiseState::Failed;
         }
 
         // TODO: do something about unwrap
         let is_promise_like =
-            ctx.use_type_checker(|type_checker| type_checker.is_promise_like(&request)).unwrap();
-        if !is_promise_like {
-            return PromiseState::Handled;
+            ctx.use_type_checker(|type_checker| type_checker.is_promise_like(&request));
+        if let Ok(is_promise_like) = is_promise_like {
+            if !is_promise_like {
+                return PromiseState::Handled;
+            }
+        } else {
+            return PromiseState::Failed;
         }
 
         match node {
@@ -347,7 +364,7 @@ fn is_valid_rejection_handler<'a>(node: &Argument<'a>, ctx: &LintContext<'a>) ->
         type_checker
             .is_valid_rejection_handler(&NodeRequest { file: path, span: node.get_span().into() })
     })
-    .unwrap()
+    .unwrap_or(true)
 }
 
 #[test]
