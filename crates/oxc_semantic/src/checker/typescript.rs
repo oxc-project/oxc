@@ -25,6 +25,7 @@ impl EarlyErrorTypeScript {
                 check_ts_type_parameter_declaration(declaration, ctx);
             }
             AstKind::TSModuleDeclaration(decl) => check_ts_module_declaration(decl, ctx),
+            AstKind::TSEnumDeclaration(decl) => check_ts_enum_declaration(decl, ctx),
             _ => {}
         }
     }
@@ -157,4 +158,33 @@ fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &Semanti
             }
         }
     }
+}
+
+fn check_ts_enum_declaration(decl: &TSEnumDeclaration<'_>, ctx: &SemanticBuilder<'_>) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Enum member must have initializer.")]
+    #[diagnostic()]
+    struct EnumMemberMustHaveInitializer(#[label] Span);
+
+    let mut need_initializer = false;
+
+    decl.members.iter().for_each(|member| {
+        if let Some(initializer) = &member.initializer {
+            need_initializer = !matches!(
+                initializer,
+                // A = 1
+                Expression::NumericLiteral(_)
+                    // B = A
+                    | Expression::Identifier(_)
+                    // C = E.D
+                    | Expression::MemberExpression(_)
+                    // D = 1 + 2
+                    | Expression::BinaryExpression(_)
+                    // E = -1
+                    | Expression::UnaryExpression(_)
+            );
+        } else if need_initializer {
+            ctx.error(EnumMemberMustHaveInitializer(member.span));
+        }
+    });
 }
