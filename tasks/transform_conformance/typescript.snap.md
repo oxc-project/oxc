@@ -983,14 +983,16 @@ var A = (A => {
 ```
 
 # babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/non-foldable-constant/input.ts
-```typescript
-var E = (E => {
-	const a = Math.sin(1);
-	E[E['a'] = a] = 'a';
-	const b = 1 + a;
-	E[E['b'] = b] = 'b';
-	return E;
-})(E || {});
+```error
+
+  × Enum member must have initializer.
+   ╭─[babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/non-foldable-constant/input.ts:3:5]
+ 2 │     a = Math.sin(1),
+ 3 │     b,
+   ·     ─
+ 4 │ }
+   ╰────
+
 
 ```
 
