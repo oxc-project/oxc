@@ -176,11 +176,8 @@ impl Runtime {
 
     fn get_type_checker() -> TSServerClient {
         // TODO: get actual path from somewhere. And gracefully handle errors.
-        let path = env::current_exe()
-            .unwrap()
-            .parent()
-            .unwrap()
-            .join("../../npm/oxc-typecheck/dist/server.js");
+        let path =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../npm/oxc-typecheck/dist/server.js");
         start_typecheck_server(path.to_string_lossy().as_ref()).unwrap()
     }
 
