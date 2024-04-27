@@ -93,7 +93,7 @@ Handle Warnings
                               your project
 
 Output
-    -f, --format=ARG          Use a specific output format (default, json)
+    -f, --format=ARG          Use a specific output format (default, json, checkstyle, unix)
 
 Miscellaneous
         --threads=INT         Number of threads to use. Set to 1 for using only 1 CPU core
