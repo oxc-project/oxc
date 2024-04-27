@@ -196,16 +196,18 @@ fn generate_traversable_enum(item: &ItemEnum) -> TokenStream2 {
 
     let variants = transform_variants(&item.variants);
 
-    let mut attributes: Vec<Attribute> = Vec::new();
+    // let mut attributes: Vec<Attribute> = Vec::new();
 
+    /*
     if has_clone(&item.attrs) {
         println!("HERE");
         attributes.push(parse_quote!(#[derive(Clone)]));
     }
+    */
 
     let output = quote! {
         #[repr(C, u8)]
-        #(#attributes)*
+        // #(#attributes)*
         pub enum #ident #generics {
             #variants
         }
@@ -351,6 +353,7 @@ fn is_special_type_name(ident: &Ident) -> bool {
         || ident == "Modifiers"
 }
 
+#[allow(dead_code)]
 fn has_clone(attrs: &[Attribute]) -> bool {
     attrs.iter().any(|attr| {
         let args = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated);

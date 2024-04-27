@@ -2905,22 +2905,12 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
 /// * es2022: <https://github.com/estree/estree/blob/master/es2022.md#modules>
 /// * <https://github.com/tc39/ecma262/pull/2154>
 #[ast_node]
-#[derive(Debug, Hash)]
+#[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ModuleExportName<'a> {
     Identifier(IdentifierName<'a>),
     StringLiteral(StringLiteral<'a>),
-}
-
-impl<'a> Clone for ModuleExportName<'a> {
-    fn clone(&self) -> Self {
-        match self {
-            Self::Dummy => ModuleExportName::Dummy,
-            Self::Identifier(ident) => Self::Identifier(ident.clone()),
-            Self::StringLiteral(lit) => Self::StringLiteral(lit.clone()),
-        }
-    }
 }
 
 impl<'a> fmt::Display for ModuleExportName<'a> {
