@@ -78,14 +78,17 @@ impl Rule for CheckAccess {
         for jsdoc in ctx.semantic().jsdoc().iter_all() {
             let mut access_related_tags_count = 0;
             for tag in jsdoc.tags() {
-                let kind = tag.kind.parsed();
-                if access_related_tag_names.contains(kind) {
+                let tag_name = tag.kind.parsed();
+
+                if access_related_tag_names.contains(tag_name) {
                     access_related_tags_count += 1;
                 }
 
                 // Has valid access level?
                 let comment = tag.comment();
-                if kind == resolved_access_tag_name && !ACCESS_LEVELS.contains(&comment.parsed()) {
+                if tag_name == resolved_access_tag_name
+                    && !ACCESS_LEVELS.contains(&comment.parsed())
+                {
                     ctx.diagnostic(CheckAccessDiagnostic::InvalidAccessLevel(
                         comment.span_trimmed_first_line(),
                     ));

@@ -47,9 +47,9 @@ impl Rule for RequirePropertyName {
 
         for jsdoc in ctx.semantic().jsdoc().iter_all() {
             for tag in jsdoc.tags() {
-                let tag_kind = tag.kind;
+                let tag_name = tag.kind;
 
-                if tag_kind.parsed() != resolved_property_tag_name {
+                if tag_name.parsed() != resolved_property_tag_name {
                     continue;
                 }
                 let (_, name_part, _) = tag.type_name_comment();
@@ -57,7 +57,7 @@ impl Rule for RequirePropertyName {
                     continue;
                 };
 
-                ctx.diagnostic(RequirePropertyNameDiagnostic(tag_kind.span));
+                ctx.diagnostic(RequirePropertyNameDiagnostic(tag_name.span));
             }
         }
     }
