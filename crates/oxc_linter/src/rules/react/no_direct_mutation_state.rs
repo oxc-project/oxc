@@ -1,8 +1,5 @@
 use oxc_ast::{
-    ast::{
-        AssignmentTarget, Expression, MemberExpression, MethodDefinitionKind,
-        SimpleAssignmentTarget, StaticMemberExpression,
-    },
+    ast::{Expression, MethodDefinitionKind, SimpleAssignmentTarget, StaticMemberExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -103,32 +100,27 @@ fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bool {
 fn get_outer_member_expression<'a, 'b>(
     assignment: &'b SimpleAssignmentTarget<'a>,
 ) -> Option<&'b StaticMemberExpression<'a>> {
-    if let SimpleAssignmentTarget::MemberAssignmentTarget(member_expr) = assignment {
-        match &**member_expr {
-            MemberExpression::StaticMemberExpression(expr) => {
-                let mut node = expr;
-                loop {
-                    if node.object.is_null() {
-                        return Some(node);
-                    }
-
-                    if let Some(object) = get_static_member_expression_obj(&node.object) {
-                        if !object.property.name.is_empty() {
-                            node = object;
-
-                            continue;
-                        }
-                    }
-
+    match assignment {
+        SimpleAssignmentTarget::StaticMemberExpression(expr) => {
+            let mut node = &**expr;
+            loop {
+                if node.object.is_null() {
                     return Some(node);
                 }
-            }
-            MemberExpression::PrivateFieldExpression(_)
-            | MemberExpression::ComputedMemberExpression(_) => {}
-        }
-    }
 
-    None
+                if let Some(object) = get_static_member_expression_obj(&node.object) {
+                    if !object.property.name.is_empty() {
+                        node = object;
+
+                        continue;
+                    }
+                }
+
+                return Some(node);
+            }
+        }
+        _ => None,
+    }
 }
 
 // Because node.object is of type &Expression<'_>
@@ -137,10 +129,7 @@ fn get_static_member_expression_obj<'a, 'b>(
     expression: &'b Expression<'a>,
 ) -> Option<&'b StaticMemberExpression<'a>> {
     match expression {
-        Expression::MemberExpression(member_expr) => match &**member_expr {
-            MemberExpression::StaticMemberExpression(expr) => Some(expr),
-            _ => None,
-        },
+        Expression::StaticMemberExpression(expr) => Some(expr),
         _ => None,
     }
 }
@@ -177,8 +166,7 @@ impl Rule for NoDirectMutationState {
                     return;
                 }
 
-                if let AssignmentTarget::SimpleAssignmentTarget(assignment) = &assignment_expr.left
-                {
+                if let Some(assignment) = assignment_expr.left.as_simple_assignment_target() {
                     if let Some(outer_member_expression) = get_outer_member_expression(assignment) {
                         if is_state_member_expression(outer_member_expression) {
                             ctx.diagnostic(NoDirectMutationStateDiagnostic(

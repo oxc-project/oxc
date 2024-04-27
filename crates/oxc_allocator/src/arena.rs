@@ -39,6 +39,15 @@ impl<'alloc, T> Box<'alloc, T> {
     pub fn new_in(x: T, alloc: &Allocator) -> Self {
         Self(alloc.alloc(x).into(), PhantomData)
     }
+
+    /// Create a fake `Box` with a dangling pointer.
+    /// # SAFETY
+    /// Safe to create, but must never be dereferenced, as does not point to a valid `T`.
+    /// Only purpose is for mocking types without allocating for const assertions.
+    #[allow(unsafe_code, clippy::missing_safety_doc)]
+    pub const unsafe fn dangling() -> Self {
+        Self(NonNull::dangling(), PhantomData)
+    }
 }
 
 impl<'alloc, T: ?Sized> ops::Deref for Box<'alloc, T> {

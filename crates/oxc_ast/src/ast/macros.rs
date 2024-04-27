@@ -1,0 +1,823 @@
+/// Macro to inherit enum variants from another enum.
+///
+/// The following types' variants can be inherited:
+/// * `Expression`
+/// * `MemberExpression`
+/// * `AssignmentTarget`
+/// * `SimpleAssignmentTarget`
+/// * `AssignmentTargetPattern`
+/// * `Declaration`
+/// * `ModuleDeclaration`
+/// * `TSType`
+/// * `TSTypeName`
+///
+/// ```
+/// inherit_variants! {
+///     #[repr(C, u8)]
+///     enum Statement<'a> {
+///         pub enum Statement<'a> {
+///             BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
+///             BreakStatement(Box<'a, BreakStatement<'a>>) = 1,
+///             @inherit Declaration
+///             @inherit ModuleDeclaration
+///         }
+///     }
+/// }
+/// ```
+///
+/// expands to:
+///
+/// ```
+/// #[repr(C, u8)]
+/// enum Statement<'a> {
+///     pub enum Statement<'a> {
+///         BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
+///         BreakStatement(Box<'a, BreakStatement<'a>>) = 1,
+///
+///         // Inherited from `Declaration`
+///         VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
+///         FunctionDeclaration(Box<'a, Function<'a>>) = 33,
+///         // ...and many more
+///
+///         // Inherited from `ModuleDeclaration`
+///         ImportDeclaration(Box<'a, ImportDeclaration<'a>>) = 64,
+///         ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>) = 65,
+///         // ...and many more
+///     }
+/// }
+///
+/// shared_enum_variants!(
+///     Statement, Declaration,
+///     is_declaration,
+///     as_declaration, as_declaration_mut,
+///     to_declaration, to_declaration_mut,
+///     [VariableDeclaration, FunctionDeclaration, ...more]
+/// )
+///
+/// shared_enum_variants!(
+///     Statement, ModuleDeclaration,
+///     is_module_declaration,
+///     as_module_declaration, as_module_declaration_mut,
+///     to_module_declaration, to_module_declaration_mut,
+///     [ImportDeclaration, ExportAllDeclaration, ...more]
+/// )
+/// ```
+macro_rules! inherit_variants {
+    // Inherit `Expression`'s variants
+    (
+        $(#[$attr:meta])*
+        pub enum $ty:ident<'a> {
+            $($(#[$variant_attr:meta])* $variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+            @inherit Expression
+            $($rest:tt)*
+        }
+    ) => {
+        $crate::ast::macros::inherit_variants! {
+            $(#[$attr])*
+            pub enum $ty<'a> {
+                $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
+
+                // `Expression`'s own variants
+
+                BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
+                NullLiteral(Box<'a, NullLiteral>) = 1,
+                NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
+                BigintLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
+                RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
+                StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
+                TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
+
+                Identifier(Box<'a, IdentifierReference<'a>>) = 7,
+
+                MetaProperty(Box<'a, MetaProperty<'a>>) = 8,
+                Super(Box<'a, Super>) = 9,
+
+                ArrayExpression(Box<'a, ArrayExpression<'a>>) = 10,
+                ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>) = 11,
+                AssignmentExpression(Box<'a, AssignmentExpression<'a>>) = 12,
+                AwaitExpression(Box<'a, AwaitExpression<'a>>) = 13,
+                BinaryExpression(Box<'a, BinaryExpression<'a>>) = 14,
+                CallExpression(Box<'a, CallExpression<'a>>) = 15,
+                ChainExpression(Box<'a, ChainExpression<'a>>) = 16,
+                ClassExpression(Box<'a, Class<'a>>) = 17,
+                ConditionalExpression(Box<'a, ConditionalExpression<'a>>) = 18,
+                FunctionExpression(Box<'a, Function<'a>>) = 19,
+                ImportExpression(Box<'a, ImportExpression<'a>>) = 20,
+                LogicalExpression(Box<'a, LogicalExpression<'a>>) = 21,
+                NewExpression(Box<'a, NewExpression<'a>>) = 22,
+                ObjectExpression(Box<'a, ObjectExpression<'a>>) = 23,
+                ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a>>) = 24,
+                SequenceExpression(Box<'a, SequenceExpression<'a>>) = 25,
+                TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a>>) = 26,
+                ThisExpression(Box<'a, ThisExpression>) = 27,
+                UnaryExpression(Box<'a, UnaryExpression<'a>>) = 28,
+                UpdateExpression(Box<'a, UpdateExpression<'a>>) = 29,
+                YieldExpression(Box<'a, YieldExpression<'a>>) = 30,
+                PrivateInExpression(Box<'a, PrivateInExpression<'a>>) = 31,
+
+                JSXElement(Box<'a, JSXElement<'a>>) = 32,
+                JSXFragment(Box<'a, JSXFragment<'a>>) = 33,
+
+                TSAsExpression(Box<'a, TSAsExpression<'a>>) = 34,
+                TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 35,
+                TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 36,
+                TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 37,
+                TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
+
+                // Inherited from `MemberExpression`
+                @inherit MemberExpression
+
+                $($rest)*
+            }
+        }
+
+        $crate::ast::macros::shared_enum_variants!(
+            $ty,
+            Expression,
+            is_expression,
+            as_expression,
+            as_expression_mut,
+            to_expression,
+            to_expression_mut,
+            [
+                BooleanLiteral,
+                NullLiteral,
+                NumericLiteral,
+                BigintLiteral,
+                RegExpLiteral,
+                StringLiteral,
+                TemplateLiteral,
+                Identifier,
+                MetaProperty,
+                Super,
+                ArrayExpression,
+                ArrowFunctionExpression,
+                AssignmentExpression,
+                AwaitExpression,
+                BinaryExpression,
+                CallExpression,
+                ChainExpression,
+                ClassExpression,
+                ConditionalExpression,
+                FunctionExpression,
+                ImportExpression,
+                LogicalExpression,
+                NewExpression,
+                ObjectExpression,
+                ParenthesizedExpression,
+                SequenceExpression,
+                TaggedTemplateExpression,
+                ThisExpression,
+                UnaryExpression,
+                UpdateExpression,
+                YieldExpression,
+                PrivateInExpression,
+                JSXElement,
+                JSXFragment,
+                TSAsExpression,
+                TSSatisfiesExpression,
+                TSTypeAssertion,
+                TSNonNullExpression,
+                TSInstantiationExpression,
+                ComputedMemberExpression,
+                StaticMemberExpression,
+                PrivateFieldExpression,
+            ]
+        );
+    };
+
+    // Inherit `MemberExpression`'s variants
+    (
+        $(#[$attr:meta])*
+        pub enum $ty:ident<'a> {
+            $($(#[$variant_attr:meta])* $variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+            @inherit MemberExpression
+            $($rest:tt)*
+        }
+    ) => {
+        $crate::ast::macros::inherit_variants! {
+            $(#[$attr])*
+            pub enum $ty<'a> {
+                $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
+
+                /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
+                ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>) = 48,
+                /// `MemberExpression[?Yield, ?Await] . IdentifierName`
+                StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>) = 49,
+                /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
+                PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>) = 50,
+
+                $($rest)*
+            }
+        }
+
+        $crate::ast::macros::shared_enum_variants!(
+            $ty,
+            MemberExpression,
+            is_member_expression,
+            as_member_expression,
+            as_member_expression_mut,
+            to_member_expression,
+            to_member_expression_mut,
+            [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression]
+        );
+    };
+
+    // Inherit `AssignmentTarget` variants
+    (
+        $(#[$attr:meta])*
+        pub enum $ty:ident<'a> {
+            $($(#[$variant_attr:meta])* $variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+            @inherit AssignmentTarget
+            $($rest:tt)*
+        }
+    ) => {
+        $crate::ast::macros::inherit_variants! {
+            $(#[$attr])*
+            pub enum $ty<'a> {
+                $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
+
+                @inherit SimpleAssignmentTarget
+                @inherit AssignmentTargetPattern
+
+                $($rest)*
+            }
+        }
+
+        $crate::ast::macros::shared_enum_variants!(
+            $ty,
+            AssignmentTarget,
+            is_assignment_target,
+            as_assignment_target,
+            as_assignment_target_mut,
+            to_assignment_target,
+            to_assignment_target_mut,
+            [
+                AssignmentTargetIdentifier,
+                ComputedMemberExpression,
+                StaticMemberExpression,
+                PrivateFieldExpression,
+                TSAsExpression,
+                TSSatisfiesExpression,
+                TSNonNullExpression,
+                TSTypeAssertion,
+                ArrayAssignmentTarget,
+                ObjectAssignmentTarget,
+            ]
+        );
+    };
+
+    // Inherit `SimpleAssignmentTarget` variants
+    (
+        $(#[$attr:meta])*
+        pub enum $ty:ident<'a> {
+            $($(#[$variant_attr:meta])* $variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+            @inherit SimpleAssignmentTarget
+            $($rest:tt)*
+        }
+    ) => {
+        $crate::ast::macros::inherit_variants! {
+            $(#[$attr])*
+            pub enum $ty<'a> {
+                $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
+
+                AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>>) = 0,
+
+                // Inherited from `MemberExpression`
+                @inherit MemberExpression
+
+                TSAsExpression(Box<'a, TSAsExpression<'a>>) = 1,
+                TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 2,
+                TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
+                TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
+
+                $($rest)*
+            }
+        }
+
+        $crate::ast::macros::shared_enum_variants!(
+            $ty,
+            SimpleAssignmentTarget,
+            is_simple_assignment_target,
+            as_simple_assignment_target,
+            as_simple_assignment_target_mut,
+            to_simple_assignment_target,
+            to_simple_assignment_target_mut,
+            [
+                AssignmentTargetIdentifier,
+                ComputedMemberExpression,
+                StaticMemberExpression,
+                PrivateFieldExpression,
+                TSAsExpression,
+                TSSatisfiesExpression,
+                TSNonNullExpression,
+                TSTypeAssertion
+            ]
+        );
+    };
+
+    // Inherit `AssignmentTargetPattern` variants
+    (
+        $(#[$attr:meta])*
+        pub enum $ty:ident<'a> {
+            $($(#[$variant_attr:meta])* $variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+            @inherit AssignmentTargetPattern
+            $($rest:tt)*
+        }
+    ) => {
+        $crate::ast::macros::inherit_variants! {
+            $(#[$attr])*
+            pub enum $ty<'a> {
+                $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
+
+                ArrayAssignmentTarget(Box<'a, ArrayAssignmentTarget<'a>>) = 8,
+                ObjectAssignmentTarget(Box<'a, ObjectAssignmentTarget<'a>>) = 9,
+
+                $($rest)*
+            }
+        }
+
+        $crate::ast::macros::shared_enum_variants!(
+            $ty,
+            AssignmentTargetPattern,
+            is_assignment_target_pattern,
+            as_assignment_target_pattern,
+            as_assignment_target_pattern_mut,
+            to_assignment_target_pattern,
+            to_assignment_target_pattern_mut,
+            [ArrayAssignmentTarget, ObjectAssignmentTarget]
+        );
+    };
+
+    // Inherit `Declaration` variants
+    (
+        $(#[$attr:meta])*
+        pub enum $ty:ident<'a> {
+            $($(#[$variant_attr:meta])* $variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+            @inherit Declaration
+            $($rest:tt)*
+        }
+    ) => {
+        $crate::ast::macros::inherit_variants! {
+            $(#[$attr])*
+            pub enum $ty<'a> {
+                $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
+
+                VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
+                FunctionDeclaration(Box<'a, Function<'a>>) = 33,
+                ClassDeclaration(Box<'a, Class<'a>>) = 34,
+                UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 35,
+
+                TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 36,
+                TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 37,
+                TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 38,
+                TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 39,
+                TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
+
+                $($rest)*
+            }
+        }
+
+        $crate::ast::macros::shared_enum_variants!(
+            $ty,
+            Declaration,
+            is_declaration,
+            as_declaration,
+            as_declaration_mut,
+            to_declaration,
+            to_declaration_mut,
+            [
+                VariableDeclaration,
+                FunctionDeclaration,
+                ClassDeclaration,
+                UsingDeclaration,
+                TSTypeAliasDeclaration,
+                TSInterfaceDeclaration,
+                TSEnumDeclaration,
+                TSModuleDeclaration,
+                TSImportEqualsDeclaration,
+            ]
+        );
+    };
+
+    // Inherit `ModuleDeclaration` variants
+    (
+        $(#[$attr:meta])*
+        pub enum $ty:ident<'a> {
+            $($(#[$variant_attr:meta])* $variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+            @inherit ModuleDeclaration
+            $($rest:tt)*
+        }
+    ) => {
+        $crate::ast::macros::inherit_variants! {
+            $(#[$attr])*
+            pub enum $ty<'a> {
+                $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
+
+                /// import hello from './world.js';
+                /// import * as t from './world.js';
+                ImportDeclaration(Box<'a, ImportDeclaration<'a>>) = 64,
+                /// export * as numbers from '../numbers.js'
+                ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>) = 65,
+                /// export default 5;
+                ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a>>) = 66,
+                /// export {five} from './numbers.js';
+                /// export {six, seven};
+                ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>) = 67,
+
+                /// export = 5;
+                TSExportAssignment(Box<'a, TSExportAssignment<'a>>) = 68,
+                /// export as namespace React;
+                TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
+
+                $($rest)*
+            }
+        }
+
+        $crate::ast::macros::shared_enum_variants!(
+            $ty,
+            ModuleDeclaration,
+            is_module_declaration,
+            as_module_declaration,
+            as_module_declaration_mut,
+            to_module_declaration,
+            to_module_declaration_mut,
+            [
+                ImportDeclaration,
+                ExportAllDeclaration,
+                ExportDefaultDeclaration,
+                ExportNamedDeclaration,
+                TSExportAssignment,
+                TSNamespaceExportDeclaration,
+            ]
+        );
+    };
+
+    // Inherit `TSType` variants
+    (
+        $(#[$attr:meta])*
+        pub enum $ty:ident<'a> {
+            $($(#[$variant_attr:meta])* $variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+            @inherit TSType
+            $($rest:tt)*
+        }
+    ) => {
+        $crate::ast::macros::inherit_variants! {
+            $(#[$attr])*
+            pub enum $ty<'a> {
+                $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
+
+                // Keyword
+                TSAnyKeyword(Box<'a, TSAnyKeyword>) = 0,
+                TSBigIntKeyword(Box<'a, TSBigIntKeyword>) = 1,
+                TSBooleanKeyword(Box<'a, TSBooleanKeyword>) = 2,
+                TSNeverKeyword(Box<'a, TSNeverKeyword>) = 3,
+                TSNullKeyword(Box<'a, TSNullKeyword>) = 4,
+                TSNumberKeyword(Box<'a, TSNumberKeyword>) = 5,
+                TSObjectKeyword(Box<'a, TSObjectKeyword>) = 6,
+                TSStringKeyword(Box<'a, TSStringKeyword>) = 7,
+                TSSymbolKeyword(Box<'a, TSSymbolKeyword>) = 8,
+                TSThisType(Box<'a, TSThisType>) = 9,
+                TSUndefinedKeyword(Box<'a, TSUndefinedKeyword>) = 10,
+                TSUnknownKeyword(Box<'a, TSUnknownKeyword>) = 11,
+                TSVoidKeyword(Box<'a, TSVoidKeyword>) = 12,
+                // Compound
+                TSArrayType(Box<'a, TSArrayType<'a>>) = 13,
+                TSConditionalType(Box<'a, TSConditionalType<'a>>) = 14,
+                TSConstructorType(Box<'a, TSConstructorType<'a>>) = 15,
+                TSFunctionType(Box<'a, TSFunctionType<'a>>) = 16,
+                TSImportType(Box<'a, TSImportType<'a>>) = 17,
+                TSIndexedAccessType(Box<'a, TSIndexedAccessType<'a>>) = 18,
+                TSInferType(Box<'a, TSInferType<'a>>) = 19,
+                TSIntersectionType(Box<'a, TSIntersectionType<'a>>) = 20,
+                TSLiteralType(Box<'a, TSLiteralType<'a>>) = 21,
+                TSMappedType(Box<'a, TSMappedType<'a>>) = 22,
+                TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>) = 23,
+                TSQualifiedName(Box<'a, TSQualifiedName<'a>>) = 24,
+                TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>) = 25,
+                TSTupleType(Box<'a, TSTupleType<'a>>) = 26,
+                TSTypeLiteral(Box<'a, TSTypeLiteral<'a>>) = 27,
+                TSTypeOperatorType(Box<'a, TSTypeOperator<'a>>) = 28,
+                TSTypePredicate(Box<'a, TSTypePredicate<'a>>) = 29,
+                TSTypeQuery(Box<'a, TSTypeQuery<'a>>) = 30,
+                TSTypeReference(Box<'a, TSTypeReference<'a>>) = 31,
+                TSUnionType(Box<'a, TSUnionType<'a>>) = 32,
+                // JSDoc
+                JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 33,
+                JSDocUnknownType(Box<'a, JSDocUnknownType>) = 34,
+
+                $($rest)*
+            }
+        }
+
+        $crate::ast::macros::shared_enum_variants!(
+            $ty,
+            TSType,
+            is_ts_type,
+            as_ts_type,
+            as_ts_type_mut,
+            to_ts_type,
+            to_ts_type_mut,
+            [
+                TSAnyKeyword,
+                TSBigIntKeyword,
+                TSBooleanKeyword,
+                TSNeverKeyword,
+                TSNullKeyword,
+                TSNumberKeyword,
+                TSObjectKeyword,
+                TSStringKeyword,
+                TSSymbolKeyword,
+                TSThisType,
+                TSUndefinedKeyword,
+                TSUnknownKeyword,
+                TSVoidKeyword,
+                TSArrayType,
+                TSConditionalType,
+                TSConstructorType,
+                TSFunctionType,
+                TSImportType,
+                TSIndexedAccessType,
+                TSInferType,
+                TSIntersectionType,
+                TSLiteralType,
+                TSMappedType,
+                TSNamedTupleMember,
+                TSQualifiedName,
+                TSTemplateLiteralType,
+                TSTupleType,
+                TSTypeLiteral,
+                TSTypeOperatorType,
+                TSTypePredicate,
+                TSTypeQuery,
+                TSTypeReference,
+                TSUnionType,
+                JSDocNullableType,
+                JSDocUnknownType,
+            ]
+        );
+    };
+
+    // Inherit `TSTypeName` variants
+    (
+        $(#[$attr:meta])*
+        pub enum $ty:ident<'a> {
+            $($(#[$variant_attr:meta])* $variant_name:ident($variant_type:ty) = $variant_discrim:literal,)*
+            @inherit TSTypeName
+            $($rest:tt)*
+        }
+    ) => {
+        $crate::ast::macros::inherit_variants! {
+            $(#[$attr])*
+            pub enum $ty<'a> {
+                $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
+
+                IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
+                QualifiedName(Box<'a, TSQualifiedName<'a>>) = 1,
+
+                $($rest)*
+            }
+        }
+
+        $crate::ast::macros::shared_enum_variants!(
+            $ty,
+            TSTypeName,
+            is_ts_type_name,
+            as_ts_type_name,
+            as_ts_type_name_mut,
+            to_ts_type_name,
+            to_ts_type_name_mut,
+            [IdentifierReference, QualifiedName]
+        );
+    };
+
+    // Passthrough - no further inheritance to handle
+    ($($rest:tt)*) => {$($rest)*};
+}
+pub(crate) use inherit_variants;
+
+/// Macro to allow conversion between 2 enum types where they share some of the same variants.
+/// "Parent" enum contains all the "child"'s variants, plus parent contains further other variants.
+/// e.g. `Statement` and `Declaration`.
+///
+/// The discriminants and types of the shared variants must be identical between the 2 enums.
+/// All variants must have a `Box<_>` payload.
+/// Equality of types is guaranteed by `From` and `TryFrom` impls this macro creates.
+/// These will fail to compile if the types differ for any variant.
+/// Equality of discriminants is checked with a compile-time assertion.
+///
+/// # SAFETY
+/// Both enums must be `#[repr(C, u8)]` or using this macro is unsound.
+///
+/// # Example
+/// NB: For illustration only - `Statement` and `Declaration` in reality share 9 variants, not 2.
+///
+/// ```
+/// shared_enum_variants!(
+///     Statement, Declaration,
+///     is_declaration,
+///     as_declaration, as_declaration_mut,
+///     to_declaration, to_declaration_mut,
+///     [VariableDeclaration, FunctionDeclaration]
+/// )
+/// ```
+///
+/// expands to:
+///
+/// ```
+/// const _: () = {
+///     assert!(discriminant!(Statement::VariableDeclaration) == discriminant!(Declaration::VariableDeclaration));
+///     assert!(discriminant!(Statement::FunctionDeclaration) == discriminant!(Declaration::FunctionDeclaration));
+/// };
+///
+/// impl<'a> Statement<'a> {
+///     /// Return if a `Statement` is a `Declaration`.
+///     #[inline]
+///     pub fn is_declaration(&self) -> bool {
+///         match self {
+///             Self::VariableDeclaration(_) | Self::FunctionDeclaration(_) => true,
+///             _ => false,
+///         }
+///     }
+///
+///     /// Convert `&Statement` to `&Declaration`.
+///     #[inline]
+///     pub fn as_declaration(&self) -> Option<&Declaration<'a>> {
+///         if self.is_declaration() {
+///             Some(unsafe { &*(self as *const _ as *const Declaration) })
+///         } else {
+///             None
+///         }
+///     }
+///
+///     /// Convert `&mut Statement` to `&mut Declaration`.
+///     #[inline]
+///     pub fn as_declaration_mut(&mut self) -> Option<&mut Declaration<'a>> {
+///         if self.is_declaration() {
+///             Some(unsafe { &mut *(self as *mut _ as *mut Declaration) })
+///         } else {
+///             None
+///         }
+///     }
+///
+///     /// Convert `&Statement` to `&Declaration`.
+///     /// # Panic
+///     /// Panics if not convertible.
+///     #[inline]
+///     pub fn to_declaration(&self) -> &Declaration<'a> {
+///         self.as_declaration().unwrap()
+///     }
+///
+///     /// Convert `&mut Statement` to `&mut Declaration`.
+///     /// # Panic
+///     /// Panics if not convertible.
+///     #[inline]
+///     pub fn to_declaration_mut(&mut self) -> Option<&mut Declaration<'a>> {
+///         self.as_declaration_mut().unwrap()
+///     }
+/// }
+///
+/// impl<'a> TryFrom<Statement<'a>> for Declaration<'a> {
+///     type Error = ();
+///
+///     /// "Convert `Statement` to `Declaration`.
+///     #[inline]
+///     fn try_from(value: Statement<'a>) -> Result<Self, Self::Error> {
+///         match value {
+///             Statement::VariableDeclaration(o) => Ok(Declaration::VariableDeclaration(o)),
+///             Statement::FunctionDeclaration(o) => Ok(Declaration::FunctionDeclaration(o)),
+///             _ => Err(()),
+///         }
+///     }
+/// }
+///
+/// impl<'a> From<Declaration<'a>> for Statement<'a> {
+///     /// Convert `Declaration` to `Statement`.
+///     #[inline]
+///     fn from(value: Declaration<'a>) -> Self {
+///         match value {
+///             Declaration::VariableDeclaration(o) => Statement::VariableDeclaration(o),
+///             Declaration::FunctionDeclaration(o) => Statement::FunctionDeclaration(o),
+///         }
+///     }
+/// }
+/// ```
+macro_rules! shared_enum_variants {
+    (
+        $parent:ident, $child:ident,
+        $is_child:ident,
+        $as_child:ident, $as_child_mut:ident,
+        $to_child:ident, $to_child_mut:ident,
+        [$($variant:ident),+ $(,)?]
+    ) => {
+        // Ensure discriminants match for all variants between parent and child types
+        const _: () = {
+            $(
+                assert!(
+                    $crate::ast::macros::discriminant!($parent::$variant)
+                    == $crate::ast::macros::discriminant!($child::$variant),
+                    concat!(
+                        "Non-matching discriminants for `", stringify!($variant),
+                        "` between `", stringify!($parent), "` and `", stringify!($child), "`"
+                    )
+                );
+            )+
+        };
+
+        impl<'a> $parent<'a> {
+            #[doc = concat!(" Return if a `", stringify!($parent), "` is a `", stringify!($child), "`.")]
+            #[inline]
+            pub fn $is_child(&self) -> bool {
+                matches!(
+                    self,
+                    $(Self::$variant(_))|+
+                )
+            }
+
+            #[doc = concat!(" Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
+            #[inline]
+            pub fn $as_child(&self) -> Option<&$child<'a>> {
+                if self.$is_child() {
+                    #[allow(unsafe_code, clippy::ptr_as_ptr)]
+                    // SAFETY: Transmute is safe because discriminants + types are identical between
+                    // `$parent` and `$child` for $child variants
+                    Some(unsafe { &*(self as *const _ as *const $child) })
+                } else {
+                    None
+                }
+            }
+
+            #[doc = concat!(" Convert `&mut ", stringify!($parent), "` to `&mut ", stringify!($child), "`.")]
+            #[inline]
+            pub fn $as_child_mut(&mut self) -> Option<&mut $child<'a>> {
+                if self.$is_child() {
+                    #[allow(unsafe_code, clippy::ptr_as_ptr)]
+                    // SAFETY: Transmute is safe because discriminants + types are identical between
+                    // `$parent` and `$child` for $child variants
+                    Some(unsafe { &mut *(self as *mut _ as *mut $child) })
+                } else {
+                    None
+                }
+            }
+
+            #[doc = concat!(" Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
+            #[doc = "# Panic"]
+            #[doc = "Panics if not convertible."]
+            #[inline]
+            pub fn $to_child(&self) -> &$child<'a> {
+                self.$as_child().unwrap()
+            }
+
+            #[doc = concat!(" Convert `&mut ", stringify!($parent), "` to `&mut ", stringify!($child), "`.")]
+            #[doc = "# Panic"]
+            #[doc = "Panics if not convertible."]
+            #[inline]
+            pub fn $to_child_mut(&mut self) -> &mut $child<'a> {
+                self.$as_child_mut().unwrap()
+            }
+        }
+
+        impl<'a> TryFrom<$parent<'a>> for $child<'a> {
+            type Error = ();
+
+            #[doc = concat!(" Convert `", stringify!($parent), "` to `", stringify!($child), "`.")]
+            #[inline]
+            fn try_from(value: $parent<'a>) -> Result<Self, Self::Error> {
+                // Compiler should implement this as a check of discriminant and then zero-cost transmute,
+                // as discriminants for `$parent` and `$child` are aligned
+                match value {
+                    $($parent::$variant(o) => Ok($child::$variant(o)),)+
+                    _ => Err(())
+                }
+            }
+        }
+
+        impl<'a> From<$child<'a>> for $parent<'a> {
+            #[doc = concat!(" Convert `", stringify!($child), "` to `", stringify!($parent), "`.")]
+            #[inline]
+            fn from(value: $child<'a>) -> Self {
+                // Compiler should implement this as zero-cost transmute as discriminants
+                // for `$child` and `$parent` are aligned
+                match value {
+                    $($child::$variant(o) => $parent::$variant(o),)+
+                }
+            }
+        }
+    }
+}
+pub(crate) use shared_enum_variants;
+
+/// Macro to get discriminant of an enum.
+/// # SAFETY
+/// Enum must be `#[repr(C, u8)]` or using this macro is unsound.
+/// <https://doc.rust-lang.org/std/mem/fn.discriminant.html>
+macro_rules! discriminant {
+    ($ty:ident :: $variant:ident) => {{
+        #[allow(unsafe_code, clippy::ptr_as_ptr, clippy::undocumented_unsafe_blocks)]
+        unsafe {
+            let t = std::mem::ManuallyDrop::new($ty::$variant(oxc_allocator::Box::dangling()));
+            *(&t as *const _ as *const u8)
+        }
+    }};
+}
+pub(crate) use discriminant;

@@ -97,15 +97,13 @@ fn get_dangerously_set_inner_html_prop_value<'a>(
     else {
         return None;
     };
-    let JSXExpression::Expression(Expression::ObjectExpression(object_expr)) =
-        &object_expr.expression
-    else {
+    let JSXExpression::ObjectExpression(object_expr) = &object_expr.expression else {
         return None;
     };
 
     if let Some(html_prop) = object_expr.properties.iter().find_map(|prop| {
         if let ObjectPropertyKind::ObjectProperty(html_prop) = prop {
-            if let PropertyKey::Identifier(html_prop_ident) = &html_prop.key {
+            if let PropertyKey::StaticIdentifier(html_prop_ident) = &html_prop.key {
                 if html_prop_ident.name == "__html" {
                     Some(html_prop)
                 } else {

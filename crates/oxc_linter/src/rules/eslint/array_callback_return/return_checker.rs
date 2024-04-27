@@ -245,7 +245,7 @@ pub fn check_block_statement(block: &BlockStatement) -> StatementReturnStatus {
 #[cfg(test)]
 mod tests {
     use oxc_allocator::Allocator;
-    use oxc_ast::ast::{Declaration, Program};
+    use oxc_ast::ast::Program;
     use oxc_parser::Parser;
     use oxc_span::SourceType;
 
@@ -262,9 +262,7 @@ mod tests {
         let program = ret.program;
         let Program { body, .. } = program;
         let stmt = body.first().unwrap();
-        let Statement::Declaration(Declaration::FunctionDeclaration(func)) = stmt else {
-            unreachable!()
-        };
+        let Statement::FunctionDeclaration(func) = stmt else { unreachable!() };
 
         let first_statement = &func.body.as_ref().unwrap().statements[0];
 

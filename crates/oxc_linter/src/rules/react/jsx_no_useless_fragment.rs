@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        Expression, JSXAttributeItem, JSXAttributeName, JSXChild, JSXElement, JSXElementName,
-        JSXExpression, JSXFragment, JSXMemberExpressionObject, JSXOpeningElement,
+        JSXAttributeItem, JSXAttributeName, JSXChild, JSXElement, JSXElementName, JSXExpression,
+        JSXFragment, JSXMemberExpressionObject, JSXOpeningElement,
     },
     AstKind,
 };
@@ -180,7 +180,7 @@ fn has_less_than_two_children(children: &oxc_allocator::Vec<'_, JSXChild<'_>>) -
     if non_padding_children.len() < 2 {
         return !non_padding_children.iter().any(|v| {
             if let JSXChild::ExpressionContainer(v) = v {
-                if let JSXExpression::Expression(Expression::CallExpression(_)) = v.expression {
+                if let JSXExpression::CallExpression(_) = v.expression {
                     return true;
                 }
                 return false;

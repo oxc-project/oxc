@@ -93,7 +93,7 @@ fn is_mistype_short_circuit(node: &AstNode) -> bool {
 
             let Expression::Identifier(left_ident) = &bin_expr.left else { return false };
 
-            if let Expression::MemberExpression(member_expr) = &bin_expr.right {
+            if let Some(member_expr) = bin_expr.right.as_member_expression() {
                 if let Expression::Identifier(ident) = member_expr.object() {
                     return ident.name == left_ident.name;
                 }

@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use oxc_ast::{
-    ast::{Argument, Expression, RegExpFlags},
+    ast::{Argument, RegExpFlags},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -151,7 +151,8 @@ struct RegexPatternData<'a> {
     /// Note that flags are represented by a `u8` and therefore safely clonable
     /// with low performance overhead.
     flags: Option<RegExpFlags>,
-    /// The pattern's span. For [`Expression::NewExpression`]s and [`Expression::CallExpression`]s,
+    /// The pattern's span. For [`oxc_ast::ast::Expression::NewExpression`]s
+    /// and [`oxc_ast::ast::Expression::CallExpression`]s,
     /// this will match the entire new/call expression.
     ///
     /// Note that spans are 8 bytes and safely clonable with low performance overhead
@@ -185,8 +186,7 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
                 // where the first one is a string literal
                 // note: improvements required for strings used via identifier
                 // references
-                if let Argument::Expression(Expression::StringLiteral(pattern)) = &expr.arguments[0]
-                {
+                if let Argument::StringLiteral(pattern) = &expr.arguments[0] {
                     // get pattern from arguments. Missing or non-string arguments
                     // will be runtime errors, but are not covered by this rule.
                     // Note that we're intentionally reporting the entire "new
@@ -214,8 +214,7 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
                 // where the first one is a string literal
                 // note: improvements required for strings used via identifier
                 // references
-                if let Argument::Expression(Expression::StringLiteral(pattern)) = &expr.arguments[0]
-                {
+                if let Argument::StringLiteral(pattern) = &expr.arguments[0] {
                     // get pattern from arguments. Missing or non-string arguments
                     // will be runtime errors, but are not covered by this rule.
                     // Note that we're intentionally reporting the entire "new

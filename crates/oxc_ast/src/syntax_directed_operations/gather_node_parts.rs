@@ -10,7 +10,7 @@ impl<'a> GatherNodeParts<'a> for Expression<'a> {
     fn gather<F: FnMut(Atom<'a>)>(&self, f: &mut F) {
         match self {
             Self::Identifier(ident) => f(ident.name.clone()),
-            Self::MemberExpression(expr) => expr.gather(f),
+            match_member_expression!(Self) => self.to_member_expression().gather(f),
             Self::AssignmentExpression(expr) => expr.left.gather(f),
             Self::UpdateExpression(expr) => expr.argument.gather(f),
             Self::StringLiteral(lit) => lit.gather(f),
@@ -41,8 +41,10 @@ impl<'a> GatherNodeParts<'a> for MemberExpression<'a> {
 impl<'a> GatherNodeParts<'a> for AssignmentTarget<'a> {
     fn gather<F: FnMut(Atom<'a>)>(&self, f: &mut F) {
         match self {
-            AssignmentTarget::SimpleAssignmentTarget(t) => t.gather(f),
-            AssignmentTarget::AssignmentTargetPattern(_) => {}
+            match_simple_assignment_target!(Self) => {
+                self.to_simple_assignment_target().gather(f);
+            }
+            match_assignment_target_pattern!(Self) => {}
         }
     }
 }
@@ -51,7 +53,7 @@ impl<'a> GatherNodeParts<'a> for SimpleAssignmentTarget<'a> {
     fn gather<F: FnMut(Atom<'a>)>(&self, f: &mut F) {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.gather(f),
-            Self::MemberAssignmentTarget(expr) => expr.gather(f),
+            match_member_expression!(Self) => self.to_member_expression().gather(f),
             _ => {}
         }
     }

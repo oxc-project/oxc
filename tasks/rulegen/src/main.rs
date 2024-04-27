@@ -9,9 +9,9 @@ use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, CallExpression, ExportDefaultDeclarationKind, Expression,
-        ExpressionStatement, MemberExpression, ModuleDeclaration, ObjectExpression, ObjectProperty,
-        ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression, StringLiteral,
-        TaggedTemplateExpression, TemplateLiteral,
+        ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
+        PropertyKey, Statement, StaticMemberExpression, StringLiteral, TaggedTemplateExpression,
+        TemplateLiteral,
     },
     Visit,
 };
@@ -141,13 +141,12 @@ impl<'a> Visit<'a> for TestCase<'a> {
     }
 
     fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
-        if let Expression::MemberExpression(member_expr) = &expr.callee {
+        if let Some(member_expr) = expr.callee.as_member_expression() {
             if let Expression::ArrayExpression(array_expr) = member_expr.object() {
                 // ['class A {', '}'].join('\n')
                 let mut code = String::new();
                 for arg in &array_expr.elements {
-                    let ArrayExpressionElement::Expression(Expression::StringLiteral(lit)) = arg
-                    else {
+                    let ArrayExpressionElement::StringLiteral(lit) = arg else {
                         continue;
                     };
                     code.push_str(lit.value.as_str());
@@ -163,7 +162,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
         for obj_prop in &expr.properties {
             match obj_prop {
                 ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
-                    PropertyKey::Identifier(ident) if ident.name == "code" => {
+                    PropertyKey::StaticIdentifier(ident) if ident.name == "code" => {
                         self.code = match &prop.value {
                             Expression::StringLiteral(s) => Some(s.value.to_string()),
                             Expression::TaggedTemplateExpression(tag_expr) => {
@@ -177,15 +176,10 @@ impl<'a> Visit<'a> for TestCase<'a> {
                             }
                             // handle code like ["{", "a: 1", "}"].join("\n")
                             Expression::CallExpression(call_expr) => {
-                                if !call_expr.arguments.first().is_some_and(|arg|  matches!(arg, Argument::Expression(Expression::StringLiteral(string)) if string.value == "\n")) {
+                                if !call_expr.arguments.first().is_some_and(|arg|  matches!(arg, Argument::StringLiteral(string) if string.value == "\n")) {
                                     continue;
                                 }
-                                let Expression::MemberExpression(member_expr) = &call_expr.callee
-                                else {
-                                    continue;
-                                };
-                                let MemberExpression::StaticMemberExpression(member) =
-                                    &**member_expr
+                                let Expression::StaticMemberExpression(member) = &call_expr.callee
                                 else {
                                     continue;
                                 };
@@ -200,9 +194,9 @@ impl<'a> Visit<'a> for TestCase<'a> {
                                         .elements
                                         .iter()
                                         .map(|arg| match arg {
-                                            ArrayExpressionElement::Expression(
-                                                Expression::StringLiteral(string),
-                                            ) => string.value.as_str(),
+                                            ArrayExpressionElement::StringLiteral(string) => {
+                                                string.value.as_str()
+                                            }
                                             _ => "",
                                         })
                                         .collect::<Vec<_>>()
@@ -212,13 +206,13 @@ impl<'a> Visit<'a> for TestCase<'a> {
                             _ => continue,
                         }
                     }
-                    PropertyKey::Identifier(ident) if ident.name == "options" => {
+                    PropertyKey::StaticIdentifier(ident) if ident.name == "options" => {
                         let span = prop.value.span();
                         let option_text = &self.source_text[span.start as usize..span.end as usize];
                         self.config =
                             Some(Cow::Owned(json::convert_config_to_json_literal(option_text)));
                     }
-                    PropertyKey::Identifier(ident) if ident.name == "settings" => {
+                    PropertyKey::StaticIdentifier(ident) if ident.name == "settings" => {
                         let span = prop.value.span();
                         let setting_text =
                             &self.source_text[span.start as usize..span.end as usize];
@@ -347,14 +341,11 @@ impl<'a> Visit<'a> for State<'a> {
         match stmt {
             Statement::ExpressionStatement(expr_stmt) => self.visit_expression_statement(expr_stmt),
             // for eslint-plugin-jsdoc
-            Statement::ModuleDeclaration(mod_decl) => {
-                if let ModuleDeclaration::ExportDefaultDeclaration(export_decl) = &**mod_decl {
-                    if let ExportDefaultDeclarationKind::Expression(Expression::ObjectExpression(
-                        obj_expr,
-                    )) = &export_decl.declaration
-                    {
-                        self.visit_object_expression(obj_expr);
-                    }
+            Statement::ExportDefaultDeclaration(export_decl) => {
+                if let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
+                    &export_decl.declaration
+                {
+                    self.visit_object_expression(obj_expr);
                 }
             }
             _ => {}
@@ -371,9 +362,7 @@ impl<'a> Visit<'a> for State<'a> {
             // Add describe's first parameter as part group comment
             // e.g. for `describe('valid', () => { ... })`, the group comment will be "valid"
             if ident.name == "describe" {
-                if let Some(Argument::Expression(Expression::StringLiteral(lit))) =
-                    expr.arguments.first()
-                {
+                if let Some(Argument::StringLiteral(lit)) = expr.arguments.first() {
                     pushed = true;
                     self.group_comment_stack.push(lit.value.to_string());
                 }
@@ -391,13 +380,13 @@ impl<'a> Visit<'a> for State<'a> {
     }
 
     fn visit_object_property(&mut self, prop: &ObjectProperty<'a>) {
-        let PropertyKey::Identifier(ident) = &prop.key else { return };
+        let PropertyKey::StaticIdentifier(ident) = &prop.key else { return };
         match ident.name.as_str() {
             "valid" => {
                 if let Expression::ArrayExpression(array_expr) = &prop.value {
                     let array_expr = self.alloc(array_expr);
                     for arg in &array_expr.elements {
-                        if let ArrayExpressionElement::Expression(expr) = arg {
+                        if let Some(expr) = arg.as_expression() {
                             self.add_valid_test(expr);
                         }
                     }
@@ -407,21 +396,21 @@ impl<'a> Visit<'a> for State<'a> {
                 if let Some(args) = find_parser_arguments(&prop.value).map(|args| self.alloc(args))
                 {
                     for arg in args {
-                        if let Argument::Expression(expr) = arg {
+                        if let Some(expr) = arg.as_expression() {
                             self.add_valid_test(expr);
                         }
                     }
                 }
 
                 if let Expression::CallExpression(call_expr) = &prop.value {
-                    if let Expression::MemberExpression(_) = &call_expr.callee {
+                    if call_expr.callee.is_member_expression() {
                         // for eslint-plugin-react
-                        if let Some(Argument::Expression(Expression::ArrayExpression(array_expr))) =
+                        if let Some(Argument::ArrayExpression(array_expr)) =
                             call_expr.arguments.first()
                         {
                             let array_expr = self.alloc(array_expr);
                             for arg in &array_expr.elements {
-                                if let ArrayExpressionElement::Expression(expr) = arg {
+                                if let Some(expr) = arg.as_expression() {
                                     self.add_valid_test(expr);
                                 }
                             }
@@ -433,7 +422,7 @@ impl<'a> Visit<'a> for State<'a> {
                 if let Expression::ArrayExpression(array_expr) = &prop.value {
                     let array_expr = self.alloc(array_expr);
                     for arg in &array_expr.elements {
-                        if let ArrayExpressionElement::Expression(expr) = arg {
+                        if let Some(expr) = arg.as_expression() {
                             self.add_invalid_test(expr);
                         }
                     }
@@ -443,7 +432,7 @@ impl<'a> Visit<'a> for State<'a> {
                 if let Some(args) = find_parser_arguments(&prop.value).map(|args| self.alloc(args))
                 {
                     for arg in args {
-                        if let Argument::Expression(expr) = arg {
+                        if let Some(expr) = arg.as_expression() {
                             self.add_invalid_test(expr);
                         }
                     }
@@ -451,13 +440,13 @@ impl<'a> Visit<'a> for State<'a> {
 
                 // for eslint-plugin-react
                 if let Expression::CallExpression(call_expr) = &prop.value {
-                    if let Expression::MemberExpression(_) = &call_expr.callee {
-                        if let Some(Argument::Expression(Expression::ArrayExpression(array_expr))) =
+                    if call_expr.callee.is_member_expression() {
+                        if let Some(Argument::ArrayExpression(array_expr)) =
                             call_expr.arguments.first()
                         {
                             let array_expr = self.alloc(array_expr);
                             for arg in &array_expr.elements {
-                                if let ArrayExpressionElement::Expression(expr) = arg {
+                                if let Some(expr) = arg.as_expression() {
                                     self.add_invalid_test(expr);
                                 }
                             }
@@ -471,30 +460,29 @@ impl<'a> Visit<'a> for State<'a> {
 }
 
 fn find_parser_arguments<'a, 'b>(
-    expr: &'b Expression<'a>,
+    mut expr: &'b Expression<'a>,
 ) -> Option<&'b oxc_allocator::Vec<'a, Argument<'a>>> {
-    let Expression::CallExpression(call_expr) = expr else { return None };
-    let Expression::MemberExpression(member_expr) = &call_expr.callee else {
-        return None;
-    };
-    let MemberExpression::StaticMemberExpression(StaticMemberExpression {
-        object, property, ..
-    }) = &**member_expr
-    else {
-        return None;
-    };
-    match (object, call_expr.arguments.first()) {
-        (Expression::Identifier(iden), Some(Argument::Expression(arg)))
-            if iden.name == "parsers" && property.name == "all" =>
-        {
-            if let Expression::CallExpression(call_expr) = arg {
-                if let Expression::MemberExpression(_) = &call_expr.callee {
-                    return Some(&call_expr.arguments);
+    loop {
+        let Expression::CallExpression(call_expr) = expr else { return None };
+        let Expression::StaticMemberExpression(static_member_expr) = &call_expr.callee else {
+            return None;
+        };
+        let StaticMemberExpression { object, property, .. } = &**static_member_expr;
+        if let Expression::Identifier(iden) = object {
+            if iden.name == "parsers" && property.name == "all" {
+                if let Some(arg) = call_expr.arguments.first() {
+                    if let Argument::CallExpression(call_expr) = arg {
+                        if call_expr.callee.is_member_expression() {
+                            return Some(&call_expr.arguments);
+                        }
+                        return None;
+                    } else if arg.is_expression() {
+                        return None;
+                    }
                 }
             }
-            None
         }
-        _ => find_parser_arguments(object),
+        expr = object;
     }
 }
 

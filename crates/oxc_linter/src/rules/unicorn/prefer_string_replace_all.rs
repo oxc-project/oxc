@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, Expression, MemberExpression, RegExpFlags},
+    ast::{Argument, MemberExpression, RegExpFlags},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -60,8 +60,7 @@ impl Rule for PreferStringReplaceAll {
             return;
         }
 
-        let Argument::Expression(pattern) = &call_expr.arguments[0] else { return };
-
+        let pattern = &call_expr.arguments[0];
         match method_name_str {
             "replaceAll" => {
                 if let Some(k) = get_pattern_replacement(pattern) {
@@ -81,12 +80,12 @@ impl Rule for PreferStringReplaceAll {
     }
 }
 
-fn is_reg_exp_with_global_flag<'a>(expr: &'a Expression<'a>) -> bool {
-    if let Expression::RegExpLiteral(reg_exp_literal) = expr {
+fn is_reg_exp_with_global_flag<'a>(expr: &'a Argument<'a>) -> bool {
+    if let Argument::RegExpLiteral(reg_exp_literal) = expr {
         return reg_exp_literal.regex.flags.contains(RegExpFlags::G);
     }
 
-    if let Expression::NewExpression(new_expr) = expr {
+    if let Argument::NewExpression(new_expr) = expr {
         if !new_expr.callee.is_specific_id("RegExp") {
             return false;
         }
@@ -99,8 +98,8 @@ fn is_reg_exp_with_global_flag<'a>(expr: &'a Expression<'a>) -> bool {
     false
 }
 
-fn get_pattern_replacement<'a>(expr: &'a Expression<'a>) -> Option<CompactStr> {
-    let Expression::RegExpLiteral(reg_exp_literal) = expr else { return None };
+fn get_pattern_replacement<'a>(expr: &'a Argument<'a>) -> Option<CompactStr> {
+    let Argument::RegExpLiteral(reg_exp_literal) = expr else { return None };
 
     if !reg_exp_literal.regex.flags.contains(RegExpFlags::G) {
         return None;

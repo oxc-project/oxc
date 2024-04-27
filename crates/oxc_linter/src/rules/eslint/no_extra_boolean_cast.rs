@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use oxc_ast::{ast::Argument, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -138,14 +138,14 @@ fn is_bool_fn_or_constructor_call(node: &AstNode) -> bool {
 fn is_first_arg(node: &AstNode, parent: &AstNode) -> bool {
     match parent.kind() {
         AstKind::CallExpression(expr) => expr.arguments.first().map_or(false, |arg| {
-            if let Argument::Expression(expr) = arg {
+            if let Some(expr) = arg.as_expression() {
                 expr.without_parenthesized().span() == node.kind().span()
             } else {
                 false
             }
         }),
         AstKind::NewExpression(expr) => expr.arguments.first().map_or(false, |arg| {
-            if let Argument::Expression(expr) = arg {
+            if let Some(expr) = arg.as_expression() {
                 expr.without_parenthesized().span() == node.kind().span()
             } else {
                 false

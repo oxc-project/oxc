@@ -90,7 +90,8 @@ impl PreferToContain {
             return;
         }
 
-        let Some(Argument::Expression(jest_expect_first_arg)) = jest_expect_fn_call.args.first()
+        let Some(jest_expect_first_arg) =
+            jest_expect_fn_call.args.first().and_then(Argument::as_expression)
         else {
             return;
         };
@@ -111,8 +112,7 @@ impl PreferToContain {
         let Some(first_argument) = expect_call_expr.arguments.first() else {
             return;
         };
-        let Argument::Expression(Expression::CallExpression(includes_call_expr)) = first_argument
-        else {
+        let Argument::CallExpression(includes_call_expr) = first_argument else {
             return;
         };
 
@@ -126,7 +126,7 @@ impl PreferToContain {
     }
 
     fn is_fixable_includes_call_expression(call_expr: &CallExpression) -> bool {
-        let Expression::MemberExpression(mem_expr) = &call_expr.callee else {
+        let Some(mem_expr) = call_expr.callee.as_member_expression() else {
             return false;
         };
 
@@ -136,7 +136,7 @@ impl PreferToContain {
             // handle "expect(a.includes(b,c))"
             && call_expr.arguments.len() == 1
             // handle "expect(a.includes(...[]))"
-            && matches!(call_expr.arguments.first(), Some(Argument::Expression(_)))
+            && call_expr.arguments[0].is_expression()
     }
 }
 

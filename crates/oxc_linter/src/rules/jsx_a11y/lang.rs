@@ -1,6 +1,6 @@
 use language_tags::LanguageTag;
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression},
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -93,11 +93,7 @@ impl Rule for Lang {
 fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
     match get_prop_value(item) {
         Some(JSXAttributeValue::ExpressionContainer(container)) => {
-            if let JSXExpression::Expression(expr) = &container.expression {
-                !expr.is_undefined()
-            } else {
-                true
-            }
+            !container.expression.is_expression() || !container.expression.is_undefined()
         }
         Some(JSXAttributeValue::StringLiteral(str)) => {
             let language_tag = LanguageTag::parse(str.value.as_str()).unwrap();

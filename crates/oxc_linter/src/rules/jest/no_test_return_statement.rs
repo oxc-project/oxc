@@ -6,7 +6,7 @@ use crate::{
 
 use oxc_allocator::Box as OBox;
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression, FunctionBody, Statement},
+    ast::{CallExpression, Expression, FunctionBody, Statement},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -75,7 +75,7 @@ fn check_call_expression<'a>(
     }
 
     for argument in &call_expr.arguments {
-        let Argument::Expression(arg_expr) = argument else {
+        let Some(arg_expr) = argument.as_expression() else {
             continue;
         };
         match arg_expr {
@@ -106,7 +106,7 @@ fn check_test_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: 
     let Some(Expression::CallExpression(call_expr)) = &stmt.argument else {
         return;
     };
-    let Expression::MemberExpression(mem_expr) = &call_expr.callee else {
+    let Some(mem_expr) = call_expr.callee.as_member_expression() else {
         return;
     };
     let Expression::CallExpression(mem_call_expr) = mem_expr.object() else {

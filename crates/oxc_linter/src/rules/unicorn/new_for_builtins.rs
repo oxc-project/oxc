@@ -1,4 +1,7 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{
+    ast::{match_member_expression, Expression},
+    AstKind,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -108,7 +111,8 @@ fn is_expr_global_builtin<'a, 'b>(
             }
             Some(ident.name.as_str())
         }
-        Expression::MemberExpression(member_expr) => {
+        match_member_expression!(Expression) => {
+            let member_expr = expr.to_member_expression();
             let Expression::Identifier(ident) = member_expr.object() else { return None };
 
             if !GLOBAL_OBJECT_NAMES.contains(ident.name.as_str()) {

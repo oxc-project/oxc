@@ -240,12 +240,7 @@ impl NoConstantBinaryExpression {
             | Expression::FunctionExpression(_) => true,
             Expression::ArrayExpression(array_expr) => {
                 array_expr.elements.is_empty()
-                    || array_expr
-                        .elements
-                        .iter()
-                        .filter(|e| matches!(e, ArrayExpressionElement::Expression(_)))
-                        .count()
-                        > 1
+                    || array_expr.elements.iter().filter(|e| e.is_expression()).count() > 1
             }
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::Void | UnaryOperator::Typeof => true,

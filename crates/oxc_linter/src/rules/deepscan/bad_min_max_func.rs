@@ -90,7 +90,7 @@ impl BadMinMaxFunc {
                 }
 
                 let number_args = arguments.iter().filter_map(|arg| {
-                    if let Argument::Expression(Expression::NumericLiteral(literal)) = arg {
+                    if let Argument::NumericLiteral(literal) = arg {
                         Some(literal.value)
                     } else {
                         None
@@ -106,7 +106,7 @@ impl BadMinMaxFunc {
                 let mut inner = vec![];
 
                 for expr in arguments.iter().filter_map(|arg| {
-                    if let Argument::Expression(Expression::CallExpression(expr)) = arg {
+                    if let Argument::CallExpression(expr) = arg {
                         Some(&**expr)
                     } else {
                         None

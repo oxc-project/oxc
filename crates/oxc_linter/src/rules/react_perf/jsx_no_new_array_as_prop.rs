@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Expression, JSXAttributeValue, JSXElement, JSXExpression},
+    ast::{Expression, JSXAttributeValue, JSXElement},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -59,7 +59,7 @@ fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
         match get_prop_value(item) {
             None => return,
             Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                if let JSXExpression::Expression(expr) = &container.expression {
+                if let Some(expr) = container.expression.as_expression() {
                     if let Some(span) = check_expression(expr) {
                         ctx.diagnostic(JsxNoNewArrayAsPropDiagnostic(span));
                     }

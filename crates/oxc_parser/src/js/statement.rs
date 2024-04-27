@@ -191,7 +191,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::LexicalDeclarationSingleStatement(decl.span));
         }
 
-        Ok(Statement::Declaration(Declaration::VariableDeclaration(decl)))
+        Ok(Statement::VariableDeclaration(decl))
     }
 
     /// Section 14.4 Empty Statement
@@ -289,7 +289,7 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::In) || self.at(Kind::Of) {
             let target = AssignmentTarget::cover(init_expression, self)
                 .map_err(|_| diagnostics::UnexpectedToken(self.end_span(expr_span)))?;
-            let for_stmt_left = ForStatementLeft::AssignmentTarget(target);
+            let for_stmt_left = ForStatementLeft::from(target);
             if !r#await && is_async_of {
                 self.error(diagnostics::ForLoopAsyncOf(self.end_span(expr_span)));
             }
@@ -299,7 +299,7 @@ impl<'a> ParserImpl<'a> {
             return self.parse_for_in_or_of_loop(span, r#await, for_stmt_left);
         }
 
-        self.parse_for_loop(span, Some(ForStatementInit::Expression(init_expression)), r#await)
+        self.parse_for_loop(span, Some(ForStatementInit::from(init_expression)), r#await)
     }
 
     fn parse_variable_declaration_for_statement(

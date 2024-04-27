@@ -79,7 +79,7 @@ impl Rule for InlineScriptId {
                         {
                             for prop in &obj_expr.properties {
                                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
-                                    if let PropertyKey::Identifier(ident) = &obj_prop.key {
+                                    if let PropertyKey::StaticIdentifier(ident) = &obj_prop.key {
                                         prop_names_hash_set.insert(ident.name.clone());
                                     }
                                 }

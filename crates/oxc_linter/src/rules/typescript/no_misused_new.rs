@@ -81,7 +81,7 @@ impl Rule for NoMisusedNew {
                 }
             }
             AstKind::TSMethodSignature(method_sig) => {
-                if let PropertyKey::Identifier(id) = &method_sig.key {
+                if let PropertyKey::StaticIdentifier(id) = &method_sig.key {
                     if id.name == "constructor" {
                         ctx.diagnostic(NoMisusedNewInterfaceDiagnostic(method_sig.key.span()));
                     }

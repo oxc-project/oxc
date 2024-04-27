@@ -41,7 +41,7 @@ impl Rule for PreferEnumInitializers {
 
         for (index, member) in decl.members.iter().enumerate() {
             if member.initializer.is_none() {
-                if let TSEnumMemberName::Identifier(i) = &member.id {
+                if let TSEnumMemberName::StaticIdentifier(i) = &member.id {
                     ctx.diagnostic(PreferEnumInitializersDiagnostic(
                         i.name.to_compact_str(),
                         index + 1,

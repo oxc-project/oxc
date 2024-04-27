@@ -1,10 +1,10 @@
 use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
 use crate::ast::{
-    ArrowFunctionExpression, AssignmentExpression, AwaitExpression, BinaryExpression,
-    CallExpression, ConditionalExpression, Expression, ImportExpression, LogicalExpression,
-    MemberExpression, NewExpression, SequenceExpression, UnaryExpression, UpdateExpression,
-    YieldExpression,
+    match_member_expression, ArrowFunctionExpression, AssignmentExpression, AwaitExpression,
+    BinaryExpression, CallExpression, ConditionalExpression, Expression, ImportExpression,
+    LogicalExpression, MemberExpression, NewExpression, SequenceExpression, UnaryExpression,
+    UpdateExpression, YieldExpression,
 };
 
 impl<'a> GetPrecedence for Expression<'a> {
@@ -22,7 +22,7 @@ impl<'a> GetPrecedence for Expression<'a> {
             Self::AwaitExpression(expr) => expr.precedence(),
             Self::NewExpression(expr) => expr.precedence(),
             Self::CallExpression(expr) => expr.precedence(),
-            Self::MemberExpression(expr) => expr.precedence(),
+            match_member_expression!(Self) => self.to_member_expression().precedence(),
             _ => panic!("All cases should be covered"),
         }
     }

@@ -73,7 +73,7 @@ impl Rule for NoConsole {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Expression::MemberExpression(mem) = &call_expr.callee {
+            if let Some(mem) = call_expr.callee.as_member_expression() {
                 if let Expression::Identifier(ident) = mem.object() {
                     if ctx.semantic().is_reference_to_global_variable(ident)
                         && ident.name == "console"

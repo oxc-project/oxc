@@ -314,7 +314,7 @@ fn find_promise_call_expression_node<'a, 'b>(
     }
 
     if let AstKind::CallExpression(call_expr) = parent.kind() {
-        if let Expression::MemberExpression(member_expr) = &call_expr.callee {
+        if let Some(member_expr) = call_expr.callee.as_member_expression() {
             if let Expression::Identifier(ident) = member_expr.object() {
                 if matches!(ident.name.as_str(), "Promise")
                     && ctx.nodes().parent_node(parent.id()).is_some()
@@ -340,7 +340,7 @@ fn get_parent_if_thenable<'a, 'b>(
 
     let Some(grandparent) = grandparent else { return node };
     let AstKind::CallExpression(call_expr) = grandparent.kind() else { return node };
-    let Expression::MemberExpression(member_expr) = &call_expr.callee else { return node };
+    let Some(member_expr) = call_expr.callee.as_member_expression() else { return node };
     let Some(name) = member_expr.static_property_name() else { return node };
 
     if ["then", "catch"].contains(&name) {

@@ -2,14 +2,15 @@ use std::cell::{Cell, RefCell};
 
 use oxc_ast::{
     ast::{
-        Argument, ArrayExpressionElement, ArrowFunctionExpression, AssignmentTarget,
-        BinaryExpression, BindingIdentifier, BindingPattern, BindingPatternKind, CallExpression,
-        Class, ClassBody, ClassElement, ComputedMemberExpression, ConditionalExpression,
-        Declaration, ExportDefaultDeclarationKind, ExportSpecifier, Expression, ForStatementInit,
-        ForStatementLeft, FormalParameter, Function, IdentifierReference, MemberExpression,
-        ModuleDeclaration, ModuleExportName, NewExpression, ParenthesizedExpression,
-        PrivateFieldExpression, Program, PropertyKey, SimpleAssignmentTarget, Statement,
-        StaticMemberExpression, ThisExpression, VariableDeclarator,
+        match_declaration, match_expression, match_member_expression,
+        match_simple_assignment_target, Argument, ArrayExpressionElement, ArrowFunctionExpression,
+        AssignmentTarget, BinaryExpression, BindingIdentifier, BindingPattern, BindingPatternKind,
+        CallExpression, Class, ClassBody, ClassElement, ComputedMemberExpression,
+        ConditionalExpression, Declaration, ExportSpecifier, Expression, ForStatementInit,
+        FormalParameter, Function, IdentifierReference, MemberExpression, ModuleExportName,
+        NewExpression, ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey,
+        SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression,
+        VariableDeclarator,
     },
     AstKind,
 };
@@ -73,41 +74,36 @@ impl<'a> ListenerMap for Statement<'a> {
             Self::ExpressionStatement(expr_stmt) => {
                 expr_stmt.expression.report_effects(options);
             }
+            #[allow(clippy::match_same_arms)]
             Self::BreakStatement(_) | Self::ContinueStatement(_) | Self::EmptyStatement(_) => {
                 no_effects();
             }
-            Self::Declaration(decl) => {
-                decl.report_effects(options);
-            }
+            match_declaration!(Self) => self.to_declaration().report_effects(options),
             Self::ReturnStatement(stmt) => {
                 if let Some(arg) = &stmt.argument {
                     arg.report_effects(options);
                 }
             }
-            Self::ModuleDeclaration(decl) => match &**decl {
-                ModuleDeclaration::ExportAllDeclaration(_)
-                | ModuleDeclaration::ImportDeclaration(_) => {
-                    no_effects();
-                }
-                ModuleDeclaration::ExportDefaultDeclaration(stmt) => {
-                    if let ExportDefaultDeclarationKind::Expression(expr) = &stmt.declaration {
-                        if has_comment_about_side_effect_check(expr.span(), options.ctx) {
-                            expr.report_effects_when_called(options);
-                        }
-                        expr.report_effects(options);
+            Self::ExportAllDeclaration(_) | Self::ImportDeclaration(_) => {
+                no_effects();
+            }
+            Self::ExportDefaultDeclaration(stmt) => {
+                if let Some(expr) = &stmt.declaration.as_expression() {
+                    if has_comment_about_side_effect_check(expr.span(), options.ctx) {
+                        expr.report_effects_when_called(options);
                     }
+                    expr.report_effects(options);
                 }
-                ModuleDeclaration::ExportNamedDeclaration(stmt) => {
-                    stmt.specifiers.iter().for_each(|specifier| {
-                        specifier.report_effects(options);
-                    });
+            }
+            Self::ExportNamedDeclaration(stmt) => {
+                stmt.specifiers.iter().for_each(|specifier| {
+                    specifier.report_effects(options);
+                });
 
-                    if let Some(decl) = &stmt.declaration {
-                        decl.report_effects(options);
-                    }
+                if let Some(decl) = &stmt.declaration {
+                    decl.report_effects(options);
                 }
-                _ => {}
-            },
+            }
             Self::TryStatement(stmt) => {
                 stmt.block.body.iter().for_each(|stmt| stmt.report_effects(options));
                 stmt.handler.iter().for_each(|handler| {
@@ -165,14 +161,14 @@ impl<'a> ListenerMap for Statement<'a> {
                 stmt.body.report_effects(options);
             }
             Self::ForInStatement(stmt) => {
-                if let ForStatementLeft::AssignmentTarget(assign) = &stmt.left {
+                if let Some(assign) = stmt.left.as_assignment_target() {
                     assign.report_effects_when_assigned(options);
                 }
                 stmt.right.report_effects(options);
                 stmt.body.report_effects(options);
             }
             Self::ForOfStatement(stmt) => {
-                if let ForStatementLeft::AssignmentTarget(assign) = &stmt.left {
+                if let Some(assign) = stmt.left.as_assignment_target() {
                     assign.report_effects_when_assigned(options);
                 }
                 stmt.right.report_effects(options);
@@ -186,9 +182,7 @@ impl<'a> ListenerMap for Statement<'a> {
 impl<'a> ListenerMap for ForStatementInit<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
         match self {
-            Self::Expression(expr) => {
-                expr.report_effects(options);
-            }
+            match_expression!(Self) => self.to_expression().report_effects(options),
             Self::UsingDeclaration(decl) => {
                 decl.declarations.iter().for_each(|decl| decl.report_effects(options));
             }
@@ -375,11 +369,9 @@ impl<'a> ListenerMap for ClassElement<'a> {
 
 impl<'a> ListenerMap for PropertyKey<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
-        match self {
-            Self::Expression(expr) => {
-                expr.report_effects(options);
-            }
-            _ => no_effects(),
+        match self.as_expression() {
+            Some(expr) => expr.report_effects(options),
+            None => no_effects(),
         }
     }
 }
@@ -567,7 +559,9 @@ fn defined_custom_report_effects_when_called(expr: &Expression) -> bool {
             | Expression::ConditionalExpression(_)
             | Expression::FunctionExpression(_)
             | Expression::Identifier(_)
-            | Expression::MemberExpression(_)
+            | Expression::ComputedMemberExpression(_)
+            | Expression::StaticMemberExpression(_)
+            | Expression::PrivateFieldExpression(_)
     )
 }
 
@@ -711,7 +705,7 @@ impl<'a> ListenerMap for CallExpression<'a> {
 impl<'a> ListenerMap for Argument<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
         match self {
-            Self::Expression(expr) => expr.report_effects(options),
+            match_expression!(Self) => self.to_expression().report_effects(options),
             Self::SpreadElement(spread) => {
                 spread.argument.report_effects(options);
             }
@@ -722,10 +716,10 @@ impl<'a> ListenerMap for Argument<'a> {
 impl<'a> ListenerMap for AssignmentTarget<'a> {
     fn report_effects_when_assigned(&self, options: &NodeListenerOptions) {
         match self {
-            Self::SimpleAssignmentTarget(target) => {
-                target.report_effects_when_assigned(options);
+            match_simple_assignment_target!(Self) => {
+                self.to_simple_assignment_target().report_effects_when_assigned(options);
             }
-            Self::AssignmentTargetPattern(_pattern) => {}
+            Self::ArrayAssignmentTarget(_) | Self::ObjectAssignmentTarget(_) => {}
         }
     }
 }
@@ -736,8 +730,8 @@ impl<'a> ListenerMap for SimpleAssignmentTarget<'a> {
             Self::AssignmentTargetIdentifier(ident) => {
                 ident.report_effects_when_assigned(options);
             }
-            Self::MemberAssignmentTarget(member) => {
-                member.report_effects_when_assigned(options);
+            match_member_expression!(Self) => {
+                self.to_member_expression().report_effects_when_assigned(options);
             }
             _ => {
                 // For remain TypeScript AST, just visit its expression
@@ -862,7 +856,7 @@ impl<'a> ListenerMap for PrivateFieldExpression<'a> {
 impl<'a> ListenerMap for ArrayExpressionElement<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
         match self {
-            Self::Expression(expr) => expr.report_effects(options),
+            match_expression!(Self) => self.to_expression().report_effects(options),
             Self::SpreadElement(spreed) => {
                 spreed.argument.report_effects(options);
             }

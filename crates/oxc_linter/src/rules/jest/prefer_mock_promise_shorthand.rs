@@ -61,7 +61,7 @@ impl Rule for PreferMockPromiseShorthand {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Expression::MemberExpression(mem_expr) = &call_expr.callee else {
+        let Some(mem_expr) = call_expr.callee.as_member_expression() else {
             return;
         };
 
@@ -72,7 +72,7 @@ impl Rule for PreferMockPromiseShorthand {
         let Some((property_span, property_name)) = mem_expr.static_property_info() else {
             return;
         };
-        let Some(Argument::Expression(expr)) = call_expr.arguments.first() else {
+        let Some(expr) = call_expr.arguments.first().and_then(Argument::as_expression) else {
             return;
         };
         let is_once = property_name.ends_with("Once");
@@ -174,7 +174,7 @@ impl PreferMockPromiseShorthand {
             content.print_str(b"undefined");
         } else {
             for argument in &call_expr.arguments {
-                if let Argument::Expression(expr) = argument {
+                if let Some(expr) = argument.as_expression() {
                     content.print_expression(expr);
                 }
             }

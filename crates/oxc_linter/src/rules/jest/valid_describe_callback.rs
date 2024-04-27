@@ -93,55 +93,49 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
         return;
     }
 
-    let callback = &call_expr.arguments[1];
-    match callback {
-        Argument::Expression(expr) => match expr {
-            Expression::FunctionExpression(fn_expr) => {
-                if fn_expr.r#async {
-                    diagnostic(ctx, fn_expr.span, Message::NoAsyncDescribeCallback);
-                }
-                let no_each_fields =
-                    jest_fn_call.members.iter().all(|member| member.is_name_unequal("each"));
-                if no_each_fields && fn_expr.params.parameters_count() > 0 {
-                    diagnostic(ctx, fn_expr.span, Message::UnexpectedDescribeArgument);
-                }
+    match &call_expr.arguments[1] {
+        Argument::FunctionExpression(fn_expr) => {
+            if fn_expr.r#async {
+                diagnostic(ctx, fn_expr.span, Message::NoAsyncDescribeCallback);
+            }
+            let no_each_fields =
+                jest_fn_call.members.iter().all(|member| member.is_name_unequal("each"));
+            if no_each_fields && fn_expr.params.parameters_count() > 0 {
+                diagnostic(ctx, fn_expr.span, Message::UnexpectedDescribeArgument);
+            }
 
-                let Some(ref body) = fn_expr.body else {
+            let Some(ref body) = fn_expr.body else {
+                return;
+            };
+            if let Some(span) = find_first_return_stmt_span(body) {
+                diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
+            }
+        }
+        Argument::ArrowFunctionExpression(arrow_expr) => {
+            if arrow_expr.r#async {
+                diagnostic(ctx, arrow_expr.span, Message::NoAsyncDescribeCallback);
+            }
+            let no_each_fields =
+                jest_fn_call.members.iter().all(|member| member.is_name_unequal("each"));
+            if no_each_fields && arrow_expr.params.parameters_count() > 0 {
+                diagnostic(ctx, arrow_expr.span, Message::UnexpectedDescribeArgument);
+            }
+
+            if arrow_expr.expression && arrow_expr.body.statements.len() > 0 {
+                let stmt = &arrow_expr.body.statements[0];
+                let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     return;
                 };
-                if let Some(span) = find_first_return_stmt_span(body) {
-                    diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
+                if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
+                    diagnostic(ctx, call_expr.span, Message::UnexpectedReturnInDescribe);
                 }
             }
-            Expression::ArrowFunctionExpression(arrow_expr) => {
-                if arrow_expr.r#async {
-                    diagnostic(ctx, arrow_expr.span, Message::NoAsyncDescribeCallback);
-                }
-                let no_each_fields =
-                    jest_fn_call.members.iter().all(|member| member.is_name_unequal("each"));
-                if no_each_fields && arrow_expr.params.parameters_count() > 0 {
-                    diagnostic(ctx, arrow_expr.span, Message::UnexpectedDescribeArgument);
-                }
 
-                if arrow_expr.expression && arrow_expr.body.statements.len() > 0 {
-                    let stmt = &arrow_expr.body.statements[0];
-                    let Statement::ExpressionStatement(expr_stmt) = stmt else {
-                        return;
-                    };
-                    if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
-                        diagnostic(ctx, call_expr.span, Message::UnexpectedReturnInDescribe);
-                    }
-                }
-
-                if let Some(span) = find_first_return_stmt_span(&arrow_expr.body) {
-                    diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
-                }
+            if let Some(span) = find_first_return_stmt_span(&arrow_expr.body) {
+                diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
             }
-            _ => diagnostic(ctx, expr.span(), Message::SecondArgumentMustBeFunction),
-        },
-        Argument::SpreadElement(spreed_element) => {
-            diagnostic(ctx, spreed_element.span, Message::SecondArgumentMustBeFunction);
         }
+        callback => diagnostic(ctx, callback.span(), Message::SecondArgumentMustBeFunction),
     }
 }
 

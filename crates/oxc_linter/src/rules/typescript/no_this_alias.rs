@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{AssignmentTarget, BindingPatternKind, Expression, SimpleAssignmentTarget},
+    ast::{match_simple_assignment_target, AssignmentTarget, BindingPatternKind, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -127,32 +127,29 @@ impl Rule for NoThisAlias {
                     return;
                 }
                 match &assignment.left {
-                    AssignmentTarget::AssignmentTargetPattern(pat) => {
+                    left @ (AssignmentTarget::ArrayAssignmentTarget(_)
+                    | AssignmentTarget::ObjectAssignmentTarget(_)) => {
                         if self.allow_destructuring {
                             return;
                         }
-                        ctx.diagnostic(NoThisDestructureDiagnostic(pat.span()));
+                        ctx.diagnostic(NoThisDestructureDiagnostic(left.span()));
                     }
-                    AssignmentTarget::SimpleAssignmentTarget(pat) => match pat {
-                        SimpleAssignmentTarget::AssignmentTargetIdentifier(id) => {
-                            if !self.allow_names.iter().any(|s| s.as_str() == id.name.as_str()) {
-                                ctx.diagnostic(NoThisAliasDiagnostic(id.span));
-                            }
+                    AssignmentTarget::AssignmentTargetIdentifier(id) => {
+                        if !self.allow_names.iter().any(|s| s.as_str() == id.name.as_str()) {
+                            ctx.diagnostic(NoThisAliasDiagnostic(id.span));
                         }
-                        _ => {
-                            if let Some(expr) = pat.get_expression() {
-                                if let Some(id) = expr.get_identifier_reference() {
-                                    if !self
-                                        .allow_names
-                                        .iter()
-                                        .any(|s| s.as_str() == id.name.as_str())
-                                    {
-                                        ctx.diagnostic(NoThisAliasDiagnostic(id.span));
-                                    }
+                    }
+                    left @ match_simple_assignment_target!(AssignmentTarget) => {
+                        let pat = left.to_simple_assignment_target();
+                        if let Some(expr) = pat.get_expression() {
+                            if let Some(id) = expr.get_identifier_reference() {
+                                if !self.allow_names.iter().any(|s| s.as_str() == id.name.as_str())
+                                {
+                                    ctx.diagnostic(NoThisAliasDiagnostic(id.span));
                                 }
                             }
                         }
-                    },
+                    }
                 }
             }
             _ => {}

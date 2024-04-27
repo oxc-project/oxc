@@ -133,7 +133,7 @@ fn get_diagnostic<'a>(
     // unwrap is safe because we already checked that this is a reduce call
     let (reduce_call_span, _) = call_expr_method_callee_info(call_expr).unwrap();
 
-    if let Some(Argument::Expression(second_arg)) = call_expr.arguments.get(1) {
+    if let Some(second_arg) = call_expr.arguments.get(1).and_then(Argument::as_expression) {
         let second_arg = second_arg.without_parenthesized();
         let second_arg =
             if let Expression::TSAsExpression(as_expr) = second_arg.without_parenthesized() {

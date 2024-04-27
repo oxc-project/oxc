@@ -101,7 +101,7 @@ impl PreferExpectResolves {
         let Some(argument) = call_expr.arguments.first() else {
             return;
         };
-        let Argument::Expression(Expression::AwaitExpression(await_expr)) = argument else {
+        let Argument::AwaitExpression(await_expr) = argument else {
             return;
         };
         let Some(ident) = call_expr.callee.get_identifier_reference() else {
@@ -122,7 +122,7 @@ impl PreferExpectResolves {
     ) -> String {
         let mut formatter = ctx.codegen();
         let first = call_expr.arguments.first().unwrap();
-        let Argument::Expression(Expression::AwaitExpression(await_expr)) = first else {
+        let Argument::AwaitExpression(await_expr) = first else {
             return formatter.into_source_text();
         };
 

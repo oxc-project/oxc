@@ -114,9 +114,7 @@ impl<'a> ModuleLexer<'a> {
 
 impl<'a> Visit<'a> for ModuleLexer<'a> {
     fn visit_statement(&mut self, stmt: &Statement<'a>) {
-        if self.facade
-            && !matches!(stmt, Statement::ModuleDeclaration(..) | Statement::Declaration(..))
-        {
+        if self.facade && !stmt.is_module_declaration() && !stmt.is_declaration() {
             self.facade = false;
         }
 
@@ -246,9 +244,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
         let ln = match &decl.declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.id.as_ref(),
             ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref(),
-            ExportDefaultDeclarationKind::Expression(_)
-            | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
-            | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => None,
+            _ => None,
         };
         self.exports.push(ExportSpecifier {
             n: decl.exported.name().clone(),

@@ -55,7 +55,8 @@ impl Rule for NoAsyncPromiseExecutor {
         if !new_expression.callee.is_specific_id("Promise") {
             return;
         }
-        let Some(Argument::Expression(expression)) = new_expression.arguments.first() else {
+        let Some(expression) = new_expression.arguments.first().and_then(Argument::as_expression)
+        else {
             return;
         };
         let mut span = match expression.get_inner_expression() {

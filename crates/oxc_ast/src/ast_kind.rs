@@ -330,7 +330,9 @@ impl<'a> AstKind<'a> {
             Expression::FunctionExpression(e) => Self::Function(e),
             Expression::ImportExpression(e) => Self::ImportExpression(e),
             Expression::LogicalExpression(e) => Self::LogicalExpression(e),
-            Expression::MemberExpression(e) => Self::MemberExpression(e),
+            match_member_expression!(Expression) => {
+                Self::MemberExpression(e.to_member_expression())
+            }
             Expression::NewExpression(e) => Self::NewExpression(e),
             Expression::ObjectExpression(e) => Self::ObjectExpression(e),
             Expression::ParenthesizedExpression(e) => Self::ParenthesizedExpression(e),

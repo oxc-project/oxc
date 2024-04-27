@@ -17,6 +17,7 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
+use super::inherit_variants;
 use super::{jsx::*, literal::*, ts::*};
 
 #[cfg(feature = "serialize")]
@@ -60,57 +61,113 @@ impl<'a> Program<'a> {
     }
 }
 
+inherit_variants! {
 /// Expression
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Expression<'a> {
-    BooleanLiteral(Box<'a, BooleanLiteral>),
-    NullLiteral(Box<'a, NullLiteral>),
-    NumericLiteral(Box<'a, NumericLiteral<'a>>),
-    BigintLiteral(Box<'a, BigIntLiteral<'a>>),
-    RegExpLiteral(Box<'a, RegExpLiteral<'a>>),
-    StringLiteral(Box<'a, StringLiteral<'a>>),
-    TemplateLiteral(Box<'a, TemplateLiteral<'a>>),
+    BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
+    NullLiteral(Box<'a, NullLiteral>) = 1,
+    NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
+    BigintLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
+    RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
+    StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
+    TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
 
-    Identifier(Box<'a, IdentifierReference<'a>>),
+    Identifier(Box<'a, IdentifierReference<'a>>) = 7,
 
-    MetaProperty(Box<'a, MetaProperty<'a>>),
-    Super(Box<'a, Super>),
+    MetaProperty(Box<'a, MetaProperty<'a>>) = 8,
+    Super(Box<'a, Super>) = 9,
 
-    ArrayExpression(Box<'a, ArrayExpression<'a>>),
-    ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>),
-    AssignmentExpression(Box<'a, AssignmentExpression<'a>>),
-    AwaitExpression(Box<'a, AwaitExpression<'a>>),
-    BinaryExpression(Box<'a, BinaryExpression<'a>>),
-    CallExpression(Box<'a, CallExpression<'a>>),
-    ChainExpression(Box<'a, ChainExpression<'a>>),
-    ClassExpression(Box<'a, Class<'a>>),
-    ConditionalExpression(Box<'a, ConditionalExpression<'a>>),
-    FunctionExpression(Box<'a, Function<'a>>),
-    ImportExpression(Box<'a, ImportExpression<'a>>),
-    LogicalExpression(Box<'a, LogicalExpression<'a>>),
-    MemberExpression(Box<'a, MemberExpression<'a>>),
-    NewExpression(Box<'a, NewExpression<'a>>),
-    ObjectExpression(Box<'a, ObjectExpression<'a>>),
-    ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a>>),
-    SequenceExpression(Box<'a, SequenceExpression<'a>>),
-    TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a>>),
-    ThisExpression(Box<'a, ThisExpression>),
-    UnaryExpression(Box<'a, UnaryExpression<'a>>),
-    UpdateExpression(Box<'a, UpdateExpression<'a>>),
-    YieldExpression(Box<'a, YieldExpression<'a>>),
-    PrivateInExpression(Box<'a, PrivateInExpression<'a>>),
+    ArrayExpression(Box<'a, ArrayExpression<'a>>) = 10,
+    ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>) = 11,
+    AssignmentExpression(Box<'a, AssignmentExpression<'a>>) = 12,
+    AwaitExpression(Box<'a, AwaitExpression<'a>>) = 13,
+    BinaryExpression(Box<'a, BinaryExpression<'a>>) = 14,
+    CallExpression(Box<'a, CallExpression<'a>>) = 15,
+    ChainExpression(Box<'a, ChainExpression<'a>>) = 16,
+    ClassExpression(Box<'a, Class<'a>>) = 17,
+    ConditionalExpression(Box<'a, ConditionalExpression<'a>>) = 18,
+    FunctionExpression(Box<'a, Function<'a>>) = 19,
+    ImportExpression(Box<'a, ImportExpression<'a>>) = 20,
+    LogicalExpression(Box<'a, LogicalExpression<'a>>) = 21,
+    NewExpression(Box<'a, NewExpression<'a>>) = 22,
+    ObjectExpression(Box<'a, ObjectExpression<'a>>) = 23,
+    ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a>>) = 24,
+    SequenceExpression(Box<'a, SequenceExpression<'a>>) = 25,
+    TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a>>) = 26,
+    ThisExpression(Box<'a, ThisExpression>) = 27,
+    UnaryExpression(Box<'a, UnaryExpression<'a>>) = 28,
+    UpdateExpression(Box<'a, UpdateExpression<'a>>) = 29,
+    YieldExpression(Box<'a, YieldExpression<'a>>) = 30,
+    PrivateInExpression(Box<'a, PrivateInExpression<'a>>) = 31,
 
-    JSXElement(Box<'a, JSXElement<'a>>),
-    JSXFragment(Box<'a, JSXFragment<'a>>),
+    JSXElement(Box<'a, JSXElement<'a>>) = 32,
+    JSXFragment(Box<'a, JSXFragment<'a>>) = 33,
 
-    TSAsExpression(Box<'a, TSAsExpression<'a>>),
-    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>),
-    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>),
-    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>),
-    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>),
+    TSAsExpression(Box<'a, TSAsExpression<'a>>) = 34,
+    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 35,
+    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 36,
+    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 37,
+    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
+
+    // `MemberExpression` variants added here by `inherit_variants!` macro
+    @inherit MemberExpression
 }
+}
+
+/// Macro for matching `Expression`'s variants.
+/// Includes `MemberExpression`'s variants.
+#[macro_export]
+macro_rules! match_expression {
+    ($ty:ident) => {
+        $ty::BooleanLiteral(_)
+            | $ty::NullLiteral(_)
+            | $ty::NumericLiteral(_)
+            | $ty::BigintLiteral(_)
+            | $ty::RegExpLiteral(_)
+            | $ty::StringLiteral(_)
+            | $ty::TemplateLiteral(_)
+            | $ty::Identifier(_)
+            | $ty::MetaProperty(_)
+            | $ty::Super(_)
+            | $ty::ArrayExpression(_)
+            | $ty::ArrowFunctionExpression(_)
+            | $ty::AssignmentExpression(_)
+            | $ty::AwaitExpression(_)
+            | $ty::BinaryExpression(_)
+            | $ty::CallExpression(_)
+            | $ty::ChainExpression(_)
+            | $ty::ClassExpression(_)
+            | $ty::ConditionalExpression(_)
+            | $ty::FunctionExpression(_)
+            | $ty::ImportExpression(_)
+            | $ty::LogicalExpression(_)
+            | $ty::NewExpression(_)
+            | $ty::ObjectExpression(_)
+            | $ty::ParenthesizedExpression(_)
+            | $ty::SequenceExpression(_)
+            | $ty::TaggedTemplateExpression(_)
+            | $ty::ThisExpression(_)
+            | $ty::UnaryExpression(_)
+            | $ty::UpdateExpression(_)
+            | $ty::YieldExpression(_)
+            | $ty::PrivateInExpression(_)
+            | $ty::JSXElement(_)
+            | $ty::JSXFragment(_)
+            | $ty::TSAsExpression(_)
+            | $ty::TSSatisfiesExpression(_)
+            | $ty::TSTypeAssertion(_)
+            | $ty::TSNonNullExpression(_)
+            | $ty::TSInstantiationExpression(_)
+            | $ty::ComputedMemberExpression(_)
+            | $ty::StaticMemberExpression(_)
+            | $ty::PrivateFieldExpression(_)
+    };
+}
+pub use match_expression;
 
 impl<'a> Expression<'a> {
     pub fn is_typescript_syntax(&self) -> bool {
@@ -233,9 +290,11 @@ impl<'a> Expression<'a> {
 
     pub fn is_specific_member_access(&self, object: &str, property: &str) -> bool {
         match self.get_inner_expression() {
-            Expression::MemberExpression(expr) => expr.is_specific_member_access(object, property),
+            expr if expr.is_member_expression() => {
+                expr.to_member_expression().is_specific_member_access(object, property)
+            }
             Expression::ChainExpression(chain) => {
-                let ChainElement::MemberExpression(expr) = &chain.expression else {
+                let Some(expr) = chain.expression.as_member_expression() else {
                     return false;
                 };
                 expr.is_specific_member_access(object, property)
@@ -304,12 +363,8 @@ impl<'a> Expression<'a> {
 
     pub fn get_member_expr(&self) -> Option<&MemberExpression<'a>> {
         match self.get_inner_expression() {
-            Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
-                ChainElement::CallExpression(_) => None,
-                ChainElement::MemberExpression(member_expr) => Some(member_expr),
-            },
-            Expression::MemberExpression(member_expr) => Some(member_expr),
-            _ => None,
+            Expression::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
+            expr => expr.as_member_expression(),
         }
     }
 
@@ -433,16 +488,20 @@ pub struct ArrayExpression<'a> {
     pub trailing_comma: Option<Span>,
 }
 
+inherit_variants! {
 /// Array Expression Element
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ArrayExpressionElement<'a> {
-    SpreadElement(Box<'a, SpreadElement<'a>>),
-    Expression(Expression<'a>),
+    SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
+    // `Expression` variants added here by `inherit_variants!` macro
+    @inherit Expression
     /// Array hole for sparse arrays
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
-    Elision(Elision),
+    Elision(Elision) = 65,
+}
 }
 
 impl<'a> ArrayExpressionElement<'a> {
@@ -500,34 +559,32 @@ pub struct ObjectProperty<'a> {
     pub computed: bool,
 }
 
+inherit_variants! {
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum PropertyKey<'a> {
-    Identifier(Box<'a, IdentifierName<'a>>),
-    PrivateIdentifier(Box<'a, PrivateIdentifier<'a>>),
-    Expression(Expression<'a>),
+    StaticIdentifier(Box<'a, IdentifierName<'a>>) = 64,
+    PrivateIdentifier(Box<'a, PrivateIdentifier<'a>>) = 65,
+    // `Expression` variants added here by `inherit_variants!` macro
+    @inherit Expression
+}
 }
 
 impl<'a> PropertyKey<'a> {
     pub fn static_name(&self) -> Option<CompactStr> {
         match self {
-            Self::Identifier(ident) => Some(ident.name.to_compact_str()),
-            Self::PrivateIdentifier(_) => None,
-            Self::Expression(expr) => match expr {
-                Expression::StringLiteral(lit) => Some(lit.value.to_compact_str()),
-                Expression::RegExpLiteral(lit) => Some(lit.regex.to_string().into()),
-                Expression::NumericLiteral(lit) => Some(lit.value.to_string().into()),
-                Expression::BigintLiteral(lit) => Some(lit.raw.to_compact_str()),
-                Expression::NullLiteral(_) => Some("null".into()),
-                Expression::TemplateLiteral(lit) => lit
-                    .expressions
-                    .is_empty()
-                    .then(|| lit.quasi())
-                    .flatten()
-                    .map(Atom::to_compact_str),
-                _ => None,
-            },
+            Self::StaticIdentifier(ident) => Some(ident.name.to_compact_str()),
+            Self::StringLiteral(lit) => Some(lit.value.to_compact_str()),
+            Self::RegExpLiteral(lit) => Some(lit.regex.to_string().into()),
+            Self::NumericLiteral(lit) => Some(lit.value.to_string().into()),
+            Self::BigintLiteral(lit) => Some(lit.raw.to_compact_str()),
+            Self::NullLiteral(_) => Some("null".into()),
+            Self::TemplateLiteral(lit) => {
+                lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(Atom::to_compact_str)
+            }
+            _ => None,
         }
     }
 
@@ -536,7 +593,7 @@ impl<'a> PropertyKey<'a> {
     }
 
     pub fn is_identifier(&self) -> bool {
-        matches!(self, Self::PrivateIdentifier(_) | Self::Identifier(_))
+        matches!(self, Self::PrivateIdentifier(_) | Self::StaticIdentifier(_))
     }
 
     pub fn is_private_identifier(&self) -> bool {
@@ -560,16 +617,13 @@ impl<'a> PropertyKey<'a> {
 
     pub fn is_specific_id(&self, name: &str) -> bool {
         match self {
-            PropertyKey::Identifier(ident) => ident.name == name,
+            PropertyKey::StaticIdentifier(ident) => ident.name == name,
             _ => false,
         }
     }
 
     pub fn is_specific_string_literal(&self, string: &str) -> bool {
-        match self {
-            PropertyKey::Expression(expr) => expr.is_specific_string_literal(string),
-            _ => false,
-        }
+        matches!(self, Self::StringLiteral(s) if s.value == string)
     }
 }
 
@@ -643,17 +697,29 @@ pub struct TemplateElementValue<'a> {
 }
 
 /// <https://tc39.es/ecma262/#prod-MemberExpression>
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum MemberExpression<'a> {
     /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
-    ComputedMemberExpression(ComputedMemberExpression<'a>),
+    ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>) = 48,
     /// `MemberExpression[?Yield, ?Await] . IdentifierName`
-    StaticMemberExpression(StaticMemberExpression<'a>),
+    StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>) = 49,
     /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
-    PrivateFieldExpression(PrivateFieldExpression<'a>),
+    PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>) = 50,
 }
+
+/// Macro for matching `MemberExpression`'s variants.
+#[macro_export]
+macro_rules! match_member_expression {
+    ($ty:ident) => {
+        $ty::ComputedMemberExpression(_)
+            | $ty::StaticMemberExpression(_)
+            | $ty::PrivateFieldExpression(_)
+    };
+}
+pub use match_member_expression;
 
 impl<'a> MemberExpression<'a> {
     pub fn is_computed(&self) -> bool {
@@ -718,8 +784,9 @@ impl<'a> MemberExpression<'a> {
         let object_matches = match self.object().without_parenthesized() {
             Expression::ChainExpression(x) => match &x.expression {
                 ChainElement::CallExpression(_) => false,
-                ChainElement::MemberExpression(me) => {
-                    me.object().without_parenthesized().is_specific_id(object)
+                match_member_expression!(ChainElement) => {
+                    let member_expr = x.expression.to_member_expression();
+                    member_expr.object().without_parenthesized().is_specific_id(object)
                 }
             },
             x => x.is_specific_id(object),
@@ -790,8 +857,7 @@ impl<'a> CallExpression<'a> {
     pub fn callee_name(&self) -> Option<&str> {
         match &self.callee {
             Expression::Identifier(ident) => Some(ident.name.as_str()),
-            Expression::MemberExpression(member) => member.static_property_name(),
-            _ => None,
+            expr => expr.as_member_expression().and_then(MemberExpression::static_property_name),
         }
     }
 
@@ -803,9 +869,7 @@ impl<'a> CallExpression<'a> {
             id.name == "require"
                 && matches!(
                     self.arguments.first(),
-                    Some(Argument::Expression(
-                        Expression::StringLiteral(_) | Expression::TemplateLiteral(_),
-                    )),
+                    Some(Argument::StringLiteral(_) | Argument::TemplateLiteral(_)),
                 )
         } else {
             false
@@ -816,11 +880,13 @@ impl<'a> CallExpression<'a> {
         // TODO: is 'Symbol' reference to global object
         match &self.callee {
             Expression::Identifier(id) => id.name == "Symbol",
-            Expression::MemberExpression(member) => {
-                matches!(member.object(), Expression::Identifier(id) if id.name == "Symbol")
-                    && member.static_property_name() == Some("for")
-            }
-            _ => false,
+            expr => match expr.as_member_expression() {
+                Some(member) => {
+                    matches!(member.object(), Expression::Identifier(id) if id.name == "Symbol")
+                        && member.static_property_name() == Some("for")
+                }
+                None => false,
+            },
         }
     }
 
@@ -829,7 +895,7 @@ impl<'a> CallExpression<'a> {
             return None;
         }
         match &self.arguments[0] {
-            Argument::Expression(Expression::StringLiteral(str_literal)) => Some(str_literal),
+            Argument::StringLiteral(str_literal) => Some(str_literal),
             _ => None,
         }
     }
@@ -868,13 +934,17 @@ pub struct SpreadElement<'a> {
     pub argument: Expression<'a>,
 }
 
+inherit_variants! {
 /// Argument
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Argument<'a> {
-    SpreadElement(Box<'a, SpreadElement<'a>>),
-    Expression(Expression<'a>),
+    SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
+    // `Expression` variants added here by `inherit_variants!` macro
+    @inherit Expression
+}
 }
 
 impl Argument<'_> {
@@ -966,43 +1036,71 @@ pub struct AssignmentExpression<'a> {
     pub right: Expression<'a>,
 }
 
+inherit_variants! {
 /// Destructuring Assignment
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum AssignmentTarget<'a> {
-    SimpleAssignmentTarget(SimpleAssignmentTarget<'a>),
-    AssignmentTargetPattern(AssignmentTargetPattern<'a>),
+    // `SimpleAssignmentTarget` variants added here by `inherit_variants!` macro
+    @inherit SimpleAssignmentTarget
+    // `AssignmentTargetPattern` variants added here by `inherit_variants!` macro
+    @inherit AssignmentTargetPattern
+}
 }
 
-impl<'a> AssignmentTarget<'a> {
-    pub fn is_simple(&self) -> bool {
-        matches!(self, Self::SimpleAssignmentTarget(_))
-    }
-
-    pub fn is_destructuring_pattern(&self) -> bool {
-        matches!(self, Self::AssignmentTargetPattern(_))
-    }
-
-    pub fn is_identifier(&self) -> bool {
-        matches!(
-            self,
-            Self::SimpleAssignmentTarget(SimpleAssignmentTarget::AssignmentTargetIdentifier(_))
-        )
-    }
+/// Macro for matching `AssignmentTarget`'s variants.
+/// Includes `SimpleAssignmentTarget`'s and `AssignmentTargetPattern`'s variants.
+#[macro_export]
+macro_rules! match_assignment_target {
+    ($ty:ident) => {
+        $ty::AssignmentTargetIdentifier(_)
+            | $ty::ComputedMemberExpression(_)
+            | $ty::StaticMemberExpression(_)
+            | $ty::PrivateFieldExpression(_)
+            | $ty::TSAsExpression(_)
+            | $ty::TSSatisfiesExpression(_)
+            | $ty::TSNonNullExpression(_)
+            | $ty::TSTypeAssertion(_)
+            | $ty::ArrayAssignmentTarget(_)
+            | $ty::ObjectAssignmentTarget(_)
+    };
 }
+pub use match_assignment_target;
 
+inherit_variants! {
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum SimpleAssignmentTarget<'a> {
-    AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>>),
-    MemberAssignmentTarget(Box<'a, MemberExpression<'a>>),
-    TSAsExpression(Box<'a, TSAsExpression<'a>>),
-    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>),
-    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>),
-    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>),
+    AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>>) = 0,
+    // `MemberExpression` variants added here by `inherit_variants!` macro
+    @inherit MemberExpression
+    TSAsExpression(Box<'a, TSAsExpression<'a>>) = 1,
+    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 2,
+    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
+    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
 }
+}
+
+/// Macro for matching `SimpleAssignmentTarget`'s variants.
+/// Includes `MemberExpression`'s variants
+#[macro_export]
+macro_rules! match_simple_assignment_target {
+    ($ty:ident) => {
+        $ty::AssignmentTargetIdentifier(_)
+            | $ty::ComputedMemberExpression(_)
+            | $ty::StaticMemberExpression(_)
+            | $ty::PrivateFieldExpression(_)
+            | $ty::TSAsExpression(_)
+            | $ty::TSSatisfiesExpression(_)
+            | $ty::TSNonNullExpression(_)
+            | $ty::TSTypeAssertion(_)
+    };
+}
+pub use match_simple_assignment_target;
 
 impl<'a> SimpleAssignmentTarget<'a> {
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
@@ -1016,13 +1114,23 @@ impl<'a> SimpleAssignmentTarget<'a> {
     }
 }
 
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum AssignmentTargetPattern<'a> {
-    ArrayAssignmentTarget(Box<'a, ArrayAssignmentTarget<'a>>),
-    ObjectAssignmentTarget(Box<'a, ObjectAssignmentTarget<'a>>),
+    ArrayAssignmentTarget(Box<'a, ArrayAssignmentTarget<'a>>) = 8,
+    ObjectAssignmentTarget(Box<'a, ObjectAssignmentTarget<'a>>) = 9,
 }
+
+/// Macro for matching `AssignmentTargetPattern`'s variants.
+#[macro_export]
+macro_rules! match_assignment_target_pattern {
+    ($ty:ident) => {
+        $ty::ArrayAssignmentTarget(_) | $ty::ObjectAssignmentTarget(_)
+    };
+}
+pub use match_assignment_target_pattern;
 
 // See serializer in serialize.rs
 #[derive(Debug, Hash)]
@@ -1094,28 +1202,30 @@ pub struct AssignmentTargetRest<'a> {
     pub target: AssignmentTarget<'a>,
 }
 
+inherit_variants! {
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum AssignmentTargetMaybeDefault<'a> {
-    AssignmentTarget(AssignmentTarget<'a>),
-    AssignmentTargetWithDefault(Box<'a, AssignmentTargetWithDefault<'a>>),
+    // `AssignmentTarget` variants added here by `inherit_variants!` macro
+    @inherit AssignmentTarget
+    AssignmentTargetWithDefault(Box<'a, AssignmentTargetWithDefault<'a>>) = 16,
+}
 }
 
 impl<'a> AssignmentTargetMaybeDefault<'a> {
     pub fn name(&self) -> Option<Atom> {
-        let target = match self {
-            Self::AssignmentTarget(target) => target,
-            Self::AssignmentTargetWithDefault(target) => &target.binding,
-        };
-
-        if let AssignmentTarget::SimpleAssignmentTarget(
-            SimpleAssignmentTarget::AssignmentTargetIdentifier(id),
-        ) = target
-        {
-            Some(id.name.clone())
-        } else {
-            None
+        match self {
+            AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id.name.clone()),
+            Self::AssignmentTargetWithDefault(target) => {
+                if let AssignmentTarget::AssignmentTargetIdentifier(id) = &target.binding {
+                    Some(id.name.clone())
+                } else {
+                    None
+                }
+            }
+            _ => None,
         }
     }
 }
@@ -1197,12 +1307,16 @@ pub struct ChainExpression<'a> {
     pub expression: ChainElement<'a>,
 }
 
+inherit_variants! {
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ChainElement<'a> {
-    CallExpression(Box<'a, CallExpression<'a>>),
-    MemberExpression(Box<'a, MemberExpression<'a>>),
+    CallExpression(Box<'a, CallExpression<'a>>) = 0,
+    // `MemberExpression` variants added here by `inherit_variants!` macro
+    @inherit MemberExpression
+}
 }
 
 /// Parenthesized Expression
@@ -1215,33 +1329,37 @@ pub struct ParenthesizedExpression<'a> {
     pub expression: Expression<'a>,
 }
 
+inherit_variants! {
 /// Statements
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Statement<'a> {
     // Statements
-    BlockStatement(Box<'a, BlockStatement<'a>>),
-    BreakStatement(Box<'a, BreakStatement<'a>>),
-    ContinueStatement(Box<'a, ContinueStatement<'a>>),
-    DebuggerStatement(Box<'a, DebuggerStatement>),
-    DoWhileStatement(Box<'a, DoWhileStatement<'a>>),
-    EmptyStatement(Box<'a, EmptyStatement>),
-    ExpressionStatement(Box<'a, ExpressionStatement<'a>>),
-    ForInStatement(Box<'a, ForInStatement<'a>>),
-    ForOfStatement(Box<'a, ForOfStatement<'a>>),
-    ForStatement(Box<'a, ForStatement<'a>>),
-    IfStatement(Box<'a, IfStatement<'a>>),
-    LabeledStatement(Box<'a, LabeledStatement<'a>>),
-    ReturnStatement(Box<'a, ReturnStatement<'a>>),
-    SwitchStatement(Box<'a, SwitchStatement<'a>>),
-    ThrowStatement(Box<'a, ThrowStatement<'a>>),
-    TryStatement(Box<'a, TryStatement<'a>>),
-    WhileStatement(Box<'a, WhileStatement<'a>>),
-    WithStatement(Box<'a, WithStatement<'a>>),
-
-    ModuleDeclaration(Box<'a, ModuleDeclaration<'a>>),
-    Declaration(Declaration<'a>),
+    BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
+    BreakStatement(Box<'a, BreakStatement<'a>>) = 1,
+    ContinueStatement(Box<'a, ContinueStatement<'a>>) = 2,
+    DebuggerStatement(Box<'a, DebuggerStatement>) = 3,
+    DoWhileStatement(Box<'a, DoWhileStatement<'a>>) = 4,
+    EmptyStatement(Box<'a, EmptyStatement>) = 5,
+    ExpressionStatement(Box<'a, ExpressionStatement<'a>>) = 6,
+    ForInStatement(Box<'a, ForInStatement<'a>>) = 7,
+    ForOfStatement(Box<'a, ForOfStatement<'a>>) = 8,
+    ForStatement(Box<'a, ForStatement<'a>>) = 9,
+    IfStatement(Box<'a, IfStatement<'a>>) = 10,
+    LabeledStatement(Box<'a, LabeledStatement<'a>>) = 11,
+    ReturnStatement(Box<'a, ReturnStatement<'a>>) = 12,
+    SwitchStatement(Box<'a, SwitchStatement<'a>>) = 13,
+    ThrowStatement(Box<'a, ThrowStatement<'a>>) = 14,
+    TryStatement(Box<'a, TryStatement<'a>>) = 15,
+    WhileStatement(Box<'a, WhileStatement<'a>>) = 16,
+    WithStatement(Box<'a, WithStatement<'a>>) = 17,
+    // `Declaration` variants added here by `inherit_variants!` macro
+    @inherit Declaration
+    // `ModuleDeclaration` variants added here by `inherit_variants!` macro
+    @inherit ModuleDeclaration
+}
 }
 
 impl<'a> Statement<'a> {
@@ -1292,21 +1410,39 @@ pub struct BlockStatement<'a> {
 }
 
 /// Declarations and the Variable Statement
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Declaration<'a> {
-    VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
-    FunctionDeclaration(Box<'a, Function<'a>>),
-    ClassDeclaration(Box<'a, Class<'a>>),
-    UsingDeclaration(Box<'a, UsingDeclaration<'a>>),
+    VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
+    FunctionDeclaration(Box<'a, Function<'a>>) = 33,
+    ClassDeclaration(Box<'a, Class<'a>>) = 34,
+    UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 35,
 
-    TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>),
-    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>),
-    TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>),
-    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>),
-    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>),
+    TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 36,
+    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 37,
+    TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 38,
+    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 39,
+    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
 }
+
+/// Macro for matching `Declaration`'s variants.
+#[macro_export]
+macro_rules! match_declaration {
+    ($ty:ident) => {
+        $ty::VariableDeclaration(_)
+            | $ty::FunctionDeclaration(_)
+            | $ty::ClassDeclaration(_)
+            | $ty::UsingDeclaration(_)
+            | $ty::TSTypeAliasDeclaration(_)
+            | $ty::TSInterfaceDeclaration(_)
+            | $ty::TSEnumDeclaration(_)
+            | $ty::TSModuleDeclaration(_)
+            | $ty::TSImportEqualsDeclaration(_)
+    };
+}
+pub use match_declaration;
 
 impl<'a> Declaration<'a> {
     pub fn is_typescript_syntax(&self) -> bool {
@@ -1493,13 +1629,17 @@ pub struct ForStatement<'a> {
     pub body: Statement<'a>,
 }
 
+inherit_variants! {
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ForStatementInit<'a> {
-    VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
-    Expression(Expression<'a>),
-    UsingDeclaration(Box<'a, UsingDeclaration<'a>>),
+    VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 64,
+    // `Expression` variants added here by `inherit_variants!` macro
+    @inherit Expression
+    UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 65,
+}
 }
 
 impl<'a> ForStatementInit<'a> {
@@ -1507,13 +1647,6 @@ impl<'a> ForStatementInit<'a> {
     ///   LetOrConst BindingList[?In, ?Yield, ?Await] ;
     pub fn is_lexical_declaration(&self) -> bool {
         matches!(self, Self::VariableDeclaration(decl) if decl.kind.is_lexical())
-    }
-
-    pub fn expression(&self) -> Option<&Expression<'a>> {
-        match self {
-            Self::Expression(e) => Some(e),
-            _ => None,
-        }
     }
 }
 
@@ -1542,13 +1675,17 @@ pub struct ForOfStatement<'a> {
     pub body: Statement<'a>,
 }
 
+inherit_variants! {
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ForStatementLeft<'a> {
-    VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
-    AssignmentTarget(AssignmentTarget<'a>),
-    UsingDeclaration(Box<'a, UsingDeclaration<'a>>),
+    VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 16,
+    // `AssignmentTarget` variants added here by `inherit_variants!` macro
+    @inherit AssignmentTarget
+    UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 17,
+}
 }
 
 impl<'a> ForStatementLeft<'a> {
@@ -2290,26 +2427,41 @@ pub struct StaticBlock<'a> {
     pub body: Vec<'a, Statement<'a>>,
 }
 
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ModuleDeclaration<'a> {
     /// import hello from './world.js';
     /// import * as t from './world.js';
-    ImportDeclaration(Box<'a, ImportDeclaration<'a>>),
+    ImportDeclaration(Box<'a, ImportDeclaration<'a>>) = 64,
     /// export * as numbers from '../numbers.js'
-    ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>),
+    ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>) = 65,
     /// export default 5;
-    ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a>>),
+    ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a>>) = 66,
     /// export {five} from './numbers.js';
     /// export {six, seven};
-    ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>),
+    ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>) = 67,
 
     /// export = 5;
-    TSExportAssignment(Box<'a, TSExportAssignment<'a>>),
+    TSExportAssignment(Box<'a, TSExportAssignment<'a>>) = 68,
     /// export as namespace React;
-    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>),
+    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
 }
+
+/// Macro for matching `ModuleDeclaration`'s variants.
+#[macro_export]
+macro_rules! match_module_declaration {
+    ($ty:ident) => {
+        $ty::ImportDeclaration(_)
+            | $ty::ExportAllDeclaration(_)
+            | $ty::ExportDefaultDeclaration(_)
+            | $ty::ExportNamedDeclaration(_)
+            | $ty::TSExportAssignment(_)
+            | $ty::TSNamespaceExportDeclaration(_)
+    };
+}
+pub use match_module_declaration;
 
 impl<'a> ModuleDeclaration<'a> {
     pub fn is_import(&self) -> bool {
@@ -2552,27 +2704,31 @@ impl<'a> ExportSpecifier<'a> {
     }
 }
 
+inherit_variants! {
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ExportDefaultDeclarationKind<'a> {
-    Expression(Expression<'a>),
-    FunctionDeclaration(Box<'a, Function<'a>>),
-    ClassDeclaration(Box<'a, Class<'a>>),
+    // `Expression` variants added here by `inherit_variants!` macro
+    @inherit Expression
 
-    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>),
-    TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>),
+    FunctionDeclaration(Box<'a, Function<'a>>) = 64,
+    ClassDeclaration(Box<'a, Class<'a>>) = 65,
+
+    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 66,
+    TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 67,
+}
 }
 
 impl<'a> ExportDefaultDeclarationKind<'a> {
     #[inline]
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
-            ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.is_typescript_syntax(),
-            ExportDefaultDeclarationKind::ClassDeclaration(class) => class.is_typescript_syntax(),
-            ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
-            | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => true,
-            ExportDefaultDeclarationKind::Expression(_) => false,
+            Self::FunctionDeclaration(func) => func.is_typescript_syntax(),
+            Self::ClassDeclaration(class) => class.is_typescript_syntax(),
+            Self::TSInterfaceDeclaration(_) | Self::TSEnumDeclaration(_) => true,
+            _ => false,
         }
     }
 }

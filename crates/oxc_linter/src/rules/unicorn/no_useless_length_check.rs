@@ -89,9 +89,7 @@ fn is_useless_check<'a>(
 
     let l = match left.without_parenthesized() {
         Expression::BinaryExpression(expr) => {
-            let Expression::MemberExpression(left_expr) = expr.left.get_inner_expression() else {
-                return None;
-            };
+            let left_expr = expr.left.get_inner_expression().as_member_expression()?;
             array_name = left_expr.object().get_identifier_reference()?.name.as_str();
             binary_expression_span = Some(expr.span);
 
@@ -115,9 +113,7 @@ fn is_useless_check<'a>(
 
     let r = match right.without_parenthesized() {
         Expression::BinaryExpression(expr) => {
-            let Expression::MemberExpression(left_expr) = expr.left.get_inner_expression() else {
-                return None;
-            };
+            let left_expr = expr.left.get_inner_expression().as_member_expression()?;
             let ident_name = left_expr.object().get_identifier_reference()?.name.as_str();
             if binary_expression_span.is_some() {
                 return None;

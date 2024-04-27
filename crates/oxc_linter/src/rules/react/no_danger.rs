@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, Expression, JSXAttributeItem, ObjectPropertyKind},
+    ast::{Argument, JSXAttributeItem, ObjectPropertyKind},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -56,9 +56,9 @@ impl Rule for NoDanger {
                     return;
                 }
 
-                let Some(Argument::Expression(props)) = call_expr.arguments.get(1) else { return };
+                let Some(props) = call_expr.arguments.get(1) else { return };
 
-                let Expression::ObjectExpression(obj_expr) = props else { return };
+                let Argument::ObjectExpression(obj_expr) = props else { return };
 
                 for prop in &obj_expr.properties {
                     if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {

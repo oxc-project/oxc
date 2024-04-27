@@ -94,7 +94,7 @@ pub fn is_hidden_from_screen_reader(ctx: &LintContext, node: &JSXOpeningElement)
         None => true,
         Some(JSXAttributeValue::StringLiteral(s)) if s.value == "true" => true,
         Some(JSXAttributeValue::ExpressionContainer(container)) => {
-            if let JSXExpression::Expression(expr) = &container.expression {
+            if let Some(expr) = container.expression.as_expression() {
                 expr.get_boolean_value().unwrap_or(false)
             } else {
                 false
@@ -110,11 +110,8 @@ pub fn object_has_accessible_child(ctx: &LintContext, node: &JSXElement<'_>) -> 
         JSXChild::Text(text) => !text.value.is_empty(),
         JSXChild::Element(el) => !is_hidden_from_screen_reader(ctx, &el.opening_element),
         JSXChild::ExpressionContainer(container) => {
-            if let JSXExpression::Expression(expr) = &container.expression {
-                !expr.is_undefined() && !expr.is_null()
-            } else {
-                false
-            }
+            !matches!(&container.expression, JSXExpression::NullLiteral(_))
+                && !container.expression.is_undefined()
         }
         _ => false,
     }) || has_jsx_prop_lowercase(&node.opening_element, "dangerouslySetInnerHTML").is_some()
@@ -169,7 +166,7 @@ const CREATE_CLASS: &str = "createReactClass";
 pub fn is_es5_component(node: &AstNode) -> bool {
     let AstKind::CallExpression(call_expr) = node.kind() else { return false };
 
-    if let Expression::MemberExpression(member_expr) = &call_expr.callee {
+    if let Some(member_expr) = call_expr.callee.as_member_expression() {
         if let Expression::Identifier(ident) = member_expr.object() {
             return ident.name == PRAGMA
                 && member_expr.static_property_name() == Some(CREATE_CLASS);
@@ -189,7 +186,7 @@ const PURE_COMPONENT: &str = "PureComponent";
 pub fn is_es6_component(node: &AstNode) -> bool {
     let AstKind::Class(class_expr) = node.kind() else { return false };
     if let Some(super_class) = &class_expr.super_class {
-        if let Expression::MemberExpression(member_expr) = super_class {
+        if let Some(member_expr) = super_class.as_member_expression() {
             if let Expression::Identifier(ident) = member_expr.object() {
                 return ident.name == PRAGMA
                     && member_expr
@@ -258,13 +255,11 @@ pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
     match value {
         JSXAttributeValue::StringLiteral(str) => str.value.parse().or(Err(())),
         JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
-            JSXExpression::Expression(Expression::StringLiteral(str)) => {
-                str.value.parse().or(Err(()))
-            }
-            JSXExpression::Expression(Expression::TemplateLiteral(tmpl)) => {
+            JSXExpression::StringLiteral(str) => str.value.parse().or(Err(())),
+            JSXExpression::TemplateLiteral(tmpl) => {
                 tmpl.quasis.first().unwrap().value.raw.parse().or(Err(()))
             }
-            JSXExpression::Expression(Expression::NumericLiteral(num)) => Ok(num.value),
+            JSXExpression::NumericLiteral(num) => Ok(num.value),
             _ => Err(()),
         },
         _ => Err(()),

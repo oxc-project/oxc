@@ -39,7 +39,7 @@ declare_oxc_lint!(
 impl Rule for NoRenderReturnValue {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
-        let Expression::MemberExpression(member_expr) = &call_expr.callee else { return };
+        let Some(member_expr) = call_expr.callee.as_member_expression() else { return };
         let Expression::Identifier(ident) = member_expr.object() else { return };
         if ident.name == "ReactDOM" {
             if let Some((property_span, property_name)) = member_expr.static_property_info() {

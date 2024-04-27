@@ -1,8 +1,5 @@
 use miette::diagnostic;
-use oxc_ast::{
-    ast::{Argument, Expression},
-    AstKind,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -60,7 +57,7 @@ impl Rule for PreferQuerySelector {
             return;
         }
 
-        let Expression::MemberExpression(member_expr) = &call_expr.callee else {
+        let Some(member_expr) = call_expr.callee.as_member_expression() else {
             return;
         };
 
@@ -71,7 +68,7 @@ impl Rule for PreferQuerySelector {
             return;
         }
 
-        let Argument::Expression(argument_expr) = call_expr.arguments.first().unwrap() else {
+        let Some(argument_expr) = call_expr.arguments[0].as_expression() else {
             return;
         };
 

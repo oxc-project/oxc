@@ -88,7 +88,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
             Self::BreakStatement(stmt) => stmt.gen(p, ctx),
             Self::ContinueStatement(stmt) => stmt.gen(p, ctx),
             Self::DebuggerStatement(stmt) => stmt.gen(p, ctx),
-            Self::Declaration(decl) => decl.gen(p, ctx),
             Self::DoWhileStatement(stmt) => stmt.gen(p, ctx),
             Self::EmptyStatement(stmt) => stmt.gen(p, ctx),
             Self::ExpressionStatement(stmt) => stmt.gen(p, ctx),
@@ -97,13 +96,14 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
             Self::ForStatement(stmt) => stmt.gen(p, ctx),
             Self::IfStatement(stmt) => stmt.gen(p, ctx),
             Self::LabeledStatement(stmt) => stmt.gen(p, ctx),
-            Self::ModuleDeclaration(decl) => decl.gen(p, ctx),
             Self::ReturnStatement(stmt) => stmt.gen(p, ctx),
             Self::SwitchStatement(stmt) => stmt.gen(p, ctx),
             Self::ThrowStatement(stmt) => stmt.gen(p, ctx),
             Self::TryStatement(stmt) => stmt.gen(p, ctx),
             Self::WhileStatement(stmt) => stmt.gen(p, ctx),
             Self::WithStatement(stmt) => stmt.gen(p, ctx),
+            match_module_declaration!(Self) => self.to_module_declaration().gen(p, ctx),
+            match_declaration!(Self) => self.to_declaration().gen(p, ctx),
         }
     }
 }
@@ -226,8 +226,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatement<'a> {
             let ctx = Context::empty();
             match init {
                 ForStatementInit::UsingDeclaration(decl) => decl.gen(p, ctx),
-                ForStatementInit::Expression(expr) => {
-                    expr.gen_expr(p, Precedence::lowest(), ctx);
+                match_expression!(ForStatementInit) => {
+                    init.to_expression().gen_expr(p, Precedence::lowest(), ctx);
                 }
                 ForStatementInit::VariableDeclaration(var) => var.gen(p, ctx),
             }
@@ -295,17 +295,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForOfStatement<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatementLeft<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        match &self {
+        match self {
             ForStatementLeft::UsingDeclaration(var) => var.gen(p, ctx),
             ForStatementLeft::VariableDeclaration(var) => var.gen(p, ctx),
-            ForStatementLeft::AssignmentTarget(target) => {
-                let wrap = matches!(
-                    target,
-                    AssignmentTarget::SimpleAssignmentTarget(
-                        SimpleAssignmentTarget::AssignmentTargetIdentifier(identifier)
-                    ) if identifier.name == "async"
-                );
-                p.wrap(wrap, |p| target.gen(p, ctx));
+            ForStatementLeft::AssignmentTargetIdentifier(identifier) => {
+                let wrap = identifier.name == "async";
+                p.wrap(wrap, |p| self.to_assignment_target().gen(p, ctx));
+            }
+            match_assignment_target!(ForStatementLeft) => {
+                p.wrap(false, |p| self.to_assignment_target().gen(p, ctx));
             }
         }
     }
@@ -939,9 +937,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclaration<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclarationKind<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            Self::Expression(expr) => {
+            match_expression!(Self) => {
                 p.start_of_default_export = p.code_len();
-                expr.gen_expr(p, Precedence::Assign, Context::default());
+                self.to_expression().gen_expr(p, Precedence::Assign, Context::default());
                 p.print_semicolon_after_statement();
             }
             Self::FunctionDeclaration(fun) => fun.gen(p, ctx),
@@ -966,7 +964,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
             Self::StringLiteral(lit) => lit.gen(p, ctx),
             Self::Identifier(ident) => ident.gen(p, ctx),
             Self::ThisExpression(expr) => expr.gen(p, ctx),
-            Self::MemberExpression(expr) => expr.gen_expr(p, precedence, ctx),
+            match_member_expression!(Self) => {
+                self.to_member_expression().gen_expr(p, precedence, ctx);
+            }
             Self::CallExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::ArrayExpression(expr) => expr.gen(p, ctx),
             Self::ObjectExpression(expr) => expr.gen_expr(p, precedence, ctx),
@@ -1383,7 +1383,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Argument<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
             Self::SpreadElement(elem) => elem.gen(p, ctx),
-            Self::Expression(elem) => elem.gen_expr(p, Precedence::Assign, Context::default()),
+            match_expression!(Self) => {
+                self.to_expression().gen_expr(p, Precedence::Assign, Context::default());
+            }
         }
     }
 }
@@ -1391,7 +1393,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Argument<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayExpressionElement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            Self::Expression(expr) => expr.gen_expr(p, Precedence::Assign, Context::default()),
+            match_expression!(Self) => {
+                self.to_expression().gen_expr(p, Precedence::Assign, Context::default());
+            }
             Self::SpreadElement(elem) => elem.gen(p, ctx),
             Self::Elision(_span) => {}
         }
@@ -1521,9 +1525,11 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyKey<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            Self::Identifier(ident) => ident.gen(p, ctx),
+            Self::StaticIdentifier(ident) => ident.gen(p, ctx),
             Self::PrivateIdentifier(ident) => ident.gen(p, ctx),
-            Self::Expression(expr) => expr.gen_expr(p, Precedence::Assign, Context::default()),
+            match_expression!(Self) => {
+                self.to_expression().gen_expr(p, Precedence::Assign, Context::default());
+            }
         }
     }
 }
@@ -1727,39 +1733,24 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for AssignmentExpression<'a> {
         let n = p.code_len();
 
         let identifier_is_keyword = match &self.left {
-            AssignmentTarget::SimpleAssignmentTarget(assignment) => match assignment {
-                SimpleAssignmentTarget::AssignmentTargetIdentifier(target) => {
-                    is_keyword(target.name.as_str())
-                }
-                SimpleAssignmentTarget::MemberAssignmentTarget(target) => {
-                    let target = &**target;
-                    match target {
-                        MemberExpression::ComputedMemberExpression(expression) => {
-                            match &expression.object {
-                                Expression::Identifier(ident) => is_keyword(ident.name.as_str()),
-                                _ => false,
-                            }
-                        }
-                        MemberExpression::StaticMemberExpression(expression) => {
-                            is_keyword(expression.property.name.as_str())
-                        }
-                        MemberExpression::PrivateFieldExpression(expression) => {
-                            is_keyword(expression.field.name.as_str())
-                        }
-                    }
-                }
+            AssignmentTarget::AssignmentTargetIdentifier(target) => {
+                is_keyword(target.name.as_str())
+            }
+            AssignmentTarget::ComputedMemberExpression(expression) => match &expression.object {
+                Expression::Identifier(ident) => is_keyword(ident.name.as_str()),
                 _ => false,
             },
-            AssignmentTarget::AssignmentTargetPattern(_) => false,
+            AssignmentTarget::StaticMemberExpression(expression) => {
+                is_keyword(expression.property.name.as_str())
+            }
+            AssignmentTarget::PrivateFieldExpression(expression) => {
+                is_keyword(expression.field.name.as_str())
+            }
+            _ => false,
         };
 
         let wrap = ((p.start_of_stmt == n || p.start_of_arrow_expr == n)
-            && matches!(
-                self.left,
-                AssignmentTarget::AssignmentTargetPattern(
-                    AssignmentTargetPattern::ObjectAssignmentTarget(_)
-                )
-            ))
+            && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_)))
             || identifier_is_keyword;
         p.wrap(wrap || precedence > self.precedence(), |p| {
             self.left.gen(p, ctx);
@@ -1774,10 +1765,16 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for AssignmentExpression<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTarget<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            Self::SimpleAssignmentTarget(target) => {
-                target.gen_expr(p, Precedence::Assign, Context::default());
+            match_simple_assignment_target!(Self) => {
+                self.to_simple_assignment_target().gen_expr(
+                    p,
+                    Precedence::Assign,
+                    Context::default(),
+                );
             }
-            Self::AssignmentTargetPattern(pat) => pat.gen(p, ctx),
+            match_assignment_target_pattern!(Self) => {
+                self.to_assignment_target_pattern().gen(p, ctx);
+            }
         }
     }
 }
@@ -1786,8 +1783,8 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for SimpleAssignmentTarget<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.gen(p, ctx),
-            Self::MemberAssignmentTarget(member_expr) => {
-                member_expr.gen_expr(p, precedence, ctx);
+            match_member_expression!(Self) => {
+                self.to_member_expression().gen_expr(p, precedence, ctx);
             }
             Self::TSAsExpression(e) => e.gen_expr(p, precedence, ctx),
             Self::TSSatisfiesExpression(e) => e.expression.gen_expr(p, precedence, ctx),
@@ -1854,7 +1851,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectAssignmentTarget<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetMaybeDefault<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            Self::AssignmentTarget(target) => target.gen(p, ctx),
+            match_assignment_target!(Self) => self.to_assignment_target().gen(p, ctx),
             Self::AssignmentTargetWithDefault(target) => target.gen(p, ctx),
         }
     }
@@ -1890,15 +1887,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetPropertyIdentifier<
 impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetPropertyProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match &self.name {
-            PropertyKey::Identifier(ident) => {
+            PropertyKey::StaticIdentifier(ident) => {
                 ident.gen(p, ctx);
             }
             PropertyKey::PrivateIdentifier(ident) => {
                 ident.gen(p, ctx);
             }
-            PropertyKey::Expression(expr) => {
+            key @ match_expression!(PropertyKey) => {
                 p.print(b'[');
-                expr.gen_expr(p, Precedence::Assign, Context::default());
+                key.to_expression().gen_expr(p, Precedence::Assign, Context::default());
                 p.print(b']');
             }
         }
@@ -1988,7 +1985,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ChainExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         match &self.expression {
             ChainElement::CallExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            ChainElement::MemberExpression(expr) => expr.gen_expr(p, precedence, ctx),
+            match_member_expression!(ChainElement) => {
+                self.expression.to_member_expression().gen_expr(p, precedence, ctx);
+            }
         }
     }
 }
@@ -2142,7 +2141,7 @@ impl<const MINIFY: bool> Gen<MINIFY> for JSXEmptyExpression {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXExpression<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            Self::Expression(expr) => p.print_expression(expr),
+            match_expression!(Self) => p.print_expression(self.to_expression()),
             Self::EmptyExpression(expr) => expr.gen(p, ctx),
         }
     }
@@ -2532,15 +2531,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Decorator<'a> {
         fn need_wrap(expr: &Expression) -> bool {
             match expr {
                 // "@foo"
-                Expression::Identifier(_) => false,
-                Expression::MemberExpression(member_expr) => {
-                    // "@foo.bar"
-                    // "@(foo['bar'])"
-                    matches!(&**member_expr, MemberExpression::ComputedMemberExpression(_))
-                }
+                // "@foo.bar"
+                // "@foo.#bar"
+                Expression::Identifier(_)
+                | Expression::StaticMemberExpression(_)
+                | Expression::PrivateFieldExpression(_) => false,
                 Expression::CallExpression(call_expr) => need_wrap(&call_expr.callee),
                 // "@(foo + bar)"
                 // "@(() => {})"
+                // "@(foo['bar'])"
                 _ => true,
             }
         }

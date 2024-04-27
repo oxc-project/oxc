@@ -836,7 +836,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             ForStatementInit::VariableDeclaration(decl) => {
                 self.visit_variable_declaration(decl);
             }
-            ForStatementInit::Expression(expr) => self.visit_expression(expr),
+            match_expression!(ForStatementInit) => self.visit_expression(init.to_expression()),
         }
         self.leave_node(kind);
     }

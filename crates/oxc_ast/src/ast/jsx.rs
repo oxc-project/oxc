@@ -12,6 +12,8 @@ use tsify::Tsify;
 
 use super::{js::*, literal::*, ts::*};
 
+use super::inherit_variants;
+
 // 1.2 JSX Elements
 
 /// JSX Element
@@ -144,12 +146,23 @@ pub struct JSXExpressionContainer<'a> {
     pub expression: JSXExpression<'a>,
 }
 
+inherit_variants! {
+#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXExpression<'a> {
-    Expression(Expression<'a>),
-    EmptyExpression(JSXEmptyExpression),
+    // `Expression` variants added here by `inherit_variants!` macro
+    @inherit Expression
+    EmptyExpression(JSXEmptyExpression) = 64,
+}
+}
+
+impl<'a> JSXExpression<'a> {
+    /// Determines whether the given expr is a `undefined` literal
+    pub fn is_undefined(&self) -> bool {
+        matches!(self, Self::Identifier(ident) if ident.name == "undefined")
+    }
 }
 
 #[derive(Debug, Hash)]

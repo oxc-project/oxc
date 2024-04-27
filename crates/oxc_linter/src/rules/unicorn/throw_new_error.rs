@@ -1,5 +1,8 @@
 use lazy_static::lazy_static;
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{
+    ast::{match_member_expression, Expression},
+    AstKind,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -60,17 +63,18 @@ impl Rule for ThrowNewError {
             return;
         };
 
-        match &call_expr.callee.without_parenthesized() {
+        match call_expr.callee.without_parenthesized() {
             Expression::Identifier(v) => {
                 if !CUSTOM_ERROR_REGEX_PATTERN.is_match(&v.name) {
                     return;
                 }
             }
-            Expression::MemberExpression(v) => {
-                if v.is_computed() {
+            callee @ match_member_expression!(Expression) => {
+                let member_expr = callee.to_member_expression();
+                if member_expr.is_computed() {
                     return;
                 }
-                if let Some(v) = v.static_property_name() {
+                if let Some(v) = member_expr.static_property_name() {
                     if !CUSTOM_ERROR_REGEX_PATTERN.is_match(v) {
                         return;
                     }

@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, Expression, MemberExpression},
+    ast::{Expression, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -125,7 +125,7 @@ impl Rule for PreferRegexpTest {
                     return;
                 }
 
-                if let Argument::Expression(expr) = &call_expr.arguments[0] {
+                if let Some(expr) = call_expr.arguments[0].as_expression() {
                     if expr.is_literal() && !matches!(expr, Expression::RegExpLiteral(_)) {
                         return;
                     }

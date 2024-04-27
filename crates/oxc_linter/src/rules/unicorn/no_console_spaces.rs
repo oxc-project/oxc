@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{Argument, Expression},
-    AstKind,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -66,7 +63,7 @@ impl Rule for NoConsoleSpaces {
         let call_expr_arg_len = call_expr.arguments.len();
 
         for (i, arg) in call_expr.arguments.iter().enumerate() {
-            if let Argument::Expression(expression_arg) = &arg {
+            if let Some(expression_arg) = arg.as_expression() {
                 let (literal_raw, is_template_lit) = match expression_arg {
                     Expression::StringLiteral(string_lit) => {
                         let literal_raw = string_lit.value.as_str();
