@@ -13,7 +13,7 @@ use crate::{context::Ctx, utils::is_valid_identifier};
 
 pub struct TypeScriptEnum<'a> {
     ctx: Ctx<'a>,
-    enums: FxHashMap<Atom<'a>, FxHashMap<Atom<'a>, NumbericAndString>>,
+    enums: FxHashMap<Atom<'a>, FxHashMap<Atom<'a>, ConstantValue>>,
 }
 
 impl<'a> TypeScriptEnum<'a> {
@@ -118,7 +118,7 @@ impl<'a> TypeScriptEnum<'a> {
         enum_name: &Atom<'a>,
     ) -> Vec<'a, Statement<'a>> {
         let mut statements = self.ctx.ast.new_vec();
-        let mut prev_constant_value = Some(NumbericAndString::I64(-1));
+        let mut prev_constant_value = Some(ConstantValue::I64(-1));
 
         let mut previous_enum_members =
             self.enums.entry(enum_name.clone()).or_insert(FxHashMap::default()).clone();
@@ -146,26 +146,26 @@ impl<'a> TypeScriptEnum<'a> {
                     Some(constant_value) => {
                         previous_enum_members.insert(member_name.clone(), constant_value.clone());
                         match constant_value {
-                            NumbericAndString::F64(v) => {
-                                prev_constant_value = Some(NumbericAndString::F64(v));
+                            ConstantValue::F64(v) => {
+                                prev_constant_value = Some(ConstantValue::F64(v));
                                 self.get_numeric_literal_expression_f64(v)
                             }
-                            NumbericAndString::I64(v) => {
-                                prev_constant_value = Some(NumbericAndString::I64(v));
+                            ConstantValue::I64(v) => {
+                                prev_constant_value = Some(ConstantValue::I64(v));
                                 self.get_numeric_literal_expression_i64(v)
                             }
-                            NumbericAndString::String(str) => {
+                            ConstantValue::String(str) => {
                                 prev_constant_value = None;
                                 self.ctx.ast.literal_string_expression(StringLiteral {
                                     span: SPAN,
                                     value: self.ctx.ast.new_atom(&str),
                                 })
                             }
-                            NumbericAndString::Numberic((_, value)) => {
-                                prev_constant_value = Some(NumbericAndString::F64(value));
+                            ConstantValue::Numberic((_, value)) => {
+                                prev_constant_value = Some(ConstantValue::F64(value));
                                 self.get_numeric_literal_expression_f64(value)
                             }
-                            NumbericAndString::Identifier(ident) => {
+                            ConstantValue::Identifier(ident) => {
                                 prev_constant_value = None;
                                 self.ctx.ast.identifier_reference_expression(
                                     IdentifierReference::new(SPAN, self.ctx.ast.new_atom(&ident)),
@@ -178,16 +178,16 @@ impl<'a> TypeScriptEnum<'a> {
                 init
             } else if let Some(value) = prev_constant_value {
                 match value {
-                    NumbericAndString::I64(value) => {
+                    ConstantValue::I64(value) => {
                         let value = value + 1;
-                        let constant_value = NumbericAndString::I64(value);
+                        let constant_value = ConstantValue::I64(value);
                         prev_constant_value = Some(constant_value.clone());
                         previous_enum_members.insert(member_name.clone(), constant_value);
                         self.get_numeric_literal_expression_i64(value)
                     }
-                    NumbericAndString::F64(value) => {
+                    ConstantValue::F64(value) => {
                         let value = value + 1.0;
-                        let constant_value = NumbericAndString::F64(value);
+                        let constant_value = ConstantValue::F64(value);
                         prev_constant_value = Some(constant_value.clone());
                         previous_enum_members.insert(member_name.clone(), constant_value);
                         self.get_numeric_literal_expression_f64(value)
@@ -475,7 +475,7 @@ impl<'a> TypeScriptEnum<'a> {
 //
 
 #[derive(Debug, Clone)]
-enum NumbericAndString {
+enum ConstantValue {
     Numberic((String, f64)),
     I64(i64),
     F64(f64),
@@ -487,17 +487,17 @@ impl<'a> TypeScriptEnum<'a> {
     fn computed_constant_value(
         &self,
         expr: &Expression<'a>,
-        prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
+        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
         // seen: &mut HashSet<Identifier>,
-    ) -> Option<NumbericAndString> {
+    ) -> Option<ConstantValue> {
         self.evaluate(&expr, prev_members)
     }
 
     fn evalaute_ref(
         &self,
         expr: &Expression<'a>,
-        prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
-    ) -> Option<NumbericAndString> {
+        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+    ) -> Option<ConstantValue> {
         match expr {
             Expression::MemberExpression(expr) => {
                 let Expression::Identifier(ident) = expr.object() else { return None };
@@ -507,7 +507,7 @@ impl<'a> TypeScriptEnum<'a> {
             }
             Expression::Identifier(ident) => {
                 if ident.name == "Infinity" || ident.name == "NaN" {
-                    return Some(NumbericAndString::Identifier(ident.name.to_string()));
+                    return Some(ConstantValue::Identifier(ident.name.to_string()));
                 }
 
                 if let Some(value) = prev_members.get(&ident.name) {
@@ -523,25 +523,23 @@ impl<'a> TypeScriptEnum<'a> {
     fn evaluate(
         &self,
         expr: &Expression<'a>,
-        prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
-    ) -> Option<NumbericAndString> {
+        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+    ) -> Option<ConstantValue> {
         match expr {
             Expression::MemberExpression(member_expr) => self.evalaute_ref(expr, &prev_members),
             Expression::Identifier(ident) => self.evalaute_ref(expr, &prev_members),
             Expression::BinaryExpression(expr) => self.eval_binary_expression(expr, &prev_members),
             Expression::UnaryExpression(expr) => self.eval_unary_expression(expr, &prev_members),
             Expression::NumericLiteral(lit) => {
-                Some(NumbericAndString::Numberic((lit.raw.to_string(), lit.value)))
+                Some(ConstantValue::Numberic((lit.raw.to_string(), lit.value)))
             }
-            Expression::StringLiteral(lit) => {
-                Some(NumbericAndString::String(lit.value.to_string()))
-            }
+            Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value.to_string())),
             Expression::TemplateLiteral(lit) => {
                 let mut value = String::new();
                 for part in &lit.quasis {
                     value.push_str(&part.value.raw);
                 }
-                Some(NumbericAndString::String(value))
+                Some(ConstantValue::String(value))
             }
             _ => None,
         }
@@ -551,67 +549,65 @@ impl<'a> TypeScriptEnum<'a> {
     fn eval_binary_expression(
         &self,
         expr: &BinaryExpression<'a>,
-        prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
-    ) -> Option<NumbericAndString> {
+        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+    ) -> Option<ConstantValue> {
         let left = self.evaluate(&expr.left, prev_members)?;
         let right = self.evaluate(&expr.right, prev_members)?;
 
         if matches!(expr.operator, BinaryOperator::Addition)
-            && (matches!(left, NumbericAndString::String(_))
-                || matches!(right, NumbericAndString::String(_)))
+            && (matches!(left, ConstantValue::String(_))
+                || matches!(right, ConstantValue::String(_)))
         {
             let left_string = match left {
-                NumbericAndString::Numberic(left) => left.0.to_string(),
-                NumbericAndString::String(left) => left,
-                NumbericAndString::I64(v) => v.to_string(),
-                NumbericAndString::F64(v) => v.to_string(),
-                NumbericAndString::Identifier(_) => unreachable!(),
+                ConstantValue::Numberic(left) => left.0.to_string(),
+                ConstantValue::String(left) => left,
+                ConstantValue::I64(v) => v.to_string(),
+                ConstantValue::F64(v) => v.to_string(),
+                ConstantValue::Identifier(_) => unreachable!(),
             };
 
             let right_string = match right {
-                NumbericAndString::Numberic(right) => right.0.to_string(),
-                NumbericAndString::String(right) => right,
-                NumbericAndString::I64(v) => v.to_string(),
-                NumbericAndString::F64(v) => v.to_string(),
-                NumbericAndString::Identifier(_) => unreachable!(),
+                ConstantValue::Numberic(right) => right.0.to_string(),
+                ConstantValue::String(right) => right,
+                ConstantValue::I64(v) => v.to_string(),
+                ConstantValue::F64(v) => v.to_string(),
+                ConstantValue::Identifier(_) => unreachable!(),
             };
 
-            return Some(NumbericAndString::String(format!("{left_string}{right_string}")));
+            return Some(ConstantValue::String(format!("{left_string}{right_string}")));
         }
 
         let left = match left {
-            NumbericAndString::Numberic(left) => left.1,
-            NumbericAndString::String(_) => return None,
-            NumbericAndString::I64(v) => v as f64,
-            NumbericAndString::F64(v) => v,
-            NumbericAndString::Identifier(ident) => return None,
+            ConstantValue::Numberic(left) => left.1,
+            ConstantValue::String(_) => return None,
+            ConstantValue::I64(v) => v as f64,
+            ConstantValue::F64(v) => v,
+            ConstantValue::Identifier(ident) => return None,
         };
 
         let right = match right {
-            NumbericAndString::Numberic(right) => right.1,
-            NumbericAndString::String(_) => return None,
-            NumbericAndString::I64(v) => v as f64,
-            NumbericAndString::F64(v) => v,
-            NumbericAndString::Identifier(ident) => return None,
+            ConstantValue::Numberic(right) => right.1,
+            ConstantValue::String(_) => return None,
+            ConstantValue::I64(v) => v as f64,
+            ConstantValue::F64(v) => v,
+            ConstantValue::Identifier(ident) => return None,
         };
 
         match expr.operator {
-            BinaryOperator::BitwiseOR => Some(NumbericAndString::I64(left as i64 | right as i64)),
-            BinaryOperator::BitwiseAnd => Some(NumbericAndString::I64(left as i64 & right as i64)),
-            BinaryOperator::ShiftRight => Some(NumbericAndString::I64(left as i64 >> right as i64)),
+            BinaryOperator::BitwiseOR => Some(ConstantValue::I64(left as i64 | right as i64)),
+            BinaryOperator::BitwiseAnd => Some(ConstantValue::I64(left as i64 & right as i64)),
+            BinaryOperator::ShiftRight => Some(ConstantValue::I64(left as i64 >> right as i64)),
             BinaryOperator::ShiftRightZeroFill => {
-                Some(NumbericAndString::I64(left as i64 >> right as i64))
+                Some(ConstantValue::I64(left as i64 >> right as i64))
             }
-            BinaryOperator::ShiftLeft => {
-                Some(NumbericAndString::I64((left as i64) << right as i64))
-            }
-            BinaryOperator::BitwiseXOR => Some(NumbericAndString::I64(left as i64 ^ right as i64)),
-            BinaryOperator::Multiplication => Some(NumbericAndString::F64(left * right)),
-            BinaryOperator::Division => Some(NumbericAndString::F64(left / right)),
-            BinaryOperator::Addition => Some(NumbericAndString::F64(left + right)),
-            BinaryOperator::Subtraction => Some(NumbericAndString::F64(left - right)),
-            BinaryOperator::Remainder => Some(NumbericAndString::F64(left % right)),
-            BinaryOperator::Exponential => Some(NumbericAndString::F64(left.powf(right))),
+            BinaryOperator::ShiftLeft => Some(ConstantValue::I64((left as i64) << right as i64)),
+            BinaryOperator::BitwiseXOR => Some(ConstantValue::I64(left as i64 ^ right as i64)),
+            BinaryOperator::Multiplication => Some(ConstantValue::F64(left * right)),
+            BinaryOperator::Division => Some(ConstantValue::F64(left / right)),
+            BinaryOperator::Addition => Some(ConstantValue::F64(left + right)),
+            BinaryOperator::Subtraction => Some(ConstantValue::F64(left - right)),
+            BinaryOperator::Remainder => Some(ConstantValue::F64(left % right)),
+            BinaryOperator::Exponential => Some(ConstantValue::F64(left.powf(right))),
             _ => None,
         }
     }
@@ -619,23 +615,23 @@ impl<'a> TypeScriptEnum<'a> {
     fn eval_unary_expression(
         &self,
         expr: &UnaryExpression<'a>,
-        prev_members: &FxHashMap<Atom<'a>, NumbericAndString>,
-    ) -> Option<NumbericAndString> {
+        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+    ) -> Option<ConstantValue> {
         let value = self.evaluate(&expr.argument, &prev_members)?;
 
         let value = match value.clone() {
-            NumbericAndString::Numberic((_raw, value)) => value,
-            NumbericAndString::I64(value) => value as f64,
-            NumbericAndString::F64(value) => value,
-            NumbericAndString::String(value) => unreachable!(),
-            NumbericAndString::Identifier(ident) => return Some(value),
+            ConstantValue::Numberic((_raw, value)) => value,
+            ConstantValue::I64(value) => value as f64,
+            ConstantValue::F64(value) => value,
+            ConstantValue::String(value) => unreachable!(),
+            ConstantValue::Identifier(ident) => return Some(value),
         };
 
         match expr.operator {
-            UnaryOperator::UnaryPlus => Some(NumbericAndString::F64(value)),
-            UnaryOperator::UnaryNegation => Some(NumbericAndString::F64(-value)),
-            UnaryOperator::LogicalNot => Some(NumbericAndString::I64(!(value as i64))),
-            UnaryOperator::BitwiseNot => Some(NumbericAndString::I64(!(value as i64))),
+            UnaryOperator::UnaryPlus => Some(ConstantValue::F64(value)),
+            UnaryOperator::UnaryNegation => Some(ConstantValue::F64(-value)),
+            UnaryOperator::LogicalNot => Some(ConstantValue::I64(!(value as i64))),
+            UnaryOperator::BitwiseNot => Some(ConstantValue::I64(!(value as i64))),
             _ => None,
         }
     }
