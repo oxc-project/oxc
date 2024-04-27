@@ -123,6 +123,8 @@ impl<'a> TypeScriptEnum<'a> {
         let mut previous_enum_members =
             self.enums.entry(enum_name.clone()).or_insert(FxHashMap::default()).clone();
 
+        let mut prev_member_name: Option<Atom<'a>> = None;
+
         for member in members.iter_mut() {
             let (member_name, member_span) = match &member.id {
                 TSEnumMemberName::Identifier(id) => (&id.name, id.span),
@@ -137,7 +139,10 @@ impl<'a> TypeScriptEnum<'a> {
 
                 // prev_constant_value = constant_value
                 let init = match constant_value {
-                    None => self.ctx.ast.copy(initializer),
+                    None => {
+                        prev_constant_value = None;
+                        self.ctx.ast.copy(initializer)
+                    }
                     Some(constant_value) => {
                         previous_enum_members.insert(member_name.clone(), constant_value.clone());
                         match constant_value {
@@ -150,6 +155,7 @@ impl<'a> TypeScriptEnum<'a> {
                                 self.get_numeric_literal_expression_i64(v)
                             }
                             NumbericAndString::String(str) => {
+                                prev_constant_value = None;
                                 self.ctx.ast.literal_string_expression(StringLiteral {
                                     span: SPAN,
                                     value: self.ctx.ast.new_atom(&str),
@@ -160,7 +166,7 @@ impl<'a> TypeScriptEnum<'a> {
                                 self.get_numeric_literal_expression_f64(value)
                             }
                             NumbericAndString::Identifier(ident) => {
-                                println!("{:?}", ident);
+                                prev_constant_value = None;
                                 self.ctx.ast.identifier_reference_expression(
                                     IdentifierReference::new(SPAN, self.ctx.ast.new_atom(&ident)),
                                 )
@@ -170,44 +176,57 @@ impl<'a> TypeScriptEnum<'a> {
                 };
 
                 init
-            } else {
-                match prev_constant_value {
-                    Some(value) => match value {
-                        NumbericAndString::I64(value) => {
-                            let value = value + 1;
-                            let constant_value = NumbericAndString::I64(value);
-                            prev_constant_value = Some(constant_value.clone());
-                            previous_enum_members.insert(member_name.clone(), constant_value);
-                            self.get_numeric_literal_expression_i64(value)
-                        }
-                        NumbericAndString::F64(value) => {
-                            let value = value + 1.0;
-                            let constant_value = NumbericAndString::F64(value);
-                            prev_constant_value = Some(constant_value.clone());
-                            previous_enum_members.insert(member_name.clone(), constant_value);
-                            self.get_numeric_literal_expression_f64(value)
-                        }
-                        _ => {
-                            unreachable!()
-                        }
-                    },
-                    None => todo!(),
+            } else if let Some(value) = prev_constant_value {
+                match value {
+                    NumbericAndString::I64(value) => {
+                        let value = value + 1;
+                        let constant_value = NumbericAndString::I64(value);
+                        prev_constant_value = Some(constant_value.clone());
+                        previous_enum_members.insert(member_name.clone(), constant_value);
+                        self.get_numeric_literal_expression_i64(value)
+                    }
+                    NumbericAndString::F64(value) => {
+                        let value = value + 1.0;
+                        let constant_value = NumbericAndString::F64(value);
+                        prev_constant_value = Some(constant_value.clone());
+                        previous_enum_members.insert(member_name.clone(), constant_value);
+                        self.get_numeric_literal_expression_f64(value)
+                    }
+                    _ => {
+                        unreachable!()
+                    }
                 }
+            } else if let Some(prev_member_name) = prev_member_name {
+                let self_ref = {
+                    let obj = self.ctx.ast.identifier_reference_expression(
+                        IdentifierReference::new(SPAN, enum_name.clone()),
+                    );
+                    let expr = self
+                        .ctx
+                        .ast
+                        .literal_string_expression(StringLiteral::new(SPAN, prev_member_name));
+                    self.ctx.ast.computed_member_expression(SPAN, obj, expr, false)
+                };
+
+                // 1 + Foo["x"]
+                let one = self.ctx.ast.literal_number_expression(NumericLiteral {
+                    span: SPAN,
+                    value: 1.0,
+                    raw: "1",
+                    base: NumberBase::Decimal,
+                });
+
+                self.ctx.ast.binary_expression(SPAN, one, BinaryOperator::Addition, self_ref)
+            } else {
+                self.ctx.ast.literal_number_expression(NumericLiteral {
+                    span: SPAN,
+                    value: 0.0,
+                    raw: "0",
+                    base: NumberBase::Decimal,
+                })
             };
 
             let is_str = init.is_string_literal();
-
-            let mut self_ref = {
-                let obj = self.ctx.ast.identifier_reference_expression(IdentifierReference::new(
-                    SPAN,
-                    enum_name.clone(),
-                ));
-                let expr = self
-                    .ctx
-                    .ast
-                    .literal_string_expression(StringLiteral::new(SPAN, member_name.clone()));
-                self.ctx.ast.computed_member_expression(SPAN, obj, expr, false)
-            };
 
             // Foo["x"] = init
             let member_expr = {
@@ -247,19 +266,8 @@ impl<'a> TypeScriptEnum<'a> {
                 );
             }
 
+            prev_member_name = Some(member_name.clone());
             statements.push(self.ctx.ast.expression_statement(member.span, expr));
-
-            // 1 + Foo["x"]
-            // default_init = {
-            //     let one = self.ctx.ast.literal_number_expression(NumericLiteral {
-            //         span: SPAN,
-            //         value: 1.0,
-            //         raw: "1",
-            //         base: NumberBase::Decimal,
-            //     });
-
-            //     self.ctx.ast.binary_expression(SPAN, one, BinaryOperator::Addition, self_ref)
-            // };
         }
 
         self.enums.insert(enum_name.clone(), previous_enum_members.clone());
