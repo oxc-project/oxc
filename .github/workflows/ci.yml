@@ -242,7 +242,7 @@ jobs:
         with:
           tool: just
 
-      - name: Coverage and check diff
+      - name: Check Conformance
         if: steps.filter.outputs.src == 'true'
         run: |
           just coverage
