@@ -19,10 +19,16 @@ use crate::{context::LintContext, rule::Rule, typecheck::requests::NodeRequest, 
 #[diagnostic(severity(warning), help("{1:?}"))]
 struct NoFloatingPromisesDiagnostic(String, String, #[label] pub Span);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct NoFloatingPromises {
     ignore_iife: bool,
     ignore_void: bool,
+}
+
+impl Default for NoFloatingPromises {
+    fn default() -> Self {
+        Self { ignore_iife: false, ignore_void: true }
+    }
 }
 
 declare_oxc_lint!(
@@ -98,7 +104,7 @@ impl Rule for NoFloatingPromises {
             PromiseState::Unhandled => {
                 if self.ignore_void {
                     (
-                      "Promises must be awaited, end with a call to .catch, or end with a call to .then with a rejection handler  or be explicitly marked as ignored with the `void` operator.",
+                      "Promises must be awaited, end with a call to .catch, or end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.",
                       "Add void operator to ignore."
                     )
                 } else {
@@ -111,7 +117,7 @@ impl Rule for NoFloatingPromises {
             PromiseState::UnhandledNonFunctionHandler => {
                 if self.ignore_void {
                     (
-                  "Promises must be awaited, end with a call to .catch, or end with a call to .then with a rejection handler  or be explicitly marked as ignored with the `void` operator. A rejection handler that is not a function will be ignored.",
+                  "Promises must be awaited, end with a call to .catch, or end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator. A rejection handler that is not a function will be ignored.",
                   "Add void operator to ignore."
                 )
                 } else {
@@ -270,7 +276,8 @@ impl NoFloatingPromises {
 
 fn is_async_iife<'a>(node: &ExpressionStatement<'a>) -> bool {
     let Expression::CallExpression(ref expr) = node.expression else { return false };
-    expr.callee.is_function()
+    let Expression::ParenthesizedExpression(ref callee) = expr.callee else { return false };
+    callee.expression.is_function()
 }
 
 fn get_rejection_handler_from_catch_call<'a, 'b>(
@@ -301,10 +308,10 @@ fn get_rejection_handler_from_then_call<'a, 'b>(
             MemberExpression::ComputedMemberExpression(expr)
                 if expr.expression.is_specific_string_literal("then") =>
             {
-                node.arguments.get(2)
+                node.arguments.get(1)
             }
             MemberExpression::StaticMemberExpression(expr) if expr.property.name == "then" => {
-                node.arguments.get(2)
+                node.arguments.get(1)
             }
             _ => None,
         }
@@ -762,6 +769,7 @@ fn test() {
                   ",
             Some(serde_json::json!([{ "ignoreIIFE": true }])),
         ),
+        // TODO: ignore promises in return statements
         (
             "
                     const foo = () =>
