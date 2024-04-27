@@ -1,4 +1,4 @@
-use crate::ast::*;
+use crate::{ast::*, dummy};
 
 /// [`PrivateBoundIdentifiers`](https://tc39.es/ecma262/#sec-static-semantics-privateboundidentifiers)
 pub trait PrivateBoundIdentifiers {
@@ -12,6 +12,7 @@ impl<'a> PrivateBoundIdentifiers for ClassElement<'a> {
             ClassElement::MethodDefinition(def) => def.private_bound_identifiers(),
             ClassElement::PropertyDefinition(def) => def.private_bound_identifiers(),
             ClassElement::AccessorProperty(def) => def.private_bound_identifiers(),
+            ClassElement::Dummy => dummy!(),
         }
     }
 }

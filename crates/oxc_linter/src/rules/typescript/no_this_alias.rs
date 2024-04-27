@@ -1,6 +1,6 @@
 use oxc_ast::{
     ast::{match_simple_assignment_target, AssignmentTarget, BindingPatternKind, Expression},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -150,6 +150,7 @@ impl Rule for NoThisAlias {
                             }
                         }
                     }
+                    AssignmentTarget::Dummy => dummy!(unreachable),
                 }
             }
             _ => {}

@@ -2,12 +2,15 @@
 //!
 //! * <https://github.com/guybedford/es-module-lexer>
 
-use oxc_ast::visit::walk::{
-    walk_export_all_declaration, walk_export_named_declaration, walk_import_declaration,
-    walk_import_expression, walk_meta_property, walk_module_declaration, walk_statement,
-};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, syntax_directed_operations::BoundNames, Visit};
+use oxc_ast::{
+    dummy,
+    visit::walk::{
+        walk_export_all_declaration, walk_export_named_declaration, walk_import_declaration,
+        walk_import_expression, walk_meta_property, walk_module_declaration, walk_statement,
+    },
+};
 use oxc_span::{Atom, GetSpan};
 
 #[derive(Debug, Clone)]
@@ -223,10 +226,11 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
                 ModuleExportName::Identifier(ident) => (ident.span.start, ident.span.end),
                 // +1 -1 to remove the string quotes
                 ModuleExportName::StringLiteral(s) => (s.span.start + 1, s.span.end - 1),
+                ModuleExportName::Dummy => dummy!(),
             };
             ExportSpecifier {
-                n: s.exported.name().clone(),
-                ln: decl.source.is_none().then(|| s.local.name().clone()),
+                n: s.exported.as_atom(),
+                ln: decl.source.is_none().then(|| s.local.as_atom()),
                 s: exported_start,
                 e: exported_end,
                 ls: Some(s.local.span().start),
@@ -247,7 +251,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
             _ => None,
         };
         self.exports.push(ExportSpecifier {
-            n: decl.exported.name().clone(),
+            n: decl.exported.as_atom(),
             ln: ln.map(|id| id.name.clone()),
             s: decl.exported.span().start,
             e: decl.exported.span().end,
@@ -259,7 +263,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
     fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration<'a>) {
         // export * as ns from 'foo'
         if let Some(exported) = &decl.exported {
-            let n = exported.name().clone();
+            let n = exported.as_atom();
             let s = exported.span().start;
             let e = exported.span().end;
             self.exports.push(ExportSpecifier { n: n.clone(), ln: None, s, e, ls: None, le: None });

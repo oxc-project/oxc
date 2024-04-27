@@ -1,7 +1,7 @@
 // Based on https://github.com/rust-lang/rust-clippy//blob/c9a43b18f11219fa70fe632b29518581fcd589c8/clippy_lints/src/operators/misrefactored_assign_op.rs
 use oxc_ast::{
     ast::{match_member_expression, AssignmentTarget, Expression, SimpleAssignmentTarget},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -127,6 +127,7 @@ fn assignment_target_eq_expr<'a>(
             SimpleAssignmentTarget::TSTypeAssertion(ts_expr) => {
                 is_same_reference(&ts_expr.expression, right_expr, ctx)
             }
+            SimpleAssignmentTarget::Dummy => dummy!(unreachable),
         };
     }
 

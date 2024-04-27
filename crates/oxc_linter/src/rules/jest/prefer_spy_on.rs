@@ -3,7 +3,7 @@ use oxc_ast::{
         Argument, AssignmentExpression, CallExpression, Expression, MemberExpression,
         SimpleAssignmentTarget,
     },
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -158,6 +158,7 @@ impl PreferSpyOn {
                 formatter.print_str(format!("\'{name}\'").as_bytes());
             }
             MemberExpression::PrivateFieldExpression(_) => (),
+            MemberExpression::Dummy => dummy!(unreachable),
         }
 
         formatter.print(b')');

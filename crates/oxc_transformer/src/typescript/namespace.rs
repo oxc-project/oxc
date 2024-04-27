@@ -3,7 +3,7 @@ use rustc_hash::FxHashSet;
 use super::TypeScript;
 
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, syntax_directed_operations::BoundNames};
+use oxc_ast::{ast::*, dummy, syntax_directed_operations::BoundNames};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 
@@ -33,10 +33,10 @@ impl<'a> TypeScript<'a> {
                         if let Some(transformed_stmt) =
                             self.handle_nested(self.ctx.ast.copy(&decl).unbox(), None)
                         {
-                            let name = decl.id.name();
+                            let name = decl.id.as_atom();
                             if names.insert(name.clone()) {
                                 new_stmts
-                                    .push(Statement::from(self.create_variable_declaration(name)));
+                                    .push(Statement::from(self.create_variable_declaration(&name)));
                             }
                             new_stmts.push(transformed_stmt);
                             continue;
@@ -53,9 +53,9 @@ impl<'a> TypeScript<'a> {
                                 if let Some(transformed_stmt) =
                                     self.handle_nested(self.ctx.ast.copy(decl), None)
                                 {
-                                    let name = decl.id.name();
+                                    let name = decl.id.as_atom();
                                     if names.insert(name.clone()) {
-                                        let declaration = self.create_variable_declaration(name);
+                                        let declaration = self.create_variable_declaration(&name);
                                         let export_named_decl = self
                                             .ctx
                                             .ast
@@ -121,7 +121,7 @@ impl<'a> TypeScript<'a> {
         parent_export: Option<Expression<'a>>,
     ) -> Option<Statement<'a>> {
         let mut names: FxHashSet<Atom<'a>> = FxHashSet::default();
-        let real_name = decl.id.name();
+        let real_name = decl.id.as_atom();
 
         let name = self.ctx.ast.new_atom(&format!("_{}", real_name.clone())); // path.scope.generateUid(realName.name);
 
@@ -144,6 +144,7 @@ impl<'a> TypeScript<'a> {
                     );
                     self.ctx.ast.new_vec_single(stmt)
                 }
+                TSModuleDeclarationBody::Dummy => dummy!(unreachable),
             }
         } else {
             self.ctx.ast.new_vec()
@@ -155,7 +156,7 @@ impl<'a> TypeScript<'a> {
         for stmt in namespace_top_level {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
-                    let module_name = decl.id.name().clone();
+                    let module_name = decl.id.as_atom();
                     if let Some(transformed) = self.handle_nested(decl.unbox(), None) {
                         is_empty = false;
                         if names.insert(module_name.clone()) {
@@ -218,7 +219,7 @@ impl<'a> TypeScript<'a> {
                                 new_stmts.extend(stmts);
                             }
                             Declaration::TSModuleDeclaration(module_decl) => {
-                                let module_name = module_decl.id.name().clone();
+                                let module_name = module_decl.id.as_atom();
                                 if let Some(transformed) = self.handle_nested(
                                     module_decl.unbox(),
                                     Some(self.ctx.ast.identifier_reference_expression(
@@ -261,7 +262,7 @@ impl<'a> TypeScript<'a> {
             return None;
         }
 
-        Some(self.transform_namespace(&name, real_name, new_stmts, parent_export))
+        Some(self.transform_namespace(&name, &real_name, new_stmts, parent_export))
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`

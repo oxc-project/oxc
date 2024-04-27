@@ -5,7 +5,7 @@ use oxc_ast::{
         match_member_expression, Argument, CallExpression, Expression, IdentifierName,
         IdentifierReference, MemberExpression,
     },
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_semantic::AstNode;
 use oxc_span::{Atom, Span};
@@ -423,6 +423,7 @@ impl<'a> MemberExpressionElement<'a> {
             }
             // Jest fn chains don't have private fields, just ignore it.
             MemberExpression::PrivateFieldExpression(_) => None,
+            MemberExpression::Dummy => dummy!(unreachable),
         }
     }
     pub fn is_string_literal(&self) -> bool {

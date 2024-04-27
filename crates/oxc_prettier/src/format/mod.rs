@@ -27,7 +27,7 @@ mod ternary;
 use std::borrow::Cow;
 
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{ast::*, dummy, AstKind};
 use oxc_span::GetSpan;
 use oxc_syntax::identifier::is_identifier_name;
 
@@ -124,6 +124,7 @@ impl<'a> Format<'a> for Statement<'a> {
             Self::WithStatement(stmt) => stmt.format(p),
             match_module_declaration!(Self) => self.to_module_declaration().format(p),
             match_declaration!(Self) => self.to_declaration().format(p),
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -236,6 +237,7 @@ impl<'a> Format<'a> for ForStatementInit<'a> {
             ForStatementInit::VariableDeclaration(v) => v.format(p),
             match_expression!(ForStatementInit) => self.to_expression().format(p),
             ForStatementInit::UsingDeclaration(v) => v.format(p),
+            ForStatementInit::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -282,6 +284,7 @@ impl<'a> Format<'a> for ForStatementLeft<'a> {
             ForStatementLeft::VariableDeclaration(v) => v.format(p),
             match_assignment_target!(ForStatementLeft) => self.to_assignment_target().format(p),
             ForStatementLeft::UsingDeclaration(v) => v.format(p),
+            ForStatementLeft::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -567,6 +570,7 @@ impl<'a> Format<'a> for Declaration<'a> {
             Self::TSEnumDeclaration(decl) => decl.format(p),
             Self::TSModuleDeclaration(decl) => decl.format(p),
             Self::TSImportEqualsDeclaration(decl) => decl.format(p),
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -688,6 +692,7 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSUnionType(v) => v.format(p),
             TSType::JSDocNullableType(v) => v.format(p),
             TSType::JSDocUnknownType(v) => v.format(p),
+            TSType::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -841,6 +846,7 @@ impl<'a> Format<'a> for TSLiteralType<'a> {
             TSLiteral::StringLiteral(v) => v.format(p),
             TSLiteral::TemplateLiteral(v) => v.format(p),
             TSLiteral::UnaryExpression(v) => v.format(p),
+            TSLiteral::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -991,6 +997,7 @@ impl<'a> Format<'a> for TSModuleReference<'a> {
             TSModuleReference::IdentifierReference(it) => format!(p, it),
             TSModuleReference::QualifiedName(it) => format!(p, it),
             TSModuleReference::ExternalModuleReference(v) => v.format(p),
+            TSModuleReference::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -1000,6 +1007,7 @@ impl<'a> Format<'a> for TSTypeName<'a> {
         match self {
             TSTypeName::IdentifierReference(it) => format!(p, it),
             TSTypeName::QualifiedName(it) => format!(p, it),
+            TSTypeName::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -1106,6 +1114,7 @@ impl<'a> Format<'a> for ImportDeclarationSpecifier<'a> {
             Self::ImportSpecifier(specifier) => specifier.format(p),
             Self::ImportDefaultSpecifier(specifier) => specifier.format(p),
             Self::ImportNamespaceSpecifier(specifier) => specifier.format(p),
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -1156,6 +1165,7 @@ impl<'a> Format<'a> for ImportAttributeKey<'a> {
         match self {
             Self::Identifier(ident) => ident.format(p),
             Self::StringLiteral(literal) => literal.format(p),
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -1205,6 +1215,7 @@ impl<'a> Format<'a> for ModuleExportName<'a> {
         match self {
             Self::Identifier(ident) => ident.format(p),
             Self::StringLiteral(literal) => literal.format(p),
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -1234,6 +1245,7 @@ impl<'a> Format<'a> for ExportDefaultDeclarationKind<'a> {
             Self::ClassDeclaration(decl) => decl.format(p),
             Self::TSInterfaceDeclaration(decl) => decl.format(p),
             Self::TSEnumDeclaration(decl) => decl.format(p),
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -1281,6 +1293,7 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::TSTypeAssertion(expr) => expr.expression.format(p),
             Self::TSNonNullExpression(expr) => expr.expression.format(p),
             Self::TSInstantiationExpression(expr) => expr.expression.format(p),
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -1440,6 +1453,7 @@ impl<'a> Format<'a> for MemberExpression<'a> {
                 Self::ComputedMemberExpression(expr) => expr.format(p),
                 Self::StaticMemberExpression(expr) => expr.format(p),
                 Self::PrivateFieldExpression(expr) => expr.format(p),
+                Self::Dummy => dummy!(unreachable),
             }
         })
     }
@@ -1498,6 +1512,7 @@ impl<'a> Format<'a> for Argument<'a> {
         match self {
             match_expression!(Self) => self.to_expression().format(p),
             Self::SpreadElement(expr) => expr.format(p),
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -1508,6 +1523,7 @@ impl<'a> Format<'a> for ArrayExpressionElement<'a> {
             Self::SpreadElement(expr) => expr.format(p),
             match_expression!(Self) => self.to_expression().format(p),
             Self::Elision(elision) => Doc::Str(""),
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -1537,6 +1553,7 @@ impl<'a> Format<'a> for ObjectPropertyKind<'a> {
         match self {
             ObjectPropertyKind::ObjectProperty(prop) => prop.format(p),
             ObjectPropertyKind::SpreadProperty(prop) => prop.format(p),
+            ObjectPropertyKind::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -1611,6 +1628,7 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                 PropertyKey::StaticIdentifier(ident) => ident.format(p),
                 PropertyKey::PrivateIdentifier(ident) => ident.format(p),
                 match_expression!(PropertyKey) => self.to_expression().format(p),
+                PropertyKey::Dummy => dummy!(unreachable),
             };
             parts.push(doc);
             parts.push(ss!("]"));
@@ -1626,6 +1644,7 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                             property::is_property_key_has_quote(&p.key)
                         }
                         ObjectPropertyKind::SpreadProperty(_) => false,
+                        ObjectPropertyKind::Dummy => dummy!(unreachable),
                     }),
                     Some(AstKind::ClassBody(a)) => a.body.iter().any(|x| match x {
                         ClassElement::PropertyDefinition(p) => {
@@ -1673,6 +1692,7 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                     array!(p, ss!("["), ident.format(p), ss!("]"))
                 }
                 match_expression!(PropertyKey) => self.to_expression().format(p),
+                PropertyKey::Dummy => dummy!(unreachable),
             }
         })
     }
@@ -1796,6 +1816,7 @@ impl<'a> Format<'a> for AssignmentTarget<'a> {
         match self {
             match_simple_assignment_target!(Self) => self.to_simple_assignment_target().format(p),
             match_assignment_target_pattern!(Self) => self.to_assignment_target_pattern().format(p),
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -1809,6 +1830,7 @@ impl<'a> Format<'a> for SimpleAssignmentTarget<'a> {
             Self::TSSatisfiesExpression(expr) => expr.expression.format(p),
             Self::TSNonNullExpression(expr) => expr.expression.format(p),
             Self::TSTypeAssertion(expr) => expr.expression.format(p),
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -1818,6 +1840,7 @@ impl<'a> Format<'a> for AssignmentTargetPattern<'a> {
         match self {
             Self::ArrayAssignmentTarget(target) => target.format(p),
             Self::ObjectAssignmentTarget(target) => target.format(p),
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -1835,6 +1858,7 @@ impl<'a> Format<'a> for AssignmentTargetMaybeDefault<'a> {
                 self.to_assignment_target().format(p)
             }
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(v) => v.format(p),
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -1856,6 +1880,7 @@ impl<'a> Format<'a> for AssignmentTargetProperty<'a> {
         match self {
             Self::AssignmentTargetPropertyIdentifier(ident) => ident.format(p),
             Self::AssignmentTargetPropertyProperty(prop) => prop.format(p),
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -1990,6 +2015,7 @@ impl<'a> Format<'a> for ChainElement<'a> {
         match self {
             Self::CallExpression(expr) => expr.format(p),
             match_member_expression!(Self) => self.to_member_expression().format(p),
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -2031,6 +2057,7 @@ impl<'a> Format<'a> for ClassElement<'a> {
             ClassElement::PropertyDefinition(c) => c.format(p),
             ClassElement::AccessorProperty(c) => c.format(p),
             ClassElement::TSIndexSignature(c) => c.format(p),
+            ClassElement::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -2212,6 +2239,7 @@ impl<'a> Format<'a> for BindingPattern<'a> {
             BindingPatternKind::ObjectPattern(ref pattern) => pattern.format(p),
             BindingPatternKind::ArrayPattern(ref pattern) => pattern.format(p),
             BindingPatternKind::AssignmentPattern(ref pattern) => pattern.format(p),
+            BindingPatternKind::Dummy => dummy!(unreachable),
         });
         if let Some(typ) = &self.type_annotation {
             parts.push(array![p, ss!(": "), typ.type_annotation.format(p)]);
@@ -2340,6 +2368,7 @@ impl<'a> Format<'a> for TSSignature<'a> {
             TSSignature::TSCallSignatureDeclaration(it) => it.format(p),
             TSSignature::TSConstructSignatureDeclaration(it) => it.format(p),
             TSSignature::TSMethodSignature(it) => it.format(p),
+            TSSignature::Dummy => dummy!(unreachable),
         }
     }
 }

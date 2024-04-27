@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
-use syn::parse_macro_input;
+use syn::{parse_macro_input, Item};
 
+mod ast_node;
 mod declare_all_lint_rules;
 mod declare_oxc_lint;
 
@@ -55,4 +56,10 @@ pub fn declare_oxc_lint_test(input: TokenStream) -> TokenStream {
 pub fn declare_all_lint_rules(input: TokenStream) -> TokenStream {
     let metadata = parse_macro_input!(input as declare_all_lint_rules::AllLintRulesMeta);
     declare_all_lint_rules::declare_all_lint_rules(metadata)
+}
+
+#[proc_macro_attribute]
+pub fn ast_node(_args: TokenStream, input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as Item);
+    ast_node::ast_node(input).into()
 }

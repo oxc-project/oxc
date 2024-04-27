@@ -1,6 +1,6 @@
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -163,6 +163,7 @@ impl Rule for AnchorIsValid {
                             // pass
                             return;
                         }
+                        JSXAttributeItem::Dummy => dummy!(unreachable),
                     }
                     return;
                 }
@@ -171,6 +172,7 @@ impl Rule for AnchorIsValid {
                     jsx_el.opening_element.attributes.iter().any(|attr| match attr {
                         JSXAttributeItem::SpreadAttribute(_) => true,
                         JSXAttributeItem::Attribute(_) => false,
+                        JSXAttributeItem::Dummy => dummy!(unreachable),
                     });
                 if has_spreed_attr {
                     return;
@@ -204,6 +206,7 @@ fn check_value_is_empty(value: &JSXAttributeValue, valid_hrefs: &[String]) -> bo
             _ => false,
         },
         JSXAttributeValue::Fragment(_) => true,
+        JSXAttributeValue::Dummy => dummy!(unreachable),
     }
 }
 

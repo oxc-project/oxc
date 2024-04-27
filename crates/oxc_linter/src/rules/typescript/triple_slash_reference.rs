@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use oxc_ast::{
     ast::{Statement, TSModuleReference},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -145,6 +145,7 @@ impl Rule for TripleSlashReference {
                         }
                         TSModuleReference::IdentifierReference(_)
                         | TSModuleReference::QualifiedName(_) => {}
+                        TSModuleReference::Dummy => dummy!(unreachable),
                     },
                     Statement::ImportDeclaration(decl) => {
                         if let Some(v) = refs_for_import.get(decl.source.value.as_str()) {

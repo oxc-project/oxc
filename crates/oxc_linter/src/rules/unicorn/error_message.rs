@@ -1,6 +1,6 @@
 use oxc_ast::{
     ast::{Argument, CallExpression, Expression, NewExpression},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -72,11 +72,14 @@ impl Rule for ErrorMessage {
         let message_argument_idx = usize::from(constructor_name.as_str() == "AggregateError");
 
         // If message is `SpreadElement` or there is `SpreadElement` before message
-        if args
-            .iter()
-            .enumerate()
-            .any(|(i, arg)| i <= message_argument_idx && matches!(arg, Argument::SpreadElement(_)))
-        {
+        if args.iter().enumerate().any(|(i, arg)| {
+            i <= message_argument_idx
+                && match arg {
+                    Argument::SpreadElement(_) => true,
+                    Argument::Dummy => dummy!(unreachable),
+                    _ => false,
+                }
+        }) {
             return;
         }
 
@@ -106,6 +109,7 @@ impl Rule for ErrorMessage {
             Argument::ArrayExpression(array_expr) => {
                 ctx.diagnostic(ErrorMessageDiagnostic::NotString(array_expr.span));
             }
+            Argument::Dummy => dummy!(unreachable),
             _ => {}
         }
     }

@@ -2,7 +2,7 @@ use regex::Regex;
 
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -131,11 +131,13 @@ impl Rule for ImgRedundantAlt {
             JSXAttributeItem::SpreadAttribute(_) => {
                 return;
             }
+            JSXAttributeItem::Dummy => dummy!(unreachable),
         };
 
         let alt_attribute_name_span = match alt_attribute_name {
             JSXAttributeName::Identifier(iden) => iden.span,
             JSXAttributeName::NamespacedName(namespaced_name) => namespaced_name.span,
+            JSXAttributeName::Dummy => dummy!(unreachable),
         };
 
         match alt_attribute {

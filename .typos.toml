@@ -16,6 +16,7 @@ extend-exclude = [
   "**/*.snap",
   "pnpm-lock.yaml",
   "**/*/CHANGELOG.md",
+  "Cargo.toml",
 ]
 
 [default.extend-words]
@@ -24,6 +25,7 @@ trivia = "trivia"
 xdescribe = "xdescribe"
 seeked = "seeked"
 labeledby = "labeledby"
+ser = "ser"
 
 [default.extend-identifiers]
 IIFEs = "IIFEs"

@@ -3,6 +3,7 @@
     clippy::must_use_candidate, // must_use_candidate is too annoying for this file
     clippy::too_many_arguments,
     clippy::unused_self,
+    clippy::inconsistent_struct_constructor,
 )]
 
 use std::mem;

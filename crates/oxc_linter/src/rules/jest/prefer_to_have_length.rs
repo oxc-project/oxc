@@ -1,6 +1,6 @@
 use oxc_ast::{
     ast::{match_member_expression, CallExpression, Expression, MemberExpression},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -104,6 +104,7 @@ impl PreferToHaveLength {
                         ctx,
                     ),
                     MemberExpression::PrivateFieldExpression(_) => (),
+                    MemberExpression::Dummy => dummy!(unreachable),
                 };
             }
             Expression::CallExpression(expr_call_expr) => {

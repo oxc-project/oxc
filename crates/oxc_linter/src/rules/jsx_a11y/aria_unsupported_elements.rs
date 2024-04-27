@@ -1,4 +1,4 @@
-use oxc_ast::{ast::JSXAttributeItem, AstKind};
+use oxc_ast::{ast::JSXAttributeItem, dummy, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -52,6 +52,7 @@ impl Rule for AriaUnsupportedElements {
                     let attr = match attr {
                         JSXAttributeItem::Attribute(attr) => attr,
                         JSXAttributeItem::SpreadAttribute(_) => continue,
+                        JSXAttributeItem::Dummy => dummy!(unreachable),
                     };
                     let attr_name = get_jsx_attribute_name(&attr.name).to_lowercase();
                     if INVALID_ATTRIBUTES.contains(&attr_name) {

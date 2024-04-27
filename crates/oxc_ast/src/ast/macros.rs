@@ -903,6 +903,7 @@ macro_rules! shared_enum_variants {
                 // for `$child` and `$parent` are aligned
                 match value {
                     $($child::$variant(o) => $parent::$variant(o),)+
+                    $child::Dummy => $parent::Dummy,
                 }
             }
         }

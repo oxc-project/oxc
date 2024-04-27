@@ -21,9 +21,12 @@ doctest = false
 oxc_allocator = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_syntax    = { workspace = true }
+oxc_macros    = { workspace = true }
 
 bitflags   = { workspace = true }
 num-bigint = { workspace = true }
+
+layout_inspect = { workspace = true, features = ["unique_names"] }
 
 serde      = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }

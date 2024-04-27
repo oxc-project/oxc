@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use dashmap::mapref::one::Ref;
 use oxc_ast::{
     ast::{BindingPatternKind, Expression, IdentifierReference, MemberExpression},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -107,6 +107,7 @@ impl Rule for NoNamedAsDefaultMember {
                         MemberExpression::ComputedMemberExpression(it) => it.span,
                         MemberExpression::StaticMemberExpression(it) => it.span,
                         MemberExpression::PrivateFieldExpression(it) => it.span,
+                        MemberExpression::Dummy => dummy!(unreachable),
                     },
                     ident.name.to_string(),
                     prop_str.to_string(),

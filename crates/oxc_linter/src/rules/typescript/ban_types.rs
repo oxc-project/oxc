@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{dummy, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -58,6 +58,7 @@ impl Rule for BanTypes {
                 let name = match &typ.type_name {
                     oxc_ast::ast::TSTypeName::IdentifierReference(v) => &v.name,
                     oxc_ast::ast::TSTypeName::QualifiedName(_) => return,
+                    oxc_ast::ast::TSTypeName::Dummy => dummy!(unreachable),
                 };
 
                 match name.as_str() {

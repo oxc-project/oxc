@@ -28,6 +28,7 @@ pub(super) fn print_export_declaration<'a>(
         ModuleDeclaration::ExportNamedDeclaration(decl) => decl.format(p),
         ModuleDeclaration::TSExportAssignment(decl) => decl.format(p),
         ModuleDeclaration::TSNamespaceExportDeclaration(decl) => decl.format(p),
+        ModuleDeclaration::Dummy => Doc::Str("Dummy ModuleDeclaration"),
     });
 
     if let Some(source) = decl.source() {
@@ -61,7 +62,8 @@ fn print_semicolon_after_export_declaration<'a>(
             ExportDefaultDeclarationKind::FunctionDeclaration(_)
             | ExportDefaultDeclarationKind::ClassDeclaration(_)
             | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
-            | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => None,
+            | ExportDefaultDeclarationKind::TSEnumDeclaration(_)
+            | ExportDefaultDeclarationKind::Dummy => None,
         },
         ModuleDeclaration::ExportAllDeclaration(_)
         | ModuleDeclaration::ExportNamedDeclaration(_)

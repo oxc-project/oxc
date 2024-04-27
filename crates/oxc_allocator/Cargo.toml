@@ -23,6 +23,8 @@ allocator-api2 = { workspace = true }
 
 serde = { workspace = true, optional = true }
 
+layout_inspect = { workspace = true, features = ["unique_names"] }
+
 [dev-dependencies]
 serde      = { workspace = true }
 serde_json = { workspace = true }

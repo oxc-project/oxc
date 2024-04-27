@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, visit::walk_mut, VisitMut};
+use oxc_ast::{ast::*, dummy, visit::walk_mut, VisitMut};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
     number::{NumberBase, ToJsInt32, ToJsString},
@@ -142,6 +142,7 @@ impl<'a> TypeScriptEnum<'a> {
                 TSEnumMemberName::StaticNumericLiteral(_) | match_expression!(TSEnumMemberName) => {
                     unreachable!()
                 }
+                TSEnumMemberName::Dummy => dummy!(panic),
             };
 
             let init = if let Some(initializer) = member.initializer.as_ref() {

@@ -3,7 +3,7 @@ mod diagnostics;
 use std::rc::Rc;
 
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{ast::*, dummy, AstBuilder};
 use oxc_span::{CompactStr, GetSpan, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
@@ -419,6 +419,7 @@ impl<'a> ReactJsx<'a> {
                 let string_literal = StringLiteral::new(SPAN, name);
                 self.ast().literal_string_expression(string_literal)
             }
+            JSXElementName::Dummy => Expression::Dummy,
         }
     }
 
@@ -526,6 +527,7 @@ impl<'a> ReactJsx<'a> {
             JSXMemberExpressionObject::MemberExpression(expr) => {
                 self.transform_jsx_member_expression(expr)
             }
+            JSXMemberExpressionObject::Dummy => Expression::Dummy,
         };
         let property = IdentifierName::new(SPAN, expr.property.name.clone());
         self.ast().static_member_expression(SPAN, object, property, false)
@@ -557,6 +559,7 @@ impl<'a> ReactJsx<'a> {
                     properties.push(object_property);
                 }
             },
+            JSXAttributeItem::Dummy => dummy!(),
         }
     }
 
@@ -581,7 +584,9 @@ impl<'a> ReactJsx<'a> {
                 JSXExpression::EmptyExpression(_e) => {
                     self.ast().literal_boolean_expression(BooleanLiteral::new(SPAN, true))
                 }
+                JSXExpression::Dummy => Expression::Dummy,
             },
+            Some(JSXAttributeValue::Dummy) => Expression::Dummy,
             None => self.ast().literal_boolean_expression(BooleanLiteral::new(SPAN, true)),
         }
     }
@@ -592,6 +597,7 @@ impl<'a> ReactJsx<'a> {
             JSXChild::ExpressionContainer(e) => match &e.expression {
                 e @ match_expression!(JSXExpression) => Some(self.ast().copy(e.to_expression())),
                 JSXExpression::EmptyExpression(_) => None,
+                JSXExpression::Dummy => dummy!(),
             },
             JSXChild::Element(e) => Some(self.transform_jsx(&JSXElementOrFragment::Element(e))),
             JSXChild::Fragment(e) => Some(self.transform_jsx(&JSXElementOrFragment::Fragment(e))),
@@ -599,6 +605,7 @@ impl<'a> ReactJsx<'a> {
                 self.ctx.error(SpreadChildrenAreNotSupported(e.span));
                 None
             }
+            JSXChild::Dummy => dummy!(),
         }
     }
 
@@ -618,6 +625,7 @@ impl<'a> ReactJsx<'a> {
                 let expr = self.ast().literal_string_expression(StringLiteral::new(SPAN, name));
                 self.ast().property_key_expression(expr)
             }
+            JSXAttributeName::Dummy => PropertyKey::Dummy,
         }
     }
 

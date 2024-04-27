@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 pub enum NumberBase {
     Float,
     Decimal,
@@ -13,7 +13,7 @@ impl NumberBase {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 pub enum BigintBase {
     Decimal,
     Binary,

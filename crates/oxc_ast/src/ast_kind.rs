@@ -2,17 +2,20 @@ use oxc_span::{Atom, GetSpan, Span};
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
+use crate::dummy;
 
 macro_rules! ast_kinds {
     { $($ident:ident($type:ty),)* } => (
         #[derive(Debug, Clone, Copy)]
         pub enum AstType {
+            Dummy,
             $($ident,)*
         }
 
         /// Untyped AST Node Kind
         #[derive(Debug, Clone, Copy)]
         pub enum AstKind<'a> {
+            Dummy,
             $($ident($type),)*
         }
     )
@@ -350,6 +353,7 @@ impl<'a> AstKind<'a> {
             Expression::TSTypeAssertion(e) => Self::TSTypeAssertion(e),
             Expression::TSNonNullExpression(e) => Self::TSNonNullExpression(e),
             Expression::TSInstantiationExpression(e) => Self::TSInstantiationExpression(e),
+            Expression::Dummy => Self::Dummy,
         }
     }
 }
@@ -535,6 +539,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSNamedTupleMember(x) => x.span,
 
             Self::TSPropertySignature(x) => x.span,
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -737,6 +742,7 @@ impl<'a> AstKind<'a> {
             Self::TSNamedTupleMember(_) => "TSNamedTupleMember".into(),
 
             Self::TSPropertySignature(_) => "TSPropertySignature".into(),
+            Self::Dummy => "Dummy AstKind".into(),
         }
     }
 }

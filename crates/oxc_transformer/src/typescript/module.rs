@@ -1,5 +1,5 @@
 use oxc_allocator::Box;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, dummy};
 use oxc_span::SPAN;
 
 use super::{
@@ -22,6 +22,7 @@ impl<'a> TypeScript<'a> {
                 qualified_name.right.clone(),
                 false,
             ),
+            TSTypeName::Dummy => dummy!(panic),
         }
     }
 
@@ -61,6 +62,7 @@ impl<'a> TypeScript<'a> {
                     ));
                     self.ctx.ast.call_expression(SPAN, callee, arguments, false, None)
                 }
+                TSModuleReference::Dummy => dummy!(panic),
             };
             self.ctx.ast.new_vec_single(self.ctx.ast.variable_declarator(
                 SPAN,

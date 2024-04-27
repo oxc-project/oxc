@@ -1,4 +1,4 @@
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, dummy};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -242,5 +242,6 @@ fn should_print_semicolon_after_class_property<'a>(
 
             false
         }
+        ClassElement::Dummy => dummy!(),
     }
 }

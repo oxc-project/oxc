@@ -1,5 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, dummy};
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
@@ -265,6 +265,7 @@ impl<'a> ParserImpl<'a> {
                             ));
                         }
                     }
+                    ModuleExportName::Dummy => dummy!(),
                 }
             }
         }

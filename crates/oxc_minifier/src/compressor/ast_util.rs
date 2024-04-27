@@ -5,9 +5,12 @@ use num_traits::{One, Zero};
 use oxc_semantic::ReferenceFlag;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
 
-use oxc_ast::ast::{
-    match_expression, ArrayExpressionElement, BinaryExpression, Expression, NumericLiteral,
-    ObjectProperty, ObjectPropertyKind, PropertyKey, SpreadElement, UnaryExpression,
+use oxc_ast::{
+    ast::{
+        match_expression, ArrayExpressionElement, BinaryExpression, Expression, NumericLiteral,
+        ObjectProperty, ObjectPropertyKind, PropertyKey, SpreadElement, UnaryExpression,
+    },
+    dummy,
 };
 
 /// Code ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/NodeUtil.java#LL836C6-L836C6)
@@ -48,6 +51,7 @@ impl<'a, 'b> IsLiteralValue<'a, 'b> for ArrayExpressionElement<'a> {
             Self::SpreadElement(element) => element.is_literal_value(include_functions),
             match_expression!(Self) => self.to_expression().is_literal_value(include_functions),
             Self::Elision(_) => true,
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -63,6 +67,7 @@ impl<'a, 'b> IsLiteralValue<'a, 'b> for ObjectPropertyKind<'a> {
         match self {
             Self::ObjectProperty(method) => method.is_literal_value(include_functions),
             Self::SpreadProperty(property) => property.is_literal_value(include_functions),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -79,6 +84,7 @@ impl<'a, 'b> IsLiteralValue<'a, 'b> for PropertyKey<'a> {
         match self {
             Self::StaticIdentifier(_) | Self::PrivateIdentifier(_) => false,
             match_expression!(Self) => self.to_expression().is_literal_value(include_functions),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -189,6 +195,7 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for ArrayExpressionElement<'a> {
                 self.to_expression().check_for_state_change(check_for_new_objects)
             }
             Self::Elision(_) => false,
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -200,6 +207,7 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for ObjectPropertyKind<'a> {
             Self::SpreadProperty(spread_element) => {
                 spread_element.check_for_state_change(check_for_new_objects)
             }
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -227,6 +235,7 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for PropertyKey<'a> {
             match_expression!(Self) => {
                 self.to_expression().check_for_state_change(check_for_new_objects)
             }
+            Self::Dummy => dummy!(),
         }
     }
 }

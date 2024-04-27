@@ -1,3 +1,4 @@
+use oxc_ast::dummy;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{
     ast::*,
@@ -485,6 +486,7 @@ fn check_module_declaration<'a>(
         | ModuleDeclaration::ExportNamedDeclaration(_)
         | ModuleDeclaration::TSExportAssignment(_)
         | ModuleDeclaration::TSNamespaceExportDeclaration(_) => "export statement",
+        ModuleDeclaration::Dummy => dummy!(panic),
     };
     let start = decl.span().start;
     let span = Span::new(start, start + 6);

@@ -876,6 +876,8 @@ pub trait Visit<'a>: Sized {
 }
 
 pub mod walk {
+    use crate::dummy;
+
     use super::*;
 
     pub fn walk_program<'a, V: Visit<'a>>(visitor: &mut V, program: &Program<'a>) {
@@ -929,6 +931,7 @@ pub mod walk {
                 visitor.visit_module_declaration(stmt.to_module_declaration());
             }
             match_declaration!(Statement) => visitor.visit_declaration(stmt.to_declaration()),
+            Statement::Dummy => dummy!(),
         }
     }
 
@@ -1027,6 +1030,7 @@ pub mod walk {
                 visitor.visit_variable_declaration(decl);
             }
             match_expression!(ForStatementInit) => visitor.visit_expression(init.to_expression()),
+            ForStatementInit::Dummy => dummy!(),
         }
         visitor.leave_node(kind);
     }
@@ -1074,6 +1078,7 @@ pub mod walk {
             ForStatementLeft::UsingDeclaration(decl) => {
                 visitor.visit_using_declaration(decl);
             }
+            ForStatementLeft::Dummy => dummy!(),
         }
     }
 
@@ -1364,6 +1369,7 @@ pub mod walk {
             ClassElement::PropertyDefinition(def) => visitor.visit_property_definition(def),
             ClassElement::AccessorProperty(_def) => { /* TODO */ }
             ClassElement::TSIndexSignature(sig) => visitor.visit_ts_index_signature(sig),
+            ClassElement::Dummy => dummy!(),
         }
     }
 
@@ -1478,6 +1484,7 @@ pub mod walk {
             Expression::TSInstantiationExpression(expr) => {
                 visitor.visit_ts_instantiation_expression(expr);
             }
+            Expression::Dummy => dummy!(),
         }
     }
 
@@ -1508,6 +1515,7 @@ pub mod walk {
                 visitor.visit_expression_array_element(arg.to_expression());
             }
             ArrayExpressionElement::Elision(elision) => visitor.visit_elision(elision),
+            ArrayExpressionElement::Dummy => dummy!(),
         }
         visitor.leave_node(kind);
     }
@@ -1518,6 +1526,7 @@ pub mod walk {
         match arg {
             Argument::SpreadElement(spread) => visitor.visit_spread_element(spread),
             match_expression!(Argument) => visitor.visit_expression(arg.to_expression()),
+            Argument::Dummy => dummy!(),
         }
         visitor.leave_node(kind);
     }
@@ -1610,6 +1619,7 @@ pub mod walk {
             match_member_expression!(ChainElement) => {
                 visitor.visit_member_expression(elem.to_member_expression());
             }
+            ChainElement::Dummy => dummy!(),
         }
     }
 
@@ -1659,6 +1669,7 @@ pub mod walk {
             MemberExpression::PrivateFieldExpression(expr) => {
                 visitor.visit_private_field_expression(expr);
             }
+            MemberExpression::Dummy => dummy!(),
         }
         visitor.leave_node(kind);
     }
@@ -1716,6 +1727,7 @@ pub mod walk {
         match prop {
             ObjectPropertyKind::ObjectProperty(prop) => visitor.visit_object_property(prop),
             ObjectPropertyKind::SpreadProperty(elem) => visitor.visit_spread_element(elem),
+            ObjectPropertyKind::Dummy => dummy!(),
         }
     }
 
@@ -1736,6 +1748,7 @@ pub mod walk {
             match_expression!(PropertyKey) => {
                 visitor.visit_expression(key.to_expression());
             }
+            PropertyKey::Dummy => dummy!(),
         }
         visitor.leave_node(kind);
     }
@@ -1832,6 +1845,7 @@ pub mod walk {
             match_assignment_target_pattern!(AssignmentTarget) => {
                 visitor.visit_assignment_target_pattern(target.to_assignment_target_pattern());
             }
+            AssignmentTarget::Dummy => dummy!(),
         }
         visitor.leave_node(kind);
     }
@@ -1861,6 +1875,7 @@ pub mod walk {
             SimpleAssignmentTarget::TSTypeAssertion(expr) => {
                 visitor.visit_expression(&expr.expression);
             }
+            SimpleAssignmentTarget::Dummy => dummy!(),
         }
         visitor.leave_node(kind);
     }
@@ -1876,6 +1891,7 @@ pub mod walk {
             AssignmentTargetPattern::ObjectAssignmentTarget(target) => {
                 visitor.visit_object_assignment_target(target);
             }
+            AssignmentTargetPattern::Dummy => dummy!(),
         }
     }
 
@@ -1902,6 +1918,7 @@ pub mod walk {
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(target) => {
                 visitor.visit_assignment_target_with_default(target);
             }
+            AssignmentTargetMaybeDefault::Dummy => dummy!(),
         }
     }
 
@@ -1939,6 +1956,7 @@ pub mod walk {
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop) => {
                 visitor.visit_assignment_target_property_property(prop);
             }
+            AssignmentTargetProperty::Dummy => dummy!(),
         }
     }
 
@@ -2012,6 +2030,7 @@ pub mod walk {
             JSXElementName::Identifier(ident) => visitor.visit_jsx_identifier(ident),
             JSXElementName::NamespacedName(expr) => visitor.visit_jsx_namespaced_name(expr),
             JSXElementName::MemberExpression(expr) => visitor.visit_jsx_member_expression(expr),
+            JSXElementName::Dummy => dummy!(),
         }
         visitor.leave_node(kind);
     }
@@ -2044,6 +2063,7 @@ pub mod walk {
             JSXMemberExpressionObject::MemberExpression(expr) => {
                 visitor.visit_jsx_member_expression(expr);
             }
+            JSXMemberExpressionObject::Dummy => dummy!(),
         }
         visitor.leave_node(kind);
     }
@@ -2067,6 +2087,7 @@ pub mod walk {
             JSXAttributeItem::SpreadAttribute(attribute) => {
                 visitor.visit_jsx_spread_attribute(attribute);
             }
+            JSXAttributeItem::Dummy => dummy!(),
         }
         visitor.leave_node(kind);
     }
@@ -2095,6 +2116,7 @@ pub mod walk {
             JSXAttributeValue::Element(elem) => visitor.visit_jsx_element(elem),
             JSXAttributeValue::Fragment(elem) => visitor.visit_jsx_fragment(elem),
             JSXAttributeValue::StringLiteral(lit) => visitor.visit_string_literal(lit),
+            JSXAttributeValue::Dummy => dummy!(),
         }
     }
 
@@ -2112,6 +2134,7 @@ pub mod walk {
         match expr {
             match_expression!(JSXExpression) => visitor.visit_expression(expr.to_expression()),
             JSXExpression::EmptyExpression(_) => {}
+            JSXExpression::Dummy => dummy!(),
         }
     }
 
@@ -2131,6 +2154,7 @@ pub mod walk {
             JSXChild::ExpressionContainer(expr) => visitor.visit_jsx_expression_container(expr),
             JSXChild::Spread(expr) => visitor.visit_jsx_spread_child(expr),
             JSXChild::Text(expr) => visitor.visit_jsx_text(expr),
+            JSXChild::Dummy => dummy!(),
         }
     }
 
@@ -2154,6 +2178,7 @@ pub mod walk {
             BindingPatternKind::ObjectPattern(pat) => visitor.visit_object_pattern(pat),
             BindingPatternKind::ArrayPattern(pat) => visitor.visit_array_pattern(pat),
             BindingPatternKind::AssignmentPattern(pat) => visitor.visit_assignment_pattern(pat),
+            BindingPatternKind::Dummy => dummy!(),
         }
         if let Some(type_annotation) = &pat.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
@@ -2322,6 +2347,7 @@ pub mod walk {
                 visitor.visit_expression(&decl.expression);
             }
             ModuleDeclaration::TSNamespaceExportDeclaration(_) => {}
+            ModuleDeclaration::Dummy => dummy!(),
         }
         visitor.leave_node(kind);
     }
@@ -2365,6 +2391,7 @@ pub mod walk {
         match key {
             ImportAttributeKey::Identifier(ident) => visitor.visit_identifier_name(ident),
             ImportAttributeKey::StringLiteral(ident) => visitor.visit_string_literal(ident),
+            ImportAttributeKey::Dummy => dummy!(),
         }
     }
 
@@ -2382,6 +2409,7 @@ pub mod walk {
             ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
                 visitor.visit_import_name_specifier(specifier);
             }
+            ImportDeclarationSpecifier::Dummy => dummy!(),
         }
     }
 
@@ -2505,6 +2533,7 @@ pub mod walk {
             Declaration::TSInterfaceDeclaration(decl) => {
                 visitor.visit_ts_interface_declaration(decl);
             }
+            Declaration::Dummy => dummy!(),
         }
     }
 
@@ -2532,6 +2561,7 @@ pub mod walk {
             TSModuleReference::ExternalModuleReference(reference) => {
                 visitor.visit_ts_external_module_reference(reference);
             }
+            TSModuleReference::Dummy => dummy!(),
         }
     }
 
@@ -2541,6 +2571,7 @@ pub mod walk {
         match &name {
             TSTypeName::IdentifierReference(ident) => visitor.visit_identifier_reference(ident),
             TSTypeName::QualifiedName(name) => visitor.visit_ts_qualified_name(name),
+            TSTypeName::Dummy => dummy!(),
         }
         visitor.leave_node(kind);
     }
@@ -2572,6 +2603,7 @@ pub mod walk {
         match &decl.id {
             TSModuleDeclarationName::Identifier(ident) => visitor.visit_identifier_name(ident),
             TSModuleDeclarationName::StringLiteral(lit) => visitor.visit_string_literal(lit),
+            TSModuleDeclarationName::Dummy => dummy!(),
         }
         match &decl.body {
             Some(TSModuleDeclarationBody::TSModuleDeclaration(decl)) => {
@@ -2580,6 +2612,7 @@ pub mod walk {
             Some(TSModuleDeclarationBody::TSModuleBlock(block)) => {
                 visitor.visit_ts_module_block(block);
             }
+            Some(TSModuleDeclarationBody::Dummy) => dummy!(),
             None => {}
         }
         visitor.leave_node(kind);
@@ -2718,6 +2751,7 @@ pub mod walk {
             TSType::TSUnionType(ty) => visitor.visit_ts_union_type(ty),
             // JSDoc
             TSType::JSDocNullableType(_) | TSType::JSDocUnknownType(_) => { /* TODO */ }
+            TSType::Dummy => dummy!(),
         }
     }
 
@@ -2762,6 +2796,7 @@ pub mod walk {
             match_ts_type!(TSTupleElement) => visitor.visit_ts_type(ty.to_ts_type()),
             TSTupleElement::TSOptionalType(ty) => visitor.visit_ts_type(&ty.type_annotation),
             TSTupleElement::TSRestType(ty) => visitor.visit_ts_type(&ty.type_annotation),
+            TSTupleElement::Dummy => dummy!(),
         };
     }
 
@@ -2902,6 +2937,7 @@ pub mod walk {
             TSLiteral::StringLiteral(lit) => visitor.visit_string_literal(lit),
             TSLiteral::TemplateLiteral(lit) => visitor.visit_template_literal(lit),
             TSLiteral::UnaryExpression(expr) => visitor.visit_unary_expression(expr),
+            TSLiteral::Dummy => dummy!(),
         }
         visitor.leave_node(kind);
     }
@@ -2917,6 +2953,7 @@ pub mod walk {
             TSSignature::TSConstructSignatureDeclaration(sig) => {
                 visitor.visit_ts_construct_signature_declaration(sig);
             }
+            TSSignature::Dummy => dummy!(),
         }
     }
 
@@ -3002,6 +3039,7 @@ pub mod walk {
                 visitor.visit_ts_type_name(name.to_ts_type_name());
             }
             TSTypeQueryExprName::TSImportType(import) => visitor.visit_ts_import_type(import),
+            TSTypeQueryExprName::Dummy => dummy!(),
         }
         if let Some(type_parameters) = &ty.type_parameters {
             visitor.visit_ts_type_parameter_instantiation(type_parameters);
@@ -3049,6 +3087,7 @@ pub mod walk {
         match name {
             TSImportAttributeName::Identifier(ident) => visitor.visit_identifier_name(ident),
             TSImportAttributeName::StringLiteral(ident) => visitor.visit_string_literal(ident),
+            TSImportAttributeName::Dummy => dummy!(),
         }
     }
 

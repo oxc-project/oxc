@@ -3,7 +3,7 @@ use oxc_ast::{
         match_expression, Argument, ArrayExpression, ArrayExpressionElement, CallExpression,
         Expression,
     },
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -376,6 +376,7 @@ fn innermost_paren_arg_span(arg: &Argument) -> Span {
     match arg {
         match_expression!(Argument) => arg.to_expression().without_parenthesized().span(),
         Argument::SpreadElement(spread_elem) => spread_elem.argument.span(),
+        Argument::Dummy => dummy!(unreachable),
     }
 }
 

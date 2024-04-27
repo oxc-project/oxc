@@ -3,7 +3,7 @@ use oxc_ast::{
         match_member_expression, ChainElement, Expression, MemberExpression, MethodDefinitionKind,
         ObjectProperty, PropertyKind,
     },
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -100,6 +100,7 @@ impl GetterReturn {
                 ChainElement::CallExpression(_) => {
                     false // todo: make a test for this
                 }
+                ChainElement::Dummy => dummy!(unreachable),
             },
             _ => false,
         }

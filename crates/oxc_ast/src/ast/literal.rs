@@ -9,6 +9,7 @@ use std::{
 };
 
 use bitflags::bitflags;
+use oxc_macros::ast_node;
 use oxc_span::{Atom, Span};
 use oxc_syntax::number::{BigintBase, NumberBase};
 #[cfg(feature = "serialize")]
@@ -16,6 +17,7 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
+#[ast_node]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -39,6 +41,7 @@ impl BooleanLiteral {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -59,6 +62,8 @@ impl NullLiteral {
     }
 }
 
+// TODO: clone should only be removed from traversable version.
+#[ast_node]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -110,6 +115,7 @@ impl<'a> Hash for NumericLiteral<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -127,6 +133,7 @@ impl<'a> BigIntLiteral<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -139,7 +146,7 @@ pub struct RegExpLiteral<'a> {
     pub regex: RegExp<'a>,
 }
 
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct RegExp<'a> {
     pub pattern: Atom<'a>,
@@ -230,10 +237,33 @@ impl fmt::Display for RegExpFlags {
     }
 }
 
-#[derive(Debug, Clone, Hash)]
+impl layout_inspect::Inspect for RegExpFlags {
+    fn name() -> String {
+        "RegExpFlags".to_string()
+    }
+
+    fn size() -> Option<usize> {
+        Some(std::mem::size_of::<Self>())
+    }
+
+    fn align() -> Option<usize> {
+        Some(std::mem::align_of::<Self>())
+    }
+
+    fn def(_collector: &mut layout_inspect::TypesCollector) -> layout_inspect::defs::DefType {
+        layout_inspect::defs::DefType::Primitive(layout_inspect::defs::DefPrimitive {
+            name: <Self as layout_inspect::Inspect>::name(),
+            size: <Self as layout_inspect::Inspect>::size().unwrap(),
+            align: <Self as layout_inspect::Inspect>::align().unwrap(),
+        })
+    }
+}
+
+#[derive(Debug, Clone, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct EmptyObject;
 
+#[ast_node]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]

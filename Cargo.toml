@@ -166,6 +166,7 @@ serde_yaml          = "0.9.34"
 similar             = "2.5.0"
 textwrap            = "0.16.0"
 unicode-width       = "0.1.12"
+layout_inspect      = { git = "https://github.com/overlookmotel/layout_inspect", rev = "5ba0afe" }
 
 [workspace.metadata.cargo-shear]
 ignored = ["napi"]

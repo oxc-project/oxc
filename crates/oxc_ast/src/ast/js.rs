@@ -4,6 +4,7 @@
 use std::{cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, Vec};
+use oxc_macros::ast_node;
 use oxc_span::{Atom, CompactStr, SourceType, Span};
 use oxc_syntax::{
     operator::{
@@ -16,6 +17,9 @@ use oxc_syntax::{
 use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
+
+use crate::traverse::{SharedBox, SharedVec};
+use crate::{dummy, traverse::ast::*};
 
 use super::inherit_variants;
 use super::{jsx::*, literal::*, ts::*};
@@ -37,6 +41,7 @@ export interface FormalParameterRest extends Span {
 }
 "#;
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -65,6 +70,7 @@ inherit_variants! {
 /// Expression
 ///
 /// Inherits variants from [`MemberExpression`].
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -389,7 +395,7 @@ impl<'a> Expression<'a> {
 }
 
 /// Identifier Name
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Identifier"))]
 pub struct IdentifierName<'a> {
@@ -405,6 +411,7 @@ impl<'a> IdentifierName<'a> {
 }
 
 /// Identifier Reference
+#[ast_node]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Identifier"))]
@@ -432,6 +439,7 @@ impl<'a> IdentifierReference<'a> {
 }
 
 /// Binding Identifier
+#[ast_node]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Identifier"))]
@@ -457,6 +465,7 @@ impl<'a> BindingIdentifier<'a> {
 }
 
 /// Label Identifier
+#[ast_node]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Identifier"))]
@@ -467,6 +476,7 @@ pub struct LabelIdentifier<'a> {
 }
 
 /// This Expression
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -476,6 +486,7 @@ pub struct ThisExpression {
 }
 
 /// <https://tc39.es/ecma262/#prod-ArrayLiteral>
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -494,6 +505,7 @@ inherit_variants! {
 /// Array Expression Element
 ///
 /// Inherits variants from [`Expression`].
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
@@ -516,12 +528,14 @@ impl<'a> ArrayExpressionElement<'a> {
 
 /// Array Expression Elision Element
 /// Serialized as `null` in JSON AST. See `serialize.rs`.
+#[ast_node]
 #[derive(Debug, Clone, Hash)]
 pub struct Elision {
     pub span: Span,
 }
 
 /// Object Expression
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -540,6 +554,7 @@ impl<'a> ObjectExpression<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -548,16 +563,17 @@ pub enum ObjectPropertyKind<'a> {
     SpreadProperty(Box<'a, SpreadElement<'a>>),
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ObjectProperty<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub kind: PropertyKind,
     pub key: PropertyKey<'a>,
     pub value: Expression<'a>,
     pub init: Option<Expression<'a>>, // for `CoverInitializedName`
+    pub kind: PropertyKind,
     pub method: bool,
     pub shorthand: bool,
     pub computed: bool,
@@ -567,6 +583,7 @@ inherit_variants! {
 /// Property Key
 ///
 /// Inherits variants from [`Expression`].
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -634,7 +651,7 @@ impl<'a> PropertyKey<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum PropertyKind {
@@ -646,6 +663,7 @@ pub enum PropertyKind {
 /// Template Literal
 ///
 /// This is interpreted by interleaving the expression elements in between the quasi elements.
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -667,6 +685,7 @@ impl<'a> TemplateLiteral<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -678,6 +697,7 @@ pub struct TaggedTemplateExpression<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -689,7 +709,7 @@ pub struct TemplateElement<'a> {
 }
 
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/impatient-js/ch_template-literals.html#template-strings-cooked-vs-raw)
-#[derive(Debug, Hash)]
+#[derive(Debug, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct TemplateElementValue<'a> {
     /// A raw interpretation where backslashes do not have special meaning.
@@ -704,6 +724,7 @@ pub struct TemplateElementValue<'a> {
 }
 
 /// <https://tc39.es/ecma262/#prod-MemberExpression>
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -738,6 +759,7 @@ impl<'a> MemberExpression<'a> {
             MemberExpression::ComputedMemberExpression(expr) => expr.optional,
             MemberExpression::StaticMemberExpression(expr) => expr.optional,
             MemberExpression::PrivateFieldExpression(expr) => expr.optional,
+            MemberExpression::Dummy => dummy!(),
         }
     }
 
@@ -746,6 +768,7 @@ impl<'a> MemberExpression<'a> {
             MemberExpression::ComputedMemberExpression(expr) => &expr.object,
             MemberExpression::StaticMemberExpression(expr) => &expr.object,
             MemberExpression::PrivateFieldExpression(expr) => &expr.object,
+            MemberExpression::Dummy => &Expression::Dummy,
         }
     }
 
@@ -764,6 +787,7 @@ impl<'a> MemberExpression<'a> {
             },
             MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.as_str()),
             MemberExpression::PrivateFieldExpression(_) => None,
+            MemberExpression::Dummy => dummy!(),
         }
     }
 
@@ -784,6 +808,7 @@ impl<'a> MemberExpression<'a> {
                 Some((expr.property.span, &expr.property.name))
             }
             MemberExpression::PrivateFieldExpression(_) => None,
+            MemberExpression::Dummy => dummy!(),
         }
     }
 
@@ -795,6 +820,7 @@ impl<'a> MemberExpression<'a> {
                     let member_expr = x.expression.to_member_expression();
                     member_expr.object().without_parenthesized().is_specific_id(object)
                 }
+                ChainElement::Dummy => dummy!(),
             },
             x => x.is_specific_id(object),
         };
@@ -812,6 +838,7 @@ impl<'a> MemberExpression<'a> {
 }
 
 /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -824,6 +851,7 @@ pub struct ComputedMemberExpression<'a> {
 }
 
 /// `MemberExpression[?Yield, ?Await] . IdentifierName`
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -836,6 +864,7 @@ pub struct StaticMemberExpression<'a> {
 }
 
 /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -848,6 +877,7 @@ pub struct PrivateFieldExpression<'a> {
 }
 
 /// Call Expression
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -909,6 +939,7 @@ impl<'a> CallExpression<'a> {
 }
 
 /// New Expression
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -921,6 +952,7 @@ pub struct NewExpression<'a> {
 }
 
 /// Meta Property `new.target` | `import.meta`
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -932,6 +964,7 @@ pub struct MetaProperty<'a> {
 }
 
 /// Spread Element
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -945,6 +978,7 @@ inherit_variants! {
 /// Argument
 ///
 /// Inherits variants from [`Expression`].
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -963,6 +997,7 @@ impl Argument<'_> {
 }
 
 /// Update Expression
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -975,6 +1010,7 @@ pub struct UpdateExpression<'a> {
 }
 
 /// Unary Expression
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -986,6 +1022,7 @@ pub struct UnaryExpression<'a> {
 }
 
 /// Binary Expression
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -998,6 +1035,7 @@ pub struct BinaryExpression<'a> {
 }
 
 /// Private Identifier in Shift Expression
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1010,6 +1048,7 @@ pub struct PrivateInExpression<'a> {
 }
 
 /// Binary Logical Operators
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1022,6 +1061,7 @@ pub struct LogicalExpression<'a> {
 }
 
 /// Conditional Expression
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1034,6 +1074,7 @@ pub struct ConditionalExpression<'a> {
 }
 
 /// Assignment Expression
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1049,6 +1090,7 @@ inherit_variants! {
 /// Destructuring Assignment
 ///
 /// Inherits variants from [`SimpleAssignmentTarget`] and [`AssignmentTargetPattern`].
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1084,6 +1126,7 @@ inherit_variants! {
 /// Simple Assignment Target
 ///
 /// Inherits variants from [`MemberExpression`].
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1128,6 +1171,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
     }
 }
 
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1147,6 +1191,7 @@ macro_rules! match_assignment_target_pattern {
 pub use match_assignment_target_pattern;
 
 // See serializer in serialize.rs
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1174,6 +1219,7 @@ impl<'a> ArrayAssignmentTarget<'a> {
 }
 
 // See serializer in serialize.rs
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1206,6 +1252,7 @@ impl<'a> ObjectAssignmentTarget<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "RestElement"))]
@@ -1220,6 +1267,7 @@ inherit_variants! {
 /// Assignment Target Maybe Default
 ///
 /// Inherits variants from [`AssignmentTarget`].
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1247,6 +1295,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1257,6 +1306,7 @@ pub struct AssignmentTargetWithDefault<'a> {
     pub init: Expression<'a>,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -1266,6 +1316,7 @@ pub enum AssignmentTargetProperty<'a> {
 }
 
 /// Assignment Property - Identifier Reference
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1277,6 +1328,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 }
 
 /// Assignment Property - Property Name
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1288,6 +1340,7 @@ pub struct AssignmentTargetPropertyProperty<'a> {
 }
 
 /// Sequence Expression
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1297,6 +1350,7 @@ pub struct SequenceExpression<'a> {
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1306,6 +1360,7 @@ pub struct Super {
 }
 
 /// Await Expression
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1315,6 +1370,7 @@ pub struct AwaitExpression<'a> {
     pub argument: Expression<'a>,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1328,6 +1384,7 @@ inherit_variants! {
 /// Chain Element
 ///
 /// Inherits variants from [`MemberExpression`].
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1340,6 +1397,7 @@ pub enum ChainElement<'a> {
 }
 
 /// Parenthesized Expression
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1353,6 +1411,7 @@ inherit_variants! {
 /// Statement
 ///
 /// Inherits variants from [`Declaration`] and [`ModuleDeclaration`].
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1398,6 +1457,7 @@ impl<'a> Statement<'a> {
 }
 
 /// Directive Prologue
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1412,6 +1472,7 @@ pub struct Directive<'a> {
 }
 
 /// Hashbang
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1422,6 +1483,7 @@ pub struct Hashbang<'a> {
 }
 
 /// Block Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1432,6 +1494,7 @@ pub struct BlockStatement<'a> {
 }
 
 /// Declarations and the Variable Statement
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1503,6 +1566,7 @@ impl<'a> Declaration<'a> {
 }
 
 /// Variable Declaration
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -1521,7 +1585,7 @@ impl<'a> VariableDeclaration<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum VariableDeclarationKind {
@@ -1559,6 +1623,7 @@ impl fmt::Display for VariableDeclarationKind {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1566,14 +1631,15 @@ pub struct VariableDeclarator<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub kind: VariableDeclarationKind,
     pub id: BindingPattern<'a>,
     pub init: Option<Expression<'a>>,
+    pub kind: VariableDeclarationKind,
     pub definite: bool,
 }
 
 /// Using Declaration
 /// * <https://github.com/tc39/proposal-explicit-resource-management>
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -1586,6 +1652,7 @@ pub struct UsingDeclaration<'a> {
 }
 
 /// Empty Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1595,6 +1662,7 @@ pub struct EmptyStatement {
 }
 
 /// Expression Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1605,6 +1673,7 @@ pub struct ExpressionStatement<'a> {
 }
 
 /// If Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1617,6 +1686,7 @@ pub struct IfStatement<'a> {
 }
 
 /// Do-While Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1628,6 +1698,7 @@ pub struct DoWhileStatement<'a> {
 }
 
 /// While Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1639,6 +1710,7 @@ pub struct WhileStatement<'a> {
 }
 
 /// For Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1655,6 +1727,7 @@ inherit_variants! {
 /// For Statement Init
 ///
 /// Inherits variants from [`Expression`].
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1676,6 +1749,7 @@ impl<'a> ForStatementInit<'a> {
 }
 
 /// For-In Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1688,6 +1762,7 @@ pub struct ForInStatement<'a> {
 }
 
 /// For-Of Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1704,6 +1779,7 @@ inherit_variants! {
 /// For Statement Left
 ///
 /// Inherits variants from [`AssignmentTarget`].
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1725,6 +1801,7 @@ impl<'a> ForStatementLeft<'a> {
 }
 
 /// Continue Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1735,6 +1812,7 @@ pub struct ContinueStatement<'a> {
 }
 
 /// Break Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1745,6 +1823,7 @@ pub struct BreakStatement<'a> {
 }
 
 /// Return Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1755,6 +1834,7 @@ pub struct ReturnStatement<'a> {
 }
 
 /// With Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1766,6 +1846,7 @@ pub struct WithStatement<'a> {
 }
 
 /// Switch Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1776,6 +1857,7 @@ pub struct SwitchStatement<'a> {
     pub cases: Vec<'a, SwitchCase<'a>>,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1793,6 +1875,7 @@ impl<'a> SwitchCase<'a> {
 }
 
 /// Labelled Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1804,6 +1887,7 @@ pub struct LabeledStatement<'a> {
 }
 
 /// Throw Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1814,6 +1898,7 @@ pub struct ThrowStatement<'a> {
 }
 
 /// Try Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1825,6 +1910,7 @@ pub struct TryStatement<'a> {
     pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1835,6 +1921,7 @@ pub struct CatchClause<'a> {
     pub body: Box<'a, BlockStatement<'a>>,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1845,6 +1932,7 @@ pub struct CatchParameter<'a> {
 }
 
 /// Debugger Statement
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1855,6 +1943,7 @@ pub struct DebuggerStatement {
 
 /// Destructuring Binding Patterns
 /// * <https://tc39.es/ecma262/#prod-BindingPattern>
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
@@ -1880,6 +1969,7 @@ impl<'a> BindingPattern<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -1919,6 +2009,7 @@ impl<'a> BindingPatternKind<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1930,6 +2021,7 @@ pub struct AssignmentPattern<'a> {
 }
 
 // See serializer in serialize.rs
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1952,6 +2044,7 @@ impl<'a> ObjectPattern<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1965,6 +2058,7 @@ pub struct BindingProperty<'a> {
 }
 
 // See serializer in serialize.rs
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1990,6 +2084,7 @@ impl<'a> ArrayPattern<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "RestElement"))]
@@ -2000,14 +2095,15 @@ pub struct BindingRestElement<'a> {
 }
 
 /// Function Definitions
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct Function<'a> {
-    pub r#type: FunctionType,
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: Option<BindingIdentifier<'a>>,
+    pub r#type: FunctionType,
     pub generator: bool,
     pub r#async: bool,
     /// Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
@@ -2066,7 +2162,7 @@ impl<'a> Function<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum FunctionType {
     FunctionDeclaration,
@@ -2078,6 +2174,7 @@ pub enum FunctionType {
 
 /// <https://tc39.es/ecma262/#prod-FormalParameters>
 // See serializer in serialize.rs
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -2100,6 +2197,7 @@ impl<'a> FormalParameters<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -2119,7 +2217,7 @@ impl<'a> FormalParameter<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
@@ -2145,6 +2243,7 @@ impl<'a> FormalParameters<'a> {
 }
 
 /// <https://tc39.es/ecma262/#prod-FunctionBody>
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -2162,6 +2261,7 @@ impl<'a> FunctionBody<'a> {
 }
 
 /// Arrow Function Definitions
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -2192,6 +2292,7 @@ impl<'a> ArrowFunctionExpression<'a> {
 }
 
 /// Generator Function Definitions
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -2203,6 +2304,7 @@ pub struct YieldExpression<'a> {
 }
 
 /// Class Definitions
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
@@ -2239,13 +2341,14 @@ impl<'a> Class<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum ClassType {
     ClassDeclaration,
     ClassExpression,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -2255,6 +2358,7 @@ pub struct ClassBody<'a> {
     pub body: Vec<'a, ClassElement<'a>>,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -2273,6 +2377,7 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(def) => def.r#static,
             Self::PropertyDefinition(def) => def.r#static,
             Self::AccessorProperty(def) => def.r#static,
+            Self::Dummy => dummy!(),
         }
     }
 
@@ -2282,6 +2387,7 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(def) => def.computed,
             Self::PropertyDefinition(def) => def.computed,
             Self::AccessorProperty(def) => def.computed,
+            Self::Dummy => dummy!(),
         }
     }
 
@@ -2290,6 +2396,7 @@ impl<'a> ClassElement<'a> {
             Self::StaticBlock(_) | Self::TSIndexSignature(_) | Self::AccessorProperty(_) => None,
             Self::MethodDefinition(def) => def.accessibility,
             Self::PropertyDefinition(def) => def.accessibility,
+            Self::Dummy => dummy!(),
         }
     }
 
@@ -2300,6 +2407,7 @@ impl<'a> ClassElement<'a> {
             | Self::PropertyDefinition(_)
             | Self::AccessorProperty(_) => None,
             Self::MethodDefinition(def) => Some(def.kind),
+            Self::Dummy => dummy!(),
         }
     }
 
@@ -2309,6 +2417,7 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(def) => Some(&def.key),
             Self::PropertyDefinition(def) => Some(&def.key),
             Self::AccessorProperty(def) => Some(&def.key),
+            Self::Dummy => dummy!(),
         }
     }
 
@@ -2318,6 +2427,7 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(def) => def.key.static_name(),
             Self::PropertyDefinition(def) => def.key.static_name(),
             Self::AccessorProperty(def) => def.key.static_name(),
+            Self::Dummy => dummy!(),
         }
     }
 
@@ -2332,6 +2442,7 @@ impl<'a> ClassElement<'a> {
             | Self::AccessorProperty(_)
             | Self::TSIndexSignature(_) => false,
             Self::MethodDefinition(method) => method.value.body.is_none(),
+            Self::Dummy => dummy!(),
         }
     }
 
@@ -2352,19 +2463,21 @@ impl<'a> ClassElement<'a> {
             Self::PropertyDefinition(property) => !property.decorators.is_empty(),
             Self::AccessorProperty(property) => !property.decorators.is_empty(),
             Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
+            Self::Dummy => dummy!(),
         }
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct MethodDefinition<'a> {
-    pub r#type: MethodDefinitionType,
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub key: PropertyKey<'a>,
     pub value: Box<'a, Function<'a>>, // FunctionExpression
+    pub r#type: MethodDefinitionType,
     pub kind: MethodDefinitionKind,
     pub computed: bool,
     pub r#static: bool,
@@ -2374,22 +2487,23 @@ pub struct MethodDefinition<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum MethodDefinitionType {
     MethodDefinition,
     TSAbstractMethodDefinition,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct PropertyDefinition<'a> {
-    pub r#type: PropertyDefinitionType,
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub key: PropertyKey<'a>,
     pub value: Option<Expression<'a>>,
+    pub r#type: PropertyDefinitionType,
     pub computed: bool,
     pub r#static: bool,
     pub declare: bool,
@@ -2402,14 +2516,14 @@ pub struct PropertyDefinition<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum PropertyDefinitionType {
     PropertyDefinition,
     TSAbstractPropertyDefinition,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, layout_inspect::Inspect)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum MethodDefinitionKind {
@@ -2431,6 +2545,7 @@ impl MethodDefinitionKind {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -2446,6 +2561,7 @@ impl<'a> PrivateIdentifier<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -2455,6 +2571,7 @@ pub struct StaticBlock<'a> {
     pub body: Vec<'a, Statement<'a>>,
 }
 
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -2519,6 +2636,7 @@ impl<'a> ModuleDeclaration<'a> {
             Self::ExportDefaultDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => None,
+            Self::Dummy => dummy!(),
         }
     }
 
@@ -2530,10 +2648,12 @@ impl<'a> ModuleDeclaration<'a> {
             Self::ExportDefaultDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => None,
+            Self::Dummy => dummy!(),
         }
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -2547,6 +2667,7 @@ pub struct AccessorProperty<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -2557,6 +2678,7 @@ pub struct ImportExpression<'a> {
     pub arguments: Vec<'a, Expression<'a>>,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -2572,6 +2694,7 @@ pub struct ImportDeclaration<'a> {
     pub import_kind: ImportOrExportKind,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -2587,6 +2710,7 @@ pub enum ImportDeclarationSpecifier<'a> {
 
 // import {imported} from "source"
 // import {imported as local} from "source"
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -2599,6 +2723,7 @@ pub struct ImportSpecifier<'a> {
 }
 
 // import local from "source"
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -2609,6 +2734,7 @@ pub struct ImportDefaultSpecifier<'a> {
 }
 
 // import * as local from "source"
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -2618,6 +2744,7 @@ pub struct ImportNamespaceSpecifier<'a> {
     pub local: BindingIdentifier<'a>,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -2628,6 +2755,7 @@ pub struct WithClause<'a> {
     pub with_entries: Vec<'a, ImportAttribute<'a>>,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -2638,6 +2766,7 @@ pub struct ImportAttribute<'a> {
     pub value: StringLiteral<'a>,
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -2651,10 +2780,12 @@ impl<'a> ImportAttributeKey<'a> {
         match self {
             Self::Identifier(identifier) => identifier.name.clone(),
             Self::StringLiteral(literal) => literal.value.clone(),
+            Self::Dummy => Atom::from("Dummy ImportAttributeKey"),
         }
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -2681,6 +2812,7 @@ impl<'a> ExportNamedDeclaration<'a> {
 /// export default HoistableDeclaration
 /// export default ClassDeclaration
 /// export default AssignmentExpression
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -2697,6 +2829,7 @@ impl<'a> ExportDefaultDeclaration<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -2715,6 +2848,7 @@ impl<'a> ExportAllDeclaration<'a> {
     }
 }
 
+#[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -2736,6 +2870,7 @@ inherit_variants! {
 /// Export Default Declaration Kind
 ///
 /// Inherits variants from [`Expression`].
+#[ast_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -2769,7 +2904,8 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
 ///   * `export {foo as "\0 any unicode"}`
 /// * es2022: <https://github.com/estree/estree/blob/master/es2022.md#modules>
 /// * <https://github.com/tc39/ecma262/pull/2154>
-#[derive(Debug, Clone, Hash)]
+#[ast_node]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ModuleExportName<'a> {
@@ -2777,21 +2913,41 @@ pub enum ModuleExportName<'a> {
     StringLiteral(StringLiteral<'a>),
 }
 
+impl<'a> Clone for ModuleExportName<'a> {
+    fn clone(&self) -> Self {
+        match self {
+            Self::Dummy => ModuleExportName::Dummy,
+            Self::Identifier(ident) => Self::Identifier(ident.clone()),
+            Self::StringLiteral(lit) => Self::StringLiteral(lit.clone()),
+        }
+    }
+}
+
 impl<'a> fmt::Display for ModuleExportName<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = match self {
             Self::Identifier(identifier) => identifier.name.to_string(),
             Self::StringLiteral(literal) => format!(r#""{}""#, literal.value),
+            Self::Dummy => "Dummy ModuleExportName".to_string(),
         };
         write!(f, "{s}")
     }
 }
 
 impl<'a> ModuleExportName<'a> {
-    pub fn name(&self) -> &Atom<'a> {
+    pub fn name(&self) -> Option<&Atom<'a>> {
         match self {
-            Self::Identifier(identifier) => &identifier.name,
-            Self::StringLiteral(literal) => &literal.value,
+            Self::Identifier(identifier) => Some(&identifier.name),
+            Self::StringLiteral(literal) => Some(&literal.value),
+            Self::Dummy => dummy!(),
+        }
+    }
+
+    pub fn as_atom(&self) -> Atom<'a> {
+        match self {
+            Self::Identifier(identifier) => identifier.name.clone(),
+            Self::StringLiteral(literal) => literal.value.clone(),
+            Self::Dummy => Atom::from("Dummy ModuleExportName"),
         }
     }
 }

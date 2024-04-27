@@ -3,7 +3,7 @@ use oxc_ast::{
         match_expression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
         JSXElementName, JSXExpression, StringLiteral,
     },
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -179,6 +179,7 @@ impl Rule for JsxNoTargetBlank {
                                 has_href_value = true;
                             };
                         }
+                        JSXAttributeItem::Dummy => dummy!(unreachable),
                     });
 
                     if is_warn_on_spread_attributes {
@@ -351,10 +352,11 @@ fn check_rel<'a>(
             (check_rel_val(str, allow_referrer), "", false, false)
         }
         JSXAttributeValue::ExpressionContainer(expr) => match &expr.expression {
-            JSXExpression::EmptyExpression(_) => default,
             expr @ match_expression!(JSXExpression) => {
                 match_rel_expression(expr.to_expression(), allow_referrer)
             }
+            JSXExpression::EmptyExpression(_) => default,
+            JSXExpression::Dummy => dummy!(unreachable),
         },
         _ => default,
     }

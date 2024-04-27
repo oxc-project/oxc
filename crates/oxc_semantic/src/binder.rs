@@ -5,6 +5,7 @@ use std::borrow::Cow;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_ast::{
+    dummy,
     syntax_directed_operations::{BoundNames, IsSimpleParameterList},
     AstKind,
 };
@@ -343,6 +344,7 @@ impl<'a> Binder for TSEnumMember<'a> {
             TSEnumMemberName::StaticStringLiteral(s) => Cow::Borrowed(s.value.as_str()),
             TSEnumMemberName::StaticNumericLiteral(n) => Cow::Owned(n.value.to_string()),
             match_expression!(TSEnumMemberName) => panic!("TODO: implement"),
+            TSEnumMemberName::Dummy => dummy!(panic),
         };
         builder.declare_symbol(
             self.span,
@@ -364,7 +366,7 @@ impl<'a> Binder for TSModuleDeclaration<'a> {
         };
         builder.declare_symbol(
             self.span,
-            self.id.name(),
+            self.id.as_atom().as_str(),
             SymbolFlags::NameSpaceModule | ambient,
             SymbolFlags::None,
         );

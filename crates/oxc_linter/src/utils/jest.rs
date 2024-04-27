@@ -232,7 +232,7 @@ fn find_original_name<'a>(
     import_decl.specifiers.iter().flatten().find_map(|specifier| match specifier {
         ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
             if import_specifier.local.name.as_str() == name {
-                return Some(import_specifier.imported.name());
+                return import_specifier.imported.name();
             }
             None
         }

@@ -2,7 +2,7 @@ use itertools::Itertools;
 use once_cell::sync::Lazy;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -476,6 +476,7 @@ impl Rule for NoUnknownProperty {
             .filter_map(|attr| match &attr {
                 JSXAttributeItem::Attribute(regular) => Some(&**regular),
                 JSXAttributeItem::SpreadAttribute(_) => None,
+                JSXAttributeItem::Dummy => dummy!(unreachable),
             })
             .for_each(|attr| {
                 let span = attr.name.span();

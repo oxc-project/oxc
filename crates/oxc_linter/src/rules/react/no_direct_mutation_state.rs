@@ -1,6 +1,6 @@
 use oxc_ast::{
     ast::{Expression, MethodDefinitionKind, SimpleAssignmentTarget, StaticMemberExpression},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -119,6 +119,7 @@ fn get_outer_member_expression<'a, 'b>(
                 return Some(node);
             }
         }
+        SimpleAssignmentTarget::Dummy => dummy!(unreachable),
         _ => None,
     }
 }

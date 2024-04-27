@@ -1,6 +1,6 @@
 use oxc_ast::{
     ast::{ExportDefaultDeclarationKind, Expression, TSInterfaceDeclaration, TSSignature, TSType},
-    AstKind, CommentKind,
+    dummy, AstKind, CommentKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -336,6 +336,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
         | TSSignature::TSIndexSignature(_)
         | TSSignature::TSPropertySignature(_)
         | TSSignature::TSMethodSignature(_) => {}
+        TSSignature::Dummy => dummy!(unreachable),
     }
 }
 

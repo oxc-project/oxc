@@ -12,7 +12,7 @@ use oxc_ast::{
         SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression,
         VariableDeclarator,
     },
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_semantic::{AstNode, SymbolId};
 use oxc_span::{GetSpan, Span};
@@ -189,6 +189,7 @@ impl<'a> ListenerMap for ForStatementInit<'a> {
             Self::VariableDeclaration(decl) => {
                 decl.declarations.iter().for_each(|decl| decl.report_effects(options));
             }
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -409,6 +410,7 @@ impl<'a> ListenerMap for BindingPattern<'a> {
                 assign_p.left.report_effects(options);
                 assign_p.right.report_effects(options);
             }
+            BindingPatternKind::Dummy => dummy!(unreachable),
         }
     }
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
@@ -709,6 +711,7 @@ impl<'a> ListenerMap for Argument<'a> {
             Self::SpreadElement(spread) => {
                 spread.argument.report_effects(options);
             }
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -720,6 +723,7 @@ impl<'a> ListenerMap for AssignmentTarget<'a> {
                 self.to_simple_assignment_target().report_effects_when_assigned(options);
             }
             Self::ArrayAssignmentTarget(_) | Self::ObjectAssignmentTarget(_) => {}
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -814,6 +818,7 @@ impl<'a> ListenerMap for MemberExpression<'a> {
             Self::PrivateFieldExpression(expr) => {
                 expr.report_effects(options);
             }
+            Self::Dummy => dummy!(unreachable),
         }
     }
     fn report_effects_when_assigned(&self, options: &NodeListenerOptions) {
@@ -830,6 +835,7 @@ impl<'a> ListenerMap for MemberExpression<'a> {
                 expr.report_effects(options);
                 expr.object.report_effects_when_mutated(options);
             }
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }
@@ -861,6 +867,7 @@ impl<'a> ListenerMap for ArrayExpressionElement<'a> {
                 spreed.argument.report_effects(options);
             }
             Self::Elision(_) => {}
+            Self::Dummy => dummy!(unreachable),
         }
     }
 }

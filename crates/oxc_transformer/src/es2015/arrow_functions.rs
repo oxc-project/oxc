@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use oxc_allocator::Vec;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, dummy};
 use oxc_span::{Atom, SPAN};
 use serde::Deserialize;
 
@@ -124,10 +124,12 @@ impl<'a> ArrowFunctions<'a> {
                         JSXMemberExpressionObject::MemberExpression(expr) => {
                             member_expr = expr;
                         }
+                        JSXMemberExpressionObject::Dummy => dummy!(unreachable),
                     }
                 }
             }
             JSXElementName::NamespacedName(_) => {}
+            JSXElementName::Dummy => dummy!(unreachable),
         }
     }
 

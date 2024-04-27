@@ -2,6 +2,7 @@ use crate::context::Context;
 use crate::{Codegen, Gen, GenExpr};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
+use oxc_ast::dummy;
 use oxc_syntax::precedence::Precedence;
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeParameterDeclaration<'a> {
@@ -227,6 +228,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
                     TSTypePredicateName::This(_ident) => {
                         p.print_str(b"this");
                     }
+                    TSTypePredicateName::Dummy => dummy!(),
                 }
                 if let Some(type_annotation) = &decl.type_annotation {
                     p.print_str(b" is ");
@@ -250,6 +252,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
                 }
             }
             Self::JSDocUnknownType(_decl) => p.print_str(b"unknown"),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -281,6 +284,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeName<'a> {
                 p.print_str(b".");
                 decl.right.gen(p, ctx);
             }
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -296,6 +300,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSLiteral<'a> {
             Self::StringLiteral(decl) => decl.gen(p, ctx),
             Self::TemplateLiteral(decl) => decl.gen(p, ctx),
             Self::UnaryExpression(decl) => decl.gen_expr(p, Precedence::Assign, ctx),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -367,6 +372,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                         key @ match_expression!(PropertyKey) => {
                             key.to_expression().gen_expr(p, Precedence::Assign, ctx);
                         }
+                        PropertyKey::Dummy => dummy!(),
                     }
                 }
                 if signature.optional {
@@ -420,6 +426,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                         key @ match_expression!(PropertyKey) => {
                             key.to_expression().gen_expr(p, Precedence::Assign, ctx);
                         }
+                        PropertyKey::Dummy => dummy!(),
                     }
                 }
                 if signature.optional {
@@ -434,6 +441,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                     return_type.gen(p, ctx);
                 }
             }
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -453,6 +461,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeQueryExprName<'a> {
         match self {
             match_ts_type_name!(Self) => self.to_ts_type_name().gen(p, ctx),
             Self::TSImportType(decl) => decl.gen(p, ctx),
+            Self::Dummy => dummy!(),
         }
     }
 }
@@ -507,6 +516,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTupleElement<'a> {
                 p.print_str(b"...");
                 ts_type.type_annotation.gen(p, ctx);
             }
+            TSTupleElement::Dummy => dummy!(),
         }
     }
 }
@@ -530,8 +540,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
         }
         p.print_str(b"module");
         p.print_space_before_identifier();
-        let name = self.id.name();
-        p.wrap_quote(name, |p, _| p.print_str(name.as_bytes()));
+        let name = self.id.as_atom();
+        p.wrap_quote(name.as_str(), |p, _| p.print_str(name.as_bytes()));
         p.print_hard_space();
         match &self.body {
             Some(TSModuleDeclarationBody::TSModuleDeclaration(body)) => {
@@ -548,6 +558,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
                 p.print_semicolon_if_needed();
                 p.print_block_end(body.span.end);
             }
+            Some(TSModuleDeclarationBody::Dummy) => dummy!(),
             None => {}
         }
         if MINIFY {
@@ -640,6 +651,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumMember<'a> {
                 decl.to_expression().gen_expr(p, Precedence::lowest(), ctx);
                 p.print_str(b"]");
             }
+            TSEnumMemberName::Dummy => dummy!(),
         }
     }
 }
@@ -684,6 +696,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleReference<'a> {
                 p.print_str(b")");
             }
             match_ts_type_name!(Self) => self.to_ts_type_name().gen(p, ctx),
+            Self::Dummy => dummy!(),
         }
     }
 }

@@ -1,6 +1,6 @@
 use oxc_ast::{
     ast::{Expression, JSXAttributeItem, JSXAttributeName, ObjectPropertyKind, PropertyKey},
-    AstKind,
+    dummy, AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -88,6 +88,7 @@ impl Rule for InlineScriptId {
                             continue 'references_loop;
                         }
                     }
+                    JSXAttributeItem::Dummy => dummy!(unreachable),
                 }
             }
 
