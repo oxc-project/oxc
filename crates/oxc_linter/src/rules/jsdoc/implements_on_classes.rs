@@ -76,7 +76,7 @@ impl Rule for ImplementsOnClasses {
         }
 
         // Filter plain declared (arrow) function.
-        // I'm not sure but node like `MethodDefinition` is not targeted.
+        // I'm not sure but this rule does not care node like `MethodDefinition`.
         if is_function_inside_of_class(node, ctx) {
             return;
         }

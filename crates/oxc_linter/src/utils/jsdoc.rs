@@ -5,18 +5,18 @@ use oxc_ast::AstKind;
 ///
 /// ```js
 /// /** VariableDeclaration > VariableDeclarator > FunctionExpression */
-/// const bar = function() {}
+/// const foo = function() {}
 ///
 /// /** VariableDeclaration > VariableDeclarator > ArrowFunctionExpression */
-/// const baz = () => {},
+/// const bar = () => {},
 ///       /** VariableDeclarator > ArrowFunctionExpression */
-///       qux = () => {};
+///       baz = () => {};
 ///
 /// /** MethodDefinition > FunctionExpression */
-/// class X { quux() {} }
+/// class X { qux() {} }
 ///
 /// /** PropertyDefinition > ArrowFunctionExpression */
-/// class Y { quuux = () => {} }
+/// class Y { qux = () => {} }
 /// ```
 pub fn get_function_nearest_jsdoc_node<'a, 'b>(
     node: &'b AstNode<'a>,
@@ -30,10 +30,8 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
             AstKind::VariableDeclaration(_)
             | AstKind::MethodDefinition(_)
             | AstKind::PropertyDefinition(_) => return None,
-            _ => {}
+            _ => current_node = ctx.nodes().parent_node(current_node.id())?,
         }
-
-        current_node = ctx.nodes().parent_node(current_node.id())?;
     }
 
     Some(current_node)

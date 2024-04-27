@@ -65,6 +65,7 @@ impl Rule for RequireProperty {
 
                 if tag_name == resolved_typedef_tag_name || tag_name == resolved_namespace_tag_name
                 {
+                    // If this is `true`:
                     // - This JSDoc has multiple `@typedef` or `@namespace` tags
                     // - And previous `@typedef` or `@namespace` tag did not have `@property` tag
                     if let Some(span) = should_report {
