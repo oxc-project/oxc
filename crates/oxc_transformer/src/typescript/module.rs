@@ -45,8 +45,8 @@ impl<'a> TypeScript<'a> {
             let decl_span = decl.span;
 
             let init = match &mut decl.module_reference {
-                TSModuleReference::TypeName(type_name) => {
-                    self.transform_ts_type_name(&mut *type_name)
+                type_name @ match_ts_type_name!(TSModuleReference) => {
+                    self.transform_ts_type_name(&mut *type_name.to_ts_type_name_mut())
                 }
                 TSModuleReference::ExternalModuleReference(reference) => {
                     if self.ctx.source_type().is_module() {
@@ -56,7 +56,7 @@ impl<'a> TypeScript<'a> {
                     let callee = self.ctx.ast.identifier_reference_expression(
                         IdentifierReference::new(SPAN, "require".into()),
                     );
-                    let arguments = self.ctx.ast.new_vec_single(Argument::Expression(
+                    let arguments = self.ctx.ast.new_vec_single(Argument::from(
                         self.ctx.ast.literal_string_expression(reference.expression.clone()),
                     ));
                     self.ctx.ast.call_expression(SPAN, callee, arguments, false, None)

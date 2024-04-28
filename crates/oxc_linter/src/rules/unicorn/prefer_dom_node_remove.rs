@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{Argument, Expression},
-    AstKind,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -62,7 +59,7 @@ impl Rule for PreferDomNodeRemove {
             return;
         }
 
-        let Argument::Expression(expr) = &call_expr.arguments[0] else {
+        let Some(expr) = call_expr.arguments[0].as_expression() else {
             return;
         };
 

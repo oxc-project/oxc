@@ -78,24 +78,16 @@ pub fn is_commons_js_or_amd_call<'a>(
 ) -> bool {
     if let Expression::Identifier(callee) = callee {
         if callee.name == "require" {
-            return arguments.len() == 1
-                && matches!(arguments[0], Argument::Expression(Expression::StringLiteral(_)))
+            return arguments.len() == 1 && matches!(arguments[0], Argument::StringLiteral(_))
                 || arguments.len() > 1;
         }
         if callee.name == "define" {
             // TODO: the parent node is ExpressionStatement
             return arguments.len() == 1
-                || (arguments.len() == 2
-                    && matches!(
-                        arguments[1],
-                        Argument::Expression(Expression::ArrayExpression(_))
-                    ))
+                || (arguments.len() == 2 && matches!(arguments[1], Argument::ArrayExpression(_)))
                 || (arguments.len() == 3
-                    && matches!(arguments[0], Argument::Expression(Expression::StringLiteral(_)))
-                    && matches!(
-                        arguments[1],
-                        Argument::Expression(Expression::ArrayExpression(_))
-                    ));
+                    && matches!(arguments[0], Argument::StringLiteral(_))
+                    && matches!(arguments[1], Argument::ArrayExpression(_)));
         }
     }
     false

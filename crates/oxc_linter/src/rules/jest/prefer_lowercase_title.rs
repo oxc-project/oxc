@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{Argument, Expression},
-    AstKind,
-};
+use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -199,11 +196,11 @@ impl PreferLowercaseTitle {
             return;
         }
 
-        let Some(Argument::Expression(expr)) = call_expr.arguments.first() else {
+        let Some(arg) = call_expr.arguments.first() else {
             return;
         };
 
-        if let Expression::StringLiteral(string_expr) = expr {
+        if let Argument::StringLiteral(string_expr) = arg {
             if string_expr.value.is_empty()
                 || self.allowed_prefixes.iter().any(|name| string_expr.value.starts_with(name))
             {
@@ -229,7 +226,7 @@ impl PreferLowercaseTitle {
                     )
                 },
             );
-        } else if let Expression::TemplateLiteral(template_expr) = expr {
+        } else if let Argument::TemplateLiteral(template_expr) = arg {
             let Some(template_string) = template_expr.quasi() else {
                 return;
             };

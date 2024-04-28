@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{Argument, ChainElement, Expression},
-    AstKind,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -106,7 +103,7 @@ impl Rule for UseIsnan {
                 // Match target array prototype methods whose only argument is NaN
                 if let Some(method) = is_target_callee(&call.callee) {
                     if call.arguments.len() == 1 {
-                        if let Some(Argument::Expression(expr)) = &call.arguments.first() {
+                        if let Some(expr) = call.arguments[0].as_expression() {
                             if is_nan_identifier(expr) {
                                 ctx.diagnostic(UseIsnanDiagnostic::IndexOfNaN(method, expr.span()));
                             }
@@ -145,21 +142,22 @@ fn is_nan_identifier<'a>(expr: &'a Expression<'a>) -> bool {
 fn is_target_callee<'a>(callee: &'a Expression<'a>) -> Option<&'static str> {
     const TARGET_METHODS: [&str; 2] = ["indexOf", "lastIndexOf"];
     let callee = callee.get_inner_expression();
-    match callee {
-        Expression::MemberExpression(expr) => expr.static_property_name().and_then(|property| {
+
+    if let Some(expr) = callee.as_member_expression() {
+        return expr.static_property_name().and_then(|property| {
             TARGET_METHODS.iter().find(|method| **method == property).copied()
-        }),
-        Expression::ChainExpression(chain) => {
-            if let ChainElement::MemberExpression(expr) = &chain.expression {
-                expr.static_property_name().and_then(|property| {
-                    TARGET_METHODS.iter().find(|method| **method == property).copied()
-                })
-            } else {
-                None
-            }
-        }
-        _ => None,
+        });
     }
+
+    if let Expression::ChainExpression(chain) = callee {
+        if let Some(expr) = chain.expression.as_member_expression() {
+            return expr.static_property_name().and_then(|property| {
+                TARGET_METHODS.iter().find(|method| **method == property).copied()
+            });
+        }
+    }
+
+    None
 }
 
 #[test]

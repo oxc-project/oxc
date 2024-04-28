@@ -105,10 +105,7 @@ fn get_update_direction(update: &Expression, counter: &IdentifierReference) -> U
         }
         // match add assign or subtract assign
         Expression::AssignmentExpression(assign) => {
-            if let AssignmentTarget::SimpleAssignmentTarget(
-                SimpleAssignmentTarget::AssignmentTargetIdentifier(id),
-            ) = &assign.left
-            {
+            if let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign.left {
                 if id.name != counter.name {
                     return UNKNOWN;
                 }

@@ -111,16 +111,14 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                 return;
             }
 
-            let Some(Argument::Expression(expr)) =
-                find_argument_of_callback(call_expr, is_jest_each, kind)
-            else {
+            let Some(arg) = find_argument_of_callback(call_expr, is_jest_each, kind) else {
                 return;
             };
 
             let callback_arg_index = usize::from(is_jest_each);
 
-            match expr {
-                Expression::FunctionExpression(func_expr) => {
+            match arg {
+                Argument::FunctionExpression(func_expr) => {
                     if func_expr.params.parameters_count() != 1 + callback_arg_index {
                         return;
                     }
@@ -135,7 +133,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
                     ctx.diagnostic(NoDoneCallbackDiagnostic::NoDoneCallback(span));
                 }
-                Expression::ArrowFunctionExpression(arrow_expr) => {
+                Argument::ArrowFunctionExpression(arrow_expr) => {
                     if arrow_expr.params.parameters_count() != 1 + callback_arg_index {
                         return;
                     }

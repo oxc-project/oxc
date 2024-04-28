@@ -65,16 +65,16 @@ impl<'a> TypeScriptAnnotations<'a> {
         program.body.retain_mut(|stmt| {
             // fix namespace/export-type-only/input.ts
             // The namespace is type only. So if its name appear in the ExportNamedDeclaration, we should remove it.
-            if let Statement::Declaration(Declaration::TSModuleDeclaration(decl)) = stmt {
+            if let Statement::TSModuleDeclaration(decl) = stmt {
                 type_names.insert(decl.id.name().clone());
                 return false;
             }
 
-            let Statement::ModuleDeclaration(module_decl) = stmt else {
+            let Some(module_decl) = stmt.as_module_declaration_mut() else {
                 return true;
             };
 
-            let need_delete = match &mut **module_decl {
+            let need_delete = match module_decl {
                 ModuleDeclaration::ExportNamedDeclaration(decl) => {
                     decl.specifiers.retain(|specifier| {
                         !(specifier.export_kind.is_type()
@@ -302,14 +302,8 @@ impl<'a> TypeScriptAnnotations<'a> {
         // Remove TS specific statements
         stmts.retain(|stmt| match stmt {
             Statement::ExpressionStatement(s) => !s.expression.is_typescript_syntax(),
-            Statement::Declaration(s) => {
-                // Removed in transform_program_on_exit
-                if matches!(s, Declaration::TSModuleDeclaration(_)) {
-                    true
-                } else {
-                    !s.is_typescript_syntax()
-                }
-            }
+            Statement::TSModuleDeclaration(_) => true,
+            match_declaration!(Statement) => !stmt.to_declaration().is_typescript_syntax(),
             // Ignore ModuleDeclaration as it's handled in the program
             _ => true,
         });

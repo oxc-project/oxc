@@ -1,9 +1,6 @@
 use std::path::PathBuf;
 
-use oxc_ast::{
-    ast::{Argument, Expression},
-    AstKind,
-};
+use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -65,9 +62,7 @@ impl Rule for NoMocksImport {
                 return;
             };
 
-            let Some(Argument::Expression(Expression::StringLiteral(string_literal))) =
-                call_expr.arguments.first()
-            else {
+            let Some(Argument::StringLiteral(string_literal)) = call_expr.arguments.first() else {
                 return;
             };
 

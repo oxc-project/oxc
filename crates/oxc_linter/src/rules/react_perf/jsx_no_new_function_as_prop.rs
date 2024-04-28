@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Expression, JSXAttributeValue, JSXElement, JSXExpression, MemberExpression},
+    ast::{Expression, JSXAttributeValue, JSXElement, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -54,7 +54,7 @@ fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
         match get_prop_value(item) {
             None => return,
             Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                if let JSXExpression::Expression(expr) = &container.expression {
+                if let Some(expr) = container.expression.as_expression() {
                     if let Some(span) = check_expression(expr) {
                         ctx.diagnostic(JsxNoNewFunctionAsPropDiagnostic(span));
                     }
@@ -74,12 +74,8 @@ fn check_expression(expr: &Expression) -> Option<Span> {
                 return Some(expr.span);
             }
 
-            let Expression::MemberExpression(member_expr) = &expr.callee else {
-                return None;
-            };
-
+            let member_expr = expr.callee.as_member_expression()?;
             let property_name = MemberExpression::static_property_name(member_expr);
-
             if property_name == Some("bind") {
                 Some(expr.span)
             } else {

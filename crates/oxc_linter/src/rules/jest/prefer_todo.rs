@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression, MemberExpression},
+    ast::{Argument, CallExpression, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -95,7 +95,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 }
 
 fn filter_todo_case(expr: &CallExpression) -> bool {
-    if let Expression::MemberExpression(mem_expr) = &expr.callee {
+    if let Some(mem_expr) = expr.callee.as_member_expression() {
         if let Some(name) = mem_expr.static_property_name() {
             return name == "todo";
         }
@@ -112,16 +112,13 @@ fn should_filter_case(expr: &CallExpression) -> bool {
 }
 
 fn is_string_type(arg: &Argument) -> bool {
-    matches!(
-        arg,
-        Argument::Expression(Expression::StringLiteral(_) | Expression::TemplateLiteral(_))
-    )
+    matches!(arg, Argument::StringLiteral(_) | Argument::TemplateLiteral(_))
 }
 
 fn is_empty_function(expr: &CallExpression) -> bool {
     match &expr.arguments[1] {
-        Argument::Expression(Expression::ArrowFunctionExpression(arrow)) => arrow.body.is_empty(),
-        Argument::Expression(Expression::FunctionExpression(func)) => {
+        Argument::ArrowFunctionExpression(arrow) => arrow.body.is_empty(),
+        Argument::FunctionExpression(func) => {
             let Some(func_body) = &func.body else {
                 return false;
             };
@@ -132,51 +129,49 @@ fn is_empty_function(expr: &CallExpression) -> bool {
 }
 
 fn get_fix_content<'a>(expr: &'a CallExpression<'a>) -> (&'a str, Span) {
-    match &expr.callee {
-        Expression::Identifier(ident) => (".todo", Span::new(ident.span.end, ident.span.end)),
-        Expression::MemberExpression(mem_expr) => {
-            if let Some((span, _)) = mem_expr.static_property_info() {
-                return ("todo", span);
-            }
-            ("", expr.span)
-        }
-        _ => ("", expr.span),
+    if let Expression::Identifier(ident) = &expr.callee {
+        return (".todo", Span::new(ident.span.end, ident.span.end));
     }
+    if let Some(mem_expr) = expr.callee.as_member_expression() {
+        if let Some((span, _)) = mem_expr.static_property_info() {
+            return ("todo", span);
+        }
+    }
+    ("", expr.span)
 }
 
 fn build_code(expr: &CallExpression, ctx: &LintContext) -> (String, Span) {
     let mut formatter = ctx.codegen();
 
-    if let Expression::Identifier(ident) = &expr.callee {
-        formatter.print_str(ident.name.as_bytes());
-        formatter.print_str(b".todo(");
-    } else if let Expression::MemberExpression(mem_expr) = &expr.callee {
-        match &**mem_expr {
-            MemberExpression::ComputedMemberExpression(expr) => {
-                if let Expression::Identifier(ident) = &expr.object {
-                    formatter.print_str(ident.name.as_bytes());
-                    formatter.print_str(b"[");
-                    formatter.print_str(b"'todo'");
-                    formatter.print_str(b"](");
-                }
-            }
-            MemberExpression::StaticMemberExpression(expr) => {
-                if let Expression::Identifier(ident) = &expr.object {
-                    formatter.print_str(ident.name.as_bytes());
-                    formatter.print_str(b".todo(");
-                }
-            }
-            MemberExpression::PrivateFieldExpression(_) => {}
+    match &expr.callee {
+        Expression::Identifier(ident) => {
+            formatter.print_str(ident.name.as_bytes());
+            formatter.print_str(b".todo(");
         }
+        Expression::ComputedMemberExpression(expr) => {
+            if let Expression::Identifier(ident) = &expr.object {
+                formatter.print_str(ident.name.as_bytes());
+                formatter.print_str(b"[");
+                formatter.print_str(b"'todo'");
+                formatter.print_str(b"](");
+            }
+        }
+        Expression::StaticMemberExpression(expr) => {
+            if let Expression::Identifier(ident) = &expr.object {
+                formatter.print_str(ident.name.as_bytes());
+                formatter.print_str(b".todo(");
+            }
+        }
+        _ => {}
     }
 
-    if let Argument::Expression(Expression::StringLiteral(ident)) = &expr.arguments[0] {
+    if let Argument::StringLiteral(ident) = &expr.arguments[0] {
         // Todo: this punctuation should read from the config
         formatter.print(b'\'');
         formatter.print_str(ident.value.as_bytes());
         formatter.print(b'\'');
         formatter.print(b')');
-    } else if let Argument::Expression(Expression::TemplateLiteral(temp)) = &expr.arguments[0] {
+    } else if let Argument::TemplateLiteral(temp) = &expr.arguments[0] {
         formatter.print(b'`');
         for q in &temp.quasis {
             formatter.print_str(q.value.raw.as_bytes());

@@ -112,7 +112,7 @@ impl NoUntypedMockFactory {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Expression::MemberExpression(mem_expr) = &call_expr.callee else {
+        let Some(mem_expr) = call_expr.callee.as_member_expression() else {
             return;
         };
         let Some((property_span, property_name)) = mem_expr.static_property_info() else {
@@ -135,7 +135,7 @@ impl NoUntypedMockFactory {
         let Some(name_node) = call_expr.arguments.first() else {
             return;
         };
-        let Argument::Expression(expr) = name_node else {
+        let Some(expr) = name_node.as_expression() else {
             return;
         };
 
@@ -166,7 +166,7 @@ impl NoUntypedMockFactory {
     }
 
     fn has_return_type(argument: &Argument) -> bool {
-        let Argument::Expression(expr) = argument else {
+        let Some(expr) = argument.as_expression() else {
             return false;
         };
 

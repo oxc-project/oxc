@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        Argument, Expression, JSXAttributeItem, JSXAttributeName, JSXElementName,
-        ObjectPropertyKind, PropertyKey,
+        Argument, JSXAttributeItem, JSXAttributeName, JSXElementName, ObjectPropertyKind,
+        PropertyKey,
     },
     AstKind,
 };
@@ -99,8 +99,7 @@ impl Rule for VoidDomElementsNoChildren {
                     return;
                 }
 
-                let Some(Argument::Expression(Expression::StringLiteral(element_name))) =
-                    call_expr.arguments.first()
+                let Some(Argument::StringLiteral(element_name)) = call_expr.arguments.first()
                 else {
                     return;
                 };
@@ -113,16 +112,14 @@ impl Rule for VoidDomElementsNoChildren {
                     return;
                 }
 
-                let Some(Argument::Expression(Expression::ObjectExpression(obj_expr))) =
-                    call_expr.arguments.get(1)
-                else {
+                let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) else {
                     return;
                 };
 
                 let has_children_prop_or_danger =
                     obj_expr.properties.iter().any(|property| match property {
                         ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
-                            PropertyKey::Identifier(iden) => {
+                            PropertyKey::StaticIdentifier(iden) => {
                                 iden.name == "children" || iden.name == "dangerouslySetInnerHTML"
                             }
                             _ => false,

@@ -1,7 +1,7 @@
 use regex::Regex;
 
 use oxc_ast::{
-    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression},
+    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -147,14 +147,14 @@ impl Rule for ImgRedundantAlt {
                 }
             }
             JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
-                JSXExpression::Expression(Expression::StringLiteral(lit)) => {
+                JSXExpression::StringLiteral(lit) => {
                     let alt_text = lit.value.as_str();
 
                     if is_redundant_alt_text(alt_text, &self.redundant_words) {
                         ctx.diagnostic(ImgRedundantAltDiagnostic(alt_attribute_name_span));
                     }
                 }
-                JSXExpression::Expression(Expression::TemplateLiteral(lit)) => {
+                JSXExpression::TemplateLiteral(lit) => {
                     for quasi in &lit.quasis {
                         let alt_text = quasi.value.raw.as_str();
 

@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, Expression},
+    ast::{match_member_expression, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -46,7 +46,7 @@ impl Rule for PreferSpread {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
-        let Expression::MemberExpression(member_expr) = &call_expr.callee.without_parenthesized()
+        let Some(member_expr) = call_expr.callee.without_parenthesized().as_member_expression()
         else {
             return;
         };
@@ -60,7 +60,7 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                let Argument::Expression(expr) = &call_expr.arguments[0] else { return };
+                let Some(expr) = call_expr.arguments[0].as_expression() else { return };
                 if matches!(expr.without_parenthesized(), Expression::ObjectExpression(_)) {
                     return;
                 }
@@ -106,7 +106,7 @@ impl Rule for PreferSpread {
                 }
 
                 if let Some(first_arg) = call_expr.arguments.first() {
-                    let Argument::Expression(first_arg) = first_arg else { return };
+                    let Some(first_arg) = first_arg.as_expression() else { return };
                     if let Expression::NumericLiteral(num_lit) = first_arg.without_parenthesized() {
                         if num_lit.value != 0.0 {
                             return;
@@ -139,7 +139,7 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                let Argument::Expression(expr) = &call_expr.arguments[0] else { return };
+                let Some(expr) = call_expr.arguments[0].as_expression() else { return };
                 let Expression::StringLiteral(string_lit) = expr.without_parenthesized() else {
                     return;
                 };
@@ -184,8 +184,7 @@ fn is_not_array(expr: &Expression) -> bool {
     }
 
     if let Expression::CallExpression(call_expr) = expr {
-        if let Expression::MemberExpression(member_expr) = &call_expr.callee.without_parenthesized()
-        {
+        if let Some(member_expr) = call_expr.callee.without_parenthesized().as_member_expression() {
             if Some("join") == member_expr.static_property_name() && call_expr.arguments.len() < 2 {
                 return true;
             }
@@ -196,8 +195,8 @@ fn is_not_array(expr: &Expression) -> bool {
 
     let ident = match expr.without_parenthesized() {
         Expression::Identifier(ident) => ident.name.as_str(),
-        Expression::MemberExpression(member_expr) => {
-            if let Some(v) = member_expr.static_property_name() {
+        expr @ match_member_expression!(Expression) => {
+            if let Some(v) = expr.to_member_expression().static_property_name() {
                 v
             } else {
                 return false;

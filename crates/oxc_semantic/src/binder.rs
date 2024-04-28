@@ -335,14 +335,14 @@ impl<'a> Binder for TSEnumDeclaration<'a> {
 impl<'a> Binder for TSEnumMember<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         // TODO: Perf
-        if matches!(&self.id, TSEnumMemberName::ComputedPropertyName(_)) {
+        if self.id.is_expression() {
             return;
         }
         let name = match &self.id {
-            TSEnumMemberName::Identifier(id) => Cow::Borrowed(id.name.as_str()),
-            TSEnumMemberName::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
-            TSEnumMemberName::NumericLiteral(n) => Cow::Owned(n.value.to_string()),
-            TSEnumMemberName::ComputedPropertyName(_) => panic!("TODO: implement"),
+            TSEnumMemberName::StaticIdentifier(id) => Cow::Borrowed(id.name.as_str()),
+            TSEnumMemberName::StaticStringLiteral(s) => Cow::Borrowed(s.value.as_str()),
+            TSEnumMemberName::StaticNumericLiteral(n) => Cow::Owned(n.value.to_string()),
+            match_expression!(TSEnumMemberName) => panic!("TODO: implement"),
         };
         builder.declare_symbol(
             self.span,

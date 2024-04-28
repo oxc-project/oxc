@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, Expression, MemberExpression},
+    ast::{Argument, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -66,11 +66,7 @@ impl Rule for PreferModernDomApis {
             return;
         };
 
-        let Expression::MemberExpression(member_expr) = &call_expr.callee else {
-            return;
-        };
-
-        let MemberExpression::StaticMemberExpression(member_expr) = &**member_expr else {
+        let Expression::StaticMemberExpression(member_expr) = &call_expr.callee else {
             return;
         };
         let method = member_expr.property.name.as_str();
@@ -84,7 +80,7 @@ impl Rule for PreferModernDomApis {
         ) && call_expr
             .arguments
             .iter()
-            .all(|argument| matches!(argument, Argument::Expression(expr) if !expr.is_undefined()))
+            .all(|argument| matches!(argument.as_expression(), Some(expr) if !expr.is_undefined()))
             && matches!(member_expr.object, Expression::Identifier(_))
             && !call_expr.optional
         {
@@ -106,7 +102,7 @@ impl Rule for PreferModernDomApis {
             Some(2),
             Some(2),
         ) {
-            if let Argument::Expression(Expression::StringLiteral(lit)) = &call_expr.arguments[0] {
+            if let Argument::StringLiteral(lit) = &call_expr.arguments[0] {
                 for (position, replacer) in &POSITION_REPLACERS {
                     if lit.value == position {
                         ctx.diagnostic(PreferModernDomApisDiagnostic(

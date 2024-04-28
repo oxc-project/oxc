@@ -107,9 +107,7 @@ impl<'a> ParserImpl<'a> {
         // CoverInitializedName ({ foo = bar })
         let init = if self.eat(Kind::Eq) {
             let right = self.parse_assignment_expression_base()?;
-            let left = AssignmentTarget::SimpleAssignmentTarget(
-                SimpleAssignmentTarget::AssignmentTargetIdentifier(self.ast.alloc(identifier)),
-            );
+            let left = AssignmentTarget::AssignmentTargetIdentifier(self.ast.alloc(identifier));
             Some(self.ast.assignment_expression(
                 self.end_span(span),
                 AssignmentOperator::Assign,
@@ -122,7 +120,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.object_property(
             self.end_span(span),
             PropertyKind::Init,
-            PropertyKey::Identifier(key),
+            PropertyKey::StaticIdentifier(key),
             value,
             init,
             /* method */ false,
@@ -159,18 +157,16 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_property_name(&mut self) -> Result<(PropertyKey<'a>, bool)> {
         let mut computed = false;
         let key = match self.cur_kind() {
-            Kind::Str => self.parse_literal_expression().map(PropertyKey::Expression)?,
-            kind if kind.is_number() => {
-                self.parse_literal_expression().map(PropertyKey::Expression)?
-            }
+            Kind::Str => self.parse_literal_expression().map(PropertyKey::from)?,
+            kind if kind.is_number() => self.parse_literal_expression().map(PropertyKey::from)?,
             // { [foo]() {} }
             Kind::LBrack => {
                 computed = true;
-                self.parse_computed_property_name().map(PropertyKey::Expression)?
+                self.parse_computed_property_name().map(PropertyKey::from)?
             }
             _ => {
                 let ident = self.parse_identifier_name()?;
-                PropertyKey::Identifier(self.ast.alloc(ident))
+                PropertyKey::StaticIdentifier(self.ast.alloc(ident))
             }
         };
         Ok((key, computed))

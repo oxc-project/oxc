@@ -6,8 +6,8 @@ use oxc_semantic::ReferenceFlag;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
 
 use oxc_ast::ast::{
-    ArrayExpressionElement, BinaryExpression, Expression, NumericLiteral, ObjectProperty,
-    ObjectPropertyKind, PropertyKey, SpreadElement, UnaryExpression,
+    match_expression, ArrayExpressionElement, BinaryExpression, Expression, NumericLiteral,
+    ObjectProperty, ObjectPropertyKind, PropertyKey, SpreadElement, UnaryExpression,
 };
 
 /// Code ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/NodeUtil.java#LL836C6-L836C6)
@@ -46,7 +46,7 @@ impl<'a, 'b> IsLiteralValue<'a, 'b> for ArrayExpressionElement<'a> {
     fn is_literal_value(&self, include_functions: bool) -> bool {
         match self {
             Self::SpreadElement(element) => element.is_literal_value(include_functions),
-            Self::Expression(expr) => expr.is_literal_value(include_functions),
+            match_expression!(Self) => self.to_expression().is_literal_value(include_functions),
             Self::Elision(_) => true,
         }
     }
@@ -77,8 +77,8 @@ impl<'a, 'b> IsLiteralValue<'a, 'b> for ObjectProperty<'a> {
 impl<'a, 'b> IsLiteralValue<'a, 'b> for PropertyKey<'a> {
     fn is_literal_value(&self, include_functions: bool) -> bool {
         match self {
-            Self::Identifier(_) | Self::PrivateIdentifier(_) => false,
-            Self::Expression(expr) => expr.is_literal_value(include_functions),
+            Self::StaticIdentifier(_) | Self::PrivateIdentifier(_) => false,
+            match_expression!(Self) => self.to_expression().is_literal_value(include_functions),
         }
     }
 }
@@ -185,7 +185,9 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for ArrayExpressionElement<'a> {
     fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
         match self {
             Self::SpreadElement(element) => element.check_for_state_change(check_for_new_objects),
-            Self::Expression(expr) => expr.check_for_state_change(check_for_new_objects),
+            match_expression!(Self) => {
+                self.to_expression().check_for_state_change(check_for_new_objects)
+            }
             Self::Elision(_) => false,
         }
     }
@@ -221,8 +223,10 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for ObjectProperty<'a> {
 impl<'a, 'b> CheckForStateChange<'a, 'b> for PropertyKey<'a> {
     fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
         match self {
-            Self::Identifier(_) | Self::PrivateIdentifier(_) => false,
-            Self::Expression(expr) => expr.check_for_state_change(check_for_new_objects),
+            Self::StaticIdentifier(_) | Self::PrivateIdentifier(_) => false,
+            match_expression!(Self) => {
+                self.to_expression().check_for_state_change(check_for_new_objects)
+            }
         }
     }
 }

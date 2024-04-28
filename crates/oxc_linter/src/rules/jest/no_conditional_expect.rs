@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -113,7 +113,7 @@ fn check_parents<'a>(
                 return in_conditional;
             }
 
-            if let Expression::MemberExpression(member_expr) = &call_expr.callee {
+            if let Some(member_expr) = call_expr.callee.as_member_expression() {
                 if member_expr.static_property_name() == Some("catch") {
                     return check_parents(parent_node, id_nodes_mapping, ctx, true);
                 }

@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{Argument, Expression},
-    AstKind,
-};
+use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -86,7 +83,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     // Check all since the optional 'propertyMatchers' argument might be present
     // `.toMatchInlineSnapshot(propertyMatchers?, inlineSnapshot)`
     for arg in jest_fn_call.args {
-        if let Argument::Expression(Expression::TemplateLiteral(template_lit)) = arg {
+        if let Argument::TemplateLiteral(template_lit) = arg {
             if !template_lit.expressions.is_empty() {
                 ctx.diagnostic(NoInterpolationInSnapshotsDiagnostic(template_lit.span));
             }

@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{Argument, Expression},
-    AstKind,
-};
+use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -91,8 +88,7 @@ impl Rule for PreferDomNodeDataset {
             _ => return,
         }
 
-        let Argument::Expression(Expression::StringLiteral(string_lit)) = &call_expr.arguments[0]
-        else {
+        let Argument::StringLiteral(string_lit) = &call_expr.arguments[0] else {
             return;
         };
 

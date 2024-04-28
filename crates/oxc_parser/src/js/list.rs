@@ -119,7 +119,7 @@ impl<'a> SeparatedList<'a> for ArrayExpressionList<'a> {
         let element = match p.cur_kind() {
             Kind::Comma => Ok(p.parse_elision()),
             Kind::Dot3 => p.parse_spread_element().map(ArrayExpressionElement::SpreadElement),
-            _ => p.parse_assignment_expression_base().map(ArrayExpressionElement::Expression),
+            _ => p.parse_assignment_expression_base().map(ArrayExpressionElement::from),
         };
 
         if p.at(Kind::Comma) && p.peek_at(self.close()) {
@@ -201,7 +201,7 @@ impl<'a> SeparatedList<'a> for CallArguments<'a> {
             }
             result
         } else {
-            p.parse_assignment_expression_base().map(Argument::Expression)
+            p.parse_assignment_expression_base().map(Argument::from)
         };
         self.elements.push(element?);
         Ok(())

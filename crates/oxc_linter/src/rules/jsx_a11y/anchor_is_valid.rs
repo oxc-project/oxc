@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression},
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -191,24 +191,18 @@ fn check_value_is_empty(value: &JSXAttributeValue, valid_hrefs: &[String]) -> bo
                 || href_value == "javascript:void(0)"
                 || !valid_hrefs.contains(&href_value)
         }
-        JSXAttributeValue::ExpressionContainer(exp) => {
-            if let JSXExpression::Expression(jsexp) = &exp.expression {
-                if let Expression::Identifier(ident) = jsexp {
-                    if ident.name == "undefined" {
-                        return true;
-                    }
-                } else if let Expression::NullLiteral(_) = jsexp {
-                    return true;
-                } else if let Expression::StringLiteral(str_lit) = jsexp {
-                    let href_value = str_lit.value.to_string(); // Assuming Atom implements ToString
-                    return href_value.is_empty()
-                        || href_value == "#"
-                        || href_value == "javascript:void(0)"
-                        || !valid_hrefs.contains(&href_value);
-                }
-            };
-            false
-        }
+        JSXAttributeValue::ExpressionContainer(exp) => match &exp.expression {
+            JSXExpression::Identifier(ident) => ident.name == "undefined",
+            JSXExpression::NullLiteral(_) => true,
+            JSXExpression::StringLiteral(str_lit) => {
+                let href_value = str_lit.value.to_string();
+                href_value.is_empty()
+                    || href_value == "#"
+                    || href_value == "javascript:void(0)"
+                    || !valid_hrefs.contains(&href_value)
+            }
+            _ => false,
+        },
         JSXAttributeValue::Fragment(_) => true,
     }
 }

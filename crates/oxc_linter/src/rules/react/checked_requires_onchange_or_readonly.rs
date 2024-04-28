@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, Expression, JSXAttributeItem, ObjectPropertyKind},
+    ast::{Argument, JSXAttributeItem, ObjectPropertyKind},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -125,8 +125,7 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     return;
                 }
 
-                let Some(Argument::Expression(Expression::StringLiteral(element_name))) =
-                    call_expr.arguments.first()
+                let Some(Argument::StringLiteral(element_name)) = call_expr.arguments.first()
                 else {
                     return;
                 };
@@ -135,9 +134,7 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     return;
                 }
 
-                let Some(Argument::Expression(Expression::ObjectExpression(obj_expr))) =
-                    call_expr.arguments.get(1)
-                else {
+                let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) else {
                     return;
                 };
 

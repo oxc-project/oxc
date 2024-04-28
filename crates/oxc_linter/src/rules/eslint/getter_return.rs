@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        ChainElement, Expression, MemberExpression, MethodDefinitionKind, ObjectProperty,
-        PropertyKind,
+        match_member_expression, ChainElement, Expression, MemberExpression, MethodDefinitionKind,
+        ObjectProperty, PropertyKind,
     },
     AstKind,
 };
@@ -90,9 +90,13 @@ impl GetterReturn {
 
     fn handle_actual_expression<'a>(callee: &'a Expression<'a>) -> bool {
         match callee.without_parenthesized() {
-            Expression::MemberExpression(me) => Self::handle_member_expression(me),
+            expr @ match_member_expression!(Expression) => {
+                Self::handle_member_expression(expr.to_member_expression())
+            }
             Expression::ChainExpression(ce) => match &ce.expression {
-                ChainElement::MemberExpression(me) => Self::handle_member_expression(me),
+                match_member_expression!(ChainElement) => {
+                    Self::handle_member_expression(ce.expression.to_member_expression())
+                }
                 ChainElement::CallExpression(_) => {
                     false // todo: make a test for this
                 }

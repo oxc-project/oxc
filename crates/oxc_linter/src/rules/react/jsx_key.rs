@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement},
+    ast::{JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -128,7 +128,7 @@ fn is_in_array_or_iter<'a, 'b>(
             AstKind::CallExpression(v) => {
                 let callee = &v.callee.without_parenthesized();
 
-                if let Expression::MemberExpression(v) = callee {
+                if let Some(v) = callee.as_member_expression() {
                     if let Some((span, ident)) = v.static_property_info() {
                         if TARGET_METHODS.contains(ident) {
                             return Some(InsideArrayOrIterator::Iterator(span));

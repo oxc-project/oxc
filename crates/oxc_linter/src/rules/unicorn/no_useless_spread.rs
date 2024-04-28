@@ -1,5 +1,8 @@
 use oxc_ast::{
-    ast::{Argument, ArrayExpression, ArrayExpressionElement, CallExpression, Expression},
+    ast::{
+        match_expression, Argument, ArrayExpression, ArrayExpressionElement, CallExpression,
+        Expression,
+    },
     AstKind,
 };
 use oxc_diagnostics::{
@@ -371,7 +374,7 @@ fn is_single_array_spread(node: &ArrayExpression) -> bool {
 
 fn innermost_paren_arg_span(arg: &Argument) -> Span {
     match arg {
-        Argument::Expression(expr) => expr.without_parenthesized().span(),
+        match_expression!(Argument) => arg.to_expression().without_parenthesized().span(),
         Argument::SpreadElement(spread_elem) => spread_elem.argument.span(),
     }
 }

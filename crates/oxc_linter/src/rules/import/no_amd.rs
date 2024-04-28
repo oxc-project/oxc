@@ -52,8 +52,7 @@ impl Rule for NoAmd {
                     return;
                 }
 
-                if let Argument::Expression(Expression::ArrayExpression(_)) = call_expr.arguments[0]
-                {
+                if let Argument::ArrayExpression(_) = call_expr.arguments[0] {
                     ctx.diagnostic(NoAmdDiagnostic(
                         identifier.span,
                         identifier.name.to_compact_str(),

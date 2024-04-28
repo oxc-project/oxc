@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{CallExpression, Expression, MemberExpression},
+    ast::{match_member_expression, CallExpression, Expression, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -78,7 +78,9 @@ impl Rule for PreferTypeError {
 
 fn is_type_checking_expr(expr: &Expression) -> bool {
     match expr {
-        Expression::MemberExpression(member_expr) => is_type_checking_member_expr(member_expr),
+        match_member_expression!(Expression) => {
+            is_type_checking_member_expr(expr.to_member_expression())
+        }
         Expression::CallExpression(call_expr) => is_typechecking_call_expr(call_expr),
         Expression::UnaryExpression(unary_expr) => {
             if unary_expr.operator == UnaryOperator::Typeof {
@@ -112,8 +114,8 @@ fn is_typechecking_call_expr(call_expr: &CallExpression) -> bool {
         Expression::Identifier(ident) => {
             TYPE_CHECKING_GLOBAL_IDENTIFIERS.contains(ident.name.as_str())
         }
-        Expression::MemberExpression(member_expr) => {
-            if let Some(ident) = member_expr.static_property_name() {
+        callee @ match_member_expression!(Expression) => {
+            if let Some(ident) = callee.to_member_expression().static_property_name() {
                 return TYPE_CHECKING_IDENTIFIERS.contains(ident);
             }
             false

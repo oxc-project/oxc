@@ -184,7 +184,7 @@ fn is_matching_native_coercion_function_call(
 
     let fn_name = NATIVE_COERCION_FUNCTION_NAMES.get_key(callee_ident.name.as_str())?;
 
-    let Argument::Expression(Expression::Identifier(arg_ident)) = &call_expr.arguments[0] else {
+    let Argument::Identifier(arg_ident) = &call_expr.arguments[0] else {
         return None;
     };
 
@@ -213,7 +213,7 @@ fn check_array_callback_methods(
         return false;
     }
 
-    let Expression::MemberExpression(callee_member_expr) = &call_expr.callee else {
+    let Some(callee_member_expr) = call_expr.callee.as_member_expression() else {
         return false;
     };
     if callee_member_expr.optional() {

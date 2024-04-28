@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{JSXAttributeValue, JSXExpression},
-    AstKind,
-};
+use oxc_ast::{ast::JSXAttributeValue, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -120,7 +117,7 @@ impl Rule for MouseEventsHaveKeyEvents {
 
                 match has_jsx_prop(jsx_opening_el, "onFocus").and_then(get_prop_value) {
                     Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                        if let JSXExpression::Expression(expr) = &container.expression {
+                        if let Some(expr) = container.expression.as_expression() {
                             if expr.is_undefined() {
                                 ctx.diagnostic(MouseEventsHaveKeyEventsDiagnostic::MissOnFocus(
                                     jsx_attr.span(),
@@ -150,13 +147,11 @@ impl Rule for MouseEventsHaveKeyEvents {
 
                 match has_jsx_prop(jsx_opening_el, "onBlur").and_then(get_prop_value) {
                     Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                        if let JSXExpression::Expression(expr) = &container.expression {
-                            if expr.is_undefined() {
-                                ctx.diagnostic(MouseEventsHaveKeyEventsDiagnostic::MissOnBlur(
-                                    jsx_attr.span(),
-                                    String::from(handler),
-                                ));
-                            }
+                        if container.expression.is_undefined() {
+                            ctx.diagnostic(MouseEventsHaveKeyEventsDiagnostic::MissOnBlur(
+                                jsx_attr.span(),
+                                String::from(handler),
+                            ));
                         }
                     }
                     None => {

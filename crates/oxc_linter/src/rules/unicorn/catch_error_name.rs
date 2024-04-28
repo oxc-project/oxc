@@ -112,7 +112,7 @@ impl Rule for CatchErrorName {
         }
 
         if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Expression::MemberExpression(member_expr) = &call_expr.callee {
+            if let Some(member_expr) = call_expr.callee.as_member_expression() {
                 if member_expr.static_property_name() == Some("catch") {
                     if let Some(arg0) = call_expr.arguments.first() {
                         if let Some(diagnostic) = self.check_function_arguments(arg0, ctx) {
@@ -142,8 +142,7 @@ impl CatchErrorName {
         arg0: &Argument,
         ctx: &LintContext,
     ) -> Option<CatchErrorNameDiagnostic> {
-        let Argument::Expression(expr) = arg0 else { return None };
-
+        let expr = arg0.as_expression()?;
         let expr = expr.without_parenthesized();
 
         if let Expression::ArrowFunctionExpression(arrow_expr) = expr {

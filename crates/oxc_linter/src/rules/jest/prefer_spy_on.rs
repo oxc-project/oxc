@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        Argument, AssignmentExpression, AssignmentTarget, CallExpression, Expression,
-        MemberExpression, SimpleAssignmentTarget,
+        Argument, AssignmentExpression, CallExpression, Expression, MemberExpression,
+        SimpleAssignmentTarget,
     },
     AstKind,
 };
@@ -66,9 +66,9 @@ impl Rule for PreferSpyOn {
         let left = &assign_expr.left;
         let right = &assign_expr.right;
 
-        let AssignmentTarget::SimpleAssignmentTarget(
-            SimpleAssignmentTarget::MemberAssignmentTarget(left_assign),
-        ) = left
+        let Some(left_assign) = left
+            .as_simple_assignment_target()
+            .and_then(SimpleAssignmentTarget::as_member_expression)
         else {
             return;
         };
@@ -77,13 +77,14 @@ impl Rule for PreferSpyOn {
             Expression::CallExpression(call_expr) => {
                 Self::check_and_fix(assign_expr, call_expr, left_assign, node, ctx);
             }
-            Expression::MemberExpression(mem_expr) => {
-                let Expression::CallExpression(call_expr) = mem_expr.object() else {
-                    return;
-                };
-                Self::check_and_fix(assign_expr, call_expr, left_assign, node, ctx);
+            _ => {
+                if let Some(mem_expr) = right.as_member_expression() {
+                    let Expression::CallExpression(call_expr) = mem_expr.object() else {
+                        return;
+                    };
+                    Self::check_and_fix(assign_expr, call_expr, left_assign, node, ctx);
+                }
             }
-            _ => (),
         }
     }
 }
@@ -167,7 +168,7 @@ impl PreferSpyOn {
 
         formatter.print_str(b".mockImplementation(");
 
-        if let Some(Argument::Expression(expr)) = Self::get_jest_fn_call(call_expr) {
+        if let Some(expr) = Self::get_jest_fn_call(call_expr) {
             formatter.print_expression(expr);
         }
 
@@ -175,15 +176,16 @@ impl PreferSpyOn {
         formatter.into_source_text()
     }
 
-    fn get_jest_fn_call<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Argument<'a>> {
+    fn get_jest_fn_call<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
         let is_jest_fn = get_node_name(&call_expr.callee) == "jest.fn";
 
         if is_jest_fn {
-            return call_expr.arguments.first();
+            return call_expr.arguments.first().and_then(Argument::as_expression);
         }
 
         match &call_expr.callee {
-            Expression::MemberExpression(mem_expr) => {
+            expr if expr.is_member_expression() => {
+                let mem_expr = expr.to_member_expression();
                 if let Some(call_expr) = Self::find_mem_expr(mem_expr) {
                     return Self::get_jest_fn_call(call_expr);
                 }
@@ -194,11 +196,17 @@ impl PreferSpyOn {
         }
     }
 
-    fn find_mem_expr<'a>(mem_expr: &'a MemberExpression<'a>) -> Option<&'a CallExpression<'a>> {
-        match mem_expr.object() {
-            Expression::CallExpression(call_expr) => Some(call_expr),
-            Expression::MemberExpression(mem_expr) => Self::find_mem_expr(mem_expr),
-            _ => None,
+    fn find_mem_expr<'a>(mut mem_expr: &'a MemberExpression<'a>) -> Option<&'a CallExpression<'a>> {
+        loop {
+            let object = mem_expr.object();
+            if let Expression::CallExpression(call_expr) = object {
+                return Some(call_expr);
+            }
+            if let Some(object_mem_expr) = object.as_member_expression() {
+                mem_expr = object_mem_expr;
+            } else {
+                return None;
+            }
         }
     }
 }

@@ -92,9 +92,8 @@ impl TestCase {
                 // Parse options
                 if let Statement::ExpressionStatement(expr_stmt) = stmt {
                     if let Expression::AssignmentExpression(assign_expr) = &expr_stmt.expression {
-                        if let AssignmentTarget::SimpleAssignmentTarget(
-                            SimpleAssignmentTarget::AssignmentTargetIdentifier(ident),
-                        ) = &assign_expr.left
+                        if let AssignmentTarget::AssignmentTargetIdentifier(ident) =
+                            &assign_expr.left
                         {
                             if ident.name == "options" {
                                 if let Expression::ObjectExpression(object_expr) =

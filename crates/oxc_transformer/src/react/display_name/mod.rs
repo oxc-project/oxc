@@ -36,19 +36,18 @@ impl<'a> ReactDisplayName<'a> {
             return;
         };
         let name = match &assign_expr.left {
-            AssignmentTarget::SimpleAssignmentTarget(
-                SimpleAssignmentTarget::AssignmentTargetIdentifier(ident),
-            ) => ident.name.clone(),
-            AssignmentTarget::SimpleAssignmentTarget(
-                SimpleAssignmentTarget::MemberAssignmentTarget(target),
-            ) => {
-                if let Some(name) = target.static_property_name() {
-                    self.ctx.ast.new_atom(name)
+            AssignmentTarget::AssignmentTargetIdentifier(ident) => ident.name.clone(),
+            target => {
+                if let Some(target) = target.as_member_expression() {
+                    if let Some(name) = target.static_property_name() {
+                        self.ctx.ast.new_atom(name)
+                    } else {
+                        return;
+                    }
                 } else {
                     return;
                 }
             }
-            _ => return,
         };
         self.add_display_name(obj_expr, name);
     }
@@ -77,7 +76,7 @@ impl<'a> ReactDisplayName<'a> {
     /// `export default React.createClass({})`
     /// Uses the current file name as the display name.
     pub fn transform_export_default_declaration(&self, decl: &mut ExportDefaultDeclaration<'a>) {
-        let ExportDefaultDeclarationKind::Expression(expr) = &mut decl.declaration else { return };
+        let Some(expr) = decl.declaration.as_expression_mut() else { return };
         let Some(obj_expr) = Self::get_object_from_create_class(expr) else { return };
         let name = self.ctx.ast.new_atom(self.ctx.filename());
         self.add_display_name(obj_expr, name);
@@ -91,7 +90,9 @@ impl<'a> ReactDisplayName<'a> {
     ) -> Option<&'b mut Box<'a, ObjectExpression<'a>>> {
         let Expression::CallExpression(call_expr) = e else { return None };
         if match &call_expr.callee {
-            Expression::MemberExpression(e) => !e.is_specific_member_access("React", "createClass"),
+            callee @ match_member_expression!(Expression) => {
+                !callee.to_member_expression().is_specific_member_access("React", "createClass")
+            }
             Expression::Identifier(ident) => ident.name != "createReactClass",
             _ => true,
         } {
@@ -103,11 +104,8 @@ impl<'a> ReactDisplayName<'a> {
         }
         let arg = call_expr.arguments.get_mut(0)?;
         match arg {
-            Argument::SpreadElement(_) => None,
-            Argument::Expression(e) => match e {
-                Expression::ObjectExpression(obj_expr) => Some(obj_expr),
-                _ => None,
-            },
+            Argument::ObjectExpression(obj_expr) => Some(obj_expr),
+            _ => None,
         }
     }
 

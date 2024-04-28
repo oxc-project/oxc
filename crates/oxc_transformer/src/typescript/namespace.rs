@@ -28,27 +28,24 @@ impl<'a> TypeScript<'a> {
 
         for stmt in self.ctx.ast.move_statement_vec(&mut program.body) {
             match stmt {
-                Statement::Declaration(Declaration::TSModuleDeclaration(decl)) => {
+                Statement::TSModuleDeclaration(decl) => {
                     if !decl.modifiers.is_contains_declare() {
                         if let Some(transformed_stmt) =
                             self.handle_nested(self.ctx.ast.copy(&decl).unbox(), None)
                         {
                             let name = decl.id.name();
                             if names.insert(name.clone()) {
-                                new_stmts.push(Statement::Declaration(
-                                    self.create_variable_declaration(name),
-                                ));
+                                new_stmts
+                                    .push(Statement::from(self.create_variable_declaration(name)));
                             }
                             new_stmts.push(transformed_stmt);
                             continue;
                         }
                     }
-                    new_stmts.push(Statement::Declaration(Declaration::TSModuleDeclaration(decl)));
+                    new_stmts.push(Statement::TSModuleDeclaration(decl));
                 }
-                Statement::ModuleDeclaration(module_decl) => {
-                    if let ModuleDeclaration::ExportNamedDeclaration(export_decl) =
-                        self.ctx.ast.copy(&module_decl).unbox()
-                    {
+                match_module_declaration!(Statement) => {
+                    if let Statement::ExportNamedDeclaration(export_decl) = &stmt {
                         if let Some(Declaration::TSModuleDeclaration(decl)) =
                             &export_decl.declaration
                         {
@@ -81,29 +78,29 @@ impl<'a> TypeScript<'a> {
                         }
                     }
 
-                    module_decl.bound_names(&mut |id| {
+                    stmt.to_module_declaration().bound_names(&mut |id| {
                         names.insert(id.name.clone());
                     });
-                    new_stmts.push(Statement::ModuleDeclaration(module_decl));
+                    new_stmts.push(stmt);
                 }
                 // Collect bindings from class, function, variable and enum declarations
-                Statement::Declaration(Declaration::FunctionDeclaration(ref decl)) => {
+                Statement::FunctionDeclaration(ref decl) => {
                     if let Some(ident) = &decl.id {
                         names.insert(ident.name.clone());
                     }
                     new_stmts.push(stmt);
                 }
-                Statement::Declaration(Declaration::ClassDeclaration(ref decl)) => {
+                Statement::ClassDeclaration(ref decl) => {
                     if let Some(ident) = &decl.id {
                         names.insert(ident.name.clone());
                     }
                     new_stmts.push(stmt);
                 }
-                Statement::Declaration(Declaration::TSEnumDeclaration(ref decl)) => {
+                Statement::TSEnumDeclaration(ref decl) => {
                     names.insert(decl.id.name.clone());
                     new_stmts.push(stmt);
                 }
-                Statement::Declaration(Declaration::VariableDeclaration(ref decl)) => {
+                Statement::VariableDeclaration(ref decl) => {
                     decl.bound_names(&mut |id| {
                         names.insert(id.name.clone());
                     });
@@ -157,102 +154,103 @@ impl<'a> TypeScript<'a> {
 
         for stmt in namespace_top_level {
             match stmt {
-                Statement::Declaration(Declaration::TSModuleDeclaration(decl)) => {
+                Statement::TSModuleDeclaration(decl) => {
                     let module_name = decl.id.name().clone();
                     if let Some(transformed) = self.handle_nested(decl.unbox(), None) {
                         is_empty = false;
                         if names.insert(module_name.clone()) {
-                            new_stmts.push(Statement::Declaration(
+                            new_stmts.push(Statement::from(
                                 self.create_variable_declaration(&module_name),
                             ));
                         }
                         new_stmts.push(transformed);
                     }
                 }
-                Statement::Declaration(Declaration::ClassDeclaration(decl)) => {
+                Statement::ClassDeclaration(decl) => {
                     is_empty = false;
                     decl.bound_names(&mut |id| {
                         names.insert(id.name.clone());
                     });
-                    new_stmts.push(Statement::Declaration(Declaration::ClassDeclaration(decl)));
+                    new_stmts.push(Statement::ClassDeclaration(decl));
                 }
-                Statement::Declaration(Declaration::TSEnumDeclaration(enum_decl)) => {
+                Statement::TSEnumDeclaration(enum_decl) => {
                     is_empty = false;
                     names.insert(enum_decl.id.name.clone());
-                    new_stmts
-                        .push(Statement::Declaration(Declaration::TSEnumDeclaration(enum_decl)));
+                    new_stmts.push(Statement::TSEnumDeclaration(enum_decl));
                 }
-                Statement::ModuleDeclaration(decl) => {
-                    if let ModuleDeclaration::ExportNamedDeclaration(export_decl) = decl.unbox() {
-                        let export_decl = export_decl.unbox();
-                        if let Some(decl) = export_decl.declaration {
-                            if decl.modifiers().is_some_and(Modifiers::is_contains_declare) {
-                                continue;
-                            }
-                            match decl {
-                                Declaration::TSEnumDeclaration(enum_decl) => {
-                                    is_empty = false;
-                                    self.add_declaration(
-                                        Declaration::TSEnumDeclaration(enum_decl),
-                                        &name,
-                                        &mut names,
-                                        &mut new_stmts,
-                                    );
-                                }
-                                Declaration::FunctionDeclaration(func_decl) => {
-                                    is_empty = false;
-                                    self.add_declaration(
-                                        Declaration::FunctionDeclaration(func_decl),
-                                        &name,
-                                        &mut names,
-                                        &mut new_stmts,
-                                    );
-                                }
-                                Declaration::ClassDeclaration(class_decl) => {
-                                    is_empty = false;
-                                    self.add_declaration(
-                                        Declaration::ClassDeclaration(class_decl),
-                                        &name,
-                                        &mut names,
-                                        &mut new_stmts,
-                                    );
-                                }
-                                Declaration::VariableDeclaration(var_decl) => {
-                                    is_empty = false;
-                                    let stmts = self.handle_variable_declaration(var_decl, &name);
-                                    new_stmts.extend(stmts);
-                                }
-                                Declaration::TSModuleDeclaration(module_decl) => {
-                                    let module_name = module_decl.id.name().clone();
-                                    if let Some(transformed) = self.handle_nested(
-                                        module_decl.unbox(),
-                                        Some(self.ctx.ast.identifier_reference_expression(
-                                            IdentifierReference::new(SPAN, name.clone()),
-                                        )),
-                                    ) {
-                                        is_empty = false;
-                                        if names.insert(module_name.clone()) {
-                                            new_stmts.push(Statement::Declaration(
-                                                self.create_variable_declaration(&module_name),
-                                            ));
-                                        }
-                                        new_stmts.push(transformed);
-                                    }
-                                }
-                                _ => {}
-                            }
-                        } else {
-                            let stmt = self.ctx.ast.module_declaration(
-                                ModuleDeclaration::ExportNamedDeclaration(
-                                    self.ctx.ast.alloc(export_decl),
-                                ),
-                            );
-                            new_stmts.push(stmt);
+                Statement::ExportNamedDeclaration(export_decl) => {
+                    let export_decl = export_decl.unbox();
+                    if let Some(decl) = export_decl.declaration {
+                        if decl.modifiers().is_some_and(Modifiers::is_contains_declare) {
+                            continue;
                         }
+                        match decl {
+                            Declaration::TSEnumDeclaration(enum_decl) => {
+                                is_empty = false;
+                                self.add_declaration(
+                                    Declaration::TSEnumDeclaration(enum_decl),
+                                    &name,
+                                    &mut names,
+                                    &mut new_stmts,
+                                );
+                            }
+                            Declaration::FunctionDeclaration(func_decl) => {
+                                is_empty = false;
+                                self.add_declaration(
+                                    Declaration::FunctionDeclaration(func_decl),
+                                    &name,
+                                    &mut names,
+                                    &mut new_stmts,
+                                );
+                            }
+                            Declaration::ClassDeclaration(class_decl) => {
+                                is_empty = false;
+                                self.add_declaration(
+                                    Declaration::ClassDeclaration(class_decl),
+                                    &name,
+                                    &mut names,
+                                    &mut new_stmts,
+                                );
+                            }
+                            Declaration::VariableDeclaration(var_decl) => {
+                                is_empty = false;
+                                let stmts = self.handle_variable_declaration(var_decl, &name);
+                                new_stmts.extend(stmts);
+                            }
+                            Declaration::TSModuleDeclaration(module_decl) => {
+                                let module_name = module_decl.id.name().clone();
+                                if let Some(transformed) = self.handle_nested(
+                                    module_decl.unbox(),
+                                    Some(self.ctx.ast.identifier_reference_expression(
+                                        IdentifierReference::new(SPAN, name.clone()),
+                                    )),
+                                ) {
+                                    is_empty = false;
+                                    if names.insert(module_name.clone()) {
+                                        new_stmts.push(Statement::from(
+                                            self.create_variable_declaration(&module_name),
+                                        ));
+                                    }
+                                    new_stmts.push(transformed);
+                                }
+                            }
+                            _ => {}
+                        }
+                    } else {
+                        let stmt = self.ctx.ast.module_declaration(
+                            ModuleDeclaration::ExportNamedDeclaration(
+                                self.ctx.ast.alloc(export_decl),
+                            ),
+                        );
+                        new_stmts.push(stmt);
                     }
                 }
-                Statement::Declaration(decl) if decl.is_typescript_syntax() => continue,
                 stmt => {
+                    if let Some(decl) = stmt.as_declaration() {
+                        if decl.is_typescript_syntax() {
+                            continue;
+                        }
+                    }
                     is_empty = false;
                     new_stmts.push(stmt);
                 }
@@ -382,7 +380,7 @@ impl<'a> TypeScript<'a> {
 
             let op = LogicalOperator::Or;
             let expr = self.ctx.ast.logical_expression(SPAN, logical_left, op, logical_right);
-            self.ctx.ast.new_vec_single(Argument::Expression(expr))
+            self.ctx.ast.new_vec_single(Argument::from(expr))
         };
 
         let expr = self.ctx.ast.call_expression(SPAN, callee, arguments, false, None);
@@ -401,7 +399,7 @@ impl<'a> TypeScript<'a> {
         if let Some(ident) = decl.id() {
             let item_name = ident.name.clone();
             let assignment_statement = self.create_assignment_statement(name, &item_name);
-            new_stmts.push(Statement::Declaration(decl));
+            new_stmts.push(Statement::from(decl));
             let assignment_statement =
                 self.ctx.ast.expression_statement(SPAN, assignment_statement);
             new_stmts.push(assignment_statement);
@@ -415,8 +413,7 @@ impl<'a> TypeScript<'a> {
         let object = self.ctx.ast.identifier_reference_expression(ident);
         let property = IdentifierName::new(SPAN, item_name.clone());
         let left = self.ctx.ast.static_member(SPAN, object, property, false);
-        let left = SimpleAssignmentTarget::MemberAssignmentTarget(self.ctx.ast.alloc(left));
-        let left = AssignmentTarget::SimpleAssignmentTarget(left);
+        let left = AssignmentTarget::from(left);
         let ident = self.ctx.ast.identifier_reference(SPAN, item_name.as_str());
         let right = self.ctx.ast.identifier_reference_expression(ident);
         let op = AssignmentOperator::Assign;
@@ -459,9 +456,7 @@ impl<'a> TypeScript<'a> {
                     ));
                 }
             });
-            return self.ctx.ast.new_vec_single(Statement::Declaration(
-                Declaration::VariableDeclaration(var_decl),
-            ));
+            return self.ctx.ast.new_vec_single(Statement::VariableDeclaration(var_decl));
         }
 
         // Now we have pattern in declarators
@@ -472,7 +467,7 @@ impl<'a> TypeScript<'a> {
         });
 
         let mut stmts = self.ctx.ast.new_vec_with_capacity(2);
-        stmts.push(Statement::Declaration(Declaration::VariableDeclaration(var_decl)));
+        stmts.push(Statement::VariableDeclaration(var_decl));
         stmts.push(
             self.ctx
                 .ast
@@ -485,13 +480,9 @@ impl<'a> TypeScript<'a> {
 /// Check if the statements contain a namespace declaration
 fn has_namespace(stmts: &[Statement]) -> bool {
     stmts.iter().any(|stmt| match stmt {
-        Statement::Declaration(Declaration::TSModuleDeclaration(_)) => true,
-        Statement::ModuleDeclaration(module_decl) => {
-            if let ModuleDeclaration::ExportNamedDeclaration(decl) = &**module_decl {
-                matches!(decl.declaration, Some(Declaration::TSModuleDeclaration(_)))
-            } else {
-                false
-            }
+        Statement::TSModuleDeclaration(_) => true,
+        Statement::ExportNamedDeclaration(decl) => {
+            matches!(decl.declaration, Some(Declaration::TSModuleDeclaration(_)))
         }
         _ => false,
     })

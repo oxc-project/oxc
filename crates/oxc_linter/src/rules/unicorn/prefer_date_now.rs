@@ -61,8 +61,8 @@ impl Rule for PreferDateNow {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
                 // `new Date().{getTime,valueOf}()`
-                if let Expression::MemberExpression(member_expr) =
-                    &call_expr.callee.without_parenthesized()
+                if let Some(member_expr) =
+                    call_expr.callee.without_parenthesized().as_member_expression()
                 {
                     if call_expr.arguments.is_empty()
                         && !member_expr.is_computed()
@@ -81,7 +81,9 @@ impl Rule for PreferDateNow {
                     if matches!(ident.name.as_str(), "Number" | "BigInt")
                         && call_expr.arguments.len() == 1
                     {
-                        if let Some(Argument::Expression(expr)) = call_expr.arguments.first() {
+                        if let Some(expr) =
+                            call_expr.arguments.first().and_then(Argument::as_expression)
+                        {
                             if is_new_date(expr.without_parenthesized()) {
                                 ctx.diagnostic(
                                     PreferDateNowDiagnostic::PreferDateNowOverNumberDateObject(

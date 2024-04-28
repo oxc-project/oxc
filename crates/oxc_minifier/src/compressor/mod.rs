@@ -63,7 +63,7 @@ impl<'a> Compressor<'a> {
         if let Statement::BlockStatement(block) = stmt {
             // Avoid compressing `if (x) { var x = 1 }` to `if (x) var x = 1` due to different
             // semantics according to AnnexB, which lead to different semantics.
-            if block.body.len() == 1 && !matches!(&block.body[0], Statement::Declaration(_)) {
+            if block.body.len() == 1 && !block.body[0].is_declaration() {
                 *stmt = block.body.remove(0);
                 self.compress_block(stmt);
             }
@@ -103,8 +103,8 @@ impl<'a> Compressor<'a> {
         for window in stmts.windows(2) {
             let [prev, cur] = window else { unreachable!() };
             if let (
-                Statement::Declaration(Declaration::VariableDeclaration(cur_decl)),
-                Statement::Declaration(Declaration::VariableDeclaration(prev_decl)),
+                Statement::VariableDeclaration(cur_decl),
+                Statement::VariableDeclaration(prev_decl),
             ) = (cur, prev)
             {
                 if cur_decl.kind == prev_decl.kind {
@@ -130,12 +130,8 @@ impl<'a> Compressor<'a> {
         let mut new_stmts = self.ast.new_vec_with_capacity(stmts.len() - capacity);
         for (i, stmt) in stmts.drain(..).enumerate() {
             if i > 0 && ranges.iter().any(|range| range.contains(&(i - 1)) && range.contains(&i)) {
-                if let Statement::Declaration(Declaration::VariableDeclaration(prev_decl)) =
-                    new_stmts.last_mut().unwrap()
-                {
-                    if let Statement::Declaration(Declaration::VariableDeclaration(mut cur_decl)) =
-                        stmt
-                    {
+                if let Statement::VariableDeclaration(prev_decl) = new_stmts.last_mut().unwrap() {
+                    if let Statement::VariableDeclaration(mut cur_decl) = stmt {
                         prev_decl.declarations.append(&mut cur_decl.declarations);
                     }
                 }

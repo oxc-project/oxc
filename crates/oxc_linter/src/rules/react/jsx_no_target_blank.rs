@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXElementName,
-        JSXExpression, StringLiteral,
+        match_expression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
+        JSXElementName, JSXExpression, StringLiteral,
     },
     AstKind,
 };
@@ -279,7 +279,7 @@ fn check_href(
             is_external_link = check_is_external_link(&str.value);
         }
         JSXAttributeValue::ExpressionContainer(expr) => {
-            if let JSXExpression::Expression(expr) = &expr.expression {
+            if let Some(expr) = expr.expression.as_expression() {
                 match_href_expression(expr, &mut is_external_link, &mut is_dynamic_link);
             }
         }
@@ -351,8 +351,10 @@ fn check_rel<'a>(
             (check_rel_val(str, allow_referrer), "", false, false)
         }
         JSXAttributeValue::ExpressionContainer(expr) => match &expr.expression {
-            JSXExpression::Expression(expr) => match_rel_expression(expr, allow_referrer),
             JSXExpression::EmptyExpression(_) => default,
+            expr @ match_expression!(JSXExpression) => {
+                match_rel_expression(expr.to_expression(), allow_referrer)
+            }
         },
         _ => default,
     }
@@ -388,7 +390,7 @@ fn check_target<'a>(attribute_value: &'a JSXAttributeValue<'a>) -> (bool, &'a st
             (str.value.as_str().to_lowercase() == "_blank", "", false, false)
         }
         JSXAttributeValue::ExpressionContainer(expr) => {
-            if let JSXExpression::Expression(expr) = &expr.expression {
+            if let Some(expr) = expr.expression.as_expression() {
                 match_target_expression(expr)
             } else {
                 default

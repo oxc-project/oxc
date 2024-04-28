@@ -44,21 +44,15 @@ impl<'a, 'b> Array<'a, 'b> {
                     return false;
                 }
 
-                return array.elements.iter().all(|element| {
-                    let ArrayExpressionElement::Expression(expr) = element else {
-                        return false;
-                    };
-
-                    match expr {
-                        Expression::NumericLiteral(_) => true,
-                        Expression::UnaryExpression(unary_expr) => {
-                            matches!(
-                                unary_expr.operator,
-                                UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation
-                            ) && matches!(unary_expr.argument, Expression::NumericLiteral(_))
-                        }
-                        _ => false,
+                return array.elements.iter().all(|element| match element {
+                    ArrayExpressionElement::NumericLiteral(_) => true,
+                    ArrayExpressionElement::UnaryExpression(unary_expr) => {
+                        matches!(
+                            unary_expr.operator,
+                            UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation
+                        ) && matches!(unary_expr.argument, Expression::NumericLiteral(_))
                     }
+                    _ => false,
                 });
             }
             Self::ArrayPattern(_) | Self::ArrayAssignmentTarget(_) | Self::TSTupleType(_) => false,
@@ -260,16 +254,16 @@ fn should_break(array: &Array) -> bool {
     match array {
         Array::ArrayExpression(array) => {
             array.elements.iter().enumerate().all(|(index, element)| {
-                let ArrayExpressionElement::Expression(element) = element else {
-                    return false;
-                };
-                if let Some(ArrayExpressionElement::Expression(next_element)) =
-                    array.elements.get(index + 1)
-                {
+                if let Some(next_element) = array.elements.get(index + 1) {
                     let all_array_or_object = matches!(
                         (element, next_element),
-                        (Expression::ArrayExpression(_), Expression::ArrayExpression(_))
-                            | (Expression::ObjectExpression(_), Expression::ObjectExpression(_))
+                        (
+                            ArrayExpressionElement::ArrayExpression(_),
+                            ArrayExpressionElement::ArrayExpression(_)
+                        ) | (
+                            ArrayExpressionElement::ObjectExpression(_),
+                            ArrayExpressionElement::ObjectExpression(_)
+                        )
                     );
                     if !all_array_or_object {
                         return false;
@@ -277,30 +271,25 @@ fn should_break(array: &Array) -> bool {
                 }
 
                 match element {
-                    Expression::ArrayExpression(array) => array.elements.len() > 1,
-                    Expression::ObjectExpression(object) => object.properties.len() > 1,
+                    ArrayExpressionElement::ArrayExpression(array) => array.elements.len() > 1,
+                    ArrayExpressionElement::ObjectExpression(object) => object.properties.len() > 1,
                     _ => false,
                 }
             })
         }
         Array::TSTupleType(tuple) => {
             tuple.element_types.iter().enumerate().all(|(index, element)| {
-                let TSTupleElement::TSType(element) = element else { return false };
+                let TSTupleElement::TSTupleType(array) = element else {
+                    return false;
+                };
 
-                if let Some(TSTupleElement::TSType(next_element)) =
+                if let Some(next_element @ match_ts_type!(TSTupleElement)) =
                     tuple.element_types.get(index + 1)
                 {
-                    if !matches!(
-                        (element, next_element),
-                        (TSType::TSTupleType(_), TSType::TSTupleType(_))
-                    ) {
+                    if !matches!(next_element, TSTupleElement::TSTupleType(_)) {
                         return false;
                     }
                 }
-
-                let TSType::TSTupleType(array) = element else {
-                    return false;
-                };
 
                 array.element_types.len() > 1
             })

@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{Expression, MemberExpression},
-    AstKind,
-};
+use oxc_ast::{ast::MemberExpression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -70,7 +67,7 @@ impl Rule for RequireArrayJoinSeparator {
         }
 
         // `[].join.call(foo)` and `Array.prototype.join.call(foo)`
-        if let Expression::MemberExpression(member_expr_obj) = member_expr.object() {
+        if let Some(member_expr_obj) = member_expr.object().as_member_expression() {
             if is_method_call(call_expr, None, Some(&["call"]), Some(1), Some(1))
                 && !member_expr.optional()
                 && !call_expr.optional

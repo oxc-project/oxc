@@ -1,4 +1,7 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{
+    ast::{match_member_expression, Expression},
+    AstKind,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -122,7 +125,8 @@ impl Rule for PreferNumberProperties {
 fn extract_ident_from_expression<'b>(expr: &'b Expression<'_>) -> Option<&'b str> {
     match expr {
         Expression::Identifier(ident_name) => Some(ident_name.name.as_str()),
-        Expression::MemberExpression(member_expr) => {
+        match_member_expression!(Expression) => {
+            let member_expr = expr.to_member_expression();
             let Expression::Identifier(ident_name) = member_expr.object() else {
                 return None;
             };

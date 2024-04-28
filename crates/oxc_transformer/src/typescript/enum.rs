@@ -73,7 +73,7 @@ impl<'a> TypeScript<'a> {
             .identifier_reference_expression(IdentifierReference::new(SPAN, enum_name.clone()));
         let right = self.ctx.ast.object_expression(SPAN, self.ctx.ast.new_vec(), None);
         let expression = self.ctx.ast.logical_expression(SPAN, left, op, right);
-        arguments.push(Argument::Expression(expression));
+        arguments.push(Argument::from(expression));
 
         let call_expression = self.ctx.ast.call_expression(SPAN, callee, arguments, false, None);
 
@@ -111,10 +111,12 @@ impl<'a> TypeScript<'a> {
 
         for member in members.iter_mut() {
             let (member_name, member_span) = match &member.id {
-                TSEnumMemberName::Identifier(id) => (&id.name, id.span),
-                TSEnumMemberName::StringLiteral(str) => (&str.value, str.span),
-                TSEnumMemberName::ComputedPropertyName(..)
-                | TSEnumMemberName::NumericLiteral(..) => unreachable!(),
+                TSEnumMemberName::StaticIdentifier(id) => (&id.name, id.span),
+                TSEnumMemberName::StaticStringLiteral(str) => (&str.value, str.span),
+                #[allow(clippy::unnested_or_patterns)] // Clippy is wrong
+                TSEnumMemberName::StaticNumericLiteral(_) | match_expression!(TSEnumMemberName) => {
+                    unreachable!()
+                }
             };
 
             let mut init = self
@@ -158,8 +160,7 @@ impl<'a> TypeScript<'a> {
                     decls
                 };
                 let decl = self.ctx.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
-                let stmt: Statement<'_> =
-                    Statement::Declaration(Declaration::VariableDeclaration(decl));
+                let stmt: Statement<'_> = Statement::VariableDeclaration(decl);
 
                 statements.push(stmt);
             }

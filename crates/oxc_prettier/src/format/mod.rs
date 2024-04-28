@@ -116,14 +116,14 @@ impl<'a> Format<'a> for Statement<'a> {
             Self::ForStatement(stmt) => stmt.format(p),
             Self::IfStatement(stmt) => stmt.format(p),
             Self::LabeledStatement(stmt) => stmt.format(p),
-            Self::ModuleDeclaration(decl) => decl.format(p),
             Self::ReturnStatement(stmt) => stmt.format(p),
             Self::SwitchStatement(stmt) => stmt.format(p),
             Self::ThrowStatement(stmt) => stmt.format(p),
             Self::TryStatement(stmt) => stmt.format(p),
             Self::WhileStatement(stmt) => stmt.format(p),
             Self::WithStatement(stmt) => stmt.format(p),
-            Self::Declaration(decl) => decl.format(p),
+            match_module_declaration!(Self) => self.to_module_declaration().format(p),
+            match_declaration!(Self) => self.to_declaration().format(p),
         }
     }
 }
@@ -234,7 +234,7 @@ impl<'a> Format<'a> for ForStatementInit<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             ForStatementInit::VariableDeclaration(v) => v.format(p),
-            ForStatementInit::Expression(v) => v.format(p),
+            match_expression!(ForStatementInit) => self.to_expression().format(p),
             ForStatementInit::UsingDeclaration(v) => v.format(p),
         }
     }
@@ -280,7 +280,7 @@ impl<'a> Format<'a> for ForStatementLeft<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             ForStatementLeft::VariableDeclaration(v) => v.format(p),
-            ForStatementLeft::AssignmentTarget(v) => v.format(p),
+            match_assignment_target!(ForStatementLeft) => self.to_assignment_target().format(p),
             ForStatementLeft::UsingDeclaration(v) => v.format(p),
         }
     }
@@ -988,7 +988,8 @@ impl<'a> Format<'a> for TSImportEqualsDeclaration<'a> {
 impl<'a> Format<'a> for TSModuleReference<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
-            TSModuleReference::TypeName(v) => v.format(p),
+            TSModuleReference::IdentifierReference(it) => format!(p, it),
+            TSModuleReference::QualifiedName(it) => format!(p, it),
             TSModuleReference::ExternalModuleReference(v) => v.format(p),
         }
     }
@@ -1228,7 +1229,7 @@ impl<'a> Format<'a> for ExportDefaultDeclaration<'a> {
 impl<'a> Format<'a> for ExportDefaultDeclarationKind<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
-            Self::Expression(expr) => expr.format(p),
+            match_expression!(Self) => self.to_expression().format(p),
             Self::FunctionDeclaration(decl) => decl.format(p),
             Self::ClassDeclaration(decl) => decl.format(p),
             Self::TSInterfaceDeclaration(decl) => decl.format(p),
@@ -1248,7 +1249,7 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::StringLiteral(lit) => lit.format(p),
             Self::Identifier(ident) => ident.format(p),
             Self::ThisExpression(expr) => expr.format(p),
-            Self::MemberExpression(expr) => expr.format(p),
+            match_member_expression!(Self) => self.to_member_expression().format(p),
             Self::CallExpression(expr) => expr.format(p),
             Self::ArrayExpression(expr) => expr.format(p),
             Self::ObjectExpression(expr) => expr.format(p),
@@ -1495,7 +1496,7 @@ impl<'a> Format<'a> for CallExpression<'a> {
 impl<'a> Format<'a> for Argument<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
-            Self::Expression(expr) => expr.format(p),
+            match_expression!(Self) => self.to_expression().format(p),
             Self::SpreadElement(expr) => expr.format(p),
         }
     }
@@ -1505,7 +1506,7 @@ impl<'a> Format<'a> for ArrayExpressionElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::SpreadElement(expr) => expr.format(p),
-            Self::Expression(expr) => expr.format(p),
+            match_expression!(Self) => self.to_expression().format(p),
             Self::Elision(elision) => Doc::Str(""),
         }
     }
@@ -1606,10 +1607,10 @@ impl<'a> Format<'a> for PropertyKey<'a> {
         if is_parent_computed {
             let mut parts = p.vec();
             parts.push(ss!("["));
-            let doc = match &self {
-                PropertyKey::Identifier(ident) => ident.format(p),
+            let doc = match self {
+                PropertyKey::StaticIdentifier(ident) => ident.format(p),
                 PropertyKey::PrivateIdentifier(ident) => ident.format(p),
-                PropertyKey::Expression(expr) => expr.format(p),
+                match_expression!(PropertyKey) => self.to_expression().format(p),
             };
             parts.push(doc);
             parts.push(ss!("]"));
@@ -1636,7 +1637,7 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                 };
 
             match self {
-                PropertyKey::Identifier(ident) => {
+                PropertyKey::StaticIdentifier(ident) => {
                     if need_quote {
                         Doc::Str(string::print_string(p, &ident.name, p.options.single_quote))
                     } else {
@@ -1644,36 +1645,34 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                     }
                 }
                 PropertyKey::PrivateIdentifier(ident) => ident.format(p),
-                PropertyKey::Expression(expr) => match expr {
-                    Expression::StringLiteral(literal) => {
-                        // This does not pass quotes/objects.js
-                        // because prettier uses the function `isEs5IdentifierName` based on unicode version 3,
-                        // but `is_identifier_name` uses the latest unicode version.
-                        if is_identifier_name(literal.value.as_str())
-                            && (p.options.quote_props.as_needed()
-                                || (p.options.quote_props.consistent()/* && !needsQuoteProps.get(parent) */))
-                        {
-                            string!(p, literal.value.as_str())
-                        } else {
-                            Doc::Str(string::print_string(
-                                p,
-                                literal.value.as_str(),
-                                p.options.single_quote,
-                            ))
-                        }
+                PropertyKey::StringLiteral(literal) => {
+                    // This does not pass quotes/objects.js
+                    // because prettier uses the function `isEs5IdentifierName` based on unicode version 3,
+                    // but `is_identifier_name` uses the latest unicode version.
+                    if is_identifier_name(literal.value.as_str())
+                        && (p.options.quote_props.as_needed()
+                            || (p.options.quote_props.consistent()/* && !needsQuoteProps.get(parent) */))
+                    {
+                        string!(p, literal.value.as_str())
+                    } else {
+                        Doc::Str(string::print_string(
+                            p,
+                            literal.value.as_str(),
+                            p.options.single_quote,
+                        ))
                     }
-                    Expression::NumericLiteral(literal) => {
-                        if need_quote {
-                            Doc::Str(string::print_string(p, literal.raw, p.options.single_quote))
-                        } else {
-                            literal.format(p)
-                        }
+                }
+                PropertyKey::NumericLiteral(literal) => {
+                    if need_quote {
+                        Doc::Str(string::print_string(p, literal.raw, p.options.single_quote))
+                    } else {
+                        literal.format(p)
                     }
-                    Expression::Identifier(ident) => {
-                        array!(p, ss!("["), ident.format(p), ss!("]"))
-                    }
-                    _ => expr.format(p),
-                },
+                }
+                PropertyKey::Identifier(ident) => {
+                    array!(p, ss!("["), ident.format(p), ss!("]"))
+                }
+                match_expression!(PropertyKey) => self.to_expression().format(p),
             }
         })
     }
@@ -1795,8 +1794,8 @@ impl<'a> Format<'a> for AssignmentExpression<'a> {
 impl<'a> Format<'a> for AssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
-            Self::SimpleAssignmentTarget(target) => target.format(p),
-            Self::AssignmentTargetPattern(pat) => pat.format(p),
+            match_simple_assignment_target!(Self) => self.to_simple_assignment_target().format(p),
+            match_assignment_target_pattern!(Self) => self.to_assignment_target_pattern().format(p),
         }
     }
 }
@@ -1805,7 +1804,7 @@ impl<'a> Format<'a> for SimpleAssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.format(p),
-            Self::MemberAssignmentTarget(member_expr) => member_expr.format(p),
+            match_member_expression!(Self) => self.to_member_expression().format(p),
             Self::TSAsExpression(expr) => expr.expression.format(p),
             Self::TSSatisfiesExpression(expr) => expr.expression.format(p),
             Self::TSNonNullExpression(expr) => expr.expression.format(p),
@@ -1832,7 +1831,9 @@ impl<'a> Format<'a> for ArrayAssignmentTarget<'a> {
 impl<'a> Format<'a> for AssignmentTargetMaybeDefault<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
-            AssignmentTargetMaybeDefault::AssignmentTarget(v) => v.format(p),
+            match_assignment_target!(AssignmentTargetMaybeDefault) => {
+                self.to_assignment_target().format(p)
+            }
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(v) => v.format(p),
         }
     }
@@ -1988,7 +1989,7 @@ impl<'a> Format<'a> for ChainElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::CallExpression(expr) => expr.format(p),
-            Self::MemberExpression(expr) => expr.format(p),
+            match_member_expression!(Self) => self.to_member_expression().format(p),
         }
     }
 }

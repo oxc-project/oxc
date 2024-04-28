@@ -80,7 +80,7 @@ fn get_static_require_arg<'a>(
 ) -> Option<(Atom<'a>, Span)> {
     let Expression::Identifier(ref id) = call.callee else { return None };
     match call.arguments.as_slice() {
-        [Argument::Expression(Expression::StringLiteral(str))] if id.name == "require" => ctx
+        [Argument::StringLiteral(str)] if id.name == "require" => ctx
             .semantic()
             .scopes()
             .root_unresolved_references()

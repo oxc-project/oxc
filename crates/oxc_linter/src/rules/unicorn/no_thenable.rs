@@ -1,9 +1,8 @@
 use oxc_ast::{
     ast::{
-        Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
-        BindingPatternKind, CallExpression, Declaration, Expression, MemberExpression,
-        ModuleDeclaration, ModuleExportName, ObjectPropertyKind, PropertyKey,
-        SimpleAssignmentTarget, VariableDeclarator,
+        match_expression, Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
+        BindingPatternKind, CallExpression, Declaration, Expression, ModuleDeclaration,
+        ModuleExportName, ObjectPropertyKind, PropertyKey, VariableDeclarator,
     },
     AstKind,
 };
@@ -122,24 +121,18 @@ impl Rule for NoThenable {
             }
             AstKind::CallExpression(expr) => check_call_expression(expr, ctx),
             // foo.then = ...
-            AstKind::AssignmentExpression(AssignmentExpression {
-                left:
-                    AssignmentTarget::SimpleAssignmentTarget(
-                        SimpleAssignmentTarget::MemberAssignmentTarget(target),
-                    ),
-                ..
-            }) => match &**target {
-                MemberExpression::ComputedMemberExpression(expr) => {
+            AstKind::AssignmentExpression(AssignmentExpression { left, .. }) => match left {
+                AssignmentTarget::ComputedMemberExpression(expr) => {
                     if let Some(span) = check_expression(&expr.expression, ctx) {
                         ctx.diagnostic(NoThenableDiagnostic::Class(span));
                     }
                 }
-                MemberExpression::StaticMemberExpression(expr) => {
+                AssignmentTarget::StaticMemberExpression(expr) => {
                     if expr.property.name == "then" {
                         ctx.diagnostic(NoThenableDiagnostic::Class(expr.span));
                     }
                 }
-                MemberExpression::PrivateFieldExpression(_) => {}
+                _ => {}
             },
             _ => {}
         }
@@ -153,8 +146,8 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
         !expr.optional
             && expr.arguments.len() >= 3
             && !matches!(expr.arguments[0], Argument::SpreadElement(_))
-            && match expr.callee {
-                Expression::MemberExpression(ref me) => {
+            && match expr.callee.as_member_expression() {
+                Some(me) => {
                     me.object().get_identifier_reference().map_or(false, |ident_ref| {
                         ident_ref.name == "Reflect" || ident_ref.name == "Object"
                     }) && me.static_property_name() == Some("defineProperty")
@@ -163,7 +156,7 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
                 _ => false,
             }
     } {
-    } else if let Argument::Expression(inner) = &expr.arguments[1] {
+    } else if let Some(inner) = expr.arguments[1].as_expression() {
         if let Some(span) = check_expression(inner, ctx) {
             ctx.diagnostic(NoThenableDiagnostic::Object(span));
         }
@@ -173,9 +166,9 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
     if !{
         !expr.optional
             && expr.arguments.len() == 1
-            && matches!(expr.arguments[0], Argument::Expression(Expression::ArrayExpression(_)))
-            && match expr.callee {
-                Expression::MemberExpression(ref me) => {
+            && matches!(expr.arguments[0], Argument::ArrayExpression(_))
+            && match expr.callee.as_member_expression() {
+                Some(me) => {
                     me.object()
                         .get_identifier_reference()
                         .map_or(false, |ident_ref| ident_ref.name == "Object")
@@ -185,14 +178,14 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
                 _ => false,
             }
     } {
-    } else if let Argument::Expression(Expression::ArrayExpression(outer)) = &expr.arguments[0] {
+    } else if let Argument::ArrayExpression(outer) = &expr.arguments[0] {
         for inner in &outer.elements {
             // inner item is array
-            if let ArrayExpressionElement::Expression(Expression::ArrayExpression(inner)) = inner {
+            if let ArrayExpressionElement::ArrayExpression(inner) = inner {
                 if inner.elements.len() > 0
                     && !matches!(inner.elements[0], ArrayExpressionElement::SpreadElement(_))
                 {
-                    if let ArrayExpressionElement::Expression(ref expr) = inner.elements[0] {
+                    if let Some(expr) = inner.elements[0].as_expression() {
                         if let Some(span) = check_expression(expr, ctx) {
                             ctx.diagnostic(NoThenableDiagnostic::Object(span));
                         }
@@ -273,8 +266,8 @@ fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span
 
 fn contains_then(key: &PropertyKey, ctx: &LintContext) -> Option<Span> {
     match key {
-        PropertyKey::Identifier(ident) if ident.name == "then" => Some(ident.span),
-        PropertyKey::Expression(expr) => check_expression(expr, ctx),
+        PropertyKey::StaticIdentifier(ident) if ident.name == "then" => Some(ident.span),
+        match_expression!(PropertyKey) => check_expression(key.to_expression(), ctx),
         _ => None,
     }
 }

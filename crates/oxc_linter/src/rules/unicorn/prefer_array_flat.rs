@@ -79,11 +79,7 @@ fn check_array_flat_map_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintConte
         return;
     }
 
-    let Argument::Expression(first_argument) = call_expr.arguments.first().unwrap() else {
-        return;
-    };
-
-    let Expression::ArrowFunctionExpression(first_argument) = first_argument else {
+    let Argument::ArrowFunctionExpression(first_argument) = &call_expr.arguments[0] else {
         return;
     };
 
@@ -112,12 +108,10 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     if !is_method_call(call_expr, None, Some(&["reduce"]), Some(2), Some(2)) {
         return;
     }
-    let Argument::Expression(Expression::ArrowFunctionExpression(first_argument)) =
-        call_expr.arguments.first().unwrap()
-    else {
+    let Argument::ArrowFunctionExpression(first_argument) = &call_expr.arguments[0] else {
         return;
     };
-    let Argument::Expression(second_argument) = call_expr.arguments.get(1).unwrap() else {
+    let Some(second_argument) = call_expr.arguments[1].as_expression() else {
         return;
     };
 
@@ -152,9 +146,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     // `array.reduce((a, b) => a.concat(b), [])`
     if let Expression::CallExpression(concat_call_expr) = &expr_stmt.expression {
         if is_method_call(concat_call_expr, None, Some(&["concat"]), Some(1), Some(1)) {
-            if let Argument::Expression(Expression::Identifier(first_argument_ident)) =
-                &concat_call_expr.arguments[0]
-            {
+            if let Argument::Identifier(first_argument_ident) = &concat_call_expr.arguments[0] {
                 if first_argument_ident.name != second_parameter {
                     return;
                 }
@@ -229,13 +221,13 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
         return;
     };
 
-    if let Expression::MemberExpression(member_expr_obj) = member_expr.object() {
+    if let Some(member_expr_obj) = member_expr.object().as_member_expression() {
         let is_call_call = is_method_call(call_expr, None, Some(&["call"]), Some(2), Some(2));
 
         if (is_call_call || is_method_call(call_expr, None, Some(&["apply"]), Some(2), Some(2)))
             && is_prototype_property(member_expr_obj, "concat", Some("Array"))
         {
-            if let Argument::Expression(first_argument) = &call_expr.arguments[0] {
+            if let Some(first_argument) = call_expr.arguments[0].as_expression() {
                 if is_empty_array_expression(first_argument)
                     && (is_call_call
                         || !matches!(call_expr.arguments.get(1), Some(Argument::SpreadElement(_))))

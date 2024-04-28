@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{Argument, Expression},
-    AstKind,
-};
+use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -45,9 +42,7 @@ impl Rule for NumberArgOutOfRange {
         };
 
         if let Some(member) = expr.callee.get_member_expr() {
-            if let Some(Argument::Expression(Expression::NumericLiteral(literal))) =
-                expr.arguments.first()
-            {
+            if let Some(Argument::NumericLiteral(literal)) = expr.arguments.first() {
                 let value = literal.value;
                 match member.static_property_name() {
                     Some(name @ "toString") => {

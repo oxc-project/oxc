@@ -925,8 +925,10 @@ pub mod walk {
             Statement::WhileStatement(stmt) => visitor.visit_while_statement(stmt),
             Statement::WithStatement(stmt) => visitor.visit_with_statement(stmt),
 
-            Statement::ModuleDeclaration(decl) => visitor.visit_module_declaration(decl),
-            Statement::Declaration(decl) => visitor.visit_declaration(decl),
+            match_module_declaration!(Statement) => {
+                visitor.visit_module_declaration(stmt.to_module_declaration());
+            }
+            match_declaration!(Statement) => visitor.visit_declaration(stmt.to_declaration()),
         }
     }
 
@@ -1024,7 +1026,7 @@ pub mod walk {
             ForStatementInit::VariableDeclaration(decl) => {
                 visitor.visit_variable_declaration(decl);
             }
-            ForStatementInit::Expression(expr) => visitor.visit_expression(expr),
+            match_expression!(ForStatementInit) => visitor.visit_expression(init.to_expression()),
         }
         visitor.leave_node(kind);
     }
@@ -1066,7 +1068,9 @@ pub mod walk {
             ForStatementLeft::VariableDeclaration(decl) => {
                 visitor.visit_variable_declaration(decl);
             }
-            ForStatementLeft::AssignmentTarget(target) => visitor.visit_assignment_target(target),
+            match_assignment_target!(ForStatementLeft) => {
+                visitor.visit_assignment_target(left.to_assignment_target());
+            }
             ForStatementLeft::UsingDeclaration(decl) => {
                 visitor.visit_using_declaration(decl);
             }
@@ -1446,7 +1450,9 @@ pub mod walk {
             Expression::FunctionExpression(expr) => visitor.visit_function(expr, None),
             Expression::ImportExpression(expr) => visitor.visit_import_expression(expr),
             Expression::LogicalExpression(expr) => visitor.visit_logical_expression(expr),
-            Expression::MemberExpression(expr) => visitor.visit_member_expression(expr),
+            match_member_expression!(Expression) => {
+                visitor.visit_member_expression(expr.to_member_expression());
+            }
             Expression::NewExpression(expr) => visitor.visit_new_expression(expr),
             Expression::ObjectExpression(expr) => visitor.visit_object_expression(expr),
             Expression::ParenthesizedExpression(expr) => {
@@ -1498,8 +1504,8 @@ pub mod walk {
         visitor.enter_node(kind);
         match arg {
             ArrayExpressionElement::SpreadElement(spread) => visitor.visit_spread_element(spread),
-            ArrayExpressionElement::Expression(expr) => {
-                visitor.visit_expression_array_element(expr);
+            match_expression!(ArrayExpressionElement) => {
+                visitor.visit_expression_array_element(arg.to_expression());
             }
             ArrayExpressionElement::Elision(elision) => visitor.visit_elision(elision),
         }
@@ -1511,7 +1517,7 @@ pub mod walk {
         visitor.enter_node(kind);
         match arg {
             Argument::SpreadElement(spread) => visitor.visit_spread_element(spread),
-            Argument::Expression(expr) => visitor.visit_expression(expr),
+            match_expression!(Argument) => visitor.visit_expression(arg.to_expression()),
         }
         visitor.leave_node(kind);
     }
@@ -1601,7 +1607,9 @@ pub mod walk {
     pub fn walk_chain_element<'a, V: Visit<'a>>(visitor: &mut V, elem: &ChainElement<'a>) {
         match elem {
             ChainElement::CallExpression(expr) => visitor.visit_call_expression(expr),
-            ChainElement::MemberExpression(expr) => visitor.visit_member_expression(expr),
+            match_member_expression!(ChainElement) => {
+                visitor.visit_member_expression(elem.to_member_expression());
+            }
         }
     }
 
@@ -1723,9 +1731,11 @@ pub mod walk {
         let kind = AstKind::PropertyKey(visitor.alloc(key));
         visitor.enter_node(kind);
         match key {
-            PropertyKey::Identifier(ident) => visitor.visit_identifier_name(ident),
+            PropertyKey::StaticIdentifier(ident) => visitor.visit_identifier_name(ident),
             PropertyKey::PrivateIdentifier(ident) => visitor.visit_private_identifier(ident),
-            PropertyKey::Expression(expr) => visitor.visit_expression(expr),
+            match_expression!(PropertyKey) => {
+                visitor.visit_expression(key.to_expression());
+            }
         }
         visitor.leave_node(kind);
     }
@@ -1816,11 +1826,11 @@ pub mod walk {
         let kind = AstKind::AssignmentTarget(visitor.alloc(target));
         visitor.enter_node(kind);
         match target {
-            AssignmentTarget::SimpleAssignmentTarget(target) => {
-                visitor.visit_simple_assignment_target(target);
+            match_simple_assignment_target!(AssignmentTarget) => {
+                visitor.visit_simple_assignment_target(target.to_simple_assignment_target());
             }
-            AssignmentTarget::AssignmentTargetPattern(pat) => {
-                visitor.visit_assignment_target_pattern(pat);
+            match_assignment_target_pattern!(AssignmentTarget) => {
+                visitor.visit_assignment_target_pattern(target.to_assignment_target_pattern());
             }
         }
         visitor.leave_node(kind);
@@ -1836,8 +1846,8 @@ pub mod walk {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
                 visitor.visit_identifier_reference(ident);
             }
-            SimpleAssignmentTarget::MemberAssignmentTarget(expr) => {
-                visitor.visit_member_expression(expr);
+            match_member_expression!(SimpleAssignmentTarget) => {
+                visitor.visit_member_expression(target.to_member_expression());
             }
             SimpleAssignmentTarget::TSAsExpression(expr) => {
                 visitor.visit_expression(&expr.expression);
@@ -1886,8 +1896,8 @@ pub mod walk {
         target: &AssignmentTargetMaybeDefault<'a>,
     ) {
         match target {
-            AssignmentTargetMaybeDefault::AssignmentTarget(target) => {
-                visitor.visit_assignment_target(target);
+            match_assignment_target!(AssignmentTargetMaybeDefault) => {
+                visitor.visit_assignment_target(target.to_assignment_target());
             }
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(target) => {
                 visitor.visit_assignment_target_with_default(target);
@@ -2100,7 +2110,7 @@ pub mod walk {
 
     pub fn walk_jsx_expression<'a, V: Visit<'a>>(visitor: &mut V, expr: &JSXExpression<'a>) {
         match expr {
-            JSXExpression::Expression(expr) => visitor.visit_expression(expr),
+            match_expression!(JSXExpression) => visitor.visit_expression(expr.to_expression()),
             JSXExpression::EmptyExpression(_) => {}
         }
     }
@@ -2423,7 +2433,9 @@ pub mod walk {
         let kind = AstKind::ExportDefaultDeclaration(visitor.alloc(decl));
         visitor.enter_node(kind);
         match &decl.declaration {
-            ExportDefaultDeclarationKind::Expression(expr) => visitor.visit_expression(expr),
+            declaration @ match_expression!(ExportDefaultDeclarationKind) => {
+                visitor.visit_expression(declaration.to_expression());
+            }
             ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                 visitor.visit_function(func, None);
             }
@@ -2514,7 +2526,9 @@ pub mod walk {
         reference: &TSModuleReference<'a>,
     ) {
         match reference {
-            TSModuleReference::TypeName(name) => visitor.visit_ts_type_name(name),
+            match_ts_type_name!(TSModuleReference) => {
+                visitor.visit_ts_type_name(reference.to_ts_type_name());
+            }
             TSModuleReference::ExternalModuleReference(reference) => {
                 visitor.visit_ts_external_module_reference(reference);
             }
@@ -2745,7 +2759,7 @@ pub mod walk {
 
     pub fn walk_ts_tuple_element<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSTupleElement<'a>) {
         match ty {
-            TSTupleElement::TSType(ty) => visitor.visit_ts_type(ty),
+            match_ts_type!(TSTupleElement) => visitor.visit_ts_type(ty.to_ts_type()),
             TSTupleElement::TSOptionalType(ty) => visitor.visit_ts_type(&ty.type_annotation),
             TSTupleElement::TSRestType(ty) => visitor.visit_ts_type(&ty.type_annotation),
         };
@@ -2984,7 +2998,9 @@ pub mod walk {
         let kind = AstKind::TSTypeQuery(visitor.alloc(ty));
         visitor.enter_node(kind);
         match &ty.expr_name {
-            TSTypeQueryExprName::TSTypeName(name) => visitor.visit_ts_type_name(name),
+            name @ match_ts_type_name!(TSTypeQueryExprName) => {
+                visitor.visit_ts_type_name(name.to_ts_type_name());
+            }
             TSTypeQueryExprName::TSImportType(import) => visitor.visit_ts_import_type(import),
         }
         if let Some(type_parameters) = &ty.type_parameters {

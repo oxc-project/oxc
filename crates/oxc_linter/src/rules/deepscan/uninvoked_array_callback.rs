@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, Expression, MemberExpression},
+    ast::{Argument, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -51,10 +51,7 @@ impl Rule for UninvokedArrayCallback {
         if new_expr.arguments.len() != 1 {
             return;
         }
-        if !matches!(
-            new_expr.arguments.first(),
-            Some(Argument::Expression(Expression::NumericLiteral(_)))
-        ) {
+        if !matches!(new_expr.arguments.first(), Some(Argument::NumericLiteral(_))) {
             return;
         }
 
@@ -69,8 +66,10 @@ impl Rule for UninvokedArrayCallback {
         else {
             return;
         };
-        if !matches!(call_expr.arguments.first(), Some(Argument::Expression(arg_expr)) if arg_expr.is_function())
-        {
+        if !matches!(
+            call_expr.arguments.first(),
+            Some(Argument::FunctionExpression(_) | Argument::ArrowFunctionExpression(_))
+        ) {
             return;
         }
 

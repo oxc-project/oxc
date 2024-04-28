@@ -135,10 +135,9 @@ impl Rule for AriaRole {
 
                 match get_prop_value(aria_role) {
                     Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                        if let JSXExpression::Expression(expr) = &container.expression {
-                            if expr.is_undefined() || expr.is_null() {
-                                ctx.diagnostic(AriaRoleDiagnostic(attr.span, String::new()));
-                            }
+                        let jsexp = &container.expression;
+                        if matches!(jsexp, JSXExpression::NullLiteral(_)) || jsexp.is_undefined() {
+                            ctx.diagnostic(AriaRoleDiagnostic(attr.span, String::new()));
                         }
                     }
                     Some(JSXAttributeValue::StringLiteral(str)) => {

@@ -1,6 +1,6 @@
 use oxc_allocator::Vec as OxcVec;
 use oxc_ast::{
-    ast::{Argument, Declaration, Expression, Statement, VariableDeclarationKind},
+    ast::{Argument, Expression, Statement, VariableDeclarationKind},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -179,17 +179,13 @@ impl Rule for RequireHook {
                 return;
             }
 
-            let Some(Argument::Expression(second_arg_expr)) = call_expr.arguments.get(1) else {
-                return;
-            };
-
-            match second_arg_expr {
-                Expression::FunctionExpression(func_expr) => {
+            match &call_expr.arguments[1] {
+                Argument::FunctionExpression(func_expr) => {
                     if let Some(func_body) = &func_expr.body {
                         self.check_block_body(node, &func_body.statements, ctx);
                     };
                 }
-                Expression::ArrowFunctionExpression(arrow_func_expr) => {
+                Argument::ArrowFunctionExpression(arrow_func_expr) => {
                     if !arrow_func_expr.expression {
                         self.check_block_body(node, &arrow_func_expr.body.statements, ctx);
                     }
@@ -215,7 +211,7 @@ impl RequireHook {
     fn check<'a>(&self, node: &AstNode<'a>, stmt: &'a Statement<'_>, ctx: &LintContext<'a>) {
         if let Statement::ExpressionStatement(expr_stmt) = stmt {
             self.check_should_report_in_hook(node, &expr_stmt.expression, ctx);
-        } else if let Statement::Declaration(Declaration::VariableDeclaration(var_decl)) = stmt {
+        } else if let Statement::VariableDeclaration(var_decl) = stmt {
             if var_decl.kind != VariableDeclarationKind::Const
                 && var_decl.declarations.iter().any(|decl| {
                     let Some(init_call) = &decl.init else {

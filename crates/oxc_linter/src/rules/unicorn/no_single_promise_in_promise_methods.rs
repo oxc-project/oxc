@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, ArrayExpressionElement, CallExpression, Expression},
+    ast::{CallExpression, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -87,7 +87,7 @@ fn is_promise_method_with_single_element_array(call_expr: &CallExpression) -> bo
         return false;
     }
 
-    let Some(Argument::Expression(first_argument)) = call_expr.arguments.first() else {
+    let Some(first_argument) = call_expr.arguments[0].as_expression() else {
         return false;
     };
     let first_argument = first_argument.without_parenthesized();
@@ -99,7 +99,7 @@ fn is_promise_method_with_single_element_array(call_expr: &CallExpression) -> bo
         return false;
     }
 
-    matches!(first_argument_array_expr.elements[0], ArrayExpressionElement::Expression(_))
+    first_argument_array_expr.elements[0].is_expression()
 }
 
 #[test]

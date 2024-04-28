@@ -83,7 +83,7 @@ impl Rule for NoArrayReduce {
             ctx.diagnostic(NoArrayReduceDiagnostic(span));
         }
 
-        if let Expression::MemberExpression(member_expr_obj) = member_expr.object() {
+        if let Some(member_expr_obj) = member_expr.object().as_member_expression() {
             if is_method_call(call_expr, None, Some(&["call", "apply"]), None, None)
                 && !member_expr.optional()
                 && !member_expr.is_computed()
@@ -99,13 +99,13 @@ impl Rule for NoArrayReduce {
 }
 
 fn is_simple_operation(node: &CallExpression) -> bool {
-    let Some(Argument::Expression(callback_arg)) = node.arguments.first() else {
+    let Some(callback_arg) = node.arguments.first() else {
         return false;
     };
     let function_body = match callback_arg {
         // `array.reduce((accumulator, element) => accumulator + element)`
-        Expression::ArrowFunctionExpression(callback) => &callback.body,
-        Expression::FunctionExpression(callback) => {
+        Argument::ArrowFunctionExpression(callback) => &callback.body,
+        Argument::FunctionExpression(callback) => {
             let Some(body) = &callback.body else {
                 return false;
             };

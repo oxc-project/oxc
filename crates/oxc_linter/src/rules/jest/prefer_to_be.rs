@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression, MemberExpression},
+    ast::{Argument, CallExpression, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -132,7 +132,8 @@ impl PreferToBe {
             return;
         }
 
-        let Some(Argument::Expression(arg_expr)) = jest_expect_fn_call.args.first() else {
+        let Some(arg_expr) = jest_expect_fn_call.args.first().and_then(Argument::as_expression)
+        else {
             return;
         };
         let first_matcher_arg = arg_expr.get_inner_expression();
@@ -210,11 +211,15 @@ impl PreferToBe {
     ) {
         let span = matcher.span;
         let end = call_expr.span.end;
-        let Some(Expression::MemberExpression(mem_expr)) = matcher.parent else {
-            return;
+
+        let is_cmp_mem_expr = match matcher.parent {
+            Some(Expression::ComputedMemberExpression(_)) => true,
+            Some(Expression::StaticMemberExpression(_) | Expression::PrivateFieldExpression(_)) => {
+                false
+            }
+            _ => return,
         };
 
-        let is_cmp_mem_expr = matches!(&**mem_expr, MemberExpression::ComputedMemberExpression(_));
         let modifiers = jest_expect_fn_call.modifiers();
         let maybe_not_modifier = modifiers.iter().find(|modifier| modifier.is_name_equal("not"));
 

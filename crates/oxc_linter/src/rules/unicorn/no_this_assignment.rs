@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{AssignmentTarget, BindingPatternKind, Expression, SimpleAssignmentTarget},
+    ast::{AssignmentTarget, BindingPatternKind, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -89,14 +89,7 @@ impl Rule for NoThisAssignment {
                     return;
                 }
 
-                let AssignmentTarget::SimpleAssignmentTarget(simple_assignment_target) =
-                    &assignment_expr.left
-                else {
-                    return;
-                };
-
-                let SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) =
-                    simple_assignment_target
+                let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assignment_expr.left
                 else {
                     return;
                 };

@@ -2,7 +2,7 @@ use oxc_ast::ast::{
     AssignmentTarget, BindingPatternKind, Expression, ForStatementInit, SimpleAssignmentTarget,
     VariableDeclarationKind,
 };
-use oxc_ast::AstKind;
+use oxc_ast::{ast::match_member_expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -72,9 +72,7 @@ impl<'a> ExpressionExt for Expression<'a> {
             },
             Expression::AssignmentExpression(expr) => {
                 if !matches!(&expr.left,
-                    AssignmentTarget::SimpleAssignmentTarget(
-                        SimpleAssignmentTarget::AssignmentTargetIdentifier(id)
-                    )
+                    AssignmentTarget::AssignmentTargetIdentifier(id)
                     if id.name == var_name
                 ) {
                     return false;
@@ -145,18 +143,20 @@ impl Rule for PreferForOf {
         }
 
         let array_name = {
-            let Expression::MemberExpression(mem_expr) = &test_expr.right else { return };
+            let Some(mem_expr) = test_expr.right.as_member_expression() else { return };
             if !matches!(mem_expr.static_property_name(), Some(prop_name) if prop_name == "length")
             {
                 return;
             }
 
-            match &mem_expr.object() {
+            match mem_expr.object() {
                 Expression::Identifier(id) => id.name.as_str(),
-                Expression::MemberExpression(mem_expr) => match mem_expr.static_property_name() {
-                    Some(array_name) => array_name,
-                    None => return,
-                },
+                expr @ match_member_expression!(Expression) => {
+                    match expr.to_member_expression().static_property_name() {
+                        Some(array_name) => array_name,
+                        None => return,
+                    }
+                }
                 _ => return,
             }
         };
@@ -198,10 +198,12 @@ impl Rule for PreferForOf {
             let AstKind::MemberExpression(mem_expr) = parent_kind else { return true };
             match mem_expr.object() {
                 Expression::Identifier(id) => id.name.as_str() != array_name,
-                Expression::MemberExpression(mem_expr) => match mem_expr.static_property_name() {
-                    Some(prop_name) => prop_name != array_name,
-                    None => true,
-                },
+                expr if expr.is_member_expression() => {
+                    match expr.to_member_expression().static_property_name() {
+                        Some(prop_name) => prop_name != array_name,
+                        None => true,
+                    }
+                }
                 _ => true,
             }
         }) {
