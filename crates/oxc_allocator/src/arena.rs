@@ -13,6 +13,7 @@ use std::{
 use allocator_api2::vec;
 pub use bumpalo::collections::String;
 use bumpalo::Bump;
+#[cfg(any(feature = "serialize", test))]
 use serde::{ser::SerializeSeq, Serialize, Serializer};
 
 use crate::Allocator;
@@ -84,6 +85,7 @@ impl<'alloc, T: ?Sized + Debug> Debug for Box<'alloc, T> {
 // }
 // }
 
+#[cfg(any(feature = "serialize", test))]
 impl<'alloc, T> Serialize for Box<'alloc, T>
 where
     T: Serialize,
@@ -180,6 +182,7 @@ impl<'alloc, T> ops::Index<usize> for &'alloc Vec<'alloc, T> {
 // }
 // }
 
+#[cfg(any(feature = "serialize", test))]
 impl<'alloc, T> Serialize for Vec<'alloc, T>
 where
     T: Serialize,

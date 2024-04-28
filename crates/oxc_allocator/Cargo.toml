@@ -19,8 +19,13 @@ doctest = false
 
 [dependencies]
 bumpalo        = { workspace = true, features = ["collections", "allocator-api2"] }
-serde          = { workspace = true }
 allocator-api2 = { workspace = true }
 
+serde = { workspace = true, optional = true }
+
 [dev-dependencies]
+serde      = { workspace = true }
 serde_json = { workspace = true }
+
+[features]
+serialize = ["dep:serde"]
