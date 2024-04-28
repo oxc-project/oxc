@@ -5,6 +5,7 @@ import type ts from 'typescript';
 export interface Request {
   command: string;
   seq: number;
+  previousDuration: number;
   arguments?: {};
 }
 

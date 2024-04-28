@@ -7,6 +7,7 @@ import {
   getNodeAtPosition,
 } from './typecheck/getNodeAtPosition.js';
 import ts from 'typescript';
+import { stats } from './stats.js';
 
 export const handlers: Record<string, (req: any) => Result> = {
   status: () => {
@@ -17,12 +18,14 @@ export const handlers: Record<string, (req: any) => Result> = {
     process.exit(0);
   },
   open: ({ arguments: { file, fileContent } }: OpenRequest) => {
-    service.openClientFile(file, fileContent, undefined);
+    measure(() => service.openClientFile(file, fileContent, undefined), 'open');
     return notRequired();
   },
   close: ({ arguments: { file } }: FileRequest) => {
-    service.closeClientFile(file);
-    deleteNodeCache(file);
+    measure(() => {
+      service.closeClientFile(file);
+      deleteNodeCache(file);
+    }, 'close');
     return notRequired();
   },
   getNode: ({ arguments: { file, span } }: NodeRequest) => {
@@ -46,50 +49,85 @@ export const handlers: Record<string, (req: any) => Result> = {
   'noFloatingPromises::isPromiseArray': ({
     arguments: { file, span },
   }: NodeRequest) => {
-    const program = useProgramFromProjectService(service, file);
+    const program = measure(
+      () => useProgramFromProjectService(service, file),
+      'getProgram',
+    );
     if (!program) {
       throw new Error('failed to create TS program');
     }
 
-    const node = getNodeAtPosition(program.ast, span);
-    const checker = program.program.getTypeChecker();
+    const node = measure(() => getNodeAtPosition(program.ast, span), 'getNode');
+    const checker = measure(
+      () => program.program.getTypeChecker(),
+      'getTypechecker',
+    );
 
-    const result = noFloatingPromises.isPromiseArray(checker, node);
+    const result = measure(
+      () => noFloatingPromises.isPromiseArray(checker, node),
+      'isPromiseArray',
+    );
     return requiredResponse({ result });
   },
   'noFloatingPromises::isPromiseLike': ({
     arguments: { file, span },
   }: NodeRequest) => {
-    const program = useProgramFromProjectService(service, file);
+    const program = measure(
+      () => useProgramFromProjectService(service, file),
+      'getProgram',
+    );
     if (!program) {
       throw new Error('failed to create TS program');
     }
 
-    const node = getNodeAtPosition(program.ast, span);
-    const checker = program.program.getTypeChecker();
+    const node = measure(() => getNodeAtPosition(program.ast, span), 'getNode');
+    const checker = measure(
+      () => program.program.getTypeChecker(),
+      'getTypechecker',
+    );
 
-    const result = noFloatingPromises.isPromiseLike(checker, node);
-    return requiredResponse({
-      result,
-    });
+    const result = measure(
+      () => noFloatingPromises.isPromiseLike(checker, node),
+      'isPromiseLike',
+    );
+    return requiredResponse({ result });
   },
   'noFloatingPromises::isValidRejectionHandler': ({
     arguments: { file, span },
   }: NodeRequest) => {
-    const program = useProgramFromProjectService(service, file);
+    const program = measure(
+      () => useProgramFromProjectService(service, file),
+      'getProgram',
+    );
     if (!program) {
       throw new Error('failed to create TS program');
     }
 
-    const node = getNodeAtPosition(program.ast, span);
-    const checker = program.program.getTypeChecker();
+    const node = measure(() => getNodeAtPosition(program.ast, span), 'getNode');
+    const checker = measure(
+      () => program.program.getTypeChecker(),
+      'getTypechecker',
+    );
 
-    const result = noFloatingPromises.isValidRejectionHandler(checker, node);
-    return requiredResponse({
-      result,
-    });
+    const result = measure(
+      () => noFloatingPromises.isValidRejectionHandler(checker, node),
+      'isValidRejectionHandler',
+    );
+    return requiredResponse({ result });
   },
 };
+
+function measure<R>(f: () => R, key: keyof typeof stats): R {
+  const start = process.hrtime.bigint();
+
+  const result = f();
+
+  const duration = process.hrtime.bigint() - start;
+  stats[key].total += Number(duration);
+  stats[key].count += 1;
+
+  return result;
+}
 
 export interface Result {
   response?: {};
