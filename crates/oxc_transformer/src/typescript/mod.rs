@@ -150,23 +150,18 @@ impl<'a> TypeScript<'a> {
     pub fn transform_statement(&mut self, stmt: &mut Statement<'a>) {
         let new_stmt = match stmt {
             match_declaration!(Statement) => {
-                let decl = stmt.to_declaration_mut();
-                if let Declaration::TSEnumDeclaration(ts_enum_decl) = decl {
+                if let Declaration::TSEnumDeclaration(ts_enum_decl) = &stmt.to_declaration() {
                     self.r#enum.transform_ts_enum(ts_enum_decl, false)
                 } else {
                     None
                 }
             }
             match_module_declaration!(Statement) => {
-                let module_decl = stmt.to_module_declaration_mut();
-                if let ModuleDeclaration::ExportNamedDeclaration(decl) = module_decl {
-                    if let Some(declaration) = &decl.declaration {
-                        match &declaration {
-                            Declaration::TSEnumDeclaration(ts_enum_decl) => {
-                                self.r#enum.transform_ts_enum(ts_enum_decl, true)
-                            }
-                            _ => None,
-                        }
+                if let ModuleDeclaration::ExportNamedDeclaration(decl) =
+                    stmt.to_module_declaration_mut()
+                {
+                    if let Some(Declaration::TSEnumDeclaration(ts_enum_decl)) = &decl.declaration {
+                        self.r#enum.transform_ts_enum(ts_enum_decl, true)
                     } else {
                         None
                     }
