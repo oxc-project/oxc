@@ -117,17 +117,15 @@ impl<'a> TypeScriptEnum<'a> {
             self.ctx.ast.variable_declaration(span, kind, decls, Modifiers::empty());
         let variable_declaration = Declaration::VariableDeclaration(variable_declaration);
 
-        if is_export {
+        let stmt = if is_export {
             let declaration =
                 self.ctx.ast.plain_export_named_declaration_declaration(SPAN, variable_declaration);
-            Some(
-                self.ctx
-                    .ast
-                    .module_declaration(ModuleDeclaration::ExportNamedDeclaration(declaration)),
-            )
+
+            self.ctx.ast.module_declaration(ModuleDeclaration::ExportNamedDeclaration(declaration))
         } else {
-            Some(Statement::Declaration(variable_declaration))
-        }
+            Statement::Declaration(variable_declaration)
+        };
+        Some(stmt)
     }
 
     pub fn transform_ts_enum_members(
