@@ -399,7 +399,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn catch_parameter(&self, span: Span, pattern: BindingPattern<'a>) -> CatchParameter<'a> {
-        CatchParameter { span, pattern }
+        CatchParameter { span, pattern: self.alloc(pattern) }
     }
 
     pub fn while_statement(
@@ -847,7 +847,14 @@ impl<'a> AstBuilder<'a> {
         r#override: bool,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> FormalParameter<'a> {
-        FormalParameter { span, pattern, accessibility, readonly, r#override, decorators }
+        FormalParameter {
+            span,
+            pattern: self.alloc(pattern),
+            accessibility,
+            readonly,
+            r#override,
+            decorators,
+        }
     }
 
     pub fn ts_this_parameter(
@@ -1050,7 +1057,7 @@ impl<'a> AstBuilder<'a> {
         init: Option<Expression<'a>>,
         definite: bool,
     ) -> VariableDeclarator<'a> {
-        VariableDeclarator { span, kind, id, init, definite }
+        VariableDeclarator { span, kind, id: self.alloc(id), init, definite }
     }
 
     pub fn using_declaration(
@@ -1097,7 +1104,7 @@ impl<'a> AstBuilder<'a> {
         shorthand: bool,
         computed: bool,
     ) -> BindingProperty<'a> {
-        BindingProperty { span, key, value, shorthand, computed }
+        BindingProperty { span, key, value: self.alloc(value), shorthand, computed }
     }
 
     pub fn spread_element(
@@ -1123,7 +1130,7 @@ impl<'a> AstBuilder<'a> {
         left: BindingPattern<'a>,
         right: Expression<'a>,
     ) -> BindingPattern<'a> {
-        let pattern = self.alloc(AssignmentPattern { span, left, right });
+        let pattern = self.alloc(AssignmentPattern { span, left: self.alloc(left), right });
         BindingPattern {
             kind: BindingPatternKind::AssignmentPattern(pattern),
             type_annotation: None,
@@ -1136,7 +1143,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: BindingPattern<'a>,
     ) -> Box<'a, BindingRestElement<'a>> {
-        self.alloc(BindingRestElement { span, argument })
+        self.alloc(BindingRestElement { span, argument: self.alloc(argument) })
     }
 
     pub fn property_key_identifier(&self, ident: IdentifierName<'a>) -> PropertyKey<'a> {

@@ -1631,7 +1631,7 @@ pub struct VariableDeclarator<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub id: BindingPattern<'a>,
+    pub id: Box<'a, BindingPattern<'a>>,
     pub init: Option<Expression<'a>>,
     pub kind: VariableDeclarationKind,
     pub definite: bool,
@@ -1928,7 +1928,7 @@ pub struct CatchClause<'a> {
 pub struct CatchParameter<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub pattern: BindingPattern<'a>,
+    pub pattern: Box<'a, BindingPattern<'a>>,
 }
 
 /// Debugger Statement
@@ -2016,7 +2016,7 @@ impl<'a> BindingPatternKind<'a> {
 pub struct AssignmentPattern<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub left: BindingPattern<'a>,
+    pub left: Box<'a, BindingPattern<'a>>,
     pub right: Expression<'a>,
 }
 
@@ -2052,7 +2052,7 @@ pub struct BindingProperty<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub key: PropertyKey<'a>,
-    pub value: BindingPattern<'a>,
+    pub value: Box<'a, BindingPattern<'a>>,
     pub shorthand: bool,
     pub computed: bool,
 }
@@ -2091,7 +2091,7 @@ impl<'a> ArrayPattern<'a> {
 pub struct BindingRestElement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub argument: BindingPattern<'a>,
+    pub argument: Box<'a, BindingPattern<'a>>,
 }
 
 /// Function Definitions
@@ -2204,7 +2204,7 @@ impl<'a> FormalParameters<'a> {
 pub struct FormalParameter<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub pattern: BindingPattern<'a>,
+    pub pattern: Box<'a, BindingPattern<'a>>,
     pub accessibility: Option<TSAccessibility>,
     pub readonly: bool,
     pub r#override: bool,
