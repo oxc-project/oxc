@@ -15,7 +15,7 @@ impl<'a> ClassTester<'a> {
         let class_id = semantic.classes().iter_enumerated().find_map(|(class_id, ast_node_id)| {
             let kind = semantic.nodes().kind(*ast_node_id);
             if let AstKind::Class(class) = kind {
-                if class.id.clone().is_some_and(|id| id.name == name) {
+                if class.id.as_deref().is_some_and(|id| id.name == name) {
                     return Some(class_id);
                 };
             }

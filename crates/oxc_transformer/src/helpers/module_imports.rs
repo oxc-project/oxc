@@ -91,10 +91,10 @@ impl<'a> ModuleImports<'a> {
                     SPAN,
                     self.ast.new_atom(name.imported.as_str()),
                 )),
-                local: BindingIdentifier::new(
+                local: self.ast.alloc(BindingIdentifier::new(
                     SPAN,
                     self.ast.new_atom(name.local.unwrap_or(name.imported).as_str()),
-                ),
+                )),
                 import_kind: ImportOrExportKind::Value,
             }))
         }));

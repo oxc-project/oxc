@@ -1541,8 +1541,8 @@ impl<'a> Declaration<'a> {
 
     pub fn id(&self) -> Option<&BindingIdentifier<'a>> {
         match self {
-            Declaration::FunctionDeclaration(decl) => decl.id.as_ref(),
-            Declaration::ClassDeclaration(decl) => decl.id.as_ref(),
+            Declaration::FunctionDeclaration(decl) => decl.id.as_deref(),
+            Declaration::ClassDeclaration(decl) => decl.id.as_deref(),
             Declaration::TSTypeAliasDeclaration(decl) => Some(&decl.id),
             Declaration::TSInterfaceDeclaration(decl) => Some(&decl.id),
             Declaration::TSEnumDeclaration(decl) => Some(&decl.id),
@@ -2102,7 +2102,7 @@ pub struct BindingRestElement<'a> {
 pub struct Function<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub id: Option<BindingIdentifier<'a>>,
+    pub id: Option<Box<'a, BindingIdentifier<'a>>>,
     pub r#type: FunctionType,
     pub generator: bool,
     pub r#async: bool,
@@ -2312,7 +2312,7 @@ pub struct Class<'a> {
     pub r#type: ClassType,
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub id: Option<BindingIdentifier<'a>>,
+    pub id: Option<Box<'a, BindingIdentifier<'a>>>,
     pub super_class: Option<Expression<'a>>,
     pub body: Box<'a, ClassBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -2718,7 +2718,7 @@ pub struct ImportSpecifier<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub imported: ModuleExportName<'a>,
-    pub local: BindingIdentifier<'a>,
+    pub local: Box<'a, BindingIdentifier<'a>>,
     pub import_kind: ImportOrExportKind,
 }
 
@@ -2730,7 +2730,7 @@ pub struct ImportSpecifier<'a> {
 pub struct ImportDefaultSpecifier<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub local: BindingIdentifier<'a>,
+    pub local: Box<'a, BindingIdentifier<'a>>,
 }
 
 // import * as local from "source"
@@ -2741,7 +2741,7 @@ pub struct ImportDefaultSpecifier<'a> {
 pub struct ImportNamespaceSpecifier<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub local: BindingIdentifier<'a>,
+    pub local: Box<'a, BindingIdentifier<'a>>,
 }
 
 #[ast_node]

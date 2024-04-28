@@ -50,7 +50,7 @@ pub struct TSThisParameter<'a> {
 pub struct TSEnumDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub id: BindingIdentifier<'a>,
+    pub id: Box<'a, BindingIdentifier<'a>>,
     pub members: Vec<'a, TSEnumMember<'a>>,
     /// Valid Modifiers: `const`, `export`, `declare`
     pub modifiers: Modifiers<'a>,
@@ -603,7 +603,7 @@ pub struct TSTypeParameterInstantiation<'a> {
 pub struct TSTypeParameter<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub name: BindingIdentifier<'a>,
+    pub name: Box<'a, BindingIdentifier<'a>>,
     pub constraint: Option<TSType<'a>>,
     pub default: Option<TSType<'a>>,
     pub r#in: bool,
@@ -628,7 +628,7 @@ pub struct TSTypeParameterDeclaration<'a> {
 pub struct TSTypeAliasDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub id: BindingIdentifier<'a>,
+    pub id: Box<'a, BindingIdentifier<'a>>,
     pub type_annotation: TSType<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     /// Valid Modifiers: `declare`, `export`
@@ -665,7 +665,7 @@ pub struct TSClassImplements<'a> {
 pub struct TSInterfaceDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub id: BindingIdentifier<'a>,
+    pub id: Box<'a, BindingIdentifier<'a>>,
     pub body: Box<'a, TSInterfaceBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
@@ -1081,7 +1081,7 @@ pub struct TSTypeAssertion<'a> {
 pub struct TSImportEqualsDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub id: BindingIdentifier<'a>,
+    pub id: Box<'a, BindingIdentifier<'a>>,
     pub module_reference: TSModuleReference<'a>,
     pub import_kind: ImportOrExportKind,
 }

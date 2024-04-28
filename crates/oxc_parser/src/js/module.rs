@@ -107,9 +107,9 @@ impl<'a> ParserImpl<'a> {
     fn parse_import_default_specifier(&mut self) -> Result<ImportDeclarationSpecifier<'a>> {
         let span = self.start_span();
         let local = self.parse_binding_identifier()?;
-        Ok(ImportDeclarationSpecifier::ImportDefaultSpecifier(
-            self.ast.alloc(ImportDefaultSpecifier { span: self.end_span(span), local }),
-        ))
+        Ok(ImportDeclarationSpecifier::ImportDefaultSpecifier(self.ast.alloc(
+            ImportDefaultSpecifier { span: self.end_span(span), local: self.ast.alloc(local) },
+        )))
     }
 
     // import * as name from "module-name"
@@ -118,9 +118,9 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // advance `*`
         self.expect(Kind::As)?;
         let local = self.parse_binding_identifier()?;
-        Ok(ImportDeclarationSpecifier::ImportNamespaceSpecifier(
-            self.ast.alloc(ImportNamespaceSpecifier { span: self.end_span(span), local }),
-        ))
+        Ok(ImportDeclarationSpecifier::ImportNamespaceSpecifier(self.ast.alloc(
+            ImportNamespaceSpecifier { span: self.end_span(span), local: self.ast.alloc(local) },
+        )))
     }
 
     // import { export1 , export2 as alias2 , [...] } from "module-name";
@@ -417,7 +417,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.alloc(ImportSpecifier {
             span: self.end_span(specifier_span),
             imported,
-            local,
+            local: self.ast.alloc(local),
             import_kind,
         }))
     }

@@ -899,7 +899,7 @@ impl<'a> AstBuilder<'a> {
         self.alloc(Function {
             r#type,
             span,
-            id,
+            id: id.map(|id| self.alloc(id)),
             generator,
             r#async,
             this_param,
@@ -938,7 +938,7 @@ impl<'a> AstBuilder<'a> {
         self.alloc(Class {
             r#type,
             span,
-            id,
+            id: id.map(|id| self.alloc(id)),
             super_class,
             body,
             type_parameters,
@@ -1443,7 +1443,7 @@ impl<'a> AstBuilder<'a> {
         out: bool,
         r#const: bool,
     ) -> TSTypeParameter<'a> {
-        TSTypeParameter { span, name, constraint, default, r#in, out, r#const }
+        TSTypeParameter { span, name: self.alloc(name), constraint, default, r#in, out, r#const }
     }
 
     pub fn ts_type_parameters(
@@ -1631,7 +1631,7 @@ impl<'a> AstBuilder<'a> {
     ) -> Declaration<'a> {
         Declaration::TSImportEqualsDeclaration(self.alloc(TSImportEqualsDeclaration {
             span,
-            id,
+            id: self.alloc(id),
             module_reference,
             import_kind,
         }))
@@ -1648,7 +1648,7 @@ impl<'a> AstBuilder<'a> {
     ) -> Declaration<'a> {
         Declaration::TSInterfaceDeclaration(self.alloc(TSInterfaceDeclaration {
             span,
-            id,
+            id: self.alloc(id),
             body,
             type_parameters,
             extends,
@@ -1666,7 +1666,7 @@ impl<'a> AstBuilder<'a> {
     ) -> Declaration<'a> {
         Declaration::TSTypeAliasDeclaration(self.alloc(TSTypeAliasDeclaration {
             span,
-            id,
+            id: self.alloc(id),
             type_annotation,
             type_parameters,
             modifiers,
@@ -1682,7 +1682,7 @@ impl<'a> AstBuilder<'a> {
     ) -> Declaration<'a> {
         Declaration::TSEnumDeclaration(self.alloc(TSEnumDeclaration {
             span,
-            id,
+            id: self.alloc(id),
             members,
             modifiers,
         }))
