@@ -1,4 +1,4 @@
-Passed: 175/226
+Passed: 174/226
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -17,7 +17,7 @@ Passed: 175/226
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (119/156)
+# babel-plugin-transform-typescript (118/156)
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
 * enum/mix-references/input.ts
@@ -25,6 +25,7 @@ Passed: 175/226
 * enum/ts5.0-const-foldable/input.ts
 * exports/declared-types/input.ts
 * exports/export-type-star-from/input.ts
+* imports/enum-value/input.ts
 * imports/type-only-export-specifier-2/input.ts
 * namespace/ambient-module-nested/input.ts
 * namespace/ambient-module-nested-exported/input.ts
