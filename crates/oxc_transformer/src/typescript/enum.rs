@@ -33,7 +33,8 @@ impl<'a> TypeScriptEnum<'a> {
     /// ```
     pub fn transform_ts_enum(
         &mut self,
-        decl: &mut Box<'a, TSEnumDeclaration<'a>>,
+        decl: &Box<'a, TSEnumDeclaration<'a>>,
+        is_export: bool,
     ) -> Option<Statement<'a>> {
         if decl.modifiers.contains(ModifierKind::Declare) {
             return None;
@@ -64,22 +65,27 @@ impl<'a> TypeScriptEnum<'a> {
         // Foo[Foo["X"] = 0] = "X";
         let enum_name = decl.id.name.clone();
         let is_already_declared = self.enums.contains_key(&enum_name);
-        let statements = self.transform_ts_enum_members(&mut decl.members, &enum_name);
+        let statements = self.transform_ts_enum_members(&decl.members, &enum_name);
         let body = self.ctx.ast.function_body(decl.span, self.ctx.ast.new_vec(), statements);
         let r#type = FunctionType::FunctionExpression;
         let callee = self.ctx.ast.plain_function(r#type, SPAN, None, params, Some(body));
         let callee = Expression::FunctionExpression(callee);
 
-        // }(Foo || {});
-        let mut arguments = self.ctx.ast.new_vec();
-        let op = LogicalOperator::Or;
-        let left = self
-            .ctx
-            .ast
-            .identifier_reference_expression(IdentifierReference::new(SPAN, enum_name.clone()));
-        let right = self.ctx.ast.object_expression(SPAN, self.ctx.ast.new_vec(), None);
-        let expression = self.ctx.ast.logical_expression(SPAN, left, op, right);
-        arguments.push(Argument::Expression(expression));
+        let arguments = if is_export && !is_already_declared {
+            // }({});
+            let object_expr = self.ctx.ast.object_expression(SPAN, self.ctx.ast.new_vec(), None);
+            self.ctx.ast.new_vec_single(Argument::Expression(object_expr))
+        } else {
+            // }(Foo || {});
+            let op = LogicalOperator::Or;
+            let left = self
+                .ctx
+                .ast
+                .identifier_reference_expression(IdentifierReference::new(SPAN, enum_name.clone()));
+            let right = self.ctx.ast.object_expression(SPAN, self.ctx.ast.new_vec(), None);
+            let expression = self.ctx.ast.logical_expression(SPAN, left, op, right);
+            self.ctx.ast.new_vec_single(Argument::Expression(expression))
+        };
 
         let call_expression = self.ctx.ast.call_expression(SPAN, callee, arguments, false, None);
 
@@ -93,7 +99,8 @@ impl<'a> TypeScriptEnum<'a> {
             return Some(self.ctx.ast.expression_statement(SPAN, expr));
         }
 
-        let kind = VariableDeclarationKind::Var;
+        let kind =
+            if is_export { VariableDeclarationKind::Let } else { VariableDeclarationKind::Var };
         let decls = {
             let mut decls = self.ctx.ast.new_vec();
 
@@ -108,13 +115,24 @@ impl<'a> TypeScriptEnum<'a> {
         };
         let variable_declaration =
             self.ctx.ast.variable_declaration(span, kind, decls, Modifiers::empty());
+        let variable_declaration = Declaration::VariableDeclaration(variable_declaration);
 
-        Some(Statement::Declaration(Declaration::VariableDeclaration(variable_declaration)))
+        if is_export {
+            let declaration =
+                self.ctx.ast.plain_export_named_declaration_declaration(SPAN, variable_declaration);
+            Some(
+                self.ctx
+                    .ast
+                    .module_declaration(ModuleDeclaration::ExportNamedDeclaration(declaration)),
+            )
+        } else {
+            Some(Statement::Declaration(variable_declaration))
+        }
     }
 
     pub fn transform_ts_enum_members(
         &mut self,
-        members: &mut Vec<'a, TSEnumMember<'a>>,
+        members: &Vec<'a, TSEnumMember<'a>>,
         enum_name: &Atom<'a>,
     ) -> Vec<'a, Statement<'a>> {
         let mut statements = self.ctx.ast.new_vec();
@@ -125,7 +143,7 @@ impl<'a> TypeScriptEnum<'a> {
 
         let mut prev_member_name: Option<Atom<'a>> = None;
 
-        for member in members.iter_mut() {
+        for member in members.iter() {
             let (member_name, member_span) = match &member.id {
                 TSEnumMemberName::Identifier(id) => (&id.name, id.span),
                 TSEnumMemberName::StringLiteral(str) => (&str.value, str.span),
