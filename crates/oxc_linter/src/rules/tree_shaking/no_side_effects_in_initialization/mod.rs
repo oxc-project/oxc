@@ -208,32 +208,32 @@ fn test() {
         // ForStatement
         "for(let i = 0; i < 3; i++){i++}",
         "for(;;){}",
-        // // FunctionDeclaration
-        // "function x(a){a(); ext()}",
-        // // FunctionDeclaration when called
-        // "function x(){}; x()",
-        // "function x(a){}; x()",
-        // "function x(...a){}; x()",
-        // "function x({a}){}; x()",
-        // // FunctionDeclaration when mutated
-        // "function x(){}; x.y = 1",
-        // // FunctionExpression
-        // "const x = function (a){a(); ext()}",
-        // // FunctionExpression when called
-        // "(function (){}())",
-        // "(function (a){}())",
-        // "(function (...a){}())",
-        // "(function ({a}){}())",
-        // // Identifier
-        // "var x;x = 1",
-        // // Identifier when called
-        // "const x = ()=>{};x(ext)",
-        // "function x(){};x(ext)",
-        // "var x = ()=>{};x(ext)",
-        // "const x = ()=>{}, y = ()=>{x()}; y()",
-        // "const x = ext, y = ()=>{const x = ()=>{}; x()}; y()",
-        // // Identifier when mutated
-        // "const x = {}; x.y = ext",
+        // FunctionDeclaration
+        "function x(a){a(); ext()}",
+        // FunctionDeclaration when called
+        "function x(){}; x()",
+        "function x(a){}; x()",
+        "function x(...a){}; x()",
+        "function x({a}){}; x()",
+        // FunctionDeclaration when mutated
+        "function x(){}; x.y = 1",
+        // FunctionExpression
+        "const x = function (a){a(); ext()}",
+        // FunctionExpression when called
+        "(function (){}())",
+        "(function (a){}())",
+        "(function (...a){}())",
+        "(function ({a}){}())",
+        // Identifier
+        "var x;x = 1",
+        // Identifier when called
+        "const x = ()=>{};x(ext)",
+        "function x(){};x(ext)",
+        "var x = ()=>{};x(ext)",
+        "const x = ()=>{}, y = ()=>{x()}; y()",
+        "const x = ext, y = ()=>{const x = ()=>{}; x()}; y()",
+        // Identifier when mutated
+        "const x = {}; x.y = ext",
         // // IfStatement
         "let y;if (ext > 0) {y = 1} else {y = 2}",
         "if (false) {ext()}",
@@ -483,44 +483,44 @@ fn test() {
         "for(;true;ext()){}",
         "for(;true;) ext()",
         "for(;true;){ext()}",
-        // // FunctionDeclaration when called
-        // "function x(){ext()}; x()",
-        // "function x(){ext()}; const y = new x()",
-        // "function x(){ext()}; new x()",
-        // "function x(a = ext()){}; x()",
-        // "function x(a){a()}; x(ext)",
-        // "function x(...a){a()}; x(ext)",
-        // "function x({a}){a()}; x(ext)",
-        // "function x(a){a(); a(); a()}; x(ext)",
-        // "function x(a){a.y = 1}; x(ext)",
-        // "function x(...a){a.y = 1}; x(ext)",
-        // "function x({a}){a.y = 1}; x(ext)",
-        // "function x(a){a.y = 1; a.y = 2; a.y = 3}; x(ext)",
-        // "function x(){ext = 1}; x(); x(); x()",
-        // "function x(){ext = 1}; const y = new x(); y = new x(); y = new x()",
-        // // FunctionExpression when called
-        // "(function (){ext()}())",
-        // "const x = new (function (){ext()})()",
-        // "new (function (){ext()})()",
-        // "(function ({a = ext()}){}())",
-        // "(function (a){a()}(ext))",
-        // "(function (...a){a()}(ext))",
-        // "(function ({a}){a()}(ext))",
-        // "(function (a){a.x = 1}(ext))",
-        // "(function (a){const b = a;b.x = 1}(ext))",
-        // "(function (...a){a.x = 1}(ext))",
-        // "(function ({a}){a.x = 1}(ext))",
-        // // Identifier when called
-        // "ext()",
-        // "const x = ext; x()",
-        // "let x = ()=>{}; x = ext; x()",
+        // FunctionDeclaration when called
+        "function x(){ext()}; x()",
+        "function x(){ext()}; const y = new x()",
+        "function x(){ext()}; new x()",
+        "function x(a = ext()){}; x()",
+        "function x(a){a()}; x(ext)",
+        "function x(...a){a()}; x(ext)",
+        "function x({a}){a()}; x(ext)",
+        "function x(a){a(); a(); a()}; x(ext)",
+        "function x(a){a.y = 1}; x(ext)",
+        "function x(...a){a.y = 1}; x(ext)",
+        "function x({a}){a.y = 1}; x(ext)",
+        "function x(a){a.y = 1; a.y = 2; a.y = 3}; x(ext)",
+        "function x(){ext = 1}; x(); x(); x()",
+        "function x(){ext = 1}; const y = new x(); y = new x(); y = new x()",
+        // FunctionExpression when called
+        "(function (){ext()}())",
+        "const x = new (function (){ext()})()",
+        "new (function (){ext()})()",
+        "(function ({a = ext()}){}())",
+        "(function (a){a()}(ext))",
+        "(function (...a){a()}(ext))",
+        "(function ({a}){a()}(ext))",
+        "(function (a){a.x = 1}(ext))",
+        "(function (a){const b = a;b.x = 1}(ext))",
+        "(function (...a){a.x = 1}(ext))",
+        "(function ({a}){a.x = 1}(ext))",
+        // Identifier when called
+        "ext()",
+        "const x = ext; x()",
+        "let x = ()=>{}; x = ext; x()",
         // "var x = ()=>{}; var x = ext; x()",
-        // "const x = ()=>{ext()}; x()",
-        // "const x = ()=>{ext = 1}; x(); x(); x()",
+        "const x = ()=>{ext()}; x()",
+        "const x = ()=>{ext = 1}; x(); x(); x()",
         // "let x = ()=>{}; const y = ()=>{x()}; x = ext; y()",
         // "var x = ()=>{}; const y = ()=>{x()}; var x = ext; y()",
-        // "const x = ()=>{}; const {y} = x(); y()",
-        // "const x = ()=>{}; const [y] = x(); y()",
+        "const x = ()=>{}; const {y} = x(); y()",
+        "const x = ()=>{}; const [y] = x(); y()",
         // // Identifier when mutated
         // "var x = ext; x.y = 1",
         // "var x = {}; x = ext; x.y = 1",
