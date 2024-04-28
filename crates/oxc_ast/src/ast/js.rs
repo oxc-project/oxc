@@ -514,7 +514,7 @@ pub enum ArrayExpressionElement<'a> {
     SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
     /// Array hole for sparse arrays
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
-    Elision(Elision) = 65,
+    Elision(Box<'a, Elision>) = 65,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
 }

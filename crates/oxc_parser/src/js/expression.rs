@@ -372,7 +372,7 @@ impl<'a> ParserImpl<'a> {
     ///     ,
     ///    Elision ,
     pub(crate) fn parse_elision(&mut self) -> ArrayExpressionElement<'a> {
-        ArrayExpressionElement::Elision(Elision { span: self.cur_token().span() })
+        ArrayExpressionElement::Elision(self.ast.alloc(Elision { span: self.cur_token().span() }))
     }
 
     /// Section [Template Literal](https://tc39.es/ecma262/#prod-TemplateLiteral)
