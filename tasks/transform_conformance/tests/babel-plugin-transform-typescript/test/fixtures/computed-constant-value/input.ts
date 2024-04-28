@@ -19,3 +19,9 @@ enum C {
   b = 1e30 + "test",
   c = "test" + 1234567890987 + "test",
 }
+
+enum D {
+  a = +"hello",
+  b = -"hello",
+  c = ~"hello",
+}

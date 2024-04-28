@@ -453,10 +453,13 @@ impl<'a> TypeScriptEnum<'a> {
         let value = match value {
             ConstantValue::Number(value) => value,
             ConstantValue::String(_) => {
-                // TODO: handle unary operators on strings correctly
-                // If operator is `+`, return the string as is
-                // If operator is `-`, return NaN
-                // If operator is `!`, return None
+                let value = if expr.operator == UnaryOperator::UnaryNegation {
+                    ConstantValue::Number(f64::NAN)
+                } else if expr.operator == UnaryOperator::BitwiseNot {
+                    ConstantValue::Number(-1.0)
+                } else {
+                    value
+                };
                 return Some(value);
             }
         };

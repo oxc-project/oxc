@@ -20,3 +20,9 @@ var C = /*#__PURE__*/function (C) {
   C["c"] = "test1234567890987test";
   return C;
 }(C || {});
+var D = /*#__PURE__*/function (D) {
+  D["a"] = "hello";
+  D[D["b"] = NaN] = "b";
+  D[D["c"] = -1] = "c";
+  return D;
+}(D || {});
