@@ -785,6 +785,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         /* cfg */
+        let after_test_graph_ix = self.cfg.current_node_ix;
         let update_graph_ix = self.cfg.new_basic_block();
         /* cfg */
 
@@ -803,10 +804,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         let after_for_stmt = self.cfg.new_basic_block();
         self.cfg.add_edge(before_for_graph_ix, test_graph_ix, EdgeType::Normal);
-        self.cfg.add_edge(test_graph_ix, body_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(after_test_graph_ix, body_graph_ix, EdgeType::Normal);
         self.cfg.add_edge(body_graph_ix, update_graph_ix, EdgeType::Backedge);
         self.cfg.add_edge(update_graph_ix, test_graph_ix, EdgeType::Backedge);
-        self.cfg.add_edge(test_graph_ix, after_for_stmt, EdgeType::Normal);
+        self.cfg.add_edge(after_test_graph_ix, after_for_stmt, EdgeType::Normal);
 
         self.cfg.after_statement(
             &statement_state,
