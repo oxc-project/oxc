@@ -1917,7 +1917,7 @@ pub struct TryStatement<'a> {
 pub struct CatchClause<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub param: Option<CatchParameter<'a>>,
+    pub param: Option<Box<'a, CatchParameter<'a>>>,
     pub body: Box<'a, BlockStatement<'a>>,
 }
 

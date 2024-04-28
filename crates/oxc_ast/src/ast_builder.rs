@@ -395,7 +395,7 @@ impl<'a> AstBuilder<'a> {
         param: Option<CatchParameter<'a>>,
         body: Box<'a, BlockStatement<'a>>,
     ) -> Box<'a, CatchClause<'a>> {
-        self.alloc(CatchClause { span, param, body })
+        self.alloc(CatchClause { span, param: param.map(|param| self.alloc(param)), body })
     }
 
     pub fn catch_parameter(&self, span: Span, pattern: BindingPattern<'a>) -> CatchParameter<'a> {
