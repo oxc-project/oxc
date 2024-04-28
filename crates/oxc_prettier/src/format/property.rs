@@ -1,8 +1,8 @@
-use oxc_ast::ast::{Expression, PropertyKey};
+use oxc_ast::ast::PropertyKey;
 use oxc_syntax::identifier::is_identifier_name;
 
 pub(super) fn is_property_key_has_quote(key: &PropertyKey<'_>) -> bool {
-    matches!(key, PropertyKey::Expression(Expression::StringLiteral(literal)) if is_string_prop_safe_to_unquote(literal.value.as_str()))
+    matches!(key, PropertyKey::StringLiteral(literal) if is_string_prop_safe_to_unquote(literal.value.as_str()))
 }
 
 pub(super) fn is_string_prop_safe_to_unquote(value: &str) -> bool {

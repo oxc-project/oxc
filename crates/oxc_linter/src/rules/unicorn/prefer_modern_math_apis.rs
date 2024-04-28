@@ -90,7 +90,7 @@ impl Rule for PreferModernMathApis {
                     return;
                 };
 
-                let Expression::MemberExpression(member_expr) = &call_expr.callee else {
+                let Some(member_expr) = call_expr.callee.as_member_expression() else {
                     return;
                 };
 
@@ -98,7 +98,7 @@ impl Rule for PreferModernMathApis {
                     return;
                 };
 
-                let Argument::Expression(arg) = &call_expr.arguments[0] else { return };
+                let Some(arg) = call_expr.arguments[0].as_expression() else { return };
 
                 let expressions = flat_plus_expression(arg);
                 if expressions.iter().any(|expr| !is_pow_2_expression(expr, ctx)) {
@@ -135,7 +135,7 @@ fn check_prefer_log<'a>(expr: &BinaryExpression<'a>, ctx: &LintContext<'a>) {
                 return;
             }
 
-            let Expression::MemberExpression(member_expr) = &call_expr.callee else {
+            let Some(member_expr) = call_expr.callee.as_member_expression() else {
                 return;
             };
 
@@ -143,7 +143,7 @@ fn check_prefer_log<'a>(expr: &BinaryExpression<'a>, ctx: &LintContext<'a>) {
                 return;
             };
 
-            let Expression::MemberExpression(member_expr) = &expr.right else {
+            let Some(member_expr) = expr.right.as_member_expression() else {
                 return;
             };
 
@@ -194,7 +194,7 @@ fn check_multiplication<'a, 'b>(
         return;
     }
 
-    let Expression::MemberExpression(member_expr) = &call_expr.callee else {
+    let Some(member_expr) = call_expr.callee.as_member_expression() else {
         return;
     };
 
@@ -202,7 +202,7 @@ fn check_multiplication<'a, 'b>(
         return;
     };
 
-    let Expression::MemberExpression(member_expr) = right else {
+    let Some(member_expr) = right.as_member_expression() else {
         return;
     };
 

@@ -1,3 +1,7 @@
+use crate::{
+    ast_util::is_function_node, context::LintContext, rule::Rule,
+    utils::get_function_nearest_jsdoc_node, AstNode,
+};
 use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -5,8 +9,6 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-
-use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
@@ -51,55 +53,41 @@ declare_oxc_lint!(
     correctness
 );
 
-/// Get the definition root node of a function.
-/// JSDoc often appears on the parent node of a function.
-///
-/// ```js
-/// /** FunctionDeclaration */
-/// function foo() {}
-///
-/// /** VariableDeclaration > VariableDeclarator > FunctionExpression */
-/// const bar = function() {}
-///
-/// /** VariableDeclaration > VariableDeclarator > ArrowFunctionExpression */
-/// const baz = () => {}
-/// ```
-fn get_function_definition_node<'a, 'b>(
-    node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
-) -> Option<&'b AstNode<'a>> {
-    match node.kind() {
-        AstKind::Function(f) if f.is_function_declaration() => return Some(node),
-        AstKind::Function(f) if f.is_expression() => {}
-        AstKind::ArrowFunctionExpression(_) => {}
-        _ => return None,
-    };
-
+fn is_function_inside_of_class<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
     let mut current_node = node;
     while let Some(parent_node) = ctx.nodes().parent_node(current_node.id()) {
         match parent_node.kind() {
-            // `MethodDefinition` is not a target
-            AstKind::VariableDeclarator(_) | AstKind::ParenthesizedExpression(_) => {
+            AstKind::MethodDefinition(_) | AstKind::PropertyDefinition(_) => return true,
+            // Keep looking up only if the node is wrapped by `()`
+            AstKind::ParenthesizedExpression(_) => {
                 current_node = parent_node;
             }
-            AstKind::VariableDeclaration(_) => return Some(parent_node),
-            _ => return None,
+            _ => return false,
         }
     }
 
-    None
+    false
 }
 
 impl Rule for ImplementsOnClasses {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let Some(jsdocs) = get_function_definition_node(node, ctx)
+        if !is_function_node(node) {
+            return;
+        }
+
+        // Filter plain declared (arrow) function.
+        // I'm not sure but this rule does not care node like `MethodDefinition`.
+        if is_function_inside_of_class(node, ctx) {
+            return;
+        }
+
+        let Some(jsdocs) = get_function_nearest_jsdoc_node(node, ctx)
             .and_then(|node| ctx.jsdoc().get_all_by_node(node))
         else {
             return;
         };
 
         let settings = &ctx.settings().jsdoc;
-
         let resolved_implements_tag_name = settings.resolve_tag_name("implements");
         let resolved_class_tag_name = settings.resolve_tag_name("class");
         let resolved_constructor_tag_name = settings.resolve_tag_name("constructor");

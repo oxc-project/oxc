@@ -281,11 +281,7 @@ impl<'a> AstBuilder<'a> {
         declarations: Vec<'a, VariableDeclarator<'a>>,
         is_await: bool,
     ) -> Statement<'a> {
-        Statement::Declaration(Declaration::UsingDeclaration(self.alloc(UsingDeclaration {
-            span,
-            is_await,
-            declarations,
-        })))
+        Statement::UsingDeclaration(self.alloc(UsingDeclaration { span, is_await, declarations }))
     }
 
     pub fn do_while_statement(
@@ -487,27 +483,21 @@ impl<'a> AstBuilder<'a> {
         &self,
         array: ArrayAssignmentTarget<'a>,
     ) -> AssignmentTarget<'a> {
-        AssignmentTarget::AssignmentTargetPattern(AssignmentTargetPattern::ArrayAssignmentTarget(
-            self.alloc(array),
-        ))
+        AssignmentTarget::ArrayAssignmentTarget(self.alloc(array))
     }
 
     pub fn array_assignment_target_maybe_default(
         &self,
         array: ArrayAssignmentTarget<'a>,
     ) -> AssignmentTargetMaybeDefault<'a> {
-        AssignmentTargetMaybeDefault::AssignmentTarget(AssignmentTarget::AssignmentTargetPattern(
-            AssignmentTargetPattern::ArrayAssignmentTarget(self.alloc(array)),
-        ))
+        AssignmentTargetMaybeDefault::ArrayAssignmentTarget(self.alloc(array))
     }
 
     pub fn object_assignment_target(
         &self,
         array: ObjectAssignmentTarget<'a>,
     ) -> AssignmentTarget<'a> {
-        AssignmentTarget::AssignmentTargetPattern(AssignmentTargetPattern::ObjectAssignmentTarget(
-            self.alloc(array),
-        ))
+        AssignmentTarget::ObjectAssignmentTarget(self.alloc(array))
     }
 
     pub fn assignment_target_property_property(
@@ -525,18 +515,14 @@ impl<'a> AstBuilder<'a> {
         &self,
         ident: IdentifierReference<'a>,
     ) -> AssignmentTarget<'a> {
-        AssignmentTarget::SimpleAssignmentTarget(
-            SimpleAssignmentTarget::AssignmentTargetIdentifier(self.alloc(ident)),
-        )
+        AssignmentTarget::AssignmentTargetIdentifier(self.alloc(ident))
     }
 
     pub fn simple_assignment_target_member_expression(
         &self,
         expr: MemberExpression<'a>,
     ) -> AssignmentTarget<'a> {
-        AssignmentTarget::SimpleAssignmentTarget(SimpleAssignmentTarget::MemberAssignmentTarget(
-            self.alloc(expr),
-        ))
+        AssignmentTarget::from(SimpleAssignmentTarget::from(expr))
     }
 
     pub fn await_expression(&self, span: Span, argument: Expression<'a>) -> Expression<'a> {
@@ -617,7 +603,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn member_expression(&self, expr: MemberExpression<'a>) -> Expression<'a> {
-        Expression::MemberExpression(self.alloc(expr))
+        Expression::from(expr)
     }
 
     pub fn computed_member(
@@ -627,12 +613,12 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         optional: bool, // for optional chaining
     ) -> MemberExpression<'a> {
-        MemberExpression::ComputedMemberExpression(ComputedMemberExpression {
+        MemberExpression::ComputedMemberExpression(self.alloc(ComputedMemberExpression {
             span,
             object,
             expression,
             optional,
-        })
+        }))
     }
 
     pub fn computed_member_expression(
@@ -652,12 +638,12 @@ impl<'a> AstBuilder<'a> {
         property: IdentifierName<'a>,
         optional: bool, // for optional chaining
     ) -> MemberExpression<'a> {
-        MemberExpression::StaticMemberExpression(StaticMemberExpression {
+        MemberExpression::StaticMemberExpression(self.alloc(StaticMemberExpression {
             span,
             object,
             property,
             optional,
-        })
+        }))
     }
 
     pub fn static_member_expression(
@@ -677,12 +663,12 @@ impl<'a> AstBuilder<'a> {
         field: PrivateIdentifier<'a>,
         optional: bool,
     ) -> MemberExpression<'a> {
-        MemberExpression::PrivateFieldExpression(PrivateFieldExpression {
+        MemberExpression::PrivateFieldExpression(self.alloc(PrivateFieldExpression {
             span,
             object,
             field,
             optional,
-        })
+        }))
     }
 
     pub fn private_in_expression(
@@ -830,7 +816,7 @@ impl<'a> AstBuilder<'a> {
 
     /* ---------- Functions ---------- */
     pub fn function_declaration(&self, func: Box<'a, Function<'a>>) -> Statement<'a> {
-        Statement::Declaration(Declaration::FunctionDeclaration(func))
+        Statement::FunctionDeclaration(func)
     }
 
     pub fn formal_parameters(
@@ -971,7 +957,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn class_declaration(&self, class: Box<'a, Class<'a>>) -> Statement<'a> {
-        Statement::Declaration(Declaration::ClassDeclaration(class))
+        Statement::ClassDeclaration(class)
     }
 
     pub fn static_block(&self, span: Span, body: Vec<'a, Statement<'a>>) -> ClassElement<'a> {
@@ -1153,17 +1139,17 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn property_key_identifier(&self, ident: IdentifierName<'a>) -> PropertyKey<'a> {
-        PropertyKey::Identifier(self.alloc(ident))
+        PropertyKey::StaticIdentifier(self.alloc(ident))
     }
 
     pub fn property_key_expression(&self, expr: Expression<'a>) -> PropertyKey<'a> {
-        PropertyKey::Expression(expr)
+        PropertyKey::from(expr)
     }
 
     /* ---------- Modules ---------- */
 
     pub fn module_declaration(&self, decl: ModuleDeclaration<'a>) -> Statement<'a> {
-        Statement::ModuleDeclaration(self.alloc(decl))
+        Statement::from(decl)
     }
 
     pub fn import_declaration(
@@ -1889,28 +1875,28 @@ impl<'a> AstBuilder<'a> {
         &self,
         ident: IdentifierName<'a>,
     ) -> TSEnumMemberName<'a> {
-        TSEnumMemberName::Identifier(self.alloc(ident))
+        TSEnumMemberName::StaticIdentifier(self.alloc(ident))
     }
 
     pub fn ts_enum_member_name_string_literal(
         &self,
         lit: StringLiteral<'a>,
     ) -> TSEnumMemberName<'a> {
-        TSEnumMemberName::StringLiteral(self.alloc(lit))
+        TSEnumMemberName::StaticStringLiteral(self.alloc(lit))
     }
 
     pub fn ts_enum_member_name_computed_property_name(
         &self,
         expr: Expression<'a>,
     ) -> TSEnumMemberName<'a> {
-        TSEnumMemberName::ComputedPropertyName(expr)
+        TSEnumMemberName::from(expr)
     }
 
     pub fn ts_enum_member_name_number_literal(
         &self,
         lit: NumericLiteral<'a>,
     ) -> TSEnumMemberName<'a> {
-        TSEnumMemberName::NumericLiteral(self.alloc(lit))
+        TSEnumMemberName::StaticNumericLiteral(self.alloc(lit))
     }
 
     pub fn ts_module_reference_external_module_reference(
@@ -1924,7 +1910,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         reference: TSTypeName<'a>,
     ) -> TSModuleReference<'a> {
-        TSModuleReference::TypeName(reference)
+        TSModuleReference::from(reference)
     }
 
     pub fn ts_type_predicate_name_this(&self, ty: TSThisType) -> TSTypePredicateName<'a> {
@@ -1946,7 +1932,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn ts_type_query_expr_name_type_name(&self, ty: TSTypeName<'a>) -> TSTypeQueryExprName<'a> {
-        TSTypeQueryExprName::TSTypeName(ty)
+        TSTypeQueryExprName::from(ty)
     }
 
     /* JSDoc */

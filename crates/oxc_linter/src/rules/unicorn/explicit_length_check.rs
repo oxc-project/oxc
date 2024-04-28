@@ -248,9 +248,10 @@ impl ExplicitLengthCheck {
 impl Rule for ExplicitLengthCheck {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::MemberExpression(MemberExpression::StaticMemberExpression(
-            static_member_expr @ StaticMemberExpression { object, property, .. },
+            static_member_expr,
         )) = node.kind()
         {
+            let StaticMemberExpression { object, property, .. } = &**static_member_expr;
             if property.name != "length" && property.name != "size" {
                 return;
             }

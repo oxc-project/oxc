@@ -1,7 +1,5 @@
 use oxc_ast::{
-    ast::{
-        AssignmentTarget, AssignmentTargetPattern, AssignmentTargetProperty, BindingPatternKind,
-    },
+    ast::{AssignmentTarget, AssignmentTargetProperty, BindingPatternKind},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -116,8 +114,8 @@ impl Rule for NoUselessRename {
                     }
                 }
             }
-            AstKind::AssignmentTarget(AssignmentTarget::AssignmentTargetPattern(
-                AssignmentTargetPattern::ObjectAssignmentTarget(object_assignment_target),
+            AstKind::AssignmentTarget(AssignmentTarget::ObjectAssignmentTarget(
+                object_assignment_target,
             )) => {
                 if self.ignore_destructuring {
                     return;

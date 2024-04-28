@@ -57,7 +57,7 @@ fn print_semicolon_after_export_declaration<'a>(
 
     match decl {
         ModuleDeclaration::ExportDefaultDeclaration(decl) => match decl.declaration {
-            ExportDefaultDeclarationKind::Expression(_) => Some(ss!(";")),
+            match_expression!(ExportDefaultDeclarationKind) => Some(ss!(";")),
             ExportDefaultDeclarationKind::FunctionDeclaration(_)
             | ExportDefaultDeclarationKind::ClassDeclaration(_)
             | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)

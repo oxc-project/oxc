@@ -10,9 +10,9 @@
 )]
 use oxc_ast::{
     ast::{
-        AssignmentTarget, AssignmentTargetPattern, ChainElement, ExportDefaultDeclarationKind,
-        Expression, ForStatementLeft, MemberExpression, ModuleDeclaration, ObjectExpression,
-        SimpleAssignmentTarget,
+        match_member_expression, AssignmentTarget, ChainElement, ExportDefaultDeclarationKind,
+        Expression, ForStatementInit, ForStatementLeft, MemberExpression, ModuleDeclaration,
+        ObjectExpression, SimpleAssignmentTarget,
     },
     AstKind,
 };
@@ -94,12 +94,9 @@ impl<'a> Prettier<'a> {
                 {
                     false
                 }
-                AstKind::ExpressionStatement(_) => matches!(
-                    assign_expr.left,
-                    AssignmentTarget::AssignmentTargetPattern(
-                        AssignmentTargetPattern::ObjectAssignmentTarget(_)
-                    )
-                ),
+                AstKind::ExpressionStatement(_) => {
+                    matches!(assign_expr.left, AssignmentTarget::ObjectAssignmentTarget(_))
+                }
                 _ => true,
             },
             AstKind::UpdateExpression(update_expr) => match parent_kind {
@@ -222,10 +219,11 @@ impl<'a> Prettier<'a> {
                 }
             }
             AstKind::ModuleDeclaration(ModuleDeclaration::ExportDefaultDeclaration(decl)) => {
-                if let ExportDefaultDeclarationKind::Expression(e) = &decl.declaration {
-                    return matches!(e, Expression::SequenceExpression(_))
-                        || self.should_wrap_function_for_export_default();
-                }
+                return matches!(
+                    decl.declaration,
+                    ExportDefaultDeclarationKind::SequenceExpression(_)
+                ) || (decl.declaration.is_expression()
+                    && self.should_wrap_function_for_export_default());
             }
             AstKind::BinaryExpression(binary_expr) => {
                 if binary_expr.operator.is_relational() {
@@ -277,10 +275,7 @@ impl<'a> Prettier<'a> {
     fn check_for_of_stmt_head_starts_with_async_or_let(&self, kind: AstKind<'a>) -> bool {
         let AstKind::IdentifierReference(ident) = kind else { return false };
         let AstKind::ForOfStatement(stmt) = self.parent_kind() else { return false };
-        if let ForStatementLeft::AssignmentTarget(AssignmentTarget::SimpleAssignmentTarget(
-            SimpleAssignmentTarget::AssignmentTargetIdentifier(i),
-        )) = &stmt.left
-        {
+        if let ForStatementLeft::AssignmentTargetIdentifier(i) = &stmt.left {
             if (i.span == ident.span) && (i.name == "let" || (i.name == "async" && !stmt.r#await)) {
                 return true;
             }
@@ -297,13 +292,10 @@ impl<'a> Prettier<'a> {
         }
         for kind in self.stack.iter().rev() {
             if let AstKind::ForOfStatement(stmt) = kind {
-                if let ForStatementLeft::AssignmentTarget(
-                    AssignmentTarget::SimpleAssignmentTarget(
-                        SimpleAssignmentTarget::MemberAssignmentTarget(e),
-                    ),
-                ) = &stmt.left
-                {
-                    return Self::starts_with_no_lookahead_token(e.object(), ident.span);
+                if let Some(target) = stmt.left.as_assignment_target() {
+                    if let Some(e) = target.as_member_expression() {
+                        return Self::starts_with_no_lookahead_token(e.object(), ident.span);
+                    }
                 }
                 break;
             }
@@ -342,16 +334,13 @@ impl<'a> Prettier<'a> {
             AstKind::ForStatement(stmt) => stmt
                 .init
                 .as_ref()
-                .and_then(|init| init.expression())
+                .and_then(ForStatementInit::as_expression)
                 .map_or(false, |e| Self::starts_with_no_lookahead_token(e, ident.span)),
             AstKind::ForInStatement(stmt) => {
-                if let ForStatementLeft::AssignmentTarget(
-                    AssignmentTarget::SimpleAssignmentTarget(
-                        SimpleAssignmentTarget::MemberAssignmentTarget(e),
-                    ),
-                ) = &stmt.left
-                {
-                    return Self::starts_with_no_lookahead_token(e.object(), ident.span);
+                if let Some(target) = stmt.left.as_assignment_target() {
+                    if let Some(e) = target.as_member_expression() {
+                        return Self::starts_with_no_lookahead_token(e.object(), ident.span);
+                    }
                 }
                 false
             }
@@ -488,17 +477,13 @@ impl<'a> Prettier<'a> {
             AstKind::NewExpression(new_expr) if new_expr.callee.span() == span => {
                 let mut object = &new_expr.callee;
                 loop {
-                    match object {
+                    object = match object {
                         Expression::CallExpression(_) => return true,
-                        Expression::MemberExpression(e) => {
-                            object = e.object();
-                        }
-                        Expression::TaggedTemplateExpression(e) => {
-                            object = &e.tag;
-                        }
-                        Expression::TSNonNullExpression(e) => {
-                            object = &e.expression;
-                        }
+                        Expression::ComputedMemberExpression(e) => &e.object,
+                        Expression::StaticMemberExpression(e) => &e.object,
+                        Expression::PrivateFieldExpression(e) => &e.object,
+                        Expression::TaggedTemplateExpression(e) => &e.tag,
+                        Expression::TSNonNullExpression(e) => &e.expression,
                         _ => return false,
                     }
                 }
@@ -583,28 +568,33 @@ impl<'a> Prettier<'a> {
             Expression::BinaryExpression(e) => Self::starts_with_no_lookahead_token(&e.left, span),
             Expression::LogicalExpression(e) => Self::starts_with_no_lookahead_token(&e.left, span),
             Expression::AssignmentExpression(e) => match &e.left {
-                AssignmentTarget::SimpleAssignmentTarget(t) => match t {
-                    SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => false,
-                    SimpleAssignmentTarget::MemberAssignmentTarget(e) => {
-                        Self::starts_with_no_lookahead_token(e.object(), span)
-                    }
-                    SimpleAssignmentTarget::TSAsExpression(e) => {
-                        Self::starts_with_no_lookahead_token(&e.expression, span)
-                    }
-                    SimpleAssignmentTarget::TSSatisfiesExpression(e) => {
-                        Self::starts_with_no_lookahead_token(&e.expression, span)
-                    }
-                    SimpleAssignmentTarget::TSNonNullExpression(e) => {
-                        Self::starts_with_no_lookahead_token(&e.expression, span)
-                    }
-                    SimpleAssignmentTarget::TSTypeAssertion(e) => {
-                        Self::starts_with_no_lookahead_token(&e.expression, span)
-                    }
-                },
-                AssignmentTarget::AssignmentTargetPattern(_) => false,
+                AssignmentTarget::AssignmentTargetIdentifier(_) => false,
+                AssignmentTarget::ComputedMemberExpression(e) => {
+                    Self::starts_with_no_lookahead_token(&e.object, span)
+                }
+                AssignmentTarget::StaticMemberExpression(e) => {
+                    Self::starts_with_no_lookahead_token(&e.object, span)
+                }
+                AssignmentTarget::PrivateFieldExpression(e) => {
+                    Self::starts_with_no_lookahead_token(&e.object, span)
+                }
+                AssignmentTarget::TSAsExpression(e) => {
+                    Self::starts_with_no_lookahead_token(&e.expression, span)
+                }
+                AssignmentTarget::TSSatisfiesExpression(e) => {
+                    Self::starts_with_no_lookahead_token(&e.expression, span)
+                }
+                AssignmentTarget::TSNonNullExpression(e) => {
+                    Self::starts_with_no_lookahead_token(&e.expression, span)
+                }
+                AssignmentTarget::TSTypeAssertion(e) => {
+                    Self::starts_with_no_lookahead_token(&e.expression, span)
+                }
+                AssignmentTarget::ArrayAssignmentTarget(_)
+                | AssignmentTarget::ObjectAssignmentTarget(_) => false,
             },
-            Expression::MemberExpression(e) => {
-                Self::starts_with_no_lookahead_token(e.object(), span)
+            match_member_expression!(Expression) => {
+                Self::starts_with_no_lookahead_token(e.to_member_expression().object(), span)
             }
             Expression::TaggedTemplateExpression(e) => {
                 if matches!(e.tag, Expression::FunctionExpression(_)) {
@@ -625,8 +615,14 @@ impl<'a> Prettier<'a> {
                 !e.prefix
                     && match &e.argument {
                         SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => false,
-                        SimpleAssignmentTarget::MemberAssignmentTarget(e) => {
-                            Self::starts_with_no_lookahead_token(e.object(), span)
+                        SimpleAssignmentTarget::ComputedMemberExpression(e) => {
+                            Self::starts_with_no_lookahead_token(&e.object, span)
+                        }
+                        SimpleAssignmentTarget::StaticMemberExpression(e) => {
+                            Self::starts_with_no_lookahead_token(&e.object, span)
+                        }
+                        SimpleAssignmentTarget::PrivateFieldExpression(e) => {
+                            Self::starts_with_no_lookahead_token(&e.object, span)
                         }
                         SimpleAssignmentTarget::TSAsExpression(e) => {
                             Self::starts_with_no_lookahead_token(&e.expression, span)
@@ -650,8 +646,14 @@ impl<'a> Prettier<'a> {
                 ChainElement::CallExpression(e) => {
                     Self::starts_with_no_lookahead_token(&e.callee, span)
                 }
-                ChainElement::MemberExpression(e) => {
-                    Self::starts_with_no_lookahead_token(e.object(), span)
+                ChainElement::ComputedMemberExpression(e) => {
+                    Self::starts_with_no_lookahead_token(&e.object, span)
+                }
+                ChainElement::StaticMemberExpression(e) => {
+                    Self::starts_with_no_lookahead_token(&e.object, span)
+                }
+                ChainElement::PrivateFieldExpression(e) => {
+                    Self::starts_with_no_lookahead_token(&e.object, span)
                 }
             },
             Expression::TSSatisfiesExpression(e) => {

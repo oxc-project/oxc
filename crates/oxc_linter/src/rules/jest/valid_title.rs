@@ -133,15 +133,15 @@ impl ValidTitle {
             return;
         }
 
-        let Some(Argument::Expression(expr)) = call_expr.arguments.first() else {
+        let Some(arg) = call_expr.arguments.first() else {
             return;
         };
 
         let need_report_describe_name = !(self.ignore_type_of_describe_name
             && matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)));
 
-        match expr {
-            Expression::StringLiteral(string_literal) => {
+        match arg {
+            Argument::StringLiteral(string_literal) => {
                 validate_title(
                     &string_literal.value,
                     string_literal.span,
@@ -150,7 +150,7 @@ impl ValidTitle {
                     ctx,
                 );
             }
-            Expression::TemplateLiteral(template_literal) => {
+            Argument::TemplateLiteral(template_literal) => {
                 if !template_literal.is_no_substitution_template() {
                     return;
                 }
@@ -164,17 +164,17 @@ impl ValidTitle {
                     );
                 }
             }
-            Expression::BinaryExpression(binary_expr) => {
+            Argument::BinaryExpression(binary_expr) => {
                 if does_binary_expression_contain_string_node(binary_expr) {
                     return;
                 }
                 if need_report_describe_name {
-                    Message::TitleMustBeString.diagnostic(ctx, expr.span());
+                    Message::TitleMustBeString.diagnostic(ctx, arg.span());
                 }
             }
             _ => {
                 if need_report_describe_name {
-                    Message::TitleMustBeString.diagnostic(ctx, expr.span());
+                    Message::TitleMustBeString.diagnostic(ctx, arg.span());
                 }
             }
         }

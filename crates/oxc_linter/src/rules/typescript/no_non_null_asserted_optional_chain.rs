@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{ChainElement, Expression},
+    ast::{match_member_expression, ChainElement, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -51,8 +51,14 @@ impl Rule for NoNonNullAssertedOptionalChain {
         if let AstKind::TSNonNullExpression(non_null_expr) = node.kind() {
             let chain_span = match non_null_expr.expression.get_inner_expression() {
                 Expression::ChainExpression(chain) => match &chain.expression {
-                    ChainElement::MemberExpression(member) if member.optional() => {
-                        Some(member.object().span())
+                    ChainElement::ComputedMemberExpression(member) if member.optional => {
+                        Some(member.object.span())
+                    }
+                    ChainElement::StaticMemberExpression(member) if member.optional => {
+                        Some(member.object.span())
+                    }
+                    ChainElement::PrivateFieldExpression(member) if member.optional => {
+                        Some(member.object.span())
                     }
                     ChainElement::CallExpression(call) if call.optional => Some(call.callee.span()),
                     _ => None,
@@ -60,7 +66,7 @@ impl Rule for NoNonNullAssertedOptionalChain {
                 Expression::CallExpression(call) => {
                     if call.optional && !is_parent_member_or_call(node, ctx) {
                         Some(call.callee.span())
-                    } else if let Expression::MemberExpression(member) = &call.callee {
+                    } else if let Some(member) = call.callee.as_member_expression() {
                         if member.optional() && !is_parent_member_or_call(node, ctx) {
                             Some(member.object().span())
                         } else {
@@ -70,10 +76,13 @@ impl Rule for NoNonNullAssertedOptionalChain {
                         None
                     }
                 }
-                Expression::MemberExpression(member)
-                    if member.optional() && !is_parent_member_or_call(node, ctx) =>
-                {
-                    Some(member.object().span())
+                expr @ match_member_expression!(Expression) => {
+                    let member_expr = expr.to_member_expression();
+                    if member_expr.optional() && !is_parent_member_or_call(node, ctx) {
+                        Some(member_expr.object().span())
+                    } else {
+                        None
+                    }
                 }
                 _ => None,
             };

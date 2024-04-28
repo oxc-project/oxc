@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, Expression, JSXAttributeItem, JSXAttributeName, ObjectPropertyKind},
+    ast::{Argument, JSXAttributeItem, JSXAttributeName, ObjectPropertyKind},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -70,9 +70,7 @@ impl Rule for NoChildrenProp {
             }
             AstKind::CallExpression(call_expr) => {
                 if is_create_element_call(call_expr) {
-                    if let Some(Argument::Expression(Expression::ObjectExpression(obj_expr))) =
-                        call_expr.arguments.get(1)
-                    {
+                    if let Some(Argument::ObjectExpression(obj_expr)) = call_expr.arguments.get(1) {
                         if let Some(span) = obj_expr.properties.iter().find_map(|prop| {
                             if let ObjectPropertyKind::ObjectProperty(prop) = prop {
                                 if prop.key.is_specific_static_name("children") {

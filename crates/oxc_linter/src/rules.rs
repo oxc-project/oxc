@@ -138,6 +138,7 @@ mod typescript {
     pub mod no_unsafe_declaration_merging;
     pub mod no_var_requires;
     pub mod prefer_as_const;
+    pub mod prefer_enum_initializers;
     pub mod prefer_for_of;
     pub mod prefer_function_type;
     pub mod prefer_ts_expect_error;
@@ -179,6 +180,7 @@ mod jest {
     pub mod prefer_to_contain;
     pub mod prefer_to_have_length;
     pub mod prefer_todo;
+    pub mod require_hook;
     pub mod require_to_throw_message;
     pub mod valid_describe_callback;
     pub mod valid_expect;
@@ -364,6 +366,7 @@ mod jsdoc {
     pub mod check_tag_names;
     pub mod empty_tags;
     pub mod implements_on_classes;
+    pub mod no_defaults;
     pub mod require_property;
     pub mod require_property_description;
     pub mod require_property_name;
@@ -470,6 +473,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::array_type,
     typescript::ban_ts_comment,
     typescript::ban_tslint_comment,
+    typescript::prefer_enum_initializers,
     typescript::ban_types,
     typescript::consistent_type_definitions,
     typescript::no_duplicate_enum_values,
@@ -522,6 +526,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_to_contain,
     jest::prefer_to_have_length,
     jest::prefer_todo,
+    jest::require_hook,
     jest::require_to_throw_message,
     jest::valid_describe_callback,
     jest::valid_expect,
@@ -698,6 +703,7 @@ oxc_macros::declare_all_lint_rules! {
     jsdoc::check_tag_names,
     jsdoc::empty_tags,
     jsdoc::implements_on_classes,
+    jsdoc::no_defaults,
     jsdoc::require_property,
     jsdoc::require_property_type,
     jsdoc::require_property_name,

@@ -1,7 +1,5 @@
 use oxc_ast::{
-    ast::{
-        Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXExpression,
-    },
+    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -115,9 +113,7 @@ impl Rule for MediaHasCaption {
                         return match &attr.value {
                             Some(JSXAttributeValue::ExpressionContainer(exp)) => {
                                 match &exp.expression {
-                                    JSXExpression::Expression(Expression::BooleanLiteral(
-                                        boolean,
-                                    )) => boolean.value,
+                                    JSXExpression::BooleanLiteral(boolean) => boolean.value,
                                     _ => false,
                                 }
                             }

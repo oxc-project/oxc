@@ -120,7 +120,7 @@ impl<'a> ReactJsx<'a> {
         let index = program
             .body
             .iter()
-            .rposition(|stmt| matches!(stmt, Statement::ModuleDeclaration(m) if m.is_import()))
+            .rposition(|stmt| matches!(stmt, Statement::ImportDeclaration(_)))
             .map_or(0, |i| i + 1);
         program.body.splice(index..index, imports);
     }
@@ -257,7 +257,7 @@ impl<'a> ReactJsx<'a> {
         let has_key_after_props_spread = e.has_key_after_props_spread();
 
         let mut arguments = self.ast().new_vec();
-        arguments.push(Argument::Expression(match e {
+        arguments.push(Argument::from(match e {
             JSXElementOrFragment::Element(e) => {
                 self.transform_element_name(&e.opening_element.name)
             }
@@ -273,7 +273,7 @@ impl<'a> ReactJsx<'a> {
         // Add `null` to second argument in classic mode
         if is_classic && attributes_len == 0 {
             let null_expr = self.ast().literal_null_expression(NullLiteral::new(SPAN));
-            arguments.push(Argument::Expression(null_expr));
+            arguments.push(Argument::from(null_expr));
         }
 
         // The object properties for the second argument of `React.createElement`
@@ -292,7 +292,7 @@ impl<'a> ReactJsx<'a> {
                         // deopt if spreading an object with `__proto__` key
                         if !matches!(&spread.argument, Expression::ObjectExpression(o) if o.has_proto())
                         {
-                            arguments.push(Argument::Expression(self.ast().copy(&spread.argument)));
+                            arguments.push(Argument::from(self.ast().copy(&spread.argument)));
                             continue;
                         }
                     }
@@ -340,7 +340,7 @@ impl<'a> ReactJsx<'a> {
                     children.pop().unwrap()
                 } else {
                     let elements = Vec::from_iter_in(
-                        children.into_iter().map(ArrayExpressionElement::Expression),
+                        children.into_iter().map(ArrayExpressionElement::from),
                         allocator,
                     );
                     need_jsxs = true;
@@ -375,11 +375,11 @@ impl<'a> ReactJsx<'a> {
 
         if !properties.is_empty() || is_automatic {
             let object_expression = self.ast().object_expression(SPAN, properties, None);
-            arguments.push(Argument::Expression(object_expression));
+            arguments.push(Argument::from(object_expression));
         }
 
         if is_automatic && key_prop.is_some() {
-            arguments.push(Argument::Expression(self.transform_jsx_attribute_value(key_prop)));
+            arguments.push(Argument::from(self.transform_jsx_attribute_value(key_prop)));
         }
 
         if is_classic && !children.is_empty() {
@@ -387,7 +387,7 @@ impl<'a> ReactJsx<'a> {
                 children
                     .iter()
                     .filter_map(|child| self.transform_jsx_child(child))
-                    .map(Argument::Expression),
+                    .map(Argument::from),
             );
         }
 
@@ -573,7 +573,7 @@ impl<'a> ReactJsx<'a> {
                 self.transform_jsx(&JSXElementOrFragment::Fragment(e))
             }
             Some(JSXAttributeValue::ExpressionContainer(c)) => match &c.expression {
-                JSXExpression::Expression(e) => self.ast().copy(e),
+                e @ match_expression!(JSXExpression) => self.ast().copy(e.to_expression()),
                 JSXExpression::EmptyExpression(_e) => {
                     self.ast().literal_boolean_expression(BooleanLiteral::new(SPAN, true))
                 }
@@ -586,7 +586,7 @@ impl<'a> ReactJsx<'a> {
         match child {
             JSXChild::Text(text) => self.transform_jsx_text(text.value.as_str()),
             JSXChild::ExpressionContainer(e) => match &e.expression {
-                JSXExpression::Expression(e) => Some(self.ast().copy(e)),
+                e @ match_expression!(JSXExpression) => Some(self.ast().copy(e.to_expression())),
                 JSXExpression::EmptyExpression(_) => None,
             },
             JSXChild::Element(e) => Some(self.transform_jsx(&JSXElementOrFragment::Element(e))),

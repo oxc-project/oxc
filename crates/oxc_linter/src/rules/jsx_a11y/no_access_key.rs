@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
+    ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -49,10 +49,8 @@ impl Rule for NoAccessKey {
                     ctx.diagnostic(NoAccessKeyDiagnostic(attr.span));
                 }
                 Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                    if let JSXExpression::Expression(expr) = &container.expression {
-                        if expr.is_identifier_reference() & expr.is_undefined() {
-                            return;
-                        }
+                    if container.expression.is_expression() && !container.expression.is_undefined()
+                    {
                         ctx.diagnostic(NoAccessKeyDiagnostic(attr.span));
                     }
                 }

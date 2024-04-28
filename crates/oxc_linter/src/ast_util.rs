@@ -165,7 +165,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for Argument<'a> {
     fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
         match self {
             Self::SpreadElement(element) => element.is_constant(in_boolean_position, ctx),
-            Self::Expression(expr) => expr.is_constant(in_boolean_position, ctx),
+            match_expression!(Self) => self.to_expression().is_constant(in_boolean_position, ctx),
         }
     }
 }
@@ -174,7 +174,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for ArrayExpressionElement<'a> {
     fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
         match self {
             Self::SpreadElement(element) => element.is_constant(in_boolean_position, ctx),
-            Self::Expression(expr) => expr.is_constant(in_boolean_position, ctx),
+            match_expression!(Self) => self.to_expression().is_constant(in_boolean_position, ctx),
             Self::Elision(_) => true,
         }
     }
@@ -290,7 +290,7 @@ pub fn extract_regex_flags<'a>(
     if args.len() <= 1 {
         return None;
     }
-    let Argument::Expression(Expression::StringLiteral(flag_arg)) = &args[1] else {
+    let Argument::StringLiteral(flag_arg) = &args[1] else {
         return None;
     };
     let mut flags = RegExpFlags::empty();
@@ -320,8 +320,7 @@ pub fn is_method_call<'a>(
         }
     }
 
-    let Expression::MemberExpression(member_expr) = &call_expr.callee.without_parenthesized()
-    else {
+    let Some(member_expr) = call_expr.callee.without_parenthesized().as_member_expression() else {
         return false;
     };
 
@@ -375,11 +374,7 @@ pub fn is_new_expression<'a>(
 pub fn call_expr_method_callee_info<'a>(
     call_expr: &'a CallExpression<'a>,
 ) -> Option<(Span, &'a str)> {
-    let Expression::MemberExpression(member_expr) = &call_expr.callee.without_parenthesized()
-    else {
-        return None;
-    };
-
+    let member_expr = call_expr.callee.without_parenthesized().as_member_expression()?;
     member_expr.static_property_info()
 }
 
@@ -411,5 +406,14 @@ pub fn is_global_require_call(call_expr: &CallExpression, ctx: &LintContext) -> 
         id_ref.name == "require" && is_global_reference(id_ref, ctx)
     } else {
         false
+    }
+}
+
+pub fn is_function_node(node: &AstNode) -> bool {
+    match node.kind() {
+        AstKind::Function(f) if f.is_function_declaration() => true,
+        AstKind::Function(f) if f.is_expression() => true,
+        AstKind::ArrowFunctionExpression(_) => true,
+        _ => false,
     }
 }

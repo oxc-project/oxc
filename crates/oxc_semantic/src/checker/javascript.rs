@@ -579,7 +579,7 @@ fn check_function_declaration<'a>(
     struct FunctionDeclarationNonStrict(#[label] Span);
 
     // Function declaration not allowed in statement position
-    if let Statement::Declaration(Declaration::FunctionDeclaration(decl)) = stmt {
+    if let Statement::FunctionDeclaration(decl) = stmt {
         if ctx.strict_mode() {
             ctx.error(FunctionDeclarationStrict(decl.span));
         } else if !is_if_stmt_or_labeled_stmt {
@@ -1033,7 +1033,9 @@ fn check_assignment_expression(assign_expr: &AssignmentExpression, ctx: &Semanti
     //     LeftHandSideExpression ||= AssignmentExpression
     //     LeftHandSideExpression ??= AssignmentExpression
     // It is a Syntax Error if AssignmentTargetType of LeftHandSideExpression is not SIMPLE.
-    if assign_expr.operator != AssignmentOperator::Assign && !assign_expr.left.is_simple() {
+    if assign_expr.operator != AssignmentOperator::Assign
+        && !assign_expr.left.is_simple_assignment_target()
+    {
         ctx.error(AssignmentIsNotSimple(assign_expr.left.span()));
     }
 }
@@ -1137,10 +1139,8 @@ fn check_unary_expression<'a>(
             Expression::Identifier(ident) if ctx.strict_mode() => {
                 ctx.error(DeleteOfUnqualified(ident.span));
             }
-            Expression::MemberExpression(expr) => {
-                if let MemberExpression::PrivateFieldExpression(expr) = &**expr {
-                    ctx.error(DeletePrivateField(expr.span));
-                }
+            Expression::PrivateFieldExpression(expr) => {
+                ctx.error(DeletePrivateField(expr.span));
             }
             _ => {}
         }

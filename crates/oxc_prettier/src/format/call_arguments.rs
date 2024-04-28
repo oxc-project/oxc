@@ -185,44 +185,40 @@ fn should_expand_first_arg<'a>(arguments: &Vec<'a, Argument<'a>>) -> bool {
         return false;
     }
 
-    let Argument::Expression(first_arg) = &arguments[0] else { return false };
-    let Argument::Expression(second_arg) = &arguments[1] else { return false };
+    match &arguments[0] {
+        Argument::FunctionExpression(_) => {}
+        Argument::ArrowFunctionExpression(arrow) if !arrow.expression => {}
+        _ => return false,
+    }
 
-    let first_check = match first_arg {
-        Expression::FunctionExpression(_) => true,
-        Expression::ArrowFunctionExpression(arrow) => !arrow.expression,
+    match &arguments[1] {
+        Argument::FunctionExpression(_)
+        | Argument::ArrowFunctionExpression(_)
+        | Argument::ConditionalExpression(_) => false,
+        second_arg if second_arg.is_expression() => {
+            let second_arg = second_arg.to_expression();
+            is_hopefully_short_call_argument(second_arg) && !could_expand_arg(second_arg, false)
+        }
         _ => false,
-    };
-
-    first_check
-        && !matches!(
-            second_arg,
-            Expression::FunctionExpression(_)
-                | Expression::ArrowFunctionExpression(_)
-                | Expression::ConditionalExpression(_)
-        )
-        && is_hopefully_short_call_argument(second_arg)
-        && !could_expand_arg(second_arg, false)
+    }
 }
 
 fn should_expand_last_arg(args: &Vec<'_, Argument<'_>>) -> bool {
-    let Some(Argument::Expression(last_arg)) = args.last() else { return false };
+    let Some(last_arg) = args.last() else { return false };
+    let Some(last_arg) = last_arg.as_expression() else { return false };
 
     let penultimate_arg = if args.len() >= 2 { Some(&args[args.len() - 2]) } else { None };
 
     could_expand_arg(last_arg, false)
         && (penultimate_arg.is_none() || matches!(last_arg, arg))
         && (args.len() != 2
-            || !matches!(
-                penultimate_arg,
-                Some(Argument::Expression(Expression::ArrowFunctionExpression(_)))
-            )
+            || !matches!(penultimate_arg, Some(Argument::ArrowFunctionExpression(_)))
             || !matches!(last_arg, Expression::ArrayExpression(_)))
 }
 
-fn is_hopefully_short_call_argument(node: &Expression) -> bool {
-    if let Expression::ParenthesizedExpression(expr) = node {
-        return is_hopefully_short_call_argument(&expr.expression);
+fn is_hopefully_short_call_argument(mut node: &Expression) -> bool {
+    while let Expression::ParenthesizedExpression(expr) = node {
+        node = &expr.expression;
     }
 
     if node.is_call_like_expression() {
@@ -273,9 +269,7 @@ fn is_simple_call_argument(node: &Expression, depth: usize) -> bool {
     }
 
     if let Expression::ArrayExpression(expr) = node {
-        return expr.elements.iter().all(
-            |x| matches!(x, ArrayExpressionElement::Expression(expr) if is_child_simple(expr)),
-        );
+        return expr.elements.iter().all(|elem| elem.as_expression().is_some_and(is_child_simple));
     }
 
     if node.is_call_expression() {
@@ -285,7 +279,7 @@ fn is_simple_call_argument(node: &Expression, depth: usize) -> bool {
             if is_simple_call_argument(&expr.callee, depth) {
                 return expr.arguments.len() <= depth
                     && expr.arguments.iter().all(|arg| {
-                        if let Argument::Expression(expr) = arg {
+                        if let Some(expr) = arg.as_expression() {
                             is_child_simple(expr)
                         } else {
                             false
@@ -296,7 +290,7 @@ fn is_simple_call_argument(node: &Expression, depth: usize) -> bool {
             if is_simple_call_argument(&expr.callee, depth) {
                 return expr.arguments.len() <= depth
                     && expr.arguments.iter().all(|arg| {
-                        if let Argument::Expression(expr) = arg {
+                        if let Some(expr) = arg.as_expression() {
                             is_child_simple(expr)
                         } else {
                             false
@@ -321,7 +315,7 @@ fn is_simple_call_argument(node: &Expression, depth: usize) -> bool {
         false
     };
 
-    if let Expression::MemberExpression(expr) = node {
+    if let Some(expr) = node.as_member_expression() {
         return check_member_expression(expr);
     }
 
@@ -338,8 +332,8 @@ fn is_simple_call_argument(node: &Expression, depth: usize) -> bool {
     if let Expression::UpdateExpression(expr) = node {
         return match &expr.argument {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(target) => true,
-            SimpleAssignmentTarget::MemberAssignmentTarget(target) => {
-                check_member_expression(target)
+            target @ match_member_expression!(SimpleAssignmentTarget) => {
+                check_member_expression(target.to_member_expression())
             }
             _ => return false,
         };

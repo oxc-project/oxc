@@ -879,8 +879,10 @@ pub mod walk_mut {
             Statement::WhileStatement(stmt) => visitor.visit_while_statement(stmt),
             Statement::WithStatement(stmt) => visitor.visit_with_statement(stmt),
 
-            Statement::ModuleDeclaration(decl) => visitor.visit_module_declaration(decl),
-            Statement::Declaration(decl) => visitor.visit_declaration(decl),
+            match_module_declaration!(Statement) => {
+                visitor.visit_module_declaration(stmt.to_module_declaration_mut());
+            }
+            match_declaration!(Statement) => visitor.visit_declaration(stmt.to_declaration_mut()),
         }
     }
 
@@ -996,7 +998,9 @@ pub mod walk_mut {
             ForStatementInit::VariableDeclaration(decl) => {
                 visitor.visit_variable_declaration(decl);
             }
-            ForStatementInit::Expression(expr) => visitor.visit_expression(expr),
+            match_expression!(ForStatementInit) => {
+                visitor.visit_expression(init.to_expression_mut());
+            }
             ForStatementInit::UsingDeclaration(decl) => {
                 visitor.visit_using_declaration(decl);
             }
@@ -1050,7 +1054,9 @@ pub mod walk_mut {
             ForStatementLeft::VariableDeclaration(decl) => {
                 visitor.visit_variable_declaration(decl);
             }
-            ForStatementLeft::AssignmentTarget(target) => visitor.visit_assignment_target(target),
+            match_assignment_target!(ForStatementLeft) => {
+                visitor.visit_assignment_target(left.to_assignment_target_mut());
+            }
             ForStatementLeft::UsingDeclaration(decl) => {
                 visitor.visit_using_declaration(decl);
             }
@@ -1474,7 +1480,9 @@ pub mod walk_mut {
             Expression::FunctionExpression(expr) => visitor.visit_function(expr, None),
             Expression::ImportExpression(expr) => visitor.visit_import_expression(expr),
             Expression::LogicalExpression(expr) => visitor.visit_logical_expression(expr),
-            Expression::MemberExpression(expr) => visitor.visit_member_expression(expr),
+            match_member_expression!(Expression) => {
+                visitor.visit_member_expression(expr.to_member_expression_mut());
+            }
             Expression::NewExpression(expr) => visitor.visit_new_expression(expr),
             Expression::ObjectExpression(expr) => visitor.visit_object_expression(expr),
             Expression::ParenthesizedExpression(expr) => {
@@ -1532,8 +1540,8 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         match arg {
             ArrayExpressionElement::SpreadElement(spread) => visitor.visit_spread_element(spread),
-            ArrayExpressionElement::Expression(expr) => {
-                visitor.visit_expression_array_element(expr);
+            match_expression!(ArrayExpressionElement) => {
+                visitor.visit_expression_array_element(arg.to_expression_mut());
             }
             ArrayExpressionElement::Elision(elision) => visitor.visit_elision(elision),
         }
@@ -1545,7 +1553,7 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         match arg {
             Argument::SpreadElement(spread) => visitor.visit_spread_element(spread),
-            Argument::Expression(expr) => visitor.visit_expression(expr),
+            match_expression!(Argument) => visitor.visit_expression(arg.to_expression_mut()),
         }
         visitor.leave_node(kind);
     }
@@ -1656,7 +1664,9 @@ pub mod walk_mut {
     ) {
         match elem {
             ChainElement::CallExpression(expr) => visitor.visit_call_expression(expr),
-            ChainElement::MemberExpression(expr) => visitor.visit_member_expression(expr),
+            match_member_expression!(ChainElement) => {
+                visitor.visit_member_expression(elem.to_member_expression_mut());
+            }
         }
     }
 
@@ -1793,9 +1803,9 @@ pub mod walk_mut {
         let kind = AstType::PropertyKey;
         visitor.enter_node(kind);
         match key {
-            PropertyKey::Identifier(ident) => visitor.visit_identifier_name(ident),
+            PropertyKey::StaticIdentifier(ident) => visitor.visit_identifier_name(ident),
             PropertyKey::PrivateIdentifier(ident) => visitor.visit_private_identifier(ident),
-            PropertyKey::Expression(expr) => visitor.visit_expression(expr),
+            match_expression!(PropertyKey) => visitor.visit_expression(key.to_expression_mut()),
         }
         visitor.leave_node(kind);
     }
@@ -1895,11 +1905,11 @@ pub mod walk_mut {
         let kind = AstType::AssignmentTarget;
         visitor.enter_node(kind);
         match target {
-            AssignmentTarget::SimpleAssignmentTarget(target) => {
-                visitor.visit_simple_assignment_target(target);
+            match_simple_assignment_target!(AssignmentTarget) => {
+                visitor.visit_simple_assignment_target(target.to_simple_assignment_target_mut());
             }
-            AssignmentTarget::AssignmentTargetPattern(pat) => {
-                visitor.visit_assignment_target_pattern(pat);
+            match_assignment_target_pattern!(AssignmentTarget) => {
+                visitor.visit_assignment_target_pattern(target.to_assignment_target_pattern_mut());
             }
         }
         visitor.leave_node(kind);
@@ -1915,8 +1925,8 @@ pub mod walk_mut {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
                 visitor.visit_identifier_reference(ident);
             }
-            SimpleAssignmentTarget::MemberAssignmentTarget(expr) => {
-                visitor.visit_member_expression(expr);
+            match_member_expression!(SimpleAssignmentTarget) => {
+                visitor.visit_member_expression(target.to_member_expression_mut());
             }
             SimpleAssignmentTarget::TSAsExpression(expr) => {
                 visitor.visit_expression(&mut expr.expression);
@@ -1965,8 +1975,8 @@ pub mod walk_mut {
         target: &mut AssignmentTargetMaybeDefault<'a>,
     ) {
         match target {
-            AssignmentTargetMaybeDefault::AssignmentTarget(target) => {
-                visitor.visit_assignment_target(target);
+            match_assignment_target!(AssignmentTargetMaybeDefault) => {
+                visitor.visit_assignment_target(target.to_assignment_target_mut());
             }
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(target) => {
                 visitor.visit_assignment_target_with_default(target);
@@ -2195,7 +2205,7 @@ pub mod walk_mut {
         expr: &mut JSXExpression<'a>,
     ) {
         match expr {
-            JSXExpression::Expression(expr) => visitor.visit_expression(expr),
+            match_expression!(JSXExpression) => visitor.visit_expression(expr.to_expression_mut()),
             JSXExpression::EmptyExpression(_) => {}
         }
     }
@@ -2571,7 +2581,9 @@ pub mod walk_mut {
         let kind = AstType::ExportDefaultDeclaration;
         visitor.enter_node(kind);
         match &mut decl.declaration {
-            ExportDefaultDeclarationKind::Expression(expr) => visitor.visit_expression(expr),
+            declaration @ match_expression!(ExportDefaultDeclarationKind) => {
+                visitor.visit_expression(declaration.to_expression_mut());
+            }
             ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                 visitor.visit_function(func, None);
             }
@@ -2660,7 +2672,9 @@ pub mod walk_mut {
         reference: &mut TSModuleReference<'a>,
     ) {
         match reference {
-            TSModuleReference::TypeName(name) => visitor.visit_ts_type_name(name),
+            name @ match_ts_type_name!(TSModuleReference) => {
+                visitor.visit_ts_type_name(name.to_ts_type_name_mut());
+            }
             TSModuleReference::ExternalModuleReference(reference) => {
                 visitor.visit_ts_external_module_reference(reference);
             }
@@ -2897,7 +2911,7 @@ pub mod walk_mut {
         ty: &mut TSTupleElement<'a>,
     ) {
         match ty {
-            TSTupleElement::TSType(ty) => visitor.visit_ts_type(ty),
+            match_ts_type!(TSTupleElement) => visitor.visit_ts_type(ty.to_ts_type_mut()),
             TSTupleElement::TSOptionalType(ty) => visitor.visit_ts_type(&mut ty.type_annotation),
             TSTupleElement::TSRestType(ty) => visitor.visit_ts_type(&mut ty.type_annotation),
         };
@@ -3160,7 +3174,9 @@ pub mod walk_mut {
         let kind = AstType::TSTypeQuery;
         visitor.enter_node(kind);
         match &mut ty.expr_name {
-            TSTypeQueryExprName::TSTypeName(name) => visitor.visit_ts_type_name(name),
+            name @ match_ts_type_name!(TSTypeQueryExprName) => {
+                visitor.visit_ts_type_name(name.to_ts_type_name_mut());
+            }
             TSTypeQueryExprName::TSImportType(import) => visitor.visit_ts_import_type(import),
         }
         if let Some(type_parameters) = &mut ty.type_parameters {

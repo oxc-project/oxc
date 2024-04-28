@@ -43,7 +43,7 @@ impl VisitMut<'_> for SpecParser {
         let mut options = PrettierOptions::default();
 
         if let Some(argument) = expr.arguments.get(1) {
-            let Argument::Expression(argument_expr) = argument else {
+            let Some(argument_expr) = argument.as_expression() else {
                 return;
             };
 
@@ -52,10 +52,7 @@ impl VisitMut<'_> for SpecParser {
                     .elements
                     .iter()
                     .filter_map(|el| {
-                        if let ArrayExpressionElement::Expression(Expression::StringLiteral(
-                            literal,
-                        )) = el
-                        {
+                        if let ArrayExpressionElement::StringLiteral(literal) = el {
                             return Some(literal.value.to_string());
                         }
                         None
@@ -66,9 +63,7 @@ impl VisitMut<'_> for SpecParser {
             return;
         }
 
-        if let Some(Argument::Expression(Expression::ObjectExpression(obj_expr))) =
-            expr.arguments.get(2)
-        {
+        if let Some(Argument::ObjectExpression(obj_expr)) = expr.arguments.get(2) {
             obj_expr.properties.iter().for_each(|item| {
                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = item {
                     if let Some(name) = obj_prop.key.static_name() {

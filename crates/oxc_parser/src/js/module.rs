@@ -43,7 +43,7 @@ impl<'a> ParserImpl<'a> {
                     && self.nth_at(2, Kind::Eq)))
         {
             let decl = self.parse_ts_import_equals_declaration(span)?;
-            return Ok(Statement::Declaration(decl));
+            return Ok(Statement::from(decl));
         }
 
         // `import type ...`
@@ -349,7 +349,7 @@ impl<'a> ParserImpl<'a> {
             _ => {
                 let decl = self
                     .parse_assignment_expression_base()
-                    .map(ExportDefaultDeclarationKind::Expression)?;
+                    .map(ExportDefaultDeclarationKind::from)?;
                 self.asi()?;
                 decl
             }

@@ -103,7 +103,7 @@ impl<'a> ParserImpl<'a> {
             // let { a = b } = c
             // let { a } = b
             //       ^ BindingIdentifier
-            if let PropertyKey::Identifier(ident) = &key {
+            if let PropertyKey::StaticIdentifier(ident) = &key {
                 shorthand = true;
                 let binding_identifier = BindingIdentifier::new(ident.span, ident.name.clone());
                 let identifier = self.ast.binding_pattern_identifier(binding_identifier);

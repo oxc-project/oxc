@@ -89,12 +89,12 @@ impl PreferComparisonMatcher {
         let Expression::CallExpression(parent_call_expr) = parent_node else {
             return;
         };
-        let Some(Argument::Expression(Expression::BinaryExpression(binary_expr))) =
-            parent_call_expr.arguments.first()
+        let Some(Argument::BinaryExpression(binary_expr)) = parent_call_expr.arguments.first()
         else {
             return;
         };
-        let Some(Argument::Expression(first_matcher_arg)) = parse_expect_jest_fn.args.first()
+        let Some(first_matcher_arg) =
+            parse_expect_jest_fn.args.first().and_then(Argument::as_expression)
         else {
             return;
         };

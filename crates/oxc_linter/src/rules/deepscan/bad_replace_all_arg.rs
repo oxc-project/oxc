@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, Expression, RegExpFlags},
+    ast::{Expression, RegExpFlags},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -56,7 +56,7 @@ impl Rule for BadReplaceAllArg {
             return;
         }
 
-        let Argument::Expression(regexp_argument) = &call_expr.arguments[0] else {
+        let Some(regexp_argument) = call_expr.arguments[0].as_expression() else {
             return;
         };
 
@@ -65,7 +65,7 @@ impl Rule for BadReplaceAllArg {
         };
 
         if !flags.contains(RegExpFlags::G) {
-            let Expression::MemberExpression(call_expr_callee) = &call_expr.callee else { return };
+            let Some(call_expr_callee) = call_expr.callee.as_member_expression() else { return };
             let Some((replace_all_span, _)) = call_expr_callee.static_property_info() else {
                 return;
             };

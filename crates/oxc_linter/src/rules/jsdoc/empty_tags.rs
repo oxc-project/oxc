@@ -95,11 +95,11 @@ impl Rule for EmptyTags {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let is_empty_tag_kind = |kind: &str| {
-            if EMPTY_TAGS.contains(kind) {
+        let is_empty_tag_kind = |tag_name: &str| {
+            if EMPTY_TAGS.contains(tag_name) {
                 return true;
             }
-            if !self.0.tags.is_empty() && self.0.tags.contains(&kind.to_string()) {
+            if !self.0.tags.is_empty() && self.0.tags.contains(&tag_name.to_string()) {
                 return true;
             }
             false
@@ -107,10 +107,12 @@ impl Rule for EmptyTags {
 
         for jsdoc in ctx.semantic().jsdoc().iter_all() {
             for tag in jsdoc.tags() {
-                let kind = tag.kind.parsed();
-                if !is_empty_tag_kind(kind) {
+                let tag_name = tag.kind.parsed();
+
+                if !is_empty_tag_kind(tag_name) {
                     continue;
                 }
+
                 let comment = tag.comment();
                 if comment.parsed().is_empty() {
                     continue;
@@ -118,7 +120,7 @@ impl Rule for EmptyTags {
 
                 ctx.diagnostic(EmptyTagsDiagnostic(
                     comment.span_trimmed_first_line(),
-                    kind.to_string(),
+                    tag_name.to_string(),
                 ));
             }
         }

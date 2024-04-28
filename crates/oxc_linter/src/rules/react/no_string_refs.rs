@@ -78,12 +78,9 @@ fn contains_string_literal(
     expr_container: &JSXExpressionContainer,
     no_template_literals: bool,
 ) -> bool {
-    if let JSXExpression::Expression(expr) = &expr_container.expression {
-        matches!(expr, Expression::StringLiteral(_))
-            || (no_template_literals && matches!(expr, Expression::TemplateLiteral(_)))
-    } else {
-        false
-    }
+    let expr = &expr_container.expression;
+    matches!(expr, JSXExpression::StringLiteral(_))
+        || (no_template_literals && matches!(expr, JSXExpression::TemplateLiteral(_)))
 }
 
 fn is_literal_ref_attribute(attr: &JSXAttribute, no_template_literals: bool) -> bool {

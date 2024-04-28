@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression, Statement},
+    ast::{CallExpression, Expression, Statement},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -119,7 +119,7 @@ fn run<'a>(
             &[JestFnKind::General(JestGeneralFnKind::Test)],
         ) || rule.additional_test_block_functions.contains(&name)
         {
-            if let Expression::MemberExpression(member_expr) = &call_expr.callee {
+            if let Some(member_expr) = call_expr.callee.as_member_expression() {
                 let Some(property_name) = member_expr.static_property_name() else {
                     return;
                 };
@@ -143,7 +143,7 @@ fn check_arguments<'a>(
     ctx: &LintContext<'a>,
 ) -> bool {
     call_expr.arguments.iter().any(|argument| {
-        if let Argument::Expression(expr) = argument {
+        if let Some(expr) = argument.as_expression() {
             return check_assert_function_used(expr, assert_function_names, ctx);
         }
         false

@@ -116,7 +116,7 @@ impl<'a> ModuleImports<'a> {
         };
         let args = {
             let string = self.ast.string_literal(SPAN, source.as_str());
-            let arg = Argument::Expression(self.ast.literal_string_expression(string));
+            let arg = Argument::from(self.ast.literal_string_expression(string));
             self.ast.new_vec_single(arg)
         };
         let name = names.into_iter().next().unwrap();
@@ -130,6 +130,6 @@ impl<'a> ModuleImports<'a> {
             self.ast.new_vec_single(decl)
         };
         let var_decl = self.ast.variable_declaration(SPAN, var_kind, decl, Modifiers::empty());
-        Statement::Declaration(Declaration::VariableDeclaration(var_decl))
+        Statement::VariableDeclaration(var_decl)
     }
 }

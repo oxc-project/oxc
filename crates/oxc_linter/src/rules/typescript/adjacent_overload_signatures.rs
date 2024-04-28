@@ -1,6 +1,6 @@
 use oxc_ast::{
     ast::{
-        ClassElement, Declaration, ExportDefaultDeclarationKind, Expression, FunctionType,
+        match_expression, ClassElement, Declaration, ExportDefaultDeclarationKind, FunctionType,
         ModuleDeclaration, PropertyKey, Statement, TSSignature,
     },
     AstKind,
@@ -87,18 +87,17 @@ enum MethodKind {
 }
 
 fn get_kind_from_key(key: &PropertyKey) -> MethodKind {
+    #[allow(clippy::match_same_arms)]
     match key {
-        PropertyKey::Identifier(_) => MethodKind::Normal,
+        PropertyKey::StaticIdentifier(_) => MethodKind::Normal,
         PropertyKey::PrivateIdentifier(_) => MethodKind::Private,
-        PropertyKey::Expression(expr) => match expr {
-            Expression::StringLiteral(_) => MethodKind::Normal,
-            Expression::NumericLiteral(_)
-            | Expression::BigintLiteral(_)
-            | Expression::TemplateLiteral(_)
-            | Expression::RegExpLiteral(_)
-            | Expression::NullLiteral(_) => MethodKind::Quoted,
-            _ => MethodKind::Expression,
-        },
+        PropertyKey::StringLiteral(_) => MethodKind::Normal,
+        PropertyKey::NumericLiteral(_)
+        | PropertyKey::BigintLiteral(_)
+        | PropertyKey::TemplateLiteral(_)
+        | PropertyKey::RegExpLiteral(_)
+        | PropertyKey::NullLiteral(_) => MethodKind::Quoted,
+        match_expression!(PropertyKey) => MethodKind::Expression,
     }
 }
 
@@ -239,10 +238,12 @@ impl GetMethod for Declaration<'_> {
 
 impl GetMethod for Statement<'_> {
     fn get_method(&self) -> Option<Method> {
-        match self {
-            Statement::ModuleDeclaration(decl) => decl.get_method(),
-            Statement::Declaration(decl) => decl.get_method(),
-            _ => None,
+        if let Some(decl) = self.as_module_declaration() {
+            decl.get_method()
+        } else if let Some(decl) = self.as_declaration() {
+            decl.get_method()
+        } else {
+            None
         }
     }
 }

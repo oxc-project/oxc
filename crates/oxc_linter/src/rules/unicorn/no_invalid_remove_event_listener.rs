@@ -1,4 +1,3 @@
-use oxc_ast::ast::Expression;
 use oxc_ast::{
     ast::{Argument, MemberExpression},
     AstKind,
@@ -76,18 +75,18 @@ impl Rule for NoInvalidRemoveEventListener {
             return;
         }
 
-        let Some(Argument::Expression(listener)) = call_expr.arguments.get(1) else { return };
+        let Some(listener) = call_expr.arguments.get(1) else { return };
 
         if !matches!(
             listener,
-            Expression::FunctionExpression(_)
-                | Expression::ArrowFunctionExpression(_)
-                | Expression::CallExpression(_)
+            Argument::FunctionExpression(_)
+                | Argument::ArrowFunctionExpression(_)
+                | Argument::CallExpression(_)
         ) {
             return;
         }
 
-        if let Expression::CallExpression(call_expr) = listener {
+        if let Argument::CallExpression(call_expr) = listener {
             match call_expr.callee.get_member_expr() {
                 Some(MemberExpression::StaticMemberExpression(v)) => {
                     if v.property.name != "bind" {
@@ -103,13 +102,13 @@ impl Rule for NoInvalidRemoveEventListener {
         let listener_span = listener.span();
         let listener_span = if listener_span.size() > 20 {
             match listener {
-                Expression::FunctionExpression(func_expr) => {
+                Argument::FunctionExpression(func_expr) => {
                     Span::new(func_expr.span.start, func_expr.params.span.end)
                 }
-                Expression::ArrowFunctionExpression(arrow_expr) => {
+                Argument::ArrowFunctionExpression(arrow_expr) => {
                     Span::new(arrow_expr.span.start, arrow_expr.body.span.start)
                 }
-                Expression::CallExpression(_) => listener_span,
+                Argument::CallExpression(_) => listener_span,
                 _ => unreachable!(),
             }
         } else {

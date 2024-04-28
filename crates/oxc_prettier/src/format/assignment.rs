@@ -1,8 +1,8 @@
 use oxc_ast::{
     ast::{
-        AccessorProperty, Argument, AssignmentExpression, AssignmentTarget,
-        AssignmentTargetPattern, AssignmentTargetProperty, BindingPatternKind, Expression,
-        ObjectProperty, PropertyDefinition, PropertyKind, Statement, TSTypeParameterInstantiation,
+        match_member_expression, AccessorProperty, Argument, AssignmentExpression,
+        AssignmentTarget, AssignmentTargetProperty, BindingPatternKind, Expression, ObjectProperty,
+        PropertyDefinition, PropertyKind, Statement, TSTypeParameterInstantiation,
         VariableDeclarator,
     },
     AstKind,
@@ -231,9 +231,8 @@ fn is_assignment(expr: &Expression) -> bool {
 fn is_complex_destructuring(expr: &AssignmentLikeNode) -> bool {
     match expr {
         AssignmentLikeNode::AssignmentExpression(assignment_expr) => {
-            if let AssignmentTarget::AssignmentTargetPattern(
-                AssignmentTargetPattern::ObjectAssignmentTarget(obj_assignment_target),
-            ) = &assignment_expr.left
+            if let AssignmentTarget::ObjectAssignmentTarget(obj_assignment_target) =
+                &assignment_expr.left
             {
                 if obj_assignment_target.properties.len() > 2
                     && obj_assignment_target.properties.iter().any(|property| {
@@ -373,9 +372,9 @@ fn is_poorly_breakable_member_or_call_chain<'a>(p: &Prettier<'a>, expr: &Express
                 call_expressions.push(call_expr);
                 Some(callee)
             }
-            Expression::MemberExpression(member_expr) => {
+            match_member_expression!(Expression) => {
                 is_chain_expression = true;
-                Some(member_expr.object())
+                Some(node.to_member_expression().object())
             }
             Expression::Identifier(_) | Expression::ThisExpression(_) => {
                 is_ident_or_this_expr = true;

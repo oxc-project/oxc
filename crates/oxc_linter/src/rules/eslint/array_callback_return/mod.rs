@@ -1,9 +1,6 @@
 pub mod return_checker;
 
-use oxc_ast::{
-    ast::{ChainElement, Expression},
-    AstKind,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -185,16 +182,12 @@ pub fn get_array_method_name<'a>(
                 };
 
                 let callee = call.callee.get_inner_expression();
-                let callee = match callee {
-                    Expression::MemberExpression(member) => member,
-                    Expression::ChainExpression(chain) => {
-                        if let ChainElement::MemberExpression(member) = &chain.expression {
-                            member
-                        } else {
-                            return None;
-                        }
-                    }
-                    _ => return None,
+                let callee = if let Some(member) = callee.as_member_expression() {
+                    member
+                } else if let Expression::ChainExpression(chain) = callee {
+                    chain.expression.as_member_expression()?
+                } else {
+                    return None;
                 };
 
                 // Array.from

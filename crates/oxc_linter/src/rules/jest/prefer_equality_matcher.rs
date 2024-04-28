@@ -78,7 +78,7 @@ impl PreferEqualityMatcher {
             return;
         };
 
-        let Argument::Expression(Expression::BinaryExpression(binary_expr)) = argument else {
+        let Argument::BinaryExpression(binary_expr) = argument else {
             return;
         };
 

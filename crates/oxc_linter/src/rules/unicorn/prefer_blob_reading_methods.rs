@@ -1,4 +1,4 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -50,7 +50,7 @@ impl Rule for PreferBlobReadingMethods {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
-        let Expression::MemberExpression(member_expr) = &call_expr.callee else { return };
+        let Some(member_expr) = call_expr.callee.as_member_expression() else { return };
 
         if member_expr.is_computed()
             || member_expr.optional()

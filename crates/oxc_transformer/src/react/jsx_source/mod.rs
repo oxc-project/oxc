@@ -84,7 +84,7 @@ impl<'a> ReactJsxSource<'a> {
             self.ctx.ast.alloc(self.ctx.ast.jsx_identifier(SPAN, SOURCE.into())),
         );
         let object = self.get_source_object();
-        let expr = self.ctx.ast.jsx_expression_container(SPAN, JSXExpression::Expression(object));
+        let expr = self.ctx.ast.jsx_expression_container(SPAN, JSXExpression::from(object));
         let value = JSXAttributeValue::ExpressionContainer(expr);
         let attribute_item = self.ctx.ast.jsx_attribute(SPAN, key, Some(value));
         elem.attributes.push(JSXAttributeItem::Attribute(attribute_item));
@@ -139,6 +139,6 @@ impl<'a> ReactJsxSource<'a> {
             self.ctx.ast.new_vec_single(decl)
         };
         let var_decl = self.ctx.ast.variable_declaration(SPAN, var_kind, decl, Modifiers::empty());
-        Statement::Declaration(Declaration::VariableDeclaration(var_decl))
+        Statement::VariableDeclaration(var_decl)
     }
 }

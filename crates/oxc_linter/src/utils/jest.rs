@@ -2,7 +2,8 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     ast::{
-        CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier, TemplateLiteral,
+        match_member_expression, CallExpression, Expression, ImportDeclaration,
+        ImportDeclarationSpecifier, TemplateLiteral,
     },
     AstKind,
 };
@@ -271,7 +272,8 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
             chain.extend(get_node_name_vec(&tagged_expr.tag));
         }
         Expression::CallExpression(call_expr) => chain.extend(get_node_name_vec(&call_expr.callee)),
-        Expression::MemberExpression(member_expr) => {
+        match_member_expression!(Expression) => {
+            let member_expr = expr.to_member_expression();
             chain.extend(get_node_name_vec(member_expr.object()));
             if let Some(name) = member_expr.static_property_name() {
                 chain.push(Cow::Borrowed(name));

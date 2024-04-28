@@ -72,13 +72,11 @@ impl Rule for ErrorMessage {
         let message_argument_idx = usize::from(constructor_name.as_str() == "AggregateError");
 
         // If message is `SpreadElement` or there is `SpreadElement` before message
-        if args.iter().enumerate().any(|(i, arg)| {
-            i <= message_argument_idx
-                && match arg {
-                    Argument::Expression(_) => false,
-                    Argument::SpreadElement(_) => true,
-                }
-        }) {
+        if args
+            .iter()
+            .enumerate()
+            .any(|(i, arg)| i <= message_argument_idx && matches!(arg, Argument::SpreadElement(_)))
+        {
             return;
         }
 
@@ -91,28 +89,21 @@ impl Rule for ErrorMessage {
             ));
         };
 
-        let arg = match arg {
-            Argument::Expression(v) => v,
-            Argument::SpreadElement(_) => {
-                return;
-            }
-        };
-
         match arg {
-            Expression::StringLiteral(lit) => {
+            Argument::StringLiteral(lit) => {
                 if lit.value.is_empty() {
                     ctx.diagnostic(ErrorMessageDiagnostic::EmptyMessage(lit.span));
                 }
             }
-            Expression::TemplateLiteral(template_lit) => {
+            Argument::TemplateLiteral(template_lit) => {
                 if template_lit.span.source_text(ctx.source_text()).len() == 2 {
                     ctx.diagnostic(ErrorMessageDiagnostic::EmptyMessage(template_lit.span));
                 }
             }
-            Expression::ObjectExpression(object_expr) => {
+            Argument::ObjectExpression(object_expr) => {
                 ctx.diagnostic(ErrorMessageDiagnostic::NotString(object_expr.span));
             }
-            Expression::ArrayExpression(array_expr) => {
+            Argument::ArrayExpression(array_expr) => {
                 ctx.diagnostic(ErrorMessageDiagnostic::NotString(array_expr.span));
             }
             _ => {}

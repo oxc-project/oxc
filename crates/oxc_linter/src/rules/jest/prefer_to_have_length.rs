@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression, MemberExpression},
+    ast::{match_member_expression, CallExpression, Expression, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -76,16 +76,17 @@ impl PreferToHaveLength {
         else {
             return;
         };
-        let Expression::MemberExpression(static_expr) = &call_expr.callee else {
+        let Some(static_expr) = call_expr.callee.as_member_expression() else {
             return;
         };
 
         match static_expr.object() {
-            Expression::MemberExpression(mem_expr) => {
+            expr @ match_member_expression!(Expression) => {
+                let mem_expr = expr.to_member_expression();
                 let Expression::CallExpression(expr_call_expr) = mem_expr.object() else {
                     return;
                 };
-                match &**mem_expr {
+                match mem_expr {
                     MemberExpression::ComputedMemberExpression(_) => Self::check_and_fix(
                         call_expr,
                         expr_call_expr,
@@ -130,7 +131,7 @@ impl PreferToHaveLength {
         let Some(argument) = expr_call_expr.arguments.first() else {
             return;
         };
-        let Argument::Expression(Expression::MemberExpression(static_mem_expr)) = argument else {
+        let Some(static_mem_expr) = argument.as_member_expression() else {
             return;
         };
         // Get property `name` field from expect(file.NAME) call

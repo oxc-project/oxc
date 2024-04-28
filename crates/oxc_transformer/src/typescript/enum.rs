@@ -76,6 +76,7 @@ impl<'a> TypeScriptEnum<'a> {
         let callee = self.ctx.ast.plain_function(r#type, SPAN, None, params, Some(body));
         let callee = Expression::FunctionExpression(callee);
 
+<<<<<<< HEAD
         let arguments = if is_export && !is_already_declared {
             // }({});
             let object_expr = self.ctx.ast.object_expression(SPAN, self.ctx.ast.new_vec(), None);
@@ -91,6 +92,21 @@ impl<'a> TypeScriptEnum<'a> {
             let expression = self.ctx.ast.logical_expression(SPAN, left, op, right);
             self.ctx.ast.new_vec_single(Argument::Expression(expression))
         };
+=======
+        let callee =
+            self.ctx.ast.arrow_function_expression(SPAN, false, false, params, body, None, None);
+
+        // })(Foo || {});
+        let mut arguments = self.ctx.ast.new_vec();
+        let op = LogicalOperator::Or;
+        let left = self
+            .ctx
+            .ast
+            .identifier_reference_expression(IdentifierReference::new(SPAN, enum_name.clone()));
+        let right = self.ctx.ast.object_expression(SPAN, self.ctx.ast.new_vec(), None);
+        let expression = self.ctx.ast.logical_expression(SPAN, left, op, right);
+        arguments.push(Argument::from(expression));
+>>>>>>> origin/main
 
         let call_expression = self.ctx.ast.call_expression(SPAN, callee, arguments, false, None);
 
@@ -143,12 +159,23 @@ impl<'a> TypeScriptEnum<'a> {
         let mut previous_enum_members = self.enums.entry(enum_name.clone()).or_default().clone();
         let mut prev_member_name: Option<Atom<'a>> = None;
 
+<<<<<<< HEAD
         for member in members {
             let member_name = match &member.id {
                 TSEnumMemberName::Identifier(id) => &id.name,
                 TSEnumMemberName::StringLiteral(str) => &str.value,
                 TSEnumMemberName::ComputedPropertyName(..)
                 | TSEnumMemberName::NumericLiteral(..) => unreachable!(),
+=======
+        for member in members.iter_mut() {
+            let (member_name, member_span) = match &member.id {
+                TSEnumMemberName::StaticIdentifier(id) => (&id.name, id.span),
+                TSEnumMemberName::StaticStringLiteral(str) => (&str.value, str.span),
+                #[allow(clippy::unnested_or_patterns)] // Clippy is wrong
+                TSEnumMemberName::StaticNumericLiteral(_) | match_expression!(TSEnumMemberName) => {
+                    unreachable!()
+                }
+>>>>>>> origin/main
             };
 
             let init = if let Some(initializer) = member.initializer.as_ref() {
@@ -219,7 +246,36 @@ impl<'a> TypeScriptEnum<'a> {
                 self.get_number_literal_expression(0.0)
             };
 
+<<<<<<< HEAD
             let is_str = init.is_string_literal();
+=======
+            if is_valid_identifier(member_name, true) {
+                let ident = IdentifierReference::new(member_span, member_name.clone());
+
+                self_ref = self.ctx.ast.identifier_reference_expression(ident.clone());
+                let init =
+                    mem::replace(&mut init, self.ctx.ast.identifier_reference_expression(ident));
+
+                let kind = VariableDeclarationKind::Const;
+                let decls = {
+                    let mut decls = self.ctx.ast.new_vec();
+
+                    let binding_identifier = BindingIdentifier::new(SPAN, member_name.clone());
+                    let binding_pattern_kind =
+                        self.ctx.ast.binding_pattern_identifier(binding_identifier);
+                    let binding = self.ctx.ast.binding_pattern(binding_pattern_kind, None, false);
+                    let decl =
+                        self.ctx.ast.variable_declarator(SPAN, kind, binding, Some(init), false);
+
+                    decls.push(decl);
+                    decls
+                };
+                let decl = self.ctx.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
+                let stmt: Statement<'_> = Statement::VariableDeclaration(decl);
+
+                statements.push(stmt);
+            }
+>>>>>>> origin/main
 
             // Foo["x"] = init
             let member_expr = {

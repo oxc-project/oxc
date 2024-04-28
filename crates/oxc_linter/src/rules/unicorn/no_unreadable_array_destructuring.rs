@@ -1,8 +1,5 @@
 use oxc_allocator::Vec;
-use oxc_ast::{
-    ast::{AssignmentTarget, AssignmentTargetPattern},
-    AstKind,
-};
+use oxc_ast::{ast::AssignmentTarget, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -65,9 +62,8 @@ impl Rule for NoUnreadableArrayDestructuring {
             }
         }
 
-        if let AstKind::AssignmentTarget(AssignmentTarget::AssignmentTargetPattern(
-            AssignmentTargetPattern::ArrayAssignmentTarget(array_pattern),
-        )) = node.kind()
+        if let AstKind::AssignmentTarget(AssignmentTarget::ArrayAssignmentTarget(array_pattern)) =
+            node.kind()
         {
             if is_unreadable_array_destructuring(&array_pattern.elements, &array_pattern.rest) {
                 ctx.diagnostic(NoUnreadableArrayDestructuringDiagnostic(array_pattern.span));

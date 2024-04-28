@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXElement, JSXExpression, JSXOpeningElement},
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXElement, JSXOpeningElement},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -210,7 +210,7 @@ fn is_valid_alt_prop(item: &JSXAttributeItem<'_>) -> bool {
     match get_prop_value(item) {
         None => false,
         Some(JSXAttributeValue::ExpressionContainer(container)) => {
-            if let JSXExpression::Expression(expr) = &container.expression {
+            if let Some(expr) = container.expression.as_expression() {
                 !expr.is_null_or_undefined()
             } else {
                 true
@@ -230,11 +230,7 @@ fn aria_label_has_value<'a>(item: &'a JSXAttributeItem<'a>) -> bool {
         None => false,
         Some(JSXAttributeValue::StringLiteral(s)) if s.value.is_empty() => false,
         Some(JSXAttributeValue::ExpressionContainer(container)) => {
-            if let JSXExpression::Expression(expr) = &container.expression {
-                !expr.is_undefined()
-            } else {
-                true
-            }
+            !container.expression.is_expression() || !container.expression.is_undefined()
         }
         _ => true,
     }

@@ -29,7 +29,7 @@
     {
       "groupName": "rust toolchain",
       "matchManagers": ["regex"],
-      "matchPackageNames": ["rust"]
+      "matchDepNames": ["rust"]
     },
     {
       "groupName": "rust crates",

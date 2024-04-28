@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{Argument, Expression},
-    AstKind,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -61,19 +58,18 @@ impl Rule for PreferPrototypeMethods {
         if call_expr.optional {
             return;
         }
-        if let Expression::MemberExpression(member_expr) = &call_expr.callee.without_parenthesized()
-        {
-            if member_expr.is_computed() || member_expr.optional() {
-                return;
-            }
-        }
+        match call_expr.callee.without_parenthesized() {
+            Expression::StaticMemberExpression(member_expr) if !member_expr.optional => {}
+            Expression::PrivateFieldExpression(member_expr) if !member_expr.optional => {}
+            _ => return,
+        };
 
         let mut method_expr: Option<&Expression> = None;
 
         // `Reflect.apply([].foo, …)`
         // `Reflect.apply({}.foo, …)`
         if is_method_call(call_expr, Some(&["Reflect"]), Some(&["apply"]), Some(1), None) {
-            if let Argument::Expression(argument_expr) = &call_expr.arguments[0] {
+            if let Some(argument_expr) = call_expr.arguments[0].as_expression() {
                 method_expr = Some(argument_expr.without_parenthesized());
             }
         }
@@ -87,7 +83,7 @@ impl Rule for PreferPrototypeMethods {
         }
 
         let Some(method_expr) = method_expr else { return };
-        let Expression::MemberExpression(method_expr) = method_expr else { return };
+        let Some(method_expr) = method_expr.as_member_expression() else { return };
         let object_expr = method_expr.object().without_parenthesized();
 
         if !is_empty_array_expression(object_expr) && !is_empty_object_expression(object_expr) {

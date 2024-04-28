@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Expression, IdentifierReference, MemberExpression},
+    ast::{match_member_expression, Expression, IdentifierReference, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -69,9 +69,7 @@ fn is_global_obj(s: &str) -> bool {
     NON_CALLABLE_GLOBALS.contains(&s)
 }
 
-fn global_this_member<'a>(
-    expr: &'a oxc_allocator::Box<'_, MemberExpression<'_>>,
-) -> Option<&'a str> {
+fn global_this_member<'a>(expr: &'a MemberExpression<'_>) -> Option<&'a str> {
     if expr.object().is_specific_id(GLOBAL_THIS) {
         expr.static_property_name()
     } else {
@@ -112,8 +110,8 @@ fn resolve_global_binding<'a, 'b: 'a>(
                                 resolve_global_binding(parent_ident, decl_scope, ctx)
                             }
                             // handles "let a = globalThis.JSON; let b = a; a();"
-                            Some(Expression::MemberExpression(parent_expr)) => {
-                                global_this_member(parent_expr)
+                            Some(parent_expr) if parent_expr.is_member_expression() => {
+                                global_this_member(parent_expr.to_member_expression())
                             }
                             _ => None,
                         }
@@ -146,9 +144,9 @@ impl Rule for NoObjCalls {
                 }
             }
 
-            Expression::MemberExpression(expr) => {
+            match_member_expression!(Expression) => {
                 // handle new globalThis.Math(), globalThis.Math(), etc
-                if let Some(global_member) = global_this_member(expr) {
+                if let Some(global_member) = global_this_member(callee.to_member_expression()) {
                     if is_global_obj(global_member) {
                         ctx.diagnostic(NoObjCallsDiagnostic(global_member.into(), span));
                     }

@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{Argument, ArrayExpressionElement, Expression},
-    AstKind,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -66,7 +63,7 @@ impl Rule for NoAwaitInPromiseMethods {
             return;
         }
 
-        let Some(Argument::Expression(first_argument)) = call_expr.arguments.first() else {
+        let Some(first_argument) = call_expr.arguments[0].as_expression() else {
             return;
         };
         let first_argument = first_argument.without_parenthesized();
@@ -75,7 +72,7 @@ impl Rule for NoAwaitInPromiseMethods {
         };
 
         for element in &first_argument_array_expr.elements {
-            if let ArrayExpressionElement::Expression(element_expr) = element {
+            if let Some(element_expr) = element.as_expression() {
                 if let Expression::AwaitExpression(await_expr) =
                     element_expr.without_parenthesized()
                 {

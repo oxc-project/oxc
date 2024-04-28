@@ -245,7 +245,7 @@ impl<'a> ParserImpl<'a> {
             let expr = self.ast.jsx_empty_expression(Span::new(span.start + 1, span.end - 1));
             JSXExpression::EmptyExpression(expr)
         } else {
-            let expr = self.parse_jsx_assignment_expression().map(JSXExpression::Expression)?;
+            let expr = self.parse_jsx_assignment_expression().map(JSXExpression::from)?;
             if in_jsx_child {
                 self.expect_jsx_child(Kind::RCurly)
             } else {

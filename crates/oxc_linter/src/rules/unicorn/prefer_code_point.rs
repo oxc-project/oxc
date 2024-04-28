@@ -1,4 +1,4 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -46,7 +46,7 @@ impl Rule for PreferCodePoint {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
-        let Expression::MemberExpression(memb_expr) = &call_expr.callee else { return };
+        let Some(memb_expr) = call_expr.callee.as_member_expression() else { return };
 
         if memb_expr.is_computed() || memb_expr.optional() || call_expr.optional {
             return;

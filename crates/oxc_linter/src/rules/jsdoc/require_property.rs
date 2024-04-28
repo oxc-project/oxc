@@ -55,13 +55,16 @@ impl Rule for RequireProperty {
     fn run_once(&self, ctx: &LintContext) {
         let settings = &ctx.settings().jsdoc;
         let resolved_property_tag_name = settings.resolve_tag_name("property");
+        let resolved_typedef_tag_name = settings.resolve_tag_name("typedef");
+        let resolved_namespace_tag_name = settings.resolve_tag_name("namespace");
 
         for jsdoc in ctx.semantic().jsdoc().iter_all() {
             let mut should_report = None;
             for tag in jsdoc.tags() {
-                let tag_kind = tag.kind.parsed();
+                let tag_name = tag.kind.parsed();
 
-                if tag_kind == "typedef" || tag_kind == "namespace" {
+                if tag_name == resolved_typedef_tag_name || tag_name == resolved_namespace_tag_name
+                {
                     // If this is `true`:
                     // - This JSDoc has multiple `@typedef` or `@namespace` tags
                     // - And previous `@typedef` or `@namespace` tag did not have `@property` tag
@@ -69,8 +72,7 @@ impl Rule for RequireProperty {
                         ctx.diagnostic(RequirePropertyDiagnostic(span));
                     }
 
-                    let (type_part, _, _) = tag.type_name_comment();
-                    let Some(type_part) = type_part else {
+                    let (Some(type_part), _, _) = tag.type_name_comment() else {
                         continue;
                     };
 
@@ -80,7 +82,7 @@ impl Rule for RequireProperty {
                     }
                 }
 
-                if tag_kind == resolved_property_tag_name {
+                if tag_name == resolved_property_tag_name {
                     // At least 1 `@property` tag is found
                     should_report = None;
                 }

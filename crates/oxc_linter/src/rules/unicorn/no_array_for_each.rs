@@ -1,4 +1,7 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{
+    ast::{match_member_expression, Expression},
+    AstKind,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -72,8 +75,8 @@ impl Rule for NoArrayForEach {
                         return;
                     }
                 }
-                Expression::MemberExpression(v) => {
-                    if let Some(name) = v.static_property_name() {
+                match_member_expression!(Expression) => {
+                    if let Some(name) = object.to_member_expression().static_property_name() {
                         if IGNORED_OBJECTS.contains(name) {
                             return;
                         }

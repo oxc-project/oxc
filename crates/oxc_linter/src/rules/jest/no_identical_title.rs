@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, CallExpression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -135,10 +135,10 @@ fn filter_and_process_jest_result<'a>(
     let parent_id = get_closest_block(possible_jest_node.node, ctx)?;
 
     match call_expr.arguments.first() {
-        Some(Argument::Expression(Expression::StringLiteral(string_lit))) => {
+        Some(Argument::StringLiteral(string_lit)) => {
             Some((string_lit.span, &string_lit.value, kind, parent_id))
         }
-        Some(Argument::Expression(Expression::TemplateLiteral(template_lit))) => {
+        Some(Argument::TemplateLiteral(template_lit)) => {
             template_lit.quasi().map(|quasi| (template_lit.span, quasi, kind, parent_id))
         }
         _ => None,

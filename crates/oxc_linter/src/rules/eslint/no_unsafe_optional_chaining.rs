@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, AssignmentTarget, Expression},
+    ast::{match_assignment_target_pattern, Argument, AssignmentTarget, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -82,7 +82,7 @@ impl Rule for NoUnsafeOptionalChaining {
                 Self::check_unsafe_usage(&expr.callee, ctx);
             }
             AstKind::AssignmentExpression(expr) => {
-                if matches!(expr.left, AssignmentTarget::AssignmentTargetPattern(_)) {
+                if matches!(expr.left, match_assignment_target_pattern!(AssignmentTarget)) {
                     Self::check_unsafe_usage(&expr.right, ctx);
                 }
                 if expr.operator.is_arithmetic() {
@@ -123,7 +123,7 @@ impl Rule for NoUnsafeOptionalChaining {
                 }
             }
             AstKind::AssignmentTargetWithDefault(target) => {
-                if matches!(target.binding, AssignmentTarget::AssignmentTargetPattern(_)) {
+                if matches!(target.binding, match_assignment_target_pattern!(AssignmentTarget)) {
                     Self::check_unsafe_usage(&target.init, ctx);
                 }
             }

@@ -1,8 +1,8 @@
 use oxc_ast::{
     ast::{
-        ArrayExpressionElement, AssignmentTarget, AssignmentTargetMaybeDefault,
-        AssignmentTargetPattern, AssignmentTargetProperty, Expression, MemberExpression,
-        ObjectProperty, ObjectPropertyKind, SimpleAssignmentTarget,
+        match_assignment_target, match_simple_assignment_target, ArrayExpressionElement,
+        AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetProperty, Expression,
+        MemberExpression, ObjectProperty, ObjectPropertyKind, SimpleAssignmentTarget,
     },
     AstKind,
 };
@@ -84,7 +84,8 @@ impl NoSelfAssign {
         ctx: &LintContext<'a>,
     ) {
         match left {
-            AssignmentTarget::SimpleAssignmentTarget(simple_assignment_target) => {
+            match_simple_assignment_target!(AssignmentTarget) => {
+                let simple_assignment_target = left.to_simple_assignment_target();
                 if let Expression::Identifier(id2) = right.without_parenthesized() {
                     let self_assign = matches!(simple_assignment_target.get_expression(), Some(Expression::Identifier(id1)) if id1.name == id2.name)
                         || matches!(simple_assignment_target, SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) if id1.name == id2.name);
@@ -93,11 +94,17 @@ impl NoSelfAssign {
                         ctx.diagnostic(NoSelfAssignDiagnostic(right.span()));
                     }
                 }
+
+                if let Some(member_target) = simple_assignment_target.as_member_expression() {
+                    if let Some(member_expr) = right.without_parenthesized().get_member_expr() {
+                        if self.is_member_expression_same_reference(member_expr, member_target) {
+                            ctx.diagnostic(NoSelfAssignDiagnostic(member_expr.span()));
+                        }
+                    }
+                }
             }
 
-            AssignmentTarget::AssignmentTargetPattern(
-                AssignmentTargetPattern::ArrayAssignmentTarget(array_pattern),
-            ) => {
+            AssignmentTarget::ArrayAssignmentTarget(array_pattern) => {
                 if let Expression::ArrayExpression(array_expr) = right.without_parenthesized() {
                     let end =
                         std::cmp::min(array_pattern.elements.len(), array_expr.elements.len());
@@ -106,16 +113,11 @@ impl NoSelfAssign {
                         let left = array_pattern.elements[i].as_ref();
                         let right = &array_expr.elements[i];
 
-                        let left_target = match left {
-                            Some(AssignmentTargetMaybeDefault::AssignmentTarget(target)) => {
-                                Some(target)
-                            }
-                            _ => None,
-                        };
-
-                        if let Some(left_target) = left_target {
-                            if let ArrayExpressionElement::Expression(expr) = right {
-                                self.each_self_assignment(left_target, expr, ctx);
+                        if let Some(left) = left {
+                            if let Some(left_target) = left.as_assignment_target() {
+                                if let Some(expr) = right.as_expression() {
+                                    self.each_self_assignment(left_target, expr, ctx);
+                                }
                             }
                         }
 
@@ -129,9 +131,7 @@ impl NoSelfAssign {
                 }
             }
 
-            AssignmentTarget::AssignmentTargetPattern(
-                AssignmentTargetPattern::ObjectAssignmentTarget(object_pattern),
-            ) => {
+            AssignmentTarget::ObjectAssignmentTarget(object_pattern) => {
                 if let Expression::ObjectExpression(object_expr) = right.get_inner_expression() {
                     if !object_expr.properties.is_empty() {
                         let mut start_j = 0;
@@ -163,16 +163,6 @@ impl NoSelfAssign {
                 }
             }
         }
-        if let AssignmentTarget::SimpleAssignmentTarget(
-            SimpleAssignmentTarget::MemberAssignmentTarget(member_target),
-        ) = &left
-        {
-            if let Some(member_expr) = right.without_parenthesized().get_member_expr() {
-                if self.is_member_expression_same_reference(member_expr, member_target) {
-                    ctx.diagnostic(NoSelfAssignDiagnostic(member_expr.span()));
-                }
-            }
-        }
     }
 
     fn is_same_reference<'a>(&self, left: &'a Expression<'a>, right: &'a Expression<'a>) -> bool {
@@ -187,20 +177,14 @@ impl NoSelfAssign {
             return true;
         }
 
-        match (left, right) {
-            (Expression::Identifier(id1), Expression::Identifier(id2)) => id1.name == id2.name,
-            (Expression::MemberExpression(member1), Expression::MemberExpression(member2)) => {
-                self.is_member_expression_same_reference(member1, member2)
-            }
-            _ => {
-                if let (Some(member1), Some(member2)) =
-                    (left.get_member_expr(), right.get_member_expr())
-                {
-                    self.is_member_expression_same_reference(member1, member2)
-                } else {
-                    false
-                }
-            }
+        if let (Expression::Identifier(id1), Expression::Identifier(id2)) = (left, right) {
+            return id1.name == id2.name;
+        }
+
+        if let (Some(member1), Some(member2)) = (left.get_member_expr(), right.get_member_expr()) {
+            self.is_member_expression_same_reference(member1, member2)
+        } else {
+            false
         }
     }
 
@@ -265,7 +249,9 @@ impl NoSelfAssign {
             }
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(property) => {
                 let left = match &property.binding {
-                    AssignmentTargetMaybeDefault::AssignmentTarget(target) => target,
+                    binding @ match_assignment_target!(AssignmentTargetMaybeDefault) => {
+                        binding.to_assignment_target()
+                    }
                     AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(_) => {
                         return;
                     }

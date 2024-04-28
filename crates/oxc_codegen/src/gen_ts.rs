@@ -358,14 +358,14 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                     p.print(b']');
                 } else {
                     match &signature.key {
-                        PropertyKey::Identifier(key) => {
+                        PropertyKey::StaticIdentifier(key) => {
                             key.gen(p, ctx);
                         }
                         PropertyKey::PrivateIdentifier(key) => {
                             p.print_str(key.name.as_bytes());
                         }
-                        PropertyKey::Expression(key) => {
-                            key.gen_expr(p, Precedence::Assign, ctx);
+                        key @ match_expression!(PropertyKey) => {
+                            key.to_expression().gen_expr(p, Precedence::Assign, ctx);
                         }
                     }
                 }
@@ -411,14 +411,14 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                     p.print(b']');
                 } else {
                     match &signature.key {
-                        PropertyKey::Identifier(key) => {
+                        PropertyKey::StaticIdentifier(key) => {
                             key.gen(p, ctx);
                         }
                         PropertyKey::PrivateIdentifier(key) => {
                             p.print_str(key.name.as_bytes());
                         }
-                        PropertyKey::Expression(key) => {
-                            key.gen_expr(p, Precedence::Assign, ctx);
+                        key @ match_expression!(PropertyKey) => {
+                            key.to_expression().gen_expr(p, Precedence::Assign, ctx);
                         }
                     }
                 }
@@ -451,7 +451,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeQuery<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeQueryExprName<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            Self::TSTypeName(decl) => decl.gen(p, ctx),
+            match_ts_type_name!(Self) => self.to_ts_type_name().gen(p, ctx),
             Self::TSImportType(decl) => decl.gen(p, ctx),
         }
     }
@@ -498,9 +498,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSIndexSignature<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTupleElement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            TSTupleElement::TSType(ts_type) => {
-                ts_type.gen(p, ctx);
-            }
+            match_ts_type!(TSTupleElement) => self.to_ts_type().gen(p, ctx),
             TSTupleElement::TSOptionalType(ts_type) => {
                 ts_type.type_annotation.gen(p, ctx);
                 p.print_str(b"?");
@@ -634,14 +632,14 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumDeclaration<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumMember<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match &self.id {
-            TSEnumMemberName::Identifier(decl) => decl.gen(p, ctx),
-            TSEnumMemberName::StringLiteral(decl) => decl.gen(p, ctx),
-            TSEnumMemberName::ComputedPropertyName(decl) => {
+            TSEnumMemberName::StaticIdentifier(decl) => decl.gen(p, ctx),
+            TSEnumMemberName::StaticStringLiteral(decl) => decl.gen(p, ctx),
+            TSEnumMemberName::StaticNumericLiteral(decl) => decl.gen(p, ctx),
+            decl @ match_expression!(TSEnumMemberName) => {
                 p.print_str(b"[");
-                decl.gen_expr(p, Precedence::lowest(), ctx);
+                decl.to_expression().gen_expr(p, Precedence::lowest(), ctx);
                 p.print_str(b"]");
             }
-            TSEnumMemberName::NumericLiteral(decl) => decl.gen(p, ctx),
         }
     }
 }
@@ -685,9 +683,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleReference<'a> {
                 decl.expression.gen(p, ctx);
                 p.print_str(b")");
             }
-            Self::TypeName(decl) => {
-                decl.gen(p, ctx);
-            }
+            match_ts_type_name!(Self) => self.to_ts_type_name().gen(p, ctx),
         }
     }
 }

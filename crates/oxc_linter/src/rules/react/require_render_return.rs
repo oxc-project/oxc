@@ -89,9 +89,7 @@ impl Rule for RequireRenderReturn {
                 }
             }
             AstKind::CallExpression(ce) => {
-                if let Some(Argument::Expression(Expression::ObjectExpression(obj_expr))) =
-                    ce.arguments.first()
-                {
+                if let Some(Argument::ObjectExpression(obj_expr)) = ce.arguments.first() {
                     if let Some(fn_body) = obj_expr
                         .properties
                         .iter()

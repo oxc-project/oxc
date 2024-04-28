@@ -55,7 +55,7 @@ declare_oxc_lint!(
 
 fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool {
     call_expr.arguments.get(index).map_or(false, |arg| {
-        if let Argument::Expression(Expression::NullLiteral(null_lit)) = arg {
+        if let Argument::NullLiteral(null_lit) = arg {
             return null_lit.span == span;
         }
 
@@ -121,7 +121,7 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
     // `Object.create(null)`, `Object.create(null, foo)`
     if is_method_call(call_expr, Some(&["Object"]), Some(&["create"]), Some(1), Some(2))
         && !call_expr.optional
-        && !matches!(&call_expr.callee, Expression::MemberExpression(member_expr) if member_expr.is_computed())
+        && !matches!(&call_expr.callee, Expression::ComputedMemberExpression(_))
         && match_null_arg(call_expr, 0, null_literal.span)
     {
         return true;
@@ -148,7 +148,7 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
             .iter()
             .any(|argument| matches!(argument, Argument::SpreadElement(_)))
         && !call_expr.optional
-        && !matches!(&call_expr.callee, Expression::MemberExpression(member_expr) if member_expr.is_computed())
+        && !matches!(&call_expr.callee, Expression::ComputedMemberExpression(_))
         && match_null_arg(call_expr, 1, null_literal.span)
     {
         return true;

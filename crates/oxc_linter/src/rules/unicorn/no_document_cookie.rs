@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{AssignmentTarget, Expression, SimpleAssignmentTarget},
+    ast::{match_member_expression, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -59,10 +59,7 @@ impl Rule for NoDocumentCookie {
             return;
         };
 
-        let AssignmentTarget::SimpleAssignmentTarget(
-            SimpleAssignmentTarget::MemberAssignmentTarget(ident),
-        ) = &assignment_expr.left
-        else {
+        let Some(ident) = assignment_expr.left.as_member_expression() else {
             return;
         };
 
@@ -105,7 +102,8 @@ fn is_document_cookie_reference<'a, 'b>(
             }
             true
         }
-        Expression::MemberExpression(member_expr) => {
+        match_member_expression!(Expression) => {
+            let member_expr = expr.to_member_expression();
             let Some(static_prop_name) = member_expr.static_property_name() else { return false };
             if static_prop_name != "document" {
                 return false;
