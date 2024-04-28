@@ -11,6 +11,8 @@ use rustc_hash::FxHashMap;
 
 use crate::context::Ctx;
 
+use super::conversions::{f64_to_int32, f64_to_uint32};
+
 pub struct TypeScriptEnum<'a> {
     ctx: Ctx<'a>,
     enums: FxHashMap<Atom<'a>, FxHashMap<Atom<'a>, ConstantValue>>,
@@ -422,20 +424,23 @@ impl<'a> TypeScriptEnum<'a> {
         };
 
         match expr.operator {
+            BinaryOperator::ShiftRight => Some(ConstantValue::F64(f64::from(
+                f64_to_int32(left).wrapping_shr(f64_to_uint32(right)),
+            ))),
+            BinaryOperator::ShiftRightZeroFill => Some(ConstantValue::F64(f64::from(
+                f64_to_uint32(left).wrapping_shr(f64_to_uint32(right)),
+            ))),
+            BinaryOperator::ShiftLeft => Some(ConstantValue::F64(f64::from(
+                f64_to_int32(left).wrapping_shl(f64_to_uint32(right)),
+            ))),
+            BinaryOperator::BitwiseXOR => {
+                Some(ConstantValue::F64(f64::from(f64_to_int32(left) ^ f64_to_int32(right))))
+            }
             BinaryOperator::BitwiseOR => {
-                Some(ConstantValue::F64((left as i64 | right as i64) as f64))
+                Some(ConstantValue::F64(f64::from(f64_to_int32(left) | f64_to_int32(right))))
             }
             BinaryOperator::BitwiseAnd => {
-                Some(ConstantValue::F64((left as i64 & right as i64) as f64))
-            }
-            BinaryOperator::ShiftRight | BinaryOperator::ShiftRightZeroFill => {
-                Some(ConstantValue::F64((left as i64 >> right as i64) as f64))
-            }
-            BinaryOperator::ShiftLeft => {
-                Some(ConstantValue::F64(((left as i64) << right as i64) as f64))
-            }
-            BinaryOperator::BitwiseXOR => {
-                Some(ConstantValue::F64((left as i64 ^ right as i64) as f64))
+                Some(ConstantValue::F64(f64::from(f64_to_int32(left) & f64_to_int32(right))))
             }
             BinaryOperator::Multiplication => Some(ConstantValue::F64(left * right)),
             BinaryOperator::Division => Some(ConstantValue::F64(left / right)),
@@ -471,9 +476,7 @@ impl<'a> TypeScriptEnum<'a> {
         match expr.operator {
             UnaryOperator::UnaryPlus => Some(ConstantValue::F64(value)),
             UnaryOperator::UnaryNegation => Some(ConstantValue::F64(-value)),
-            UnaryOperator::LogicalNot | UnaryOperator::BitwiseNot => {
-                Some(ConstantValue::F64(!(value as i64) as f64))
-            }
+            UnaryOperator::BitwiseNot => Some(ConstantValue::F64(f64::from(!f64_to_int32(value)))),
             _ => None,
         }
     }
