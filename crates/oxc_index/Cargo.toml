@@ -22,7 +22,7 @@ doctest = false
 serde = { workspace = true, optional = true }
 
 [features]
-serialize = ["dep:serde"]
+serialize         = ["dep:serde"]
 example_generated = []
 
 [package.metadata.docs.rs]
