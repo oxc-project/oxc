@@ -121,7 +121,13 @@ impl<'a> AstBuilder<'a> {
         hashbang: Option<Hashbang<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
-        Program { span, source_type, directives, hashbang, body }
+        Program {
+            span,
+            source_type,
+            directives,
+            hashbang: hashbang.map(|hashbang| self.alloc(hashbang)),
+            body,
+        }
     }
 
     /* ---------- Constructors ---------- */

@@ -50,7 +50,7 @@ pub struct Program<'a> {
     pub span: Span,
     pub source_type: SourceType,
     pub directives: Vec<'a, Directive<'a>>,
-    pub hashbang: Option<Hashbang<'a>>,
+    pub hashbang: Option<Box<'a, Hashbang<'a>>>,
     pub body: Vec<'a, Statement<'a>>,
 }
 
