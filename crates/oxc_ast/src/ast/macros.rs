@@ -79,49 +79,88 @@ macro_rules! inherit_variants {
 
                 // `Expression`'s own variants
 
+                /// Inherited from [`Expression`]
                 BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
+                /// Inherited from [`Expression`]
                 NullLiteral(Box<'a, NullLiteral>) = 1,
+                /// Inherited from [`Expression`]
                 NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
+                /// Inherited from [`Expression`]
                 BigintLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
+                /// Inherited from [`Expression`]
                 RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
+                /// Inherited from [`Expression`]
                 StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
+                /// Inherited from [`Expression`]
                 TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
 
+                /// Inherited from [`Expression`]
                 Identifier(Box<'a, IdentifierReference<'a>>) = 7,
 
+                /// Inherited from [`Expression`]
                 MetaProperty(Box<'a, MetaProperty<'a>>) = 8,
+                /// Inherited from [`Expression`]
                 Super(Box<'a, Super>) = 9,
 
+                /// Inherited from [`Expression`]
                 ArrayExpression(Box<'a, ArrayExpression<'a>>) = 10,
+                /// Inherited from [`Expression`]
                 ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>) = 11,
+                /// Inherited from [`Expression`]
                 AssignmentExpression(Box<'a, AssignmentExpression<'a>>) = 12,
+                /// Inherited from [`Expression`]
                 AwaitExpression(Box<'a, AwaitExpression<'a>>) = 13,
+                /// Inherited from [`Expression`]
                 BinaryExpression(Box<'a, BinaryExpression<'a>>) = 14,
+                /// Inherited from [`Expression`]
                 CallExpression(Box<'a, CallExpression<'a>>) = 15,
+                /// Inherited from [`Expression`]
                 ChainExpression(Box<'a, ChainExpression<'a>>) = 16,
+                /// Inherited from [`Expression`]
                 ClassExpression(Box<'a, Class<'a>>) = 17,
+                /// Inherited from [`Expression`]
                 ConditionalExpression(Box<'a, ConditionalExpression<'a>>) = 18,
+                /// Inherited from [`Expression`]
                 FunctionExpression(Box<'a, Function<'a>>) = 19,
+                /// Inherited from [`Expression`]
                 ImportExpression(Box<'a, ImportExpression<'a>>) = 20,
+                /// Inherited from [`Expression`]
                 LogicalExpression(Box<'a, LogicalExpression<'a>>) = 21,
+                /// Inherited from [`Expression`]
                 NewExpression(Box<'a, NewExpression<'a>>) = 22,
+                /// Inherited from [`Expression`]
                 ObjectExpression(Box<'a, ObjectExpression<'a>>) = 23,
+                /// Inherited from [`Expression`]
                 ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a>>) = 24,
+                /// Inherited from [`Expression`]
                 SequenceExpression(Box<'a, SequenceExpression<'a>>) = 25,
+                /// Inherited from [`Expression`]
                 TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a>>) = 26,
+                /// Inherited from [`Expression`]
                 ThisExpression(Box<'a, ThisExpression>) = 27,
+                /// Inherited from [`Expression`]
                 UnaryExpression(Box<'a, UnaryExpression<'a>>) = 28,
+                /// Inherited from [`Expression`]
                 UpdateExpression(Box<'a, UpdateExpression<'a>>) = 29,
+                /// Inherited from [`Expression`]
                 YieldExpression(Box<'a, YieldExpression<'a>>) = 30,
+                /// Inherited from [`Expression`]
                 PrivateInExpression(Box<'a, PrivateInExpression<'a>>) = 31,
 
+                /// Inherited from [`Expression`]
                 JSXElement(Box<'a, JSXElement<'a>>) = 32,
+                /// Inherited from [`Expression`]
                 JSXFragment(Box<'a, JSXFragment<'a>>) = 33,
 
+                /// Inherited from [`Expression`]
                 TSAsExpression(Box<'a, TSAsExpression<'a>>) = 34,
+                /// Inherited from [`Expression`]
                 TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 35,
+                /// Inherited from [`Expression`]
                 TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 36,
+                /// Inherited from [`Expression`]
                 TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 37,
+                /// Inherited from [`Expression`]
                 TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
 
                 // Inherited from `MemberExpression`
@@ -200,10 +239,13 @@ macro_rules! inherit_variants {
             pub enum $ty<'a> {
                 $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
 
+                /// Inherited from [`MemberExpression`].
                 /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
                 ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>) = 48,
+                /// Inherited from [`MemberExpression`].
                 /// `MemberExpression[?Yield, ?Await] . IdentifierName`
                 StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>) = 49,
+                /// Inherited from [`MemberExpression`].
                 /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
                 PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>) = 50,
 
@@ -281,15 +323,20 @@ macro_rules! inherit_variants {
             pub enum $ty<'a> {
                 $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
 
+                /// Inherited from [`SimpleAssignmentTarget`]
                 AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>>) = 0,
+
+                /// Inherited from [`SimpleAssignmentTarget`]
+                TSAsExpression(Box<'a, TSAsExpression<'a>>) = 1,
+                /// Inherited from [`SimpleAssignmentTarget`]
+                TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 2,
+                /// Inherited from [`SimpleAssignmentTarget`]
+                TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
+                /// Inherited from [`SimpleAssignmentTarget`]
+                TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
 
                 // Inherited from `MemberExpression`
                 @inherit MemberExpression
-
-                TSAsExpression(Box<'a, TSAsExpression<'a>>) = 1,
-                TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 2,
-                TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
-                TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
 
                 $($rest)*
             }
@@ -330,7 +377,9 @@ macro_rules! inherit_variants {
             pub enum $ty<'a> {
                 $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
 
+                /// Inherited from [`AssignmentTargetPattern`]
                 ArrayAssignmentTarget(Box<'a, ArrayAssignmentTarget<'a>>) = 8,
+                /// Inherited from [`AssignmentTargetPattern`]
                 ObjectAssignmentTarget(Box<'a, ObjectAssignmentTarget<'a>>) = 9,
 
                 $($rest)*
@@ -363,15 +412,24 @@ macro_rules! inherit_variants {
             pub enum $ty<'a> {
                 $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
 
+                /// Inherited from [`Declaration`]
                 VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
+                /// Inherited from [`Declaration`]
                 FunctionDeclaration(Box<'a, Function<'a>>) = 33,
+                /// Inherited from [`Declaration`]
                 ClassDeclaration(Box<'a, Class<'a>>) = 34,
+                /// Inherited from [`Declaration`]
                 UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 35,
 
+                /// Inherited from [`Declaration`]
                 TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 36,
+                /// Inherited from [`Declaration`]
                 TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 37,
+                /// Inherited from [`Declaration`]
                 TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 38,
+                /// Inherited from [`Declaration`]
                 TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 39,
+                /// Inherited from [`Declaration`]
                 TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
 
                 $($rest)*
@@ -414,20 +472,26 @@ macro_rules! inherit_variants {
             pub enum $ty<'a> {
                 $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
 
-                /// import hello from './world.js';
-                /// import * as t from './world.js';
+                /// Inherited from [`ModuleDeclaration`].
+                /// `import hello from './world.js';`
+                /// `import * as t from './world.js';`
                 ImportDeclaration(Box<'a, ImportDeclaration<'a>>) = 64,
-                /// export * as numbers from '../numbers.js'
+                /// Inherited from [`ModuleDeclaration`].
+                /// `export * as numbers from '../numbers.js'`
                 ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>) = 65,
-                /// export default 5;
+                /// Inherited from [`ModuleDeclaration`].
+                /// `export default 5;`
                 ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a>>) = 66,
-                /// export {five} from './numbers.js';
-                /// export {six, seven};
+                /// Inherited from [`ModuleDeclaration`].
+                /// `export {five} from './numbers.js';`
+                /// `export {six, seven};`
                 ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>) = 67,
 
-                /// export = 5;
+                /// Inherited from [`ModuleDeclaration`].
+                /// `export = 5;`
                 TSExportAssignment(Box<'a, TSExportAssignment<'a>>) = 68,
-                /// export as namespace React;
+                /// Inherited from [`ModuleDeclaration`].
+                /// `export as namespace React;`
                 TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
 
                 $($rest)*
@@ -468,42 +532,79 @@ macro_rules! inherit_variants {
                 $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
 
                 // Keyword
+                /// Inherited from [`TSType`]
                 TSAnyKeyword(Box<'a, TSAnyKeyword>) = 0,
+                /// Inherited from [`TSType`]
                 TSBigIntKeyword(Box<'a, TSBigIntKeyword>) = 1,
+                /// Inherited from [`TSType`]
                 TSBooleanKeyword(Box<'a, TSBooleanKeyword>) = 2,
+                /// Inherited from [`TSType`]
                 TSNeverKeyword(Box<'a, TSNeverKeyword>) = 3,
+                /// Inherited from [`TSType`]
                 TSNullKeyword(Box<'a, TSNullKeyword>) = 4,
+                /// Inherited from [`TSType`]
                 TSNumberKeyword(Box<'a, TSNumberKeyword>) = 5,
+                /// Inherited from [`TSType`]
                 TSObjectKeyword(Box<'a, TSObjectKeyword>) = 6,
+                /// Inherited from [`TSType`]
                 TSStringKeyword(Box<'a, TSStringKeyword>) = 7,
+                /// Inherited from [`TSType`]
                 TSSymbolKeyword(Box<'a, TSSymbolKeyword>) = 8,
+                /// Inherited from [`TSType`]
                 TSThisType(Box<'a, TSThisType>) = 9,
+                /// Inherited from [`TSType`]
                 TSUndefinedKeyword(Box<'a, TSUndefinedKeyword>) = 10,
+                /// Inherited from [`TSType`]
                 TSUnknownKeyword(Box<'a, TSUnknownKeyword>) = 11,
+                /// Inherited from [`TSType`]
                 TSVoidKeyword(Box<'a, TSVoidKeyword>) = 12,
+
                 // Compound
+                /// Inherited from [`TSType`]
                 TSArrayType(Box<'a, TSArrayType<'a>>) = 13,
+                /// Inherited from [`TSType`]
                 TSConditionalType(Box<'a, TSConditionalType<'a>>) = 14,
+                /// Inherited from [`TSType`]
                 TSConstructorType(Box<'a, TSConstructorType<'a>>) = 15,
+                /// Inherited from [`TSType`]
                 TSFunctionType(Box<'a, TSFunctionType<'a>>) = 16,
+                /// Inherited from [`TSType`]
                 TSImportType(Box<'a, TSImportType<'a>>) = 17,
+                /// Inherited from [`TSType`]
                 TSIndexedAccessType(Box<'a, TSIndexedAccessType<'a>>) = 18,
+                /// Inherited from [`TSType`]
                 TSInferType(Box<'a, TSInferType<'a>>) = 19,
+                /// Inherited from [`TSType`]
                 TSIntersectionType(Box<'a, TSIntersectionType<'a>>) = 20,
+                /// Inherited from [`TSType`]
                 TSLiteralType(Box<'a, TSLiteralType<'a>>) = 21,
+                /// Inherited from [`TSType`]
                 TSMappedType(Box<'a, TSMappedType<'a>>) = 22,
+                /// Inherited from [`TSType`]
                 TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>) = 23,
+                /// Inherited from [`TSType`]
                 TSQualifiedName(Box<'a, TSQualifiedName<'a>>) = 24,
+                /// Inherited from [`TSType`]
                 TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>) = 25,
+                /// Inherited from [`TSType`]
                 TSTupleType(Box<'a, TSTupleType<'a>>) = 26,
+                /// Inherited from [`TSType`]
                 TSTypeLiteral(Box<'a, TSTypeLiteral<'a>>) = 27,
+                /// Inherited from [`TSType`]
                 TSTypeOperatorType(Box<'a, TSTypeOperator<'a>>) = 28,
+                /// Inherited from [`TSType`]
                 TSTypePredicate(Box<'a, TSTypePredicate<'a>>) = 29,
+                /// Inherited from [`TSType`]
                 TSTypeQuery(Box<'a, TSTypeQuery<'a>>) = 30,
+                /// Inherited from [`TSType`]
                 TSTypeReference(Box<'a, TSTypeReference<'a>>) = 31,
+                /// Inherited from [`TSType`]
                 TSUnionType(Box<'a, TSUnionType<'a>>) = 32,
+
                 // JSDoc
+                /// Inherited from [`TSType`]
                 JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 33,
+                /// Inherited from [`TSType`]
                 JSDocUnknownType(Box<'a, JSDocUnknownType>) = 34,
 
                 $($rest)*
@@ -572,7 +673,9 @@ macro_rules! inherit_variants {
             pub enum $ty<'a> {
                 $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
 
+                /// Inherited from [`TSTypeName`]
                 IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
+                /// Inherited from [`TSTypeName`]
                 QualifiedName(Box<'a, TSQualifiedName<'a>>) = 1,
 
                 $($rest)*

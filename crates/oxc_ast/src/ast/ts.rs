@@ -61,6 +61,9 @@ pub struct TSEnumMember<'a> {
 }
 
 inherit_variants! {
+/// TS Enum Member Name
+///
+/// Inherits variants from [`Expression`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -341,17 +344,20 @@ pub struct TSRestType<'a> {
 }
 
 inherit_variants! {
+/// TS Tuple Element
+///
+/// Inherits variants from [`TSType`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
 pub enum TSTupleElement<'a> {
-    // `TSType` variants added here by `inherit_variants!` macro
-    @inherit TSType
     // Discriminants start at 64, so that `TSTupleElement::is_ts_type` is a single
     // bitwise AND operation on the discriminant (`discriminant & 63 != 0`).
     TSOptionalType(Box<'a, TSOptionalType<'a>>) = 64,
     TSRestType(Box<'a, TSRestType<'a>>) = 65,
+    // `TSType` variants added here by `inherit_variants!` macro
+    @inherit TSType
 }
 }
 
@@ -847,14 +853,17 @@ pub struct TSTypeQuery<'a> {
 }
 
 inherit_variants! {
+/// TS Type Query Expr Name
+///
+/// Inherits variants from [`TSTypeName`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSTypeQueryExprName<'a> {
+    TSImportType(Box<'a, TSImportType<'a>>) = 2,
     // `TSTypeName` variants added here by `inherit_variants!` macro
     @inherit TSTypeName
-    TSImportType(Box<'a, TSImportType<'a>>) = 2,
 }
 }
 
@@ -998,14 +1007,17 @@ pub struct TSImportEqualsDeclaration<'a> {
 }
 
 inherit_variants! {
+/// TS Module Reference
+///
+/// Inherits variants from [`TSTypeName`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
 pub enum TSModuleReference<'a> {
+    ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>) = 2,
     // `TSTypeName` variants added here by `inherit_variants!` macro
     @inherit TSTypeName
-    ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>) = 2,
 }
 }
 

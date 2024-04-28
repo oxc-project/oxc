@@ -147,14 +147,17 @@ pub struct JSXExpressionContainer<'a> {
 }
 
 inherit_variants! {
+/// JSX Expression
+///
+/// Inherits variants from [`Expression`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXExpression<'a> {
+    EmptyExpression(JSXEmptyExpression) = 64,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
-    EmptyExpression(JSXEmptyExpression) = 64,
 }
 }
 

@@ -63,6 +63,8 @@ impl<'a> Program<'a> {
 
 inherit_variants! {
 /// Expression
+///
+/// Inherits variants from [`MemberExpression`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -490,17 +492,19 @@ pub struct ArrayExpression<'a> {
 
 inherit_variants! {
 /// Array Expression Element
+///
+/// Inherits variants from [`Expression`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ArrayExpressionElement<'a> {
     SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
-    // `Expression` variants added here by `inherit_variants!` macro
-    @inherit Expression
     /// Array hole for sparse arrays
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
     Elision(Elision) = 65,
+    // `Expression` variants added here by `inherit_variants!` macro
+    @inherit Expression
 }
 }
 
@@ -560,6 +564,9 @@ pub struct ObjectProperty<'a> {
 }
 
 inherit_variants! {
+/// Property Key
+///
+/// Inherits variants from [`Expression`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -936,6 +943,8 @@ pub struct SpreadElement<'a> {
 
 inherit_variants! {
 /// Argument
+///
+/// Inherits variants from [`Expression`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1038,6 +1047,8 @@ pub struct AssignmentExpression<'a> {
 
 inherit_variants! {
 /// Destructuring Assignment
+///
+/// Inherits variants from [`SimpleAssignmentTarget`] and [`AssignmentTargetPattern`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1070,18 +1081,21 @@ macro_rules! match_assignment_target {
 pub use match_assignment_target;
 
 inherit_variants! {
+/// Simple Assignment Target
+///
+/// Inherits variants from [`MemberExpression`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum SimpleAssignmentTarget<'a> {
     AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>>) = 0,
-    // `MemberExpression` variants added here by `inherit_variants!` macro
-    @inherit MemberExpression
     TSAsExpression(Box<'a, TSAsExpression<'a>>) = 1,
     TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 2,
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
     TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
+    // `MemberExpression` variants added here by `inherit_variants!` macro
+    @inherit MemberExpression
 }
 }
 
@@ -1203,14 +1217,17 @@ pub struct AssignmentTargetRest<'a> {
 }
 
 inherit_variants! {
+/// Assignment Target Maybe Default
+///
+/// Inherits variants from [`AssignmentTarget`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum AssignmentTargetMaybeDefault<'a> {
+    AssignmentTargetWithDefault(Box<'a, AssignmentTargetWithDefault<'a>>) = 16,
     // `AssignmentTarget` variants added here by `inherit_variants!` macro
     @inherit AssignmentTarget
-    AssignmentTargetWithDefault(Box<'a, AssignmentTargetWithDefault<'a>>) = 16,
 }
 }
 
@@ -1308,6 +1325,9 @@ pub struct ChainExpression<'a> {
 }
 
 inherit_variants! {
+/// Chain Element
+///
+/// Inherits variants from [`MemberExpression`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1330,7 +1350,9 @@ pub struct ParenthesizedExpression<'a> {
 }
 
 inherit_variants! {
-/// Statements
+/// Statement
+///
+/// Inherits variants from [`Declaration`] and [`ModuleDeclaration`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1630,15 +1652,18 @@ pub struct ForStatement<'a> {
 }
 
 inherit_variants! {
+/// For Statement Init
+///
+/// Inherits variants from [`Expression`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ForStatementInit<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 64,
+    UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 65,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
-    UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 65,
 }
 }
 
@@ -1676,15 +1701,18 @@ pub struct ForOfStatement<'a> {
 }
 
 inherit_variants! {
+/// For Statement Left
+///
+/// Inherits variants from [`AssignmentTarget`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ForStatementLeft<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 16,
+    UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 17,
     // `AssignmentTarget` variants added here by `inherit_variants!` macro
     @inherit AssignmentTarget
-    UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 17,
 }
 }
 
@@ -2432,20 +2460,20 @@ pub struct StaticBlock<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ModuleDeclaration<'a> {
-    /// import hello from './world.js';
-    /// import * as t from './world.js';
+    /// `import hello from './world.js';`
+    /// `import * as t from './world.js';`
     ImportDeclaration(Box<'a, ImportDeclaration<'a>>) = 64,
-    /// export * as numbers from '../numbers.js'
+    /// `export * as numbers from '../numbers.js'`
     ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>) = 65,
-    /// export default 5;
+    /// `export default 5;`
     ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a>>) = 66,
-    /// export {five} from './numbers.js';
-    /// export {six, seven};
+    /// `export {five} from './numbers.js';`
+    /// `export {six, seven};`
     ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>) = 67,
 
-    /// export = 5;
+    /// `export = 5;`
     TSExportAssignment(Box<'a, TSExportAssignment<'a>>) = 68,
-    /// export as namespace React;
+    /// `export as namespace React;`
     TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
 }
 
@@ -2705,19 +2733,22 @@ impl<'a> ExportSpecifier<'a> {
 }
 
 inherit_variants! {
+/// Export Default Declaration Kind
+///
+/// Inherits variants from [`Expression`].
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ExportDefaultDeclarationKind<'a> {
-    // `Expression` variants added here by `inherit_variants!` macro
-    @inherit Expression
-
     FunctionDeclaration(Box<'a, Function<'a>>) = 64,
     ClassDeclaration(Box<'a, Class<'a>>) = 65,
 
     TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 66,
     TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 67,
+
+    // `Expression` variants added here by `inherit_variants!` macro
+    @inherit Expression
 }
 }
 
