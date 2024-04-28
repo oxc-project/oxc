@@ -8,6 +8,7 @@ use oxc_syntax::{
     NumberBase,
 };
 use rustc_hash::FxHashMap;
+use ryu_js::Buffer;
 
 use crate::context::Ctx;
 
@@ -138,7 +139,7 @@ impl<'a> TypeScriptEnum<'a> {
         enum_name: &Atom<'a>,
     ) -> Vec<'a, Statement<'a>> {
         let mut statements = self.ctx.ast.new_vec();
-        let mut prev_constant_value = Some(ConstantValue::F64(-1.0));
+        let mut prev_constant_value = Some(ConstantValue::Number(-1.0));
         let mut previous_enum_members = self.enums.entry(enum_name.clone()).or_default().clone();
         let mut prev_member_name: Option<Atom<'a>> = None;
 
@@ -170,8 +171,8 @@ impl<'a> TypeScriptEnum<'a> {
                     Some(constant_value) => {
                         previous_enum_members.insert(member_name.clone(), constant_value.clone());
                         match constant_value {
-                            ConstantValue::F64(v) => {
-                                prev_constant_value = Some(ConstantValue::F64(v));
+                            ConstantValue::Number(v) => {
+                                prev_constant_value = Some(ConstantValue::Number(v));
                                 self.get_initializer_expr(v)
                             }
                             ConstantValue::String(str) => {
@@ -181,26 +182,16 @@ impl<'a> TypeScriptEnum<'a> {
                                     value: self.ctx.ast.new_atom(&str),
                                 })
                             }
-                            ConstantValue::NumericLiteral((_, value)) => {
-                                prev_constant_value = Some(ConstantValue::F64(value));
-                                self.get_initializer_expr(value)
-                            }
-                            ConstantValue::Identifier(ident) => {
-                                prev_constant_value = None;
-                                self.ctx.ast.identifier_reference_expression(
-                                    IdentifierReference::new(SPAN, self.ctx.ast.new_atom(&ident)),
-                                )
-                            }
                         }
                     }
                 };
 
                 init
-            } else if let Some(value) = prev_constant_value {
+            } else if let Some(ref value) = prev_constant_value {
                 match value {
-                    ConstantValue::F64(value) => {
+                    ConstantValue::Number(value) => {
                         let value = value + 1.0;
-                        let constant_value = ConstantValue::F64(value);
+                        let constant_value = ConstantValue::Number(value);
                         prev_constant_value = Some(constant_value.clone());
                         previous_enum_members.insert(member_name.clone(), constant_value);
                         self.get_initializer_expr(value)
@@ -294,9 +285,15 @@ impl<'a> TypeScriptEnum<'a> {
 
     fn get_initializer_expr(&self, value: f64) -> Expression<'a> {
         let is_negative = value < 0.0;
-        let value = if is_negative { -value } else { value };
 
-        let expr = self.get_number_literal_expression(value);
+        // Infinity
+        let expr = if value.is_infinite() {
+            let ident = IdentifierReference::new(SPAN, self.ctx.ast.new_atom("Infinity"));
+            self.ctx.ast.identifier_reference_expression(ident)
+        } else {
+            let value = if is_negative { -value } else { value };
+            self.get_number_literal_expression(value)
+        };
 
         if is_negative {
             self.ctx.ast.unary_expression(SPAN, UnaryOperator::UnaryNegation, expr)
@@ -308,9 +305,7 @@ impl<'a> TypeScriptEnum<'a> {
 
 #[derive(Debug, Clone)]
 enum ConstantValue {
-    NumericLiteral((String, f64)),
-    F64(f64),
-    Identifier(String),
+    Number(f64),
     String(String),
 }
 
@@ -338,8 +333,10 @@ impl<'a> TypeScriptEnum<'a> {
                 return members.get(property).cloned();
             }
             Expression::Identifier(ident) => {
-                if ident.name == "Infinity" || ident.name == "NaN" {
-                    return Some(ConstantValue::Identifier(ident.name.to_string()));
+                if ident.name == "Infinity" {
+                    return Some(ConstantValue::Number(f64::INFINITY));
+                } else if ident.name == "NaN" {
+                    return Some(ConstantValue::Number(f64::NAN));
                 }
 
                 if let Some(value) = prev_members.get(&ident.name) {
@@ -368,9 +365,7 @@ impl<'a> TypeScriptEnum<'a> {
             }
             Expression::BinaryExpression(expr) => self.eval_binary_expression(expr, prev_members),
             Expression::UnaryExpression(expr) => self.eval_unary_expression(expr, prev_members),
-            Expression::NumericLiteral(lit) => {
-                Some(ConstantValue::NumericLiteral((lit.raw.to_string(), lit.value)))
-            }
+            Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
             Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value.to_string())),
             Expression::TemplateLiteral(lit) => {
                 let mut value = String::new();
@@ -378,6 +373,9 @@ impl<'a> TypeScriptEnum<'a> {
                     value.push_str(&part.value.raw);
                 }
                 Some(ConstantValue::String(value))
+            }
+            Expression::ParenthesizedExpression(expr) => {
+                self.evaluate(&expr.expression, prev_members)
             }
             _ => None,
         }
@@ -397,57 +395,53 @@ impl<'a> TypeScriptEnum<'a> {
                 || matches!(right, ConstantValue::String(_)))
         {
             let left_string = match left {
-                ConstantValue::NumericLiteral((raw, _)) => raw.to_string(),
                 ConstantValue::String(str) => str,
-                ConstantValue::F64(v) => v.to_string(),
-                ConstantValue::Identifier(_) => unreachable!(),
+                ConstantValue::Number(v) => f64_to_js_string(v),
             };
 
             let right_string = match right {
-                ConstantValue::NumericLiteral((raw, _)) => raw.to_string(),
                 ConstantValue::String(str) => str,
-                ConstantValue::F64(v) => v.to_string(),
-                ConstantValue::Identifier(_) => unreachable!(),
+                ConstantValue::Number(v) => f64_to_js_string(v),
             };
 
             return Some(ConstantValue::String(format!("{left_string}{right_string}")));
         }
 
         let left = match left {
-            ConstantValue::NumericLiteral((_, v)) | ConstantValue::F64(v) => v,
-            ConstantValue::String(_) | ConstantValue::Identifier(_) => return None,
+            ConstantValue::Number(v) => v,
+            ConstantValue::String(_) => return None,
         };
 
         let right = match right {
-            ConstantValue::NumericLiteral((_, v)) | ConstantValue::F64(v) => v,
-            ConstantValue::String(_) | ConstantValue::Identifier(_) => return None,
+            ConstantValue::Number(v) => v,
+            ConstantValue::String(_) => return None,
         };
 
         match expr.operator {
-            BinaryOperator::ShiftRight => Some(ConstantValue::F64(f64::from(
+            BinaryOperator::ShiftRight => Some(ConstantValue::Number(f64::from(
                 f64_to_int32(left).wrapping_shr(f64_to_uint32(right)),
             ))),
-            BinaryOperator::ShiftRightZeroFill => Some(ConstantValue::F64(f64::from(
+            BinaryOperator::ShiftRightZeroFill => Some(ConstantValue::Number(f64::from(
                 f64_to_uint32(left).wrapping_shr(f64_to_uint32(right)),
             ))),
-            BinaryOperator::ShiftLeft => Some(ConstantValue::F64(f64::from(
+            BinaryOperator::ShiftLeft => Some(ConstantValue::Number(f64::from(
                 f64_to_int32(left).wrapping_shl(f64_to_uint32(right)),
             ))),
             BinaryOperator::BitwiseXOR => {
-                Some(ConstantValue::F64(f64::from(f64_to_int32(left) ^ f64_to_int32(right))))
+                Some(ConstantValue::Number(f64::from(f64_to_int32(left) ^ f64_to_int32(right))))
             }
             BinaryOperator::BitwiseOR => {
-                Some(ConstantValue::F64(f64::from(f64_to_int32(left) | f64_to_int32(right))))
+                Some(ConstantValue::Number(f64::from(f64_to_int32(left) | f64_to_int32(right))))
             }
             BinaryOperator::BitwiseAnd => {
-                Some(ConstantValue::F64(f64::from(f64_to_int32(left) & f64_to_int32(right))))
+                Some(ConstantValue::Number(f64::from(f64_to_int32(left) & f64_to_int32(right))))
             }
-            BinaryOperator::Multiplication => Some(ConstantValue::F64(left * right)),
-            BinaryOperator::Division => Some(ConstantValue::F64(left / right)),
-            BinaryOperator::Addition => Some(ConstantValue::F64(left + right)),
-            BinaryOperator::Subtraction => Some(ConstantValue::F64(left - right)),
-            BinaryOperator::Remainder => Some(ConstantValue::F64(left % right)),
-            BinaryOperator::Exponential => Some(ConstantValue::F64(left.powf(right))),
+            BinaryOperator::Multiplication => Some(ConstantValue::Number(left * right)),
+            BinaryOperator::Division => Some(ConstantValue::Number(left / right)),
+            BinaryOperator::Addition => Some(ConstantValue::Number(left + right)),
+            BinaryOperator::Subtraction => Some(ConstantValue::Number(left - right)),
+            BinaryOperator::Remainder => Some(ConstantValue::Number(left % right)),
+            BinaryOperator::Exponential => Some(ConstantValue::Number(left.powf(right))),
             _ => None,
         }
     }
@@ -461,8 +455,7 @@ impl<'a> TypeScriptEnum<'a> {
         let value = self.evaluate(&expr.argument, prev_members)?;
 
         let value = match value {
-            ConstantValue::NumericLiteral((_raw, value)) => value,
-            ConstantValue::F64(value) => value,
+            ConstantValue::Number(value) => value,
             ConstantValue::String(_) => {
                 // TODO: handle unary operators on strings correctly
                 // If operator is `+`, return the string as is
@@ -470,13 +463,14 @@ impl<'a> TypeScriptEnum<'a> {
                 // If operator is `!`, return None
                 return Some(value);
             }
-            ConstantValue::Identifier(_) => return Some(value),
         };
 
         match expr.operator {
-            UnaryOperator::UnaryPlus => Some(ConstantValue::F64(value)),
-            UnaryOperator::UnaryNegation => Some(ConstantValue::F64(-value)),
-            UnaryOperator::BitwiseNot => Some(ConstantValue::F64(f64::from(!f64_to_int32(value)))),
+            UnaryOperator::UnaryPlus => Some(ConstantValue::Number(value)),
+            UnaryOperator::UnaryNegation => Some(ConstantValue::Number(-value)),
+            UnaryOperator::BitwiseNot => {
+                Some(ConstantValue::Number(f64::from(!f64_to_int32(value))))
+            }
             _ => None,
         }
     }
@@ -541,4 +535,9 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a> {
             walk_mut::walk_expression_mut(self, expr);
         }
     }
+}
+
+fn f64_to_js_string(value: f64) -> String {
+    let mut buffer = Buffer::new();
+    buffer.format(value).to_string()
 }
