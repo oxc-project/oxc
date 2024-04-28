@@ -1,13 +1,14 @@
 use std::{mem, rc::Rc};
 
 use oxc_allocator::{Box, Vec};
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, visit::walk_mut, VisitMut};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     NumberBase,
 };
 use rustc_hash::FxHashMap;
+use serde::de::Visitor;
 
 use crate::{context::Ctx, utils::is_valid_identifier};
 
@@ -157,7 +158,14 @@ impl<'a> TypeScriptEnum<'a> {
                 let init = match constant_value {
                     None => {
                         prev_constant_value = None;
-                        self.ctx.ast.copy(initializer)
+                        let mut new_initializer = self.ctx.ast.copy(initializer);
+                        IdentifierReferenceRename::new(
+                            enum_name.clone(),
+                            previous_enum_members.clone(),
+                            &self.ctx,
+                        )
+                        .visit_expression(&mut new_initializer);
+                        new_initializer
                     }
                     Some(constant_value) => {
                         previous_enum_members.insert(member_name.clone(), constant_value.clone());
@@ -506,7 +514,7 @@ impl<'a> TypeScriptEnum<'a> {
         prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
         // seen: &mut HashSet<Identifier>,
     ) -> Option<ConstantValue> {
-        self.evaluate(&expr, prev_members)
+        self.evaluate(expr, prev_members)
     }
 
     fn evalaute_ref(
@@ -517,7 +525,7 @@ impl<'a> TypeScriptEnum<'a> {
         match expr {
             Expression::MemberExpression(expr) => {
                 let Expression::Identifier(ident) = expr.object() else { return None };
-                let Some(members) = self.enums.get(&ident.name) else { return None };
+                let members = self.enums.get(&ident.name)?;
                 let property = expr.static_property_name()?;
                 return members.get(property).cloned();
             }
@@ -542,10 +550,11 @@ impl<'a> TypeScriptEnum<'a> {
         prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
     ) -> Option<ConstantValue> {
         match expr {
-            Expression::MemberExpression(member_expr) => self.evalaute_ref(expr, &prev_members),
-            Expression::Identifier(ident) => self.evalaute_ref(expr, &prev_members),
-            Expression::BinaryExpression(expr) => self.eval_binary_expression(expr, &prev_members),
-            Expression::UnaryExpression(expr) => self.eval_unary_expression(expr, &prev_members),
+            Expression::Identifier(_) | Expression::MemberExpression(_) => {
+                self.evalaute_ref(expr, prev_members)
+            }
+            Expression::BinaryExpression(expr) => self.eval_binary_expression(expr, prev_members),
+            Expression::UnaryExpression(expr) => self.eval_unary_expression(expr, prev_members),
             Expression::NumericLiteral(lit) => {
                 Some(ConstantValue::Numberic((lit.raw.to_string(), lit.value)))
             }
@@ -649,6 +658,51 @@ impl<'a> TypeScriptEnum<'a> {
             UnaryOperator::LogicalNot => Some(ConstantValue::I64(!(value as i64))),
             UnaryOperator::BitwiseNot => Some(ConstantValue::I64(!(value as i64))),
             _ => None,
+        }
+    }
+}
+
+struct IdentifierReferenceRename<'a> {
+    enum_name: Atom<'a>,
+    ctx: Ctx<'a>,
+    previous_enum_members: FxHashMap<Atom<'a>, ConstantValue>,
+}
+
+impl IdentifierReferenceRename<'_> {
+    fn new<'a>(
+        enum_name: Atom<'a>,
+        previous_enum_members: FxHashMap<Atom<'a>, ConstantValue>,
+        ctx: &Ctx<'a>,
+    ) -> IdentifierReferenceRename<'a> {
+        IdentifierReferenceRename { enum_name, ctx: Rc::clone(ctx), previous_enum_members }
+    }
+}
+
+impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a> {
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+        let new_expr = match expr {
+            Expression::MemberExpression(expr) => {
+                if let Expression::Identifier(ident) = expr.object() {
+                    if !self.previous_enum_members.contains_key(&ident.name) {
+                        return;
+                    }
+                };
+                None
+            }
+            Expression::Identifier(ident) => {
+                // TODO: shadowed case, e.g. let ident = 1; ident; // ident is not an enum
+                // enum_name.identifier
+                let ident_reference = IdentifierReference::new(SPAN, self.enum_name.clone());
+                let object = self.ctx.ast.identifier_reference_expression(ident_reference);
+                let property = self.ctx.ast.identifier_name(SPAN, &ident.name);
+                Some(self.ctx.ast.static_member_expression(SPAN, object, property, false))
+            }
+            _ => None,
+        };
+        if let Some(new_expr) = new_expr {
+            *expr = new_expr;
+        } else {
+            walk_mut::walk_expression_mut(self, expr);
         }
     }
 }
