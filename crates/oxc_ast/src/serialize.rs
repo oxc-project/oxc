@@ -72,8 +72,12 @@ impl<'a> Serialize for ArrayAssignmentTarget<'a> {
 struct SerArrayAssignmentTarget<'a, 'b> {
     #[serde(flatten)]
     span: Span,
-    elements:
-        ElementsAndRest<'a, 'b, Option<AssignmentTargetMaybeDefault<'a>>, AssignmentTargetRest<'a>>,
+    elements: ElementsAndRest<
+        'a,
+        'b,
+        Option<AssignmentTargetMaybeDefault<'a>>,
+        Box<'a, AssignmentTargetRest<'a>>,
+    >,
 }
 
 impl<'a> Serialize for ObjectAssignmentTarget<'a> {
@@ -91,7 +95,8 @@ impl<'a> Serialize for ObjectAssignmentTarget<'a> {
 struct SerObjectAssignmentTarget<'a, 'b> {
     #[serde(flatten)]
     span: Span,
-    properties: ElementsAndRest<'a, 'b, AssignmentTargetProperty<'a>, AssignmentTargetRest<'a>>,
+    properties:
+        ElementsAndRest<'a, 'b, AssignmentTargetProperty<'a>, Box<'a, AssignmentTargetRest<'a>>>,
 }
 
 impl<'a> Serialize for ObjectPattern<'a> {

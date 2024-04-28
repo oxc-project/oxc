@@ -76,10 +76,9 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                 }
                 ArrayExpressionElement::SpreadElement(elem) => {
                     if i == len - 1 {
-                        rest = Some(AssignmentTargetRest {
-                            span: elem.span,
-                            target: AssignmentTarget::cover(elem.unbox().argument, p)?,
-                        });
+                        let span = elem.span;
+                        let target = AssignmentTarget::cover(elem.unbox().argument, p)?;
+                        rest = Some(p.ast.alloc(AssignmentTargetRest { span, target }));
                         if let Some(span) = expr.trailing_comma {
                             p.error(diagnostics::BindingRestElementTrailingComma(span));
                         }
@@ -136,10 +135,9 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
                 }
                 ObjectPropertyKind::SpreadProperty(spread) => {
                     if i == len - 1 {
-                        rest = Some(AssignmentTargetRest {
-                            span: spread.span,
-                            target: AssignmentTarget::cover(spread.unbox().argument, p)?,
-                        });
+                        let span = spread.span;
+                        let target = AssignmentTarget::cover(spread.unbox().argument, p)?;
+                        rest = Some(p.ast.alloc(AssignmentTargetRest { span, target }));
                     } else {
                         return Err(diagnostics::SpreadLastElement(spread.span).into());
                     }

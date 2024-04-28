@@ -1204,7 +1204,7 @@ pub struct ArrayAssignmentTarget<'a> {
     )]
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub rest: Option<AssignmentTargetRest<'a>>,
+    pub rest: Option<Box<'a, AssignmentTargetRest<'a>>>,
     #[cfg_attr(feature = "serialize", serde(skip))]
     pub trailing_comma: Option<Span>,
 }
@@ -1232,7 +1232,7 @@ pub struct ObjectAssignmentTarget<'a> {
     )]
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
     #[cfg_attr(feature = "serialize", serde(skip))]
-    pub rest: Option<AssignmentTargetRest<'a>>,
+    pub rest: Option<Box<'a, AssignmentTargetRest<'a>>>,
 }
 
 impl<'a> ObjectAssignmentTarget<'a> {
