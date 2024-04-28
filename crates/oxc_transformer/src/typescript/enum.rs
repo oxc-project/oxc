@@ -179,7 +179,7 @@ impl<'a> TypeScriptEnum<'a> {
                                     value: self.ctx.ast.new_atom(&str),
                                 })
                             }
-                            ConstantValue::Numberic((_, value)) => {
+                            ConstantValue::NumericLiteral((_, value)) => {
                                 prev_constant_value = Some(ConstantValue::F64(value));
                                 self.get_initializer_expr(value)
                             }
@@ -306,7 +306,7 @@ impl<'a> TypeScriptEnum<'a> {
 
 #[derive(Debug, Clone)]
 enum ConstantValue {
-    Numberic((String, f64)),
+    NumericLiteral((String, f64)),
     F64(f64),
     Identifier(String),
     String(String),
@@ -367,7 +367,7 @@ impl<'a> TypeScriptEnum<'a> {
             Expression::BinaryExpression(expr) => self.eval_binary_expression(expr, prev_members),
             Expression::UnaryExpression(expr) => self.eval_unary_expression(expr, prev_members),
             Expression::NumericLiteral(lit) => {
-                Some(ConstantValue::Numberic((lit.raw.to_string(), lit.value)))
+                Some(ConstantValue::NumericLiteral((lit.raw.to_string(), lit.value)))
             }
             Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value.to_string())),
             Expression::TemplateLiteral(lit) => {
@@ -395,15 +395,15 @@ impl<'a> TypeScriptEnum<'a> {
                 || matches!(right, ConstantValue::String(_)))
         {
             let left_string = match left {
-                ConstantValue::Numberic(left) => left.0.to_string(),
-                ConstantValue::String(left) => left,
+                ConstantValue::NumericLiteral((raw, _)) => raw.to_string(),
+                ConstantValue::String(str) => str,
                 ConstantValue::F64(v) => v.to_string(),
                 ConstantValue::Identifier(_) => unreachable!(),
             };
 
             let right_string = match right {
-                ConstantValue::Numberic(right) => right.0.to_string(),
-                ConstantValue::String(right) => right,
+                ConstantValue::NumericLiteral((raw, _)) => raw.to_string(),
+                ConstantValue::String(str) => str,
                 ConstantValue::F64(v) => v.to_string(),
                 ConstantValue::Identifier(_) => unreachable!(),
             };
@@ -412,14 +412,12 @@ impl<'a> TypeScriptEnum<'a> {
         }
 
         let left = match left {
-            ConstantValue::Numberic(left) => left.1,
-            ConstantValue::F64(v) => v,
+            ConstantValue::NumericLiteral((_, v)) | ConstantValue::F64(v) => v,
             ConstantValue::String(_) | ConstantValue::Identifier(_) => return None,
         };
 
         let right = match right {
-            ConstantValue::Numberic(right) => right.1,
-            ConstantValue::F64(v) => v,
+            ConstantValue::NumericLiteral((_, v)) | ConstantValue::F64(v) => v,
             ConstantValue::String(_) | ConstantValue::Identifier(_) => return None,
         };
 
@@ -458,7 +456,7 @@ impl<'a> TypeScriptEnum<'a> {
         let value = self.evaluate(&expr.argument, prev_members)?;
 
         let value = match value {
-            ConstantValue::Numberic((_raw, value)) => value,
+            ConstantValue::NumericLiteral((_raw, value)) => value,
             ConstantValue::F64(value) => value,
             ConstantValue::String(_) => {
                 // TODO: handle unary operators on strings correctly
