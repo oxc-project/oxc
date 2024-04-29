@@ -1655,6 +1655,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "rustc-hash",
+ "ryu-js",
  "serde",
 ]
 

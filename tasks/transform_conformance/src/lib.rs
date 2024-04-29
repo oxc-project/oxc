@@ -120,8 +120,6 @@ pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
     "transform-react-constant-elements",
 ];
 
-const EXCLUDE_TESTS: &[&str] = &["babel-plugin-transform-typescript/test/fixtures/enum"];
-
 const CONFORMANCE_SNAPSHOT: &str = "babel.snap.md";
 const OXC_CONFORMANCE_SNAPSHOT: &str = "oxc.snap.md";
 const EXEC_SNAPSHOT: &str = "babel_exec.snap.md";
@@ -185,9 +183,6 @@ impl TestRunner {
                             if !path.to_string_lossy().contains(filter) {
                                 return None;
                             }
-                        }
-                        if EXCLUDE_TESTS.iter().any(|p| path.to_string_lossy().contains(p)) {
-                            return None;
                         }
                         TestCaseKind::new(&cwd, path)
                             .filter(|test_case| !test_case.skip_test_case())

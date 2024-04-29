@@ -16,7 +16,6 @@ mod options;
 mod es2015;
 mod react;
 mod typescript;
-mod utils;
 
 mod helpers {
     pub mod module_imports;
@@ -223,6 +222,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     }
 
     fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
+        self.x0_typescript.transform_statement(stmt);
         walk_mut::walk_statement_mut(self, stmt);
     }
 

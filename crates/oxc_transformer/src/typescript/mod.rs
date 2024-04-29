@@ -1,5 +1,6 @@
 mod annotations;
 mod collector;
+mod conversions;
 mod diagnostics;
 mod r#enum;
 mod module;
@@ -14,7 +15,10 @@ use oxc_ast::ast::*;
 
 use crate::context::Ctx;
 
-use self::{annotations::TypeScriptAnnotations, collector::TypeScriptReferenceCollector};
+use self::{
+    annotations::TypeScriptAnnotations, collector::TypeScriptReferenceCollector,
+    r#enum::TypeScriptEnum,
+};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -51,6 +55,7 @@ pub struct TypeScript<'a> {
     ctx: Ctx<'a>,
 
     annotations: TypeScriptAnnotations<'a>,
+    r#enum: TypeScriptEnum<'a>,
     reference_collector: TypeScriptReferenceCollector<'a>,
 }
 
@@ -60,6 +65,7 @@ impl<'a> TypeScript<'a> {
 
         Self {
             annotations: TypeScriptAnnotations::new(&options, ctx),
+            r#enum: TypeScriptEnum::new(ctx),
             reference_collector: TypeScriptReferenceCollector::new(),
             options,
             ctx: Rc::clone(ctx),
@@ -141,6 +147,36 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_statements_on_exit(stmts);
     }
 
+    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>) {
+        let new_stmt = match stmt {
+            match_declaration!(Statement) => {
+                if let Declaration::TSEnumDeclaration(ts_enum_decl) = &stmt.to_declaration() {
+                    self.r#enum.transform_ts_enum(ts_enum_decl, false)
+                } else {
+                    None
+                }
+            }
+            match_module_declaration!(Statement) => {
+                if let ModuleDeclaration::ExportNamedDeclaration(decl) =
+                    stmt.to_module_declaration_mut()
+                {
+                    if let Some(Declaration::TSEnumDeclaration(ts_enum_decl)) = &decl.declaration {
+                        self.r#enum.transform_ts_enum(ts_enum_decl, true)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        };
+
+        if let Some(new_stmt) = new_stmt {
+            *stmt = new_stmt;
+        }
+    }
+
     pub fn transform_if_statement(&mut self, stmt: &mut IfStatement<'a>) {
         self.annotations.transform_if_statement(stmt);
     }
@@ -162,11 +198,6 @@ impl<'a> TypeScript<'a> {
                 if ts_import_equals.import_kind.is_value() =>
             {
                 *decl = self.transform_ts_import_equals(ts_import_equals);
-            }
-            Declaration::TSEnumDeclaration(ts_enum_declaration) => {
-                if let Some(expr) = self.transform_ts_enum(ts_enum_declaration) {
-                    *decl = expr;
-                }
             }
             _ => {}
         }

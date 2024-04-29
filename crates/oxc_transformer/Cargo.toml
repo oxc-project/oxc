@@ -29,6 +29,7 @@ oxc_syntax      = { workspace = true }
 rustc-hash = { workspace = true }
 indexmap   = { workspace = true }
 serde      = { workspace = true, features = ["derive"] }
+ryu-js     = { workspace = true }
 
 [dev-dependencies]
 oxc_parser  = { workspace = true }
