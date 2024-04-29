@@ -114,6 +114,7 @@ mod typescript {
     pub mod ban_ts_comment;
     pub mod ban_tslint_comment;
     pub mod ban_types;
+    pub mod consistent_indexed_object_style;
     pub mod consistent_type_definitions;
     pub mod no_duplicate_enum_values;
     pub mod no_empty_interface;
@@ -474,6 +475,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_enum_initializers,
     typescript::ban_types,
     typescript::consistent_type_definitions,
+    typescript::consistent_indexed_object_style,
     typescript::no_duplicate_enum_values,
     typescript::no_empty_interface,
     typescript::no_explicit_any,
