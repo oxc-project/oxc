@@ -58,8 +58,11 @@ pub fn get_write_expr<'a, 'b>(
     node_id: AstNodeId,
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b Expression<'a>> {
-    let parent = ctx.nodes().parent_kind(node_id)?;
-    match parent {
+    let parent = ctx.nodes().parent_node(node_id)?;
+    match parent.kind() {
+        AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_) => {
+            get_write_expr(parent.id(), ctx)
+        }
         AstKind::AssignmentExpression(assign_expr) => Some(&assign_expr.right),
         _ => None,
     }

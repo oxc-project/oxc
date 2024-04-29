@@ -82,7 +82,7 @@ const PLUGINS: &[&str] = &[
     // // ES2016
     // "babel-plugin-transform-exponentiation-operator",
     // // ES2015
-    // "babel-plugin-transform-arrow-functions",
+    "babel-plugin-transform-arrow-functions",
     // "babel-plugin-transform-function-name",
     // "babel-plugin-transform-shorthand-properties",
     // "babel-plugin-transform-sticky-regex",
@@ -109,7 +109,6 @@ const PLUGINS: &[&str] = &[
 
 pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
     "proposal-decorators",
-    "transform-arrow-functions",
     "transform-class-properties",
     "transform-classes",
     "transform-modules-commonjs",

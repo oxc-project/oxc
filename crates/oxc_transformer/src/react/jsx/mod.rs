@@ -516,8 +516,12 @@ impl<'a> ReactJsx<'a> {
     fn transform_jsx_member_expression(&self, expr: &JSXMemberExpression<'a>) -> Expression<'a> {
         let object = match &expr.object {
             JSXMemberExpressionObject::Identifier(ident) => {
-                let ident = IdentifierReference::new(SPAN, ident.name.clone());
-                self.ast().identifier_reference_expression(ident)
+                if ident.name == "this" {
+                    self.ast().this_expression(SPAN)
+                } else {
+                    let ident = IdentifierReference::new(SPAN, ident.name.clone());
+                    self.ast().identifier_reference_expression(ident)
+                }
             }
             JSXMemberExpressionObject::MemberExpression(expr) => {
                 self.transform_jsx_member_expression(expr)

@@ -13,6 +13,7 @@ mod compiler_assumptions;
 mod context;
 mod options;
 // Presets: <https://babel.dev/docs/presets>
+mod es2015;
 mod react;
 mod typescript;
 
@@ -22,6 +23,7 @@ mod helpers {
 
 use std::{path::Path, rc::Rc};
 
+use es2015::ES2015;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{
     ast::*,
@@ -31,8 +33,8 @@ use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 
 pub use crate::{
-    compiler_assumptions::CompilerAssumptions, options::TransformOptions, react::ReactOptions,
-    typescript::TypeScriptOptions,
+    compiler_assumptions::CompilerAssumptions, es2015::ES2015Options, options::TransformOptions,
+    react::ReactOptions, typescript::TypeScriptOptions,
 };
 
 use crate::{
@@ -46,6 +48,7 @@ pub struct Transformer<'a> {
     // NOTE: all callbacks must run in order.
     x0_typescript: TypeScript<'a>,
     x1_react: React<'a>,
+    x3_es2015: ES2015<'a>,
 }
 
 impl<'a> Transformer<'a> {
@@ -60,6 +63,7 @@ impl<'a> Transformer<'a> {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, &ctx),
             x1_react: React::new(options.react, &ctx),
+            x3_es2015: ES2015::new(options.es2015, &ctx),
         }
     }
 
@@ -109,8 +113,11 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
 
     fn visit_class(&mut self, class: &mut Class<'a>) {
         self.x0_typescript.transform_class(class);
+        self.x3_es2015.transform_class(class);
 
         walk_mut::walk_class_mut(self, class);
+
+        self.x3_es2015.transform_class_on_exit(class);
     }
 
     fn visit_class_body(&mut self, body: &mut ClassBody<'a>) {
@@ -134,8 +141,11 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         self.x0_typescript.transform_expression(expr);
         self.x1_react.transform_expression(expr);
+        self.x3_es2015.transform_expression(expr);
 
         walk_mut::walk_expression_mut(self, expr);
+
+        self.x3_es2015.transform_expression_on_exit(expr);
     }
 
     fn visit_formal_parameter(&mut self, param: &mut FormalParameter<'a>) {
@@ -157,7 +167,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
     fn visit_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
         self.x0_typescript.transform_jsx_opening_element(elem);
         self.x1_react.transform_jsx_opening_element(elem);
-
+        self.x3_es2015.transform_jsx_opening_element(elem);
         walk_mut::walk_jsx_opening_element_mut(self, elem);
     }
 
@@ -191,6 +201,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         walk_mut::walk_statements_mut(self, stmts);
 
         self.x0_typescript.transform_statements_on_exit(stmts);
+        self.x3_es2015.transform_statements_on_exit(stmts);
     }
 
     fn visit_tagged_template_expression(&mut self, expr: &mut TaggedTemplateExpression<'a>) {
@@ -217,7 +228,11 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
 
     fn visit_declaration(&mut self, decl: &mut Declaration<'a>) {
         self.x0_typescript.transform_declaration(decl);
+        self.x3_es2015.transform_declaration(decl);
+
         walk_mut::walk_declaration_mut(self, decl);
+
+        self.x3_es2015.transform_declaration_on_exit(decl);
     }
 
     fn visit_if_statement(&mut self, stmt: &mut IfStatement<'a>) {

@@ -49,7 +49,7 @@ once_cell           = { workspace = true }
 memchr              = { workspace = true }
 json-strip-comments = { workspace = true }
 
-static_assertions   = { workspace = true }
+static_assertions = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
