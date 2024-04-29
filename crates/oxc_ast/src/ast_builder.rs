@@ -1914,7 +1914,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     pub fn ts_type_predicate_name_this(&self, ty: TSThisType) -> TSTypePredicateName<'a> {
-        TSTypePredicateName::This(ty)
+        TSTypePredicateName::This(self.alloc(ty))
     }
 
     pub fn ts_type_predicate_name_identifier(
