@@ -99,8 +99,8 @@ pub enum JSXElementName<'a> {
 pub struct JSXNamespacedName<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub namespace: JSXIdentifier<'a>,
-    pub property: JSXIdentifier<'a>,
+    pub namespace: Box<'a, JSXIdentifier<'a>>,
+    pub property: Box<'a, JSXIdentifier<'a>>,
 }
 
 impl<'a> std::fmt::Display for JSXNamespacedName<'a> {
@@ -117,11 +117,11 @@ pub struct JSXMemberExpression<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub object: JSXMemberExpressionObject<'a>,
-    pub property: JSXIdentifier<'a>,
+    pub property: Box<'a, JSXIdentifier<'a>>,
 }
 
 impl<'a> JSXMemberExpression<'a> {
-    pub fn get_object_identifier(&self) -> &JSXIdentifier {
+    pub fn get_object_identifier(&self) -> &Box<'a, JSXIdentifier> {
         match &self.object {
             JSXMemberExpressionObject::Identifier(ident) => ident,
             JSXMemberExpressionObject::MemberExpression(expr) => expr.get_object_identifier(),

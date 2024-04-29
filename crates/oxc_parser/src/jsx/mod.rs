@@ -144,7 +144,7 @@ impl<'a> ParserImpl<'a> {
                 .map(JSXElementName::MemberExpression);
         }
 
-        Ok(JSXElementName::Identifier(self.ast.alloc(identifier)))
+        Ok(JSXElementName::Identifier(identifier))
     }
 
     /// `JSXMemberExpression` :
@@ -153,10 +153,10 @@ impl<'a> ParserImpl<'a> {
     fn parse_jsx_member_expression(
         &mut self,
         span: Span,
-        object: JSXIdentifier<'a>,
+        object: Box<'a, JSXIdentifier<'a>>,
     ) -> Result<Box<'a, JSXMemberExpression<'a>>> {
         let mut span = span;
-        let mut object = JSXMemberExpressionObject::Identifier(self.ast.alloc(object));
+        let mut object = JSXMemberExpressionObject::Identifier(object);
         let mut property = None;
 
         while self.eat(Kind::Dot) && !self.at(Kind::Eof) {
@@ -337,7 +337,7 @@ impl<'a> ParserImpl<'a> {
             )));
         }
 
-        Ok(JSXAttributeName::Identifier(self.ast.alloc(identifier)))
+        Ok(JSXAttributeName::Identifier(identifier))
     }
 
     fn parse_jsx_attribute_value(&mut self) -> Result<JSXAttributeValue<'a>> {
@@ -364,7 +364,7 @@ impl<'a> ParserImpl<'a> {
     ///   `IdentifierStart`
     ///   `JSXIdentifier` `IdentifierPart`
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
-    fn parse_jsx_identifier(&mut self) -> Result<JSXIdentifier<'a>> {
+    fn parse_jsx_identifier(&mut self) -> Result<Box<'a, JSXIdentifier<'a>>> {
         let span = self.start_span();
         if !self.at(Kind::Ident) && !self.cur_kind().is_all_keyword() {
             return Err(self.unexpected());
