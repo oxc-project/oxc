@@ -490,6 +490,7 @@ impl<'a> TypeScriptEnum<'a> {
 ///   b = A.a.toString(),
 ///   d = A.c,
 /// }
+/// ```
 struct IdentifierReferenceRename<'a> {
     enum_name: Atom<'a>,
     ctx: Ctx<'a>,
