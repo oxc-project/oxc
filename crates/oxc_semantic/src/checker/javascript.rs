@@ -11,8 +11,8 @@ use oxc_diagnostics::{
 use oxc_span::{Atom, CompactStr, GetSpan, ModuleKind, Span};
 use oxc_syntax::{
     module_record::ExportLocalName,
+    number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
-    NumberBase,
 };
 use phf::{phf_set, Set};
 use rustc_hash::FxHashMap;

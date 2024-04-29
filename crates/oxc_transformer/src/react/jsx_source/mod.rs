@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use oxc_ast::ast::*;
 use oxc_span::{Span, SPAN};
-use oxc_syntax::NumberBase;
+use oxc_syntax::number::NumberBase;
 
 use crate::context::Ctx;
 

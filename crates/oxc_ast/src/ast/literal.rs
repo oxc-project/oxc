@@ -10,7 +10,7 @@ use std::{
 
 use bitflags::bitflags;
 use oxc_span::{Atom, Span};
-use oxc_syntax::{BigintBase, NumberBase};
+use oxc_syntax::number::{BigintBase, NumberBase};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]

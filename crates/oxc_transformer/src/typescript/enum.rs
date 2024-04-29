@@ -4,8 +4,8 @@ use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
+    number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
-    NumberBase,
 };
 use rustc_hash::FxHashMap;
 use ryu_js::Buffer;

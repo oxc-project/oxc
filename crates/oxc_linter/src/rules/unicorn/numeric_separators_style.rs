@@ -152,18 +152,18 @@ impl Rule for NumericSeparatorsStyle {
 
 impl NumericSeparatorsStyle {
     fn format_number(&self, number: &NumericLiteral) -> String {
-        use oxc_syntax::NumberBase;
+        use oxc_syntax::number::NumberBase;
 
         match number.base {
             NumberBase::Binary => self.format_binary(number.raw),
-            NumberBase::Decimal | oxc_syntax::NumberBase::Float => self.format_decimal(number.raw),
+            NumberBase::Decimal | NumberBase::Float => self.format_decimal(number.raw),
             NumberBase::Hex => self.format_hex(number.raw),
             NumberBase::Octal => self.format_octal(number.raw),
         }
     }
 
     fn format_bigint(&self, number: &BigIntLiteral, raw: &str) -> String {
-        use oxc_syntax::BigintBase;
+        use oxc_syntax::number::BigintBase;
 
         let raw_without_bigint_n_suffix = &raw[..raw.len() - 1];
         let mut formatted = match number.base {

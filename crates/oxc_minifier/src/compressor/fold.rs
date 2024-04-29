@@ -9,8 +9,8 @@ use num_bigint::BigInt;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
+    number::NumberBase,
     operator::{BinaryOperator, LogicalOperator, UnaryOperator},
-    NumberBase,
 };
 
 use super::ast_util::{

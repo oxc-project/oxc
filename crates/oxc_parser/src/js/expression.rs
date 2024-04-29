@@ -4,7 +4,11 @@ use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, Span};
-use oxc_syntax::{operator::BinaryOperator, precedence::Precedence, BigintBase, NumberBase};
+use oxc_syntax::{
+    number::{BigintBase, NumberBase},
+    operator::BinaryOperator,
+    precedence::Precedence,
+};
 
 use super::{
     function::IsParenthesizedArrowFunction,
