@@ -759,7 +759,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         tag: Expression<'a>,
-        quasi: TemplateLiteral<'a>,
+        quasi: Box<'a, TemplateLiteral<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> Expression<'a> {
         Expression::TaggedTemplateExpression(self.alloc(TaggedTemplateExpression {

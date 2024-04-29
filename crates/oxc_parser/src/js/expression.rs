@@ -439,7 +439,7 @@ impl<'a> ParserImpl<'a> {
         if in_optional_chain {
             self.error(diagnostics::OptionalChainTaggedTemplate(quasi.span));
         }
-        Ok(self.ast.tagged_template_expression(span, lhs, quasi, type_parameters))
+        Ok(self.ast.tagged_template_expression(span, lhs, self.ast.alloc(quasi), type_parameters))
     }
 
     pub(crate) fn parse_template_element(&mut self, tagged: bool) -> TemplateElement<'a> {
