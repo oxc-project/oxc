@@ -6,3 +6,19 @@ input_file: crates/oxc_semantic/tests/cfg_fixtures/conditional_expression.js
 bb0: {
 
 }
+
+bb1: {
+
+}
+
+bb2: {
+
+}
+
+bb3: {
+
+}
+
+bb4: {
+	Unreachable()
+}
