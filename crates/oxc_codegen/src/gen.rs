@@ -5,9 +5,9 @@ use oxc_span::GetSpan;
 use oxc_syntax::{
     identifier::{LS, PS},
     keyword::is_keyword,
+    number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
     precedence::{GetPrecedence, Precedence},
-    NumberBase,
 };
 
 use super::{Codegen, Context, Operator, Separator};

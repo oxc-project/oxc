@@ -10,10 +10,10 @@ use std::mem;
 use oxc_allocator::{Allocator, Box, String, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span, SPAN};
 use oxc_syntax::{
+    number::{BigintBase, NumberBase},
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
-    BigintBase, NumberBase,
 };
 
 #[allow(clippy::wildcard_imports)]

@@ -15,9 +15,9 @@ use oxc_ast::visit::walk_mut::{
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
 use oxc_span::Span;
 use oxc_syntax::{
+    number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
     precedence::GetPrecedence,
-    NumberBase,
 };
 
 pub use self::options::CompressOptions;
