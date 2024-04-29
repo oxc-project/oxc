@@ -1298,8 +1298,8 @@ impl<'a> AstBuilder<'a> {
     pub fn jsx_namespaced_name(
         &self,
         span: Span,
-        namespace: JSXIdentifier<'a>,
-        property: JSXIdentifier<'a>,
+        namespace: Box<'a, JSXIdentifier<'a>>,
+        property: Box<'a, JSXIdentifier<'a>>,
     ) -> Box<'a, JSXNamespacedName<'a>> {
         self.alloc(JSXNamespacedName { span, namespace, property })
     }
@@ -1308,7 +1308,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         object: JSXMemberExpressionObject<'a>,
-        property: JSXIdentifier<'a>,
+        property: Box<'a, JSXIdentifier<'a>>,
     ) -> Box<'a, JSXMemberExpression<'a>> {
         self.alloc(JSXMemberExpression { span, object, property })
     }
@@ -1350,8 +1350,8 @@ impl<'a> AstBuilder<'a> {
         self.alloc(JSXSpreadAttribute { span, argument })
     }
 
-    pub fn jsx_identifier(&self, span: Span, name: Atom<'a>) -> JSXIdentifier<'a> {
-        JSXIdentifier { span, name }
+    pub fn jsx_identifier(&self, span: Span, name: Atom<'a>) -> Box<'a, JSXIdentifier<'a>> {
+        self.alloc(JSXIdentifier { span, name })
     }
 
     pub fn jsx_text(&self, span: Span, value: Atom<'a>) -> Box<'a, JSXText<'a>> {
