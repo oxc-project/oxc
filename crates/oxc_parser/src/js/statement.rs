@@ -151,7 +151,11 @@ impl<'a> ParserImpl<'a> {
             if self.eat(Kind::Colon) {
                 let label = LabelIdentifier { span: ident.span, name: ident.name.clone() };
                 let body = self.parse_statement_list_item(StatementContext::Label)?;
-                return Ok(self.ast.labeled_statement(self.end_span(span), label, body));
+                return Ok(self.ast.labeled_statement(
+                    self.end_span(span),
+                    self.ast.alloc(label),
+                    body,
+                ));
             }
         }
         self.parse_expression_statement(span, expr)

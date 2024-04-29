@@ -1731,7 +1731,7 @@ impl<'a> ForStatementLeft<'a> {
 pub struct ContinueStatement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub label: Option<LabelIdentifier<'a>>,
+    pub label: Option<Box<'a, LabelIdentifier<'a>>>,
 }
 
 /// Break Statement
@@ -1741,7 +1741,7 @@ pub struct ContinueStatement<'a> {
 pub struct BreakStatement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub label: Option<LabelIdentifier<'a>>,
+    pub label: Option<Box<'a, LabelIdentifier<'a>>>,
 }
 
 /// Return Statement
@@ -1799,7 +1799,7 @@ impl<'a> SwitchCase<'a> {
 pub struct LabeledStatement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub label: LabelIdentifier<'a>,
+    pub label: Box<'a, LabelIdentifier<'a>>,
     pub body: Statement<'a>,
 }
 

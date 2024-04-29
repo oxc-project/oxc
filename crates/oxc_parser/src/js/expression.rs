@@ -83,13 +83,13 @@ impl<'a> ParserImpl<'a> {
         Ok(BindingIdentifier { span, name, symbol_id: Cell::default() })
     }
 
-    pub(crate) fn parse_label_identifier(&mut self) -> Result<LabelIdentifier<'a>> {
+    pub(crate) fn parse_label_identifier(&mut self) -> Result<Box<'a, LabelIdentifier<'a>>> {
         if !self.cur_kind().is_label_identifier(self.ctx.has_yield(), self.ctx.has_await()) {
             return Err(self.unexpected());
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
-        Ok(LabelIdentifier { span, name })
+        Ok(self.ast.alloc(LabelIdentifier { span, name }))
     }
 
     pub(crate) fn parse_identifier_name(&mut self) -> Result<IdentifierName<'a>> {
