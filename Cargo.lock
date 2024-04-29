@@ -1621,7 +1621,6 @@ version = "0.12.5"
 dependencies = [
  "bitflags 2.5.0",
  "dashmap",
- "indexmap",
  "oxc_index",
  "oxc_span",
  "phf",

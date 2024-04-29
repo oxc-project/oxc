@@ -3,7 +3,6 @@
 use std::{fmt, hash::BuildHasherDefault, path::PathBuf, sync::Arc};
 
 use dashmap::DashMap;
-use indexmap::IndexMap;
 use rustc_hash::{FxHashMap, FxHasher};
 
 use oxc_span::{CompactStr, Span};
@@ -32,7 +31,7 @@ pub struct ModuleRecord {
     ///   import ModuleSpecifier
     ///   export ExportFromClause FromClause
     /// Keyed by ModuleSpecifier, valued by all node occurrences
-    pub requested_modules: IndexMap<CompactStr, Vec<RequestedModule>, BuildHasherDefault<FxHasher>>,
+    pub requested_modules: FxHashMap<CompactStr, Vec<RequestedModule>>,
 
     /// `[[LoadedModules]]`
     ///
