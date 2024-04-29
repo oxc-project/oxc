@@ -22,7 +22,7 @@ struct ConsistentIndexedObjectStyleDiagnostic(
 
 #[derive(Debug, Default, Clone)]
 pub struct ConsistentIndexedObjectStyle {
-    config: ConsistentIndexedObjectStyleConfig,
+    is_index_signature: bool,
 }
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
@@ -55,7 +55,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                 _ => ConsistentIndexedObjectStyleConfig::IndexSignature,
             },
         );
-        Self { config }
+        Self { is_index_signature: config == ConsistentIndexedObjectStyleConfig::IndexSignature }
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -66,11 +66,9 @@ impl Rule for ConsistentIndexedObjectStyle {
                         if let TSSignature::TSIndexSignature(idx) = signature {
                             match &idx.type_annotation.type_annotation {
                                 TSType::TSTypeLiteral(lit) => {
-                                    for member in &lit.members {
-                                        if let TSSignature::TSIndexSignature(_) = member {
-                                            if self.config
-                                                == ConsistentIndexedObjectStyleConfig::Record
-                                            {
+                                    if !self.is_index_signature {
+                                        for member in &lit.members {
+                                            if let TSSignature::TSIndexSignature(_) = member {
                                                 ctx.diagnostic(
                                                     ConsistentIndexedObjectStyleDiagnostic(
                                                         "record",
@@ -83,16 +81,19 @@ impl Rule for ConsistentIndexedObjectStyle {
                                     }
                                 }
                                 TSType::TSTypeReference(tref) => {
-                                    if let TSTypeName::IdentifierReference(iden) = &tref.type_name {
-                                        if iden.name != decl.id.name
-                                            && self.config
-                                                == ConsistentIndexedObjectStyleConfig::Record
+                                    if !self.is_index_signature {
+                                        if let TSTypeName::IdentifierReference(iden) =
+                                            &tref.type_name
                                         {
-                                            ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
-                                                "record",
-                                                "index signature",
-                                                idx.span,
-                                            ));
+                                            if iden.name != decl.id.name {
+                                                ctx.diagnostic(
+                                                    ConsistentIndexedObjectStyleDiagnostic(
+                                                        "record",
+                                                        "index signature",
+                                                        idx.span,
+                                                    ),
+                                                );
+                                            }
                                         }
                                     }
                                 }
@@ -118,28 +119,29 @@ impl Rule for ConsistentIndexedObjectStyle {
                                     if let TSSignature::TSIndexSignature(sig) = member {
                                         match &sig.type_annotation.type_annotation {
                                             TSType::TSTypeReference(tref) => {
-                                                if let TSTypeName::IdentifierReference(i) = &tref.type_name
+                                                if let TSTypeName::IdentifierReference(i) =
+                                                    &tref.type_name
                                                 {
                                                     if i.name != al.id.name {
                                                         ctx.diagnostic(
                                                             ConsistentIndexedObjectStyleDiagnostic(
                                                                 "record",
-                                                            "index signature",
-                                                            sig.span
-                                                        ),
+                                                                "index signature",
+                                                                sig.span,
+                                                            ),
                                                         );
                                                     }
                                                 }
                                             }
                                             _ => {
-                                                if self.config
-                                                    != ConsistentIndexedObjectStyleConfig::IndexSignature
-                                                {
-                                                    ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
-                                                        "record",
-                                                    "index signature",
-                                                        sig.span,
-                                                    ));
+                                                if !self.is_index_signature {
+                                                    ctx.diagnostic(
+                                                        ConsistentIndexedObjectStyleDiagnostic(
+                                                            "record",
+                                                            "index signature",
+                                                            sig.span,
+                                                        ),
+                                                    );
                                                 }
                                             }
                                         }
@@ -160,13 +162,17 @@ impl Rule for ConsistentIndexedObjectStyle {
                                                 if let TSTypeName::IdentifierReference(i) =
                                                     &re.type_name
                                                 {
-                                                    if i.name == al.id.name && self.config == ConsistentIndexedObjectStyleConfig::IndexSignature {
-                                                    ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
-                                                        "index signature",
-                                                        "record",
-                                                        re.span
-                                                ));
-                                                }
+                                                    if i.name == al.id.name
+                                                        && self.is_index_signature
+                                                    {
+                                                        ctx.diagnostic(
+                                                            ConsistentIndexedObjectStyleDiagnostic(
+                                                                "index signature",
+                                                                "record",
+                                                                re.span,
+                                                            ),
+                                                        );
+                                                    }
                                                 }
                                             }
                                         }
@@ -186,9 +192,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                                         }
                                     }
                                     _ => {
-                                        if self.config
-                                            != ConsistentIndexedObjectStyleConfig::IndexSignature
-                                        {
+                                        if !self.is_index_signature {
                                             ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
                                                 "record",
                                                 "index signature",
@@ -205,7 +209,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                     if let TSTypeName::IdentifierReference(iden) = &decl.type_name {
                         if iden.name == "Record"
                             && decl.type_parameters.is_some()
-                            && self.config != ConsistentIndexedObjectStyleConfig::Record
+                            && self.is_index_signature
                         {
                             ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
                                 "index signature",
@@ -217,34 +221,34 @@ impl Rule for ConsistentIndexedObjectStyle {
 
                     for param in &decl.type_parameters {
                         for p in &param.params {
-                            if let TSType::TSTypeLiteral(lit) = p {
-                                if lit.members.len() == 1 {
-                                    for member in &lit.members {
-                                        if let TSSignature::TSIndexSignature(idx) = member {
-                                            if self.config
-                                            != ConsistentIndexedObjectStyleConfig::IndexSignature
-                                        {
-                                            ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
-                                                "record",
-                                                "index signature",
-                                                idx.span,
-                                            ));
-                                        }
+                            if !self.is_index_signature {
+                                if let TSType::TSTypeLiteral(lit) = p {
+                                    if lit.members.len() == 1 {
+                                        for member in &lit.members {
+                                            if let TSSignature::TSIndexSignature(idx) = member {
+                                                ctx.diagnostic(
+                                                    ConsistentIndexedObjectStyleDiagnostic(
+                                                        "record",
+                                                        "index signature",
+                                                        idx.span,
+                                                    ),
+                                                );
+                                            }
                                         }
                                     }
                                 }
                             }
 
-                            if let TSType::TSTypeReference(r) = p {
-                                if let TSTypeName::IdentifierReference(iden) = &r.type_name {
-                                    if self.config != ConsistentIndexedObjectStyleConfig::Record
-                                        && iden.name == "Record"
-                                    {
-                                        ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
-                                            "index signature",
-                                            "record",
-                                            r.span,
-                                        ));
+                            if self.is_index_signature {
+                                if let TSType::TSTypeReference(r) = p {
+                                    if let TSTypeName::IdentifierReference(iden) = &r.type_name {
+                                        if iden.name == "Record" {
+                                            ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
+                                                "index signature",
+                                                "record",
+                                                r.span,
+                                            ));
+                                        }
                                     }
                                 }
                             }
@@ -257,31 +261,35 @@ impl Rule for ConsistentIndexedObjectStyle {
                 for body in &prog.body {
                     if let Statement::Declaration(Declaration::FunctionDeclaration(func)) = body {
                         if let Some(return_type) = &func.return_type {
-                            if let TSType::TSTypeLiteral(lit) = &return_type.type_annotation {
-                                if lit.members.len() == 1 {
-                                    for member in &lit.members {
-                                        if let TSSignature::TSIndexSignature(sig) = member {
-                                            if self.config != ConsistentIndexedObjectStyleConfig::IndexSignature {
-                                                                    ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
-                                                                        "record",
-                                                                        "index signature",
-                                                sig.span
-                                            ));
-                                                                }
+                            if !self.is_index_signature {
+                                if let TSType::TSTypeLiteral(lit) = &return_type.type_annotation {
+                                    if lit.members.len() == 1 {
+                                        for member in &lit.members {
+                                            if let TSSignature::TSIndexSignature(sig) = member {
+                                                ctx.diagnostic(
+                                                    ConsistentIndexedObjectStyleDiagnostic(
+                                                        "record",
+                                                        "index signature",
+                                                        sig.span,
+                                                    ),
+                                                );
+                                            }
                                         }
                                     }
                                 }
                             }
-                            if let TSType::TSTypeReference(tref) = &return_type.type_annotation {
-                                if let TSTypeName::IdentifierReference(r) = &tref.type_name {
-                                    if self.config != ConsistentIndexedObjectStyleConfig::Record
-                                        && r.name == "Record"
-                                    {
-                                        ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
-                                            "index signature",
-                                            "record",
-                                            tref.span,
-                                        ));
+
+                            if self.is_index_signature {
+                                if let TSType::TSTypeReference(tref) = &return_type.type_annotation
+                                {
+                                    if let TSTypeName::IdentifierReference(r) = &tref.type_name {
+                                        if r.name == "Record" {
+                                            ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
+                                                "index signature",
+                                                "record",
+                                                tref.span,
+                                            ));
+                                        }
                                     }
                                 }
                             }
@@ -289,35 +297,41 @@ impl Rule for ConsistentIndexedObjectStyle {
 
                         for param in &func.params.items {
                             if let Some(ts_type_annotation) = &param.pattern.type_annotation {
-                                if let TSType::TSTypeLiteral(lit) =
-                                    &ts_type_annotation.type_annotation
-                                {
-                                    if lit.members.len() == 1 {
-                                        for member in &lit.members {
-                                            if let TSSignature::TSIndexSignature(sig) = member {
-                                                if self.config != ConsistentIndexedObjectStyleConfig::IndexSignature {
-                                                                    ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
-                                                                        "record",
-                                                                        "index signature",
-                                                                        sig.span));
-                                                                }
+                                if !self.is_index_signature {
+                                    if let TSType::TSTypeLiteral(lit) =
+                                        &ts_type_annotation.type_annotation
+                                    {
+                                        if lit.members.len() == 1 {
+                                            for member in &lit.members {
+                                                if let TSSignature::TSIndexSignature(sig) = member {
+                                                    ctx.diagnostic(
+                                                        ConsistentIndexedObjectStyleDiagnostic(
+                                                            "record",
+                                                            "index signature",
+                                                            sig.span,
+                                                        ),
+                                                    );
+                                                }
                                             }
                                         }
                                     }
                                 }
 
-                                if let TSType::TSTypeReference(tref) =
-                                    &ts_type_annotation.type_annotation
-                                {
-                                    if let TSTypeName::IdentifierReference(r) = &tref.type_name {
-                                        if self.config != ConsistentIndexedObjectStyleConfig::Record
-                                            && r.name == "Record"
+                                if self.is_index_signature {
+                                    if let TSType::TSTypeReference(tref) =
+                                        &ts_type_annotation.type_annotation
+                                    {
+                                        if let TSTypeName::IdentifierReference(r) = &tref.type_name
                                         {
-                                            ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
-                                                "index signature",
-                                                "record",
-                                                tref.span,
-                                            ));
+                                            if r.name == "Record" {
+                                                ctx.diagnostic(
+                                                    ConsistentIndexedObjectStyleDiagnostic(
+                                                        "index signature",
+                                                        "record",
+                                                        tref.span,
+                                                    ),
+                                                );
+                                            }
                                         }
                                     }
                                 }
