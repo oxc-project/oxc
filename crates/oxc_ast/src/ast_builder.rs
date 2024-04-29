@@ -1329,8 +1329,8 @@ impl<'a> AstBuilder<'a> {
         self.alloc(JSXSpreadChild { span, expression })
     }
 
-    pub fn jsx_empty_expression(&self, span: Span) -> JSXEmptyExpression {
-        JSXEmptyExpression { span }
+    pub fn jsx_empty_expression(&self, span: Span) -> Box<'a, JSXEmptyExpression> {
+        self.alloc(JSXEmptyExpression { span })
     }
 
     pub fn jsx_attribute(
