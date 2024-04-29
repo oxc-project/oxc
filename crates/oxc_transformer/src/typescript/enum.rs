@@ -4,14 +4,12 @@ use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
-    number::{NumberBase, ToJsString},
+    number::{NumberBase, ToJsInt32, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
 use rustc_hash::FxHashMap;
 
 use crate::context::Ctx;
-
-use super::conversions::{f64_to_int32, f64_to_uint32};
 
 pub struct TypeScriptEnum<'a> {
     ctx: Ctx<'a>,
@@ -376,7 +374,7 @@ impl<'a> TypeScriptEnum<'a> {
         }
     }
 
-    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
+    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss, clippy::cast_sign_loss)]
     fn eval_binary_expression(
         &self,
         expr: &BinaryExpression<'a>,
@@ -414,22 +412,22 @@ impl<'a> TypeScriptEnum<'a> {
 
         match expr.operator {
             BinaryOperator::ShiftRight => Some(ConstantValue::Number(f64::from(
-                f64_to_int32(left).wrapping_shr(f64_to_uint32(right)),
+                left.to_js_int_32().wrapping_shr(right.to_js_int_32() as u32),
             ))),
             BinaryOperator::ShiftRightZeroFill => Some(ConstantValue::Number(f64::from(
-                f64_to_uint32(left).wrapping_shr(f64_to_uint32(right)),
+                (left.to_js_int_32() as u32).wrapping_shr(right.to_js_int_32() as u32),
             ))),
             BinaryOperator::ShiftLeft => Some(ConstantValue::Number(f64::from(
-                f64_to_int32(left).wrapping_shl(f64_to_uint32(right)),
+                left.to_js_int_32().wrapping_shl(right.to_js_int_32() as u32),
             ))),
             BinaryOperator::BitwiseXOR => {
-                Some(ConstantValue::Number(f64::from(f64_to_int32(left) ^ f64_to_int32(right))))
+                Some(ConstantValue::Number(f64::from(left.to_js_int_32() ^ right.to_js_int_32())))
             }
             BinaryOperator::BitwiseOR => {
-                Some(ConstantValue::Number(f64::from(f64_to_int32(left) | f64_to_int32(right))))
+                Some(ConstantValue::Number(f64::from(left.to_js_int_32() | right.to_js_int_32())))
             }
             BinaryOperator::BitwiseAnd => {
-                Some(ConstantValue::Number(f64::from(f64_to_int32(left) & f64_to_int32(right))))
+                Some(ConstantValue::Number(f64::from(left.to_js_int_32() & right.to_js_int_32())))
             }
             BinaryOperator::Multiplication => Some(ConstantValue::Number(left * right)),
             BinaryOperator::Division => Some(ConstantValue::Number(left / right)),
@@ -467,7 +465,7 @@ impl<'a> TypeScriptEnum<'a> {
             UnaryOperator::UnaryPlus => Some(ConstantValue::Number(value)),
             UnaryOperator::UnaryNegation => Some(ConstantValue::Number(-value)),
             UnaryOperator::BitwiseNot => {
-                Some(ConstantValue::Number(f64::from(!f64_to_int32(value))))
+                Some(ConstantValue::Number(f64::from(!value.to_js_int_32())))
             }
             _ => None,
         }
