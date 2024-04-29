@@ -1323,7 +1323,7 @@ pub enum AssignmentTargetProperty<'a> {
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub binding: IdentifierReference<'a>,
+    pub binding: Box<'a, IdentifierReference<'a>>,
     pub init: Option<Expression<'a>>,
 }
 
