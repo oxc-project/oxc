@@ -266,14 +266,18 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    pub fn break_statement(&self, span: Span, label: Option<LabelIdentifier<'a>>) -> Statement<'a> {
+    pub fn break_statement(
+        &self,
+        span: Span,
+        label: Option<Box<'a, LabelIdentifier<'a>>>,
+    ) -> Statement<'a> {
         Statement::BreakStatement(self.alloc(BreakStatement { span, label }))
     }
 
     pub fn continue_statement(
         &self,
         span: Span,
-        label: Option<LabelIdentifier<'a>>,
+        label: Option<Box<'a, LabelIdentifier<'a>>>,
     ) -> Statement<'a> {
         Statement::ContinueStatement(self.alloc(ContinueStatement { span, label }))
     }
@@ -353,7 +357,7 @@ impl<'a> AstBuilder<'a> {
     pub fn labeled_statement(
         &self,
         span: Span,
-        label: LabelIdentifier<'a>,
+        label: Box<'a, LabelIdentifier<'a>>,
         body: Statement<'a>,
     ) -> Statement<'a> {
         Statement::LabeledStatement(self.alloc(LabeledStatement { span, label, body }))
