@@ -1,4 +1,4 @@
-Passed: 291/364
+Passed: 293/364
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -66,11 +66,9 @@ Passed: 291/364
 # babel-preset-react (8/9)
 * preset-options/development-runtime-automatic/input.js
 
-# babel-plugin-transform-react-jsx (139/143)
+# babel-plugin-transform-react-jsx (141/143)
 * autoImport/complicated-scope-module/input.js
-* react/weird-symbols/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
-* react-automatic/weird-symbols/input.js
 
 # babel-plugin-transform-react-display-name (15/16)
 * display-name/nested/input.js
