@@ -111,6 +111,7 @@ pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
     "proposal-decorators",
     "transform-class-properties",
     "transform-classes",
+    "transform-destructuring",
     "transform-modules-commonjs",
     "transform-object-rest-spread",
     "transform-optional-chaining",

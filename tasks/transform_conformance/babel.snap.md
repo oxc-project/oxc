@@ -1,4 +1,4 @@
-Passed: 294/364
+Passed: 294/363
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -22,7 +22,7 @@ Passed: 294/364
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (118/156)
+# babel-plugin-transform-typescript (118/155)
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
 * enum/mix-references/input.ts
@@ -59,7 +59,6 @@ Passed: 294/364
 * optimize-const-enums/local-shadowed/input.ts
 * optimize-const-enums/merged/input.ts
 * optimize-const-enums/merged-exported/input.ts
-* regression/10338/input.ts
 * regression/15768/input.ts
 
 # babel-preset-react (8/9)
