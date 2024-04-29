@@ -133,7 +133,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// [Import Attributes](https://tc39.es/proposal-import-attributes)
-    fn parse_import_attributes(&mut self) -> Result<Option<WithClause<'a>>> {
+    fn parse_import_attributes(&mut self) -> Result<Option<Box<'a, WithClause<'a>>>> {
         let attributes_keyword = match self.cur_kind() {
             Kind::Assert if !self.cur_token().is_on_new_line => self.parse_identifier_name()?,
             Kind::With => self.parse_identifier_name()?,
@@ -147,7 +147,11 @@ impl<'a> ParserImpl<'a> {
         let with_entries = AssertEntries::parse(self)?.elements;
         self.ctx = ctx;
 
-        Ok(Some(WithClause { span: self.end_span(span), attributes_keyword, with_entries }))
+        Ok(Some(self.ast.alloc(WithClause {
+            span: self.end_span(span),
+            attributes_keyword,
+            with_entries,
+        })))
     }
 
     pub(crate) fn parse_ts_export_assignment_declaration(

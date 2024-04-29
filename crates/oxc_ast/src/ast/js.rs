@@ -2652,7 +2652,7 @@ impl<'a> ModuleDeclaration<'a> {
         }
     }
 
-    pub fn with_clause(&self) -> Option<&WithClause<'a>> {
+    pub fn with_clause(&self) -> Option<&Box<'a, WithClause<'a>>> {
         match self {
             Self::ImportDeclaration(decl) => decl.with_clause.as_ref(),
             Self::ExportAllDeclaration(decl) => decl.with_clause.as_ref(),
@@ -2701,7 +2701,7 @@ pub struct ImportDeclaration<'a> {
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
     pub source: StringLiteral<'a>,
     /// Some(vec![]) for empty assertion
-    pub with_clause: Option<WithClause<'a>>,
+    pub with_clause: Option<Box<'a, WithClause<'a>>>,
     /// `import type { foo } from 'bar'`
     pub import_kind: ImportOrExportKind,
 }
@@ -2810,7 +2810,7 @@ pub struct ExportNamedDeclaration<'a> {
     /// `export type { foo }`
     pub export_kind: ImportOrExportKind,
     /// Some(vec![]) for empty assertion
-    pub with_clause: Option<WithClause<'a>>,
+    pub with_clause: Option<Box<'a, WithClause<'a>>>,
 }
 
 impl<'a> ExportNamedDeclaration<'a> {
@@ -2850,8 +2850,8 @@ pub struct ExportAllDeclaration<'a> {
     pub span: Span,
     pub exported: Option<ModuleExportName<'a>>,
     pub source: StringLiteral<'a>,
-    pub with_clause: Option<WithClause<'a>>, // Some(vec![]) for empty assertion
-    pub export_kind: ImportOrExportKind,     // `export type *`
+    pub with_clause: Option<Box<'a, WithClause<'a>>>, // Some(vec![]) for empty assertion
+    pub export_kind: ImportOrExportKind,              // `export type *`
 }
 
 impl<'a> ExportAllDeclaration<'a> {
