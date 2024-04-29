@@ -401,7 +401,7 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
-    pub(crate) fn parse_ts_this_parameter(&mut self) -> Result<TSThisParameter<'a>> {
+    pub(crate) fn parse_ts_this_parameter(&mut self) -> Result<Box<'a, TSThisParameter<'a>>> {
         let span = self.start_span();
 
         let this = {

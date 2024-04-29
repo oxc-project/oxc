@@ -854,8 +854,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         this: IdentifierName<'a>,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    ) -> TSThisParameter<'a> {
-        TSThisParameter { span, this, type_annotation }
+    ) -> Box<'a, TSThisParameter<'a>> {
+        self.alloc(TSThisParameter { span, this, type_annotation })
     }
 
     pub fn plain_function(
@@ -888,7 +888,7 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
-        this_param: Option<TSThisParameter<'a>>,
+        this_param: Option<Box<'a, TSThisParameter<'a>>>,
         params: Box<'a, FormalParameters<'a>>,
         body: Option<Box<'a, FunctionBody<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1512,7 +1512,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_call_signature_declaration(
         &self,
         span: Span,
-        this_param: Option<TSThisParameter<'a>>,
+        this_param: Option<Box<'a, TSThisParameter<'a>>>,
         params: Box<'a, FormalParameters<'a>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1548,7 +1548,7 @@ impl<'a> AstBuilder<'a> {
         computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
-        this_param: Option<TSThisParameter<'a>>,
+        this_param: Option<Box<'a, TSThisParameter<'a>>>,
         params: Box<'a, FormalParameters<'a>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1834,7 +1834,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_function_type(
         &self,
         span: Span,
-        this_param: Option<TSThisParameter<'a>>,
+        this_param: Option<Box<'a, TSThisParameter<'a>>>,
         params: Box<'a, FormalParameters<'a>>,
         return_type: Box<'a, TSTypeAnnotation<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
