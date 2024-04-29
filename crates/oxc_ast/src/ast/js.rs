@@ -2133,7 +2133,7 @@ pub struct Function<'a> {
     ///   return this.admin;
     /// });
     /// ```
-    pub this_param: Option<TSThisParameter<'a>>,
+    pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub body: Option<Box<'a, FunctionBody<'a>>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,

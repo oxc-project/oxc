@@ -238,7 +238,7 @@ impl<'a> SeparatedList<'a> for SequenceExpressionList<'a> {
 pub struct FormalParameterList<'a> {
     pub elements: Vec<'a, FormalParameter<'a>>,
     pub rest: Option<oxc_allocator::Box<'a, BindingRestElement<'a>>>,
-    pub this_param: Option<TSThisParameter<'a>>,
+    pub this_param: Option<oxc_allocator::Box<'a, TSThisParameter<'a>>>,
 }
 
 impl<'a> SeparatedList<'a> for FormalParameterList<'a> {

@@ -68,7 +68,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_formal_parameters(
         &mut self,
         params_kind: FormalParameterKind,
-    ) -> Result<(Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>)> {
+    ) -> Result<(Option<Box<'a, TSThisParameter<'a>>>, Box<'a, FormalParameters<'a>>)> {
         let span = self.start_span();
         let list: FormalParameterList<'_> = FormalParameterList::parse(self)?;
         let formal_parameters =
