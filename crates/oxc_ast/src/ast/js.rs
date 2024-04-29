@@ -18,8 +18,8 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
-use crate::traverse::{SharedBox, SharedVec};
-use crate::{dummy, traverse::ast::*};
+use crate::dummy;
+use crate::traverse::{ast::*, SharedBox, SharedVec, Token, Traverse, TraverseCtx};
 
 use super::inherit_variants;
 use super::{jsx::*, literal::*, ts::*};
@@ -40,6 +40,18 @@ export interface FormalParameterRest extends Span {
     optional: boolean,
 }
 "#;
+
+/// Traverse AST.
+#[allow(unused_variables)] // TODO: Remove this attr once function is implemented
+pub fn traverse<'a, T: Traverse<'a>>(
+    traverser: &mut T,
+    program: SharedBox<'a, TraversableProgram<'a>>,
+    ctx: &mut TraverseCtx<'a>,
+    tk: &mut Token,
+) {
+    // TODO
+    // walk_traversable_program(traverser, program, ctx, tk);
+}
 
 #[ast_node]
 #[derive(Debug, Hash)]
