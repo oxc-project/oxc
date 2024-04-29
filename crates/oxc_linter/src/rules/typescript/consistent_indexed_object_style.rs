@@ -94,7 +94,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                                                     );
                                                 }
                                             }
-                                            _ => ctx.diagnostic(
+                                            TSTypeName::QualifiedName(_) => ctx.diagnostic(
                                                 ConsistentIndexedObjectStyleDiagnostic(
                                                     "record",
                                                     "index signature",
@@ -196,12 +196,12 @@ impl Rule for ConsistentIndexedObjectStyle {
                                                 );
                                             }
                                         }
-                                        _ => {
+                                        TSTypeName::QualifiedName(_) => {
                                             ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
                                                 "record",
                                                 "index signature",
                                                 sig.span,
-                                            ))
+                                            ));
                                         }
                                     },
                                     _ => {
