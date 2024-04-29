@@ -28,10 +28,12 @@ rustc-hash       = { workspace = true }
 dashmap          = { workspace = true }
 phf              = { workspace = true, features = ["macros"] }
 
+ryu-js       = { workspace = true, optional = true }
 serde        = { workspace = true, features = ["derive"], optional = true }
 tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 
 [features]
-default   = []
-serialize = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_index/serialize", "bitflags/serde"]
+default      = []
+to_js_string = ["dep:ryu-js"]
+serialize    = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_index/serialize", "bitflags/serde"]

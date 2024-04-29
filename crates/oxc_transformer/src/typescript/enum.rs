@@ -4,11 +4,10 @@ use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
-    number::NumberBase,
+    number::{NumberBase, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
 use rustc_hash::FxHashMap;
-use ryu_js::Buffer;
 
 use crate::context::Ctx;
 
@@ -392,12 +391,12 @@ impl<'a> TypeScriptEnum<'a> {
         {
             let left_string = match left {
                 ConstantValue::String(str) => str,
-                ConstantValue::Number(v) => f64_to_js_string(v),
+                ConstantValue::Number(v) => v.to_js_string(),
             };
 
             let right_string = match right {
                 ConstantValue::String(str) => str,
-                ConstantValue::Number(v) => f64_to_js_string(v),
+                ConstantValue::Number(v) => v.to_js_string(),
             };
 
             return Some(ConstantValue::String(format!("{left_string}{right_string}")));
@@ -536,9 +535,4 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a> {
             walk_mut::walk_expression_mut(self, expr);
         }
     }
-}
-
-fn f64_to_js_string(value: f64) -> String {
-    let mut buffer = Buffer::new();
-    buffer.format(value).to_string()
 }
