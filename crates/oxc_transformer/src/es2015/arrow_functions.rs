@@ -210,7 +210,7 @@ impl<'a> ArrowFunctions<'a> {
     }
 
     pub fn transform_class(&mut self, _class: &mut Class<'a>) {
-        self.stacks.push(true);
+        self.stacks.push(false);
     }
 
     pub fn transform_class_on_exit(&mut self, _class: &mut Class<'a>) {
