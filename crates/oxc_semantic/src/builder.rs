@@ -765,6 +765,54 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_conditional_expression(&mut self, expr: &ConditionalExpression<'a>) {
+        let kind = AstKind::ConditionalExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        self.visit_expression(&expr.test);
+
+        /* cfg */
+        let before_conditional_expr_graph_ix = self.cfg.current_node_ix;
+        // conditional expression basic block
+        let before_consequent_expr_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+
+        self.visit_expression(&expr.consequent);
+
+        /* cfg */
+        let after_consequent_expr_graph_ix = self.cfg.current_node_ix;
+        let start_alternate_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+
+        self.visit_expression(&expr.alternate);
+
+        /* cfg */
+        let after_alternate_graph_ix = self.cfg.current_node_ix;
+        /* bb after conditional expression joins consequent and alternate */
+        let after_conditional_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+
+        self.cfg.put_unreachable();
+        self.cfg.add_edge(
+            after_consequent_expr_graph_ix,
+            after_conditional_graph_ix,
+            EdgeType::Normal,
+        );
+        self.cfg.add_edge(
+            before_conditional_expr_graph_ix,
+            before_consequent_expr_graph_ix,
+            EdgeType::Normal,
+        );
+
+        self.cfg.add_edge(
+            before_conditional_expr_graph_ix,
+            start_alternate_graph_ix,
+            EdgeType::Normal,
+        );
+        self.cfg.add_edge(after_alternate_graph_ix, after_conditional_graph_ix, EdgeType::Normal);
+        self.leave_node(kind);
+    }
+
     fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
         let kind = AstKind::ForStatement(self.alloc(stmt));
         let is_lexical_declaration =
