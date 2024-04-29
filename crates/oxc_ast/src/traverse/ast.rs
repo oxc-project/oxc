@@ -129,6 +129,7 @@ pub use ast::traversable_parenthesizedexpression::*;
 pub use ast::traversable_privatefieldexpression::*;
 pub use ast::traversable_privateidentifier::*;
 pub use ast::traversable_privateinexpression::*;
+pub use ast::traversable_program::*;
 pub use ast::traversable_propertydefinition::*;
 pub use ast::traversable_propertykey::*;
 pub use ast::traversable_regexpliteral::*;
