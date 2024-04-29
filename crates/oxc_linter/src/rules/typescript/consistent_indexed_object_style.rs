@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Declaration, Statement, TSSignature, TSType, TSTypeName},
+    ast::{Statement, TSSignature, TSType, TSTypeName},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -272,7 +272,7 @@ impl Rule for ConsistentIndexedObjectStyle {
             },
             AstKind::Program(prog) => {
                 for body in &prog.body {
-                    if let Statement::Declaration(Declaration::FunctionDeclaration(func)) = body {
+                    if let Statement::FunctionDeclaration(func) = body {
                         if let Some(return_type) = &func.return_type {
                             if !self.is_index_signature {
                                 if let TSType::TSTypeLiteral(lit) = &return_type.type_annotation {
