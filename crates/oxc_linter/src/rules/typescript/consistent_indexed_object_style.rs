@@ -77,7 +77,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                                                         "index signature",
                                                         idx.span,
                                                     ),
-                                                )
+                                                );
                                             }
                                         }
                                     }
@@ -92,23 +92,16 @@ impl Rule for ConsistentIndexedObjectStyle {
                                                 "record",
                                                 "index signature",
                                                 idx.span,
-                                            ))
+                                            ));
                                         }
                                     }
                                 }
-                                TSType::TSUnknownKeyword(_) => {
+                                TSType::TSUnknownKeyword(_) | TSType::TSAnyKeyword(_) => {
                                     ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
                                         "record",
                                         "index signature",
                                         idx.span,
-                                    ))
-                                }
-                                TSType::TSAnyKeyword(_) => {
-                                    ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
-                                        "record",
-                                        "index signature",
-                                        idx.span,
-                                    ))
+                                    ));
                                 }
                                 _ => {}
                             }
@@ -121,7 +114,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                     for t in &uni.types {
                         if let TSType::TSTypeLiteral(lit) = t {
                             if lit.members.len() == 1 {
-                                for member in lit.members.iter() {
+                                for member in &lit.members {
                                     if let TSSignature::TSIndexSignature(sig) = member {
                                         match &sig.type_annotation.type_annotation {
                                             TSType::TSTypeReference(tref) => {
@@ -146,7 +139,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                                                         "record",
                                                     "index signature",
                                                         sig.span,
-                                                    ))
+                                                    ));
                                                 }
                                             }
                                         }
@@ -158,11 +151,11 @@ impl Rule for ConsistentIndexedObjectStyle {
                 }
                 TSType::TSTypeLiteral(lit) => {
                     if lit.members.len() == 1 {
-                        for member in lit.members.iter() {
+                        for member in &lit.members {
                             if let TSSignature::TSIndexSignature(sig) = member {
                                 match &sig.type_annotation.type_annotation {
                                     TSType::TSUnionType(uni) => {
-                                        for t in uni.types.iter() {
+                                        for t in &uni.types {
                                             if let TSType::TSTypeReference(re) = t {
                                                 if let TSTypeName::IdentifierReference(i) =
                                                     &re.type_name
@@ -200,7 +193,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                                                 "record",
                                                 "index signature",
                                                 sig.span,
-                                            ))
+                                            ));
                                         }
                                     }
                                 }
@@ -218,15 +211,15 @@ impl Rule for ConsistentIndexedObjectStyle {
                                 "index signature",
                                 "record",
                                 decl.span,
-                            ))
+                            ));
                         }
                     }
 
-                    for param in decl.type_parameters.iter() {
-                        for p in param.params.iter() {
+                    for param in &decl.type_parameters {
+                        for p in &param.params {
                             if let TSType::TSTypeLiteral(lit) = p {
-                                if lit.members.iter().len() == 1 {
-                                    for member in lit.members.iter() {
+                                if lit.members.len() == 1 {
+                                    for member in &lit.members {
                                         if let TSSignature::TSIndexSignature(idx) = member {
                                             if self.config
                                             != ConsistentIndexedObjectStyleConfig::IndexSignature
@@ -266,7 +259,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                         if let Some(return_type) = &func.return_type {
                             if let TSType::TSTypeLiteral(lit) = &return_type.type_annotation {
                                 if lit.members.len() == 1 {
-                                    for member in lit.members.iter() {
+                                    for member in &lit.members {
                                         if let TSSignature::TSIndexSignature(sig) = member {
                                             if self.config != ConsistentIndexedObjectStyleConfig::IndexSignature {
                                                                     ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
@@ -294,13 +287,13 @@ impl Rule for ConsistentIndexedObjectStyle {
                             }
                         }
 
-                        for param in func.params.items.iter() {
+                        for param in &func.params.items {
                             if let Some(ts_type_annotation) = &param.pattern.type_annotation {
                                 if let TSType::TSTypeLiteral(lit) =
                                     &ts_type_annotation.type_annotation
                                 {
                                     if lit.members.len() == 1 {
-                                        for member in lit.members.iter() {
+                                        for member in &lit.members {
                                             if let TSSignature::TSIndexSignature(sig) = member {
                                                 if self.config != ConsistentIndexedObjectStyleConfig::IndexSignature {
                                                                     ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
