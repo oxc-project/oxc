@@ -1,4 +1,4 @@
-Passed: 293/364
+Passed: 294/364
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -11,8 +11,7 @@ Passed: 293/364
 * spec/newableArrowFunction-default/input.js
 * spec/newableArrowFunction-vs-spec-false/input.js
 
-# babel-preset-typescript (6/16)
-* jsx-compat/ts-invalid/input.ts
+# babel-preset-typescript (7/16)
 * node-extensions/import-in-cts/input.cts
 * node-extensions/type-assertion-in-cts/input.cts
 * node-extensions/type-assertion-in-mts/input.mts

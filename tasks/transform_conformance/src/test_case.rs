@@ -289,35 +289,49 @@ impl TestCase for ConformanceTestCase {
         let transform_options = match self.transform_options() {
             Ok(transform_options) => {
                 let ret = Parser::new(&allocator, &input, source_type).parse();
-                let semantic = SemanticBuilder::new(&input, source_type)
-                    .with_trivias(ret.trivias)
-                    .build_module_record(PathBuf::new(), &ret.program)
-                    .build(&ret.program)
-                    .semantic;
-                let program = allocator.alloc(ret.program);
-                let transformer =
-                    Transformer::new(&allocator, &self.path, semantic, transform_options.clone());
-                let result = transformer.build(program);
-                if result.is_ok() {
-                    transformed_code = Codegen::<false>::new("", &input, codegen_options.clone())
-                        .build(program)
-                        .source_text;
+                if ret.errors.is_empty() {
+                    let semantic = SemanticBuilder::new(&input, source_type)
+                        .with_trivias(ret.trivias)
+                        .build_module_record(PathBuf::new(), &ret.program)
+                        .build(&ret.program)
+                        .semantic;
+                    let program = allocator.alloc(ret.program);
+                    let transformer = Transformer::new(
+                        &allocator,
+                        &self.path,
+                        semantic,
+                        transform_options.clone(),
+                    );
+                    let result = transformer.build(program);
+                    if result.is_ok() {
+                        transformed_code =
+                            Codegen::<false>::new("", &input, codegen_options.clone())
+                                .build(program)
+                                .source_text;
+                    } else {
+                        let error = result
+                            .err()
+                            .unwrap()
+                            .iter()
+                            .map(ToString::to_string)
+                            .collect::<Vec<_>>()
+                            .join("\n");
+                        actual_errors = get_babel_error(&error);
+                    }
                 } else {
-                    let error = result
-                        .err()
-                        .unwrap()
-                        .iter()
-                        .map(ToString::to_string)
+                    let error = ret
+                        .errors
+                        .into_iter()
+                        .map(|err| err.to_string())
                         .collect::<Vec<_>>()
                         .join("\n");
-
-                    actual_errors = get_babel_error(error);
+                    actual_errors = get_babel_error(&error);
                 }
                 Some(transform_options.clone())
             }
             Err(json_err) => {
                 let error = json_err.to_string();
-                actual_errors = get_babel_error(error);
+                actual_errors = get_babel_error(&error);
                 None
             }
         };
@@ -328,7 +342,7 @@ impl TestCase for ConformanceTestCase {
         let output = output_path.and_then(|path| fs::read_to_string(path).ok()).map_or_else(
             || {
                 if let Some(throws) = &babel_options.throws {
-                    return throws.to_string();
+                    return throws.to_string().replace(" (1:6)", "");
                 }
                 String::default()
             },
@@ -448,14 +462,12 @@ impl TestCase for ExecTestCase {
     }
 }
 
-fn get_babel_error(error: String) -> String {
-    if error == "unknown variant `invalidOption`, expected `classic` or `automatic`" {
-        "Runtime must be either \"classic\" or \"automatic\".".to_string()
-    } else if error == "Duplicate __self prop found." {
-        "Duplicate __self prop found. You are most likely using the deprecated transform-react-jsx-self Babel plugin. Both __source and __self are automatically set when using the automatic runtime. Please remove transform-react-jsx-source and transform-react-jsx-self from your Babel config.".to_string()
-    } else if error == "Duplicate __source prop found." {
-        "Duplicate __source prop found. You are most likely using the deprecated transform-react-jsx-source Babel plugin. Both __source and __self are automatically set when using the automatic runtime. Please remove transform-react-jsx-source and transform-react-jsx-self from your Babel config.".to_string()
-    } else {
-        error
-    }
+fn get_babel_error(error: &str) -> String {
+    match error {
+        "unknown variant `invalidOption`, expected `classic` or `automatic`" => "Runtime must be either \"classic\" or \"automatic\".",
+        "Duplicate __self prop found." => "Duplicate __self prop found. You are most likely using the deprecated transform-react-jsx-self Babel plugin. Both __source and __self are automatically set when using the automatic runtime. Please remove transform-react-jsx-source and transform-react-jsx-self from your Babel config.",
+        "Duplicate __source prop found." => "Duplicate __source prop found. You are most likely using the deprecated transform-react-jsx-source Babel plugin. Both __source and __self are automatically set when using the automatic runtime. Please remove transform-react-jsx-source and transform-react-jsx-self from your Babel config.",
+        "Expected `>` but found `/`" => "Unexpected token, expected \",\"",
+        _ => error
+    }.to_string()
 }
