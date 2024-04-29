@@ -843,7 +843,7 @@ pub struct PrivateFieldExpression<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub object: Expression<'a>,
-    pub field: PrivateIdentifier<'a>,
+    pub field: Box<'a, PrivateIdentifier<'a>>,
     pub optional: bool, // for optional chaining
 }
 
@@ -1004,7 +1004,7 @@ pub struct BinaryExpression<'a> {
 pub struct PrivateInExpression<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub left: PrivateIdentifier<'a>,
+    pub left: Box<'a, PrivateIdentifier<'a>>,
     pub operator: BinaryOperator, // BinaryOperator::In
     pub right: Expression<'a>,
 }

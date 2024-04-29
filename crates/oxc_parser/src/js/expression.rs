@@ -129,11 +129,11 @@ impl<'a> ParserImpl<'a> {
     /// `PrivateIdentifier` ::
     ///     # `IdentifierName`
     /// # Panics
-    pub(crate) fn parse_private_identifier(&mut self) -> PrivateIdentifier<'a> {
+    pub(crate) fn parse_private_identifier(&mut self) -> Box<'a, PrivateIdentifier<'a>> {
         let span = self.start_span();
         let name = Atom::from(self.cur_string());
         self.bump_any();
-        PrivateIdentifier { span: self.end_span(span), name }
+        self.ast.alloc(PrivateIdentifier { span: self.end_span(span), name })
     }
 
     /// Section [Primary Expression](https://tc39.es/ecma262/#sec-primary-expression)

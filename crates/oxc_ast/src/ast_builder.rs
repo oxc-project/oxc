@@ -664,7 +664,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         object: Expression<'a>,
-        field: PrivateIdentifier<'a>,
+        field: Box<'a, PrivateIdentifier<'a>>,
         optional: bool,
     ) -> MemberExpression<'a> {
         MemberExpression::PrivateFieldExpression(self.alloc(PrivateFieldExpression {
@@ -678,7 +678,7 @@ impl<'a> AstBuilder<'a> {
     pub fn private_in_expression(
         &self,
         span: Span,
-        left: PrivateIdentifier<'a>,
+        left: Box<'a, PrivateIdentifier<'a>>,
         right: Expression<'a>,
     ) -> Expression<'a> {
         Expression::PrivateInExpression(self.alloc(PrivateInExpression {
@@ -693,7 +693,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         object: Expression<'a>,
-        field: PrivateIdentifier<'a>,
+        field: Box<'a, PrivateIdentifier<'a>>,
         optional: bool,
     ) -> Expression<'a> {
         self.member_expression(self.private_field(span, object, field, optional))
