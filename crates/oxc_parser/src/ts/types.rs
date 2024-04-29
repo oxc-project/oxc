@@ -793,7 +793,7 @@ impl<'a> ParserImpl<'a> {
         })
     }
 
-    fn parse_ts_import_attributes(&mut self) -> Result<TSImportAttributes<'a>> {
+    fn parse_ts_import_attributes(&mut self) -> Result<Box<'a, TSImportAttributes<'a>>> {
         let span = self.start_span();
         // { with:
         self.expect(Kind::LCurly)?;
@@ -801,7 +801,8 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Colon)?;
         let elements = TSImportAttributeList::parse(self)?.elements;
         self.expect(Kind::RCurly)?;
-        Ok(TSImportAttributes { span, elements })
+
+        Ok(self.ast.alloc(TSImportAttributes { span, elements }))
     }
 
     fn parse_ts_constructor_type(&mut self) -> Result<TSType<'a>> {

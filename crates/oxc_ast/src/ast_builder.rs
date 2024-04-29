@@ -1802,7 +1802,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: Option<TSImportAttributes<'a>>,
+        attributes: Option<Box<'a, TSImportAttributes<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> TSType<'a> {
         TSType::TSImportType(self.alloc(TSImportType {

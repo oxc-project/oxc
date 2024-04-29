@@ -875,7 +875,7 @@ pub struct TSImportType<'a> {
     pub span: Span,
     pub argument: TSType<'a>,
     pub qualifier: Option<TSTypeName<'a>>,
-    pub attributes: Option<TSImportAttributes<'a>>,
+    pub attributes: Option<Box<'a, TSImportAttributes<'a>>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
