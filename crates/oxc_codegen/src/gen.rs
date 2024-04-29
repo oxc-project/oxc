@@ -810,7 +810,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Option<WithClause<'a>> {
+impl<'a, const MINIFY: bool> Gen<MINIFY> for Option<Box<'a, WithClause<'a>>> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         if let Some(with_clause) = self {
             with_clause.gen(p, ctx);
