@@ -251,11 +251,21 @@ impl<'a> ListenerMap for AstNode<'a> {
             AstKind::Class(class) => {
                 class.report_effects_when_called(options);
             }
+            AstKind::ImportDefaultSpecifier(specifier) => {
+                if !has_comment_about_side_effect_check(specifier.span, options.ctx) {
+                    options.ctx.diagnostic(NoSideEffectsDiagnostic::CallImport(specifier.span));
+                }
+            }
+            AstKind::ImportSpecifier(specifier) => {
+                let span = specifier.local.span;
+                if !has_comment_about_side_effect_check(span, options.ctx) {
+                    options.ctx.diagnostic(NoSideEffectsDiagnostic::CallImport(span));
+                }
+            }
             _ => {}
         }
     }
     fn report_effects_when_mutated(&self, options: &NodeListenerOptions) {
-        #[allow(clippy::single_match)]
         match self.kind() {
             AstKind::VariableDeclarator(decl) => {
                 if let Some(init) = &decl.init {
@@ -271,6 +281,15 @@ impl<'a> ListenerMap for AstNode<'a> {
                 options
                     .ctx
                     .diagnostic(NoSideEffectsDiagnostic::MutateParameter(Span::new(start, end)));
+            }
+            AstKind::ImportDefaultSpecifier(specifier) => {
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::MutateImport(specifier.span));
+            }
+            AstKind::ImportSpecifier(specifier) => {
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::MutateImport(specifier.local.span));
+            }
+            AstKind::ImportNamespaceSpecifier(specifier) => {
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::MutateImport(specifier.local.span));
             }
             _ => {}
         }
@@ -754,6 +773,11 @@ impl<'a> ListenerMap for IdentifierReference<'a> {
     }
 
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        // TODO: change to `isPureFunction`
+        if has_pure_notation(self.span, options.ctx) {
+            return;
+        }
+
         let ctx = options.ctx;
         if let Some(symbol_id) = get_symbol_id_of_variable(self, ctx) {
             let symbol_table = ctx.semantic().symbols();

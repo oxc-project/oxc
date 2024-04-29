@@ -764,6 +764,54 @@ expression: no_side_effects_in_initialization
    ·                         ───
    ╰────
 
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling imported function
+   ╭─[no_side_effects_in_initialization.tsx:1:8]
+ 1 │ import x from "import-default"; x()
+   ·        ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating imported variable
+   ╭─[no_side_effects_in_initialization.tsx:1:8]
+ 1 │ import x from "import-default"; x.z = 1
+   ·        ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling imported function
+   ╭─[no_side_effects_in_initialization.tsx:1:9]
+ 1 │ import {x} from "import"; x()
+   ·         ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating imported variable
+   ╭─[no_side_effects_in_initialization.tsx:1:9]
+ 1 │ import {x} from "import"; x.z = 1
+   ·         ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling imported function
+   ╭─[no_side_effects_in_initialization.tsx:1:14]
+ 1 │ import {x as y} from "import"; y()
+   ·              ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating imported variable
+   ╭─[no_side_effects_in_initialization.tsx:1:14]
+ 1 │ import {x as y} from "import"; y.a = 1
+   ·              ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling
+   ╭─[no_side_effects_in_initialization.tsx:1:30]
+ 1 │ import * as y from "import"; y.x()
+   ·                              ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating imported variable
+   ╭─[no_side_effects_in_initialization.tsx:1:13]
+ 1 │ import * as y from "import"; y.x = 1
+   ·             ─
+   ╰────
+
   ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
    ╭─[no_side_effects_in_initialization.tsx:1:15]
  1 │ const x = new ext()

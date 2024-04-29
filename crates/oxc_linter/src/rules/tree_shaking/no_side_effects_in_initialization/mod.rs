@@ -38,6 +38,10 @@ enum NoSideEffectsDiagnostic {
     #[diagnostic(severity(warning))]
     MutateOfThis(#[label] Span),
 
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating imported variable")]
+    #[diagnostic(severity(warning))]
+    MutateImport(#[label] Span),
+
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling")]
     #[diagnostic(severity(warning))]
     Call(#[label] Span),
@@ -53,6 +57,10 @@ enum NoSideEffectsDiagnostic {
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function parameter")]
     #[diagnostic(severity(warning))]
     CallParameter(#[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling imported function")]
+    #[diagnostic(severity(warning))]
+    CallImport(#[label] Span),
 
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Debugger statements are side-effects")]
     #[diagnostic(severity(warning))]
@@ -234,23 +242,24 @@ fn test() {
         "const x = ext, y = ()=>{const x = ()=>{}; x()}; y()",
         // Identifier when mutated
         "const x = {}; x.y = ext",
-        // // IfStatement
+        // IfStatement
         "let y;if (ext > 0) {y = 1} else {y = 2}",
         "if (false) {ext()}",
         "if (true) {} else {ext()}",
-        // // ImportDeclaration
-        // r#"import "import""#,
-        // r#"import x from "import-default""#,
-        // r#"import {x} from "import""#,
-        // r#"import {x as y} from "import""#,
-        // r#"import * as x from "import""#,
-        // r#"import /* tree-shaking no-side-effects-when-called */ x from "import-default-no-effects"; x()"#,
-        // r#"import /* test */ /*tree-shaking  no-side-effects-when-called */ x from "import-default-no-effects"; x()"#,
+        // ImportDeclaration
+        r#"import "import""#,
+        r#"import x from "import-default""#,
+        r#"import {x} from "import""#,
+        r#"import {x as y} from "import""#,
+        r#"import * as x from "import""#,
+        r#"import /* tree-shaking no-side-effects-when-called */ x from "import-default-no-effects"; x()"#,
+        r#"import /* test */ /*tree-shaking  no-side-effects-when-called */ x from "import-default-no-effects"; x()"#,
+        // TODO: Current only support the comment next to code.
         // r#"import /* tree-shaking  no-side-effects-when-called*/ /* test */ x from "import-default-no-effects"; x()"#,
-        // r#"import {/* tree-shaking  no-side-effects-when-called */ x} from "import-no-effects"; x()"#,
-        // r#"import {x as /* tree-shaking  no-side-effects-when-called */ y} from "import-no-effects"; y()"#,
-        // r#"import {x} from "import"; /*@__PURE__*/ x()"#,
-        // r#"import {x} from "import"; /* @__PURE__ */ x()"#,
+        r#"import {/* tree-shaking  no-side-effects-when-called */ x} from "import-no-effects"; x()"#,
+        r#"import {x as /* tree-shaking  no-side-effects-when-called */ y} from "import-no-effects"; y()"#,
+        r#"import {x} from "import"; /*@__PURE__*/ x()"#,
+        r#"import {x} from "import"; /* @__PURE__ */ x()"#,
         // // JSXAttribute
         // r#"class X {}; const x = <X test="3"/>"#,
         // "class X {}; const x = <X test={3}/>",
@@ -532,15 +541,15 @@ fn test() {
         "if (1>0){ext()}",
         "if (1<0){} else {ext()}",
         "if (ext>0){ext()} else {ext()}",
-        // // ImportDeclaration
-        // r#"import x from "import-default"; x()"#,
-        // r#"import x from "import-default"; x.z = 1"#,
-        // r#"import {x} from "import"; x()"#,
-        // r#"import {x} from "import"; x.z = 1"#,
-        // r#"import {x as y} from "import"; y()"#,
-        // r#"import {x as y} from "import"; y.a = 1"#,
-        // r#"import * as y from "import"; y.x()"#,
-        // r#"import * as y from "import"; y.x = 1"#,
+        // ImportDeclaration
+        r#"import x from "import-default"; x()"#,
+        r#"import x from "import-default"; x.z = 1"#,
+        r#"import {x} from "import"; x()"#,
+        r#"import {x} from "import"; x.z = 1"#,
+        r#"import {x as y} from "import"; y()"#,
+        r#"import {x as y} from "import"; y.a = 1"#,
+        r#"import * as y from "import"; y.x()"#,
+        r#"import * as y from "import"; y.x = 1"#,
         // // JSXAttribute
         // "class X {}; const x = <X test={ext()}/>",
         // "class X {}; class Y {constructor(){ext()}}; const x = <X test=<Y/>/>",
