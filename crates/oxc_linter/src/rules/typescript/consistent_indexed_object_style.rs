@@ -34,7 +34,7 @@ enum ConsistentIndexedObjectStyleConfig {
 
 declare_oxc_lint!(
     /// ### What it does
-    ///
+    /// Require or disallow the `Record` type.
     ///
     /// ### Why is this bad?
     ///
