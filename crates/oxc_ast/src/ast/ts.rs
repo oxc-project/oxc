@@ -815,7 +815,7 @@ pub struct TSTypePredicate<'a> {
 #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
 pub enum TSTypePredicateName<'a> {
     Identifier(Box<'a, IdentifierName<'a>>),
-    This(TSThisType),
+    This(Box<'a, TSThisType>),
 }
 
 #[ast_node]
