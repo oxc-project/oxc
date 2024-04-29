@@ -163,6 +163,14 @@ expression: consistent_indexed_object_style
   help: A index signature is preferred over an record.
 
   ⚠ typescript-eslint(consistent-indexed-object-style):
+   ╭─[consistent_indexed_object_style.tsx:1:14]
+ 1 │ type Foo = { [k: string]: A.Foo };
+   ·              ─────────┬────────
+   ·                       ╰── A record is preferred over an index signature.
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style):
    ╭─[consistent_indexed_object_style.tsx:1:29]
  1 │ type Foo = { [key: string]: AnotherFoo };
    ·                             ─────┬────
@@ -192,6 +200,16 @@ expression: consistent_indexed_object_style
  3 │               [k: string]: T;
    ·               ───────┬───────
    ·                      ╰── A record is preferred over an index signature.
+ 4 │             }
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style):
+   ╭─[consistent_indexed_object_style.tsx:3:12]
+ 2 │             interface Foo {
+ 3 │               [k: string]: A.Foo;
+   ·               ─────────┬─────────
+   ·                        ╰── A record is preferred over an index signature.
  4 │             }
    ╰────
   help: A record is preferred over an index signature.

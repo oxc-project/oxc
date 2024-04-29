@@ -82,18 +82,25 @@ impl Rule for ConsistentIndexedObjectStyle {
                                 }
                                 TSType::TSTypeReference(tref) => {
                                     if !self.is_index_signature {
-                                        if let TSTypeName::IdentifierReference(iden) =
-                                            &tref.type_name
-                                        {
-                                            if iden.name != decl.id.name {
-                                                ctx.diagnostic(
-                                                    ConsistentIndexedObjectStyleDiagnostic(
-                                                        "record",
-                                                        "index signature",
-                                                        idx.span,
-                                                    ),
-                                                );
+                                        match &tref.type_name {
+                                            TSTypeName::IdentifierReference(iden) => {
+                                                if iden.name != decl.id.name {
+                                                    ctx.diagnostic(
+                                                        ConsistentIndexedObjectStyleDiagnostic(
+                                                            "record",
+                                                            "index signature",
+                                                            idx.span,
+                                                        ),
+                                                    );
+                                                }
                                             }
+                                            _ => ctx.diagnostic(
+                                                ConsistentIndexedObjectStyleDiagnostic(
+                                                    "record",
+                                                    "index signature",
+                                                    idx.span,
+                                                ),
+                                            ),
                                         }
                                     }
                                 }
@@ -177,9 +184,8 @@ impl Rule for ConsistentIndexedObjectStyle {
                                             }
                                         }
                                     }
-                                    TSType::TSTypeReference(tref) => {
-                                        if let TSTypeName::IdentifierReference(i) = &tref.type_name
-                                        {
+                                    TSType::TSTypeReference(tref) => match &tref.type_name {
+                                        TSTypeName::IdentifierReference(i) => {
                                             if i.name != al.id.name {
                                                 ctx.diagnostic(
                                                     ConsistentIndexedObjectStyleDiagnostic(
@@ -190,7 +196,14 @@ impl Rule for ConsistentIndexedObjectStyle {
                                                 );
                                             }
                                         }
-                                    }
+                                        _ => {
+                                            ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
+                                                "record",
+                                                "index signature",
+                                                sig.span,
+                                            ))
+                                        }
+                                    },
                                     _ => {
                                         if !self.is_index_signature {
                                             ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
@@ -533,7 +546,7 @@ fn test() {
         ("function foo(): { readonly [key: string]: any } {}", None),
         ("type Foo = Record<string, any>;", Some(serde_json::json!(["index-signature"]))),
         ("type Foo<T> = Record<string, T>;", Some(serde_json::json!(["index-signature"]))),
-        // ("type Foo = { [k: string]: A.Foo };", None),
+        ("type Foo = { [k: string]: A.Foo };", None),
         ("type Foo = { [key: string]: AnotherFoo };", None),
         ("type Foo = { [key: string]: { [key: string]: Foo } };", None),
         ("type Foo = { [key: string]: string } | Foo;", None),
@@ -545,14 +558,14 @@ fn test() {
         	      ",
             None,
         ),
-        // (
-        //     "
-        // 	interface Foo {
-        // 	  [k: string]: A.Foo;
-        // 	}
-        // 	      ",
-        //     None,
-        // ),
+        (
+            "
+        	interface Foo {
+        	  [k: string]: A.Foo;
+        	}
+        	      ",
+            None,
+        ),
         (
             "
         	interface Foo {
