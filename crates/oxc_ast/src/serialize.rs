@@ -20,9 +20,8 @@ impl serde_json::ser::Formatter for EcmaFormatter {
     where
         W: ?Sized + std::io::Write,
     {
-        let mut buffer = ryu_js::Buffer::new();
-        let s = buffer.format(value);
-        writer.write_all(s.as_bytes())
+        use oxc_syntax::number::ToJsString;
+        writer.write_all(value.to_js_string().as_bytes())
     }
 }
 

@@ -24,12 +24,11 @@ oxc_span        = { workspace = true }
 oxc_allocator   = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_diagnostics = { workspace = true }
-oxc_syntax      = { workspace = true }
+oxc_syntax      = { workspace = true, features = ["to_js_string"] }
 
 rustc-hash = { workspace = true }
 indexmap   = { workspace = true }
 serde      = { workspace = true, features = ["derive"] }
-ryu-js     = { workspace = true }
 
 [dev-dependencies]
 oxc_parser  = { workspace = true }
