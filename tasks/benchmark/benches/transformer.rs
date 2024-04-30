@@ -2,8 +2,7 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
+use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
 use oxc_transformer::{TransformOptions, Transformer};
@@ -20,15 +19,16 @@ fn bench_transformer(criterion: &mut Criterion) {
             // transforming an already transformed AST.
             b.iter_with_large_drop(|| {
                 let allocator = Allocator::default();
-                let program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let semantic =
-                    SemanticBuilder::new(source_text, source_type).build(&program).semantic;
-                let program = allocator.alloc(program);
+                let ParserReturn { trivias, program, .. } =
+                    Parser::new(&allocator, source_text, source_type).parse();
                 let transform_options = TransformOptions::default();
+                let program = allocator.alloc(program);
                 Transformer::new(
                     &allocator,
                     Path::new(&file.file_name),
-                    semantic,
+                    source_type,
+                    source_text,
+                    &trivias,
                     transform_options,
                 )
                 .build(program)

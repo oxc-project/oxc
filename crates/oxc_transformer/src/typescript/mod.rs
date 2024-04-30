@@ -11,6 +11,7 @@ use serde::Deserialize;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::context::Ctx;
 
@@ -114,11 +115,7 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_formal_parameter(param);
     }
 
-    pub fn transform_function(
-        &mut self,
-        func: &mut Function<'a>,
-        flags: Option<oxc_semantic::ScopeFlags>,
-    ) {
+    pub fn transform_function(&mut self, func: &mut Function<'a>, flags: Option<ScopeFlags>) {
         self.annotations.transform_function(func, flags);
     }
 
