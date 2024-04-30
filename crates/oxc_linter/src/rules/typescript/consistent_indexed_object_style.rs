@@ -12,7 +12,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(consistent-indexed-object-style):")]
+#[error("typescript-eslint(consistent-indexed-object-style):A {0:?} is preferred over an {1:?}.")]
 #[diagnostic(severity(warning), help("A {0} is preferred over an {1}."))]
 struct ConsistentIndexedObjectStyleDiagnostic(
     &'static str,
