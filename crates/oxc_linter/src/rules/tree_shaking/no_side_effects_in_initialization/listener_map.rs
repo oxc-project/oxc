@@ -7,8 +7,11 @@ use oxc_ast::{
         AssignmentTarget, BinaryExpression, BindingIdentifier, BindingPattern, BindingPatternKind,
         CallExpression, Class, ClassBody, ClassElement, ComputedMemberExpression,
         ConditionalExpression, Declaration, ExportSpecifier, Expression, ForStatementInit,
-        FormalParameter, Function, IdentifierReference, MemberExpression, ModuleExportName,
-        NewExpression, ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey,
+        FormalParameter, Function, IdentifierReference, JSXAttribute, JSXAttributeItem,
+        JSXAttributeValue, JSXChild, JSXElement, JSXElementName, JSXExpression,
+        JSXExpressionContainer, JSXFragment, JSXIdentifier, JSXOpeningElement, MemberExpression,
+        ModuleExportName, NewExpression, ObjectExpression, ObjectPropertyKind,
+        ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey,
         SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression,
         VariableDeclarator,
     },
@@ -347,7 +350,10 @@ impl<'a> ListenerMap for ClassBody<'a> {
         });
 
         if let Some(constructor) = constructor {
+            let old_val = options.has_valid_this.get();
+            options.has_valid_this.set(options.called_with_new.get());
             constructor.report_effects_when_called(options);
+            options.has_valid_this.set(old_val);
         }
 
         self.body
@@ -491,6 +497,12 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::ConditionalExpression(expr) => {
                 expr.get_value_and_report_effects(options);
             }
+            Self::JSXElement(expr) => {
+                expr.report_effects(options);
+            }
+            Self::ObjectExpression(expr) => {
+                expr.report_effects(options);
+            }
             Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
             | Self::Identifier(_)
@@ -582,6 +594,197 @@ fn defined_custom_report_effects_when_called(expr: &Expression) -> bool {
             | Expression::StaticMemberExpression(_)
             | Expression::PrivateFieldExpression(_)
     )
+}
+
+impl<'a> ListenerMap for ObjectExpression<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.properties.iter().for_each(|property| match property {
+            ObjectPropertyKind::ObjectProperty(p) => {
+                p.key.report_effects(options);
+                p.value.report_effects(options);
+            }
+            ObjectPropertyKind::SpreadProperty(spreed) => {
+                spreed.argument.report_effects(options);
+            }
+        });
+    }
+}
+
+impl<'a> ListenerMap for JSXElement<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.opening_element.report_effects(options);
+        self.children.iter().for_each(|child| {
+            child.report_effects(options);
+        });
+    }
+}
+
+impl<'a> ListenerMap for JSXChild<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        match self {
+            JSXChild::Element(element) => {
+                element.report_effects(options);
+            }
+            JSXChild::Spread(spread) => {
+                spread.expression.report_effects(options);
+            }
+            JSXChild::Fragment(fragment) => {
+                fragment.report_effects(options);
+            }
+            JSXChild::ExpressionContainer(container) => {
+                container.report_effects(options);
+            }
+            JSXChild::Text(_) => {
+                no_effects();
+            }
+        }
+    }
+}
+
+impl<'a> ListenerMap for JSXOpeningElement<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.name.report_effects_when_called(options);
+        self.attributes.iter().for_each(|attr| attr.report_effects(options));
+    }
+}
+
+impl<'a> ListenerMap for JSXElementName<'a> {
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        match self {
+            Self::Identifier(ident) => ident.report_effects_when_called(options),
+            Self::NamespacedName(name) => name.property.report_effects_when_called(options),
+            Self::MemberExpression(member) => {
+                member.property.report_effects_when_called(options);
+            }
+        }
+    }
+}
+
+impl<'a> ListenerMap for JSXIdentifier<'a> {
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        if self.name.chars().next().is_some_and(char::is_uppercase) {
+            let Some(symbol_id) = options.ctx.symbols().get_symbol_id_from_name(&self.name) else {
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::CallGlobal(
+                    self.name.to_compact_str(),
+                    self.span,
+                ));
+                return;
+            };
+
+            for reference in options.ctx.symbols().get_resolved_references(symbol_id) {
+                if reference.is_write() {
+                    let node_id = reference.node_id();
+                    if let Some(expr) = get_write_expr(node_id, options.ctx) {
+                        let old_val = options.called_with_new.get();
+                        options.called_with_new.set(true);
+                        expr.report_effects_when_called(options);
+                        options.called_with_new.set(old_val);
+                    }
+                }
+            }
+            let symbol_table = options.ctx.semantic().symbols();
+            let node = options.ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
+            let old_val = options.called_with_new.get();
+            options.called_with_new.set(true);
+            node.report_effects_when_called(options);
+            options.called_with_new.set(old_val);
+        }
+    }
+}
+
+impl<'a> ListenerMap for JSXAttributeItem<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        match self {
+            Self::Attribute(attribute) => {
+                attribute.report_effects(options);
+            }
+            Self::SpreadAttribute(attribute) => {
+                attribute.argument.report_effects(options);
+            }
+        }
+    }
+}
+
+impl<'a> ListenerMap for JSXAttribute<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        if let Some(value) = &self.value {
+            match value {
+                JSXAttributeValue::ExpressionContainer(container) => {
+                    container.report_effects(options);
+                }
+                JSXAttributeValue::Element(element) => {
+                    element.report_effects(options);
+                }
+                JSXAttributeValue::Fragment(fragment) => {
+                    fragment.report_effects(options);
+                }
+                JSXAttributeValue::StringLiteral(_) => {
+                    no_effects();
+                }
+            }
+        }
+    }
+}
+
+impl<'a> ListenerMap for JSXExpressionContainer<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.expression.report_effects(options);
+    }
+}
+
+impl<'a> ListenerMap for JSXExpression<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        match self {
+            Self::ArrayExpression(array_expr) => {
+                array_expr.elements.iter().for_each(|el| el.report_effects(options));
+            }
+            Self::AssignmentExpression(assign_expr) => {
+                assign_expr.left.report_effects_when_assigned(options);
+                assign_expr.right.report_effects(options);
+            }
+            Self::CallExpression(call_expr) => {
+                call_expr.report_effects(options);
+            }
+            Self::ParenthesizedExpression(expr) => {
+                expr.report_effects(options);
+            }
+            Self::NewExpression(expr) => {
+                expr.report_effects(options);
+            }
+            Self::AwaitExpression(expr) => {
+                expr.argument.report_effects(options);
+            }
+            Self::BinaryExpression(expr) => {
+                expr.get_value_and_report_effects(options);
+            }
+            Self::ClassExpression(expr) => {
+                expr.report_effects(options);
+            }
+            Self::ConditionalExpression(expr) => {
+                expr.get_value_and_report_effects(options);
+            }
+            Self::JSXElement(expr) => {
+                expr.report_effects(options);
+            }
+            Self::ObjectExpression(expr) => {
+                expr.report_effects(options);
+            }
+            Self::ArrowFunctionExpression(_)
+            | Self::EmptyExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::Identifier(_)
+            | Self::MetaProperty(_)
+            | Self::Super(_)
+            | Self::ThisExpression(_) => no_effects(),
+            _ => {}
+        }
+    }
+}
+
+impl<'a> ListenerMap for JSXFragment<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        self.children.iter().for_each(|child| child.report_effects(options));
+    }
 }
 
 impl<'a> ListenerMap for ConditionalExpression<'a> {

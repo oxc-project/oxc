@@ -260,26 +260,26 @@ fn test() {
         r#"import {x as /* tree-shaking  no-side-effects-when-called */ y} from "import-no-effects"; y()"#,
         r#"import {x} from "import"; /*@__PURE__*/ x()"#,
         r#"import {x} from "import"; /* @__PURE__ */ x()"#,
-        // // JSXAttribute
-        // r#"class X {}; const x = <X test="3"/>"#,
-        // "class X {}; const x = <X test={3}/>",
-        // "class X {}; const x = <X test=<X/>/>",
-        // // JSXElement
-        // "class X {}; const x = <X/>",
-        // "class X {}; const x = <X>Text</X>",
-        // // JSXEmptyExpression
-        // "class X {}; const x = <X>{}</X>",
-        // // JSXExpressionContainer
-        // "class X {}; const x = <X>{3}</X>",
-        // // JSXIdentifier
-        // "class X {}; const x = <X/>",
-        // "const X = class {constructor() {this.x = 1}}; const x = <X/>",
-        // // JSXOpeningElement
-        // "class X {}; const x = <X/>",
-        // "class X {}; const x = <X></X>",
-        // r#"class X {}; const x = <X test="3"/>"#,
-        // // JSXSpreadAttribute
-        // "class X {}; const x = <X {...{x: 3}}/>",
+        // JSXAttribute
+        r#"class X {}; const x = <X test="3"/>"#,
+        "class X {}; const x = <X test={3}/>",
+        "class X {}; const x = <X test=<X/>/>",
+        // JSXElement
+        "class X {}; const x = <X/>",
+        "class X {}; const x = <X>Text</X>",
+        // JSXEmptyExpression
+        "class X {}; const x = <X>{}</X>",
+        // JSXExpressionContainer
+        "class X {}; const x = <X>{3}</X>",
+        // JSXIdentifier
+        "class X {}; const x = <X/>",
+        "const X = class {constructor() {this.x = 1}}; const x = <X/>",
+        // JSXOpeningElement
+        "class X {}; const x = <X/>",
+        "class X {}; const x = <X></X>",
+        r#"class X {}; const x = <X test="3"/>"#,
+        // JSXSpreadAttribute
+        "class X {}; const x = <X {...{x: 3}}/>",
         // // LabeledStatement
         // "loop: for(;true;){continue loop}",
         // // Literal
@@ -550,24 +550,24 @@ fn test() {
         r#"import {x as y} from "import"; y.a = 1"#,
         r#"import * as y from "import"; y.x()"#,
         r#"import * as y from "import"; y.x = 1"#,
-        // // JSXAttribute
-        // "class X {}; const x = <X test={ext()}/>",
-        // "class X {}; class Y {constructor(){ext()}}; const x = <X test=<Y/>/>",
-        // // JSXElement
-        // "class X {constructor(){ext()}}; const x = <X/>",
-        // "class X {}; const x = <X>{ext()}</X>",
-        // // JSXExpressionContainer
-        // "class X {}; const x = <X>{ext()}</X>",
-        // // JSXIdentifier
-        // "class X {constructor(){ext()}}; const x = <X/>",
-        // "const X = class {constructor(){ext()}}; const x = <X/>",
-        // "const x = <Ext/>",
-        // // JSXMemberExpression
-        // "const X = {Y: ext}; const x = <X.Y />",
-        // // JSXOpeningElement
-        // "class X {}; const x = <X test={ext()}/>",
-        // // JSXSpreadAttribute
-        // "class X {}; const x = <X {...{x: ext()}}/>",
+        // JSXAttribute
+        "class X {}; const x = <X test={ext()}/>",
+        "class X {}; class Y {constructor(){ext()}}; const x = <X test=<Y/>/>",
+        // JSXElement
+        "class X {constructor(){ext()}}; const x = <X/>",
+        "class X {}; const x = <X>{ext()}</X>",
+        // JSXExpressionContainer
+        "class X {}; const x = <X>{ext()}</X>",
+        // JSXIdentifier
+        "class X {constructor(){ext()}}; const x = <X/>",
+        "const X = class {constructor(){ext()}}; const x = <X/>",
+        "const x = <Ext/>",
+        // JSXMemberExpression
+        "const X = {Y: ext}; const x = <X.Y />",
+        // JSXOpeningElement
+        "class X {}; const x = <X test={ext()}/>",
+        // JSXSpreadAttribute
+        "class X {}; const x = <X {...{x: ext()}}/>",
         // // LabeledStatement
         // "loop: for(;true;){ext()}",
         // // Literal
