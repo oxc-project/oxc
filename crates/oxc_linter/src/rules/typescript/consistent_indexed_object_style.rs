@@ -62,13 +62,26 @@ impl Rule for ConsistentIndexedObjectStyle {
         match node.kind() {
             AstKind::TSInterfaceDeclaration(decl) => {
                 if decl.body.body.len() == 1 {
-                    for signature in &decl.body.body {
-                        if let TSSignature::TSIndexSignature(idx) = signature {
-                            match &idx.type_annotation.type_annotation {
-                                TSType::TSTypeLiteral(lit) => {
-                                    if !self.is_index_signature {
-                                        for member in &lit.members {
-                                            if let TSSignature::TSIndexSignature(_) = member {
+                    if let TSSignature::TSIndexSignature(idx) = &decl.body.body[0] {
+                        match &idx.type_annotation.type_annotation {
+                            TSType::TSTypeLiteral(lit) => {
+                                if !self.is_index_signature {
+                                    for member in &lit.members {
+                                        if let TSSignature::TSIndexSignature(_) = member {
+                                            ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
+                                                "record",
+                                                "index signature",
+                                                idx.span,
+                                            ));
+                                        }
+                                    }
+                                }
+                            }
+                            TSType::TSTypeReference(tref) => {
+                                if !self.is_index_signature {
+                                    match &tref.type_name {
+                                        TSTypeName::IdentifierReference(iden) => {
+                                            if iden.name != decl.id.name {
                                                 ctx.diagnostic(
                                                     ConsistentIndexedObjectStyleDiagnostic(
                                                         "record",
@@ -78,41 +91,24 @@ impl Rule for ConsistentIndexedObjectStyle {
                                                 );
                                             }
                                         }
-                                    }
-                                }
-                                TSType::TSTypeReference(tref) => {
-                                    if !self.is_index_signature {
-                                        match &tref.type_name {
-                                            TSTypeName::IdentifierReference(iden) => {
-                                                if iden.name != decl.id.name {
-                                                    ctx.diagnostic(
-                                                        ConsistentIndexedObjectStyleDiagnostic(
-                                                            "record",
-                                                            "index signature",
-                                                            idx.span,
-                                                        ),
-                                                    );
-                                                }
-                                            }
-                                            TSTypeName::QualifiedName(_) => ctx.diagnostic(
-                                                ConsistentIndexedObjectStyleDiagnostic(
-                                                    "record",
-                                                    "index signature",
-                                                    idx.span,
-                                                ),
-                                            ),
+                                        TSTypeName::QualifiedName(_) => {
+                                            ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
+                                                "record",
+                                                "index signature",
+                                                idx.span,
+                                            ))
                                         }
                                     }
                                 }
-                                TSType::TSUnknownKeyword(_) | TSType::TSAnyKeyword(_) => {
-                                    ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
-                                        "record",
-                                        "index signature",
-                                        idx.span,
-                                    ));
-                                }
-                                _ => {}
                             }
+                            TSType::TSUnknownKeyword(_) | TSType::TSAnyKeyword(_) => {
+                                ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
+                                    "record",
+                                    "index signature",
+                                    idx.span,
+                                ));
+                            }
+                            _ => {}
                         }
                     }
                 }
