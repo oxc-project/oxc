@@ -102,6 +102,7 @@ console.log('--------------------');
 console.log('> Nested enums:');
 const nestedEnums = Object.values(types).flatMap((type) => {
     if (type.kind !== 'enum') return [];
+    if (type.name === 'FakeForTestingInheritedTypes') return [];
     return type.variants.filter(({type: variantType}) => (
         variantType?.kind === 'enum'
         || (variantType?.kind === 'box' && variantType.value.kind === 'enum')

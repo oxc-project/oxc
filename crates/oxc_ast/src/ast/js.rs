@@ -53,6 +53,22 @@ pub fn traverse<'a, T: Traverse<'a>>(
     // walk_traversable_program(traverser, program, ctx, tk);
 }
 
+// TODO: Delete this - just for testing type layouts.
+// The `inherit_variants!` macro has screwed up `layout_inspect` - it can't see these inherited types.
+#[derive(layout_inspect::Inspect)]
+pub enum FakeForTestingInheritedTypes<'a> {
+    Program(Box<'a, Program<'a>>),
+    MemberExpression(Box<'a, MemberExpression<'a>>),
+    Expression(Box<'a, Expression<'a>>),
+    SimpleAssignmentTarget(Box<'a, SimpleAssignmentTarget<'a>>),
+    AssignmentTargetPattern(Box<'a, AssignmentTargetPattern<'a>>),
+    AssignmentTarget(Box<'a, AssignmentTarget<'a>>),
+    Declaration(Box<'a, Declaration<'a>>),
+    ModuleDeclaration(Box<'a, ModuleDeclaration<'a>>),
+    TSType(Box<'a, TSTypeName<'a>>),
+    TSTypeName(Box<'a, TSTypeName<'a>>),
+}
+
 #[ast_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]

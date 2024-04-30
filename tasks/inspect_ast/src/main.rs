@@ -2,10 +2,10 @@
 
 use layout_inspect::inspect;
 
-use oxc_ast::ast::Program;
+use oxc_ast::ast::FakeForTestingInheritedTypes;
 
 pub fn main() {
-    let types = inspect::<Program>();
+    let types = inspect::<FakeForTestingInheritedTypes>();
     let json = serde_json::to_string_pretty(&types).unwrap();
     println!("{json}");
 }
