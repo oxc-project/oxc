@@ -162,10 +162,10 @@ owo-colors          = "4.0.0"
 oxc_resolver        = "1.7.0"
 petgraph            = "0.6.4"
 rust-lapper         = "1.1.0"
-serde_yaml          = "0.9.34"
 similar             = "2.5.0"
 textwrap            = "0.16.0"
 unicode-width       = "0.1.12"
+saphyr              = "0.0.1"
 
 [workspace.metadata.cargo-shear]
 ignored = ["napi"]

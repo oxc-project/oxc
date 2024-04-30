@@ -34,20 +34,19 @@ oxc_tasks_common = { workspace = true }
 oxc_sourcemap    = { workspace = true }
 oxc_transformer  = { workspace = true }
 
-serde        = { workspace = true, features = ["derive"] }
-serde_json   = { workspace = true }
-rayon        = { workspace = true }
-project-root = { workspace = true }
-pico-args    = { workspace = true }
-lazy_static  = { workspace = true }
-walkdir      = { workspace = true }
-regex        = { workspace = true }
-phf          = { workspace = true, features = ["macros"] }
-futures      = { workspace = true }
-tokio        = { workspace = true, features = ["rt-multi-thread", "macros"] }
-
+serde          = { workspace = true, features = ["derive"] }
+serde_json     = { workspace = true }
+rayon          = { workspace = true }
+project-root   = { workspace = true }
+pico-args      = { workspace = true }
+lazy_static    = { workspace = true }
+walkdir        = { workspace = true }
+regex          = { workspace = true }
+phf            = { workspace = true, features = ["macros"] }
+futures        = { workspace = true }
+tokio          = { workspace = true, features = ["rt-multi-thread", "macros"] }
+saphyr         = { workspace = true }
 console        = { workspace = true }
 encoding_rs    = { workspace = true }
 encoding_rs_io = { workspace = true }
-serde_yaml     = { workspace = true }
 similar        = { workspace = true }

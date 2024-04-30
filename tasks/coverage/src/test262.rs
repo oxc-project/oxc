@@ -1,78 +1,15 @@
-use std::{
-    io,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use oxc_span::SourceType;
-use serde::Deserialize;
 
 use crate::{
     project_root,
     suite::{Case, Suite, TestResult},
 };
 
+pub use crate::test262_meta::{MetaData, Phase, TestFlag};
+
 const FIXTURES_PATH: &str = "tasks/coverage/test262/test";
-
-#[derive(Debug, Clone, Deserialize, Default)]
-pub struct MetaData {
-    pub description: Box<str>,
-    pub esid: Option<Box<str>>,
-    pub es5id: Option<Box<str>>,
-    pub es6id: Option<Box<str>>,
-    #[serde(default)]
-    pub info: Box<str>,
-    #[serde(default)]
-    pub features: Box<[Box<str>]>,
-    #[serde(default)]
-    pub includes: Box<[Box<str>]>,
-    #[serde(default)]
-    pub flags: Box<[TestFlag]>,
-    #[serde(default)]
-    pub negative: Option<Negative>,
-    #[serde(default)]
-    pub locale: Box<[Box<str>]>,
-}
-
-/// Individual test flag.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum TestFlag {
-    OnlyStrict,
-    NoStrict,
-    Module,
-    Raw,
-    Async,
-    Generated,
-    #[serde(rename = "CanBlockIsFalse")]
-    CanBlockIsFalse,
-    #[serde(rename = "CanBlockIsTrue")]
-    CanBlockIsTrue,
-    #[serde(rename = "non-deterministic")]
-    NonDeterministic,
-}
-
-/// Negative test information structure.
-#[derive(Debug, Clone, Deserialize)]
-pub struct Negative {
-    pub phase: Phase,
-    #[serde(rename = "type")]
-    pub error_type: Box<str>,
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-pub enum Phase {
-    Parse,
-    Early,
-    Resolution,
-    Runtime,
-}
-
-impl Phase {
-    pub fn is_runtime(self) -> bool {
-        matches!(self, Self::Runtime)
-    }
-}
 
 pub struct Test262Suite<T: Case> {
     test_root: PathBuf,
@@ -125,12 +62,11 @@ impl Test262Case {
         &self.meta
     }
 
-    /// # Errors
     /// # Panics
-    pub fn read_metadata(code: &str) -> io::Result<MetaData> {
+    pub fn read_metadata(code: &str) -> MetaData {
         let (start, end) = (code.find("/*---").unwrap(), code.find("---*/").unwrap());
-        let yaml = &code[start + 5..end].replace('\r', "\n");
-        serde_yaml::from_str(yaml).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+        let s = &code[start + 5..end].replace('\r', "\n");
+        MetaData::from_str(s)
     }
 
     pub fn set_result(&mut self, result: TestResult) {
@@ -144,7 +80,7 @@ impl Test262Case {
 
 impl Case for Test262Case {
     fn new(path: PathBuf, code: String) -> Self {
-        let meta = Self::read_metadata(&code).expect("read test262 yaml meta");
+        let meta = Self::read_metadata(&code);
         let should_fail = Self::compute_should_fail(&meta);
         Self { path, code, meta, should_fail, result: TestResult::ToBeRun }
     }
