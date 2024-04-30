@@ -111,6 +111,15 @@ const nestedEnums = Object.values(types).flatMap((type) => {
 console.log(nestedEnums.join('\n'));
 
 console.log('--------------------');
+console.log('> Enums with unboxed variants:');
+const enumsWithUnboxedVariants = Object.values(types).flatMap((type) => {
+    if (type.kind !== 'enum') return [];
+    return type.variants.filter(({type: variantType}) => variantType && variantType.kind !== 'box')
+        .map(variant => `${type.name} -> ${variant.type.name}`);
+}).sort();
+console.log(enumsWithUnboxedVariants.join('\n'));
+
+console.log('--------------------');
 console.log('> Structs that need boxing:')
 const structsThatNeedBoxing = Object.values(types).filter(type => (
     type.kind === 'struct'
