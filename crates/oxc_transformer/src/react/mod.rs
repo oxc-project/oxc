@@ -47,13 +47,8 @@ impl<'a> React<'a> {
 // Transforms
 impl<'a> React<'a> {
     pub fn transform_program_on_exit(&mut self, program: &mut Program<'a>) {
-        // TODO: PERF: These two transforms reallocathe program.statements,
-        // they should be combined so that allocation is computed only once for program.statements.
         if self.options.is_jsx_plugin_enabled() {
             self.jsx.transform_program_on_exit(program);
-        }
-        if self.options.is_jsx_source_plugin_enabled() {
-            self.jsx.jsx_source.transform_program_on_exit(program);
         }
     }
 

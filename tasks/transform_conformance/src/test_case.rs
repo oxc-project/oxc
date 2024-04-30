@@ -83,9 +83,14 @@ fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOpti
         get_options::<ReactOptions>(options)?
     } else {
         let jsx_plugin = options.get_plugin("transform-react-jsx");
-        let has_jsx_plugin = jsx_plugin.as_ref().is_some();
-        let mut react_options =
-            jsx_plugin.map(get_options::<ReactOptions>).transpose()?.unwrap_or_default();
+        let jsx_development_plugin = options.get_plugin("transform-react-jsx-development");
+        let has_jsx_plugin =
+            jsx_plugin.as_ref().is_some() || jsx_development_plugin.as_ref().is_some();
+        let mut react_options = jsx_plugin
+            .map(get_options::<ReactOptions>)
+            .or_else(|| jsx_development_plugin.map(get_options::<ReactOptions>))
+            .transpose()?
+            .unwrap_or_default();
         react_options.development = options.get_plugin("transform-react-jsx-development").is_some();
         react_options.jsx_plugin = has_jsx_plugin;
         react_options.display_name_plugin =

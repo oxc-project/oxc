@@ -1,6 +1,7 @@
-Passed: 296/362
+Passed: 303/362
 
 # All Passed:
+* babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-source
 
@@ -62,9 +63,6 @@ Passed: 296/362
 * optimize-const-enums/merged-exported/input.ts
 * regression/15768/input.ts
 
-# babel-preset-react (8/9)
-* preset-options/development-runtime-automatic/input.js
-
 # babel-plugin-transform-react-jsx (141/143)
 * autoImport/complicated-scope-module/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
@@ -73,13 +71,7 @@ Passed: 296/362
 * react-source/arrow-function/input.js
 * react-source/disable-with-super/input.js
 
-# babel-plugin-transform-react-jsx-development (2/12)
-* cross-platform/auto-import-dev/input.js
-* cross-platform/classic-runtime/input.js
-* cross-platform/fragments/input.js
-* cross-platform/handle-fragments-with-key/input.js
-* cross-platform/handle-nonstatic-children/input.js
-* cross-platform/handle-static-children/input.js
+# babel-plugin-transform-react-jsx-development (8/12)
 * cross-platform/self-inside-arrow/input.mjs
 * cross-platform/source-and-self-defined/input.js
 * cross-platform/within-derived-classes-constructor/input.js
