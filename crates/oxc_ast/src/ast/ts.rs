@@ -856,7 +856,7 @@ pub enum TSModuleDeclarationKind {
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSModuleDeclarationName<'a> {
     Identifier(IdentifierName<'a>),
-    StringLiteral(StringLiteral<'a>),
+    StringLiteral(Box<'a, StringLiteral<'a>>),
 }
 
 impl<'a> TSModuleDeclarationName<'a> {
@@ -975,7 +975,7 @@ pub struct TSImportAttribute<'a> {
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSImportAttributeName<'a> {
     Identifier(IdentifierName<'a>),
-    StringLiteral(StringLiteral<'a>),
+    StringLiteral(Box<'a, StringLiteral<'a>>),
 }
 
 #[ast_node]
@@ -1109,7 +1109,7 @@ pub enum TSModuleReference<'a> {
 pub struct TSExternalModuleReference<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub expression: StringLiteral<'a>,
+    pub expression: Box<'a, StringLiteral<'a>>,
 }
 
 #[ast_node]

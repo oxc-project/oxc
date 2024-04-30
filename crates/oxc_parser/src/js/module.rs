@@ -438,7 +438,7 @@ impl<'a> ParserImpl<'a> {
                 if !literal.is_string_well_formed_unicode() {
                     self.error(diagnostics::ExportLoneSurrogate(literal.span));
                 };
-                Ok(ModuleExportName::StringLiteral(literal))
+                Ok(ModuleExportName::StringLiteral(self.ast.alloc(literal)))
             }
             _ => Ok(ModuleExportName::Identifier(self.parse_identifier_name()?)),
         }

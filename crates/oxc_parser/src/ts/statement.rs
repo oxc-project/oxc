@@ -241,7 +241,9 @@ impl<'a> ParserImpl<'a> {
         modifiers: Modifiers<'a>,
     ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
         let id = match self.cur_kind() {
-            Kind::Str => self.parse_literal_string().map(TSModuleDeclarationName::StringLiteral),
+            Kind::Str => self
+                .parse_literal_string()
+                .map(|str_lit| TSModuleDeclarationName::StringLiteral(self.ast.alloc(str_lit))),
             _ => self.parse_identifier_name().map(TSModuleDeclarationName::Identifier),
         }?;
 
@@ -384,7 +386,7 @@ impl<'a> ParserImpl<'a> {
             self.expect(Kind::RParen)?;
             self.ast.ts_module_reference_external_module_reference(TSExternalModuleReference {
                 span: self.end_span(reference_span),
-                expression,
+                expression: self.ast.alloc(expression),
             })
         } else {
             let node = self.parse_ts_type_name()?;

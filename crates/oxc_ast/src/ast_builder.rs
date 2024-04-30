@@ -249,7 +249,7 @@ impl<'a> AstBuilder<'a> {
         expression: StringLiteral<'a>,
         directive: Atom<'a>,
     ) -> Directive<'a> {
-        Directive { span, expression, directive }
+        Directive { span, expression: self.alloc(expression), directive }
     }
 
     pub fn hashbang(&self, span: Span, value: Atom<'a>) -> Hashbang<'a> {
@@ -1178,7 +1178,13 @@ impl<'a> AstBuilder<'a> {
         with_clause: Option<Box<'a, WithClause<'a>>>,
         import_kind: ImportOrExportKind,
     ) -> Box<'a, ImportDeclaration<'a>> {
-        self.alloc(ImportDeclaration { span, specifiers, source, with_clause, import_kind })
+        self.alloc(ImportDeclaration {
+            span,
+            specifiers,
+            source: self.alloc(source),
+            with_clause,
+            import_kind,
+        })
     }
 
     pub fn export_all_declaration(
@@ -1189,7 +1195,13 @@ impl<'a> AstBuilder<'a> {
         with_clause: Option<Box<'a, WithClause<'a>>>,
         export_kind: ImportOrExportKind,
     ) -> Box<'a, ExportAllDeclaration<'a>> {
-        self.alloc(ExportAllDeclaration { span, exported, source, with_clause, export_kind })
+        self.alloc(ExportAllDeclaration {
+            span,
+            exported,
+            source: self.alloc(source),
+            with_clause,
+            export_kind,
+        })
     }
 
     pub fn export_default_declaration(
@@ -1214,7 +1226,7 @@ impl<'a> AstBuilder<'a> {
             span,
             declaration,
             specifiers,
-            source,
+            source: source.map(|source| self.alloc(source)),
             export_kind,
             with_clause,
         })

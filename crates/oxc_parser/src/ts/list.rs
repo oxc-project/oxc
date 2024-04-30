@@ -196,7 +196,10 @@ impl<'a> SeparatedList<'a> for TSImportAttributeList<'a> {
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let span = p.start_span();
         let name = match p.cur_kind() {
-            Kind::Str => TSImportAttributeName::StringLiteral(p.parse_literal_string()?),
+            Kind::Str => {
+                let str_lit = p.parse_literal_string()?;
+                TSImportAttributeName::StringLiteral(p.ast.alloc(str_lit))
+            }
             _ => TSImportAttributeName::Identifier(p.parse_identifier_name()?),
         };
 

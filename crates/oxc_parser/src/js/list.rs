@@ -316,7 +316,10 @@ impl<'a> SeparatedList<'a> for AssertEntries<'a> {
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let span = p.start_span();
         let key = match p.cur_kind() {
-            Kind::Str => ImportAttributeKey::StringLiteral(p.parse_literal_string()?),
+            Kind::Str => {
+                let str_lit = p.parse_literal_string()?;
+                ImportAttributeKey::StringLiteral(p.ast.alloc(str_lit))
+            }
             _ => ImportAttributeKey::Identifier(p.parse_identifier_name()?),
         };
 
@@ -328,7 +331,7 @@ impl<'a> SeparatedList<'a> for AssertEntries<'a> {
 
         p.expect(Kind::Colon)?;
         let value = p.parse_literal_string()?;
-        let element = ImportAttribute { span: p.end_span(span), key, value };
+        let element = ImportAttribute { span: p.end_span(span), key, value: p.ast.alloc(value) };
         self.elements.push(element);
         Ok(())
     }
@@ -380,7 +383,17 @@ impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
         }
 
         let local = p.parse_module_export_name()?;
-        let exported = if p.eat(Kind::As) { p.parse_module_export_name()? } else { local.clone() };
+        let exported = if p.eat(Kind::As) {
+            p.parse_module_export_name()?
+        } else {
+            match &local {
+                ModuleExportName::Identifier(id) => ModuleExportName::Identifier(id.clone()),
+                ModuleExportName::StringLiteral(str_lit) => {
+                    ModuleExportName::StringLiteral(p.ast.alloc((**str_lit).clone()))
+                }
+                ModuleExportName::Dummy => ModuleExportName::Dummy,
+            }
+        };
         let element =
             ExportSpecifier { span: p.end_span(specifier_span), local, exported, export_kind };
         self.elements.push(element);

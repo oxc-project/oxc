@@ -1476,7 +1476,7 @@ impl<'a> Statement<'a> {
 pub struct Directive<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub expression: StringLiteral<'a>,
+    pub expression: Box<'a, StringLiteral<'a>>,
     /// A Use Strict Directive is an ExpressionStatement in a Directive Prologue whose StringLiteral is either of the exact code point sequences "use strict" or 'use strict'.
     /// A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
     /// <https://tc39.es/ecma262/#sec-directive-prologues-and-the-use-strict-directive>
@@ -2644,7 +2644,7 @@ impl<'a> ModuleDeclaration<'a> {
         match self {
             Self::ImportDeclaration(decl) => Some(&decl.source),
             Self::ExportAllDeclaration(decl) => Some(&decl.source),
-            Self::ExportNamedDeclaration(decl) => decl.source.as_ref(),
+            Self::ExportNamedDeclaration(decl) => decl.source.as_deref(),
             Self::ExportDefaultDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => None,
@@ -2699,7 +2699,7 @@ pub struct ImportDeclaration<'a> {
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
-    pub source: StringLiteral<'a>,
+    pub source: Box<'a, StringLiteral<'a>>,
     /// Some(vec![]) for empty assertion
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
     /// `import type { foo } from 'bar'`
@@ -2775,7 +2775,7 @@ pub struct ImportAttribute<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub key: ImportAttributeKey<'a>,
-    pub value: StringLiteral<'a>,
+    pub value: Box<'a, StringLiteral<'a>>,
 }
 
 #[ast_node]
@@ -2784,7 +2784,7 @@ pub struct ImportAttribute<'a> {
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ImportAttributeKey<'a> {
     Identifier(IdentifierName<'a>),
-    StringLiteral(StringLiteral<'a>),
+    StringLiteral(Box<'a, StringLiteral<'a>>),
 }
 
 impl<'a> ImportAttributeKey<'a> {
@@ -2806,7 +2806,7 @@ pub struct ExportNamedDeclaration<'a> {
     pub span: Span,
     pub declaration: Option<Declaration<'a>>,
     pub specifiers: Vec<'a, ExportSpecifier<'a>>,
-    pub source: Option<StringLiteral<'a>>,
+    pub source: Option<Box<'a, StringLiteral<'a>>>,
     /// `export type { foo }`
     pub export_kind: ImportOrExportKind,
     /// Some(vec![]) for empty assertion
@@ -2849,7 +2849,7 @@ pub struct ExportAllDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub exported: Option<ModuleExportName<'a>>,
-    pub source: StringLiteral<'a>,
+    pub source: Box<'a, StringLiteral<'a>>,
     pub with_clause: Option<Box<'a, WithClause<'a>>>, // Some(vec![]) for empty assertion
     pub export_kind: ImportOrExportKind,              // `export type *`
 }
@@ -2917,12 +2917,12 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
 /// * es2022: <https://github.com/estree/estree/blob/master/es2022.md#modules>
 /// * <https://github.com/tc39/ecma262/pull/2154>
 #[ast_node]
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ModuleExportName<'a> {
     Identifier(IdentifierName<'a>),
-    StringLiteral(StringLiteral<'a>),
+    StringLiteral(Box<'a, StringLiteral<'a>>),
 }
 
 impl<'a> fmt::Display for ModuleExportName<'a> {
