@@ -871,7 +871,7 @@ pub struct StaticMemberExpression<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub object: Expression<'a>,
-    pub property: IdentifierName<'a>,
+    pub property: Box<'a, IdentifierName<'a>>,
     pub optional: bool, // for optional chaining
 }
 
@@ -971,8 +971,8 @@ pub struct NewExpression<'a> {
 pub struct MetaProperty<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub meta: IdentifierName<'a>,
-    pub property: IdentifierName<'a>,
+    pub meta: Box<'a, IdentifierName<'a>>,
+    pub property: Box<'a, IdentifierName<'a>>,
 }
 
 /// Spread Element
@@ -2763,7 +2763,7 @@ pub struct ImportNamespaceSpecifier<'a> {
 pub struct WithClause<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
+    pub attributes_keyword: Box<'a, IdentifierName<'a>>, // `with` or `assert`
     pub with_entries: Vec<'a, ImportAttribute<'a>>,
 }
 
@@ -2783,7 +2783,7 @@ pub struct ImportAttribute<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ImportAttributeKey<'a> {
-    Identifier(IdentifierName<'a>),
+    Identifier(Box<'a, IdentifierName<'a>>),
     StringLiteral(Box<'a, StringLiteral<'a>>),
 }
 
@@ -2921,7 +2921,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ModuleExportName<'a> {
-    Identifier(IdentifierName<'a>),
+    Identifier(Box<'a, IdentifierName<'a>>),
     StringLiteral(Box<'a, StringLiteral<'a>>),
 }
 

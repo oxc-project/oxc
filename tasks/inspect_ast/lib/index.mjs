@@ -119,7 +119,7 @@ const structsThatNeedBoxing = Object.values(types).filter(type => (
     )
     && ![
         'Atom', 'Span', 'SourceType', 'ReferenceId', 'SymbolId', 'EmptyObject', 'RegExp',
-        'TemplateElementValue', 'IdentifierName', 'Modifiers', 'JSXOpeningFragment', 'JSXClosingFragment'
+        'TemplateElementValue', 'Modifiers', 'JSXOpeningFragment', 'JSXClosingFragment'
     ].includes(type.name)
 )).map(type => type.name).sort();
 console.log(structsThatNeedBoxing.join('\n'));

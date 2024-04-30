@@ -442,7 +442,11 @@ impl<'a> AstBuilder<'a> {
         meta: IdentifierName<'a>,
         property: IdentifierName<'a>,
     ) -> Expression<'a> {
-        Expression::MetaProperty(self.alloc(MetaProperty { span, meta, property }))
+        Expression::MetaProperty(self.alloc(MetaProperty {
+            span,
+            meta: self.alloc(meta),
+            property: self.alloc(property),
+        }))
     }
 
     pub fn array_expression(
@@ -652,7 +656,7 @@ impl<'a> AstBuilder<'a> {
         MemberExpression::StaticMemberExpression(self.alloc(StaticMemberExpression {
             span,
             object,
-            property,
+            property: self.alloc(property),
             optional,
         }))
     }
@@ -873,7 +877,7 @@ impl<'a> AstBuilder<'a> {
         this: IdentifierName<'a>,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> Box<'a, TSThisParameter<'a>> {
-        self.alloc(TSThisParameter { span, this, type_annotation })
+        self.alloc(TSThisParameter { span, this: self.alloc(this), type_annotation })
     }
 
     pub fn plain_function(

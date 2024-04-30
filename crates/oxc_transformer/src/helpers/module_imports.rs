@@ -84,20 +84,21 @@ impl<'a> ModuleImports<'a> {
         source: &CompactStr,
         names: std::vec::Vec<NamedImport>,
     ) -> Statement<'a> {
-        let specifiers = self.ast.new_vec_from_iter(names.into_iter().map(|name| {
-            ImportDeclarationSpecifier::ImportSpecifier(self.ast.alloc(ImportSpecifier {
-                span: SPAN,
-                imported: ModuleExportName::Identifier(IdentifierName::new(
-                    SPAN,
-                    self.ast.new_atom(name.imported.as_str()),
-                )),
-                local: self.ast.alloc(BindingIdentifier::new(
-                    SPAN,
-                    self.ast.new_atom(name.local.unwrap_or(name.imported).as_str()),
-                )),
-                import_kind: ImportOrExportKind::Value,
-            }))
-        }));
+        let specifiers =
+            self.ast.new_vec_from_iter(names.into_iter().map(|name| {
+                ImportDeclarationSpecifier::ImportSpecifier(self.ast.alloc(ImportSpecifier {
+                    span: SPAN,
+                    imported: ModuleExportName::Identifier(self.ast.alloc(IdentifierName::new(
+                        SPAN,
+                        self.ast.new_atom(name.imported.as_str()),
+                    ))),
+                    local: self.ast.alloc(BindingIdentifier::new(
+                        SPAN,
+                        self.ast.new_atom(name.local.unwrap_or(name.imported).as_str()),
+                    )),
+                    import_kind: ImportOrExportKind::Value,
+                }))
+            }));
         let import_stmt = self.ast.import_declaration(
             SPAN,
             Some(specifiers),

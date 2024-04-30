@@ -240,12 +240,13 @@ impl<'a> ParserImpl<'a> {
         kind: TSModuleDeclarationKind,
         modifiers: Modifiers<'a>,
     ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
-        let id = match self.cur_kind() {
-            Kind::Str => self
-                .parse_literal_string()
-                .map(|str_lit| TSModuleDeclarationName::StringLiteral(self.ast.alloc(str_lit))),
-            _ => self.parse_identifier_name().map(TSModuleDeclarationName::Identifier),
-        }?;
+        let id = if self.cur_kind() == Kind::Str {
+            let str_lit = self.parse_literal_string()?;
+            TSModuleDeclarationName::StringLiteral(self.ast.alloc(str_lit))
+        } else {
+            let id = self.parse_identifier_name()?;
+            TSModuleDeclarationName::Identifier(self.ast.alloc(id))
+        };
 
         let body = if self.eat(Kind::Dot) {
             let span = self.start_span();

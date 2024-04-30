@@ -500,7 +500,7 @@ impl<'a> ParserImpl<'a> {
             left = TSTypeName::QualifiedName(self.ast.alloc(TSQualifiedName {
                 span: self.end_span(span),
                 left,
-                right,
+                right: self.ast.alloc(right),
             }));
         }
         Ok(left)

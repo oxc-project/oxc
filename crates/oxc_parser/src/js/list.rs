@@ -315,12 +315,12 @@ impl<'a> SeparatedList<'a> for AssertEntries<'a> {
 
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let span = p.start_span();
-        let key = match p.cur_kind() {
-            Kind::Str => {
-                let str_lit = p.parse_literal_string()?;
-                ImportAttributeKey::StringLiteral(p.ast.alloc(str_lit))
-            }
-            _ => ImportAttributeKey::Identifier(p.parse_identifier_name()?),
+        let key = if p.cur_kind() == Kind::Str {
+            let str_lit = p.parse_literal_string()?;
+            ImportAttributeKey::StringLiteral(p.ast.alloc(str_lit))
+        } else {
+            let id = p.parse_identifier_name()?;
+            ImportAttributeKey::Identifier(p.ast.alloc(id))
         };
 
         if let Some(old_span) = self.keys.get(&key.as_atom()) {
@@ -387,7 +387,9 @@ impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
             p.parse_module_export_name()?
         } else {
             match &local {
-                ModuleExportName::Identifier(id) => ModuleExportName::Identifier(id.clone()),
+                ModuleExportName::Identifier(id) => {
+                    ModuleExportName::Identifier(p.ast.alloc((**id).clone()))
+                }
                 ModuleExportName::StringLiteral(str_lit) => {
                     ModuleExportName::StringLiteral(p.ast.alloc((**str_lit).clone()))
                 }

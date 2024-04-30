@@ -36,7 +36,7 @@ export interface TSIndexSignatureName extends Span {
 pub struct TSThisParameter<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub this: IdentifierName<'a>,
+    pub this: Box<'a, IdentifierName<'a>>,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
@@ -341,7 +341,7 @@ pub struct TSNamedTupleMember<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub element_type: TSType<'a>,
-    pub label: IdentifierName<'a>,
+    pub label: Box<'a, IdentifierName<'a>>,
     pub optional: bool,
 }
 
@@ -583,7 +583,7 @@ pub struct TSQualifiedName<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub left: TSTypeName<'a>,
-    pub right: IdentifierName<'a>,
+    pub right: Box<'a, IdentifierName<'a>>,
 }
 
 #[ast_node]
@@ -855,7 +855,7 @@ pub enum TSModuleDeclarationKind {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSModuleDeclarationName<'a> {
-    Identifier(IdentifierName<'a>),
+    Identifier(Box<'a, IdentifierName<'a>>),
     StringLiteral(Box<'a, StringLiteral<'a>>),
 }
 
@@ -974,7 +974,7 @@ pub struct TSImportAttribute<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSImportAttributeName<'a> {
-    Identifier(IdentifierName<'a>),
+    Identifier(Box<'a, IdentifierName<'a>>),
     StringLiteral(Box<'a, StringLiteral<'a>>),
 }
 
@@ -1251,7 +1251,7 @@ pub struct TSExportAssignment<'a> {
 pub struct TSNamespaceExportDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub id: IdentifierName<'a>,
+    pub id: Box<'a, IdentifierName<'a>>,
 }
 
 #[ast_node]

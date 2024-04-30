@@ -62,7 +62,7 @@ impl<'a> SeparatedList<'a> for TSTupleElementList<'a> {
                     type_annotation: TSType::TSNamedTupleMember(p.ast.alloc(TSNamedTupleMember {
                         span: p.end_span(member_span),
                         element_type,
-                        label,
+                        label: p.ast.alloc(label),
                         optional: false, // A tuple member cannot be both optional and rest. (TS5085)
                     })),
                 })));
@@ -75,7 +75,12 @@ impl<'a> SeparatedList<'a> for TSTupleElementList<'a> {
 
             let element_type = p.parse_ts_type()?;
             self.elements.push(TSTupleElement::TSNamedTupleMember(p.ast.alloc(
-                TSNamedTupleMember { span: p.end_span(span), element_type, label, optional },
+                TSNamedTupleMember {
+                    span: p.end_span(span),
+                    element_type,
+                    label: p.ast.alloc(label),
+                    optional,
+                },
             )));
 
             return Ok(());
@@ -195,12 +200,12 @@ impl<'a> SeparatedList<'a> for TSImportAttributeList<'a> {
 
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let span = p.start_span();
-        let name = match p.cur_kind() {
-            Kind::Str => {
-                let str_lit = p.parse_literal_string()?;
-                TSImportAttributeName::StringLiteral(p.ast.alloc(str_lit))
-            }
-            _ => TSImportAttributeName::Identifier(p.parse_identifier_name()?),
+        let name = if p.cur_kind() == Kind::Str {
+            let str_lit = p.parse_literal_string()?;
+            TSImportAttributeName::StringLiteral(p.ast.alloc(str_lit))
+        } else {
+            let id = p.parse_identifier_name()?;
+            TSImportAttributeName::Identifier(p.ast.alloc(id))
         };
 
         p.expect(Kind::Colon)?;

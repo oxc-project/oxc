@@ -149,7 +149,7 @@ impl<'a> ParserImpl<'a> {
 
         Ok(Some(self.ast.alloc(WithClause {
             span: self.end_span(span),
-            attributes_keyword,
+            attributes_keyword: self.ast.alloc(attributes_keyword),
             with_entries,
         })))
     }
@@ -176,7 +176,10 @@ impl<'a> ParserImpl<'a> {
         let id = self.parse_identifier_name()?;
         self.asi()?;
 
-        Ok(self.ast.alloc(TSNamespaceExportDeclaration { span: self.end_span(span), id }))
+        Ok(self.ast.alloc(TSNamespaceExportDeclaration {
+            span: self.end_span(span),
+            id: self.ast.alloc(id),
+        }))
     }
 
     /// [Exports](https://tc39.es/ecma262/#sec-exports)
@@ -359,7 +362,7 @@ impl<'a> ParserImpl<'a> {
                 decl
             }
         };
-        let exported = ModuleExportName::Identifier(exported);
+        let exported = ModuleExportName::Identifier(self.ast.alloc(exported));
         let span = self.end_span(span);
         Ok(self.ast.export_default_declaration(span, declaration, exported))
     }
@@ -416,7 +419,7 @@ impl<'a> ParserImpl<'a> {
         } else {
             let local = self.parse_binding_identifier()?;
             let imported = IdentifierName { span: local.span, name: local.name.clone() };
-            (ModuleExportName::Identifier(imported), local)
+            (ModuleExportName::Identifier(self.ast.alloc(imported)), local)
         };
         Ok(self.ast.alloc(ImportSpecifier {
             span: self.end_span(specifier_span),
@@ -430,17 +433,17 @@ impl<'a> ParserImpl<'a> {
     //   IdentifierName
     //   StringLiteral
     pub(crate) fn parse_module_export_name(&mut self) -> Result<ModuleExportName<'a>> {
-        match self.cur_kind() {
-            Kind::Str => {
-                let literal = self.parse_literal_string()?;
-                // ModuleExportName : StringLiteral
-                // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
-                if !literal.is_string_well_formed_unicode() {
-                    self.error(diagnostics::ExportLoneSurrogate(literal.span));
-                };
-                Ok(ModuleExportName::StringLiteral(self.ast.alloc(literal)))
-            }
-            _ => Ok(ModuleExportName::Identifier(self.parse_identifier_name()?)),
+        if self.cur_kind() == Kind::Str {
+            let literal = self.parse_literal_string()?;
+            // ModuleExportName : StringLiteral
+            // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
+            if !literal.is_string_well_formed_unicode() {
+                self.error(diagnostics::ExportLoneSurrogate(literal.span));
+            };
+            Ok(ModuleExportName::StringLiteral(self.ast.alloc(literal)))
+        } else {
+            let id = self.parse_identifier_name()?;
+            Ok(ModuleExportName::Identifier(self.ast.alloc(id)))
         }
     }
 
