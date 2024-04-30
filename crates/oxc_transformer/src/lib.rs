@@ -28,9 +28,11 @@ use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{
     ast::*,
     visit::{walk_mut, VisitMut},
+    Trivias,
 };
 use oxc_diagnostics::Error;
-use oxc_semantic::Semantic;
+use oxc_span::SourceType;
+use oxc_syntax::scope::ScopeFlags;
 
 pub use crate::{
     compiler_assumptions::CompilerAssumptions, es2015::ES2015Options, options::TransformOptions,
@@ -55,10 +57,19 @@ impl<'a> Transformer<'a> {
     pub fn new(
         allocator: &'a Allocator,
         source_path: &Path,
-        semantic: Semantic<'a>,
+        source_type: SourceType,
+        source_text: &'a str,
+        trivias: &'a Trivias,
         options: TransformOptions,
     ) -> Self {
-        let ctx = Rc::new(TransformCtx::new(allocator, source_path, semantic, &options));
+        let ctx = Rc::new(TransformCtx::new(
+            allocator,
+            source_path,
+            source_type,
+            source_text,
+            trivias,
+            &options,
+        ));
         Self {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, &ctx),
@@ -154,7 +165,7 @@ impl<'a> VisitMut<'a> for Transformer<'a> {
         walk_mut::walk_formal_parameter_mut(self, param);
     }
 
-    fn visit_function(&mut self, func: &mut Function<'a>, flags: Option<oxc_semantic::ScopeFlags>) {
+    fn visit_function(&mut self, func: &mut Function<'a>, flags: Option<ScopeFlags>) {
         self.x0_typescript.transform_function(func, flags);
 
         walk_mut::walk_function_mut(self, func, flags);

@@ -8,7 +8,7 @@ use crate::TypeScriptOptions;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
-use oxc_syntax::operator::AssignmentOperator;
+use oxc_syntax::{operator::AssignmentOperator, scope::ScopeFlags};
 use rustc_hash::FxHashSet;
 
 use super::collector::TypeScriptReferenceCollector;
@@ -217,11 +217,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         param.accessibility = None;
     }
 
-    pub fn transform_function(
-        &mut self,
-        func: &mut Function<'a>,
-        _flags: Option<oxc_semantic::ScopeFlags>,
-    ) {
+    pub fn transform_function(&mut self, func: &mut Function<'a>, _flags: Option<ScopeFlags>) {
         func.this_param = None;
         func.type_parameters = None;
         func.return_type = None;

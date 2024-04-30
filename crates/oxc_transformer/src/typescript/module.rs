@@ -49,7 +49,7 @@ impl<'a> TypeScript<'a> {
                     self.transform_ts_type_name(&mut *type_name.to_ts_type_name_mut())
                 }
                 TSModuleReference::ExternalModuleReference(reference) => {
-                    if self.ctx.source_type().is_module() {
+                    if self.ctx.source_type.is_module() {
                         self.ctx.error(ImportEqualsRequireUnsupported(decl_span));
                     }
 
@@ -80,7 +80,7 @@ impl<'a> TypeScript<'a> {
         &mut self,
         export_assignment: &mut TSExportAssignment<'a>,
     ) {
-        if self.ctx.source_type().is_module() {
+        if self.ctx.source_type.is_module() {
             self.ctx.error(ExportAssignmentUnsupported(export_assignment.span));
         }
     }

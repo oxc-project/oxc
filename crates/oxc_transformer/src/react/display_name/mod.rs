@@ -78,7 +78,7 @@ impl<'a> ReactDisplayName<'a> {
     pub fn transform_export_default_declaration(&self, decl: &mut ExportDefaultDeclaration<'a>) {
         let Some(expr) = decl.declaration.as_expression_mut() else { return };
         let Some(obj_expr) = Self::get_object_from_create_class(expr) else { return };
-        let name = self.ctx.ast.new_atom(self.ctx.filename());
+        let name = self.ctx.ast.new_atom(&self.ctx.filename);
         self.add_display_name(obj_expr, name);
     }
 }

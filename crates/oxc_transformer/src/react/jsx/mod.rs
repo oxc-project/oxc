@@ -91,7 +91,7 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn is_script(&self) -> bool {
-        self.ctx.semantic.source_type().is_script()
+        self.ctx.source_type.is_script()
     }
 
     fn ast(&self) -> &AstBuilder<'a> {

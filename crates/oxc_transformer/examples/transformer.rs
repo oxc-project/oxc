@@ -1,12 +1,8 @@
-use std::{
-    env,
-    path::{Path, PathBuf},
-};
+use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer::{TransformOptions, Transformer};
 
@@ -35,18 +31,14 @@ fn main() {
     println!("Original:\n");
     println!("{source_text}\n");
 
-    let semantic = SemanticBuilder::new(&source_text, source_type)
-        .with_trivias(ret.trivias)
-        .build_module_record(PathBuf::new(), &ret.program)
-        .build(&ret.program)
-        .semantic;
-
-    let program = allocator.alloc(ret.program);
+    let mut program = ret.program;
     let transform_options = TransformOptions::default();
-    Transformer::new(&allocator, path, semantic, transform_options).build(program).unwrap();
+    Transformer::new(&allocator, path, source_type, &source_text, &ret.trivias, transform_options)
+        .build(&mut program)
+        .unwrap();
 
     let printed = Codegen::<false>::new("", &source_text, CodegenOptions::default())
-        .build(program)
+        .build(&program)
         .source_text;
     println!("Transformed:\n");
     println!("{printed}");
