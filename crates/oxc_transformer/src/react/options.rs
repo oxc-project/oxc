@@ -142,6 +142,10 @@ impl Default for ReactOptions {
 }
 
 impl ReactOptions {
+    pub fn is_jsx_plugin_enabled(&self) -> bool {
+        self.jsx_plugin || self.development
+    }
+
     pub fn is_jsx_self_plugin_enabled(&self) -> bool {
         self.jsx_self_plugin || self.development
     }

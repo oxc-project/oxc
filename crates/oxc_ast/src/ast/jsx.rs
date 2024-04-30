@@ -199,8 +199,12 @@ pub struct JSXAttribute<'a> {
 }
 
 impl<'a> JSXAttribute<'a> {
+    pub fn is_identifier(&self, name: &str) -> bool {
+        matches!(&self.name, JSXAttributeName::Identifier(ident) if ident.name == name)
+    }
+
     pub fn is_key(&self) -> bool {
-        matches!(&self.name, JSXAttributeName::Identifier(ident) if ident.name == "key")
+        self.is_identifier("key")
     }
 }
 

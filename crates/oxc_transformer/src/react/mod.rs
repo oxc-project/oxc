@@ -30,7 +30,7 @@ pub struct React<'a> {
 impl<'a> React<'a> {
     pub fn new(options: ReactOptions, ctx: &Ctx<'a>) -> Self {
         let mut options = options;
-        if options.jsx_plugin {
+        if options.is_jsx_plugin_enabled() {
             options.update_with_comments(ctx);
         }
         let options = Rc::new(options);
@@ -47,7 +47,7 @@ impl<'a> React<'a> {
     pub fn transform_program_on_exit(&mut self, program: &mut Program<'a>) {
         // TODO: PERF: These two transforms reallocathe program.statements,
         // they should be combined so that allocation is computed only once for program.statements.
-        if self.options.jsx_plugin {
+        if self.options.is_jsx_plugin_enabled() {
             self.jsx.transform_program_on_exit(program);
         }
         if self.options.is_jsx_source_plugin_enabled() {
@@ -63,12 +63,12 @@ impl<'a> React<'a> {
                 }
             }
             Expression::JSXElement(e) => {
-                if self.options.jsx_plugin {
+                if self.options.is_jsx_plugin_enabled() {
                     *expr = self.jsx.transform_jsx_element(e);
                 }
             }
             Expression::JSXFragment(e) => {
-                if self.options.jsx_plugin {
+                if self.options.is_jsx_plugin_enabled() {
                     *expr = self.jsx.transform_jsx_fragment(e);
                 }
             }
