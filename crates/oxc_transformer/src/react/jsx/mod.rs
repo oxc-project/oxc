@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{CompactStr, GetSpan, SPAN};
+use oxc_span::{CompactStr, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
     xml_entities::XML_ENTITIES,
@@ -12,6 +12,7 @@ use oxc_syntax::{
 
 use crate::{context::Ctx, helpers::module_imports::NamedImport};
 
+use super::utils::get_line_column;
 pub use super::{
     jsx_self::ReactJsxSelf,
     jsx_source::ReactJsxSource,
@@ -217,6 +218,13 @@ enum JSXElementOrFragment<'a, 'b> {
 }
 
 impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Element(e) => e.span(),
+            Self::Fragment(e) => e.span,
+        }
+    }
+
     fn attributes(&self) -> Option<&'b Vec<'a, JSXAttributeItem<'a>>> {
         match self {
             Self::Element(e) if !e.opening_element.attributes.is_empty() => {
@@ -367,7 +375,9 @@ impl<'a> ReactJsx<'a> {
             if let Some(span) = source_attr_span {
                 self.jsx_source.report_error(span);
             } else {
-                properties.push(self.jsx_source.get_object_property_kind_for_jsx_plugin());
+                let (line, column) = get_line_column(e.span().start, self.ctx.source_text);
+                properties
+                    .push(self.jsx_source.get_object_property_kind_for_jsx_plugin(line, column));
             }
         }
 

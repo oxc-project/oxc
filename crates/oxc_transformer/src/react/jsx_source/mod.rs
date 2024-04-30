@@ -10,6 +10,8 @@ use crate::context::Ctx;
 
 use self::diagnostics::DuplicateSourceProp;
 
+use super::utils::get_line_column;
+
 const SOURCE: &str = "__source";
 const FILE_NAME_VAR: &str = "_jsxFileName";
 
@@ -47,12 +49,16 @@ impl<'a> ReactJsxSource<'a> {
         self.add_source_attribute(elem);
     }
 
-    pub fn get_object_property_kind_for_jsx_plugin(&mut self) -> ObjectPropertyKind<'a> {
+    pub fn get_object_property_kind_for_jsx_plugin(
+        &mut self,
+        line: usize,
+        column: usize,
+    ) -> ObjectPropertyKind<'a> {
         self.should_add_jsx_file_name_variable = true;
         let kind = PropertyKind::Init;
         let ident = IdentifierName::new(SPAN, SOURCE.into());
         let key = self.ctx.ast.property_key_identifier(ident);
-        let value = self.get_source_object();
+        let value = self.get_source_object(line, column);
         let obj = self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false);
         ObjectPropertyKind::ObjectProperty(obj)
     }
@@ -83,14 +89,16 @@ impl<'a> ReactJsxSource<'a> {
         let key = JSXAttributeName::Identifier(
             self.ctx.ast.alloc(self.ctx.ast.jsx_identifier(SPAN, SOURCE.into())),
         );
-        let object = self.get_source_object();
+        let (line, column) = get_line_column(elem.span.start, self.ctx.source_text);
+        let object = self.get_source_object(line, column);
         let expr = self.ctx.ast.jsx_expression_container(SPAN, JSXExpression::from(object));
         let value = JSXAttributeValue::ExpressionContainer(expr);
         let attribute_item = self.ctx.ast.jsx_attribute(SPAN, key, Some(value));
         elem.attributes.push(JSXAttributeItem::Attribute(attribute_item));
     }
 
-    fn get_source_object(&self) -> Expression<'a> {
+    #[allow(clippy::cast_precision_loss)]
+    fn get_source_object(&self, line: usize, column: usize) -> Expression<'a> {
         let kind = PropertyKind::Init;
 
         let filename = {
@@ -104,7 +112,12 @@ impl<'a> ReactJsxSource<'a> {
         let line_number = {
             let ident = IdentifierName::new(SPAN, "lineNumber".into());
             let key = self.ctx.ast.property_key_identifier(ident);
-            let number = self.ctx.ast.number_literal(SPAN, 1.0, "1", NumberBase::Decimal);
+            let number = self.ctx.ast.number_literal(
+                SPAN,
+                line as f64,
+                self.ctx.ast.new_str(&line.to_string()),
+                NumberBase::Decimal,
+            );
             let value = self.ctx.ast.literal_number_expression(number);
             self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false)
         };
@@ -112,7 +125,12 @@ impl<'a> ReactJsxSource<'a> {
         let column_number = {
             let ident = IdentifierName::new(SPAN, "columnNumber".into());
             let key = self.ctx.ast.property_key_identifier(ident);
-            let number = self.ctx.ast.number_literal(SPAN, 1.0, "1", NumberBase::Decimal);
+            let number = self.ctx.ast.number_literal(
+                SPAN,
+                column as f64,
+                self.ctx.ast.new_str(&column.to_string()),
+                NumberBase::Decimal,
+            );
             let value = self.ctx.ast.literal_number_expression(number);
             self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false)
         };
