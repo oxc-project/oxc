@@ -18,6 +18,7 @@ use self::errors::{
 };
 pub use self::{
     env::ESLintEnv, globals::ESLintGlobals, rules::ESLintRules, settings::ESLintSettings,
+    settings::jsdoc::JSDocPluginSettings
 };
 
 /// ESLint Config

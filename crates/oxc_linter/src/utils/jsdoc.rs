@@ -1,5 +1,6 @@
-use crate::{context::LintContext, AstNode};
+use crate::{config::JSDocPluginSettings, context::LintContext, AstNode};
 use oxc_ast::AstKind;
+use oxc_semantic::JSDoc;
 
 /// JSDoc is often attached on the parent node of a function.
 ///
@@ -35,4 +36,36 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
     }
 
     Some(current_node)
+}
+
+pub fn should_ignore_as_internal(jsdoc: &JSDoc, settings: &JSDocPluginSettings) -> bool {
+    if settings.ignore_internal {
+        let resolved_internal_tag_name = settings.resolve_tag_name("internal");
+
+        for tag in jsdoc.tags() {
+            if tag.kind.parsed() == resolved_internal_tag_name {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+pub fn should_ignore_as_private(jsdoc: &JSDoc, settings: &JSDocPluginSettings) -> bool {
+    if settings.ignore_private {
+        let resolved_private_tag_name = settings.resolve_tag_name("private");
+        let resolved_access_tag_name = settings.resolve_tag_name("access");
+
+        for tag in jsdoc.tags() {
+            let tag_name = tag.kind.parsed();
+            if tag_name == resolved_private_tag_name
+                || tag_name == resolved_access_tag_name && tag.comment().parsed() == "private"
+            {
+                return true;
+            }
+        }
+    }
+
+    false
 }
