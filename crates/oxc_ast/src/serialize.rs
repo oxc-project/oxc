@@ -28,10 +28,16 @@ impl serde_json::ser::Formatter for EcmaFormatter {
 impl<'a> Program<'a> {
     /// # Panics
     pub fn to_json(&self) -> String {
-        let buf = std::vec::Vec::new();
-        let mut ser = serde_json::Serializer::with_formatter(buf, crate::serialize::EcmaFormatter);
-        self.serialize(&mut ser).unwrap();
+        let ser = self.serializer();
         String::from_utf8(ser.into_inner()).unwrap()
+    }
+
+    /// # Panics
+    pub fn serializer(&self) -> serde_json::Serializer<std::vec::Vec<u8>, EcmaFormatter> {
+        let buf = std::vec::Vec::new();
+        let mut ser = serde_json::Serializer::with_formatter(buf, EcmaFormatter);
+        self.serialize(&mut ser).unwrap();
+        ser
     }
 }
 
