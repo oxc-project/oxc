@@ -6,9 +6,8 @@ use std::{
 };
 
 use oxc_allocator::Allocator;
-use oxc_ast::AstBuilder;
+use oxc_ast::{AstBuilder, Trivias};
 use oxc_diagnostics::Error;
-use oxc_semantic::Semantic;
 use oxc_span::SourceType;
 
 use crate::{helpers::module_imports::ModuleImports, TransformOptions};
@@ -16,17 +15,21 @@ use crate::{helpers::module_imports::ModuleImports, TransformOptions};
 pub type Ctx<'a> = Rc<TransformCtx<'a>>;
 
 pub struct TransformCtx<'a> {
+    errors: RefCell<Vec<Error>>,
+
+    pub trivias: &'a Trivias,
+
     pub ast: AstBuilder<'a>,
 
-    pub semantic: Semantic<'a>,
-
     /// <https://babeljs.io/docs/options#filename>
-    filename: String,
+    pub filename: String,
 
     /// Source path in the form of `<CWD>/path/to/file/input.js`
-    source_path: PathBuf,
+    pub source_path: PathBuf,
 
-    errors: RefCell<Vec<Error>>,
+    pub source_type: SourceType,
+
+    pub source_text: &'a str,
 
     // Helpers
     /// Manage import statement globally
@@ -37,7 +40,9 @@ impl<'a> TransformCtx<'a> {
     pub fn new(
         allocator: &'a Allocator,
         source_path: &Path,
-        semantic: Semantic<'a>,
+        source_type: SourceType,
+        source_text: &'a str,
+        trivias: &'a Trivias,
         options: &TransformOptions,
     ) -> Self {
         let filename = source_path
@@ -49,11 +54,13 @@ impl<'a> TransformCtx<'a> {
             .map_or_else(|_| source_path.to_path_buf(), |p| Path::new("<CWD>").join(p));
 
         Self {
+            errors: RefCell::new(vec![]),
             ast: AstBuilder::new(allocator),
-            semantic,
             filename,
             source_path,
-            errors: RefCell::new(vec![]),
+            source_type,
+            source_text,
+            trivias,
             module_imports: ModuleImports::new(allocator),
         }
     }
@@ -62,21 +69,9 @@ impl<'a> TransformCtx<'a> {
         mem::take(&mut self.errors.borrow_mut())
     }
 
-    pub fn filename(&self) -> &str {
-        &self.filename
-    }
-
-    pub fn source_path(&self) -> &Path {
-        &self.source_path
-    }
-
     /// Add an Error
     #[allow(unused)]
     pub fn error<T: Into<Error>>(&self, error: T) {
         self.errors.borrow_mut().push(error.into());
-    }
-
-    pub fn source_type(&self) -> &SourceType {
-        self.semantic.source_type()
     }
 }

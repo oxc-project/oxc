@@ -10,7 +10,6 @@ use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::{miette::miette, Error};
 use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions, TestOs};
 use oxc_transformer::{
@@ -206,21 +205,20 @@ pub trait TestCase {
         );
 
         let ret = Parser::new(&allocator, &source_text, source_type).parse();
-
-        let semantic = SemanticBuilder::new(&source_text, source_type)
-            .with_trivias(ret.trivias)
-            .build_module_record(PathBuf::new(), &ret.program)
-            .build(&ret.program)
-            .semantic;
-
-        let transformed_program = allocator.alloc(ret.program);
-
-        let result = Transformer::new(&allocator, path, semantic, transform_options.clone())
-            .build(transformed_program);
+        let mut program = ret.program;
+        let result = Transformer::new(
+            &allocator,
+            path,
+            source_type,
+            &source_text,
+            &ret.trivias,
+            transform_options.clone(),
+        )
+        .build(&mut program);
 
         result.map(|()| {
             Codegen::<false>::new("", &source_text, CodegenOptions::default())
-                .build(transformed_program)
+                .build(&program)
                 .source_text
         })
     }
@@ -290,23 +288,20 @@ impl TestCase for ConformanceTestCase {
             Ok(transform_options) => {
                 let ret = Parser::new(&allocator, &input, source_type).parse();
                 if ret.errors.is_empty() {
-                    let semantic = SemanticBuilder::new(&input, source_type)
-                        .with_trivias(ret.trivias)
-                        .build_module_record(PathBuf::new(), &ret.program)
-                        .build(&ret.program)
-                        .semantic;
-                    let program = allocator.alloc(ret.program);
+                    let mut program = ret.program;
                     let transformer = Transformer::new(
                         &allocator,
                         &self.path,
-                        semantic,
+                        source_type,
+                        &input,
+                        &ret.trivias,
                         transform_options.clone(),
                     );
-                    let result = transformer.build(program);
+                    let result = transformer.build(&mut program);
                     if result.is_ok() {
                         transformed_code =
                             Codegen::<false>::new("", &input, codegen_options.clone())
-                                .build(program)
+                                .build(&program)
                                 .source_text;
                     } else {
                         let error = result

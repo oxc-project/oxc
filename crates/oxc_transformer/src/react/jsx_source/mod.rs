@@ -132,8 +132,7 @@ impl<'a> ReactJsxSource<'a> {
             self.ctx.ast.binding_pattern(ident, None, false)
         };
         let decl = {
-            let string =
-                self.ctx.ast.string_literal(SPAN, &self.ctx.source_path().to_string_lossy());
+            let string = self.ctx.ast.string_literal(SPAN, &self.ctx.source_path.to_string_lossy());
             let init = self.ctx.ast.literal_string_expression(string);
             let decl = self.ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
             self.ctx.ast.new_vec_single(decl)

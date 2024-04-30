@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer::{TransformOptions, Transformer};
 
@@ -18,18 +17,12 @@ use crate::{
 /// TODO: add codegen to turn on idempotency test.
 fn get_result(source_text: &str, source_type: SourceType, source_path: &Path) -> TestResult {
     let allocator = Allocator::default();
-
-    let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
-
-    let semantic_ret = SemanticBuilder::new(source_text, source_type)
-        .with_trivias(parser_ret.trivias)
-        .with_check_syntax_error(true)
-        .build(&parser_ret.program);
-
-    let mut program = parser_ret.program;
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let mut program = ret.program;
     let options = TransformOptions::default();
-    let _ = Transformer::new(&allocator, source_path, semantic_ret.semantic, options)
-        .build(&mut program);
+    let _ =
+        Transformer::new(&allocator, source_path, source_type, source_text, &ret.trivias, options)
+            .build(&mut program);
     TestResult::Passed
 }
 

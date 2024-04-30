@@ -142,6 +142,10 @@ impl Default for ReactOptions {
 }
 
 impl ReactOptions {
+    pub fn is_jsx_plugin_enabled(&self) -> bool {
+        self.jsx_plugin || self.development
+    }
+
     pub fn is_jsx_self_plugin_enabled(&self) -> bool {
         self.jsx_self_plugin || self.development
     }
@@ -159,9 +163,8 @@ impl ReactOptions {
     ///
     /// This behavior is aligned with babel.
     pub(crate) fn update_with_comments(&mut self, ctx: &Ctx) {
-        let semantic = &ctx.semantic;
-        for (_, span) in semantic.trivias().comments() {
-            let mut comment = span.source_text(semantic.source_text()).trim_start();
+        for (_, span) in ctx.trivias.comments() {
+            let mut comment = span.source_text(ctx.source_text).trim_start();
             // strip leading jsdoc comment `*` and then whitespaces
             while let Some(cur_comment) = comment.strip_prefix('*') {
                 comment = cur_comment.trim_start();

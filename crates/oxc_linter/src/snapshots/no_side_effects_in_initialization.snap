@@ -764,6 +764,120 @@ expression: no_side_effects_in_initialization
    ·                         ───
    ╰────
 
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling imported function
+   ╭─[no_side_effects_in_initialization.tsx:1:8]
+ 1 │ import x from "import-default"; x()
+   ·        ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating imported variable
+   ╭─[no_side_effects_in_initialization.tsx:1:8]
+ 1 │ import x from "import-default"; x.z = 1
+   ·        ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling imported function
+   ╭─[no_side_effects_in_initialization.tsx:1:9]
+ 1 │ import {x} from "import"; x()
+   ·         ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating imported variable
+   ╭─[no_side_effects_in_initialization.tsx:1:9]
+ 1 │ import {x} from "import"; x.z = 1
+   ·         ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling imported function
+   ╭─[no_side_effects_in_initialization.tsx:1:14]
+ 1 │ import {x as y} from "import"; y()
+   ·              ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating imported variable
+   ╭─[no_side_effects_in_initialization.tsx:1:14]
+ 1 │ import {x as y} from "import"; y.a = 1
+   ·              ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling
+   ╭─[no_side_effects_in_initialization.tsx:1:30]
+ 1 │ import * as y from "import"; y.x()
+   ·                              ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating imported variable
+   ╭─[no_side_effects_in_initialization.tsx:1:13]
+ 1 │ import * as y from "import"; y.x = 1
+   ·             ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:32]
+ 1 │ class X {}; const x = <X test={ext()}/>
+   ·                                ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:36]
+ 1 │ class X {}; class Y {constructor(){ext()}}; const x = <X test=<Y/>/>
+   ·                                    ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:24]
+ 1 │ class X {constructor(){ext()}}; const x = <X/>
+   ·                        ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:27]
+ 1 │ class X {}; const x = <X>{ext()}</X>
+   ·                           ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:27]
+ 1 │ class X {}; const x = <X>{ext()}</X>
+   ·                           ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:24]
+ 1 │ class X {constructor(){ext()}}; const x = <X/>
+   ·                        ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:32]
+ 1 │ const X = class {constructor(){ext()}}; const x = <X/>
+   ·                                ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `Ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:12]
+ 1 │ const x = <Ext/>
+   ·            ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `Y`
+   ╭─[no_side_effects_in_initialization.tsx:1:34]
+ 1 │ const X = {Y: ext}; const x = <X.Y />
+   ·                                  ─
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:32]
+ 1 │ class X {}; const x = <X test={ext()}/>
+   ·                                ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:34]
+ 1 │ class X {}; const x = <X {...{x: ext()}}/>
+   ·                                  ───
+   ╰────
+
   ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
    ╭─[no_side_effects_in_initialization.tsx:1:15]
  1 │ const x = new ext()

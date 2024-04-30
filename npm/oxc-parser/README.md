@@ -2,34 +2,11 @@
 
 See index.d.ts for `parseSync` and `parseAsync` API.
 
-TypeScript typings for the AST is currently work in progress.
-
-## cjs
-
-```javascript
-const oxc = require("oxc-parser");
-const assert = require('assert');
-
-function test(ret) {
-  const program = JSON.parse(ret.program);
-  assert(program.body.length == 1);
-  assert(ret.errors.length == 0);
-}
-
-test(oxc.parseSync("foo"));
-
-async function main() {
-  test(await oxc.parseAsync("foo"));
-}
-
-main()
-```
-
 ## ESM
 
 ```javascript
-import oxc from 'oxc-parser';
-import assert from 'assert';
+import oxc from "oxc-parser";
+import assert from "assert";
 
 function test(ret) {
   const program = JSON.parse(ret.program);
@@ -37,11 +14,16 @@ function test(ret) {
   assert(ret.errors.length == 0);
 }
 
-test(oxc.parseSync("foo"));
+const sourceText = "let foo: Foo = 'foo';";
+const options = {
+  sourceFilename: "text.tsx", // the extension is used to determine which dialect to parse
+};
+
+test(oxc.parseSync(sourceText, options));
 
 async function main() {
-  test(await oxc.parseAsync("foo"));
+  test(await oxc.parseAsync(sourceText, options));
 }
 
-main()
+main();
 ```

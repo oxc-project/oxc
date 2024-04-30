@@ -187,9 +187,9 @@ impl Oxc {
             self.save_diagnostics(semantic_ret.errors);
         }
 
+        let semantic = Rc::new(semantic_ret.semantic);
         // Only lint if there are not syntax errors
         if run_options.lint() && self.diagnostics.borrow().is_empty() {
-            let semantic = Rc::new(semantic_ret.semantic);
             let lint_ctx = LintContext::new(path.clone().into_boxed_path(), &semantic);
             let linter_ret = Linter::default().run(lint_ctx);
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
@@ -226,14 +226,16 @@ impl Oxc {
         }
 
         if run_options.transform() {
-            // FIXME: this should not be duplicated with the linter semantic,
-            // we need to fix the API so symbols and scopes can be shared.
-            let semantic = SemanticBuilder::new(source_text, source_type)
-                .build_module_record(PathBuf::new(), program)
-                .build(program)
-                .semantic;
             let options = TransformOptions::default();
-            let result = Transformer::new(&allocator, &path, semantic, options).build(program);
+            let result = Transformer::new(
+                &allocator,
+                &path,
+                source_type,
+                source_text,
+                semantic.trivias(),
+                options,
+            )
+            .build(program);
             if let Err(errs) = result {
                 self.save_diagnostics(errs);
             }
