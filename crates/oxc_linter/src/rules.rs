@@ -184,6 +184,7 @@ mod jest {
     pub mod require_to_throw_message;
     pub mod valid_describe_callback;
     pub mod valid_expect;
+    pub mod valid_expect_in_promise;
     pub mod valid_title;
 }
 
@@ -529,6 +530,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::require_hook,
     jest::require_to_throw_message,
     jest::valid_describe_callback,
+    jest::valid_expect_in_promise,
     jest::valid_expect,
     jest::valid_title,
     unicorn::catch_error_name,
