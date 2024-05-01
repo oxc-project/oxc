@@ -62,6 +62,10 @@ enum NoSideEffectsDiagnostic {
     #[diagnostic(severity(warning))]
     CallImport(#[label] Span),
 
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling member function")]
+    #[diagnostic(severity(warning))]
+    CallMember(#[label] Span),
+
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Debugger statements are side-effects")]
     #[diagnostic(severity(warning))]
     Debugger(#[label] Span),
@@ -280,29 +284,29 @@ fn test() {
         r#"class X {}; const x = <X test="3"/>"#,
         // JSXSpreadAttribute
         "class X {}; const x = <X {...{x: 3}}/>",
-        // // LabeledStatement
-        // "loop: for(;true;){continue loop}",
-        // // Literal
-        // "const x = 3",
-        // "if (false) ext()",
-        // r#""use strict""#,
-        // // LogicalExpression
-        // "const x = 3 || 4",
-        // "true || ext()",
-        // "false && ext()",
-        // "if (false && false) ext()",
-        // "if (true && false) ext()",
-        // "if (false && true) ext()",
-        // "if (false || false) ext()",
-        // // MemberExpression
-        // "const x = ext.y",
-        // r#"const x = ext["y"]"#,
-        // "let x = ()=>{}; x.y = 1",
-        // // MemberExpression when called
+        // LabeledStatement
+        "loop: for(;true;){continue loop}",
+        // Literal
+        "const x = 3",
+        "if (false) ext()",
+        r#""use strict""#,
+        // LogicalExpression
+        "const x = 3 || 4",
+        "true || ext()",
+        "false && ext()",
+        "if (false && false) ext()",
+        "if (true && false) ext()",
+        "if (false && true) ext()",
+        "if (false || false) ext()",
+        // MemberExpression
+        "const x = ext.y",
+        r#"const x = ext["y"]"#,
+        "let x = ()=>{}; x.y = 1",
+        // MemberExpression when called
         // "const x = Object.keys({})",
-        // // MemberExpression when mutated
-        // "const x = {};x.y = ext",
-        // "const x = {y: 1};delete x.y",
+        // MemberExpression when mutated
+        "const x = {};x.y = ext",
+        "const x = {y: 1};delete x.y",
         // // MetaProperty
         // "function x(){const y = new.target}; x()",
         // // MethodDefinition
@@ -568,30 +572,30 @@ fn test() {
         "class X {}; const x = <X test={ext()}/>",
         // JSXSpreadAttribute
         "class X {}; const x = <X {...{x: ext()}}/>",
-        // // LabeledStatement
-        // "loop: for(;true;){ext()}",
-        // // Literal
-        // "if (true) ext()",
-        // // LogicalExpression
-        // "ext() && true",
-        // "true && ext()",
-        // "false || ext()",
-        // "if (true && true) ext()",
-        // "if (false || true) ext()",
-        // "if (true || false) ext()",
-        // "if (true || true) ext()",
-        // // MemberExpression
-        // "const x = {};const y = x[ext()]",
-        // // MemberExpression when called
-        // "ext.x()",
-        // "const x = {}; x.y()",
-        // "const x = ()=>{}; x().y()",
-        // "const Object = {}; const x = Object.keys({})",
-        // "const x = {}; x[ext()]()",
-        // // MemberExpression when mutated
-        // "const x = {y: ext};x.y.z = 1",
-        // "const x = {y:ext};const y = x.y; y.z = 1",
-        // "const x = {y: ext};delete x.y.z",
+        // LabeledStatement
+        "loop: for(;true;){ext()}",
+        // Literal
+        "if (true) ext()",
+        // LogicalExpression
+        "ext() && true",
+        "true && ext()",
+        "false || ext()",
+        "if (true && true) ext()",
+        "if (false || true) ext()",
+        "if (true || false) ext()",
+        "if (true || true) ext()",
+        // MemberExpression
+        "const x = {};const y = x[ext()]",
+        // MemberExpression when called
+        "ext.x()",
+        "const x = {}; x.y()",
+        "const x = ()=>{}; x().y()",
+        "const Object = {}; const x = Object.keys({})",
+        "const x = {}; x[ext()]()",
+        // MemberExpression when mutated
+        "const x = {y: ext};x.y.z = 1",
+        "const x = {y:ext};const y = x.y; y.z = 1",
+        "const x = {y: ext};delete x.y.z",
         // // MethodDefinition
         // "class x {static [ext()](){}}",
         // NewExpression
