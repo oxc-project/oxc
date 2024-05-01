@@ -3,9 +3,12 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use syn::{
     parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, Attribute, Expr,
-    ExprGroup, ExprLit, Field, Fields, GenericArgument, Ident, Item, ItemEnum, ItemStruct, Lit,
-    Meta, Path, PathArguments, PathSegment, Token, Type, TypePath, TypeReference, Variant,
+    ExprGroup, ExprLit, Field, Fields, GenericArgument, Ident, ImplItemFn, Item, ItemEnum,
+    ItemStruct, Lit, Meta, Path, PathArguments, PathSegment, Token, Type, TypePath, TypeReference,
+    Variant,
 };
+
+const TRAVERSABLE: &str = "Traversable";
 
 pub fn ast_node(mut item: Item) -> TokenStream2 {
     let result = match &mut item {
@@ -146,75 +149,103 @@ fn validate_variant(var: &Variant) {
 // generators
 
 fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
-    let ident = format_ident!("Traversable{}", item.ident);
+    let ident = format_ident!("{TRAVERSABLE}{}", item.ident);
     let generics = &item.generics;
+
+    let fields = transform_fields(&item.fields);
+    let methods: Vec<_> = fields.iter().flat_map(generate_traversable_methods).collect();
 
     // TODO: traits like serialization, Debug and Hash fail with `GCell`;
     // But we may want to keep other attributes.
-    // let attrs_len = item.attrs.len();
-    // let (outer_attrs, inner_attrs) = item
-    //     .attrs
-    //     .iter()
-    //     .filter_map(|attr| {
-    //         println!("HERE {},", attr.to_token_stream());
-    //         match attr.path() {
-    //             path if path.is_ident("derive") => Some(transform_derive_attribute(attr.clone())),
-    //             _ => Some(attr.clone()),
-    //         }
-    //     })
-    //     // allocate for worst possible case.
-    //     .fold((Vec::with_capacity(attrs_len), Vec::with_capacity(attrs_len)), |mut acc, attr| {
-    //         match &attr.style {
-    //             AttrStyle::Outer => acc.0.push(attr),
-    //             AttrStyle::Inner(_) => acc.1.push(attr),
-    //         }
-    //
-    //         acc
-    //     });
-
-    let fields = transform_fields(&item.fields);
-
     let output = quote! {
-        #[repr(C)] // TODO: we can replace it with outer_attrs if we fix the issues with it.
-        // #(#outer_attrs)*
+        #[repr(C)] // TODO: we can derive attributes from `item` if we filter invalid attributes.
         pub struct #ident #generics {
-            // #(#inner_attrs)*
             #fields
         }
 
+        impl #generics #ident #generics {
+            #(#methods)*
+        }
     };
 
     output
 }
 
 fn generate_traversable_enum(item: &ItemEnum) -> TokenStream2 {
-    let ident = format_ident!("Traversable{}", item.ident);
+    let ident = format_ident!("{TRAVERSABLE}{}", item.ident);
     let generics = &item.generics;
-
-    // TODO: traits like serialization, Debug and Hash fail with `GCell`;
-    // But we may want to keep other attributes.
 
     let variants = transform_variants(&item.variants);
 
-    // let mut attributes: Vec<Attribute> = Vec::new();
-
-    /*
-    if has_clone(&item.attrs) {
-        println!("HERE");
-        attributes.push(parse_quote!(#[derive(Clone)]));
-    }
-    */
-
+    // TODO: traits like serialization, Debug and Hash fail with `GCell`;
+    // But we may want to keep other attributes.
     let output = quote! {
         #[repr(C, u8)]
         // #(#attributes)*
         pub enum #ident #generics {
             #variants
         }
-
     };
 
     output
+}
+
+fn generate_traversable_methods(field: &Field) -> Vec<ImplItemFn> {
+    let type_name = &type_name(&field.ty);
+    let mut methods = Vec::new();
+
+    // Early reaturn if we are visiting a non traversable type.
+    if !is_traversable_type_name(type_name) {
+        return methods;
+    }
+
+    if is_collection(type_name) {
+        generate_traversable_vec_methods(&mut methods, field);
+    }
+
+    if is_ast_enum_type_name(type_name) {
+        generate_traversable_enum_method(field)
+    } else {
+        generate_traversable_struct_method(field)
+    }
+}
+
+fn generate_traversable_vec_methods(v: &mut Vec<ImplItemFn>, field: &Field) {
+    macro_rules! vquote {
+        ($($tt:tt)*) => {{
+            v.push(parse_quote!($($tt)*))
+        }};
+    }
+
+    let ty = &field.ty;
+    let ident =
+        field.ident.as_ref().expect("`ast_node` attribute only supports named struct fields.");
+    let ident_len = format_ident!("{ident}_len");
+    let ident_item = format_ident!("{ident}_item");
+
+    // len method
+    vquote! {
+        fn #ident_len(&self) -> usize {
+            self.#ident.len()
+        }
+    }
+
+    // // get item method
+    // vquote! {
+    //     fn #ident_item(&self) -> Traversable {
+    //         self.#ident.len()
+    //     }
+    // }
+}
+
+fn generate_traversable_struct_method(field: &Field) -> Vec<ImplItemFn> {
+    let ty = &field.ty;
+    todo!()
+}
+
+fn generate_traversable_enum_method(field: &Field) -> Vec<ImplItemFn> {
+    let ty = &field.ty;
+    todo!()
 }
 
 // transformers
@@ -314,7 +345,7 @@ fn transform_generic_type(mut ty: TypePath) -> TypePath {
             } else if seg.ident == "Box" {
                 parse_quote!(SharedBox)
             } else if !is_special_type_name(&seg.ident) {
-                let new_ident = format_ident!("Traversable{}", seg.ident);
+                let new_ident = format_ident!("{TRAVERSABLE}{}", seg.ident);
                 parse_quote!(#new_ident)
             } else {
                 recreate_original_path(ty.path, seg.ident, PathArguments::None)
@@ -351,6 +382,41 @@ fn is_special_type_name(ident: &Ident) -> bool {
         || ident == "TemplateElementValue"
         || ident == "IdentifierName"
         || ident == "Modifiers"
+}
+
+fn is_traversable_type_name(ident: &String) -> bool {
+    ident.starts_with(TRAVERSABLE)
+}
+
+fn is_ast_enum_type_name(ident: &String) -> bool {
+    let ident = &ident[TRAVERSABLE.len()..];
+    matches! {
+        ident,
+        | "Statement"
+    }
+}
+
+fn is_collection(ident: &String) -> bool {
+    ident == "Vec"
+}
+
+fn type_name(ty: &Type) -> String {
+    fn type_path_name(ty: &TypePath) -> String {
+        assert!(!ty.path.segments.is_empty());
+        let seg = &ty
+            .path
+            .segments
+            .last()
+            .expect("Expected generic type with one or more path segments.");
+
+        // TODO: is there any way to get this as `&str`?
+        seg.ident.to_string()
+    }
+
+    match ty {
+        Type::Path(ty) => type_path_name(ty),
+        _ => panic!("Unsupported type!"),
+    }
 }
 
 #[allow(dead_code)]
