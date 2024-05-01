@@ -7,7 +7,7 @@ use oxc_span::Span;
 use phf::phf_set;
 use serde::Deserialize;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_private};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.")]
@@ -95,6 +95,8 @@ impl Rule for EmptyTags {
     }
 
     fn run_once(&self, ctx: &LintContext) {
+        let settings = &ctx.settings().jsdoc;
+
         let is_empty_tag_kind = |tag_name: &str| {
             if EMPTY_TAGS.contains(tag_name) {
                 return true;
@@ -105,7 +107,12 @@ impl Rule for EmptyTags {
             false
         };
 
-        for jsdoc in ctx.semantic().jsdoc().iter_all() {
+        for jsdoc in ctx
+            .semantic()
+            .jsdoc()
+            .iter_all()
+            .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+        {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();
 

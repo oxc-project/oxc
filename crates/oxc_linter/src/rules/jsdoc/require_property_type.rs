@@ -5,7 +5,11 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{should_ignore_as_internal, should_ignore_as_private},
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jsdoc(require-property-type): Missing type in @property tag.")]
@@ -45,7 +49,13 @@ impl Rule for RequirePropertyType {
         let settings = &ctx.settings().jsdoc;
         let resolved_property_tag_name = settings.resolve_tag_name("property");
 
-        for jsdoc in ctx.semantic().jsdoc().iter_all() {
+        for jsdoc in ctx
+            .semantic()
+            .jsdoc()
+            .iter_all()
+            .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+            .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+        {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind;
 

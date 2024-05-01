@@ -9,23 +9,24 @@ use oxc_ast::{
         ConditionalExpression, Declaration, ExportSpecifier, Expression, ForStatementInit,
         FormalParameter, Function, IdentifierReference, JSXAttribute, JSXAttributeItem,
         JSXAttributeValue, JSXChild, JSXElement, JSXElementName, JSXExpression,
-        JSXExpressionContainer, JSXFragment, JSXIdentifier, JSXOpeningElement, MemberExpression,
-        ModuleExportName, NewExpression, ObjectExpression, ObjectPropertyKind,
+        JSXExpressionContainer, JSXFragment, JSXIdentifier, JSXOpeningElement, LogicalExpression,
+        MemberExpression, ModuleExportName, NewExpression, ObjectExpression, ObjectPropertyKind,
         ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey,
-        SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression,
+        SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression, UnaryExpression,
         VariableDeclarator,
     },
     AstKind,
 };
 use oxc_semantic::{AstNode, SymbolId};
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::operator::{LogicalOperator, UnaryOperator};
 use rustc_hash::FxHashSet;
 
 use crate::{
     ast_util::{get_declaration_of_variable, get_symbol_id_of_variable},
     utils::{
-        calculate_binary_operation, get_write_expr, has_comment_about_side_effect_check,
-        has_pure_notation, no_effects, Value,
+        calculate_binary_operation, calculate_logical_operation, get_write_expr,
+        has_comment_about_side_effect_check, has_pure_notation, no_effects, Value,
     },
     LintContext,
 };
@@ -177,6 +178,9 @@ impl<'a> ListenerMap for Statement<'a> {
                 stmt.right.report_effects(options);
                 stmt.body.report_effects(options);
             }
+            Self::LabeledStatement(stmt) => {
+                stmt.body.report_effects(options);
+            }
             _ => {}
         }
     }
@@ -260,6 +264,12 @@ impl<'a> ListenerMap for AstNode<'a> {
                 }
             }
             AstKind::ImportSpecifier(specifier) => {
+                let span = specifier.local.span;
+                if !has_comment_about_side_effect_check(span, options.ctx) {
+                    options.ctx.diagnostic(NoSideEffectsDiagnostic::CallImport(span));
+                }
+            }
+            AstKind::ImportNamespaceSpecifier(specifier) => {
                 let span = specifier.local.span;
                 if !has_comment_about_side_effect_check(span, options.ctx) {
                     options.ctx.diagnostic(NoSideEffectsDiagnostic::CallImport(span));
@@ -503,6 +513,21 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::ObjectExpression(expr) => {
                 expr.report_effects(options);
             }
+            Self::LogicalExpression(expr) => {
+                expr.get_value_and_report_effects(options);
+            }
+            Self::StaticMemberExpression(expr) => {
+                expr.report_effects(options);
+            }
+            Self::ComputedMemberExpression(expr) => {
+                expr.report_effects(options);
+            }
+            Self::PrivateFieldExpression(expr) => {
+                expr.report_effects(options);
+            }
+            Self::UnaryExpression(expr) => {
+                expr.get_value_and_report_effects(options);
+            }
             Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
             | Self::Identifier(_)
@@ -558,6 +583,15 @@ impl<'a> ListenerMap for Expression<'a> {
                 expr.report_effects_when_called(options);
             }
             Self::ConditionalExpression(expr) => expr.report_effects_when_called(options),
+            Self::StaticMemberExpression(expr) => {
+                expr.report_effects_when_called(options);
+            }
+            Self::ComputedMemberExpression(expr) => {
+                expr.report_effects_when_called(options);
+            }
+            Self::PrivateFieldExpression(expr) => {
+                expr.report_effects_when_called(options);
+            }
             _ => {
                 // Default behavior
                 options.ctx.diagnostic(NoSideEffectsDiagnostic::Call(self.span()));
@@ -572,6 +606,7 @@ impl<'a> ListenerMap for Expression<'a> {
             | Self::TemplateLiteral(_) => Value::new(self),
             Self::BinaryExpression(expr) => expr.get_value_and_report_effects(options),
             Self::ConditionalExpression(expr) => expr.get_value_and_report_effects(options),
+            Self::LogicalExpression(expr) => expr.get_value_and_report_effects(options),
             _ => {
                 self.report_effects(options);
                 Value::Unknown
@@ -594,6 +629,48 @@ fn defined_custom_report_effects_when_called(expr: &Expression) -> bool {
             | Expression::StaticMemberExpression(_)
             | Expression::PrivateFieldExpression(_)
     )
+}
+
+impl<'a> ListenerMap for UnaryExpression<'a> {
+    fn get_value_and_report_effects(&self, options: &NodeListenerOptions) -> Value {
+        if self.operator == UnaryOperator::Delete {
+            match &self.argument {
+                Expression::StaticMemberExpression(expr) => {
+                    expr.object.report_effects_when_mutated(options);
+                }
+                Expression::ComputedMemberExpression(expr) => {
+                    expr.object.report_effects_when_mutated(options);
+                }
+                Expression::PrivateFieldExpression(expr) => {
+                    expr.object.report_effects_when_mutated(options);
+                }
+                _ => {}
+            }
+        }
+
+        // TODO
+        Value::Unknown
+    }
+}
+
+impl<'a> ListenerMap for LogicalExpression<'a> {
+    fn get_value_and_report_effects(&self, options: &NodeListenerOptions) -> Value {
+        let left = self.left.get_value_and_report_effects(options);
+        // `false && foo`
+        if self.operator == LogicalOperator::And
+            && left.get_falsy_value().is_some_and(|is_falsy| is_falsy)
+        {
+            return left;
+        }
+        // `true || foo`
+        if self.operator == LogicalOperator::Or
+            && left.get_falsy_value().is_some_and(|is_falsy| !is_falsy)
+        {
+            return left;
+        }
+        let right = self.right.get_value_and_report_effects(options);
+        calculate_logical_operation(self.operator, left, right)
+    }
 }
 
 impl<'a> ListenerMap for ObjectExpression<'a> {
@@ -768,6 +845,18 @@ impl<'a> ListenerMap for JSXExpression<'a> {
             }
             Self::ObjectExpression(expr) => {
                 expr.report_effects(options);
+            }
+            Self::StaticMemberExpression(expr) => {
+                expr.report_effects(options);
+            }
+            Self::ComputedMemberExpression(expr) => {
+                expr.report_effects(options);
+            }
+            Self::PrivateFieldExpression(expr) => {
+                expr.report_effects(options);
+            }
+            Self::UnaryExpression(expr) => {
+                expr.get_value_and_report_effects(options);
             }
             Self::ArrowFunctionExpression(_)
             | Self::EmptyExpression(_)
@@ -1046,16 +1135,26 @@ impl<'a> ListenerMap for MemberExpression<'a> {
     fn report_effects_when_assigned(&self, options: &NodeListenerOptions) {
         match self {
             Self::ComputedMemberExpression(expr) => {
-                expr.report_effects(options);
-                expr.object.report_effects_when_mutated(options);
+                expr.report_effects_when_assigned(options);
             }
             Self::StaticMemberExpression(expr) => {
-                expr.report_effects(options);
-                expr.object.report_effects_when_mutated(options);
+                expr.report_effects_when_assigned(options);
             }
             Self::PrivateFieldExpression(expr) => {
-                expr.report_effects(options);
-                expr.object.report_effects_when_mutated(options);
+                expr.report_effects_when_assigned(options);
+            }
+        }
+    }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        match self {
+            Self::ComputedMemberExpression(expr) => {
+                expr.report_effects_when_called(options);
+            }
+            Self::StaticMemberExpression(expr) => {
+                expr.report_effects_when_called(options);
+            }
+            Self::PrivateFieldExpression(expr) => {
+                expr.report_effects_when_called(options);
             }
         }
     }
@@ -1066,17 +1165,98 @@ impl<'a> ListenerMap for ComputedMemberExpression<'a> {
         self.expression.report_effects(options);
         self.object.report_effects(options);
     }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        self.report_effects(options);
+
+        let mut node = &self.object;
+        loop {
+            match node {
+                Expression::ComputedMemberExpression(expr) => {
+                    node = &expr.object;
+                }
+                Expression::StaticMemberExpression(expr) => node = &expr.object,
+                Expression::PrivateInExpression(expr) => node = &expr.right,
+                _ => {
+                    break;
+                }
+            }
+        }
+
+        if let Expression::Identifier(ident) = node {
+            ident.report_effects_when_called(options);
+        } else {
+            options.ctx.diagnostic(NoSideEffectsDiagnostic::CallMember(node.span()));
+        }
+    }
+    fn report_effects_when_assigned(&self, options: &NodeListenerOptions) {
+        self.report_effects(options);
+        self.object.report_effects_when_mutated(options);
+    }
 }
 
 impl<'a> ListenerMap for StaticMemberExpression<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
         self.object.report_effects(options);
     }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        self.report_effects(options);
+
+        let mut node = &self.object;
+        loop {
+            match node {
+                Expression::ComputedMemberExpression(expr) => {
+                    node = &expr.object;
+                }
+                Expression::StaticMemberExpression(expr) => node = &expr.object,
+                Expression::PrivateInExpression(expr) => node = &expr.right,
+                _ => {
+                    break;
+                }
+            }
+        }
+
+        if let Expression::Identifier(ident) = node {
+            ident.report_effects_when_called(options);
+        } else {
+            options.ctx.diagnostic(NoSideEffectsDiagnostic::CallMember(node.span()));
+        }
+    }
+    fn report_effects_when_assigned(&self, options: &NodeListenerOptions) {
+        self.report_effects(options);
+        self.object.report_effects_when_mutated(options);
+    }
 }
 
 impl<'a> ListenerMap for PrivateFieldExpression<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
         self.object.report_effects(options);
+    }
+    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
+        self.report_effects(options);
+
+        let mut node = &self.object;
+        loop {
+            match node {
+                Expression::ComputedMemberExpression(expr) => {
+                    node = &expr.object;
+                }
+                Expression::StaticMemberExpression(expr) => node = &expr.object,
+                Expression::PrivateInExpression(expr) => node = &expr.right,
+                _ => {
+                    break;
+                }
+            }
+        }
+
+        if let Expression::Identifier(ident) = node {
+            ident.report_effects_when_called(options);
+        } else {
+            options.ctx.diagnostic(NoSideEffectsDiagnostic::CallMember(node.span()));
+        }
+    }
+    fn report_effects_when_assigned(&self, options: &NodeListenerOptions) {
+        self.report_effects(options);
+        self.object.report_effects_when_mutated(options);
     }
 }
 

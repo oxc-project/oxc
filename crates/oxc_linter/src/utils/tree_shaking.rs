@@ -1,7 +1,7 @@
 use oxc_ast::{ast::Expression, AstKind, CommentKind};
 use oxc_semantic::AstNodeId;
 use oxc_span::Span;
-use oxc_syntax::operator::BinaryOperator;
+use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::LintContext;
 
@@ -192,7 +192,6 @@ pub fn calculate_binary_operation(op: BinaryOperator, left: Value, right: Value)
             _ => Value::Unknown,
         },
         // <https://tc39.es/ecma262/#sec-islessthan>
-        #[allow(clippy::single_match)]
         BinaryOperator::LessThan => match (left, right) {
             // <https://tc39.es/ecma262/#sec-numeric-types-number-lessThan>
             (Value::Unknown, Value::Number(_)) | (Value::Number(_), Value::Unknown) => {
@@ -202,6 +201,20 @@ pub fn calculate_binary_operation(op: BinaryOperator, left: Value, right: Value)
             _ => Value::Unknown,
         },
         _ => Value::Unknown,
+    }
+}
+
+pub fn calculate_logical_operation(op: LogicalOperator, left: Value, right: Value) -> Value {
+    match op {
+        LogicalOperator::And => match (left, right) {
+            (Value::Boolean(a), Value::Boolean(b)) => Value::Boolean(a && b),
+            _ => Value::Unknown,
+        },
+        LogicalOperator::Or => match (left, right) {
+            (Value::Boolean(a), Value::Boolean(b)) => Value::Boolean(a || b),
+            _ => Value::Unknown,
+        },
+        LogicalOperator::Coalesce => Value::Unknown,
     }
 }
 
