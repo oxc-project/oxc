@@ -6,7 +6,6 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde::Deserialize;
-use serde_derive_default;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -44,7 +43,7 @@ declare_oxc_lint!(
     correctness
 );
 
-#[derive(Debug, serde_derive_default::Default, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 struct RequireYieldsConfig {
     #[serde(default, rename = "withGeneratorTag")]
     with_generator_tag: bool,
@@ -52,6 +51,15 @@ struct RequireYieldsConfig {
     force_require_yields: bool,
     #[serde(default = "default_exempted_by", rename = "exemptedBy")]
     exempted_by: Vec<String>,
+}
+impl Default for RequireYieldsConfig {
+    fn default() -> Self {
+        Self {
+            with_generator_tag: false,
+            force_require_yields: true,
+            exempted_by: default_exempted_by(),
+        }
+    }
 }
 
 fn default_exempted_by() -> Vec<String> {
@@ -70,11 +78,10 @@ impl Rule for RequireYields {
             .map_or_else(Self::default, |value| Self(Box::new(value)))
     }
 
-    fn run_once<'a>(&self, ctx: &LintContext<'a>) {
-        // fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // let AstKind::YieldExpression(yield_expression) = node.kind() else {
-        //     return;
-        // };
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::YieldExpression(yield_expression) = node.kind() else {
+            return;
+        };
 
         let config = &self.0;
         println!("👻 {config:#?}");
@@ -213,7 +220,7 @@ fn test() {
         // 			           * @override
         // 			           */
         // 			          function * quux (foo) {
-			
+
         // 			            yield foo;
         // 			          }
         // 			      ",
@@ -238,7 +245,7 @@ fn test() {
         // 			           * @yields {object}
         // 			           */
         // 			          function * quux () {
-			
+
         // 			            yield {a: foo};
         // 			          }
         // 			      ",
@@ -488,7 +495,7 @@ fn test() {
         // 			           * @yields
         // 			           */
         // 			          function * quux (foo) {
-			
+
         // 			            const a = yield foo;
         // 			          }
         // 			      ",
@@ -518,7 +525,7 @@ fn test() {
       // 			           *
       // 			           */
       // 			          function * quux (foo) {
-			
+
       // 			            yield foo;
       // 			          }
       // 			      ",
@@ -545,7 +552,7 @@ fn test() {
       // 			           *
       // 			           */
       // 			          function * quux (foo) {
-			
+
       // 			            const a = yield foo;
       // 			          }
       // 			      ",
@@ -672,7 +679,7 @@ fn test() {
       // 			           * @yields {void}
       // 			           */
       // 			          function * quux (foo) {
-			
+
       // 			            return foo;
       // 			          }
       // 			      ",
@@ -781,7 +788,7 @@ fn test() {
       // 			           */
       // 			          function * quux () {
       // 			            if (yield false) {
-			
+
       // 			            }
       // 			          }
       // 			      ",
