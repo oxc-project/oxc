@@ -17,8 +17,8 @@ use self::errors::{
     FailedToParseJsonc,
 };
 pub use self::{
-    env::ESLintEnv, globals::ESLintGlobals, rules::ESLintRules, settings::ESLintSettings,
-    settings::jsdoc::JSDocPluginSettings
+    env::ESLintEnv, globals::ESLintGlobals, rules::ESLintRules,
+    settings::jsdoc::JSDocPluginSettings, settings::ESLintSettings,
 };
 
 /// ESLint Config

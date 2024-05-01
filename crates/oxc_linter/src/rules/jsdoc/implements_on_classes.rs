@@ -1,6 +1,9 @@
 use crate::{
-    ast_util::is_function_node, context::LintContext, rule::Rule,
-    utils::get_function_nearest_jsdoc_node, AstNode,
+    ast_util::is_function_node,
+    context::LintContext,
+    rule::Rule,
+    utils::{get_function_nearest_jsdoc_node, should_ignore_as_internal, should_ignore_as_private},
+    AstNode,
 };
 use oxc_ast::AstKind;
 use oxc_diagnostics::{
@@ -93,7 +96,11 @@ impl Rule for ImplementsOnClasses {
         let resolved_constructor_tag_name = settings.resolve_tag_name("constructor");
 
         let (mut implements_found, mut class_or_ctor_found) = (None, false);
-        for jsdoc in &jsdocs {
+        for jsdoc in jsdocs
+            .iter()
+            .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+            .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+        {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();
 

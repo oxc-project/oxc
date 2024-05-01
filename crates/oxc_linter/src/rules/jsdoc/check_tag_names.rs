@@ -7,7 +7,11 @@ use oxc_span::Span;
 use phf::phf_set;
 use serde::Deserialize;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{should_ignore_as_internal, should_ignore_as_private},
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.")]
@@ -212,7 +216,13 @@ impl Rule for CheckTagNames {
         let is_declare = false;
         let is_ambient = is_dts || is_declare;
 
-        for jsdoc in ctx.semantic().jsdoc().iter_all() {
+        for jsdoc in ctx
+            .semantic()
+            .jsdoc()
+            .iter_all()
+            .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+            .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+        {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();
 
