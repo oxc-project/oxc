@@ -3,6 +3,7 @@ mod jsx;
 mod jsx_self;
 mod jsx_source;
 mod options;
+mod utils;
 
 use std::rc::Rc;
 

@@ -4,6 +4,7 @@
 use std::hash::{Hash, Hasher};
 
 use miette::{SourceOffset, SourceSpan};
+
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
