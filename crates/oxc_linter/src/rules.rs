@@ -141,6 +141,7 @@ mod typescript {
     pub mod prefer_enum_initializers;
     pub mod prefer_for_of;
     pub mod prefer_function_type;
+    pub mod prefer_literal_enum_member;
     pub mod prefer_ts_expect_error;
     pub mod triple_slash_reference;
 }
@@ -492,6 +493,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_function_type,
     typescript::prefer_ts_expect_error,
     typescript::triple_slash_reference,
+    typescript::prefer_literal_enum_member,
     jest::expect_expect,
     jest::max_expects,
     jest::no_alias_methods,
