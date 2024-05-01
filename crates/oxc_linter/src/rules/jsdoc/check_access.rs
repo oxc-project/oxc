@@ -7,7 +7,7 @@ use oxc_span::Span;
 use phf::phf_set;
 use rustc_hash::FxHashSet;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_internal};
 
 #[derive(Debug, Error, Diagnostic)]
 enum CheckAccessDiagnostic {
@@ -75,7 +75,12 @@ impl Rule for CheckAccess {
             access_related_tag_names.insert(settings.resolve_tag_name(level));
         }
 
-        for jsdoc in ctx.semantic().jsdoc().iter_all() {
+        for jsdoc in ctx
+            .semantic()
+            .jsdoc()
+            .iter_all()
+            .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+        {
             let mut access_related_tags_count = 0;
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();

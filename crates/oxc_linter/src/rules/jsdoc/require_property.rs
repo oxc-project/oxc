@@ -5,7 +5,11 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{should_ignore_as_internal, should_ignore_as_private},
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint-plugin-jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.")]
@@ -58,7 +62,13 @@ impl Rule for RequireProperty {
         let resolved_typedef_tag_name = settings.resolve_tag_name("typedef");
         let resolved_namespace_tag_name = settings.resolve_tag_name("namespace");
 
-        for jsdoc in ctx.semantic().jsdoc().iter_all() {
+        for jsdoc in ctx
+            .semantic()
+            .jsdoc()
+            .iter_all()
+            .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+            .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+        {
             let mut should_report = None;
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();
