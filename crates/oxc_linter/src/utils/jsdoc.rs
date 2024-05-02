@@ -1,6 +1,7 @@
 use crate::{config::JSDocPluginSettings, context::LintContext, AstNode};
 use oxc_ast::AstKind;
 use oxc_semantic::JSDoc;
+use rustc_hash::FxHashSet;
 
 /// JSDoc is often attached on the parent node of a function.
 ///
@@ -30,7 +31,10 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
         match current_node.kind() {
             AstKind::VariableDeclaration(_)
             | AstKind::MethodDefinition(_)
-            | AstKind::PropertyDefinition(_) => return None,
+            | AstKind::PropertyDefinition(_)
+            // /** This is NOT for `ArrowFunctionExpression` */
+            // function outer() { inner(() => {}) }
+            | AstKind::CallExpression(_) => return None,
             _ => current_node = ctx.nodes().parent_node(current_node.id())?,
         }
     }
@@ -64,6 +68,36 @@ pub fn should_ignore_as_private(jsdoc: &JSDoc, settings: &JSDocPluginSettings) -
             {
                 return true;
             }
+        }
+    }
+
+    false
+}
+
+pub fn should_ignore_as_avoid(
+    jsdoc: &JSDoc,
+    settings: &JSDocPluginSettings,
+    exempted_tag_names: &[String],
+) -> bool {
+    let mut ignore_tag_names =
+        exempted_tag_names.iter().map(std::convert::Into::into).collect::<FxHashSet<_>>();
+    if settings.ignore_replaces_docs {
+        ignore_tag_names.insert(settings.resolve_tag_name("ignore"));
+    }
+    if settings.override_replaces_docs {
+        ignore_tag_names.insert(settings.resolve_tag_name("override"));
+    }
+    if settings.augments_extends_replaces_docs {
+        ignore_tag_names.insert(settings.resolve_tag_name("augments"));
+        ignore_tag_names.insert(settings.resolve_tag_name("extends"));
+    }
+    if settings.implements_replaces_docs {
+        ignore_tag_names.insert(settings.resolve_tag_name("implements"));
+    }
+
+    for tag in jsdoc.tags() {
+        if ignore_tag_names.contains(tag.kind.parsed()) {
+            return true;
         }
     }
 
