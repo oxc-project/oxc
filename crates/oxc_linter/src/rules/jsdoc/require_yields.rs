@@ -21,9 +21,19 @@ use crate::{
 };
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsdoc(require-yields): Missing `@yields` declaration.")]
-#[diagnostic(severity(warning), help("Add `@yields` tag to the JSDoc comment."))]
-struct RequireYieldsDiagnostic(#[label] pub Span);
+enum RequireYieldsDiagnostic {
+    #[error("eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.")]
+    #[diagnostic(severity(warning), help("Add `@yields` tag to the JSDoc comment."))]
+    MissingYields(#[label] Span),
+    #[error("eslint-plugin-jsdoc(require-yields): Duplicate `@yields` tags.")]
+    #[diagnostic(severity(warning), help("Remove redundunt `@yields` tag."))]
+    DuplicateYields(#[label] Span),
+    #[error(
+        "eslint-plugin-jsdoc(require-yields): `@yields` tag is missing with `@generator` tag."
+    )]
+    #[diagnostic(severity(warning), help("Add `@yields` tag to the JSDoc comment."))]
+    MissingYieldsWithGenerator(#[label] Span),
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireYields(Box<RequireYieldsConfig>);
@@ -112,14 +122,12 @@ impl Rule for RequireYields {
                 let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
 
                 if config.force_require_yields && is_missing_yields_tag(&jsdoc_tags, settings) {
-                    // TODO: Diagnostic w/ missing yields!
-                    ctx.diagnostic(RequireYieldsDiagnostic(func.span));
+                    ctx.diagnostic(RequireYieldsDiagnostic::MissingYields(func.span));
                     return;
                 }
 
                 if let Some(span) = is_duplicated_yields_tag(&jsdoc_tags, settings) {
-                    // TODO: Diagnostic w/ duplicate yields!
-                    ctx.diagnostic(RequireYieldsDiagnostic(span));
+                    ctx.diagnostic(RequireYieldsDiagnostic::DuplicateYields(span));
                     return;
                 }
 
@@ -127,8 +135,7 @@ impl Rule for RequireYields {
                     if let Some(span) =
                         is_missing_yields_tag_with_generator_tag(&jsdoc_tags, settings)
                     {
-                        // TODO: Diagnostic w/ generator!
-                        ctx.diagnostic(RequireYieldsDiagnostic(span));
+                        ctx.diagnostic(RequireYieldsDiagnostic::MissingYieldsWithGenerator(span));
                     }
                 }
             }
@@ -181,8 +188,7 @@ impl Rule for RequireYields {
                 let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
 
                 if is_missing_yields_tag(&jsdoc_tags, settings) {
-                    // TODO: Diagnostic w/ missing yields!
-                    ctx.diagnostic(RequireYieldsDiagnostic(generator_func.span));
+                    ctx.diagnostic(RequireYieldsDiagnostic::MissingYields(generator_func.span));
                 }
             }
             _ => {}
@@ -338,6 +344,7 @@ fn test() {
         			           * @inheritdoc
         			           */
         			          function * quux (foo) {
+        			            yield 'inherit!';
         			          }
         			      ",
             None,
@@ -572,17 +579,15 @@ fn test() {
         (
             "
         			          /**
-        			           * @type {MyCallback}
+        			           * @mytype {MyCallback}
         			           */
         			          function * quux () {
-        			            yield;
+        			            yield 2;
         			          }
         			      ",
             Some(serde_json::json!([
               {
-                "exemptedBy": [
-                  "type",
-                ],
+                "exemptedBy": ["mytype"],
               },
             ])),
             None,
@@ -1412,8 +1417,18 @@ fn test() {
             None,
             None,
         ),
+        (
+            "
+        			          /**
+        			           * fail(`@generator`+missing `@yields`, with config)
+        			           * @generator
+        			           */
+                        function*() {}
+        			      ",
+            Some(serde_json::json!([{ "withGeneratorTag": true, }])),
+            None,
+        ),
     ];
 
-    Tester::new(RequireYields::NAME, pass, fail).test();
-    // Tester::new(RequireYields::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RequireYields::NAME, pass, fail).test_and_snapshot();
 }
