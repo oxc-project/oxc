@@ -28,11 +28,12 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
     // Whether the node has attached JSDoc or not is determined by `JSDocBuilder`
     while ctx.jsdoc().get_all_by_node(current_node).is_none() {
         // Tie-breaker, otherwise every loop will end at `Program` node!
+        // Maybe more checks should be added
         match current_node.kind() {
             AstKind::VariableDeclaration(_)
             | AstKind::MethodDefinition(_)
             | AstKind::PropertyDefinition(_)
-            // /** This is NOT for `ArrowFunctionExpression` */
+            // /** This JSDoc should NOT found for `ArrowFunctionExpression` callback */
             // function outer() { inner(() => {}) }
             | AstKind::CallExpression(_) => return None,
             _ => current_node = ctx.nodes().parent_node(current_node.id())?,
