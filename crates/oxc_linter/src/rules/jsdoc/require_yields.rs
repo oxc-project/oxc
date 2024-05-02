@@ -6,11 +6,10 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{JSDoc, JSDocTag};
 use oxc_span::Span;
-use rustc_hash::FxHashSet;
+use phf::phf_set;
 use serde::Deserialize;
 
 use crate::{
-    config::JSDocPluginSettings,
     context::LintContext,
     rule::Rule,
     utils::{
@@ -29,7 +28,7 @@ enum RequireYieldsDiagnostic {
     #[diagnostic(severity(warning), help("Remove redundunt `@yields` tag."))]
     DuplicateYields(#[label] Span),
     #[error(
-        "eslint-plugin-jsdoc(require-yields): `@yields` tag is missing with `@generator` tag."
+        "eslint-plugin-jsdoc(require-yields): `@yields` tag is requried when using `@generator` tag."
     )]
     #[diagnostic(severity(warning), help("Add `@yields` tag to the JSDoc comment."))]
     MissingYieldsWithGenerator(#[label] Span),
@@ -99,10 +98,24 @@ impl Rule for RequireYields {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let config = &self.0;
 
+        // This rule checks generator function should have JSDoc `@yields` tag.
+        // By default, this rule only checks:
+        // ```
+        // function*() { yield withValue; }
+        // ```
+        //
+        // If `config.forceRequireYields` is `true`, also checks:
+        // ```
+        // function*() {}
+        // function*() { yield; }
+        // ```
+        //
+        // If generator function does not have JSDoc, it will be skipped.
         match node.kind() {
             AstKind::Function(func)
                 if func.generator && (func.is_expression() || func.is_declaration()) =>
             {
+                // If no JSDoc is found, skip
                 let Some(jsdocs) = get_function_nearest_jsdoc_node(node, ctx)
                     .and_then(|node| ctx.jsdoc().get_all_by_node(node))
                 else {
@@ -110,35 +123,59 @@ impl Rule for RequireYields {
                 };
 
                 let settings = &ctx.settings().jsdoc;
-                if jsdocs.iter().any(|jsdoc| {
-                    should_ignore_as_skip(jsdoc)
-                        || should_ignore_as_avoid(jsdoc, settings, &config.exempted_by)
-                        || should_ignore_as_private(jsdoc, settings)
-                        || should_ignore_as_internal(jsdoc, settings)
-                }) {
+                // If JSDoc is found but safely ignored, skip
+                if jsdocs
+                    .iter()
+                    .filter(|jsdoc| !should_ignore_as_custom_skip(jsdoc))
+                    .filter(|jsdoc| !should_ignore_as_avoid(jsdoc, settings, &config.exempted_by))
+                    .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+                    .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+                    .count()
+                    == 0
+                {
                     return;
                 }
 
                 let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
+                let resolved_yields_tag_name = settings.resolve_tag_name("yields");
 
-                if config.force_require_yields && is_missing_yields_tag(&jsdoc_tags, settings) {
+                // Without this option, need to check `yield` value.
+                // Check will be performed in `YieldExpression` branch.
+                if config.force_require_yields
+                    && is_missing_yields_tag(&jsdoc_tags, &resolved_yields_tag_name)
+                {
                     ctx.diagnostic(RequireYieldsDiagnostic::MissingYields(func.span));
                     return;
                 }
 
-                if let Some(span) = is_duplicated_yields_tag(&jsdoc_tags, settings) {
+                // Other checks are always performed
+
+                if let Some(span) = is_duplicated_yields_tag(&jsdoc_tags, &resolved_yields_tag_name)
+                {
                     ctx.diagnostic(RequireYieldsDiagnostic::DuplicateYields(span));
                     return;
                 }
 
                 if config.with_generator_tag {
-                    if let Some(span) =
-                        is_missing_yields_tag_with_generator_tag(&jsdoc_tags, settings)
-                    {
+                    let resolved_generator_tag_name = settings.resolve_tag_name("generator");
+
+                    if let Some(span) = is_missing_yields_tag_with_generator_tag(
+                        &jsdoc_tags,
+                        &resolved_yields_tag_name,
+                        &resolved_generator_tag_name,
+                    ) {
                         ctx.diagnostic(RequireYieldsDiagnostic::MissingYieldsWithGenerator(span));
                     }
                 }
             }
+            // Q. Why not perform all checks in `Function` branch?
+            // A. Rule behavior is different whether `yield` value is present or not.
+            //
+            // `oxc_semantic` add node flag to detect `yield` is used or NOT.
+            // But existence of value is still unknown.
+            //
+            // Find `YieldExpression` inside of `(Generator)Function` requires more complex logic.
+            // Use bottom-up approach to find the nearest generator function instead.
             AstKind::YieldExpression(yield_expr) => {
                 // With this option, no needs to check `yield` value.
                 // We can perform all checks in `Function` branch instead.
@@ -176,18 +213,23 @@ impl Rule for RequireYields {
                 };
 
                 let settings = &ctx.settings().jsdoc;
-                if jsdocs.iter().any(|jsdoc| {
-                    should_ignore_as_skip(jsdoc)
-                        || should_ignore_as_avoid(jsdoc, settings, &config.exempted_by)
-                        || should_ignore_as_private(jsdoc, settings)
-                        || should_ignore_as_internal(jsdoc, settings)
-                }) {
+                // If JSDoc is found but safely ignored, skip
+                if jsdocs
+                    .iter()
+                    .filter(|jsdoc| !should_ignore_as_custom_skip(jsdoc))
+                    .filter(|jsdoc| !should_ignore_as_avoid(jsdoc, settings, &config.exempted_by))
+                    .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+                    .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+                    .count()
+                    == 0
+                {
                     return;
                 }
 
                 let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
+                let resolved_yields_tag_name = settings.resolve_tag_name("yields");
 
-                if is_missing_yields_tag(&jsdoc_tags, settings) {
+                if is_missing_yields_tag(&jsdoc_tags, &resolved_yields_tag_name) {
                     ctx.diagnostic(RequireYieldsDiagnostic::MissingYields(generator_func.span));
                 }
             }
@@ -196,39 +238,28 @@ impl Rule for RequireYields {
     }
 }
 
-fn should_ignore_as_skip(jsdoc: &JSDoc) -> bool {
-    let ignore_tag_names = ["abstract", "virtual", "class", "constructor", "type", "interface"]
+const CUSTOM_SKIP_TAG_NAMES: phf::Set<&'static str> = phf_set! {
+    "abstract", "virtual", "class", "constructor", "type", "interface"
+};
+fn should_ignore_as_custom_skip(jsdoc: &JSDoc) -> bool {
+    jsdoc
+        .tags()
         .iter()
-        .map(|s| (*s).to_string())
-        .collect::<FxHashSet<_>>();
-
-    for tag in jsdoc.tags() {
-        if ignore_tag_names.contains(tag.kind.parsed()) {
-            return true;
-        }
-    }
-
-    false
+        .map(|tag| tag.kind.parsed())
+        .any(|tag_name| CUSTOM_SKIP_TAG_NAMES.contains(tag_name))
 }
 
-fn is_missing_yields_tag(jsdoc_tags: &Vec<&JSDocTag>, settings: &JSDocPluginSettings) -> bool {
-    let resolved_yields_tag_name = settings.resolve_tag_name("yields");
-
-    for tag in jsdoc_tags {
-        if tag.kind.parsed() == resolved_yields_tag_name {
-            return false;
-        }
-    }
-
-    true
+fn is_missing_yields_tag(jsdoc_tags: &[&JSDocTag], resolved_yields_tag_name: &str) -> bool {
+    jsdoc_tags
+        .iter()
+        .map(|tag| tag.kind.parsed())
+        .all(|tag_name| tag_name != resolved_yields_tag_name)
 }
 
 fn is_duplicated_yields_tag(
     jsdoc_tags: &Vec<&JSDocTag>,
-    settings: &JSDocPluginSettings,
+    resolved_yields_tag_name: &str,
 ) -> Option<Span> {
-    let resolved_yields_tag_name = settings.resolve_tag_name("yields");
-
     let mut yields_found = false;
     for tag in jsdoc_tags {
         if tag.kind.parsed() == resolved_yields_tag_name {
@@ -245,11 +276,9 @@ fn is_duplicated_yields_tag(
 
 fn is_missing_yields_tag_with_generator_tag(
     jsdoc_tags: &Vec<&JSDocTag>,
-    settings: &JSDocPluginSettings,
+    resolved_yields_tag_name: &str,
+    resolved_generator_tag_name: &str,
 ) -> Option<Span> {
-    let resolved_yields_tag_name = settings.resolve_tag_name("yields");
-    let resolved_generator_tag_name = settings.resolve_tag_name("generator");
-
     let (mut yields_found, mut generator_found) = (None, None);
     for tag in jsdoc_tags {
         let tag_name = tag.kind.parsed();
