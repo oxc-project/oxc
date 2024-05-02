@@ -16,7 +16,7 @@ use super::{js::*, literal::*, ts::*};
 use super::inherit_variants;
 use crate::dummy;
 use crate::traverse::ast::*;
-use crate::traverse::{SharedBox, SharedVec};
+use crate::traverse::{GCell, SharedBox, SharedVec};
 
 // 1.2 JSX Elements
 

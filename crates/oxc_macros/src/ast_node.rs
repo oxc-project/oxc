@@ -166,6 +166,10 @@ fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
         impl #generics #ident #generics {
             #(#methods)*
         }
+
+        impl #generics GCell<#ident #generics> {
+
+        }
     };
 
     output
@@ -215,23 +219,13 @@ fn generate_traversable_methods(field: &Field) -> Vec<ImplItemFn> {
 }
 
 fn generate_traversable_vec_methods(v: &mut Vec<ImplItemFn>, field: &Field) {
-    macro_rules! vquote {
-        ($($tt:tt)*) => {{
-            v.push(parse_quote!($($tt)*))
-        }};
-    }
-
     let ident =
         field.ident.as_ref().expect("`ast_node` attribute only supports named struct fields.");
 
     debug_assert_eq!(ident, "SharedVec");
 
     let ty = &field.ty;
-    let ident_len = format_ident!("{ident}_len");
-    let ident_item = format_ident!("{ident}_item");
-    let ident_item_get = format_ident!("{ident}_item_get");
-
-    let (_lifetime, generic_ty) = {
+    let (_lifetime, ref generic_ty) = {
         let generics = type_generics(ty).expect("We only accept generic collections.");
         let mut iter = (&generics.args).into_iter();
         let GenericArgument::Lifetime(lifetime) =
@@ -250,27 +244,61 @@ fn generate_traversable_vec_methods(v: &mut Vec<ImplItemFn>, field: &Field) {
         (lifetime, transform_type(generic_ty.clone()))
     };
 
-    vquote! {
-        /// Get length of #ident.
-        fn #ident_len(&self) -> usize {
-            self.#ident.len()
-        }
+    let generator = TraversableStructVecMethodsGenerator { ident, generic_ty };
+
+    if is_ast_enum_type_name(&type_name(generic_ty)) {
+        generator.generate_as_enum(v);
+    } else {
+        generator.generate_as_struct(v);
+    }
+}
+
+struct TraversableStructVecMethodsGenerator<'a> {
+    ident: &'a Ident,
+    generic_ty: &'a Type,
+}
+
+impl<'a> TraversableStructVecMethodsGenerator<'a> {
+    fn generate_as_struct(self, _: &mut Vec<ImplItemFn>) {
+        #![allow(clippy::unused_self)]
+        // TODO: implement me when we stabilized the struct version of these methods
     }
 
-    vquote! {
-        /// Get #ident item.
-        /// # Panic
-        /// Panics if `index` is out of bounds.
-        fn #ident_item(&self, index: usize) -> #generic_ty {
-            self.#ident[index]
+    fn generate_as_enum(self, v: &mut Vec<ImplItemFn>) {
+        macro_rules! vquote {
+            ($($tt:tt)*) => {{
+                v.push(parse_quote!($($tt)*))
+            }};
         }
-    }
+        let ident = self.ident;
+        let generic_ty = self.generic_ty;
 
-    vquote! {
-        /// Get #ident item.
-        /// Returns `None` if `index` is out of bounds.
-        fn #ident_item_get(&self, index: usize) -> #generic_ty {
-            self.#ident.get(index).copied()
+        let ident_len = format_ident!("{ident}_len");
+        let ident_item = format_ident!("{ident}_item");
+        let ident_item_get = format_ident!("{ident}_item_get");
+
+        vquote! {
+            /// Get length of #ident.
+            fn #ident_len(&self) -> usize {
+                self.#ident.len()
+            }
+        }
+
+        vquote! {
+            /// Get #ident item.
+            /// # Panic
+            /// Panics if `index` is out of bounds.
+            fn #ident_item(&self, index: usize) -> #generic_ty {
+                self.#ident[index]
+            }
+        }
+
+        vquote! {
+            /// Get #ident item.
+            /// Returns `None` if `index` is out of bounds.
+            fn #ident_item_get(&self, index: usize) -> #generic_ty {
+                self.#ident.get(index).copied()
+            }
         }
     }
 }
@@ -415,15 +443,15 @@ fn is_special_type_name(ident: &Ident) -> bool {
         || ident == "Modifiers"
 }
 
-fn is_traversable_type_name(ident: &String) -> bool {
+fn is_traversable_type_name(ident: &str) -> bool {
     ident.starts_with(TRAVERSABLE)
 }
 
-fn is_shared_type_name(ident: &String) -> bool {
+fn is_shared_type_name(ident: &str) -> bool {
     ident.starts_with("Shared")
 }
 
-fn is_ast_enum_type_name(ident: &String) -> bool {
+fn is_ast_enum_type_name(ident: &str) -> bool {
     if ident.len() <= TRAVERSABLE.len() {
         return false;
     }
@@ -434,7 +462,7 @@ fn is_ast_enum_type_name(ident: &String) -> bool {
     }
 }
 
-fn is_collection(ident: &String) -> bool {
+fn is_collection(ident: &str) -> bool {
     ident == "Vec"
 }
 
