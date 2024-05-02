@@ -163,9 +163,9 @@ fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
             #fields
         }
 
-        impl #generics #ident #generics {
-            #(#methods)*
-        }
+        // impl #generics #ident #generics {
+        //     #(#methods)*
+        // }
     };
 
     output
@@ -194,20 +194,24 @@ fn generate_traversable_methods(field: &Field) -> Vec<ImplItemFn> {
     let type_name = &type_name(&field.ty);
     let mut methods = Vec::new();
 
-    // Early reaturn if we are visiting a non traversable type.
-    if !is_traversable_type_name(type_name) {
+    // Early reaturn if we are visiting a non traversable/shared type.
+    if !is_traversable_type_name(type_name) && !is_shared_type_name(type_name) {
         return methods;
     }
 
+    let v = &mut methods;
+
     if is_collection(type_name) {
-        generate_traversable_vec_methods(&mut methods, field);
+        generate_traversable_vec_methods(v, field);
     }
 
     if is_ast_enum_type_name(type_name) {
-        generate_traversable_enum_method(field)
+        generate_traversable_enum_method(v, field);
     } else {
-        generate_traversable_struct_method(field)
+        generate_traversable_struct_method(v, field);
     }
+
+    methods
 }
 
 fn generate_traversable_vec_methods(v: &mut Vec<ImplItemFn>, field: &Field) {
@@ -218,6 +222,7 @@ fn generate_traversable_vec_methods(v: &mut Vec<ImplItemFn>, field: &Field) {
     }
 
     let ty = &field.ty;
+    let generics = type_generics(ty);
     let ident =
         field.ident.as_ref().expect("`ast_node` attribute only supports named struct fields.");
     let ident_len = format_ident!("{ident}_len");
@@ -238,14 +243,12 @@ fn generate_traversable_vec_methods(v: &mut Vec<ImplItemFn>, field: &Field) {
     // }
 }
 
-fn generate_traversable_struct_method(field: &Field) -> Vec<ImplItemFn> {
+fn generate_traversable_struct_method(v: &mut Vec<ImplItemFn>, field: &Field) {
     let ty = &field.ty;
-    todo!()
 }
 
-fn generate_traversable_enum_method(field: &Field) -> Vec<ImplItemFn> {
+fn generate_traversable_enum_method(v: &mut Vec<ImplItemFn>, field: &Field) {
     let ty = &field.ty;
-    todo!()
 }
 
 // transformers
@@ -388,7 +391,14 @@ fn is_traversable_type_name(ident: &String) -> bool {
     ident.starts_with(TRAVERSABLE)
 }
 
+fn is_shared_type_name(ident: &String) -> bool {
+    ident.starts_with("Shared")
+}
+
 fn is_ast_enum_type_name(ident: &String) -> bool {
+    if ident.len() <= TRAVERSABLE.len() {
+        return false;
+    }
     let ident = &ident[TRAVERSABLE.len()..];
     matches! {
         ident,
@@ -413,9 +423,38 @@ fn type_name(ty: &Type) -> String {
         seg.ident.to_string()
     }
 
+    fn type_ref_name(ty: &TypeReference) -> String {
+        type_name(ty.elem.as_ref())
+    }
+
     match ty {
         Type::Path(ty) => type_path_name(ty),
-        _ => panic!("Unsupported type!"),
+        Type::Reference(ty) => type_ref_name(ty),
+        _ => panic!("Unsupported type! {ty:?}"),
+    }
+}
+
+fn type_generics(ty: &Type) -> Option<&AngleBracketedGenericArguments> {
+    fn type_path_generics(ty: &TypePath) -> Option<&AngleBracketedGenericArguments> {
+        assert!(!ty.path.segments.is_empty());
+        let seg = &ty
+            .path
+            .segments
+            .last()
+            .expect("Expected generic type with one or more path segments.");
+
+        match &seg.arguments {
+            PathArguments::AngleBracketed(args) => Some(args),
+            PathArguments::Parenthesized(_) => {
+                panic!("Parenthesized type arguments are not allowed with `ast_node` attribute.")
+            }
+            PathArguments::None => None,
+        }
+    }
+
+    match ty {
+        Type::Path(ty) => type_path_generics(ty),
+        _ => panic!("Unsupported type! {ty:?}"),
     }
 }
 
