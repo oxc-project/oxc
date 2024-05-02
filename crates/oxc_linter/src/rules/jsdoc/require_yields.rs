@@ -28,7 +28,7 @@ enum RequireYieldsDiagnostic {
     #[diagnostic(severity(warning), help("Remove redundunt `@yields` tag."))]
     DuplicateYields(#[label] Span),
     #[error(
-        "eslint-plugin-jsdoc(require-yields): `@yields` tag is requried when using `@generator` tag."
+        "eslint-plugin-jsdoc(require-yields): `@yields` tag is required when using `@generator` tag."
     )]
     #[diagnostic(severity(warning), help("Add `@yields` tag to the JSDoc comment."))]
     MissingYieldsWithGenerator(#[label] Span),
