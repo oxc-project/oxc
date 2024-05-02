@@ -244,13 +244,7 @@ fn generate_traversable_vec_methods(v: &mut Vec<ImplItemFn>, field: &Field) {
         (lifetime, transform_type(generic_ty.clone()))
     };
 
-    let generator = TraversableStructVecMethodsGenerator { ident, generic_ty };
-
-    if is_ast_enum_type_name(&type_name(generic_ty)) {
-        generator.generate_as_enum(v);
-    } else {
-        generator.generate_as_struct(v);
-    }
+    TraversableStructVecMethodsGenerator { ident, generic_ty }.generate(v);
 }
 
 struct TraversableStructVecMethodsGenerator<'a> {
@@ -299,6 +293,14 @@ impl<'a> TraversableStructVecMethodsGenerator<'a> {
             fn #ident_item_get(&self, index: usize) -> #generic_ty {
                 self.#ident.get(index).copied()
             }
+        }
+    }
+
+    fn generate(self, v: &mut Vec<ImplItemFn>) {
+        if is_ast_enum_type_name(&type_name(self.generic_ty)) {
+            self.generate_as_enum(v);
+        } else {
+            self.generate_as_struct(v);
         }
     }
 }
