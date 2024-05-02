@@ -163,9 +163,9 @@ fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
             #fields
         }
 
-        // impl #generics #ident #generics {
-        //     #(#methods)*
-        // }
+        impl #generics #ident #generics {
+            #(#methods)*
+        }
     };
 
     output
@@ -221,35 +221,63 @@ fn generate_traversable_vec_methods(v: &mut Vec<ImplItemFn>, field: &Field) {
         }};
     }
 
-    let ty = &field.ty;
-    let generics = type_generics(ty);
     let ident =
         field.ident.as_ref().expect("`ast_node` attribute only supports named struct fields.");
+
+    debug_assert_eq!(ident, "SharedVec");
+
+    let ty = &field.ty;
     let ident_len = format_ident!("{ident}_len");
     let ident_item = format_ident!("{ident}_item");
+    let ident_item_get = format_ident!("{ident}_item_get");
 
-    // len method
+    let (_lifetime, generic_ty) = {
+        let generics = type_generics(ty).expect("We only accept generic collections.");
+        let mut iter = (&generics.args).into_iter();
+        let GenericArgument::Lifetime(lifetime) =
+            iter.next().expect("`ast_node` only support's arena vectors")
+        else {
+            panic!("`ast_node` expected the first argument to the `Vec` to be a lifetime.");
+        };
+        let GenericArgument::Type(generic_ty) =
+            iter.next().expect("`ast_node` only accepts arena vectors.")
+        else {
+            panic!("`ast_node` expected the second argument to the `Vec` to be a generic type argument.");
+        };
+
+        assert!(iter.next().is_none(), "`ast_node` only accepts arena vectors.");
+
+        (lifetime, transform_type(generic_ty.clone()))
+    };
+
     vquote! {
+        /// Get length of #ident.
         fn #ident_len(&self) -> usize {
             self.#ident.len()
         }
     }
 
-    // // get item method
-    // vquote! {
-    //     fn #ident_item(&self) -> Traversable {
-    //         self.#ident.len()
-    //     }
-    // }
+    vquote! {
+        /// Get #ident item.
+        /// # Panic
+        /// Panics if `index` is out of bounds.
+        fn #ident_item(&self, index: usize) -> #generic_ty {
+            self.#ident[index]
+        }
+    }
+
+    vquote! {
+        /// Get #ident item.
+        /// Returns `None` if `index` is out of bounds.
+        fn #ident_item_get(&self, index: usize) -> #generic_ty {
+            self.#ident.get(index).copied()
+        }
+    }
 }
 
-fn generate_traversable_struct_method(v: &mut Vec<ImplItemFn>, field: &Field) {
-    let ty = &field.ty;
-}
+fn generate_traversable_struct_method(_: &mut Vec<ImplItemFn>, _: &Field) {}
 
-fn generate_traversable_enum_method(v: &mut Vec<ImplItemFn>, field: &Field) {
-    let ty = &field.ty;
-}
+fn generate_traversable_enum_method(_: &mut Vec<ImplItemFn>, _: &Field) {}
 
 // transformers
 
