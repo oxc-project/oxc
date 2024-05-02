@@ -42,8 +42,7 @@ pub struct IndexSlice<I: Idx, T: ?Sized> {
     pub raw: T,
 }
 
-// TODO: we may want to remove this somehow. Won't work in upcoming rust versions.
-#[allow(unsafe_code, suspicious_auto_trait_impls)]
+#[allow(unsafe_code)]
 // SAFETY: Whether `IndexSlice` is `Send` depends only on the data,
 // not the phantom data.
 unsafe impl<I: Idx, T> Send for IndexSlice<I, [T]> where T: Send {}

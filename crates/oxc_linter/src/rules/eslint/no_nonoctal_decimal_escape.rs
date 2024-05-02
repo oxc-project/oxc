@@ -6,7 +6,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::{Captures, Match, Regex};
+use regex::{Captures, Regex};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -58,23 +58,11 @@ impl Rule for NoNonoctalDecimalEscape {
     }
 }
 trait StickyRegex {
-    // takes the start position and returns the match and the nextPosition
-    fn sticky_find<'h>(&self, haystack: &'h str, start: usize) -> (Option<Match<'h>>, usize);
     fn sticky_captures<'h>(&self, haystack: &'h str, start: usize)
         -> (Option<Captures<'h>>, usize);
 }
 
 impl StickyRegex for Regex {
-    fn sticky_find<'h>(&self, haystack: &'h str, start: usize) -> (Option<Match<'h>>, usize) {
-        let m_opt = self.find_at(haystack, start);
-        if let Some(m) = m_opt {
-            if m.start() == start {
-                return (m_opt, m.end());
-            }
-        }
-        (None, 0)
-    }
-
     fn sticky_captures<'h>(
         &self,
         haystack: &'h str,

@@ -1,5 +1,4 @@
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
-#![allow(non_snake_case)]
+#![allow(non_snake_case)] // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 
 use oxc_ast::ast::Expression;
 use oxc_index::IndexVec;

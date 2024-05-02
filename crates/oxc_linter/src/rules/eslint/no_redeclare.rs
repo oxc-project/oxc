@@ -28,14 +28,14 @@ struct NoRedeclareAsBuiltiInDiagnostic(
     #[label("'{0}' is already defined as a built-in global variable.")] pub Span,
 );
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-redeclare): '{0}' is already defined by a variable declaration.")]
-#[diagnostic(severity(warning))]
-struct NoRedeclareBySyntaxDiagnostic(
-    CompactStr,
-    #[label("'{0}' is already defined by a variable declaration.")] pub Span,
-    #[label("It cannot be redeclared here.")] pub Span,
-);
+// #[derive(Debug, Error, Diagnostic)]
+// #[error("eslint(no-redeclare): '{0}' is already defined by a variable declaration.")]
+// #[diagnostic(severity(warning))]
+// struct NoRedeclareBySyntaxDiagnostic(
+//     CompactStr,
+//     #[label("'{0}' is already defined by a variable declaration.")] pub Span,
+//     #[label("It cannot be redeclared here.")] pub Span,
+// );
 
 #[derive(Debug, Default, Clone)]
 pub struct NoRedeclare {
