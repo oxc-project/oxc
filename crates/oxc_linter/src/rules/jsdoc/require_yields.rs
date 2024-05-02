@@ -242,18 +242,11 @@ const CUSTOM_SKIP_TAG_NAMES: phf::Set<&'static str> = phf_set! {
     "abstract", "virtual", "class", "constructor", "type", "interface"
 };
 fn should_ignore_as_custom_skip(jsdoc: &JSDoc) -> bool {
-    jsdoc
-        .tags()
-        .iter()
-        .map(|tag| tag.kind.parsed())
-        .any(|tag_name| CUSTOM_SKIP_TAG_NAMES.contains(tag_name))
+    jsdoc.tags().iter().any(|tag| CUSTOM_SKIP_TAG_NAMES.contains(tag.kind.parsed()))
 }
 
 fn is_missing_yields_tag(jsdoc_tags: &[&JSDocTag], resolved_yields_tag_name: &str) -> bool {
-    jsdoc_tags
-        .iter()
-        .map(|tag| tag.kind.parsed())
-        .all(|tag_name| tag_name != resolved_yields_tag_name)
+    jsdoc_tags.iter().all(|tag| tag.kind.parsed() != resolved_yields_tag_name)
 }
 
 fn is_duplicated_yields_tag(

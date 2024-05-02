@@ -95,11 +95,5 @@ pub fn should_ignore_as_avoid(
         ignore_tag_names.insert(settings.resolve_tag_name("implements"));
     }
 
-    for tag in jsdoc.tags() {
-        if ignore_tag_names.contains(tag.kind.parsed()) {
-            return true;
-        }
-    }
-
-    false
+    jsdoc.tags().iter().any(|tag| ignore_tag_names.contains(tag.kind.parsed()))
 }
