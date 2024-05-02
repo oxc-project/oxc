@@ -186,22 +186,6 @@ impl<'a, 'b> IsConstant<'a, 'b> for SpreadElement<'a> {
     }
 }
 
-pub trait IsPrivate {
-    fn is_private(&self) -> bool;
-}
-
-impl<'a> IsPrivate for MethodDefinition<'a> {
-    fn is_private(&self) -> bool {
-        self.accessibility.map_or(false, |accessibility| accessibility == TSAccessibility::Private)
-    }
-}
-
-impl<'a> IsPrivate for PropertyDefinition<'a> {
-    fn is_private(&self) -> bool {
-        self.accessibility.map_or(false, |accessibility| accessibility == TSAccessibility::Private)
-    }
-}
-
 /// Return the innermost `Function` or `ArrowFunctionExpression` Node
 /// enclosing the specified node
 pub fn get_enclosing_function<'a, 'b>(

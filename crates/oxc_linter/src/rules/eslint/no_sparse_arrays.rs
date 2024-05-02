@@ -1,18 +1,9 @@
 use miette::{miette, LabeledSpan};
 use oxc_ast::{ast::ArrayExpressionElement, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic, Severity},
-    thiserror::Error,
-};
+use oxc_diagnostics::miette::{self, Severity};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-sparse-arrays): Unexpected comma in middle of array")]
-#[diagnostic(severity(warning), help("remove the comma or insert `undefined`"))]
-struct NoSparseArraysDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoSparseArrays;

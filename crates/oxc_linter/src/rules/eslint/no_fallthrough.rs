@@ -1,17 +1,17 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+// use oxc_diagnostics::{
+//     miette::{self, Diagnostic},
+//     thiserror::Error,
+// };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+// use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 // Ported from https://github.com/eslint/eslint/blob/main/lib/rules/no-fallthrough.js
-#[derive(Debug, Error, Diagnostic)]
-#[error("")]
-#[diagnostic(severity(warning), help(""))]
-struct NoFallthroughDiagnostic(#[label] pub Span);
+// #[derive(Debug, Error, Diagnostic)]
+// #[error("")]
+// #[diagnostic(severity(warning), help(""))]
+// struct NoFallthroughDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoFallthrough;

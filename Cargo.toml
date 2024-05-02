@@ -22,7 +22,8 @@ non_ascii_idents                       = "warn"
 unit-bindings                          = "warn"
 
 [workspace.lints.clippy]
-all = { level = "warn" }
+all        = { level = "warn" }
+empty_docs = { level = "allow", priority = 1 } # from `Tsify`
 # restriction
 dbg_macro     = "warn"
 todo          = "warn"

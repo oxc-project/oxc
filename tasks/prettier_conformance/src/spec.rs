@@ -23,7 +23,7 @@ impl SpecParser {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(spec).unwrap_or_default();
         let mut ret = Parser::new(&allocator, &spec_content, source_type).parse();
-        self.source_text = spec_content.clone();
+        self.source_text.clone_from(&spec_content);
         self.calls = vec![];
         self.visit_program(&mut ret.program);
     }
