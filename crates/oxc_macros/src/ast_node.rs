@@ -486,7 +486,7 @@ fn type_name(ty: &Type) -> String {
     match ty {
         Type::Path(ty) => type_path_name(ty),
         Type::Reference(ty) => type_ref_name(ty),
-        _ => panic!("Unsupported type! {ty:?}"),
+        _ => panic!("Unsupported type!"),
     }
 }
 
@@ -510,7 +510,7 @@ fn type_generics(ty: &Type) -> Option<&AngleBracketedGenericArguments> {
 
     match ty {
         Type::Path(ty) => type_path_generics(ty),
-        _ => panic!("Unsupported type! {ty:?}"),
+        _ => panic!("Unsupported type!"),
     }
 }
 
