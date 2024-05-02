@@ -19,7 +19,7 @@ pub struct JSDocPluginSettings {
     pub override_replaces_docs: bool,
     /// Only for `require-(yields|returns|description|example|param|throws)` rule
     #[serde(default, rename = "augmentsExtendsReplacesDocs")]
-    pub arguments_extends_replaces_docs: bool,
+    pub augments_extends_replaces_docs: bool,
     /// Only for `require-(yields|returns|description|example|param|throws)` rule
     #[serde(default, rename = "implementsReplacesDocs")]
     pub implements_replaces_docs: bool,
@@ -79,7 +79,7 @@ impl Default for JSDocPluginSettings {
             // Exists only for these defaults
             ignore_replaces_docs: true,
             override_replaces_docs: true,
-            arguments_extends_replaces_docs: false,
+            augments_extends_replaces_docs: false,
             implements_replaces_docs: false,
             exempt_destructured_roots_from_checks: false,
             tag_name_preference: FxHashMap::default(),
@@ -202,7 +202,7 @@ mod test {
         assert_eq!(settings.tag_name_preference.len(), 0);
         assert!(settings.ignore_replaces_docs);
         assert!(settings.override_replaces_docs);
-        assert!(!settings.arguments_extends_replaces_docs);
+        assert!(!settings.augments_extends_replaces_docs);
         assert!(!settings.implements_replaces_docs);
 
         let settings = JSDocPluginSettings::default();
@@ -212,7 +212,7 @@ mod test {
         assert_eq!(settings.tag_name_preference.len(), 0);
         assert!(settings.ignore_replaces_docs);
         assert!(settings.override_replaces_docs);
-        assert!(!settings.arguments_extends_replaces_docs);
+        assert!(!settings.augments_extends_replaces_docs);
         assert!(!settings.implements_replaces_docs);
     }
 
