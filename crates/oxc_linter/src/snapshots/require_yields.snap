@@ -600,7 +600,7 @@ expression: require_yields
    ╰────
   help: Add `@yields` tag to the JSDoc comment.
 
-  ⚠ eslint-plugin-jsdoc(require-yields): `@yields` tag is requried when using `@generator` tag.
+  ⚠ eslint-plugin-jsdoc(require-yields): `@yields` tag is required when using `@generator` tag.
    ╭─[require_yields.tsx:4:25]
  3 │                                * fail(`@generator`+missing `@yields`, with config)
  4 │                                * @generator
