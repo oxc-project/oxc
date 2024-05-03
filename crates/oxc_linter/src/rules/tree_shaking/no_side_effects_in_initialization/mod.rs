@@ -324,21 +324,21 @@ fn test() {
         "const x = new (function (){this.x = 1})()",
         "function x(){this.y = 1}; const z = new x()",
         "/*@__PURE__*/ new ext()",
-        // // ObjectExpression
-        // "const x = {y: ext}",
-        // r#"const x = {["y"]: ext}"#,
-        // "const x = {};x.y = ext",
-        // // ObjectPattern
-        // "const {x} = {}",
-        // "const {[ext]: x} = {}",
-        // // RestElement
-        // "const [...x] = []",
-        // // ReturnStatement
-        // "(()=>{return})()",
-        // "(()=>{return 1})()",
-        // // SequenceExpression
-        // "let x = 1; x++, x++",
-        // "if (ext, false) ext()",
+        // ObjectExpression
+        "const x = {y: ext}",
+        r#"const x = {["y"]: ext}"#,
+        "const x = {};x.y = ext",
+        // ObjectPattern
+        "const {x} = {}",
+        "const {[ext]: x} = {}",
+        // RestElement
+        "const [...x] = []",
+        // ReturnStatement
+        "(()=>{return})()",
+        "(()=>{return 1})()",
+        // SequenceExpression
+        "let x = 1; x++, x++",
+        "if (ext, false) ext()",
         // // SwitchCase
         // "switch(ext){case ext:const x = 1;break;default:}",
         // // SwitchStatement
@@ -609,19 +609,19 @@ fn test() {
         // NewExpression
         "const x = new ext()",
         "new ext()",
-        // // ObjectExpression
-        // "const x = {y: ext()}",
-        // r#"const x = {["y"]: ext()}"#,
-        // "const x = {[ext()]: 1}",
-        // // ObjectPattern
-        // "const {[ext()]: x} = {}",
-        // // ReturnStatement
-        // "(()=>{return ext()})()",
-        // // SequenceExpression
-        // "ext(), 1",
-        // "1, ext()",
-        // "if (1, true) ext()",
-        // "if (1, ext) ext()",
+        // ObjectExpression
+        "const x = {y: ext()}",
+        r#"const x = {["y"]: ext()}"#,
+        "const x = {[ext()]: 1}",
+        // ObjectPattern
+        "const {[ext()]: x} = {}",
+        // ReturnStatement
+        "(()=>{return ext()})()",
+        // SequenceExpression
+        "ext(), 1",
+        "1, ext()",
+        "if (1, true) ext()",
+        "if (1, ext) ext()",
         // // Super when called
         // "class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; const z = new x()",
         // "class y{}; class x extends y{constructor(){super(); super.test()}}; const z = new x()",

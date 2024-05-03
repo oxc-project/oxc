@@ -9,7 +9,7 @@ use oxc_ast::{
         JSXAttributeValue, JSXChild, JSXElement, JSXElementName, JSXExpression,
         JSXExpressionContainer, JSXFragment, JSXIdentifier, JSXOpeningElement, LogicalExpression,
         MemberExpression, ModuleExportName, NewExpression, ObjectExpression, ObjectPropertyKind,
-        ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey,
+        ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey, SequenceExpression,
         SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression, UnaryExpression,
         VariableDeclarator,
     },
@@ -439,6 +439,7 @@ impl<'a> ListenerMap for BindingPattern<'a> {
             }
             BindingPatternKind::ObjectPattern(object) => {
                 object.properties.iter().for_each(|prop| {
+                    prop.key.report_effects(options);
                     prop.value.report_effects(options);
                 });
             }
@@ -533,6 +534,9 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::UpdateExpression(expr) => {
                 expr.argument.report_effects_when_assigned(options);
             }
+            Self::SequenceExpression(expr) => {
+                expr.get_value_and_report_effects(options);
+            }
             Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
             | Self::Identifier(_)
@@ -612,6 +616,7 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::BinaryExpression(expr) => expr.get_value_and_report_effects(options),
             Self::ConditionalExpression(expr) => expr.get_value_and_report_effects(options),
             Self::LogicalExpression(expr) => expr.get_value_and_report_effects(options),
+            Self::SequenceExpression(expr) => expr.get_value_and_report_effects(options),
             _ => {
                 self.report_effects(options);
                 Value::Unknown
@@ -634,6 +639,16 @@ fn defined_custom_report_effects_when_called(expr: &Expression) -> bool {
             | Expression::StaticMemberExpression(_)
             | Expression::PrivateFieldExpression(_)
     )
+}
+
+impl<'a> ListenerMap for SequenceExpression<'a> {
+    fn get_value_and_report_effects(&self, options: &NodeListenerOptions) -> Value {
+        let mut val = Value::Unknown;
+        for expr in &self.expressions {
+            val = expr.get_value_and_report_effects(options);
+        }
+        val
+    }
 }
 
 impl<'a> ListenerMap for UnaryExpression<'a> {
@@ -862,6 +877,9 @@ impl<'a> ListenerMap for JSXExpression<'a> {
                 expr.report_effects(options);
             }
             Self::UnaryExpression(expr) => {
+                expr.get_value_and_report_effects(options);
+            }
+            Self::SequenceExpression(expr) => {
                 expr.get_value_and_report_effects(options);
             }
             Self::ArrowFunctionExpression(_)
