@@ -339,22 +339,22 @@ fn test() {
         // SequenceExpression
         "let x = 1; x++, x++",
         "if (ext, false) ext()",
-        // // SwitchCase
-        // "switch(ext){case ext:const x = 1;break;default:}",
-        // // SwitchStatement
-        // "switch(ext){}",
-        // "const x = ()=>{}; switch(ext){case 1:const x = ext}; x()",
-        // "const x = ext; switch(ext){case 1:const x = ()=>{}; x()}",
-        // // TaggedTemplateExpression
-        // "const x = ()=>{}; const y = x``",
-        // // TemplateLiteral
-        // "const x = ``",
-        // "const x = `Literal`",
-        // "const x = `Literal ${ext}`",
-        // r#"const x = ()=>"a"; const y = `Literal ${x()}`"#,
-        // // ThisExpression
+        // SwitchCase
+        "switch(ext){case ext:const x = 1;break;default:}",
+        // SwitchStatement
+        "switch(ext){}",
+        "const x = ()=>{}; switch(ext){case 1:const x = ext}; x()",
+        "const x = ext; switch(ext){case 1:const x = ()=>{}; x()}",
+        // TaggedTemplateExpression
+        "const x = ()=>{}; const y = x``",
+        // TemplateLiteral
+        "const x = ``",
+        "const x = `Literal`",
+        "const x = `Literal ${ext}`",
+        r#"const x = ()=>"a"; const y = `Literal ${x()}`"#,
+        // ThisExpression
         "const y = this.x",
-        // // ThisExpression when mutated
+        // ThisExpression when mutated
         "const y = new (function (){this.x = 1})()",
         "const y = new (function (){{this.x = 1}})()",
         "const y = new (function (){(()=>{this.x = 1})()})()",
@@ -370,23 +370,23 @@ fn test() {
         // UpdateExpression
         "let x=1;x++",
         "const x = {};x.y++",
-        // // VariableDeclaration
-        // "const x = 1",
-        // // VariableDeclarator
-        // "var x, y",
-        // "var x = 1, y = 2",
-        // "const x = 1, y = 2",
-        // "let x = 1, y = 2",
-        // "const {x} = {}",
-        // // WhileStatement
-        // "while(true){}",
-        // "while(ext > 0){}",
-        // "const x = ()=>{}; while(true)x()",
-        // // YieldExpression
-        // "function* x(){const a = yield}; x()",
-        // "function* x(){yield ext}; x()",
-        // // Supports TypeScript nodes
-        // "interface Blub {}",
+        // VariableDeclaration
+        "const x = 1",
+        // VariableDeclarator
+        "var x, y",
+        "var x = 1, y = 2",
+        "const x = 1, y = 2",
+        "let x = 1, y = 2",
+        "const {x} = {}",
+        // WhileStatement
+        "while(true){}",
+        "while(ext > 0){}",
+        "const x = ()=>{}; while(true)x()",
+        // YieldExpression
+        "function* x(){const a = yield}; x()",
+        "function* x(){yield ext}; x()",
+        // Supports TypeScript nodes
+        "interface Blub {}",
     ];
 
     let fail = vec![
@@ -622,22 +622,22 @@ fn test() {
         "1, ext()",
         "if (1, true) ext()",
         "if (1, ext) ext()",
-        // // Super when called
-        // "class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; const z = new x()",
-        // "class y{}; class x extends y{constructor(){super(); super.test()}}; const z = new x()",
-        // "class y{}; class x extends y{constructor(){super()}}; const z = new x()",
-        // // SwitchCase
-        // "switch(ext){case ext():}",
-        // "switch(ext){case 1:ext()}",
-        // // SwitchStatement
-        // "switch(ext()){}",
+        // Super when called
+        "class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; const z = new x()",
+        "class y{}; class x extends y{constructor(){super(); super.test()}}; const z = new x()",
+        "class y{}; class x extends y{constructor(){super()}}; const z = new x()",
+        // SwitchCase
+        "switch(ext){case ext():}",
+        "switch(ext){case 1:ext()}",
+        // SwitchStatement
+        "switch(ext()){}",
         // "var x=()=>{}; switch(ext){case 1:var x=ext}; x()",
-        // // TaggedTemplateExpression
-        // "const x = ext``",
-        // "ext``",
-        // "const x = ()=>{}; const y = x`${ext()}`",
-        // // TemplateLiteral
-        // "const x = `Literal ${ext()}`",
+        // TaggedTemplateExpression
+        "const x = ext``",
+        "ext``",
+        "const x = ()=>{}; const y = x`${ext()}`",
+        // TemplateLiteral
+        "const x = `Literal ${ext()}`",
         // ThisExpression when mutated
         "this.x = 1",
         "(()=>{this.x = 1})()",
@@ -657,21 +657,21 @@ fn test() {
         // UpdateExpression
         "ext++",
         "const x = {};x[ext()]++",
-        // // VariableDeclaration
-        // "const x = ext()",
-        // // VariableDeclarator
-        // "var x = ext(),y = ext()",
-        // "const x = ext(),y = ext()",
-        // "let x = ext(),y = ext()",
-        // "const {x = ext()} = {}",
-        // // WhileStatement
-        // "while(ext()){}",
-        // "while(true)ext()",
-        // "while(true){ext()}",
-        // // YieldExpression
-        // "function* x(){yield ext()}; x()",
-        // // YieldExpression when called
-        // "function* x(){yield ext()}; x()"
+        // VariableDeclaration
+        "const x = ext()",
+        // VariableDeclarator
+        "var x = ext(),y = ext()",
+        "const x = ext(),y = ext()",
+        "let x = ext(),y = ext()",
+        "const {x = ext()} = {}",
+        // WhileStatement
+        "while(ext()){}",
+        "while(true)ext()",
+        "while(true){ext()}",
+        // YieldExpression
+        "function* x(){yield ext()}; x()",
+        // YieldExpression when called
+        "function* x(){yield ext()}; x()"
     ];
 
     Tester::new(NoSideEffectsInInitialization::NAME, pass, fail).test_and_snapshot();
