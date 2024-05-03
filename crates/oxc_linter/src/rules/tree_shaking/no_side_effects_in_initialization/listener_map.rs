@@ -10,8 +10,8 @@ use oxc_ast::{
         JSXExpressionContainer, JSXFragment, JSXIdentifier, JSXOpeningElement, LogicalExpression,
         MemberExpression, ModuleExportName, NewExpression, ObjectExpression, ObjectPropertyKind,
         ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey, SequenceExpression,
-        SimpleAssignmentTarget, Statement, StaticMemberExpression, ThisExpression, UnaryExpression,
-        VariableDeclarator,
+        SimpleAssignmentTarget, Statement, StaticMemberExpression, SwitchCase, ThisExpression,
+        UnaryExpression, VariableDeclarator,
     },
     AstKind,
 };
@@ -182,6 +182,23 @@ impl<'a> ListenerMap for Statement<'a> {
             }
             Self::LabeledStatement(stmt) => {
                 stmt.body.report_effects(options);
+            }
+            Self::WhileStatement(stmt) => {
+                if stmt
+                    .test
+                    .get_value_and_report_effects(options)
+                    .get_falsy_value()
+                    .is_some_and(|is_falsy| is_falsy)
+                {
+                    return;
+                }
+                stmt.body.report_effects(options);
+            }
+            Self::SwitchStatement(stmt) => {
+                stmt.discriminant.report_effects(options);
+                stmt.cases.iter().for_each(|case| {
+                    case.report_effects(options);
+                });
             }
             _ => {}
         }
@@ -537,6 +554,20 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::SequenceExpression(expr) => {
                 expr.get_value_and_report_effects(options);
             }
+            Self::YieldExpression(expr) => {
+                expr.argument.iter().for_each(|arg| arg.report_effects(options));
+            }
+            Self::TaggedTemplateExpression(expr) => {
+                expr.tag.report_effects_when_called(options);
+                expr.quasi.expressions.iter().for_each(|expr| {
+                    expr.report_effects(options);
+                });
+            }
+            Self::TemplateLiteral(expr) => {
+                expr.expressions.iter().for_each(|expr| {
+                    expr.report_effects(options);
+                });
+            }
             Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
             | Self::Identifier(_)
@@ -639,6 +670,17 @@ fn defined_custom_report_effects_when_called(expr: &Expression) -> bool {
             | Expression::StaticMemberExpression(_)
             | Expression::PrivateFieldExpression(_)
     )
+}
+
+impl<'a> ListenerMap for SwitchCase<'a> {
+    fn report_effects(&self, options: &NodeListenerOptions) {
+        if let Some(test) = &self.test {
+            test.report_effects(options);
+        }
+        self.consequent.iter().for_each(|stmt| {
+            stmt.report_effects(options);
+        });
+    }
 }
 
 impl<'a> ListenerMap for SequenceExpression<'a> {
