@@ -1,5 +1,3 @@
-use std::cell::{Cell, RefCell};
-
 use oxc_ast::{
     ast::{
         match_declaration, match_expression, match_member_expression,
@@ -21,12 +19,13 @@ use oxc_semantic::{AstNode, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{LogicalOperator, UnaryOperator};
 use rustc_hash::FxHashSet;
+use std::{cell::Cell, cell::RefCell};
 
 use crate::{
     ast_util::{get_declaration_of_variable, get_symbol_id_of_variable},
     utils::{
-        calculate_binary_operation, calculate_logical_operation, get_write_expr,
-        has_comment_about_side_effect_check, has_pure_notation, no_effects, Value,
+        calculate_binary_operation, calculate_logical_operation, calculate_unary_operation,
+        get_write_expr, has_comment_about_side_effect_check, has_pure_notation, no_effects, Value,
     },
     LintContext,
 };
@@ -116,6 +115,9 @@ impl<'a> ListenerMap for Statement<'a> {
                 stmt.finalizer.iter().for_each(|finalizer| {
                     finalizer.body.iter().for_each(|stmt| stmt.report_effects(options));
                 });
+            }
+            Self::ThrowStatement(stmt) => {
+                options.ctx.diagnostic(NoSideEffectsDiagnostic::Throw(stmt.span));
             }
             Self::BlockStatement(stmt) => {
                 stmt.body.iter().for_each(|stmt| stmt.report_effects(options));
@@ -528,6 +530,9 @@ impl<'a> ListenerMap for Expression<'a> {
             Self::UnaryExpression(expr) => {
                 expr.get_value_and_report_effects(options);
             }
+            Self::UpdateExpression(expr) => {
+                expr.argument.report_effects_when_assigned(options);
+            }
             Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
             | Self::Identifier(_)
@@ -644,12 +649,13 @@ impl<'a> ListenerMap for UnaryExpression<'a> {
                 Expression::PrivateFieldExpression(expr) => {
                     expr.object.report_effects_when_mutated(options);
                 }
-                _ => {}
+                _ => options.ctx.diagnostic(NoSideEffectsDiagnostic::Delete(self.argument.span())),
             }
+            return Value::Unknown;
         }
 
-        // TODO
-        Value::Unknown
+        let value = self.argument.get_value_and_report_effects(options);
+        calculate_unary_operation(self.operator, value)
     }
 }
 

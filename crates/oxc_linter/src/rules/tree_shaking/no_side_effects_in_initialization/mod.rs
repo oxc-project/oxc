@@ -69,6 +69,14 @@ enum NoSideEffectsDiagnostic {
     #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Debugger statements are side-effects")]
     #[diagnostic(severity(warning))]
     Debugger(#[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of deleting anything but a MemberExpression")]
+    #[diagnostic(severity(warning))]
+    Delete(#[label] Span),
+
+    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Throwing an error is a side-effect")]
+    #[diagnostic(severity(warning))]
+    Throw(#[label] Span),
 }
 
 /// <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/master/src/rules/no-side-effects-in-initialization.ts>
@@ -307,12 +315,12 @@ fn test() {
         // MemberExpression when mutated
         "const x = {};x.y = ext",
         "const x = {y: 1};delete x.y",
-        // // MetaProperty
-        // "function x(){const y = new.target}; x()",
-        // // MethodDefinition
-        // "class x {a(){}}",
-        // "class x {static a(){}}",
-        // // NewExpression
+        // MetaProperty
+        "function x(){const y = new.target}; x()",
+        // MethodDefinition
+        "class x {a(){}}",
+        "class x {static a(){}}",
+        // NewExpression
         "const x = new (function (){this.x = 1})()",
         "function x(){this.y = 1}; const z = new x()",
         "/*@__PURE__*/ new ext()",
@@ -351,17 +359,17 @@ fn test() {
         "const y = new (function (){{this.x = 1}})()",
         "const y = new (function (){(()=>{this.x = 1})()})()",
         "function x(){this.y = 1}; const y = new x()",
-        // // TryStatement
-        // "try {} catch (error) {}",
-        // "try {} finally {}",
-        // "try {} catch (error) {} finally {}",
-        // // UnaryExpression
-        // "!ext",
-        // "const x = {};delete x.y",
-        // r#"const x = {};delete x["y"]"#,
-        // // UpdateExpression
-        // "let x=1;x++",
-        // "const x = {};x.y++",
+        // TryStatement
+        "try {} catch (error) {}",
+        "try {} finally {}",
+        "try {} catch (error) {} finally {}",
+        // UnaryExpression
+        "!ext",
+        "const x = {};delete x.y",
+        r#"const x = {};delete x["y"]"#,
+        // UpdateExpression
+        "let x=1;x++",
+        "const x = {};x.y++",
         // // VariableDeclaration
         // "const x = 1",
         // // VariableDeclarator
@@ -535,7 +543,7 @@ fn test() {
         "const x = ()=>{}; const {y} = x(); y()",
         "const x = ()=>{}; const [y] = x(); y()",
         // // Identifier when mutated
-        // "var x = ext; x.y = 1",
+        "var x = ext; x.y = 1",
         // "var x = {}; x = ext; x.y = 1",
         // "var x = {}; var x = ext; x.y = 1",
         // "var x = {}; x = ext; x.y = 1; x.y = 1; x.y = 1",
@@ -596,8 +604,8 @@ fn test() {
         "const x = {y: ext};x.y.z = 1",
         "const x = {y:ext};const y = x.y; y.z = 1",
         "const x = {y: ext};delete x.y.z",
-        // // MethodDefinition
-        // "class x {static [ext()](){}}",
+        // MethodDefinition
+        "class x {static [ext()](){}}",
         // NewExpression
         "const x = new ext()",
         "new ext()",
@@ -636,19 +644,19 @@ fn test() {
         "(function(){this.x = 1}())",
         "const y = new (function (){(function(){this.x = 1}())})()",
         "function x(){this.y = 1}; x()",
-        // // ThrowStatement
-        // r#"throw new Error("Hello Error")"#,
-        // // TryStatement
-        // "try {ext()} catch (error) {}",
-        // "try {} finally {ext()}",
-        // // UnaryExpression
-        // "!ext()",
-        // "delete ext.x",
-        // r#"delete ext["x"]"#,
-        // "const x = ()=>{};delete x()",
-        // // UpdateExpression
-        // "ext++",
-        // "const x = {};x[ext()]++",
+        // ThrowStatement
+        r#"throw new Error("Hello Error")"#,
+        // TryStatement
+        "try {ext()} catch (error) {}",
+        "try {} finally {ext()}",
+        // UnaryExpression
+        "!ext()",
+        "delete ext.x",
+        r#"delete ext["x"]"#,
+        "const x = ()=>{};delete x()",
+        // UpdateExpression
+        "ext++",
+        "const x = {};x[ext()]++",
         // // VariableDeclaration
         // "const x = ext()",
         // // VariableDeclarator
