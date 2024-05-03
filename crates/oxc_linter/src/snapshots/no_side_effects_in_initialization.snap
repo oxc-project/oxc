@@ -734,6 +734,12 @@ expression: no_side_effects_in_initialization
    ·                               ───
    ╰────
 
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:9]
+ 1 │ var x = ext; x.y = 1
+   ·         ───
+   ╰────
+
   ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
    ╭─[no_side_effects_in_initialization.tsx:1:5]
  1 │ if (ext()>0){}
@@ -993,6 +999,12 @@ expression: no_side_effects_in_initialization
    ╰────
 
   ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:18]
+ 1 │ class x {static [ext()](){}}
+   ·                  ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
    ╭─[no_side_effects_in_initialization.tsx:1:15]
  1 │ const x = new ext()
    ·               ───
@@ -1032,4 +1044,58 @@ expression: no_side_effects_in_initialization
    ╭─[no_side_effects_in_initialization.tsx:1:14]
  1 │ function x(){this.y = 1}; x()
    ·              ────
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Throwing an error is a side-effect
+   ╭─[no_side_effects_in_initialization.tsx:1:1]
+ 1 │ throw new Error("Hello Error")
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:6]
+ 1 │ try {ext()} catch (error) {}
+   ·      ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:17]
+ 1 │ try {} finally {ext()}
+   ·                 ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:2]
+ 1 │ !ext()
+   ·  ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:8]
+ 1 │ delete ext.x
+   ·        ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:8]
+ 1 │ delete ext["x"]
+   ·        ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of deleting anything but a MemberExpression
+   ╭─[no_side_effects_in_initialization.tsx:1:25]
+ 1 │ const x = ()=>{};delete x()
+   ·                         ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of assignment to `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:1]
+ 1 │ ext++
+   · ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
+   ╭─[no_side_effects_in_initialization.tsx:1:16]
+ 1 │ const x = {};x[ext()]++
+   ·                ───
    ╰────
