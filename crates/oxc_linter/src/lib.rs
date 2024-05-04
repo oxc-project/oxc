@@ -18,10 +18,12 @@ mod rules;
 mod service;
 mod utils;
 
-use rustc_hash::FxHashMap;
 use std::{io::Write, rc::Rc, sync::Arc};
 
+use rustc_hash::{FxHashMap, FxHashSet};
+
 use oxc_diagnostics::Report;
+use oxc_semantic::AstNode;
 
 pub use crate::{
     config::ESLintConfig,
@@ -36,7 +38,6 @@ use crate::{
     rule::RuleCategory,
     rules::{RuleEnum, RULES},
 };
-use oxc_semantic::AstNode;
 
 #[cfg(target_pointer_width = "64")]
 #[test]
@@ -124,7 +125,11 @@ impl Linter {
         ctx.into_message()
     }
 
+    /// # Panics
     pub fn print_rules<W: Write>(writer: &mut W) {
+        let default_rules =
+            Linter::default().rules.into_iter().map(|(name, _)| name).collect::<FxHashSet<&str>>();
+
         let rules_by_category = RULES.iter().fold(
             FxHashMap::default(),
             |mut map: FxHashMap<RuleCategory, Vec<&RuleEnum>>, rule| {
@@ -133,14 +138,40 @@ impl Linter {
             },
         );
 
+        let mut default_count = 0;
+
         for (category, rules) in rules_by_category {
-            writeln!(writer, "{} ({}):", category, rules.len()).unwrap();
+            writeln!(writer, "## {} ({}):", category, rules.len()).unwrap();
+
+            let rule_width = rules.iter().map(|r| r.name().len()).max().unwrap();
+            let plugin_width = rules.iter().map(|r| r.plugin_name().len()).max().unwrap();
+            let x = "";
+            writeln!(
+                writer,
+                "| {:<rule_width$} | {:<plugin_width$} | Default |",
+                "Rule name", "Source"
+            )
+            .unwrap();
+            writeln!(writer, "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<7} |").unwrap();
+
             for rule in rules {
-                // Separate the category and rule name so people don't copy the combination as a whole for `--allow` and `--deny`,
-                // resulting invalid rule names.
-                writeln!(writer, "• {}: {}", rule.plugin_name(), rule.name()).unwrap();
+                let rule_name = rule.name();
+                let plugin_name = rule.plugin_name();
+                let (default, default_width) = if default_rules.contains(rule_name) {
+                    default_count += 1;
+                    ("✅", 6)
+                } else {
+                    ("", 7)
+                };
+                writeln!(
+                    writer,
+                    "| {rule_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} |"
+                )
+                .unwrap();
             }
+            writeln!(writer).unwrap();
         }
+        writeln!(writer, "Default: {default_count}").unwrap();
         writeln!(writer, "Total: {}", RULES.len()).unwrap();
     }
 }
