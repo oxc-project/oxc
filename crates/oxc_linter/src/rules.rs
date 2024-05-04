@@ -14,7 +14,7 @@ mod import {
     pub mod no_amd;
     pub mod no_cycle;
     pub mod no_default_export;
-    pub mod no_deprecated;
+    // pub mod no_deprecated;
     pub mod no_duplicates;
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
@@ -643,7 +643,7 @@ oxc_macros::declare_all_lint_rules! {
     import::namespace,
     import::no_amd,
     import::no_cycle,
-    import::no_deprecated,
+    // import::no_deprecated,
     import::no_named_as_default,
     import::no_named_as_default_member,
     import::no_self_import,
