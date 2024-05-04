@@ -47,7 +47,7 @@ declare_oxc_lint!(
     /// Also, will report for computed references (i.e. foo["bar"]()).
     /// Reports on assignment to a member of an imported namespace.
     Namespace,
-    nursery
+    correctness
 );
 
 impl Rule for Namespace {

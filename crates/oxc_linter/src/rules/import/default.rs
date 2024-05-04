@@ -32,7 +32,7 @@ declare_oxc_lint!(
     /// import bar from './bar' // no default export found in ./bar
     /// ```
     Default,
-    nursery
+    correctness
 );
 
 impl Rule for Default {
