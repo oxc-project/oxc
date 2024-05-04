@@ -88,11 +88,16 @@ impl Rule for Named {
             };
             let remote_module_record = remote_module_record_ref.value();
             // Check remote bindings
-            if remote_module_record.exported_bindings.contains_key(import_name.name()) {
+            let name = import_name.name();
+            // `export { default as foo } from './source'` <> `export default xxx`
+            if *name == "default" && remote_module_record.export_default.is_some() {
+                continue;
+            }
+            if remote_module_record.exported_bindings.contains_key(name) {
                 continue;
             }
             ctx.diagnostic(NamedDiagnostic(
-                import_name.name().to_string(),
+                name.to_string(),
                 specifier.to_string(),
                 import_name.span(),
             ));
@@ -175,6 +180,7 @@ fn test() {
         "import { foo } from './export-all'",
         // TypeScript export assignment
         "import x from './typescript-export-assign-object'",
+        "export { default as foo } from './typescript-export-default'",
     ];
 
     let fail = vec![
