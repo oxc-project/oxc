@@ -32,7 +32,7 @@ declare_oxc_lint!(
     /// require(`../name`);
     /// ```
     NoAmd,
-    nursery
+    restriction
 );
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/src/rules/no-amd.js>

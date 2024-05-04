@@ -72,7 +72,7 @@ declare_oxc_lint!(
     /// import { b } from './dep-b.js' // reported: Dependency cycle detected.
     /// ```
     NoCycle,
-    nursery
+    restriction
 );
 
 impl Rule for NoCycle {

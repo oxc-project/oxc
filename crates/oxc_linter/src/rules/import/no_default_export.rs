@@ -40,7 +40,7 @@ declare_oxc_lint!(
     /// ```
     ///
     NoDefaultExport,
-    nursery
+    restriction
 );
 
 impl Rule for NoDefaultExport {
