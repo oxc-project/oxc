@@ -8,6 +8,7 @@ mod utils;
 use std::rc::Rc;
 
 use oxc_ast::ast::*;
+use oxc_traverse::TraverseCtx;
 
 use crate::context::Ctx;
 
@@ -58,11 +59,6 @@ impl<'a> React<'a> {
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
-            Expression::AssignmentExpression(e) => {
-                if self.options.display_name_plugin {
-                    self.display_name.transform_assignment_expression(e);
-                }
-            }
             Expression::JSXElement(e) => {
                 if self.options.is_jsx_plugin_enabled() {
                     *expr = self.jsx.transform_jsx_element(e);
@@ -77,21 +73,13 @@ impl<'a> React<'a> {
         }
     }
 
-    pub fn transform_variable_declarator(&self, declarator: &mut VariableDeclarator<'a>) {
+    pub fn transform_call_expression(
+        &self,
+        call_expr: &mut CallExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
         if self.options.display_name_plugin {
-            self.display_name.transform_variable_declarator(declarator);
-        }
-    }
-
-    pub fn transform_object_property(&self, prop: &mut ObjectProperty<'a>) {
-        if self.options.display_name_plugin {
-            self.display_name.transform_object_property(prop);
-        }
-    }
-
-    pub fn transform_export_default_declaration(&self, decl: &mut ExportDefaultDeclaration<'a>) {
-        if self.options.display_name_plugin {
-            self.display_name.transform_export_default_declaration(decl);
+            self.display_name.transform_call_expression(call_expr, ctx);
         }
     }
 

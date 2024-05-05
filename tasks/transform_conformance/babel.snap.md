@@ -1,6 +1,7 @@
-Passed: 294/363
+Passed: 295/363
 
 # All Passed:
+* babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-source
 
 
@@ -67,9 +68,6 @@ Passed: 294/363
 # babel-plugin-transform-react-jsx (141/143)
 * autoImport/complicated-scope-module/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
-
-# babel-plugin-transform-react-display-name (15/16)
-* display-name/nested/input.js
 
 # babel-plugin-transform-react-jsx-self (1/3)
 * react-source/arrow-function/input.js

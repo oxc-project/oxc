@@ -115,8 +115,9 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_binding_pattern(pat);
     }
 
-    fn enter_call_expression(&mut self, expr: &mut CallExpression<'a>, _ctx: &TraverseCtx<'a>) {
+    fn enter_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &TraverseCtx<'a>) {
         self.x0_typescript.transform_call_expression(expr);
+        self.x1_react.transform_call_expression(expr, ctx);
     }
 
     fn enter_class(&mut self, class: &mut Class<'a>, _ctx: &TraverseCtx<'a>) {
@@ -130,14 +131,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, _ctx: &TraverseCtx<'a>) {
         self.x0_typescript.transform_class_body(body);
-    }
-
-    fn enter_export_default_declaration(
-        &mut self,
-        decl: &mut ExportDefaultDeclaration<'a>,
-        _ctx: &TraverseCtx<'a>,
-    ) {
-        self.x1_react.transform_export_default_declaration(decl);
     }
 
     fn enter_export_named_declaration(
@@ -191,10 +184,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_new_expression(expr);
     }
 
-    fn enter_object_property(&mut self, prop: &mut ObjectProperty<'a>, _ctx: &TraverseCtx<'a>) {
-        self.x1_react.transform_object_property(prop);
-    }
-
     fn enter_property_definition(
         &mut self,
         def: &mut PropertyDefinition<'a>,
@@ -214,14 +203,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         _ctx: &TraverseCtx<'a>,
     ) {
         self.x0_typescript.transform_tagged_template_expression(expr);
-    }
-
-    fn enter_variable_declarator(
-        &mut self,
-        declarator: &mut VariableDeclarator<'a>,
-        _ctx: &TraverseCtx<'a>,
-    ) {
-        self.x1_react.transform_variable_declarator(declarator);
     }
 
     fn enter_identifier_reference(
