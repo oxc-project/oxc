@@ -75,12 +75,12 @@ impl Rule for Radix {
         if let AstKind::CallExpression(call_expr) = node.kind() {
             match &call_expr.callee.without_parenthesized() {
                 Expression::Identifier(ident) if ident.name == "parseInt" => {
-                    check_arguments(&self.radix_type, call_expr, ctx)
+                    Self::check_arguments(&self, call_expr, ctx);
                 }
                 Expression::StaticMemberExpression(member_expr) => {
                     if let Expression::Identifier(ident) = &member_expr.object {
                         if ident.name == "Number" && member_expr.property.name == "parseInt" {
-                            check_arguments(&self.radix_type, call_expr, ctx)
+                            Self::check_arguments(&self, call_expr, ctx);
                         }
                     }
                 }
@@ -90,12 +90,46 @@ impl Rule for Radix {
                             if ident.name == "Number"
                                 && member_expr.static_property_name() == Some("parseInt")
                             {
-                                check_arguments(&self.radix_type, call_expr, ctx)
+                                Self::check_arguments(&self, call_expr, ctx);
                             }
                         }
                     }
                 }
                 _ => {}
+            }
+        }
+    }
+}
+
+impl Radix {
+    fn check_arguments(&self, call_expr: &CallExpression, ctx: &LintContext) {
+        match call_expr.arguments.len() {
+            0 => ctx.diagnostic(MissingParametersDiagnostic(Span::new(
+                call_expr.span.start,
+                call_expr.span.end,
+            ))),
+            1 => {
+                if matches!(&self.radix_type, RadixType::Always) {
+                    ctx.diagnostic(MissingRadixDiagnostic(Span::new(
+                        call_expr.span.start,
+                        call_expr.span.end,
+                    )));
+                }
+            }
+            _ => {
+                if matches!(&self.radix_type, RadixType::AsNeeded)
+                    && is_default_radix(&call_expr.arguments[1])
+                {
+                    ctx.diagnostic(RedundantRadixDiagnostic(Span::new(
+                        call_expr.span.start,
+                        call_expr.span.end,
+                    )));
+                } else if !is_valid_radix(&call_expr.arguments[1]) {
+                    ctx.diagnostic(InvalidRadixDiagnostic(Span::new(
+                        call_expr.span.start,
+                        call_expr.span.end,
+                    )));
+                }
             }
         }
     }
@@ -113,38 +147,6 @@ impl RadixType {
         match raw {
             "as-needed" => Self::AsNeeded,
             _ => Self::Always,
-        }
-    }
-}
-
-fn check_arguments(radix_type: &RadixType, call_expr: &CallExpression, ctx: &LintContext) {
-    match call_expr.arguments.len() {
-        0 => ctx.diagnostic(MissingParametersDiagnostic(Span::new(
-            call_expr.span.start,
-            call_expr.span.end,
-        ))),
-        1 => {
-            if matches!(radix_type, RadixType::Always) {
-                ctx.diagnostic(MissingRadixDiagnostic(Span::new(
-                    call_expr.span.start,
-                    call_expr.span.end,
-                )));
-            }
-        }
-        _ => {
-            if matches!(radix_type, RadixType::AsNeeded)
-                && is_default_radix(&call_expr.arguments[1])
-            {
-                ctx.diagnostic(RedundantRadixDiagnostic(Span::new(
-                    call_expr.span.start,
-                    call_expr.span.end,
-                )));
-            } else if !is_valid_radix(&call_expr.arguments[1]) {
-                ctx.diagnostic(InvalidRadixDiagnostic(Span::new(
-                    call_expr.span.start,
-                    call_expr.span.end,
-                )));
-            }
         }
     }
 }
