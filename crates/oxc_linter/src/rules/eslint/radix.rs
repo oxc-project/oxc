@@ -78,6 +78,13 @@ impl Rule for Radix {
                     check_arguments(&self.radix_type, call_expr, ctx)
                 }
             }
+            if let Expression::StaticMemberExpression(member_expr) = &call_expr.callee {
+                if let Expression::Identifier(ident) = &member_expr.object {
+                    if ident.name == "Number" && member_expr.property.name == "parseInt" {
+                        check_arguments(&self.radix_type, call_expr, ctx)
+                    }
+                }
+            }
         }
     }
 }
@@ -182,7 +189,7 @@ fn test() {
         // ("var Number; Number.parseInt(foo);", Some(serde_json::json!(["always"]))),
         // ("var Number; Number.parseInt(foo, 10);", Some(serde_json::json!(["as-needed"]))),
         // ("/* globals parseInt:off */ parseInt(foo);", Some(serde_json::json!(["always"]))),
-        // ("Number.parseInt(foo, 10);", Some(serde_json::json!(["as-needed"]))),
+        // ("Number.parseInt(foo, 10);", Some(serde_json::json!(["as-needed"]))), // { globals: { Number: "off" } }
     ];
 
     let fail = vec![
@@ -200,12 +207,12 @@ fn test() {
         (r#"parseInt("10", 1);"#, None),
         (r#"parseInt("10", 37);"#, None),
         (r#"parseInt("10", 10.5);"#, None),
-        // ("Number.parseInt();", None),
-        // ("Number.parseInt();", Some(serde_json::json!(["as-needed"]))),
-        // (r#"Number.parseInt("10");"#, None),
-        // (r#"Number.parseInt("10", 1);"#, None),
-        // (r#"Number.parseInt("10", 37);"#, None),
-        // (r#"Number.parseInt("10", 10.5);"#, None),
+        ("Number.parseInt();", None),
+        ("Number.parseInt();", Some(serde_json::json!(["as-needed"]))),
+        (r#"Number.parseInt("10");"#, None),
+        (r#"Number.parseInt("10", 1);"#, None),
+        (r#"Number.parseInt("10", 37);"#, None),
+        (r#"Number.parseInt("10", 10.5);"#, None),
         (r#"parseInt("10", 10);"#, Some(serde_json::json!(["as-needed"]))),
         // (r#"parseInt?.("10");"#, None),
         // (r#"Number.parseInt?.("10");"#, None),

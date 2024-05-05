@@ -87,6 +87,42 @@ expression: radix
    · ────────────────────
    ╰────
 
+  ⚠ eslint(radix): Missing parameters.
+   ╭─[radix.tsx:1:1]
+ 1 │ Number.parseInt();
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(radix): Missing parameters.
+   ╭─[radix.tsx:1:1]
+ 1 │ Number.parseInt();
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(radix): Missing radix parameter.
+   ╭─[radix.tsx:1:1]
+ 1 │ Number.parseInt("10");
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
+   ╭─[radix.tsx:1:1]
+ 1 │ Number.parseInt("10", 1);
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
+   ╭─[radix.tsx:1:1]
+ 1 │ Number.parseInt("10", 37);
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
+   ╭─[radix.tsx:1:1]
+ 1 │ Number.parseInt("10", 10.5);
+   · ───────────────────────────
+   ╰────
+
   ⚠ eslint(radix): Redundant radix parameter.
    ╭─[radix.tsx:1:1]
  1 │ parseInt("10", 10);
