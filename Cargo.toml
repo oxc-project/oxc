@@ -173,7 +173,7 @@ unicode-width       = "0.1.12"
 saphyr              = "0.0.1"
 
 [workspace.metadata.cargo-shear]
-ignored = ["napi"]
+ignored = ["napi", "oxc_traverse"]
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,
