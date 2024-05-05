@@ -1,9 +1,13 @@
 //! [JSX](https://facebook.github.io/jsx)
 
+// NB: `#[visited_node]` attribute on AST nodes does not do anything to the code in this file.
+// It is purely a marker for codegen used in `oxc_traverse`. See docs in that crate.
+
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
 use oxc_allocator::{Box, Vec};
+use oxc_ast_macros::visited_node;
 use oxc_span::{Atom, Span};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
@@ -17,6 +21,7 @@ use super::inherit_variants;
 // 1.2 JSX Elements
 
 /// JSX Element
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -29,6 +34,7 @@ pub struct JSXElement<'a> {
 }
 
 /// JSX Opening Element
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -42,6 +48,7 @@ pub struct JSXOpeningElement<'a> {
 }
 
 /// JSX Closing Element
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -52,6 +59,7 @@ pub struct JSXClosingElement<'a> {
 }
 
 /// JSX Fragment
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -80,6 +88,7 @@ pub struct JSXClosingFragment {
 }
 
 /// JSX Element Name
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -93,6 +102,7 @@ pub enum JSXElementName<'a> {
 }
 
 /// JSX Namespaced Name
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -110,6 +120,7 @@ impl<'a> std::fmt::Display for JSXNamespacedName<'a> {
 }
 
 /// JSX Member Expression
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -129,6 +140,7 @@ impl<'a> JSXMemberExpression<'a> {
     }
 }
 
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -137,6 +149,7 @@ pub enum JSXMemberExpressionObject<'a> {
     MemberExpression(Box<'a, JSXMemberExpression<'a>>),
 }
 
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -150,6 +163,7 @@ inherit_variants! {
 /// JSX Expression
 ///
 /// Inherits variants from [`Expression`].
+#[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -168,6 +182,7 @@ impl<'a> JSXExpression<'a> {
     }
 }
 
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -179,6 +194,7 @@ pub struct JSXEmptyExpression {
 // 1.3 JSX Attributes
 
 /// JSX Attributes
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -188,6 +204,7 @@ pub enum JSXAttributeItem<'a> {
 }
 
 /// JSX Attribute
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -209,6 +226,7 @@ impl<'a> JSXAttribute<'a> {
 }
 
 /// JSX Spread Attribute
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -219,6 +237,7 @@ pub struct JSXSpreadAttribute<'a> {
 }
 
 /// JSX Attribute Name
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -228,6 +247,7 @@ pub enum JSXAttributeName<'a> {
 }
 
 /// JSX Attribute Value
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -238,6 +258,7 @@ pub enum JSXAttributeValue<'a> {
     Fragment(Box<'a, JSXFragment<'a>>),
 }
 
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -256,6 +277,7 @@ impl<'a> JSXIdentifier<'a> {
 // 1.4 JSX Children
 
 /// JSX Child
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -267,6 +289,7 @@ pub enum JSXChild<'a> {
     Spread(Box<'a, JSXSpreadChild<'a>>),
 }
 
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -276,6 +299,7 @@ pub struct JSXSpreadChild<'a> {
     pub expression: Expression<'a>,
 }
 
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]

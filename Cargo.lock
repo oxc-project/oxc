@@ -1249,6 +1249,7 @@ dependencies = [
  "bitflags 2.5.0",
  "num-bigint",
  "oxc_allocator",
+ "oxc_ast_macros",
  "oxc_span",
  "oxc_syntax",
  "serde",
@@ -1257,6 +1258,10 @@ dependencies = [
  "tsify",
  "wasm-bindgen",
 ]
+
+[[package]]
+name = "oxc_ast_macros"
+version = "0.0.0"
 
 [[package]]
 name = "oxc_benchmark"
