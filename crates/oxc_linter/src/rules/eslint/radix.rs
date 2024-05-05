@@ -104,31 +104,19 @@ impl Rule for Radix {
 impl Radix {
     fn check_arguments(&self, call_expr: &CallExpression, ctx: &LintContext) {
         match call_expr.arguments.len() {
-            0 => ctx.diagnostic(MissingParametersDiagnostic(Span::new(
-                call_expr.span.start,
-                call_expr.span.end,
-            ))),
+            0 => ctx.diagnostic(MissingParametersDiagnostic(call_expr.span)),
             1 => {
                 if matches!(&self.radix_type, RadixType::Always) {
-                    ctx.diagnostic(MissingRadixDiagnostic(Span::new(
-                        call_expr.span.start,
-                        call_expr.span.end,
-                    )));
+                    ctx.diagnostic(MissingRadixDiagnostic(call_expr.span));
                 }
             }
             _ => {
                 if matches!(&self.radix_type, RadixType::AsNeeded)
                     && is_default_radix(&call_expr.arguments[1])
                 {
-                    ctx.diagnostic(RedundantRadixDiagnostic(Span::new(
-                        call_expr.span.start,
-                        call_expr.span.end,
-                    )));
+                    ctx.diagnostic(RedundantRadixDiagnostic(call_expr.span));
                 } else if !is_valid_radix(&call_expr.arguments[1]) {
-                    ctx.diagnostic(InvalidRadixDiagnostic(Span::new(
-                        call_expr.span.start,
-                        call_expr.span.end,
-                    )));
+                    ctx.diagnostic(InvalidRadixDiagnostic(call_expr.span));
                 }
             }
         }
@@ -172,6 +160,7 @@ fn is_valid_radix(node: &Argument) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use serde_json::json;
 
     let pass = vec![
         (r#"parseInt("10", 10);"#, None),
@@ -182,10 +171,10 @@ fn test() {
         (r#"parseInt("10", 10.0);"#, None),
         (r#"parseInt("10", foo);"#, None),
         (r#"Number.parseInt("10", foo);"#, None),
-        (r#"parseInt("10", 10);"#, Some(serde_json::json!(["always"]))),
-        (r#"parseInt("10");"#, Some(serde_json::json!(["as-needed"]))),
-        (r#"parseInt("10", 8);"#, Some(serde_json::json!(["as-needed"]))),
-        (r#"parseInt("10", foo);"#, Some(serde_json::json!(["as-needed"]))),
+        (r#"parseInt("10", 10);"#, Some(json!(["always"]))),
+        (r#"parseInt("10");"#, Some(json!(["as-needed"]))),
+        (r#"parseInt("10", 8);"#, Some(json!(["as-needed"]))),
+        (r#"parseInt("10", foo);"#, Some(json!(["as-needed"]))),
         ("parseInt", None),
         ("Number.foo();", None),
         ("Number[parseInt]();", None),
@@ -194,20 +183,20 @@ fn test() {
         // ("class C { #parseInt; foo() { Number.#parseInt(foo, 'bar'); } }", None),
         // (
         //     "class C { #parseInt; foo() { Number.#parseInt(foo, 10); } }",
-        //     Some(serde_json::json!(["as-needed"])),
+        //     Some(json!(["as-needed"])),
         // ),
         // ("var parseInt; parseInt();", None),
-        // ("var parseInt; parseInt(foo);", Some(serde_json::json!(["always"]))),
-        // ("var parseInt; parseInt(foo, 10);", Some(serde_json::json!(["as-needed"]))),
+        // ("var parseInt; parseInt(foo);", Some(json!(["always"]))),
+        // ("var parseInt; parseInt(foo, 10);", Some(json!(["as-needed"]))),
         // ("var Number; Number.parseInt();", None),
-        // ("var Number; Number.parseInt(foo);", Some(serde_json::json!(["always"]))),
-        // ("var Number; Number.parseInt(foo, 10);", Some(serde_json::json!(["as-needed"]))),
-        // ("/* globals parseInt:off */ parseInt(foo);", Some(serde_json::json!(["always"]))),
-        // ("Number.parseInt(foo, 10);", Some(serde_json::json!(["as-needed"]))), // { globals: { Number: "off" } }
+        // ("var Number; Number.parseInt(foo);", Some(json!(["always"]))),
+        // ("var Number; Number.parseInt(foo, 10);", Some(json!(["as-needed"]))),
+        // ("/* globals parseInt:off */ parseInt(foo);", Some(json!(["always"]))),
+        // ("Number.parseInt(foo, 10);", Some(json!(["as-needed"]))), // { globals: { Number: "off" } }
     ];
 
     let fail = vec![
-        ("parseInt();", Some(serde_json::json!(["as-needed"]))),
+        ("parseInt();", Some(json!(["as-needed"]))),
         ("parseInt();", None),
         (r#"parseInt("10");"#, None),
         (r#"parseInt("10",);"#, None),
@@ -222,12 +211,12 @@ fn test() {
         (r#"parseInt("10", 37);"#, None),
         (r#"parseInt("10", 10.5);"#, None),
         ("Number.parseInt();", None),
-        ("Number.parseInt();", Some(serde_json::json!(["as-needed"]))),
+        ("Number.parseInt();", Some(json!(["as-needed"]))),
         (r#"Number.parseInt("10");"#, None),
         (r#"Number.parseInt("10", 1);"#, None),
         (r#"Number.parseInt("10", 37);"#, None),
         (r#"Number.parseInt("10", 10.5);"#, None),
-        (r#"parseInt("10", 10);"#, Some(serde_json::json!(["as-needed"]))),
+        (r#"parseInt("10", 10);"#, Some(json!(["as-needed"]))),
         (r#"parseInt?.("10");"#, None),
         (r#"Number.parseInt?.("10");"#, None),
         (r#"Number?.parseInt("10");"#, None),
