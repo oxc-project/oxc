@@ -73,17 +73,29 @@ impl Rule for Radix {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Expression::Identifier(ident) = &call_expr.callee {
-                if ident.name == "parseInt" {
+            match &call_expr.callee.without_parenthesized() {
+                Expression::Identifier(ident) if ident.name == "parseInt" => {
                     check_arguments(&self.radix_type, call_expr, ctx)
                 }
-            }
-            if let Expression::StaticMemberExpression(member_expr) = &call_expr.callee {
-                if let Expression::Identifier(ident) = &member_expr.object {
-                    if ident.name == "Number" && member_expr.property.name == "parseInt" {
-                        check_arguments(&self.radix_type, call_expr, ctx)
+                Expression::StaticMemberExpression(member_expr) => {
+                    if let Expression::Identifier(ident) = &member_expr.object {
+                        if ident.name == "Number" && member_expr.property.name == "parseInt" {
+                            check_arguments(&self.radix_type, call_expr, ctx)
+                        }
                     }
                 }
+                Expression::ChainExpression(chain_expr) => {
+                    if let Some(member_expr) = chain_expr.expression.as_member_expression() {
+                        if let Expression::Identifier(ident) = &member_expr.object() {
+                            if ident.name == "Number"
+                                && member_expr.static_property_name() == Some("parseInt")
+                            {
+                                check_arguments(&self.radix_type, call_expr, ctx)
+                            }
+                        }
+                    }
+                }
+                _ => {}
             }
         }
     }
@@ -214,10 +226,10 @@ fn test() {
         (r#"Number.parseInt("10", 37);"#, None),
         (r#"Number.parseInt("10", 10.5);"#, None),
         (r#"parseInt("10", 10);"#, Some(serde_json::json!(["as-needed"]))),
-        // (r#"parseInt?.("10");"#, None),
-        // (r#"Number.parseInt?.("10");"#, None),
-        // (r#"Number?.parseInt("10");"#, None),
-        // (r#"(Number?.parseInt)("10");"#, None),
+        (r#"parseInt?.("10");"#, None),
+        (r#"Number.parseInt?.("10");"#, None),
+        (r#"Number?.parseInt("10");"#, None),
+        (r#"(Number?.parseInt)("10");"#, None),
     ];
 
     Tester::new(Radix::NAME, pass, fail).test_and_snapshot();

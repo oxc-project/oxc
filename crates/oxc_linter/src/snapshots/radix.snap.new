@@ -128,3 +128,27 @@ expression: radix
  1 │ parseInt("10", 10);
    · ──────────────────
    ╰────
+
+  ⚠ eslint(radix): Missing radix parameter.
+   ╭─[radix.tsx:1:1]
+ 1 │ parseInt?.("10");
+   · ────────────────
+   ╰────
+
+  ⚠ eslint(radix): Missing radix parameter.
+   ╭─[radix.tsx:1:1]
+ 1 │ Number.parseInt?.("10");
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint(radix): Missing radix parameter.
+   ╭─[radix.tsx:1:1]
+ 1 │ Number?.parseInt("10");
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(radix): Missing radix parameter.
+   ╭─[radix.tsx:1:1]
+ 1 │ (Number?.parseInt)("10");
+   · ────────────────────────
+   ╰────
