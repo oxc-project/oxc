@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -114,9 +114,9 @@ impl Radix {
                 if matches!(&self.radix_type, RadixType::AsNeeded)
                     && is_default_radix(&call_expr.arguments[1])
                 {
-                    ctx.diagnostic(RedundantRadixDiagnostic(call_expr.span));
+                    ctx.diagnostic(RedundantRadixDiagnostic(call_expr.arguments[1].span()));
                 } else if !is_valid_radix(&call_expr.arguments[1]) {
-                    ctx.diagnostic(InvalidRadixDiagnostic(call_expr.span));
+                    ctx.diagnostic(InvalidRadixDiagnostic(call_expr.arguments[1].span()));
                 }
             }
         }
