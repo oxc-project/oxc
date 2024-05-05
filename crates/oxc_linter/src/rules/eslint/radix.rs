@@ -13,22 +13,22 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(radix): Missing parameters.")]
-#[diagnostic(severity(warning), help(""))]
+#[diagnostic(severity(warning))]
 struct MissingParametersDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(radix): Missing radix parameter.")]
-#[diagnostic(severity(warning), help(""))]
+#[diagnostic(severity(warning))]
 struct MissingRadixDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(radix): Redundant radix parameter.")]
-#[diagnostic(severity(warning), help(""))]
+#[diagnostic(severity(warning))]
 struct RedundantRadixDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.")]
-#[diagnostic(severity(warning), help(""))]
+#[diagnostic(severity(warning))]
 struct InvalidRadixDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
