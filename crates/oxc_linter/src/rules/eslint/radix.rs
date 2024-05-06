@@ -111,12 +111,11 @@ impl Radix {
                 }
             }
             _ => {
-                if matches!(&self.radix_type, RadixType::AsNeeded)
-                    && is_default_radix(&call_expr.arguments[1])
-                {
-                    ctx.diagnostic(RedundantRadixDiagnostic(call_expr.arguments[1].span()));
-                } else if !is_valid_radix(&call_expr.arguments[1]) {
-                    ctx.diagnostic(InvalidRadixDiagnostic(call_expr.arguments[1].span()));
+                let radix_arg = &call_expr.arguments[1];
+                if matches!(&self.radix_type, RadixType::AsNeeded) && is_default_radix(radix_arg) {
+                    ctx.diagnostic(RedundantRadixDiagnostic(radix_arg.span()));
+                } else if !is_valid_radix(radix_arg) {
+                    ctx.diagnostic(InvalidRadixDiagnostic(radix_arg.span()));
                 }
             }
         }
