@@ -55,7 +55,7 @@ declare_oxc_lint!(
     /// var num = parseInt("071", 10);  // 71
     /// ```
     Radix,
-    correctness
+    pedantic
 );
 
 impl Rule for Radix {
