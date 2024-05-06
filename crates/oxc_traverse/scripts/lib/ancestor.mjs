@@ -1,3 +1,4 @@
+import assert from 'assert';
 import {camelToSnake, snakeToCamel} from './utils.mjs';
 
 export default function generateAncestorsCode(types) {
@@ -5,8 +6,9 @@ export default function generateAncestorsCode(types) {
     let ancestorTypeEnumVariants = '',
         ancestorEnumVariants = '',
         isFunctions = '',
-        ancestorTypes = '',
-        discriminant = 1;
+        ancestorTypes = '';
+    // Type IDs start at 1, as 0 is reserved for `None`
+    let typeId = 1;
     for (const type of Object.values(types)) {
         if (type.kind === 'enum') continue;
 
@@ -21,7 +23,8 @@ export default function generateAncestorsCode(types) {
         }
 
         const variantNames = [];
-        let thisAncestorTypes = '';
+        let thisAncestorTypes = '',
+            fieldId = 0;
         for (const field of type.fields) {
             const fieldTypeName = field.innerTypeName,
                 fieldType = types[fieldTypeName];
@@ -63,15 +66,17 @@ export default function generateAncestorsCode(types) {
             const variantName = `${type.name}${fieldNameCamel}`;
             variantNames.push(variantName);
 
-            ancestorTypeEnumVariants += `${variantName} = ${discriminant},\n`;
+            ancestorTypeEnumVariants += `${variantName} = ancestor_discriminant(${typeId}, ${fieldId}),\n`;
             ancestorEnumVariants += `${variantName}(${structName}) = AncestorType::${variantName} as u16,\n`;
-            discriminant++;
+            fieldId++;
 
             if (fieldType.kind === 'enum') {
                 (variantNamesForEnums[fieldTypeName] || (variantNamesForEnums[fieldTypeName] = []))
                     .push(variantName);
             }
         }
+
+        assert(fieldId <= 256, `Too many fields in ${type.name} to be represented as a u8`);
 
         if (variantNames.length > 0) {
             ancestorTypes += `
@@ -85,8 +90,12 @@ export default function generateAncestorsCode(types) {
                     matches!(self, ${variantNames.map(name => `Self::${name}(_)`).join(' | ')})
                 }
             `;
+
+            typeId++;
         }
     }
+
+    assert(typeId <= 256, 'Too many AST types to be represented as a u8');
 
     for (const [typeName, variantNames] of Object.entries(variantNamesForEnums)) {
         isFunctions += `
@@ -115,6 +124,15 @@ export default function generateAncestorsCode(types) {
         use oxc_syntax::operator::{
             AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
         };
+
+        /// Generate discriminant for \`Ancestor\` / \`AncestorType\` enums.
+        /// There are too many variants to fit in a \`u8\`, so have to use a \`u16\`.
+        /// Use that to our advantage by putting type and field each in a single byte.
+        /// This makes \`Ancestor::is_*\` methods a single equality operation on the lower byte.
+        // TODO: I thought compiler would perform above optimization, but it doesn't.
+        const fn ancestor_discriminant(type_id: u8, field_id: u8) -> u16 {
+            type_id as u16 + field_id as u16 * 256
+        }
 
         /// Type of [\`Ancestor\`].
         /// Used in [\`crate::TraverseCtx::retag_stack\`].
