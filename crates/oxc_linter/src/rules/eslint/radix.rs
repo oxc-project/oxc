@@ -74,11 +74,16 @@ impl Rule for Radix {
         if let AstKind::CallExpression(call_expr) = node.kind() {
             match &call_expr.callee.without_parenthesized() {
                 Expression::Identifier(ident) if ident.name == "parseInt" => {
-                    Self::check_arguments(self, call_expr, ctx);
+                    if ctx.symbols().get_symbol_id_from_name("parseInt") == None {
+                        Self::check_arguments(self, call_expr, ctx);
+                    }
                 }
                 Expression::StaticMemberExpression(member_expr) => {
                     if let Expression::Identifier(ident) = &member_expr.object {
-                        if ident.name == "Number" && member_expr.property.name == "parseInt" {
+                        if ident.name == "Number"
+                            && member_expr.property.name == "parseInt"
+                            && ctx.symbols().get_symbol_id_from_name("Number") == None
+                        {
                             Self::check_arguments(self, call_expr, ctx);
                         }
                     }
@@ -88,6 +93,7 @@ impl Rule for Radix {
                         if let Expression::Identifier(ident) = &member_expr.object() {
                             if ident.name == "Number"
                                 && member_expr.static_property_name() == Some("parseInt")
+                                && ctx.symbols().get_symbol_id_from_name("Number") == None
                             {
                                 Self::check_arguments(self, call_expr, ctx);
                             }
@@ -176,19 +182,16 @@ fn test() {
         ("parseInt", None),
         ("Number.foo();", None),
         ("Number[parseInt]();", None),
-        // ("class C { #parseInt; foo() { Number.#parseInt(); } }", None),
-        // ("class C { #parseInt; foo() { Number.#parseInt(foo); } }", None),
-        // ("class C { #parseInt; foo() { Number.#parseInt(foo, 'bar'); } }", None),
-        // (
-        //     "class C { #parseInt; foo() { Number.#parseInt(foo, 10); } }",
-        //     Some(json!(["as-needed"])),
-        // ),
-        // ("var parseInt; parseInt();", None),
-        // ("var parseInt; parseInt(foo);", Some(json!(["always"]))),
-        // ("var parseInt; parseInt(foo, 10);", Some(json!(["as-needed"]))),
-        // ("var Number; Number.parseInt();", None),
-        // ("var Number; Number.parseInt(foo);", Some(json!(["always"]))),
-        // ("var Number; Number.parseInt(foo, 10);", Some(json!(["as-needed"]))),
+        ("class C { #parseInt; foo() { Number.#parseInt(); } }", None),
+        ("class C { #parseInt; foo() { Number.#parseInt(foo); } }", None),
+        ("class C { #parseInt; foo() { Number.#parseInt(foo, 'bar'); } }", None),
+        ("class C { #parseInt; foo() { Number.#parseInt(foo, 10); } }", Some(json!(["as-needed"]))),
+        ("var parseInt; parseInt();", None),
+        ("var parseInt; parseInt(foo);", Some(json!(["always"]))),
+        ("var parseInt; parseInt(foo, 10);", Some(json!(["as-needed"]))),
+        ("var Number; Number.parseInt();", None),
+        ("var Number; Number.parseInt(foo);", Some(json!(["always"]))),
+        ("var Number; Number.parseInt(foo, 10);", Some(json!(["as-needed"]))),
         // ("/* globals parseInt:off */ parseInt(foo);", Some(json!(["always"]))),
         // ("Number.parseInt(foo, 10);", Some(json!(["as-needed"]))), // { globals: { Number: "off" } }
     ];
