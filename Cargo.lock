@@ -1697,6 +1697,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
+ "oxc_traverse",
  "ropey",
  "rustc-hash",
  "serde",
