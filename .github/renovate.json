@@ -34,7 +34,7 @@
     {
       "groupName": "rust crates",
       "matchManagers": ["cargo"],
-      "ignoreDeps": ["textwrap", "owo-colors", "syn", "miette", "ureq"]
+      "ignoreDeps": ["syn", "ureq"]
     },
     {
       "groupName": "website npm packages",
