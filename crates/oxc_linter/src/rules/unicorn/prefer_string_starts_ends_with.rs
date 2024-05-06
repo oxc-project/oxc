@@ -92,7 +92,10 @@ enum ErrorKind {
 }
 
 fn check_regex(regexp_lit: &RegExpLiteral) -> Option<ErrorKind> {
-    if regexp_lit.regex.flags.intersects(RegExpFlags::I | RegExpFlags::M) {
+    if regexp_lit.regex.flags.intersects(RegExpFlags::M)
+        || (regexp_lit.regex.flags.intersects(RegExpFlags::I | RegExpFlags::M)
+            && is_useless_case_sensitive_regex_flag(regexp_lit))
+    {
         return None;
     }
 
@@ -116,6 +119,14 @@ fn check_regex(regexp_lit: &RegExpLiteral) -> Option<ErrorKind> {
 fn is_simple_string(str: &str) -> bool {
     str.chars()
         .all(|c| !matches!(c, '^' | '$' | '+' | '[' | '{' | '(' | '\\' | '.' | '?' | '*' | '|'))
+}
+
+// `/^#/i` => `true` (the `i` flag is useless)
+// `/^foo/i` => `false` (the `i` flag is not useless)
+fn is_useless_case_sensitive_regex_flag(regexp_lit: &RegExpLiteral) -> bool {
+    // ignore `^` and `$` (start and end of string)
+    let pat = regexp_lit.regex.pattern.trim_start_matches('^').trim_end_matches('$');
+    pat.chars().all(|c| c.is_ascii_alphabetic())
 }
 
 #[test]
@@ -152,6 +163,8 @@ fn test() {
         r"/A|B$/.test(bar)",
         // Additional tests
         r"/^http/i.test(uri)",
+        r"if (/^a/i.test(hex)) {}",
+        r"if (/a$/i.test(hex)) {}",
     ];
 
     let fail = vec![
@@ -196,6 +209,8 @@ fn test() {
         r"/a$/.test(String(unknown))",
         r"const a = /你$/.test('a');",
         r"const a = /^你/.test('a');",
+        r"if (/^#/i.test(hex)) {}",
+        r"if (/#$/i.test(hex)) {}",
     ];
 
     Tester::new(PreferStringStartsEndsWith::NAME, pass, fail).test_and_snapshot();
