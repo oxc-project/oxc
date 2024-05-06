@@ -27,7 +27,7 @@ export default function generateWalkFunctionsCode(types) {
         #[allow(clippy::wildcard_imports)]
         use oxc_ast::ast::*;
 
-        use crate::{ancestor, Ancestor, Traverse, TraverseCtx};
+        use crate::{ancestor::{self, AncestorType}, Ancestor, Traverse, TraverseCtx};
 
         ${walkMethods}
 
@@ -51,8 +51,10 @@ function generateWalkForStruct(type, types) {
     const fieldsCodes = visitedFields.map((field, index) => {
         const fieldWalkName = `walk_${camelToSnake(field.innerTypeName)}`;
 
-        const retagCode = index === 0 ? '' : `ctx.retag_stack(${field.ancestorDiscriminant});`,
-            fieldCode = `(node as *mut u8).add(ancestor::${field.offsetVarName}) as *mut ${field.typeName}`;
+        const retagCode = index === 0
+            ? ''
+            : `ctx.retag_stack(AncestorType::${type.name}${snakeToCamel(field.name)});`;
+        const fieldCode = `(node as *mut u8).add(ancestor::${field.offsetVarName}) as *mut ${field.typeName}`;
 
         if (field.wrappers[0] === 'Option') {
             let walkCode;

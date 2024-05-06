@@ -2,7 +2,8 @@ import {camelToSnake, snakeToCamel} from './utils.mjs';
 
 export default function generateAncestorsCode(types) {
     const variantNamesForEnums = Object.create(null);
-    let enumVariants = '',
+    let ancestorEnumVariants = '',
+        ancestorTypeEnumVariants = '',
         isFunctions = '',
         ancestorTypes = '',
         discriminant = 1;
@@ -62,8 +63,8 @@ export default function generateAncestorsCode(types) {
             const variantName = `${type.name}${fieldNameCamel}`;
             variantNames.push(variantName);
 
-            enumVariants += `${variantName}(${structName}) = ${discriminant},\n`;
-            field.ancestorDiscriminant = discriminant;
+            ancestorEnumVariants += `${variantName}(${structName}) = ${discriminant},\n`;
+            ancestorTypeEnumVariants += `${variantName} = ${discriminant},\n`;
             discriminant++;
 
             if (fieldType.kind === 'enum') {
@@ -117,8 +118,6 @@ export default function generateAncestorsCode(types) {
             AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
         };
 
-        pub(crate) type AncestorDiscriminant = ${discriminantType};
-
         /// Ancestor type used in AST traversal.
         ///
         /// Encodes both the type of the parent, and child's location in the parent.
@@ -130,7 +129,18 @@ export default function generateAncestorsCode(types) {
         #[derive(Debug)]
         pub enum Ancestor<'a> {
             None = 0,
-            ${enumVariants}
+            ${ancestorEnumVariants}
+        }
+
+        /// Type of [\`Ancestor\`].
+        /// Used in [\`crate::TraverseCtx::retag_stack\`].
+        // SAFETY: Discriminants of this type must match those for \`Ancestor\` to maintain the safety
+        // of \`TraverseCtx::retag_stack\`.
+        #[allow(dead_code)]
+        #[repr(${discriminantType})]
+        pub(crate) enum AncestorType {
+            None = 0,
+            ${ancestorTypeEnumVariants}
         }
 
         impl<'a> Ancestor<'a> {
