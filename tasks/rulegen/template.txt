@@ -26,7 +26,8 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     {{pascal_rule_name}},
-    correctness
+    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
+             // See <https://oxc-project.github.io/docs/contribute/linter.html#rule-category> for details
 );
 
 impl Rule for {{pascal_rule_name}} {
