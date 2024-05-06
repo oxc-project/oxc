@@ -311,7 +311,7 @@ fn test() {
         r#"const x = ext["y"]"#,
         "let x = ()=>{}; x.y = 1",
         // MemberExpression when called
-        // "const x = Object.keys({})",
+        "const x = Object.keys({})",
         // MemberExpression when mutated
         "const x = {};x.y = ext",
         "const x = {y: 1};delete x.y",

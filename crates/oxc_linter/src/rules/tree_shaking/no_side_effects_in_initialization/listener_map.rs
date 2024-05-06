@@ -25,7 +25,8 @@ use crate::{
     ast_util::{get_declaration_of_variable, get_symbol_id_of_variable},
     utils::{
         calculate_binary_operation, calculate_logical_operation, calculate_unary_operation,
-        get_write_expr, has_comment_about_side_effect_check, has_pure_notation, no_effects, Value,
+        get_write_expr, has_comment_about_side_effect_check, has_pure_notation, is_pure_function,
+        no_effects, FunctionName, Value,
     },
     LintContext,
 };
@@ -1053,7 +1054,6 @@ impl<'a> ListenerMap for CallExpression<'a> {
             self.callee.report_effects_when_called(options);
             options.called_with_new.set(old_value);
         } else {
-            // TODO: Not work now
             options.ctx.diagnostic(NoSideEffectsDiagnostic::Call(self.callee.span()));
         }
     }
@@ -1131,8 +1131,7 @@ impl<'a> ListenerMap for IdentifierReference<'a> {
     }
 
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
-        // TODO: change to `isPureFunction`
-        if has_pure_notation(self.span, options.ctx) {
+        if is_pure_function(&FunctionName::Identifier(self), options.ctx) {
             return;
         }
 
@@ -1281,10 +1280,16 @@ impl<'a> ListenerMap for StaticMemberExpression<'a> {
             }
         }
 
-        if let Expression::Identifier(ident) = node {
-            ident.report_effects_when_called(options);
-        } else {
+        let Expression::Identifier(ident) = node else {
             options.ctx.diagnostic(NoSideEffectsDiagnostic::CallMember(node.span()));
+            return;
+        };
+
+        if get_declaration_of_variable(ident, options.ctx)
+            .is_some_and(|_| !has_pure_notation(self.span, options.ctx))
+            || !is_pure_function(&FunctionName::StaticMemberExpr(self), options.ctx)
+        {
+            options.ctx.diagnostic(NoSideEffectsDiagnostic::CallMember(self.span));
         }
     }
     fn report_effects_when_assigned(&self, options: &NodeListenerOptions) {

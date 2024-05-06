@@ -1,9 +1,16 @@
-use oxc_ast::{ast::Expression, AstKind, CommentKind};
+use lazy_static::lazy_static;
+use oxc_ast::{
+    ast::{Expression, IdentifierReference, StaticMemberExpression},
+    AstKind, CommentKind,
+};
 use oxc_semantic::AstNodeId;
-use oxc_span::Span;
+use oxc_span::{CompactStr, GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator, UnaryOperator};
+use rustc_hash::FxHashSet;
 
 use crate::LintContext;
+
+mod pure_functions;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Value {
@@ -84,6 +91,63 @@ pub fn get_write_expr<'a, 'b>(
 }
 
 pub fn no_effects() {}
+
+lazy_static! {
+    static ref PURE_FUNCTIONS_SET: FxHashSet<&'static str> = {
+        let mut set = FxHashSet::default();
+        set.extend(pure_functions::PURE_FUNCTIONS);
+
+        set
+    };
+}
+
+pub enum FunctionName<'a> {
+    Identifier(&'a IdentifierReference<'a>),
+    StaticMemberExpr(&'a StaticMemberExpression<'a>),
+}
+
+impl<'a> FunctionName<'a> {
+    fn from_expression(expr: &'a Expression<'a>) -> Option<Self> {
+        match expr {
+            Expression::Identifier(ident) => Some(FunctionName::Identifier(ident)),
+            Expression::StaticMemberExpression(member_expr) => {
+                Some(FunctionName::StaticMemberExpr(member_expr))
+            }
+            _ => None,
+        }
+    }
+}
+
+impl GetSpan for FunctionName<'_> {
+    fn span(&self) -> Span {
+        match self {
+            FunctionName::Identifier(ident) => ident.span,
+            FunctionName::StaticMemberExpr(member_expr) => member_expr.span,
+        }
+    }
+}
+
+pub fn is_pure_function(function_name: &FunctionName, ctx: &LintContext) -> bool {
+    if has_pure_notation(function_name.span(), ctx) {
+        return true;
+    }
+    let name = flatten_member_expr_if_possible(function_name);
+    PURE_FUNCTIONS_SET.contains(name.as_str())
+}
+
+fn flatten_member_expr_if_possible(function_name: &FunctionName) -> CompactStr {
+    match function_name {
+        FunctionName::StaticMemberExpr(static_member_expr) => {
+            let Some(parent_name) = FunctionName::from_expression(&static_member_expr.object)
+            else {
+                return CompactStr::from("");
+            };
+            let flattened_parent = flatten_member_expr_if_possible(&parent_name);
+            CompactStr::from(format!("{}.{}", flattened_parent, static_member_expr.property.name))
+        }
+        FunctionName::Identifier(ident) => ident.name.to_compact_str(),
+    }
+}
 
 /// Comments containing @__PURE__ or #__PURE__ mark a specific function call
 /// or constructor invocation as side effect free.
