@@ -1,10 +1,10 @@
 /*
  * HTTP server to intercept benchmark data from Codspeed runner.
- * 
+ *
  * Codspeed runner makes 2 API calls:
  * 1. Uploading metadata
  * 2. Uploading archive of CPU profile files
- * 
+ *
  * Server starts on an available port, saves the files sent by Codspeed runner to a directory,
  * then shuts itself down.
  */
@@ -20,7 +20,7 @@ const DEFAULT_PORT = 3000,
     LISTEN_ATTEMPTS = 10;
 
 // Create directory for saving assets
-const rand = Math.round(Math.random() * 1000000000000000000).toString(16),
+const rand = Math.round(Math.random() * 100000000000000).toString(16),
     dataDir = `/tmp/oxc_bench_data_${rand}`;
 await fs.mkdir(dataDir);
 
