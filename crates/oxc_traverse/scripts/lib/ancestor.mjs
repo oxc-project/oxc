@@ -2,8 +2,8 @@ import {camelToSnake, snakeToCamel} from './utils.mjs';
 
 export default function generateAncestorsCode(types) {
     const variantNamesForEnums = Object.create(null);
-    let ancestorEnumVariants = '',
-        ancestorTypeEnumVariants = '',
+    let ancestorTypeEnumVariants = '',
+        ancestorEnumVariants = '',
         isFunctions = '',
         ancestorTypes = '',
         discriminant = 1;
@@ -63,8 +63,8 @@ export default function generateAncestorsCode(types) {
             const variantName = `${type.name}${fieldNameCamel}`;
             variantNames.push(variantName);
 
-            ancestorEnumVariants += `${variantName}(${structName}) = ${discriminant},\n`;
             ancestorTypeEnumVariants += `${variantName} = ${discriminant},\n`;
+            ancestorEnumVariants += `${variantName}(${structName}) = AncestorType::${variantName} as u16,\n`;
             discriminant++;
 
             if (fieldType.kind === 'enum') {
@@ -97,8 +97,6 @@ export default function generateAncestorsCode(types) {
         `;
     }
 
-    const discriminantType = discriminant <= 256 ? 'u8' : 'u16';
-
     return `
         #![allow(
             unsafe_code,
@@ -118,29 +116,34 @@ export default function generateAncestorsCode(types) {
             AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
         };
 
+        /// Type of [\`Ancestor\`].
+        /// Used in [\`crate::TraverseCtx::retag_stack\`].
+        #[repr(u16)]
+        #[derive(Clone, Copy)]
+        #[allow(dead_code)]
+        pub(crate) enum AncestorType {
+            None = 0,
+            ${ancestorTypeEnumVariants}
+        }
+
         /// Ancestor type used in AST traversal.
         ///
         /// Encodes both the type of the parent, and child's location in the parent.
         /// i.e. variants for \`BinaryExpressionLeft\` and \`BinaryExpressionRight\`, not just \`BinaryExpression\`.
         //
-        // SAFETY: This type MUST be \`#[repr(u8)]\` or \`#[repr(u16)]\` (depending on number of variants)
-        // to maintain the safety of \`TraverseCtx::retag_stack\`.
-        #[repr(C, ${discriminantType})]
+        // SAFETY:
+        // * This type must be \`#[repr(u16)]\`.
+        // * Variant discriminants must correspond to those in \`AncestorType\`.
+        //
+        // These invariants make it possible to set the discriminant of an \`Ancestor\` without altering
+        // the "payload" pointer with:
+        // \`*(ancestor as *mut _ as *mut AncestorType) = AncestorType::Program\`.
+        // \`TraverseCtx::retag_stack\` uses this technique.
+        #[repr(C, u16)]
         #[derive(Debug)]
         pub enum Ancestor<'a> {
-            None = 0,
+            None = AncestorType::None as u16,
             ${ancestorEnumVariants}
-        }
-
-        /// Type of [\`Ancestor\`].
-        /// Used in [\`crate::TraverseCtx::retag_stack\`].
-        // SAFETY: Discriminants of this type must match those for \`Ancestor\` to maintain the safety
-        // of \`TraverseCtx::retag_stack\`.
-        #[allow(dead_code)]
-        #[repr(${discriminantType})]
-        pub(crate) enum AncestorType {
-            None = 0,
-            ${ancestorTypeEnumVariants}
         }
 
         impl<'a> Ancestor<'a> {

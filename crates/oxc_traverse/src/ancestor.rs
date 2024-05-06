@@ -18,324 +18,11 @@ use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
 
-/// Ancestor type used in AST traversal.
-///
-/// Encodes both the type of the parent, and child's location in the parent.
-/// i.e. variants for `BinaryExpressionLeft` and `BinaryExpressionRight`, not just `BinaryExpression`.
-//
-// SAFETY: This type MUST be `#[repr(u8)]` or `#[repr(u16)]` (depending on number of variants)
-// to maintain the safety of `TraverseCtx::retag_stack`.
-#[repr(C, u16)]
-#[derive(Debug)]
-pub enum Ancestor<'a> {
-    None = 0,
-    ProgramDirectives(ProgramWithoutDirectives<'a>) = 1,
-    ProgramHashbang(ProgramWithoutHashbang<'a>) = 2,
-    ProgramBody(ProgramWithoutBody<'a>) = 3,
-    ArrayExpressionElements(ArrayExpressionWithoutElements<'a>) = 4,
-    ObjectExpressionProperties(ObjectExpressionWithoutProperties<'a>) = 5,
-    ObjectPropertyKey(ObjectPropertyWithoutKey<'a>) = 6,
-    ObjectPropertyValue(ObjectPropertyWithoutValue<'a>) = 7,
-    ObjectPropertyInit(ObjectPropertyWithoutInit<'a>) = 8,
-    TemplateLiteralQuasis(TemplateLiteralWithoutQuasis<'a>) = 9,
-    TemplateLiteralExpressions(TemplateLiteralWithoutExpressions<'a>) = 10,
-    TaggedTemplateExpressionTag(TaggedTemplateExpressionWithoutTag<'a>) = 11,
-    TaggedTemplateExpressionQuasi(TaggedTemplateExpressionWithoutQuasi<'a>) = 12,
-    TaggedTemplateExpressionTypeParameters(TaggedTemplateExpressionWithoutTypeParameters<'a>) = 13,
-    ComputedMemberExpressionObject(ComputedMemberExpressionWithoutObject<'a>) = 14,
-    ComputedMemberExpressionExpression(ComputedMemberExpressionWithoutExpression<'a>) = 15,
-    StaticMemberExpressionObject(StaticMemberExpressionWithoutObject<'a>) = 16,
-    StaticMemberExpressionProperty(StaticMemberExpressionWithoutProperty<'a>) = 17,
-    PrivateFieldExpressionObject(PrivateFieldExpressionWithoutObject<'a>) = 18,
-    PrivateFieldExpressionField(PrivateFieldExpressionWithoutField<'a>) = 19,
-    CallExpressionCallee(CallExpressionWithoutCallee<'a>) = 20,
-    CallExpressionArguments(CallExpressionWithoutArguments<'a>) = 21,
-    CallExpressionTypeParameters(CallExpressionWithoutTypeParameters<'a>) = 22,
-    NewExpressionCallee(NewExpressionWithoutCallee<'a>) = 23,
-    NewExpressionArguments(NewExpressionWithoutArguments<'a>) = 24,
-    NewExpressionTypeParameters(NewExpressionWithoutTypeParameters<'a>) = 25,
-    MetaPropertyMeta(MetaPropertyWithoutMeta<'a>) = 26,
-    MetaPropertyProperty(MetaPropertyWithoutProperty<'a>) = 27,
-    SpreadElementArgument(SpreadElementWithoutArgument<'a>) = 28,
-    UpdateExpressionArgument(UpdateExpressionWithoutArgument<'a>) = 29,
-    UnaryExpressionArgument(UnaryExpressionWithoutArgument<'a>) = 30,
-    BinaryExpressionLeft(BinaryExpressionWithoutLeft<'a>) = 31,
-    BinaryExpressionRight(BinaryExpressionWithoutRight<'a>) = 32,
-    PrivateInExpressionLeft(PrivateInExpressionWithoutLeft<'a>) = 33,
-    PrivateInExpressionRight(PrivateInExpressionWithoutRight<'a>) = 34,
-    LogicalExpressionLeft(LogicalExpressionWithoutLeft<'a>) = 35,
-    LogicalExpressionRight(LogicalExpressionWithoutRight<'a>) = 36,
-    ConditionalExpressionTest(ConditionalExpressionWithoutTest<'a>) = 37,
-    ConditionalExpressionConsequent(ConditionalExpressionWithoutConsequent<'a>) = 38,
-    ConditionalExpressionAlternate(ConditionalExpressionWithoutAlternate<'a>) = 39,
-    AssignmentExpressionLeft(AssignmentExpressionWithoutLeft<'a>) = 40,
-    AssignmentExpressionRight(AssignmentExpressionWithoutRight<'a>) = 41,
-    ArrayAssignmentTargetElements(ArrayAssignmentTargetWithoutElements<'a>) = 42,
-    ArrayAssignmentTargetRest(ArrayAssignmentTargetWithoutRest<'a>) = 43,
-    ObjectAssignmentTargetProperties(ObjectAssignmentTargetWithoutProperties<'a>) = 44,
-    ObjectAssignmentTargetRest(ObjectAssignmentTargetWithoutRest<'a>) = 45,
-    AssignmentTargetRestTarget(AssignmentTargetRestWithoutTarget<'a>) = 46,
-    AssignmentTargetWithDefaultBinding(AssignmentTargetWithDefaultWithoutBinding<'a>) = 47,
-    AssignmentTargetWithDefaultInit(AssignmentTargetWithDefaultWithoutInit<'a>) = 48,
-    AssignmentTargetPropertyIdentifierBinding(AssignmentTargetPropertyIdentifierWithoutBinding<'a>) =
-        49,
-    AssignmentTargetPropertyIdentifierInit(AssignmentTargetPropertyIdentifierWithoutInit<'a>) = 50,
-    AssignmentTargetPropertyPropertyName(AssignmentTargetPropertyPropertyWithoutName<'a>) = 51,
-    AssignmentTargetPropertyPropertyBinding(AssignmentTargetPropertyPropertyWithoutBinding<'a>) =
-        52,
-    SequenceExpressionExpressions(SequenceExpressionWithoutExpressions<'a>) = 53,
-    AwaitExpressionArgument(AwaitExpressionWithoutArgument<'a>) = 54,
-    ChainExpressionExpression(ChainExpressionWithoutExpression<'a>) = 55,
-    ParenthesizedExpressionExpression(ParenthesizedExpressionWithoutExpression<'a>) = 56,
-    DirectiveExpression(DirectiveWithoutExpression<'a>) = 57,
-    BlockStatementBody(BlockStatementWithoutBody<'a>) = 58,
-    VariableDeclarationDeclarations(VariableDeclarationWithoutDeclarations<'a>) = 59,
-    VariableDeclaratorId(VariableDeclaratorWithoutId<'a>) = 60,
-    VariableDeclaratorInit(VariableDeclaratorWithoutInit<'a>) = 61,
-    UsingDeclarationDeclarations(UsingDeclarationWithoutDeclarations<'a>) = 62,
-    ExpressionStatementExpression(ExpressionStatementWithoutExpression<'a>) = 63,
-    IfStatementTest(IfStatementWithoutTest<'a>) = 64,
-    IfStatementConsequent(IfStatementWithoutConsequent<'a>) = 65,
-    IfStatementAlternate(IfStatementWithoutAlternate<'a>) = 66,
-    DoWhileStatementBody(DoWhileStatementWithoutBody<'a>) = 67,
-    DoWhileStatementTest(DoWhileStatementWithoutTest<'a>) = 68,
-    WhileStatementTest(WhileStatementWithoutTest<'a>) = 69,
-    WhileStatementBody(WhileStatementWithoutBody<'a>) = 70,
-    ForStatementInit(ForStatementWithoutInit<'a>) = 71,
-    ForStatementTest(ForStatementWithoutTest<'a>) = 72,
-    ForStatementUpdate(ForStatementWithoutUpdate<'a>) = 73,
-    ForStatementBody(ForStatementWithoutBody<'a>) = 74,
-    ForInStatementLeft(ForInStatementWithoutLeft<'a>) = 75,
-    ForInStatementRight(ForInStatementWithoutRight<'a>) = 76,
-    ForInStatementBody(ForInStatementWithoutBody<'a>) = 77,
-    ForOfStatementLeft(ForOfStatementWithoutLeft<'a>) = 78,
-    ForOfStatementRight(ForOfStatementWithoutRight<'a>) = 79,
-    ForOfStatementBody(ForOfStatementWithoutBody<'a>) = 80,
-    ContinueStatementLabel(ContinueStatementWithoutLabel<'a>) = 81,
-    BreakStatementLabel(BreakStatementWithoutLabel<'a>) = 82,
-    ReturnStatementArgument(ReturnStatementWithoutArgument<'a>) = 83,
-    WithStatementObject(WithStatementWithoutObject<'a>) = 84,
-    WithStatementBody(WithStatementWithoutBody<'a>) = 85,
-    SwitchStatementDiscriminant(SwitchStatementWithoutDiscriminant<'a>) = 86,
-    SwitchStatementCases(SwitchStatementWithoutCases<'a>) = 87,
-    SwitchCaseTest(SwitchCaseWithoutTest<'a>) = 88,
-    SwitchCaseConsequent(SwitchCaseWithoutConsequent<'a>) = 89,
-    LabeledStatementLabel(LabeledStatementWithoutLabel<'a>) = 90,
-    LabeledStatementBody(LabeledStatementWithoutBody<'a>) = 91,
-    ThrowStatementArgument(ThrowStatementWithoutArgument<'a>) = 92,
-    TryStatementBlock(TryStatementWithoutBlock<'a>) = 93,
-    TryStatementHandler(TryStatementWithoutHandler<'a>) = 94,
-    TryStatementFinalizer(TryStatementWithoutFinalizer<'a>) = 95,
-    CatchClauseParam(CatchClauseWithoutParam<'a>) = 96,
-    CatchClauseBody(CatchClauseWithoutBody<'a>) = 97,
-    CatchParameterPattern(CatchParameterWithoutPattern<'a>) = 98,
-    BindingPatternKind(BindingPatternWithoutKind<'a>) = 99,
-    BindingPatternTypeAnnotation(BindingPatternWithoutTypeAnnotation<'a>) = 100,
-    AssignmentPatternLeft(AssignmentPatternWithoutLeft<'a>) = 101,
-    AssignmentPatternRight(AssignmentPatternWithoutRight<'a>) = 102,
-    ObjectPatternProperties(ObjectPatternWithoutProperties<'a>) = 103,
-    ObjectPatternRest(ObjectPatternWithoutRest<'a>) = 104,
-    BindingPropertyKey(BindingPropertyWithoutKey<'a>) = 105,
-    BindingPropertyValue(BindingPropertyWithoutValue<'a>) = 106,
-    ArrayPatternElements(ArrayPatternWithoutElements<'a>) = 107,
-    ArrayPatternRest(ArrayPatternWithoutRest<'a>) = 108,
-    BindingRestElementArgument(BindingRestElementWithoutArgument<'a>) = 109,
-    FunctionId(FunctionWithoutId<'a>) = 110,
-    FunctionThisParam(FunctionWithoutThisParam<'a>) = 111,
-    FunctionParams(FunctionWithoutParams<'a>) = 112,
-    FunctionBody(FunctionWithoutBody<'a>) = 113,
-    FunctionTypeParameters(FunctionWithoutTypeParameters<'a>) = 114,
-    FunctionReturnType(FunctionWithoutReturnType<'a>) = 115,
-    FormalParametersItems(FormalParametersWithoutItems<'a>) = 116,
-    FormalParametersRest(FormalParametersWithoutRest<'a>) = 117,
-    FormalParameterPattern(FormalParameterWithoutPattern<'a>) = 118,
-    FormalParameterDecorators(FormalParameterWithoutDecorators<'a>) = 119,
-    FunctionBodyDirectives(FunctionBodyWithoutDirectives<'a>) = 120,
-    FunctionBodyStatements(FunctionBodyWithoutStatements<'a>) = 121,
-    ArrowFunctionExpressionParams(ArrowFunctionExpressionWithoutParams<'a>) = 122,
-    ArrowFunctionExpressionBody(ArrowFunctionExpressionWithoutBody<'a>) = 123,
-    ArrowFunctionExpressionTypeParameters(ArrowFunctionExpressionWithoutTypeParameters<'a>) = 124,
-    ArrowFunctionExpressionReturnType(ArrowFunctionExpressionWithoutReturnType<'a>) = 125,
-    YieldExpressionArgument(YieldExpressionWithoutArgument<'a>) = 126,
-    ClassId(ClassWithoutId<'a>) = 127,
-    ClassSuperClass(ClassWithoutSuperClass<'a>) = 128,
-    ClassBody(ClassWithoutBody<'a>) = 129,
-    ClassTypeParameters(ClassWithoutTypeParameters<'a>) = 130,
-    ClassSuperTypeParameters(ClassWithoutSuperTypeParameters<'a>) = 131,
-    ClassImplements(ClassWithoutImplements<'a>) = 132,
-    ClassDecorators(ClassWithoutDecorators<'a>) = 133,
-    ClassBodyBody(ClassBodyWithoutBody<'a>) = 134,
-    MethodDefinitionKey(MethodDefinitionWithoutKey<'a>) = 135,
-    MethodDefinitionValue(MethodDefinitionWithoutValue<'a>) = 136,
-    MethodDefinitionDecorators(MethodDefinitionWithoutDecorators<'a>) = 137,
-    PropertyDefinitionKey(PropertyDefinitionWithoutKey<'a>) = 138,
-    PropertyDefinitionValue(PropertyDefinitionWithoutValue<'a>) = 139,
-    PropertyDefinitionTypeAnnotation(PropertyDefinitionWithoutTypeAnnotation<'a>) = 140,
-    PropertyDefinitionDecorators(PropertyDefinitionWithoutDecorators<'a>) = 141,
-    StaticBlockBody(StaticBlockWithoutBody<'a>) = 142,
-    AccessorPropertyKey(AccessorPropertyWithoutKey<'a>) = 143,
-    AccessorPropertyValue(AccessorPropertyWithoutValue<'a>) = 144,
-    AccessorPropertyDecorators(AccessorPropertyWithoutDecorators<'a>) = 145,
-    ImportExpressionSource(ImportExpressionWithoutSource<'a>) = 146,
-    ImportExpressionArguments(ImportExpressionWithoutArguments<'a>) = 147,
-    ImportDeclarationSpecifiers(ImportDeclarationWithoutSpecifiers<'a>) = 148,
-    ImportDeclarationSource(ImportDeclarationWithoutSource<'a>) = 149,
-    ImportDeclarationWithClause(ImportDeclarationWithoutWithClause<'a>) = 150,
-    ImportSpecifierImported(ImportSpecifierWithoutImported<'a>) = 151,
-    ImportSpecifierLocal(ImportSpecifierWithoutLocal<'a>) = 152,
-    ImportDefaultSpecifierLocal(ImportDefaultSpecifierWithoutLocal<'a>) = 153,
-    ImportNamespaceSpecifierLocal(ImportNamespaceSpecifierWithoutLocal<'a>) = 154,
-    WithClauseAttributesKeyword(WithClauseWithoutAttributesKeyword<'a>) = 155,
-    WithClauseWithEntries(WithClauseWithoutWithEntries<'a>) = 156,
-    ImportAttributeKey(ImportAttributeWithoutKey<'a>) = 157,
-    ImportAttributeValue(ImportAttributeWithoutValue<'a>) = 158,
-    ExportNamedDeclarationDeclaration(ExportNamedDeclarationWithoutDeclaration<'a>) = 159,
-    ExportNamedDeclarationSpecifiers(ExportNamedDeclarationWithoutSpecifiers<'a>) = 160,
-    ExportNamedDeclarationSource(ExportNamedDeclarationWithoutSource<'a>) = 161,
-    ExportNamedDeclarationWithClause(ExportNamedDeclarationWithoutWithClause<'a>) = 162,
-    ExportDefaultDeclarationDeclaration(ExportDefaultDeclarationWithoutDeclaration<'a>) = 163,
-    ExportDefaultDeclarationExported(ExportDefaultDeclarationWithoutExported<'a>) = 164,
-    ExportAllDeclarationExported(ExportAllDeclarationWithoutExported<'a>) = 165,
-    ExportAllDeclarationSource(ExportAllDeclarationWithoutSource<'a>) = 166,
-    ExportAllDeclarationWithClause(ExportAllDeclarationWithoutWithClause<'a>) = 167,
-    ExportSpecifierLocal(ExportSpecifierWithoutLocal<'a>) = 168,
-    ExportSpecifierExported(ExportSpecifierWithoutExported<'a>) = 169,
-    JSXElementOpeningElement(JSXElementWithoutOpeningElement<'a>) = 170,
-    JSXElementClosingElement(JSXElementWithoutClosingElement<'a>) = 171,
-    JSXElementChildren(JSXElementWithoutChildren<'a>) = 172,
-    JSXOpeningElementName(JSXOpeningElementWithoutName<'a>) = 173,
-    JSXOpeningElementAttributes(JSXOpeningElementWithoutAttributes<'a>) = 174,
-    JSXOpeningElementTypeParameters(JSXOpeningElementWithoutTypeParameters<'a>) = 175,
-    JSXClosingElementName(JSXClosingElementWithoutName<'a>) = 176,
-    JSXFragmentChildren(JSXFragmentWithoutChildren<'a>) = 177,
-    JSXNamespacedNameNamespace(JSXNamespacedNameWithoutNamespace<'a>) = 178,
-    JSXNamespacedNameProperty(JSXNamespacedNameWithoutProperty<'a>) = 179,
-    JSXMemberExpressionObject(JSXMemberExpressionWithoutObject<'a>) = 180,
-    JSXMemberExpressionProperty(JSXMemberExpressionWithoutProperty<'a>) = 181,
-    JSXExpressionContainerExpression(JSXExpressionContainerWithoutExpression<'a>) = 182,
-    JSXAttributeName(JSXAttributeWithoutName<'a>) = 183,
-    JSXAttributeValue(JSXAttributeWithoutValue<'a>) = 184,
-    JSXSpreadAttributeArgument(JSXSpreadAttributeWithoutArgument<'a>) = 185,
-    JSXSpreadChildExpression(JSXSpreadChildWithoutExpression<'a>) = 186,
-    TSThisParameterThis(TSThisParameterWithoutThis<'a>) = 187,
-    TSThisParameterTypeAnnotation(TSThisParameterWithoutTypeAnnotation<'a>) = 188,
-    TSEnumDeclarationId(TSEnumDeclarationWithoutId<'a>) = 189,
-    TSEnumDeclarationMembers(TSEnumDeclarationWithoutMembers<'a>) = 190,
-    TSEnumMemberId(TSEnumMemberWithoutId<'a>) = 191,
-    TSEnumMemberInitializer(TSEnumMemberWithoutInitializer<'a>) = 192,
-    TSTypeAnnotationTypeAnnotation(TSTypeAnnotationWithoutTypeAnnotation<'a>) = 193,
-    TSLiteralTypeLiteral(TSLiteralTypeWithoutLiteral<'a>) = 194,
-    TSConditionalTypeCheckType(TSConditionalTypeWithoutCheckType<'a>) = 195,
-    TSConditionalTypeExtendsType(TSConditionalTypeWithoutExtendsType<'a>) = 196,
-    TSConditionalTypeTrueType(TSConditionalTypeWithoutTrueType<'a>) = 197,
-    TSConditionalTypeFalseType(TSConditionalTypeWithoutFalseType<'a>) = 198,
-    TSUnionTypeTypes(TSUnionTypeWithoutTypes<'a>) = 199,
-    TSIntersectionTypeTypes(TSIntersectionTypeWithoutTypes<'a>) = 200,
-    TSTypeOperatorTypeAnnotation(TSTypeOperatorWithoutTypeAnnotation<'a>) = 201,
-    TSArrayTypeElementType(TSArrayTypeWithoutElementType<'a>) = 202,
-    TSIndexedAccessTypeObjectType(TSIndexedAccessTypeWithoutObjectType<'a>) = 203,
-    TSIndexedAccessTypeIndexType(TSIndexedAccessTypeWithoutIndexType<'a>) = 204,
-    TSTupleTypeElementTypes(TSTupleTypeWithoutElementTypes<'a>) = 205,
-    TSNamedTupleMemberElementType(TSNamedTupleMemberWithoutElementType<'a>) = 206,
-    TSNamedTupleMemberLabel(TSNamedTupleMemberWithoutLabel<'a>) = 207,
-    TSOptionalTypeTypeAnnotation(TSOptionalTypeWithoutTypeAnnotation<'a>) = 208,
-    TSRestTypeTypeAnnotation(TSRestTypeWithoutTypeAnnotation<'a>) = 209,
-    TSTypeReferenceTypeName(TSTypeReferenceWithoutTypeName<'a>) = 210,
-    TSTypeReferenceTypeParameters(TSTypeReferenceWithoutTypeParameters<'a>) = 211,
-    TSQualifiedNameLeft(TSQualifiedNameWithoutLeft<'a>) = 212,
-    TSQualifiedNameRight(TSQualifiedNameWithoutRight<'a>) = 213,
-    TSTypeParameterInstantiationParams(TSTypeParameterInstantiationWithoutParams<'a>) = 214,
-    TSTypeParameterName(TSTypeParameterWithoutName<'a>) = 215,
-    TSTypeParameterConstraint(TSTypeParameterWithoutConstraint<'a>) = 216,
-    TSTypeParameterDefault(TSTypeParameterWithoutDefault<'a>) = 217,
-    TSTypeParameterDeclarationParams(TSTypeParameterDeclarationWithoutParams<'a>) = 218,
-    TSTypeAliasDeclarationId(TSTypeAliasDeclarationWithoutId<'a>) = 219,
-    TSTypeAliasDeclarationTypeAnnotation(TSTypeAliasDeclarationWithoutTypeAnnotation<'a>) = 220,
-    TSTypeAliasDeclarationTypeParameters(TSTypeAliasDeclarationWithoutTypeParameters<'a>) = 221,
-    TSClassImplementsExpression(TSClassImplementsWithoutExpression<'a>) = 222,
-    TSClassImplementsTypeParameters(TSClassImplementsWithoutTypeParameters<'a>) = 223,
-    TSInterfaceDeclarationId(TSInterfaceDeclarationWithoutId<'a>) = 224,
-    TSInterfaceDeclarationBody(TSInterfaceDeclarationWithoutBody<'a>) = 225,
-    TSInterfaceDeclarationTypeParameters(TSInterfaceDeclarationWithoutTypeParameters<'a>) = 226,
-    TSInterfaceDeclarationExtends(TSInterfaceDeclarationWithoutExtends<'a>) = 227,
-    TSInterfaceBodyBody(TSInterfaceBodyWithoutBody<'a>) = 228,
-    TSPropertySignatureKey(TSPropertySignatureWithoutKey<'a>) = 229,
-    TSPropertySignatureTypeAnnotation(TSPropertySignatureWithoutTypeAnnotation<'a>) = 230,
-    TSIndexSignatureParameters(TSIndexSignatureWithoutParameters<'a>) = 231,
-    TSIndexSignatureTypeAnnotation(TSIndexSignatureWithoutTypeAnnotation<'a>) = 232,
-    TSCallSignatureDeclarationThisParam(TSCallSignatureDeclarationWithoutThisParam<'a>) = 233,
-    TSCallSignatureDeclarationParams(TSCallSignatureDeclarationWithoutParams<'a>) = 234,
-    TSCallSignatureDeclarationReturnType(TSCallSignatureDeclarationWithoutReturnType<'a>) = 235,
-    TSCallSignatureDeclarationTypeParameters(TSCallSignatureDeclarationWithoutTypeParameters<'a>) =
-        236,
-    TSMethodSignatureKey(TSMethodSignatureWithoutKey<'a>) = 237,
-    TSMethodSignatureThisParam(TSMethodSignatureWithoutThisParam<'a>) = 238,
-    TSMethodSignatureParams(TSMethodSignatureWithoutParams<'a>) = 239,
-    TSMethodSignatureReturnType(TSMethodSignatureWithoutReturnType<'a>) = 240,
-    TSMethodSignatureTypeParameters(TSMethodSignatureWithoutTypeParameters<'a>) = 241,
-    TSConstructSignatureDeclarationParams(TSConstructSignatureDeclarationWithoutParams<'a>) = 242,
-    TSConstructSignatureDeclarationReturnType(TSConstructSignatureDeclarationWithoutReturnType<'a>) =
-        243,
-    TSConstructSignatureDeclarationTypeParameters(
-        TSConstructSignatureDeclarationWithoutTypeParameters<'a>,
-    ) = 244,
-    TSIndexSignatureNameTypeAnnotation(TSIndexSignatureNameWithoutTypeAnnotation<'a>) = 245,
-    TSInterfaceHeritageExpression(TSInterfaceHeritageWithoutExpression<'a>) = 246,
-    TSInterfaceHeritageTypeParameters(TSInterfaceHeritageWithoutTypeParameters<'a>) = 247,
-    TSTypePredicateParameterName(TSTypePredicateWithoutParameterName<'a>) = 248,
-    TSTypePredicateTypeAnnotation(TSTypePredicateWithoutTypeAnnotation<'a>) = 249,
-    TSModuleDeclarationId(TSModuleDeclarationWithoutId<'a>) = 250,
-    TSModuleDeclarationBody(TSModuleDeclarationWithoutBody<'a>) = 251,
-    TSModuleBlockBody(TSModuleBlockWithoutBody<'a>) = 252,
-    TSTypeLiteralMembers(TSTypeLiteralWithoutMembers<'a>) = 253,
-    TSInferTypeTypeParameter(TSInferTypeWithoutTypeParameter<'a>) = 254,
-    TSTypeQueryExprName(TSTypeQueryWithoutExprName<'a>) = 255,
-    TSTypeQueryTypeParameters(TSTypeQueryWithoutTypeParameters<'a>) = 256,
-    TSImportTypeArgument(TSImportTypeWithoutArgument<'a>) = 257,
-    TSImportTypeQualifier(TSImportTypeWithoutQualifier<'a>) = 258,
-    TSImportTypeAttributes(TSImportTypeWithoutAttributes<'a>) = 259,
-    TSImportTypeTypeParameters(TSImportTypeWithoutTypeParameters<'a>) = 260,
-    TSImportAttributesElements(TSImportAttributesWithoutElements<'a>) = 261,
-    TSImportAttributeName(TSImportAttributeWithoutName<'a>) = 262,
-    TSImportAttributeValue(TSImportAttributeWithoutValue<'a>) = 263,
-    TSFunctionTypeThisParam(TSFunctionTypeWithoutThisParam<'a>) = 264,
-    TSFunctionTypeParams(TSFunctionTypeWithoutParams<'a>) = 265,
-    TSFunctionTypeReturnType(TSFunctionTypeWithoutReturnType<'a>) = 266,
-    TSFunctionTypeTypeParameters(TSFunctionTypeWithoutTypeParameters<'a>) = 267,
-    TSConstructorTypeParams(TSConstructorTypeWithoutParams<'a>) = 268,
-    TSConstructorTypeReturnType(TSConstructorTypeWithoutReturnType<'a>) = 269,
-    TSConstructorTypeTypeParameters(TSConstructorTypeWithoutTypeParameters<'a>) = 270,
-    TSMappedTypeTypeParameter(TSMappedTypeWithoutTypeParameter<'a>) = 271,
-    TSMappedTypeNameType(TSMappedTypeWithoutNameType<'a>) = 272,
-    TSMappedTypeTypeAnnotation(TSMappedTypeWithoutTypeAnnotation<'a>) = 273,
-    TSTemplateLiteralTypeQuasis(TSTemplateLiteralTypeWithoutQuasis<'a>) = 274,
-    TSTemplateLiteralTypeTypes(TSTemplateLiteralTypeWithoutTypes<'a>) = 275,
-    TSAsExpressionExpression(TSAsExpressionWithoutExpression<'a>) = 276,
-    TSAsExpressionTypeAnnotation(TSAsExpressionWithoutTypeAnnotation<'a>) = 277,
-    TSSatisfiesExpressionExpression(TSSatisfiesExpressionWithoutExpression<'a>) = 278,
-    TSSatisfiesExpressionTypeAnnotation(TSSatisfiesExpressionWithoutTypeAnnotation<'a>) = 279,
-    TSTypeAssertionExpression(TSTypeAssertionWithoutExpression<'a>) = 280,
-    TSTypeAssertionTypeAnnotation(TSTypeAssertionWithoutTypeAnnotation<'a>) = 281,
-    TSImportEqualsDeclarationId(TSImportEqualsDeclarationWithoutId<'a>) = 282,
-    TSImportEqualsDeclarationModuleReference(TSImportEqualsDeclarationWithoutModuleReference<'a>) =
-        283,
-    TSExternalModuleReferenceExpression(TSExternalModuleReferenceWithoutExpression<'a>) = 284,
-    TSNonNullExpressionExpression(TSNonNullExpressionWithoutExpression<'a>) = 285,
-    DecoratorExpression(DecoratorWithoutExpression<'a>) = 286,
-    TSExportAssignmentExpression(TSExportAssignmentWithoutExpression<'a>) = 287,
-    TSNamespaceExportDeclarationId(TSNamespaceExportDeclarationWithoutId<'a>) = 288,
-    TSInstantiationExpressionExpression(TSInstantiationExpressionWithoutExpression<'a>) = 289,
-    TSInstantiationExpressionTypeParameters(TSInstantiationExpressionWithoutTypeParameters<'a>) =
-        290,
-    JSDocNullableTypeTypeAnnotation(JSDocNullableTypeWithoutTypeAnnotation<'a>) = 291,
-}
-
 /// Type of [`Ancestor`].
 /// Used in [`crate::TraverseCtx::retag_stack`].
-// SAFETY: Discriminants of this type must match those for `Ancestor` to maintain the safety
-// of `TraverseCtx::retag_stack`.
-#[allow(dead_code)]
 #[repr(u16)]
+#[derive(Clone, Copy)]
+#[allow(dead_code)]
 pub(crate) enum AncestorType {
     None = 0,
     ProgramDirectives = 1,
@@ -629,6 +316,543 @@ pub(crate) enum AncestorType {
     TSInstantiationExpressionExpression = 289,
     TSInstantiationExpressionTypeParameters = 290,
     JSDocNullableTypeTypeAnnotation = 291,
+}
+
+/// Ancestor type used in AST traversal.
+///
+/// Encodes both the type of the parent, and child's location in the parent.
+/// i.e. variants for `BinaryExpressionLeft` and `BinaryExpressionRight`, not just `BinaryExpression`.
+//
+// SAFETY:
+// * This type must be `#[repr(u16)]`.
+// * Variant discriminants must correspond to those in `AncestorType`.
+//
+// These invariants make it possible to set the discriminant of an `Ancestor` without altering
+// the "payload" pointer with:
+// `*(ancestor as *mut _ as *mut AncestorType) = AncestorType::Program`.
+// `TraverseCtx::retag_stack` uses this technique.
+#[repr(C, u16)]
+#[derive(Debug)]
+pub enum Ancestor<'a> {
+    None = AncestorType::None as u16,
+    ProgramDirectives(ProgramWithoutDirectives<'a>) = AncestorType::ProgramDirectives as u16,
+    ProgramHashbang(ProgramWithoutHashbang<'a>) = AncestorType::ProgramHashbang as u16,
+    ProgramBody(ProgramWithoutBody<'a>) = AncestorType::ProgramBody as u16,
+    ArrayExpressionElements(ArrayExpressionWithoutElements<'a>) =
+        AncestorType::ArrayExpressionElements as u16,
+    ObjectExpressionProperties(ObjectExpressionWithoutProperties<'a>) =
+        AncestorType::ObjectExpressionProperties as u16,
+    ObjectPropertyKey(ObjectPropertyWithoutKey<'a>) = AncestorType::ObjectPropertyKey as u16,
+    ObjectPropertyValue(ObjectPropertyWithoutValue<'a>) = AncestorType::ObjectPropertyValue as u16,
+    ObjectPropertyInit(ObjectPropertyWithoutInit<'a>) = AncestorType::ObjectPropertyInit as u16,
+    TemplateLiteralQuasis(TemplateLiteralWithoutQuasis<'a>) =
+        AncestorType::TemplateLiteralQuasis as u16,
+    TemplateLiteralExpressions(TemplateLiteralWithoutExpressions<'a>) =
+        AncestorType::TemplateLiteralExpressions as u16,
+    TaggedTemplateExpressionTag(TaggedTemplateExpressionWithoutTag<'a>) =
+        AncestorType::TaggedTemplateExpressionTag as u16,
+    TaggedTemplateExpressionQuasi(TaggedTemplateExpressionWithoutQuasi<'a>) =
+        AncestorType::TaggedTemplateExpressionQuasi as u16,
+    TaggedTemplateExpressionTypeParameters(TaggedTemplateExpressionWithoutTypeParameters<'a>) =
+        AncestorType::TaggedTemplateExpressionTypeParameters as u16,
+    ComputedMemberExpressionObject(ComputedMemberExpressionWithoutObject<'a>) =
+        AncestorType::ComputedMemberExpressionObject as u16,
+    ComputedMemberExpressionExpression(ComputedMemberExpressionWithoutExpression<'a>) =
+        AncestorType::ComputedMemberExpressionExpression as u16,
+    StaticMemberExpressionObject(StaticMemberExpressionWithoutObject<'a>) =
+        AncestorType::StaticMemberExpressionObject as u16,
+    StaticMemberExpressionProperty(StaticMemberExpressionWithoutProperty<'a>) =
+        AncestorType::StaticMemberExpressionProperty as u16,
+    PrivateFieldExpressionObject(PrivateFieldExpressionWithoutObject<'a>) =
+        AncestorType::PrivateFieldExpressionObject as u16,
+    PrivateFieldExpressionField(PrivateFieldExpressionWithoutField<'a>) =
+        AncestorType::PrivateFieldExpressionField as u16,
+    CallExpressionCallee(CallExpressionWithoutCallee<'a>) =
+        AncestorType::CallExpressionCallee as u16,
+    CallExpressionArguments(CallExpressionWithoutArguments<'a>) =
+        AncestorType::CallExpressionArguments as u16,
+    CallExpressionTypeParameters(CallExpressionWithoutTypeParameters<'a>) =
+        AncestorType::CallExpressionTypeParameters as u16,
+    NewExpressionCallee(NewExpressionWithoutCallee<'a>) = AncestorType::NewExpressionCallee as u16,
+    NewExpressionArguments(NewExpressionWithoutArguments<'a>) =
+        AncestorType::NewExpressionArguments as u16,
+    NewExpressionTypeParameters(NewExpressionWithoutTypeParameters<'a>) =
+        AncestorType::NewExpressionTypeParameters as u16,
+    MetaPropertyMeta(MetaPropertyWithoutMeta<'a>) = AncestorType::MetaPropertyMeta as u16,
+    MetaPropertyProperty(MetaPropertyWithoutProperty<'a>) =
+        AncestorType::MetaPropertyProperty as u16,
+    SpreadElementArgument(SpreadElementWithoutArgument<'a>) =
+        AncestorType::SpreadElementArgument as u16,
+    UpdateExpressionArgument(UpdateExpressionWithoutArgument<'a>) =
+        AncestorType::UpdateExpressionArgument as u16,
+    UnaryExpressionArgument(UnaryExpressionWithoutArgument<'a>) =
+        AncestorType::UnaryExpressionArgument as u16,
+    BinaryExpressionLeft(BinaryExpressionWithoutLeft<'a>) =
+        AncestorType::BinaryExpressionLeft as u16,
+    BinaryExpressionRight(BinaryExpressionWithoutRight<'a>) =
+        AncestorType::BinaryExpressionRight as u16,
+    PrivateInExpressionLeft(PrivateInExpressionWithoutLeft<'a>) =
+        AncestorType::PrivateInExpressionLeft as u16,
+    PrivateInExpressionRight(PrivateInExpressionWithoutRight<'a>) =
+        AncestorType::PrivateInExpressionRight as u16,
+    LogicalExpressionLeft(LogicalExpressionWithoutLeft<'a>) =
+        AncestorType::LogicalExpressionLeft as u16,
+    LogicalExpressionRight(LogicalExpressionWithoutRight<'a>) =
+        AncestorType::LogicalExpressionRight as u16,
+    ConditionalExpressionTest(ConditionalExpressionWithoutTest<'a>) =
+        AncestorType::ConditionalExpressionTest as u16,
+    ConditionalExpressionConsequent(ConditionalExpressionWithoutConsequent<'a>) =
+        AncestorType::ConditionalExpressionConsequent as u16,
+    ConditionalExpressionAlternate(ConditionalExpressionWithoutAlternate<'a>) =
+        AncestorType::ConditionalExpressionAlternate as u16,
+    AssignmentExpressionLeft(AssignmentExpressionWithoutLeft<'a>) =
+        AncestorType::AssignmentExpressionLeft as u16,
+    AssignmentExpressionRight(AssignmentExpressionWithoutRight<'a>) =
+        AncestorType::AssignmentExpressionRight as u16,
+    ArrayAssignmentTargetElements(ArrayAssignmentTargetWithoutElements<'a>) =
+        AncestorType::ArrayAssignmentTargetElements as u16,
+    ArrayAssignmentTargetRest(ArrayAssignmentTargetWithoutRest<'a>) =
+        AncestorType::ArrayAssignmentTargetRest as u16,
+    ObjectAssignmentTargetProperties(ObjectAssignmentTargetWithoutProperties<'a>) =
+        AncestorType::ObjectAssignmentTargetProperties as u16,
+    ObjectAssignmentTargetRest(ObjectAssignmentTargetWithoutRest<'a>) =
+        AncestorType::ObjectAssignmentTargetRest as u16,
+    AssignmentTargetRestTarget(AssignmentTargetRestWithoutTarget<'a>) =
+        AncestorType::AssignmentTargetRestTarget as u16,
+    AssignmentTargetWithDefaultBinding(AssignmentTargetWithDefaultWithoutBinding<'a>) =
+        AncestorType::AssignmentTargetWithDefaultBinding as u16,
+    AssignmentTargetWithDefaultInit(AssignmentTargetWithDefaultWithoutInit<'a>) =
+        AncestorType::AssignmentTargetWithDefaultInit as u16,
+    AssignmentTargetPropertyIdentifierBinding(AssignmentTargetPropertyIdentifierWithoutBinding<'a>) =
+        AncestorType::AssignmentTargetPropertyIdentifierBinding as u16,
+    AssignmentTargetPropertyIdentifierInit(AssignmentTargetPropertyIdentifierWithoutInit<'a>) =
+        AncestorType::AssignmentTargetPropertyIdentifierInit as u16,
+    AssignmentTargetPropertyPropertyName(AssignmentTargetPropertyPropertyWithoutName<'a>) =
+        AncestorType::AssignmentTargetPropertyPropertyName as u16,
+    AssignmentTargetPropertyPropertyBinding(AssignmentTargetPropertyPropertyWithoutBinding<'a>) =
+        AncestorType::AssignmentTargetPropertyPropertyBinding as u16,
+    SequenceExpressionExpressions(SequenceExpressionWithoutExpressions<'a>) =
+        AncestorType::SequenceExpressionExpressions as u16,
+    AwaitExpressionArgument(AwaitExpressionWithoutArgument<'a>) =
+        AncestorType::AwaitExpressionArgument as u16,
+    ChainExpressionExpression(ChainExpressionWithoutExpression<'a>) =
+        AncestorType::ChainExpressionExpression as u16,
+    ParenthesizedExpressionExpression(ParenthesizedExpressionWithoutExpression<'a>) =
+        AncestorType::ParenthesizedExpressionExpression as u16,
+    DirectiveExpression(DirectiveWithoutExpression<'a>) = AncestorType::DirectiveExpression as u16,
+    BlockStatementBody(BlockStatementWithoutBody<'a>) = AncestorType::BlockStatementBody as u16,
+    VariableDeclarationDeclarations(VariableDeclarationWithoutDeclarations<'a>) =
+        AncestorType::VariableDeclarationDeclarations as u16,
+    VariableDeclaratorId(VariableDeclaratorWithoutId<'a>) =
+        AncestorType::VariableDeclaratorId as u16,
+    VariableDeclaratorInit(VariableDeclaratorWithoutInit<'a>) =
+        AncestorType::VariableDeclaratorInit as u16,
+    UsingDeclarationDeclarations(UsingDeclarationWithoutDeclarations<'a>) =
+        AncestorType::UsingDeclarationDeclarations as u16,
+    ExpressionStatementExpression(ExpressionStatementWithoutExpression<'a>) =
+        AncestorType::ExpressionStatementExpression as u16,
+    IfStatementTest(IfStatementWithoutTest<'a>) = AncestorType::IfStatementTest as u16,
+    IfStatementConsequent(IfStatementWithoutConsequent<'a>) =
+        AncestorType::IfStatementConsequent as u16,
+    IfStatementAlternate(IfStatementWithoutAlternate<'a>) =
+        AncestorType::IfStatementAlternate as u16,
+    DoWhileStatementBody(DoWhileStatementWithoutBody<'a>) =
+        AncestorType::DoWhileStatementBody as u16,
+    DoWhileStatementTest(DoWhileStatementWithoutTest<'a>) =
+        AncestorType::DoWhileStatementTest as u16,
+    WhileStatementTest(WhileStatementWithoutTest<'a>) = AncestorType::WhileStatementTest as u16,
+    WhileStatementBody(WhileStatementWithoutBody<'a>) = AncestorType::WhileStatementBody as u16,
+    ForStatementInit(ForStatementWithoutInit<'a>) = AncestorType::ForStatementInit as u16,
+    ForStatementTest(ForStatementWithoutTest<'a>) = AncestorType::ForStatementTest as u16,
+    ForStatementUpdate(ForStatementWithoutUpdate<'a>) = AncestorType::ForStatementUpdate as u16,
+    ForStatementBody(ForStatementWithoutBody<'a>) = AncestorType::ForStatementBody as u16,
+    ForInStatementLeft(ForInStatementWithoutLeft<'a>) = AncestorType::ForInStatementLeft as u16,
+    ForInStatementRight(ForInStatementWithoutRight<'a>) = AncestorType::ForInStatementRight as u16,
+    ForInStatementBody(ForInStatementWithoutBody<'a>) = AncestorType::ForInStatementBody as u16,
+    ForOfStatementLeft(ForOfStatementWithoutLeft<'a>) = AncestorType::ForOfStatementLeft as u16,
+    ForOfStatementRight(ForOfStatementWithoutRight<'a>) = AncestorType::ForOfStatementRight as u16,
+    ForOfStatementBody(ForOfStatementWithoutBody<'a>) = AncestorType::ForOfStatementBody as u16,
+    ContinueStatementLabel(ContinueStatementWithoutLabel<'a>) =
+        AncestorType::ContinueStatementLabel as u16,
+    BreakStatementLabel(BreakStatementWithoutLabel<'a>) = AncestorType::BreakStatementLabel as u16,
+    ReturnStatementArgument(ReturnStatementWithoutArgument<'a>) =
+        AncestorType::ReturnStatementArgument as u16,
+    WithStatementObject(WithStatementWithoutObject<'a>) = AncestorType::WithStatementObject as u16,
+    WithStatementBody(WithStatementWithoutBody<'a>) = AncestorType::WithStatementBody as u16,
+    SwitchStatementDiscriminant(SwitchStatementWithoutDiscriminant<'a>) =
+        AncestorType::SwitchStatementDiscriminant as u16,
+    SwitchStatementCases(SwitchStatementWithoutCases<'a>) =
+        AncestorType::SwitchStatementCases as u16,
+    SwitchCaseTest(SwitchCaseWithoutTest<'a>) = AncestorType::SwitchCaseTest as u16,
+    SwitchCaseConsequent(SwitchCaseWithoutConsequent<'a>) =
+        AncestorType::SwitchCaseConsequent as u16,
+    LabeledStatementLabel(LabeledStatementWithoutLabel<'a>) =
+        AncestorType::LabeledStatementLabel as u16,
+    LabeledStatementBody(LabeledStatementWithoutBody<'a>) =
+        AncestorType::LabeledStatementBody as u16,
+    ThrowStatementArgument(ThrowStatementWithoutArgument<'a>) =
+        AncestorType::ThrowStatementArgument as u16,
+    TryStatementBlock(TryStatementWithoutBlock<'a>) = AncestorType::TryStatementBlock as u16,
+    TryStatementHandler(TryStatementWithoutHandler<'a>) = AncestorType::TryStatementHandler as u16,
+    TryStatementFinalizer(TryStatementWithoutFinalizer<'a>) =
+        AncestorType::TryStatementFinalizer as u16,
+    CatchClauseParam(CatchClauseWithoutParam<'a>) = AncestorType::CatchClauseParam as u16,
+    CatchClauseBody(CatchClauseWithoutBody<'a>) = AncestorType::CatchClauseBody as u16,
+    CatchParameterPattern(CatchParameterWithoutPattern<'a>) =
+        AncestorType::CatchParameterPattern as u16,
+    BindingPatternKind(BindingPatternWithoutKind<'a>) = AncestorType::BindingPatternKind as u16,
+    BindingPatternTypeAnnotation(BindingPatternWithoutTypeAnnotation<'a>) =
+        AncestorType::BindingPatternTypeAnnotation as u16,
+    AssignmentPatternLeft(AssignmentPatternWithoutLeft<'a>) =
+        AncestorType::AssignmentPatternLeft as u16,
+    AssignmentPatternRight(AssignmentPatternWithoutRight<'a>) =
+        AncestorType::AssignmentPatternRight as u16,
+    ObjectPatternProperties(ObjectPatternWithoutProperties<'a>) =
+        AncestorType::ObjectPatternProperties as u16,
+    ObjectPatternRest(ObjectPatternWithoutRest<'a>) = AncestorType::ObjectPatternRest as u16,
+    BindingPropertyKey(BindingPropertyWithoutKey<'a>) = AncestorType::BindingPropertyKey as u16,
+    BindingPropertyValue(BindingPropertyWithoutValue<'a>) =
+        AncestorType::BindingPropertyValue as u16,
+    ArrayPatternElements(ArrayPatternWithoutElements<'a>) =
+        AncestorType::ArrayPatternElements as u16,
+    ArrayPatternRest(ArrayPatternWithoutRest<'a>) = AncestorType::ArrayPatternRest as u16,
+    BindingRestElementArgument(BindingRestElementWithoutArgument<'a>) =
+        AncestorType::BindingRestElementArgument as u16,
+    FunctionId(FunctionWithoutId<'a>) = AncestorType::FunctionId as u16,
+    FunctionThisParam(FunctionWithoutThisParam<'a>) = AncestorType::FunctionThisParam as u16,
+    FunctionParams(FunctionWithoutParams<'a>) = AncestorType::FunctionParams as u16,
+    FunctionBody(FunctionWithoutBody<'a>) = AncestorType::FunctionBody as u16,
+    FunctionTypeParameters(FunctionWithoutTypeParameters<'a>) =
+        AncestorType::FunctionTypeParameters as u16,
+    FunctionReturnType(FunctionWithoutReturnType<'a>) = AncestorType::FunctionReturnType as u16,
+    FormalParametersItems(FormalParametersWithoutItems<'a>) =
+        AncestorType::FormalParametersItems as u16,
+    FormalParametersRest(FormalParametersWithoutRest<'a>) =
+        AncestorType::FormalParametersRest as u16,
+    FormalParameterPattern(FormalParameterWithoutPattern<'a>) =
+        AncestorType::FormalParameterPattern as u16,
+    FormalParameterDecorators(FormalParameterWithoutDecorators<'a>) =
+        AncestorType::FormalParameterDecorators as u16,
+    FunctionBodyDirectives(FunctionBodyWithoutDirectives<'a>) =
+        AncestorType::FunctionBodyDirectives as u16,
+    FunctionBodyStatements(FunctionBodyWithoutStatements<'a>) =
+        AncestorType::FunctionBodyStatements as u16,
+    ArrowFunctionExpressionParams(ArrowFunctionExpressionWithoutParams<'a>) =
+        AncestorType::ArrowFunctionExpressionParams as u16,
+    ArrowFunctionExpressionBody(ArrowFunctionExpressionWithoutBody<'a>) =
+        AncestorType::ArrowFunctionExpressionBody as u16,
+    ArrowFunctionExpressionTypeParameters(ArrowFunctionExpressionWithoutTypeParameters<'a>) =
+        AncestorType::ArrowFunctionExpressionTypeParameters as u16,
+    ArrowFunctionExpressionReturnType(ArrowFunctionExpressionWithoutReturnType<'a>) =
+        AncestorType::ArrowFunctionExpressionReturnType as u16,
+    YieldExpressionArgument(YieldExpressionWithoutArgument<'a>) =
+        AncestorType::YieldExpressionArgument as u16,
+    ClassId(ClassWithoutId<'a>) = AncestorType::ClassId as u16,
+    ClassSuperClass(ClassWithoutSuperClass<'a>) = AncestorType::ClassSuperClass as u16,
+    ClassBody(ClassWithoutBody<'a>) = AncestorType::ClassBody as u16,
+    ClassTypeParameters(ClassWithoutTypeParameters<'a>) = AncestorType::ClassTypeParameters as u16,
+    ClassSuperTypeParameters(ClassWithoutSuperTypeParameters<'a>) =
+        AncestorType::ClassSuperTypeParameters as u16,
+    ClassImplements(ClassWithoutImplements<'a>) = AncestorType::ClassImplements as u16,
+    ClassDecorators(ClassWithoutDecorators<'a>) = AncestorType::ClassDecorators as u16,
+    ClassBodyBody(ClassBodyWithoutBody<'a>) = AncestorType::ClassBodyBody as u16,
+    MethodDefinitionKey(MethodDefinitionWithoutKey<'a>) = AncestorType::MethodDefinitionKey as u16,
+    MethodDefinitionValue(MethodDefinitionWithoutValue<'a>) =
+        AncestorType::MethodDefinitionValue as u16,
+    MethodDefinitionDecorators(MethodDefinitionWithoutDecorators<'a>) =
+        AncestorType::MethodDefinitionDecorators as u16,
+    PropertyDefinitionKey(PropertyDefinitionWithoutKey<'a>) =
+        AncestorType::PropertyDefinitionKey as u16,
+    PropertyDefinitionValue(PropertyDefinitionWithoutValue<'a>) =
+        AncestorType::PropertyDefinitionValue as u16,
+    PropertyDefinitionTypeAnnotation(PropertyDefinitionWithoutTypeAnnotation<'a>) =
+        AncestorType::PropertyDefinitionTypeAnnotation as u16,
+    PropertyDefinitionDecorators(PropertyDefinitionWithoutDecorators<'a>) =
+        AncestorType::PropertyDefinitionDecorators as u16,
+    StaticBlockBody(StaticBlockWithoutBody<'a>) = AncestorType::StaticBlockBody as u16,
+    AccessorPropertyKey(AccessorPropertyWithoutKey<'a>) = AncestorType::AccessorPropertyKey as u16,
+    AccessorPropertyValue(AccessorPropertyWithoutValue<'a>) =
+        AncestorType::AccessorPropertyValue as u16,
+    AccessorPropertyDecorators(AccessorPropertyWithoutDecorators<'a>) =
+        AncestorType::AccessorPropertyDecorators as u16,
+    ImportExpressionSource(ImportExpressionWithoutSource<'a>) =
+        AncestorType::ImportExpressionSource as u16,
+    ImportExpressionArguments(ImportExpressionWithoutArguments<'a>) =
+        AncestorType::ImportExpressionArguments as u16,
+    ImportDeclarationSpecifiers(ImportDeclarationWithoutSpecifiers<'a>) =
+        AncestorType::ImportDeclarationSpecifiers as u16,
+    ImportDeclarationSource(ImportDeclarationWithoutSource<'a>) =
+        AncestorType::ImportDeclarationSource as u16,
+    ImportDeclarationWithClause(ImportDeclarationWithoutWithClause<'a>) =
+        AncestorType::ImportDeclarationWithClause as u16,
+    ImportSpecifierImported(ImportSpecifierWithoutImported<'a>) =
+        AncestorType::ImportSpecifierImported as u16,
+    ImportSpecifierLocal(ImportSpecifierWithoutLocal<'a>) =
+        AncestorType::ImportSpecifierLocal as u16,
+    ImportDefaultSpecifierLocal(ImportDefaultSpecifierWithoutLocal<'a>) =
+        AncestorType::ImportDefaultSpecifierLocal as u16,
+    ImportNamespaceSpecifierLocal(ImportNamespaceSpecifierWithoutLocal<'a>) =
+        AncestorType::ImportNamespaceSpecifierLocal as u16,
+    WithClauseAttributesKeyword(WithClauseWithoutAttributesKeyword<'a>) =
+        AncestorType::WithClauseAttributesKeyword as u16,
+    WithClauseWithEntries(WithClauseWithoutWithEntries<'a>) =
+        AncestorType::WithClauseWithEntries as u16,
+    ImportAttributeKey(ImportAttributeWithoutKey<'a>) = AncestorType::ImportAttributeKey as u16,
+    ImportAttributeValue(ImportAttributeWithoutValue<'a>) =
+        AncestorType::ImportAttributeValue as u16,
+    ExportNamedDeclarationDeclaration(ExportNamedDeclarationWithoutDeclaration<'a>) =
+        AncestorType::ExportNamedDeclarationDeclaration as u16,
+    ExportNamedDeclarationSpecifiers(ExportNamedDeclarationWithoutSpecifiers<'a>) =
+        AncestorType::ExportNamedDeclarationSpecifiers as u16,
+    ExportNamedDeclarationSource(ExportNamedDeclarationWithoutSource<'a>) =
+        AncestorType::ExportNamedDeclarationSource as u16,
+    ExportNamedDeclarationWithClause(ExportNamedDeclarationWithoutWithClause<'a>) =
+        AncestorType::ExportNamedDeclarationWithClause as u16,
+    ExportDefaultDeclarationDeclaration(ExportDefaultDeclarationWithoutDeclaration<'a>) =
+        AncestorType::ExportDefaultDeclarationDeclaration as u16,
+    ExportDefaultDeclarationExported(ExportDefaultDeclarationWithoutExported<'a>) =
+        AncestorType::ExportDefaultDeclarationExported as u16,
+    ExportAllDeclarationExported(ExportAllDeclarationWithoutExported<'a>) =
+        AncestorType::ExportAllDeclarationExported as u16,
+    ExportAllDeclarationSource(ExportAllDeclarationWithoutSource<'a>) =
+        AncestorType::ExportAllDeclarationSource as u16,
+    ExportAllDeclarationWithClause(ExportAllDeclarationWithoutWithClause<'a>) =
+        AncestorType::ExportAllDeclarationWithClause as u16,
+    ExportSpecifierLocal(ExportSpecifierWithoutLocal<'a>) =
+        AncestorType::ExportSpecifierLocal as u16,
+    ExportSpecifierExported(ExportSpecifierWithoutExported<'a>) =
+        AncestorType::ExportSpecifierExported as u16,
+    JSXElementOpeningElement(JSXElementWithoutOpeningElement<'a>) =
+        AncestorType::JSXElementOpeningElement as u16,
+    JSXElementClosingElement(JSXElementWithoutClosingElement<'a>) =
+        AncestorType::JSXElementClosingElement as u16,
+    JSXElementChildren(JSXElementWithoutChildren<'a>) = AncestorType::JSXElementChildren as u16,
+    JSXOpeningElementName(JSXOpeningElementWithoutName<'a>) =
+        AncestorType::JSXOpeningElementName as u16,
+    JSXOpeningElementAttributes(JSXOpeningElementWithoutAttributes<'a>) =
+        AncestorType::JSXOpeningElementAttributes as u16,
+    JSXOpeningElementTypeParameters(JSXOpeningElementWithoutTypeParameters<'a>) =
+        AncestorType::JSXOpeningElementTypeParameters as u16,
+    JSXClosingElementName(JSXClosingElementWithoutName<'a>) =
+        AncestorType::JSXClosingElementName as u16,
+    JSXFragmentChildren(JSXFragmentWithoutChildren<'a>) = AncestorType::JSXFragmentChildren as u16,
+    JSXNamespacedNameNamespace(JSXNamespacedNameWithoutNamespace<'a>) =
+        AncestorType::JSXNamespacedNameNamespace as u16,
+    JSXNamespacedNameProperty(JSXNamespacedNameWithoutProperty<'a>) =
+        AncestorType::JSXNamespacedNameProperty as u16,
+    JSXMemberExpressionObject(JSXMemberExpressionWithoutObject<'a>) =
+        AncestorType::JSXMemberExpressionObject as u16,
+    JSXMemberExpressionProperty(JSXMemberExpressionWithoutProperty<'a>) =
+        AncestorType::JSXMemberExpressionProperty as u16,
+    JSXExpressionContainerExpression(JSXExpressionContainerWithoutExpression<'a>) =
+        AncestorType::JSXExpressionContainerExpression as u16,
+    JSXAttributeName(JSXAttributeWithoutName<'a>) = AncestorType::JSXAttributeName as u16,
+    JSXAttributeValue(JSXAttributeWithoutValue<'a>) = AncestorType::JSXAttributeValue as u16,
+    JSXSpreadAttributeArgument(JSXSpreadAttributeWithoutArgument<'a>) =
+        AncestorType::JSXSpreadAttributeArgument as u16,
+    JSXSpreadChildExpression(JSXSpreadChildWithoutExpression<'a>) =
+        AncestorType::JSXSpreadChildExpression as u16,
+    TSThisParameterThis(TSThisParameterWithoutThis<'a>) = AncestorType::TSThisParameterThis as u16,
+    TSThisParameterTypeAnnotation(TSThisParameterWithoutTypeAnnotation<'a>) =
+        AncestorType::TSThisParameterTypeAnnotation as u16,
+    TSEnumDeclarationId(TSEnumDeclarationWithoutId<'a>) = AncestorType::TSEnumDeclarationId as u16,
+    TSEnumDeclarationMembers(TSEnumDeclarationWithoutMembers<'a>) =
+        AncestorType::TSEnumDeclarationMembers as u16,
+    TSEnumMemberId(TSEnumMemberWithoutId<'a>) = AncestorType::TSEnumMemberId as u16,
+    TSEnumMemberInitializer(TSEnumMemberWithoutInitializer<'a>) =
+        AncestorType::TSEnumMemberInitializer as u16,
+    TSTypeAnnotationTypeAnnotation(TSTypeAnnotationWithoutTypeAnnotation<'a>) =
+        AncestorType::TSTypeAnnotationTypeAnnotation as u16,
+    TSLiteralTypeLiteral(TSLiteralTypeWithoutLiteral<'a>) =
+        AncestorType::TSLiteralTypeLiteral as u16,
+    TSConditionalTypeCheckType(TSConditionalTypeWithoutCheckType<'a>) =
+        AncestorType::TSConditionalTypeCheckType as u16,
+    TSConditionalTypeExtendsType(TSConditionalTypeWithoutExtendsType<'a>) =
+        AncestorType::TSConditionalTypeExtendsType as u16,
+    TSConditionalTypeTrueType(TSConditionalTypeWithoutTrueType<'a>) =
+        AncestorType::TSConditionalTypeTrueType as u16,
+    TSConditionalTypeFalseType(TSConditionalTypeWithoutFalseType<'a>) =
+        AncestorType::TSConditionalTypeFalseType as u16,
+    TSUnionTypeTypes(TSUnionTypeWithoutTypes<'a>) = AncestorType::TSUnionTypeTypes as u16,
+    TSIntersectionTypeTypes(TSIntersectionTypeWithoutTypes<'a>) =
+        AncestorType::TSIntersectionTypeTypes as u16,
+    TSTypeOperatorTypeAnnotation(TSTypeOperatorWithoutTypeAnnotation<'a>) =
+        AncestorType::TSTypeOperatorTypeAnnotation as u16,
+    TSArrayTypeElementType(TSArrayTypeWithoutElementType<'a>) =
+        AncestorType::TSArrayTypeElementType as u16,
+    TSIndexedAccessTypeObjectType(TSIndexedAccessTypeWithoutObjectType<'a>) =
+        AncestorType::TSIndexedAccessTypeObjectType as u16,
+    TSIndexedAccessTypeIndexType(TSIndexedAccessTypeWithoutIndexType<'a>) =
+        AncestorType::TSIndexedAccessTypeIndexType as u16,
+    TSTupleTypeElementTypes(TSTupleTypeWithoutElementTypes<'a>) =
+        AncestorType::TSTupleTypeElementTypes as u16,
+    TSNamedTupleMemberElementType(TSNamedTupleMemberWithoutElementType<'a>) =
+        AncestorType::TSNamedTupleMemberElementType as u16,
+    TSNamedTupleMemberLabel(TSNamedTupleMemberWithoutLabel<'a>) =
+        AncestorType::TSNamedTupleMemberLabel as u16,
+    TSOptionalTypeTypeAnnotation(TSOptionalTypeWithoutTypeAnnotation<'a>) =
+        AncestorType::TSOptionalTypeTypeAnnotation as u16,
+    TSRestTypeTypeAnnotation(TSRestTypeWithoutTypeAnnotation<'a>) =
+        AncestorType::TSRestTypeTypeAnnotation as u16,
+    TSTypeReferenceTypeName(TSTypeReferenceWithoutTypeName<'a>) =
+        AncestorType::TSTypeReferenceTypeName as u16,
+    TSTypeReferenceTypeParameters(TSTypeReferenceWithoutTypeParameters<'a>) =
+        AncestorType::TSTypeReferenceTypeParameters as u16,
+    TSQualifiedNameLeft(TSQualifiedNameWithoutLeft<'a>) = AncestorType::TSQualifiedNameLeft as u16,
+    TSQualifiedNameRight(TSQualifiedNameWithoutRight<'a>) =
+        AncestorType::TSQualifiedNameRight as u16,
+    TSTypeParameterInstantiationParams(TSTypeParameterInstantiationWithoutParams<'a>) =
+        AncestorType::TSTypeParameterInstantiationParams as u16,
+    TSTypeParameterName(TSTypeParameterWithoutName<'a>) = AncestorType::TSTypeParameterName as u16,
+    TSTypeParameterConstraint(TSTypeParameterWithoutConstraint<'a>) =
+        AncestorType::TSTypeParameterConstraint as u16,
+    TSTypeParameterDefault(TSTypeParameterWithoutDefault<'a>) =
+        AncestorType::TSTypeParameterDefault as u16,
+    TSTypeParameterDeclarationParams(TSTypeParameterDeclarationWithoutParams<'a>) =
+        AncestorType::TSTypeParameterDeclarationParams as u16,
+    TSTypeAliasDeclarationId(TSTypeAliasDeclarationWithoutId<'a>) =
+        AncestorType::TSTypeAliasDeclarationId as u16,
+    TSTypeAliasDeclarationTypeAnnotation(TSTypeAliasDeclarationWithoutTypeAnnotation<'a>) =
+        AncestorType::TSTypeAliasDeclarationTypeAnnotation as u16,
+    TSTypeAliasDeclarationTypeParameters(TSTypeAliasDeclarationWithoutTypeParameters<'a>) =
+        AncestorType::TSTypeAliasDeclarationTypeParameters as u16,
+    TSClassImplementsExpression(TSClassImplementsWithoutExpression<'a>) =
+        AncestorType::TSClassImplementsExpression as u16,
+    TSClassImplementsTypeParameters(TSClassImplementsWithoutTypeParameters<'a>) =
+        AncestorType::TSClassImplementsTypeParameters as u16,
+    TSInterfaceDeclarationId(TSInterfaceDeclarationWithoutId<'a>) =
+        AncestorType::TSInterfaceDeclarationId as u16,
+    TSInterfaceDeclarationBody(TSInterfaceDeclarationWithoutBody<'a>) =
+        AncestorType::TSInterfaceDeclarationBody as u16,
+    TSInterfaceDeclarationTypeParameters(TSInterfaceDeclarationWithoutTypeParameters<'a>) =
+        AncestorType::TSInterfaceDeclarationTypeParameters as u16,
+    TSInterfaceDeclarationExtends(TSInterfaceDeclarationWithoutExtends<'a>) =
+        AncestorType::TSInterfaceDeclarationExtends as u16,
+    TSInterfaceBodyBody(TSInterfaceBodyWithoutBody<'a>) = AncestorType::TSInterfaceBodyBody as u16,
+    TSPropertySignatureKey(TSPropertySignatureWithoutKey<'a>) =
+        AncestorType::TSPropertySignatureKey as u16,
+    TSPropertySignatureTypeAnnotation(TSPropertySignatureWithoutTypeAnnotation<'a>) =
+        AncestorType::TSPropertySignatureTypeAnnotation as u16,
+    TSIndexSignatureParameters(TSIndexSignatureWithoutParameters<'a>) =
+        AncestorType::TSIndexSignatureParameters as u16,
+    TSIndexSignatureTypeAnnotation(TSIndexSignatureWithoutTypeAnnotation<'a>) =
+        AncestorType::TSIndexSignatureTypeAnnotation as u16,
+    TSCallSignatureDeclarationThisParam(TSCallSignatureDeclarationWithoutThisParam<'a>) =
+        AncestorType::TSCallSignatureDeclarationThisParam as u16,
+    TSCallSignatureDeclarationParams(TSCallSignatureDeclarationWithoutParams<'a>) =
+        AncestorType::TSCallSignatureDeclarationParams as u16,
+    TSCallSignatureDeclarationReturnType(TSCallSignatureDeclarationWithoutReturnType<'a>) =
+        AncestorType::TSCallSignatureDeclarationReturnType as u16,
+    TSCallSignatureDeclarationTypeParameters(TSCallSignatureDeclarationWithoutTypeParameters<'a>) =
+        AncestorType::TSCallSignatureDeclarationTypeParameters as u16,
+    TSMethodSignatureKey(TSMethodSignatureWithoutKey<'a>) =
+        AncestorType::TSMethodSignatureKey as u16,
+    TSMethodSignatureThisParam(TSMethodSignatureWithoutThisParam<'a>) =
+        AncestorType::TSMethodSignatureThisParam as u16,
+    TSMethodSignatureParams(TSMethodSignatureWithoutParams<'a>) =
+        AncestorType::TSMethodSignatureParams as u16,
+    TSMethodSignatureReturnType(TSMethodSignatureWithoutReturnType<'a>) =
+        AncestorType::TSMethodSignatureReturnType as u16,
+    TSMethodSignatureTypeParameters(TSMethodSignatureWithoutTypeParameters<'a>) =
+        AncestorType::TSMethodSignatureTypeParameters as u16,
+    TSConstructSignatureDeclarationParams(TSConstructSignatureDeclarationWithoutParams<'a>) =
+        AncestorType::TSConstructSignatureDeclarationParams as u16,
+    TSConstructSignatureDeclarationReturnType(TSConstructSignatureDeclarationWithoutReturnType<'a>) =
+        AncestorType::TSConstructSignatureDeclarationReturnType as u16,
+    TSConstructSignatureDeclarationTypeParameters(
+        TSConstructSignatureDeclarationWithoutTypeParameters<'a>,
+    ) = AncestorType::TSConstructSignatureDeclarationTypeParameters as u16,
+    TSIndexSignatureNameTypeAnnotation(TSIndexSignatureNameWithoutTypeAnnotation<'a>) =
+        AncestorType::TSIndexSignatureNameTypeAnnotation as u16,
+    TSInterfaceHeritageExpression(TSInterfaceHeritageWithoutExpression<'a>) =
+        AncestorType::TSInterfaceHeritageExpression as u16,
+    TSInterfaceHeritageTypeParameters(TSInterfaceHeritageWithoutTypeParameters<'a>) =
+        AncestorType::TSInterfaceHeritageTypeParameters as u16,
+    TSTypePredicateParameterName(TSTypePredicateWithoutParameterName<'a>) =
+        AncestorType::TSTypePredicateParameterName as u16,
+    TSTypePredicateTypeAnnotation(TSTypePredicateWithoutTypeAnnotation<'a>) =
+        AncestorType::TSTypePredicateTypeAnnotation as u16,
+    TSModuleDeclarationId(TSModuleDeclarationWithoutId<'a>) =
+        AncestorType::TSModuleDeclarationId as u16,
+    TSModuleDeclarationBody(TSModuleDeclarationWithoutBody<'a>) =
+        AncestorType::TSModuleDeclarationBody as u16,
+    TSModuleBlockBody(TSModuleBlockWithoutBody<'a>) = AncestorType::TSModuleBlockBody as u16,
+    TSTypeLiteralMembers(TSTypeLiteralWithoutMembers<'a>) =
+        AncestorType::TSTypeLiteralMembers as u16,
+    TSInferTypeTypeParameter(TSInferTypeWithoutTypeParameter<'a>) =
+        AncestorType::TSInferTypeTypeParameter as u16,
+    TSTypeQueryExprName(TSTypeQueryWithoutExprName<'a>) = AncestorType::TSTypeQueryExprName as u16,
+    TSTypeQueryTypeParameters(TSTypeQueryWithoutTypeParameters<'a>) =
+        AncestorType::TSTypeQueryTypeParameters as u16,
+    TSImportTypeArgument(TSImportTypeWithoutArgument<'a>) =
+        AncestorType::TSImportTypeArgument as u16,
+    TSImportTypeQualifier(TSImportTypeWithoutQualifier<'a>) =
+        AncestorType::TSImportTypeQualifier as u16,
+    TSImportTypeAttributes(TSImportTypeWithoutAttributes<'a>) =
+        AncestorType::TSImportTypeAttributes as u16,
+    TSImportTypeTypeParameters(TSImportTypeWithoutTypeParameters<'a>) =
+        AncestorType::TSImportTypeTypeParameters as u16,
+    TSImportAttributesElements(TSImportAttributesWithoutElements<'a>) =
+        AncestorType::TSImportAttributesElements as u16,
+    TSImportAttributeName(TSImportAttributeWithoutName<'a>) =
+        AncestorType::TSImportAttributeName as u16,
+    TSImportAttributeValue(TSImportAttributeWithoutValue<'a>) =
+        AncestorType::TSImportAttributeValue as u16,
+    TSFunctionTypeThisParam(TSFunctionTypeWithoutThisParam<'a>) =
+        AncestorType::TSFunctionTypeThisParam as u16,
+    TSFunctionTypeParams(TSFunctionTypeWithoutParams<'a>) =
+        AncestorType::TSFunctionTypeParams as u16,
+    TSFunctionTypeReturnType(TSFunctionTypeWithoutReturnType<'a>) =
+        AncestorType::TSFunctionTypeReturnType as u16,
+    TSFunctionTypeTypeParameters(TSFunctionTypeWithoutTypeParameters<'a>) =
+        AncestorType::TSFunctionTypeTypeParameters as u16,
+    TSConstructorTypeParams(TSConstructorTypeWithoutParams<'a>) =
+        AncestorType::TSConstructorTypeParams as u16,
+    TSConstructorTypeReturnType(TSConstructorTypeWithoutReturnType<'a>) =
+        AncestorType::TSConstructorTypeReturnType as u16,
+    TSConstructorTypeTypeParameters(TSConstructorTypeWithoutTypeParameters<'a>) =
+        AncestorType::TSConstructorTypeTypeParameters as u16,
+    TSMappedTypeTypeParameter(TSMappedTypeWithoutTypeParameter<'a>) =
+        AncestorType::TSMappedTypeTypeParameter as u16,
+    TSMappedTypeNameType(TSMappedTypeWithoutNameType<'a>) =
+        AncestorType::TSMappedTypeNameType as u16,
+    TSMappedTypeTypeAnnotation(TSMappedTypeWithoutTypeAnnotation<'a>) =
+        AncestorType::TSMappedTypeTypeAnnotation as u16,
+    TSTemplateLiteralTypeQuasis(TSTemplateLiteralTypeWithoutQuasis<'a>) =
+        AncestorType::TSTemplateLiteralTypeQuasis as u16,
+    TSTemplateLiteralTypeTypes(TSTemplateLiteralTypeWithoutTypes<'a>) =
+        AncestorType::TSTemplateLiteralTypeTypes as u16,
+    TSAsExpressionExpression(TSAsExpressionWithoutExpression<'a>) =
+        AncestorType::TSAsExpressionExpression as u16,
+    TSAsExpressionTypeAnnotation(TSAsExpressionWithoutTypeAnnotation<'a>) =
+        AncestorType::TSAsExpressionTypeAnnotation as u16,
+    TSSatisfiesExpressionExpression(TSSatisfiesExpressionWithoutExpression<'a>) =
+        AncestorType::TSSatisfiesExpressionExpression as u16,
+    TSSatisfiesExpressionTypeAnnotation(TSSatisfiesExpressionWithoutTypeAnnotation<'a>) =
+        AncestorType::TSSatisfiesExpressionTypeAnnotation as u16,
+    TSTypeAssertionExpression(TSTypeAssertionWithoutExpression<'a>) =
+        AncestorType::TSTypeAssertionExpression as u16,
+    TSTypeAssertionTypeAnnotation(TSTypeAssertionWithoutTypeAnnotation<'a>) =
+        AncestorType::TSTypeAssertionTypeAnnotation as u16,
+    TSImportEqualsDeclarationId(TSImportEqualsDeclarationWithoutId<'a>) =
+        AncestorType::TSImportEqualsDeclarationId as u16,
+    TSImportEqualsDeclarationModuleReference(TSImportEqualsDeclarationWithoutModuleReference<'a>) =
+        AncestorType::TSImportEqualsDeclarationModuleReference as u16,
+    TSExternalModuleReferenceExpression(TSExternalModuleReferenceWithoutExpression<'a>) =
+        AncestorType::TSExternalModuleReferenceExpression as u16,
+    TSNonNullExpressionExpression(TSNonNullExpressionWithoutExpression<'a>) =
+        AncestorType::TSNonNullExpressionExpression as u16,
+    DecoratorExpression(DecoratorWithoutExpression<'a>) = AncestorType::DecoratorExpression as u16,
+    TSExportAssignmentExpression(TSExportAssignmentWithoutExpression<'a>) =
+        AncestorType::TSExportAssignmentExpression as u16,
+    TSNamespaceExportDeclarationId(TSNamespaceExportDeclarationWithoutId<'a>) =
+        AncestorType::TSNamespaceExportDeclarationId as u16,
+    TSInstantiationExpressionExpression(TSInstantiationExpressionWithoutExpression<'a>) =
+        AncestorType::TSInstantiationExpressionExpression as u16,
+    TSInstantiationExpressionTypeParameters(TSInstantiationExpressionWithoutTypeParameters<'a>) =
+        AncestorType::TSInstantiationExpressionTypeParameters as u16,
+    JSDocNullableTypeTypeAnnotation(JSDocNullableTypeWithoutTypeAnnotation<'a>) =
+        AncestorType::JSDocNullableTypeTypeAnnotation as u16,
 }
 
 impl<'a> Ancestor<'a> {

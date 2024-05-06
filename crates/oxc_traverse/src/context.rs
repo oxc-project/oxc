@@ -119,14 +119,12 @@ impl<'a> TraverseCtx<'a> {
     /// of pointer to the ancestor node.
     ///
     /// This is purely a performance optimization. If the last item on stack already contains the
-    /// correct pointer, then `ctx.retag_stack(3)` is equivalent to:
+    /// correct pointer, then `ctx.retag_stack(AncestorType::ProgramBody)` is equivalent to:
     ///
     /// ```nocompile
     /// ctx.pop_stack();
     /// ctx.push_stack(Ancestor::ProgramBody(ProgramWithoutBody(node_ptr)));
     /// ```
-    ///
-    /// (3 is the discriminant for `Ancestor::ProgramBody`)
     ///
     /// `retag_stack` is only a single 2-byte write operation.
     ///
