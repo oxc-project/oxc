@@ -61,8 +61,10 @@ export default function generateAncestorsCode(types) {
 
             const variantName = `${type.name}${fieldNameCamel}`;
             variantNames.push(variantName);
-
-            enumVariants += `${variantName}(${structName}) = ${discriminant},\n`;
+            
+            let enumVariantName = `${variantName}(${structName})`;
+            enumVariants += `${enumVariantName} = ${discriminant},\n`;
+            field.enumVariantName = enumVariantName
             field.ancestorDiscriminant = discriminant;
             discriminant++;
 

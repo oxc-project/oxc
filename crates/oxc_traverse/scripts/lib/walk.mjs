@@ -51,7 +51,7 @@ function generateWalkForStruct(type, types) {
     const fieldsCodes = visitedFields.map((field, index) => {
         const fieldWalkName = `walk_${camelToSnake(field.innerTypeName)}`;
 
-        const retagCode = index === 0 ? '' : `ctx.retag_stack(${field.ancestorDiscriminant});`,
+        const retagCode = index === 0 ? '' : `ctx.retag_stack(// Ancestor::${field.enumVariantName}\n${field.ancestorDiscriminant});`,
             fieldCode = `(node as *mut u8).add(ancestor::${field.offsetVarName}) as *mut ${field.typeName}`;
 
         if (field.wrappers[0] === 'Option') {
