@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, Box};
 use oxc_ast::AstBuilder;
 
-use crate::ancestor::{Ancestor, AncestorDiscriminant};
+use crate::ancestor::{Ancestor, AncestorType};
 
 const INITIAL_STACK_CAPACITY: usize = 64;
 
@@ -119,25 +119,21 @@ impl<'a> TraverseCtx<'a> {
     /// of pointer to the ancestor node.
     ///
     /// This is purely a performance optimization. If the last item on stack already contains the
-    /// correct pointer, then `ctx.retag_stack(3)` is equivalent to:
+    /// correct pointer, then `ctx.retag_stack(AncestorType::ProgramBody)` is equivalent to:
     ///
     /// ```nocompile
     /// ctx.pop_stack();
     /// ctx.push_stack(Ancestor::ProgramBody(ProgramWithoutBody(node_ptr)));
     /// ```
     ///
-    /// (3 is the discriminant for `Ancestor::ProgramBody`)
-    ///
     /// `retag_stack` is only a single 2-byte write operation.
     ///
     /// # SAFETY
     /// * Stack must not be empty.
-    /// * `discriminant` must be valid discriminant value for `Ancestor` enum.
-    /// * Last item on stack must contain pointer to type corresponding to provided discriminant.
+    /// * Last item on stack must contain pointer to type corresponding to provided `AncestorType`.
     #[inline]
     #[allow(unsafe_code, clippy::ptr_as_ptr, clippy::ref_as_ptr)]
-    pub(crate) unsafe fn retag_stack(&mut self, discriminant: AncestorDiscriminant) {
-        *(self.stack.last_mut().unwrap_unchecked() as *mut _ as *mut AncestorDiscriminant) =
-            discriminant;
+    pub(crate) unsafe fn retag_stack(&mut self, ty: AncestorType) {
+        *(self.stack.last_mut().unwrap_unchecked() as *mut _ as *mut AncestorType) = ty;
     }
 }
