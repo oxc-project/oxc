@@ -17,7 +17,7 @@
         "channel\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+(\\.\\d+)?)\""
       ],
       "depNameTemplate": "rust",
-      "lookupNameTemplate": "rust-lang/rust",
+      "packageNameTemplate": "rust-lang/rust",
       "datasourceTemplate": "github-releases"
     }
   ],
@@ -28,13 +28,13 @@
     },
     {
       "groupName": "rust toolchain",
-      "matchManagers": ["regex"],
+      "matchManagers": ["custom.regex"],
       "matchDepNames": ["rust"]
     },
     {
       "groupName": "rust crates",
       "matchManagers": ["cargo"],
-      "ignoreDeps": ["textwrap", "owo-colors", "syn", "miette", "ureq"]
+      "ignoreDeps": ["syn", "ureq"]
     },
     {
       "groupName": "website npm packages",

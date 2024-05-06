@@ -41,12 +41,6 @@ jobs:
             fixture: 0
           - component: linter
             fixture: 1
-          - component: linter
-            fixture: 2
-          - component: linter
-            fixture: 3
-          - component: linter
-            fixture: 4
     steps:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@v1

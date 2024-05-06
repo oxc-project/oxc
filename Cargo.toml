@@ -87,10 +87,12 @@ oxc_transformer = { version = "0.12.5", path = "crates/oxc_transformer" }
 oxc_sourcemap   = { version = "0.12.5", path = "crates/oxc_sourcemap" }
 
 # publish = false
+oxc_ast_macros   = { path = "crates/oxc_ast_macros" }
 oxc_macros       = { path = "crates/oxc_macros" }
 oxc_linter       = { path = "crates/oxc_linter" }
 oxc_prettier     = { path = "crates/oxc_prettier" }
 oxc_tasks_common = { path = "tasks/common" }
+oxc_traverse     = { path = "crates/oxc_traverse" }
 
 napi        = "2"
 napi-derive = "2"
@@ -110,6 +112,7 @@ ignore              = "0.4.22"
 itertools           = "0.12.1"
 jemallocator        = "0.5.4"
 lazy_static         = "1.4.0"
+memoffset           = "0.9.1"
 miette              = { version = "7.2.0", features = ["fancy-no-syscall"] }
 mimalloc            = "0.1.41"
 num-bigint          = "0.4.4"
@@ -132,6 +135,7 @@ tempfile            = "3.10.1"
 thiserror           = "1.0.59"
 tokio               = "1"
 tower-lsp           = "0.20.0"
+trybuild            = "1.0.93"
 unicode-id-start    = "1.1.2"
 ureq                = { version = "2.9.6", default-features = false }
 url                 = "2.5.0"
@@ -169,7 +173,7 @@ unicode-width       = "0.1.12"
 saphyr              = "0.0.1"
 
 [workspace.metadata.cargo-shear]
-ignored = ["napi"]
+ignored = ["napi", "oxc_traverse"]
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,

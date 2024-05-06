@@ -351,6 +351,7 @@ mod nextjs {
     pub mod no_before_interactive_script_outside_document;
     pub mod no_css_tags;
     pub mod no_document_import_in_page;
+    pub mod no_duplicate_head;
     pub mod no_head_element;
     pub mod no_head_import_in_document;
     pub mod no_img_element;
@@ -695,6 +696,7 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_css_tags,
     nextjs::no_head_element,
     nextjs::no_head_import_in_document,
+    nextjs::no_duplicate_head,
     nextjs::no_img_element,
     nextjs::no_script_component_in_head,
     nextjs::no_sync_scripts,
