@@ -6,17 +6,19 @@ on:
     types: [opened, synchronize]
     paths:
       - 'crates/oxc_parser/**'
+      - 'crates/oxc_diagnostics/**'
       - 'crates/oxc_cli/**'
       - 'crates/oxc_linter/**'
-      - '!.github/workflows/ecosystem.yml'
+      - '.github/workflows/ecosystem.yml'
   push:
     branches:
       - main
     paths:
       - 'crates/oxc_parser/**'
+      - 'crates/oxc_diagnostics/**'
       - 'crates/oxc_cli/**'
       - 'crates/oxc_linter/**'
-      - '!.github/workflows/ecosystem.yml'
+      - '.github/workflows/ecosystem.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -59,7 +61,7 @@ jobs:
             ref: master
     steps:
       - name: Clone ${{ matrix.repository }}
-        uses: taiki-e/checkout-action@v1
+        uses: actions/checkout@v4
         with:
           repository: ${{ matrix.repository }}
           ref: ${{ matrix.ref }}

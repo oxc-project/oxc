@@ -165,6 +165,7 @@ impl LintRunner {
             OutputFormat::Json => diagnostic_service.set_json_reporter(),
             OutputFormat::Unix => diagnostic_service.set_unix_reporter(),
             OutputFormat::Checkstyle => diagnostic_service.set_checkstyle_reporter(),
+            OutputFormat::Github => diagnostic_service.set_github_reporter(),
         }
         diagnostic_service
     }
