@@ -839,7 +839,7 @@ macro_rules! shared_enum_variants {
         };
 
         impl<'a> $parent<'a> {
-            #[doc = concat!(" Return if a `", stringify!($parent), "` is a `", stringify!($child), "`.")]
+            #[doc = concat!("Return if a `", stringify!($parent), "` is a `", stringify!($child), "`.")]
             #[inline]
             pub fn $is_child(&self) -> bool {
                 matches!(
@@ -848,7 +848,7 @@ macro_rules! shared_enum_variants {
                 )
             }
 
-            #[doc = concat!(" Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
+            #[doc = concat!("Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
             #[inline]
             pub fn $as_child(&self) -> Option<&$child<'a>> {
                 if self.$is_child() {
@@ -861,7 +861,7 @@ macro_rules! shared_enum_variants {
                 }
             }
 
-            #[doc = concat!(" Convert `&mut ", stringify!($parent), "` to `&mut ", stringify!($child), "`.")]
+            #[doc = concat!("Convert `&mut ", stringify!($parent), "` to `&mut ", stringify!($child), "`.")]
             #[inline]
             pub fn $as_child_mut(&mut self) -> Option<&mut $child<'a>> {
                 if self.$is_child() {
@@ -874,7 +874,7 @@ macro_rules! shared_enum_variants {
                 }
             }
 
-            #[doc = concat!(" Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
+            #[doc = concat!("Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
             #[doc = "# Panic"]
             #[doc = "Panics if not convertible."]
             #[inline]
@@ -882,7 +882,7 @@ macro_rules! shared_enum_variants {
                 self.$as_child().unwrap()
             }
 
-            #[doc = concat!(" Convert `&mut ", stringify!($parent), "` to `&mut ", stringify!($child), "`.")]
+            #[doc = concat!("Convert `&mut ", stringify!($parent), "` to `&mut ", stringify!($child), "`.")]
             #[doc = "# Panic"]
             #[doc = "Panics if not convertible."]
             #[inline]
@@ -894,7 +894,7 @@ macro_rules! shared_enum_variants {
         impl<'a> TryFrom<$parent<'a>> for $child<'a> {
             type Error = ();
 
-            #[doc = concat!(" Convert `", stringify!($parent), "` to `", stringify!($child), "`.")]
+            #[doc = concat!("Convert `", stringify!($parent), "` to `", stringify!($child), "`.")]
             #[inline]
             fn try_from(value: $parent<'a>) -> Result<Self, Self::Error> {
                 // Compiler should implement this as a check of discriminant and then zero-cost transmute,
@@ -907,7 +907,7 @@ macro_rules! shared_enum_variants {
         }
 
         impl<'a> From<$child<'a>> for $parent<'a> {
-            #[doc = concat!(" Convert `", stringify!($child), "` to `", stringify!($parent), "`.")]
+            #[doc = concat!("Convert `", stringify!($child), "` to `", stringify!($parent), "`.")]
             #[inline]
             fn from(value: $child<'a>) -> Self {
                 // Compiler should implement this as zero-cost transmute as discriminants
