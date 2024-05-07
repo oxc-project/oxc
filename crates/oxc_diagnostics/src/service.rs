@@ -7,7 +7,8 @@ use std::{
 use crate::{
     miette::NamedSource,
     reporter::{
-        CheckstyleReporter, DiagnosticReporter, GraphicalReporter, JsonReporter, UnixReporter,
+        CheckstyleReporter, DiagnosticReporter, GithubReporter, GraphicalReporter, JsonReporter,
+        UnixReporter,
     },
     Error, MinifiedFileError, Severity,
 };
@@ -62,6 +63,10 @@ impl DiagnosticService {
 
     pub fn set_checkstyle_reporter(&mut self) {
         self.reporter = Box::<CheckstyleReporter>::default();
+    }
+
+    pub fn set_github_reporter(&mut self) {
+        self.reporter = Box::<GithubReporter>::default();
     }
 
     #[must_use]

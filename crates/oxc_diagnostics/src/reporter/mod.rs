@@ -1,11 +1,12 @@
 mod checkstyle;
+mod github;
 mod graphical;
 mod json;
 mod unix;
 
 pub use self::{
-    checkstyle::CheckstyleReporter, graphical::GraphicalReporter, json::JsonReporter,
-    unix::UnixReporter,
+    checkstyle::CheckstyleReporter, github::GithubReporter, graphical::GraphicalReporter,
+    json::JsonReporter, unix::UnixReporter,
 };
 
 use std::io::{BufWriter, Stdout};

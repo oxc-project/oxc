@@ -135,7 +135,7 @@ pub struct WarningOptions {
 /// Output
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
-    /// Use a specific output format (default, json)
+    /// Use a specific output format (default, json, unix, checkstyle, github)
     #[bpaf(long, short, fallback(OutputFormat::Default), hide_usage)]
     pub format: OutputFormat,
 }
@@ -143,6 +143,9 @@ pub struct OutputOptions {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum OutputFormat {
     Default,
+    /// GitHub Check Annotation
+    /// <https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-a-notice-message>
+    Github,
     Json,
     Unix,
     Checkstyle,
@@ -156,6 +159,7 @@ impl FromStr for OutputFormat {
             "default" => Ok(Self::Default),
             "unix" => Ok(Self::Unix),
             "checkstyle" => Ok(Self::Checkstyle),
+            "github" => Ok(Self::Github),
             _ => Err(format!("'{s}' is not a known format")),
         }
     }
