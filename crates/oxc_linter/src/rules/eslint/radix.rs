@@ -74,7 +74,7 @@ impl Rule for Radix {
         if let AstKind::CallExpression(call_expr) = node.kind() {
             match &call_expr.callee.without_parenthesized() {
                 Expression::Identifier(ident) if ident.name == "parseInt" => {
-                    if ctx.symbols().get_symbol_id_from_name("parseInt") == None {
+                    if ctx.symbols().get_symbol_id_from_name("parseInt").is_none() {
                         Self::check_arguments(self, call_expr, ctx);
                     }
                 }
@@ -82,7 +82,7 @@ impl Rule for Radix {
                     if let Expression::Identifier(ident) = &member_expr.object {
                         if ident.name == "Number"
                             && member_expr.property.name == "parseInt"
-                            && ctx.symbols().get_symbol_id_from_name("Number") == None
+                            && ctx.symbols().get_symbol_id_from_name("Number").is_none()
                         {
                             Self::check_arguments(self, call_expr, ctx);
                         }
@@ -93,7 +93,7 @@ impl Rule for Radix {
                         if let Expression::Identifier(ident) = &member_expr.object() {
                             if ident.name == "Number"
                                 && member_expr.static_property_name() == Some("parseInt")
-                                && ctx.symbols().get_symbol_id_from_name("Number") == None
+                                && ctx.symbols().get_symbol_id_from_name("Number").is_none()
                             {
                                 Self::check_arguments(self, call_expr, ctx);
                             }
