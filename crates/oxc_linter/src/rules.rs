@@ -85,6 +85,7 @@ mod eslint {
     pub mod no_iterator;
     pub mod no_loss_of_precision;
     pub mod no_mixed_operators;
+    pub mod no_new_native_nonconstructor;
     pub mod no_new_symbol;
     pub mod no_new_wrappers;
     pub mod no_nonoctal_decimal_escape;
@@ -475,6 +476,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::use_isnan,
     eslint::valid_typeof,
     eslint::no_await_in_loop,
+    eslint::no_new_native_nonconstructor,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
     typescript::ban_ts_comment,
