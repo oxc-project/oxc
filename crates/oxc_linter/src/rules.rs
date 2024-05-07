@@ -353,6 +353,7 @@ mod nextjs {
     pub mod no_head_element;
     pub mod no_head_import_in_document;
     pub mod no_img_element;
+    pub mod no_page_custom_font;
     pub mod no_script_component_in_head;
     pub mod no_styled_jsx_in_document;
     pub mod no_sync_scripts;
@@ -702,6 +703,7 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_document_import_in_page,
     nextjs::no_unwanted_polyfillio,
     nextjs::no_before_interactive_script_outside_document,
+    nextjs::no_page_custom_font,
     nextjs::no_styled_jsx_in_document,
     jsdoc::check_access,
     jsdoc::check_property_names,
