@@ -92,6 +92,10 @@ impl<'a> AstBuilder<'a> {
         mem::replace(stmts, self.new_vec())
     }
 
+    pub fn move_vec<T>(&self, vec: &mut Vec<'a, T>) -> Vec<'a, T> {
+        mem::replace(vec, self.new_vec())
+    }
+
     pub fn move_assignment_target(
         &self,
         target: &mut AssignmentTarget<'a>,

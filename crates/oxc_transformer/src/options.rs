@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use crate::{
-    compiler_assumptions::CompilerAssumptions, es2015::ES2015Options, react::ReactOptions,
-    typescript::TypeScriptOptions,
+    compiler_assumptions::CompilerAssumptions, es2015::ES2015Options, es2018::ES2018Options,
+    react::ReactOptions, typescript::TypeScriptOptions,
 };
 
 /// <https://babel.dev/docs/options>
@@ -27,4 +27,5 @@ pub struct TransformOptions {
     pub react: ReactOptions,
 
     pub es2015: ES2015Options,
+    pub es2018: ES2018Options,
 }

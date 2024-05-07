@@ -13,7 +13,7 @@ use oxc_parser::Parser;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions, TestOs};
 use oxc_transformer::{
-    ES2015Options, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
+    ES2015Options, ES2018Options, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
 };
 
 use crate::{fixture_root, packages_root, TestRunnerEnv, PLUGINS_NOT_SUPPORTED_YET};
@@ -79,6 +79,8 @@ fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOpti
         }
     }
 
+    let assumptions = serde_json::from_value(options.assumptions.clone()).unwrap_or_default();
+
     let react = if let Some(options) = options.get_preset("react") {
         get_options::<ReactOptions>(options)?
     } else {
@@ -103,9 +105,18 @@ fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOpti
             .transpose()?,
     };
 
+    let es2018 = ES2018Options {
+        object_rest_spread: options
+            .get_plugin("transform-object-rest-spread")
+            .map(get_options)
+            .transpose()?,
+
+        assumptions,
+    };
+
     Ok(TransformOptions {
         cwd: options.cwd.clone().unwrap(),
-        assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
+        assumptions,
         typescript: options
             .get_plugin("transform-typescript")
             .map(get_options::<TypeScriptOptions>)
@@ -113,6 +124,7 @@ fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOpti
             .unwrap_or_default(),
         react,
         es2015,
+        es2018,
     })
 }
 

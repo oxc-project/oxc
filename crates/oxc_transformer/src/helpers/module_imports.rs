@@ -65,7 +65,7 @@ impl<'a> ModuleImports<'a> {
             .entry(ImportType::new(ImportKind::Require, source))
             .or_default()
             .push(import);
-        if front {
+        if front && len > 0 {
             self.imports.borrow_mut().move_index(len, 0);
         }
     }
