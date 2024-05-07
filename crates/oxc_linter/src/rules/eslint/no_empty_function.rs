@@ -34,16 +34,13 @@ declare_oxc_lint!(
     ///
     /// ```
     NoEmptyFunction,
-    correctness,
+    restriction,
 );
 
 impl Rule for NoEmptyFunction {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::FunctionBody(fb) = node.kind() {
-            if fb.is_empty() {
-                if ctx.semantic().trivias().has_comments_between(fb.span) {
-                    return;
-                }
+            if fb.is_empty() && !ctx.semantic().trivias().has_comments_between(fb.span) {
                 ctx.diagnostic(NoEmptyFunctionDiagnostic(fb.span));
             }
         }
@@ -57,29 +54,29 @@ fn test() {
     let pass = vec![
         "
         function foo() {
-            // empty 
+            // empty
         }
         ",
         "
         function* baz() {
-            // empty 
+            // empty
         }
         ",
         "
         const bar = () => {
-            // empty 
+            // empty
         };
         ",
         "
         const obj = {
             foo: function() {
-                // empty 
+                // empty
             },
             bar: function*() {
-                // empty 
+                // empty
             },
             foobar() {
-                // empty 
+                // empty
             }
         };
         ",
