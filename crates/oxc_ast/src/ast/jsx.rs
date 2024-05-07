@@ -162,7 +162,9 @@ pub struct JSXExpressionContainer<'a> {
 inherit_variants! {
 /// JSX Expression
 ///
-/// Inherits variants from [`Expression`].
+/// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]

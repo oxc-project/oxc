@@ -70,7 +70,9 @@ pub struct TSEnumMember<'a> {
 inherit_variants! {
 /// TS Enum Member Name
 ///
-/// Inherits variants from [`Expression`].
+/// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -368,7 +370,9 @@ pub struct TSRestType<'a> {
 inherit_variants! {
 /// TS Tuple Element
 ///
-/// Inherits variants from [`TSType`].
+/// Inherits variants from [`TSType`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -918,7 +922,9 @@ pub struct TSTypeQuery<'a> {
 inherit_variants! {
 /// TS Type Query Expr Name
 ///
-/// Inherits variants from [`TSTypeName`].
+/// Inherits variants from [`TSTypeName`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -1085,7 +1091,9 @@ pub struct TSImportEqualsDeclaration<'a> {
 inherit_variants! {
 /// TS Module Reference
 ///
-/// Inherits variants from [`TSTypeName`].
+/// Inherits variants from [`TSTypeName`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
