@@ -1,6 +1,11 @@
 /// Macro to inherit enum variants from another enum.
 ///
+/// (for further details see <https://github.com/oxc-project/oxc/pull/3115>)
+///
+/// # Types which can be inherited
+///
 /// The following types' variants can be inherited:
+///
 /// * `Expression`
 /// * `MemberExpression`
 /// * `AssignmentTarget`
@@ -10,6 +15,8 @@
 /// * `ModuleDeclaration`
 /// * `TSType`
 /// * `TSTypeName`
+///
+/// # Expansion
 ///
 /// ```
 /// inherit_variants! {
@@ -240,12 +247,15 @@ macro_rules! inherit_variants {
                 $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
 
                 /// Inherited from [`MemberExpression`].
+                ///
                 /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
                 ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>) = 48,
                 /// Inherited from [`MemberExpression`].
+                ///
                 /// `MemberExpression[?Yield, ?Await] . IdentifierName`
                 StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>) = 49,
                 /// Inherited from [`MemberExpression`].
+                ///
                 /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
                 PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>) = 50,
 
@@ -712,7 +722,8 @@ pub(crate) use inherit_variants;
 /// # SAFETY
 /// Both enums must be `#[repr(C, u8)]` or using this macro is unsound.
 ///
-/// # Example
+/// # Expansion
+///
 /// NB: For illustration only - `Statement` and `Declaration` in reality share 9 variants, not 2.
 ///
 /// ```

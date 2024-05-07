@@ -69,7 +69,9 @@ impl<'a> Program<'a> {
 inherit_variants! {
 /// Expression
 ///
-/// Inherits variants from [`MemberExpression`].
+/// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -505,7 +507,9 @@ pub struct ArrayExpression<'a> {
 inherit_variants! {
 /// Array Expression Element
 ///
-/// Inherits variants from [`Expression`].
+/// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -583,7 +587,9 @@ pub struct ObjectProperty<'a> {
 inherit_variants! {
 /// Property Key
 ///
-/// Inherits variants from [`Expression`].
+/// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -973,7 +979,9 @@ pub struct SpreadElement<'a> {
 inherit_variants! {
 /// Argument
 ///
-/// Inherits variants from [`Expression`].
+/// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -1086,6 +1094,9 @@ inherit_variants! {
 /// Destructuring Assignment
 ///
 /// Inherits variants from [`SimpleAssignmentTarget`] and [`AssignmentTargetPattern`].
+/// See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -1121,7 +1132,9 @@ pub use match_assignment_target;
 inherit_variants! {
 /// Simple Assignment Target
 ///
-/// Inherits variants from [`MemberExpression`].
+/// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -1262,7 +1275,9 @@ pub struct AssignmentTargetRest<'a> {
 inherit_variants! {
 /// Assignment Target Maybe Default
 ///
-/// Inherits variants from [`AssignmentTarget`].
+/// Inherits variants from [`AssignmentTarget`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -1379,7 +1394,9 @@ pub struct ChainExpression<'a> {
 inherit_variants! {
 /// Chain Element
 ///
-/// Inherits variants from [`MemberExpression`].
+/// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -1407,6 +1424,9 @@ inherit_variants! {
 /// Statement
 ///
 /// Inherits variants from [`Declaration`] and [`ModuleDeclaration`].
+/// See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -1722,7 +1742,9 @@ pub struct ForStatement<'a> {
 inherit_variants! {
 /// For Statement Init
 ///
-/// Inherits variants from [`Expression`].
+/// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -1774,7 +1796,9 @@ pub struct ForOfStatement<'a> {
 inherit_variants! {
 /// For Statement Left
 ///
-/// Inherits variants from [`AssignmentTarget`].
+/// Inherits variants from [`AssignmentTarget`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -2854,7 +2878,9 @@ impl<'a> ExportSpecifier<'a> {
 inherit_variants! {
 /// Export Default Declaration Kind
 ///
-/// Inherits variants from [`Expression`].
+/// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// [`ast` module docs]: `super`
 #[visited_node]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
