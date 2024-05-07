@@ -5,7 +5,11 @@ use std::{
 };
 
 use crate::{
-    miette::NamedSource, reporter::DiagnosticReporter, Error, MinifiedFileError, Severity,
+    miette::NamedSource,
+    reporter::{
+        CheckstyleReporter, DiagnosticReporter, GraphicalReporter, JsonReporter, UnixReporter,
+    },
+    Error, MinifiedFileError, Severity,
 };
 
 pub type DiagnosticTuple = (PathBuf, Vec<Error>);
@@ -13,7 +17,7 @@ pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;
 pub type DiagnosticReceiver = mpsc::Receiver<Option<DiagnosticTuple>>;
 
 pub struct DiagnosticService {
-    reporter: DiagnosticReporter,
+    reporter: Box<dyn DiagnosticReporter>,
 
     /// Disable reporting on warnings, only errors are reported
     quiet: bool,
@@ -36,7 +40,7 @@ impl Default for DiagnosticService {
     fn default() -> Self {
         let (sender, receiver) = mpsc::channel();
         Self {
-            reporter: DiagnosticReporter::new_graphical(),
+            reporter: Box::<GraphicalReporter>::default(),
             quiet: false,
             max_warnings: None,
             warnings_count: Cell::new(0),
@@ -49,19 +53,15 @@ impl Default for DiagnosticService {
 
 impl DiagnosticService {
     pub fn set_json_reporter(&mut self) {
-        self.reporter = DiagnosticReporter::new_json();
+        self.reporter = Box::<JsonReporter>::default();
     }
 
     pub fn set_unix_reporter(&mut self) {
-        self.reporter = DiagnosticReporter::new_unix();
+        self.reporter = Box::<UnixReporter>::default();
     }
 
     pub fn set_checkstyle_reporter(&mut self) {
-        self.reporter = DiagnosticReporter::new_checkstyle();
-    }
-
-    pub fn is_graphical_output(&self) -> bool {
-        matches!(self.reporter, DiagnosticReporter::Graphical { .. })
+        self.reporter = Box::<CheckstyleReporter>::default();
     }
 
     #[must_use]
