@@ -101,10 +101,24 @@ impl Rule for Eqeqeq {
         let (preferred_operator, preferred_operator_with_padding) =
             to_strict_eq_operator_str(binary_expr.operator);
 
+        #[allow(clippy::cast_possible_truncation)]
+        let operator_span = {
+            let left_end = binary_expr.left.span().end;
+            let right_start = binary_expr.right.span().start;
+            let offset = Span::new(left_end, right_start)
+                .source_text(ctx.source_text())
+                .find(operator)
+                .unwrap_or(0) as u32;
+
+            let operator_start = left_end + offset;
+            let operator_end = operator_start + operator.len() as u32;
+            Span::new(operator_start, operator_end)
+        };
+
         // If the comparison is a `typeof` comparison or both sides are literals with the same type, then it's safe to fix.
         if is_type_of_binary_bool || are_literals_and_same_type_bool {
             ctx.diagnostic_with_fix(
-                EqeqeqDiagnostic(operator, preferred_operator, binary_expr.span),
+                EqeqeqDiagnostic(operator, preferred_operator, operator_span),
                 || {
                     let start = binary_expr.left.span().end;
                     let end = binary_expr.right.span().start;
@@ -112,7 +126,7 @@ impl Rule for Eqeqeq {
                 },
             );
         } else {
-            ctx.diagnostic(EqeqeqDiagnostic(operator, preferred_operator, binary_expr.span));
+            ctx.diagnostic(EqeqeqDiagnostic(operator, preferred_operator, operator_span));
         }
     }
 }
