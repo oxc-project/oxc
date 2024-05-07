@@ -84,11 +84,9 @@ impl<'a> TraverseCtx<'a> {
         None
     }
 
-    /// Get depth of ancestry stack.
-    /// i.e. How many nodes above this one in the tree.
+    /// Get depth in the AST.
     ///
-    /// NB: A "no parent" ancestor above `Program` counts towards this total.
-    /// The current node does not.
+    /// Count includes current node. i.e. in `Program`, depth is 1.
     #[inline]
     pub fn ancestors_depth(&self) -> usize {
         self.stack.len()
