@@ -171,6 +171,8 @@ similar             = "2.5.0"
 textwrap            = "0.16.0"
 unicode-width       = "0.1.12"
 saphyr              = "0.0.1"
+base64-simd         = "0.8"
+cfg-if              = "1.0.0"
 
 [workspace.metadata.cargo-shear]
 ignored = ["napi", "oxc_traverse"]

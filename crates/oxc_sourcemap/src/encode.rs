@@ -4,6 +4,7 @@ use crate::error::{Error, Result};
 /// - Quote `source_content` at parallel.
 /// - If you using `ConcatSourceMapBuilder`, serialize `tokens` to vlq `mappings` at parallel.
 use crate::{token::TokenChunk, SourceMap, Token};
+#[cfg(feature = "rayon")]
 use rayon::prelude::*;
 
 // Here using `serde_json::to_string` to serialization `names/source_contents/sources`.
@@ -40,11 +41,21 @@ pub fn encode(sourcemap: &SourceMap) -> Result<String> {
     // Quote `source_content` at parallel.
     if let Some(source_contents) = &sourcemap.source_contents {
         buf.push_str("],\"sourcesContent\":[");
-        let quote_source_contents = source_contents
-            .par_iter()
-            .map(|x| serde_json::to_string(x.as_ref()))
-            .collect::<std::result::Result<Vec<_>, serde_json::Error>>()
-            .map_err(Error::from)?;
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "rayon")] {
+                let quote_source_contents = source_contents
+                    .par_iter()
+                    .map(|x| serde_json::to_string(x.as_ref()))
+                    .collect::<std::result::Result<Vec<_>, serde_json::Error>>()
+                    .map_err(Error::from)?;
+            } else {
+                let quote_source_contents = source_contents
+                    .iter()
+                    .map(|x| serde_json::to_string(x.as_ref()))
+                    .collect::<std::result::Result<Vec<_>, serde_json::Error>>()
+                    .map_err(Error::from)?;
+            }
+        };
         buf.push_str(&quote_source_contents.join(","));
     }
     if let Some(x_google_ignore_list) = &sourcemap.x_google_ignore_list {
@@ -70,10 +81,19 @@ fn serialize_sourcemap_mappings(sm: &SourceMap) -> String {
         },
         |token_chunks| {
             // Serialize `tokens` to vlq `mappings` at parallel.
-            token_chunks
-                .par_iter()
-                .map(|token_chunk| serialize_mappings(&sm.tokens, token_chunk))
-                .collect::<String>()
+            cfg_if::cfg_if! {
+                if #[cfg(feature = "rayon")] {
+                    token_chunks
+                        .par_iter()
+                        .map(|token_chunk| serialize_mappings(&sm.tokens, token_chunk))
+                        .collect::<String>()
+                } else {
+                    token_chunks
+                        .iter()
+                        .map(|token_chunk| serialize_mappings(&sm.tokens, token_chunk))
+                        .collect::<String>()
+                }
+            }
         },
     )
 }
