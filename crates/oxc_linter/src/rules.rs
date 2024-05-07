@@ -86,7 +86,6 @@ mod eslint {
     pub mod no_loss_of_precision;
     pub mod no_mixed_operators;
     pub mod no_new_native_nonconstructor;
-    pub mod no_new_symbol;
     pub mod no_new_wrappers;
     pub mod no_nonoctal_decimal_escape;
     pub mod no_obj_calls;
@@ -445,7 +444,6 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_iterator,
     eslint::no_loss_of_precision,
     eslint::no_mixed_operators,
-    eslint::no_new_symbol,
     eslint::no_new_wrappers,
     eslint::no_nonoctal_decimal_escape,
     eslint::no_obj_calls,
