@@ -98,10 +98,10 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub fn read_json(&self, maybe_value: Option<serde_json::Value>) -> Self {
+            pub fn read_json(&self, value: serde_json::Value) -> Self {
                 match self {
                     #(Self::#struct_names(_) => Self::#struct_names(
-                        maybe_value.map(#struct_names::from_configuration).unwrap_or_default(),
+                        #struct_names::from_configuration(value),
                     )),*
                 }
             }

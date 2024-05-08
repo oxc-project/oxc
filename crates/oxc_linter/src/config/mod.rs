@@ -98,7 +98,8 @@ impl ESLintConfig {
                                 .iter()
                                 .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
                             {
-                                rules_to_replace.push(rule.read_json(rule_config.config.clone()));
+                                let config = rule_config.config.clone().unwrap_or_default();
+                                rules_to_replace.push(rule.read_json(config));
                             }
                         }
                         AllowWarnDeny::Allow => {
@@ -119,7 +120,8 @@ impl ESLintConfig {
                         rule_configs.iter().find(|r| r.severity.is_warn_deny())
                     {
                         if let Some(rule) = rules_for_override.iter().find(|r| r.name() == *name) {
-                            rules_to_replace.push(rule.read_json(rule_config.config.clone()));
+                            let config = rule_config.config.clone().unwrap_or_default();
+                            rules_to_replace.push(rule.read_json(config));
                         }
                     } else if rule_configs.iter().all(|r| r.severity.is_allow()) {
                         if let Some(rule) = rules_for_override.iter().find(|r| r.name() == *name) {
