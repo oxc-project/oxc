@@ -113,6 +113,7 @@ mod eslint {
     pub mod no_var;
     pub mod no_void;
     pub mod no_with;
+    pub mod radix;
     pub mod require_yield;
     pub mod use_isnan;
     pub mod valid_typeof;
@@ -467,6 +468,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_var,
     eslint::no_void,
     eslint::no_with,
+    eslint::radix,
     eslint::require_yield,
     eslint::use_isnan,
     eslint::valid_typeof,
