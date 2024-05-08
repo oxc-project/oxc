@@ -1,4 +1,4 @@
-Passed: 294/363
+Passed: 294/362
 
 # All Passed:
 * babel-plugin-transform-react-jsx-source
@@ -22,7 +22,7 @@ Passed: 294/363
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (118/155)
+# babel-plugin-transform-typescript (118/156)
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
 * enum/mix-references/input.ts
@@ -32,6 +32,7 @@ Passed: 294/363
 * exports/export-type-star-from/input.ts
 * imports/enum-value/input.ts
 * imports/type-only-export-specifier-2/input.ts
+* lvalues/TSTypeParameterInstantiation/input.ts
 * namespace/ambient-module-nested/input.ts
 * namespace/ambient-module-nested-exported/input.ts
 * namespace/canonical/input.ts
@@ -75,17 +76,15 @@ Passed: 294/363
 * react-source/arrow-function/input.js
 * react-source/disable-with-super/input.js
 
-# babel-plugin-transform-react-jsx-development (2/14)
-* linux/auto-import-dev/input.js
-* linux/classic-runtime/input.js
-* linux/fragments/input.js
-* linux/handle-fragments-with-key/input.js
-* linux/handle-nonstatic-children/input.js
-* linux/handle-static-children/input.js
-* linux/self-inside-arrow/input.mjs
-* linux/source-and-self-defined/input.js
-* linux/within-derived-classes-constructor/input.js
-* linux/within-ts-module-block/input.ts
-* windows/auto-import-dev-windows/input.js
-* windows/classic-runtime-windows/input.js
+# babel-plugin-transform-react-jsx-development (2/12)
+* cross-platform/auto-import-dev/input.js
+* cross-platform/classic-runtime/input.js
+* cross-platform/fragments/input.js
+* cross-platform/handle-fragments-with-key/input.js
+* cross-platform/handle-nonstatic-children/input.js
+* cross-platform/handle-static-children/input.js
+* cross-platform/self-inside-arrow/input.mjs
+* cross-platform/source-and-self-defined/input.js
+* cross-platform/within-derived-classes-constructor/input.js
+* cross-platform/within-ts-module-block/input.ts
 
