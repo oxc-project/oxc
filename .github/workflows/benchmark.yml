@@ -45,6 +45,7 @@ jobs:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
         shell: bash
         run: |
+          sed -i "s/fat/thin/" Cargo.toml # thin lto for faster compilation speed
           cargo build --release -p oxc_benchmark --benches --features codspeed
           rm target/release/deps/*.d
           mkdir -p target/codspeed/oxc_benchmark/
