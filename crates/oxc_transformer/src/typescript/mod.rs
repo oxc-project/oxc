@@ -11,7 +11,6 @@ use serde::Deserialize;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_syntax::scope::ScopeFlags;
 use oxc_traverse::TraverseCtx;
 
 use crate::context::Ctx;
@@ -116,8 +115,8 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_formal_parameter(param);
     }
 
-    pub fn transform_function(&mut self, func: &mut Function<'a>, flags: Option<ScopeFlags>) {
-        self.annotations.transform_function(func, flags);
+    pub fn transform_function(&mut self, func: &mut Function<'a>) {
+        self.annotations.transform_function(func);
     }
 
     pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
