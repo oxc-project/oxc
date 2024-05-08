@@ -24,6 +24,7 @@ oxc_span        = { workspace = true }
 oxc_allocator   = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_syntax      = { workspace = true, features = ["to_js_string"] }
+oxc_traverse    = { workspace = true }
 
 rustc-hash = { workspace = true }
 indexmap   = { workspace = true }

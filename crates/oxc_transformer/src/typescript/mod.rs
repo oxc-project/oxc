@@ -12,6 +12,7 @@ use serde::Deserialize;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_syntax::scope::ScopeFlags;
+use oxc_traverse::TraverseCtx;
 
 use crate::context::Ctx;
 
@@ -184,8 +185,14 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_tagged_template_expression(expr);
     }
 
-    pub fn transform_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
-        self.reference_collector.visit_identifier_reference(ident);
+    pub fn transform_identifier_reference(
+        &mut self,
+        ident: &mut IdentifierReference<'a>,
+        ctx: &TraverseCtx,
+    ) {
+        if !ctx.parent().is_ts_interface_heritage() && !ctx.parent().is_ts_type_reference() {
+            self.reference_collector.visit_identifier_reference(ident);
+        }
     }
 
     pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
