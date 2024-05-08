@@ -1,7 +1,5 @@
 name: Release CLI
 
-# When main is pushed and npm/oxc/package.json has been changed,
-# trigger the jobs after the ci workflow has been passed.
 on:
   push:
     branches:
