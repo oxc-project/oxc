@@ -56,6 +56,9 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
                 Ok(SimpleAssignmentTarget::TSNonNullExpression(expr))
             }
             Expression::TSTypeAssertion(expr) => Ok(SimpleAssignmentTarget::TSTypeAssertion(expr)),
+            Expression::TSInstantiationExpression(expr) => {
+                Ok(SimpleAssignmentTarget::TSInstantiationExpression(expr))
+            }
             expr => Err(diagnostics::InvalidAssignment(expr.span()).into()),
         }
     }

@@ -514,7 +514,7 @@ impl<'a> ParserImpl<'a> {
             return Ok(None);
         }
         let span = self.start_span();
-        let params = TSTypeArgumentList::parse(self)?.params;
+        let params = TSTypeArgumentList::parse(self, false)?.params;
         Ok(Some(self.ast.ts_type_arguments(self.end_span(span), params)))
     }
 
@@ -529,7 +529,7 @@ impl<'a> ParserImpl<'a> {
         self.try_parse(|p| {
             p.re_lex_ts_l_angle();
 
-            let params = TSTypeArgumentList::parse(p)?.params;
+            let params = TSTypeArgumentList::parse(p, true)?.params;
             let token = p.cur_token();
             if token.is_on_new_line || token.kind.can_follow_type_arguments_in_expr() {
                 Ok(params)

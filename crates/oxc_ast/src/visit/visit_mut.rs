@@ -1940,6 +1940,9 @@ pub mod walk_mut {
             SimpleAssignmentTarget::TSTypeAssertion(expr) => {
                 visitor.visit_expression(&mut expr.expression);
             }
+            SimpleAssignmentTarget::TSInstantiationExpression(expr) => {
+                visitor.visit_expression(&mut expr.expression);
+            }
         }
         visitor.leave_node(kind);
     }

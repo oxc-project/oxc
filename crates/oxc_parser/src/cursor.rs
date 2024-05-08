@@ -248,6 +248,13 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    pub(crate) fn re_lex_ts_r_angle(&mut self) {
+        let kind = self.cur_kind();
+        if matches!(kind, Kind::ShiftRight | Kind::ShiftRight3) {
+            self.token = self.lexer.re_lex_as_typescript_r_angle(kind);
+        }
+    }
+
     pub(crate) fn checkpoint(&self) -> ParserCheckpoint<'a> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),
