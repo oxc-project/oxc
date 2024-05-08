@@ -182,6 +182,7 @@ pub(crate) mod eslint {
     pub mod no_var;
     pub mod no_void;
     pub mod no_warning_comments;
+    pub mod object_shorthand;
     pub mod no_with;
     pub mod operator_assignment;
     pub mod prefer_destructuring;
@@ -859,6 +860,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::prefer_rest_params,
     eslint::prefer_spread,
     eslint::preserve_caught_error,
+    eslint::object_shorthand,
     eslint::radix,
     eslint::require_await,
     eslint::require_yield,
