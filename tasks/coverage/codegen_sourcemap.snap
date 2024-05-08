@@ -47,7 +47,7 @@ Expected a semicolon or an implicit semicolon after a statement, but found none
 
 
 
-- bar-record-tuple/input.js
+- bar-record-tuple-babel-7/input.js
 Unexpected token
 
 
@@ -407,6 +407,10 @@ Unexpected token
 
 
 - hash-record-tuple/input.js
+Invalid Character `[`
+
+
+- hash-record-tuple-babel-7/input.js
 Invalid Character `[`
 
 

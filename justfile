@@ -27,7 +27,7 @@ ready:
 # Clone or update submodules
 submodules:
   just clone-submodule tasks/coverage/test262 git@github.com:tc39/test262.git 17ba9aea47e496f5b2bc6ce7405b3f32e3cfbf7a
-  just clone-submodule tasks/coverage/babel git@github.com:babel/babel.git acf3d17fdfe150a270c822581b709dddac4548ce
+  just clone-submodule tasks/coverage/babel git@github.com:babel/babel.git 4bd1b2c2f1bb3f702cfcb50448736e33c7000128
   just clone-submodule tasks/coverage/typescript git@github.com:microsoft/TypeScript.git 64d2eeea7b9c7f1a79edf42cb99f302535136a2e
   just clone-submodule tasks/prettier_conformance/prettier git@github.com:prettier/prettier.git 7142cf354cce2558f41574f44b967baf11d5b603
 
