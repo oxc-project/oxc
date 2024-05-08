@@ -105,6 +105,7 @@ mod eslint {
     pub mod no_useless_rename;
     pub mod no_var;
     pub mod no_void;
+    pub mod object_shorthand;
     pub mod no_with;
     pub mod prefer_exponentiation_operator;
     pub mod radix;
@@ -483,6 +484,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_var,
     eslint::no_void,
     eslint::no_with,
+    eslint::object_shorthand,
     eslint::radix,
     eslint::require_yield,
     eslint::symbol_description,
