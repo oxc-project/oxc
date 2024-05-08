@@ -61,7 +61,7 @@ impl Rule for JsxNoUselessFragment {
         Self {
             allow_expressions: value
                 .and_then(|val| val.get("allowExpressions").and_then(serde_json::Value::as_bool))
-                .unwrap_or(true),
+                .unwrap_or(Self::default().allow_expressions),
         }
     }
 
@@ -236,7 +236,7 @@ fn test() {
         ",
             Some(json!([{ "allowExpressions": true }])),
         ),
-        (r"{1 && <>{1}</>}", Some(json!(["warn", {"allowExpressions": true}]))),
+        (r"{1 && <>{1}</>}", Some(json!([{"allowExpressions": true}]))),
     ];
 
     let fail = vec![

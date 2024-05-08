@@ -199,7 +199,7 @@ impl Tester {
         is_fix: bool,
     ) -> TestResult {
         let allocator = Allocator::default();
-        let rule = self.find_rule().read_json(rule_config);
+        let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
         let options = LintOptions::default()
             .with_fix(is_fix)
             .with_import_plugin(self.import_plugin)

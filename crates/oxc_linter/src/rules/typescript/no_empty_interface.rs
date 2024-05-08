@@ -48,9 +48,10 @@ declare_oxc_lint!(
 
 impl Rule for NoEmptyInterface {
     fn from_configuration(value: Value) -> Self {
-        let allow_single_extends = value.get(0).map_or(true, |config| {
-            config.get("allow_single_extends").and_then(Value::as_bool).unwrap_or_default()
-        });
+        let allow_single_extends =
+            value.get(0).map_or(Self::default().allow_single_extends, |config| {
+                config.get("allow_single_extends").and_then(Value::as_bool).unwrap_or_default()
+            });
 
         Self { allow_single_extends }
     }
