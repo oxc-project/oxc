@@ -10,22 +10,31 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_module_lexer::ModuleLexer;
 use oxc_parser::{Parser, ParserReturn};
-use oxc_semantic::AstNode;
+use oxc_semantic::{AstNode, ModuleRecord};
 use oxc_span::{SourceType, Span};
 use oxc_syntax::module_graph_visitor::{ModuleGraphVisitorBuilder, VisitFoldWhile};
 use std::path::{Path, PathBuf};
 
 use crate::{context::LintContext, rule::Rule};
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Error, Diagnostic)]
 enum NoBarrelFileDiagnostic {
     #[error(
         "oxc(no-barrel-file): \
             Avoid barrel files, they slow down performance, \
-            and cause large module graphs with modules that go unused.{1}"
+            and cause large module graphs with modules that go unused."
     )]
     #[diagnostic(severity(warning), help("For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>"))]
-    BarrelFile(#[label] Span, String),
+    BarrelFile(#[label] Span),
+    #[error(
+        "oxc(no-barrel-file): \
+            Avoid barrel files, they slow down performance, \
+            and cause large module graphs with modules that go unused.\n\
+            Loading this barrel file results in importing at least {1} modules."
+    )]
+    #[diagnostic(severity(warning), help("For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>"))]
+    BarrelFileWithDetails(#[label] Span, i32),
     #[error("oxc(no-barrel-file): Don't import from barrel files.")]
     #[diagnostic(severity(warning), help("For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>"))]
     BarrelImport(#[label] Span),
@@ -75,16 +84,13 @@ impl Rule for NoBarrelFile {
                 match_module_declaration!(Statement) if !node.to_module_declaration().is_type()
             }
         }) {
-            let misc = if module_record.loaded_modules.is_empty() {
-                String::default()
+            let diag = if let Some(count) = count_loaded_modules(module_record) {
+                NoBarrelFileDiagnostic::BarrelFileWithDetails(program.span, count)
             } else {
-                let loaded_modules_count = ModuleGraphVisitorBuilder::default()
-                    .visit_fold(0, module_record, |acc, _, _| VisitFoldWhile::Next(acc + 1))
-                    .result;
-                format!("\nLoading this barrel file results in importing at least {loaded_modules_count:?} modules.")
+                NoBarrelFileDiagnostic::BarrelFile(program.span)
             };
 
-            ctx.diagnostic(NoBarrelFileDiagnostic::BarrelFile(program.span, misc));
+            ctx.diagnostic(diag);
         }
     }
 
@@ -93,6 +99,18 @@ impl Rule for NoBarrelFile {
         if is_facade_import(ctx.file_path().to_str().unwrap(), import.source.value.as_str()) {
             ctx.diagnostic(NoBarrelFileDiagnostic::BarrelImport(import.source.span));
         }
+    }
+}
+
+fn count_loaded_modules(module_record: &ModuleRecord) -> Option<i32> {
+    if module_record.loaded_modules.is_empty() {
+        None
+    } else {
+        Some(
+            ModuleGraphVisitorBuilder::default()
+                .visit_fold(0, module_record, |acc, _, _| VisitFoldWhile::Next(acc + 1))
+                .result,
+        )
     }
 }
 
