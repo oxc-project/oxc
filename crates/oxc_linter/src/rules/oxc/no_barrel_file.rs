@@ -96,7 +96,7 @@ impl Rule for NoBarrelFile {
 
     fn run(&self, node: &AstNode<'_>, ctx: &LintContext<'_>) {
         let AstKind::ImportDeclaration(import) = node.kind() else { return };
-        if is_facade_import(ctx.file_path().to_str().unwrap(), import.source.value.as_str()) {
+        if is_facade_import(ctx.file_path(), import.source.value.as_str().as_ref()) {
             ctx.diagnostic(NoBarrelFileDiagnostic::BarrelImport(import.source.span));
         }
     }
@@ -115,7 +115,7 @@ fn count_loaded_modules(module_record: &ModuleRecord) -> Option<i32> {
 }
 
 /// Returns `false` if can't confirm a file is a facade.
-fn is_facade_import(filename: &str, source: &str) -> bool {
+fn is_facade_import<P: AsRef<Path>>(filename: P, source: P) -> bool {
     let Some(ref potential_barrel) = try_resolve_path(filename, source) else { return false };
 
     if !potential_barrel.file_name().is_some_and(|name| name.to_string_lossy().starts_with("index"))
