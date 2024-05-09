@@ -91,7 +91,7 @@ impl Rule for NoBarrelFile {
     fn run(&self, node: &AstNode<'_>, ctx: &LintContext<'_>) {
         let AstKind::ImportDeclaration(import) = node.kind() else { return };
         if is_facade_import(ctx.file_path().to_str().unwrap(), import.source.value.as_str()) {
-            ctx.diagnostic(NoBarrelFileDiagnostic::BarrelImport(import.source.span))
+            ctx.diagnostic(NoBarrelFileDiagnostic::BarrelImport(import.source.span));
         }
     }
 }
@@ -108,30 +108,26 @@ fn is_facade_import(filename: &str, source: &str) -> bool {
     facade
 }
 
-fn try_resolve_path<'a, P: AsRef<Path>>(from: P, to: P) -> Option<PathBuf> {
+fn try_resolve_path<P: AsRef<Path>>(from: P, to: P) -> Option<PathBuf> {
     const EXTENSIONS: [&str; 6] = ["js", "ts", "jsx", "tsx", "cjs", "mjs"];
-    fn try_extensions<'a>(path: PathBuf) -> Option<PathBuf> {
+    fn try_extensions(path: PathBuf) -> Option<PathBuf> {
         EXTENSIONS
             .iter()
             .flat_map(|ext| [path.join("index").join(ext), path.join(ext)])
             .find(|fullpath| fullpath.exists())
     }
 
-    let cwd: &Path = from.as_ref().parent()?.as_ref();
+    let cwd: &Path = from.as_ref().parent()?;
     let to = to.as_ref();
 
     // TODO: check if path is a package.
     let path = if to.starts_with(".") { cwd.join(to) } else { to.to_path_buf() };
 
-    let result = if path.extension().is_some() && path.exists() {
-        Some(path)
-    } else if let Some(path) = try_extensions(path) {
+    if path.extension().is_some() && path.exists() {
         Some(path)
     } else {
-        None
-    };
-
-    result.map(|path| path.to_owned())
+        try_extensions(path)
+    }
 }
 
 #[test]
