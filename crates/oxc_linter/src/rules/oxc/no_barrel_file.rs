@@ -75,13 +75,13 @@ impl Rule for NoBarrelFile {
                 match_module_declaration!(Statement) if !node.to_module_declaration().is_type()
             }
         }) {
-            let misc = if !module_record.loaded_modules.is_empty() {
+            let misc = if module_record.loaded_modules.is_empty() {
+                String::default()
+            } else {
                 let loaded_modules_count = ModuleGraphVisitorBuilder::default()
                     .visit_fold(0, module_record, |acc, _, _| VisitFoldWhile::Next(acc + 1))
                     .result;
                 format!("\nLoading this barrel file results in importing at least {loaded_modules_count:?} modules.")
-            } else {
-                String::default()
             };
 
             ctx.diagnostic(NoBarrelFileDiagnostic::BarrelFile(program.span, misc));
@@ -110,7 +110,7 @@ fn is_facade_import(filename: &str, source: &str) -> bool {
 
 fn try_resolve_path<P: AsRef<Path>>(from: P, to: P) -> Option<PathBuf> {
     const EXTENSIONS: [&str; 6] = ["js", "ts", "jsx", "tsx", "cjs", "mjs"];
-    fn try_extensions(path: PathBuf) -> Option<PathBuf> {
+    fn try_extensions(path: &Path) -> Option<PathBuf> {
         EXTENSIONS
             .iter()
             .flat_map(|ext| [path.join("index").join(ext), path.join(ext)])
@@ -126,7 +126,7 @@ fn try_resolve_path<P: AsRef<Path>>(from: P, to: P) -> Option<PathBuf> {
     if path.extension().is_some() && path.exists() {
         Some(path)
     } else {
-        try_extensions(path)
+        try_extensions(&path)
     }
 }
 
