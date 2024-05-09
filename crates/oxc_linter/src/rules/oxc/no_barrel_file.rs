@@ -117,6 +117,12 @@ fn count_loaded_modules(module_record: &ModuleRecord) -> Option<i32> {
 /// Returns `false` if can't confirm a file is a facade.
 fn is_facade_import(filename: &str, source: &str) -> bool {
     let Some(ref potential_barrel) = try_resolve_path(filename, source) else { return false };
+
+    if !potential_barrel.file_name().is_some_and(|name| name.to_string_lossy().starts_with("index"))
+    {
+        return false;
+    }
+
     let Ok(source) = std::fs::read_to_string(potential_barrel) else { return false };
     let Ok(source_type) = SourceType::from_path(potential_barrel) else { return false };
 
@@ -131,15 +137,25 @@ fn try_resolve_path<P: AsRef<Path>>(from: P, to: P) -> Option<PathBuf> {
     fn try_extensions(path: &Path) -> Option<PathBuf> {
         EXTENSIONS
             .iter()
-            .flat_map(|ext| [path.join("index").join(ext), path.join(ext)])
-            .find(|fullpath| fullpath.exists())
+            .flat_map(|ext| [(path.join("index"), ext), (path.to_path_buf(), ext)])
+            .map(|(mut path, ext)| {
+                path.set_extension(ext);
+                path
+            })
+            .find(|fullpath| fullpath.canonicalize().is_ok_and(|it| it.exists()))
     }
 
     let cwd: &Path = from.as_ref().parent()?;
     let to = to.as_ref();
 
     // TODO: check if path is a package.
-    let path = if to.starts_with(".") { cwd.join(to) } else { to.to_path_buf() };
+    // Is relative in respect to the node paths? Detects paths starting with a dot(`.`).
+    let path = if to.iter().next().is_some_and(|seg| seg.to_string_lossy().starts_with('.')) {
+        cwd.join(to)
+    } else {
+        // TODO: We need to have root of the project to resolve most of absolute paths.
+        to.to_path_buf()
+    };
 
     if path.extension().is_some() && path.exists() {
         Some(path)
@@ -157,6 +173,8 @@ fn test() {
         r#"export type { foo } from "foo";"#,
         r#"export type * from "foo";
            export type { bar } from "bar";"#,
+        r#"import { foo, bar, baz } from "../import/export-star/models"
+            foo("noop")"#,
     ];
 
     let fail = vec![
@@ -176,7 +194,7 @@ fn test() {
            export { bar, type Bar } from "bar";
            export { baz, type Baz } from "baz";
            export { qux, type Qux } from "qux";"#,
-        r#"import { foo, bar, baz } from "../feature";
+        r#"import { foo, bar, baz } from "../import/export-star/models";
            export { foo };
            export { bar };"#,
     ];

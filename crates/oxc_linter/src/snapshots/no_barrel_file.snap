@@ -40,8 +40,9 @@ expression: no_barrel_file
   help: For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>
 
   ⚠ oxc(no-barrel-file): Avoid barrel files, they slow down performance, and cause large module graphs with modules that go unused.
+  │ Loading this barrel file results in importing at least 3 modules.
    ╭─[index.ts:1:1]
- 1 │ ╭─▶ import { foo, bar, baz } from "../feature";
+ 1 │ ╭─▶ import { foo, bar, baz } from "../import/export-star/models";
  2 │ │              export { foo };
  3 │ ╰─▶            export { bar };
    ╰────
