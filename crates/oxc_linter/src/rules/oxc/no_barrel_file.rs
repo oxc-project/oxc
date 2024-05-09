@@ -1,26 +1,35 @@
-use oxc_ast::AstKind;
+// Based on this gist.
+// <https://gist.github.com/developit/a306951af9c0cfdf5925f126428887eb#file-no-barrel-js-L126>
+
+use oxc_allocator::Allocator;
+use oxc_ast::{ast::Statement, match_module_declaration, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::Error,
+    thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_module_lexer::ModuleLexer;
+use oxc_parser::{Parser, ParserReturn};
+use oxc_semantic::AstNode;
+use oxc_span::{SourceType, Span};
 use oxc_syntax::module_graph_visitor::{ModuleGraphVisitorBuilder, VisitFoldWhile};
+use std::path::{Path, PathBuf};
 
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error(
-    "oxc(no-barrel-file): \
+enum NoBarrelFileDiagnostic {
+    #[error(
+        "oxc(no-barrel-file): \
             Avoid barrel files, they slow down performance, \
-            and cause large module graphs with modules that go unused.\n\
-            Loading this barrel file results in importing {1:?} modules."
-)]
-#[diagnostic(severity(warning), help("For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>"))]
-struct NoBarrelFileDiagnostic(#[label] pub Span, pub u32);
-
-/// Minimum amount of exports to consider module as barrelfile
-const AMOUNT_OF_EXPORTS_TO_CONSIDER_MODULE_AS_BARREL: u8 = 3;
+            and cause large module graphs with modules that go unused.{1}"
+    )]
+    #[diagnostic(severity(warning), help("For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>"))]
+    BarrelFile(#[label] Span, String),
+    #[error("oxc(no-barrel-file): Don't import from barrel files.")]
+    #[diagnostic(severity(warning), help("For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>"))]
+    BarrelImport(#[label] Span),
+}
 
 /// <https://github.com/thepassle/eslint-plugin-barrel-files/blob/main/docs/rules/avoid-barrel-files.md>
 #[derive(Debug, Default, Clone)]
@@ -60,23 +69,69 @@ impl Rule for NoBarrelFile {
 
         let AstKind::Program(program) = root.kind() else { unreachable!() };
 
-        let declarations =
-            program
-                .body
-                .iter()
-                .fold(0, |acc, node| if node.is_declaration() { acc + 1 } else { acc });
-        let exports =
-            module_record.star_export_entries.len() + module_record.indirect_export_entries.len();
+        if program.body.iter().all(|node| {
+            matches! {
+                node,
+                match_module_declaration!(Statement) if !node.to_module_declaration().is_type()
+            }
+        }) {
+            let misc = if !module_record.loaded_modules.is_empty() {
+                let loaded_modules_count = ModuleGraphVisitorBuilder::default()
+                    .visit_fold(0, module_record, |acc, _, _| VisitFoldWhile::Next(acc + 1))
+                    .result;
+                format!("\nLoading this barrel file results in importing at least {loaded_modules_count:?} modules.")
+            } else {
+                String::default()
+            };
 
-        if exports > declarations
-            && exports > AMOUNT_OF_EXPORTS_TO_CONSIDER_MODULE_AS_BARREL as usize
-        {
-            let loaded_modules_count = ModuleGraphVisitorBuilder::default()
-                .visit_fold(0, module_record, |acc, _, _| VisitFoldWhile::Next(acc + 1))
-                .result;
-            ctx.diagnostic(NoBarrelFileDiagnostic(program.span, loaded_modules_count));
+            ctx.diagnostic(NoBarrelFileDiagnostic::BarrelFile(program.span, misc));
         }
     }
+
+    fn run(&self, node: &AstNode<'_>, ctx: &LintContext<'_>) {
+        let AstKind::ImportDeclaration(import) = node.kind() else { return };
+        if is_facade_import(ctx.file_path().to_str().unwrap(), import.source.value.as_str()) {
+            ctx.diagnostic(NoBarrelFileDiagnostic::BarrelImport(import.source.span))
+        }
+    }
+}
+
+/// Returns `false` if can't confirm a file is a facade.
+fn is_facade_import(filename: &str, source: &str) -> bool {
+    let Some(ref potential_barrel) = try_resolve_path(filename, source) else { return false };
+    let Ok(source) = std::fs::read_to_string(potential_barrel) else { return false };
+    let Ok(source_type) = SourceType::from_path(potential_barrel) else { return false };
+
+    let allocator = Allocator::default();
+    let ParserReturn { ref program, .. } = Parser::new(&allocator, &source, source_type).parse();
+    let ModuleLexer { facade, .. } = ModuleLexer::new().build(program);
+    facade
+}
+
+fn try_resolve_path<'a, P: AsRef<Path>>(from: P, to: P) -> Option<PathBuf> {
+    const EXTENSIONS: [&str; 6] = ["js", "ts", "jsx", "tsx", "cjs", "mjs"];
+    fn try_extensions<'a>(path: PathBuf) -> Option<PathBuf> {
+        EXTENSIONS
+            .iter()
+            .flat_map(|ext| [path.join("index").join(ext), path.join(ext)])
+            .find(|fullpath| fullpath.exists())
+    }
+
+    let cwd: &Path = from.as_ref().parent()?.as_ref();
+    let to = to.as_ref();
+
+    // TODO: check if path is a package.
+    let path = if to.starts_with(".") { cwd.join(to) } else { to.to_path_buf() };
+
+    let result = if path.extension().is_some() && path.exists() {
+        Some(path)
+    } else if let Some(path) = try_extensions(path) {
+        Some(path)
+    } else {
+        None
+    };
+
+    result.map(|path| path.to_owned())
 }
 
 #[test]
@@ -88,9 +143,6 @@ fn test() {
         r#"export type { foo } from "foo";"#,
         r#"export type * from "foo";
            export type { bar } from "bar";"#,
-        r#"import { foo, bar, baz } from "../feature";
-           export { foo };
-           export { bar };"#,
     ];
 
     let fail = vec![
@@ -110,6 +162,9 @@ fn test() {
            export { bar, type Bar } from "bar";
            export { baz, type Baz } from "baz";
            export { qux, type Qux } from "qux";"#,
+        r#"import { foo, bar, baz } from "../feature";
+           export { foo };
+           export { bar };"#,
     ];
 
     Tester::new(NoBarrelFile::NAME, pass, fail)

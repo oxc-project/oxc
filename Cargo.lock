@@ -1429,6 +1429,7 @@ dependencies = [
  "oxc_codegen",
  "oxc_diagnostics",
  "oxc_macros",
+ "oxc_module_lexer",
  "oxc_parser",
  "oxc_resolver",
  "oxc_semantic",

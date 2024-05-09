@@ -2624,6 +2624,16 @@ macro_rules! match_module_declaration {
 pub use match_module_declaration;
 
 impl<'a> ModuleDeclaration<'a> {
+    pub fn is_type(&self) -> bool {
+        match self {
+            Self::TSExportAssignment(_) | Self::TSNamespaceExportDeclaration(_) => true,
+            Self::ExportNamedDeclaration(decl) => decl.export_kind.is_type(),
+            Self::ExportAllDeclaration(decl) => decl.export_kind.is_type(),
+            Self::ImportDeclaration(decl) => decl.import_kind.is_type(),
+            Self::ExportDefaultDeclaration(_) => false,
+        }
+    }
+
     pub fn is_import(&self) -> bool {
         matches!(self, Self::ImportDeclaration(_))
     }

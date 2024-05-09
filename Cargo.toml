@@ -91,6 +91,7 @@ oxc_ast_macros   = { path = "crates/oxc_ast_macros" }
 oxc_macros       = { path = "crates/oxc_macros" }
 oxc_linter       = { path = "crates/oxc_linter" }
 oxc_prettier     = { path = "crates/oxc_prettier" }
+oxc_module_lexer = { path = "crates/oxc_module_lexer" }
 oxc_tasks_common = { path = "tasks/common" }
 oxc_traverse     = { path = "crates/oxc_traverse" }
 
