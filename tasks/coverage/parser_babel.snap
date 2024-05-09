@@ -1,6 +1,6 @@
 parser_babel Summary:
-AST Parsed     : 2091/2099 (99.62%)
-Positive Passed: 2084/2099 (99.29%)
+AST Parsed     : 2093/2099 (99.71%)
+Positive Passed: 2086/2099 (99.38%)
 Negative Passed: 1363/1501 (90.81%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
@@ -163,24 +163,6 @@ Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
    ╭─[typescript/arrow-function/generic-tsx-babel-7/input.ts:3:1]
  2 │ <T>(a: T): T => a;
    ╰────
-Expect to Parse: "typescript/assign/TSTypeParameterInstantiation/input.ts"
-
-  × Unexpected token
-    ╭─[typescript/assign/TSTypeParameterInstantiation/input.ts:15:31]
- 14 │ 
- 15 │     cls.myFunc<ConcreteClass> = (instance) => {
-    ·                               ─
- 16 │         console.log(instance.myField);
-    ╰────
-Expect to Parse: "typescript/assign/TSTypeParameterInstantiation-babel-7/input.ts"
-
-  × Unexpected token
-    ╭─[typescript/assign/TSTypeParameterInstantiation-babel-7/input.ts:15:31]
- 14 │ 
- 15 │     cls.myFunc<ConcreteClass> = (instance) => {
-    ·                               ─
- 16 │         console.log(instance.myField);
-    ╰────
 Expect to Parse: "typescript/class/constructor-with-modifier-names/input.ts"
 
   × Multiple constructor implementations are not allowed.

@@ -1809,6 +1809,7 @@ impl<'a> Format<'a> for SimpleAssignmentTarget<'a> {
             Self::TSSatisfiesExpression(expr) => expr.expression.format(p),
             Self::TSNonNullExpression(expr) => expr.expression.format(p),
             Self::TSTypeAssertion(expr) => expr.expression.format(p),
+            Self::TSInstantiationExpression(expr) => expr.expression.format(p),
         }
     }
 }

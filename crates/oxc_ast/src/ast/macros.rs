@@ -313,6 +313,7 @@ macro_rules! inherit_variants {
                 TSSatisfiesExpression,
                 TSNonNullExpression,
                 TSTypeAssertion,
+                TSInstantiationExpression,
                 ArrayAssignmentTarget,
                 ObjectAssignmentTarget,
             ]
@@ -344,6 +345,8 @@ macro_rules! inherit_variants {
                 TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
                 /// Inherited from [`SimpleAssignmentTarget`]
                 TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
+                /// Inherited from [`SimpleAssignmentTarget`]
+                TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 5,
 
                 // Inherited from `MemberExpression`
                 @inherit MemberExpression
@@ -368,7 +371,8 @@ macro_rules! inherit_variants {
                 TSAsExpression,
                 TSSatisfiesExpression,
                 TSNonNullExpression,
-                TSTypeAssertion
+                TSTypeAssertion,
+                TSInstantiationExpression
             ]
         );
     };

@@ -127,6 +127,9 @@ fn assignment_target_eq_expr<'a>(
             SimpleAssignmentTarget::TSTypeAssertion(ts_expr) => {
                 is_same_reference(&ts_expr.expression, right_expr, ctx)
             }
+            SimpleAssignmentTarget::TSInstantiationExpression(ts_expr) => {
+                is_same_reference(&ts_expr.expression, right_expr, ctx)
+            }
         };
     }
 
