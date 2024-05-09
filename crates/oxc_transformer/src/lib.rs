@@ -21,7 +21,7 @@ mod helpers {
     pub mod module_imports;
 }
 
-use std::{path::Path, rc::Rc};
+use std::{cell::RefMut, path::Path, rc::Rc};
 
 use es2015::ES2015;
 use oxc_allocator::{Allocator, Vec};
@@ -78,8 +78,7 @@ impl<'a> Transformer<'a> {
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
     pub fn build(mut self, program: &mut Program<'a>) -> Result<(), std::vec::Vec<Error>> {
-        let allocator = self.ctx.ast.allocator;
-        traverse_mut(&mut self, program, allocator);
+        traverse_mut(&mut self, program);
 
         let errors = self.ctx.take_errors();
         if errors.is_empty() {
@@ -91,146 +90,122 @@ impl<'a> Transformer<'a> {
 }
 
 impl<'a> Traverse<'a> for Transformer<'a> {
-    fn enter_program(&mut self, program: &mut Program<'a>, _ctx: &TraverseCtx<'a>) {
+    fn ctx(&mut self) -> RefMut<TraverseCtx<'a>> {
+        self.ctx.traverse_mut()
+    }
+
+    fn enter_program(&mut self, program: &mut Program<'a>) {
         self.x0_typescript.transform_program(program);
     }
 
-    fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &TraverseCtx<'a>) {
+    fn exit_program(&mut self, program: &mut Program<'a>) {
         self.x1_react.transform_program_on_exit(program);
         self.x0_typescript.transform_program_on_exit(program);
     }
 
     // ALPHASORT
 
-    fn enter_arrow_function_expression(
-        &mut self,
-        expr: &mut ArrowFunctionExpression<'a>,
-        _ctx: &TraverseCtx<'a>,
-    ) {
+    fn enter_arrow_function_expression(&mut self, expr: &mut ArrowFunctionExpression<'a>) {
         self.x0_typescript.transform_arrow_expression(expr);
     }
 
-    fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, _ctx: &TraverseCtx<'a>) {
+    fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>) {
         self.x0_typescript.transform_binding_pattern(pat);
     }
 
-    fn enter_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &TraverseCtx<'a>) {
+    fn enter_call_expression(&mut self, expr: &mut CallExpression<'a>) {
         self.x0_typescript.transform_call_expression(expr);
-        self.x1_react.transform_call_expression(expr, ctx);
+        self.x1_react.transform_call_expression(expr);
     }
 
-    fn enter_class(&mut self, class: &mut Class<'a>, _ctx: &TraverseCtx<'a>) {
+    fn enter_class(&mut self, class: &mut Class<'a>) {
         self.x0_typescript.transform_class(class);
         self.x3_es2015.transform_class(class);
     }
 
-    fn exit_class(&mut self, class: &mut Class<'a>, _ctx: &TraverseCtx<'a>) {
+    fn exit_class(&mut self, class: &mut Class<'a>) {
         self.x3_es2015.transform_class_on_exit(class);
     }
 
-    fn enter_class_body(&mut self, body: &mut ClassBody<'a>, _ctx: &TraverseCtx<'a>) {
+    fn enter_class_body(&mut self, body: &mut ClassBody<'a>) {
         self.x0_typescript.transform_class_body(body);
     }
 
-    fn enter_export_named_declaration(
-        &mut self,
-        decl: &mut ExportNamedDeclaration<'a>,
-        _ctx: &TraverseCtx<'a>,
-    ) {
+    fn enter_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
         self.x0_typescript.transform_export_named_declaration(decl);
     }
 
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &TraverseCtx<'a>) {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>) {
         self.x0_typescript.transform_expression(expr);
         self.x1_react.transform_expression(expr);
         self.x3_es2015.transform_expression(expr);
     }
 
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, _ctx: &TraverseCtx<'a>) {
+    fn exit_expression(&mut self, expr: &mut Expression<'a>) {
         self.x3_es2015.transform_expression_on_exit(expr);
     }
 
-    fn enter_formal_parameter(&mut self, param: &mut FormalParameter<'a>, _ctx: &TraverseCtx<'a>) {
+    fn enter_formal_parameter(&mut self, param: &mut FormalParameter<'a>) {
         self.x0_typescript.transform_formal_parameter(param);
     }
 
-    fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &TraverseCtx<'a>) {
+    fn enter_function(&mut self, func: &mut Function<'a>) {
         self.x0_typescript.transform_function(func);
     }
 
-    fn enter_jsx_opening_element(
-        &mut self,
-        elem: &mut JSXOpeningElement<'a>,
-        _ctx: &TraverseCtx<'a>,
-    ) {
+    fn enter_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
         self.x0_typescript.transform_jsx_opening_element(elem);
         self.x1_react.transform_jsx_opening_element(elem);
         self.x3_es2015.transform_jsx_opening_element(elem);
     }
 
-    fn enter_method_definition(&mut self, def: &mut MethodDefinition<'a>, _ctx: &TraverseCtx<'a>) {
+    fn enter_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
         self.x0_typescript.transform_method_definition(def);
     }
 
-    fn exit_method_definition(&mut self, def: &mut MethodDefinition<'a>, _ctx: &TraverseCtx<'a>) {
+    fn exit_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
         self.x0_typescript.transform_method_definition_on_exit(def);
     }
 
-    fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, _ctx: &TraverseCtx<'a>) {
+    fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>) {
         self.x0_typescript.transform_new_expression(expr);
     }
 
-    fn enter_property_definition(
-        &mut self,
-        def: &mut PropertyDefinition<'a>,
-        _ctx: &TraverseCtx<'a>,
-    ) {
+    fn enter_property_definition(&mut self, def: &mut PropertyDefinition<'a>) {
         self.x0_typescript.transform_property_definition(def);
     }
 
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &TraverseCtx<'a>) {
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         self.x0_typescript.transform_statements_on_exit(stmts);
         self.x3_es2015.transform_statements_on_exit(stmts);
     }
 
-    fn enter_tagged_template_expression(
-        &mut self,
-        expr: &mut TaggedTemplateExpression<'a>,
-        _ctx: &TraverseCtx<'a>,
-    ) {
+    fn enter_tagged_template_expression(&mut self, expr: &mut TaggedTemplateExpression<'a>) {
         self.x0_typescript.transform_tagged_template_expression(expr);
     }
 
-    fn enter_identifier_reference(
-        &mut self,
-        ident: &mut IdentifierReference<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) {
-        self.x0_typescript.transform_identifier_reference(ident, ctx);
+    fn enter_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
+        self.x0_typescript.transform_identifier_reference(ident);
     }
 
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, _ctx: &TraverseCtx<'a>) {
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>) {
         self.x0_typescript.transform_statement(stmt);
     }
 
-    fn enter_declaration(&mut self, decl: &mut Declaration<'a>, _ctx: &TraverseCtx<'a>) {
+    fn enter_declaration(&mut self, decl: &mut Declaration<'a>) {
         self.x0_typescript.transform_declaration(decl);
         self.x3_es2015.transform_declaration(decl);
     }
 
-    fn exit_declaration(&mut self, decl: &mut Declaration<'a>, _ctx: &TraverseCtx<'a>) {
+    fn exit_declaration(&mut self, decl: &mut Declaration<'a>) {
         self.x3_es2015.transform_declaration_on_exit(decl);
     }
 
-    fn enter_if_statement(&mut self, stmt: &mut IfStatement<'a>, _ctx: &TraverseCtx<'a>) {
+    fn enter_if_statement(&mut self, stmt: &mut IfStatement<'a>) {
         self.x0_typescript.transform_if_statement(stmt);
     }
 
-    fn enter_module_declaration(
-        &mut self,
-        decl: &mut ModuleDeclaration<'a>,
-        _ctx: &TraverseCtx<'a>,
-    ) {
+    fn enter_module_declaration(&mut self, decl: &mut ModuleDeclaration<'a>) {
         self.x0_typescript.transform_module_declaration(decl);
     }
 }

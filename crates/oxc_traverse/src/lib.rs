@@ -60,8 +60,6 @@
 //! scheme could very easily be derailed entirely by a single mistake, so in my opinion, it's unwise
 //! to edit by hand.
 
-use oxc_allocator::Allocator;
-
 use oxc_ast::ast::Program;
 
 pub mod ancestor;
@@ -113,9 +111,9 @@ mod walk;
 /// struct MyTransform;
 ///
 /// impl<'a> Traverse<'a> for MyTransform {
-///     fn enter_numeric_literal(&mut self, node: &mut NumericLiteral<'a>, ctx: &TraverseCtx<'a>) {
+///     fn enter_numeric_literal(&mut self, node: &mut NumericLiteral<'a>) {
 ///         // Read parent
-///         if let Ancestor::BinaryExpressionRight(bin_expr_ref) = ctx.parent() {
+///         if let Ancestor::BinaryExpressionRight(bin_expr_ref) = self.ctx().parent() {
 ///             // This is legal
 ///             if let Expression::Identifier(id) = bin_expr_ref.left() {
 ///                 println!("left side is ID: {}", &id.name);
@@ -126,7 +124,7 @@ mod walk;
 ///         }
 ///
 ///         // Read grandparent
-///         if let Some(Ancestor::ExpressionStatementExpression(stmt_ref)) = ctx.ancestor(2) {
+///         if let Some(Ancestor::ExpressionStatementExpression(stmt_ref)) = self.ctx().ancestor(2) {
 ///             // This is legal
 ///             println!("expression stmt's span: {:?}", stmt_ref.span());
 ///
@@ -137,13 +135,8 @@ mod walk;
 /// }
 /// ```
 #[allow(unsafe_code)]
-pub fn traverse_mut<'a, Tr: Traverse<'a>>(
-    traverser: &mut Tr,
-    program: &mut Program<'a>,
-    allocator: &'a Allocator,
-) {
-    let mut ctx = TraverseCtx::new(allocator);
+pub fn traverse_mut<'a, Tr: Traverse<'a>>(traverser: &mut Tr, program: &mut Program<'a>) {
     // SAFETY: Walk functions are constructed to avoid unsoundness
-    unsafe { walk::walk_program(traverser, program as *mut Program, &mut ctx) };
-    debug_assert!(ctx.ancestors_depth() == 1);
+    unsafe { walk::walk_program(traverser, program as *mut Program) };
+    debug_assert!(traverser.ctx().ancestors_depth() == 1);
 }

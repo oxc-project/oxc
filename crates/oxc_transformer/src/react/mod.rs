@@ -8,7 +8,6 @@ mod utils;
 use std::rc::Rc;
 
 use oxc_ast::ast::*;
-use oxc_traverse::TraverseCtx;
 
 use crate::context::Ctx;
 
@@ -73,13 +72,9 @@ impl<'a> React<'a> {
         }
     }
 
-    pub fn transform_call_expression(
-        &self,
-        call_expr: &mut CallExpression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) {
+    pub fn transform_call_expression(&self, call_expr: &mut CallExpression<'a>) {
         if self.options.display_name_plugin {
-            self.display_name.transform_call_expression(call_expr, ctx);
+            self.display_name.transform_call_expression(call_expr);
         }
     }
 

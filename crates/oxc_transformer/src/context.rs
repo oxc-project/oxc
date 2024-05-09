@@ -1,5 +1,5 @@
 use std::{
-    cell::RefCell,
+    cell::{Ref, RefCell, RefMut},
     mem,
     path::{Path, PathBuf},
     rc::Rc,
@@ -9,6 +9,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::{AstBuilder, Trivias};
 use oxc_diagnostics::Error;
 use oxc_span::SourceType;
+use oxc_traverse::TraverseCtx;
 
 use crate::{helpers::module_imports::ModuleImports, TransformOptions};
 
@@ -18,6 +19,8 @@ pub struct TransformCtx<'a> {
     errors: RefCell<Vec<Error>>,
 
     pub trivias: &'a Trivias,
+
+    traverse: Rc<RefCell<TraverseCtx<'a>>>,
 
     pub ast: AstBuilder<'a>,
 
@@ -45,6 +48,8 @@ impl<'a> TransformCtx<'a> {
         trivias: &'a Trivias,
         options: &TransformOptions,
     ) -> Self {
+        let traverse = Rc::new(RefCell::new(TraverseCtx::new(allocator)));
+
         let filename = source_path
             .file_stem() // omit file extension
             .map_or_else(|| String::from("unknown"), |name| name.to_string_lossy().to_string());
@@ -61,6 +66,7 @@ impl<'a> TransformCtx<'a> {
             source_type,
             source_text,
             trivias,
+            traverse,
             module_imports: ModuleImports::new(allocator),
         }
     }
@@ -73,5 +79,13 @@ impl<'a> TransformCtx<'a> {
     #[allow(unused)]
     pub fn error<T: Into<Error>>(&self, error: T) {
         self.errors.borrow_mut().push(error.into());
+    }
+
+    pub fn traverse(&self) -> Ref<TraverseCtx<'a>> {
+        self.traverse.borrow()
+    }
+
+    pub fn traverse_mut(&self) -> RefMut<TraverseCtx<'a>> {
+        self.traverse.borrow_mut()
     }
 }

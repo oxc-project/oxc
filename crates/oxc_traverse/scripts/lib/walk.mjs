@@ -27,20 +27,19 @@ export default function generateWalkFunctionsCode(types) {
         #[allow(clippy::wildcard_imports)]
         use oxc_ast::ast::*;
 
-        use crate::{ancestor::{self, AncestorType}, Ancestor, Traverse, TraverseCtx};
+        use crate::{ancestor::{self, AncestorType}, Ancestor, Traverse};
 
         ${walkMethods}
 
         pub(crate) unsafe fn walk_statements<'a, Tr: Traverse<'a>>(
             traverser: &mut Tr,
             stmts: *mut Vec<'a, Statement<'a>>,
-            ctx: &mut TraverseCtx<'a>
         ) {
-            traverser.enter_statements(&mut *stmts, ctx);
+            traverser.enter_statements(&mut *stmts);
             for stmt in (*stmts).iter_mut() {
-                walk_statement(traverser, stmt, ctx);
+                walk_statement(traverser, stmt);
             }
-            traverser.exit_statements(&mut *stmts, ctx);
+            traverser.exit_statements(&mut *stmts);
         }
     `;
 }
@@ -53,7 +52,7 @@ function generateWalkForStruct(type, types) {
 
         const retagCode = index === 0
             ? ''
-            : `ctx.retag_stack(AncestorType::${type.name}${snakeToCamel(field.name)});`;
+            : `traverser.ctx().retag_stack(AncestorType::${type.name}${snakeToCamel(field.name)});`;
         const fieldCode = `(node as *mut u8).add(ancestor::${field.offsetVarName}) as *mut ${field.typeName}`;
 
         if (field.wrappers[0] === 'Option') {
@@ -61,19 +60,19 @@ function generateWalkForStruct(type, types) {
             if (field.wrappers.length === 2 && field.wrappers[1] === 'Vec') {
                 if (field.typeNameInner === 'Statement') {
                     // Special case for `Option<Vec<Statement>>`
-                    walkCode = `walk_statements(traverser, field as *mut _, ctx);`;
+                    walkCode = `walk_statements(traverser, field as *mut _);`;
                 } else {
                     walkCode = `
                         for item in field.iter_mut() {
-                            ${fieldWalkName}(traverser, item as *mut _, ctx);
+                            ${fieldWalkName}(traverser, item as *mut _);
                         }
                     `.trim();
                 }
             } else if (field.wrappers.length === 2 && field.wrappers[1] === 'Box') {
-                walkCode = `${fieldWalkName}(traverser, (&mut **field) as *mut _, ctx);`;
+                walkCode = `${fieldWalkName}(traverser, (&mut **field) as *mut _);`;
             } else {
                 assert(field.wrappers.length === 1, `Cannot handle struct field with type ${field.typeName}`);
-                walkCode = `${fieldWalkName}(traverser, field as *mut _, ctx);`;
+                walkCode = `${fieldWalkName}(traverser, field as *mut _);`;
             }
 
             return `
@@ -88,9 +87,9 @@ function generateWalkForStruct(type, types) {
             let walkVecCode;
             if (field.wrappers.length === 1 && field.innerTypeName === 'Statement') {
                 // Special case for `Vec<Statement>`
-                walkVecCode = `walk_statements(traverser, ${fieldCode}, ctx);`
+                walkVecCode = `walk_statements(traverser, ${fieldCode});`
             } else {
-                let walkCode = `${fieldWalkName}(traverser, item as *mut _, ctx);`,
+                let walkCode = `${fieldWalkName}(traverser, item as *mut _);`,
                     iterModifier = '';
                 if (field.wrappers.length === 2 && field.wrappers[1] === 'Option') {
                     iterModifier = '.flatten()';
@@ -116,7 +115,7 @@ function generateWalkForStruct(type, types) {
         if (field.wrappers.length === 1 && field.wrappers[0] === 'Box') {
             return `
                 ${retagCode}
-                ${fieldWalkName}(traverser, (&mut **(${fieldCode})) as *mut _, ctx);
+                ${fieldWalkName}(traverser, (&mut **(${fieldCode})) as *mut _);
             `;
         }
 
@@ -124,7 +123,7 @@ function generateWalkForStruct(type, types) {
 
         return `
             ${retagCode}
-            ${fieldWalkName}(traverser, ${fieldCode}, ctx);
+            ${fieldWalkName}(traverser, ${fieldCode});
         `;
     });
 
@@ -132,13 +131,13 @@ function generateWalkForStruct(type, types) {
         const field = visitedFields[0],
             fieldCamelName = snakeToCamel(field.name);
         fieldsCodes.unshift(`
-            ctx.push_stack(
+            traverser.ctx().push_stack(
                 Ancestor::${type.name}${fieldCamelName}(
                     ancestor::${type.name}Without${fieldCamelName}(node)
                 )
             );
         `);
-        fieldsCodes.push('ctx.pop_stack();');
+        fieldsCodes.push('traverser.ctx().pop_stack();');
     }
 
     const typeSnakeName = camelToSnake(type.name);
@@ -146,11 +145,10 @@ function generateWalkForStruct(type, types) {
         pub(crate) unsafe fn walk_${typeSnakeName}<'a, Tr: Traverse<'a>>(
             traverser: &mut Tr,
             node: *mut ${toTypeName(type)},
-            ctx: &mut TraverseCtx<'a>
         ) {
-            traverser.enter_${typeSnakeName}(&mut *node, ctx);
+            traverser.enter_${typeSnakeName}(&mut *node);
             ${fieldsCodes.join('\n')}
-            traverser.exit_${typeSnakeName}(&mut *node, ctx);
+            traverser.exit_${typeSnakeName}(&mut *node);
         }
     `.replace(/\n\s*\n+/g, '\n');
 }
@@ -168,7 +166,7 @@ function generateWalkForEnum(type, types) {
         }
 
         return `${type.name}::${variant.name}(node) => `
-            + `walk_${camelToSnake(variant.innerTypeName)}(traverser, ${nodeCode} as *mut _, ctx),`;
+            + `walk_${camelToSnake(variant.innerTypeName)}(traverser, ${nodeCode} as *mut _),`;
     });
 
     const missingVariants = [];
@@ -191,7 +189,7 @@ function generateWalkForEnum(type, types) {
 
         variantCodes.push(
             `${variantMatches.join(' | ')} => `
-            + `walk_${camelToSnake(inheritedTypeName)}(traverser, node as *mut _, ctx),`
+            + `walk_${camelToSnake(inheritedTypeName)}(traverser, node as *mut _),`
         );
     }
 
@@ -202,13 +200,12 @@ function generateWalkForEnum(type, types) {
         pub(crate) unsafe fn walk_${typeSnakeName}<'a, Tr: Traverse<'a>>(
             traverser: &mut Tr,
             node: *mut ${toTypeName(type)},
-            ctx: &mut TraverseCtx<'a>
         ) {
-            traverser.enter_${typeSnakeName}(&mut *node, ctx);
+            traverser.enter_${typeSnakeName}(&mut *node);
             match &mut *node {
                 ${variantCodes.join('\n')}
             }
-            traverser.exit_${typeSnakeName}(&mut *node, ctx);
+            traverser.exit_${typeSnakeName}(&mut *node);
         }
     `;
 }

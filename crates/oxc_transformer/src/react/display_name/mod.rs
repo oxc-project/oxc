@@ -3,7 +3,7 @@ use std::rc::Rc;
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
-use oxc_traverse::{Ancestor, FinderRet, TraverseCtx};
+use oxc_traverse::{Ancestor, FinderRet};
 
 use crate::context::Ctx;
 
@@ -27,16 +27,12 @@ impl<'a> ReactDisplayName<'a> {
 
 // Transforms
 impl<'a> ReactDisplayName<'a> {
-    pub fn transform_call_expression(
-        &self,
-        call_expr: &mut CallExpression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) {
+    pub fn transform_call_expression(&self, call_expr: &mut CallExpression<'a>) {
         let Some(obj_expr) = Self::get_object_from_create_class(call_expr) else {
             return;
         };
 
-        let name = ctx.find_ancestor(|ancestor| {
+        let name = self.ctx.traverse().find_ancestor(|ancestor| {
             match ancestor {
                 // `foo = React.createClass({})`
                 Ancestor::AssignmentExpressionRight(assign_expr) => match &assign_expr.left() {
@@ -46,7 +42,7 @@ impl<'a> ReactDisplayName<'a> {
                     target => {
                         if let Some(target) = target.as_member_expression() {
                             if let Some(name) = target.static_property_name() {
-                                FinderRet::Found(ctx.ast.new_atom(name))
+                                FinderRet::Found(self.ctx.ast.new_atom(name))
                             } else {
                                 FinderRet::Stop
                             }
@@ -65,7 +61,7 @@ impl<'a> ReactDisplayName<'a> {
                 // `{foo: React.createClass({})}`
                 Ancestor::ObjectPropertyValue(prop) => {
                     if let Some(name) = prop.key().static_name() {
-                        FinderRet::Found(ctx.ast.new_atom(&name))
+                        FinderRet::Found(self.ctx.ast.new_atom(&name))
                     } else {
                         FinderRet::Stop
                     }
@@ -73,7 +69,7 @@ impl<'a> ReactDisplayName<'a> {
                 // `export default React.createClass({})`
                 // Uses the current file name as the display name.
                 Ancestor::ExportDefaultDeclarationDeclaration(_) => {
-                    FinderRet::Found(ctx.ast.new_atom(&self.ctx.filename))
+                    FinderRet::Found(self.ctx.ast.new_atom(&self.ctx.filename))
                 }
                 // Stop crawling up when hit a statement
                 _ if ancestor.is_via_statement() => FinderRet::Stop,
