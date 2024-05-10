@@ -8,12 +8,12 @@ digraph {
     1 [ label = ""]
     2 [ label = ""]
     3 [ label = ""]
-    4 [ label = "Unreachable()"]
+    4 [ label = "Unreachable()\nbreak"]
     5 [ label = ""]
     6 [ label = ""]
     7 [ label = ""]
     8 [ label = ""]
-    9 [ label = "Unreachable()"]
+    9 [ label = "Unreachable()\nbreak"]
     10 [ label = ""]
     11 [ label = "$return = <value>"]
     12 [ label = ""]
@@ -70,4 +70,3 @@ digraph {
     20 -> 21 [ ]
     0 -> 22 [ ]
 }
-

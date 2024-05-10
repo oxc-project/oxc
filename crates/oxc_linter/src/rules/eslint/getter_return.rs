@@ -288,6 +288,8 @@ impl GetterReturn {
 
                             return (DefinitelyReturnsOrThrowsOrUnreachable::Yes, false);
                         }
+                        // Ignore irrelevant elements.
+                        BasicBlockElement::Break(_) => {}
                     }
                 }
 

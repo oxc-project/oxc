@@ -10,10 +10,10 @@ digraph {
     3 [ label = ""]
     4 [ label = ""]
     5 [ label = "Unreachable()"]
-    6 [ label = "Unreachable()"]
+    6 [ label = "Unreachable()\nbreak $0"]
     7 [ label = "Unreachable()"]
     8 [ label = ""]
-    9 [ label = "Unreachable()"]
+    9 [ label = "Unreachable()\nbreak $2"]
     10 [ label = "$return = <value>"]
     11 [ label = ""]
     12 [ label = "Unreachable()"]
@@ -35,4 +35,3 @@ digraph {
     11 -> 12 [ ]
     0 -> 13 [ ]
 }
-

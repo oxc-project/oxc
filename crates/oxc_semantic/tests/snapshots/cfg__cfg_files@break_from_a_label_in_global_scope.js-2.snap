@@ -5,8 +5,7 @@ input_file: crates/oxc_semantic/tests/cfg_fixtures/break_from_a_label_in_global_
 ---
 digraph {
     0 [ label = ""]
-    1 [ label = "Unreachable()"]
+    1 [ label = "Unreachable()\nbreak $0"]
     0 -> 1 [ ]
     0 -> 1 [ ]
 }
-
