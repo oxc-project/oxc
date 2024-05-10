@@ -1,4 +1,4 @@
-Passed: 303/362
+Passed: 304/362
 
 # All Passed:
 * babel-preset-react
@@ -67,8 +67,7 @@ Passed: 303/362
 * autoImport/complicated-scope-module/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
 
-# babel-plugin-transform-react-jsx-self (1/3)
-* react-source/arrow-function/input.js
+# babel-plugin-transform-react-jsx-self (2/3)
 * react-source/disable-with-super/input.js
 
 # babel-plugin-transform-react-jsx-development (8/12)

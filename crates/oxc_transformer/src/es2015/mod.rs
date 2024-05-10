@@ -31,7 +31,13 @@ impl<'a> ES2015<'a> {
         }
     }
 
-    pub fn transform_statements_on_exit(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+    pub fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.transform_statements(stmts);
+        }
+    }
+
+    pub fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         if self.options.arrow_function.is_some() {
             self.arrow_functions.transform_statements_on_exit(stmts);
         }
