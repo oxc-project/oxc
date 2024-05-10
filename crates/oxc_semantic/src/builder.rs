@@ -503,11 +503,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         if let Some(break_target) = maybe_label {
-            /* cfg */
-            let break_label = self.cfg.new_register();
-            self.cfg.use_this_register = Some(break_label);
-            /* cfg */
-
             self.visit_label_identifier(break_target);
 
             /* cfg */

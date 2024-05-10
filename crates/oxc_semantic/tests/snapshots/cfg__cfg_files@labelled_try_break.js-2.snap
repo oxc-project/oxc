@@ -13,7 +13,7 @@ digraph {
     6 [ label = "Unreachable()\nbreak $0"]
     7 [ label = "Unreachable()"]
     8 [ label = ""]
-    9 [ label = "Unreachable()\nbreak $2"]
+    9 [ label = "Unreachable()\nbreak $1"]
     10 [ label = "$return = <value>"]
     11 [ label = ""]
     12 [ label = "Unreachable()"]

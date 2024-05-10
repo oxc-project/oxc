@@ -42,7 +42,7 @@ bb8: {
 
 bb9: {
 	Unreachable()
-	break $2
+	break $1
 }
 
 bb10: {
