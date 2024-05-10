@@ -34,7 +34,7 @@ pub enum FinderRet<T> {
 // Public methods
 impl<'a> TraverseCtx<'a> {
     /// Create new traversal context.
-    pub fn new(allocator: &'a Allocator) -> Self {
+    pub(crate) fn new(allocator: &'a Allocator) -> Self {
         let mut stack = Vec::with_capacity(INITIAL_STACK_CAPACITY);
         stack.push(Ancestor::None);
         Self { stack, ast: AstBuilder::new(allocator) }
