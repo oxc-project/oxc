@@ -1,3 +1,16 @@
+# Benchmarks are sharded.
+#
+# Each benchmark (parser, transformer, etc) runs in parallel in a separate job.
+# Linter benchmarks are much slower to build and run than the rest, so linter benchmark
+# is built in 1 job, and then run on each fixture in parallel in separate jobs.
+# When all jobs are complete, a final job uploads all the results to CodSpeed.
+#
+# Sharding is not natively supported by CodSpeed, so we use a hacky method to achieve it.
+# 1. Intercept the data which `CodSpeedHQ/action` would normally upload to CodSpeed for each job.
+# 2. Once all runs are complete, combine the data for all the runs together.
+# 3. Upload the combined data to CodSpeed as one.
+# This is performed by some short NodeJS scripts in `tasks/benchmark/codspeed`.
+
 name: Benchmark
 
 on:
@@ -27,45 +40,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build Benchmark
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Branch
-        uses: taiki-e/checkout-action@v1
-
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
-        with:
-          shared-key: 'benchmark'
-          save-cache: ${{ github.ref_name == 'main' }}
-
-      - name: Build benchmark
-        env:
-          RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
-        shell: bash
-        run: |
-          cargo build --release -p oxc_benchmark --benches --features codspeed
-          rm target/release/deps/*.d
-          mkdir -p target/codspeed/oxc_benchmark/
-          mv target/release/deps/lexer-* target/codspeed/oxc_benchmark/lexer
-          mv target/release/deps/parser-* target/codspeed/oxc_benchmark/parser
-          mv target/release/deps/transformer-* target/codspeed/oxc_benchmark/transformer
-          mv target/release/deps/semantic-* target/codspeed/oxc_benchmark/semantic
-          mv target/release/deps/minifier-* target/codspeed/oxc_benchmark/minifier
-          mv target/release/deps/codegen_sourcemap-* target/codspeed/oxc_benchmark/codegen_sourcemap
-          mv target/release/deps/sourcemap-* target/codspeed/oxc_benchmark/sourcemap
-          mv target/release/deps/linter-* target/codspeed/oxc_benchmark/linter
-
-      - name: Upload Binary
-        uses: actions/upload-artifact@v4
-        with:
-          if-no-files-found: error
-          name: benchmark
-          path: ./target/codspeed/oxc_benchmark
-
+  # Build and run benchmarks for all components except linter
   benchmark:
-    needs: build
     name: Benchmark
     runs-on: ubuntu-latest
     strategy:
@@ -79,23 +55,16 @@ jobs:
           - minifier
           - codegen_sourcemap
           - sourcemap
-          - linter
 
     steps:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@v1
 
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
         with:
-          name: benchmark
-          path: ./target/codspeed/oxc_benchmark
-
-      - name: Fix permission loss
-        shell: bash
-        run: |
-          ls ./target/codspeed/oxc_benchmark
-          chmod +x ./target/codspeed/oxc_benchmark/${{ matrix.component }}
+          shared-key: benchmark-${{ matrix.component }}
+          save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Install codspeed
         uses: taiki-e/install-action@v2
@@ -117,6 +86,17 @@ jobs:
           pnpm install
           node capture.mjs &
 
+      - name: Build benchmark
+        env:
+          RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
+        shell: bash
+        run: |
+          cargo build --release -p oxc_benchmark --bench ${{ matrix.component }} \
+            --no-default-features --features ${{ matrix.component }} --features codspeed
+          mkdir -p target/codspeed/oxc_benchmark
+          mv target/release/deps/${{ matrix.component }}-* target/codspeed/oxc_benchmark
+          rm target/codspeed/oxc_benchmark/*.d
+
       - name: Run benchmark
         uses: CodSpeedHQ/action@v2
         timeout-minutes: 30
@@ -124,13 +104,116 @@ jobs:
           # Dummy token for tokenless runs, to suppress logging hash of metadata JSON (see `upload.mjs`)
           token: ${{ secrets.CODSPEED_TOKEN || 'dummy' }}
           upload-url: http://localhost:${{ env.INTERCEPT_PORT }}/upload
-          run: cargo codspeed run ${{ matrix.component }}
+          run: cargo codspeed run
 
       - name: Upload bench data artefact
         uses: actions/upload-artifact@v4
         with:
           name: result-${{ matrix.component }}
-          path: ${{ env.DATA_DIR }} # # env.DEFAULT_PORT from capture.mjs
+          path: ${{ env.DATA_DIR }} # env.DATA_DIR from `capture.mjs`
+          if-no-files-found: error
+          retention-days: 1
+
+  # Build linter benchmark.
+  # Linter benchmarks are much slower than the rest, so we run each fixture in a separate job.
+  # But only build the linter benchmark once.
+  build-linter:
+    name: Build Linter Benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Branch
+        uses: taiki-e/checkout-action@v1
+
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
+        with:
+          shared-key: benchmark-linter
+          save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Build benchmark
+        env:
+          RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
+        shell: bash
+        run: |
+          cargo build --release -p oxc_benchmark --bench linter \
+            --no-default-features --features linter --features codspeed
+          mkdir -p target/codspeed/oxc_benchmark
+          mv target/release/deps/linter-* target/codspeed/oxc_benchmark
+          rm target/codspeed/oxc_benchmark/*.d
+
+      - name: Upload Binary
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          name: benchmark-linter
+          path: ./target/codspeed/oxc_benchmark
+          retention-days: 1
+
+  # Run linter benchmarks. Each fixture in a separate job.
+  benchmark-linter:
+    name: Benchmark linter
+    needs: build-linter
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        fixture:
+          - 0
+          - 1
+
+    steps:
+      - name: Checkout Branch
+        uses: taiki-e/checkout-action@v1
+
+      - name: Download Binary
+        uses: actions/download-artifact@v4
+        with:
+          name: benchmark-linter
+          path: ./target/codspeed/oxc_benchmark
+
+      - name: Fix permission loss
+        shell: bash
+        run: |
+          ls ./target/codspeed/oxc_benchmark
+          chmod +x ./target/codspeed/oxc_benchmark/*
+
+      - name: Install codspeed
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-codspeed
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Start bench results interceptor server
+        working-directory: ./tasks/benchmark/codspeed
+        env:
+          COMPONENT: linter
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          corepack enable
+          pnpm install
+          node capture.mjs &
+
+      - name: Run benchmark
+        uses: CodSpeedHQ/action@v2
+        timeout-minutes: 30
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        with:
+          # Dummy token for tokenless runs, to suppress logging hash of metadata JSON (see `upload.mjs`)
+          token: ${{ secrets.CODSPEED_TOKEN || 'dummy' }}
+          upload-url: http://localhost:${{ env.INTERCEPT_PORT }}/upload
+          run: cargo codspeed run
+
+      - name: Upload bench data artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: result-linter${{ matrix.fixture }}
+          path: ${{ env.DATA_DIR }} # env.DATA_DIR from `capture.mjs`
           if-no-files-found: error
           retention-days: 1
 
@@ -211,10 +294,11 @@ jobs:
           # if-no-files-found: error
           # retention-days: 1
 
+  # Upload combined benchmark results to CodSpeed
   upload:
     name: Upload benchmarks
-    # needs: [benchmark, benchmark-napi]
-    needs: [benchmark]
+    # needs: [benchmark, benchmark-linter, benchmark-napi]
+    needs: [benchmark, benchmark-linter]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Branch
@@ -238,10 +322,18 @@ jobs:
         with:
           merge-multiple: true
           pattern: result-*
-          path: ${{ env.DATA_DIR }} # env.DEFAULT_PORT from create_temp_dir.mjs
+          path: ${{ env.DATA_DIR }} # env.DATA_DIR from `create_temp_dir.mjs`
 
       - name: Upload to Codspeed
         working-directory: ./tasks/benchmark/codspeed
         env:
           CODSPEED_TOKEN: ${{ secrets.CODSPEED_TOKEN }}
         run: node upload.mjs
+
+      - name: Delete temporary artefacts
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: |
+            result-*
+            benchmark-linter
+          failOnError: false

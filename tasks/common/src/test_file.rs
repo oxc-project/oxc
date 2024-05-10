@@ -52,11 +52,6 @@ impl TestFiles {
         Self { files: vec![file] }
     }
 
-    pub fn linter() -> Self {
-        let files = Self::complicated_urls().into_iter().take(2).map(TestFile::new).collect();
-        Self { files }
-    }
-
     fn complicated_urls() -> [&'static str; 5] {
         [
             // TypeScript syntax (2.81MB)
