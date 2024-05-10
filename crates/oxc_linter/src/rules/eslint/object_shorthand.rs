@@ -4,6 +4,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -39,7 +40,36 @@ enum ObjectShorthandDiagnostic {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct ObjectShorthand;
+pub struct ObjectShorthand(Box<ObjectShorthandConfig>);
+
+#[derive(Debug, Clone)]
+pub struct ObjectShorthandConfig {
+    shorthand_type: ShorthandType,
+    avoid_quotes: bool,
+    ignore_constructors: bool,
+    avoid_explicit_return_arrows: bool,
+    methods_ignore_pattern: Option<Regex>,
+}
+
+impl std::ops::Deref for ObjectShorthand {
+    type Target = ObjectShorthandConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Default for ObjectShorthandConfig {
+    fn default() -> Self {
+        Self {
+            shorthand_type: ShorthandType::default(),
+            avoid_quotes: false,
+            ignore_constructors: false,
+            avoid_explicit_return_arrows: false,
+            methods_ignore_pattern: None,
+        }
+    }
+}
 
 // doc: https://github.com/eslint/eslint/blob/main/docs/src/rules/object-shorthand.md
 // code: https://github.com/eslint/eslint/blob/main/lib/rules/object-shorthand.js
@@ -72,7 +102,61 @@ declare_oxc_lint!(
 );
 
 impl Rule for ObjectShorthand {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let obj1 = value.get(0);
+        let obj2 = value.get(1);
+
+        Self(Box::new(ObjectShorthandConfig {
+            shorthand_type: obj1
+                .and_then(serde_json::Value::as_str)
+                .map(ShorthandType::from)
+                .unwrap_or_default(),
+            avoid_quotes: obj2
+                .and_then(|v| v.get("avoidQuotes"))
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(false),
+            ignore_constructors: obj2
+                .and_then(|v| v.get("ignoreConstructors"))
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(false),
+            avoid_explicit_return_arrows: obj2
+                .and_then(|v| v.get("avoidExplicitReturnArrows"))
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(false),
+            methods_ignore_pattern: obj2
+                .and_then(|v| v.get("methodsIgnorePattern"))
+                .and_then(serde_json::Value::as_str)
+                .and_then(|pattern| Regex::new(pattern).ok()),
+        }))
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        println!("{:?}", self);
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+enum ShorthandType {
+    #[default]
+    Always,
+    Methods,
+    Properties,
+    Consistent,
+    ConsistentAsNeeded,
+    Never,
+}
+
+impl ShorthandType {
+    pub fn from(raw: &str) -> Self {
+        match raw {
+            "methods" => Self::Methods,
+            "properties" => Self::Properties,
+            "consistent" => Self::Consistent,
+            "consistent-as-needed" => Self::ConsistentAsNeeded,
+            "never" => Self::Never,
+            _ => Self::Always,
+        }
+    }
 }
 
 #[test]
