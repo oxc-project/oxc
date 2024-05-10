@@ -489,14 +489,20 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
         let kind = AstKind::BreakStatement(self.alloc(stmt));
         self.enter_node(kind);
+        let maybe_label = stmt.label.as_ref();
 
         /* cfg */
         let statement_state = self
             .cfg
             .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        let break_label = maybe_label.and_then(|_| {
+            let reg = Some(self.cfg.new_register());
+            self.cfg.use_this_register = reg;
+            reg
+        });
         /* cfg */
 
-        if let Some(break_target) = &stmt.label {
+        if let Some(break_target) = maybe_label {
             self.visit_label_identifier(break_target);
 
             /* cfg */
@@ -527,6 +533,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.cfg.put_unreachable();
 
+        self.cfg.put_break(break_label);
         self.cfg.after_statement(
             &statement_state,
             self.current_node_id,
