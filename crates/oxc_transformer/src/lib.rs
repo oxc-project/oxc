@@ -28,7 +28,6 @@ use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, Trivias};
 use oxc_diagnostics::Error;
 use oxc_span::SourceType;
-// use oxc_syntax::scope::ScopeFlags;
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
 pub use crate::{
@@ -156,10 +155,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &TraverseCtx<'a>) {
-        // TODO: Scope flags
-        // Was a function param: flags: Option<ScopeFlags>,
-        let flags = None;
-        self.x0_typescript.transform_function(func, flags);
+        self.x0_typescript.transform_function(func);
     }
 
     fn enter_jsx_opening_element(
