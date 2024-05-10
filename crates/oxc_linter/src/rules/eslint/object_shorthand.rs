@@ -4,7 +4,6 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -48,7 +47,7 @@ pub struct ObjectShorthandConfig {
     avoid_quotes: bool,
     ignore_constructors: bool,
     avoid_explicit_return_arrows: bool,
-    methods_ignore_pattern: Option<Regex>,
+    methods_ignore_pattern: Option<String>,
 }
 
 impl std::ops::Deref for ObjectShorthand {
@@ -126,13 +125,11 @@ impl Rule for ObjectShorthand {
             methods_ignore_pattern: obj2
                 .and_then(|v| v.get("methodsIgnorePattern"))
                 .and_then(serde_json::Value::as_str)
-                .and_then(|pattern| Regex::new(pattern).ok()),
+                .and_then(|v| Some(v.to_string())),
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        println!("{:?}", self);
-    }
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
 }
 
 #[derive(Debug, Default, Clone)]
