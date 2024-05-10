@@ -1,6 +1,6 @@
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::{self, Error},
+    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -41,7 +41,7 @@ enum ObjectShorthandDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct ObjectShorthand(Box<ObjectShorthandConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct ObjectShorthandConfig {
     shorthand_type: ShorthandType,
     avoid_quotes: bool,
@@ -55,18 +55,6 @@ impl std::ops::Deref for ObjectShorthand {
 
     fn deref(&self) -> &Self::Target {
         &self.0
-    }
-}
-
-impl Default for ObjectShorthandConfig {
-    fn default() -> Self {
-        Self {
-            shorthand_type: ShorthandType::default(),
-            avoid_quotes: false,
-            ignore_constructors: false,
-            avoid_explicit_return_arrows: false,
-            methods_ignore_pattern: None,
-        }
     }
 }
 
@@ -125,7 +113,7 @@ impl Rule for ObjectShorthand {
             methods_ignore_pattern: obj2
                 .and_then(|v| v.get("methodsIgnorePattern"))
                 .and_then(serde_json::Value::as_str)
-                .and_then(|v| Some(v.to_string())),
+                .map(ToString::to_string),
         }))
     }
 
