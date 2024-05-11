@@ -188,9 +188,13 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_property_definition(def);
     }
 
+    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &TraverseCtx<'a>) {
+        self.x3_es2015.enter_statements(stmts);
+    }
+
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &TraverseCtx<'a>) {
         self.x0_typescript.transform_statements_on_exit(stmts);
-        self.x3_es2015.transform_statements_on_exit(stmts);
+        self.x3_es2015.exit_statements(stmts);
     }
 
     fn enter_tagged_template_expression(

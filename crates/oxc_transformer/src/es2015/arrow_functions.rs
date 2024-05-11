@@ -31,9 +31,10 @@ pub struct ArrowFunctions<'a> {
     _options: ArrowFunctionsOptions,
     uid: usize,
     has_this: bool,
-    can_insert: bool,
     /// Stack to keep track of whether we are inside an arrow function or not.
     stacks: std::vec::Vec<bool>,
+    // var _this = this;
+    this_statements: std::vec::Vec<Option<Statement<'a>>>,
 }
 
 impl<'a> ArrowFunctions<'a> {
@@ -43,8 +44,8 @@ impl<'a> ArrowFunctions<'a> {
             _options: options,
             uid: 0,
             has_this: false,
-            can_insert: false,
             stacks: vec![],
+            this_statements: vec![],
         }
     }
 
@@ -64,8 +65,28 @@ impl<'a> ArrowFunctions<'a> {
         }
     }
 
+    pub fn transform_statements(&mut self, _stmts: &mut Vec<'a, Statement<'a>>) {
+        self.this_statements.push(None);
+    }
+
+    /// ```ts
+    /// function a(){
+    ///    () => console.log(this);
+    /// }
+    /// // to
+    /// function a(){
+    ///   var _this = this;
+    ///  (function() { return console.log(_this); });
+    /// }
+    /// ```
+    /// Insert the var _this = this; statement outside the arrow function
     pub fn transform_statements_on_exit(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
-        if self.can_insert {
+        // Insert the var _this = this;
+        if let Some(Some(stmt)) = self.this_statements.pop() {
+            stmts.insert(0, stmt);
+        }
+
+        if self.has_this {
             let binding_pattern = self.ctx.ast.binding_pattern(
                 self.ctx
                     .ast
@@ -88,13 +109,10 @@ impl<'a> ArrowFunctions<'a> {
                 self.ctx.ast.new_vec_single(variable_declarator),
                 Modifiers::empty(),
             );
-            stmts.insert(0, Statement::VariableDeclaration(stmt));
-            self.can_insert = false;
-        }
 
-        // Insert to parent block statement
-        if self.has_this {
-            self.can_insert = true;
+            let stmt = Statement::VariableDeclaration(stmt);
+            // store it, insert it in last statements
+            self.this_statements.last_mut().unwrap().replace(stmt);
             self.has_this = false;
         }
     }
@@ -199,13 +217,13 @@ impl<'a> ArrowFunctions<'a> {
 
     pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
         if let Declaration::FunctionDeclaration(_) = decl {
-            self.stacks.push(true);
+            self.stacks.push(false);
         }
     }
 
     pub fn transform_declaration_on_exit(&mut self, decl: &mut Declaration<'a>) {
         if let Declaration::FunctionDeclaration(_) = decl {
-            self.stacks.push(false);
+            self.stacks.pop();
         }
     }
 
@@ -214,6 +232,6 @@ impl<'a> ArrowFunctions<'a> {
     }
 
     pub fn transform_class_on_exit(&mut self, _class: &mut Class<'a>) {
-        self.stacks.push(false);
+        self.stacks.pop();
     }
 }
