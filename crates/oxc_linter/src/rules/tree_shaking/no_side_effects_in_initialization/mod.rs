@@ -1,10 +1,7 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -12,71 +9,68 @@ use self::listener_map::{ListenerMap, NodeListenerOptions};
 
 mod listener_map;
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoSideEffectsDiagnostic {
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of assignment to `{0}`")]
-    #[diagnostic(severity(warning))]
-    Assignment(CompactStr, #[label] Span),
+fn assignment(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning(format!("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of assignment to `{x0}`")).with_labels([span1.into()])
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating")]
-    #[diagnostic(severity(warning))]
-    Mutate(#[label] Span),
+fn mutate(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating").with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating `{0}`")]
-    #[diagnostic(severity(warning))]
-    MutateWithName(CompactStr, #[label] Span),
+fn mutate_with_name(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning(format!("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating `{x0}`")).with_labels([span1.into()])
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function return value")]
-    #[diagnostic(severity(warning))]
-    MutateFunctionReturnValue(#[label] Span),
+fn mutate_function_return_value(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function return value").with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function parameter")]
-    #[diagnostic(severity(warning))]
-    MutateParameter(#[label] Span),
+fn mutate_parameter(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function parameter").with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating unknown this value")]
-    #[diagnostic(severity(warning))]
-    MutateOfThis(#[label] Span),
+fn mutate_of_this(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating unknown this value").with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating imported variable")]
-    #[diagnostic(severity(warning))]
-    MutateImport(#[label] Span),
+fn mutate_import(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating imported variable").with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling")]
-    #[diagnostic(severity(warning))]
-    Call(#[label] Span),
+fn call(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling").with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function return value")]
-    #[diagnostic(severity(warning))]
-    CallReturnValue(#[label] Span),
+fn call_return_value(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function return value").with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `{0}`")]
-    #[diagnostic(severity(warning))]
-    CallGlobal(CompactStr, #[label] Span),
+fn call_global(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning(format!("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `{x0}`")).with_labels([span1.into()])
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function parameter")]
-    #[diagnostic(severity(warning))]
-    CallParameter(#[label] Span),
+fn call_parameter(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function parameter").with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling imported function")]
-    #[diagnostic(severity(warning))]
-    CallImport(#[label] Span),
+fn call_import(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling imported function").with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling member function")]
-    #[diagnostic(severity(warning))]
-    CallMember(#[label] Span),
+fn call_member(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling member function").with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Debugger statements are side-effects")]
-    #[diagnostic(severity(warning))]
-    Debugger(#[label] Span),
+fn debugger(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Debugger statements are side-effects").with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of deleting anything but a MemberExpression")]
-    #[diagnostic(severity(warning))]
-    Delete(#[label] Span),
+fn delete(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of deleting anything but a MemberExpression").with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Throwing an error is a side-effect")]
-    #[diagnostic(severity(warning))]
-    Throw(#[label] Span),
+fn throw(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Throwing an error is a side-effect").with_labels([span0.into()])
 }
 
 /// <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/master/src/rules/no-side-effects-in-initialization.ts>
@@ -106,7 +100,9 @@ declare_oxc_lint!(
 
 impl Rule for NoSideEffectsInInitialization {
     fn run_once(&self, ctx: &LintContext) {
-        let Some(root) = ctx.nodes().root_node() else { return };
+        let Some(root) = ctx.nodes().root_node() else {
+            return;
+        };
         let AstKind::Program(program) = root.kind() else { unreachable!() };
         let node_listener_options = NodeListenerOptions::new(ctx);
         program.report_effects(&node_listener_options);
@@ -671,7 +667,7 @@ fn test() {
         // YieldExpression
         "function* x(){yield ext()}; x()",
         // YieldExpression when called
-        "function* x(){yield ext()}; x()"
+        "function* x(){yield ext()}; x()",
     ];
 
     Tester::new(NoSideEffectsInInitialization::NAME, pass, fail).test_and_snapshot();

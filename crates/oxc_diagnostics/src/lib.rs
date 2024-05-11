@@ -27,8 +27,8 @@ pub type Report = miette::Report;
 
 pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
 
-pub use miette::LabeledSpan;
 use miette::{Diagnostic, SourceCode};
+pub use miette::{LabeledSpan, NamedSource};
 use thiserror::Error;
 
 #[derive(Debug, Error, Diagnostic)]
@@ -60,6 +60,7 @@ pub struct OxcDiagnosticInner {
     pub message: String,
     pub labels: Option<Vec<LabeledSpan>>,
     pub help: Option<String>,
+    pub severity: Severity,
 }
 
 impl fmt::Display for OxcDiagnostic {
@@ -73,6 +74,10 @@ impl std::error::Error for OxcDiagnostic {}
 impl Diagnostic for OxcDiagnostic {
     fn help<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
         self.help.as_ref().map(Box::new).map(|c| c as Box<dyn Display>)
+    }
+
+    fn severity(&self) -> Option<Severity> {
+        Some(self.severity)
     }
 
     fn labels(&self) -> Option<Box<dyn Iterator<Item = LabeledSpan> + '_>> {
@@ -92,6 +97,19 @@ impl OxcDiagnostic {
                 message: message.into(),
                 labels: None,
                 help: None,
+                severity: Severity::Error,
+            }),
+        }
+    }
+
+    #[must_use]
+    pub fn warning<T: Into<String>>(message: T) -> Self {
+        Self {
+            inner: Box::new(OxcDiagnosticInner {
+                message: message.into(),
+                labels: None,
+                help: None,
+                severity: Severity::Warning,
             }),
         }
     }

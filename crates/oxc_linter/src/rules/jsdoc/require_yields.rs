@@ -1,8 +1,6 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{JSDoc, JSDocTag};
 use oxc_span::Span;
@@ -19,19 +17,22 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum RequireYieldsDiagnostic {
-    #[error("eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.")]
-    #[diagnostic(severity(warning), help("Add `@yields` tag to the JSDoc comment."))]
-    MissingYields(#[label] Span),
-    #[error("eslint-plugin-jsdoc(require-yields): Duplicate `@yields` tags.")]
-    #[diagnostic(severity(warning), help("Remove redundunt `@yields` tag."))]
-    DuplicateYields(#[label] Span),
-    #[error(
-        "eslint-plugin-jsdoc(require-yields): `@yields` tag is required when using `@generator` tag."
-    )]
-    #[diagnostic(severity(warning), help("Add `@yields` tag to the JSDoc comment."))]
-    MissingYieldsWithGenerator(#[label] Span),
+fn missing_yields(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.")
+        .with_help("Add `@yields` tag to the JSDoc comment.")
+        .with_labels([span0.into()])
+}
+
+fn duplicate_yields(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-jsdoc(require-yields): Duplicate `@yields` tags.")
+        .with_help("Remove redundunt `@yields` tag.")
+        .with_labels([span0.into()])
+}
+
+fn missing_yields_with_generator(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-jsdoc(require-yields): `@yields` tag is required when using `@generator` tag.")
+        .with_help("Add `@yields` tag to the JSDoc comment.")
+        .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -144,7 +145,7 @@ impl Rule for RequireYields {
                 if config.force_require_yields
                     && is_missing_yields_tag(&jsdoc_tags, &resolved_yields_tag_name)
                 {
-                    ctx.diagnostic(RequireYieldsDiagnostic::MissingYields(func.span));
+                    ctx.diagnostic(missing_yields(func.span));
                     return;
                 }
 
@@ -152,7 +153,7 @@ impl Rule for RequireYields {
 
                 if let Some(span) = is_duplicated_yields_tag(&jsdoc_tags, &resolved_yields_tag_name)
                 {
-                    ctx.diagnostic(RequireYieldsDiagnostic::DuplicateYields(span));
+                    ctx.diagnostic(duplicate_yields(span));
                     return;
                 }
 
@@ -164,7 +165,7 @@ impl Rule for RequireYields {
                         &resolved_yields_tag_name,
                         &resolved_generator_tag_name,
                     ) {
-                        ctx.diagnostic(RequireYieldsDiagnostic::MissingYieldsWithGenerator(span));
+                        ctx.diagnostic(missing_yields_with_generator(span));
                     }
                 }
             }
@@ -230,7 +231,7 @@ impl Rule for RequireYields {
                 let resolved_yields_tag_name = settings.resolve_tag_name("yields");
 
                 if is_missing_yields_tag(&jsdoc_tags, &resolved_yields_tag_name) {
-                    ctx.diagnostic(RequireYieldsDiagnostic::MissingYields(generator_func.span));
+                    ctx.diagnostic(missing_yields(generator_func.span));
                 }
             }
             _ => {}
@@ -302,7 +303,7 @@ fn test() {
         			           * @yields Foo.
         			           */
         			          function * quux () {
-			
+
         			            yield foo;
         			          }
         			      ",

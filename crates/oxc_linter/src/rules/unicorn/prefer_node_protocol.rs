@@ -2,20 +2,19 @@ use oxc_ast::{
     ast::{Expression, ModuleDeclaration},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_resolver::NODEJS_BUILTINS;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.")]
-#[diagnostic(severity(warning), help("Prefer `node:{1}` over `{1}`."))]
-struct PreferNodeProtocolDiagnostic(#[label] pub Span, String);
+fn prefer_node_protocol_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.")
+        .with_help(format!("Prefer `node:{x1}` over `{x1}`."))
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferNodeProtocol;
@@ -75,7 +74,7 @@ impl Rule for PreferNodeProtocol {
             return;
         }
 
-        ctx.diagnostic(PreferNodeProtocolDiagnostic(span, string_lit_value.to_string()));
+        ctx.diagnostic(prefer_node_protocol_diagnostic(span, &string_lit_value));
     }
 }
 

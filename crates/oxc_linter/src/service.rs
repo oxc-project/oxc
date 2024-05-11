@@ -293,7 +293,9 @@ impl Runtime {
                 .for_each_with(tx_error, |tx_error, (specifier, resolution)| {
                     let path = resolution.path();
                     self.process_path(path, tx_error);
-                    let Some(target_module_record_ref) = self.module_map.get(path) else { return };
+                    let Some(target_module_record_ref) = self.module_map.get(path) else {
+                        return;
+                    };
                     let ModuleState::Resolved(target_module_record) =
                         target_module_record_ref.value()
                     else {

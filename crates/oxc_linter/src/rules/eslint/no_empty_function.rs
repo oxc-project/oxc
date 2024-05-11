@@ -1,17 +1,16 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-empty-function): Disallow empty functions")]
-#[diagnostic(severity(warning), help("Unexpected empty function block"))]
-struct NoEmptyFunctionDiagnostic(#[label] pub Span);
+fn no_empty_function_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint(no-empty-function): Disallow empty functions")
+        .with_help("Unexpected empty function block")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoEmptyFunction;
@@ -41,7 +40,7 @@ impl Rule for NoEmptyFunction {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::FunctionBody(fb) = node.kind() {
             if fb.is_empty() && !ctx.semantic().trivias().has_comments_between(fb.span) {
-                ctx.diagnostic(NoEmptyFunctionDiagnostic(fb.span));
+                ctx.diagnostic(no_empty_function_diagnostic(fb.span));
             }
         }
     }

@@ -1,22 +1,23 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum BadObjectLiteralComparisonDiagnostic {
-    #[error("deepscan(bad-object-literal-comparison): Unexpected object literal comparison.")]
-    #[diagnostic(severity(warning), help("This comparison will always return {1:?} as object literals are never equal to each other. Consider using `Object.entries()` of `Object.keys()` and comparing their lengths."))]
-    ObjectComparison(#[label] Span, bool),
-    #[error("deepscan(bad-object-literal-comparison): Unexpected array literal comparison.")]
-    #[diagnostic(severity(warning), help("This comparison will always return {1:?} as array literals are never equal to each other. Consider using `Array.length` if empty checking was intended."))]
-    ArrayComparison(#[label] Span, bool),
+fn object_comparison(span0: Span, x1: bool) -> OxcDiagnostic {
+    OxcDiagnostic::warning("deepscan(bad-object-literal-comparison): Unexpected object literal comparison.")
+        .with_help(format!(
+            "This comparison will always return {x1:?} as object literals are never equal to each other. Consider using `Object.entries()` of `Object.keys()` and comparing their lengths."
+        ))
+        .with_labels([span0.into()])
+}
+
+fn array_comparison(span0: Span, x1: bool) -> OxcDiagnostic {
+    OxcDiagnostic::warning("deepscan(bad-object-literal-comparison): Unexpected array literal comparison.")
+        .with_help(format!("This comparison will always return {x1:?} as array literals are never equal to each other. Consider using `Array.length` if empty checking was intended."))
+        .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -50,7 +51,9 @@ declare_oxc_lint!(
 
 impl Rule for BadObjectLiteralComparison {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(binary_expression) = node.kind() else { return };
+        let AstKind::BinaryExpression(binary_expression) = node.kind() else {
+            return;
+        };
 
         if !matches!(
             binary_expression.operator,
@@ -65,7 +68,7 @@ impl Rule for BadObjectLiteralComparison {
         if is_empty_object_expression(&binary_expression.left)
             || is_empty_object_expression(&binary_expression.right)
         {
-            ctx.diagnostic(BadObjectLiteralComparisonDiagnostic::ObjectComparison(
+            ctx.diagnostic(object_comparison(
                 binary_expression.span,
                 matches!(
                     binary_expression.operator,
@@ -77,7 +80,7 @@ impl Rule for BadObjectLiteralComparison {
         if is_empty_array_expression(&binary_expression.left)
             || is_empty_array_expression(&binary_expression.right)
         {
-            ctx.diagnostic(BadObjectLiteralComparisonDiagnostic::ArrayComparison(
+            ctx.diagnostic(array_comparison(
                 binary_expression.span,
                 matches!(
                     binary_expression.operator,

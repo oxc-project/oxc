@@ -1,20 +1,21 @@
 use oxc_ast::{ast::Argument, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("deepscan(number-arg-out-of-range): Radix or precision arguments of number-related functions should not exceed the limit")]
-#[diagnostic(
-    severity(warning),
-    help("The first argument of 'Number.prototype.{0}' should be a number between {1} and {2}")
-)]
-struct NumberArgOutOfRangeDiagnostic(CompactStr, usize, usize, #[label] pub Span);
+fn number_arg_out_of_range_diagnostic(
+    x0: &str,
+    x1: usize,
+    x2: usize,
+    span3: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warning("deepscan(number-arg-out-of-range): Radix or precision arguments of number-related functions should not exceed the limit")
+        .with_help(format!("The first argument of 'Number.prototype.{x0}' should be a number between {x1} and {x2}"))
+        .with_labels([span3.into()])
+}
 
 /// `https://deepscan.io/docs/rules/number-arg-out-of-range`
 #[derive(Debug, Default, Clone)]
@@ -47,20 +48,23 @@ impl Rule for NumberArgOutOfRange {
                 match member.static_property_name() {
                     Some(name @ "toString") => {
                         if !(2.0_f64..=36.0_f64).contains(&value) {
-                            let name = CompactStr::from(name);
-                            ctx.diagnostic(NumberArgOutOfRangeDiagnostic(name, 2, 36, expr.span));
+                            ctx.diagnostic(number_arg_out_of_range_diagnostic(
+                                name, 2, 36, expr.span,
+                            ));
                         }
                     }
                     Some(name @ ("toFixed" | "toExponential")) => {
                         if !(0.0_f64..=20.0_f64).contains(&value) {
-                            let name = CompactStr::from(name);
-                            ctx.diagnostic(NumberArgOutOfRangeDiagnostic(name, 0, 20, expr.span));
+                            ctx.diagnostic(number_arg_out_of_range_diagnostic(
+                                name, 0, 20, expr.span,
+                            ));
                         }
                     }
                     Some(name @ "toPrecision") => {
                         if !(1.0_f64..=21.0_f64).contains(&value) {
-                            let name = CompactStr::from(name);
-                            ctx.diagnostic(NumberArgOutOfRangeDiagnostic(name, 1, 21, expr.span));
+                            ctx.diagnostic(number_arg_out_of_range_diagnostic(
+                                name, 1, 21, expr.span,
+                            ));
                         }
                     }
                     _ => {}

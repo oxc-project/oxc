@@ -2,33 +2,27 @@ use oxc_ast::{
     ast::{BinaryExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("deepscan(bad-bitwise-operator): Bad bitwise operator")]
-#[diagnostic(
-    severity(warning),
-    help("Bitwise operator '{0}' seems unintended. Did you mean logical operator '{1}'?")
-)]
-struct BadBitwiseOperatorDiagnostic(&'static str, &'static str, #[label] pub Span);
+fn bad_bitwise_operator_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("deepscan(bad-bitwise-operator): Bad bitwise operator")
+        .with_help(format!(
+            "Bitwise operator '{x0}' seems unintended. Did you mean logical operator '{x1}'?"
+        ))
+        .with_labels([span2.into()])
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("Bad bitwise operator")]
-#[diagnostic(
-    severity(warning),
-    help(
-        "Bitwise operator '|=' seems unintended. Consider using non-compound assignment and logical operator '||' instead."
-    )
-)]
-struct BadBitwiseOrOperatorDiagnostic(#[label] pub Span);
+fn bad_bitwise_or_operator_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("Bad bitwise operator")
+        .with_help("Bitwise operator '|=' seems unintended. Consider using non-compound assignment and logical operator '||' instead.")
+        .with_labels([span0.into()])
+}
 
 /// `https://deepscan.io/docs/rules/bad-bitwise-operator`
 #[derive(Debug, Default, Clone)]
@@ -67,16 +61,16 @@ impl Rule for BadBitwiseOperator {
         match node.kind() {
             AstKind::BinaryExpression(bin_expr) => {
                 if is_mistype_short_circuit(node) {
-                    ctx.diagnostic(BadBitwiseOperatorDiagnostic("&", "&&", bin_expr.span));
+                    ctx.diagnostic(bad_bitwise_operator_diagnostic("&", "&&", bin_expr.span));
                 } else if is_mistype_option_fallback(node) {
-                    ctx.diagnostic(BadBitwiseOperatorDiagnostic("|", "||", bin_expr.span));
+                    ctx.diagnostic(bad_bitwise_operator_diagnostic("|", "||", bin_expr.span));
                 }
             }
             AstKind::AssignmentExpression(assign_expr) => {
                 if assign_expr.operator == AssignmentOperator::BitwiseOR
                     && !is_numeric_expr(&assign_expr.right, true)
                 {
-                    ctx.diagnostic(BadBitwiseOrOperatorDiagnostic(assign_expr.span));
+                    ctx.diagnostic(bad_bitwise_or_operator_diagnostic(assign_expr.span));
                 }
             }
             _ => {}
@@ -91,7 +85,9 @@ fn is_mistype_short_circuit(node: &AstNode) -> bool {
                 return false;
             }
 
-            let Expression::Identifier(left_ident) = &bin_expr.left else { return false };
+            let Expression::Identifier(left_ident) = &bin_expr.left else {
+                return false;
+            };
 
             if let Some(member_expr) = bin_expr.right.as_member_expression() {
                 if let Expression::Identifier(ident) = member_expr.object() {

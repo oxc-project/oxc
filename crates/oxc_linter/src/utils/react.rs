@@ -28,7 +28,9 @@ pub fn has_jsx_prop<'a, 'b>(
     node.attributes.iter().find(|attr| match attr {
         JSXAttributeItem::SpreadAttribute(_) => false,
         JSXAttributeItem::Attribute(attr) => {
-            let JSXAttributeName::Identifier(name) = &attr.name else { return false };
+            let JSXAttributeName::Identifier(name) = &attr.name else {
+                return false;
+            };
 
             name.name.as_str() == target_prop
         }
@@ -42,7 +44,9 @@ pub fn has_jsx_prop_lowercase<'a, 'b>(
     node.attributes.iter().find(|attr| match attr {
         JSXAttributeItem::SpreadAttribute(_) => false,
         JSXAttributeItem::Attribute(attr) => {
-            let JSXAttributeName::Identifier(name) = &attr.name else { return false };
+            let JSXAttributeName::Identifier(name) = &attr.name else {
+                return false;
+            };
 
             name.name.as_str().to_lowercase() == target_prop.to_lowercase()
         }
@@ -164,7 +168,9 @@ const PRAGMA: &str = "React";
 const CREATE_CLASS: &str = "createReactClass";
 
 pub fn is_es5_component(node: &AstNode) -> bool {
-    let AstKind::CallExpression(call_expr) = node.kind() else { return false };
+    let AstKind::CallExpression(call_expr) = node.kind() else {
+        return false;
+    };
 
     if let Some(member_expr) = call_expr.callee.as_member_expression() {
         if let Expression::Identifier(ident) = member_expr.object() {
@@ -184,7 +190,9 @@ const COMPONENT: &str = "Component";
 const PURE_COMPONENT: &str = "PureComponent";
 
 pub fn is_es6_component(node: &AstNode) -> bool {
-    let AstKind::Class(class_expr) = node.kind() else { return false };
+    let AstKind::Class(class_expr) = node.kind() else {
+        return false;
+    };
     if let Some(super_class) = &class_expr.super_class {
         if let Some(member_expr) = super_class.as_member_expression() {
             if let Expression::Identifier(ident) = member_expr.object() {

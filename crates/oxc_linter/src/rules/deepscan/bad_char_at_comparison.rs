@@ -1,22 +1,17 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("deepscan(bad-char-at-comparison): Invalid comparison with `charAt` method")]
-#[diagnostic(severity(warning), help("`String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false."))]
-struct BadCharAtComparisonDiagnostic(
-    #[label("`charAt` called here")] pub Span,
-    #[label("And compared with a string of length {2} here")] pub Span,
-    usize,
-);
+fn bad_char_at_comparison_diagnostic(span0: Span, span1: Span, x2: usize) -> OxcDiagnostic {
+    OxcDiagnostic::warning("deepscan(bad-char-at-comparison): Invalid comparison with `charAt` method")
+        .with_help("`String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.")
+        .with_labels([LabeledSpan::new_with_span(Some("`charAt` called here".into()), span0), LabeledSpan::new_with_span(Some(format!("And compared with a string of length {x2} here")), span1)])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct BadCharAtComparison;
@@ -46,7 +41,9 @@ declare_oxc_lint!(
 
 impl Rule for BadCharAtComparison {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
         if !is_method_call(call_expr, None, Some(&["charAt"]), Some(1), Some(1)) {
             return;
@@ -56,7 +53,9 @@ impl Rule for BadCharAtComparison {
             return;
         };
 
-        let AstKind::BinaryExpression(binary_expr) = parent.kind() else { return };
+        let AstKind::BinaryExpression(binary_expr) = parent.kind() else {
+            return;
+        };
         if !matches!(
             binary_expr.operator,
             BinaryOperator::Equality
@@ -75,7 +74,7 @@ impl Rule for BadCharAtComparison {
 
         if let Expression::StringLiteral(string_lit) = comparison_with {
             if !is_string_valid(string_lit.value.as_str()) {
-                ctx.diagnostic(BadCharAtComparisonDiagnostic(
+                ctx.diagnostic(bad_char_at_comparison_diagnostic(
                     call_expr.span,
                     string_lit.span,
                     string_lit.value.len(),

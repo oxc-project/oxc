@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{Expression, RegExpFlags},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -16,13 +14,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("deepscan(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.")]
-#[diagnostic(severity(warning), help("To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression."))]
-struct BadReplaceAllArgDiagnostic(
-    #[label("`replaceAll` called here")] pub Span,
-    #[label("RegExp supplied here")] pub Span,
-);
+fn bad_replace_all_arg_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("deepscan(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.")
+        .with_help("To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.")
+        .with_labels([LabeledSpan::new_with_span(Some("`replaceAll` called here".into()), span0), LabeledSpan::new_with_span(Some("RegExp supplied here".into()), span1)])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct BadReplaceAllArg;
@@ -50,7 +46,9 @@ declare_oxc_lint!(
 
 impl Rule for BadReplaceAllArg {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
         if !is_method_call(call_expr, None, Some(&["replaceAll"]), Some(1), None) {
             return;
@@ -65,12 +63,14 @@ impl Rule for BadReplaceAllArg {
         };
 
         if !flags.contains(RegExpFlags::G) {
-            let Some(call_expr_callee) = call_expr.callee.as_member_expression() else { return };
+            let Some(call_expr_callee) = call_expr.callee.as_member_expression() else {
+                return;
+            };
             let Some((replace_all_span, _)) = call_expr_callee.static_property_info() else {
                 return;
             };
 
-            ctx.diagnostic(BadReplaceAllArgDiagnostic(replace_all_span, regex_span));
+            ctx.diagnostic(bad_replace_all_arg_diagnostic(replace_all_span, regex_span));
         }
     }
 }

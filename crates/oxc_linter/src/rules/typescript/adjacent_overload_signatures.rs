@@ -5,25 +5,24 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "typescript-eslint(adjacent-overload-signatures): All {0:?} signatures should be adjacent."
-)]
-#[diagnostic(severity(warning))]
-struct AdjacentOverloadSignaturesDiagnostic(
-    CompactStr,
-    #[label] pub Option<Span>,
-    #[label] pub Span,
-);
+fn adjacent_overload_signatures_diagnostic(
+    x0: &str,
+    span1: Option<Span>,
+    span2: Span,
+) -> OxcDiagnostic {
+    let mut d = OxcDiagnostic::warning(format!("typescript-eslint(adjacent-overload-signatures): All {x0:?} signatures should be adjacent."));
+    if let Some(span) = span1 {
+        d = d.and_label(span);
+    }
+    d.and_label(span2)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct AdjacentOverloadSignatures;
@@ -258,16 +257,16 @@ fn check_and_report(methods: &Vec<Option<Method>>, ctx: &LintContext<'_>) {
 
             if index.is_some() && !method.is_same_method(last_method) {
                 let name = if method.r#static {
-                    CompactStr::from(format!("static {0}", method.name))
+                    format!("static {0}", method.name)
                 } else {
-                    method.name.clone()
+                    method.name.to_string()
                 };
 
                 let last_same_method =
                     seen_methods.iter().rev().find(|m| m.is_same_method(Some(method)));
 
-                ctx.diagnostic(AdjacentOverloadSignaturesDiagnostic(
-                    name,
+                ctx.diagnostic(adjacent_overload_signatures_diagnostic(
+                    &name,
                     last_same_method.map(|m| m.span),
                     method.span,
                 ));
