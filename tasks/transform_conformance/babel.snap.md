@@ -1,4 +1,4 @@
-Passed: 304/362
+Passed: 302/362
 
 # All Passed:
 * babel-preset-react
@@ -63,8 +63,10 @@ Passed: 304/362
 * optimize-const-enums/merged-exported/input.ts
 * regression/15768/input.ts
 
-# babel-plugin-transform-react-jsx (141/143)
+# babel-plugin-transform-react-jsx (139/143)
 * autoImport/complicated-scope-module/input.js
+* react/should-disallow-valueless-key/input.js
+* react-automatic/should-disallow-valueless-key/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
 
 # babel-plugin-transform-react-jsx-self (2/3)

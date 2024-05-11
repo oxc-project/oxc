@@ -1,13 +1,10 @@
-mod diagnostics;
-
 use std::rc::Rc;
 
 use oxc_ast::ast::*;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
 
 use crate::context::Ctx;
-
-use self::diagnostics::DuplicateSelfProp;
 
 const SELF: &str = "__self";
 
@@ -46,7 +43,8 @@ impl<'a> ReactJsxSelf<'a> {
     }
 
     pub fn report_error(&self, span: Span) {
-        self.ctx.error(DuplicateSelfProp(span));
+        let error = OxcDiagnostic::warning("Duplicate __self prop found.").with_label(span);
+        self.ctx.error(error);
     }
 }
 

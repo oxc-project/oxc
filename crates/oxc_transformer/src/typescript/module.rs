@@ -2,10 +2,7 @@ use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 
-use super::{
-    diagnostics::{ExportAssignmentUnsupported, ImportEqualsRequireUnsupported},
-    TypeScript,
-};
+use super::TypeScript;
 
 impl<'a> TypeScript<'a> {
     fn transform_ts_type_name(&self, type_name: &mut TSTypeName<'a>) -> Expression<'a> {
@@ -50,7 +47,9 @@ impl<'a> TypeScript<'a> {
                 }
                 TSModuleReference::ExternalModuleReference(reference) => {
                     if self.ctx.source_type.is_module() {
-                        self.ctx.error(ImportEqualsRequireUnsupported(decl_span));
+                        self.ctx.error(super::diagnostics::import_equals_require_unsupported(
+                            decl_span,
+                        ));
                     }
 
                     let callee = self.ctx.ast.identifier_reference_expression(
@@ -81,7 +80,8 @@ impl<'a> TypeScript<'a> {
         export_assignment: &mut TSExportAssignment<'a>,
     ) {
         if self.ctx.source_type.is_module() {
-            self.ctx.error(ExportAssignmentUnsupported(export_assignment.span));
+            self.ctx
+                .error(super::diagnostics::export_assignment_unsupported(export_assignment.span));
         }
     }
 }

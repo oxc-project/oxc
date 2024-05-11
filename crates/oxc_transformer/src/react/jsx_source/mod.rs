@@ -1,14 +1,11 @@
-mod diagnostics;
-
 use std::rc::Rc;
 
 use oxc_ast::ast::*;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
 use oxc_syntax::number::NumberBase;
 
 use crate::context::Ctx;
-
-use self::diagnostics::DuplicateSourceProp;
 
 use super::utils::get_line_column;
 
@@ -52,7 +49,8 @@ impl<'a> ReactJsxSource<'a> {
     }
 
     pub fn report_error(&self, span: Span) {
-        self.ctx.error(DuplicateSourceProp(span));
+        let error = OxcDiagnostic::warning("Duplicate __source prop found.").with_label(span);
+        self.ctx.error(error);
     }
 }
 

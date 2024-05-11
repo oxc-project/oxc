@@ -17,7 +17,7 @@ pub fn namespace_does_not_support(span0: Span) -> OxcDiagnostic {
 }
 
 pub fn valueless_key(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("Please provide an explicit key value. Using \"key\" as a shorthand for \"key={{true}}\" is not allowed.")
+    OxcDiagnostic::warning("Please provide an explicit key value. Using \"key\" as a shorthand for \"key={true}\" is not allowed.")
 .with_labels([span0.into()])
 }
 
