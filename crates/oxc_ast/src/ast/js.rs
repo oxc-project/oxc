@@ -2133,8 +2133,10 @@ pub struct BindingRestElement<'a> {
 /// Function Definitions
 #[visited_node(
     scope(ScopeFlags::Function),
-    // Don't create a 2nd scope if `MethodDefinition` already created one
-    scope_if((ctx.scope() & ScopeFlags::Modifiers).is_empty()),
+    // Don't create scope if this is a method - `MethodDefinition` already created one.
+    // `ctx.ancestor(2).unwrap()` not `ctx.parent()` because this code is inserted
+    // into `walk_function` *after* `Function` is added to stack.
+    scope_if(matches!(ctx.ancestor(2).unwrap(), Ancestor::MethodDefinitionValue(_))),
     strict_if(self.body.as_ref().is_some_and(|body| body.has_use_strict_directive()))
 )]
 #[derive(Debug, Hash)]
@@ -2586,7 +2588,7 @@ impl MethodDefinitionKind {
     pub fn scope_flags(self) -> ScopeFlags {
         match self {
             Self::Constructor => ScopeFlags::Constructor,
-            Self::Method => ScopeFlags::Method,
+            Self::Method => ScopeFlags::empty(),
             Self::Get => ScopeFlags::GetAccessor,
             Self::Set => ScopeFlags::SetAccessor,
         }
