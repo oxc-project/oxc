@@ -1,5 +1,5 @@
 import assert from 'assert';
-import {toTypeName, camelToSnake, snakeToCamel} from './utils.mjs';
+import {camelToSnake, snakeToCamel} from './utils.mjs';
 
 export default function generateWalkFunctionsCode(types) {
     let walkMethods = '';
@@ -195,7 +195,7 @@ function generateWalkForStruct(type, types) {
     return `
         pub(crate) unsafe fn walk_${typeSnakeName}<'a, Tr: Traverse<'a>>(
             traverser: &mut Tr,
-            node: *mut ${toTypeName(type)},
+            node: *mut ${type.rawName},
             ctx: &mut TraverseCtx<'a>
         ) {
             traverser.enter_${typeSnakeName}(&mut *node, ctx);
@@ -255,7 +255,7 @@ function generateWalkForEnum(type, types) {
     return `
         pub(crate) unsafe fn walk_${typeSnakeName}<'a, Tr: Traverse<'a>>(
             traverser: &mut Tr,
-            node: *mut ${toTypeName(type)},
+            node: *mut ${type.rawName},
             ctx: &mut TraverseCtx<'a>
         ) {
             traverser.enter_${typeSnakeName}(&mut *node, ctx);

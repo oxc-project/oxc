@@ -1,15 +1,17 @@
-import {camelToSnake, toTypeName} from './utils.mjs';
+import {camelToSnake} from './utils.mjs';
 
 export default function generateTraverseTraitCode(types) {
+    const typesArr = Object.values(types);
+    typesArr.push({name: 'Statements', rawName: "Vec<'a, Statement<'a>>"});
+
     let traverseMethods = '';
-    for (const type of Object.values(types)) {
-        const snakeName = camelToSnake(type.name),
-            typeName = toTypeName(type);
+    for (const type of typesArr) {
+        const snakeName = camelToSnake(type.name);
         traverseMethods += `
             #[inline]
-            fn enter_${snakeName}(&mut self, node: &mut ${typeName}, ctx: &TraverseCtx<'a>) {}
+            fn enter_${snakeName}(&mut self, node: &mut ${type.rawName}, ctx: &TraverseCtx<'a>) {}
             #[inline]
-            fn exit_${snakeName}(&mut self, node: &mut ${typeName}, ctx: &TraverseCtx<'a>) {}
+            fn exit_${snakeName}(&mut self, node: &mut ${type.rawName}, ctx: &TraverseCtx<'a>) {}
         `;
     }
 
@@ -23,11 +25,6 @@ export default function generateTraverseTraitCode(types) {
         #[allow(unused_variables)]
         pub trait Traverse<'a> {
             ${traverseMethods}
-
-            #[inline]
-            fn enter_statements(&mut self, node: &mut Vec<'a, Statement<'a>>, ctx: &TraverseCtx<'a>) {}
-            #[inline]
-            fn exit_statements(&mut self, node: &mut Vec<'a, Statement<'a>>, ctx: &TraverseCtx<'a>) {}
         }
     `;
 }

@@ -9,12 +9,6 @@ export function typeAndWrappers(name) {
     return {name, wrappers};
 }
 
-export function toTypeName(type) {
-    let ty = type.name;
-    if (type.hasLifetime) ty += "<'a>";
-    return ty;
-}
-
 export function camelToSnake(name) {
     let prefixLen = 1;
     for (const prefix of ['TS', 'JSX', 'JS']) {
