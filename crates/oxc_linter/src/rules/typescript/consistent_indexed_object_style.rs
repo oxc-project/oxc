@@ -269,19 +269,16 @@ impl Rule for ConsistentIndexedObjectStyle {
                                         }
                                     }
                                 }
-                            }
-
-                            if self.is_index_signature {
-                                if let TSType::TSTypeReference(tref) = &return_type.type_annotation
-                                {
-                                    if let TSTypeName::IdentifierReference(r) = &tref.type_name {
-                                        if r.name == "Record" {
-                                            ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
-                                                "index signature",
-                                                "record",
-                                                tref.span,
-                                            ));
-                                        }
+                            } else if let TSType::TSTypeReference(tref) =
+                                &return_type.type_annotation
+                            {
+                                if let TSTypeName::IdentifierReference(r) = &tref.type_name {
+                                    if r.name == "Record" {
+                                        ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
+                                            "index signature",
+                                            "record",
+                                            tref.span,
+                                        ));
                                     }
                                 }
                             }
@@ -307,23 +304,16 @@ impl Rule for ConsistentIndexedObjectStyle {
                                             }
                                         }
                                     }
-                                }
-
-                                if self.is_index_signature {
-                                    if let TSType::TSTypeReference(tref) =
-                                        &ts_type_annotation.type_annotation
-                                    {
-                                        if let TSTypeName::IdentifierReference(r) = &tref.type_name
-                                        {
-                                            if r.name == "Record" {
-                                                ctx.diagnostic(
-                                                    ConsistentIndexedObjectStyleDiagnostic(
-                                                        "index signature",
-                                                        "record",
-                                                        tref.span,
-                                                    ),
-                                                );
-                                            }
+                                } else if let TSType::TSTypeReference(tref) =
+                                    &ts_type_annotation.type_annotation
+                                {
+                                    if let TSTypeName::IdentifierReference(r) = &tref.type_name {
+                                        if r.name == "Record" {
+                                            ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
+                                                "index signature",
+                                                "record",
+                                                tref.span,
+                                            ));
                                         }
                                     }
                                 }
@@ -332,6 +322,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                     }
                 }
             }
+
             _ => {}
         }
     }
