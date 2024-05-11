@@ -158,6 +158,14 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_function(func);
     }
 
+    fn enter_jsx_element(&mut self, node: &mut JSXElement<'a>, _ctx: &TraverseCtx<'a>) {
+        self.x0_typescript.transform_jsx_element(node);
+    }
+
+    fn enter_jsx_fragment(&mut self, node: &mut JSXFragment<'a>, _ctx: &TraverseCtx<'a>) {
+        self.x0_typescript.transform_jsx_fragment(node);
+    }
+
     fn enter_jsx_opening_element(
         &mut self,
         elem: &mut JSXOpeningElement<'a>,
