@@ -60,9 +60,7 @@ impl<'a> Program<'a> {
     }
 
     pub fn is_strict(&self) -> bool {
-        self.source_type.is_module()
-            || self.source_type.always_strict()
-            || self.directives.iter().any(|d| d.directive == "use strict")
+        self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict)
     }
 }
 
@@ -1483,11 +1481,19 @@ impl<'a> Statement<'a> {
 pub struct Directive<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+    /// Directive with any escapes unescaped
     pub expression: StringLiteral<'a>,
+    /// Raw content of directive as it appears in source, any escapes left as is
+    pub directive: Atom<'a>,
+}
+
+impl<'a> Directive<'a> {
     /// A Use Strict Directive is an ExpressionStatement in a Directive Prologue whose StringLiteral is either of the exact code point sequences "use strict" or 'use strict'.
     /// A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
     /// <https://tc39.es/ecma262/#sec-directive-prologues-and-the-use-strict-directive>
-    pub directive: Atom<'a>,
+    pub fn is_use_strict(&self) -> bool {
+        self.directive == "use strict"
+    }
 }
 
 /// Hashbang
@@ -2179,9 +2185,7 @@ impl<'a> Function<'a> {
     }
 
     pub fn is_strict(&self) -> bool {
-        self.body.as_ref().is_some_and(|body| {
-            body.directives.iter().any(|directive| directive.directive == "use strict")
-        })
+        self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())
     }
 }
 
@@ -2280,6 +2284,10 @@ pub struct FunctionBody<'a> {
 impl<'a> FunctionBody<'a> {
     pub fn is_empty(&self) -> bool {
         self.directives.is_empty() && self.statements.is_empty()
+    }
+
+    pub fn has_use_strict_directive(&self) -> bool {
+        self.directives.iter().any(Directive::is_use_strict)
     }
 }
 
