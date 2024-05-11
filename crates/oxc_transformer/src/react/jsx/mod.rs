@@ -19,11 +19,6 @@ pub use super::{
     options::{ReactJsxRuntime, ReactOptions},
 };
 
-use self::diagnostics::{
-    ImportSourceCannotBeSet, NamespaceDoesNotSupport, PragmaAndPragmaFragCannotBeSet,
-    SpreadChildrenAreNotSupported, ValuelessKey,
-};
-
 /// [plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx)
 ///
 /// This plugin generates production-ready JS code.
@@ -109,7 +104,7 @@ impl<'a> ReactJsx<'a> {
     pub fn add_runtime_imports(&mut self, program: &mut Program<'a>) {
         if self.options.runtime.is_classic() {
             if self.options.import_source != "react" {
-                self.ctx.error(ImportSourceCannotBeSet);
+                self.ctx.error(diagnostics::import_source_cannot_be_set());
             }
 
             if self.options.is_jsx_source_plugin_enabled() {
@@ -122,7 +117,7 @@ impl<'a> ReactJsx<'a> {
         if self.options.pragma != "React.createElement"
             || self.options.pragma_frag != "React.Fragment"
         {
-            self.ctx.error(PragmaAndPragmaFragCannotBeSet);
+            self.ctx.error(diagnostics::pragma_and_pragma_frag_cannot_be_set());
             return;
         }
 
@@ -363,7 +358,7 @@ impl<'a> ReactJsx<'a> {
 
                         if attr.is_key() {
                             if attr.value.is_none() {
-                                self.ctx.error(ValuelessKey(attr.name.span()));
+                                self.ctx.error(diagnostics::valueless_key(attr.name.span()));
                             }
                             // In automatic mode, extract the key before spread prop,
                             // and add it to the third argument later.
@@ -521,7 +516,7 @@ impl<'a> ReactJsx<'a> {
             }
             JSXElementName::NamespacedName(name) => {
                 if self.options.throw_if_namespace {
-                    self.ctx.error(NamespaceDoesNotSupport(name.span));
+                    self.ctx.error(diagnostics::namespace_does_not_support(name.span));
                 }
                 let name = self.ast().new_atom(&name.to_string());
                 let string_literal = StringLiteral::new(SPAN, name);
@@ -718,7 +713,7 @@ impl<'a> ReactJsx<'a> {
             JSXChild::Element(e) => Some(self.transform_jsx(&JSXElementOrFragment::Element(e))),
             JSXChild::Fragment(e) => Some(self.transform_jsx(&JSXElementOrFragment::Fragment(e))),
             JSXChild::Spread(e) => {
-                self.ctx.error(SpreadChildrenAreNotSupported(e.span));
+                self.ctx.error(diagnostics::spread_children_are_not_supported(e.span));
                 None
             }
         }
