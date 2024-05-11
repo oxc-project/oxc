@@ -45,14 +45,14 @@ export default function generateAncestorsCode(types) {
             }
 
             const fieldNameCamel = snakeToCamel(field.name),
-                lifetime = type.hasLifetime ? "<'a>" : '',
+                lifetime = type.rawName.slice(type.name.length),
                 structName = `${type.name}Without${fieldNameCamel}${lifetime}`;
 
             thisAncestorTypes += `
                 #[repr(transparent)]
                 #[derive(Debug)]
                 pub struct ${structName}(
-                    pub(crate) *const ${type.name}${lifetime}
+                    pub(crate) *const ${type.rawName}
                 );
 
                 impl${lifetime} ${structName} {

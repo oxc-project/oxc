@@ -44,11 +44,10 @@ function parseFile(code, filename, types) {
 
         let match;
         while (true) {
-            match = lines[++lineIndex].match(/^pub (enum|struct) (.+?)(<'a>)? \{/);
+            match = lines[++lineIndex].match(/^pub (enum|struct) ((.+?)(?:<'a>)?) \{/);
             if (match) break;
         }
-        const [, kind, name, lifetimeStr] = match,
-            hasLifetime = !!lifetimeStr,
+        const [, kind, rawName, name] = match,
             startLineIndex = lineIndex;
 
         const itemLines = [];
@@ -59,14 +58,14 @@ function parseFile(code, filename, types) {
         }
 
         if (kind === 'struct') {
-            types[name] = parseStruct(name, hasLifetime, itemLines, scopeArgs, filename, startLineIndex);
+            types[name] = parseStruct(name, rawName, itemLines, scopeArgs, filename, startLineIndex);
         } else {
-            types[name] = parseEnum(name, hasLifetime, itemLines, filename, startLineIndex);
+            types[name] = parseEnum(name, rawName, itemLines, filename, startLineIndex);
         }
     }
 }
 
-function parseStruct(name, hasLifetime, lines, scopeArgs, filename, startLineIndex) {
+function parseStruct(name, rawName, lines, scopeArgs, filename, startLineIndex) {
     const fields = [];
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
@@ -88,10 +87,10 @@ function parseStruct(name, hasLifetime, lines, scopeArgs, filename, startLineInd
         
         fields.push({name, typeName, rawName, rawTypeName, innerTypeName, wrappers});
     }
-    return {kind: 'struct', name, hasLifetime, fields, scopeArgs};
+    return {kind: 'struct', name, rawName, fields, scopeArgs};
 }
 
-function parseEnum(name, hasLifetime, lines, filename, startLineIndex) {
+function parseEnum(name, rawName, lines, filename, startLineIndex) {
     const variants = [],
         inherits = [];
     for (const [lineIndex, line] of lines.entries()) {
@@ -111,7 +110,7 @@ function parseEnum(name, hasLifetime, lines, filename, startLineIndex) {
             inherits.push(match2[1]);
         }
     }
-    return {kind: 'enum', name, hasLifetime, variants, inherits};
+    return {kind: 'enum', name, rawName, variants, inherits};
 }
 
 function parseScopeArgs(argsStr, filename, lineIndex) {
