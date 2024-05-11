@@ -1,3 +1,5 @@
+use std::env;
+
 use serde::Deserialize;
 
 /// <https://nextjs.org/docs/pages/building-your-application/configuring/eslint#eslint-plugin>
@@ -10,10 +12,18 @@ pub struct NextPluginSettings {
 
 impl NextPluginSettings {
     pub fn get_root_dirs(&self) -> Vec<String> {
-        match &self.root_dir {
+        let mut root_dirs = match &self.root_dir {
             OneOrMany::One(val) => vec![val.clone()],
             OneOrMany::Many(vec) => vec.clone(),
+        };
+
+        if root_dirs.is_empty() {
+            if let Ok(current_dir) = env::current_dir() {
+                root_dirs.push(current_dir.to_string_lossy().to_string());
+            }
         }
+
+        root_dirs
     }
 }
 

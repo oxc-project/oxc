@@ -90,8 +90,7 @@ impl Tester {
         let rule_path = PathBuf::from(rule_name.replace('-', "_")).with_extension("tsx");
         let expect_pass = expect_pass.into_iter().map(Into::into).collect::<Vec<_>>();
         let expect_fail = expect_fail.into_iter().map(Into::into).collect::<Vec<_>>();
-        let current_working_directory =
-            env::current_dir().unwrap().join("fixtures/import").into_boxed_path();
+        let current_working_directory = env::current_dir().unwrap().into_boxed_path();
         Self {
             rule_name,
             rule_path,
@@ -116,6 +115,10 @@ impl Tester {
 
     pub fn with_import_plugin(mut self, yes: bool) -> Self {
         self.import_plugin = yes;
+        if yes {
+            self.current_working_directory =
+                self.current_working_directory.join("fixtures/import").into_boxed_path();
+        }
         self
     }
 
@@ -131,6 +134,10 @@ impl Tester {
 
     pub fn with_nextjs_plugin(mut self, yes: bool) -> Self {
         self.nextjs_plugin = yes;
+        if yes {
+            self.current_working_directory =
+                self.current_working_directory.join("fixtures/next").into_boxed_path();
+        }
         self
     }
 
