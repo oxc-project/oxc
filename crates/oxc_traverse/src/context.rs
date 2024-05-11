@@ -1,9 +1,11 @@
 use oxc_allocator::{Allocator, Box};
 use oxc_ast::AstBuilder;
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::ancestor::{Ancestor, AncestorType};
 
-const INITIAL_STACK_CAPACITY: usize = 64;
+const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
+const INITIAL_SCOPE_STACK_CAPACITY: usize = 32; // 32 entries = 64 bytes
 
 /// Traverse context.
 ///
@@ -11,16 +13,21 @@ const INITIAL_STACK_CAPACITY: usize = 64;
 ///
 /// Provides ability to:
 /// * Query parent/ancestor of current node via [`parent`], [`ancestor`], [`find_ancestor`].
+/// * Get type of current scope via [`scope`], [`ancestor_scope`], [`find_scope`].
 /// * Create AST nodes via AST builder [`ast`].
 /// * Allocate into arena via [`alloc`].
 ///
 /// [`parent`]: `TraverseCtx::parent`
 /// [`ancestor`]: `TraverseCtx::ancestor`
 /// [`find_ancestor`]: `TraverseCtx::find_ancestor`
+/// [`scope`]: `TraverseCtx::scope`
+/// [`ancestor_scope`]: `TraverseCtx::ancestor_scope`
+/// [`find_scope`]: `TraverseCtx::find_scope`
 /// [`ast`]: `TraverseCtx::ast`
 /// [`alloc`]: `TraverseCtx::alloc`
 pub struct TraverseCtx<'a> {
     stack: Vec<Ancestor<'a>>,
+    scope_stack: Vec<ScopeFlags>,
     pub ast: AstBuilder<'a>,
 }
 
@@ -37,7 +44,11 @@ impl<'a> TraverseCtx<'a> {
     pub(crate) fn new(allocator: &'a Allocator) -> Self {
         let mut stack = Vec::with_capacity(INITIAL_STACK_CAPACITY);
         stack.push(Ancestor::None);
-        Self { stack, ast: AstBuilder::new(allocator) }
+
+        let mut scope_stack = Vec::with_capacity(INITIAL_SCOPE_STACK_CAPACITY);
+        scope_stack.push(ScopeFlags::empty());
+
+        Self { stack, scope_stack, ast: AstBuilder::new(allocator) }
     }
 
     /// Allocate a node in the arena.
@@ -91,6 +102,52 @@ impl<'a> TraverseCtx<'a> {
     pub fn ancestors_depth(&self) -> usize {
         self.stack.len()
     }
+
+    /// Get current scope info.
+    #[inline]
+    #[allow(unsafe_code)]
+    pub fn scope(&self) -> ScopeFlags {
+        // SAFETY: Scope stack contains 1 entry initially. Entries are pushed as traverse down the AST,
+        // and popped as go back up. So even when visiting `Program`, the initial entry is in the stack.
+        unsafe { *self.scope_stack.last().unwrap_unchecked() }
+    }
+
+    /// Get scope ancestor.
+    /// `level` is number of scopes above.
+    /// `ancestor_scope(1).unwrap()` is equivalent to `scope()`.
+    #[inline]
+    pub fn ancestor_scope(&self, level: usize) -> Option<ScopeFlags> {
+        self.scope_stack.get(self.stack.len() - level).copied()
+    }
+
+    /// Walk up trail of scopes to find a scope.
+    ///
+    /// `finder` should return:
+    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
+    /// * `FinderRet::Stop` to stop walking and return `None`.
+    /// * `FinderRet::Continue` to continue walking up.
+    pub fn find_scope<F, O>(&self, finder: F) -> Option<O>
+    where
+        F: Fn(ScopeFlags) -> FinderRet<O>,
+    {
+        for flags in self.scope_stack.iter().rev().copied() {
+            match finder(flags) {
+                FinderRet::Found(res) => return Some(res),
+                FinderRet::Stop => return None,
+                FinderRet::Continue => {}
+            }
+        }
+        None
+    }
+
+    /// Get depth of scopes.
+    ///
+    /// Count includes global scope.
+    /// i.e. in `Program`, depth is 2 (global scope + program top level scope).
+    #[inline]
+    pub fn scopes_depth(&self) -> usize {
+        self.scope_stack.len()
+    }
 }
 
 // Methods used internally within crate
@@ -133,5 +190,23 @@ impl<'a> TraverseCtx<'a> {
     #[allow(unsafe_code, clippy::ptr_as_ptr, clippy::ref_as_ptr)]
     pub(crate) unsafe fn retag_stack(&mut self, ty: AncestorType) {
         *(self.stack.last_mut().unwrap_unchecked() as *mut _ as *mut AncestorType) = ty;
+    }
+
+    /// Push scope flags onto scope stack.
+    ///
+    /// `StrictMode` flag is inherited from parent.
+    #[inline]
+    pub(crate) fn push_scope_stack(&mut self, flags: ScopeFlags) {
+        self.scope_stack.push(flags | (self.scope() & ScopeFlags::StrictMode));
+    }
+
+    /// Pop last item off scope stack.
+    /// # SAFETY
+    /// * Stack must not be empty.
+    /// * Each `pop_scope_stack` call must correspond to an earlier `push_scope_stack` call.
+    #[inline]
+    #[allow(unsafe_code)]
+    pub(crate) unsafe fn pop_scope_stack(&mut self) {
+        self.scope_stack.pop().unwrap_unchecked();
     }
 }

@@ -20,12 +20,15 @@ export default function generateWalkFunctionsCode(types) {
             clippy::semicolon_if_nothing_returned,
             clippy::ptr_as_ptr,
             clippy::borrow_as_ptr,
-            clippy::cast_ptr_alignment
+            clippy::cast_ptr_alignment,
+            clippy::needless_borrow
         )]
 
         use oxc_allocator::Vec;
         #[allow(clippy::wildcard_imports)]
         use oxc_ast::ast::*;
+        use oxc_span::SourceType;
+        use oxc_syntax::scope::ScopeFlags;
 
         use crate::{ancestor::{self, AncestorType}, Ancestor, Traverse, TraverseCtx};
 
@@ -48,13 +51,55 @@ export default function generateWalkFunctionsCode(types) {
 function generateWalkForStruct(type, types) {
     const visitedFields = type.fields.filter(field => field.innerTypeName in types);
 
+    const {scopeArgs} = type;
+    let scopeEnterField, enterScopeCode, exitScopeCode;
+    if (scopeArgs) {
+        // Get field to enter scope before
+        const enterFieldName = scopeArgs.enter_scope_before;
+        if (enterFieldName) {
+            scopeEnterField = visitedFields.find(field => field.name === enterFieldName);
+            assert(
+                scopeEnterField,
+                `\`visited_node\` attr says to enter scope before field '${enterFieldName}' `
+                + `in '${type.name}', but that field is not visited`
+            );
+        } else {
+            scopeEnterField = visitedFields[0];
+        }
+
+        const convertExpressionToUsePointers = arg => arg.replace(
+            /(^|[^a-zA-Z0-9_])self\.(?:r#)?([A-Za-z0-9_]+)/g,
+            (_, before, fieldName) => {
+                const field = type.fields.find(field => field.name === fieldName);
+                assert(`Cannot parse conditional in visited_node args: '${arg}' for ${type.name}`);
+                return `${before}(&*(${makeFieldCode(field)}))`;
+            }
+        );
+
+        let scopeType = convertExpressionToUsePointers(scopeArgs.scope);
+        if (scopeArgs.strict_if) {
+            scopeType += `.with_strict_mode(${convertExpressionToUsePointers(scopeArgs.strict_if)})`;
+        }
+
+        enterScopeCode = `ctx.push_scope_stack(${scopeType});`;
+        exitScopeCode = `ctx.pop_scope_stack();`;
+        if (scopeArgs.scope_if) {
+            enterScopeCode = `
+                let has_scope = ${convertExpressionToUsePointers(scopeArgs.scope_if)};
+                if has_scope { ${enterScopeCode} }
+            `;
+            exitScopeCode = `if has_scope { ${exitScopeCode} }`;
+        }
+    }
+
     const fieldsCodes = visitedFields.map((field, index) => {
         const fieldWalkName = `walk_${camelToSnake(field.innerTypeName)}`;
 
         const retagCode = index === 0
             ? ''
             : `ctx.retag_stack(AncestorType::${type.name}${snakeToCamel(field.name)});`;
-        const fieldCode = `(node as *mut u8).add(ancestor::${field.offsetVarName}) as *mut ${field.typeName}`;
+        const fieldCode = makeFieldCode(field);
+        const scopeCode = field === scopeEnterField ? enterScopeCode : '';
 
         if (field.wrappers[0] === 'Option') {
             let walkCode;
@@ -77,6 +122,7 @@ function generateWalkForStruct(type, types) {
             }
 
             return `
+                ${scopeCode}
                 if let Some(field) = &mut *(${fieldCode}) {
                     ${retagCode}
                     ${walkCode}
@@ -108,6 +154,7 @@ function generateWalkForStruct(type, types) {
             }
 
             return `
+                ${scopeCode}
                 ${retagCode}
                 ${walkVecCode}
             `;
@@ -115,6 +162,7 @@ function generateWalkForStruct(type, types) {
 
         if (field.wrappers.length === 1 && field.wrappers[0] === 'Box') {
             return `
+                ${scopeCode}
                 ${retagCode}
                 ${fieldWalkName}(traverser, (&mut **(${fieldCode})) as *mut _, ctx);
             `;
@@ -123,6 +171,7 @@ function generateWalkForStruct(type, types) {
         assert(field.wrappers.length === 0, `Cannot handle struct field with type: ${field.type}`);
 
         return `
+            ${scopeCode}
             ${retagCode}
             ${fieldWalkName}(traverser, ${fieldCode}, ctx);
         `;
@@ -138,6 +187,7 @@ function generateWalkForStruct(type, types) {
                 )
             );
         `);
+        if (exitScopeCode) fieldsCodes.push(exitScopeCode);
         fieldsCodes.push('ctx.pop_stack();');
     }
 
@@ -153,6 +203,10 @@ function generateWalkForStruct(type, types) {
             traverser.exit_${typeSnakeName}(&mut *node, ctx);
         }
     `.replace(/\n\s*\n+/g, '\n');
+}
+
+function makeFieldCode(field) {
+    return `(node as *mut u8).add(ancestor::${field.offsetVarName}) as *mut ${field.typeName}`;
 }
 
 function generateWalkForEnum(type, types) {

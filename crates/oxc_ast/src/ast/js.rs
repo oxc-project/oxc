@@ -14,6 +14,7 @@ use oxc_syntax::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
     reference::{ReferenceFlag, ReferenceId},
+    scope::ScopeFlags,
     symbol::SymbolId,
 };
 #[cfg(feature = "serialize")]
@@ -41,7 +42,10 @@ export interface FormalParameterRest extends Span {
 }
 "#;
 
-#[visited_node]
+#[visited_node(
+    scope(ScopeFlags::Top),
+    strict_if(self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict))
+)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -1508,7 +1512,7 @@ pub struct Hashbang<'a> {
 }
 
 /// Block Statement
-#[visited_node]
+#[visited_node(scope(ScopeFlags::empty()))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1735,7 +1739,10 @@ pub struct WhileStatement<'a> {
 }
 
 /// For Statement
-#[visited_node]
+#[visited_node(
+    scope(ScopeFlags::empty()),
+    scope_if(self.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration))
+)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1776,7 +1783,7 @@ impl<'a> ForStatementInit<'a> {
 }
 
 /// For-In Statement
-#[visited_node]
+#[visited_node(scope(ScopeFlags::empty()), scope_if(self.left.is_lexical_declaration()))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1789,7 +1796,7 @@ pub struct ForInStatement<'a> {
 }
 
 /// For-Of Statement
-#[visited_node]
+#[visited_node(scope(ScopeFlags::empty()), scope_if(self.left.is_lexical_declaration()))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1875,7 +1882,7 @@ pub struct WithStatement<'a> {
 }
 
 /// Switch Statement
-#[visited_node]
+#[visited_node(scope(ScopeFlags::empty()), enter_scope_before(cases))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1939,7 +1946,7 @@ pub struct TryStatement<'a> {
     pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
 }
 
-#[visited_node]
+#[visited_node(scope(ScopeFlags::empty()), scope_if(self.param.is_some()))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -2124,7 +2131,12 @@ pub struct BindingRestElement<'a> {
 }
 
 /// Function Definitions
-#[visited_node]
+#[visited_node(
+    scope(ScopeFlags::Function),
+    // Don't create a 2nd scope if `MethodDefinition` already created one
+    scope_if((ctx.scope() & ScopeFlags::Modifiers).is_empty()),
+    strict_if(self.body.as_ref().is_some_and(|body| body.has_use_strict_directive()))
+)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
@@ -2292,7 +2304,7 @@ impl<'a> FunctionBody<'a> {
 }
 
 /// Arrow Function Definitions
-#[visited_node]
+#[visited_node(scope(ScopeFlags::Function | ScopeFlags::Arrow))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -2335,7 +2347,7 @@ pub struct YieldExpression<'a> {
 }
 
 /// Class Definitions
-#[visited_node]
+#[visited_node(scope(ScopeFlags::StrictMode), enter_scope_before(id))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
@@ -2491,7 +2503,11 @@ impl<'a> ClassElement<'a> {
     }
 }
 
-#[visited_node]
+#[visited_node(
+    scope(self.kind.scope_flags()),
+    strict_if(self.value.is_strict()),
+    enter_scope_before(value)
+)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
@@ -2566,6 +2582,15 @@ impl MethodDefinitionKind {
     pub fn is_set(&self) -> bool {
         matches!(self, Self::Set)
     }
+
+    pub fn scope_flags(self) -> ScopeFlags {
+        match self {
+            Self::Constructor => ScopeFlags::Constructor,
+            Self::Method => ScopeFlags::Method,
+            Self::Get => ScopeFlags::GetAccessor,
+            Self::Set => ScopeFlags::SetAccessor,
+        }
+    }
 }
 
 #[visited_node]
@@ -2584,7 +2609,7 @@ impl<'a> PrivateIdentifier<'a> {
     }
 }
 
-#[visited_node]
+#[visited_node(scope(ScopeFlags::ClassStaticBlock))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]

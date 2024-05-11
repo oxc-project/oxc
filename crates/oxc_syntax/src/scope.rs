@@ -23,8 +23,11 @@ bitflags! {
         const Constructor      = 1 << 6;
         const GetAccessor      = 1 << 7;
         const SetAccessor      = 1 << 8;
+        // Only used in `Traverse`
+        const Method           = 1 << 9;
         const Var = Self::Top.bits() | Self::Function.bits() | Self::ClassStaticBlock.bits() | Self::TsModuleBlock.bits();
-        const Modifiers = Self::Constructor.bits() | Self::GetAccessor.bits() | Self::SetAccessor.bits();
+        const Modifiers = Self::Constructor.bits() | Self::GetAccessor.bits()
+            | Self::SetAccessor.bits() | Self::Method.bits();
     }
 }
 
