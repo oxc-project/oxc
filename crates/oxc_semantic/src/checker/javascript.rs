@@ -14,7 +14,7 @@ use oxc_syntax::{
 use phf::{phf_set, Set};
 use rustc_hash::FxHashMap;
 
-use crate::{builder::SemanticBuilder, diagnostics::Redeclaration, scope::ScopeFlags, AstNode};
+use crate::{builder::SemanticBuilder, diagnostics::redeclaration, scope::ScopeFlags, AstNode};
 
 pub struct EarlyErrorJavaScript;
 
@@ -131,7 +131,7 @@ fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
                 };
 
                 if is_duplicate {
-                    ctx.error(Redeclaration(element.name.clone(), prev_element.span, element.span));
+                    ctx.error(redeclaration(&element.name, prev_element.span, element.span));
                 }
             }
         }
@@ -429,8 +429,10 @@ fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
 }
 
 fn illegal_use_strict(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Illegal 'use strict' directive in function with non-simple parameter list")
-        .with_labels([span0.into()])
+    OxcDiagnostic::error(
+        "Illegal 'use strict' directive in function with non-simple parameter list",
+    )
+    .with_labels([span0.into()])
 }
 
 // It is a Syntax Error if FunctionBodyContainsUseStrict of AsyncFunctionBody is true and IsSimpleParameterList of FormalParameters is false.
@@ -454,8 +456,10 @@ fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
 }
 
 fn top_level(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("'{x0}' declaration can only be used at the top level of a module"))
-        .with_labels([span1.into()])
+    OxcDiagnostic::error(format!(
+        "'{x0}' declaration can only be used at the top level of a module"
+    ))
+    .with_labels([span1.into()])
 }
 
 fn module_code(x0: &str, span1: Span) -> OxcDiagnostic {
@@ -613,7 +617,7 @@ fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuilder<
     for case in &stmt.cases {
         if case.test.is_none() {
             if let Some(previous_span) = previous_default {
-                ctx.error(Redeclaration("default".into(), previous_span, case.span));
+                ctx.error(redeclaration("default", previous_span, case.span));
                 break;
             }
             previous_default.replace(case.span);
@@ -720,7 +724,7 @@ fn check_labeled_statement(ctx: &SemanticBuilder) {
         let mut defined = FxHashMap::default();
         for labeled in labels {
             if let Some(span) = defined.get(labeled.name) {
-                ctx.error(Redeclaration(labeled.name.into(), *span, labeled.span));
+                ctx.error(redeclaration(labeled.name, *span, labeled.span));
             } else {
                 defined.insert(labeled.name, labeled.span);
             }
@@ -729,8 +733,10 @@ fn check_labeled_statement(ctx: &SemanticBuilder) {
 }
 
 fn multiple_declaration_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Only a single declaration is allowed in a `for...{x0}` statement"))
-        .with_labels([span1.into()])
+    OxcDiagnostic::error(format!(
+        "Only a single declaration is allowed in a `for...{x0}` statement"
+    ))
+    .with_labels([span1.into()])
 }
 
 fn unexpected_initializer_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnostic {
@@ -1036,7 +1042,7 @@ fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilder<'_
     for prop_name in prop_names {
         if prop_name.0 == "__proto__" {
             if let Some(prev_span) = prev_proto {
-                ctx.error(Redeclaration("__proto__".into(), prev_span, prop_name.1));
+                ctx.error(redeclaration("__proto__", prev_span, prop_name.1));
             }
             prev_proto = Some(prop_name.1);
         }

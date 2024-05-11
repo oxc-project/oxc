@@ -19,7 +19,7 @@ use crate::{
     control_flow::{
         AssignmentValue, ControlFlowGraph, EdgeType, Register, StatementControlFlowType,
     },
-    diagnostics::Redeclaration,
+    diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
     label::LabelBuilder,
     module_record::ModuleRecordBuilder,
@@ -279,7 +279,7 @@ impl<'a> SemanticBuilder<'a> {
         let symbol_id = self.scope.get_binding(scope_id, name)?;
         if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
-            self.error(Redeclaration(CompactStr::from(name), symbol_span, span));
+            self.error(redeclaration(name, symbol_span, span));
         }
         Some(symbol_id)
     }
