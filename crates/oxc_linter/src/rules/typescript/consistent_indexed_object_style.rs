@@ -61,56 +61,54 @@ impl Rule for ConsistentIndexedObjectStyle {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSInterfaceDeclaration(decl) => {
-                if decl.body.body.len() == 1 {
-                    if let TSSignature::TSIndexSignature(idx) = &decl.body.body[0] {
-                        match &idx.type_annotation.type_annotation {
-                            TSType::TSTypeLiteral(lit) => {
-                                if !self.is_index_signature {
-                                    for member in &lit.members {
-                                        if let TSSignature::TSIndexSignature(_) = member {
-                                            ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
-                                                "record",
-                                                "index signature",
-                                                idx.span,
-                                            ));
-                                        }
-                                    }
-                                }
-                            }
-                            TSType::TSTypeReference(tref) => {
-                                if !self.is_index_signature {
-                                    match &tref.type_name {
-                                        TSTypeName::IdentifierReference(iden) => {
-                                            if iden.name != decl.id.name {
-                                                ctx.diagnostic(
-                                                    ConsistentIndexedObjectStyleDiagnostic(
-                                                        "record",
-                                                        "index signature",
-                                                        idx.span,
-                                                    ),
-                                                );
-                                            }
-                                        }
-                                        TSTypeName::QualifiedName(_) => {
-                                            ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
-                                                "record",
-                                                "index signature",
-                                                idx.span,
-                                            ))
-                                        }
-                                    }
-                                }
-                            }
-                            TSType::TSUnknownKeyword(_) | TSType::TSAnyKeyword(_) => {
+                if self.is_index_signature {
+                    return;
+                }
+
+                if decl.body.body.len() != 1 {
+                    return;
+                }
+
+                let TSSignature::TSIndexSignature(idx) = &decl.body.body[0] else { return };
+
+                match &idx.type_annotation.type_annotation {
+                    TSType::TSTypeLiteral(lit) => {
+                        for member in &lit.members {
+                            if let TSSignature::TSIndexSignature(_) = member {
                                 ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
                                     "record",
                                     "index signature",
                                     idx.span,
                                 ));
                             }
-                            _ => {}
                         }
                     }
+                    TSType::TSTypeReference(tref) => match &tref.type_name {
+                        TSTypeName::IdentifierReference(iden) => {
+                            if iden.name != decl.id.name {
+                                ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
+                                    "record",
+                                    "index signature",
+                                    idx.span,
+                                ));
+                            }
+                        }
+                        TSTypeName::QualifiedName(_) => {
+                            ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
+                                "record",
+                                "index signature",
+                                idx.span,
+                            ))
+                        }
+                    },
+                    TSType::TSUnknownKeyword(_) | TSType::TSAnyKeyword(_) => {
+                        ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
+                            "record",
+                            "index signature",
+                            idx.span,
+                        ));
+                    }
+                    _ => {}
                 }
             }
             AstKind::TSTypeAliasDeclaration(al) => match &al.type_annotation {
