@@ -29,7 +29,7 @@ impl EarlyErrorTypeScript {
 }
 
 fn empty_type_parameter_list(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Type parameter list cannot be empty.").with_labels([span0.into()])
+    OxcDiagnostic::error("Type parameter list cannot be empty.").with_labels([span0.into()])
 }
 
 fn check_ts_type_parameter_declaration(
@@ -42,7 +42,7 @@ fn check_ts_type_parameter_declaration(
 }
 
 fn unexpected_optional(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Unexpected `?` operator").with_labels([span0.into()])
+    OxcDiagnostic::error("Unexpected `?` operator").with_labels([span0.into()])
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -56,12 +56,12 @@ fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_
 }
 
 fn required_parameter_after_optional_parameter(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("A required parameter cannot follow an optional parameter.")
+    OxcDiagnostic::error("A required parameter cannot follow an optional parameter.")
         .with_labels([span0.into()])
 }
 
 fn parameter_property_outside_constructor(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("A parameter property is only allowed in a constructor implementation.")
+    OxcDiagnostic::error("A parameter property is only allowed in a constructor implementation.")
         .with_labels([span0.into()])
 }
 
@@ -99,7 +99,7 @@ fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &Sem
 }
 
 fn unexpected_assignment(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(
+    OxcDiagnostic::error(
         "The left-hand side of an assignment expression must be a variable or a property access.",
     )
     .with_labels([span0.into()])
@@ -122,7 +122,7 @@ fn check_simple_assignment_target<'a>(
 }
 
 fn unexpected_type_annotation(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Unexpected type annotation").with_labels([span0.into()])
+    OxcDiagnostic::error("Unexpected type annotation").with_labels([span0.into()])
 }
 
 fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder<'a>) {
@@ -136,7 +136,7 @@ fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder<'a>
 }
 
 fn not_allowed_namespace_declaration(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(
+    OxcDiagnostic::error(
         "A namespace declaration is only allowed at the top level of a namespace or module.",
     )
     .with_labels([span0.into()])
@@ -162,7 +162,7 @@ fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &Semanti
 }
 
 fn enum_member_must_have_initializer(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Enum member must have initializer.").with_labels([span0.into()])
+    OxcDiagnostic::error("Enum member must have initializer.").with_labels([span0.into()])
 }
 
 fn check_ts_enum_declaration(decl: &TSEnumDeclaration<'_>, ctx: &SemanticBuilder<'_>) {

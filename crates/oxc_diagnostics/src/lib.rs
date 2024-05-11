@@ -91,7 +91,7 @@ impl Diagnostic for OxcDiagnostic {
 
 impl OxcDiagnostic {
     #[must_use]
-    pub fn new<T: Into<String>>(message: T) -> Self {
+    pub fn error<T: Into<String>>(message: T) -> Self {
         Self {
             inner: Box::new(OxcDiagnosticInner {
                 message: message.into(),

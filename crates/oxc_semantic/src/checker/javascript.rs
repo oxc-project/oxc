@@ -139,11 +139,11 @@ fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
 }
 
 fn undefined_export(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(format!("Export '{x0}' is not defined")).with_labels([span1.into()])
+    OxcDiagnostic::error(format!("Export '{x0}' is not defined")).with_labels([span1.into()])
 }
 
 fn duplicate_export(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(format!("Duplicated export '{x0}'")).with_labels([
+    OxcDiagnostic::error(format!("Duplicated export '{x0}'")).with_labels([
         LabeledSpan::new_with_span(Some("Export has already been declared here".into()), span1),
         LabeledSpan::new_with_span(Some("It cannot be redeclared here".into()), span2),
     ])
@@ -194,12 +194,12 @@ fn check_module_record(ctx: &SemanticBuilder<'_>) {
 }
 
 fn class_static_block_await(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Cannot use await in class static initialization block")
+    OxcDiagnostic::error("Cannot use await in class static initialization block")
         .with_labels([span0.into()])
 }
 
 fn reserved_keyword(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(format!("The keyword '{x0}' is reserved")).with_labels([span1.into()])
+    OxcDiagnostic::error(format!("The keyword '{x0}' is reserved")).with_labels([span1.into()])
 }
 
 pub const STRICT_MODE_NAMES: Set<&'static str> = phf_set! {
@@ -237,12 +237,12 @@ fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &Seman
 }
 
 fn unexpected_identifier_assign(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(format!("Cannot assign to '{x0}' in strict mode"))
+    OxcDiagnostic::error(format!("Cannot assign to '{x0}' in strict mode"))
         .with_labels([span1.into()])
 }
 
 fn invalid_let_declaration(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(format!(
+    OxcDiagnostic::error(format!(
         "`let` cannot be declared as a variable name inside of a `{x0}` declaration"
     ))
     .with_labels([span1.into()])
@@ -277,7 +277,7 @@ fn check_binding_identifier<'a>(
 }
 
 fn unexpected_arguments(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(format!("'arguments' is not allowed in {x0}")).with_labels([span1.into()])
+    OxcDiagnostic::error(format!("'arguments' is not allowed in {x0}")).with_labels([span1.into()])
 }
 
 fn check_identifier_reference<'a>(
@@ -322,7 +322,7 @@ fn check_identifier_reference<'a>(
 }
 
 fn private_not_in_class(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(format!("Private identifier '#{x0}' is not allowed outside class bodies"))
+    OxcDiagnostic::error(format!("Private identifier '#{x0}' is not allowed outside class bodies"))
         .with_labels([span1.into()])
 }
 
@@ -333,7 +333,7 @@ fn check_private_identifier_outside_class(ident: &PrivateIdentifier, ctx: &Seman
 }
 
 fn private_field_undeclared(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(format!("Private field '{x0}' must be declared in an enclosing class"))
+    OxcDiagnostic::error(format!("Private field '{x0}' must be declared in an enclosing class"))
         .with_labels([span1.into()])
 }
 
@@ -354,13 +354,13 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
 }
 
 fn legacy_octal(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("'0'-prefixed octal literals and octal escape sequences are deprecated")
+    OxcDiagnostic::error("'0'-prefixed octal literals and octal escape sequences are deprecated")
         .with_help("for octal literals use the '0o' prefix instead")
         .with_labels([span0.into()])
 }
 
 fn leading_zero_decimal(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Decimals with leading zeros are not allowed in strict mode")
+    OxcDiagnostic::error("Decimals with leading zeros are not allowed in strict mode")
         .with_help("remove the leading zero")
         .with_labels([span0.into()])
 }
@@ -393,7 +393,7 @@ fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
 }
 
 fn non_octal_decimal_escape_sequence(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Invalid escape sequence")
+    OxcDiagnostic::error("Invalid escape sequence")
         .with_help("\\8 and \\9 are not allowed in strict mode")
         .with_labels([span0.into()])
 }
@@ -429,7 +429,7 @@ fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
 }
 
 fn illegal_use_strict(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Illegal 'use strict' directive in function with non-simple parameter list")
+    OxcDiagnostic::error("Illegal 'use strict' directive in function with non-simple parameter list")
         .with_labels([span0.into()])
 }
 
@@ -454,12 +454,12 @@ fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
 }
 
 fn top_level(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(format!("'{x0}' declaration can only be used at the top level of a module"))
+    OxcDiagnostic::error(format!("'{x0}' declaration can only be used at the top level of a module"))
         .with_labels([span1.into()])
 }
 
 fn module_code(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(format!("Cannot use {x0} outside a module")).with_labels([span1.into()])
+    OxcDiagnostic::error(format!("Cannot use {x0} outside a module")).with_labels([span1.into()])
 }
 
 fn check_module_declaration<'a>(
@@ -498,24 +498,24 @@ fn check_module_declaration<'a>(
 }
 
 fn new_target(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Unexpected new.target expression")
+    OxcDiagnostic::error("Unexpected new.target expression")
 .with_help("new.target is only allowed in constructors and functions invoked using thew `new` operator")
 .with_labels([span0.into()])
 }
 
 fn new_target_property(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("The only valid meta property for new is new.target")
+    OxcDiagnostic::error("The only valid meta property for new is new.target")
         .with_labels([span0.into()])
 }
 
 fn import_meta(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Unexpected import.meta expression")
+    OxcDiagnostic::error("Unexpected import.meta expression")
         .with_help("import.meta is only allowed in module code")
         .with_labels([span0.into()])
 }
 
 fn import_meta_property(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("The only valid meta property for import is import.meta")
+    OxcDiagnostic::error("The only valid meta property for import is import.meta")
         .with_labels([span0.into()])
 }
 
@@ -556,7 +556,7 @@ fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &Semant
 }
 
 fn function_declaration_strict(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Invalid function declaration")
+    OxcDiagnostic::error("Invalid function declaration")
         .with_help(
             "In strict mode code, functions can only be declared at top level or inside a block",
         )
@@ -564,7 +564,7 @@ fn function_declaration_strict(span0: Span) -> OxcDiagnostic {
 }
 
 fn function_declaration_non_strict(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Invalid function declaration")
+    OxcDiagnostic::error("Invalid function declaration")
 .with_help("In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement")
 .with_labels([span0.into()])
 }
@@ -585,7 +585,7 @@ fn check_function_declaration<'a>(
 }
 
 fn reg_exp_flag_u_and_v(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(
+    OxcDiagnostic::error(
         "The 'u' and 'v' regular expression flags cannot be enabled at the same time",
     )
     .with_labels([span0.into()])
@@ -599,7 +599,7 @@ fn check_regexp_literal(lit: &RegExpLiteral, ctx: &SemanticBuilder<'_>) {
 }
 
 fn with_statement(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("'with' statements are not allowed").with_labels([span0.into()])
+    OxcDiagnostic::error("'with' statements are not allowed").with_labels([span0.into()])
 }
 
 fn check_with_statement(stmt: &WithStatement, ctx: &SemanticBuilder<'_>) {
@@ -622,15 +622,15 @@ fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuilder<
 }
 
 fn invalid_label_jump_target(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Jump target cannot cross function boundary.").with_labels([span0.into()])
+    OxcDiagnostic::error("Jump target cannot cross function boundary.").with_labels([span0.into()])
 }
 
 fn invalid_label_target(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Use of undefined label").with_labels([span0.into()])
+    OxcDiagnostic::error("Use of undefined label").with_labels([span0.into()])
 }
 
 fn invalid_label_non_iteration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(format!("A `{x0}` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement."))
+    OxcDiagnostic::error(format!("A `{x0}` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement."))
 .with_labels([LabeledSpan::new_with_span(Some("This is an non-iteration statement".into()), span1), LabeledSpan::new_with_span(Some("for this label".into()), span2)])
 }
 
@@ -660,7 +660,7 @@ fn check_label(label: &LabelIdentifier, ctx: &SemanticBuilder, is_continue: bool
 }
 
 fn invalid_break(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Illegal break statement")
+    OxcDiagnostic::error("Illegal break statement")
 .with_help("A `break` statement can only be used within an enclosing iteration or switch statement.")
 .with_labels([span0.into()])
 }
@@ -688,7 +688,7 @@ fn check_break_statement<'a>(stmt: &BreakStatement, node: &AstNode<'a>, ctx: &Se
 }
 
 fn invalid_continue(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Illegal continue statement: no surrounding iteration statement")
+    OxcDiagnostic::error("Illegal continue statement: no surrounding iteration statement")
 .with_help("A `continue` statement can only be used within an enclosing `for`, `while` or `do while` ")
 .with_labels([span0.into()])
 }
@@ -729,12 +729,12 @@ fn check_labeled_statement(ctx: &SemanticBuilder) {
 }
 
 fn multiple_declaration_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(format!("Only a single declaration is allowed in a `for...{x0}` statement"))
+    OxcDiagnostic::error(format!("Only a single declaration is allowed in a `for...{x0}` statement"))
         .with_labels([span1.into()])
 }
 
 fn unexpected_initializer_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(format!("{x0} loop variable declaration may not have an initializer"))
+    OxcDiagnostic::error(format!("{x0} loop variable declaration may not have an initializer"))
         .with_labels([span1.into()])
 }
 
@@ -771,7 +771,7 @@ fn check_for_statement_left<'a>(
 }
 
 fn duplicate_constructor(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Multiple constructor implementations are not allowed.").with_labels([
+    OxcDiagnostic::error("Multiple constructor implementations are not allowed.").with_labels([
         LabeledSpan::new_with_span(
             Some("constructor has already been declared here".into()),
             span0,
@@ -781,7 +781,7 @@ fn duplicate_constructor(span0: Span, span1: Span) -> OxcDiagnostic {
 }
 
 fn require_class_name(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("A class name is required.").with_labels([span0.into()])
+    OxcDiagnostic::error("A class name is required.").with_labels([span0.into()])
 }
 
 fn check_class(class: &Class, node: &AstNode<'_>, ctx: &SemanticBuilder<'_>) {
@@ -817,12 +817,12 @@ fn check_class(class: &Class, node: &AstNode<'_>, ctx: &SemanticBuilder<'_>) {
 }
 
 fn setter_with_parameters(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("A 'set' accessor must have exactly one parameter.")
+    OxcDiagnostic::error("A 'set' accessor must have exactly one parameter.")
         .with_labels([span0.into()])
 }
 
 fn setter_with_rest_parameter(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("A 'set' accessor cannot have rest parameter.").with_labels([span0.into()])
+    OxcDiagnostic::error("A 'set' accessor cannot have rest parameter.").with_labels([span0.into()])
 }
 
 fn check_setter(function: &Function<'_>, ctx: &SemanticBuilder<'_>) {
@@ -839,7 +839,7 @@ fn check_setter(function: &Function<'_>, ctx: &SemanticBuilder<'_>) {
 }
 
 fn getter_parameters(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("A 'get' accessor must not have any formal parameters.")
+    OxcDiagnostic::error("A 'get' accessor must not have any formal parameters.")
         .with_labels([span0.into()])
 }
 
@@ -858,7 +858,7 @@ fn check_method_definition(method: &MethodDefinition<'_>, ctx: &SemanticBuilder<
 }
 
 fn super_without_derived_class(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("'super' can only be referenced in a derived class.")
+    OxcDiagnostic::error("'super' can only be referenced in a derived class.")
         .with_help("either remove this super, or extend the class")
         .with_labels([
             span0.into(),
@@ -867,12 +867,12 @@ fn super_without_derived_class(span0: Span, span1: Span) -> OxcDiagnostic {
 }
 
 fn unexpected_super_call(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Super calls are not permitted outside constructors or in nested functions inside constructors.")
+    OxcDiagnostic::error("Super calls are not permitted outside constructors or in nested functions inside constructors.")
 .with_labels([span0.into()])
 }
 
 fn unexpected_super_reference(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("'super' can only be referenced in members of derived classes or object literal expressions.")
+    OxcDiagnostic::error("'super' can only be referenced in members of derived classes or object literal expressions.")
 .with_labels([span0.into()])
 }
 
@@ -962,7 +962,7 @@ fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
 }
 
 fn cover_initialized_name(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Invalid assignment in object literal")
+    OxcDiagnostic::error("Invalid assignment in object literal")
 .with_help("Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.")
 .with_labels([span0.into()])
 }
@@ -984,7 +984,7 @@ fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
 }
 
 fn a_rest_parameter_cannot_have_an_initializer(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("A rest parameter cannot have an initializer").with_labels([span0.into()])
+    OxcDiagnostic::error("A rest parameter cannot have an initializer").with_labels([span0.into()])
 }
 
 fn check_formal_parameters<'a>(
@@ -1010,7 +1010,7 @@ fn check_array_pattern(pattern: &ArrayPattern, ctx: &SemanticBuilder<'_>) {
 }
 
 fn assignment_is_not_simple(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Invalid left-hand side in assignment").with_labels([span0.into()])
+    OxcDiagnostic::error("Invalid left-hand side in assignment").with_labels([span0.into()])
 }
 
 fn check_assignment_expression(assign_expr: &AssignmentExpression, ctx: &SemanticBuilder<'_>) {
@@ -1044,7 +1044,7 @@ fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilder<'_
 }
 
 fn unexpected_exponential(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Unexpected exponentiation expression")
+    OxcDiagnostic::error("Unexpected exponentiation expression")
         .with_help(format!("Wrap {x0} expression in parentheses to enforce operator precedence"))
         .with_labels([span1.into()])
 }
@@ -1067,7 +1067,7 @@ fn check_binary_expression(binary_expr: &BinaryExpression, ctx: &SemanticBuilder
 }
 
 fn mixed_coalesce(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Logical expressions and coalesce expressions cannot be mixed")
+    OxcDiagnostic::error("Logical expressions and coalesce expressions cannot be mixed")
         .with_help("Wrap either expression by parentheses")
         .with_labels([span0.into()])
 }
@@ -1094,7 +1094,7 @@ fn check_logical_expression(logical_expr: &LogicalExpression, ctx: &SemanticBuil
 }
 
 fn super_private(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Private fields cannot be accessed on super").with_labels([span0.into()])
+    OxcDiagnostic::error("Private fields cannot be accessed on super").with_labels([span0.into()])
 }
 
 fn check_member_expression(member_expr: &MemberExpression, ctx: &SemanticBuilder<'_>) {
@@ -1107,12 +1107,12 @@ fn check_member_expression(member_expr: &MemberExpression, ctx: &SemanticBuilder
 }
 
 fn delete_of_unqualified(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Delete of an unqualified identifier in strict mode.")
+    OxcDiagnostic::error("Delete of an unqualified identifier in strict mode.")
         .with_labels([span0.into()])
 }
 
 fn delete_private_field(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("Private fields can not be deleted").with_labels([span0.into()])
+    OxcDiagnostic::error("Private fields can not be deleted").with_labels([span0.into()])
 }
 
 fn check_unary_expression<'a>(
@@ -1148,7 +1148,7 @@ fn is_in_formal_parameters<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) ->
 }
 
 fn await_or_yield_in_parameter(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new(format!("{x0} expression not allowed in formal parameter")).with_labels([
+    OxcDiagnostic::error(format!("{x0} expression not allowed in formal parameter")).with_labels([
         LabeledSpan::new_with_span(
             Some(format!("{x0} expression not allowed in formal parameter")),
             span1,

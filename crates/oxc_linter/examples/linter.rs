@@ -73,7 +73,7 @@ fn print_errors(source_text: &str, errors: Vec<OxcDiagnostic>) {
 //   · ─────────
 //   ╰────
 fn no_debugger(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("`debugger` statement is not allowed").with_labels([span0.into()])
+    OxcDiagnostic::error("`debugger` statement is not allowed").with_labels([span0.into()])
 }
 
 // This prints:
@@ -85,7 +85,7 @@ fn no_debugger(span0: Span) -> OxcDiagnostic {
 //   ·      ╰── Empty object binding pattern
 //   ╰────
 fn no_empty_pattern(s0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::new("empty destructuring pattern is not allowed").with_labels([
+    OxcDiagnostic::error("empty destructuring pattern is not allowed").with_labels([
         LabeledSpan::new_with_span(Some(format!("Empty {s0} binding pattern")), span1),
     ])
 }
