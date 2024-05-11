@@ -2346,10 +2346,16 @@ pub(crate) unsafe fn walk_class<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_class(&mut *node, ctx);
-    ctx.push_stack(Ancestor::ClassId(ancestor::ClassWithoutId(node)));
+    ctx.push_stack(Ancestor::ClassDecorators(ancestor::ClassWithoutDecorators(node)));
+    for item in (*((node as *mut u8).add(ancestor::OFFSET_CLASS_DECORATORS) as *mut Vec<Decorator>))
+        .iter_mut()
+    {
+        walk_decorator(traverser, item as *mut _, ctx);
+    }
     if let Some(field) =
         &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_ID) as *mut Option<BindingIdentifier>)
     {
+        ctx.retag_stack(AncestorType::ClassId);
         walk_binding_identifier(traverser, field as *mut _, ctx);
     }
     if let Some(field) =
@@ -2384,12 +2390,6 @@ pub(crate) unsafe fn walk_class<'a, Tr: Traverse<'a>>(
         for item in field.iter_mut() {
             walk_ts_class_implements(traverser, item as *mut _, ctx);
         }
-    }
-    ctx.retag_stack(AncestorType::ClassDecorators);
-    for item in (*((node as *mut u8).add(ancestor::OFFSET_CLASS_DECORATORS) as *mut Vec<Decorator>))
-        .iter_mut()
-    {
-        walk_decorator(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack();
     traverser.exit_class(&mut *node, ctx);
@@ -2444,7 +2444,16 @@ pub(crate) unsafe fn walk_method_definition<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_method_definition(&mut *node, ctx);
-    ctx.push_stack(Ancestor::MethodDefinitionKey(ancestor::MethodDefinitionWithoutKey(node)));
+    ctx.push_stack(Ancestor::MethodDefinitionDecorators(
+        ancestor::MethodDefinitionWithoutDecorators(node),
+    ));
+    for item in (*((node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_DECORATORS)
+        as *mut Vec<Decorator>))
+        .iter_mut()
+    {
+        walk_decorator(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::MethodDefinitionKey);
     walk_property_key(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_KEY) as *mut PropertyKey,
@@ -2457,13 +2466,6 @@ pub(crate) unsafe fn walk_method_definition<'a, Tr: Traverse<'a>>(
             as *mut Box<Function>)) as *mut _,
         ctx,
     );
-    ctx.retag_stack(AncestorType::MethodDefinitionDecorators);
-    for item in (*((node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_DECORATORS)
-        as *mut Vec<Decorator>))
-        .iter_mut()
-    {
-        walk_decorator(traverser, item as *mut _, ctx);
-    }
     ctx.pop_stack();
     traverser.exit_method_definition(&mut *node, ctx);
 }

@@ -937,13 +937,13 @@ impl<'a> AstBuilder<'a> {
         self.alloc(Class {
             r#type,
             span,
+            decorators,
             id,
             super_class,
             body,
             type_parameters,
             super_type_parameters,
             implements,
-            decorators,
             modifiers,
         })
     }

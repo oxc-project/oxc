@@ -151,17 +151,17 @@ pub(crate) enum AncestorType {
     ArrowFunctionExpressionTypeParameters = 124,
     ArrowFunctionExpressionReturnType = 125,
     YieldExpressionArgument = 126,
-    ClassId = 127,
-    ClassSuperClass = 128,
-    ClassBody = 129,
-    ClassTypeParameters = 130,
-    ClassSuperTypeParameters = 131,
-    ClassImplements = 132,
-    ClassDecorators = 133,
+    ClassDecorators = 127,
+    ClassId = 128,
+    ClassSuperClass = 129,
+    ClassBody = 130,
+    ClassTypeParameters = 131,
+    ClassSuperTypeParameters = 132,
+    ClassImplements = 133,
     ClassBodyBody = 134,
-    MethodDefinitionKey = 135,
-    MethodDefinitionValue = 136,
-    MethodDefinitionDecorators = 137,
+    MethodDefinitionDecorators = 135,
+    MethodDefinitionKey = 136,
+    MethodDefinitionValue = 137,
     PropertyDefinitionKey = 138,
     PropertyDefinitionValue = 139,
     PropertyDefinitionTypeAnnotation = 140,
@@ -547,6 +547,7 @@ pub enum Ancestor<'a> {
         AncestorType::ArrowFunctionExpressionReturnType as u16,
     YieldExpressionArgument(YieldExpressionWithoutArgument<'a>) =
         AncestorType::YieldExpressionArgument as u16,
+    ClassDecorators(ClassWithoutDecorators<'a>) = AncestorType::ClassDecorators as u16,
     ClassId(ClassWithoutId<'a>) = AncestorType::ClassId as u16,
     ClassSuperClass(ClassWithoutSuperClass<'a>) = AncestorType::ClassSuperClass as u16,
     ClassBody(ClassWithoutBody<'a>) = AncestorType::ClassBody as u16,
@@ -554,13 +555,12 @@ pub enum Ancestor<'a> {
     ClassSuperTypeParameters(ClassWithoutSuperTypeParameters<'a>) =
         AncestorType::ClassSuperTypeParameters as u16,
     ClassImplements(ClassWithoutImplements<'a>) = AncestorType::ClassImplements as u16,
-    ClassDecorators(ClassWithoutDecorators<'a>) = AncestorType::ClassDecorators as u16,
     ClassBodyBody(ClassBodyWithoutBody<'a>) = AncestorType::ClassBodyBody as u16,
+    MethodDefinitionDecorators(MethodDefinitionWithoutDecorators<'a>) =
+        AncestorType::MethodDefinitionDecorators as u16,
     MethodDefinitionKey(MethodDefinitionWithoutKey<'a>) = AncestorType::MethodDefinitionKey as u16,
     MethodDefinitionValue(MethodDefinitionWithoutValue<'a>) =
         AncestorType::MethodDefinitionValue as u16,
-    MethodDefinitionDecorators(MethodDefinitionWithoutDecorators<'a>) =
-        AncestorType::MethodDefinitionDecorators as u16,
     PropertyDefinitionKey(PropertyDefinitionWithoutKey<'a>) =
         AncestorType::PropertyDefinitionKey as u16,
     PropertyDefinitionValue(PropertyDefinitionWithoutValue<'a>) =
@@ -1268,13 +1268,13 @@ impl<'a> Ancestor<'a> {
     pub fn is_class(&self) -> bool {
         matches!(
             self,
-            Self::ClassId(_)
+            Self::ClassDecorators(_)
+                | Self::ClassId(_)
                 | Self::ClassSuperClass(_)
                 | Self::ClassBody(_)
                 | Self::ClassTypeParameters(_)
                 | Self::ClassSuperTypeParameters(_)
                 | Self::ClassImplements(_)
-                | Self::ClassDecorators(_)
         )
     }
 
@@ -1287,9 +1287,9 @@ impl<'a> Ancestor<'a> {
     pub fn is_method_definition(&self) -> bool {
         matches!(
             self,
-            Self::MethodDefinitionKey(_)
+            Self::MethodDefinitionDecorators(_)
+                | Self::MethodDefinitionKey(_)
                 | Self::MethodDefinitionValue(_)
-                | Self::MethodDefinitionDecorators(_)
         )
     }
 
@@ -5886,6 +5886,7 @@ impl<'a> YieldExpressionWithoutArgument<'a> {
 
 pub(crate) const OFFSET_CLASS_TYPE: usize = offset_of!(Class, r#type);
 pub(crate) const OFFSET_CLASS_SPAN: usize = offset_of!(Class, span);
+pub(crate) const OFFSET_CLASS_DECORATORS: usize = offset_of!(Class, decorators);
 pub(crate) const OFFSET_CLASS_ID: usize = offset_of!(Class, id);
 pub(crate) const OFFSET_CLASS_SUPER_CLASS: usize = offset_of!(Class, super_class);
 pub(crate) const OFFSET_CLASS_BODY: usize = offset_of!(Class, body);
@@ -5893,391 +5894,7 @@ pub(crate) const OFFSET_CLASS_TYPE_PARAMETERS: usize = offset_of!(Class, type_pa
 pub(crate) const OFFSET_CLASS_SUPER_TYPE_PARAMETERS: usize =
     offset_of!(Class, super_type_parameters);
 pub(crate) const OFFSET_CLASS_IMPLEMENTS: usize = offset_of!(Class, implements);
-pub(crate) const OFFSET_CLASS_DECORATORS: usize = offset_of!(Class, decorators);
 pub(crate) const OFFSET_CLASS_MODIFIERS: usize = offset_of!(Class, modifiers);
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct ClassWithoutId<'a>(pub(crate) *const Class<'a>);
-
-impl<'a> ClassWithoutId<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &ClassType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn super_class(&self) -> &Option<Expression<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
-    }
-
-    #[inline]
-    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn implements(&self) -> &Option<Vec<'a, TSClassImplements<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct ClassWithoutSuperClass<'a>(pub(crate) *const Class<'a>);
-
-impl<'a> ClassWithoutSuperClass<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &ClassType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
-    }
-
-    #[inline]
-    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn implements(&self) -> &Option<Vec<'a, TSClassImplements<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct ClassWithoutBody<'a>(pub(crate) *const Class<'a>);
-
-impl<'a> ClassWithoutBody<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &ClassType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn super_class(&self) -> &Option<Expression<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn implements(&self) -> &Option<Vec<'a, TSClassImplements<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct ClassWithoutTypeParameters<'a>(pub(crate) *const Class<'a>);
-
-impl<'a> ClassWithoutTypeParameters<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &ClassType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn super_class(&self) -> &Option<Expression<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
-    }
-
-    #[inline]
-    pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn implements(&self) -> &Option<Vec<'a, TSClassImplements<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct ClassWithoutSuperTypeParameters<'a>(pub(crate) *const Class<'a>);
-
-impl<'a> ClassWithoutSuperTypeParameters<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &ClassType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn super_class(&self) -> &Option<Expression<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
-    }
-
-    #[inline]
-    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn implements(&self) -> &Option<Vec<'a, TSClassImplements<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct ClassWithoutImplements<'a>(pub(crate) *const Class<'a>);
-
-impl<'a> ClassWithoutImplements<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &ClassType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn super_class(&self) -> &Option<Expression<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
-    }
-
-    #[inline]
-    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
-    }
-}
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -6343,6 +5960,389 @@ impl<'a> ClassWithoutDecorators<'a> {
     }
 }
 
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct ClassWithoutId<'a>(pub(crate) *const Class<'a>);
+
+impl<'a> ClassWithoutId<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_class(&self) -> &Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
+    }
+
+    #[inline]
+    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn implements(&self) -> &Option<Vec<'a, TSClassImplements<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
+                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn modifiers(&self) -> &Modifiers<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct ClassWithoutSuperClass<'a>(pub(crate) *const Class<'a>);
+
+impl<'a> ClassWithoutSuperClass<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
+    }
+
+    #[inline]
+    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn implements(&self) -> &Option<Vec<'a, TSClassImplements<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
+                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn modifiers(&self) -> &Modifiers<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct ClassWithoutBody<'a>(pub(crate) *const Class<'a>);
+
+impl<'a> ClassWithoutBody<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_class(&self) -> &Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn implements(&self) -> &Option<Vec<'a, TSClassImplements<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
+                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn modifiers(&self) -> &Modifiers<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct ClassWithoutTypeParameters<'a>(pub(crate) *const Class<'a>);
+
+impl<'a> ClassWithoutTypeParameters<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_class(&self) -> &Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
+    }
+
+    #[inline]
+    pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn implements(&self) -> &Option<Vec<'a, TSClassImplements<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
+                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn modifiers(&self) -> &Modifiers<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct ClassWithoutSuperTypeParameters<'a>(pub(crate) *const Class<'a>);
+
+impl<'a> ClassWithoutSuperTypeParameters<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_class(&self) -> &Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
+    }
+
+    #[inline]
+    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn implements(&self) -> &Option<Vec<'a, TSClassImplements<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
+                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn modifiers(&self) -> &Modifiers<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct ClassWithoutImplements<'a>(pub(crate) *const Class<'a>);
+
+impl<'a> ClassWithoutImplements<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_class(&self) -> &Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
+    }
+
+    #[inline]
+    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn modifiers(&self) -> &Modifiers<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    }
+}
+
 pub(crate) const OFFSET_CLASS_BODY_SPAN: usize = offset_of!(ClassBody, span);
 pub(crate) const OFFSET_CLASS_BODY_BODY: usize = offset_of!(ClassBody, body);
 
@@ -6359,6 +6359,8 @@ impl<'a> ClassBodyWithoutBody<'a> {
 
 pub(crate) const OFFSET_METHOD_DEFINITION_TYPE: usize = offset_of!(MethodDefinition, r#type);
 pub(crate) const OFFSET_METHOD_DEFINITION_SPAN: usize = offset_of!(MethodDefinition, span);
+pub(crate) const OFFSET_METHOD_DEFINITION_DECORATORS: usize =
+    offset_of!(MethodDefinition, decorators);
 pub(crate) const OFFSET_METHOD_DEFINITION_KEY: usize = offset_of!(MethodDefinition, key);
 pub(crate) const OFFSET_METHOD_DEFINITION_VALUE: usize = offset_of!(MethodDefinition, value);
 pub(crate) const OFFSET_METHOD_DEFINITION_KIND: usize = offset_of!(MethodDefinition, kind);
@@ -6369,149 +6371,6 @@ pub(crate) const OFFSET_METHOD_DEFINITION_OVERRIDE: usize =
 pub(crate) const OFFSET_METHOD_DEFINITION_OPTIONAL: usize = offset_of!(MethodDefinition, optional);
 pub(crate) const OFFSET_METHOD_DEFINITION_ACCESSIBILITY: usize =
     offset_of!(MethodDefinition, accessibility);
-pub(crate) const OFFSET_METHOD_DEFINITION_DECORATORS: usize =
-    offset_of!(MethodDefinition, decorators);
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct MethodDefinitionWithoutKey<'a>(pub(crate) *const MethodDefinition<'a>);
-
-impl<'a> MethodDefinitionWithoutKey<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &MethodDefinitionType {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_TYPE)
-                as *const MethodDefinitionType)
-        }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn value(&self) -> &Box<'a, Function<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_VALUE)
-                as *const Box<'a, Function<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn kind(&self) -> &MethodDefinitionKind {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_KIND)
-                as *const MethodDefinitionKind)
-        }
-    }
-
-    #[inline]
-    pub fn computed(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#static(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_STATIC) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#override(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_OVERRIDE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn optional(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_OPTIONAL) as *const bool) }
-    }
-
-    #[inline]
-    pub fn accessibility(&self) -> &Option<TSAccessibility> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_ACCESSIBILITY)
-                as *const Option<TSAccessibility>)
-        }
-    }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_DECORATORS)
-                as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct MethodDefinitionWithoutValue<'a>(pub(crate) *const MethodDefinition<'a>);
-
-impl<'a> MethodDefinitionWithoutValue<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &MethodDefinitionType {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_TYPE)
-                as *const MethodDefinitionType)
-        }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn key(&self) -> &PropertyKey<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_KEY) as *const PropertyKey<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn kind(&self) -> &MethodDefinitionKind {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_KIND)
-                as *const MethodDefinitionKind)
-        }
-    }
-
-    #[inline]
-    pub fn computed(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#static(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_STATIC) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#override(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_OVERRIDE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn optional(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_OPTIONAL) as *const bool) }
-    }
-
-    #[inline]
-    pub fn accessibility(&self) -> &Option<TSAccessibility> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_ACCESSIBILITY)
-                as *const Option<TSAccessibility>)
-        }
-    }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_DECORATORS)
-                as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-}
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -6543,6 +6402,147 @@ impl<'a> MethodDefinitionWithoutDecorators<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_VALUE)
                 as *const Box<'a, Function<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn kind(&self) -> &MethodDefinitionKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_KIND)
+                as *const MethodDefinitionKind)
+        }
+    }
+
+    #[inline]
+    pub fn computed(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(&self) -> &Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct MethodDefinitionWithoutKey<'a>(pub(crate) *const MethodDefinition<'a>);
+
+impl<'a> MethodDefinitionWithoutKey<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &MethodDefinitionType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_TYPE)
+                as *const MethodDefinitionType)
+        }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn value(&self) -> &Box<'a, Function<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_VALUE)
+                as *const Box<'a, Function<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn kind(&self) -> &MethodDefinitionKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_KIND)
+                as *const MethodDefinitionKind)
+        }
+    }
+
+    #[inline]
+    pub fn computed(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(&self) -> &Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct MethodDefinitionWithoutValue<'a>(pub(crate) *const MethodDefinition<'a>);
+
+impl<'a> MethodDefinitionWithoutValue<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &MethodDefinitionType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_TYPE)
+                as *const MethodDefinitionType)
+        }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_KEY) as *const PropertyKey<'a>)
         }
     }
 

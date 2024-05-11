@@ -2343,13 +2343,13 @@ pub struct Class<'a> {
     pub r#type: ClassType,
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+    pub decorators: Vec<'a, Decorator<'a>>,
     pub id: Option<BindingIdentifier<'a>>,
     pub super_class: Option<Expression<'a>>,
     pub body: Box<'a, ClassBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
-    pub decorators: Vec<'a, Decorator<'a>>,
     /// Valid Modifiers: `export`, `abstract`
     pub modifiers: Modifiers<'a>,
 }
@@ -2499,6 +2499,7 @@ pub struct MethodDefinition<'a> {
     pub r#type: MethodDefinitionType,
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+    pub decorators: Vec<'a, Decorator<'a>>,
     pub key: PropertyKey<'a>,
     pub value: Box<'a, Function<'a>>, // FunctionExpression
     pub kind: MethodDefinitionKind,
@@ -2507,7 +2508,6 @@ pub struct MethodDefinition<'a> {
     pub r#override: bool,
     pub optional: bool,
     pub accessibility: Option<TSAccessibility>,
-    pub decorators: Vec<'a, Decorator<'a>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
