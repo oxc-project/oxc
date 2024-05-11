@@ -57,8 +57,8 @@ impl Rule for NoGlobalAssign {
                 .unwrap_or(&vec![])
                 .iter()
                 .map(serde_json::Value::as_str)
-                .filter(std::option::Option::is_some)
-                .map(|x| CompactStr::from(x.unwrap()))
+                .filter(Option::is_some)
+                .map(|x| x.unwrap().into())
                 .collect::<Vec<CompactStr>>(),
         }))
     }
@@ -70,7 +70,6 @@ impl Rule for NoGlobalAssign {
                 let reference = symbol_table.get_reference(reference_id);
                 if reference.is_write() && symbol_table.is_global_reference(reference_id) {
                     let name = reference.name();
-
                     if !self.excludes.contains(name) && ctx.env_contains_var(name) {
                         ctx.diagnostic(no_global_assign_diagnostic(name, reference.span()));
                     }

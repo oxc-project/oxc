@@ -1,9 +1,11 @@
 pub mod return_checker;
 
+use std::borrow::Cow;
+
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use phf::phf_set;
 use serde_json::Value;
 
@@ -230,10 +232,10 @@ const TARGET_METHODS: phf::Set<&'static str> = phf_set! {
     "toSorted",
 };
 
-fn full_array_method_name(array_method: &'static str) -> CompactStr {
+fn full_array_method_name(array_method: &'static str) -> Cow<'static, str> {
     match array_method {
-        "from" => CompactStr::from("Array.from"),
-        s => CompactStr::from(format!("Array.prototype.{s}")),
+        "from" => Cow::Borrowed("Array.from"),
+        s => Cow::Owned(format!("Array.prototype.{s}")),
     }
 }
 

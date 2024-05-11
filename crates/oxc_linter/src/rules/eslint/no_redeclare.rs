@@ -32,7 +32,7 @@ fn no_redeclare_as_builti_in_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic 
 // #[error("eslint(no-redeclare): '{0}' is already defined by a variable declaration.")]
 // #[diagnostic(severity(warning))]
 // struct NoRedeclareBySyntaxDiagnostic(
-//     CompactStr,
+//     String,
 //     #[label("'{0}' is already defined by a variable declaration.")] pub Span,
 //     #[label("It cannot be redeclared here.")] pub Span,
 // );

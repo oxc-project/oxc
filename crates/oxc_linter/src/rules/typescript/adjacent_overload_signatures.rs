@@ -143,21 +143,21 @@ impl GetMethod for TSSignature<'_> {
     fn get_method(&self) -> Option<Method> {
         match self {
             TSSignature::TSMethodSignature(sig) => sig.key.static_name().map(|name| Method {
-                name,
+                name: name.clone(),
                 r#static: false,
                 call_signature: false,
                 kind: get_kind_from_key(&sig.key),
                 span: sig.key.span(),
             }),
             TSSignature::TSCallSignatureDeclaration(sig) => Some(Method {
-                name: CompactStr::from("call"),
+                name: "call".into(),
                 r#static: false,
                 call_signature: true,
                 kind: MethodKind::Normal,
                 span: sig.span,
             }),
             TSSignature::TSConstructSignatureDeclaration(decl) => Some(Method {
-                name: CompactStr::from("new"),
+                name: "new".into(),
                 r#static: false,
                 call_signature: false,
                 kind: MethodKind::Normal,

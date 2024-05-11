@@ -7,7 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ModuleRecord};
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::module_record::{ExportExportName, ExportImportName, ImportImportName};
 
 use crate::{context::LintContext, rule::Rule};
@@ -85,8 +85,7 @@ impl Rule for Namespace {
                         return;
                     };
 
-                    let Some(loaded_module) =
-                        &loaded_module.loaded_modules.get(&CompactStr::from(source.clone()))
+                    let Some(loaded_module) = &loaded_module.loaded_modules.get(source.as_str())
                     else {
                         return;
                     };
@@ -129,7 +128,7 @@ impl Rule for Namespace {
                             check_deep_namespace_for_node(
                                 node,
                                 &source,
-                                vec![entry.local_name.name().clone()].as_slice(),
+                                vec![entry.local_name.name().to_string()].as_slice(),
                                 &module,
                                 ctx,
                             );
@@ -154,7 +153,7 @@ impl Rule for Namespace {
                             check_deep_namespace_for_object_pattern(
                                 pattern,
                                 &source,
-                                vec![entry.local_name.name().clone()].as_slice(),
+                                &[entry.local_name.name().to_string()],
                                 &module,
                                 ctx,
                             );
@@ -214,7 +213,7 @@ fn get_module_request_name(name: &str, module_record: &ModuleRecord) -> Option<S
 fn check_deep_namespace_for_node(
     node: &AstNode,
     source: &str,
-    namespaces: &[CompactStr],
+    namespaces: &[String],
     module: &Arc<ModuleRecord>,
     ctx: &LintContext<'_>,
 ) {
@@ -234,7 +233,7 @@ fn check_deep_namespace_for_node(
                 parent_node,
                 source,
                 namespaces.as_slice(),
-                module.loaded_modules.get(&CompactStr::from(module_source)).unwrap().value(),
+                module.loaded_modules.get(module_source.as_str()).unwrap().value(),
                 ctx,
             );
         } else {
@@ -257,7 +256,7 @@ fn check_deep_namespace_for_node(
 fn check_deep_namespace_for_object_pattern(
     pattern: &ObjectPattern,
     source: &str,
-    namespaces: &[CompactStr],
+    namespaces: &[String],
     module: &Arc<ModuleRecord>,
     ctx: &LintContext<'_>,
 ) {
@@ -269,12 +268,12 @@ fn check_deep_namespace_for_object_pattern(
         if let BindingPatternKind::ObjectPattern(pattern) = &property.value.kind {
             if let Some(module_source) = get_module_request_name(&name, module) {
                 let mut next_namespaces = namespaces.to_owned();
-                next_namespaces.push(name.clone());
+                next_namespaces.push(name.to_string());
                 check_deep_namespace_for_object_pattern(
                     pattern,
                     source,
                     next_namespaces.as_slice(),
-                    module.loaded_modules.get(&CompactStr::from(module_source)).unwrap().value(),
+                    module.loaded_modules.get(module_source.as_str()).unwrap().value(),
                     ctx,
                 );
                 continue;
@@ -311,7 +310,7 @@ fn check_binding_exported(
         || module
             .exported_bindings_from_star_export
             .iter()
-            .any(|entry| entry.value().contains(&CompactStr::from(name)))
+            .any(|entry| entry.value().iter().any(|s| s.as_str() == name))
     {
         return;
     }
