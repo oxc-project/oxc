@@ -39,6 +39,9 @@ impl Rule for {{pascal_rule_name}} {
 #[test]
 fn test() {
     use crate::tester::Tester;
+    {{#if has_filename}}
+    use std::path::PathBuf;
+    {{/if}}
 
     let pass = vec![
         {{pass_cases}}
