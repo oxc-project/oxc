@@ -1,11 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-    Result,
-};
-use oxc_span::{Atom, CompactStr, GetSpan, Span};
+use oxc_diagnostics::Result;
+use oxc_span::{Atom, GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -14,15 +10,6 @@ use crate::{
     list::{NormalList, SeparatedList},
     ParserImpl,
 };
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Identifier `{0}` has already been declared")]
-#[diagnostic()]
-struct Redeclaration(
-    pub CompactStr,
-    #[label("`{0}` has already been declared here")] pub Span,
-    #[label("It can not be redeclared here")] pub Span,
-);
 
 /// ObjectExpression.properties
 pub struct ObjectExpressionProperties<'a> {
@@ -83,10 +70,10 @@ impl<'a> SeparatedList<'a> for ObjectPatternProperties<'a> {
         if p.cur_kind() == Kind::Dot3 {
             let rest = p.parse_rest_element()?;
             if !matches!(&rest.argument.kind, BindingPatternKind::BindingIdentifier(_)) {
-                p.error(diagnostics::InvalidBindingRestElement(rest.argument.span()));
+                p.error(diagnostics::invalid_binding_rest_element(rest.argument.span()));
             }
             if let Some(r) = self.rest.replace(rest) {
-                p.error(diagnostics::BindingRestElementLast(r.span));
+                p.error(diagnostics::binding_rest_element_last(r.span));
             }
         } else {
             let prop = p.parse_binding_property()?;
@@ -160,7 +147,7 @@ impl<'a> SeparatedList<'a> for ArrayPatternList<'a> {
             Kind::Dot3 => {
                 let rest = p.parse_rest_element()?;
                 if let Some(r) = self.rest.replace(rest) {
-                    p.error(diagnostics::BindingRestElementLast(r.span));
+                    p.error(diagnostics::binding_rest_element_last(r.span));
                 }
             }
             _ => {
@@ -272,7 +259,7 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
             Kind::Dot3 => {
                 let rest = p.parse_rest_element()?;
                 if let Some(r) = self.rest.replace(rest) {
-                    p.error(diagnostics::RestParameterLast(r.span));
+                    p.error(diagnostics::rest_parameter_last(r.span));
                 }
             }
             _ => {
@@ -321,7 +308,7 @@ impl<'a> SeparatedList<'a> for AssertEntries<'a> {
         };
 
         if let Some(old_span) = self.keys.get(&key.as_atom()) {
-            p.error(Redeclaration(key.as_atom().into_compact_str(), *old_span, key.span()));
+            p.error(diagnostics::redeclaration(key.as_atom().as_str(), *old_span, key.span()));
         } else {
             self.keys.insert(key.as_atom(), key.span());
         }

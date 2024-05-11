@@ -813,7 +813,7 @@ impl<'a> ParserImpl<'a> {
 
         if let Some(this_param) = this_param {
             // type Foo = new (this: number) => any;
-            self.error(diagnostics::TSConstructorThisParameter(this_param.span));
+            self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
         }
 
         self.expect(Kind::Arrow)?;
@@ -994,7 +994,9 @@ impl<'a> ParserImpl<'a> {
         self.bump(Kind::Comma);
         self.bump(Kind::Semicolon);
         if let Some(return_type) = return_type.as_ref() {
-            self.error(diagnostics::ASetAccessorCannotHaveAReturnTypeAnnotation(return_type.span));
+            self.error(diagnostics::a_set_accessor_cannot_have_a_return_type_annotation(
+                return_type.span,
+            ));
         }
         Ok(self.ast.ts_method_signature(
             self.end_span(span),
@@ -1066,7 +1068,7 @@ impl<'a> ParserImpl<'a> {
 
         if let Some(this_param) = this_param {
             // interface Foo { new(this: number): Foo }
-            self.error(diagnostics::TSConstructorThisParameter(this_param.span));
+            self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
         }
 
         let return_type = self.parse_ts_return_type_annotation()?;

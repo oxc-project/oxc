@@ -154,12 +154,12 @@ impl<'a> ParserImpl<'a> {
         let decl = self.parse_function_impl(func_kind)?;
         if stmt_ctx.is_single_statement() {
             if decl.r#async {
-                self.error(diagnostics::AsyncFunctionDeclaration(Span::new(
+                self.error(diagnostics::async_function_declaration(Span::new(
                     decl.span.start,
                     decl.params.span.end,
                 )));
             } else if decl.generator {
-                self.error(diagnostics::GeneratorFunctionDeclaration(Span::new(
+                self.error(diagnostics::generator_function_declaration(Span::new(
                     decl.span.start,
                     decl.params.span.end,
                 )));
@@ -304,7 +304,7 @@ impl<'a> ParserImpl<'a> {
 
         let has_yield = self.ctx.has_yield();
         if !has_yield {
-            self.error(diagnostics::YieldExpression(Span::new(span.start, span.start + 5)));
+            self.error(diagnostics::yield_expression(Span::new(span.start, span.start + 5)));
         }
 
         let mut delegate = false;
@@ -351,7 +351,7 @@ impl<'a> ParserImpl<'a> {
         self.ctx = ctx;
 
         if kind.is_id_required() && id.is_none() {
-            self.error(diagnostics::ExpectFunctionName(self.cur_token().span()));
+            self.error(diagnostics::expect_function_name(self.cur_token().span()));
         }
 
         id
@@ -479,7 +479,7 @@ impl<'a> ParserImpl<'a> {
 
         if let Some(this_param) = this_param {
             // const x = (this: number) => {};
-            self.error(diagnostics::TSArrowFunctionThisParameter(this_param.span));
+            self.error(diagnostics::ts_arrow_function_this_parameter(this_param.span));
         }
 
         let return_type = self.parse_ts_return_type_annotation()?;
@@ -487,7 +487,7 @@ impl<'a> ParserImpl<'a> {
         self.ctx = self.ctx.and_await(has_await);
 
         if self.cur_token().is_on_new_line {
-            self.error(diagnostics::LineterminatorBeforeArrow(self.cur_token().span()));
+            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
         }
 
         self.expect(Kind::Arrow)?;

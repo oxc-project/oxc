@@ -216,7 +216,7 @@ impl<'a> Lexer<'a> {
         if start_pos.addr() == self.source.end_addr() {
             return cold_branch(|| {
                 let start = self.offset();
-                self.error(diagnostics::UnexpectedEnd(Span::new(start, start)));
+                self.error(diagnostics::unexpected_end(Span::new(start, start)));
                 Kind::Undetermined
             });
         }
@@ -290,7 +290,7 @@ impl<'a> Lexer<'a> {
         // No identifier found
         let start = self.offset();
         let c = self.consume_char();
-        self.error(diagnostics::InvalidCharacter(c, Span::new(start, self.offset())));
+        self.error(diagnostics::invalid_character(c, Span::new(start, self.offset())));
         Kind::Undetermined
     }
 }

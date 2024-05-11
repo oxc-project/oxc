@@ -172,7 +172,7 @@ impl Oxc {
             .parse();
 
         self.comments = self.map_comments(&ret.trivias);
-        self.save_diagnostics(ret.errors);
+        self.save_diagnostics(ret.errors.into_iter().map(Error::from).collect::<Vec<_>>());
 
         self.ir = format!("{:#?}", ret.program.body).into();
 

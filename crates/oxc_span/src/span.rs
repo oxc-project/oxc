@@ -3,7 +3,7 @@
 
 use std::hash::{Hash, Hasher};
 
-use miette::{SourceOffset, SourceSpan};
+use miette::{LabeledSpan, SourceOffset, SourceSpan};
 
 #[cfg(feature = "serialize")]
 use serde::Serialize;
@@ -56,6 +56,12 @@ impl Hash for Span {
 impl From<Span> for SourceSpan {
     fn from(val: Span) -> Self {
         Self::new(SourceOffset::from(val.start as usize), val.size() as usize)
+    }
+}
+
+impl From<Span> for LabeledSpan {
+    fn from(val: Span) -> Self {
+        LabeledSpan::underline(val)
     }
 }
 

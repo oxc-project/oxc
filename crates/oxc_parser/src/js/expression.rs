@@ -117,11 +117,11 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn check_identifier(&mut self, span: Span, name: &Atom) {
         // It is a Syntax Error if this production has an [Await] parameter.
         if self.ctx.has_await() && *name == "await" {
-            self.error(diagnostics::IdentifierAsync("await", span));
+            self.error(diagnostics::identifier_async("await", span));
         }
         // It is a Syntax Error if this production has a [Yield] parameter.
         if self.ctx.has_yield() && *name == "yield" {
-            self.error(diagnostics::IdentifierGenerator("yield", span));
+            self.error(diagnostics::identifier_generator("yield", span));
         }
     }
 
@@ -214,7 +214,7 @@ impl<'a> ParserImpl<'a> {
         let paren_span = self.end_span(span);
 
         if expressions.is_empty() {
-            return Err(diagnostics::EmptyParenthesizedExpression(paren_span).into());
+            return Err(diagnostics::empty_parenthesized_expression(paren_span));
         }
 
         // ParenthesizedExpression is from acorn --preserveParens
@@ -294,7 +294,7 @@ impl<'a> ParserImpl<'a> {
             Kind::Float | Kind::PositiveExponential | Kind::NegativeExponential => parse_float(src),
             _ => unreachable!(),
         }
-        .map_err(|err| diagnostics::InvalidNumber(err, token.span()))?;
+        .map_err(|err| diagnostics::invalid_number(err, token.span()))?;
         let base = match token.kind {
             Kind::Decimal => NumberBase::Decimal,
             Kind::Float => NumberBase::Float,
@@ -327,7 +327,7 @@ impl<'a> ParserImpl<'a> {
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
         let _value = parse_big_int(src, token.kind)
-            .map_err(|err| diagnostics::InvalidNumber(err, token.span()))?;
+            .map_err(|err| diagnostics::invalid_number(err, token.span()))?;
         self.bump_any();
         Ok(self.ast.bigint_literal(self.end_span(span), Atom::from(raw), base))
     }
@@ -437,7 +437,7 @@ impl<'a> ParserImpl<'a> {
         // It is a Syntax Error if any source text is matched by this production.
         // <https://tc39.es/ecma262/#sec-left-hand-side-expressions-static-semantics-early-errors>
         if in_optional_chain {
-            self.error(diagnostics::OptionalChainTaggedTemplate(quasi.span));
+            self.error(diagnostics::optional_chain_tagged_template(quasi.span));
         }
         Ok(self.ast.tagged_template_expression(span, lhs, quasi, type_parameters))
     }
@@ -470,7 +470,7 @@ impl<'a> ParserImpl<'a> {
         span.end -= end_offset;
 
         if !tagged && cooked.is_none() {
-            self.error(diagnostics::TemplateLiteral(span));
+            self.error(diagnostics::template_literal(span));
         }
 
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
@@ -547,7 +547,7 @@ impl<'a> ParserImpl<'a> {
         // SuperCall:
         //     super ( Arguments )
         if !matches!(self.cur_kind(), Kind::Dot | Kind::LBrack | Kind::LParen) {
-            self.error(diagnostics::UnexpectedSuper(span));
+            self.error(diagnostics::unexpected_super(span));
         }
 
         self.ast.super_(span)
@@ -689,13 +689,13 @@ impl<'a> ParserImpl<'a> {
         };
 
         if matches!(callee, Expression::ImportExpression(_)) {
-            self.error(diagnostics::NewDynamicImport(self.end_span(rhs_span)));
+            self.error(diagnostics::new_dynamic_import(self.end_span(rhs_span)));
         }
 
         let span = self.end_span(span);
 
         if optional {
-            self.error(diagnostics::NewOptionalChain(span));
+            self.error(diagnostics::new_optional_chain(span));
         }
 
         Ok(self.ast.new_expression(span, callee, arguments, type_parameter))
@@ -975,7 +975,7 @@ impl<'a> ParserImpl<'a> {
             self.bump_any(); // bump async
             let arrow_token = self.peek_token();
             if arrow_token.is_on_new_line {
-                self.error(diagnostics::NoLineBreakIsAllowedBeforeArrow(arrow_token.span()));
+                self.error(diagnostics::no_line_break_is_allowed_before_arrow(arrow_token.span()));
             }
             self.parse_single_param_function_expression(span, true, false)
         } else {
@@ -1042,7 +1042,7 @@ impl<'a> ParserImpl<'a> {
         self.bump_any();
         let has_await = self.ctx.has_await();
         if !has_await {
-            self.error(diagnostics::AwaitExpression(Span::new(span.start, span.start + 5)));
+            self.error(diagnostics::await_expression(Span::new(span.start, span.start + 5)));
         }
         self.ctx = self.ctx.and_await(true);
         let argument = self.parse_unary_expression_base(lhs_span)?;

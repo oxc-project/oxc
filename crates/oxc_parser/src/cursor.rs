@@ -107,7 +107,7 @@ impl<'a> ParserImpl<'a> {
     fn test_escaped_keyword(&mut self, kind: Kind) {
         if self.cur_token().escaped() && kind.is_all_keyword() {
             let span = self.cur_token().span();
-            self.error(diagnostics::EscapedKeyword(span));
+            self.error(diagnostics::escaped_keyword(span));
         }
     }
 
@@ -158,7 +158,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn asi(&mut self) -> Result<()> {
         if !self.can_insert_semicolon() {
             let span = Span::new(self.prev_token_end, self.cur_token().start);
-            return Err(diagnostics::AutoSemicolonInsertion(span).into());
+            return Err(diagnostics::auto_semicolon_insertion(span));
         }
         if self.at(Kind::Semicolon) {
             self.advance(Kind::Semicolon);
@@ -178,9 +178,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn expect_without_advance(&mut self, kind: Kind) -> Result<()> {
         if !self.at(kind) {
             let range = self.cur_token().span();
-            return Err(
-                diagnostics::ExpectToken(kind.to_str(), self.cur_kind().to_str(), range).into()
-            );
+            return Err(diagnostics::expect_token(kind.to_str(), self.cur_kind().to_str(), range));
         }
         Ok(())
     }

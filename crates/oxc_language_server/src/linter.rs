@@ -279,7 +279,10 @@ impl IsolatedLintHandler {
                 let reports = ret
                     .errors
                     .into_iter()
-                    .map(|diagnostic| ErrorReport { error: diagnostic, fixed_content: None })
+                    .map(|diagnostic| ErrorReport {
+                        error: Error::from(diagnostic),
+                        fixed_content: None,
+                    })
                     .collect();
                 return Some(Self::wrap_diagnostics(path, &original_source_text, reports, start));
             };

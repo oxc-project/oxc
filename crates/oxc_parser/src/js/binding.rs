@@ -68,7 +68,7 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::Question) && self.ts_enabled() {
             let span = self.cur_token().span();
             self.bump_any();
-            self.error(diagnostics::ARestParameterCannotBeOptional(span));
+            self.error(diagnostics::a_rest_parameter_cannot_be_optional(span));
         }
         // The span is not extended to its type_annotation
         let type_annotation = self.parse_ts_type_annotation()?;
@@ -80,9 +80,11 @@ impl<'a> ParserImpl<'a> {
 
         if self.at(Kind::Comma) {
             if self.peek_at(Kind::RBrack) {
-                self.error(diagnostics::BindingRestElementTrailingComma(self.cur_token().span()));
+                self.error(diagnostics::binding_rest_element_trailing_comma(
+                    self.cur_token().span(),
+                ));
             } else if !self.ctx.has_ambient() {
-                self.error(diagnostics::BindingRestElementLast(span));
+                self.error(diagnostics::binding_rest_element_last(span));
             }
         }
 
