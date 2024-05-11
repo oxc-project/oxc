@@ -117,37 +117,36 @@ impl Rule for ConsistentIndexedObjectStyle {
                 TSType::TSUnionType(uni) => {
                     for t in &uni.types {
                         if let TSType::TSTypeLiteral(lit) = t {
-                            if lit.members.len() == 1 {
-                                if let TSSignature::TSIndexSignature(sig) = &lit.members[0] {
-                                    match &sig.type_annotation.type_annotation {
-                                        TSType::TSTypeReference(tref) => {
-                                            if let TSTypeName::IdentifierReference(i) =
-                                                &tref.type_name
-                                            {
-                                                if i.name != al.id.name {
-                                                    ctx.diagnostic(
-                                                        ConsistentIndexedObjectStyleDiagnostic(
-                                                            "record",
-                                                            "index signature",
-                                                            sig.span,
-                                                        ),
-                                                    );
-                                                }
-                                            }
-                                        }
-                                        _ => {
-                                            if !self.is_index_signature {
-                                                ctx.diagnostic(
-                                                    ConsistentIndexedObjectStyleDiagnostic(
-                                                        "record",
-                                                        "index signature",
-                                                        sig.span,
-                                                    ),
-                                                );
-                                            }
-                                        }
+                            if self.is_index_signature {
+                                return;
+                            }
+
+                            if lit.members.len() != 1 {
+                                return;
+                            }
+
+                            let TSSignature::TSIndexSignature(idx) = &lit.members[0] else {
+                                return;
+                            };
+
+                            if let TSType::TSTypeReference(tref) =
+                                &idx.type_annotation.type_annotation
+                            {
+                                if let TSTypeName::IdentifierReference(i) = &tref.type_name {
+                                    if i.name != al.id.name {
+                                        ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
+                                            "record",
+                                            "index signature",
+                                            idx.span,
+                                        ));
                                     }
                                 }
+                            } else {
+                                ctx.diagnostic(ConsistentIndexedObjectStyleDiagnostic(
+                                    "record",
+                                    "index signature",
+                                    idx.span,
+                                ));
                             }
                         }
                     }
