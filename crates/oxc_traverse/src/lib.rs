@@ -60,12 +60,15 @@
 //! scheme could very easily be derailed entirely by a single mistake, so in my opinion, it's unwise
 //! to edit by hand.
 
+use std::marker::PhantomData;
+
 use oxc_allocator::Allocator;
 
 use oxc_ast::ast::Program;
 
 pub mod ancestor;
 pub use ancestor::Ancestor;
+mod combined;
 mod context;
 pub use context::{FinderRet, TraverseCtx};
 #[allow(clippy::module_inception)]
@@ -147,4 +150,139 @@ pub fn traverse_mut<'a, Tr: Traverse<'a>>(
     unsafe { walk::walk_program(traverser, program as *mut Program, &mut ctx) };
     debug_assert!(ctx.ancestors_depth() == 1);
     debug_assert!(ctx.scopes_depth() == 1);
+}
+
+/// Type to compose 2 `Traverse`s.
+///
+/// The traverses will run:
+/// * `enter_*` methods in order.
+/// * `exit_*` methods in reverse order.
+///
+/// Each `Traverse` does NOT run one after another on the whole AST in a series of passes.
+/// Visitation is interleaved. The AST is only visited once.
+///
+/// i.e. execution order is:
+///
+/// * `Tr1::enter_program`
+/// * `Tr2::enter_program`
+/// * `Tr1::enter_statements`
+/// * `Tr2::enter_statements`
+/// * ...and so on all the way down AST
+/// * `Tr2::exit_statements`
+/// * `Tr1::exit_statements`
+/// * `Tr2::exit_program`
+/// * `Tr1::exit_program`
+///
+/// # Example
+///
+/// ```
+/// use oxc_traverse::{CombinedTraverse, Traverse};
+///
+/// struct MyTraverse1;
+/// impl MyTraverse1 { fn new() -> Self { Self } }
+/// impl<'a> Traverse<'a> for MyTraverse1 {}
+///
+/// struct MyTraverse2;
+/// impl MyTraverse2 { fn new() -> Self { Self } }
+/// impl<'a> Traverse<'a> for MyTraverse2 {}
+///
+/// let combined = CombinedTraverse::new(
+///     MyTraverse1::new(),
+///     MyTraverse2::new(),
+/// );
+/// ```
+#[allow(dead_code)] // TODO: Remove this line once type is used in transformers
+pub struct CombinedTraverse<'a, Tr1: Traverse<'a>, Tr2: Traverse<'a>> {
+    traverse1: Tr1,
+    traverse2: Tr2,
+    _marker: PhantomData<&'a ()>,
+}
+
+impl<'a, Tr1, Tr2> CombinedTraverse<'a, Tr1, Tr2>
+where
+    Tr1: Traverse<'a>,
+    Tr2: Traverse<'a>,
+{
+    pub fn new(traverse1: Tr1, traverse2: Tr2) -> Self {
+        Self { traverse1, traverse2, _marker: PhantomData }
+    }
+}
+
+/// Macro to compose multiple traverses.
+///
+/// The traverses will run:
+/// * `enter_*` methods in order.
+/// * `exit_*` methods in reverse order.
+///
+/// Each `Traverse` does NOT run one after another on the whole AST in a series of passes.
+/// Visitation is interleaved. The AST is only visited once.
+///
+/// i.e. with 3 `Traverse`s provided, execution order is:
+///
+/// * `Tr1::enter_program`
+/// * `Tr2::enter_program`
+/// * `Tr3::enter_program`
+/// * `Tr1::enter_statements`
+/// * `Tr2::enter_statements`
+/// * `Tr3::enter_statements`
+/// * ...and so on all the way down AST
+/// * `Tr3::exit_statements`
+/// * `Tr2::exit_statements`
+/// * `Tr1::exit_statements`
+/// * `Tr3::exit_program`
+/// * `Tr2::exit_program`
+/// * `Tr1::exit_program`
+///
+/// # Example
+///
+/// ```
+/// use oxc_traverse::{combine_traverses, Traverse};
+///
+/// struct MyTraverse1;
+/// impl MyTraverse1 { fn new() -> Self { Self } }
+/// impl<'a> Traverse<'a> for MyTraverse1 {}
+///
+/// struct MyTraverse2;
+/// impl MyTraverse2 { fn new() -> Self { Self } }
+/// impl<'a> Traverse<'a> for MyTraverse2 {}
+///
+/// struct MyTraverse3;
+/// impl MyTraverse3 { fn new() -> Self { Self } }
+/// impl<'a> Traverse<'a> for MyTraverse3 {}
+///
+/// let all_three = combine_traverses!(
+///     MyTraverse1::new(),
+///     MyTraverse2::new(),
+///     MyTraverse3::new(),
+/// );
+/// ```
+///
+/// # Expansion
+///
+/// `combine_traverses!` in above example expands to:
+///
+/// ```nocompile
+/// let all_three = CombinedTraverse::new(
+///     MyTraverse1::new(),
+///     CombinedTraverse::new(
+///         MyTraverse2::new(),
+///         MyTraverse3::new(),
+///     ),
+/// );
+/// ```
+#[macro_export]
+macro_rules! combine_traverses {
+    ($t1:expr, $t2:expr $(,)?) => {
+        $crate::CombinedTraverse::new($t1, $t2)
+    };
+
+    ($t1:expr, $t2:expr, $($rest:expr),+ $(,)?) => {
+        $crate::CombinedTraverse::new(
+            $t1,
+            $crate::combine_traverses!(
+                $t2,
+                $($rest),+
+            )
+        )
+    };
 }
