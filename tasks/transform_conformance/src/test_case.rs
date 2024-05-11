@@ -273,7 +273,11 @@ impl TestCase for ConformanceTestCase {
             } else {
                 input_is_js && output_is_js
             })
-            .with_typescript(self.options.get_plugin("transform-typescript").is_some());
+            .with_typescript(
+                self.options.get_plugin("transform-typescript").is_some()
+                    || self.options.get_plugin("syntax-typescript").is_some(),
+            )
+            .with_jsx(self.options.get_plugin("syntax-jsx").is_some());
 
         if filtered {
             println!("input_path: {:?}", &self.path);

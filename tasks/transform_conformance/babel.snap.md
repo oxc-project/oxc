@@ -1,4 +1,4 @@
-Passed: 304/362
+Passed: 295/362
 
 # All Passed:
 * babel-preset-react
@@ -24,7 +24,7 @@ Passed: 304/362
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (119/156)
+# babel-plugin-transform-typescript (110/156)
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
 * enum/mix-references/input.ts
@@ -32,6 +32,15 @@ Passed: 304/362
 * enum/ts5.0-const-foldable/input.ts
 * exports/declared-types/input.ts
 * exports/export-type-star-from/input.ts
+* imports/elide-jsx-pragma-namespace-no/input.ts
+* imports/elide-jsx-pragma-no/input.ts
+* imports/elide-jsx-pragmaFrag-namespace-no/input.ts
+* imports/elide-jsx-pragmaFrag-no/input.ts
+* imports/elide-preact-no-1/input.ts
+* imports/elide-preact-no-2/input.ts
+* imports/elide-react-no-1/input.ts
+* imports/elide-react-no-2/input.ts
+* imports/elide-react-no-3/input.ts
 * imports/enum-value/input.ts
 * imports/type-only-export-specifier-2/input.ts
 * namespace/ambient-module-nested/input.ts
