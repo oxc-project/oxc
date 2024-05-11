@@ -81,9 +81,33 @@ impl<'a> TraverseCtx<'a> {
     /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
     /// * `FinderRet::Stop` to stop walking and return `None`.
     /// * `FinderRet::Continue` to continue walking up.
-    pub fn find_ancestor<F, O>(&self, finder: F) -> Option<O>
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_ast::ast::ThisExpression;
+    /// use oxc_traverse::{Ancestor, FinderRet, Traverse, TraverseCtx};
+    ///
+    /// struct MyTraverse;
+    /// impl<'a> Traverse<'a> for MyTraverse {
+    ///     fn enter_this_expression(&mut self, this_expr: &mut ThisExpression, ctx: &TraverseCtx<'a>) {
+    ///         // Get name of function where `this` is bound
+    ///         let fn_id = ctx.find_ancestor(|ancestor| {
+    ///             match ancestor {
+    ///                 Ancestor::FunctionBody(func) => FinderRet::Found(func.id()),
+    ///                 Ancestor::FunctionParams(func) => FinderRet::Found(func.id()),
+    ///                 _ => FinderRet::Continue
+    ///             }
+    ///         });
+    ///     }
+    /// }
+    /// ```
+    //
+    // `'c` lifetime on `&'c self` and `&'c Ancestor` passed into the closure
+    // allows an `Ancestor` or AST node to be returned from the closure.
+    pub fn find_ancestor<'c, F, O>(&'c self, finder: F) -> Option<O>
     where
-        F: Fn(&Ancestor<'a>) -> FinderRet<O>,
+        F: Fn(&'c Ancestor<'a>) -> FinderRet<O>,
     {
         for ancestor in self.stack.iter().rev() {
             match finder(ancestor) {
