@@ -115,6 +115,7 @@ mod eslint {
     pub mod no_with;
     pub mod radix;
     pub mod require_yield;
+    pub mod unicode_bom;
     pub mod use_isnan;
     pub mod valid_typeof;
 }
@@ -470,6 +471,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_with,
     eslint::radix,
     eslint::require_yield,
+    eslint::unicode_bom,
     eslint::use_isnan,
     eslint::valid_typeof,
     eslint::no_await_in_loop,
