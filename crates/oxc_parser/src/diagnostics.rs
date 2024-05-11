@@ -260,7 +260,8 @@ pub fn constructor_generator(span0: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn field_constructor(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Classes can't have a field named 'constructor'").with_labels([span0.into()])
+    OxcDiagnostic::error("Classes can't have a field named 'constructor'")
+        .with_labels([span0.into()])
 }
 
 #[cold]
@@ -385,8 +386,10 @@ pub fn await_using_declaration_not_allowed_in_for_in_statement(span0: Span) -> O
 
 #[cold]
 pub fn using_declaration_not_allowed_in_for_in_statement(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("The left-hand side of a for...in statement cannot be an using declaration.")
-        .with_labels([span0.into()])
+    OxcDiagnostic::error(
+        "The left-hand side of a for...in statement cannot be an using declaration.",
+    )
+    .with_labels([span0.into()])
 }
 
 #[cold]
