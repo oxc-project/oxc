@@ -1,10 +1,6 @@
 use std::path::PathBuf;
 
-use oxc_diagnostics::{
-    miette::{self, miette, Diagnostic, LabeledSpan},
-    thiserror::{self, Error},
-    Severity,
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ModuleRecord;
 use oxc_span::{CompactStr, Span};
@@ -12,11 +8,11 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-enum ExportDiagnostic {
-    #[error("eslint-plugin-import(export): No named exports found in module '{1}'")]
-    #[diagnostic(severity(warning))]
-    NoNamedExport(#[label] Span, CompactStr),
+fn no_named_export(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warning(format!(
+        "eslint-plugin-import(export): No named exports found in module '{x1}'"
+    ))
+    .with_labels([span0.into()])
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/export.md>
@@ -48,7 +44,9 @@ impl Rule for Export {
         module_record.star_export_entries.iter().for_each(|star_export_entry| {
             let mut export_names = FxHashSet::default();
 
-            let Some(module_request) = &star_export_entry.module_request else { return };
+            let Some(module_request) = &star_export_entry.module_request else {
+                return;
+            };
             let Some(remote_module_record_ref) =
                 module_record.loaded_modules.get(module_request.name())
             else {
@@ -62,10 +60,7 @@ impl Rule for Export {
             );
 
             if export_names.is_empty() {
-                ctx.diagnostic(ExportDiagnostic::NoNamedExport(
-                    module_request.span(),
-                    module_request.name().clone(),
-                ));
+                ctx.diagnostic(no_named_export(module_request.span(), module_request.name()));
             } else {
                 all_export_names.insert(star_export_entry.span, export_names);
             }
@@ -93,11 +88,12 @@ impl Rule for Export {
                 spans.push(*span);
                 let labels = spans.into_iter().map(LabeledSpan::underline).collect::<Vec<_>>();
 
-                ctx.diagnostic(miette!(
-                    severity = Severity::Warning,
-                    labels = labels,
-                    "eslint-plugin-import(export): Multiple exports of name '{name}'."
-                ));
+                ctx.diagnostic(
+                    OxcDiagnostic::warning(format!(
+                        "eslint-plugin-import(export): Multiple exports of name '{name}'."
+                    ))
+                    .with_labels(labels),
+                );
             }
         }
 
@@ -106,12 +102,12 @@ impl Rule for Export {
             if let Some(span) = module_record.export_default {
                 spans.push(span);
                 let labels = spans.into_iter().map(LabeledSpan::underline).collect::<Vec<_>>();
-
-                ctx.diagnostic(miette!(
-                    severity = Severity::Warning,
-                    labels = labels,
-                    "eslint-plugin-import(export): Multiple default exports."
-                ));
+                ctx.diagnostic(
+                    OxcDiagnostic::warning(
+                        "eslint-plugin-import(export): Multiple default exports.",
+                    )
+                    .with_labels(labels),
+                );
             }
         }
     }

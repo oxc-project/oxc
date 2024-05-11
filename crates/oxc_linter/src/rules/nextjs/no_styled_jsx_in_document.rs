@@ -2,19 +2,18 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXElementName},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-next(no-styled-jsx-in-document): `styled-jsx` should not be used in `pages/_document.js`")]
-#[diagnostic(severity(warning), help("Possible to fix it please see: https://nextjs.org/docs/messages/no-styled-jsx-in-document#possible-ways-to-fix-it"))]
-struct NoStyledJsxInDocumentDiagnostic(#[label] pub Span);
+fn no_styled_jsx_in_document_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-next(no-styled-jsx-in-document): `styled-jsx` should not be used in `pages/_document.js`")
+        .with_help("Possible to fix it please see: https://nextjs.org/docs/messages/no-styled-jsx-in-document#possible-ways-to-fix-it")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoStyledJsxInDocument;
@@ -50,17 +49,17 @@ impl Rule for NoStyledJsxInDocument {
         let Some(file_name) = full_file_path.file_name() else {
             return;
         };
-        let Some(file_name) = file_name.to_str() else { return };
+        let Some(file_name) = file_name.to_str() else {
+            return;
+        };
         if !file_name.starts_with("_document.") {
             return;
         }
 
-        let has_jsx_attribute = element.attributes.iter().any(|attribute| {
-					matches!(attribute, JSXAttributeItem::Attribute(attribute) if attribute.is_identifier("jsx"))
-				});
+        let has_jsx_attribute = element.attributes.iter().any(|attribute| matches!(attribute, JSXAttributeItem::Attribute(attribute) if attribute.is_identifier("jsx")));
 
         if has_jsx_attribute {
-            ctx.diagnostic(NoStyledJsxInDocumentDiagnostic(element.span));
+            ctx.diagnostic(no_styled_jsx_in_document_diagnostic(element.span));
         }
     }
 }

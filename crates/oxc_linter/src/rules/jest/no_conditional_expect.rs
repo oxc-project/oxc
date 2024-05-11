@@ -1,10 +1,8 @@
+use oxc_diagnostics::OxcDiagnostic;
+
 use std::collections::HashMap;
 
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodeId};
 use oxc_span::Span;
@@ -18,10 +16,13 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect")]
-#[diagnostic(severity(warning), help("Avoid calling `expect` conditionally`"))]
-struct NoConditionalExpectDiagnostic(#[label] pub Span);
+fn no_conditional_expect_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning(
+        "eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect",
+    )
+    .with_help("Avoid calling `expect` conditionally`")
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConditionalExpect;
@@ -84,7 +85,7 @@ fn run<'a>(
 
         let has_condition_or_catch = check_parents(node, id_nodes_mapping, ctx, false);
         if has_condition_or_catch {
-            ctx.diagnostic(NoConditionalExpectDiagnostic(jest_fn_call.head.span));
+            ctx.diagnostic(no_conditional_expect_diagnostic(jest_fn_call.head.span));
         }
     }
 }

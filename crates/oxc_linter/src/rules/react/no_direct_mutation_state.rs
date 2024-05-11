@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{Expression, MethodDefinitionKind, SimpleAssignmentTarget, StaticMemberExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -16,13 +14,13 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.")]
-#[diagnostic(
-    severity(warning),
-    help("calling setState() afterwards may replace the mutation you made.")
-)]
-struct NoDirectMutationStateDiagnostic(#[label] pub Span);
+fn no_direct_mutation_state_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning(
+        "eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.",
+    )
+    .with_help("calling setState() afterwards may replace the mutation you made.")
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDirectMutationState;
@@ -169,7 +167,7 @@ impl Rule for NoDirectMutationState {
                 if let Some(assignment) = assignment_expr.left.as_simple_assignment_target() {
                     if let Some(outer_member_expression) = get_outer_member_expression(assignment) {
                         if is_state_member_expression(outer_member_expression) {
-                            ctx.diagnostic(NoDirectMutationStateDiagnostic(
+                            ctx.diagnostic(no_direct_mutation_state_diagnostic(
                                 assignment_expr.left.span(),
                             ));
                         }
@@ -186,7 +184,7 @@ impl Rule for NoDirectMutationState {
                     get_outer_member_expression(&update_expr.argument)
                 {
                     if is_state_member_expression(outer_member_expression) {
-                        ctx.diagnostic(NoDirectMutationStateDiagnostic(update_expr.span));
+                        ctx.diagnostic(no_direct_mutation_state_diagnostic(update_expr.span));
                     }
                 }
             }

@@ -2,29 +2,22 @@ use oxc_ast::{
     ast::{Class, Function, JSXAttributeItem, JSXElementName},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoPageCustomFontDiagnostic {
-    #[error("eslint-plugin-next(no-page-custom-font): Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged.")]
-    #[diagnostic(
-        severity(warning),
-        help("See: https://nextjs.org/docs/messages/no-page-custom-font")
-    )]
-    NotAddedInDocument(#[label] Span),
-    #[error("eslint-plugin-next(no-page-custom-font): Using `<link />` outside of `<Head>` will disable automatic font optimization. This is discouraged.")]
-    #[diagnostic(
-        severity(warning),
-        help("See: 'https://nextjs.org/docs/messages/no-page-custom-font")
-    )]
-    LinkOutsideOfHead(#[label] Span),
+fn not_added_in_document(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-next(no-page-custom-font): Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged.")
+        .with_help("See: https://nextjs.org/docs/messages/no-page-custom-font")
+        .with_labels([span0.into()])
+}
+
+fn link_outside_of_head(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-next(no-page-custom-font): Using `<link />` outside of `<Head>` will disable automatic font optimization. This is discouraged.")
+        .with_help("See: 'https://nextjs.org/docs/messages/no-page-custom-font")
+        .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -47,13 +40,13 @@ declare_oxc_lint!(
 
 impl Rule for NoPageCustomFont {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(element) = node.kind() else { return };
+        let AstKind::JSXOpeningElement(element) = node.kind() else {
+            return;
+        };
         if matches!(&element.name, JSXElementName::Identifier(ident) if ident.name != "link") {
             return;
         }
-        let is_custom_font = element.attributes.iter().any(
-            |attr| matches!(&attr, JSXAttributeItem::Attribute(attr) if attr.is_identifier("href") && attr.value.is_some()),
-        );
+        let is_custom_font = element.attributes.iter().any(|attr| matches!(&attr, JSXAttributeItem::Attribute(attr) if attr.is_identifier("href") && attr.value.is_some()));
 
         if !is_custom_font {
             return;
@@ -118,9 +111,9 @@ impl Rule for NoPageCustomFont {
             if is_inside_export_default {
                 return;
             }
-            NoPageCustomFontDiagnostic::LinkOutsideOfHead(span)
+            link_outside_of_head(span)
         } else {
-            NoPageCustomFontDiagnostic::NotAddedInDocument(span)
+            not_added_in_document(span)
         };
         ctx.diagnostic(diagnostic);
     }

@@ -1,7 +1,7 @@
 use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_diagnostics::Error;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{AstNodes, JSDocFinder, ScopeTree, Semantic, SymbolTable};
 use oxc_span::SourceType;
 
@@ -116,15 +116,11 @@ impl<'a> LintContext<'a> {
         }
     }
 
-    pub fn diagnostic<T: Into<Error>>(&self, diagnostic: T) {
+    pub fn diagnostic(&self, diagnostic: OxcDiagnostic) {
         self.add_diagnostic(Message::new(diagnostic.into(), None));
     }
 
-    pub fn diagnostic_with_fix<T, F>(&self, diagnostic: T, fix: F)
-    where
-        T: Into<Error>,
-        F: FnOnce() -> Fix<'a>,
-    {
+    pub fn diagnostic_with_fix<F: FnOnce() -> Fix<'a>>(&self, diagnostic: OxcDiagnostic, fix: F) {
         if self.fix {
             self.add_diagnostic(Message::new(diagnostic.into(), Some(fix())));
         } else {

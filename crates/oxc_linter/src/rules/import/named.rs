@@ -1,17 +1,16 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::module_record::{ExportImportName, ImportImportName};
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-import(named): named import {0:?} not found")]
-#[diagnostic(severity(warning), help("does {1:?} have the export {0:?}?"))]
-struct NamedDiagnostic(String, String, #[label] pub Span);
+fn named_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning(format!("eslint-plugin-import(named): named import {x0:?} not found"))
+        .with_help(format!("does {x1:?} have the export {x0:?}?"))
+        .with_labels([span2.into()])
+}
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/named.md>
 #[derive(Debug, Default, Clone)]
@@ -67,11 +66,7 @@ impl Rule for Named {
                 continue;
             }
 
-            ctx.diagnostic(NamedDiagnostic(
-                import_name.name().to_string(),
-                specifier.to_string(),
-                import_name.span(),
-            ));
+            ctx.diagnostic(named_diagnostic(import_name.name(), specifier, import_name.span()));
         }
 
         for export_entry in &module_record.indirect_export_entries {
@@ -96,11 +91,7 @@ impl Rule for Named {
             if remote_module_record.exported_bindings.contains_key(name) {
                 continue;
             }
-            ctx.diagnostic(NamedDiagnostic(
-                name.to_string(),
-                specifier.to_string(),
-                import_name.span(),
-            ));
+            ctx.diagnostic(named_diagnostic(name, specifier, import_name.span()));
         }
     }
 }

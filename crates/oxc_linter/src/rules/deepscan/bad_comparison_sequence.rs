@@ -2,24 +2,16 @@ use oxc_ast::{
     ast::{BinaryExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("deepscan(bad-comparison-sequence): Bad comparison sequence")]
-#[diagnostic(
-    severity(warning),
-    help(
-        "Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)"
-    )
-)]
-struct BadComparisonSequenceDiagnostic(#[label] pub Span);
+fn bad_comparison_sequence_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("deepscan(bad-comparison-sequence): Bad comparison sequence").with_help("Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)").with_labels([span0.into()])
+}
 
 /// `https://deepscan.io/docs/rules/bad-comparison-sequence`
 #[derive(Debug, Default, Clone)]
@@ -45,9 +37,11 @@ declare_oxc_lint!(
 
 impl Rule for BadComparisonSequence {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(expr) = node.kind() else { return };
+        let AstKind::BinaryExpression(expr) = node.kind() else {
+            return;
+        };
         if is_bad_comparison(expr) && has_no_bad_comparison_in_parents(node, ctx) {
-            ctx.diagnostic(BadComparisonSequenceDiagnostic(expr.span));
+            ctx.diagnostic(bad_comparison_sequence_diagnostic(expr.span));
         }
     }
 }

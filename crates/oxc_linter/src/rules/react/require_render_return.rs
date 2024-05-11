@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{Argument, ClassElement, Expression, FunctionBody, ObjectPropertyKind},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -19,12 +17,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-react(require-render-return): Your render method should have a return statement"
-)]
-#[diagnostic(severity(warning), help("When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the return statement is missing."))]
-struct RequireRenderReturnDiagnostic(#[label] pub Span);
+fn require_render_return_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-react(require-render-return): Your render method should have a return statement")
+        .with_help("When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the return statement is missing.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireRenderReturn;
@@ -85,7 +82,7 @@ impl Rule for RequireRenderReturn {
                         return;
                     }
 
-                    ctx.diagnostic(RequireRenderReturnDiagnostic(fn_body.span));
+                    ctx.diagnostic(require_render_return_diagnostic(fn_body.span));
                 }
             }
             AstKind::CallExpression(ce) => {
@@ -107,7 +104,7 @@ impl Rule for RequireRenderReturn {
                         })
                         .find(|fn_body| !has_return_in_fn_body(fn_body))
                     {
-                        ctx.diagnostic(RequireRenderReturnDiagnostic(fn_body.span));
+                        ctx.diagnostic(require_render_return_diagnostic(fn_body.span));
                     }
                 }
             }

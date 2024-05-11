@@ -1,17 +1,18 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-import(default): No default export found in imported module {0:?}")]
-#[diagnostic(severity(warning), help("does {0:?} have the default export?"))]
-struct DefaultDiagnostic(String, #[label] pub Span);
+fn default_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning(format!(
+        "eslint-plugin-import(default): No default export found in imported module {x0:?}"
+    ))
+    .with_help(format!("does {x0:?} have the default export?"))
+    .with_labels([span1.into()])
+}
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/default.md>
 #[derive(Debug, Default, Clone)]
@@ -53,7 +54,7 @@ impl Rule for Default {
             if remote_module_record_ref.export_default.is_none()
                 && !remote_module_record_ref.exported_bindings.contains_key("default")
             {
-                ctx.diagnostic(DefaultDiagnostic(specifier.to_string(), default_span));
+                ctx.diagnostic(default_diagnostic(specifier, default_span));
             }
         }
     }

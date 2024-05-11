@@ -1,7 +1,5 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -11,10 +9,13 @@ use crate::{
     utils::{should_ignore_as_internal, should_ignore_as_private},
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsdoc(require-property-name): Missing name in @property tag.")]
-#[diagnostic(severity(warning), help("Add a type name to this @property tag."))]
-struct RequirePropertyNameDiagnostic(#[label] pub Span);
+fn require_property_name_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning(
+        "eslint-plugin-jsdoc(require-property-name): Missing name in @property tag.",
+    )
+    .with_help("Add a type name to this @property tag.")
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct RequirePropertyName;
@@ -67,7 +68,7 @@ impl Rule for RequirePropertyName {
                     continue;
                 };
 
-                ctx.diagnostic(RequirePropertyNameDiagnostic(tag_name.span));
+                ctx.diagnostic(require_property_name_diagnostic(tag_name.span));
             }
         }
     }

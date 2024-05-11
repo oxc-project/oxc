@@ -93,7 +93,7 @@ expression: no_useless_promise_resolve_reject
  2 │             async function foo() {
  3 │                 return Promise.reject(bar);
    ·                        ───────────────────
- 4 │             }   
+ 4 │             }
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 

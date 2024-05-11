@@ -163,11 +163,7 @@ impl Linter {
                 } else {
                     ("", 7)
                 };
-                writeln!(
-                    writer,
-                    "| {rule_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} |"
-                )
-                .unwrap();
+                writeln!(writer, "| {rule_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} |").unwrap();
             }
             writeln!(writer).unwrap();
         }
