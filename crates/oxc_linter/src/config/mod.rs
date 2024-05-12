@@ -1,21 +1,16 @@
 mod env;
-pub mod errors;
 mod globals;
 mod rules;
 mod settings;
 
 use std::path::Path;
 
-use oxc_diagnostics::{Error, FailedToOpenFileError, Report};
+use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashSet;
 use serde::Deserialize;
 
 use crate::{rules::RuleEnum, AllowWarnDeny};
 
-use self::errors::{
-    FailedToParseConfigError, FailedToParseConfigJsonError, FailedToParseConfigPropertyError,
-    FailedToParseJsonc,
-};
 pub use self::{
     env::ESLintEnv, globals::ESLintGlobals, rules::ESLintRules,
     settings::jsdoc::JSDocPluginSettings, settings::ESLintSettings,
@@ -36,37 +31,33 @@ impl ESLintConfig {
     /// # Errors
     ///
     /// * Parse Failure
-    pub fn from_file(path: &Path) -> Result<Self, Report> {
+    pub fn from_file(path: &Path) -> Result<Self, OxcDiagnostic> {
         let mut string = std::fs::read_to_string(path).map_err(|e| {
-            FailedToParseConfigError(vec![Error::new(FailedToOpenFileError(path.to_path_buf(), e))])
+            OxcDiagnostic::error(format!("Failed to parse config {path:?} with error {e:?}"))
         })?;
 
         // jsonc support
-        json_strip_comments::strip(&mut string)
-            .map_err(|_| FailedToParseJsonc(path.to_path_buf()))?;
+        json_strip_comments::strip(&mut string).map_err(|err| {
+            OxcDiagnostic::error(format!("Failed to parse jsonc file {path:?}: {err:?}"))
+        })?;
 
         let json = serde_json::from_str::<serde_json::Value>(&string).map_err(|err| {
             let guess = mime_guess::from_path(path);
             let err = match guess.first() {
                 // syntax error
                 Some(mime) if mime.subtype() == "json" => err.to_string(),
-                Some(_) => "only json configuration is supported".to_string(),
+                Some(_) => "Only json configuration is supported".to_string(),
                 None => {
                     format!(
                         "{err}, if the configuration is not a json file, please use json instead."
                     )
                 }
             };
-            FailedToParseConfigError(vec![Error::new(FailedToParseConfigJsonError(
-                path.to_path_buf(),
-                err,
-            ))])
+            OxcDiagnostic::error(format!("Failed to parse eslint config {path:?}.\n{err}"))
         })?;
 
         let config = Self::deserialize(&json).map_err(|err| {
-            FailedToParseConfigError(vec![Error::new(FailedToParseConfigPropertyError(
-                err.to_string(),
-            ))])
+            OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })?;
 
         Ok(config)
