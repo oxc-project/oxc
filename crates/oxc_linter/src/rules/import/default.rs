@@ -1,7 +1,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Span, VALID_EXTENSIONS};
 use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
@@ -49,6 +49,14 @@ impl Rule for Default {
                 continue;
             };
             if remote_module_record_ref.not_esm {
+                continue;
+            }
+            if !remote_module_record_ref
+                .resolved_absolute_path
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .is_some_and(|ext| VALID_EXTENSIONS.contains(&ext))
+            {
                 continue;
             }
             if remote_module_record_ref.export_default.is_none()
@@ -104,6 +112,7 @@ fn test() {
         // r#"import foobar from "./typescript-export-assign-property""#,
         // r#"import foobar from "./typescript-export-assign-default-reexport""#,
         // r#"import React from "./typescript-export-assign-default-namespace"#,
+        r#"import Foo from "./vue/main.vue""#,
     ];
 
     let fail = vec![
