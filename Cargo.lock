@@ -1368,7 +1368,6 @@ dependencies = [
  "miette",
  "owo-colors",
  "textwrap",
- "thiserror",
  "unicode-width",
 ]
 

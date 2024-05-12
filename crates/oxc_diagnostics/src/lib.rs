@@ -1,5 +1,5 @@
 //! Diagnostics Wrapper
-//! Exports `thiserror` and `miette`
+//! Exports `miette`
 
 mod graphic_reporter;
 mod graphical_theme;
@@ -9,11 +9,9 @@ mod service;
 use std::{
     fmt::{self, Display},
     ops::Deref,
-    path::PathBuf,
 };
 
 pub use miette;
-pub use thiserror;
 
 pub use crate::{
     graphic_reporter::GraphicalReportHandler,
@@ -29,17 +27,6 @@ pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
 
 use miette::{Diagnostic, SourceCode};
 pub use miette::{LabeledSpan, NamedSource};
-use thiserror::Error;
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("File is too long to fit on the screen")]
-#[diagnostic(help("{0:?} seems like a minified file"))]
-pub struct MinifiedFileError(pub PathBuf);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Failed to open file {0:?} with error \"{1}\"")]
-#[diagnostic(help("Failed to open file {0:?} with error \"{1}\""))]
-pub struct FailedToOpenFileError(pub PathBuf, pub std::io::Error);
 
 #[derive(Debug, Clone)]
 pub struct OxcDiagnostic {

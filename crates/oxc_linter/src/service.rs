@@ -12,7 +12,7 @@ use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, FailedToOpenFileError};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::Parser;
 use oxc_resolver::Resolver;
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
@@ -177,8 +177,11 @@ impl Runtime {
             return None;
         }
         let source_type = source_type.unwrap_or_default();
-        let file_result = fs::read_to_string(path)
-            .map_err(|e| Error::new(FailedToOpenFileError(path.to_path_buf(), e)));
+        let file_result = fs::read_to_string(path).map_err(|e| {
+            Error::new(OxcDiagnostic::error(format!(
+                "Failed to open file {path:?} with error \"{e}\""
+            )))
+        });
         Some(match file_result {
             Ok(source_text) => Ok((source_type, source_text)),
             Err(e) => Err(e),
