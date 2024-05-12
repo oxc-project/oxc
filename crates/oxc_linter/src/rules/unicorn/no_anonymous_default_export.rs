@@ -1,22 +1,18 @@
-use std::fmt;
-
 use oxc_ast::{
     ast::{AssignmentExpression, AssignmentTarget, ExportDefaultDeclarationKind, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-anonymous-default-export): Disallow anonymous functions and classes as the default export")]
-#[diagnostic(severity(warning), help("The {1} should be named."))]
-struct NoAnonymousDefaultExportDiagnostic(#[label] pub Span, String);
+fn no_anonymous_default_export_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-unicorn(no-anonymous-default-export): Disallow anonymous functions and classes as the default export")
+        .with_help(format!("The {x1} should be named."))
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAnonymousDefaultExport;
@@ -71,6 +67,20 @@ impl Rule for NoAnonymousDefaultExport {
                 ExportDefaultDeclarationKind::ArrowFunctionExpression(_) => {
                     Some((export_decl.span, ErrorNodeKind::Function))
                 }
+                ExportDefaultDeclarationKind::ParenthesizedExpression(expr) => {
+                    let expr = expr.expression.get_inner_expression();
+                    match expr {
+                        Expression::ClassExpression(class_expr) => class_expr
+                            .id
+                            .as_ref()
+                            .map_or(Some((class_expr.span, ErrorNodeKind::Class)), |_| None),
+                        Expression::FunctionExpression(func_expr) => func_expr
+                            .id
+                            .as_ref()
+                            .map_or(Some((func_expr.span, ErrorNodeKind::Function)), |_| None),
+                        _ => None,
+                    }
+                }
                 _ => None,
             },
             // CommonJS: module.exports
@@ -91,7 +101,7 @@ impl Rule for NoAnonymousDefaultExport {
         };
 
         if let Some((span, error_kind)) = problem_node {
-            ctx.diagnostic(NoAnonymousDefaultExportDiagnostic(span, error_kind.to_string()));
+            ctx.diagnostic(no_anonymous_default_export_diagnostic(span, error_kind.as_str()));
         };
     }
 }
@@ -117,13 +127,12 @@ enum ErrorNodeKind {
     Class,
 }
 
-impl fmt::Display for ErrorNodeKind {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let display_name = match self {
+impl ErrorNodeKind {
+    fn as_str(&self) -> &str {
+        match self {
             Self::Function => "function",
             Self::Class => "class",
-        };
-        write!(f, "{display_name}")
+        }
     }
 }
 
@@ -149,6 +158,8 @@ fn test() {
         r"module.exports = class {}",
         r"module.exports = function () {}",
         r"module.exports = () => {}",
+        "export default (async function * () {})",
+        "export default (class extends class {} {})",
     ];
 
     Tester::new(NoAnonymousDefaultExport::NAME, pass, fail).test_and_snapshot();
