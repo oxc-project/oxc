@@ -4,7 +4,7 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
-use oxc_diagnostics::Error;
+use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_span::{CompactStr, SourceType, Span};
 use oxc_syntax::{
     identifier::is_identifier_name,
@@ -186,7 +186,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     /// Push a Syntax Error
-    pub fn error<T: Into<Error>>(&self, error: T) {
+    pub fn error(&self, error: OxcDiagnostic) {
         self.errors.borrow_mut().push(error.into());
     }
 
