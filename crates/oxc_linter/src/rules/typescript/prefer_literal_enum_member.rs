@@ -38,7 +38,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     PreferLiteralEnumMember,
-    correctness
+    restriction
 );
 
 impl Rule for PreferLiteralEnumMember {
