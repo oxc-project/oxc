@@ -6,9 +6,8 @@ use std::{
     sync::Arc,
 };
 
-use miette::NamedSource;
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{miette, Error, Severity};
+use oxc_diagnostics::{Error, NamedSource, Severity};
 use oxc_linter::{
     partial_loader::{
         AstroPartialLoader, JavaScriptSource, SveltePartialLoader, VuePartialLoader,

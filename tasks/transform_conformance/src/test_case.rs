@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_diagnostics::{miette::miette, Error};
+use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_parser::Parser;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
@@ -191,7 +191,7 @@ pub trait TestCase {
         let transform_options = match self.transform_options() {
             Ok(transform_options) => transform_options,
             Err(json_err) => {
-                return Err(vec![miette!(format!("{json_err:?}"))]);
+                return Err(vec![OxcDiagnostic::error(format!("{json_err:?}")).into()]);
             }
         };
 

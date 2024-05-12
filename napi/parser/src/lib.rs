@@ -7,7 +7,7 @@ use napi_derive::napi;
 use oxc_allocator::Allocator;
 pub use oxc_ast::ast::Program;
 use oxc_ast::CommentKind;
-use oxc_diagnostics::{miette::NamedSource, Error};
+use oxc_diagnostics::{Error, NamedSource};
 use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
 

@@ -18,7 +18,7 @@ use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
 use oxc_ast::Trivias;
-use oxc_diagnostics::{miette::NamedSource, Error, GraphicalReportHandler, GraphicalTheme};
+use oxc_diagnostics::{Error, GraphicalReportHandler, GraphicalTheme, NamedSource};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, Span};

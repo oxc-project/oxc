@@ -1,6 +1,6 @@
 use std::io::{BufWriter, Stdout, Write};
 
-use crate::{miette::Error, GraphicalReportHandler};
+use crate::{Error, GraphicalReportHandler};
 
 use super::{writer, DiagnosticReporter};
 

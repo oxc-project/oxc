@@ -1,4 +1,6 @@
-use crate::miette::{Error, JSONReportHandler};
+use miette::JSONReportHandler;
+
+use crate::Error;
 
 use super::DiagnosticReporter;
 

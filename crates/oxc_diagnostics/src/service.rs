@@ -5,12 +5,11 @@ use std::{
 };
 
 use crate::{
-    miette::NamedSource,
     reporter::{
         CheckstyleReporter, DiagnosticReporter, GithubReporter, GraphicalReporter, JsonReporter,
         UnixReporter,
     },
-    Error, OxcDiagnostic, Severity,
+    Error, NamedSource, OxcDiagnostic, Severity,
 };
 
 pub type DiagnosticTuple = (PathBuf, Vec<Error>);

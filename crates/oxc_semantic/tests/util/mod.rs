@@ -5,7 +5,7 @@ use std::{path::PathBuf, sync::Arc};
 
 use itertools::Itertools;
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{miette::NamedSource, Error};
+use oxc_diagnostics::{Error, NamedSource};
 use oxc_semantic::{print_basic_block, Semantic, SemanticBuilder};
 use oxc_span::SourceType;
 

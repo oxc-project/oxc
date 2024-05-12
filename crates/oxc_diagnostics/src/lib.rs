@@ -11,8 +11,6 @@ use std::{
     ops::Deref,
 };
 
-pub use miette;
-
 pub use crate::{
     graphic_reporter::GraphicalReportHandler,
     graphical_theme::GraphicalTheme,
@@ -21,7 +19,6 @@ pub use crate::{
 
 pub type Error = miette::Error;
 pub type Severity = miette::Severity;
-pub type Report = miette::Report;
 
 pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
 

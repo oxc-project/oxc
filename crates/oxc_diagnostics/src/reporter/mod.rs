@@ -11,7 +11,7 @@ pub use self::{
 
 use std::io::{BufWriter, Stdout};
 
-use crate::{miette::Error, Severity};
+use crate::{Error, Severity};
 
 /// stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
 /// See `https://github.com/rust-lang/rust/issues/60673`.
