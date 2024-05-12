@@ -4,7 +4,7 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
-use oxc_diagnostics::{Error, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{CompactStr, SourceType, Span};
 use oxc_syntax::{
     identifier::is_identifier_name,
@@ -38,7 +38,7 @@ pub struct SemanticBuilder<'a> {
     trivias: Rc<Trivias>,
 
     /// Semantic early errors such as redeclaration errors.
-    errors: RefCell<Vec<Error>>,
+    errors: RefCell<Vec<OxcDiagnostic>>,
 
     // states
     pub current_node_id: AstNodeId,
@@ -76,7 +76,7 @@ pub struct SemanticBuilder<'a> {
 
 pub struct SemanticBuilderReturn<'a> {
     pub semantic: Semantic<'a>,
-    pub errors: Vec<Error>,
+    pub errors: Vec<OxcDiagnostic>,
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -187,7 +187,7 @@ impl<'a> SemanticBuilder<'a> {
 
     /// Push a Syntax Error
     pub fn error(&self, error: OxcDiagnostic) {
-        self.errors.borrow_mut().push(error.into());
+        self.errors.borrow_mut().push(error);
     }
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {

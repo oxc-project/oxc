@@ -259,11 +259,7 @@ impl Runtime {
             .parse();
 
         if !ret.errors.is_empty() {
-            return ret
-                .errors
-                .into_iter()
-                .map(|err| Message::new(Error::from(err), None))
-                .collect();
+            return ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
         };
 
         let program = allocator.alloc(ret.program);

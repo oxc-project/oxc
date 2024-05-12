@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use oxc_diagnostics::Error;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
 #[derive(Debug, Default)]
@@ -26,7 +26,7 @@ pub struct FixResult<'a> {
 }
 
 pub struct Message<'a> {
-    pub error: Error,
+    pub error: OxcDiagnostic,
     start: u32,
     end: u32,
     pub fix: Option<Fix<'a>>,
@@ -35,14 +35,20 @@ pub struct Message<'a> {
 
 impl<'a> Message<'a> {
     #[allow(clippy::cast_possible_truncation)] // for `as u32`
-    pub fn new(error: Error, fix: Option<Fix<'a>>) -> Self {
-        let labels = error.labels().map_or(vec![], Iterator::collect);
-        let start =
-            labels.iter().min_by_key(|span| span.offset()).map_or(0, |span| span.offset() as u32);
-        let end = labels
-            .iter()
-            .max_by_key(|span| span.offset() + span.len())
-            .map_or(0, |span| (span.offset() + span.len()) as u32);
+    pub fn new(error: OxcDiagnostic, fix: Option<Fix<'a>>) -> Self {
+        let (start, end) = if let Some(labels) = &error.labels {
+            let start = labels
+                .iter()
+                .min_by_key(|span| span.offset())
+                .map_or(0, |span| span.offset() as u32);
+            let end = labels
+                .iter()
+                .max_by_key(|span| span.offset() + span.len())
+                .map_or(0, |span| (span.offset() + span.len()) as u32);
+            (start, end)
+        } else {
+            (0, 0)
+        };
         Self { error, start, end, fix, fixed: false }
     }
 
@@ -114,7 +120,7 @@ impl<'a> Fixer<'a> {
 mod test {
     use std::borrow::Cow;
 
-    use oxc_diagnostics::{Error, OxcDiagnostic};
+    use oxc_diagnostics::OxcDiagnostic;
     use oxc_span::Span;
 
     use super::{Fix, FixResult, Fixer, Message};
@@ -188,7 +194,7 @@ mod test {
     }
 
     fn create_message(error: OxcDiagnostic, fix: Option<Fix>) -> Message {
-        Message::new(Error::from(error), fix)
+        Message::new(error, fix)
     }
 
     #[test]
@@ -382,8 +388,8 @@ mod test {
     fn sort_no_fix_messages_correctly() {
         let result = get_fix_result(vec![
             create_message(replace_id(), Some(REPLACE_ID)),
-            Message::new(no_fix_2(Span::new(1, 7)).into(), None),
-            Message::new(no_fix_1(Span::new(1, 3)).into(), None),
+            Message::new(no_fix_2(Span::new(1, 7)), None),
+            Message::new(no_fix_1(Span::new(1, 3)), None),
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
         assert_eq!(result.messages.len(), 2);
