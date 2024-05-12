@@ -41,7 +41,7 @@ declare_oxc_lint!(
     /// <Item config={staticConfig} />
     /// ```
     JsxNoNewObjectAsProp,
-    correctness
+    perf
 );
 
 impl Rule for JsxNoNewObjectAsProp {

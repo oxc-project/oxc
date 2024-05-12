@@ -42,7 +42,7 @@ declare_oxc_lint!(
     /// <Item list={this.props.list} />
     /// ```
     JsxNoNewArrayAsProp,
-    correctness
+    perf
 );
 
 impl Rule for JsxNoNewArrayAsProp {
