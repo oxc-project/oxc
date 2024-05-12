@@ -10,7 +10,7 @@ digraph {
     3 [ label = ""]
     4 [ label = ""]
     5 [ label = ""]
-    6 [ label = "Unreachable()"]
+    6 [ label = "Unreachable()\nbreak"]
     7 [ label = ""]
     8 [ label = ""]
     9 [ label = "Unreachable()"]
@@ -42,4 +42,3 @@ digraph {
     9 -> 3 [ ]
     0 -> 15 [ ]
 }
-

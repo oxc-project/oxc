@@ -5,19 +5,20 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX")]
-#[diagnostic(severity(warning), help("'{0}' is not defined."))]
-struct JsxNoUndefDiagnostic(CompactStr, #[label] pub Span);
+fn jsx_no_undef_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning(
+        "eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX",
+    )
+    .with_help(format!("'{x0}' is not defined."))
+    .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct JsxNoUndef;
@@ -69,7 +70,7 @@ impl Rule for JsxNoUndef {
                         return;
                     }
                 }
-                ctx.diagnostic(JsxNoUndefDiagnostic(ident.name.to_compact_str(), ident.span));
+                ctx.diagnostic(jsx_no_undef_diagnostic(ident.name.as_str(), ident.span));
             }
         }
     }

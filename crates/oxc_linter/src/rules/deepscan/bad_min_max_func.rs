@@ -2,22 +2,22 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("deepscan(bad-min-max-func): Math.min and Math.max combination leads to constant result")]
-#[diagnostic(
-    severity(warning),
-    help("This evaluates to {0:?} because of the incorrect `Math.min`/`Math.max` combination")
-)]
-struct BadMinMaxFuncDiagnostic(f64, #[label] pub Span);
+fn bad_min_max_func_diagnostic(x0: f64, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning(
+        "deepscan(bad-min-max-func): Math.min and Math.max combination leads to constant result",
+    )
+    .with_help(format!(
+        "This evaluates to {x0:?} because of the incorrect `Math.min`/`Math.max` combination"
+    ))
+    .with_labels([span1.into()])
+}
 
 /// `https://deepscan.io/docs/rules/bad-min-max-func`
 #[derive(Debug, Default, Clone)]
@@ -66,7 +66,7 @@ impl Rule for BadMinMaxFunc {
                     };
 
                     if let Some(constant) = constant_result {
-                        ctx.diagnostic(BadMinMaxFuncDiagnostic(*constant, call_expr.span));
+                        ctx.diagnostic(bad_min_max_func_diagnostic(*constant, call_expr.span));
                     }
                 }
             }

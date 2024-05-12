@@ -193,7 +193,7 @@ impl<'a> Lexer<'a> {
                 break;
             }
         }
-        self.error(diagnostics::InvalidNumberEnd(Span::new(offset, self.offset())));
+        self.error(diagnostics::invalid_number_end(Span::new(offset, self.offset())));
         Kind::Undetermined
     }
 }

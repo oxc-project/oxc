@@ -126,10 +126,10 @@ impl<'a> ParserImpl<'a> {
             //   BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
             // the grammar forbids `let []`, `let {}`
             if !matches!(id.kind, BindingPatternKind::BindingIdentifier(_)) {
-                self.error(diagnostics::InvalidDestrucuringDeclaration(id.span()));
+                self.error(diagnostics::invalid_destrucuring_declaration(id.span()));
             } else if kind == VariableDeclarationKind::Const && !self.ctx.has_ambient() {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
-                self.error(diagnostics::MissinginitializerInConst(id.span()));
+                self.error(diagnostics::missinginitializer_in_const(id.span()));
             }
         }
 
@@ -151,12 +151,14 @@ impl<'a> ParserImpl<'a> {
 
         // `[no LineTerminator here]`
         if self.cur_token().is_on_new_line {
-            self.error(diagnostics::LineTerminatorBeforeUsingDeclaration(self.cur_token().span()));
+            self.error(diagnostics::line_terminator_before_using_declaration(
+                self.cur_token().span(),
+            ));
         }
 
         // [lookahead ≠ await]
         if self.cur_kind() == Kind::Await {
-            self.error(diagnostics::AwaitInUsingDeclaration(self.cur_token().span()));
+            self.error(diagnostics::await_in_using_declaration(self.cur_token().span()));
             self.eat(Kind::Await);
         }
 
@@ -171,7 +173,7 @@ impl<'a> ParserImpl<'a> {
             match declaration.id.kind {
                 BindingPatternKind::BindingIdentifier(_) => {}
                 _ => {
-                    self.error(diagnostics::InvalidIdentifierInUsingDeclaration(
+                    self.error(diagnostics::invalid_identifier_in_using_declaration(
                         declaration.id.span(),
                     ));
                 }
@@ -179,7 +181,9 @@ impl<'a> ParserImpl<'a> {
 
             // Excluding `for` loops, an initializer is required in a UsingDeclaration.
             if declaration.init.is_none() && !matches!(statement_ctx, StatementContext::For) {
-                self.error(diagnostics::UsingDeclarationsMustBeInitialized(declaration.id.span()));
+                self.error(diagnostics::using_declarations_must_be_initialized(
+                    declaration.id.span(),
+                ));
             }
 
             declarations.push(declaration);

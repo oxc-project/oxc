@@ -14,6 +14,7 @@ use oxc_syntax::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
     reference::{ReferenceFlag, ReferenceId},
+    scope::ScopeFlags,
     symbol::SymbolId,
 };
 #[cfg(feature = "serialize")]
@@ -41,7 +42,10 @@ export interface FormalParameterRest extends Span {
 }
 "#;
 
-#[visited_node]
+#[visited_node(
+    scope(ScopeFlags::Top),
+    strict_if(self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict))
+)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -60,9 +64,7 @@ impl<'a> Program<'a> {
     }
 
     pub fn is_strict(&self) -> bool {
-        self.source_type.is_module()
-            || self.source_type.always_strict()
-            || self.directives.iter().any(|d| d.directive == "use strict")
+        self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict)
     }
 }
 
@@ -1483,11 +1485,19 @@ impl<'a> Statement<'a> {
 pub struct Directive<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+    /// Directive with any escapes unescaped
     pub expression: StringLiteral<'a>,
+    /// Raw content of directive as it appears in source, any escapes left as is
+    pub directive: Atom<'a>,
+}
+
+impl<'a> Directive<'a> {
     /// A Use Strict Directive is an ExpressionStatement in a Directive Prologue whose StringLiteral is either of the exact code point sequences "use strict" or 'use strict'.
     /// A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
     /// <https://tc39.es/ecma262/#sec-directive-prologues-and-the-use-strict-directive>
-    pub directive: Atom<'a>,
+    pub fn is_use_strict(&self) -> bool {
+        self.directive == "use strict"
+    }
 }
 
 /// Hashbang
@@ -1502,7 +1512,7 @@ pub struct Hashbang<'a> {
 }
 
 /// Block Statement
-#[visited_node]
+#[visited_node(scope(ScopeFlags::empty()))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1729,7 +1739,10 @@ pub struct WhileStatement<'a> {
 }
 
 /// For Statement
-#[visited_node]
+#[visited_node(
+    scope(ScopeFlags::empty()),
+    scope_if(self.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration))
+)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1770,7 +1783,7 @@ impl<'a> ForStatementInit<'a> {
 }
 
 /// For-In Statement
-#[visited_node]
+#[visited_node(scope(ScopeFlags::empty()), scope_if(self.left.is_lexical_declaration()))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1783,7 +1796,7 @@ pub struct ForInStatement<'a> {
 }
 
 /// For-Of Statement
-#[visited_node]
+#[visited_node(scope(ScopeFlags::empty()), scope_if(self.left.is_lexical_declaration()))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1869,7 +1882,7 @@ pub struct WithStatement<'a> {
 }
 
 /// Switch Statement
-#[visited_node]
+#[visited_node(scope(ScopeFlags::empty()), enter_scope_before(cases))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1933,7 +1946,7 @@ pub struct TryStatement<'a> {
     pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
 }
 
-#[visited_node]
+#[visited_node(scope(ScopeFlags::empty()), scope_if(self.param.is_some()))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -2118,7 +2131,14 @@ pub struct BindingRestElement<'a> {
 }
 
 /// Function Definitions
-#[visited_node]
+#[visited_node(
+    scope(ScopeFlags::Function),
+    // Don't create scope if this is a method - `MethodDefinition` already created one.
+    // `ctx.ancestor(2).unwrap()` not `ctx.parent()` because this code is inserted
+    // into `walk_function` *after* `Function` is added to stack.
+    scope_if(matches!(ctx.ancestor(2).unwrap(), Ancestor::MethodDefinitionValue(_))),
+    strict_if(self.body.as_ref().is_some_and(|body| body.has_use_strict_directive()))
+)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
@@ -2179,9 +2199,7 @@ impl<'a> Function<'a> {
     }
 
     pub fn is_strict(&self) -> bool {
-        self.body.as_ref().is_some_and(|body| {
-            body.directives.iter().any(|directive| directive.directive == "use strict")
-        })
+        self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())
     }
 }
 
@@ -2281,10 +2299,14 @@ impl<'a> FunctionBody<'a> {
     pub fn is_empty(&self) -> bool {
         self.directives.is_empty() && self.statements.is_empty()
     }
+
+    pub fn has_use_strict_directive(&self) -> bool {
+        self.directives.iter().any(Directive::is_use_strict)
+    }
 }
 
 /// Arrow Function Definitions
-#[visited_node]
+#[visited_node(scope(ScopeFlags::Function | ScopeFlags::Arrow))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -2327,7 +2349,7 @@ pub struct YieldExpression<'a> {
 }
 
 /// Class Definitions
-#[visited_node]
+#[visited_node(scope(ScopeFlags::StrictMode), enter_scope_before(id))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
@@ -2335,13 +2357,13 @@ pub struct Class<'a> {
     pub r#type: ClassType,
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+    pub decorators: Vec<'a, Decorator<'a>>,
     pub id: Option<BindingIdentifier<'a>>,
     pub super_class: Option<Expression<'a>>,
     pub body: Box<'a, ClassBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
-    pub decorators: Vec<'a, Decorator<'a>>,
     /// Valid Modifiers: `export`, `abstract`
     pub modifiers: Modifiers<'a>,
 }
@@ -2483,7 +2505,11 @@ impl<'a> ClassElement<'a> {
     }
 }
 
-#[visited_node]
+#[visited_node(
+    scope(self.kind.scope_flags()),
+    strict_if(self.value.is_strict()),
+    enter_scope_before(value)
+)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
@@ -2491,6 +2517,7 @@ pub struct MethodDefinition<'a> {
     pub r#type: MethodDefinitionType,
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+    pub decorators: Vec<'a, Decorator<'a>>,
     pub key: PropertyKey<'a>,
     pub value: Box<'a, Function<'a>>, // FunctionExpression
     pub kind: MethodDefinitionKind,
@@ -2499,7 +2526,6 @@ pub struct MethodDefinition<'a> {
     pub r#override: bool,
     pub optional: bool,
     pub accessibility: Option<TSAccessibility>,
-    pub decorators: Vec<'a, Decorator<'a>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -2558,6 +2584,15 @@ impl MethodDefinitionKind {
     pub fn is_set(&self) -> bool {
         matches!(self, Self::Set)
     }
+
+    pub fn scope_flags(self) -> ScopeFlags {
+        match self {
+            Self::Constructor => ScopeFlags::Constructor,
+            Self::Method => ScopeFlags::empty(),
+            Self::Get => ScopeFlags::GetAccessor,
+            Self::Set => ScopeFlags::SetAccessor,
+        }
+    }
 }
 
 #[visited_node]
@@ -2576,7 +2611,7 @@ impl<'a> PrivateIdentifier<'a> {
     }
 }
 
-#[visited_node]
+#[visited_node(scope(ScopeFlags::ClassStaticBlock))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]

@@ -262,7 +262,7 @@ impl<'a> ParserImpl<'a> {
         self.ctx = Context::default().and_await(ctx.has_await());
         let expr = self.parse_expression();
         if let Ok(Expression::SequenceExpression(seq)) = &expr {
-            return Err(diagnostics::JSXExpressionsMayNotUseTheCommaOperator(seq.span).into());
+            return Err(diagnostics::jsx_expressions_may_not_use_the_comma_operator(seq.span));
         }
         self.ctx = ctx;
         expr

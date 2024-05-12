@@ -43,7 +43,7 @@ pub struct TSThisParameter<'a> {
 /// Enum Declaration
 ///
 /// `const_opt` enum `BindingIdentifier` { `EnumBody_opt` }
-#[visited_node]
+#[visited_node(scope(ScopeFlags::empty()), enter_scope_before(members))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -597,7 +597,7 @@ pub struct TSTypeParameterInstantiation<'a> {
     pub params: Vec<'a, TSType<'a>>,
 }
 
-#[visited_node]
+#[visited_node(scope(ScopeFlags::empty()))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -878,7 +878,7 @@ pub enum TSModuleDeclarationBody<'a> {
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>),
 }
 
-#[visited_node]
+#[visited_node(scope(ScopeFlags::TsModuleBlock))]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]

@@ -132,7 +132,6 @@ serde               = "1.0.199"
 serde_json          = "1.0.116"
 syn                 = { version = "2.0.58", default-features = false }
 tempfile            = "3.10.1"
-thiserror           = "1.0.59"
 tokio               = "1"
 tower-lsp           = "0.20.0"
 trybuild            = "1.0.93"

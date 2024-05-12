@@ -183,7 +183,7 @@ macro_rules! ascii_identifier_handler {
 // `\0` `\1` etc
 ascii_byte_handler!(ERR(lexer) {
     let c = lexer.consume_char();
-    lexer.error(diagnostics::InvalidCharacter(c, lexer.unterminated_range()));
+    lexer.error(diagnostics::invalid_character(c, lexer.unterminated_range()));
     Kind::Undetermined
 });
 

@@ -22,7 +22,7 @@ use std::{io::Write, rc::Rc, sync::Arc};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_diagnostics::Report;
+use oxc_diagnostics::Error;
 use oxc_semantic::AstNode;
 
 pub use crate::{
@@ -67,7 +67,7 @@ impl Linter {
     /// # Errors
     ///
     /// Returns `Err` if there are any errors parsing the configuration file.
-    pub fn from_options(options: LintOptions) -> Result<Self, Report> {
+    pub fn from_options(options: LintOptions) -> Result<Self, Error> {
         let (rules, eslint_config) = options.derive_rules_and_config()?;
         let rules = rules.into_iter().map(|rule| (rule.name(), rule)).collect();
         Ok(Self { rules, options, eslint_config: Arc::new(eslint_config) })
@@ -163,11 +163,7 @@ impl Linter {
                 } else {
                     ("", 7)
                 };
-                writeln!(
-                    writer,
-                    "| {rule_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} |"
-                )
-                .unwrap();
+                writeln!(writer, "| {rule_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} |").unwrap();
             }
             writeln!(writer).unwrap();
         }

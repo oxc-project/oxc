@@ -4,7 +4,7 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
-use oxc_diagnostics::Error;
+use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_span::{CompactStr, SourceType, Span};
 use oxc_syntax::{
     identifier::is_identifier_name,
@@ -19,7 +19,7 @@ use crate::{
     control_flow::{
         AssignmentValue, ControlFlowGraph, EdgeType, Register, StatementControlFlowType,
     },
-    diagnostics::Redeclaration,
+    diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
     label::LabelBuilder,
     module_record::ModuleRecordBuilder,
@@ -186,7 +186,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     /// Push a Syntax Error
-    pub fn error<T: Into<Error>>(&self, error: T) {
+    pub fn error(&self, error: OxcDiagnostic) {
         self.errors.borrow_mut().push(error.into());
     }
 
@@ -279,7 +279,7 @@ impl<'a> SemanticBuilder<'a> {
         let symbol_id = self.scope.get_binding(scope_id, name)?;
         if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
-            self.error(Redeclaration(CompactStr::from(name), symbol_span, span));
+            self.error(redeclaration(name, symbol_span, span));
         }
         Some(symbol_id)
     }
@@ -489,14 +489,20 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
         let kind = AstKind::BreakStatement(self.alloc(stmt));
         self.enter_node(kind);
+        let maybe_label = stmt.label.as_ref();
 
         /* cfg */
         let statement_state = self
             .cfg
             .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        let break_label = maybe_label.and_then(|_| {
+            let reg = Some(self.cfg.new_register());
+            self.cfg.use_this_register = reg;
+            reg
+        });
         /* cfg */
 
-        if let Some(break_target) = &stmt.label {
+        if let Some(break_target) = maybe_label {
             self.visit_label_identifier(break_target);
 
             /* cfg */
@@ -527,6 +533,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.cfg.put_unreachable();
 
+        self.cfg.put_break(break_label);
         self.cfg.after_statement(
             &statement_state,
             self.current_node_id,
@@ -765,6 +772,54 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_conditional_expression(&mut self, expr: &ConditionalExpression<'a>) {
+        let kind = AstKind::ConditionalExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        self.visit_expression(&expr.test);
+
+        /* cfg */
+        let before_conditional_expr_graph_ix = self.cfg.current_node_ix;
+        // conditional expression basic block
+        let before_consequent_expr_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+
+        self.visit_expression(&expr.consequent);
+
+        /* cfg */
+        let after_consequent_expr_graph_ix = self.cfg.current_node_ix;
+        let start_alternate_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+
+        self.visit_expression(&expr.alternate);
+
+        /* cfg */
+        let after_alternate_graph_ix = self.cfg.current_node_ix;
+        /* bb after conditional expression joins consequent and alternate */
+        let after_conditional_graph_ix = self.cfg.new_basic_block();
+        /* cfg */
+
+        self.cfg.put_unreachable();
+        self.cfg.add_edge(
+            after_consequent_expr_graph_ix,
+            after_conditional_graph_ix,
+            EdgeType::Normal,
+        );
+        self.cfg.add_edge(
+            before_conditional_expr_graph_ix,
+            before_consequent_expr_graph_ix,
+            EdgeType::Normal,
+        );
+
+        self.cfg.add_edge(
+            before_conditional_expr_graph_ix,
+            start_alternate_graph_ix,
+            EdgeType::Normal,
+        );
+        self.cfg.add_edge(after_alternate_graph_ix, after_conditional_graph_ix, EdgeType::Normal);
+        self.leave_node(kind);
+    }
+
     fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
         let kind = AstKind::ForStatement(self.alloc(stmt));
         let is_lexical_declaration =
@@ -785,6 +840,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         /* cfg */
+        let after_test_graph_ix = self.cfg.current_node_ix;
         let update_graph_ix = self.cfg.new_basic_block();
         /* cfg */
 
@@ -803,10 +859,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         let after_for_stmt = self.cfg.new_basic_block();
         self.cfg.add_edge(before_for_graph_ix, test_graph_ix, EdgeType::Normal);
-        self.cfg.add_edge(test_graph_ix, body_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(after_test_graph_ix, body_graph_ix, EdgeType::Normal);
         self.cfg.add_edge(body_graph_ix, update_graph_ix, EdgeType::Backedge);
         self.cfg.add_edge(update_graph_ix, test_graph_ix, EdgeType::Backedge);
-        self.cfg.add_edge(test_graph_ix, after_for_stmt, EdgeType::Normal);
+        self.cfg.add_edge(after_test_graph_ix, after_for_stmt, EdgeType::Normal);
 
         self.cfg.after_statement(
             &statement_state,

@@ -2,25 +2,26 @@ use oxc_ast::{
     ast::{Argument, MemberExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("deepscan(uninvoked-array-callback): Uninvoked array callback")]
-#[diagnostic(
-    severity(warning),
-    help("consider filling the array with `undefined` values using `Array.prototype.fill()`")
-)]
-struct UninvokedArrayCallbackDiagnostic(
-    #[label("this callback will not be invoked")] Span,
-    #[label("because this is an array with only empty slots")] Span,
-);
+fn uninvoked_array_callback_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("deepscan(uninvoked-array-callback): Uninvoked array callback")
+        .with_help(
+            "consider filling the array with `undefined` values using `Array.prototype.fill()`",
+        )
+        .with_labels([
+            LabeledSpan::new_with_span(Some("this callback will not be invoked".into()), span0),
+            LabeledSpan::new_with_span(
+                Some("because this is an array with only empty slots".into()),
+                span1,
+            ),
+        ])
+}
 
 /// `https://deepscan.io/docs/rules/uninvoked-array-callback`
 #[derive(Debug, Default, Clone)]
@@ -44,7 +45,9 @@ declare_oxc_lint!(
 
 impl Rule for UninvokedArrayCallback {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::NewExpression(new_expr) = node.kind() else { return };
+        let AstKind::NewExpression(new_expr) = node.kind() else {
+            return;
+        };
         if !new_expr.callee.is_specific_id("Array") {
             return;
         }
@@ -55,7 +58,9 @@ impl Rule for UninvokedArrayCallback {
             return;
         }
 
-        let Some(member_expr_node) = ctx.nodes().parent_node(node.id()) else { return };
+        let Some(member_expr_node) = ctx.nodes().parent_node(node.id()) else {
+            return;
+        };
 
         let AstKind::MemberExpression(member_expr) = member_expr_node.kind() else {
             return;
@@ -78,7 +83,7 @@ impl Rule for UninvokedArrayCallback {
             MemberExpression::StaticMemberExpression(expr) => expr.property.span,
             MemberExpression::PrivateFieldExpression(expr) => expr.field.span,
         };
-        ctx.diagnostic(UninvokedArrayCallbackDiagnostic(property_span, new_expr.span));
+        ctx.diagnostic(uninvoked_array_callback_diagnostic(property_span, new_expr.span));
     }
 }
 

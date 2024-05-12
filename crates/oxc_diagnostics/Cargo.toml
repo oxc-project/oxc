@@ -18,8 +18,7 @@ workspace = true
 doctest = false
 
 [dependencies]
-thiserror = { workspace = true }
-miette    = { workspace = true }
+miette = { workspace = true }
 
 unicode-width = { workspace = true }
 owo-colors    = { workspace = true }

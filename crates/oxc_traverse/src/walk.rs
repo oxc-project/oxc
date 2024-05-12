@@ -8,12 +8,15 @@
     clippy::semicolon_if_nothing_returned,
     clippy::ptr_as_ptr,
     clippy::borrow_as_ptr,
-    clippy::cast_ptr_alignment
+    clippy::cast_ptr_alignment,
+    clippy::needless_borrow
 )]
 
 use oxc_allocator::Vec;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
+use oxc_span::SourceType;
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
     ancestor::{self, AncestorType},
@@ -27,6 +30,16 @@ pub(crate) unsafe fn walk_program<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_program(&mut *node, ctx);
     ctx.push_stack(Ancestor::ProgramDirectives(ancestor::ProgramWithoutDirectives(node)));
+    ctx.push_scope_stack(
+        ScopeFlags::Top.with_strict_mode(
+            (&*((node as *mut u8).add(ancestor::OFFSET_PROGRAM_SOURCE_TYPE) as *mut SourceType))
+                .is_strict()
+                || (&*((node as *mut u8).add(ancestor::OFFSET_PROGRAM_DIRECTIVES)
+                    as *mut Vec<Directive>))
+                    .iter()
+                    .any(Directive::is_use_strict),
+        ),
+    );
     for item in (*((node as *mut u8).add(ancestor::OFFSET_PROGRAM_DIRECTIVES)
         as *mut Vec<Directive>))
         .iter_mut()
@@ -45,6 +58,7 @@ pub(crate) unsafe fn walk_program<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_PROGRAM_BODY) as *mut Vec<Statement>,
         ctx,
     );
+    ctx.pop_scope_stack();
     ctx.pop_stack();
     traverser.exit_program(&mut *node, ctx);
 }
@@ -1389,11 +1403,13 @@ pub(crate) unsafe fn walk_block_statement<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_block_statement(&mut *node, ctx);
     ctx.push_stack(Ancestor::BlockStatementBody(ancestor::BlockStatementWithoutBody(node)));
+    ctx.push_scope_stack(ScopeFlags::empty());
     walk_statements(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_BLOCK_STATEMENT_BODY) as *mut Vec<Statement>,
         ctx,
     );
+    ctx.pop_scope_stack();
     ctx.pop_stack();
     traverser.exit_block_statement(&mut *node, ctx);
 }
@@ -1600,6 +1616,13 @@ pub(crate) unsafe fn walk_for_statement<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_for_statement(&mut *node, ctx);
     ctx.push_stack(Ancestor::ForStatementInit(ancestor::ForStatementWithoutInit(node)));
+    let has_scope = (&*((node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_INIT)
+        as *mut Option<ForStatementInit>))
+        .as_ref()
+        .is_some_and(ForStatementInit::is_lexical_declaration);
+    if has_scope {
+        ctx.push_scope_stack(ScopeFlags::empty());
+    }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_INIT)
         as *mut Option<ForStatementInit>)
     {
@@ -1623,6 +1646,9 @@ pub(crate) unsafe fn walk_for_statement<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_BODY) as *mut Statement,
         ctx,
     );
+    if has_scope {
+        ctx.pop_scope_stack();
+    }
     ctx.pop_stack();
     traverser.exit_for_statement(&mut *node, ctx);
 }
@@ -1695,6 +1721,12 @@ pub(crate) unsafe fn walk_for_in_statement<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_for_in_statement(&mut *node, ctx);
     ctx.push_stack(Ancestor::ForInStatementLeft(ancestor::ForInStatementWithoutLeft(node)));
+    let has_scope = (&*((node as *mut u8).add(ancestor::OFFSET_FOR_IN_STATEMENT_LEFT)
+        as *mut ForStatementLeft))
+        .is_lexical_declaration();
+    if has_scope {
+        ctx.push_scope_stack(ScopeFlags::empty());
+    }
     walk_for_statement_left(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_FOR_IN_STATEMENT_LEFT) as *mut ForStatementLeft,
@@ -1712,6 +1744,9 @@ pub(crate) unsafe fn walk_for_in_statement<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_FOR_IN_STATEMENT_BODY) as *mut Statement,
         ctx,
     );
+    if has_scope {
+        ctx.pop_scope_stack();
+    }
     ctx.pop_stack();
     traverser.exit_for_in_statement(&mut *node, ctx);
 }
@@ -1723,6 +1758,12 @@ pub(crate) unsafe fn walk_for_of_statement<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_for_of_statement(&mut *node, ctx);
     ctx.push_stack(Ancestor::ForOfStatementLeft(ancestor::ForOfStatementWithoutLeft(node)));
+    let has_scope = (&*((node as *mut u8).add(ancestor::OFFSET_FOR_OF_STATEMENT_LEFT)
+        as *mut ForStatementLeft))
+        .is_lexical_declaration();
+    if has_scope {
+        ctx.push_scope_stack(ScopeFlags::empty());
+    }
     walk_for_statement_left(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_FOR_OF_STATEMENT_LEFT) as *mut ForStatementLeft,
@@ -1740,6 +1781,9 @@ pub(crate) unsafe fn walk_for_of_statement<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_FOR_OF_STATEMENT_BODY) as *mut Statement,
         ctx,
     );
+    if has_scope {
+        ctx.pop_scope_stack();
+    }
     ctx.pop_stack();
     traverser.exit_for_of_statement(&mut *node, ctx);
 }
@@ -1860,6 +1904,7 @@ pub(crate) unsafe fn walk_switch_statement<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_SWITCH_STATEMENT_DISCRIMINANT) as *mut Expression,
         ctx,
     );
+    ctx.push_scope_stack(ScopeFlags::empty());
     ctx.retag_stack(AncestorType::SwitchStatementCases);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_SWITCH_STATEMENT_CASES)
         as *mut Vec<SwitchCase>))
@@ -1867,6 +1912,7 @@ pub(crate) unsafe fn walk_switch_statement<'a, Tr: Traverse<'a>>(
     {
         walk_switch_case(traverser, item as *mut _, ctx);
     }
+    ctx.pop_scope_stack();
     ctx.pop_stack();
     traverser.exit_switch_statement(&mut *node, ctx);
 }
@@ -1967,6 +2013,12 @@ pub(crate) unsafe fn walk_catch_clause<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_catch_clause(&mut *node, ctx);
     ctx.push_stack(Ancestor::CatchClauseParam(ancestor::CatchClauseWithoutParam(node)));
+    let has_scope = (&*((node as *mut u8).add(ancestor::OFFSET_CATCH_CLAUSE_PARAM)
+        as *mut Option<CatchParameter>))
+        .is_some();
+    if has_scope {
+        ctx.push_scope_stack(ScopeFlags::empty());
+    }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CATCH_CLAUSE_PARAM)
         as *mut Option<CatchParameter>)
     {
@@ -1979,6 +2031,9 @@ pub(crate) unsafe fn walk_catch_clause<'a, Tr: Traverse<'a>>(
             as *mut Box<BlockStatement>)) as *mut _,
         ctx,
     );
+    if has_scope {
+        ctx.pop_scope_stack();
+    }
     ctx.pop_stack();
     traverser.exit_catch_clause(&mut *node, ctx);
 }
@@ -2173,6 +2228,17 @@ pub(crate) unsafe fn walk_function<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_function(&mut *node, ctx);
     ctx.push_stack(Ancestor::FunctionId(ancestor::FunctionWithoutId(node)));
+    let has_scope = matches!(ctx.ancestor(2).unwrap(), Ancestor::MethodDefinitionValue(_));
+    if has_scope {
+        ctx.push_scope_stack(
+            ScopeFlags::Function.with_strict_mode(
+                (&*((node as *mut u8).add(ancestor::OFFSET_FUNCTION_BODY)
+                    as *mut Option<Box<FunctionBody>>))
+                    .as_ref()
+                    .is_some_and(|body| body.has_use_strict_directive()),
+            ),
+        );
+    }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_ID)
         as *mut Option<BindingIdentifier>)
     {
@@ -2208,6 +2274,9 @@ pub(crate) unsafe fn walk_function<'a, Tr: Traverse<'a>>(
     {
         ctx.retag_stack(AncestorType::FunctionReturnType);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if has_scope {
+        ctx.pop_scope_stack();
     }
     ctx.pop_stack();
     traverser.exit_function(&mut *node, ctx);
@@ -2291,6 +2360,7 @@ pub(crate) unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
     ctx.push_stack(Ancestor::ArrowFunctionExpressionParams(
         ancestor::ArrowFunctionExpressionWithoutParams(node),
     ));
+    ctx.push_scope_stack(ScopeFlags::Function | ScopeFlags::Arrow);
     walk_formal_parameters(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_PARAMS)
@@ -2318,6 +2388,7 @@ pub(crate) unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
         ctx.retag_stack(AncestorType::ArrowFunctionExpressionReturnType);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
     }
+    ctx.pop_scope_stack();
     ctx.pop_stack();
     traverser.exit_arrow_function_expression(&mut *node, ctx);
 }
@@ -2346,10 +2417,17 @@ pub(crate) unsafe fn walk_class<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_class(&mut *node, ctx);
-    ctx.push_stack(Ancestor::ClassId(ancestor::ClassWithoutId(node)));
+    ctx.push_stack(Ancestor::ClassDecorators(ancestor::ClassWithoutDecorators(node)));
+    for item in (*((node as *mut u8).add(ancestor::OFFSET_CLASS_DECORATORS) as *mut Vec<Decorator>))
+        .iter_mut()
+    {
+        walk_decorator(traverser, item as *mut _, ctx);
+    }
+    ctx.push_scope_stack(ScopeFlags::StrictMode);
     if let Some(field) =
         &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_ID) as *mut Option<BindingIdentifier>)
     {
+        ctx.retag_stack(AncestorType::ClassId);
         walk_binding_identifier(traverser, field as *mut _, ctx);
     }
     if let Some(field) =
@@ -2385,12 +2463,7 @@ pub(crate) unsafe fn walk_class<'a, Tr: Traverse<'a>>(
             walk_ts_class_implements(traverser, item as *mut _, ctx);
         }
     }
-    ctx.retag_stack(AncestorType::ClassDecorators);
-    for item in (*((node as *mut u8).add(ancestor::OFFSET_CLASS_DECORATORS) as *mut Vec<Decorator>))
-        .iter_mut()
-    {
-        walk_decorator(traverser, item as *mut _, ctx);
-    }
+    ctx.pop_scope_stack();
     ctx.pop_stack();
     traverser.exit_class(&mut *node, ctx);
 }
@@ -2444,11 +2517,30 @@ pub(crate) unsafe fn walk_method_definition<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_method_definition(&mut *node, ctx);
-    ctx.push_stack(Ancestor::MethodDefinitionKey(ancestor::MethodDefinitionWithoutKey(node)));
+    ctx.push_stack(Ancestor::MethodDefinitionDecorators(
+        ancestor::MethodDefinitionWithoutDecorators(node),
+    ));
+    for item in (*((node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_DECORATORS)
+        as *mut Vec<Decorator>))
+        .iter_mut()
+    {
+        walk_decorator(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::MethodDefinitionKey);
     walk_property_key(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_KEY) as *mut PropertyKey,
         ctx,
+    );
+    ctx.push_scope_stack(
+        (&*((node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_KIND)
+            as *mut MethodDefinitionKind))
+            .scope_flags()
+            .with_strict_mode(
+                (&*((node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_VALUE)
+                    as *mut Box<Function>))
+                    .is_strict(),
+            ),
     );
     ctx.retag_stack(AncestorType::MethodDefinitionValue);
     walk_function(
@@ -2457,13 +2549,7 @@ pub(crate) unsafe fn walk_method_definition<'a, Tr: Traverse<'a>>(
             as *mut Box<Function>)) as *mut _,
         ctx,
     );
-    ctx.retag_stack(AncestorType::MethodDefinitionDecorators);
-    for item in (*((node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_DECORATORS)
-        as *mut Vec<Decorator>))
-        .iter_mut()
-    {
-        walk_decorator(traverser, item as *mut _, ctx);
-    }
+    ctx.pop_scope_stack();
     ctx.pop_stack();
     traverser.exit_method_definition(&mut *node, ctx);
 }
@@ -2520,11 +2606,13 @@ pub(crate) unsafe fn walk_static_block<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_static_block(&mut *node, ctx);
     ctx.push_stack(Ancestor::StaticBlockBody(ancestor::StaticBlockWithoutBody(node)));
+    ctx.push_scope_stack(ScopeFlags::ClassStaticBlock);
     walk_statements(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_STATIC_BLOCK_BODY) as *mut Vec<Statement>,
         ctx,
     );
+    ctx.pop_scope_stack();
     ctx.pop_stack();
     traverser.exit_static_block(&mut *node, ctx);
 }
@@ -3501,6 +3589,7 @@ pub(crate) unsafe fn walk_ts_enum_declaration<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_ID) as *mut BindingIdentifier,
         ctx,
     );
+    ctx.push_scope_stack(ScopeFlags::empty());
     ctx.retag_stack(AncestorType::TSEnumDeclarationMembers);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_MEMBERS)
         as *mut Vec<TSEnumMember>))
@@ -3508,6 +3597,7 @@ pub(crate) unsafe fn walk_ts_enum_declaration<'a, Tr: Traverse<'a>>(
     {
         walk_ts_enum_member(traverser, item as *mut _, ctx);
     }
+    ctx.pop_scope_stack();
     ctx.pop_stack();
     traverser.exit_ts_enum_declaration(&mut *node, ctx);
 }
@@ -4230,6 +4320,7 @@ pub(crate) unsafe fn walk_ts_type_parameter<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_ts_type_parameter(&mut *node, ctx);
     ctx.push_stack(Ancestor::TSTypeParameterName(ancestor::TSTypeParameterWithoutName(node)));
+    ctx.push_scope_stack(ScopeFlags::empty());
     walk_binding_identifier(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_PARAMETER_NAME) as *mut BindingIdentifier,
@@ -4247,6 +4338,7 @@ pub(crate) unsafe fn walk_ts_type_parameter<'a, Tr: Traverse<'a>>(
         ctx.retag_stack(AncestorType::TSTypeParameterDefault);
         walk_ts_type(traverser, field as *mut _, ctx);
     }
+    ctx.pop_scope_stack();
     ctx.pop_stack();
     traverser.exit_ts_type_parameter(&mut *node, ctx);
 }
@@ -4728,11 +4820,13 @@ pub(crate) unsafe fn walk_ts_module_block<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_ts_module_block(&mut *node, ctx);
     ctx.push_stack(Ancestor::TSModuleBlockBody(ancestor::TSModuleBlockWithoutBody(node)));
+    ctx.push_scope_stack(ScopeFlags::TsModuleBlock);
     walk_statements(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_MODULE_BLOCK_BODY) as *mut Vec<Statement>,
         ctx,
     );
+    ctx.pop_scope_stack();
     ctx.pop_stack();
     traverser.exit_ts_module_block(&mut *node, ctx);
 }

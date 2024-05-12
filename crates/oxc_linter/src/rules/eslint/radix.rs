@@ -2,32 +2,29 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum RadixDiagnostic {
-    #[diagnostic(severity(warning))]
-    #[error("eslint(radix): Missing parameters.")]
-    MissingParameters(#[label] Span),
+fn missing_parameters(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint(radix): Missing parameters.").with_labels([span0.into()])
+}
 
-    #[diagnostic(severity(warning))]
-    #[error("eslint(radix): Missing radix parameter.")]
-    MissingRadix(#[label] Span),
+fn missing_radix(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint(radix): Missing radix parameter.").with_labels([span0.into()])
+}
 
-    #[diagnostic(severity(warning))]
-    #[error("eslint(radix): Redundant radix parameter.")]
-    RedundantRadix(#[label] Span),
+fn redundant_radix(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint(radix): Redundant radix parameter.").with_labels([span0.into()])
+}
 
-    #[diagnostic(severity(warning))]
-    #[error("eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.")]
-    InvalidRadix(#[label] Span),
+fn invalid_radix(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning(
+        "eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.",
+    )
+    .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -109,18 +106,18 @@ impl Rule for Radix {
 impl Radix {
     fn check_arguments(&self, call_expr: &CallExpression, ctx: &LintContext) {
         match call_expr.arguments.len() {
-            0 => ctx.diagnostic(RadixDiagnostic::MissingParameters(call_expr.span)),
+            0 => ctx.diagnostic(missing_parameters(call_expr.span)),
             1 => {
                 if matches!(&self.radix_type, RadixType::Always) {
-                    ctx.diagnostic(RadixDiagnostic::MissingRadix(call_expr.span));
+                    ctx.diagnostic(missing_radix(call_expr.span));
                 }
             }
             _ => {
                 let radix_arg = &call_expr.arguments[1];
                 if matches!(&self.radix_type, RadixType::AsNeeded) && is_default_radix(radix_arg) {
-                    ctx.diagnostic(RadixDiagnostic::RedundantRadix(radix_arg.span()));
+                    ctx.diagnostic(redundant_radix(radix_arg.span()));
                 } else if !is_valid_radix(radix_arg) {
-                    ctx.diagnostic(RadixDiagnostic::InvalidRadix(radix_arg.span()));
+                    ctx.diagnostic(invalid_radix(radix_arg.span()));
                 }
             }
         }

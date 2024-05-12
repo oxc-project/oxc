@@ -188,7 +188,7 @@ impl<'a> ParserImpl<'a> {
         )?;
 
         if stmt_ctx.is_single_statement() && decl.kind.is_lexical() {
-            self.error(diagnostics::LexicalDeclarationSingleStatement(decl.span));
+            self.error(diagnostics::lexical_declaration_single_statement(decl.span));
         }
 
         Ok(Statement::VariableDeclaration(decl))
@@ -288,13 +288,13 @@ impl<'a> ParserImpl<'a> {
         // for (a.b in ...), for ([a] in ..), for ({a} in ..)
         if self.at(Kind::In) || self.at(Kind::Of) {
             let target = AssignmentTarget::cover(init_expression, self)
-                .map_err(|_| diagnostics::UnexpectedToken(self.end_span(expr_span)))?;
+                .map_err(|_| diagnostics::unexpected_token(self.end_span(expr_span)))?;
             let for_stmt_left = ForStatementLeft::from(target);
             if !r#await && is_async_of {
-                self.error(diagnostics::ForLoopAsyncOf(self.end_span(expr_span)));
+                self.error(diagnostics::for_loop_async_of(self.end_span(expr_span)));
             }
             if is_let_of {
-                self.error(diagnostics::UnexpectedToken(self.end_span(expr_span)));
+                self.error(diagnostics::unexpected_token(self.end_span(expr_span)));
             }
             return self.parse_for_in_or_of_loop(span, r#await, for_stmt_left);
         }
@@ -332,11 +332,11 @@ impl<'a> ParserImpl<'a> {
 
         if matches!(self.cur_kind(), Kind::In) {
             if using_decl.is_await {
-                self.error(diagnostics::AwaitUsingDeclarationNotAllowedInForInStatement(
+                self.error(diagnostics::await_using_declaration_not_allowed_in_for_in_statement(
                     using_decl.span,
                 ));
             } else {
-                self.error(diagnostics::UsingDeclarationNotAllowedInForInStatement(
+                self.error(diagnostics::using_declaration_not_allowed_in_for_in_statement(
                     using_decl.span,
                 ));
             }
@@ -371,7 +371,7 @@ impl<'a> ParserImpl<'a> {
         };
         self.expect(Kind::RParen)?;
         if r#await {
-            self.error(diagnostics::ForAwait(self.end_span(span)));
+            self.error(diagnostics::for_await(self.end_span(span)));
         }
         let body = self.parse_statement_list_item(StatementContext::For)?;
         Ok(self.ast.for_statement(self.end_span(span), init, test, update, body))
@@ -393,7 +393,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::RParen)?;
 
         if r#await && is_for_in {
-            self.error(diagnostics::ForAwait(self.end_span(span)));
+            self.error(diagnostics::for_await(self.end_span(span)));
         }
 
         let body = self.parse_statement_list_item(StatementContext::For)?;
@@ -438,7 +438,7 @@ impl<'a> ParserImpl<'a> {
             Some(expr)
         };
         if !self.ctx.has_return() {
-            self.error(diagnostics::ReturnStatementOnlyInFunctionBody(Span::new(
+            self.error(diagnostics::return_statement_only_in_function_body(Span::new(
                 span.start,
                 span.start + 6,
             )));
@@ -497,7 +497,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // advance `throw`
         if self.cur_token().is_on_new_line {
-            self.error(diagnostics::IllegalNewline(
+            self.error(diagnostics::illegal_newline(
                 "throw",
                 self.end_span(span),
                 self.cur_token().span(),
@@ -521,7 +521,7 @@ impl<'a> ParserImpl<'a> {
 
         if handler.is_none() && finalizer.is_none() {
             let range = Span::new(block.span.end, block.span.end);
-            self.error(diagnostics::ExpectCatchFinally(range));
+            self.error(diagnostics::expect_catch_finally(range));
         }
 
         Ok(self.ast.try_statement(self.end_span(span), block, handler, finalizer))

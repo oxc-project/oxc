@@ -1,6 +1,5 @@
-use super::errors::FailedToParseRuleValueError;
 use crate::AllowWarnDeny;
-use oxc_diagnostics::Error;
+use oxc_diagnostics::{Error, OxcDiagnostic};
 use serde::de::{self, Deserializer, Visitor};
 use serde::Deserialize;
 use std::fmt;
@@ -88,8 +87,8 @@ fn parse_rule_value(
 
         serde_json::Value::Array(v) => {
             if v.is_empty() {
-                return Err(FailedToParseRuleValueError(
-                    value.to_string(),
+                return Err(failed_to_parse_rule_value(
+                    &value.to_string(),
                     "Type should be `[SeverityConf, ...any[]`",
                 )
                 .into());
@@ -108,8 +107,8 @@ fn parse_rule_value(
             Ok((severity, config))
         }
 
-        _ => Err(FailedToParseRuleValueError(
-            value.to_string(),
+        _ => Err(failed_to_parse_rule_value(
+            &value.to_string(),
             "Type should be `SeverityConf | [SeverityConf, ...any[]]`",
         )
         .into()),
@@ -122,6 +121,10 @@ impl Deref for ESLintRules {
     fn deref(&self) -> &Self::Target {
         &self.0
     }
+}
+
+fn failed_to_parse_rule_value(value: &str, err: &str) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Failed to rule value {value:?} with error {err:?}"))
 }
 
 #[cfg(test)]

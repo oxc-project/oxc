@@ -1,23 +1,8 @@
 use std::path::Path;
 
 use git2::Repository;
-use miette::Diagnostic;
-use oxc_diagnostics::{thiserror::Error, Error};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("No repository found")]
-#[diagnostic(severity(warning), help("Ensure target path(s) belong to a Git repository"))]
-struct NoRepositoryFound;
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Multiple repositories found")]
-#[diagnostic(severity(warning), help("Ensure all paths belong to a single repository"))]
-struct MultipleRepositoriesFound;
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Uncommitted changes")]
-#[diagnostic(severity(warning), help("Commit any changes before linting"))]
-struct UncommittedChanges;
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 
 pub struct Git<'a> {
     // paths: &'a Vec<Box<Path>>,
@@ -33,13 +18,15 @@ impl<'a> Git<'a> {
 
     pub fn verify(&'a self) -> Result<&'a Repository, Error> {
         if self.repos.is_empty() {
-            return Err(NoRepositoryFound.into());
+            return Err(OxcDiagnostic::warning("No repository found"))
+                .with_help("Ensure target path(s) belong to a Git repository");
         }
         match self.is_same_repo() {
             Ok(repo) => {
                 for path in self.paths {
                     if Self::is_uncommitted(repo, path) {
-                        return Err(UncommittedChanges.into());
+                        return Err(OxcDiagnostic::warning("Uncommitted changes")
+                            .with_help("Commit any changes before linting"));
                     }
                 }
                 Ok(repo)
@@ -54,7 +41,8 @@ impl<'a> Git<'a> {
         let first_repo = self.repos.first().unwrap();
         for repo in &self.repos[1..] {
             if repo.path() != first_repo.path() {
-                return Err(MultipleRepositoriesFound.into());
+                return Err(OxcDiagnostic::warning("Multiple repositories found")
+                    .with_help("Ensure all paths belong to a single repository"));
             }
         }
         Ok(first_repo)

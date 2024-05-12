@@ -106,6 +106,7 @@ pub enum BasicBlockElement {
     Unreachable,
     Assignment(Register, AssignmentValue),
     Throw(Register),
+    Break(Option<Register>),
 }
 
 #[derive(Debug, Clone)]
@@ -237,6 +238,10 @@ impl ControlFlowGraph {
 
     pub fn put_throw(&mut self, throw_expr: Register) {
         self.current_basic_block().push(BasicBlockElement::Throw(throw_expr));
+    }
+
+    pub fn put_break(&mut self, label: Option<Register>) {
+        self.current_basic_block().push(BasicBlockElement::Break(label));
     }
 
     pub fn put_unreachable(&mut self) {
@@ -379,6 +384,13 @@ pub fn print_basic_block(basic_block_elements: &Vec<BasicBlockElement>) -> Strin
             BasicBlockElement::Unreachable => output.push_str("Unreachable()\n"),
             BasicBlockElement::Throw(reg) => {
                 output.push_str(&format!("throw {}\n", print_register(*reg)));
+            }
+
+            BasicBlockElement::Break(Some(reg)) => {
+                output.push_str(&format!("break {}\n", print_register(*reg)));
+            }
+            BasicBlockElement::Break(None) => {
+                output.push_str("break");
             }
             BasicBlockElement::Assignment(to, with) => {
                 output.push_str(&format!("{} = ", print_register(*to)));

@@ -4671,8 +4671,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/breakTarget6.ts:2:9]
  1 │ while (true) {
  2 │   break target;
-   ·         ───┬──
-   ·            ╰── This label is used, but not defined
+   ·         ──────
  3 │ }
    ╰────
 
@@ -5739,8 +5738,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/continueTarget6.ts:2:12]
  1 │ while (true) {
  2 │   continue target;
-   ·            ───┬──
-   ·               ╰── This label is used, but not defined
+   ·            ──────
  3 │ }
    ╰────
 
@@ -6727,7 +6725,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: Try insert a semicolon here
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[compiler/illegalSuperCallsInConstructor.ts:12:17]
  11 │             get foo() {
  12 │                 super();
@@ -6736,7 +6733,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[compiler/illegalSuperCallsInConstructor.ts:16:17]
  15 │             set foo(v: number) {
  16 │                 super();
@@ -9602,7 +9598,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: either remove this super, or extend the class
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
    ╭─[compiler/superCallFromFunction1.ts:3:5]
  2 │ function foo() {
  3 │     super(value => String(value));
@@ -9611,7 +9606,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
    ╭─[compiler/superCallOutsideConstructor.ts:6:9]
  5 │ class D extends C {
  6 │     x = super(); 
@@ -9700,7 +9694,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
    ╭─[compiler/superErrors.ts:3:13]
  2 │     // super in a non class context
  3 │     var x = super;
@@ -9709,7 +9702,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
    ╭─[compiler/superErrors.ts:4:19]
  3 │     var x = super;
  4 │     var y = () => super;
@@ -9718,7 +9710,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
    ╭─[compiler/superErrors.ts:5:31]
  4 │     var y = () => super;
  5 │     var z = () => () => () => super;
@@ -11152,7 +11143,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: Try insert a semicolon here
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
    ╭─[conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers6.ts:6:16]
  5 │ class D extends C {
  6 │     static c = super();
@@ -12510,7 +12500,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: either remove this super, or extend the class
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
    ╭─[conformance/es6/computedProperties/computedPropertyNames27_ES5.ts:5:7]
  4 │ class C extends Base {
  5 │     [(super(), "prop")]() { }
@@ -12519,7 +12508,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
    ╭─[conformance/es6/computedProperties/computedPropertyNames27_ES6.ts:5:7]
  4 │ class C extends Base {
  5 │     [(super(), "prop")]() { }
@@ -15609,7 +15597,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: either remove this super, or extend the class
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:9:9]
   8 │     fn() {
   9 │         super();
@@ -15618,7 +15605,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:14:9]
  13 │     get foo() {
  14 │         super();
@@ -15627,7 +15613,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:18:9]
  17 │     set foo(v) {
  18 │         super();
@@ -15636,7 +15621,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:22:9]
  21 │     //super call in class member initializer with no base type
  22 │     p = super();
@@ -15645,7 +15629,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:26:9]
  25 │     static fn() {
  26 │         super();
@@ -15654,7 +15637,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:30:16]
  29 │     //super call in static class member initializer with no base type
  30 │     static k = super();
@@ -15663,7 +15645,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:34:9]
  33 │     static get q() {
  34 │         super();
@@ -15672,7 +15653,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:38:9]
  37 │     static set q(n) {
  38 │         super();
@@ -15681,7 +15661,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:58:9]
  57 │     //super call in class member initializer of derived type
  58 │     t = super();
@@ -15690,7 +15669,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:62:9]
  61 │         //super call in class member function of derived type
  62 │         super();
@@ -15699,7 +15677,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:67:9]
  66 │     get foo() {
  67 │         super();
@@ -15708,7 +15685,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:71:9]
  70 │     set foo(n) {
  71 │         super();
@@ -15717,7 +15693,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
      ╭─[conformance/expressions/superPropertyAccess/errorSuperPropertyAccess.ts:127:16]
  126 │ // In object literal
  127 │ var obj = { n: super.wat, p: super.foo() };
@@ -15725,7 +15700,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
      ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
      ╭─[conformance/expressions/superPropertyAccess/errorSuperPropertyAccess.ts:127:30]
  126 │ // In object literal
  127 │ var obj = { n: super.wat, p: super.foo() };
@@ -17878,8 +17852,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/Statements/BreakStatements/parser_breakTarget6.ts:2:9]
  1 │ while (true) {
  2 │   break target;
-   ·         ───┬──
-   ·            ╰── This label is used, but not defined
+   ·         ──────
  3 │ }
    ╰────
 
@@ -17930,8 +17903,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueTarget6.ts:2:12]
  1 │ while (true) {
  2 │   continue target;
-   ·            ───┬──
-   ·               ╰── This label is used, but not defined
+   ·            ──────
  3 │ }
    ╰────
 
@@ -18218,7 +18190,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: replace with `super()` or `super.prop` or `super[prop]`
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
    ╭─[conformance/parser/ecmascript5/SuperExpressions/parserSuperExpression2.ts:3:5]
  2 │   M() {
  3 │     super<T>(0);
@@ -18653,8 +18624,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/salsa/plainJSBinderErrors.ts:38:19]
  37 │             label: var x = 1
  38 │             break label
-    ·                   ──┬──
-    ·                     ╰── This label is used, but not defined
+    ·                   ─────
  39 │         }
     ╰────
 
@@ -18987,8 +18957,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidDoWhileBreakStatements.ts:11:10]
  10 │ ONE:
  11 │ do break TWO; while (true)
-    ·          ─┬─
-    ·           ╰── This label is used, but not defined
+    ·          ───
  12 │ 
     ╰────
 
@@ -19004,8 +18973,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidDoWhileBreakStatements.ts:30:11]
  29 │ do {
  30 │     break FIVE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  31 │     FIVE:
     ╰────
 
@@ -19013,8 +18981,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidDoWhileBreakStatements.ts:40:11]
  39 │ do {
  40 │     break NINE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  41 │ }while (true)
     ╰────
 
@@ -19031,8 +18998,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidForBreakStatements.ts:11:15]
  10 │ ONE:
  11 │ for(;;) break TWO;
-    ·               ─┬─
-    ·                ╰── This label is used, but not defined
+    ·               ───
  12 │ 
     ╰────
 
@@ -19048,8 +19014,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidForBreakStatements.ts:30:11]
  29 │ for(;;) {
  30 │     break FIVE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  31 │     FIVE:
     ╰────
 
@@ -19057,8 +19022,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidForBreakStatements.ts:39:11]
  38 │ for(;;) {
  39 │     break NINE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  40 │ }
     ╰────
 
@@ -19075,8 +19039,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidForInBreakStatements.ts:11:25]
  10 │ ONE:
  11 │ for (var x in {}) break TWO;
-    ·                         ─┬─
-    ·                          ╰── This label is used, but not defined
+    ·                         ───
  12 │ 
     ╰────
 
@@ -19092,8 +19055,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidForInBreakStatements.ts:30:11]
  29 │ for (var x in {}) {
  30 │     break FIVE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  31 │     FIVE:
     ╰────
 
@@ -19101,8 +19063,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidForInBreakStatements.ts:40:11]
  39 │ for (var x in {}) {
  40 │     break NINE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  41 │ }
     ╰────
 
@@ -19119,8 +19080,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/statements/breakStatements/invalidWhileBreakStatements.ts:8:20]
  7 │ ONE:
  8 │ while (true) break TWO;
-   ·                    ─┬─
-   ·                     ╰── This label is used, but not defined
+   ·                    ───
  9 │ 
    ╰────
 
@@ -19136,8 +19096,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidWhileBreakStatements.ts:27:11]
  26 │ while (true) {
  27 │     break FIVE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  28 │     FIVE:
     ╰────
 
@@ -19145,8 +19104,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidWhileBreakStatements.ts:37:11]
  36 │ while (true) {
  37 │     break NINE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  38 │ }
     ╰────
 
@@ -19163,8 +19121,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidDoWhileContinueStatements.ts:11:13]
  10 │ ONE:
  11 │ do continue TWO; while (true)
-    ·             ─┬─
-    ·              ╰── This label is used, but not defined
+    ·             ───
  12 │ 
     ╰────
 
@@ -19180,8 +19137,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidDoWhileContinueStatements.ts:30:14]
  29 │ do {
  30 │     continue FIVE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  31 │     FIVE:
     ╰────
 
@@ -19189,8 +19145,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidDoWhileContinueStatements.ts:40:14]
  39 │ do {
  40 │     continue NINE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  41 │ }while (true)
     ╰────
 
@@ -19207,8 +19162,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidForContinueStatements.ts:11:18]
  10 │ ONE:
  11 │ for(;;) continue TWO;
-    ·                  ─┬─
-    ·                   ╰── This label is used, but not defined
+    ·                  ───
  12 │ 
     ╰────
 
@@ -19224,8 +19178,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidForContinueStatements.ts:30:14]
  29 │ for(;;) {
  30 │     continue FIVE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  31 │     FIVE:
     ╰────
 
@@ -19233,8 +19186,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidForContinueStatements.ts:39:14]
  38 │ for(;;) {
  39 │     continue NINE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  40 │ }
     ╰────
 
@@ -19251,8 +19203,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidForInContinueStatements.ts:11:28]
  10 │ ONE:
  11 │ for (var x in {}) continue TWO;
-    ·                            ─┬─
-    ·                             ╰── This label is used, but not defined
+    ·                            ───
  12 │ 
     ╰────
 
@@ -19268,8 +19219,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidForInContinueStatements.ts:30:14]
  29 │ for (var x in {}) {
  30 │     continue FIVE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  31 │     FIVE:
     ╰────
 
@@ -19277,8 +19227,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidForInContinueStatements.ts:40:14]
  39 │ for (var x in {}) {
  40 │     continue NINE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  41 │ }
     ╰────
 
@@ -19304,8 +19253,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidWhileContinueStatements.ts:11:23]
  10 │ ONE:
  11 │ while (true) continue TWO;
-    ·                       ─┬─
-    ·                        ╰── This label is used, but not defined
+    ·                       ───
  12 │ 
     ╰────
 
@@ -19321,8 +19269,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidWhileContinueStatements.ts:30:14]
  29 │ while (true) {
  30 │     continue FIVE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  31 │     FIVE:
     ╰────
 
@@ -19330,8 +19277,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidWhileContinueStatements.ts:40:14]
  39 │ while (true) {
  40 │     continue NINE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  41 │ }
     ╰────
 

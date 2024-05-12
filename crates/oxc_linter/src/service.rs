@@ -12,7 +12,7 @@ use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, FailedToOpenFileError};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::Parser;
 use oxc_resolver::Resolver;
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
@@ -177,8 +177,11 @@ impl Runtime {
             return None;
         }
         let source_type = source_type.unwrap_or_default();
-        let file_result = fs::read_to_string(path)
-            .map_err(|e| Error::new(FailedToOpenFileError(path.to_path_buf(), e)));
+        let file_result = fs::read_to_string(path).map_err(|e| {
+            Error::new(OxcDiagnostic::error(format!(
+                "Failed to open file {path:?} with error \"{e}\""
+            )))
+        });
         Some(match file_result {
             Ok(source_text) => Ok((source_type, source_text)),
             Err(e) => Err(e),
@@ -256,7 +259,11 @@ impl Runtime {
             .parse();
 
         if !ret.errors.is_empty() {
-            return ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
+            return ret
+                .errors
+                .into_iter()
+                .map(|err| Message::new(Error::from(err), None))
+                .collect();
         };
 
         let program = allocator.alloc(ret.program);
@@ -289,7 +296,9 @@ impl Runtime {
                 .for_each_with(tx_error, |tx_error, (specifier, resolution)| {
                     let path = resolution.path();
                     self.process_path(path, tx_error);
-                    let Some(target_module_record_ref) = self.module_map.get(path) else { return };
+                    let Some(target_module_record_ref) = self.module_map.get(path) else {
+                        return;
+                    };
                     let ModuleState::Resolved(target_module_record) =
                         target_module_record_ref.value()
                     else {

@@ -1,14 +1,11 @@
-mod diagnostics;
-
 use std::rc::Rc;
 
 use oxc_ast::ast::*;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
 use oxc_syntax::number::NumberBase;
 
 use crate::context::Ctx;
-
-use self::diagnostics::DuplicateSourceProp;
 
 use super::utils::get_line_column;
 
@@ -27,22 +24,11 @@ const FILE_NAME_VAR: &str = "_jsxFileName";
 /// TODO: get lineNumber and columnNumber from somewhere
 pub struct ReactJsxSource<'a> {
     ctx: Ctx<'a>,
-
-    /// Has `var _jsxFileName = "";` been added to program.statements?
-    should_add_jsx_file_name_variable: bool,
 }
 
 impl<'a> ReactJsxSource<'a> {
     pub fn new(ctx: &Ctx<'a>) -> Self {
-        Self { ctx: Rc::clone(ctx), should_add_jsx_file_name_variable: false }
-    }
-
-    pub fn transform_program_on_exit(&mut self, program: &mut Program<'a>) {
-        if !self.should_add_jsx_file_name_variable {
-            return;
-        }
-        let statement = self.get_var_file_name_statement();
-        program.body.insert(0, statement);
+        Self { ctx: Rc::clone(ctx) }
     }
 
     pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
@@ -54,7 +40,6 @@ impl<'a> ReactJsxSource<'a> {
         line: usize,
         column: usize,
     ) -> ObjectPropertyKind<'a> {
-        self.should_add_jsx_file_name_variable = true;
         let kind = PropertyKind::Init;
         let ident = IdentifierName::new(SPAN, SOURCE.into());
         let key = self.ctx.ast.property_key_identifier(ident);
@@ -64,7 +49,8 @@ impl<'a> ReactJsxSource<'a> {
     }
 
     pub fn report_error(&self, span: Span) {
-        self.ctx.error(DuplicateSourceProp(span));
+        let error = OxcDiagnostic::warning("Duplicate __source prop found.").with_label(span);
+        self.ctx.error(error);
     }
 }
 
@@ -84,8 +70,6 @@ impl<'a> ReactJsxSource<'a> {
             }
         }
 
-        self.should_add_jsx_file_name_variable = true;
-
         let key = JSXAttributeName::Identifier(
             self.ctx.ast.alloc(self.ctx.ast.jsx_identifier(SPAN, SOURCE.into())),
         );
@@ -98,7 +82,7 @@ impl<'a> ReactJsxSource<'a> {
     }
 
     #[allow(clippy::cast_precision_loss)]
-    fn get_source_object(&self, line: usize, column: usize) -> Expression<'a> {
+    pub fn get_source_object(&mut self, line: usize, column: usize) -> Expression<'a> {
         let kind = PropertyKind::Init;
 
         let filename = {
@@ -142,7 +126,7 @@ impl<'a> ReactJsxSource<'a> {
         self.ctx.ast.object_expression(SPAN, properties, None)
     }
 
-    fn get_var_file_name_statement(&self) -> Statement<'a> {
+    pub fn get_var_file_name_statement(&self) -> Statement<'a> {
         let var_kind = VariableDeclarationKind::Var;
         let id = {
             let ident = BindingIdentifier::new(SPAN, FILE_NAME_VAR.into());

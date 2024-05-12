@@ -2,24 +2,20 @@ use oxc_ast::{
     ast::{Expression, MemberExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("deepscan(bad-array-method-on-arguments): Bad array method on arguments")]
-#[diagnostic(
-    severity(warning),
-    help(
-        "The 'arguments' object does not have '{0}()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead."
-    )
-)]
-struct BadArrayMethodOnArgumentsDiagnostic(CompactStr, #[label] pub Span);
+fn bad_array_method_on_arguments_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("deepscan(bad-array-method-on-arguments): Bad array method on arguments")
+        .with_help(format!(
+            "The 'arguments' object does not have '{x0}()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead."
+        ))
+        .with_labels([span1.into()])
+}
 
 /// `https://deepscan.io/docs/rules/bad-array-method-on-arguments`
 #[derive(Debug, Default, Clone)]
@@ -51,17 +47,23 @@ impl Rule for BadArrayMethodOnArguments {
         if !node.kind().is_specific_id_reference("arguments") {
             return;
         }
-        let Some(parent_node_id) = ctx.nodes().parent_id(node.id()) else { return };
+        let Some(parent_node_id) = ctx.nodes().parent_id(node.id()) else {
+            return;
+        };
         let AstKind::MemberExpression(member_expr) = ctx.nodes().kind(parent_node_id) else {
             return;
         };
-        let Some(parent_node_id) = ctx.nodes().parent_id(parent_node_id) else { return };
-        let AstKind::CallExpression(_) = ctx.nodes().kind(parent_node_id) else { return };
+        let Some(parent_node_id) = ctx.nodes().parent_id(parent_node_id) else {
+            return;
+        };
+        let AstKind::CallExpression(_) = ctx.nodes().kind(parent_node_id) else {
+            return;
+        };
         match member_expr {
             MemberExpression::StaticMemberExpression(expr) => {
                 if ARRAY_METHODS.binary_search(&expr.property.name.as_str()).is_ok() {
-                    ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                        expr.property.name.to_compact_str(),
+                    ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
+                        expr.property.name.as_str(),
                         expr.span,
                     ));
                 }
@@ -70,8 +72,8 @@ impl Rule for BadArrayMethodOnArguments {
                 match &expr.expression {
                     Expression::StringLiteral(name) => {
                         if ARRAY_METHODS.binary_search(&name.value.as_str()).is_ok() {
-                            ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                                name.value.to_compact_str(),
+                            ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
+                                name.value.as_str(),
                                 expr.span,
                             ));
                         }
@@ -85,9 +87,8 @@ impl Rule for BadArrayMethodOnArguments {
                                 })
                             {
                                 if ARRAY_METHODS.binary_search(&name).is_ok() {
-                                    ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                                        CompactStr::from(name),
-                                        expr.span,
+                                    ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
+                                        name, expr.span,
                                     ));
                                 }
                             }

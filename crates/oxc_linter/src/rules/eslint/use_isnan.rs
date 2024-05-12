@@ -1,35 +1,34 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum UseIsnanDiagnostic {
-    #[error("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")]
-    #[diagnostic(severity(warning), help("Use the isNaN function to compare with NaN."))]
-    ComparisonWithNaN(#[label] Span),
-    #[error("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")]
-    #[diagnostic(
-        severity(warning),
-        help(
-            "'switch(NaN)' can never match a case clause. Use Number.isNaN instead of the switch."
+fn comparison_with_na_n(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")
+        .with_help("Use the isNaN function to compare with NaN.")
+        .with_labels([span0.into()])
+}
+
+fn switch_na_n(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")
+        .with_help(
+            "'switch(NaN)' can never match a case clause. Use Number.isNaN instead of the switch.",
         )
-    )]
-    SwitchNaN(#[label] Span),
-    #[error("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")]
-    #[diagnostic(
-        severity(warning),
-        help("'case NaN' can never match. Use Number.isNaN before the switch.")
-    )]
-    CaseNaN(#[label] Span),
-    #[error("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")]
-    #[diagnostic(severity(warning), help("Array prototype method '{0}' cannot find NaN."))]
-    IndexOfNaN(&'static str, #[label] Span),
+        .with_labels([span0.into()])
+}
+
+fn case_na_n(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")
+        .with_help("'case NaN' can never match. Use Number.isNaN before the switch.")
+        .with_labels([span0.into()])
+}
+
+fn index_of_na_n(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")
+        .with_help(format!("Array prototype method '{x0}' cannot find NaN."))
+        .with_labels([span1.into()])
 }
 
 #[derive(Debug, Clone)]
@@ -81,22 +80,22 @@ impl Rule for UseIsnan {
                 if expr.operator.is_compare() || expr.operator.is_equality() =>
             {
                 if is_nan_identifier(&expr.left) {
-                    ctx.diagnostic(UseIsnanDiagnostic::ComparisonWithNaN(expr.left.span()));
+                    ctx.diagnostic(comparison_with_na_n(expr.left.span()));
                 }
                 if is_nan_identifier(&expr.right) {
-                    ctx.diagnostic(UseIsnanDiagnostic::ComparisonWithNaN(expr.right.span()));
+                    ctx.diagnostic(comparison_with_na_n(expr.right.span()));
                 }
             }
             AstKind::SwitchCase(case) if self.enforce_for_switch_case => {
                 if let Some(test) = &case.test {
                     if is_nan_identifier(test) {
-                        ctx.diagnostic(UseIsnanDiagnostic::CaseNaN(test.span()));
+                        ctx.diagnostic(case_na_n(test.span()));
                     }
                 }
             }
             AstKind::SwitchStatement(switch) if self.enforce_for_switch_case => {
                 if is_nan_identifier(&switch.discriminant) {
-                    ctx.diagnostic(UseIsnanDiagnostic::SwitchNaN(switch.discriminant.span()));
+                    ctx.diagnostic(switch_na_n(switch.discriminant.span()));
                 }
             }
             AstKind::CallExpression(call) if self.enforce_for_index_of => {
@@ -105,7 +104,7 @@ impl Rule for UseIsnan {
                     if call.arguments.len() == 1 {
                         if let Some(expr) = call.arguments[0].as_expression() {
                             if is_nan_identifier(expr) {
-                                ctx.diagnostic(UseIsnanDiagnostic::IndexOfNaN(method, expr.span()));
+                                ctx.diagnostic(index_of_na_n(method, expr.span()));
                             }
                         }
                     }
@@ -383,88 +382,31 @@ fn test() {
         ("switch(NaN) { case foo: break; }", Some(serde_json::json!([{}]))),
         ("switch(foo) { case NaN: break; }", Some(serde_json::json!([{}]))),
         ("switch(NaN) {}", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
-        (
-            "switch(NaN) { case foo: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(NaN) { default: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(NaN) { case foo: break; default: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
+        ("switch(NaN) { case foo: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(NaN) { default: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(NaN) { case foo: break; default: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
         ("switch(foo) { case NaN: }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
-        (
-            "switch(foo) { case NaN: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(foo) { case (NaN): break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(foo) { case bar: break; case NaN: break; default: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(foo) { case bar: case NaN: default: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(foo) { case bar: break; case NaN: break; case baz: break; case NaN: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(NaN) { case NaN: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
+        ("switch(foo) { case NaN: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(foo) { case (NaN): break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(foo) { case bar: break; case NaN: break; default: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(foo) { case bar: case NaN: default: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(foo) { case bar: break; case NaN: break; case baz: break; case NaN: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(NaN) { case NaN: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
         ("switch(Number.NaN) { case foo: break; }", None),
         ("switch(foo) { case Number.NaN: break; }", None),
         ("switch(Number.NaN) { case foo: break; }", Some(serde_json::json!([{}]))),
         ("switch(foo) { case Number.NaN: break; }", Some(serde_json::json!([{}]))),
         ("switch(Number.NaN) {}", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
-        (
-            "switch(Number.NaN) { case foo: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(Number.NaN) { default: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(Number.NaN) { case foo: break; default: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(foo) { case Number.NaN: }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(foo) { case Number.NaN: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(foo) { case (Number.NaN): break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(foo) { case bar: break; case Number.NaN: break; default: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(foo) { case bar: case Number.NaN: default: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(foo) { case bar: break; case NaN: break; case baz: break; case Number.NaN: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
-        (
-            "switch(Number.NaN) { case Number.NaN: break; }",
-            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
-        ),
+        ("switch(Number.NaN) { case foo: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(Number.NaN) { default: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(Number.NaN) { case foo: break; default: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(foo) { case Number.NaN: }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(foo) { case Number.NaN: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(foo) { case (Number.NaN): break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(foo) { case bar: break; case Number.NaN: break; default: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(foo) { case bar: case Number.NaN: default: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(foo) { case bar: break; case NaN: break; case baz: break; case Number.NaN: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
+        ("switch(Number.NaN) { case Number.NaN: break; }", Some(serde_json::json!([{ "enforceForSwitchCase": true }]))),
         ("foo.indexOf(NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo.lastIndexOf(NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo['indexOf'](NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
@@ -477,15 +419,9 @@ fn test() {
         ("foo.indexOf(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo.lastIndexOf(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo['indexOf'](Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
-        (
-            "foo['lastIndexOf'](Number.NaN)",
-            Some(serde_json::json!([{ "enforceForIndexOf": true }])),
-        ),
+        ("foo['lastIndexOf'](Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo().indexOf(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
-        (
-            "foo.bar.lastIndexOf(Number.NaN)",
-            Some(serde_json::json!([{ "enforceForIndexOf": true }])),
-        ),
+        ("foo.bar.lastIndexOf(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo.indexOf?.(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo?.indexOf(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("(foo?.indexOf)(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),

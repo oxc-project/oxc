@@ -32,7 +32,7 @@ use std::collections::VecDeque;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::RegExpFlags;
-use oxc_diagnostics::Error;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, Span};
 
 use self::{
@@ -80,7 +80,7 @@ pub struct Lexer<'a> {
 
     token: Token,
 
-    pub(crate) errors: Vec<Error>,
+    pub(crate) errors: Vec<OxcDiagnostic>,
 
     lookahead: VecDeque<Lookahead<'a>>,
 
@@ -223,8 +223,8 @@ impl<'a> Lexer<'a> {
     }
 
     // ---------- Private Methods ---------- //
-    fn error<T: Into<Error>>(&mut self, error: T) {
-        self.errors.push(error.into());
+    fn error(&mut self, error: OxcDiagnostic) {
+        self.errors.push(error);
     }
 
     /// Get the length offset from the source, in UTF-8 bytes
@@ -282,8 +282,8 @@ impl<'a> Lexer<'a> {
     fn unexpected_err(&mut self) {
         let offset = self.current_offset();
         match self.peek() {
-            Some(c) => self.error(diagnostics::InvalidCharacter(c, offset)),
-            None => self.error(diagnostics::UnexpectedEnd(offset)),
+            Some(c) => self.error(diagnostics::invalid_character(c, offset)),
+            None => self.error(diagnostics::unexpected_end(offset)),
         }
     }
 

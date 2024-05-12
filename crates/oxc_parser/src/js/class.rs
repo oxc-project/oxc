@@ -22,7 +22,7 @@ impl<'a> ParserImpl<'a> {
         let decl = self.parse_class_declaration(start_span, Modifiers::empty())?;
 
         if stmt_ctx.is_single_statement() {
-            self.error(diagnostics::ClassDeclaration(Span::new(
+            self.error(diagnostics::class_declaration(Span::new(
                 decl.span.start,
                 decl.body.span.start,
             )));
@@ -253,7 +253,7 @@ impl<'a> ParserImpl<'a> {
 
         if let PropertyKey::PrivateIdentifier(private_ident) = &key {
             if private_ident.name == "constructor" {
-                self.error(diagnostics::PrivateNameConstructor(private_ident.span));
+                self.error(diagnostics::private_name_constructor(private_ident.span));
             }
         }
 
@@ -281,17 +281,17 @@ impl<'a> ParserImpl<'a> {
             )?;
             if let Some((name, span)) = definition.prop_name() {
                 if r#static && name == "prototype" && !self.ctx.has_ambient() {
-                    self.error(diagnostics::StaticPrototype(span));
+                    self.error(diagnostics::static_prototype(span));
                 }
                 if !r#static && name == "constructor" {
                     if kind == MethodDefinitionKind::Get || kind == MethodDefinitionKind::Set {
-                        self.error(diagnostics::ConstructorGetterSetter(span));
+                        self.error(diagnostics::constructor_getter_setter(span));
                     }
                     if r#async {
-                        self.error(diagnostics::ConstructorAsync(span));
+                        self.error(diagnostics::constructor_async(span));
                     }
                     if generator {
-                        self.error(diagnostics::ConstructorGenerator(span));
+                        self.error(diagnostics::constructor_generator(span));
                     }
                 }
             }
@@ -316,10 +316,10 @@ impl<'a> ParserImpl<'a> {
             )?;
             if let Some((name, span)) = definition.prop_name() {
                 if name == "constructor" {
-                    self.error(diagnostics::FieldConstructor(span));
+                    self.error(diagnostics::field_constructor(span));
                 }
                 if r#static && name == "prototype" && !self.ctx.has_ambient() {
-                    self.error(diagnostics::StaticPrototype(span));
+                    self.error(diagnostics::static_prototype(span));
                 }
             }
             Ok(definition)
@@ -367,11 +367,11 @@ impl<'a> ParserImpl<'a> {
         if kind == MethodDefinitionKind::Constructor {
             if let Some(this_param) = &value.this_param {
                 // class Foo { constructor(this: number) {} }
-                self.error(diagnostics::TSConstructorThisParameter(this_param.span));
+                self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
             }
 
             if r#static {
-                self.error(diagnostics::StaticConstructor(key.span()));
+                self.error(diagnostics::static_constructor(key.span()));
             }
         }
 

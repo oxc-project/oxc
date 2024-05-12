@@ -318,7 +318,9 @@ pub fn is_method_call<'a>(
     }
 
     if let Some(methods) = methods {
-        let Some(static_property_name) = member_expr.static_property_name() else { return false };
+        let Some(static_property_name) = member_expr.static_property_name() else {
+            return false;
+        };
         if !methods.contains(&static_property_name) {
             return false;
         }

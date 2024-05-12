@@ -6,19 +6,16 @@ use crate::{
     AstNode,
 };
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-jsdoc(implements-on-classes): `@implements` used on a non-constructor function"
-)]
-#[diagnostic(severity(warning), help("Add `@class` tag or use ES6 class syntax."))]
-struct ImplementsOnClassesDiagnostic(#[label] pub Span);
+fn implements_on_classes_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-jsdoc(implements-on-classes): `@implements` used on a non-constructor function")
+        .with_help("Add `@class` tag or use ES6 class syntax.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ImplementsOnClasses;
@@ -116,7 +113,7 @@ impl Rule for ImplementsOnClasses {
 
         if let Some(span) = implements_found {
             if !class_or_ctor_found {
-                ctx.diagnostic(ImplementsOnClassesDiagnostic(span));
+                ctx.diagnostic(implements_on_classes_diagnostic(span));
             }
         }
     }

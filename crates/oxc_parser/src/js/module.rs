@@ -244,9 +244,9 @@ impl<'a> ParserImpl<'a> {
                 match &specifier.local {
                     // It is a Syntax Error if ReferencedBindings of NamedExports contains any StringLiterals.
                     ModuleExportName::StringLiteral(literal) => {
-                        self.error(diagnostics::ExportNamedString(
-                            specifier.local.to_string(),
-                            specifier.exported.to_string(),
+                        self.error(diagnostics::export_named_string(
+                            &specifier.local.to_string(),
+                            &specifier.exported.to_string(),
                             literal.span,
                         ));
                     }
@@ -258,9 +258,9 @@ impl<'a> ParserImpl<'a> {
                         if match_result.is_reserved_keyword()
                             || match_result.is_future_reserved_keyword()
                         {
-                            self.error(diagnostics::ExportReservedWord(
-                                specifier.local.to_string(),
-                                specifier.exported.to_string(),
+                            self.error(diagnostics::export_reserved_word(
+                                &specifier.local.to_string(),
+                                &specifier.exported.to_string(),
                                 id.span,
                             ));
                         }
@@ -431,7 +431,7 @@ impl<'a> ParserImpl<'a> {
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
                 if !literal.is_string_well_formed_unicode() {
-                    self.error(diagnostics::ExportLoneSurrogate(literal.span));
+                    self.error(diagnostics::export_lone_surrogate(literal.span));
                 };
                 Ok(ModuleExportName::StringLiteral(literal))
             }

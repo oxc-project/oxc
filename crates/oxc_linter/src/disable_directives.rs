@@ -214,36 +214,45 @@ fn test() {
         // [Disabling Rules](https://eslint.org/docs/latest/use/configure/rules#disabling-rules)
         // Using configuration comments
         let pass = vec![
-        // To disable rule warnings in a part of a file, use block comments in the following format:
-        format!("
+            // To disable rule warnings in a part of a file, use block comments in the following format:
+            format!(
+                "
         /* {prefix}-disable */
             debugger;
         /* {prefix}-enable */
-        "),
-        // You can also disable or enable warnings for specific rules:
-        format!("
+        "
+            ),
+            // You can also disable or enable warnings for specific rules:
+            format!(
+                "
         /* {prefix}-disable no-debugger, no-console */
             debugger;
         /* {prefix}-enable no-debugger, no-console */
-        "),
-        // To disable rule warnings in an entire file, put a /* eslint-disable */ block comment at the top of the file:
-        format!("
+        "
+            ),
+            // To disable rule warnings in an entire file, put a /* eslint-disable */ block comment at the top of the file:
+            format!(
+                "
         /* {prefix}-disable */
             debugger;
-        "),
-        // You can also disable or enable specific rules for an entire file:
-        format!("
+        "
+            ),
+            // You can also disable or enable specific rules for an entire file:
+            format!(
+                "
         /* {prefix}-disable no-debugger */
             debugger;
-        "),
-        // To ensure that a rule is never applied (regardless of any future enable/disable lines):
-        // This is not supported.
-        // "
-        // /* eslint no-debugger: \"off\" */
-        //     debugger;
-        // "),
-        // To disable all rules on a specific line, use a line or block comment in one of the following formats:
-        format!("debugger; // {prefix}-disable-line
+        "
+            ),
+            // To ensure that a rule is never applied (regardless of any future enable/disable lines):
+            // This is not supported.
+            // "
+            // /* eslint no-debugger: \"off\" */
+            //     debugger;
+            // "),
+            // To disable all rules on a specific line, use a line or block comment in one of the following formats:
+            format!(
+                "debugger; // {prefix}-disable-line
             debugger; // {prefix}-disable-line
 
             // {prefix}-disable-next-line
@@ -253,9 +262,11 @@ fn test() {
             debugger;
 
             debugger; /* {prefix}-disable-line */
-        "),
-        // To disable a specific rule on a specific line:
-        format!("
+        "
+            ),
+            // To disable a specific rule on a specific line:
+            format!(
+                "
             debugger; // {prefix}-disable-line no-debugger
 
             // {prefix}-disable-next-line no-debugger
@@ -265,9 +276,11 @@ fn test() {
 
             /* {prefix}-disable-next-line no-debugger */
             debugger;
-        "),
-        // To disable multiple rules on a specific line:
-        format!("
+        "
+            ),
+            // To disable multiple rules on a specific line:
+            format!(
+                "
             debugger; // {prefix}-disable-line no-debugger, quotes, semi
 
             // {prefix}-disable-next-line no-debugger, quotes, semi
@@ -284,23 +297,29 @@ fn test() {
               semi
             */
             debugger;
-        "),
-        // To disable all rules twice:
-        format!("
+        "
+            ),
+            // To disable all rules twice:
+            format!(
+                "
         /* {prefix}-disable */
             debugger;
         /* {prefix}-disable */
             debugger;
-        "),
-        // To disable a rule twice:
-        format!("
+        "
+            ),
+            // To disable a rule twice:
+            format!(
+                "
         /* {prefix}-disable no-debugger */
             debugger;
         /* {prefix}-disable no-debugger */
             debugger;
-        "),
-        // Comment descriptions
-        format!("
+        "
+            ),
+            // Comment descriptions
+            format!(
+                "
             // {prefix}-disable-next-line no-debugger -- Here's a description about why this configuration is necessary.
             debugger;
 
@@ -309,8 +328,9 @@ fn test() {
              * along with some additional information
             **/
             debugger;
-        ")
-    ];
+        "
+            ),
+        ];
 
         let fail = vec![
             "debugger".to_string(),

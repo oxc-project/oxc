@@ -6,9 +6,8 @@ use std::{
     sync::Arc,
 };
 
-use miette::NamedSource;
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{miette, Error, Severity};
+use oxc_diagnostics::{Error, NamedSource, Severity};
 use oxc_linter::{
     partial_loader::{
         AstroPartialLoader, JavaScriptSource, SveltePartialLoader, VuePartialLoader,
@@ -279,7 +278,10 @@ impl IsolatedLintHandler {
                 let reports = ret
                     .errors
                     .into_iter()
-                    .map(|diagnostic| ErrorReport { error: diagnostic, fixed_content: None })
+                    .map(|diagnostic| ErrorReport {
+                        error: Error::from(diagnostic),
+                        fixed_content: None,
+                    })
                     .collect();
                 return Some(Self::wrap_diagnostics(path, &original_source_text, reports, start));
             };

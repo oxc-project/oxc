@@ -1,17 +1,17 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-new-native-nonconstructor): `{0}` cannot be called as a constructor.")]
-#[diagnostic(severity(warning))]
-struct NoNewNativeNonconstructorDiagnostic(CompactStr, #[label] pub Span);
+fn no_new_native_nonconstructor_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning(format!(
+        "eslint(no-new-native-nonconstructor): `{x0}` cannot be called as a constructor."
+    ))
+    .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNewNativeNonconstructor;
@@ -40,15 +40,19 @@ declare_oxc_lint!(
 
 impl Rule for NoNewNativeNonconstructor {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::NewExpression(expr) = node.kind() else { return };
-        let Expression::Identifier(ident) = &expr.callee else { return };
+        let AstKind::NewExpression(expr) = node.kind() else {
+            return;
+        };
+        let Expression::Identifier(ident) = &expr.callee else {
+            return;
+        };
         if matches!(ident.name.as_str(), "Symbol" | "BigInt")
             && ctx.semantic().is_reference_to_global_variable(ident)
         {
             let start = expr.span.start;
             let end = start + 3;
-            ctx.diagnostic(NoNewNativeNonconstructorDiagnostic(
-                ident.name.to_compact_str(),
+            ctx.diagnostic(no_new_native_nonconstructor_diagnostic(
+                ident.name.as_str(),
                 Span::new(start, end),
             ));
         }

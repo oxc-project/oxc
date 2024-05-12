@@ -3,7 +3,7 @@ use std::{
     io::{BufWriter, Stdout, Write},
 };
 
-use crate::{miette::Error, Severity};
+use crate::{Error, Severity};
 
 use super::{writer, DiagnosticReporter, Info};
 

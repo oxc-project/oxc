@@ -83,7 +83,7 @@ impl<'a> Source<'a> {
     #[allow(clippy::needless_pass_by_value)]
     pub(super) fn new(mut source_text: &'a str, _unique: UniquePromise) -> Self {
         // If source text exceeds size limit, substitute a short source text which will fail to parse.
-        // `Parser::parse` will convert error to `diagnostics::OverlongSource`.
+        // `Parser::parse` will convert error to `diagnostics::overlong_source()`.
         if source_text.len() > MAX_LEN {
             source_text = "\0";
         }

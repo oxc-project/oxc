@@ -9,4 +9,5 @@ bb0: {
 
 bb1: {
 	Unreachable()
+	break $0
 }

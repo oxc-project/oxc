@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_diagnostics::{miette::miette, Error};
+use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_parser::Parser;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
@@ -83,9 +83,14 @@ fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOpti
         get_options::<ReactOptions>(options)?
     } else {
         let jsx_plugin = options.get_plugin("transform-react-jsx");
-        let has_jsx_plugin = jsx_plugin.as_ref().is_some();
-        let mut react_options =
-            jsx_plugin.map(get_options::<ReactOptions>).transpose()?.unwrap_or_default();
+        let jsx_development_plugin = options.get_plugin("transform-react-jsx-development");
+        let has_jsx_plugin =
+            jsx_plugin.as_ref().is_some() || jsx_development_plugin.as_ref().is_some();
+        let mut react_options = jsx_plugin
+            .map(get_options::<ReactOptions>)
+            .or_else(|| jsx_development_plugin.map(get_options::<ReactOptions>))
+            .transpose()?
+            .unwrap_or_default();
         react_options.development = options.get_plugin("transform-react-jsx-development").is_some();
         react_options.jsx_plugin = has_jsx_plugin;
         react_options.display_name_plugin =
@@ -186,7 +191,7 @@ pub trait TestCase {
         let transform_options = match self.transform_options() {
             Ok(transform_options) => transform_options,
             Err(json_err) => {
-                return Err(vec![miette!(format!("{json_err:?}"))]);
+                return Err(vec![OxcDiagnostic::error(format!("{json_err:?}")).into()]);
             }
         };
 
@@ -268,7 +273,11 @@ impl TestCase for ConformanceTestCase {
             } else {
                 input_is_js && output_is_js
             })
-            .with_typescript(self.options.get_plugin("transform-typescript").is_some());
+            .with_typescript(
+                self.options.get_plugin("transform-typescript").is_some()
+                    || self.options.get_plugin("syntax-typescript").is_some(),
+            )
+            .with_jsx(self.options.get_plugin("syntax-jsx").is_some());
 
         if filtered {
             println!("input_path: {:?}", &self.path);

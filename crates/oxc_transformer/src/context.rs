@@ -7,7 +7,7 @@ use std::{
 
 use oxc_allocator::Allocator;
 use oxc_ast::{AstBuilder, Trivias};
-use oxc_diagnostics::Error;
+use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_span::SourceType;
 
 use crate::{helpers::module_imports::ModuleImports, TransformOptions};
@@ -15,7 +15,7 @@ use crate::{helpers::module_imports::ModuleImports, TransformOptions};
 pub type Ctx<'a> = Rc<TransformCtx<'a>>;
 
 pub struct TransformCtx<'a> {
-    errors: RefCell<Vec<Error>>,
+    errors: RefCell<Vec<OxcDiagnostic>>,
 
     pub trivias: &'a Trivias,
 
@@ -66,12 +66,12 @@ impl<'a> TransformCtx<'a> {
     }
 
     pub fn take_errors(&self) -> Vec<Error> {
-        mem::take(&mut self.errors.borrow_mut())
+        let errors: Vec<OxcDiagnostic> = mem::take(&mut self.errors.borrow_mut());
+        errors.into_iter().map(Error::from).collect()
     }
 
     /// Add an Error
-    #[allow(unused)]
-    pub fn error<T: Into<Error>>(&self, error: T) {
-        self.errors.borrow_mut().push(error.into());
+    pub fn error(&self, error: OxcDiagnostic) {
+        self.errors.borrow_mut().push(error);
     }
 }

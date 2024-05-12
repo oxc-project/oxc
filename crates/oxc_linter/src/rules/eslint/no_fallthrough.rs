@@ -1,7 +1,3 @@
-// use oxc_diagnostics::{
-//     miette::{self, Diagnostic},
-//     thiserror::Error,
-// };
 use oxc_macros::declare_oxc_lint;
 // use oxc_span::Span;
 
@@ -70,10 +66,7 @@ fn test() {
         ("function foo() { switch(foo) { case 0: {return;}\n case 1: {return;} } }", None),
         ("switch(foo) { case 0: case 1: {break;} }", None),
         ("switch(foo) { }", None),
-        (
-            "switch(foo) { case 0: switch(bar) { case 2: break; } /* falls through */ case 1: break; }",
-            None,
-        ),
+        ("switch(foo) { case 0: switch(bar) { case 2: break; } /* falls through */ case 1: break; }", None),
         ("function foo() { switch(foo) { case 1: return a; a++; }}", None),
         ("switch (foo) { case 0: a(); /* falls through */ default:  b(); /* comment */ }", None),
         ("switch (foo) { case 0: a(); /* falls through */ default: /* comment */ b(); }", None),
@@ -82,10 +75,7 @@ fn test() {
         ("switch (foo) { case 0: try {} finally { break; } default: b(); }", None),
         ("switch (foo) { case 0: try { throw 0; } catch (err) { break; } default: b(); }", None),
         ("switch (foo) { case 0: do { throw 0; } while(a); default: b(); }", None),
-        (
-            "switch (foo) { case 0: a(); \n// eslint-disable-next-line no-fallthrough\n case 1: }",
-            None,
-        ),
+        ("switch (foo) { case 0: a(); \n// eslint-disable-next-line no-fallthrough\n case 1: }", None),
         (
             "switch(foo) { case 0: a(); /* no break */ case 1: b(); }",
             Some(serde_json::json!([{
@@ -116,22 +106,10 @@ fn test() {
                 "commentPattern": "break[\\s\\w]+omitted"
             }])),
         ),
-        (
-            "switch(foo) { case 0: \n\n\n case 1: b(); }",
-            Some(serde_json::json!([{ "allowEmptyCase": true }])),
-        ),
-        (
-            "switch(foo) { case 0: \n /* with comments */  \n case 1: b(); }",
-            Some(serde_json::json!([{ "allowEmptyCase": true }])),
-        ),
-        (
-            "switch (a) {\n case 1: ; break; \n case 3: }",
-            Some(serde_json::json!([{ "allowEmptyCase": true }])),
-        ),
-        (
-            "switch (a) {\n case 1: ; break; \n case 3: }",
-            Some(serde_json::json!([{ "allowEmptyCase": false }])),
-        ),
+        ("switch(foo) { case 0: \n\n\n case 1: b(); }", Some(serde_json::json!([{ "allowEmptyCase": true }]))),
+        ("switch(foo) { case 0: \n /* with comments */  \n case 1: b(); }", Some(serde_json::json!([{ "allowEmptyCase": true }]))),
+        ("switch (a) {\n case 1: ; break; \n case 3: }", Some(serde_json::json!([{ "allowEmptyCase": true }]))),
+        ("switch (a) {\n case 1: ; break; \n case 3: }", Some(serde_json::json!([{ "allowEmptyCase": false }]))),
     ];
 
     let fail = vec![

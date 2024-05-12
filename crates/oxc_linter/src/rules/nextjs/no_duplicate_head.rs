@@ -1,5 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::miette::{miette, LabeledSpan, Severity};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Reference;
 
@@ -73,12 +73,11 @@ impl Rule for NoDuplicateHead {
             return;
         }
 
-        ctx.diagnostic(miette!(
-            severity = Severity::Warning,
-            labels = labels,
-            help = "Only use a single `<Head />` component in your custom document in `pages/_document.js`. See: https://nextjs.org/docs/messages/no-duplicate-head",
-            "eslint-plugin-next(no-duplicate-head): Do not include multiple instances of `<Head/>`"
-        ));
+        ctx.diagnostic(
+            OxcDiagnostic::warning("eslint-plugin-next(no-duplicate-head): Do not include multiple instances of `<Head/>`")
+                .with_help("Only use a single `<Head />` component in your custom document in `pages/_document.js`. See: https://nextjs.org/docs/messages/no-duplicate-head")
+                .with_labels(labels),
+        );
     }
 }
 

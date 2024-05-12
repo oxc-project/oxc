@@ -1,23 +1,22 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::module_graph_visitor::{ModuleGraphVisitorBuilder, VisitFoldWhile};
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "oxc(no-barrel-file): \
+fn no_barrel_file_diagnostic(span: Span, x1: u32) -> OxcDiagnostic {
+    OxcDiagnostic::warning(format!(
+        "oxc(no-barrel-file): \
             Avoid barrel files, they slow down performance, \
             and cause large module graphs with modules that go unused.\n\
-            Loading this barrel file results in importing {1:?} modules."
-)]
-#[diagnostic(severity(warning), help("For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>"))]
-struct NoBarrelFileDiagnostic(#[label] pub Span, pub u32);
+            Loading this barrel file results in importing {x1} modules."
+    ))
+    .with_help("For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>")
+    .with_label(span)
+}
 
 /// Minimum amount of exports to consider module as barrelfile
 const AMOUNT_OF_EXPORTS_TO_CONSIDER_MODULE_AS_BARREL: u8 = 3;
@@ -74,7 +73,7 @@ impl Rule for NoBarrelFile {
             let loaded_modules_count = ModuleGraphVisitorBuilder::default()
                 .visit_fold(0, module_record, |acc, _, _| VisitFoldWhile::Next(acc + 1))
                 .result;
-            ctx.diagnostic(NoBarrelFileDiagnostic(program.span, loaded_modules_count));
+            ctx.diagnostic(no_barrel_file_diagnostic(program.span, loaded_modules_count));
         }
     }
 }

@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{CallExpression, Expression, Statement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use regex::Regex;
@@ -20,10 +18,11 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(expect-expect): Test has no assertions")]
-#[diagnostic(severity(warning), help("Add assertion(s) in this Test"))]
-struct ExpectExpectDiagnostic(#[label] pub Span);
+fn expect_expect_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint-plugin-jest(expect-expect): Test has no assertions")
+        .with_help("Add assertion(s) in this Test")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ExpectExpect(Box<ExpectExpectConfig>);
@@ -131,7 +130,7 @@ fn run<'a>(
             let has_assert_function = check_arguments(call_expr, &rule.assert_function_names, ctx);
 
             if !has_assert_function {
-                ctx.diagnostic(ExpectExpectDiagnostic(call_expr.callee.span()));
+                ctx.diagnostic(expect_expect_diagnostic(call_expr.callee.span()));
             }
         }
     }
@@ -251,18 +250,9 @@ fn test() {
             ",
             Some(serde_json::json!([{ "assertFunctionNames": ["expect", "foo"] }])),
         ),
-        (
-            "it('should return undefined',() => expectSaga(mySaga).returns());",
-            Some(serde_json::json!([{ "assertFunctionNames": ["expectSaga"] }])),
-        ),
-        (
-            "test('verifies expect method call', () => expect$(123));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["expect\\$"] }])),
-        ),
-        (
-            "test('verifies expect method call', () => new Foo().expect(123));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["Foo.expect"] }])),
-        ),
+        ("it('should return undefined',() => expectSaga(mySaga).returns());", Some(serde_json::json!([{ "assertFunctionNames": ["expectSaga"] }]))),
+        ("test('verifies expect method call', () => expect$(123));", Some(serde_json::json!([{ "assertFunctionNames": ["expect\\$"] }]))),
+        ("test('verifies expect method call', () => new Foo().expect(123));", Some(serde_json::json!([{ "assertFunctionNames": ["Foo.expect"] }]))),
         (
             "
         	test('verifies deep expect method call', () => {
@@ -308,46 +298,16 @@ fn test() {
             ",
             Some(serde_json::json!([{ "additionalTestBlockFunctions": ["theoretically"] }])),
         ),
-        (
-            "test('should pass *', () => expect404ToBeLoaded());",
-            Some(serde_json::json!([{ "assertFunctionNames": ["expect*"] }])),
-        ),
-        (
-            "test('should pass *', () => expect.toHaveStatus404());",
-            Some(serde_json::json!([{ "assertFunctionNames": ["expect.**"] }])),
-        ),
-        (
-            "test('should pass', () => tester.foo().expect(123));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["tester.*.expect"] }])),
-        ),
-        (
-            "test('should pass **', () => tester.foo().expect(123));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["**"] }])),
-        ),
-        (
-            "test('should pass *', () => tester.foo().expect(123));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["*"] }])),
-        ),
-        (
-            "test('should pass', () => tester.foo().expect(123));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["tester.**"] }])),
-        ),
-        (
-            "test('should pass', () => tester.foo().expect(123));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["tester.*"] }])),
-        ),
-        (
-            "test('should pass', () => tester.foo().bar().expectIt(456));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["tester.**.expect*"] }])),
-        ),
-        (
-            "test('should pass', () => request.get().foo().expect(456));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["request.**.expect"] }])),
-        ),
-        (
-            "test('should pass', () => request.get().foo().expect(456));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["request.**.e*e*t"] }])),
-        ),
+        ("test('should pass *', () => expect404ToBeLoaded());", Some(serde_json::json!([{ "assertFunctionNames": ["expect*"] }]))),
+        ("test('should pass *', () => expect.toHaveStatus404());", Some(serde_json::json!([{ "assertFunctionNames": ["expect.**"] }]))),
+        ("test('should pass', () => tester.foo().expect(123));", Some(serde_json::json!([{ "assertFunctionNames": ["tester.*.expect"] }]))),
+        ("test('should pass **', () => tester.foo().expect(123));", Some(serde_json::json!([{ "assertFunctionNames": ["**"] }]))),
+        ("test('should pass *', () => tester.foo().expect(123));", Some(serde_json::json!([{ "assertFunctionNames": ["*"] }]))),
+        ("test('should pass', () => tester.foo().expect(123));", Some(serde_json::json!([{ "assertFunctionNames": ["tester.**"] }]))),
+        ("test('should pass', () => tester.foo().expect(123));", Some(serde_json::json!([{ "assertFunctionNames": ["tester.*"] }]))),
+        ("test('should pass', () => tester.foo().bar().expectIt(456));", Some(serde_json::json!([{ "assertFunctionNames": ["tester.**.expect*"] }]))),
+        ("test('should pass', () => request.get().foo().expect(456));", Some(serde_json::json!([{ "assertFunctionNames": ["request.**.expect"] }]))),
+        ("test('should pass', () => request.get().foo().expect(456));", Some(serde_json::json!([{ "assertFunctionNames": ["request.**.e*e*t"] }]))),
         (
             "
         	import { test } from '@jest/globals';

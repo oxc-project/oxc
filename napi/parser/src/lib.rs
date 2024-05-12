@@ -7,7 +7,7 @@ use napi_derive::napi;
 use oxc_allocator::Allocator;
 pub use oxc_ast::ast::Program;
 use oxc_ast::CommentKind;
-use oxc_diagnostics::miette::NamedSource;
+use oxc_diagnostics::{Error, NamedSource};
 use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
 
@@ -103,7 +103,7 @@ pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseR
         let source = Arc::new(NamedSource::new(file_name, source_text.to_string()));
         ret.errors
             .into_iter()
-            .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
+            .map(|diagnostic| Error::from(diagnostic).with_source_code(Arc::clone(&source)))
             .map(|error| format!("{error:?}"))
             .collect()
     };

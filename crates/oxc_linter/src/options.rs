@@ -3,19 +3,9 @@ use std::path::PathBuf;
 use rustc_hash::FxHashSet;
 use serde_json::{Number, Value};
 
-use oxc_diagnostics::Error;
+use oxc_diagnostics::{Error, OxcDiagnostic};
 
-use crate::{
-    config::{
-        errors::{
-            FailedToParseAllowWarnDenyFromJsonValueError,
-            FailedToParseAllowWarnDenyFromNumberError, FailedToParseAllowWarnDenyFromStringError,
-        },
-        ESLintConfig,
-    },
-    rules::RULES,
-    RuleCategory, RuleEnum,
-};
+use crate::{config::ESLintConfig, rules::RULES, RuleCategory, RuleEnum};
 
 #[derive(Debug)]
 pub struct LintOptions {
@@ -124,39 +114,45 @@ impl AllowWarnDeny {
 }
 
 impl TryFrom<&str> for AllowWarnDeny {
-    type Error = Error;
+    type Error = OxcDiagnostic;
 
-    fn try_from(s: &str) -> Result<Self, <Self as TryFrom<&str>>::Error> {
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
         match s {
             "allow" | "off" => Ok(Self::Allow),
             "deny" | "error" => Ok(Self::Deny),
             "warn" => Ok(Self::Warn),
-            _ => Err(FailedToParseAllowWarnDenyFromStringError(s.to_string()).into()),
+            _ => Err(OxcDiagnostic::error(format!(
+                r#"Failed to parse rule severity, expected one of "allow", "off", "deny", "error" or "warn", but got {s:?}"#
+            ))),
         }
     }
 }
 
 impl TryFrom<&Value> for AllowWarnDeny {
-    type Error = Error;
+    type Error = OxcDiagnostic;
 
-    fn try_from(value: &Value) -> Result<Self, <Self as TryFrom<&Value>>::Error> {
+    fn try_from(value: &Value) -> Result<Self, OxcDiagnostic> {
         match value {
             Value::String(s) => Self::try_from(s.as_str()),
             Value::Number(n) => Self::try_from(n),
-            _ => Err(FailedToParseAllowWarnDenyFromJsonValueError(value.to_string()).into()),
+            _ => Err(OxcDiagnostic::error(format!(
+                "Failed to parse rule severity, expected a string or a number, but got {value:?}"
+            ))),
         }
     }
 }
 
 impl TryFrom<&Number> for AllowWarnDeny {
-    type Error = Error;
+    type Error = OxcDiagnostic;
 
-    fn try_from(value: &Number) -> Result<Self, <Self as TryFrom<&Number>>::Error> {
+    fn try_from(value: &Number) -> Result<Self, Self::Error> {
         match value.as_i64() {
             Some(0) => Ok(Self::Allow),
             Some(1) => Ok(Self::Warn),
             Some(2) => Ok(Self::Deny),
-            _ => Err(FailedToParseAllowWarnDenyFromNumberError(value.to_string()).into()),
+            _ => Err(OxcDiagnostic::error(format!(
+                r#"Failed to parse rule severity, expected one of `0`, `1` or `2`, but got {value:?}"#
+            ))),
         }
     }
 }

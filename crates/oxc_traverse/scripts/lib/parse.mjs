@@ -21,35 +21,51 @@ export default async function getTypesFromCode() {
 }
 
 function parseFile(code, filename, types) {
-    const lines = code.split(/\r?\n/);
+    const lines = code.split(/\r?\n/).map(
+        line => line.replace(/\s+/g, ' ').replace(/ ?\/\/.*$/, '')
+    );
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-        if (lines[lineIndex] !== '#[visited_node]') continue;
+        const lineMatch = lines[lineIndex].match(/^#\[visited_node ?([\]\(])/);
+        if (!lineMatch) continue;
+
+        let scopeArgs = null;
+        if (lineMatch[1] === '(') {
+            let line = lines[lineIndex].slice(lineMatch[0].length),
+                scopeArgsStr = '';
+            while (!line.endsWith(')]')) {
+                scopeArgsStr += ` ${line}`;
+                line = lines[++lineIndex];
+            }
+            scopeArgsStr += ` ${line.slice(0, -2)}`;
+            scopeArgsStr = scopeArgsStr.trim().replace(/  +/g, ' ');
+
+            scopeArgs = parseScopeArgs(scopeArgsStr, filename, lineIndex);
+        }
 
         let match;
         while (true) {
-            match = lines[++lineIndex].match(/^pub (enum|struct) (.+?)(<'a>)? \{/);
+            match = lines[++lineIndex].match(/^pub (enum|struct) ((.+?)(?:<'a>)?) \{/);
             if (match) break;
         }
-        const [, kind, name, lifetimeStr] = match,
-            hasLifetime = !!lifetimeStr,
+        const [, kind, rawName, name] = match,
             startLineIndex = lineIndex;
 
         const itemLines = [];
         while (true) {
-            const line = lines[++lineIndex].replace(/\/\/.*$/, '').replace(/\s+/g, ' ').trim();
+            const line = lines[++lineIndex].trim();
             if (line === '}') break;
             if (line !== '') itemLines.push(line);
         }
 
         if (kind === 'struct') {
-            types[name] = parseStruct(name, hasLifetime, itemLines, filename, startLineIndex);
+            types[name] = parseStruct(name, rawName, itemLines, scopeArgs, filename, startLineIndex);
         } else {
-            types[name] = parseEnum(name, hasLifetime, itemLines, filename, startLineIndex);
+            types[name] = parseEnum(name, rawName, itemLines, filename, startLineIndex);
         }
     }
 }
 
-function parseStruct(name, hasLifetime, lines, filename, startLineIndex) {
+function parseStruct(name, rawName, lines, scopeArgs, filename, startLineIndex) {
     const fields = [];
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
@@ -71,17 +87,17 @@ function parseStruct(name, hasLifetime, lines, filename, startLineIndex) {
         
         fields.push({name, typeName, rawName, rawTypeName, innerTypeName, wrappers});
     }
-    return {kind: 'struct', name, hasLifetime, fields};
+    return {kind: 'struct', name, rawName, fields, scopeArgs};
 }
 
-function parseEnum(name, hasLifetime, lines, filename, startLineIndex) {
+function parseEnum(name, rawName, lines, filename, startLineIndex) {
     const variants = [],
         inherits = [];
     for (const [lineIndex, line] of lines.entries()) {
         const match = line.match(/^(.+?)\((.+?)\)(?: ?= ?(\d+))?,$/);
         if (match) {
             const [, name, rawTypeName, discriminantStr] = match,
-                typeName = rawTypeName.replace(/<'a>/g, '').replace(/<'a,\s*/g, '<'),
+                typeName = rawTypeName.replace(/<'a>/g, '').replace(/<'a, ?/g, '<'),
                 {name: innerTypeName, wrappers} = typeAndWrappers(typeName),
                 discriminant = discriminantStr ? +discriminantStr : null;
             variants.push({name, typeName, rawTypeName, innerTypeName, wrappers, discriminant});
@@ -94,5 +110,54 @@ function parseEnum(name, hasLifetime, lines, filename, startLineIndex) {
             inherits.push(match2[1]);
         }
     }
-    return {kind: 'enum', name, hasLifetime, variants, inherits};
+    return {kind: 'enum', name, rawName, variants, inherits};
+}
+
+function parseScopeArgs(argsStr, filename, lineIndex) {
+    if (!argsStr) return null;
+
+    const matchAndConsume = (regex) => {
+        const match = argsStr.match(regex);
+        assert(match);
+        argsStr = argsStr.slice(match[0].length);
+        return match.slice(1);
+    };
+
+    const args = {};
+    try {
+        while (true) {
+            const [key] = matchAndConsume(/^([a-z_]+)\(/);
+            assert(
+                ['scope', 'scope_if', 'strict_if', 'enter_scope_before'].includes(key),
+                `Unexpected visited_node macro arg: ${key}`
+            );
+
+            let bracketCount = 1,
+                index = 0;
+            for (; index < argsStr.length; index++) {
+                const char = argsStr[index];
+                if (char === '(') {
+                    bracketCount++;
+                } else if (char === ')') {
+                    bracketCount--;
+                    if (bracketCount === 0) break;
+                }
+            }
+            assert(bracketCount === 0);
+            
+            args[key] = argsStr.slice(0, index).trim();
+            argsStr = argsStr.slice(index + 1);
+            if (argsStr === '') break;
+
+            matchAndConsume(/^ ?, ?/);
+        }
+
+        assert(args.scope, 'Missing key `scope`');
+    } catch (err) {
+        throw new Error(
+            `Cannot parse visited_node args: ${argsStr} in ${filename}:${lineIndex}\n${err?.message}`
+        );
+    }
+
+    return args;
 }

@@ -4,10 +4,9 @@ mod diagnostics;
 mod r#enum;
 mod module;
 mod namespace;
+mod options;
 
 use std::rc::Rc;
-
-use serde::Deserialize;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
@@ -20,13 +19,7 @@ use self::{
     r#enum::TypeScriptEnum,
 };
 
-#[derive(Debug, Default, Clone, Deserialize)]
-#[serde(default, rename_all = "camelCase")]
-pub struct TypeScriptOptions {
-    /// When set to true, the transform will only remove type-only imports (introduced in TypeScript 3.8).
-    /// This should only be used if you are using TypeScript >= 3.8.
-    only_remove_type_imports: bool,
-}
+pub use self::options::TypeScriptOptions;
 
 /// [Preset TypeScript](https://babeljs.io/docs/babel-preset-typescript)
 ///
@@ -61,7 +54,7 @@ pub struct TypeScript<'a> {
 
 impl<'a> TypeScript<'a> {
     pub fn new(options: TypeScriptOptions, ctx: &Ctx<'a>) -> Self {
-        let options = Rc::new(options);
+        let options = Rc::new(options.update_with_comments(ctx));
 
         Self {
             annotations: TypeScriptAnnotations::new(&options, ctx),
@@ -209,5 +202,13 @@ impl<'a> TypeScript<'a> {
         if let ModuleDeclaration::TSExportAssignment(ts_export_assignment) = &mut *module_decl {
             self.transform_ts_export_assignment(ts_export_assignment);
         }
+    }
+
+    pub fn transform_jsx_element(&mut self, elem: &mut JSXElement<'a>) {
+        self.annotations.transform_jsx_element(elem);
+    }
+
+    pub fn transform_jsx_fragment(&mut self, elem: &mut JSXFragment<'a>) {
+        self.annotations.transform_jsx_fragment(elem);
     }
 }

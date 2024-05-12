@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap};
 
-use crate::{miette::Error, Severity};
+use crate::{Error, Severity};
 
 use super::{DiagnosticReporter, Info};
 

@@ -1,14 +1,11 @@
 use oxc_ast::syntax_directed_operations::BoundNames;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{builder::SemanticBuilder, diagnostics::Redeclaration, AstNode};
+use crate::{builder::SemanticBuilder, diagnostics::redeclaration, AstNode};
 
 pub struct EarlyErrorTypeScript;
 
@@ -31,43 +28,44 @@ impl EarlyErrorTypeScript {
     }
 }
 
+fn empty_type_parameter_list(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Type parameter list cannot be empty.").with_labels([span0.into()])
+}
+
 fn check_ts_type_parameter_declaration(
     declaration: &TSTypeParameterDeclaration<'_>,
     ctx: &SemanticBuilder<'_>,
 ) {
-    #[derive(Debug, Error, Diagnostic)]
-    #[error("Type parameter list cannot be empty.")]
-    #[diagnostic()]
-    struct EmptyTypeParameterList(#[label] Span);
     if declaration.params.is_empty() {
-        ctx.error(EmptyTypeParameterList(declaration.span));
+        ctx.error(empty_type_parameter_list(declaration.span));
     }
+}
+
+fn unexpected_optional(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected `?` operator").with_labels([span0.into()])
 }
 
 #[allow(clippy::cast_possible_truncation)]
 fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_>) {
-    #[derive(Debug, Error, Diagnostic)]
-    #[error("Unexpected `?` operator")]
-    #[diagnostic()]
-    struct UnexpectedOptional(#[label] Span);
     if decl.id.optional {
         let start = decl.id.span().end;
         let Some(offset) = ctx.source_text[start as usize..].find('?') else { return };
         let offset = start + offset as u32;
-        ctx.error(UnexpectedOptional(Span::new(offset, offset)));
+        ctx.error(unexpected_optional(Span::new(offset, offset)));
     }
 }
 
-fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
-    #[derive(Debug, Error, Diagnostic)]
-    #[error("A required parameter cannot follow an optional parameter.")]
-    #[diagnostic()]
-    struct RequiredParameterAfterOptionalParameter(#[label] Span);
-    #[derive(Debug, Error, Diagnostic)]
-    #[error("A parameter property is only allowed in a constructor implementation.")]
-    #[diagnostic()]
-    struct ParameterPropertyOutsideConstructor(#[label] Span);
+fn required_parameter_after_optional_parameter(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A required parameter cannot follow an optional parameter.")
+        .with_labels([span0.into()])
+}
 
+fn parameter_property_outside_constructor(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A parameter property is only allowed in a constructor implementation.")
+        .with_labels([span0.into()])
+}
+
+fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
     if !params.is_empty() && params.kind == FormalParameterKind::Signature {
         check_duplicate_bound_names(params, ctx);
     }
@@ -78,7 +76,7 @@ fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>)
     for item in &params.items {
         // function a(optional?: number, required: number) { }
         if has_optional && !item.pattern.optional && !item.pattern.kind.is_assignment_pattern() {
-            ctx.error(RequiredParameterAfterOptionalParameter(item.span));
+            ctx.error(required_parameter_after_optional_parameter(item.span));
         }
         if item.pattern.optional {
             has_optional = true;
@@ -86,7 +84,7 @@ fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>)
 
         // function a(public x: number) { }
         if !is_inside_constructor && item.accessibility.is_some() {
-            ctx.error(ParameterPropertyOutsideConstructor(item.span));
+            ctx.error(parameter_property_outside_constructor(item.span));
         }
     }
 }
@@ -95,9 +93,16 @@ fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &Sem
     let mut idents: FxHashMap<Atom<'a>, Span> = FxHashMap::default();
     bound_names.bound_names(&mut |ident| {
         if let Some(old_span) = idents.insert(ident.name.clone(), ident.span) {
-            ctx.error(Redeclaration(ident.name.to_compact_str(), old_span, ident.span));
+            ctx.error(redeclaration(&ident.name, old_span, ident.span));
         }
     });
+}
+
+fn unexpected_assignment(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "The left-hand side of an assignment expression must be a variable or a property access.",
+    )
+    .with_labels([span0.into()])
 }
 
 fn check_simple_assignment_target<'a>(
@@ -110,40 +115,34 @@ fn check_simple_assignment_target<'a>(
             Expression::Identifier(_) => {}
             match_member_expression!(Expression) => {}
             _ => {
-                #[derive(Debug, Error, Diagnostic)]
-                #[error(
-                    "The left-hand side of an assignment expression must be a variable or a property access."
-                )]
-                #[diagnostic()]
-                struct UnexpectedAssignment(#[label] Span);
-
-                ctx.error(UnexpectedAssignment(target.span()));
+                ctx.error(unexpected_assignment(target.span()));
             }
         }
     }
 }
 
-fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder<'a>) {
-    #[derive(Debug, Error, Diagnostic)]
-    #[error("Unexpected type annotation")]
-    #[diagnostic()]
-    struct UnexpectedTypeAnnotation(#[label] Span);
+fn unexpected_type_annotation(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected type annotation").with_labels([span0.into()])
+}
 
+fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder<'a>) {
     for element in &pattern.elements {
         let _ = element.as_ref().map(|element| {
             if let Some(type_annotation) = &element.type_annotation {
-                ctx.error(UnexpectedTypeAnnotation(type_annotation.span));
+                ctx.error(unexpected_type_annotation(type_annotation.span));
             }
         });
     }
 }
 
-fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
-    #[derive(Debug, Error, Diagnostic)]
-    #[error("A namespace declaration is only allowed at the top level of a namespace or module.")]
-    #[diagnostic()]
-    struct NotAllowedNamespaceDeclaration(#[label] Span);
+fn not_allowed_namespace_declaration(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "A namespace declaration is only allowed at the top level of a namespace or module.",
+    )
+    .with_labels([span0.into()])
+}
 
+fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     // skip current node
     for node in ctx.nodes.iter_parents(ctx.current_node_id).skip(1) {
         match node.kind() {
@@ -156,18 +155,17 @@ fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &Semanti
                 continue;
             }
             _ => {
-                ctx.error(NotAllowedNamespaceDeclaration(decl.span));
+                ctx.error(not_allowed_namespace_declaration(decl.span));
             }
         }
     }
 }
 
-fn check_ts_enum_declaration(decl: &TSEnumDeclaration<'_>, ctx: &SemanticBuilder<'_>) {
-    #[derive(Debug, Error, Diagnostic)]
-    #[error("Enum member must have initializer.")]
-    #[diagnostic()]
-    struct EnumMemberMustHaveInitializer(#[label] Span);
+fn enum_member_must_have_initializer(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Enum member must have initializer.").with_labels([span0.into()])
+}
 
+fn check_ts_enum_declaration(decl: &TSEnumDeclaration<'_>, ctx: &SemanticBuilder<'_>) {
     let mut need_initializer = false;
 
     decl.members.iter().for_each(|member| {
@@ -187,7 +185,7 @@ fn check_ts_enum_declaration(decl: &TSEnumDeclaration<'_>, ctx: &SemanticBuilder
                     | Expression::UnaryExpression(_)
             );
         } else if need_initializer {
-            ctx.error(EnumMemberMustHaveInitializer(member.span));
+            ctx.error(enum_member_must_have_initializer(member.span));
         }
     });
 }
