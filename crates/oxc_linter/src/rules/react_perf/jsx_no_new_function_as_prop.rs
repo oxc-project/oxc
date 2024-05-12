@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// <Item callback={this.props.callback} />
     /// ```
     JsxNoNewFunctionAsProp,
-    correctness
+    perf
 );
 
 impl Rule for JsxNoNewFunctionAsProp {
