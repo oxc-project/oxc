@@ -1,9 +1,9 @@
 use oxc_ast::{
     ast::{
         CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXChild, JSXElement, JSXElementName, JSXExpression, JSXOpeningElement,
+        JSXChild, JSXElement, JSXElementName, JSXExpression, JSXOpeningElement, MemberExpression,
     },
-    AstKind,
+    match_member_expression, AstKind,
 };
 use oxc_semantic::{AstNode, SymbolFlags};
 
@@ -272,4 +272,57 @@ pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
         },
         _ => Err(()),
     }
+}
+
+/// Checks whether the `name` follows the official conventions of React Hooks.
+///
+/// Identifies `use(...)` as a valid hook.
+///
+/// Hook names must start with use followed by a capital letter,
+/// like useState (built-in) or useOnlineStatus (custom).
+pub fn is_react_hook_name(name: &str) -> bool {
+    name.starts_with("use") && name.chars().nth(3).map_or(true, char::is_uppercase)
+    // uncomment this check if react decided to drop the idea of `use` hook.
+    // <https://react.dev/reference/react/use> It is currently in `Canary` builds.
+    // name.starts_with("use") && name.chars().nth(3).is_some_and(char::is_uppercase)
+}
+
+/// Checks whether the `name` follows the official conventions of React Hooks.
+///
+/// Identifies `use(...)` as a valid hook.
+///
+/// Hook names must start with use followed by a capital letter,
+/// like useState (built-in) or useOnlineStatus (custom).
+pub fn is_react_hook(expr: &Expression) -> bool {
+    match expr {
+        match_member_expression!(Expression) => {
+            // SAFETY: We already have checked that `expr` is a member expression using the
+            // `match_member_expression` macro.
+            #[allow(unsafe_code)]
+            let expr = unsafe { expr.as_member_expression().unwrap_unchecked() };
+            let MemberExpression::StaticMemberExpression(static_expr) = expr else { return false };
+            let is_valid_namespace = match &static_expr.object {
+                Expression::Identifier(ident) => {
+                    ident.name.chars().next().is_some_and(char::is_uppercase)
+                }
+                Expression::ThisExpression(_) | Expression::Super(_) => false,
+                _ => true,
+            };
+            is_valid_namespace && expr.static_property_name().is_some_and(is_react_hook_name)
+        }
+        Expression::Identifier(ident) => is_react_hook_name(ident.name.as_str()),
+        _ => false,
+    }
+}
+
+/// Checks if the node is a React component name. React component names must
+/// always start with an uppercase letter.
+pub fn is_react_component_name(name: &str) -> bool {
+    name.chars().next().is_some_and(|c| c.is_ascii_uppercase())
+}
+
+/// Checks if the node is a React component name or React hook,
+/// `is_react_component_name`, `is_react_hook_name`
+pub fn is_react_component_or_hook_name(name: &str) -> bool {
+    is_react_component_name(name) || is_react_hook_name(name)
 }

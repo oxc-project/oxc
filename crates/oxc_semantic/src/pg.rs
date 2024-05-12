@@ -1,13 +1,7 @@
 use petgraph::{stable_graph::NodeIndex, visit::EdgeRef, Direction, Graph};
 
 /// # Panics
-pub fn neighbors_filtered_by_edge_weight<
-    State: Default + Copy + Clone,
-    NodeWeight,
-    EdgeWeight,
-    F,
-    G,
->(
+pub fn neighbors_filtered_by_edge_weight<State: Default + Clone, NodeWeight, EdgeWeight, F, G>(
     graph: &Graph<NodeWeight, EdgeWeight>,
     node: NodeIndex,
     edge_filter: &F,
@@ -37,11 +31,11 @@ where
             } else {
                 let opposite_dir_of_edge_graph_ix = edge.target();
                 let (new_state, keep_walking_this_path) =
-                    visitor(&opposite_dir_of_edge_graph_ix, state);
+                    visitor(&opposite_dir_of_edge_graph_ix, state.clone());
                 if keep_walking_this_path {
-                    q.push((opposite_dir_of_edge_graph_ix, new_state));
+                    q.push((opposite_dir_of_edge_graph_ix, new_state.clone()));
                 } else {
-                    final_states.push(new_state);
+                    final_states.push(new_state.clone());
                 }
                 edges += 1;
             }
