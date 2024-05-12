@@ -1,17 +1,17 @@
 //! Parsing utilities for converting Javascript numbers to Rust f64
 //! code copied from [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/parser/src/numeric_value.rs)
 
+use memchr::memchr_iter;
 use num_bigint::BigInt;
 use std::borrow::Cow;
 
 use super::kind::Kind;
 
-// the string passed in has `_` removed from the lexer
 pub fn parse_int(s: &str, kind: Kind) -> Result<f64, &'static str> {
     if kind == Kind::Decimal {
         return parse_float(s);
     }
-    let s = if s.contains('_') { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
+    let s = without_underscores(s);
     let s = s.as_ref();
     match kind {
         Kind::Binary => Ok(parse_binary(&s[2..])),
@@ -29,7 +29,7 @@ pub fn parse_int(s: &str, kind: Kind) -> Result<f64, &'static str> {
 }
 
 pub fn parse_float(s: &str) -> Result<f64, &'static str> {
-    let s = if s.contains('_') { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
+    let s = without_underscores(s);
     s.parse::<f64>().map_err(|_| "invalid float")
 }
 
@@ -95,4 +95,43 @@ pub fn parse_big_int(s: &str, kind: Kind) -> Result<BigInt, &'static str> {
         _ => unreachable!(),
     };
     BigInt::parse_bytes(s.as_bytes(), radix).ok_or("invalid bigint")
+}
+
+#[inline]
+pub(super) fn without_underscores(s: &str) -> Cow<'_, str> {
+    let b = s.as_bytes();
+    let mut iter = memchr_iter(b'_', b);
+
+    // break early if `s` has no underscores
+    let Some(mut last_end) = iter.next() else { return Cow::Borrowed(s) };
+    let mut result = String::with_capacity(s.len());
+
+    // SAFETY: b is created from a valid str, and last_end is always less than
+    // b.len()
+    debug_assert!(last_end < b.len());
+    result.push_str(unsafe { core::str::from_utf8_unchecked(&b[0..last_end]) });
+    last_end += 1;
+
+    for underscore_pos in iter {
+        result.push_str(unsafe { core::str::from_utf8_unchecked(&b[last_end..underscore_pos]) });
+        last_end = underscore_pos + 1;
+    }
+
+    result.push_str(unsafe { core::str::from_utf8_unchecked(&b[last_end..b.len()]) });
+    Cow::Owned(result)
+}
+
+#[cfg(test)]
+mod test {
+
+    #[test]
+    fn test_without_underscores() {
+        assert_eq!(super::without_underscores("1"), "1");
+        assert_eq!(super::without_underscores(""), "");
+        assert_eq!(super::without_underscores("_"), "");
+        assert_eq!(super::without_underscores("_________"), "");
+        assert_eq!(super::without_underscores("1_000"), "1000");
+        assert_eq!(super::without_underscores("1_000_"), "1000");
+        assert_eq!(super::without_underscores("1_000_000_000"), "1000000000");
+    }
 }
