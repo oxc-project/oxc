@@ -142,7 +142,7 @@ walkdir             = "2.5.0"
 indexmap            = "2.2.6"
 static_assertions   = "1.1.0"
 tracing-subscriber  = "0.3"
-insta               = "1.38.0"
+insta               = { version = "1.38.0", features = ["glob", "json"] }
 mime_guess          = "2.0.4"
 language-tags       = "0.3.2"
 tsify               = "0.4.5"
@@ -180,6 +180,11 @@ ignored = ["napi", "oxc_traverse"]
 # Disabling debug info speeds up local and CI builds,
 # and we don't rely on it for debugging that much.
 debug = false
+
+[profile.dev.package]
+# compile Insta in release mode for faster snapshot tests
+insta.opt-level   = 3
+similar.opt-level = 3
 
 [profile.release.package.oxc_wasm]
 opt-level = 'z'

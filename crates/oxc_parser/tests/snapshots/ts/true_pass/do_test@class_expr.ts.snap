@@ -1,0 +1,160 @@
+---
+source: crates/oxc_parser/tests/ts.rs
+expression: ret.program
+info: Correctly parses without errors
+input_file: crates/oxc_parser/tests/fixtures/ts/true_pass/class_expr.ts
+---
+{
+  "type": "Program",
+  "start": 0,
+  "end": 121,
+  "sourceType": {
+    "language": "typescript",
+    "moduleKind": "module",
+    "variant": "standard",
+    "alwaysStrict": false
+  },
+  "directives": [],
+  "hashbang": null,
+  "body": [
+    {
+      "type": "VariableDeclaration",
+      "start": 41,
+      "end": 120,
+      "kind": "const",
+      "declarations": [
+        {
+          "type": "VariableDeclarator",
+          "start": 47,
+          "end": 120,
+          "id": {
+            "type": "Identifier",
+            "start": 47,
+            "end": 50,
+            "name": "Foo",
+            "typeAnnotation": null,
+            "optional": false
+          },
+          "init": {
+            "type": "ClassExpression",
+            "start": 53,
+            "end": 120,
+            "decorators": [],
+            "id": null,
+            "superClass": null,
+            "body": {
+              "type": "ClassBody",
+              "start": 59,
+              "end": 120,
+              "body": [
+                {
+                  "type": "MethodDefinition",
+                  "start": 65,
+                  "end": 118,
+                  "decorators": [],
+                  "key": {
+                    "type": "Identifier",
+                    "start": 65,
+                    "end": 76,
+                    "name": "constructor"
+                  },
+                  "value": {
+                    "type": "FunctionExpression",
+                    "start": 76,
+                    "end": 118,
+                    "id": null,
+                    "generator": false,
+                    "async": false,
+                    "thisParam": null,
+                    "params": {
+                      "type": "FormalParameters",
+                      "start": 76,
+                      "end": 115,
+                      "kind": "FormalParameter",
+                      "items": [
+                        {
+                          "type": "FormalParameter",
+                          "start": 77,
+                          "end": 86,
+                          "pattern": {
+                            "type": "Identifier",
+                            "start": 77,
+                            "end": 86,
+                            "name": "a",
+                            "typeAnnotation": {
+                              "type": "TSTypeAnnotation",
+                              "start": 78,
+                              "end": 86,
+                              "typeAnnotation": {
+                                "type": "TSNumberKeyword",
+                                "start": 80,
+                                "end": 86
+                              }
+                            },
+                            "optional": false
+                          },
+                          "accessibility": null,
+                          "readonly": false,
+                          "override": false,
+                          "decorators": []
+                        },
+                        {
+                          "type": "FormalParameter",
+                          "start": 88,
+                          "end": 114,
+                          "pattern": {
+                            "type": "Identifier",
+                            "start": 105,
+                            "end": 114,
+                            "name": "e",
+                            "typeAnnotation": {
+                              "type": "TSTypeAnnotation",
+                              "start": 106,
+                              "end": 114,
+                              "typeAnnotation": {
+                                "type": "TSNumberKeyword",
+                                "start": 108,
+                                "end": 114
+                              }
+                            },
+                            "optional": false
+                          },
+                          "accessibility": "private",
+                          "readonly": true,
+                          "override": false,
+                          "decorators": []
+                        }
+                      ]
+                    },
+                    "body": {
+                      "type": "FunctionBody",
+                      "start": 116,
+                      "end": 118,
+                      "directives": [],
+                      "statements": []
+                    },
+                    "typeParameters": null,
+                    "returnType": null,
+                    "modifiers": null
+                  },
+                  "kind": "constructor",
+                  "computed": false,
+                  "static": false,
+                  "override": false,
+                  "optional": false,
+                  "accessibility": null
+                }
+              ]
+            },
+            "typeParameters": null,
+            "superTypeParameters": null,
+            "implements": null,
+            "modifiers": null
+          },
+          "definite": false
+        }
+      ],
+      "modifiers": null
+    }
+  ]
+}

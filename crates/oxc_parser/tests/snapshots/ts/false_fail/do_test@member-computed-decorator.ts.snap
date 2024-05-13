@@ -1,0 +1,24 @@
+---
+source: crates/oxc_parser/tests/ts.rs
+expression: snapshot_str
+info: "Should parse but doesn't"
+input_file: crates/oxc_parser/tests/fixtures/ts/false_fail/member-computed-decorator.ts
+---
+============= ERRORS =============
+- error: Expected `,` but found `[` (offset: 564, len: 1)
+
+============= PROGRAM =============
+{
+  "type": "Program",
+  "start": 0,
+  "end": 0,
+  "sourceType": {
+    "language": "typescript",
+    "moduleKind": "module",
+    "variant": "standard",
+    "alwaysStrict": false
+  },
+  "directives": [],
+  "hashbang": null,
+  "body": []
+}

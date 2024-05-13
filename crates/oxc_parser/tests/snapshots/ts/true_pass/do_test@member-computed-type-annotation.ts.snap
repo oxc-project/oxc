@@ -1,0 +1,430 @@
+---
+source: crates/oxc_parser/tests/ts.rs
+expression: ret.program
+info: Correctly parses without errors
+input_file: crates/oxc_parser/tests/fixtures/ts/true_pass/member-computed-type-annotation.ts
+---
+{
+  "type": "Program",
+  "start": 0,
+  "end": 202,
+  "sourceType": {
+    "language": "typescript",
+    "moduleKind": "module",
+    "variant": "standard",
+    "alwaysStrict": false
+  },
+  "directives": [],
+  "hashbang": null,
+  "body": [
+    {
+      "type": "TSTypeAliasDeclaration",
+      "start": 0,
+      "end": 42,
+      "id": {
+        "type": "Identifier",
+        "start": 5,
+        "end": 8,
+        "name": "Foo"
+      },
+      "typeAnnotation": {
+        "type": "TSTypeLiteral",
+        "start": 11,
+        "end": 42,
+        "members": [
+          {
+            "type": "TSPropertySignature",
+            "start": 17,
+            "end": 26,
+            "computed": false,
+            "optional": false,
+            "readonly": false,
+            "key": {
+              "type": "Identifier",
+              "start": 17,
+              "end": 18,
+              "name": "a"
+            },
+            "typeAnnotation": {
+              "type": "TSTypeAnnotation",
+              "start": 18,
+              "end": 26,
+              "typeAnnotation": {
+                "type": "TSNumberKeyword",
+                "start": 20,
+                "end": 26
+              }
+            }
+          },
+          {
+            "type": "TSPropertySignature",
+            "start": 31,
+            "end": 40,
+            "computed": false,
+            "optional": false,
+            "readonly": false,
+            "key": {
+              "type": "Identifier",
+              "start": 31,
+              "end": 32,
+              "name": "b"
+            },
+            "typeAnnotation": {
+              "type": "TSTypeAnnotation",
+              "start": 32,
+              "end": 40,
+              "typeAnnotation": {
+                "type": "TSStringKeyword",
+                "start": 34,
+                "end": 40
+              }
+            }
+          }
+        ]
+      },
+      "typeParameters": null,
+      "modifiers": []
+    },
+    {
+      "type": "TSInterfaceDeclaration",
+      "start": 44,
+      "end": 89,
+      "id": {
+        "type": "Identifier",
+        "start": 54,
+        "end": 57,
+        "name": "Bar"
+      },
+      "body": {
+        "type": "TSInterfaceBody",
+        "start": 58,
+        "end": 89,
+        "body": [
+          {
+            "type": "TSPropertySignature",
+            "start": 64,
+            "end": 73,
+            "computed": false,
+            "optional": false,
+            "readonly": false,
+            "key": {
+              "type": "Identifier",
+              "start": 64,
+              "end": 65,
+              "name": "a"
+            },
+            "typeAnnotation": {
+              "type": "TSTypeAnnotation",
+              "start": 65,
+              "end": 73,
+              "typeAnnotation": {
+                "type": "TSNumberKeyword",
+                "start": 67,
+                "end": 73
+              }
+            }
+          },
+          {
+            "type": "TSPropertySignature",
+            "start": 78,
+            "end": 87,
+            "computed": false,
+            "optional": false,
+            "readonly": false,
+            "key": {
+              "type": "Identifier",
+              "start": 78,
+              "end": 79,
+              "name": "b"
+            },
+            "typeAnnotation": {
+              "type": "TSTypeAnnotation",
+              "start": 79,
+              "end": 87,
+              "typeAnnotation": {
+                "type": "TSStringKeyword",
+                "start": 81,
+                "end": 87
+              }
+            }
+          }
+        ]
+      },
+      "typeParameters": null,
+      "extends": null,
+      "modifiers": []
+    },
+    {
+      "type": "ClassDeclaration",
+      "start": 91,
+      "end": 133,
+      "decorators": [],
+      "id": {
+        "type": "Identifier",
+        "start": 97,
+        "end": 100,
+        "name": "Baz"
+      },
+      "superClass": null,
+      "body": {
+        "type": "ClassBody",
+        "start": 101,
+        "end": 133,
+        "body": [
+          {
+            "type": "PropertyDefinition",
+            "start": 107,
+            "end": 116,
+            "key": {
+              "type": "Identifier",
+              "start": 107,
+              "end": 108,
+              "name": "a"
+            },
+            "value": null,
+            "computed": false,
+            "static": false,
+            "declare": false,
+            "override": false,
+            "optional": false,
+            "definite": false,
+            "readonly": false,
+            "typeAnnotation": {
+              "type": "TSTypeAnnotation",
+              "start": 108,
+              "end": 116,
+              "typeAnnotation": {
+                "type": "TSNumberKeyword",
+                "start": 110,
+                "end": 116
+              }
+            },
+            "accessibility": null,
+            "decorators": []
+          },
+          {
+            "type": "PropertyDefinition",
+            "start": 121,
+            "end": 130,
+            "key": {
+              "type": "Identifier",
+              "start": 121,
+              "end": 122,
+              "name": "b"
+            },
+            "value": null,
+            "computed": false,
+            "static": false,
+            "declare": false,
+            "override": false,
+            "optional": false,
+            "definite": false,
+            "readonly": false,
+            "typeAnnotation": {
+              "type": "TSTypeAnnotation",
+              "start": 122,
+              "end": 130,
+              "typeAnnotation": {
+                "type": "TSStringKeyword",
+                "start": 124,
+                "end": 130
+              }
+            },
+            "accessibility": null,
+            "decorators": []
+          }
+        ]
+      },
+      "typeParameters": null,
+      "superTypeParameters": null,
+      "implements": null,
+      "modifiers": null
+    },
+    {
+      "type": "VariableDeclaration",
+      "start": 135,
+      "end": 156,
+      "kind": "const",
+      "declarations": [
+        {
+          "type": "VariableDeclarator",
+          "start": 141,
+          "end": 156,
+          "id": {
+            "type": "Identifier",
+            "start": 141,
+            "end": 152,
+            "name": "x",
+            "typeAnnotation": {
+              "type": "TSTypeAnnotation",
+              "start": 142,
+              "end": 152,
+              "typeAnnotation": {
+                "type": "TSIndexedAccessType",
+                "start": 144,
+                "end": 152,
+                "objectType": {
+                  "type": "TSTypeReference",
+                  "start": 144,
+                  "end": 147,
+                  "typeName": {
+                    "type": "Identifier",
+                    "start": 144,
+                    "end": 147,
+                    "name": "Foo"
+                  },
+                  "typeParameters": null
+                },
+                "indexType": {
+                  "type": "TSLiteralType",
+                  "start": 148,
+                  "end": 151,
+                  "literal": {
+                    "type": "StringLiteral",
+                    "start": 148,
+                    "end": 151,
+                    "value": "a"
+                  }
+                }
+              }
+            },
+            "optional": false
+          },
+          "init": {
+            "type": "NumericLiteral",
+            "start": 155,
+            "end": 156,
+            "value": 1.0,
+            "raw": "1"
+          },
+          "definite": false
+        }
+      ],
+      "modifiers": null
+    },
+    {
+      "type": "VariableDeclaration",
+      "start": 157,
+      "end": 178,
+      "kind": "const",
+      "declarations": [
+        {
+          "type": "VariableDeclarator",
+          "start": 163,
+          "end": 178,
+          "id": {
+            "type": "Identifier",
+            "start": 163,
+            "end": 174,
+            "name": "y",
+            "typeAnnotation": {
+              "type": "TSTypeAnnotation",
+              "start": 164,
+              "end": 174,
+              "typeAnnotation": {
+                "type": "TSIndexedAccessType",
+                "start": 166,
+                "end": 174,
+                "objectType": {
+                  "type": "TSTypeReference",
+                  "start": 166,
+                  "end": 169,
+                  "typeName": {
+                    "type": "Identifier",
+                    "start": 166,
+                    "end": 169,
+                    "name": "Bar"
+                  },
+                  "typeParameters": null
+                },
+                "indexType": {
+                  "type": "TSLiteralType",
+                  "start": 170,
+                  "end": 173,
+                  "literal": {
+                    "type": "StringLiteral",
+                    "start": 170,
+                    "end": 173,
+                    "value": "a"
+                  }
+                }
+              }
+            },
+            "optional": false
+          },
+          "init": {
+            "type": "NumericLiteral",
+            "start": 177,
+            "end": 178,
+            "value": 1.0,
+            "raw": "1"
+          },
+          "definite": false
+        }
+      ],
+      "modifiers": null
+    },
+    {
+      "type": "VariableDeclaration",
+      "start": 179,
+      "end": 200,
+      "kind": "const",
+      "declarations": [
+        {
+          "type": "VariableDeclarator",
+          "start": 185,
+          "end": 200,
+          "id": {
+            "type": "Identifier",
+            "start": 185,
+            "end": 196,
+            "name": "z",
+            "typeAnnotation": {
+              "type": "TSTypeAnnotation",
+              "start": 186,
+              "end": 196,
+              "typeAnnotation": {
+                "type": "TSIndexedAccessType",
+                "start": 188,
+                "end": 196,
+                "objectType": {
+                  "type": "TSTypeReference",
+                  "start": 188,
+                  "end": 191,
+                  "typeName": {
+                    "type": "Identifier",
+                    "start": 188,
+                    "end": 191,
+                    "name": "Baz"
+                  },
+                  "typeParameters": null
+                },
+                "indexType": {
+                  "type": "TSLiteralType",
+                  "start": 192,
+                  "end": 195,
+                  "literal": {
+                    "type": "StringLiteral",
+                    "start": 192,
+                    "end": 195,
+                    "value": "a"
+                  }
+                }
+              }
+            },
+            "optional": false
+          },
+          "init": {
+            "type": "NumericLiteral",
+            "start": 199,
+            "end": 200,
+            "value": 1.0,
+            "raw": "1"
+          },
+          "definite": false
+        }
+      ],
+      "modifiers": null
+    }
+  ]
+}

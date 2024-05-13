@@ -803,6 +803,7 @@ dependencies = [
  "globset",
  "lazy_static",
  "linked-hash-map",
+ "serde",
  "similar",
  "walkdir",
 ]
@@ -1504,6 +1505,7 @@ version = "0.12.5"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.5.0",
+ "insta",
  "memchr",
  "num-bigint",
  "ouroboros",
