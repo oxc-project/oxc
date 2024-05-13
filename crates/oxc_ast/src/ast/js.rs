@@ -2491,7 +2491,8 @@ impl<'a> ClassElement<'a> {
             Self::PropertyDefinition(property) => {
                 property.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition
             }
-            _ => false,
+            Self::AccessorProperty(property) => property.r#type.is_abstract(),
+            Self::StaticBlock(_) => false,
         }
     }
 
@@ -2701,11 +2702,24 @@ impl<'a> ModuleDeclaration<'a> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+pub enum AccessorPropertyType {
+    AccessorProperty,
+    TSAbstractAccessorProperty,
+}
+
+impl AccessorPropertyType {
+    pub fn is_abstract(&self) -> bool {
+        matches!(self, Self::TSAbstractAccessorProperty)
+    }
+}
+
 #[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct AccessorProperty<'a> {
+    pub r#type: AccessorPropertyType,
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub key: PropertyKey<'a>,

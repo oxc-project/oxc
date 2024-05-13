@@ -1012,6 +1012,7 @@ impl<'a> AstBuilder<'a> {
 
     pub fn accessor_property(
         &self,
+        r#type: AccessorPropertyType,
         span: Span,
         key: PropertyKey<'a>,
         value: Option<Expression<'a>>,
@@ -1020,6 +1021,7 @@ impl<'a> AstBuilder<'a> {
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         ClassElement::AccessorProperty(self.alloc(AccessorProperty {
+            r#type,
             span,
             key,
             value,

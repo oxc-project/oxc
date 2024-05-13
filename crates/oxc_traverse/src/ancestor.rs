@@ -6963,6 +6963,7 @@ impl<'a> StaticBlockWithoutBody<'a> {
     }
 }
 
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_TYPE: usize = offset_of!(AccessorProperty, r#type);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_SPAN: usize = offset_of!(AccessorProperty, span);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_KEY: usize = offset_of!(AccessorProperty, key);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_VALUE: usize = offset_of!(AccessorProperty, value);
@@ -6976,6 +6977,14 @@ pub(crate) const OFFSET_ACCESSOR_PROPERTY_DECORATORS: usize =
 pub struct AccessorPropertyWithoutKey<'a>(pub(crate) *const AccessorProperty<'a>);
 
 impl<'a> AccessorPropertyWithoutKey<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &AccessorPropertyType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
+                as *const AccessorPropertyType)
+        }
+    }
+
     #[inline]
     pub fn span(&self) -> &Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
@@ -7014,6 +7023,14 @@ pub struct AccessorPropertyWithoutValue<'a>(pub(crate) *const AccessorProperty<'
 
 impl<'a> AccessorPropertyWithoutValue<'a> {
     #[inline]
+    pub fn r#type(&self) -> &AccessorPropertyType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
+                as *const AccessorPropertyType)
+        }
+    }
+
+    #[inline]
     pub fn span(&self) -> &Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
     }
@@ -7049,6 +7066,14 @@ impl<'a> AccessorPropertyWithoutValue<'a> {
 pub struct AccessorPropertyWithoutDecorators<'a>(pub(crate) *const AccessorProperty<'a>);
 
 impl<'a> AccessorPropertyWithoutDecorators<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &AccessorPropertyType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
+                as *const AccessorPropertyType)
+        }
+    }
+
     #[inline]
     pub fn span(&self) -> &Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }

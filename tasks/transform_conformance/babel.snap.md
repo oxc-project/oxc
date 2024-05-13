@@ -1,4 +1,4 @@
-Passed: 306/362
+Passed: 308/362
 
 # All Passed:
 * babel-preset-react
@@ -24,9 +24,7 @@ Passed: 306/362
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (121/156)
-* class/accessor-allowDeclareFields-false/input.ts
-* class/accessor-allowDeclareFields-true/input.ts
+# babel-plugin-transform-typescript (123/156)
 * enum/mix-references/input.ts
 * enum/scoped/input.ts
 * enum/ts5.0-const-foldable/input.ts

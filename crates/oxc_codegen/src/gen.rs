@@ -2397,6 +2397,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for AccessorProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
+        if p.options.enable_typescript && self.r#type.is_abstract() {
+            p.print_str(b"abstract ");
+        }
         if self.r#static {
             p.print_str(b"static ");
         }
