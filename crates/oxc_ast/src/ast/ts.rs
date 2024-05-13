@@ -861,6 +861,10 @@ pub enum TSModuleDeclarationName<'a> {
 }
 
 impl<'a> TSModuleDeclarationName<'a> {
+    pub fn is_string_literal(&self) -> bool {
+        matches!(self, Self::StringLiteral(_))
+    }
+
     pub fn name(&self) -> &Atom<'a> {
         match self {
             Self::Identifier(ident) => &ident.name,

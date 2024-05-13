@@ -117,12 +117,12 @@ impl<'a> LintContext<'a> {
     }
 
     pub fn diagnostic(&self, diagnostic: OxcDiagnostic) {
-        self.add_diagnostic(Message::new(diagnostic.into(), None));
+        self.add_diagnostic(Message::new(diagnostic, None));
     }
 
     pub fn diagnostic_with_fix<F: FnOnce() -> Fix<'a>>(&self, diagnostic: OxcDiagnostic, fix: F) {
         if self.fix {
-            self.add_diagnostic(Message::new(diagnostic.into(), Some(fix())));
+            self.add_diagnostic(Message::new(diagnostic, Some(fix())));
         } else {
             self.diagnostic(diagnostic);
         }

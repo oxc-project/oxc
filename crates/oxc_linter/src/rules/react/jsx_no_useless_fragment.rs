@@ -46,7 +46,7 @@ declare_oxc_lint!(
     /// <div>foo</div>
     /// ```
     JsxNoUselessFragment,
-    correctness
+    pedantic
 );
 
 impl Rule for JsxNoUselessFragment {

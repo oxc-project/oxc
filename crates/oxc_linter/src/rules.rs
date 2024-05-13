@@ -115,6 +115,7 @@ mod eslint {
     pub mod no_with;
     pub mod radix;
     pub mod require_yield;
+    pub mod unicode_bom;
     pub mod use_isnan;
     pub mod valid_typeof;
 }
@@ -208,6 +209,7 @@ mod react {
     pub mod no_unknown_property;
     pub mod react_in_jsx_scope;
     pub mod require_render_return;
+    pub mod rules_of_hooks;
     pub mod void_dom_elements_no_children;
 }
 
@@ -227,6 +229,7 @@ mod unicorn {
     pub mod filename_case;
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
+    pub mod no_anonymous_default_export;
     pub mod no_array_for_each;
     pub mod no_array_reduce;
     pub mod no_await_expression_member;
@@ -471,6 +474,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_with,
     eslint::radix,
     eslint::require_yield,
+    eslint::unicode_bom,
     eslint::use_isnan,
     eslint::valid_typeof,
     eslint::no_await_in_loop,
@@ -546,6 +550,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::filename_case,
     unicorn::new_for_builtins,
     unicorn::no_abusive_eslint_disable,
+    unicorn::no_anonymous_default_export,
     unicorn::no_array_for_each,
     unicorn::no_array_reduce,
     unicorn::no_await_expression_member,
@@ -636,6 +641,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_is_mounted,
     react::no_unknown_property,
     react::require_render_return,
+    react::rules_of_hooks,
     react::void_dom_elements_no_children,
     react_perf::jsx_no_jsx_as_prop,
     react_perf::jsx_no_new_array_as_prop,

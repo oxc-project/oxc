@@ -99,7 +99,7 @@ impl DiagnosticService {
     pub fn wrap_diagnostics(
         path: &Path,
         source_text: &str,
-        diagnostics: Vec<Error>,
+        diagnostics: Vec<OxcDiagnostic>,
     ) -> (PathBuf, Vec<Error>) {
         let source = Arc::new(NamedSource::new(path.to_string_lossy(), source_text.to_owned()));
         let diagnostics = diagnostics

@@ -18,7 +18,7 @@ use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
 use oxc_ast::Trivias;
-use oxc_diagnostics::{Error, GraphicalReportHandler, GraphicalTheme, NamedSource};
+use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, Span};
@@ -334,12 +334,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         if let Some(res) = self.check_semantic(&semantic_ret.semantic) {
             return res;
         }
-        let errors = parser_ret
-            .errors
-            .into_iter()
-            .map(Error::from)
-            .chain(semantic_ret.errors)
-            .collect::<Vec<_>>();
+        let errors = parser_ret.errors.into_iter().chain(semantic_ret.errors).collect::<Vec<_>>();
 
         let result = if errors.is_empty() {
             Ok(String::new())

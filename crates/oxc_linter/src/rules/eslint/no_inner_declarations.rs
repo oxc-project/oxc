@@ -45,7 +45,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoInnerDeclarations,
-    correctness
+    pedantic
 );
 
 impl Rule for NoInnerDeclarations {
