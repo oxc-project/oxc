@@ -28,5 +28,5 @@ cfg-if      = { workspace = true }
 rayon = { workspace = true, optional = true }
 
 [features]
-default = []
-rayon   = ["dep:rayon"]
+default    = []
+concurrent = ["dep:rayon"]

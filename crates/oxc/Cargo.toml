@@ -39,4 +39,6 @@ semantic    = ["oxc_semantic"]
 transformer = ["oxc_transformer"]
 minifier    = ["oxc_minifier"]
 codegen     = ["oxc_codegen"]
-sourcemap   = ["oxc_sourcemap"]
+
+sourcemap            = ["oxc_sourcemap"]
+sourcemap_concurrent = ["sourcemap", "oxc_sourcemap/concurrent"]
