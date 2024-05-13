@@ -1,10 +1,11 @@
 commit: 4bd1b2c2
 
-Passed: 308/362
+Passed: 309/362
 
 # All Passed:
 * babel-preset-react
 * babel-plugin-transform-react-display-name
+* babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
 
 
@@ -64,9 +65,6 @@ Passed: 308/362
 # babel-plugin-transform-react-jsx (141/143)
 * autoImport/complicated-scope-module/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
-
-# babel-plugin-transform-react-jsx-self (2/3)
-* react-source/disable-with-super/input.js
 
 # babel-plugin-transform-react-jsx-development (8/12)
 * cross-platform/self-inside-arrow/input.mjs
