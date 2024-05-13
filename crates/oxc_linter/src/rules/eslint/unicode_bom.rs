@@ -2,7 +2,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, Fix};
 
 fn unexpected_unicode_bom_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warning("eslint(unicode-bom): Unexpected Unicode BOM (Byte Order Mark)")
@@ -59,11 +59,15 @@ impl Rule for UnicodeBom {
         let has_bomb = source.starts_with('﻿');
 
         if has_bomb && matches!(self.bom_option, BomOptionType::Never) {
-            ctx.diagnostic(unexpected_unicode_bom_diagnostic(Span::new(0, 0)));
+            ctx.diagnostic_with_fix(unexpected_unicode_bom_diagnostic(Span::new(0, 0)), || {
+                return Fix::delete(Span::new(0, 3));
+            });
         }
 
         if !has_bomb && matches!(self.bom_option, BomOptionType::Always) {
-            ctx.diagnostic(expected_unicode_bom_diagnostic(Span::new(0, 0)));
+            ctx.diagnostic_with_fix(expected_unicode_bom_diagnostic(Span::new(0, 0)), || {
+                return Fix::new("﻿", Span::new(0, 0));
+            });
         }
     }
 }
@@ -105,5 +109,11 @@ fn test() {
         ("﻿ var a = 123;", Some(serde_json::json!(["never"]))),
     ];
 
-    Tester::new(UnicodeBom::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("﻿var a = 123;", "var a = 123;", Some(serde_json::json!(["never"]))),
+        ("﻿var a = 123;", "var a = 123;", None),
+        ("var a = 123;", "﻿var a = 123;", Some(serde_json::json!(["always"]))),
+    ];
+
+    Tester::new(UnicodeBom::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
