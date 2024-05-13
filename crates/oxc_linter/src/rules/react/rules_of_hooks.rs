@@ -102,7 +102,7 @@ declare_oxc_lint!(
     /// <https://reactjs.org/docs/hooks-rules.html>
     ///
     RulesOfHooks,
-    correctness
+    nursery
 );
 
 impl Rule for RulesOfHooks {
@@ -846,7 +846,7 @@ fn test() {
         // This *must* be invalid.
         "
             function useHook() {
-              if (a) return; 
+              if (a) return;
               useState();
             }
         ",

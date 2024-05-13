@@ -260,7 +260,7 @@ impl<'a> ParserImpl<'a> {
         if accessor {
             self.parse_ts_type_annotation()?;
 
-            return self.parse_class_accessor_property(span, key, computed, r#static);
+            return self.parse_class_accessor_property(span, key, computed, r#static, r#abstract);
         }
 
         // LAngle for start of type parameters `foo<T>`
@@ -468,10 +468,18 @@ impl<'a> ParserImpl<'a> {
         key: PropertyKey<'a>,
         computed: bool,
         r#static: bool,
+        r#abstract: bool,
     ) -> Result<ClassElement<'a>> {
         let value =
             self.eat(Kind::Eq).then(|| self.parse_assignment_expression_base()).transpose()?;
+        let r#type = if r#abstract {
+            AccessorPropertyType::TSAbstractAccessorProperty
+        } else {
+            AccessorPropertyType::AccessorProperty
+        };
+
         Ok(self.ast.accessor_property(
+            r#type,
             self.end_span(span),
             key,
             value,
