@@ -1,6 +1,6 @@
 use rustc_hash::FxHashSet;
 
-use super::TypeScript;
+use super::{diagnostics::ambient_module_nested, TypeScript};
 
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, syntax_directed_operations::BoundNames};
@@ -121,6 +121,7 @@ impl<'a> TypeScript<'a> {
         parent_export: Option<Expression<'a>>,
     ) -> Option<Statement<'a>> {
         let mut names: FxHashSet<Atom<'a>> = FxHashSet::default();
+
         let real_name = decl.id.name();
 
         let name = self.ctx.ast.new_atom(&format!("_{}", real_name.clone())); // path.scope.generateUid(realName.name);
@@ -155,6 +156,10 @@ impl<'a> TypeScript<'a> {
         for stmt in namespace_top_level {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
+                    if decl.id.is_string_literal() {
+                        self.ctx.error(ambient_module_nested(decl.span));
+                    }
+
                     let module_name = decl.id.name().clone();
                     if let Some(transformed) = self.handle_nested(decl.unbox(), None) {
                         is_empty = false;
@@ -218,6 +223,10 @@ impl<'a> TypeScript<'a> {
                                 new_stmts.extend(stmts);
                             }
                             Declaration::TSModuleDeclaration(module_decl) => {
+                                if module_decl.id.is_string_literal() {
+                                    self.ctx.error(ambient_module_nested(module_decl.span));
+                                }
+
                                 let module_name = module_decl.id.name().clone();
                                 if let Some(transformed) = self.handle_nested(
                                     module_decl.unbox(),

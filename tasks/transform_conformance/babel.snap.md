@@ -1,4 +1,4 @@
-Passed: 304/362
+Passed: 306/362
 
 # All Passed:
 * babel-preset-react
@@ -24,7 +24,7 @@ Passed: 304/362
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (119/156)
+# babel-plugin-transform-typescript (121/156)
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
 * enum/mix-references/input.ts
@@ -34,8 +34,6 @@ Passed: 304/362
 * exports/export-type-star-from/input.ts
 * imports/enum-value/input.ts
 * imports/type-only-export-specifier-2/input.ts
-* namespace/ambient-module-nested/input.ts
-* namespace/ambient-module-nested-exported/input.ts
 * namespace/canonical/input.ts
 * namespace/contentious-names/input.ts
 * namespace/empty-removed/input.ts
