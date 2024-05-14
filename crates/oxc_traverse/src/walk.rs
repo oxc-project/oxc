@@ -2228,7 +2228,7 @@ pub(crate) unsafe fn walk_function<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_function(&mut *node, ctx);
     ctx.push_stack(Ancestor::FunctionId(ancestor::FunctionWithoutId(node)));
-    let has_scope = matches!(ctx.ancestor(2).unwrap(), Ancestor::MethodDefinitionValue(_));
+    let has_scope = !matches!(ctx.ancestor(2).unwrap(), Ancestor::MethodDefinitionValue(_));
     if has_scope {
         ctx.push_scope_stack(
             ScopeFlags::Function.with_strict_mode(
