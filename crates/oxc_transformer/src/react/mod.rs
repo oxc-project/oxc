@@ -93,13 +93,13 @@ impl<'a> React<'a> {
                 })
                 .unwrap_or(false);
             if !is_constructor
-      // no super class
-      || ctx
-          .find_ancestor(|ancestor| match ancestor {
-              Ancestor::ClassBody(class) => FinderRet::Found(class.super_class().is_none()),
-              _ => FinderRet::Continue,
-          })
-          .unwrap_or(true)
+                // no super class
+                || ctx
+                    .find_ancestor(|ancestor| match ancestor {
+                        Ancestor::ClassBody(class) => FinderRet::Found(class.super_class().is_none()),
+                        _ => FinderRet::Continue,
+                    })
+                    .unwrap_or(true)
             {
                 self.jsx.jsx_self.transform_jsx_opening_element(elem);
             }
