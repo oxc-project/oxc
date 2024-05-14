@@ -5,6 +5,38 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.0] - 2024-05-14
+
+### Features
+
+- Report ambient module cannot be nested error (#3253)
+- Do not elide jsx imports if a jsx element appears somewhere (#3237)
+- Support development mode (#3143)
+- Get the correct lineNumber and columnNumber from the span. (#3142)
+- Enable jsx plugin when development is true (#3141)
+- Add `ToJsInt32` trait for f64 (#3132)
+- Add `ToJsString` trait for f64 (#3131)
+- Add arrow-functions plugin (#3083)
+- Implement typescript namespace (#3025)
+
+### Bug Fixes
+
+- Correctly jsx-self inside arrow-function (#3224)
+- Implement `transform-react-display-name` with bottom-up lookup (#3183)
+- Should not transform `this` in class (#3129)
+
+### Refactor
+
+- Remove all usages of `Into<Error>`
+- Clean up more diagnostics
+- Unify diagnostics
+- Remove no-op scopes code (#3210)
+- Transformer use `Traverse` (#3182)
+- Remove the requirement of `Semantic` (#3140)
+- Move number related functions to number module (#3130)
+- Reimplementation of Enum conversion based on Babel (#3102)
+- Squash nested enums (#3115)
+
 ## [0.12.5] - 2024-04-22
 
 ### Performance
