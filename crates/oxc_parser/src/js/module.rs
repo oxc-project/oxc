@@ -125,11 +125,8 @@ impl<'a> ParserImpl<'a> {
 
     // import { export1 , export2 as alias2 , [...] } from "module-name";
     fn parse_import_specifiers(&mut self) -> Result<Vec<'a, ImportDeclarationSpecifier<'a>>> {
-        let ctx = self.ctx;
-        self.ctx = Context::default();
-        let specifiers = ImportSpecifierList::parse(self)?.import_specifiers;
-        self.ctx = ctx;
-        Ok(specifiers)
+        self.context(Context::empty(), self.ctx, ImportSpecifierList::parse)
+            .map(|x| x.import_specifiers)
     }
 
     /// [Import Attributes](https://tc39.es/proposal-import-attributes)
@@ -142,11 +139,7 @@ impl<'a> ParserImpl<'a> {
             }
         };
         let span = self.start_span();
-        let ctx = self.ctx;
-        self.ctx = Context::default();
-        let with_entries = AssertEntries::parse(self)?.elements;
-        self.ctx = ctx;
-
+        let with_entries = self.context(Context::empty(), self.ctx, AssertEntries::parse)?.elements;
         Ok(Some(WithClause { span: self.end_span(span), attributes_keyword, with_entries }))
     }
 
@@ -225,12 +218,8 @@ impl<'a> ParserImpl<'a> {
         span: Span,
     ) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
         let export_kind = self.parse_import_or_export_kind();
-
-        let ctx = self.ctx;
-        self.ctx = Context::default();
-        let specifiers = ExportNamedSpecifiers::parse(self)?.elements;
-        self.ctx = ctx;
-
+        let specifiers =
+            self.context(Context::empty(), self.ctx, ExportNamedSpecifiers::parse)?.elements;
         let (source, with_clause) = if self.eat(Kind::From) && self.cur_kind().is_literal() {
             let source = self.parse_literal_string()?;
             (Some(source), self.parse_import_attributes()?)
