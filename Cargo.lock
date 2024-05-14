@@ -985,8 +985,7 @@ dependencies = [
 [[package]]
 name = "miette"
 version = "7.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4edc8853320c2a0dab800fbda86253c8938f6ea88510dc92c5f1ed20e794afc1"
+source = "git+https://github.com/re-taro/miette.git?branch=refactor/add_cold_attr#569158143d5fab2a0d0aa368c7a5d03a6bd42c3a"
 dependencies = [
  "cfg-if",
  "miette-derive",
@@ -999,8 +998,7 @@ dependencies = [
 [[package]]
 name = "miette-derive"
 version = "7.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcf09caffaac8068c346b6df2a7fc27a177fd20b39421a39ce0a211bde679a6c"
+source = "git+https://github.com/re-taro/miette.git?branch=refactor/add_cold_attr#569158143d5fab2a0d0aa368c7a5d03a6bd42c3a"
 dependencies = [
  "proc-macro2",
  "quote",

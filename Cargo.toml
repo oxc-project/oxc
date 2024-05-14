@@ -113,7 +113,7 @@ itertools           = "0.12.1"
 jemallocator        = "0.5.4"
 lazy_static         = "1.4.0"
 memoffset           = "0.9.1"
-miette              = { version = "7.2.0", features = ["fancy-no-syscall"] }
+miette              = { git = "https://github.com/re-taro/miette.git", branch = "refactor/add_cold_attr", features = ["fancy-no-syscall"] }
 mimalloc            = "0.1.41"
 num-bigint          = "0.4.4"
 num-traits          = "0.2.18"
