@@ -84,23 +84,34 @@ impl<'a> React<'a> {
         ctx: &TraverseCtx<'a>,
     ) {
         if self.options.is_jsx_self_plugin_enabled() {
-            let is_constructor = ctx
+            let can_use_this = ctx
                 .find_scope(|scope| {
                     if scope.is_block() || scope.is_arrow() {
                         return FinderRet::Continue;
                     }
-                    FinderRet::Found(scope.is_constructor())
+                    if scope.is_top() || scope.is_ts_module_block() {
+                        return FinderRet::Found(false);
+                    }
+                    if scope.is_function()
+                        || scope.is_set_or_get_accessor()
+                        || scope.is_class_static_block()
+                    {
+                        return FinderRet::Found(true);
+                    }
+
+                    // Class constructor
+                    let has_no_super_class = ctx
+                        .find_ancestor(|ancestor| match ancestor {
+                            Ancestor::ClassBody(class) => {
+                                FinderRet::Found(class.super_class().is_none())
+                            }
+                            _ => FinderRet::Continue,
+                        })
+                        .unwrap_or_else(|| unreachable!());
+                    FinderRet::Found(has_no_super_class)
                 })
-                .unwrap_or(false);
-            if !is_constructor
-      // no super class
-      || ctx
-          .find_ancestor(|ancestor| match ancestor {
-              Ancestor::ClassBody(class) => FinderRet::Found(class.super_class().is_none()),
-              _ => FinderRet::Continue,
-          })
-          .unwrap_or(true)
-            {
+                .unwrap_or_else(|| unreachable!());
+            if can_use_this {
                 self.jsx.jsx_self.transform_jsx_opening_element(elem);
             }
         }
