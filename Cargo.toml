@@ -85,9 +85,9 @@ oxc_span        = { version = "0.13.0", path = "crates/oxc_span" }
 oxc_syntax      = { version = "0.13.0", path = "crates/oxc_syntax" }
 oxc_transformer = { version = "0.13.0", path = "crates/oxc_transformer" }
 oxc_sourcemap   = { version = "0.13.0", path = "crates/oxc_sourcemap" }
+oxc_ast_macros  = { version = "0.13.0", path = "crates/oxc_ast_macros" }
 
 # publish = false
-oxc_ast_macros   = { path = "crates/oxc_ast_macros" }
 oxc_macros       = { path = "crates/oxc_macros" }
 oxc_linter       = { path = "crates/oxc_linter" }
 oxc_prettier     = { path = "crates/oxc_prettier" }

@@ -1269,7 +1269,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_macros"
-version = "0.0.0"
+version = "0.13.0"
 
 [[package]]
 name = "oxc_benchmark"
