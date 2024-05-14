@@ -750,7 +750,10 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Expression<'a>> {
         // ArgumentList[Yield, Await] :
         //   AssignmentExpression[+In, ?Yield, ?Await]
-        let call_arguments = self.with_context(Context::In, CallArguments::parse)?;
+        let ctx = self.ctx;
+        self.ctx = ctx.and_in(true).and_decorator(false);
+        let call_arguments = CallArguments::parse(self)?;
+        self.ctx = ctx;
         Ok(self.ast.call_expression(
             self.end_span(lhs_span),
             lhs,
