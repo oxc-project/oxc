@@ -5,6 +5,22 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.0] - 2024-05-14
+
+### Features
+
+- Add type to AccessorProperty to support TSAbractAccessorProperty (#3256)
+
+### Bug Fixes
+
+- Correctly parse cls.fn<C> = x (#3208)
+
+### Refactor
+
+- Move number related functions to number module (#3130)
+- Squash nested enums (#3115)
+- Remove duplicate `TSNamedTupleMember` representation (#3101)
+
 ## [0.12.5] - 2024-04-22
 
 ### Features
