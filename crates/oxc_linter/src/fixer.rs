@@ -27,8 +27,8 @@ pub struct FixResult<'a> {
 
 pub struct Message<'a> {
     pub error: OxcDiagnostic,
-    start: u32,
-    end: u32,
+    pub start: u32,
+    pub end: u32,
     pub fix: Option<Fix<'a>>,
     fixed: bool,
 }
