@@ -2588,10 +2588,10 @@ impl MethodDefinitionKind {
 
     pub fn scope_flags(self) -> ScopeFlags {
         match self {
-            Self::Constructor => ScopeFlags::Constructor,
-            Self::Method => ScopeFlags::empty(),
-            Self::Get => ScopeFlags::GetAccessor,
-            Self::Set => ScopeFlags::SetAccessor,
+            Self::Constructor => ScopeFlags::Constructor | ScopeFlags::Function,
+            Self::Method => ScopeFlags::Function,
+            Self::Get => ScopeFlags::GetAccessor | ScopeFlags::Function,
+            Self::Set => ScopeFlags::SetAccessor | ScopeFlags::Function,
         }
     }
 }
