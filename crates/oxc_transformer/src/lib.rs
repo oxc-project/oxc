@@ -169,10 +169,10 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     fn enter_jsx_opening_element(
         &mut self,
         elem: &mut JSXOpeningElement<'a>,
-        _ctx: &TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         self.x0_typescript.transform_jsx_opening_element(elem);
-        self.x1_react.transform_jsx_opening_element(elem);
+        self.x1_react.transform_jsx_opening_element(elem, ctx);
         self.x3_es2015.transform_jsx_opening_element(elem);
     }
 
