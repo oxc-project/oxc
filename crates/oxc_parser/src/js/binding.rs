@@ -13,7 +13,7 @@ impl<'a> ParserImpl<'a> {
     pub(super) fn parse_binding_pattern_with_initializer(&mut self) -> Result<BindingPattern<'a>> {
         let span = self.start_span();
         let pattern = self.parse_binding_pattern(true)?;
-        self.with_context(Context::In, |p| p.parse_initializer(span, pattern))
+        self.context(Context::In, Context::empty(), |p| p.parse_initializer(span, pattern))
     }
 
     pub(super) fn parse_binding_pattern(
@@ -74,8 +74,8 @@ impl<'a> ParserImpl<'a> {
         let type_annotation = self.parse_ts_type_annotation()?;
         let pattern = self.ast.binding_pattern(kind, type_annotation, false);
         // Rest element does not allow `= initializer`, .
-        let argument =
-            self.with_context(Context::In, |p| p.parse_initializer(init_span, pattern))?;
+        let argument = self
+            .context(Context::In, Context::empty(), |p| p.parse_initializer(init_span, pattern))?;
         let span = self.end_span(span);
 
         if self.at(Kind::Comma) {
@@ -110,7 +110,7 @@ impl<'a> ParserImpl<'a> {
                 let binding_identifier = BindingIdentifier::new(ident.span, ident.name.clone());
                 let identifier = self.ast.binding_pattern_identifier(binding_identifier);
                 let left = self.ast.binding_pattern(identifier, None, false);
-                self.with_context(Context::In, |p| p.parse_initializer(span, left))?
+                self.context(Context::In, Context::empty(), |p| p.parse_initializer(span, left))?
             } else {
                 return Err(self.unexpected());
             }

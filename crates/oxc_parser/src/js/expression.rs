@@ -204,11 +204,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_parenthesized_expression(&mut self, span: Span) -> Result<Expression<'a>> {
-        let has_in = self.ctx.has_in();
-        let has_decorator = self.ctx.has_decorator();
-        self.ctx = self.ctx.and_in(true).and_decorator(false);
-        let list = SequenceExpressionList::parse(self)?;
-        self.ctx = self.ctx.and_in(has_in).and_decorator(has_decorator);
+        let list = self.context(Context::In, Context::Decorator, SequenceExpressionList::parse)?;
 
         let mut expressions = list.elements;
         let paren_span = self.end_span(span);
@@ -361,10 +357,7 @@ impl<'a> ParserImpl<'a> {
     ///     [ `ElementList`[?Yield, ?Await] , Elisionopt ]
     pub(crate) fn parse_array_expression(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
-        let has_in = self.ctx.has_in();
-        self.ctx = self.ctx.and_in(true);
-        let list = ArrayExpressionList::parse(self)?;
-        self.ctx = self.ctx.and_in(has_in);
+        let list = self.context(Context::In, Context::empty(), ArrayExpressionList::parse)?;
         Ok(self.ast.array_expression(self.end_span(span), list.elements, list.trailing_comma))
     }
 
@@ -390,7 +383,7 @@ impl<'a> ParserImpl<'a> {
             Kind::TemplateHead => {
                 quasis.push(self.parse_template_element(tagged));
                 // TemplateHead Expression[+In, ?Yield, ?Await]
-                let expr = self.with_context(Context::In, Self::parse_expression)?;
+                let expr = self.context(Context::In, Context::empty(), Self::parse_expression)?;
                 expressions.push(expr);
                 self.re_lex_template_substitution_tail();
                 loop {
@@ -405,7 +398,11 @@ impl<'a> ParserImpl<'a> {
                         }
                         _ => {
                             // TemplateMiddle Expression[+In, ?Yield, ?Await]
-                            let expr = self.with_context(Context::In, Self::parse_expression)?;
+                            let expr = self.context(
+                                Context::In,
+                                Context::empty(),
+                                Self::parse_expression,
+                            )?;
                             expressions.push(expr);
                             self.re_lex_template_substitution_tail();
                         }
@@ -652,10 +649,7 @@ impl<'a> ParserImpl<'a> {
         optional: bool,
     ) -> Result<Expression<'a>> {
         self.bump_any(); // advance `[`
-        let has_in = self.ctx.has_in();
-        self.ctx = self.ctx.and_in(true);
-        let property = self.parse_expression()?;
-        self.ctx = self.ctx.and_in(has_in);
+        let property = self.context(Context::In, Context::empty(), Self::parse_expression)?;
         self.expect(Kind::RBrack)?;
         Ok(self.ast.computed_member_expression(self.end_span(lhs_span), lhs, property, optional))
     }
@@ -683,7 +677,7 @@ impl<'a> ParserImpl<'a> {
         let arguments = if self.at(Kind::LParen) {
             // ArgumentList[Yield, Await] :
             //   AssignmentExpression[+In, ?Yield, ?Await]
-            self.with_context(Context::In, CallArguments::parse)?.elements
+            self.context(Context::In, Context::empty(), CallArguments::parse)?.elements
         } else {
             self.ast.new_vec()
         };
@@ -750,10 +744,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Expression<'a>> {
         // ArgumentList[Yield, Await] :
         //   AssignmentExpression[+In, ?Yield, ?Await]
-        let ctx = self.ctx;
-        self.ctx = ctx.and_in(true).and_decorator(false);
-        let call_arguments = CallArguments::parse(self)?;
-        self.ctx = ctx;
+        let call_arguments = self.context(Context::In, Context::Decorator, CallArguments::parse)?;
         Ok(self.ast.call_expression(
             self.end_span(lhs_span),
             lhs,
@@ -928,12 +919,8 @@ impl<'a> ParserImpl<'a> {
         if !self.eat(Kind::Question) {
             return Ok(lhs);
         }
-
-        let has_in = self.ctx.has_in();
-        self.ctx = self.ctx.and_in(true);
-        let consequent = self.parse_assignment_expression_base()?;
-        self.ctx = self.ctx.and_in(has_in);
-
+        let consequent =
+            self.context(Context::In, Context::empty(), Self::parse_assignment_expression_base)?;
         self.expect(Kind::Colon)?;
         let alternate = self.parse_assignment_expression_base()?;
         Ok(self.ast.conditional_expression(self.end_span(span), lhs, consequent, alternate))
@@ -1047,9 +1034,9 @@ impl<'a> ParserImpl<'a> {
         if !has_await {
             self.error(diagnostics::await_expression(Span::new(span.start, span.start + 5)));
         }
-        self.ctx = self.ctx.and_await(true);
-        let argument = self.parse_unary_expression_base(lhs_span)?;
-        self.ctx = self.ctx.and_await(has_await);
+        let argument = self.context(Context::Await, Context::empty(), |p| {
+            p.parse_unary_expression_base(lhs_span)
+        })?;
         Ok(self.ast.await_expression(self.end_span(span), argument))
     }
 
@@ -1060,7 +1047,8 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_decorator(&mut self) -> Result<Decorator<'a>> {
         let span = self.start_span();
         self.bump_any(); // bump @
-        let expr = self.with_context(Context::Decorator, Self::parse_lhs_expression)?;
+        let expr =
+            self.context(Context::Decorator, Context::empty(), Self::parse_lhs_expression)?;
         Ok(self.ast.decorator(self.end_span(span), expr))
     }
 
