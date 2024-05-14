@@ -467,6 +467,8 @@ fn get_babel_error(error: &str) -> String {
         "Duplicate __self prop found." => "Duplicate __self prop found. You are most likely using the deprecated transform-react-jsx-self Babel plugin. Both __source and __self are automatically set when using the automatic runtime. Please remove transform-react-jsx-source and transform-react-jsx-self from your Babel config.",
         "Duplicate __source prop found." => "Duplicate __source prop found. You are most likely using the deprecated transform-react-jsx-source Babel plugin. Both __source and __self are automatically set when using the automatic runtime. Please remove transform-react-jsx-source and transform-react-jsx-self from your Babel config.",
         "Expected `>` but found `/`" => "Unexpected token, expected \",\"",
+        "This syntax is reserved in files with the .mts or .cts extension. Use an `as` expression instead." => "This syntax is reserved in files with the .mts or .cts extension. Use an `as` expression instead. (1:0)",
+        "This syntax is reserved in files with the .mts or .cts extension. Add a trailing comma, as in `<T,>() => ...`." => "This syntax is reserved in files with the .mts or .cts extension. Add a trailing comma, as in `<T,>() => ...`. (1:0)",
         _ => error
     }.to_string()
 }

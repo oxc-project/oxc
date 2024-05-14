@@ -11,7 +11,10 @@ use oxc_span::{Atom, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use rustc_hash::FxHashSet;
 
-use super::collector::TypeScriptReferenceCollector;
+use super::{
+    collector::TypeScriptReferenceCollector,
+    diagnostics::{type_assertion_reserved, type_parameters_reserved},
+};
 
 pub struct TypeScriptAnnotations<'a> {
     #[allow(dead_code)]
@@ -197,6 +200,20 @@ impl<'a> TypeScriptAnnotations<'a> {
     }
 
     pub fn transform_arrow_expression(&mut self, expr: &mut ArrowFunctionExpression<'a>) {
+        if self.is_mts_or_ctx_file() {
+            // <T>() => {} is invalid, but <T, >() => {} is valid
+            if let Some(type_parameters) = &expr.type_parameters {
+                if type_parameters.params.len() == 1
+                    && !type_parameters
+                        .span
+                        .source_text(self.ctx.source_text)
+                        .trim_end()
+                        .ends_with(',')
+                {
+                    self.ctx.error(type_parameters_reserved(expr.span));
+                }
+            }
+        }
         expr.type_parameters = None;
         expr.return_type = None;
     }
@@ -240,7 +257,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         });
     }
 
-    pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
+    pub fn transform_expression_on_exit(&mut self, expr: &mut Expression<'a>) {
         *expr = self.ctx.ast.copy(expr.get_inner_expression());
     }
 
@@ -395,5 +412,16 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_jsx_fragment(&mut self, _elem: &mut JSXFragment<'a>) {
         self.has_jsx_fragment = true;
+    }
+
+    pub fn transform_ts_type_assertion(&mut self, node: &mut TSTypeAssertion<'a>) {
+        if self.is_mts_or_ctx_file() {
+            self.ctx.error(type_assertion_reserved(node.span));
+        }
+    }
+
+    pub fn is_mts_or_ctx_file(&self) -> bool {
+        let extension = self.ctx.source_path.extension();
+        extension.is_some_and(|ext| matches!(ext.to_str(), Some("mts" | "cts")))
     }
 }

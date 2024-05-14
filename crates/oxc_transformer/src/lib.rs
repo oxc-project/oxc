@@ -141,12 +141,12 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &TraverseCtx<'a>) {
-        self.x0_typescript.transform_expression(expr);
         self.x1_react.transform_expression(expr);
         self.x3_es2015.transform_expression(expr);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, _ctx: &TraverseCtx<'a>) {
+        self.x0_typescript.transform_expression_on_exit(expr);
         self.x3_es2015.transform_expression_on_exit(expr);
     }
 
@@ -244,5 +244,9 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         _ctx: &TraverseCtx<'a>,
     ) {
         self.x0_typescript.transform_module_declaration(decl);
+    }
+
+    fn enter_ts_type_assertion(&mut self, node: &mut TSTypeAssertion<'a>, _ctx: &TraverseCtx<'a>) {
+        self.x0_typescript.transform_ts_type_assertion(node);
     }
 }

@@ -1,6 +1,6 @@
 commit: 4bd1b2c2
 
-Passed: 309/362
+Passed: 313/362
 
 # All Passed:
 * babel-preset-react
@@ -16,12 +16,8 @@ Passed: 309/362
 * spec/newableArrowFunction-default/input.js
 * spec/newableArrowFunction-vs-spec-false/input.js
 
-# babel-preset-typescript (7/16)
+# babel-preset-typescript (11/16)
 * node-extensions/import-in-cts/input.cts
-* node-extensions/type-assertion-in-cts/input.cts
-* node-extensions/type-assertion-in-mts/input.mts
-* node-extensions/type-param-arrow-in-cts/input.mts
-* node-extensions/type-param-arrow-in-mts/input.mts
 * node-extensions/with-in-mts/input.mts
 * opts/allowDeclareFields/input.ts
 * opts/optimizeConstEnums/input.ts

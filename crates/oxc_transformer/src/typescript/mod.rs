@@ -100,8 +100,8 @@ impl<'a> TypeScript<'a> {
         self.reference_collector.visit_transform_export_named_declaration(decl);
     }
 
-    pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
-        self.annotations.transform_expression(expr);
+    pub fn transform_expression_on_exit(&mut self, expr: &mut Expression<'a>) {
+        self.annotations.transform_expression_on_exit(expr);
     }
 
     pub fn transform_formal_parameter(&mut self, param: &mut FormalParameter<'a>) {
@@ -210,5 +210,9 @@ impl<'a> TypeScript<'a> {
 
     pub fn transform_jsx_fragment(&mut self, elem: &mut JSXFragment<'a>) {
         self.annotations.transform_jsx_fragment(elem);
+    }
+
+    pub fn transform_ts_type_assertion(&mut self, node: &mut TSTypeAssertion<'a>) {
+        self.annotations.transform_ts_type_assertion(node);
     }
 }

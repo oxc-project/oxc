@@ -15,3 +15,11 @@ pub fn ambient_module_nested(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warning("Ambient modules cannot be nested in other modules or namespaces.")
         .with_label(span0)
 }
+
+pub fn type_assertion_reserved(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("This syntax is reserved in files with the .mts or .cts extension. Use an `as` expression instead.").with_label(span)
+}
+
+pub fn type_parameters_reserved(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("This syntax is reserved in files with the .mts or .cts extension. Add a trailing comma, as in `<T,>() => ...`.").with_label(span)
+}
