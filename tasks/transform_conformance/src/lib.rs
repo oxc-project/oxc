@@ -1,13 +1,14 @@
-use indexmap::IndexMap;
-use oxc_tasks_common::{normalize_path, project_root};
 use std::{
-    fs::{self, File},
-    io::Write,
+    fs,
     path::{Path, PathBuf},
     process::Command,
 };
+
+use indexmap::IndexMap;
 use test_case::TestCaseKind;
 use walkdir::WalkDir;
+
+use oxc_tasks_common::{normalize_path, project_root, Snapshot};
 
 mod test_case;
 
@@ -26,6 +27,7 @@ pub struct TestRunnerOptions {
 /// The test runner which walks the babel repository and searches for transformation tests.
 pub struct TestRunner {
     options: TestRunnerOptions,
+    snapshot: Snapshot,
 }
 
 fn babel_root() -> PathBuf {
@@ -139,7 +141,8 @@ impl SnapshotOption {
 
 impl TestRunner {
     pub fn new(options: TestRunnerOptions) -> Self {
-        Self { options }
+        let snapshot = Snapshot::new(&babel_root(), /* show_commit */ true);
+        Self { options, snapshot }
     }
 
     /// # Panics
@@ -246,8 +249,7 @@ impl TestRunner {
             let snapshot = format!(
                 "Passed: {all_passed_count}/{total}\n\n# All Passed:\n{all_passed}\n\n\n{snapshot}"
             );
-            let mut file = File::create(dest).unwrap();
-            file.write_all(snapshot.as_bytes()).unwrap();
+            self.snapshot.save(&dest, &snapshot);
         }
     }
 }
