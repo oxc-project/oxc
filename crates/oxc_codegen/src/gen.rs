@@ -601,6 +601,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for UsingDeclaration<'a> {
         p.print_str(b"using");
         p.print_soft_space();
         p.print_list(&self.declarations, ctx);
+        p.needs_semicolon = true;
     }
 }
 
