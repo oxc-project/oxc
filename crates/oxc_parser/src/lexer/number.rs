@@ -24,11 +24,14 @@ pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
 }
 
 /// # Safety
-/// 
+///
 /// This function assumes that all `_` characters have been stripped from `s`.
 /// Violating this assumption does _not_ cause UB. However, this function is
 /// marked as unsafe to ensure consumers are aware of the assumption.
-unsafe fn parse_int_without_underscores_unchecked(s: &str, kind: Kind) -> Result<f64, &'static str> {
+unsafe fn parse_int_without_underscores_unchecked(
+    s: &str,
+    kind: Kind,
+) -> Result<f64, &'static str> {
     if kind == Kind::Decimal {
         return parse_float_without_underscores_unchecked(s);
     }
@@ -50,7 +53,7 @@ unsafe fn parse_int_without_underscores_unchecked(s: &str, kind: Kind) -> Result
 }
 
 /// # Safety
-/// 
+///
 /// This function assumes that all `_` characters have been stripped from `s`.
 /// Violating this assumption does _not_ cause UB. However, this function is
 /// marked as unsafe to ensure consumers are aware of the assumption.

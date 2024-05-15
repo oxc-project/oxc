@@ -27,7 +27,7 @@ pub struct Token {
     pub escaped: bool,
 
     /// True if for numeric literal tokens that contain separator characters (`_`).
-    /// 
+    ///
     /// Numeric literals are defined in Section 12.9.3 of the ECMASCript
     /// standard and include [`Kind::Decimal`], [`Kind::Binary`],
     /// [`Kind::Octal`], [`Kind::Hex`], etc.
