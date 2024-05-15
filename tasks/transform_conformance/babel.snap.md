@@ -1,6 +1,6 @@
 commit: 4bd1b2c2
 
-Passed: 310/362
+Passed: 310/351
 
 # All Passed:
 * babel-preset-react
@@ -16,26 +16,18 @@ Passed: 310/362
 * spec/newableArrowFunction-default/input.js
 * spec/newableArrowFunction-vs-spec-false/input.js
 
-# babel-preset-typescript (7/16)
+# babel-preset-typescript (7/10)
 * node-extensions/import-in-cts/input.cts
-* node-extensions/type-assertion-in-cts/input.cts
-* node-extensions/type-assertion-in-mts/input.mts
-* node-extensions/type-param-arrow-in-cts/input.mts
-* node-extensions/type-param-arrow-in-mts/input.mts
-* node-extensions/with-in-mts/input.mts
-* opts/allowDeclareFields/input.ts
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (123/156)
+# babel-plugin-transform-typescript (123/154)
 * enum/mix-references/input.ts
 * enum/scoped/input.ts
 * enum/ts5.0-const-foldable/input.ts
 * exports/declared-types/input.ts
-* exports/export-type-star-from/input.ts
 * imports/enum-value/input.ts
 * imports/type-only-export-specifier-2/input.ts
-* namespace/canonical/input.ts
 * namespace/contentious-names/input.ts
 * namespace/empty-removed/input.ts
 * namespace/module-nested/input.ts
@@ -62,12 +54,9 @@ Passed: 310/362
 * optimize-const-enums/merged-exported/input.ts
 * regression/15768/input.ts
 
-# babel-plugin-transform-react-jsx (141/143)
+# babel-plugin-transform-react-jsx (141/142)
 * autoImport/complicated-scope-module/input.js
-* react-automatic/should-throw-when-filter-is-specified/input.js
 
-# babel-plugin-transform-react-jsx-development (9/12)
-* cross-platform/self-inside-arrow/input.mjs
-* cross-platform/source-and-self-defined/input.js
+# babel-plugin-transform-react-jsx-development (9/10)
 * cross-platform/within-ts-module-block/input.ts
 

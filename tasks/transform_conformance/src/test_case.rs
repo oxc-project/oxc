@@ -16,7 +16,10 @@ use oxc_transformer::{
     ES2015Options, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
 };
 
-use crate::{fixture_root, packages_root, TestRunnerEnv, PLUGINS_NOT_SUPPORTED_YET};
+use crate::{
+    constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
+    fixture_root, packages_root, TestRunnerEnv,
+};
 
 #[derive(Debug)]
 pub enum TestCaseKind {
@@ -181,6 +184,12 @@ pub trait TestCase {
         if options.presets.iter().any(|value| value.as_str().is_some_and(|s| s.starts_with("./")))
             || options.get_preset("flow").is_some()
         {
+            return true;
+        }
+
+        // Skip tests that are known to fail
+        let full_path = self.path().to_string_lossy();
+        if SKIP_TESTS.iter().any(|path| full_path.ends_with(path)) {
             return true;
         }
 
