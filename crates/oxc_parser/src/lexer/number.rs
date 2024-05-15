@@ -48,7 +48,7 @@ fn parse_float_without_underscores(s: &str) -> Result<f64, &'static str> {
     s.parse::<f64>().map_err(|_| "invalid float")
 }
 
-#[allow(clippy::cast_precision_loss,clippy::cast_possible_truncation)]
+#[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
 fn parse_binary(s: &str) -> f64 {
     debug_assert!(!s.is_empty());
 
@@ -131,7 +131,7 @@ fn parse_big_int_without_underscores(s: &str, kind: Kind) -> Result<BigInt, &'st
 }
 
 #[cfg(test)]
-#[allow(clippy::unreadable_literal,clippy::mixed_case_hex_literals)]
+#[allow(clippy::unreadable_literal, clippy::mixed_case_hex_literals)]
 mod test {
 
     use super::{parse_float, parse_int, Kind};
@@ -174,18 +174,19 @@ mod test {
     }
 
     #[test]
+    #[allow(clippy::excessive_precision)]
     fn test_int_precision() {
         assert_eq!(parse_int("9007199254740991", Kind::Decimal, false), Ok(9007199254740991.0));
     }
 
     #[test]
+    #[allow(clippy::excessive_precision)]
     fn test_float_precision() {
         let cases = vec![
             ("1.7976931348623157e+308", 1.7976931348623157e+308),
-            ("0.000_000_001", 0.000_000_001),
+            ("0.000000001", 0.000_000_001),
         ];
         assert_all_eq!(float cases, false);
-        // assert_eq!(parse_float("1.7976931348623157e+308", false), Ok(1.7976931348623157e+308));
     }
 
     #[test]
@@ -250,7 +251,7 @@ mod test {
             ("0b10", 0b10),
             ("0b110001001000100", 0b110001001000100),
             ("0b110001001000100", 0b110001001000100),
-            ("0b1_1000_1001_0001_00", 0b1_1000_1001_0001_00),
+            ("0b1_1000_1001_0001_0000", 0b1_1000_1001_0001_0000),
             // still works for illegal tokens
             ("0b1_0000__0000", 0b1_0000_0000),
             ("0b1_", 0b1),
