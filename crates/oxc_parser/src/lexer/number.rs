@@ -6,13 +6,35 @@ use std::borrow::Cow;
 
 use super::kind::Kind;
 
-// the string passed in has `_` removed from the lexer
-pub fn parse_int(s: &str, kind: Kind) -> Result<f64, &'static str> {
-    if kind == Kind::Decimal {
-        return parse_float(s);
-    }
-    let s = if s.contains('_') { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
+pub fn parse_int(s: &str, kind: Kind, has_sep: bool) -> Result<f64, &'static str> {
+    let s = if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
     let s = s.as_ref();
+    debug_assert!(!s.contains('_'));
+
+    // SAFETY: we just checked that `s` has no `_` characters
+    unsafe { parse_int_without_underscores_unchecked(s, kind) }
+}
+
+pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
+    let s = if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
+    debug_assert!(!s.contains('_'));
+
+    // SAFETY: we just checked that `s` has no `_` characters
+    unsafe { parse_float_without_underscores_unchecked(&s) }
+}
+
+/// # Safety
+///
+/// This function assumes that all `_` characters have been stripped from `s`.
+/// Violating this assumption does _not_ cause UB. However, this function is
+/// marked as unsafe to ensure consumers are aware of the assumption.
+unsafe fn parse_int_without_underscores_unchecked(
+    s: &str,
+    kind: Kind,
+) -> Result<f64, &'static str> {
+    if kind == Kind::Decimal {
+        return parse_float_without_underscores_unchecked(s);
+    }
     match kind {
         Kind::Binary => Ok(parse_binary(&s[2..])),
         Kind::Octal => {
@@ -28,8 +50,12 @@ pub fn parse_int(s: &str, kind: Kind) -> Result<f64, &'static str> {
     }
 }
 
-pub fn parse_float(s: &str) -> Result<f64, &'static str> {
-    let s = if s.contains('_') { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
+/// # Safety
+///
+/// This function assumes that all `_` characters have been stripped from `s`.
+/// Violating this assumption does _not_ cause UB. However, this function is
+/// marked as unsafe to ensure consumers are aware of the assumption.
+unsafe fn parse_float_without_underscores_unchecked(s: &str) -> Result<f64, &'static str> {
     s.parse::<f64>().map_err(|_| "invalid float")
 }
 
