@@ -35,8 +35,6 @@ unsafe fn parse_int_without_underscores_unchecked(
     if kind == Kind::Decimal {
         return parse_float_without_underscores_unchecked(s);
     }
-    // let s = if s.contains('_') { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
-    // let s = s.as_ref();
     match kind {
         Kind::Binary => Ok(parse_binary(&s[2..])),
         Kind::Octal => {
