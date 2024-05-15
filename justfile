@@ -87,9 +87,9 @@ autoinherit:
   cargo autoinherit
 
 # Test Transform
-test-transform:
-  cargo run -p oxc_transform_conformance
-  cargo run -p oxc_transform_conformance -- --exec
+test-transform *args='':
+  cargo run -p oxc_transform_conformance -- {{args}}
+  cargo run -p oxc_transform_conformance -- --exec  {{args}}
 
 # Build oxlint in release build
 oxlint:
