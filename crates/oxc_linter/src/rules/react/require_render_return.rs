@@ -1,18 +1,15 @@
-use oxc_ast::{
-    ast::{Argument, ClassElement, Expression, FunctionBody, ObjectPropertyKind},
-    AstKind,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_semantic::AstNodeId;
+use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashSet;
 
 use crate::{
+    ast_util::get_enclosing_function,
     context::LintContext,
     rule::Rule,
-    rules::eslint::array_callback_return::return_checker::{
-        check_statement, StatementReturnStatus,
-    },
     utils::{is_es5_component, is_es6_component},
     AstNode,
 };
@@ -52,69 +49,116 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireRenderReturn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !is_es5_component(node) && !is_es6_component(node) {
-            return;
+    fn run_once(&self, ctx: &LintContext) {
+        let mut render_fn_set: FxHashSet<AstNodeId> = FxHashSet::default();
+
+        for node in ctx.nodes().iter() {
+            if is_render_fn(node) {
+                render_fn_set.insert(node.id());
+            }
+
+            let is_return_detected = match node.kind() {
+                AstKind::ReturnStatement(_) => true,
+                AstKind::ArrowFunctionExpression(arrow) => arrow.expression,
+                _ => false,
+            };
+
+            if is_return_detected {
+                let Some(function) = get_enclosing_function(node, ctx) else {
+                    continue;
+                };
+                let Some(fn_parent_node) = ctx.nodes().parent_node(function.id()) else {
+                    continue;
+                };
+
+                if matches!(
+                    fn_parent_node.kind(),
+                    AstKind::MethodDefinition(_)
+                        | AstKind::PropertyDefinition(_)
+                        | AstKind::ObjectProperty(_)
+                ) {
+                    render_fn_set.remove(&fn_parent_node.id());
+                }
+            }
         }
 
-        match node.kind() {
-            AstKind::Class(cl) => {
-                if let Some((fn_body, is_arrow_function_expression)) =
-                    cl.body.body.iter().find_map(|ce| match ce {
-                        ClassElement::MethodDefinition(md)
-                            if md.key.is_specific_static_name("render") =>
-                        {
-                            md.value.body.as_ref().map(|v| (v, false))
-                        }
-                        ClassElement::PropertyDefinition(pd)
-                            if pd.key.is_specific_static_name("render") =>
-                        {
-                            if let Some(Expression::ArrowFunctionExpression(ref ae)) = pd.value {
-                                Some((&ae.body, ae.expression))
-                            } else {
-                                None
-                            }
-                        }
-                        _ => None,
-                    })
-                {
-                    if is_arrow_function_expression || has_return_in_fn_body(fn_body) {
-                        return;
-                    }
-
-                    ctx.diagnostic(require_render_return_diagnostic(fn_body.span));
-                }
+        for node_id in render_fn_set {
+            let render_fn_node = ctx.nodes().get_node(node_id);
+            if is_in_es6_component(render_fn_node, ctx) {
+                diagnostic_on_render_fn(node_id, ctx);
+                return;
+            } else if is_in_es5_component(render_fn_node, ctx) {
+                diagnostic_on_render_fn(node_id, ctx);
             }
-            AstKind::CallExpression(ce) => {
-                if let Some(Argument::ObjectExpression(obj_expr)) = ce.arguments.first() {
-                    if let Some(fn_body) = obj_expr
-                        .properties
-                        .iter()
-                        .filter_map(|prop| match prop {
-                            ObjectPropertyKind::ObjectProperty(prop)
-                                if prop.key.is_specific_static_name("render") =>
-                            {
-                                if let Expression::FunctionExpression(ae) = &prop.value {
-                                    ae.body.as_ref()
-                                } else {
-                                    None
-                                }
-                            }
-                            _ => None,
-                        })
-                        .find(|fn_body| !has_return_in_fn_body(fn_body))
-                    {
-                        ctx.diagnostic(require_render_return_diagnostic(fn_body.span));
-                    }
-                }
-            }
-            _ => {}
         }
     }
 }
 
-fn has_return_in_fn_body<'a>(fn_body: &oxc_allocator::Box<'a, FunctionBody<'a>>) -> bool {
-    fn_body.statements.iter().any(|stmt| check_statement(stmt) != StatementReturnStatus::NotReturn)
+const RENDER_METHOD_NAME: &str = "render";
+
+fn is_render_fn(node: &AstNode) -> bool {
+    match node.kind() {
+        AstKind::MethodDefinition(method) => {
+            if method.key.is_specific_static_name(RENDER_METHOD_NAME) {
+                return true;
+            }
+        }
+        AstKind::PropertyDefinition(property) => {
+            if property.key.is_specific_static_name(RENDER_METHOD_NAME)
+                && property.value.as_ref().is_some_and(Expression::is_function)
+            {
+                return true;
+            }
+        }
+        AstKind::ObjectProperty(property) => {
+            if property.key.is_specific_static_name(RENDER_METHOD_NAME)
+                && property.value.is_function()
+            {
+                return true;
+            }
+        }
+        _ => {}
+    }
+    false
+}
+
+fn diagnostic_on_render_fn(node_id: AstNodeId, ctx: &LintContext) {
+    let span = match ctx.nodes().get_node(node_id).kind() {
+        AstKind::MethodDefinition(method) => Some(method.key.span()),
+        AstKind::PropertyDefinition(property) => Some(property.key.span()),
+        AstKind::ObjectProperty(property) => Some(property.key.span()),
+        _ => None,
+    };
+
+    if let Some(span) = span {
+        ctx.diagnostic(require_render_return_diagnostic(span));
+    }
+}
+
+fn is_in_es5_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+    let Some(ancestors_0) = ctx.nodes().parent_node(node.id()) else { return false };
+    if !matches!(ancestors_0.kind(), AstKind::ObjectExpression(_)) {
+        return false;
+    }
+
+    let Some(ancestors_1) = ctx.nodes().parent_node(ancestors_0.id()) else { return false };
+    if !matches!(ancestors_1.kind(), AstKind::Argument(_)) {
+        return false;
+    }
+
+    let Some(ancestors_2) = ctx.nodes().parent_node(ancestors_1.id()) else { return false };
+
+    is_es5_component(ancestors_2)
+}
+
+fn is_in_es6_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+    let Some(parent) = ctx.nodes().parent_node(node.id()) else { return false };
+    if !matches!(parent.kind(), AstKind::ClassBody(_)) {
+        return false;
+    }
+
+    let Some(grandparent) = ctx.nodes().parent_node(parent.id()) else { return false };
+    is_es6_component(grandparent)
 }
 
 #[test]
