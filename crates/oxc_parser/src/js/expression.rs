@@ -286,8 +286,8 @@ impl<'a> ParserImpl<'a> {
         let token = self.cur_token();
         let src = self.cur_src();
         let value = match token.kind {
-            Kind::Decimal | Kind::Binary | Kind::Octal | Kind::Hex => parse_int(src, token.kind),
-            Kind::Float | Kind::PositiveExponential | Kind::NegativeExponential => parse_float(src),
+            Kind::Decimal | Kind::Binary | Kind::Octal | Kind::Hex => parse_int(src, token.kind, token.has_separator()),
+            Kind::Float | Kind::PositiveExponential | Kind::NegativeExponential => parse_float(src, token.has_separator()),
             _ => unreachable!(),
         }
         .map_err(|err| diagnostics::invalid_number(err, token.span()))?;

@@ -59,6 +59,7 @@ impl<'a> Lexer<'a> {
                         self.unexpected_err();
                         return Kind::Undetermined;
                     }
+                    self.token.set_has_separator();
                 }
                 c if kind.matches_number_char(c) => {
                     self.consume_char();
@@ -140,6 +141,7 @@ impl<'a> Lexer<'a> {
                         self.unexpected_err();
                         return;
                     }
+                    self.token.set_has_separator();
                 }
                 '0'..='9' => {
                     self.consume_char();
