@@ -1,9 +1,13 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{
+    ast::{BinaryExpression, Expression},
+    AstKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::operator::BinaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 fn comparison_with_na_n(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warning("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")
@@ -76,9 +80,7 @@ declare_oxc_lint!(
 impl Rule for UseIsnan {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::BinaryExpression(expr)
-                if expr.operator.is_compare() || expr.operator.is_equality() =>
-            {
+            AstKind::BinaryExpression(expr) if expr.operator.is_compare() => {
                 if is_nan_identifier(&expr.left) {
                     ctx.diagnostic(comparison_with_na_n(expr.left.span()));
                 }
@@ -86,11 +88,22 @@ impl Rule for UseIsnan {
                     ctx.diagnostic(comparison_with_na_n(expr.right.span()));
                 }
             }
+            AstKind::BinaryExpression(expr) if expr.operator.is_equality() => {
+                if is_nan_identifier(&expr.left) {
+                    ctx.diagnostic_with_fix(comparison_with_na_n(expr.left.span()), || {
+                        Fix::new(make_equality_fix(true, expr, ctx), expr.span)
+                    });
+                }
+                if is_nan_identifier(&expr.right) {
+                    ctx.diagnostic_with_fix(comparison_with_na_n(expr.right.span()), || {
+                        Fix::new(make_equality_fix(false, expr, ctx), expr.span)
+                    });
+                }
+            }
             AstKind::SwitchCase(case) if self.enforce_for_switch_case => {
-                if let Some(test) = &case.test {
-                    if is_nan_identifier(test) {
-                        ctx.diagnostic(case_na_n(test.span()));
-                    }
+                let Some(test) = &case.test else { return };
+                if is_nan_identifier(test) {
+                    ctx.diagnostic(case_na_n(test.span()));
                 }
             }
             AstKind::SwitchStatement(switch) if self.enforce_for_switch_case => {
@@ -99,14 +112,16 @@ impl Rule for UseIsnan {
                 }
             }
             AstKind::CallExpression(call) if self.enforce_for_index_of => {
-                // Match target array prototype methods whose only argument is NaN
-                if let Some(method) = is_target_callee(&call.callee) {
-                    if call.arguments.len() == 1 {
-                        if let Some(expr) = call.arguments[0].as_expression() {
-                            if is_nan_identifier(expr) {
-                                ctx.diagnostic(index_of_na_n(method, expr.span()));
-                            }
-                        }
+                // do this check first b/c it's cheaper than is_target_callee
+                if call.arguments.len() != 1 {
+                    return;
+                };
+                // Match target array prototype methods whose only argument is
+                // NaN
+                let Some(method) = is_target_callee(&call.callee) else { return };
+                if let Some(expr) = call.arguments[0].as_expression() {
+                    if is_nan_identifier(expr) {
+                        ctx.diagnostic(index_of_na_n(method, expr.span()));
                     }
                 }
             }
@@ -149,14 +164,33 @@ fn is_target_callee<'a>(callee: &'a Expression<'a>) -> Option<&'static str> {
     }
 
     if let Expression::ChainExpression(chain) = callee {
-        if let Some(expr) = chain.expression.as_member_expression() {
-            return expr.static_property_name().and_then(|property| {
-                TARGET_METHODS.iter().find(|method| **method == property).copied()
-            });
-        }
+        let expr = chain.expression.as_member_expression()?;
+        return expr.static_property_name().and_then(|property| {
+            TARGET_METHODS.iter().find(|method| **method == property).copied()
+        });
     }
 
     None
+}
+
+fn make_equality_fix<'a>(
+    nan_on_left: bool,
+    comparison: &BinaryExpression<'a>,
+    ctx: &LintContext<'a>,
+) -> String {
+    let non_nan = if nan_on_left {
+        comparison.right.span().source_text(ctx.source_text())
+    } else {
+        comparison.left.span().source_text(ctx.source_text())
+    };
+
+    let maybe_bang = match comparison.operator {
+        BinaryOperator::Equality | BinaryOperator::StrictEquality => "",
+        BinaryOperator::Inequality | BinaryOperator::StrictInequality => "!",
+        _ => unreachable!(),
+    };
+
+    format!("{maybe_bang}isNaN({non_nan})")
 }
 
 #[test]
@@ -427,5 +461,20 @@ fn test() {
         ("(foo?.indexOf)(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
     ];
 
-    Tester::new(UseIsnan::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("1 == NaN", "isNaN(1)", None),
+        ("1 === NaN", "isNaN(1)", None),
+        ("1 != NaN", "!isNaN(1)", None),
+        ("1 !== NaN", "!isNaN(1)", None),
+        ("NaN == 'foo'", "isNaN('foo')", None),
+        ("NaN === 'foo'", "isNaN('foo')", None),
+        ("NaN != 'foo'", "!isNaN('foo')", None),
+        ("NaN !== 'foo'", "!isNaN('foo')", None),
+        ("1 == Number.NaN", "isNaN(1)", None),
+        ("1 === Number.NaN", "isNaN(1)", None),
+        ("1 != Number.NaN", "!isNaN(1)", None),
+        ("1 !== Number.NaN", "!isNaN(1)", None),
+    ];
+
+    Tester::new(UseIsnan::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
