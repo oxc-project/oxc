@@ -28,7 +28,7 @@ pub struct Token {
 
     /// True if for numeric literal tokens that contain separator characters (`_`).
     ///
-    /// Numeric literals are defined in Section 12.9.3 of the ECMASCript
+    /// Numeric literals are defined in Section 12.9.3 of the ECMAScript
     /// standard and include [`Kind::Decimal`], [`Kind::Binary`],
     /// [`Kind::Octal`], [`Kind::Hex`], etc.
     has_separator: bool,

@@ -53,13 +53,17 @@ impl<'a> Lexer<'a> {
             match c {
                 '_' => {
                     self.consume_char();
+                    // NOTE: it looks invalid numeric tokens are still parsed.
+                    // This seems to be a waste. It also requires us to put this
+                    // call here instead of after we ensure the next character
+                    // is a number character
+                    self.token.set_has_separator();
                     if self.peek().is_some_and(|c| kind.matches_number_char(c)) {
                         self.consume_char();
                     } else {
                         self.unexpected_err();
                         return Kind::Undetermined;
                     }
-                    self.token.set_has_separator();
                 }
                 c if kind.matches_number_char(c) => {
                     self.consume_char();
@@ -135,13 +139,17 @@ impl<'a> Lexer<'a> {
             match c {
                 '_' => {
                     self.consume_char();
+                    // NOTE: it looks invalid numeric tokens are still parsed.
+                    // This seems to be a waste. It also requires us to put this
+                    // call here instead of after we ensure the next character
+                    // is an ASCII digit
+                    self.token.set_has_separator();
                     if self.peek().is_some_and(|c| c.is_ascii_digit()) {
                         self.consume_char();
                     } else {
                         self.unexpected_err();
                         return;
                     }
-                    self.token.set_has_separator();
                 }
                 '0'..='9' => {
                     self.consume_char();
