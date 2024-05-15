@@ -140,9 +140,9 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_export_named_declaration(decl);
     }
 
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &TraverseCtx<'a>) {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) {
         self.x0_typescript.transform_expression(expr);
-        self.x1_react.transform_expression(expr);
+        self.x1_react.transform_expression(expr, ctx);
         self.x3_es2015.transform_expression(expr);
     }
 

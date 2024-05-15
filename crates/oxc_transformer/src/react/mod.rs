@@ -8,7 +8,7 @@ mod utils;
 use std::rc::Rc;
 
 use oxc_ast::ast::*;
-use oxc_traverse::{Ancestor, FinderRet, TraverseCtx};
+use oxc_traverse::TraverseCtx;
 
 use crate::context::Ctx;
 
@@ -52,16 +52,16 @@ impl<'a> React<'a> {
         }
     }
 
-    pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
+    pub fn transform_expression(&mut self, expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) {
         match expr {
             Expression::JSXElement(e) => {
                 if self.options.is_jsx_plugin_enabled() {
-                    *expr = self.jsx.transform_jsx_element(e);
+                    *expr = self.jsx.transform_jsx_element(e, ctx);
                 }
             }
             Expression::JSXFragment(e) => {
                 if self.options.is_jsx_plugin_enabled() {
-                    *expr = self.jsx.transform_jsx_fragment(e);
+                    *expr = self.jsx.transform_jsx_fragment(e, ctx);
                 }
             }
             _ => {}
@@ -83,26 +83,10 @@ impl<'a> React<'a> {
         elem: &mut JSXOpeningElement<'a>,
         ctx: &TraverseCtx<'a>,
     ) {
-        if self.options.is_jsx_self_plugin_enabled() {
-            let is_constructor = ctx
-                .find_scope(|scope| {
-                    if scope.is_block() || scope.is_arrow() {
-                        return FinderRet::Continue;
-                    }
-                    FinderRet::Found(scope.is_constructor())
-                })
-                .unwrap_or(false);
-            if !is_constructor
-                // no super class
-                || ctx
-                    .find_ancestor(|ancestor| match ancestor {
-                        Ancestor::ClassBody(class) => FinderRet::Found(class.super_class().is_none()),
-                        _ => FinderRet::Continue,
-                    })
-                    .unwrap_or(true)
-            {
-                self.jsx.jsx_self.transform_jsx_opening_element(elem);
-            }
+        if self.options.is_jsx_self_plugin_enabled()
+            && self.jsx.jsx_self.can_add_self_attribute(ctx)
+        {
+            self.jsx.jsx_self.transform_jsx_opening_element(elem);
         }
         if self.options.is_jsx_source_plugin_enabled() {
             self.jsx.jsx_source.transform_jsx_opening_element(elem);

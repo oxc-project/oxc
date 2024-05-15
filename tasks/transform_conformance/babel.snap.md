@@ -1,6 +1,6 @@
 commit: 4bd1b2c2
 
-Passed: 309/362
+Passed: 310/362
 
 # All Passed:
 * babel-preset-react
@@ -66,9 +66,8 @@ Passed: 309/362
 * autoImport/complicated-scope-module/input.js
 * react-automatic/should-throw-when-filter-is-specified/input.js
 
-# babel-plugin-transform-react-jsx-development (8/12)
+# babel-plugin-transform-react-jsx-development (9/12)
 * cross-platform/self-inside-arrow/input.mjs
 * cross-platform/source-and-self-defined/input.js
-* cross-platform/within-derived-classes-constructor/input.js
 * cross-platform/within-ts-module-block/input.ts
 
