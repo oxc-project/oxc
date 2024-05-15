@@ -130,6 +130,17 @@ fn new_expr() {
 }
 
 #[test]
+fn for_stmt() {
+    test("for (let x = 0; x < 10; x++) {}", "for (let x = 0; x < 10; x++) {\n}\n");
+    test("for (;;) {}", "for (;;) {\n}\n");
+    test("for (let x = 1;;) {}", "for (let x = 1;;) {\n}\n");
+    test("for (;true;) {}", "for (; true;) {\n}\n");
+    test("for (;;i++) {}", "for (;; i++) {\n}\n");
+
+    test("for (using x = 1;;) {}", "for (using x = 1;;) {\n}\n");
+}
+
+#[test]
 fn typescript() {
     test_ts("let x: string = `\\x01`;", "let x: string = `\\x01`;\n", false);
 
