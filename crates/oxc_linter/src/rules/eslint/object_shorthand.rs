@@ -1,41 +1,35 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum ObjectShorthandDiagnostic {
-    #[diagnostic(severity(warning))]
-    #[error("eslint(object-shorthand): Expected shorthand for all properties.")]
-    ExpectedAllPropertiesShorthanded(#[label] Span),
+fn expected_all_properties_shorthanded(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint(object-shorthand): Expected shorthand for all properties.").with_labels([span0.into()])
+}
 
-    #[diagnostic(severity(warning))]
-    #[error("eslint(object-shorthand): Expected longform method syntax for string literal keys.")]
-    ExpectedLiteralMethodLongform(#[label] Span),
+fn expected_literal_method_longform(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint(object-shorthand): Expected longform method syntax for string literal keys.").with_labels([span0.into()])
+}
 
-    #[diagnostic(severity(warning))]
-    #[error("eslint(object-shorthand): Expected property shorthand.")]
-    ExpectedPropertyShorthand(#[label] Span),
+fn expected_property_shorthand(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint(object-shorthand): Expected property shorthand.").with_labels([span0.into()])
+}
 
-    #[diagnostic(severity(warning))]
-    #[error("eslint(object-shorthand): Expected longform property syntax.")]
-    ExpectedPropertyLongform(#[label] Span),
+fn expected_property_longform(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint(object-shorthand): Expected longform property syntax.").with_labels([span0.into()])
+}
 
-    #[diagnostic(severity(warning))]
-    #[error("eslint(object-shorthand): Expected method shorthand.")]
-    ExpectedMethodShorthand(#[label] Span),
+fn expected_method_shorthand(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint(object-shorthand): Expected method shorthand.").with_labels([span0.into()])
+}
 
-    #[diagnostic(severity(warning))]
-    #[error("eslint(object-shorthand): Expected longform method syntax.")]
-    ExpectedMethodLongform(#[label] Span),
+fn expected_method_longform(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint(object-shorthand): Expected longform method syntax.").with_labels([span0.into()])
+}
 
-    #[diagnostic(severity(warning))]
-    #[error("eslint(object-shorthand): Unexpected mix of shorthand and non-shorthand properties.")]
-    UnexpectedMix(#[label] Span),
+fn unexpected_mix(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warning("eslint(object-shorthand): Unexpected mix of shorthand and non-shorthand properties.").with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
