@@ -298,6 +298,38 @@ expression: rules_of_hooks
  6 │             e = () => { useState(); };
    ╰────
 
+  × eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
+   ╭─[rules_of_hooks.tsx:6:17]
+ 5 │             let d = () => useState();
+ 6 │             e = () => { useState(); };
+   ·                 ─────────────────────
+ 7 │             ({f: () => { useState(); }});
+   ╰────
+
+  × eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
+   ╭─[rules_of_hooks.tsx:7:18]
+ 6 │             e = () => { useState(); };
+ 7 │             ({f: () => { useState(); }});
+   ·                  ─────────────────────
+ 8 │             ({g() { useState(); }});
+   ╰────
+
+  × eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
+   ╭─[rules_of_hooks.tsx:8:16]
+ 7 │             ({f: () => { useState(); }});
+ 8 │             ({g() { useState(); }});
+   ·                ──────────────────
+ 9 │             const {j = () => { useState(); }} = {};
+   ╰────
+
+  × eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
+    ╭─[rules_of_hooks.tsx:9:24]
+  8 │             ({g() { useState(); }});
+  9 │             const {j = () => { useState(); }} = {};
+    ·                        ─────────────────────
+ 10 │             ({k = () => { useState(); }} = {});
+    ╰────
+
   × eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:21]
  3 │                     if (a) return;

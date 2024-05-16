@@ -9,7 +9,8 @@ use oxc_semantic::{
     pg::neighbors_filtered_by_edge_weight,
     AstNodeId, AstNodes, BasicBlockElement, EdgeType, Register,
 };
-use oxc_span::Atom;
+use oxc_span::{Atom, CompactStr};
+use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
     context::LintContext,
@@ -195,7 +196,7 @@ impl Rule for RulesOfHooks {
                 //         useState(0);
                 //     }
                 // }
-                if ident.is_some_and(|name| !is_react_component_or_hook_name(name))
+                if ident.is_some_and(|name| !is_react_component_or_hook_name(name.as_str()))
                     || is_export_default(nodes, parent_func.id())
                 {
                     return ctx.diagnostic(diagnostics::function_error(
@@ -368,7 +369,7 @@ fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: AstNodeId) -
             (
                 node.id(),
                 match node.kind() {
-                    AstKind::Function(func) => func.id.as_ref().map(|it| it.name.as_str()),
+                    AstKind::Function(func) => func.id.as_ref().map(|it| it.name.to_compact_str()),
                     AstKind::ArrowFunctionExpression(_) => {
                         get_declaration_identifier(nodes, node.id())
                     }
@@ -378,21 +379,37 @@ fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: AstNodeId) -
         })
         .any(|(ix, id)| {
             id.is_some_and(|name| {
-                is_react_component_or_hook_name(name) || is_memo_or_forward_ref_callback(nodes, ix)
+                is_react_component_or_hook_name(name.as_str())
+                    || is_memo_or_forward_ref_callback(nodes, ix)
             })
         })
 }
 
-fn get_declaration_identifier<'a>(nodes: &'a AstNodes<'a>, node_id: AstNodeId) -> Option<&str> {
-    nodes.ancestors(node_id).map(|id| nodes.get_node(id)).find_map(|node| {
-        if let AstKind::VariableDeclaration(decl) = node.kind() {
-            if decl.declarations.len() == 1 {
-                decl.declarations[0].id.get_identifier().map(Atom::as_str)
-            } else {
-                None
+fn get_declaration_identifier<'a>(
+    nodes: &'a AstNodes<'a>,
+    node_id: AstNodeId,
+) -> Option<CompactStr> {
+    nodes.ancestors(node_id).map(|id| nodes.kind(id)).find_map(|kind| {
+        match kind {
+            // const useHook = () => {};
+            AstKind::VariableDeclaration(decl) if decl.declarations.len() == 1 => {
+                decl.declarations[0].id.get_identifier().map(Atom::to_compact_str)
             }
-        } else {
-            None
+            // useHook = () => {};
+            AstKind::AssignmentExpression(expr)
+                if matches!(expr.operator, AssignmentOperator::Assign) =>
+            {
+                expr.left.get_identifier().map(std::convert::Into::into)
+            }
+            // const {useHook = () => {}} = {};
+            // ({useHook = () => {}} = {});
+            AstKind::AssignmentPattern(patt) => {
+                patt.left.get_identifier().map(Atom::to_compact_str)
+            }
+            // { useHook: () => {} }
+            // { useHook() {} }
+            AstKind::ObjectProperty(prop) => prop.key.name(),
+            _ => None,
         }
     })
 }
@@ -887,6 +904,24 @@ fn test() {
                 };
                 useHook();
             }
+        ",
+        "
+
+            export const Component = () => {
+                return {
+                    Target: () => {
+                        useEffect(() => {
+                            return () => {
+                                something.value = true;
+                            };
+                        }, []);
+                        return <div></div>;
+                    },
+                    useTargetModule: (m) => {
+                        useModule(m);
+                    },
+                };
+            };
         ",
     ];
 

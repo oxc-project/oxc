@@ -1135,6 +1135,12 @@ pub enum AssignmentTarget<'a> {
 }
 }
 
+impl<'a> AssignmentTarget<'a> {
+    pub fn get_identifier(&self) -> Option<&str> {
+        self.as_simple_assignment_target().and_then(|it| it.get_identifier())
+    }
+}
+
 /// Macro for matching `AssignmentTarget`'s variants.
 /// Includes `SimpleAssignmentTarget`'s and `AssignmentTargetPattern`'s variants.
 #[macro_export]
@@ -1197,6 +1203,14 @@ macro_rules! match_simple_assignment_target {
 pub use match_simple_assignment_target;
 
 impl<'a> SimpleAssignmentTarget<'a> {
+    pub fn get_identifier(&self) -> Option<&str> {
+        match self {
+            Self::AssignmentTargetIdentifier(ident) => Some(ident.name.as_str()),
+            match_member_expression!(Self) => self.to_member_expression().static_property_name(),
+            _ => None,
+        }
+    }
+
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         match self {
             Self::TSAsExpression(expr) => Some(&expr.expression),
