@@ -278,9 +278,13 @@ impl RulesOfHooks {
     ) -> bool {
         let graph = &ctx.semantic().cfg().graph;
         // All nodes should be reachable from our hook, Otherwise we have a conditional/branching flow.
-        petgraph::algo::dijkstra(graph, func_cfg_ix, Some(node_cfg_ix), |_| 0)
-            .into_iter()
-            .any(|(f, _)| !petgraph::algo::has_path_connecting(graph, f, node_cfg_ix, None))
+        petgraph::algo::dijkstra(graph, func_cfg_ix, Some(node_cfg_ix), |e| match e.weight() {
+            EdgeType::NewFunction => 1,
+            EdgeType::Backedge | EdgeType::Normal => 0,
+        })
+        .into_iter()
+        .filter(|(_, val)| *val == 0)
+        .any(|(f, _)| !petgraph::algo::has_path_connecting(graph, f, node_cfg_ix, None))
     }
 
     #[inline(always)]
@@ -873,6 +877,16 @@ fn test() {
 
               return <div>test</div>;
             };
+        ",
+        "
+            function useLabeledBlock() {
+                let x = () => {
+                    if (some) {
+                        noop();
+                    }
+                };
+                useHook();
+            }
         ",
     ];
 
