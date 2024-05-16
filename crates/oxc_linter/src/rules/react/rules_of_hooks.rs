@@ -15,7 +15,7 @@ use oxc_syntax::operator::AssignmentOperator;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{is_react_component_or_hook_name, is_react_hook},
+    utils::{is_react_component_or_hook_name, is_react_function_call, is_react_hook},
     AstNode,
 };
 
@@ -120,6 +120,8 @@ impl Rule for RulesOfHooks {
         let semantic = ctx.semantic();
         let nodes = semantic.nodes();
 
+        let is_use = is_react_function_call(call, "use");
+
         let Some(parent_func) = parent_func(nodes, node) else {
             return ctx.diagnostic(diagnostics::top_level_hook(span, hook_name));
         };
@@ -135,8 +137,6 @@ impl Rule for RulesOfHooks {
         ) {
             return ctx.diagnostic(diagnostics::class_component(span, hook_name));
         }
-
-        let is_use = hook_name == "use";
 
         match parent_func.kind() {
             // We are in a named function that isn't a hook or component, which is illegal
@@ -356,8 +356,7 @@ fn is_non_react_func_arg(nodes: &AstNodes, node_id: AstNodeId) -> bool {
         return false;
     };
 
-    // TODO make it better, might have false positives.
-    call.callee_name().is_some_and(|name| !matches!(name, "forwardRef" | "memo"))
+    !(is_react_function_call(call, "forwardRef") || is_react_function_call(call, "memo"))
 }
 
 fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: AstNodeId) -> bool {
@@ -618,6 +617,7 @@ fn test() {
             use_hook();
             // also valid because it's not matching the PascalCase namespace
             jest.useFakeTimer()
+            AFFiNE.plugins.use('oauth');
         ",
         // Regression test for some internal code.
         // This shows how the "callback rule" is more relaxed,
