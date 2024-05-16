@@ -257,15 +257,14 @@ impl RulesOfHooks {
     fn is_cyclic(&self, ctx: &LintContext, node: &AstNode, func: &AstNode) -> bool {
         // TODO: use cfg instead
         ctx.nodes().ancestors(node.id()).take_while(|id| *id != func.id()).any(|id| {
-            use AstKind::*;
             let maybe_loop = ctx.nodes().kind(id);
             matches! {
                 maybe_loop,
-                | DoWhileStatement(_)
-                | ForInStatement(_)
-                | ForOfStatement(_)
-                | ForStatement(_)
-                | WhileStatement(_)
+                | AstKind::DoWhileStatement(_)
+                | AstKind::ForInStatement(_)
+                | AstKind::ForOfStatement(_)
+                | AstKind::ForStatement(_)
+                | AstKind::WhileStatement(_)
             }
         })
     }
