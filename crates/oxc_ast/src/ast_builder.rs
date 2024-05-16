@@ -128,7 +128,7 @@ impl<'a> AstBuilder<'a> {
         hashbang: Option<Hashbang<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
-        Program { span, source_type, directives, hashbang, body }
+        Program::new(span, source_type, directives, hashbang, body)
     }
 
     /* ---------- Constructors ---------- */
@@ -280,14 +280,12 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn block(&self, span: Span, body: Vec<'a, Statement<'a>>) -> Box<'a, BlockStatement<'a>> {
-        self.alloc(BlockStatement { span, body })
+        self.alloc(BlockStatement::new(span, body))
     }
 
     #[inline]
     pub fn block_statement(&self, block: Box<'a, BlockStatement<'a>>) -> Statement<'a> {
-        Statement::BlockStatement(
-            self.alloc(BlockStatement { span: block.span, body: block.unbox().body }),
-        )
+        Statement::BlockStatement(self.block(block.span, block.unbox().body))
     }
 
     #[inline]
@@ -347,7 +345,7 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::ForInStatement(self.alloc(ForInStatement { span, left, right, body }))
+        Statement::ForInStatement(self.alloc(ForInStatement::new(span, left, right, body)))
     }
 
     #[inline]
@@ -359,7 +357,7 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::ForOfStatement(self.alloc(ForOfStatement { span, r#await, left, right, body }))
+        Statement::ForOfStatement(self.alloc(ForOfStatement::new(span, r#await, left, right, body)))
     }
 
     #[inline]
@@ -371,7 +369,7 @@ impl<'a> AstBuilder<'a> {
         update: Option<Expression<'a>>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::ForStatement(self.alloc(ForStatement { span, init, test, update, body }))
+        Statement::ForStatement(self.alloc(ForStatement::new(span, init, test, update, body)))
     }
 
     #[inline]
@@ -407,7 +405,7 @@ impl<'a> AstBuilder<'a> {
         discriminant: Expression<'a>,
         cases: Vec<'a, SwitchCase<'a>>,
     ) -> Statement<'a> {
-        Statement::SwitchStatement(self.alloc(SwitchStatement { span, discriminant, cases }))
+        Statement::SwitchStatement(self.alloc(SwitchStatement::new(span, discriminant, cases)))
     }
 
     #[inline]
@@ -443,7 +441,7 @@ impl<'a> AstBuilder<'a> {
         param: Option<CatchParameter<'a>>,
         body: Box<'a, BlockStatement<'a>>,
     ) -> Box<'a, CatchClause<'a>> {
-        self.alloc(CatchClause { span, param, body })
+        self.alloc(CatchClause::new(span, param, body))
     }
 
     #[inline]
@@ -509,7 +507,7 @@ impl<'a> AstBuilder<'a> {
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> Expression<'a> {
-        Expression::ArrowFunctionExpression(self.alloc(ArrowFunctionExpression {
+        Expression::ArrowFunctionExpression(self.alloc(ArrowFunctionExpression::new(
             span,
             expression,
             r#async,
@@ -517,7 +515,7 @@ impl<'a> AstBuilder<'a> {
             body,
             type_parameters,
             return_type,
-        }))
+        )))
     }
 
     #[inline]
@@ -993,7 +991,7 @@ impl<'a> AstBuilder<'a> {
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
         modifiers: Modifiers<'a>,
     ) -> Box<'a, Function<'a>> {
-        self.alloc(Function {
+        self.alloc(Function::new(
             r#type,
             span,
             id,
@@ -1005,7 +1003,7 @@ impl<'a> AstBuilder<'a> {
             type_parameters,
             return_type,
             modifiers,
-        })
+        ))
     }
 
     #[inline]
@@ -1034,7 +1032,7 @@ impl<'a> AstBuilder<'a> {
         decorators: Vec<'a, Decorator<'a>>,
         modifiers: Modifiers<'a>,
     ) -> Box<'a, Class<'a>> {
-        self.alloc(Class {
+        self.alloc(Class::new(
             r#type,
             span,
             decorators,
@@ -1045,7 +1043,7 @@ impl<'a> AstBuilder<'a> {
             super_type_parameters,
             implements,
             modifiers,
-        })
+        ))
     }
 
     #[inline]
@@ -1064,7 +1062,7 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn static_block(&self, span: Span, body: Vec<'a, Statement<'a>>) -> ClassElement<'a> {
-        ClassElement::StaticBlock(self.alloc(StaticBlock { span, body }))
+        ClassElement::StaticBlock(self.alloc(StaticBlock::new(span, body)))
     }
 
     #[inline]
@@ -1598,7 +1596,7 @@ impl<'a> AstBuilder<'a> {
         out: bool,
         r#const: bool,
     ) -> TSTypeParameter<'a> {
-        TSTypeParameter { span, name, constraint, default, r#in, out, r#const }
+        TSTypeParameter::new(span, name, constraint, default, r#in, out, r#const)
     }
 
     #[inline]
@@ -1736,7 +1734,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         body: Vec<'a, Statement<'a>>,
     ) -> Box<'a, TSModuleBlock<'a>> {
-        self.alloc(TSModuleBlock { span, body })
+        self.alloc(TSModuleBlock::new(span, body))
     }
 
     #[inline]
@@ -1853,12 +1851,9 @@ impl<'a> AstBuilder<'a> {
         members: Vec<'a, TSEnumMember<'a>>,
         modifiers: Modifiers<'a>,
     ) -> Declaration<'a> {
-        Declaration::TSEnumDeclaration(self.alloc(TSEnumDeclaration {
-            span,
-            id,
-            members,
-            modifiers,
-        }))
+        Declaration::TSEnumDeclaration(
+            self.alloc(TSEnumDeclaration::new(span, id, members, modifiers)),
+        )
     }
 
     #[inline]

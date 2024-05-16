@@ -8,14 +8,19 @@
     clippy::cast_ptr_alignment
 )]
 
+use std::cell::Cell;
+
 use memoffset::offset_of;
 
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SourceType, Span};
-use oxc_syntax::operator::{
-    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+use oxc_syntax::{
+    operator::{
+        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+    },
+    scope::ScopeId,
 };
 
 /// Type of [`Ancestor`].
@@ -2156,6 +2161,7 @@ pub(crate) const OFFSET_PROGRAM_SOURCE_TYPE: usize = offset_of!(Program, source_
 pub(crate) const OFFSET_PROGRAM_DIRECTIVES: usize = offset_of!(Program, directives);
 pub(crate) const OFFSET_PROGRAM_HASHBANG: usize = offset_of!(Program, hashbang);
 pub(crate) const OFFSET_PROGRAM_BODY: usize = offset_of!(Program, body);
+pub(crate) const OFFSET_PROGRAM_SCOPE_ID: usize = offset_of!(Program, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -2183,6 +2189,13 @@ impl<'a> ProgramWithoutDirectives<'a> {
     pub fn body(&self) -> &Vec<'a, Statement<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_BODY) as *const Vec<'a, Statement<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -2216,6 +2229,13 @@ impl<'a> ProgramWithoutHashbang<'a> {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_BODY) as *const Vec<'a, Statement<'a>>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -2245,6 +2265,13 @@ impl<'a> ProgramWithoutBody<'a> {
     pub fn hashbang(&self) -> &Option<Hashbang<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_HASHBANG) as *const Option<Hashbang<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -3780,6 +3807,7 @@ impl<'a> DirectiveWithoutExpression<'a> {
 
 pub(crate) const OFFSET_BLOCK_STATEMENT_SPAN: usize = offset_of!(BlockStatement, span);
 pub(crate) const OFFSET_BLOCK_STATEMENT_BODY: usize = offset_of!(BlockStatement, body);
+pub(crate) const OFFSET_BLOCK_STATEMENT_SCOPE_ID: usize = offset_of!(BlockStatement, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -3789,6 +3817,14 @@ impl<'a> BlockStatementWithoutBody<'a> {
     #[inline]
     pub fn span(&self) -> &Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_BLOCK_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BLOCK_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 
@@ -4096,6 +4132,7 @@ pub(crate) const OFFSET_FOR_STATEMENT_INIT: usize = offset_of!(ForStatement, ini
 pub(crate) const OFFSET_FOR_STATEMENT_TEST: usize = offset_of!(ForStatement, test);
 pub(crate) const OFFSET_FOR_STATEMENT_UPDATE: usize = offset_of!(ForStatement, update);
 pub(crate) const OFFSET_FOR_STATEMENT_BODY: usize = offset_of!(ForStatement, body);
+pub(crate) const OFFSET_FOR_STATEMENT_SCOPE_ID: usize = offset_of!(ForStatement, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -4126,6 +4163,14 @@ impl<'a> ForStatementWithoutInit<'a> {
     #[inline]
     pub fn body(&self) -> &Statement<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_BODY) as *const Statement<'a>) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 
@@ -4159,6 +4204,14 @@ impl<'a> ForStatementWithoutTest<'a> {
     pub fn body(&self) -> &Statement<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_BODY) as *const Statement<'a>) }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -4190,6 +4243,14 @@ impl<'a> ForStatementWithoutUpdate<'a> {
     #[inline]
     pub fn body(&self) -> &Statement<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_BODY) as *const Statement<'a>) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 
@@ -4226,12 +4287,21 @@ impl<'a> ForStatementWithoutBody<'a> {
                 as *const Option<Expression<'a>>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 pub(crate) const OFFSET_FOR_IN_STATEMENT_SPAN: usize = offset_of!(ForInStatement, span);
 pub(crate) const OFFSET_FOR_IN_STATEMENT_LEFT: usize = offset_of!(ForInStatement, left);
 pub(crate) const OFFSET_FOR_IN_STATEMENT_RIGHT: usize = offset_of!(ForInStatement, right);
 pub(crate) const OFFSET_FOR_IN_STATEMENT_BODY: usize = offset_of!(ForInStatement, body);
+pub(crate) const OFFSET_FOR_IN_STATEMENT_SCOPE_ID: usize = offset_of!(ForInStatement, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -4254,6 +4324,14 @@ impl<'a> ForInStatementWithoutLeft<'a> {
     pub fn body(&self) -> &Statement<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_BODY) as *const Statement<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -4282,6 +4360,14 @@ impl<'a> ForInStatementWithoutRight<'a> {
             &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_BODY) as *const Statement<'a>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -4308,6 +4394,14 @@ impl<'a> ForInStatementWithoutBody<'a> {
             &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_RIGHT) as *const Expression<'a>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 pub(crate) const OFFSET_FOR_OF_STATEMENT_SPAN: usize = offset_of!(ForOfStatement, span);
@@ -4315,6 +4409,7 @@ pub(crate) const OFFSET_FOR_OF_STATEMENT_AWAIT: usize = offset_of!(ForOfStatemen
 pub(crate) const OFFSET_FOR_OF_STATEMENT_LEFT: usize = offset_of!(ForOfStatement, left);
 pub(crate) const OFFSET_FOR_OF_STATEMENT_RIGHT: usize = offset_of!(ForOfStatement, right);
 pub(crate) const OFFSET_FOR_OF_STATEMENT_BODY: usize = offset_of!(ForOfStatement, body);
+pub(crate) const OFFSET_FOR_OF_STATEMENT_SCOPE_ID: usize = offset_of!(ForOfStatement, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -4342,6 +4437,14 @@ impl<'a> ForOfStatementWithoutLeft<'a> {
     pub fn body(&self) -> &Statement<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_BODY) as *const Statement<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -4375,6 +4478,14 @@ impl<'a> ForOfStatementWithoutRight<'a> {
             &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_BODY) as *const Statement<'a>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -4404,6 +4515,14 @@ impl<'a> ForOfStatementWithoutBody<'a> {
     pub fn right(&self) -> &Expression<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_RIGHT) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -4492,6 +4611,7 @@ pub(crate) const OFFSET_SWITCH_STATEMENT_SPAN: usize = offset_of!(SwitchStatemen
 pub(crate) const OFFSET_SWITCH_STATEMENT_DISCRIMINANT: usize =
     offset_of!(SwitchStatement, discriminant);
 pub(crate) const OFFSET_SWITCH_STATEMENT_CASES: usize = offset_of!(SwitchStatement, cases);
+pub(crate) const OFFSET_SWITCH_STATEMENT_SCOPE_ID: usize = offset_of!(SwitchStatement, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -4508,6 +4628,14 @@ impl<'a> SwitchStatementWithoutDiscriminant<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_SWITCH_STATEMENT_CASES)
                 as *const Vec<'a, SwitchCase<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_SWITCH_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -4527,6 +4655,14 @@ impl<'a> SwitchStatementWithoutCases<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_SWITCH_STATEMENT_DISCRIMINANT)
                 as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_SWITCH_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -4716,6 +4852,7 @@ impl<'a> TryStatementWithoutFinalizer<'a> {
 pub(crate) const OFFSET_CATCH_CLAUSE_SPAN: usize = offset_of!(CatchClause, span);
 pub(crate) const OFFSET_CATCH_CLAUSE_PARAM: usize = offset_of!(CatchClause, param);
 pub(crate) const OFFSET_CATCH_CLAUSE_BODY: usize = offset_of!(CatchClause, body);
+pub(crate) const OFFSET_CATCH_CLAUSE_SCOPE_ID: usize = offset_of!(CatchClause, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -4732,6 +4869,14 @@ impl<'a> CatchClauseWithoutParam<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CATCH_CLAUSE_BODY)
                 as *const Box<'a, BlockStatement<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CATCH_CLAUSE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -4751,6 +4896,14 @@ impl<'a> CatchClauseWithoutBody<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CATCH_CLAUSE_PARAM)
                 as *const Option<CatchParameter<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CATCH_CLAUSE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -5026,6 +5179,7 @@ pub(crate) const OFFSET_FUNCTION_BODY: usize = offset_of!(Function, body);
 pub(crate) const OFFSET_FUNCTION_TYPE_PARAMETERS: usize = offset_of!(Function, type_parameters);
 pub(crate) const OFFSET_FUNCTION_RETURN_TYPE: usize = offset_of!(Function, return_type);
 pub(crate) const OFFSET_FUNCTION_MODIFIERS: usize = offset_of!(Function, modifiers);
+pub(crate) const OFFSET_FUNCTION_SCOPE_ID: usize = offset_of!(Function, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -5095,6 +5249,13 @@ impl<'a> FunctionWithoutId<'a> {
     #[inline]
     pub fn modifiers(&self) -> &Modifiers<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 
@@ -5167,6 +5328,13 @@ impl<'a> FunctionWithoutThisParam<'a> {
     pub fn modifiers(&self) -> &Modifiers<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -5237,6 +5405,13 @@ impl<'a> FunctionWithoutParams<'a> {
     #[inline]
     pub fn modifiers(&self) -> &Modifiers<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 
@@ -5309,6 +5484,13 @@ impl<'a> FunctionWithoutBody<'a> {
     pub fn modifiers(&self) -> &Modifiers<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -5380,6 +5562,13 @@ impl<'a> FunctionWithoutTypeParameters<'a> {
     pub fn modifiers(&self) -> &Modifiers<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -5450,6 +5639,13 @@ impl<'a> FunctionWithoutReturnType<'a> {
     #[inline]
     pub fn modifiers(&self) -> &Modifiers<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 
@@ -5651,6 +5847,8 @@ pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS: usize =
     offset_of!(ArrowFunctionExpression, type_parameters);
 pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE: usize =
     offset_of!(ArrowFunctionExpression, return_type);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID: usize =
+    offset_of!(ArrowFunctionExpression, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -5700,6 +5898,14 @@ impl<'a> ArrowFunctionExpressionWithoutParams<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -5752,6 +5958,14 @@ impl<'a> ArrowFunctionExpressionWithoutBody<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -5808,6 +6022,14 @@ impl<'a> ArrowFunctionExpressionWithoutTypeParameters<'a> {
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -5862,6 +6084,14 @@ impl<'a> ArrowFunctionExpressionWithoutReturnType<'a> {
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 pub(crate) const OFFSET_YIELD_EXPRESSION_SPAN: usize = offset_of!(YieldExpression, span);
@@ -5895,6 +6125,7 @@ pub(crate) const OFFSET_CLASS_SUPER_TYPE_PARAMETERS: usize =
     offset_of!(Class, super_type_parameters);
 pub(crate) const OFFSET_CLASS_IMPLEMENTS: usize = offset_of!(Class, implements);
 pub(crate) const OFFSET_CLASS_MODIFIERS: usize = offset_of!(Class, modifiers);
+pub(crate) const OFFSET_CLASS_SCOPE_ID: usize = offset_of!(Class, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -5957,6 +6188,13 @@ impl<'a> ClassWithoutDecorators<'a> {
     #[inline]
     pub fn modifiers(&self) -> &Modifiers<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 
@@ -6022,6 +6260,13 @@ impl<'a> ClassWithoutId<'a> {
     pub fn modifiers(&self) -> &Modifiers<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -6085,6 +6330,13 @@ impl<'a> ClassWithoutSuperClass<'a> {
     #[inline]
     pub fn modifiers(&self) -> &Modifiers<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 
@@ -6152,6 +6404,13 @@ impl<'a> ClassWithoutBody<'a> {
     pub fn modifiers(&self) -> &Modifiers<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -6214,6 +6473,13 @@ impl<'a> ClassWithoutTypeParameters<'a> {
     #[inline]
     pub fn modifiers(&self) -> &Modifiers<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 
@@ -6278,6 +6544,13 @@ impl<'a> ClassWithoutSuperTypeParameters<'a> {
     pub fn modifiers(&self) -> &Modifiers<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -6340,6 +6613,13 @@ impl<'a> ClassWithoutImplements<'a> {
     #[inline]
     pub fn modifiers(&self) -> &Modifiers<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 
@@ -6951,6 +7231,7 @@ impl<'a> PropertyDefinitionWithoutDecorators<'a> {
 
 pub(crate) const OFFSET_STATIC_BLOCK_SPAN: usize = offset_of!(StaticBlock, span);
 pub(crate) const OFFSET_STATIC_BLOCK_BODY: usize = offset_of!(StaticBlock, body);
+pub(crate) const OFFSET_STATIC_BLOCK_SCOPE_ID: usize = offset_of!(StaticBlock, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -6960,6 +7241,14 @@ impl<'a> StaticBlockWithoutBody<'a> {
     #[inline]
     pub fn span(&self) -> &Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_STATIC_BLOCK_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_STATIC_BLOCK_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 
@@ -8341,6 +8630,8 @@ pub(crate) const OFFSET_TS_ENUM_DECLARATION_ID: usize = offset_of!(TSEnumDeclara
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_MEMBERS: usize = offset_of!(TSEnumDeclaration, members);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_MODIFIERS: usize =
     offset_of!(TSEnumDeclaration, modifiers);
+pub(crate) const OFFSET_TS_ENUM_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSEnumDeclaration, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -8365,6 +8656,14 @@ impl<'a> TSEnumDeclarationWithoutId<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_MODIFIERS)
                 as *const Modifiers<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -8392,6 +8691,14 @@ impl<'a> TSEnumDeclarationWithoutMembers<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_MODIFIERS)
                 as *const Modifiers<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -8939,6 +9246,7 @@ pub(crate) const OFFSET_TS_TYPE_PARAMETER_DEFAULT: usize = offset_of!(TSTypePara
 pub(crate) const OFFSET_TS_TYPE_PARAMETER_IN: usize = offset_of!(TSTypeParameter, r#in);
 pub(crate) const OFFSET_TS_TYPE_PARAMETER_OUT: usize = offset_of!(TSTypeParameter, out);
 pub(crate) const OFFSET_TS_TYPE_PARAMETER_CONST: usize = offset_of!(TSTypeParameter, r#const);
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_SCOPE_ID: usize = offset_of!(TSTypeParameter, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -8979,6 +9287,14 @@ impl<'a> TSTypeParameterWithoutName<'a> {
     #[inline]
     pub fn r#const(&self) -> &bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_CONST) as *const bool) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 
@@ -9022,6 +9338,14 @@ impl<'a> TSTypeParameterWithoutConstraint<'a> {
     pub fn r#const(&self) -> &bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_CONST) as *const bool) }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -9063,6 +9387,14 @@ impl<'a> TSTypeParameterWithoutDefault<'a> {
     #[inline]
     pub fn r#const(&self) -> &bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_CONST) as *const bool) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 
@@ -10403,6 +10735,7 @@ impl<'a> TSModuleDeclarationWithoutBody<'a> {
 
 pub(crate) const OFFSET_TS_MODULE_BLOCK_SPAN: usize = offset_of!(TSModuleBlock, span);
 pub(crate) const OFFSET_TS_MODULE_BLOCK_BODY: usize = offset_of!(TSModuleBlock, body);
+pub(crate) const OFFSET_TS_MODULE_BLOCK_SCOPE_ID: usize = offset_of!(TSModuleBlock, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -10412,6 +10745,14 @@ impl<'a> TSModuleBlockWithoutBody<'a> {
     #[inline]
     pub fn span(&self) -> &Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 

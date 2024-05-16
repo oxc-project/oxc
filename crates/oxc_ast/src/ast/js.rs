@@ -14,7 +14,7 @@ use oxc_syntax::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
     reference::{ReferenceFlag, ReferenceId},
-    scope::ScopeFlags,
+    scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
 #[cfg(feature = "serialize")]
@@ -46,7 +46,7 @@ export interface FormalParameterRest extends Span {
     scope(ScopeFlags::Top),
     strict_if(self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict))
 )]
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct Program<'a> {
@@ -56,6 +56,29 @@ pub struct Program<'a> {
     pub directives: Vec<'a, Directive<'a>>,
     pub hashbang: Option<Hashbang<'a>>,
     pub body: Vec<'a, Statement<'a>>,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+impl<'a> Program<'a> {
+    pub fn new(
+        span: Span,
+        source_type: SourceType,
+        directives: Vec<'a, Directive<'a>>,
+        hashbang: Option<Hashbang<'a>>,
+        body: Vec<'a, Statement<'a>>,
+    ) -> Self {
+        Self { span, source_type, directives, hashbang, body, scope_id: Cell::default() }
+    }
+}
+
+impl<'a> Hash for Program<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.source_type.hash(state);
+        self.directives.hash(state);
+        self.hashbang.hash(state);
+        self.body.hash(state);
+    }
 }
 
 impl<'a> Program<'a> {
@@ -1513,13 +1536,27 @@ pub struct Hashbang<'a> {
 
 /// Block Statement
 #[visited_node(scope(ScopeFlags::empty()))]
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct BlockStatement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+impl<'a> BlockStatement<'a> {
+    pub fn new(span: Span, body: Vec<'a, Statement<'a>>) -> Self {
+        Self { span, body, scope_id: Cell::default() }
+    }
+}
+
+impl<'a> Hash for BlockStatement<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.body.hash(state);
+    }
 }
 
 /// Declarations and the Variable Statement
@@ -1743,7 +1780,7 @@ pub struct WhileStatement<'a> {
     scope(ScopeFlags::empty()),
     scope_if(self.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration))
 )]
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ForStatement<'a> {
@@ -1753,6 +1790,29 @@ pub struct ForStatement<'a> {
     pub test: Option<Expression<'a>>,
     pub update: Option<Expression<'a>>,
     pub body: Statement<'a>,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+impl<'a> ForStatement<'a> {
+    pub fn new(
+        span: Span,
+        init: Option<ForStatementInit<'a>>,
+        test: Option<Expression<'a>>,
+        update: Option<Expression<'a>>,
+        body: Statement<'a>,
+    ) -> Self {
+        Self { span, init, test, update, body, scope_id: Cell::default() }
+    }
+}
+
+impl<'a> Hash for ForStatement<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.init.hash(state);
+        self.test.hash(state);
+        self.update.hash(state);
+        self.body.hash(state);
+    }
 }
 
 inherit_variants! {
@@ -1784,7 +1844,7 @@ impl<'a> ForStatementInit<'a> {
 
 /// For-In Statement
 #[visited_node(scope(ScopeFlags::empty()), scope_if(self.left.is_lexical_declaration()))]
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ForInStatement<'a> {
@@ -1793,11 +1853,32 @@ pub struct ForInStatement<'a> {
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
     pub body: Statement<'a>,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+impl<'a> ForInStatement<'a> {
+    pub fn new(
+        span: Span,
+        left: ForStatementLeft<'a>,
+        right: Expression<'a>,
+        body: Statement<'a>,
+    ) -> Self {
+        Self { span, left, right, body, scope_id: Cell::default() }
+    }
+}
+
+impl<'a> Hash for ForInStatement<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.left.hash(state);
+        self.right.hash(state);
+        self.body.hash(state);
+    }
 }
 
 /// For-Of Statement
 #[visited_node(scope(ScopeFlags::empty()), scope_if(self.left.is_lexical_declaration()))]
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ForOfStatement<'a> {
@@ -1807,6 +1888,29 @@ pub struct ForOfStatement<'a> {
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
     pub body: Statement<'a>,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+impl<'a> ForOfStatement<'a> {
+    pub fn new(
+        span: Span,
+        r#await: bool,
+        left: ForStatementLeft<'a>,
+        right: Expression<'a>,
+        body: Statement<'a>,
+    ) -> Self {
+        Self { span, r#await, left, right, body, scope_id: Cell::default() }
+    }
+}
+
+impl<'a> Hash for ForOfStatement<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.r#await.hash(state);
+        self.left.hash(state);
+        self.right.hash(state);
+        self.body.hash(state);
+    }
 }
 
 inherit_variants! {
@@ -1883,7 +1987,7 @@ pub struct WithStatement<'a> {
 
 /// Switch Statement
 #[visited_node(scope(ScopeFlags::empty()), enter_scope_before(cases))]
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SwitchStatement<'a> {
@@ -1891,6 +1995,21 @@ pub struct SwitchStatement<'a> {
     pub span: Span,
     pub discriminant: Expression<'a>,
     pub cases: Vec<'a, SwitchCase<'a>>,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+impl<'a> SwitchStatement<'a> {
+    pub fn new(span: Span, discriminant: Expression<'a>, cases: Vec<'a, SwitchCase<'a>>) -> Self {
+        Self { span, discriminant, cases, scope_id: Cell::default() }
+    }
+}
+
+impl<'a> Hash for SwitchStatement<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.discriminant.hash(state);
+        self.cases.hash(state);
+    }
 }
 
 #[visited_node]
@@ -1947,7 +2066,7 @@ pub struct TryStatement<'a> {
 }
 
 #[visited_node(scope(ScopeFlags::empty()), scope_if(self.param.is_some()))]
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct CatchClause<'a> {
@@ -1955,6 +2074,25 @@ pub struct CatchClause<'a> {
     pub span: Span,
     pub param: Option<CatchParameter<'a>>,
     pub body: Box<'a, BlockStatement<'a>>,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+impl<'a> CatchClause<'a> {
+    pub fn new(
+        span: Span,
+        param: Option<CatchParameter<'a>>,
+        body: Box<'a, BlockStatement<'a>>,
+    ) -> Self {
+        Self { span, param, body, scope_id: Cell::default() }
+    }
+}
+
+impl<'a> Hash for CatchClause<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.param.hash(state);
+        self.body.hash(state);
+    }
 }
 
 #[visited_node]
@@ -2139,7 +2277,7 @@ pub struct BindingRestElement<'a> {
     scope_if(!matches!(ctx.ancestor(2).unwrap(), Ancestor::MethodDefinitionValue(_))),
     strict_if(self.body.as_ref().is_some_and(|body| body.has_use_strict_directive()))
 )]
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct Function<'a> {
@@ -2171,9 +2309,40 @@ pub struct Function<'a> {
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// Valid modifiers: `export`, `default`, `async`
     pub modifiers: Modifiers<'a>,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 impl<'a> Function<'a> {
+    #![allow(clippy::too_many_arguments)]
+    pub fn new(
+        r#type: FunctionType,
+        span: Span,
+        id: Option<BindingIdentifier<'a>>,
+        generator: bool,
+        r#async: bool,
+        this_param: Option<TSThisParameter<'a>>,
+        params: Box<'a, FormalParameters<'a>>,
+        body: Option<Box<'a, FunctionBody<'a>>>,
+        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+        modifiers: Modifiers<'a>,
+    ) -> Self {
+        Self {
+            r#type,
+            span,
+            id,
+            generator,
+            r#async,
+            this_param,
+            params,
+            body,
+            type_parameters,
+            return_type,
+            modifiers,
+            scope_id: Cell::default(),
+        }
+    }
+
     pub fn is_typescript_syntax(&self) -> bool {
         matches!(
             self.r#type,
@@ -2200,6 +2369,22 @@ impl<'a> Function<'a> {
 
     pub fn is_strict(&self) -> bool {
         self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())
+    }
+}
+
+impl<'a> Hash for Function<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.r#type.hash(state);
+        self.span.hash(state);
+        self.id.hash(state);
+        self.generator.hash(state);
+        self.r#async.hash(state);
+        self.this_param.hash(state);
+        self.params.hash(state);
+        self.body.hash(state);
+        self.type_parameters.hash(state);
+        self.return_type.hash(state);
+        self.modifiers.hash(state);
     }
 }
 
@@ -2307,7 +2492,7 @@ impl<'a> FunctionBody<'a> {
 
 /// Arrow Function Definitions
 #[visited_node(scope(ScopeFlags::Function | ScopeFlags::Arrow))]
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct ArrowFunctionExpression<'a> {
@@ -2322,9 +2507,31 @@ pub struct ArrowFunctionExpression<'a> {
 
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 impl<'a> ArrowFunctionExpression<'a> {
+    pub fn new(
+        span: Span,
+        expression: bool,
+        r#async: bool,
+        params: Box<'a, FormalParameters<'a>>,
+        body: Box<'a, FunctionBody<'a>>,
+        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    ) -> Self {
+        Self {
+            span,
+            expression,
+            r#async,
+            params,
+            body,
+            type_parameters,
+            return_type,
+            scope_id: Cell::default(),
+        }
+    }
+
     /// Get expression part of `ArrowFunctionExpression`: `() => expression_part`.
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         if self.expression {
@@ -2333,6 +2540,18 @@ impl<'a> ArrowFunctionExpression<'a> {
             }
         }
         None
+    }
+}
+
+impl<'a> Hash for ArrowFunctionExpression<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.expression.hash(state);
+        self.r#async.hash(state);
+        self.params.hash(state);
+        self.body.hash(state);
+        self.type_parameters.hash(state);
+        self.return_type.hash(state);
     }
 }
 
@@ -2350,7 +2569,7 @@ pub struct YieldExpression<'a> {
 
 /// Class Definitions
 #[visited_node(scope(ScopeFlags::StrictMode), enter_scope_before(id))]
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct Class<'a> {
@@ -2366,9 +2585,38 @@ pub struct Class<'a> {
     pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
     /// Valid Modifiers: `export`, `abstract`
     pub modifiers: Modifiers<'a>,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 impl<'a> Class<'a> {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        r#type: ClassType,
+        span: Span,
+        decorators: Vec<'a, Decorator<'a>>,
+        id: Option<BindingIdentifier<'a>>,
+        super_class: Option<Expression<'a>>,
+        body: Box<'a, ClassBody<'a>>,
+        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+        super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: Option<Vec<'a, TSClassImplements<'a>>>,
+        modifiers: Modifiers<'a>,
+    ) -> Self {
+        Self {
+            r#type,
+            span,
+            decorators,
+            id,
+            super_class,
+            body,
+            type_parameters,
+            super_type_parameters,
+            implements,
+            modifiers,
+            scope_id: Cell::default(),
+        }
+    }
+
     pub fn is_expression(&self) -> bool {
         self.r#type == ClassType::ClassExpression
     }
@@ -2383,6 +2631,21 @@ impl<'a> Class<'a> {
 
     pub fn is_typescript_syntax(&self) -> bool {
         self.is_declare()
+    }
+}
+
+impl<'a> Hash for Class<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.r#type.hash(state);
+        self.span.hash(state);
+        self.decorators.hash(state);
+        self.id.hash(state);
+        self.super_class.hash(state);
+        self.body.hash(state);
+        self.type_parameters.hash(state);
+        self.super_type_parameters.hash(state);
+        self.implements.hash(state);
+        self.modifiers.hash(state);
     }
 }
 
@@ -2613,13 +2876,27 @@ impl<'a> PrivateIdentifier<'a> {
 }
 
 #[visited_node(scope(ScopeFlags::ClassStaticBlock))]
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct StaticBlock<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+impl<'a> StaticBlock<'a> {
+    pub fn new(span: Span, body: Vec<'a, Statement<'a>>) -> Self {
+        Self { span, body, scope_id: Cell::default() }
+    }
+}
+
+impl<'a> Hash for StaticBlock<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.body.hash(state);
+    }
 }
 
 #[visited_node]
