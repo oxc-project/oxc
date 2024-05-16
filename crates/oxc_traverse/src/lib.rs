@@ -114,7 +114,7 @@ mod walk;
 /// struct MyTransform;
 ///
 /// impl<'a> Traverse<'a> for MyTransform {
-///     fn enter_numeric_literal(&mut self, node: &mut NumericLiteral<'a>, ctx: &TraverseCtx<'a>) {
+///     fn enter_numeric_literal(&mut self, node: &mut NumericLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
 ///         // Read parent
 ///         if let Ancestor::BinaryExpressionRight(bin_expr_ref) = ctx.parent() {
 ///             // This is legal

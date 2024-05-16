@@ -9,9 +9,9 @@ export default function generateTraverseTraitCode(types) {
         const snakeName = camelToSnake(type.name);
         traverseMethods += `
             #[inline]
-            fn enter_${snakeName}(&mut self, node: &mut ${type.rawName}, ctx: &TraverseCtx<'a>) {}
+            fn enter_${snakeName}(&mut self, node: &mut ${type.rawName}, ctx: &mut TraverseCtx<'a>) {}
             #[inline]
-            fn exit_${snakeName}(&mut self, node: &mut ${type.rawName}, ctx: &TraverseCtx<'a>) {}
+            fn exit_${snakeName}(&mut self, node: &mut ${type.rawName}, ctx: &mut TraverseCtx<'a>) {}
         `;
     }
 
