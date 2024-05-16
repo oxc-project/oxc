@@ -218,7 +218,7 @@ expression: rules_of_hooks
  5 │                         if (b) return;
    ╰────
 
-  × eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook2" is called conditionally. React Hooks must be called in the exact same order in every component render.
+  × eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook2" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:6:25]
  5 │                         if (b) return;
  6 │                         useHook2();
@@ -234,7 +234,7 @@ expression: rules_of_hooks
  10 │                         if (d) return;
     ╰────
 
-  × eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook4" is called conditionally. React Hooks must be called in the exact same order in every component render.
+  × eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook4" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
     ╭─[rules_of_hooks.tsx:11:25]
  10 │                         if (d) return;
  11 │                         useHook4();
@@ -250,7 +250,7 @@ expression: rules_of_hooks
  5 │                     if (b) continue;
    ╰────
 
-  × eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook2" is called conditionally. React Hooks must be called in the exact same order in every component render.
+  × eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook2" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:6:21]
  5 │                     if (b) continue;
  6 │                     useHook2();

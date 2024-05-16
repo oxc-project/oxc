@@ -1490,7 +1490,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_module_lexer"
-version = "0.0.0"
+version = "0.13.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1660,8 +1660,6 @@ version = "0.0.0"
 dependencies = [
  "console",
  "project-root",
- "serde",
- "serde_json",
  "similar",
  "ureq",
  "url",
@@ -1680,7 +1678,6 @@ dependencies = [
  "oxc_tasks_common",
  "oxc_transformer",
  "pico-args",
- "serde",
  "serde_json",
  "walkdir",
 ]
@@ -1701,6 +1698,7 @@ dependencies = [
  "ropey",
  "rustc-hash",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
