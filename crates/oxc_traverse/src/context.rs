@@ -13,10 +13,12 @@ const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
 ///
 /// Provides ability to:
 /// * Query parent/ancestor of current node via [`parent`], [`ancestor`], [`find_ancestor`].
-/// * Get scopes tree and symbols table via [`scopes`], [`symbols`], [`find_scope`],
-///   [`find_scope_by_flags`].
+/// * Get scopes tree and symbols table via [`scopes`], [`symbols`], [`scopes_mut`], [`symbols_mut`],
+///   [`find_scope`], [`find_scope_by_flags`].
 /// * Create AST nodes via AST builder [`ast`].
 /// * Allocate into arena via [`alloc`].
+///
+/// # Namespaced APIs
 ///
 /// All APIs are provided via 2 routes:
 ///
@@ -29,11 +31,64 @@ const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
 /// | `ctx.current_scope_id()` | `ctx.scoping.current_scope_id()` |
 /// | `ctx.alloc(thing)`       | `ctx.ast.alloc(thing)`           |
 ///
+/// Purpose of the "namespaces" is to support if you want to mutate scope tree or symbol table
+/// while holding an `&Ancestor`, or AST nodes obtained from an `&Ancestor`.
+///
+/// For example, this will not compile because it attempts to borrow `ctx`
+/// immutably and mutably at same time:
+///
+/// ```nocompile
+/// use oxc_ast::ast::*;
+/// use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+///
+/// struct MyTransform;
+/// impl<'a> Traverse<'a> for MyTransform {
+///     fn enter_unary_expression(&mut self, unary_expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+///         // `right` is ultimately borrowed from `ctx`
+///         let right = match ctx.parent() {
+///             Ancestor::BinaryExpressionLeft(bin_expr) => bin_expr.right(),
+///             _ => return,
+///         };
+///
+///         // Won't compile! `ctx.scopes_mut()` attempts to mut borrow `ctx`
+///         // while it's already borrowed by `right`.
+///         let scope_tree_mut = ctx.scopes_mut();
+///
+///         // Use `right` later on
+///         dbg!(right);
+///     }
+/// }
+/// ```
+///
+/// You can fix this by using the "namespaced" methods instead.
+/// This works because you can borrow `ctx.ancestry` and `ctx.scoping` simultaneously:
+///
+/// ```
+/// use oxc_ast::ast::*;
+/// use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+///
+/// struct MyTransform;
+/// impl<'a> Traverse<'a> for MyTransform {
+///     fn enter_unary_expression(&mut self, unary_expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+///         let right = match ctx.ancestry.parent() {
+///             Ancestor::BinaryExpressionLeft(bin_expr) => bin_expr.right(),
+///             _ => return,
+///         };
+///
+///         let scope_tree_mut = ctx.scoping.scopes_mut();
+///
+///         dbg!(right);
+///     }
+/// }
+/// ```
+///
 /// [`parent`]: `TraverseCtx::parent`
 /// [`ancestor`]: `TraverseCtx::ancestor`
 /// [`find_ancestor`]: `TraverseCtx::find_ancestor`
 /// [`scopes`]: `TraverseCtx::scopes`
 /// [`symbols`]: `TraverseCtx::symbols`
+/// [`scopes_mut`]: `TraverseCtx::scopes_mut`
+/// [`symbols_mut`]: `TraverseCtx::symbols_mut`
 /// [`find_scope`]: `TraverseCtx::find_scope`
 /// [`find_scope_by_flags`]: `TraverseCtx::find_scope_by_flags`
 /// [`ast`]: `TraverseCtx::ast`
@@ -191,12 +246,28 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.scopes()
     }
 
+    /// Get mutable scopes tree.
+    ///
+    /// Shortcut for `ctx.scoping.scopes_mut`.
+    #[inline]
+    pub fn scopes_mut(&mut self) -> &mut ScopeTree {
+        self.scoping.scopes_mut()
+    }
+
     /// Get symbols table.
     ///
     /// Shortcut for `ctx.scoping.symbols`.
     #[inline]
     pub fn symbols(&self) -> &SymbolTable {
         self.scoping.symbols()
+    }
+
+    /// Get mutable symbols table.
+    ///
+    /// Shortcut for `ctx.scoping.symbols_mut`.
+    #[inline]
+    pub fn symbols_mut(&mut self) -> &mut SymbolTable {
+        self.scoping.symbols_mut()
     }
 
     /// Walk up trail of scopes to find a scope.
@@ -423,10 +494,22 @@ impl TraverseScoping {
         &self.scopes
     }
 
+    /// Get mutable scopes tree
+    #[inline]
+    pub fn scopes_mut(&mut self) -> &mut ScopeTree {
+        &mut self.scopes
+    }
+
     /// Get symbols table
     #[inline]
     pub fn symbols(&self) -> &SymbolTable {
         &self.symbols
+    }
+
+    /// Get mutable symbols table
+    #[inline]
+    pub fn symbols_mut(&mut self) -> &mut SymbolTable {
+        &mut self.symbols
     }
 
     /// Walk up trail of scopes to find a scope.
