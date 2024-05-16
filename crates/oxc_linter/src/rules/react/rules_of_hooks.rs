@@ -42,7 +42,7 @@ mod diagnostics {
         .with_label(span)
     }
 
-    pub(super) fn look_hook(span: Span, hook_name: &str) -> D {
+    pub(super) fn loop_hook(span: Span, hook_name: &str) -> D {
         D::error(format!(
             "eslint-plugin-react-hooks(rules-of-hooks): \
             React Hook {hook_name:?} may be executed more than once. Possibly \
@@ -237,8 +237,8 @@ impl Rule for RulesOfHooks {
         }
 
         // Is this node cyclic?
-        if self.is_cyclic(ctx, node_cfg_ix) {
-            return ctx.diagnostic(diagnostics::look_hook(span, hook_name));
+        if self.is_cyclic(ctx, node, parent_func) {
+            return ctx.diagnostic(diagnostics::loop_hook(span, hook_name));
         }
 
         if self.is_conditional(ctx, func_cfg_ix, node_cfg_ix)
@@ -254,12 +254,20 @@ impl Rule for RulesOfHooks {
 impl RulesOfHooks {
     #![allow(clippy::unused_self, clippy::inline_always)]
     #[inline(always)]
-    fn is_cyclic(&self, ctx: &LintContext, node_cfg_ix: NodeIndex) -> bool {
-        let graph = &ctx.semantic().cfg().graph;
-        petgraph::algo::dijkstra(graph, node_cfg_ix, None, |_| 0)
-            .into_keys()
-            .flat_map(|it| graph.edges_directed(it, petgraph::Direction::Outgoing))
-            .any(|edge| matches!(edge.weight(), EdgeType::Backedge))
+    fn is_cyclic(&self, ctx: &LintContext, node: &AstNode, func: &AstNode) -> bool {
+        // TODO: use cfg instead
+        ctx.nodes().ancestors(node.id()).take_while(|id| *id != func.id()).any(|id| {
+            use AstKind::*;
+            let maybe_loop = ctx.nodes().kind(id);
+            matches! {
+                maybe_loop,
+                | DoWhileStatement(_)
+                | ForInStatement(_)
+                | ForOfStatement(_)
+                | ForStatement(_)
+                | WhileStatement(_)
+            }
+        })
     }
 
     #[inline(always)]
@@ -832,12 +840,40 @@ fn test() {
             }
         ",
         "
-                function useLabeledBlock() {
-                    label: {
-                        useHook();
-                        if (a) break label;
-                    }
+            function useLabeledBlock() {
+                label: {
+                    useHook();
+                    if (a) break label;
                 }
+            }
+        ",
+        "
+            export const FalsePositive = ({ editor, anchorElem, isLink, linkNodeUrl, close }: Props) => {
+              // This custom hook invocation seems to trigger false positives below
+              const [state, setState] = useCustomHook<State>({
+                inputLinkUrl: linkNodeUrl ?? '',
+                editable: !isLink,
+                lastLinkUrl: '',
+                lastSelection: null
+              });
+
+              const [someThing, setSomeThing] = useState(true);
+
+              const onEdit = useCallback(() => setSomeThing(false), [inputLinkUrl, setSomeThing]);
+
+              const updateLinkEditor = useCallback(() => {
+                const rootElement = editor.getRootElement();
+
+                if (nativeSelection.anchorNode === rootElement) {
+                  let inner = rootElement;
+                  while (inner.firstElementChild !== null) {
+                    inner = inner.firstElementChild as HTMLElement;
+                  }
+                }
+              }, [anchorElem, editor, setSomeThing]);
+
+              return <div>test</div>;
+            };
         ",
     ];
 
