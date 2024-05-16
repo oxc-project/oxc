@@ -445,6 +445,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             }
             flags
         });
+        program.scope_id.set(Some(self.current_scope_id));
         self.enter_node(kind);
 
         /* cfg */
@@ -463,6 +464,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_block_statement(&mut self, stmt: &BlockStatement<'a>) {
         let kind = AstKind::BlockStatement(self.alloc(stmt));
         self.enter_scope(ScopeFlags::empty());
+        stmt.scope_id.set(Some(self.current_scope_id));
         self.enter_node(kind);
 
         /* cfg */
@@ -826,6 +828,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             stmt.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
         if is_lexical_declaration {
             self.enter_scope(ScopeFlags::empty());
+            stmt.scope_id.set(Some(self.current_scope_id));
         }
         self.enter_node(kind);
         if let Some(init) = &stmt.init {
@@ -902,6 +905,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let is_lexical_declaration = stmt.left.is_lexical_declaration();
         if is_lexical_declaration {
             self.enter_scope(ScopeFlags::empty());
+            stmt.scope_id.set(Some(self.current_scope_id));
         }
         self.enter_node(kind);
         self.visit_for_statement_left(&stmt.left);
@@ -971,6 +975,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let is_lexical_declaration = stmt.left.is_lexical_declaration();
         if is_lexical_declaration {
             self.enter_scope(ScopeFlags::empty());
+            stmt.scope_id.set(Some(self.current_scope_id));
         }
         self.enter_node(kind);
         self.visit_for_statement_left(&stmt.left);
@@ -1181,6 +1186,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.visit_expression(&stmt.discriminant);
         self.enter_scope(ScopeFlags::empty());
+        stmt.scope_id.set(Some(self.current_scope_id));
 
         /* cfg */
         let discriminant_graph_ix = self.cfg.current_node_ix;
@@ -1480,6 +1486,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             }
             /* cfg */
 
+            // TODO: Is it intentional that we visit this twice?
             self.visit_finally_clause(finalizer);
         }
 
@@ -1501,6 +1508,29 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.leave_node(kind);
+    }
+
+    fn visit_catch_clause(&mut self, clause: &CatchClause<'a>) {
+        let kind = AstKind::CatchClause(self.alloc(clause));
+        self.enter_scope(ScopeFlags::empty());
+        clause.scope_id.set(Some(self.current_scope_id));
+        self.enter_node(kind);
+        if let Some(param) = &clause.param {
+            self.visit_catch_parameter(param);
+        }
+        self.visit_statements(&clause.body.body);
+        self.leave_node(kind);
+        self.leave_scope();
+    }
+
+    fn visit_finally_clause(&mut self, clause: &BlockStatement<'a>) {
+        let kind = AstKind::FinallyClause(self.alloc(clause));
+        self.enter_scope(ScopeFlags::empty());
+        clause.scope_id.set(Some(self.current_scope_id));
+        self.enter_node(kind);
+        self.visit_statements(&clause.body);
+        self.leave_node(kind);
+        self.leave_scope();
     }
 
     fn visit_while_statement(&mut self, stmt: &WhileStatement<'a>) {
@@ -1593,6 +1623,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             }
             flags
         });
+        func.scope_id.set(Some(self.current_scope_id));
 
         /* cfg */
         let preserved = self.cfg.preserve_expression_state();
@@ -1649,6 +1680,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             // Class expressions create a temporary scope with the class name as its only variable
             // E.g., `let c = class A { foo() { console.log(A) } }`
             self.enter_scope(ScopeFlags::empty());
+            class.scope_id.set(Some(self.current_scope_id));
         }
 
         self.enter_node(kind);
@@ -1688,9 +1720,20 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
     }
 
+    fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
+        let kind = AstKind::StaticBlock(self.alloc(block));
+        self.enter_scope(ScopeFlags::ClassStaticBlock);
+        block.scope_id.set(Some(self.current_scope_id));
+        self.enter_node(kind);
+        self.visit_statements(&block.body);
+        self.leave_node(kind);
+        self.leave_scope();
+    }
+
     fn visit_arrow_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow);
+        expr.scope_id.set(Some(self.current_scope_id));
 
         /* cfg */
         let preserved = self.cfg.preserve_expression_state();
@@ -1720,6 +1763,45 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         if let Some(parameters) = &expr.type_parameters {
             self.visit_ts_type_parameter_declaration(parameters);
+        }
+        self.leave_node(kind);
+        self.leave_scope();
+    }
+
+    fn visit_enum(&mut self, decl: &TSEnumDeclaration<'a>) {
+        let kind = AstKind::TSEnumDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        self.visit_binding_identifier(&decl.id);
+        self.enter_scope(ScopeFlags::empty());
+        decl.scope_id.set(Some(self.current_scope_id));
+        for member in &decl.members {
+            self.visit_enum_member(member);
+        }
+        self.leave_scope();
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_module_block(&mut self, block: &TSModuleBlock<'a>) {
+        let kind = AstKind::TSModuleBlock(self.alloc(block));
+        self.enter_scope(ScopeFlags::TsModuleBlock);
+        block.scope_id.set(Some(self.current_scope_id));
+        self.enter_node(kind);
+        self.visit_statements(&block.body);
+        self.leave_node(kind);
+        self.leave_scope();
+    }
+
+    fn visit_ts_type_parameter(&mut self, ty: &TSTypeParameter<'a>) {
+        let kind = AstKind::TSTypeParameter(self.alloc(ty));
+        self.enter_scope(ScopeFlags::empty());
+        ty.scope_id.set(Some(self.current_scope_id));
+        self.enter_node(kind);
+        if let Some(constraint) = &ty.constraint {
+            self.visit_ts_type(constraint);
+        }
+
+        if let Some(default) = &ty.default {
+            self.visit_ts_type(default);
         }
         self.leave_node(kind);
         self.leave_scope();
