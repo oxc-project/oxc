@@ -1659,8 +1659,6 @@ version = "0.0.0"
 dependencies = [
  "console",
  "project-root",
- "serde",
- "serde_json",
  "similar",
  "ureq",
  "url",
@@ -1679,7 +1677,6 @@ dependencies = [
  "oxc_tasks_common",
  "oxc_transformer",
  "pico-args",
- "serde",
  "serde_json",
  "walkdir",
 ]
@@ -1700,6 +1697,7 @@ dependencies = [
  "ropey",
  "rustc-hash",
  "serde",
+ "serde_json",
 ]
 
 [[package]]

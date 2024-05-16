@@ -29,6 +29,7 @@ oxc_traverse    = { workspace = true }
 rustc-hash = { workspace = true }
 indexmap   = { workspace = true }
 serde      = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 ropey      = { workspace = true }
 
 [dev-dependencies]

@@ -3,18 +3,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use serde::de::DeserializeOwned;
-use serde_json::Value;
-
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_parser::Parser;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
-use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
-use oxc_transformer::{
-    ES2015Options, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
-};
+use oxc_tasks_common::{normalize_path, print_diff_in_terminal};
+use oxc_transformer::{BabelOptions, TransformOptions, Transformer};
 
 use crate::{
     constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
@@ -75,53 +70,7 @@ impl TestCaseKind {
 }
 
 fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOptions> {
-    fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> serde_json::Result<T> {
-        match value {
-            Some(v) => serde_json::from_value::<T>(v),
-            None => Ok(T::default()),
-        }
-    }
-
-    let react = if let Some(options) = options.get_preset("react") {
-        get_options::<ReactOptions>(options)?
-    } else {
-        let jsx_plugin = options.get_plugin("transform-react-jsx");
-        let jsx_development_plugin = options.get_plugin("transform-react-jsx-development");
-        let has_jsx_plugin =
-            jsx_plugin.as_ref().is_some() || jsx_development_plugin.as_ref().is_some();
-        let mut react_options = jsx_plugin
-            .map(get_options::<ReactOptions>)
-            .or_else(|| jsx_development_plugin.map(get_options::<ReactOptions>))
-            .transpose()?
-            .unwrap_or_default();
-        react_options.development = options.get_plugin("transform-react-jsx-development").is_some();
-        react_options.jsx_plugin = has_jsx_plugin;
-        react_options.display_name_plugin =
-            options.get_plugin("transform-react-display-name").is_some();
-        react_options.jsx_self_plugin = options.get_plugin("transform-react-jsx-self").is_some();
-        react_options.jsx_source_plugin =
-            options.get_plugin("transform-react-jsx-source").is_some();
-        react_options
-    };
-
-    let es2015 = ES2015Options {
-        arrow_function: options
-            .get_plugin("transform-arrow-functions")
-            .map(get_options)
-            .transpose()?,
-    };
-
-    Ok(TransformOptions {
-        cwd: options.cwd.clone().unwrap(),
-        assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
-        typescript: options
-            .get_plugin("transform-typescript")
-            .map(get_options::<TypeScriptOptions>)
-            .transpose()?
-            .unwrap_or_default(),
-        react,
-        es2015,
-    })
+    TransformOptions::from_babel_options(options)
 }
 
 pub trait TestCase {
@@ -242,7 +191,7 @@ pub struct ConformanceTestCase {
 
 impl TestCase for ConformanceTestCase {
     fn new(cwd: &Path, path: &Path) -> Self {
-        let mut options = BabelOptions::from_path(path.parent().unwrap());
+        let mut options = BabelOptions::from_test_path(path.parent().unwrap());
         options.cwd.replace(cwd.to_path_buf());
         let transform_options = transform_options(&options);
         Self { path: path.to_path_buf(), options, transform_options }
@@ -437,7 +386,7 @@ impl ExecTestCase {
 
 impl TestCase for ExecTestCase {
     fn new(cwd: &Path, path: &Path) -> Self {
-        let mut options = BabelOptions::from_path(path.parent().unwrap());
+        let mut options = BabelOptions::from_test_path(path.parent().unwrap());
         options.cwd.replace(cwd.to_path_buf());
         let transform_options = transform_options(&options);
         Self { path: path.to_path_buf(), options, transform_options }
