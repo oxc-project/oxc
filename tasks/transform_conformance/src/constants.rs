@@ -1,4 +1,6 @@
 pub(crate) const PLUGINS: &[&str] = &[
+    // Env
+    // "babel-preset-env",
     // // ES2024
     // "babel-plugin-transform-unicode-sets-regex",
     // // ES2022

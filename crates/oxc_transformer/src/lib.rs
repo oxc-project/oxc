@@ -13,6 +13,7 @@ mod compiler_assumptions;
 mod context;
 mod options;
 // Presets: <https://babel.dev/docs/presets>
+mod env;
 mod es2015;
 mod react;
 mod typescript;
@@ -23,6 +24,7 @@ mod helpers {
 
 use std::{path::Path, rc::Rc};
 
+use env::Env;
 use es2015::ES2015;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, Trivias};
@@ -31,8 +33,8 @@ use oxc_span::SourceType;
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
 pub use crate::{
-    compiler_assumptions::CompilerAssumptions, es2015::ES2015Options, options::TransformOptions,
-    react::ReactOptions, typescript::TypeScriptOptions,
+    compiler_assumptions::CompilerAssumptions, env::EnvOptions, es2015::ES2015Options,
+    options::TransformOptions, react::ReactOptions, typescript::TypeScriptOptions,
 };
 
 use crate::{
@@ -46,6 +48,8 @@ pub struct Transformer<'a> {
     // NOTE: all callbacks must run in order.
     x0_typescript: TypeScript<'a>,
     x1_react: React<'a>,
+    #[allow(unused)]
+    x2_env: Env,
     x3_es2015: ES2015<'a>,
 }
 
@@ -70,6 +74,7 @@ impl<'a> Transformer<'a> {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, &ctx),
             x1_react: React::new(options.react, &ctx),
+            x2_env: Env::new(options.env),
             x3_es2015: ES2015::new(options.es2015, &ctx),
         }
     }

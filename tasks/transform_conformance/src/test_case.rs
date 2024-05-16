@@ -13,7 +13,7 @@ use oxc_parser::Parser;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions};
 use oxc_transformer::{
-    ES2015Options, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
+    ES2015Options, EnvOptions, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
 };
 
 use crate::{
@@ -121,6 +121,7 @@ fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOpti
             .unwrap_or_default(),
         react,
         es2015,
+        env: EnvOptions,
     })
 }
 
