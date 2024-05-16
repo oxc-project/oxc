@@ -18,6 +18,17 @@ const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
 /// * Create AST nodes via AST builder [`ast`].
 /// * Allocate into arena via [`alloc`].
 ///
+/// All APIs are provided via 2 routes:
+///
+/// 1. Directly on `TraverseCtx`.
+/// 2. Via "namespaces".
+///
+/// | Direct                   | Namespaced                       |
+/// |--------------------------|----------------------------------|
+/// | `ctx.parent()`           | `ctx.ancestry.parent()`          |
+/// | `ctx.current_scope_id()` | `ctx.scoping.current_scope_id()` |
+/// | `ctx.alloc(thing)`       | `ctx.ast.alloc(thing)`           |
+///
 /// [`parent`]: `TraverseCtx::parent`
 /// [`ancestor`]: `TraverseCtx::ancestor`
 /// [`find_ancestor`]: `TraverseCtx::find_ancestor`
@@ -28,9 +39,18 @@ const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
 /// [`ast`]: `TraverseCtx::ast`
 /// [`alloc`]: `TraverseCtx::alloc`
 pub struct TraverseCtx<'a> {
-    stack: Vec<Ancestor<'a>>,
+    pub ancestry: TraverseAncestry<'a>,
     pub scoping: TraverseScoping,
     pub ast: AstBuilder<'a>,
+}
+
+/// Traverse ancestry context.
+///
+/// Contains a stack of `Ancestor`s, and provides methods to get parent/ancestor of current node.
+///
+/// `walk_*` methods push/pop `Ancestor`s to `stack` when entering/exiting nodes.
+pub struct TraverseAncestry<'a> {
+    stack: Vec<Ancestor<'a>>,
 }
 
 /// Traverse scope context.
@@ -56,37 +76,40 @@ pub enum FinderRet<T> {
 impl<'a> TraverseCtx<'a> {
     /// Create new traversal context.
     pub(crate) fn new(scopes: ScopeTree, symbols: SymbolTable, allocator: &'a Allocator) -> Self {
-        let mut stack = Vec::with_capacity(INITIAL_STACK_CAPACITY);
-        stack.push(Ancestor::None);
-
+        let ancestry = TraverseAncestry::new();
         let scoping = TraverseScoping::new(scopes, symbols);
         let ast = AstBuilder::new(allocator);
-
-        Self { stack, scoping, ast }
+        Self { ancestry, scoping, ast }
     }
 
     /// Allocate a node in the arena.
+    ///
     /// Returns a [`Box<T>`].
+    ///
+    /// Shortcut for `ctx.ast.alloc`.
     #[inline]
     pub fn alloc<T>(&self, node: T) -> Box<'a, T> {
         self.ast.alloc(node)
     }
 
     /// Get parent of current node.
+    ///
+    /// Shortcut for `ctx.ancestry.parent`.
     #[inline]
     #[allow(unsafe_code)]
     pub fn parent(&self) -> &Ancestor<'a> {
-        // SAFETY: Stack contains 1 entry initially. Entries are pushed as traverse down the AST,
-        // and popped as go back up. So even when visiting `Program`, the initial entry is in the stack.
-        unsafe { self.stack.last().unwrap_unchecked() }
+        self.ancestry.parent()
     }
 
     /// Get ancestor of current node.
+    ///
     /// `level` is number of levels above.
     /// `ancestor(1).unwrap()` is equivalent to `parent()`.
+    ///
+    /// Shortcut for `ctx.ancestry.ancestor`.
     #[inline]
     pub fn ancestor(&self, level: usize) -> Option<&Ancestor<'a>> {
-        self.stack.get(self.stack.len() - level)
+        self.ancestry.ancestor(level)
     }
 
     /// Walk up trail of ancestors to find a node.
@@ -105,7 +128,8 @@ impl<'a> TraverseCtx<'a> {
     /// struct MyTraverse;
     /// impl<'a> Traverse<'a> for MyTraverse {
     ///     fn enter_this_expression(&mut self, this_expr: &mut ThisExpression, ctx: &TraverseCtx<'a>) {
-    ///         // Get name of function where `this` is bound
+    ///         // Get name of function where `this` is bound.
+    ///         // NB: This example doesn't handle `this` in class fields or static blocks.
     ///         let fn_id = ctx.find_ancestor(|ancestor| {
     ///             match ancestor {
     ///                 Ancestor::FunctionBody(func) => FinderRet::Found(func.id()),
@@ -116,29 +140,23 @@ impl<'a> TraverseCtx<'a> {
     ///     }
     /// }
     /// ```
-    //
-    // `'c` lifetime on `&'c self` and `&'c Ancestor` passed into the closure
-    // allows an `Ancestor` or AST node to be returned from the closure.
+    ///
+    /// Shortcut for `self.ancestry.find_ancestor`.
     pub fn find_ancestor<'c, F, O>(&'c self, finder: F) -> Option<O>
     where
         F: Fn(&'c Ancestor<'a>) -> FinderRet<O>,
     {
-        for ancestor in self.stack.iter().rev() {
-            match finder(ancestor) {
-                FinderRet::Found(res) => return Some(res),
-                FinderRet::Stop => return None,
-                FinderRet::Continue => {}
-            }
-        }
-        None
+        self.ancestry.find_ancestor(finder)
     }
 
     /// Get depth in the AST.
     ///
     /// Count includes current node. i.e. in `Program`, depth is 1.
+    ///
+    /// Shortcut for `self.ancestry.ancestors_depth`.
     #[inline]
     pub fn ancestors_depth(&self) -> usize {
-        self.stack.len()
+        self.ancestry.ancestors_depth()
     }
 
     /// Get current scope ID.
@@ -202,13 +220,129 @@ impl<'a> TraverseCtx<'a> {
 
 // Methods used internally within crate
 impl<'a> TraverseCtx<'a> {
-    /// Push item onto stack.
+    /// Shortcut for `self.ancestry.push_stack`, to make `walk_*` methods less verbose.
+    #[inline]
+    pub(crate) fn push_stack(&mut self, ancestor: Ancestor<'a>) {
+        self.ancestry.push_stack(ancestor);
+    }
+
+    /// Shortcut for `self.ancestry.pop_stack`, to make `walk_*` methods less verbose.
+    ///
+    /// # SAFETY
+    /// See safety constraints of `TraverseAncestry.pop_stack`.
+    #[inline]
+    #[allow(unsafe_code)]
+    pub(crate) unsafe fn pop_stack(&mut self) {
+        self.ancestry.pop_stack();
+    }
+
+    /// Shortcut for `self.ancestry.retag_stack`, to make `walk_*` methods less verbose.
+    ///
+    /// # SAFETY
+    /// See safety constraints of `TraverseAncestry.retag_stack`.
+    #[inline]
+    #[allow(unsafe_code, clippy::ptr_as_ptr, clippy::ref_as_ptr)]
+    pub(crate) unsafe fn retag_stack(&mut self, ty: AncestorType) {
+        self.ancestry.retag_stack(ty);
+    }
+
+    /// Shortcut for `ctx.scoping.set_current_scope_id`, to make `walk_*` methods less verbose.
+    #[inline]
+    pub(crate) fn set_current_scope_id(&mut self, scope_id: ScopeId) {
+        self.scoping.set_current_scope_id(scope_id);
+    }
+}
+
+// Public methods
+impl<'a> TraverseAncestry<'a> {
+    /// Get parent of current node.
+    #[inline]
+    #[allow(unsafe_code)]
+    pub fn parent(&self) -> &Ancestor<'a> {
+        // SAFETY: Stack contains 1 entry initially. Entries are pushed as traverse down the AST,
+        // and popped as go back up. So even when visiting `Program`, the initial entry is in the stack.
+        unsafe { self.stack.last().unwrap_unchecked() }
+    }
+
+    /// Get ancestor of current node.
+    ///
+    /// `level` is number of levels above.
+    /// `ancestor(1).unwrap()` is equivalent to `parent()`.
+    #[inline]
+    pub fn ancestor(&self, level: usize) -> Option<&Ancestor<'a>> {
+        self.stack.get(self.stack.len() - level)
+    }
+
+    /// Walk up trail of ancestors to find a node.
+    ///
+    /// `finder` should return:
+    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
+    /// * `FinderRet::Stop` to stop walking and return `None`.
+    /// * `FinderRet::Continue` to continue walking up.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_ast::ast::ThisExpression;
+    /// use oxc_traverse::{Ancestor, FinderRet, Traverse, TraverseCtx};
+    ///
+    /// struct MyTraverse;
+    /// impl<'a> Traverse<'a> for MyTraverse {
+    ///     fn enter_this_expression(&mut self, this_expr: &mut ThisExpression, ctx: &TraverseCtx<'a>) {
+    ///         // Get name of function where `this` is bound.
+    ///         // NB: This example doesn't handle `this` in class fields or static blocks.
+    ///         let fn_id = ctx.ancestry.find_ancestor(|ancestor| {
+    ///             match ancestor {
+    ///                 Ancestor::FunctionBody(func) => FinderRet::Found(func.id()),
+    ///                 Ancestor::FunctionParams(func) => FinderRet::Found(func.id()),
+    ///                 _ => FinderRet::Continue
+    ///             }
+    ///         });
+    ///     }
+    /// }
+    /// ```
+    //
+    // `'c` lifetime on `&'c self` and `&'c Ancestor` passed into the closure
+    // allows an `Ancestor` or AST node to be returned from the closure.
+    pub fn find_ancestor<'c, F, O>(&'c self, finder: F) -> Option<O>
+    where
+        F: Fn(&'c Ancestor<'a>) -> FinderRet<O>,
+    {
+        for ancestor in self.stack.iter().rev() {
+            match finder(ancestor) {
+                FinderRet::Found(res) => return Some(res),
+                FinderRet::Stop => return None,
+                FinderRet::Continue => {}
+            }
+        }
+        None
+    }
+
+    /// Get depth in the AST.
+    ///
+    /// Count includes current node. i.e. in `Program`, depth is 1.
+    #[inline]
+    pub fn ancestors_depth(&self) -> usize {
+        self.stack.len()
+    }
+}
+
+// Methods used internally within crate
+impl<'a> TraverseAncestry<'a> {
+    /// Create new `TraverseAncestry`.
+    fn new() -> Self {
+        let mut stack = Vec::with_capacity(INITIAL_STACK_CAPACITY);
+        stack.push(Ancestor::None);
+        Self { stack }
+    }
+
+    /// Push item onto ancestry stack.
     #[inline]
     pub(crate) fn push_stack(&mut self, ancestor: Ancestor<'a>) {
         self.stack.push(ancestor);
     }
 
-    /// Pop last item off stack.
+    /// Pop last item off ancestry stack.
     /// # SAFETY
     /// * Stack must not be empty.
     /// * Each `pop_stack` call must correspond to a `push_stack` call for same type.
@@ -218,7 +352,7 @@ impl<'a> TraverseCtx<'a> {
         self.stack.pop().unwrap_unchecked();
     }
 
-    /// Retag last item on stack.
+    /// Retag last item on ancestry stack.
     ///
     /// i.e. Alter discriminant of `Ancestor` enum, without changing the "payload" it contains
     /// of pointer to the ancestor node.
@@ -240,12 +374,6 @@ impl<'a> TraverseCtx<'a> {
     #[allow(unsafe_code, clippy::ptr_as_ptr, clippy::ref_as_ptr)]
     pub(crate) unsafe fn retag_stack(&mut self, ty: AncestorType) {
         *(self.stack.last_mut().unwrap_unchecked() as *mut _ as *mut AncestorType) = ty;
-    }
-
-    /// Shortcut for `ctx.scoping.set_current_scope_id`, to make `walk_*` methods less verbose.
-    #[inline]
-    pub(crate) fn set_current_scope_id(&mut self, scope_id: ScopeId) {
-        self.scoping.set_current_scope_id(scope_id);
     }
 }
 

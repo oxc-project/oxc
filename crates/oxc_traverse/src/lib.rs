@@ -68,7 +68,7 @@ use oxc_span::SourceType;
 pub mod ancestor;
 pub use ancestor::Ancestor;
 mod context;
-pub use context::{FinderRet, TraverseCtx, TraverseScoping};
+pub use context::{FinderRet, TraverseAncestry, TraverseCtx, TraverseScoping};
 #[allow(clippy::module_inception)]
 mod traverse;
 pub use traverse::Traverse;
