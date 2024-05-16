@@ -50,11 +50,11 @@ impl<'a> ReactJsxSelf<'a> {
 
     #[allow(clippy::unused_self)]
     fn is_inside_constructor(&self, ctx: &TraverseCtx<'a>) -> bool {
-        ctx.find_scope(|scope| {
-            if scope.is_block() || scope.is_arrow() {
+        ctx.find_scope_by_flags(|flags| {
+            if flags.is_block() || flags.is_arrow() {
                 return FinderRet::Continue;
             }
-            FinderRet::Found(scope.is_constructor())
+            FinderRet::Found(flags.is_constructor())
         })
         .unwrap_or(false)
     }

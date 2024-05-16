@@ -61,13 +61,14 @@
 //! to edit by hand.
 
 use oxc_allocator::Allocator;
-
 use oxc_ast::ast::Program;
+use oxc_semantic::SemanticBuilder;
+use oxc_span::SourceType;
 
 pub mod ancestor;
 pub use ancestor::Ancestor;
 mod context;
-pub use context::{FinderRet, TraverseCtx};
+pub use context::{FinderRet, TraverseCtx, TraverseScoping};
 #[allow(clippy::module_inception)]
 mod traverse;
 pub use traverse::Traverse;
@@ -140,11 +141,18 @@ mod walk;
 pub fn traverse_mut<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     program: &mut Program<'a>,
+    source_text: &'a str,
+    source_type: SourceType,
     allocator: &'a Allocator,
 ) {
-    let mut ctx = TraverseCtx::new(allocator);
+    let semantic = SemanticBuilder::new(source_text, source_type)
+        .with_check_syntax_error(true)
+        .build(program)
+        .semantic;
+    let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
+
+    let mut ctx = TraverseCtx::new(scopes, symbols, allocator);
     // SAFETY: Walk functions are constructed to avoid unsoundness
     unsafe { walk::walk_program(traverser, program as *mut Program, &mut ctx) };
     debug_assert!(ctx.ancestors_depth() == 1);
-    debug_assert!(ctx.scopes_depth() == 1);
 }

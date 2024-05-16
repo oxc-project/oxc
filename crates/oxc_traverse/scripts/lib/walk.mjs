@@ -20,15 +20,15 @@ export default function generateWalkFunctionsCode(types) {
             clippy::semicolon_if_nothing_returned,
             clippy::ptr_as_ptr,
             clippy::borrow_as_ptr,
-            clippy::cast_ptr_alignment,
-            clippy::needless_borrow
+            clippy::cast_ptr_alignment
         )]
+
+        use std::cell::Cell;
 
         use oxc_allocator::Vec;
         #[allow(clippy::wildcard_imports)]
         use oxc_ast::ast::*;
-        use oxc_span::SourceType;
-        use oxc_syntax::scope::ScopeFlags;
+        use oxc_syntax::scope::ScopeId;
 
         use crate::{ancestor::{self, AncestorType}, Ancestor, Traverse, TraverseCtx};
 
@@ -49,11 +49,17 @@ export default function generateWalkFunctionsCode(types) {
 }
 
 function generateWalkForStruct(type, types) {
-    const visitedFields = type.fields.filter(field => field.innerTypeName in types);
+    let scopeIdField;
+    const visitedFields = type.fields.filter(field => {
+        if (field.name === 'scope_id' && field.typeName === `Cell<Option<ScopeId>>`) {
+            scopeIdField = field;
+        }
+        return field.innerTypeName in types;
+    });
 
     const {scopeArgs} = type;
-    let scopeEnterField, enterScopeCode, exitScopeCode;
-    if (scopeArgs) {
+    let scopeEnterField, enterScopeCode = '', exitScopeCode = '';
+    if (scopeArgs && scopeIdField) {
         // Get field to enter scope before
         const enterFieldName = scopeArgs.enter_scope_before;
         if (enterFieldName) {
@@ -63,33 +69,26 @@ function generateWalkForStruct(type, types) {
                 `\`visited_node\` attr says to enter scope before field '${enterFieldName}' `
                 + `in '${type.name}', but that field is not visited`
             );
-        } else {
-            scopeEnterField = visitedFields[0];
         }
 
-        const convertExpressionToUsePointers = arg => arg.replace(
-            /(^|[^a-zA-Z0-9_])self\.(?:r#)?([A-Za-z0-9_]+)/g,
-            (_, before, fieldName) => {
-                const field = type.fields.find(field => field.name === fieldName);
-                assert(`Cannot parse conditional in visited_node args: '${arg}' for ${type.name}`);
-                return `${before}(&*(${makeFieldCode(field)}))`;
+        // TODO: Maybe this isn't quite right. `scope_id` fields are `Cell<Option<ScopeId>>`,
+        // so visitor is able to alter the `scope_id` of a node higher up the tree,
+        // but we don't take that into account.
+        // Visitor should not do that though, so maybe it's OK.
+        // In final version, we should not make `scope_id` fields `Cell`s to prevent this.
+        enterScopeCode = `
+            let mut previous_scope_id = None;
+            if let Some(scope_id) = (*(${makeFieldCode(scopeIdField)})).get() {
+                previous_scope_id = Some(ctx.current_scope_id());
+                ctx.set_current_scope_id(scope_id);
             }
-        );
+        `;
 
-        let scopeType = convertExpressionToUsePointers(scopeArgs.scope);
-        if (scopeArgs.strict_if) {
-            scopeType += `.with_strict_mode(${convertExpressionToUsePointers(scopeArgs.strict_if)})`;
-        }
-
-        enterScopeCode = `ctx.push_scope_stack(${scopeType});`;
-        exitScopeCode = `ctx.pop_scope_stack();`;
-        if (scopeArgs.scope_if) {
-            enterScopeCode = `
-                let has_scope = ${convertExpressionToUsePointers(scopeArgs.scope_if)};
-                if has_scope { ${enterScopeCode} }
-            `;
-            exitScopeCode = `if has_scope { ${exitScopeCode} }`;
-        }
+        exitScopeCode = `
+            if let Some(previous_scope_id) = previous_scope_id {
+                ctx.set_current_scope_id(previous_scope_id);
+            }
+        `;
     }
 
     const fieldsCodes = visitedFields.map((field, index) => {
@@ -99,7 +98,11 @@ function generateWalkForStruct(type, types) {
             ? ''
             : `ctx.retag_stack(AncestorType::${type.name}${snakeToCamel(field.name)});`;
         const fieldCode = makeFieldCode(field);
-        const scopeCode = field === scopeEnterField ? enterScopeCode : '';
+        let scopeCode = '';
+        if (field === scopeEnterField) {
+            scopeCode = enterScopeCode;
+            enterScopeCode = '';
+        }
 
         if (field.wrappers[0] === 'Option') {
             let walkCode;
@@ -187,7 +190,6 @@ function generateWalkForStruct(type, types) {
                 )
             );
         `);
-        if (exitScopeCode) fieldsCodes.push(exitScopeCode);
         fieldsCodes.push('ctx.pop_stack();');
     }
 
@@ -198,9 +200,11 @@ function generateWalkForStruct(type, types) {
             node: *mut ${type.rawName},
             ctx: &mut TraverseCtx<'a>
         ) {
+            ${enterScopeCode}
             traverser.enter_${typeSnakeName}(&mut *node, ctx);
             ${fieldsCodes.join('\n')}
             traverser.exit_${typeSnakeName}(&mut *node, ctx);
+            ${exitScopeCode}
         }
     `.replace(/\n\s*\n+/g, '\n');
 }

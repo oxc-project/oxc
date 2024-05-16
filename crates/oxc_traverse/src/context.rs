@@ -1,11 +1,11 @@
 use oxc_allocator::{Allocator, Box};
 use oxc_ast::AstBuilder;
-use oxc_syntax::scope::ScopeFlags;
+use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::ancestor::{Ancestor, AncestorType};
 
 const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
-const INITIAL_SCOPE_STACK_CAPACITY: usize = 32; // 32 entries = 64 bytes
 
 /// Traverse context.
 ///
@@ -13,22 +13,36 @@ const INITIAL_SCOPE_STACK_CAPACITY: usize = 32; // 32 entries = 64 bytes
 ///
 /// Provides ability to:
 /// * Query parent/ancestor of current node via [`parent`], [`ancestor`], [`find_ancestor`].
-/// * Get type of current scope via [`scope`], [`ancestor_scope`], [`find_scope`].
+/// * Get scopes tree and symbols table via [`scopes`], [`symbols`], [`find_scope`],
+///   [`find_scope_by_flags`].
 /// * Create AST nodes via AST builder [`ast`].
 /// * Allocate into arena via [`alloc`].
 ///
 /// [`parent`]: `TraverseCtx::parent`
 /// [`ancestor`]: `TraverseCtx::ancestor`
 /// [`find_ancestor`]: `TraverseCtx::find_ancestor`
-/// [`scope`]: `TraverseCtx::scope`
-/// [`ancestor_scope`]: `TraverseCtx::ancestor_scope`
+/// [`scopes`]: `TraverseCtx::scopes`
+/// [`symbols`]: `TraverseCtx::symbols`
 /// [`find_scope`]: `TraverseCtx::find_scope`
+/// [`find_scope_by_flags`]: `TraverseCtx::find_scope_by_flags`
 /// [`ast`]: `TraverseCtx::ast`
 /// [`alloc`]: `TraverseCtx::alloc`
 pub struct TraverseCtx<'a> {
     stack: Vec<Ancestor<'a>>,
-    scope_stack: Vec<ScopeFlags>,
+    pub scoping: TraverseScoping,
     pub ast: AstBuilder<'a>,
+}
+
+/// Traverse scope context.
+///
+/// Contains the scope tree and symbols table, and provides methods to access them.
+///
+/// `current_scope_id` is the ID of current scope during traversal.
+/// `walk_*` functions update this field when entering/exiting a scope.
+pub struct TraverseScoping {
+    scopes: ScopeTree,
+    symbols: SymbolTable,
+    current_scope_id: ScopeId,
 }
 
 /// Return value when using [`TraverseCtx::find_ancestor`].
@@ -41,14 +55,14 @@ pub enum FinderRet<T> {
 // Public methods
 impl<'a> TraverseCtx<'a> {
     /// Create new traversal context.
-    pub(crate) fn new(allocator: &'a Allocator) -> Self {
+    pub(crate) fn new(scopes: ScopeTree, symbols: SymbolTable, allocator: &'a Allocator) -> Self {
         let mut stack = Vec::with_capacity(INITIAL_STACK_CAPACITY);
         stack.push(Ancestor::None);
 
-        let mut scope_stack = Vec::with_capacity(INITIAL_SCOPE_STACK_CAPACITY);
-        scope_stack.push(ScopeFlags::empty());
+        let scoping = TraverseScoping::new(scopes, symbols);
+        let ast = AstBuilder::new(allocator);
 
-        Self { stack, scope_stack, ast: AstBuilder::new(allocator) }
+        Self { stack, scoping, ast }
     }
 
     /// Allocate a node in the arena.
@@ -127,50 +141,62 @@ impl<'a> TraverseCtx<'a> {
         self.stack.len()
     }
 
-    /// Get current scope info.
+    /// Get current scope ID.
+    ///
+    /// Shortcut for `ctx.scoping.current_scope_id`.
     #[inline]
-    #[allow(unsafe_code)]
-    pub fn scope(&self) -> ScopeFlags {
-        // SAFETY: Scope stack contains 1 entry initially. Entries are pushed as traverse down the AST,
-        // and popped as go back up. So even when visiting `Program`, the initial entry is in the stack.
-        unsafe { *self.scope_stack.last().unwrap_unchecked() }
+    pub fn current_scope_id(&self) -> ScopeId {
+        self.scoping.current_scope_id()
     }
 
-    /// Get scope ancestor.
-    /// `level` is number of scopes above.
-    /// `ancestor_scope(1).unwrap()` is equivalent to `scope()`.
+    /// Get scopes tree.
+    ///
+    /// Shortcut for `ctx.scoping.scopes`.
     #[inline]
-    pub fn ancestor_scope(&self, level: usize) -> Option<ScopeFlags> {
-        self.scope_stack.get(self.stack.len() - level).copied()
+    pub fn scopes(&self) -> &ScopeTree {
+        self.scoping.scopes()
+    }
+
+    /// Get symbols table.
+    ///
+    /// Shortcut for `ctx.scoping.symbols`.
+    #[inline]
+    pub fn symbols(&self) -> &SymbolTable {
+        self.scoping.symbols()
     }
 
     /// Walk up trail of scopes to find a scope.
+    ///
+    /// `finder` is called with `ScopeId`.
     ///
     /// `finder` should return:
     /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
     /// * `FinderRet::Stop` to stop walking and return `None`.
     /// * `FinderRet::Continue` to continue walking up.
+    ///
+    /// This is a shortcut for `ctx.scoping.find_scope`.
     pub fn find_scope<F, O>(&self, finder: F) -> Option<O>
+    where
+        F: Fn(ScopeId) -> FinderRet<O>,
+    {
+        self.scoping.find_scope(finder)
+    }
+
+    /// Walk up trail of scopes to find a scope by checking `ScopeFlags`.
+    ///
+    /// `finder` is called with `ScopeFlags`.
+    ///
+    /// `finder` should return:
+    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
+    /// * `FinderRet::Stop` to stop walking and return `None`.
+    /// * `FinderRet::Continue` to continue walking up.
+    ///
+    /// This is a shortcut for `ctx.scoping.find_scope_by_flags`.
+    pub fn find_scope_by_flags<F, O>(&self, finder: F) -> Option<O>
     where
         F: Fn(ScopeFlags) -> FinderRet<O>,
     {
-        for flags in self.scope_stack.iter().rev().copied() {
-            match finder(flags) {
-                FinderRet::Found(res) => return Some(res),
-                FinderRet::Stop => return None,
-                FinderRet::Continue => {}
-            }
-        }
-        None
-    }
-
-    /// Get depth of scopes.
-    ///
-    /// Count includes global scope.
-    /// i.e. in `Program`, depth is 2 (global scope + program top level scope).
-    #[inline]
-    pub fn scopes_depth(&self) -> usize {
-        self.scope_stack.len()
+        self.scoping.find_scope_by_flags(finder)
     }
 }
 
@@ -216,21 +242,95 @@ impl<'a> TraverseCtx<'a> {
         *(self.stack.last_mut().unwrap_unchecked() as *mut _ as *mut AncestorType) = ty;
     }
 
-    /// Push scope flags onto scope stack.
-    ///
-    /// `StrictMode` flag is inherited from parent.
+    /// Shortcut for `ctx.scoping.set_current_scope_id`, to make `walk_*` methods less verbose.
     #[inline]
-    pub(crate) fn push_scope_stack(&mut self, flags: ScopeFlags) {
-        self.scope_stack.push(flags | (self.scope() & ScopeFlags::StrictMode));
+    pub(crate) fn set_current_scope_id(&mut self, scope_id: ScopeId) {
+        self.scoping.set_current_scope_id(scope_id);
+    }
+}
+
+// Public methods
+impl TraverseScoping {
+    /// Get current scope ID
+    #[inline]
+    pub fn current_scope_id(&self) -> ScopeId {
+        self.current_scope_id
     }
 
-    /// Pop last item off scope stack.
-    /// # SAFETY
-    /// * Stack must not be empty.
-    /// * Each `pop_scope_stack` call must correspond to an earlier `push_scope_stack` call.
+    /// Get scopes tree
     #[inline]
-    #[allow(unsafe_code)]
-    pub(crate) unsafe fn pop_scope_stack(&mut self) {
-        self.scope_stack.pop().unwrap_unchecked();
+    pub fn scopes(&self) -> &ScopeTree {
+        &self.scopes
+    }
+
+    /// Get symbols table
+    #[inline]
+    pub fn symbols(&self) -> &SymbolTable {
+        &self.symbols
+    }
+
+    /// Walk up trail of scopes to find a scope.
+    ///
+    /// `finder` is called with `ScopeId`.
+    ///
+    /// `finder` should return:
+    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
+    /// * `FinderRet::Stop` to stop walking and return `None`.
+    /// * `FinderRet::Continue` to continue walking up.
+    pub fn find_scope<F, O>(&self, finder: F) -> Option<O>
+    where
+        F: Fn(ScopeId) -> FinderRet<O>,
+    {
+        let mut scope_id = self.current_scope_id;
+        loop {
+            match finder(scope_id) {
+                FinderRet::Found(res) => return Some(res),
+                FinderRet::Stop => return None,
+                FinderRet::Continue => {}
+            }
+
+            if let Some(parent_scope_id) = self.scopes.get_parent_id(scope_id) {
+                scope_id = parent_scope_id;
+            } else {
+                return None;
+            }
+        }
+    }
+
+    /// Walk up trail of scopes to find a scope by checking `ScopeFlags`.
+    ///
+    /// `finder` is called with `ScopeFlags`.
+    ///
+    /// `finder` should return:
+    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
+    /// * `FinderRet::Stop` to stop walking and return `None`.
+    /// * `FinderRet::Continue` to continue walking up.
+    pub fn find_scope_by_flags<F, O>(&self, finder: F) -> Option<O>
+    where
+        F: Fn(ScopeFlags) -> FinderRet<O>,
+    {
+        self.find_scope(|scope_id| {
+            let flags = self.scopes.get_flags(scope_id);
+            finder(flags)
+        })
+    }
+}
+
+// Methods used internally within crate
+impl TraverseScoping {
+    /// Create new `TraverseScoping`
+    fn new(scopes: ScopeTree, symbols: SymbolTable) -> Self {
+        Self {
+            scopes,
+            symbols,
+            // Dummy value. Immediately overwritten in `walk_program`.
+            current_scope_id: ScopeId::new(0),
+        }
+    }
+
+    /// Set current scope ID
+    #[inline]
+    pub(crate) fn set_current_scope_id(&mut self, scope_id: ScopeId) {
+        self.current_scope_id = scope_id;
     }
 }

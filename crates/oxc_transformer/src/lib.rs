@@ -25,7 +25,7 @@ use std::{path::Path, rc::Rc};
 
 use es2015::ES2015;
 use oxc_allocator::{Allocator, Vec};
-use oxc_ast::{ast::*, Trivias};
+use oxc_ast::{ast::*, AstBuilder, Trivias};
 use oxc_diagnostics::Error;
 use oxc_span::SourceType;
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
@@ -78,8 +78,9 @@ impl<'a> Transformer<'a> {
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
     pub fn build(mut self, program: &mut Program<'a>) -> Result<(), std::vec::Vec<Error>> {
-        let allocator = self.ctx.ast.allocator;
-        traverse_mut(&mut self, program, allocator);
+        let TransformCtx { ast: AstBuilder { allocator }, source_text, source_type, .. } =
+            *self.ctx;
+        traverse_mut(&mut self, program, source_text, source_type, allocator);
 
         let errors = self.ctx.take_errors();
         if errors.is_empty() {
