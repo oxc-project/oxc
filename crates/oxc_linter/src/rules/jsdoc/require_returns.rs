@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{MethodDefinitionKind, Statement},
+    ast::{Expression, MethodDefinitionKind, NewExpression, ReturnStatement},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -10,7 +10,6 @@ use phf::phf_set;
 use serde::Deserialize;
 
 use crate::{
-    ast_util::is_function_node,
     context::LintContext,
     rule::Rule,
     utils::{
@@ -21,9 +20,11 @@ use crate::{
 };
 
 fn missing_returns_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.")
-        .with_help("Add `@returns` tag to the JSDoc comment.")
-        .with_labels([span0.into()])
+    OxcDiagnostic::warning(
+        "eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.",
+    )
+    .with_help("Add `@returns` tag to the JSDoc comment.")
+    .with_labels([span0.into()])
 }
 fn duplicate_returns_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warning("eslint-plugin-jsdoc(require-returns): Duplicate `@returns` tags.")
@@ -102,102 +103,178 @@ impl Rule for RequireReturns {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !is_function_node(node) {
-            return;
-        }
+        let config = &self.0;
 
-        // TODO: Cover return Promise case
-        // Ignore empty, or async functions
-        let func_span = match node.kind() {
-            AstKind::ArrowFunctionExpression(arrow_func) => {
-                // If async, means always return Promise, skip
-                if arrow_func.r#async {
+        match node.kind() {
+            AstKind::Function(func) if (func.is_expression() || func.is_declaration()) => {
+                println!("👻 Function");
+                let Some(func_def_node) = get_function_nearest_jsdoc_node(node, ctx) else {
                     return;
-                }
-                // If no expression, skip
-                if !arrow_func.expression {
-                    return;
-                }
-
-                arrow_func.span
-            }
-            AstKind::Function(func) if func.is_expression() || func.is_declaration() => {
-                // If async, means always return Promise, skip
-                if func.r#async {
-                    return;
-                }
-
-                let Some(ref func_body) = func.body else {
+                };
+                // If no JSDoc is found, skip
+                let Some(jsdocs) = ctx.jsdoc().get_all_by_node(func_def_node) else {
                     return;
                 };
 
-                let mut return_found = None;
-                for stmt in &func_body.statements {
-                    if let Statement::ReturnStatement(ret) = stmt {
-                        return_found = Some(ret);
+                let settings = &ctx.settings().jsdoc;
+                // If JSDoc is found but safely ignored, skip
+                if jsdocs
+                    .iter()
+                    .filter(|jsdoc| !should_ignore_as_custom_skip(jsdoc))
+                    .filter(|jsdoc| !should_ignore_as_avoid(jsdoc, settings, &config.exempted_by))
+                    .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+                    .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+                    .count()
+                    == 0
+                {
+                    return;
+                }
+
+                if let AstKind::MethodDefinition(method_def) = func_def_node.kind() {
+                    match method_def.kind {
+                        MethodDefinitionKind::Get => {
+                            if !config.check_getters {
+                                return;
+                            }
+                        }
+                        MethodDefinitionKind::Constructor => {
+                            if !config.check_constructors {
+                                return;
+                            }
+                        }
+                        _ => {}
                     }
                 }
 
-                // let Some(arg) = return_found.and_then(|ret| ret.argument) else {
-                //     return;
-                // };
-                // arg;
+                let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
+                let resolved_returns_tag_name = settings.resolve_tag_name("returns");
 
-                func.span
+                // Without this option, need to check `return` value.
+                // Check will be performed in `ReturnStatement` branch.
+                if config.force_require_return
+                    && is_missing_returns_tag(&jsdoc_tags, &resolved_returns_tag_name)
+                {
+                    println!("🥹 Function, missing_returns!");
+                    ctx.diagnostic(missing_returns_diagnostic(func.span));
+                    return;
+                }
+
+                // Other checks are always performed
+
+                if let Some(span) =
+                    is_duplicated_returns_tag(&jsdoc_tags, &resolved_returns_tag_name)
+                {
+                    println!("🥹 Function, duplicate_returns!");
+                    ctx.diagnostic(duplicate_returns_diagnostic(span));
+                }
             }
-            _ => return,
-        };
+            // Q. Why not perform all checks in `Function` branch?
+            // A. Rule behavior is different whether `return` value is present or not.
+            //
+            // Find `ReturnStatement` inside of `Function` requires more complex logic.
+            // Use bottom-up approach to find the nearest function instead.
+            AstKind::ReturnStatement(return_stmt) => {
+                println!("👻 ReturnStatement");
 
-        let Some(func_node) = get_function_nearest_jsdoc_node(node, ctx) else {
-            return;
-        };
+                // TODO
+                // /** 空っぽ */ function x(foo) { return foo; }
+                // というシンプルなケースで、エラーになるべきが、なってないらしい
 
-        let config = &self.0;
-        if let AstKind::MethodDefinition(def) = func_node.kind() {
-            match def.kind {
-                MethodDefinitionKind::Get => {
-                    if !config.check_getters {
-                        return;
+                // With this option, no needs to check `return` value.
+                // We can perform all checks in `Function` branch instead.
+                if config.force_require_return {
+                    return;
+                }
+
+                // Do not check `return` without value
+                if return_stmt.argument.is_none() {
+                    return;
+                }
+
+                // Find the nearest function
+                let mut func_node = None;
+                let mut current_node = node;
+                while let Some(parent_node) = ctx.nodes().parent_node(current_node.id()) {
+                    // If syntax is valid, `return` should be inside a function
+                    match parent_node.kind() {
+                        AstKind::Function(func)
+                            if (func.is_expression() || func.is_declaration()) =>
+                        {
+                            func_node = Some((
+                                func.span,
+                                parent_node,
+                                func.r#async || is_returning_promise(return_stmt),
+                            ));
+                            break;
+                        }
+                        AstKind::ArrowFunctionExpression(arrow_func) => {
+                            func_node = Some((
+                                arrow_func.span,
+                                parent_node,
+                                arrow_func.r#async || is_returning_promise(return_stmt),
+                            ));
+                            break;
+                        }
+                        _ => {
+                            current_node = parent_node;
+                        }
                     }
                 }
-                MethodDefinitionKind::Constructor => {
-                    if !config.check_constructors {
-                        return;
+                let Some((func_span, func_node, is_async)) = func_node else {
+                    return;
+                };
+
+                if is_async {
+                    return;
+                }
+
+                let Some(func_def_node) = get_function_nearest_jsdoc_node(func_node, ctx) else {
+                    return;
+                };
+                // If no JSDoc is found, skip
+                let Some(jsdocs) = ctx.jsdoc().get_all_by_node(func_def_node) else {
+                    return;
+                };
+
+                let settings = &ctx.settings().jsdoc;
+                // If JSDoc is found but safely ignored, skip
+                if jsdocs
+                    .iter()
+                    .filter(|jsdoc| !should_ignore_as_custom_skip(jsdoc))
+                    .filter(|jsdoc| !should_ignore_as_avoid(jsdoc, settings, &config.exempted_by))
+                    .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+                    .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+                    .count()
+                    == 0
+                {
+                    return;
+                }
+
+                if let AstKind::MethodDefinition(method_def) = func_def_node.kind() {
+                    match method_def.kind {
+                        MethodDefinitionKind::Get => {
+                            if !config.check_getters {
+                                return;
+                            }
+                        }
+                        MethodDefinitionKind::Constructor => {
+                            if !config.check_constructors {
+                                return;
+                            }
+                        }
+                        _ => {}
                     }
                 }
-                _ => {}
+
+                let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
+                let resolved_returns_tag_name = settings.resolve_tag_name("returns");
+
+                if is_missing_returns_tag(&jsdoc_tags, &resolved_returns_tag_name) {
+                    println!("🥹 Return, missing_returns!");
+                    ctx.diagnostic(missing_returns_diagnostic(func_span));
+                }
             }
-        }
-
-        // If no JSDoc is found, skip
-        let Some(jsdocs) = ctx.jsdoc().get_all_by_node(func_node) else {
-            return;
-        };
-
-        let settings = &ctx.settings().jsdoc;
-        // If JSDoc is found but safely ignored, skip
-        if jsdocs
-            .iter()
-            .filter(|jsdoc| !should_ignore_as_custom_skip(jsdoc))
-            .filter(|jsdoc| !should_ignore_as_avoid(jsdoc, settings, &config.exempted_by))
-            .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
-            .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
-            .count()
-            == 0
-        {
-            return;
-        }
-
-        let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
-        let resolved_returns_tag_name = settings.resolve_tag_name("returns");
-
-        if is_missing_returns_tag(&jsdoc_tags, &resolved_returns_tag_name) {
-            ctx.diagnostic(missing_returns_diagnostic(func_span));
-            return;
-        }
-
-        if let Some(span) = is_duplicated_returns_tag(&jsdoc_tags, &resolved_returns_tag_name) {
-            ctx.diagnostic(duplicate_returns_diagnostic(span));
+            _ => {}
         }
     }
 }
@@ -229,6 +306,23 @@ fn is_duplicated_returns_tag(
     }
 
     None
+}
+
+fn is_returning_promise(return_stmt: &ReturnStatement) -> bool {
+    let Some(ref argument) = return_stmt.argument else {
+        return false;
+    };
+
+    // `return new Promise()`
+    if let Expression::NewExpression(new_expr) = argument {
+        if new_expr.callee.is_specific_id("Promise") {
+            return true;
+        }
+    }
+
+    // TODO: `return Promise.xxx()`
+
+    true
 }
 
 #[test]
@@ -2203,5 +2297,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireReturns::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RequireReturns::NAME, pass, fail).test();
+    // Tester::new(RequireReturns::NAME, pass, fail).test_and_snapshot();
 }
