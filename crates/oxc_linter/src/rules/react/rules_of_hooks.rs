@@ -149,18 +149,6 @@ impl Rule for RulesOfHooks {
                     id.name.as_str(),
                 ));
             }
-            // Hooks can't be called from async function.
-            AstKind::Function(Function { id: Some(id), r#async: true, .. }) => {
-                return ctx.diagnostic(diagnostics::async_component(id.span, id.name.as_str()));
-            }
-            // Hooks can't be called from async arrow function.
-            AstKind::ArrowFunctionExpression(ArrowFunctionExpression {
-                span,
-                r#async: true,
-                ..
-            }) => {
-                return ctx.diagnostic(diagnostics::async_component(*span, "Anonymous"));
-            }
             // Hooks are allowed inside of unnamed functions used as arguments. As long as they are
             // not used as a callback inside of components or hooks.
             AstKind::Function(Function { id: None, .. }) | AstKind::ArrowFunctionExpression(_)
@@ -173,7 +161,11 @@ impl Rule for RulesOfHooks {
                 return;
             }
             AstKind::Function(Function { span, id: None, .. })
-            | AstKind::ArrowFunctionExpression(ArrowFunctionExpression { span, .. }) => {
+            | AstKind::ArrowFunctionExpression(ArrowFunctionExpression {
+                span,
+                r#async: false,
+                ..
+            }) => {
                 let ident = get_declaration_identifier(nodes, parent_func.id());
 
                 // Hooks cannot be called inside of export default functions or used in a function
@@ -205,6 +197,18 @@ impl Rule for RulesOfHooks {
                         "Anonymous",
                     ));
                 }
+            }
+            // Hooks can't be called from async function.
+            AstKind::Function(Function { id: Some(id), r#async: true, .. }) => {
+                return ctx.diagnostic(diagnostics::async_component(id.span, id.name.as_str()));
+            }
+            // Hooks can't be called from async arrow function.
+            AstKind::ArrowFunctionExpression(ArrowFunctionExpression {
+                span,
+                r#async: true,
+                ..
+            }) => {
+                return ctx.diagnostic(diagnostics::async_component(*span, "Anonymous"));
             }
             _ => {}
         }
@@ -923,6 +927,13 @@ fn test() {
                 };
             };
         ",
+        "
+            test.beforeEach(async () => {
+                timer = Sinon.useFakeTimers({
+                    toFake: ['setInterval'],
+                });
+            });
+    ",
     ];
 
     let fail = vec![
