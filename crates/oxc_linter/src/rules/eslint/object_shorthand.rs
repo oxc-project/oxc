@@ -222,20 +222,14 @@ fn test() {
     ];
 
     let fail = vec![
-        (
-            "var x = {
-          f: /* comment */ function() {
-          }
-          }",
-            None,
-        ),
-        (
-            "var x = {
-         f /* comment */: function() {
-          }
-          }",
-            None,
-        ),
+        ("var x = {a: /* comment */ a}", None),
+        ("var x = {a /* comment */: a}", None),
+        ("var x = {a: (a /* comment */)}", None),
+        ("var x = {'a': /* comment */ a}", None),
+        ("var x = {'a' /* comment */: a}", None),
+        ("var x = {'a': (a /* comment */)}", None),
+        ("var x = {f: /* comment */ function() {}}", None),
+        ("var x = {f /* comment */: function() {}}", None),
         ("var x = {a: a, b}", Some(json!(["consistent"]))),
         ("var x = {b, c: d, f: g}", Some(json!(["consistent"]))),
         ("var x = {foo, bar: baz, ...qux}", Some(json!(["consistent"]))),
@@ -813,6 +807,11 @@ fn test_avoid_explicit_return_arrows() {
 
     let fix = vec![
         (
+            "({ x: (arg => { return; }) })",
+            "({ x(arg) { return; } })",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
             "({ x: () => { return; } })",
             "({ x() { return; } })",
             Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
@@ -1007,6 +1006,25 @@ fn test_avoid_explicit_return_arrows() {
         (
             "({ a: (async (arg, arg2) => { return foo; }) })",
             "({ async a(arg, arg2) { return foo; } })",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                const test = {
+                    key: <T>(): void => { },
+                    key: async <T>(): Promise<void> => { },
+                    key: <T>(arg: T): T => { return arg },
+                    key: async <T>(arg: T): Promise<T> => { return arg },
+                }
+            ",
+            "
+                const test = {
+                    key<T>(): void { },
+                    async key<T>(): Promise<void> { },
+                    key<T>(arg: T): T { return arg },
+                    async key<T>(arg: T): Promise<T> { return arg },
+                }
+            ",
             Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
         (
