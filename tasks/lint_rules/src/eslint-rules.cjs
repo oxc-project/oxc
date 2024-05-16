@@ -219,7 +219,7 @@ const loadPluginNextRules = (linter) => {
 
 /**
  * @typedef {{
- *   npm: Array<string>;
+ *   npm: string[];
  *   issueNo: number;
  * }} TargetPluginMeta
  * @type {Map<string, TargetPluginMeta>}
