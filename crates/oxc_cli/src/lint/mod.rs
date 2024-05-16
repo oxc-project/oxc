@@ -94,6 +94,9 @@ impl Runner for LintRunner {
             .with_filter(filter)
             .with_config_path(config)
             .with_fix(fix_options.fix)
+            .with_react_plugin(enable_plugins.react_plugin)
+            .with_unicorn_plugin(enable_plugins.unicorn_plugin)
+            .with_typescript_plugin(enable_plugins.typescript_plugin)
             .with_import_plugin(enable_plugins.import_plugin)
             .with_jsdoc_plugin(enable_plugins.jsdoc_plugin)
             .with_jest_plugin(enable_plugins.jest_plugin)
@@ -395,7 +398,21 @@ mod test {
         let args = &[
             "-c",
             "fixtures/typescript_eslint/eslintrc.json",
-            "fixtures/typescript_eslint/test.js",
+            "fixtures/typescript_eslint/test.ts",
+        ];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn typescript_eslint_off() {
+        let args = &[
+            "-c",
+            "fixtures/typescript_eslint/eslintrc.json",
+            "--disable-typescript-plugin",
+            "fixtures/typescript_eslint/test.ts",
         ];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);

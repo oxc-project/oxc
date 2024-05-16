@@ -14,6 +14,10 @@ pub struct LintOptions {
     pub filter: Vec<(AllowWarnDeny, String)>,
     pub config_path: Option<PathBuf>,
     pub fix: bool,
+
+    pub react_plugin: bool,
+    pub unicorn_plugin: bool,
+    pub typescript_plugin: bool,
     pub import_plugin: bool,
     pub jsdoc_plugin: bool,
     pub jest_plugin: bool,
@@ -28,6 +32,9 @@ impl Default for LintOptions {
             filter: vec![(AllowWarnDeny::Deny, String::from("correctness"))],
             config_path: None,
             fix: false,
+            react_plugin: true,
+            unicorn_plugin: true,
+            typescript_plugin: true,
             import_plugin: false,
             jsdoc_plugin: false,
             jest_plugin: false,
@@ -56,6 +63,24 @@ impl LintOptions {
     #[must_use]
     pub fn with_fix(mut self, yes: bool) -> Self {
         self.fix = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_react_plugin(mut self, yes: bool) -> Self {
+        self.react_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_unicorn_plugin(mut self, yes: bool) -> Self {
+        self.unicorn_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_typescript_plugin(mut self, yes: bool) -> Self {
+        self.typescript_plugin = yes;
         self
     }
 
@@ -157,13 +182,6 @@ impl TryFrom<&Number> for AllowWarnDeny {
     }
 }
 
-const IMPORT_PLUGIN_NAME: &str = "import";
-const JSDOC_PLUGIN_NAME: &str = "jsdoc";
-const JEST_PLUGIN_NAME: &str = "jest";
-const JSX_A11Y_PLUGIN_NAME: &str = "jsx_a11y";
-const NEXTJS_PLUGIN_NAME: &str = "nextjs";
-const REACT_PERF_PLUGIN_NAME: &str = "react_perf";
-
 impl LintOptions {
     /// # Errors
     ///
@@ -234,13 +252,17 @@ impl LintOptions {
         RULES
             .iter()
             .filter(|rule| match rule.plugin_name() {
-                IMPORT_PLUGIN_NAME if !self.import_plugin => false,
-                JSDOC_PLUGIN_NAME if !self.jsdoc_plugin => false,
-                JEST_PLUGIN_NAME if !self.jest_plugin => false,
-                JSX_A11Y_PLUGIN_NAME if !self.jsx_a11y_plugin => false,
-                NEXTJS_PLUGIN_NAME if !self.nextjs_plugin => false,
-                REACT_PERF_PLUGIN_NAME if !self.react_perf_plugin => false,
-                _ => true,
+                "react" => self.react_plugin,
+                "unicorn" => self.unicorn_plugin,
+                "typescript" => self.typescript_plugin,
+                "import" => self.import_plugin,
+                "jsdoc" => self.jsdoc_plugin,
+                "jest" => self.jest_plugin,
+                "jsx_a11y" => self.jsx_a11y_plugin,
+                "nextjs" => self.nextjs_plugin,
+                "react_perf" => self.react_perf_plugin,
+                "eslint" | "oxc" | "deepscan" | "tree_shaking" => true,
+                name => panic!("Unhandled plugin: {name}"),
             })
             .cloned()
             .collect::<Vec<_>>()

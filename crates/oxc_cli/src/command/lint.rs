@@ -169,6 +169,18 @@ impl FromStr for OutputFormat {
 #[allow(clippy::struct_field_names)]
 #[derive(Debug, Clone, Bpaf)]
 pub struct EnablePlugins {
+    /// Disable react plugin, which is turned on by default
+    #[bpaf(long("disable-react-plugin"), flag(false, true), hide_usage)]
+    pub react_plugin: bool,
+
+    /// Disable unicorn plugin, which is turned on by default
+    #[bpaf(long("disable-unicorn-plugin"), flag(false, true), hide_usage)]
+    pub unicorn_plugin: bool,
+
+    /// Disable TypeScript plugin, which is turned on by default
+    #[bpaf(long("disable-typescript-plugin"), flag(false, true), hide_usage)]
+    pub typescript_plugin: bool,
+
     /// Enable the experimental import plugin and detect ESM problems.
     /// It is recommended to use along side with the `--tsconfig` option.
     #[bpaf(switch, hide_usage)]
