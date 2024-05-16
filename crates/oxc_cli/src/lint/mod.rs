@@ -34,12 +34,11 @@ impl Runner for LintRunner {
         let CliLintOptions {
             paths,
             filter,
+            basic_options,
             warning_options,
             ignore_options,
             fix_options,
             enable_plugins,
-            config,
-            tsconfig,
             output_options,
             ..
         } = self.options;
@@ -92,7 +91,7 @@ impl Runner for LintRunner {
         let cwd = std::env::current_dir().unwrap().into_boxed_path();
         let lint_options = LintOptions::default()
             .with_filter(filter)
-            .with_config_path(config)
+            .with_config_path(basic_options.config)
             .with_fix(fix_options.fix)
             .with_react_plugin(enable_plugins.react_plugin)
             .with_unicorn_plugin(enable_plugins.unicorn_plugin)
@@ -117,6 +116,7 @@ impl Runner for LintRunner {
             }
         };
 
+        let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
             if !path.is_file() {
                 let path = if path.is_relative() { cwd.join(path) } else { path.clone() };
