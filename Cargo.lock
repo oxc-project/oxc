@@ -1678,7 +1678,6 @@ dependencies = [
  "oxc_tasks_common",
  "oxc_transformer",
  "pico-args",
- "serde_json",
  "walkdir",
 ]
 

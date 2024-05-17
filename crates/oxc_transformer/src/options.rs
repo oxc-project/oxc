@@ -1,10 +1,13 @@
 use std::path::{Path, PathBuf};
 
+use oxc_diagnostics::{Error, OxcDiagnostic};
 use serde::{de::DeserializeOwned, Deserialize};
 use serde_json::Value;
 
 use crate::{
-    compiler_assumptions::CompilerAssumptions, es2015::ES2015Options, react::ReactOptions,
+    compiler_assumptions::CompilerAssumptions,
+    es2015::{ArrowFunctionsOptions, ES2015Options},
+    react::ReactOptions,
     typescript::TypeScriptOptions,
 };
 
@@ -33,58 +36,94 @@ pub struct TransformOptions {
 }
 
 impl TransformOptions {
-    /// # Panics
-    /// Panics if the options are invalid.
     /// # Errors
-    pub fn from_babel_options(options: &BabelOptions) -> serde_json::Result<Self> {
+    ///
+    pub fn from_babel_options(options: &BabelOptions) -> Result<Self, Vec<Error>> {
         fn get_options<T: Default + DeserializeOwned>(
-            value: Option<Value>,
-        ) -> serde_json::Result<T> {
-            match value {
-                Some(v) => serde_json::from_value::<T>(v),
-                None => Ok(T::default()),
-            }
+            name: &str,
+            babel_options: &BabelOptions,
+            errors: &mut Vec<Error>,
+            is_preset: bool,
+        ) -> T {
+            let target = if is_preset {
+                babel_options.get_preset(name)
+            } else {
+                babel_options.get_plugin(name)
+            };
+            target
+                .and_then(|plugin_options| {
+                    plugin_options.and_then(|options| match serde_json::from_value::<T>(options) {
+                        Ok(options) => Some(options),
+                        Err(err) => {
+                            let kind_msg =
+                                if is_preset { format!("preset-{name}") } else { name.to_string() };
+                            errors.push(OxcDiagnostic::error(format!("{kind_msg}: {err}")).into());
+                            None
+                        }
+                    })
+                })
+                .unwrap_or_else(|| T::default())
         }
 
-        let react = if let Some(options) = options.get_preset("react") {
-            get_options::<ReactOptions>(options)?
+        let mut errors = Vec::<Error>::new();
+
+        let react = if options.has_preset("react") {
+            get_options::<ReactOptions>("react", options, &mut errors, true)
         } else {
-            let jsx_plugin = options.get_plugin("transform-react-jsx");
-            let jsx_development_plugin = options.get_plugin("transform-react-jsx-development");
-            let has_jsx_plugin =
-                jsx_plugin.as_ref().is_some() || jsx_development_plugin.as_ref().is_some();
-            let mut react_options = jsx_plugin
-                .map(get_options::<ReactOptions>)
-                .or_else(|| jsx_development_plugin.map(get_options::<ReactOptions>))
-                .transpose()?
-                .unwrap_or_default();
-            react_options.development =
-                options.get_plugin("transform-react-jsx-development").is_some();
-            react_options.jsx_plugin = has_jsx_plugin;
-            react_options.display_name_plugin =
-                options.get_plugin("transform-react-display-name").is_some();
-            react_options.jsx_self_plugin =
-                options.get_plugin("transform-react-jsx-self").is_some();
-            react_options.jsx_source_plugin =
-                options.get_plugin("transform-react-jsx-source").is_some();
+            let has_jsx_plugin = options.has_plugin("transform-react-jsx");
+            let has_jsx_development_plugin = options.has_plugin("transform-react-jsx-development");
+            let mut react_options = if has_jsx_plugin {
+                get_options::<ReactOptions>("transform-react-jsx", options, &mut errors, false)
+            } else {
+                get_options::<ReactOptions>(
+                    "transform-react-jsx-development",
+                    options,
+                    &mut errors,
+                    false,
+                )
+            };
+            react_options.development = options.has_plugin("transform-react-jsx-development");
+            react_options.jsx_plugin = has_jsx_plugin || has_jsx_development_plugin;
+            react_options.display_name_plugin = options.has_plugin("transform-react-display-name");
+            react_options.jsx_self_plugin = options.has_plugin("transform-react-jsx-self");
+            react_options.jsx_source_plugin = options.has_plugin("transform-react-jsx-source");
             react_options
         };
 
         let es2015 = ES2015Options {
-            arrow_function: options
-                .get_plugin("transform-arrow-functions")
-                .map(get_options)
-                .transpose()?,
+            arrow_function: options.has_plugin("transform-arrow-functions").then(|| {
+                get_options::<ArrowFunctionsOptions>(
+                    "transform-arrow-functions",
+                    options,
+                    &mut errors,
+                    false,
+                )
+            }),
         };
 
+        let typescript =
+            get_options::<TypeScriptOptions>("transform-typescript", options, &mut errors, false);
+
+        let assumptions = if options.assumptions.is_null() {
+            CompilerAssumptions::default()
+        } else {
+            match serde_json::from_value::<CompilerAssumptions>(options.assumptions.clone()) {
+                Ok(value) => value,
+                Err(err) => {
+                    errors.push(OxcDiagnostic::error(err.to_string()).into());
+                    CompilerAssumptions::default()
+                }
+            }
+        };
+
+        if !errors.is_empty() {
+            return Err(errors);
+        }
+
         Ok(Self {
-            cwd: options.cwd.clone().unwrap(),
-            assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
-            typescript: options
-                .get_plugin("transform-typescript")
-                .map(get_options::<TypeScriptOptions>)
-                .transpose()?
-                .unwrap_or_default(),
+            cwd: options.cwd.clone().unwrap_or_default(),
+            assumptions,
+            typescript,
             react,
             es2015,
         })
@@ -205,6 +244,14 @@ impl BabelOptions {
         self.presets.iter().find_map(|v| Self::get_value(v, name))
     }
 
+    pub fn has_plugin(&self, name: &str) -> bool {
+        self.get_plugin(name).is_some()
+    }
+
+    pub fn has_preset(&self, name: &str) -> bool {
+        self.get_preset(name).is_some()
+    }
+
     #[allow(clippy::option_option)]
     fn get_value(value: &Value, name: &str) -> Option<Option<Value>> {
         match value {
@@ -215,4 +262,18 @@ impl BabelOptions {
             _ => None,
         }
     }
+}
+
+#[test]
+fn test_deny_unknown_fields() {
+    let options = serde_json::json!({
+      "plugins": [["transform-react-jsx", { "runtime": "automatic", "filter": 1 }]],
+      "sourceType": "module"
+    });
+    let babel_options = serde_json::from_value::<BabelOptions>(options).unwrap();
+    let result = TransformOptions::from_babel_options(&babel_options);
+    assert!(result.is_err());
+    let err_message =
+        result.err().unwrap().iter().map(ToString::to_string).collect::<Vec<_>>().join("\n");
+    assert!(err_message.contains("transform-react-jsx: unknown field `filter`"));
 }

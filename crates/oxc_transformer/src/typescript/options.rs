@@ -12,8 +12,12 @@ fn default_for_jsx_pragma_frag() -> Cow<'static, str> {
     Cow::Borrowed("React.Fragment")
 }
 
+fn default_as_true() -> bool {
+    true
+}
+
 #[derive(Debug, Clone, Deserialize)]
-#[serde(default, rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct TypeScriptOptions {
     /// Replace the function used when compiling JSX expressions.
     /// This is so that we know that the import is not a type import, and should not be removed.
@@ -26,9 +30,18 @@ pub struct TypeScriptOptions {
     /// defaults to React.Fragment
     #[serde(default = "default_for_jsx_pragma_frag")]
     pub jsx_pragma_frag: Cow<'static, str>,
+
     /// When set to true, the transform will only remove type-only imports (introduced in TypeScript 3.8).
     /// This should only be used if you are using TypeScript >= 3.8.
     pub only_remove_type_imports: bool,
+
+    // Enables compilation of TypeScript namespaces.
+    #[serde(default = "default_as_true")]
+    pub allow_namespaces: bool,
+
+    // When enabled, type-only class fields are only removed if they are prefixed with the declare modifier:
+    #[serde(default = "default_as_true")]
+    pub allow_declare_fields: bool,
 }
 
 impl TypeScriptOptions {
@@ -74,6 +87,8 @@ impl Default for TypeScriptOptions {
             jsx_pragma: default_for_jsx_pragma(),
             jsx_pragma_frag: default_for_jsx_pragma_frag(),
             only_remove_type_imports: false,
+            allow_namespaces: default_as_true(),
+            allow_declare_fields: default_as_true(),
         }
     }
 }
