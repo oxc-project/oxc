@@ -326,7 +326,7 @@ impl<'a> ParserImpl<'a> {
         let token = self.cur_token();
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
-        let _value = parse_big_int(src, token.kind)
+        let _value = parse_big_int(src, token.kind, token.has_separator())
             .map_err(|err| diagnostics::invalid_number(err, token.span()))?;
         self.bump_any();
         Ok(self.ast.bigint_literal(self.end_span(span), Atom::from(raw), base))
