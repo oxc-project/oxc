@@ -11,7 +11,7 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn bad_bitwise_operator_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("deepscan(bad-bitwise-operator): Bad bitwise operator")
+    OxcDiagnostic::warning("oxc(bad-bitwise-operator): Bad bitwise operator")
         .with_help(format!(
             "Bitwise operator '{x0}' seems unintended. Did you mean logical operator '{x1}'?"
         ))
@@ -24,7 +24,6 @@ fn bad_bitwise_or_operator_diagnostic(span0: Span) -> OxcDiagnostic {
         .with_labels([span0.into()])
 }
 
-/// `https://deepscan.io/docs/rules/bad-bitwise-operator`
 #[derive(Debug, Default, Clone)]
 pub struct BadBitwiseOperator;
 

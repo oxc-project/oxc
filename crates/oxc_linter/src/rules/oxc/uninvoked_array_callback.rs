@@ -10,7 +10,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn uninvoked_array_callback_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("deepscan(uninvoked-array-callback): Uninvoked array callback")
+    OxcDiagnostic::warning("oxc(uninvoked-array-callback): Uninvoked array callback")
         .with_help(
             "consider filling the array with `undefined` values using `Array.prototype.fill()`",
         )
@@ -23,7 +23,6 @@ fn uninvoked_array_callback_diagnostic(span0: Span, span1: Span) -> OxcDiagnosti
         ])
 }
 
-/// `https://deepscan.io/docs/rules/uninvoked-array-callback`
 #[derive(Debug, Default, Clone)]
 pub struct UninvokedArrayCallback;
 

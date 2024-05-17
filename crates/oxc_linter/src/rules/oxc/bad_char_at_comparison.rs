@@ -8,7 +8,7 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 fn bad_char_at_comparison_diagnostic(span0: Span, span1: Span, x2: usize) -> OxcDiagnostic {
-    OxcDiagnostic::warning("deepscan(bad-char-at-comparison): Invalid comparison with `charAt` method")
+    OxcDiagnostic::warning("oxc(bad-char-at-comparison): Invalid comparison with `charAt` method")
         .with_help("`String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.")
         .with_labels([LabeledSpan::new_with_span(Some("`charAt` called here".into()), span0), LabeledSpan::new_with_span(Some(format!("And compared with a string of length {x2} here")), span1)])
 }

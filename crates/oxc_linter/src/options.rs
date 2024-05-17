@@ -261,7 +261,7 @@ impl LintOptions {
                 "jsx_a11y" => self.jsx_a11y_plugin,
                 "nextjs" => self.nextjs_plugin,
                 "react_perf" => self.react_perf_plugin,
-                "eslint" | "oxc" | "deepscan" | "tree_shaking" => true,
+                "eslint" | "oxc" | "tree_shaking" => true,
                 name => panic!("Unhandled plugin: {name}"),
             })
             .cloned()
