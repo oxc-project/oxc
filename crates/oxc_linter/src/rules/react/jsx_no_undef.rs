@@ -1,8 +1,5 @@
 use oxc_ast::{
-    ast::{
-        JSXElementName, JSXIdentifier, JSXMemberExpression, JSXMemberExpressionObject,
-        JSXOpeningElement,
-    },
+    ast::{JSXElementName, JSXIdentifier, JSXMemberExpression, JSXMemberExpressionObject},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -39,12 +36,6 @@ declare_oxc_lint!(
     correctness
 );
 
-fn get_member_ident<'a>(expr: &'a JSXMemberExpression<'a>) -> &'a JSXIdentifier {
-    match expr.object {
-        JSXMemberExpressionObject::Identifier(ref ident) => ident,
-        JSXMemberExpressionObject::MemberExpression(ref next_expr) => get_member_ident(next_expr),
-    }
-}
 fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a JSXIdentifier> {
     match node {
         JSXElementName::Identifier(ref ident)
@@ -57,18 +48,28 @@ fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a JSXIdent
     }
 }
 
+fn get_member_ident<'a>(expr: &'a JSXMemberExpression<'a>) -> &'a JSXIdentifier {
+    match &expr.object {
+        JSXMemberExpressionObject::Identifier(ident) => ident,
+        JSXMemberExpressionObject::MemberExpression(next_expr) => get_member_ident(next_expr),
+    }
+}
+
 impl Rule for JsxNoUndef {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXOpeningElement(JSXOpeningElement { name: el_name, .. }) = &node.kind() {
-            if let Some(ident) = get_resolvable_ident(el_name) {
-                if ident.name.as_str() == "this" {
+        if let AstKind::JSXOpeningElement(elem) = &node.kind() {
+            if let Some(ident) = get_resolvable_ident(&elem.name) {
+                let name = ident.name.as_str();
+                if name == "this" {
                     return;
                 }
-                let jsx_scope_id = node.scope_id();
-                for scope_id in ctx.scopes().ancestors(jsx_scope_id) {
-                    if ctx.scopes().has_binding(scope_id, &ident.name) {
+                for scope_id in ctx.scopes().ancestors(node.scope_id()) {
+                    if ctx.scopes().has_binding(scope_id, name) {
                         return;
                     }
+                }
+                if ctx.globals().is_enabled(name) {
+                    return;
                 }
                 ctx.diagnostic(jsx_no_undef_diagnostic(ident.name.as_str(), ident.span));
             }
@@ -78,6 +79,8 @@ impl Rule for JsxNoUndef {
 
 #[test]
 fn test() {
+    use serde_json::json;
+
     use crate::tester::Tester;
 
     let pass = vec![
@@ -126,4 +129,8 @@ fn test() {
     ];
 
     Tester::new(JsxNoUndef::NAME, pass, fail).test_and_snapshot();
+
+    let pass = vec![("let x = <A.B />;", None, Some(json!({ "globals": {"A": "readonly" } })))];
+    let fail = vec![("let x = <A.B />;", None, None)];
+    Tester::new(JsxNoUndef::NAME, pass, fail).test();
 }
