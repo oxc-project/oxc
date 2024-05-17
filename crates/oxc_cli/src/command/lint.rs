@@ -184,6 +184,10 @@ pub struct EnablePlugins {
     #[bpaf(long("disable-unicorn-plugin"), flag(false, true), hide_usage)]
     pub unicorn_plugin: bool,
 
+    /// Disable oxc unique rules, which is turned on by default
+    #[bpaf(long("disable-oxc-plugin"), flag(false, true), hide_usage)]
+    pub oxc_plugin: bool,
+
     /// Disable TypeScript plugin, which is turned on by default
     #[bpaf(long("disable-typescript-plugin"), flag(false, true), hide_usage)]
     pub typescript_plugin: bool,

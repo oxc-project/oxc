@@ -18,6 +18,7 @@ pub struct LintOptions {
     pub react_plugin: bool,
     pub unicorn_plugin: bool,
     pub typescript_plugin: bool,
+    pub oxc_plugin: bool,
     pub import_plugin: bool,
     pub jsdoc_plugin: bool,
     pub jest_plugin: bool,
@@ -35,6 +36,7 @@ impl Default for LintOptions {
             react_plugin: true,
             unicorn_plugin: true,
             typescript_plugin: true,
+            oxc_plugin: true,
             import_plugin: false,
             jsdoc_plugin: false,
             jest_plugin: false,
@@ -81,6 +83,12 @@ impl LintOptions {
     #[must_use]
     pub fn with_typescript_plugin(mut self, yes: bool) -> Self {
         self.typescript_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_oxc_plugin(mut self, yes: bool) -> Self {
+        self.oxc_plugin = yes;
         self
     }
 
@@ -261,7 +269,8 @@ impl LintOptions {
                 "jsx_a11y" => self.jsx_a11y_plugin,
                 "nextjs" => self.nextjs_plugin,
                 "react_perf" => self.react_perf_plugin,
-                "eslint" | "oxc" | "tree_shaking" => true,
+                "oxc" => self.oxc_plugin,
+                "eslint" | "tree_shaking" => true,
                 name => panic!("Unhandled plugin: {name}"),
             })
             .cloned()
