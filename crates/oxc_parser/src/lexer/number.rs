@@ -136,41 +136,32 @@ mod test {
 
     use super::{parse_float, parse_int, Kind};
 
-    /// Assert that all (&str, number) items in an [`Iterator`] parse to the
-    /// expected number. `number` will be casted to an [`f64`].
-    macro_rules! assert_all_eq {
-        // parser fn shorthands
-        (float $test_cases:expr, $has_sep:expr) => {
-            assert_all_eq!($test_cases, nokind, $has_sep, parser = parse_float);
-        };
-        (bigint $test_cases:expr, $kind:expr, $has_sep:expr) => {
-            assert_all_eq!($test_cases, $kind, $has_sep, parser = parse_big_int);
-        };
-        (int $test_cases:expr, $kind:expr, $has_sep:expr) => {
-            assert_all_eq!($test_cases, $kind, $has_sep, parser = parse_int);
-        };
-
-        // impl
-        ($test_cases:expr, nokind, $has_sep:expr, parser = $parse_fn:tt) => {
-            for (s, expected) in $test_cases.into_iter() {
-                let parsed = $parse_fn(s, $has_sep);
-                assert_eq!(
-                    parsed,
-                    Ok(expected as f64),
-                    "expected {s} to parse to {expected}, but got {parsed:?}"
-                );
-            }
-        };
-        ($test_cases:expr, $kind:expr, $has_sep:expr, parser = $parse_fn:tt) => {
-            for (s, expected) in $test_cases.into_iter() {
-                let parsed = $parse_fn(s, $kind, $has_sep);
-                assert_eq!(
-                    parsed,
-                    Ok(expected as f64),
-                    "expected {s} to parse to {expected}, but got {parsed:?}"
-                );
-            }
-        };
+    #[allow(clippy::cast_precision_loss)]
+    fn assert_all_ints_eq<I>(test_cases: I, kind: Kind, has_sep: bool)
+    where
+        I: IntoIterator<Item = (&'static str, i64)>,
+    {
+        for (s, expected) in test_cases {
+            let parsed = parse_int(s, kind, has_sep);
+            assert_eq!(
+                parsed,
+                Ok(expected as f64),
+                "expected {s} to parse to {expected}, but got {parsed:?}"
+            );
+        }
+    }
+    fn assert_all_floats_eq<I>(test_cases: I, has_sep: bool)
+    where
+        I: IntoIterator<Item = (&'static str, f64)>,
+    {
+        for (s, expected) in test_cases {
+            let parsed = parse_float(s, has_sep);
+            assert_eq!(
+                parsed,
+                Ok(expected),
+                "expected {s} to parse to {expected}, but got {parsed:?}"
+            );
+        }
     }
 
     #[test]
@@ -186,7 +177,7 @@ mod test {
             ("1.7976931348623157e+308", 1.7976931348623157e+308),
             ("0.000000001", 0.000_000_001),
         ];
-        assert_all_eq!(float cases, false);
+        assert_all_floats_eq(cases, false);
     }
 
     #[test]
@@ -219,10 +210,10 @@ mod test {
             ("0xFfEeDdCcBbAa", 0xFfEeDdCcBbAa),
         ];
 
-        assert_all_eq!(int decimal, Kind::Decimal, false);
-        assert_all_eq!(int binary, Kind::Binary, false);
-        assert_all_eq!(int octal, Kind::Octal, false);
-        assert_all_eq!(int hex, Kind::Hex, false);
+        assert_all_ints_eq(decimal, Kind::Decimal, false);
+        assert_all_ints_eq(binary, Kind::Binary, false);
+        assert_all_ints_eq(octal, Kind::Octal, false);
+        assert_all_ints_eq(hex, Kind::Hex, false);
     }
 
     #[test]
@@ -286,10 +277,10 @@ mod test {
             ("0x_0", 0x0),
         ];
 
-        assert_all_eq!(int decimal, Kind::Decimal, true);
-        assert_all_eq!(int binary, Kind::Binary, true);
-        assert_all_eq!(int octal, Kind::Octal, true);
-        assert_all_eq!(int hex, Kind::Hex, true);
+        assert_all_ints_eq(decimal, Kind::Decimal, true);
+        assert_all_ints_eq(binary, Kind::Binary, true);
+        assert_all_ints_eq(octal, Kind::Octal, true);
+        assert_all_ints_eq(hex, Kind::Hex, true);
     }
 
     #[test]
@@ -308,9 +299,23 @@ mod test {
 
         // parse_int() handles Kind::Decimal as a float. Should we check if
         // a '.' is encountered during lexing and pick which parser to use?
-        assert_all_eq!(float no_sep.clone(), false);
-        assert_all_eq!(float sep.clone(), true);
-        assert_all_eq!(int no_sep, Kind::Decimal, false);
-        assert_all_eq!(int sep, Kind::Decimal, true);
+        assert_all_floats_eq(no_sep.clone(), false);
+        assert_all_floats_eq(sep.clone(), true);
+        for (s, expected) in no_sep {
+            let parsed = parse_int(s, Kind::Decimal, false);
+            assert_eq!(
+                parsed,
+                Ok(expected),
+                "expected {s} to parse to {expected}, but got {parsed:?}"
+            );
+        }
+        for (s, expected) in sep {
+            let parsed = parse_int(s, Kind::Decimal, true);
+            assert_eq!(
+                parsed,
+                Ok(expected),
+                "expected {s} to parse to {expected}, but got {parsed:?}"
+            );
+        }
     }
 }
