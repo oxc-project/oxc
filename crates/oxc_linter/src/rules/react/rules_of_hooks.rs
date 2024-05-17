@@ -9,12 +9,13 @@ use oxc_semantic::{
     pg::neighbors_filtered_by_edge_weight,
     AstNodeId, AstNodes, BasicBlockElement, EdgeType, Register,
 };
-use oxc_span::Atom;
+use oxc_span::{Atom, CompactStr};
+use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{is_react_component_or_hook_name, is_react_hook},
+    utils::{is_react_component_or_hook_name, is_react_function_call, is_react_hook},
     AstNode,
 };
 
@@ -119,6 +120,8 @@ impl Rule for RulesOfHooks {
         let semantic = ctx.semantic();
         let nodes = semantic.nodes();
 
+        let is_use = is_react_function_call(call, "use");
+
         let Some(parent_func) = parent_func(nodes, node) else {
             return ctx.diagnostic(diagnostics::top_level_hook(span, hook_name));
         };
@@ -135,8 +138,6 @@ impl Rule for RulesOfHooks {
             return ctx.diagnostic(diagnostics::class_component(span, hook_name));
         }
 
-        let is_use = hook_name == "use";
-
         match parent_func.kind() {
             // We are in a named function that isn't a hook or component, which is illegal
             AstKind::Function(Function { id: Some(id), .. })
@@ -147,18 +148,6 @@ impl Rule for RulesOfHooks {
                     hook_name,
                     id.name.as_str(),
                 ));
-            }
-            // Hooks can't be called from async function.
-            AstKind::Function(Function { id: Some(id), r#async: true, .. }) => {
-                return ctx.diagnostic(diagnostics::async_component(id.span, id.name.as_str()));
-            }
-            // Hooks can't be called from async arrow function.
-            AstKind::ArrowFunctionExpression(ArrowFunctionExpression {
-                span,
-                r#async: true,
-                ..
-            }) => {
-                return ctx.diagnostic(diagnostics::async_component(*span, "Anonymous"));
             }
             // Hooks are allowed inside of unnamed functions used as arguments. As long as they are
             // not used as a callback inside of components or hooks.
@@ -172,7 +161,11 @@ impl Rule for RulesOfHooks {
                 return;
             }
             AstKind::Function(Function { span, id: None, .. })
-            | AstKind::ArrowFunctionExpression(ArrowFunctionExpression { span, .. }) => {
+            | AstKind::ArrowFunctionExpression(ArrowFunctionExpression {
+                span,
+                r#async: false,
+                ..
+            }) => {
                 let ident = get_declaration_identifier(nodes, parent_func.id());
 
                 // Hooks cannot be called inside of export default functions or used in a function
@@ -195,7 +188,7 @@ impl Rule for RulesOfHooks {
                 //         useState(0);
                 //     }
                 // }
-                if ident.is_some_and(|name| !is_react_component_or_hook_name(name))
+                if ident.is_some_and(|name| !is_react_component_or_hook_name(name.as_str()))
                     || is_export_default(nodes, parent_func.id())
                 {
                     return ctx.diagnostic(diagnostics::function_error(
@@ -204,6 +197,18 @@ impl Rule for RulesOfHooks {
                         "Anonymous",
                     ));
                 }
+            }
+            // Hooks can't be called from async function.
+            AstKind::Function(Function { id: Some(id), r#async: true, .. }) => {
+                return ctx.diagnostic(diagnostics::async_component(id.span, id.name.as_str()));
+            }
+            // Hooks can't be called from async arrow function.
+            AstKind::ArrowFunctionExpression(ArrowFunctionExpression {
+                span,
+                r#async: true,
+                ..
+            }) => {
+                return ctx.diagnostic(diagnostics::async_component(*span, "Anonymous"));
             }
             _ => {}
         }
@@ -278,9 +283,13 @@ impl RulesOfHooks {
     ) -> bool {
         let graph = &ctx.semantic().cfg().graph;
         // All nodes should be reachable from our hook, Otherwise we have a conditional/branching flow.
-        petgraph::algo::dijkstra(graph, func_cfg_ix, Some(node_cfg_ix), |_| 0)
-            .into_iter()
-            .any(|(f, _)| !petgraph::algo::has_path_connecting(graph, f, node_cfg_ix, None))
+        petgraph::algo::dijkstra(graph, func_cfg_ix, Some(node_cfg_ix), |e| match e.weight() {
+            EdgeType::NewFunction => 1,
+            EdgeType::Backedge | EdgeType::Normal => 0,
+        })
+        .into_iter()
+        .filter(|(_, val)| *val == 0)
+        .any(|(f, _)| !petgraph::algo::has_path_connecting(graph, f, node_cfg_ix, None))
     }
 
     #[inline(always)]
@@ -351,8 +360,7 @@ fn is_non_react_func_arg(nodes: &AstNodes, node_id: AstNodeId) -> bool {
         return false;
     };
 
-    // TODO make it better, might have false positives.
-    call.callee_name().is_some_and(|name| !matches!(name, "forwardRef" | "memo"))
+    !(is_react_function_call(call, "forwardRef") || is_react_function_call(call, "memo"))
 }
 
 fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: AstNodeId) -> bool {
@@ -364,7 +372,7 @@ fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: AstNodeId) -
             (
                 node.id(),
                 match node.kind() {
-                    AstKind::Function(func) => func.id.as_ref().map(|it| it.name.as_str()),
+                    AstKind::Function(func) => func.id.as_ref().map(|it| it.name.to_compact_str()),
                     AstKind::ArrowFunctionExpression(_) => {
                         get_declaration_identifier(nodes, node.id())
                     }
@@ -374,21 +382,37 @@ fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: AstNodeId) -
         })
         .any(|(ix, id)| {
             id.is_some_and(|name| {
-                is_react_component_or_hook_name(name) || is_memo_or_forward_ref_callback(nodes, ix)
+                is_react_component_or_hook_name(name.as_str())
+                    || is_memo_or_forward_ref_callback(nodes, ix)
             })
         })
 }
 
-fn get_declaration_identifier<'a>(nodes: &'a AstNodes<'a>, node_id: AstNodeId) -> Option<&str> {
-    nodes.ancestors(node_id).map(|id| nodes.get_node(id)).find_map(|node| {
-        if let AstKind::VariableDeclaration(decl) = node.kind() {
-            if decl.declarations.len() == 1 {
-                decl.declarations[0].id.get_identifier().map(Atom::as_str)
-            } else {
-                None
+fn get_declaration_identifier<'a>(
+    nodes: &'a AstNodes<'a>,
+    node_id: AstNodeId,
+) -> Option<CompactStr> {
+    nodes.ancestors(node_id).map(|id| nodes.kind(id)).find_map(|kind| {
+        match kind {
+            // const useHook = () => {};
+            AstKind::VariableDeclaration(decl) if decl.declarations.len() == 1 => {
+                decl.declarations[0].id.get_identifier().map(Atom::to_compact_str)
             }
-        } else {
-            None
+            // useHook = () => {};
+            AstKind::AssignmentExpression(expr)
+                if matches!(expr.operator, AssignmentOperator::Assign) =>
+            {
+                expr.left.get_identifier().map(std::convert::Into::into)
+            }
+            // const {useHook = () => {}} = {};
+            // ({useHook = () => {}} = {});
+            AstKind::AssignmentPattern(patt) => {
+                patt.left.get_identifier().map(Atom::to_compact_str)
+            }
+            // { useHook: () => {} }
+            // { useHook() {} }
+            AstKind::ObjectProperty(prop) => prop.key.name(),
+            _ => None,
         }
     })
 }
@@ -597,6 +621,7 @@ fn test() {
             use_hook();
             // also valid because it's not matching the PascalCase namespace
             jest.useFakeTimer()
+            AFFiNE.plugins.use('oauth');
         ",
         // Regression test for some internal code.
         // This shows how the "callback rule" is more relaxed,
@@ -874,6 +899,41 @@ fn test() {
               return <div>test</div>;
             };
         ",
+        "
+            function useLabeledBlock() {
+                let x = () => {
+                    if (some) {
+                        noop();
+                    }
+                };
+                useHook();
+            }
+        ",
+        "
+
+            export const Component = () => {
+                return {
+                    Target: () => {
+                        useEffect(() => {
+                            return () => {
+                                something.value = true;
+                            };
+                        }, []);
+                        return <div></div>;
+                    },
+                    useTargetModule: (m) => {
+                        useModule(m);
+                    },
+                };
+            };
+        ",
+        "
+            test.beforeEach(async () => {
+                timer = Sinon.useFakeTimers({
+                    toFake: ['setInterval'],
+                });
+            });
+    ",
     ];
 
     let fail = vec![

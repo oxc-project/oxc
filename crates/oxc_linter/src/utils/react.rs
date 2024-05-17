@@ -301,14 +301,16 @@ pub fn is_react_hook(expr: &Expression) -> bool {
             #[allow(unsafe_code)]
             let expr = unsafe { expr.as_member_expression().unwrap_unchecked() };
             let MemberExpression::StaticMemberExpression(static_expr) = expr else { return false };
+
+            let is_valid_property = is_react_hook_name(&static_expr.property.name);
             let is_valid_namespace = match &static_expr.object {
                 Expression::Identifier(ident) => {
+                    // TODO: test PascalCase
                     ident.name.chars().next().is_some_and(char::is_uppercase)
                 }
-                Expression::ThisExpression(_) | Expression::Super(_) => false,
-                _ => true,
+                _ => false,
             };
-            is_valid_namespace && expr.static_property_name().is_some_and(is_react_hook_name)
+            is_valid_namespace && is_valid_property
         }
         Expression::Identifier(ident) => is_react_hook_name(ident.name.as_str()),
         _ => false,
@@ -325,4 +327,21 @@ pub fn is_react_component_name(name: &str) -> bool {
 /// `is_react_component_name`, `is_react_hook_name`
 pub fn is_react_component_or_hook_name(name: &str) -> bool {
     is_react_component_name(name) || is_react_hook_name(name)
+}
+
+pub fn is_react_function_call(call: &CallExpression, expected_call: &str) -> bool {
+    let Some(subject) = call.callee_name() else { return false };
+
+    if subject != expected_call {
+        return false;
+    }
+
+    if let Some(member) = call.callee.as_member_expression() {
+        matches! {
+            member.object().get_identifier_reference(),
+            Some(ident) if ident.name.as_str() == PRAGMA
+        }
+    } else {
+        true
+    }
 }

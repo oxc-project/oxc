@@ -106,14 +106,19 @@ export default function generateAncestorsCode(types) {
             clippy::cast_ptr_alignment
         )]
 
+        use std::cell::Cell;
+
         use memoffset::offset_of;
 
         use oxc_allocator::{Box, Vec};
         #[allow(clippy::wildcard_imports)]
         use oxc_ast::ast::*;
         use oxc_span::{Atom, SourceType, Span};
-        use oxc_syntax::operator::{
-            AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+        use oxc_syntax::{
+            operator::{
+                AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+            },
+            scope::ScopeId,
         };
 
         /// Type of [\`Ancestor\`].

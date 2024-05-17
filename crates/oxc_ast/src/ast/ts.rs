@@ -9,9 +9,12 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
+use std::{cell::Cell, hash::Hash};
+
 use oxc_allocator::{Box, Vec};
 use oxc_ast_macros::visited_node;
 use oxc_span::{Atom, GetSpan, Span};
+use oxc_syntax::scope::ScopeId;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
@@ -44,7 +47,7 @@ pub struct TSThisParameter<'a> {
 ///
 /// `const_opt` enum `BindingIdentifier` { `EnumBody_opt` }
 #[visited_node(scope(ScopeFlags::empty()), enter_scope_before(members))]
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSEnumDeclaration<'a> {
@@ -54,6 +57,27 @@ pub struct TSEnumDeclaration<'a> {
     pub members: Vec<'a, TSEnumMember<'a>>,
     /// Valid Modifiers: `const`, `export`, `declare`
     pub modifiers: Modifiers<'a>,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+impl<'a> TSEnumDeclaration<'a> {
+    pub fn new(
+        span: Span,
+        id: BindingIdentifier<'a>,
+        members: Vec<'a, TSEnumMember<'a>>,
+        modifiers: Modifiers<'a>,
+    ) -> Self {
+        Self { span, id, members, modifiers, scope_id: Cell::default() }
+    }
+}
+
+impl<'a> Hash for TSEnumDeclaration<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.id.hash(state);
+        self.members.hash(state);
+        self.modifiers.hash(state);
+    }
 }
 
 #[visited_node]
@@ -598,7 +622,7 @@ pub struct TSTypeParameterInstantiation<'a> {
 }
 
 #[visited_node(scope(ScopeFlags::empty()))]
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeParameter<'a> {
@@ -610,6 +634,33 @@ pub struct TSTypeParameter<'a> {
     pub r#in: bool,
     pub out: bool,
     pub r#const: bool,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+impl<'a> TSTypeParameter<'a> {
+    pub fn new(
+        span: Span,
+        name: BindingIdentifier<'a>,
+        constraint: Option<TSType<'a>>,
+        default: Option<TSType<'a>>,
+        r#in: bool,
+        out: bool,
+        r#const: bool,
+    ) -> Self {
+        Self { span, name, constraint, default, r#in, out, r#const, scope_id: Cell::default() }
+    }
+}
+
+impl<'a> Hash for TSTypeParameter<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.name.hash(state);
+        self.constraint.hash(state);
+        self.default.hash(state);
+        self.r#in.hash(state);
+        self.out.hash(state);
+        self.r#const.hash(state);
+    }
 }
 
 #[visited_node]
@@ -883,13 +934,27 @@ pub enum TSModuleDeclarationBody<'a> {
 }
 
 #[visited_node(scope(ScopeFlags::TsModuleBlock))]
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSModuleBlock<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+impl<'a> TSModuleBlock<'a> {
+    pub fn new(span: Span, body: Vec<'a, Statement<'a>>) -> Self {
+        Self { span, body, scope_id: Cell::default() }
+    }
+}
+
+impl<'a> Hash for TSModuleBlock<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.body.hash(state);
+    }
 }
 
 #[visited_node]
