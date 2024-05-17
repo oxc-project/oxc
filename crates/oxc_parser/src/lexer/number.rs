@@ -49,7 +49,7 @@ fn parse_float_without_underscores(s: &str) -> Result<f64, &'static str> {
 }
 
 /// NOTE: bit shifting here is is safe and much faster than f64::mul_add.
-/// It's safe becase we're sure this number is an integer - if it wasn't, it
+/// It's safe because we're sure this number is an integer - if it wasn't, it
 /// would be a [`Kind::Float`] instead. It's fast because shifting usually takes
 /// 1 clock cycle on the ALU, while multiplication+addition uses the FPU and is
 /// much slower. Addtiionally, this loop often gets unrolled by rustc since
