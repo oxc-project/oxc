@@ -127,7 +127,8 @@ fn run<'a>(
                 }
             }
 
-            let has_assert_function = check_arguments(call_expr, &rule.assert_function_names, ctx);
+            let has_assert_function =
+                check_arguments(call_expr, &rule.assert_function_names, None, ctx);
 
             if !has_assert_function {
                 ctx.diagnostic(expect_expect_diagnostic(call_expr.callee.span()));
@@ -139,31 +140,41 @@ fn run<'a>(
 fn check_arguments<'a>(
     call_expr: &'a CallExpression<'a>,
     assert_function_names: &[String],
+    fn_expr_name: Option<&'a str>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    call_expr.arguments.iter().any(|argument| {
+    for argument in &call_expr.arguments {
         if let Some(expr) = argument.as_expression() {
-            return check_assert_function_used(expr, assert_function_names, ctx);
+            if check_assert_function_used(expr, assert_function_names, fn_expr_name, ctx) {
+                return true;
+            }
         }
-        false
-    })
+    }
+    false
 }
 
 fn check_assert_function_used<'a>(
     expr: &'a Expression<'a>,
     assert_function_names: &[String],
+    fn_expr_name: Option<&'a str>,
     ctx: &LintContext<'a>,
 ) -> bool {
     match expr {
         Expression::FunctionExpression(fn_expr) => {
             let body = &fn_expr.body;
             if let Some(body) = body {
-                return check_statements(&body.statements, assert_function_names, ctx);
+                let fn_expr_name = fn_expr.id.as_ref().map(|id| id.name.as_str());
+                return check_statements(
+                    &body.statements,
+                    assert_function_names,
+                    fn_expr_name,
+                    ctx,
+                );
             }
         }
         Expression::ArrowFunctionExpression(arrow_expr) => {
             let body = &arrow_expr.body;
-            return check_statements(&body.statements, assert_function_names, ctx);
+            return check_statements(&body.statements, assert_function_names, fn_expr_name, ctx);
         }
         Expression::CallExpression(call_expr) => {
             let name = get_node_name(&call_expr.callee);
@@ -171,7 +182,8 @@ fn check_assert_function_used<'a>(
                 return true;
             }
 
-            let has_assert_function = check_arguments(call_expr, assert_function_names, ctx);
+            let has_assert_function =
+                check_arguments(call_expr, assert_function_names, fn_expr_name, ctx);
 
             return has_assert_function;
         }
@@ -182,13 +194,24 @@ fn check_assert_function_used<'a>(
             let AstKind::Function(function) = node.kind() else {
                 return false;
             };
+            // Stop recursing into self
+            if let Some(name) = fn_expr_name {
+                if function.id.as_ref().is_some_and(|id| id.name.as_str() == name) {
+                    return false;
+                }
+            }
             let Some(body) = &function.body else {
                 return false;
             };
-            return check_statements(&body.statements, assert_function_names, ctx);
+            return check_statements(&body.statements, assert_function_names, fn_expr_name, ctx);
         }
         Expression::AwaitExpression(expr) => {
-            return check_assert_function_used(&expr.argument, assert_function_names, ctx);
+            return check_assert_function_used(
+                &expr.argument,
+                assert_function_names,
+                fn_expr_name,
+                ctx,
+            );
         }
         _ => {}
     };
@@ -199,11 +222,17 @@ fn check_assert_function_used<'a>(
 fn check_statements<'a>(
     statements: &'a oxc_allocator::Vec<Statement<'a>>,
     assert_function_names: &[String],
+    fn_expr_name: Option<&'a str>,
     ctx: &LintContext<'a>,
 ) -> bool {
     statements.iter().any(|statement| {
         if let Statement::ExpressionStatement(expr_stmt) = statement {
-            return check_assert_function_used(&expr_stmt.expression, assert_function_names, ctx);
+            return check_assert_function_used(
+                &expr_stmt.expression,
+                assert_function_names,
+                fn_expr_name,
+                ctx,
+            );
         }
         false
     })
@@ -430,6 +459,18 @@ fn test() {
                     throw new Error('nope')
                 };
                 await foo(asyncFunction()).rejects.toThrow();
+            });
+            "#,
+            None,
+        ),
+        (
+            r#"
+            test("event emitters bound to CLS context", function(t) {
+                t.test("emitter with newListener that removes handler", function(t) {
+                    ee.on("newListener", function handler(event: any) {
+                        this.removeListener("newListener", handler);
+                    });
+                });
             });
             "#,
             None,
