@@ -48,6 +48,14 @@ fn parse_float_without_underscores(s: &str) -> Result<f64, &'static str> {
     s.parse::<f64>().map_err(|_| "invalid float")
 }
 
+/// NOTE: bit shifting here is is safe and much faster than f64::mul_add.
+/// It's safe becase we're sure this number is an integer - if it wasn't, it
+/// would be a [`Kind::Float`] instead. It's fast because shifting usually takes
+/// 1 clock cycle on the ALU, while multiplication+addition uses the FPU and is
+/// much slower. Addtiionally, this loop often gets unrolled by rustc since
+/// these numbers are usually not long. On x84_64, FMUL has a latency of 4 clock
+/// cycles, which doesn't include addition. Some platorms support mul + add in a
+/// single instruction, but many others do not.
 #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
 fn parse_binary(s: &str) -> f64 {
     debug_assert!(!s.is_empty());
