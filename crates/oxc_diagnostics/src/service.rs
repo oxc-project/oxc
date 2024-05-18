@@ -22,6 +22,9 @@ pub struct DiagnosticService {
     /// Disable reporting on warnings, only errors are reported
     quiet: bool,
 
+    /// Do not display any diagnostics
+    silent: bool,
+
     /// Specify a warning threshold,
     /// which can be used to force exit with an error status if there are too many warning-level rule violations in your project
     max_warnings: Option<usize>,
@@ -42,6 +45,7 @@ impl Default for DiagnosticService {
         Self {
             reporter: Box::<GraphicalReporter>::default(),
             quiet: false,
+            silent: false,
             max_warnings: None,
             warnings_count: Cell::new(0),
             errors_count: Cell::new(0),
@@ -71,6 +75,12 @@ impl DiagnosticService {
     #[must_use]
     pub fn with_quiet(mut self, yes: bool) -> Self {
         self.quiet = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_silent(mut self, yes: bool) -> Self {
+        self.silent = yes;
         self
     }
 
@@ -133,6 +143,10 @@ impl DiagnosticService {
                     else if self.quiet {
                         continue;
                     }
+                }
+
+                if self.silent {
+                    continue;
                 }
 
                 if let Some(mut err_str) = self.reporter.render_error(diagnostic) {

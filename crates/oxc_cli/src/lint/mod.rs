@@ -10,7 +10,7 @@ use oxc_span::VALID_EXTENSIONS;
 use crate::{
     command::{LintOptions as CliLintOptions, OutputFormat, OutputOptions, WarningOptions},
     walk::{Extensions, Walk},
-    CliRunResult, LintResult, Runner,
+    CliRunResult, LintResult, MiscOptions, Runner,
 };
 
 pub struct LintRunner {
@@ -40,6 +40,7 @@ impl Runner for LintRunner {
             fix_options,
             enable_plugins,
             output_options,
+            misc_options,
             ..
         } = self.options;
 
@@ -130,7 +131,7 @@ impl Runner for LintRunner {
         let options = LintServiceOptions { cwd, paths, tsconfig };
         let lint_service = LintService::new(linter, options);
         let mut diagnostic_service =
-            Self::get_diagnostic_service(&warning_options, &output_options);
+            Self::get_diagnostic_service(&warning_options, &output_options, &misc_options);
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn({
@@ -159,9 +160,11 @@ impl LintRunner {
     fn get_diagnostic_service(
         warning_options: &WarningOptions,
         output_options: &OutputOptions,
+        misc_options: &MiscOptions,
     ) -> DiagnosticService {
         let mut diagnostic_service = DiagnosticService::default()
             .with_quiet(warning_options.quiet)
+            .with_silent(misc_options.silent)
             .with_max_warnings(warning_options.max_warnings);
 
         match output_options.format {
@@ -181,7 +184,7 @@ mod test {
     use crate::{lint_command, CliRunResult, LintResult, Runner};
 
     fn test(args: &[&str]) -> LintResult {
-        let mut new_args = vec!["--quiet"];
+        let mut new_args = vec!["--silent"];
         new_args.extend(args);
         let options = lint_command().run_inner(new_args.as_slice()).unwrap().lint_options;
         match LintRunner::new(options).run() {
@@ -300,6 +303,24 @@ mod test {
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn filter_error() {
+        let args = &["-D", "correctness", "fixtures/linter/debugger.js"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 1);
+    }
+
+    #[test]
+    fn eslintrc_error() {
+        let args = &["-c", "fixtures/linter/eslintrc.json", "fixtures/linter/debugger.js"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 1);
     }
 
     #[test]
