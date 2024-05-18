@@ -418,7 +418,7 @@ impl<'a> ParserImpl<'a> {
             return Ok(());
         }
 
-        let mut decorators = self.ast.new_vec();
+        let mut decorators = vec![];
         while self.at(Kind::At) {
             let decorator = self.parse_decorator()?;
             decorators.push(decorator);
