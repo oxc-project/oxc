@@ -4,7 +4,7 @@ use crate::error::{Error, Result};
 /// - Quote `source_content` at parallel.
 /// - If you using `ConcatSourceMapBuilder`, serialize `tokens` to vlq `mappings` at parallel.
 use crate::{token::TokenChunk, SourceMap, Token};
-#[cfg(feature = "rayon")]
+#[cfg(feature = "concurrent")]
 use rayon::prelude::*;
 
 // Here using `serde_json::to_string` to serialization `names/source_contents/sources`.
@@ -42,7 +42,7 @@ pub fn encode(sourcemap: &SourceMap) -> Result<String> {
     if let Some(source_contents) = &sourcemap.source_contents {
         buf.push_str("],\"sourcesContent\":[");
         cfg_if::cfg_if! {
-            if #[cfg(feature = "rayon")] {
+            if #[cfg(feature = "concurrent")] {
                 let quote_source_contents = source_contents
                     .par_iter()
                     .map(|x| serde_json::to_string(x.as_ref()))
@@ -82,7 +82,7 @@ fn serialize_sourcemap_mappings(sm: &SourceMap) -> String {
         |token_chunks| {
             // Serialize `tokens` to vlq `mappings` at parallel.
             cfg_if::cfg_if! {
-                if #[cfg(feature = "rayon")] {
+                if #[cfg(feature = "concurrent")] {
                     token_chunks
                         .par_iter()
                         .map(|token_chunk| serialize_mappings(&sm.tokens, token_chunk))

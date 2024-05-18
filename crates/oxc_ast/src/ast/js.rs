@@ -1727,7 +1727,7 @@ pub struct UsingDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub is_await: bool,
-    #[cfg_attr(feature = "serde-impl", serde(default))]
+    #[cfg_attr(feature = "serialize", serde(default))]
     pub declarations: Vec<'a, VariableDeclarator<'a>>,
 }
 

@@ -1,5 +1,4 @@
 mod linter;
-mod options;
 
 use crate::linter::{DiagnosticReport, ServerLinter};
 use globset::Glob;
