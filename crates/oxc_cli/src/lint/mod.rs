@@ -295,7 +295,7 @@ mod test {
 
     #[test]
     fn filter_allow_one() {
-        let args = &["-D", "correctness", "-A", "no-debugger", "fixtures/linter/debugger.js"];
+        let args = &["-W", "correctness", "-A", "no-debugger", "fixtures/linter/debugger.js"];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
@@ -314,7 +314,7 @@ mod test {
     #[test]
     fn eslintrc_no_undef() {
         let args = &[
-            "-D",
+            "-W",
             "no-undef",
             "-c",
             "fixtures/no_undef/eslintrc.json",
@@ -329,7 +329,7 @@ mod test {
     #[test]
     fn eslintrc_no_env() {
         let args = &[
-            "-D",
+            "-W",
             "no-undef",
             "-c",
             "fixtures/eslintrc_env/eslintrc_no_env.json",
@@ -359,7 +359,7 @@ mod test {
         let args = &[
             "-c",
             "fixtures/no_empty_allow_empty_catch/eslintrc.json",
-            "-D",
+            "-W",
             "no-empty",
             "fixtures/no_empty_allow_empty_catch/test.js",
         ];
@@ -374,7 +374,7 @@ mod test {
         let args = &[
             "-c",
             "fixtures/no_empty_disallow_empty_catch/eslintrc.json",
-            "-D",
+            "-W",
             "no-empty",
             "fixtures/no_empty_disallow_empty_catch/test.js",
         ];

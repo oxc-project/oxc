@@ -118,7 +118,7 @@ impl DiagnosticService {
             for diagnostic in diagnostics {
                 let severity = diagnostic.severity();
                 let is_warning = severity == Some(Severity::Warning);
-                let is_error = severity.is_none() || severity == Some(Severity::Error);
+                let is_error = severity == Some(Severity::Error) || severity.is_none();
                 if is_warning || is_error {
                     if is_warning {
                         let warnings_count = self.warnings_count() + 1;

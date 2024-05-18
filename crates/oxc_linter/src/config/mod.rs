@@ -9,7 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashSet;
 use serde::Deserialize;
 
-use crate::{rules::RuleEnum, AllowWarnDeny};
+use crate::{rules::RuleEnum, AllowWarnDeny, RuleWithSeverity};
 
 pub use self::{
     env::ESLintEnv, globals::ESLintGlobals, rules::ESLintRules,
@@ -66,12 +66,12 @@ impl ESLintConfig {
     #[allow(clippy::option_if_let_else)]
     pub fn override_rules(
         &self,
-        rules_for_override: &mut FxHashSet<RuleEnum>,
+        rules_for_override: &mut FxHashSet<RuleWithSeverity>,
         all_rules: &[RuleEnum],
     ) {
         use itertools::Itertools;
-        let mut rules_to_replace = vec![];
-        let mut rules_to_remove = vec![];
+        let mut rules_to_replace: Vec<RuleWithSeverity> = vec![];
+        let mut rules_to_remove: Vec<RuleWithSeverity> = vec![];
 
         // Rules can have the same name but different plugin names
         let lookup = self.rules.iter().into_group_map_by(|r| r.rule_name.as_str());
@@ -83,14 +83,16 @@ impl ESLintConfig {
                     let rule_config = &rule_configs[0];
                     let rule_name = &rule_config.rule_name;
                     let plugin_name = &rule_config.plugin_name;
-                    match rule_config.severity {
+                    let severity = rule_config.severity;
+                    match severity {
                         AllowWarnDeny::Warn | AllowWarnDeny::Deny => {
                             if let Some(rule) = all_rules
                                 .iter()
                                 .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
                             {
                                 let config = rule_config.config.clone().unwrap_or_default();
-                                rules_to_replace.push(rule.read_json(config));
+                                let rule = rule.read_json(config);
+                                rules_to_replace.push(RuleWithSeverity::new(rule, severity));
                             }
                         }
                         AllowWarnDeny::Allow => {
@@ -98,7 +100,8 @@ impl ESLintConfig {
                                 .iter()
                                 .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
                             {
-                                rules_to_remove.push(rule.clone());
+                                let rule = rule.clone();
+                                rules_to_remove.push(rule);
                             }
                         }
                     }
@@ -112,7 +115,8 @@ impl ESLintConfig {
                     {
                         if let Some(rule) = rules_for_override.iter().find(|r| r.name() == *name) {
                             let config = rule_config.config.clone().unwrap_or_default();
-                            rules_to_replace.push(rule.read_json(config));
+                            rules_to_replace
+                                .push(RuleWithSeverity::new(rule.read_json(config), rule.severity));
                         }
                     } else if rule_configs.iter().all(|r| r.severity.is_allow()) {
                         if let Some(rule) = rules_for_override.iter().find(|r| r.name() == *name) {

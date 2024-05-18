@@ -1,5 +1,5 @@
 {
   "rules": {
-    "no-undef": "error"
+    "no-undef": "warn"
   }
 }
