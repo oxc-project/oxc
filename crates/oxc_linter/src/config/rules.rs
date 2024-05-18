@@ -70,6 +70,10 @@ fn parse_rule_key(name: &str) -> (String, String) {
         "react-perf" => ("react_perf", rule_name),
         // e.g. "@next/next/google-font-display"
         "@next" => ("nextjs", rule_name.trim_start_matches("next/")),
+        // For backwards compatibility, react hook rules reside in the react plugin.
+        "react-hooks" => ("react", rule_name),
+        // For backwards compatibility, deepscan rules reside in the oxc plugin.
+        "deepscan" => ("oxc", rule_name),
         _ => (plugin_name, rule_name),
     };
 

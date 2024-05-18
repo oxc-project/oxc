@@ -10,14 +10,13 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn bad_array_method_on_arguments_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("deepscan(bad-array-method-on-arguments): Bad array method on arguments")
+    OxcDiagnostic::warning("oxc(bad-array-method-on-arguments): Bad array method on arguments")
         .with_help(format!(
             "The 'arguments' object does not have '{x0}()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead."
         ))
         .with_labels([span1.into()])
 }
 
-/// `https://deepscan.io/docs/rules/bad-array-method-on-arguments`
 #[derive(Debug, Default, Clone)]
 pub struct BadArrayMethodOnArguments;
 
@@ -79,7 +78,7 @@ impl Rule for BadArrayMethodOnArguments {
                         }
                     }
                     Expression::TemplateLiteral(template) => {
-                        // only check template string like "arguments[`METHOD_NAME`]" for Deepscan compatible
+                        // only check template string like "arguments[`METHOD_NAME`]" for Oxc compatible
                         if template.expressions.is_empty() && template.quasis.len() == 1 {
                             if let Some(name) =
                                 template.quasis.first().and_then(|template_element| {
@@ -142,7 +141,6 @@ fn test() {
         ("function fn() {arguments[`${'map'}`]((prev, cur) => prev + cur, 0)}", None),
         ("function fn() {arguments.toLocaleString(() => {})}", None),
         ("function fn() {arguments.toString(() => {})}", None),
-        // keep pass for DeepScan compatible
         ("function fn() {arguments.findLast(() => {})}", None),
         ("function fn() {arguments.group(() => {})}", None),
         ("function fn() {arguments.groupToMap(() => {})}", None),

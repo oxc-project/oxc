@@ -96,6 +96,7 @@ impl Runner for LintRunner {
             .with_react_plugin(enable_plugins.react_plugin)
             .with_unicorn_plugin(enable_plugins.unicorn_plugin)
             .with_typescript_plugin(enable_plugins.typescript_plugin)
+            .with_oxc_plugin(enable_plugins.oxc_plugin)
             .with_import_plugin(enable_plugins.import_plugin)
             .with_jsdoc_plugin(enable_plugins.jsdoc_plugin)
             .with_jest_plugin(enable_plugins.jest_plugin)

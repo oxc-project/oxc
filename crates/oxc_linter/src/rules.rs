@@ -22,19 +22,6 @@ mod import {
     // pub mod no_unused_modules;
 }
 
-mod deepscan {
-    pub mod bad_array_method_on_arguments;
-    pub mod bad_bitwise_operator;
-    pub mod bad_char_at_comparison;
-    pub mod bad_comparison_sequence;
-    pub mod bad_min_max_func;
-    pub mod bad_object_literal_comparison;
-    pub mod bad_replace_all_arg;
-    pub mod missing_throw;
-    pub mod number_arg_out_of_range;
-    pub mod uninvoked_array_callback;
-}
-
 mod eslint {
     pub mod array_callback_return;
     pub mod constructor_super;
@@ -335,13 +322,23 @@ mod jsx_a11y {
 
 mod oxc {
     pub mod approx_constant;
+    pub mod bad_array_method_on_arguments;
+    pub mod bad_bitwise_operator;
+    pub mod bad_char_at_comparison;
+    pub mod bad_comparison_sequence;
+    pub mod bad_min_max_func;
+    pub mod bad_object_literal_comparison;
+    pub mod bad_replace_all_arg;
     pub mod const_comparisons;
     pub mod double_comparisons;
     pub mod erasing_op;
     pub mod misrefactored_assign_op;
+    pub mod missing_throw;
     pub mod no_accumulating_spread;
     pub mod no_barrel_file;
+    pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
+    pub mod uninvoked_array_callback;
 }
 
 mod nextjs {
@@ -387,16 +384,6 @@ mod tree_shaking {
 }
 
 oxc_macros::declare_all_lint_rules! {
-    deepscan::bad_array_method_on_arguments,
-    deepscan::bad_bitwise_operator,
-    deepscan::bad_char_at_comparison,
-    deepscan::bad_comparison_sequence,
-    deepscan::bad_object_literal_comparison,
-    deepscan::bad_min_max_func,
-    deepscan::bad_replace_all_arg,
-    deepscan::missing_throw,
-    deepscan::number_arg_out_of_range,
-    deepscan::uninvoked_array_callback,
     eslint::array_callback_return,
     eslint::constructor_super,
     eslint::default_case_last,
@@ -688,13 +675,23 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::role_supports_aria_props,
     jsx_a11y::autocomplete_valid,
     oxc::approx_constant,
+    oxc::bad_array_method_on_arguments,
+    oxc::bad_bitwise_operator,
+    oxc::bad_char_at_comparison,
+    oxc::bad_comparison_sequence,
+    oxc::bad_min_max_func,
+    oxc::bad_object_literal_comparison,
+    oxc::bad_replace_all_arg,
     oxc::const_comparisons,
     oxc::double_comparisons,
     oxc::erasing_op,
     oxc::misrefactored_assign_op,
+    oxc::missing_throw,
     oxc::no_accumulating_spread,
     oxc::no_barrel_file,
+    oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
+    oxc::uninvoked_array_callback,
     nextjs::google_font_display,
     nextjs::google_font_preconnect,
     nextjs::inline_script_id,
