@@ -12,19 +12,20 @@ use crate::{
     ESLintConfig, ESLintEnv, ESLintGlobals, ESLintSettings,
 };
 
+#[derive(Clone)]
 pub struct LintContext<'a> {
     semantic: Rc<Semantic<'a>>,
 
     diagnostics: RefCell<Vec<Message<'a>>>,
 
-    disable_directives: DisableDirectives<'a>,
+    disable_directives: Rc<DisableDirectives<'a>>,
 
     /// Whether or not to apply code fixes during linting.
     fix: bool,
 
     current_rule_name: &'static str,
 
-    file_path: Box<Path>,
+    file_path: Rc<Path>,
 
     eslint_config: Arc<ESLintConfig>,
 }
@@ -36,10 +37,10 @@ impl<'a> LintContext<'a> {
         Self {
             semantic: Rc::clone(semantic),
             diagnostics: RefCell::new(vec![]),
-            disable_directives,
+            disable_directives: Rc::new(disable_directives),
             fix: false,
             current_rule_name: "",
-            file_path,
+            file_path: file_path.into(),
             eslint_config: Arc::new(ESLintConfig::default()),
         }
     }
@@ -99,15 +100,16 @@ impl<'a> LintContext<'a> {
         false
     }
 
-    #[inline]
-    pub fn with_rule_name(&mut self, name: &'static str) {
+    #[must_use]
+    pub fn with_rule_name(mut self, name: &'static str) -> Self {
         self.current_rule_name = name;
+        self
     }
 
     /* Diagnostics */
 
     pub fn into_message(self) -> Vec<Message<'a>> {
-        self.diagnostics.into_inner()
+        self.diagnostics.borrow().iter().cloned().collect::<Vec<_>>()
     }
 
     fn add_diagnostic(&self, message: Message<'a>) {

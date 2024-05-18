@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Fix<'a> {
     pub content: Cow<'a, str>,
     pub span: Span,
@@ -25,6 +25,7 @@ pub struct FixResult<'a> {
     pub messages: Vec<Message<'a>>,
 }
 
+#[derive(Clone)]
 pub struct Message<'a> {
     pub error: OxcDiagnostic,
     pub start: u32,
