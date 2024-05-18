@@ -1,6 +1,6 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_ast::ast::RegExpFlags;
+use oxc_ast::ast::{Decorator, RegExpFlags};
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
@@ -305,5 +305,10 @@ impl<'a> ParserImpl<'a> {
         let result = cb(self);
         self.ctx = ctx;
         result
+    }
+
+    pub(crate) fn consume_decorators(&mut self) -> oxc_allocator::Vec<'a, Decorator<'a>> {
+        let decorators = std::mem::take(&mut self.state.decorators);
+        self.ast.new_vec_from_iter(decorators)
     }
 }

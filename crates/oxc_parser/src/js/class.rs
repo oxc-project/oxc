@@ -57,7 +57,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Box<'a, Class<'a>>> {
         self.bump_any(); // advance `class`
 
-        let decorators = self.state.consume_decorators();
+        let decorators = self.consume_decorators();
         let start_span = decorators.iter().next().map_or(start_span, |d| d.span);
 
         let id = if self.cur_kind().is_binding_identifier() && !self.at(Kind::Implements) {
@@ -360,7 +360,7 @@ impl<'a> ParserImpl<'a> {
             kind
         };
 
-        let decorators = self.state.consume_decorators();
+        let decorators = self.consume_decorators();
 
         let value = self.parse_method(r#async, generator)?;
 
@@ -444,7 +444,7 @@ impl<'a> ParserImpl<'a> {
             accessibility,
             optional,
             definite,
-            decorators: self.state.consume_decorators(),
+            decorators: self.consume_decorators(),
         };
         Ok(ClassElement::PropertyDefinition(self.ast.alloc(property_definition)))
     }
@@ -474,6 +474,7 @@ impl<'a> ParserImpl<'a> {
             AccessorPropertyType::AccessorProperty
         };
 
+        let decorators = self.consume_decorators();
         Ok(self.ast.accessor_property(
             r#type,
             self.end_span(span),
@@ -481,7 +482,7 @@ impl<'a> ParserImpl<'a> {
             value,
             computed,
             r#static,
-            self.state.consume_decorators(),
+            decorators,
         ))
     }
 }
