@@ -4,9 +4,7 @@ use oxc_diagnostics::Result;
 use oxc_span::{Atom, GetSpan, Span};
 
 use super::{
-    declaration::{VariableDeclarationContext, VariableDeclarationParent},
-    grammar::CoverGrammar,
-    list::SwitchCases,
+    grammar::CoverGrammar, list::SwitchCases, VariableDeclarationContext, VariableDeclarationParent,
 };
 use crate::{diagnostics, lexer::Kind, list::NormalList, Context, ParserImpl, StatementContext};
 

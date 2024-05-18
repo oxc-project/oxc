@@ -5,23 +5,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{diagnostics, lexer::Kind, ParserImpl, StatementContext};
 
-#[derive(Clone, Debug, Copy, Eq, PartialEq)]
-pub enum VariableDeclarationParent {
-    For,
-    Statement,
-    Clause,
-}
-
-#[derive(Clone, Debug, Copy, Eq, PartialEq)]
-pub struct VariableDeclarationContext {
-    pub parent: VariableDeclarationParent,
-}
-
-impl VariableDeclarationContext {
-    pub(crate) fn new(parent: VariableDeclarationParent) -> Self {
-        Self { parent }
-    }
-}
+use super::{VariableDeclarationContext, VariableDeclarationParent};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Result<Statement<'a>> {

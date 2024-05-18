@@ -5,16 +5,9 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
-use super::list::FormalParameterList;
 use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl, StatementContext};
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum FunctionKind {
-    Declaration { single_statement: bool },
-    Expression,
-    DefaultExport,
-    TSDeclaration,
-}
+use super::{list::FormalParameterList, FunctionKind};
 
 impl FunctionKind {
     pub(crate) fn is_id_required(self) -> bool {

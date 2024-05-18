@@ -4,8 +4,8 @@ use oxc_diagnostics::Result;
 use oxc_span::Span;
 
 use super::{
-    function::FunctionKind,
     list::{AssertEntries, ExportNamedSpecifiers, ImportSpecifierList},
+    FunctionKind,
 };
 use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl};
 
