@@ -10,7 +10,7 @@ use std::f64::consts as f64;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn approx_constant_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("oxc(approx-constant): Approximate value of `{x1}` found."))
+    OxcDiagnostic::warn(format!("oxc(approx-constant): Approximate value of `{x1}` found."))
         .with_help(format!("Use `Math.{x1}` instead"))
         .with_labels([span0.into()])
 }

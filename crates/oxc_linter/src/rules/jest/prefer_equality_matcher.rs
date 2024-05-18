@@ -14,7 +14,7 @@ use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
 fn use_equality_matcher_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jest(prefer-equality-matcher): Suggest using the built-in equality matchers.")
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-equality-matcher): Suggest using the built-in equality matchers.")
         .with_help("Prefer using one of the equality matchers instead")
         .with_labels([span0.into()])
 }

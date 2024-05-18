@@ -13,7 +13,7 @@ use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
 
 fn redundant_left_hand_side(span0: Span, span1: Span, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning("oxc(const-comparisons): Left-hand side of `&&` operator has no effect.")
+    OxcDiagnostic::warn("oxc(const-comparisons): Left-hand side of `&&` operator has no effect.")
         .with_help(x2.to_string())
         .with_labels([
             LabeledSpan::new_with_span(Some("If this evaluates to `true`".into()), span0),
@@ -22,18 +22,16 @@ fn redundant_left_hand_side(span0: Span, span1: Span, x2: &str) -> OxcDiagnostic
 }
 
 fn redundant_right_hand_side(span0: Span, span1: Span, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
-        "oxc(const-comparisons): Right-hand side of `&&` operator has no effect.",
-    )
-    .with_help(x2.to_string())
-    .with_labels([
-        LabeledSpan::new_with_span(Some("If this evaluates to `true`".into()), span0),
-        LabeledSpan::new_with_span(Some("This will always evaluate to true.".into()), span1),
-    ])
+    OxcDiagnostic::warn("oxc(const-comparisons): Right-hand side of `&&` operator has no effect.")
+        .with_help(x2.to_string())
+        .with_labels([
+            LabeledSpan::new_with_span(Some("If this evaluates to `true`".into()), span0),
+            LabeledSpan::new_with_span(Some("This will always evaluate to true.".into()), span1),
+        ])
 }
 
 fn impossible(span0: Span, span1: Span, x2: &str, x3: &str, x4: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning("oxc(const-comparisons): Unexpected constant comparison")
+    OxcDiagnostic::warn("oxc(const-comparisons): Unexpected constant comparison")
         .with_help(x4.to_string())
         .with_labels([
             LabeledSpan::new_with_span(Some(format!("Requires that {x2}")), span0),

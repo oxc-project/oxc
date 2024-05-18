@@ -9,24 +9,22 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn missing_message(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint-plugin-unicorn(error-message): Pass a message to the {x0:1} constructor."
     ))
     .with_labels([span1.into()])
 }
 
 fn empty_message(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-unicorn(error-message): Error message should not be an empty string.",
     )
     .with_labels([span0.into()])
 }
 
 fn not_string(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
-        "eslint-plugin-unicorn(error-message): Error message should be a string.",
-    )
-    .with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-unicorn(error-message): Error message should be a string.")
+        .with_labels([span0.into()])
 }
 
 #[derive(Default, Debug, Clone)]

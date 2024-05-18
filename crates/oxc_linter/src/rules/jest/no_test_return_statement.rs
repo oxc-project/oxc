@@ -15,7 +15,7 @@ use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
 fn no_test_return_statement_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value",
     )
     .with_labels([span0.into()])

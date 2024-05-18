@@ -6,26 +6,26 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn type_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "typescript-eslint(ban-types): Do not use {x0:?} as a type. Use \"{x1}\" instead"
     ))
     .with_labels([span2.into()])
 }
 
 fn type_literal(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("typescript-eslint(ban-types): Prefer explicitly define the object shape")
+    OxcDiagnostic::warn("typescript-eslint(ban-types): Prefer explicitly define the object shape")
         .with_help("This type means \"any non-nullish value\", which is slightly better than 'unknown', but it's still a broad type")
         .with_labels([span0.into()])
 }
 
 fn function(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("typescript-eslint(ban-types): Don't use `Function` as a type")
+    OxcDiagnostic::warn("typescript-eslint(ban-types): Don't use `Function` as a type")
         .with_help("The `Function` type accepts any function-like value")
         .with_labels([span0.into()])
 }
 
 fn object(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "typescript-eslint(ban-types): 'The `Object` type actually means \"any non-nullish value\"",
     )
     .with_labels([span0.into()])

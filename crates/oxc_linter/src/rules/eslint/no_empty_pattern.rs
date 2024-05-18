@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_empty_pattern_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-empty-pattern): Disallow empty destructuring patterns.")
+    OxcDiagnostic::warn("eslint(no-empty-pattern): Disallow empty destructuring patterns.")
         .with_help("Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.")
         .with_labels([LabeledSpan::new_with_span(Some(format!("Empty {x0} binding pattern")), span1)])
 }

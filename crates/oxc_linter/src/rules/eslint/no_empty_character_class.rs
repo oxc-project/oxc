@@ -10,7 +10,7 @@ use regex::Regex;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_empty_character_class_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-empty-character-class): Empty character class")
+    OxcDiagnostic::warn("eslint(no-empty-character-class): Empty character class")
         .with_help("Try to remove empty character class `[]` in regexp literal")
         .with_labels([span0.into()])
 }

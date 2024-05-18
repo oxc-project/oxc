@@ -20,35 +20,35 @@ use crate::{
 };
 
 fn spread_in_list(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new {x1} unnecessarily."))
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new {x1} unnecessarily."))
         .with_help("Consider removing the spread operator.")
         .with_labels([span0.into()])
 }
 
 fn spread_in_arguments(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.").with_help("This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.\nFor example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.").with_help("This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.\nFor example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.").with_labels([span0.into()])
 }
 
 fn iterable_to_array(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint-plugin-unicorn(no-useless-spread): `{x1}` accepts an iterable, so it's unnecessary to convert the iterable to an array."))
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-useless-spread): `{x1}` accepts an iterable, so it's unnecessary to convert the iterable to an array."))
         .with_help("Consider removing the spread operator.")
         .with_labels([span0.into()])
 }
 
 fn iterable_to_array_in_for_of(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")
         .with_help("`for…of` can iterate over iterable, it's unnecessary to convert to an array.")
         .with_labels([span0.into()])
 }
 
 fn iterable_to_array_in_yield_star(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")
         .with_help("`yield*` can delegate to another iterable, so it's unnecessary to convert the iterable to an array.")
         .with_labels([span0.into()])
 }
 
 fn clone_array(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")
         .with_help(format!("`{x1}` returns a new array. Spreading it into an array expression to create a new array is redundant."))
         .with_labels([span0.into()])
 }

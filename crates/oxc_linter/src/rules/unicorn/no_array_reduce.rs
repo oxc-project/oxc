@@ -13,7 +13,7 @@ use crate::{
 };
 
 fn no_array_reduce_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.")
         .with_help("Refactor your code to use `for` loops instead.")
         .with_labels([span0.into()])
 }

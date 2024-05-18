@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn bad_min_max_func_diagnostic(x0: f64, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "oxc(bad-min-max-func): Math.min and Math.max combination leads to constant result",
     )
     .with_help(format!(

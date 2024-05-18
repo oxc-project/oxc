@@ -16,11 +16,9 @@ use crate::{
 };
 
 fn no_conditional_expect_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
-        "eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect",
-    )
-    .with_help("Avoid calling `expect` conditionally`")
-    .with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect")
+        .with_help("Avoid calling `expect` conditionally`")
+        .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]

@@ -11,7 +11,7 @@ use phf::phf_set;
 use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
 fn prefer_spread_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over {x1}"
     ))
     .with_help("The spread operator (`...`) is more concise and readable.")

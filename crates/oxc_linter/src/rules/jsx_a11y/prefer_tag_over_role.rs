@@ -16,7 +16,7 @@ use oxc_span::Span;
 use phf::phf_map;
 
 fn prefer_tag_over_role_diagnostic(span: Span, tag: &str, role: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `{tag}` over `role` attribute `{role}`."))
+    OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `{tag}` over `role` attribute `{role}`."))
         .with_help(format!("Replace HTML elements with `role` attribute `{role}` to corresponding semantic HTML tag `{tag}`."))
         .with_label(span)
 }

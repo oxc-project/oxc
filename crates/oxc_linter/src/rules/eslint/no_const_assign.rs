@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_const_assign_diagnostic(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint(no-const-assign): Unexpected re-assignment of const variable {x0}"
     ))
     .with_labels([

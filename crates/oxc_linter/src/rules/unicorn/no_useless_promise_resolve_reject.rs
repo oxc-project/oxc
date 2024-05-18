@@ -6,13 +6,13 @@ use oxc_span::{GetSpan, Span};
 use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
 
 fn resolve(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `{x1} value` over `{x1} Promise.resolve(value)`."))
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `{x1} value` over `{x1} Promise.resolve(value)`."))
         .with_help("Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.")
         .with_labels([span0.into()])
 }
 
 fn reject(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `{x1} Promise.reject(error)`."))
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `{x1} Promise.reject(error)`."))
         .with_help("Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.")
         .with_labels([span0.into()])
 }

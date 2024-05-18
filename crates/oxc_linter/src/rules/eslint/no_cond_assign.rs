@@ -10,7 +10,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_cond_assign_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint(no-cond-assign): Expected a conditional expression and instead saw an assignment",
     )
     .with_help("Consider wrapping the assignment in additional parentheses")

@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_reflect_apply_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-unicorn(prefer-reflect-apply): Prefer Reflect.apply() over Function#apply()",
     )
     .with_help("Reflect.apply() is less verbose and easier to understand.")

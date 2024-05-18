@@ -13,25 +13,25 @@ use oxc_syntax::module_record::{ExportExportName, ExportImportName, ImportImport
 use crate::{context::LintContext, rule::Rule};
 
 fn no_export(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint-plugin-import(namespace): {x1:?} not found in imported namespace {x2:?}."
     ))
     .with_labels([span0.into()])
 }
 
 fn no_export_in_deeply_imported_namespace(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint-plugin-import(namespace): {x1:?} not found in deeply imported namespace {x2:?}."
     ))
     .with_labels([span0.into()])
 }
 
 fn computed_reference(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint-plugin-import(namespace): Unable to validate computed reference to imported namespace {x1:?}.")).with_labels([span0.into()])
+    OxcDiagnostic::warn(format!("eslint-plugin-import(namespace): Unable to validate computed reference to imported namespace {x1:?}.")).with_labels([span0.into()])
 }
 
 fn assignment(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint-plugin-import(namespace): Assignment to member of namespace {x1:?}.'"
     ))
     .with_labels([span0.into()])

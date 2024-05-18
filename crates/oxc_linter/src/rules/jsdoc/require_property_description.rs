@@ -10,7 +10,7 @@ use crate::{
 };
 
 fn require_property_description_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-jsdoc(require-property-description): Missing description in @property tag.",
     )
     .with_help("Add a description to this @property tag.")

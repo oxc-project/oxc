@@ -9,7 +9,7 @@ use std::borrow::Cow;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_loss_of_precision_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint(no-loss-of-precision): This number literal will lose precision at runtime.",
     )
     .with_labels([span0.into()])

@@ -10,7 +10,7 @@ use oxc_syntax::class::ElementKind;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_unused_private_class_members_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint(no-unused-private-class-members): '{x0}' is defined but never used."
     ))
     .with_labels([span1.into()])

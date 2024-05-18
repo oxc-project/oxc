@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn guard_for_in_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(guard-for-in): Require `for-in` loops to include an `if` statement")
+    OxcDiagnostic::warn("eslint(guard-for-in): Require `for-in` loops to include an `if` statement")
         .with_help("The body of a for-in should be wrapped in an if statement to filter unwanted properties from the prototype.")
         .with_labels([span0.into()])
 }

@@ -14,7 +14,7 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, Up
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn for_direction_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(for-direction): The update clause in this loop moves the variable in the wrong direction")
+    OxcDiagnostic::warn("eslint(for-direction): The update clause in this loop moves the variable in the wrong direction")
         .with_help("Use while loop for intended infinite loop")
         .with_labels([LabeledSpan::new_with_span(Some("This test moves in the wrong direction".into()), span0), LabeledSpan::new_with_span(Some("with this update".into()), span1)])
 }

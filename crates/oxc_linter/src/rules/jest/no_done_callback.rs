@@ -16,7 +16,7 @@ use crate::{
 };
 
 fn no_done_callback(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument",
     )
     .with_help("Return a Promise instead of relying on callback parameter")
@@ -24,7 +24,7 @@ fn no_done_callback(span0: Span) -> OxcDiagnostic {
 }
 
 fn use_await_instead_of_callback(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument",
     )
     .with_help("Use await instead of callback in async functions")

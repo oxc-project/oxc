@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 fn no_single_promise_in_promise_methods_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.{x1}()` is unnecessary."))
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.{x1}()` is unnecessary."))
         .with_help("Either use the value directly, or switch to `Promise.resolve(…)`.")
         .with_labels([span0.into()])
 }

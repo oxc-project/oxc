@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_template_curly_in_string_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint(no-template-curly-in-string): Unexpected template string expression",
     )
     .with_help("Disallow template literal placeholder syntax in regular strings")

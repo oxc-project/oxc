@@ -7,7 +7,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_iterator_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-iterator): Reserved name '__iterator__'")
+    OxcDiagnostic::warn("eslint(no-iterator): Reserved name '__iterator__'")
         .with_help("Disallow the use of the `__iterator__` property.")
         .with_labels([span0.into()])
 }

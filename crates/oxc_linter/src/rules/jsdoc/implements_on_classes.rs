@@ -12,7 +12,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 fn implements_on_classes_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jsdoc(implements-on-classes): `@implements` used on a non-constructor function")
+    OxcDiagnostic::warn("eslint-plugin-jsdoc(implements-on-classes): `@implements` used on a non-constructor function")
         .with_help("Add `@class` tag or use ES6 class syntax.")
         .with_labels([span0.into()])
 }

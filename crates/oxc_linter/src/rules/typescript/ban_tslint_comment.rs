@@ -8,7 +8,7 @@ use regex::Regex;
 use crate::{context::LintContext, fixer::Fix, rule::Rule};
 
 fn ban_tslint_comment_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "typescript-eslint(ban-tslint-comment): tslint comment detected: \"{x0}\""
     ))
     .with_labels([span1.into()])

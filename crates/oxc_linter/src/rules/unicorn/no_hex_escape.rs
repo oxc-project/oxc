@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
 fn no_hex_escape_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-unicorn(no-hex-escape): Use Unicode escapes instead of hexadecimal escapes.",
     )
     .with_labels([span0.into()])

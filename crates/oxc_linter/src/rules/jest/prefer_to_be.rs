@@ -18,29 +18,29 @@ use crate::{
 };
 
 fn use_to_be(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-jest(prefer-to-be): Use `toBe` when expecting primitive literals.",
     )
     .with_labels([span0.into()])
 }
 
 fn use_to_be_undefined(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jest(prefer-to-be): Use `toBeUndefined` instead.")
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-to-be): Use `toBeUndefined` instead.")
         .with_labels([span0.into()])
 }
 
 fn use_to_be_defined(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jest(prefer-to-be): Use `toBeDefined` instead.")
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-to-be): Use `toBeDefined` instead.")
         .with_labels([span0.into()])
 }
 
 fn use_to_be_null(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jest(prefer-to-be): Use `toBeNull` instead.")
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-to-be): Use `toBeNull` instead.")
         .with_labels([span0.into()])
 }
 
 fn use_to_be_na_n(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jest(prefer-to-be): Use `toBeNaN` instead.")
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-to-be): Use `toBeNaN` instead.")
         .with_labels([span0.into()])
 }
 

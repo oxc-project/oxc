@@ -8,7 +8,7 @@ use oxc_syntax::operator::LogicalOperator;
 use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
 
 fn no_useless_fallback_in_spread_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals")
         .with_help("Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.")
         .with_labels([span0.into()])
 }

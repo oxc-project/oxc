@@ -16,7 +16,7 @@ use crate::{
 };
 
 fn click_events_have_key_events_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.")
+    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.")
         .with_help("Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.")
         .with_labels([span0.into()])
 }

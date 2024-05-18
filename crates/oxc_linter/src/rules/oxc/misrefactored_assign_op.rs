@@ -17,7 +17,7 @@ use crate::{
 };
 
 fn misrefactored_assign_op_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning("oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation")
+    OxcDiagnostic::warn("oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation")
         .with_help(format!("Did you mean `{x1}`?"))
         .with_labels([span0.into()])
 }

@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_static_only_class_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.")
         .with_help("A class with only static members could just be an object instead.")
         .with_labels([span0.into()])
 }

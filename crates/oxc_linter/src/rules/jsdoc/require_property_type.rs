@@ -10,7 +10,7 @@ use crate::{
 };
 
 fn require_property_type_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-jsdoc(require-property-type): Missing type in @property tag.",
     )
     .with_help("Add a {type} to this @property tag.")

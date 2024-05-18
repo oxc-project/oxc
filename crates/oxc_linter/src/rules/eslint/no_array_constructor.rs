@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_array_constructor_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-array-constructor): Disallow `Array` constructors")
+    OxcDiagnostic::warn("eslint(no-array-constructor): Disallow `Array` constructors")
         .with_help("Use array literal instead")
         .with_labels([span0.into()])
 }

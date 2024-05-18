@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn max_classes_per_file_diagnostic(total: usize, max: usize, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint(max-classes-per-file): File has too many classes ({total}). Maximum allowed is {max}",
     ))
     .with_help("Reduce the number of classes in this file")

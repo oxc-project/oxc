@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_with_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-with): Unexpected use of `with` statement.")
+    OxcDiagnostic::warn("eslint(no-with): Unexpected use of `with` statement.")
         .with_help("Do not use the `with` statement.")
         .with_labels([span0.into()])
 }

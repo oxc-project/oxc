@@ -8,7 +8,7 @@ use serde_json::Value;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn max_params_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint(max-params): {x0:?}"))
+    OxcDiagnostic::warn(format!("eslint(max-params): {x0:?}"))
         .with_help(
             "This rule enforces a maximum number of parameters allowed in function definitions.",
         )

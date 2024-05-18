@@ -9,19 +9,19 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn missing_parameters(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(radix): Missing parameters.").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint(radix): Missing parameters.").with_labels([span0.into()])
 }
 
 fn missing_radix(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(radix): Missing radix parameter.").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint(radix): Missing radix parameter.").with_labels([span0.into()])
 }
 
 fn redundant_radix(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(radix): Redundant radix parameter.").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint(radix): Redundant radix parameter.").with_labels([span0.into()])
 }
 
 fn invalid_radix(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.",
     )
     .with_labels([span0.into()])

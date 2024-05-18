@@ -10,13 +10,13 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 fn use_to_be_called_with(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.")
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.")
         .with_help("Prefer toBeCalledWith(/* expected args */)")
         .with_labels([span0.into()])
 }
 
 fn use_have_been_called_with(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.")
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.")
         .with_help("Prefer toHaveBeenCalledWith(/* expected args */)")
         .with_labels([span0.into()])
 }

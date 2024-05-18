@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
 
 fn prefer_regexp_test_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()")
         .with_help("RegExp#test() exclusively returns a boolean and therefore is more efficient")
         .with_labels([span0.into()])
 }

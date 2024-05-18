@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
 fn zero_fraction(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-unicorn(no-zero-fractions): Don't use a zero fraction in the number.",
     )
     .with_help(format!("Replace the number literal with `{x1}`"))
@@ -14,7 +14,7 @@ fn zero_fraction(span0: Span, x1: &str) -> OxcDiagnostic {
 }
 
 fn dangling_dot(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-unicorn(no-zero-fractions): Don't use a dangling dot in the number.",
     )
     .with_help(format!("Replace the number literal with `{x1}`"))

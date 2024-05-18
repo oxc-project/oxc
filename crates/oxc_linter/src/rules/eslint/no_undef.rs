@@ -8,7 +8,7 @@ use oxc_syntax::operator::UnaryOperator;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_undef_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-undef): Disallow the use of undeclared variables.")
+    OxcDiagnostic::warn("eslint(no-undef): Disallow the use of undeclared variables.")
         .with_help(format!("'{x0}' is not defined."))
         .with_labels([span1.into()])
 }

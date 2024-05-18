@@ -14,13 +14,13 @@ use crate::{
 };
 
 fn missing_property(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-react(checked-requires-onchange-or-readonly): `checked` should be used with either `onChange` or `readOnly`.")
+    OxcDiagnostic::warn("eslint-plugin-react(checked-requires-onchange-or-readonly): `checked` should be used with either `onChange` or `readOnly`.")
         .with_help("Add either `onChange` or `readOnly`.")
         .with_labels([span0.into()])
 }
 
 fn exclusive_checked_attribute(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-react(checked-requires-onchange-or-readonly): Use either `checked` or `defaultChecked`, but not both.")
+    OxcDiagnostic::warn("eslint-plugin-react(checked-requires-onchange-or-readonly): Use either `checked` or `defaultChecked`, but not both.")
         .with_help("Remove either `checked` or `defaultChecked`.")
         .with_labels([span0.into(), span1.into()])
 }

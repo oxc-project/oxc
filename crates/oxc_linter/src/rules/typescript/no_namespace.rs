@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_namespace_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.",
     )
     .with_help("Replace the namespace with an ES2015 module or use `declare module`")

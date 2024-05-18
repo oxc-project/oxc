@@ -15,7 +15,7 @@ use crate::{
 };
 
 fn no_test_prefixes_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint-plugin-jest(no-test-prefixes): Use {x0:?} instead."))
+    OxcDiagnostic::warn(format!("eslint-plugin-jest(no-test-prefixes): Use {x0:?} instead."))
         .with_labels([span1.into()])
 }
 

@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{ast_util::get_declaration_of_variable, context::LintContext, rule::Rule, AstNode};
 
 fn prefer_set_size_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.").with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]

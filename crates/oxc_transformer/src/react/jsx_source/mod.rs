@@ -49,7 +49,7 @@ impl<'a> ReactJsxSource<'a> {
     }
 
     pub fn report_error(&self, span: Span) {
-        let error = OxcDiagnostic::warning("Duplicate __source prop found.").with_label(span);
+        let error = OxcDiagnostic::warn("Duplicate __source prop found.").with_label(span);
         self.ctx.error(error);
     }
 }

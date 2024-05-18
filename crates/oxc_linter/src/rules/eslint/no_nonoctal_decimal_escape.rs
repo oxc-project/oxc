@@ -8,7 +8,7 @@ use regex::{Captures, Regex};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn replacement(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint(no-nonoctal-decimal-escape): Don't use '{x0}' escape sequence."
     ))
     .with_help(format!("Replace '{x0}' with '{x1}'. This maintains the current functionality."))
@@ -16,7 +16,7 @@ fn replacement(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
 }
 
 fn escape_backslash(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint(no-nonoctal-decimal-escape): Don't use '{x0}' escape sequence."
     ))
     .with_help(format!("Replace '{x0}' with '{x1}' to include the actual backslash character."))

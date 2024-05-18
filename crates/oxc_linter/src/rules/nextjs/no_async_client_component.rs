@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{ast_util::get_declaration_of_variable, context::LintContext, rule::Rule};
 
 fn no_async_client_component_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-next(no-async-client-component): Prevent client components from being async functions.")
+    OxcDiagnostic::warn("eslint-plugin-next(no-async-client-component): Prevent client components from being async functions.")
         .with_help("See: https://nextjs.org/docs/messages/no-async-client-component")
         .with_labels([span0.into()])
 }

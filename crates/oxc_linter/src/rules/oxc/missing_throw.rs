@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn missing_throw_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("oxc(missing-throw): Missing throw")
+    OxcDiagnostic::warn("oxc(missing-throw): Missing throw")
         .with_help("The `throw` keyword seems to be missing in front of this 'new' expression")
         .with_labels([span0.into()])
 }

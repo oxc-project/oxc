@@ -8,14 +8,14 @@ use serde_json::Value;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_empty_interface_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "typescript-eslint(no-empty-interface): an empty interface is equivalent to `{}`",
     )
     .with_labels([span0.into()])
 }
 
 fn no_empty_interface_extend_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype").with_labels([span0.into()])
+    OxcDiagnostic::warn("typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype").with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]

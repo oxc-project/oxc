@@ -12,7 +12,7 @@ use crate::{
 };
 
 fn tabindex_no_positive_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-jsx-a11y(tabindex-no-positive): Avoid positive integer values for tabIndex.",
     )
     .with_help("Change the tabIndex prop to a non-negative value")

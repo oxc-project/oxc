@@ -139,7 +139,7 @@ impl DiagnosticService {
                     // Skip large output and print only once
                     if err_str.lines().any(|line| line.len() >= 400) {
                         let minified_diagnostic = Error::new(
-                            OxcDiagnostic::warning("File is too long to fit on the screen")
+                            OxcDiagnostic::warn("File is too long to fit on the screen")
                                 .with_help(format!("{path:?} seems like a minified file")),
                         );
                         err_str = format!("{minified_diagnostic:?}");

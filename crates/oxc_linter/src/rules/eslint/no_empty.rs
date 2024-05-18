@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_empty_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-empty): Disallow empty block statements")
+    OxcDiagnostic::warn("eslint(no-empty): Disallow empty block statements")
         .with_help(format!("Add comment inside empty {x0} statement"))
         .with_labels([LabeledSpan::new_with_span(Some(format!("Empty {x0} statement")), span1)])
 }

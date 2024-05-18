@@ -15,11 +15,9 @@ use crate::{
 };
 
 fn unexpected_lowercase(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
-        "eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names",
-    )
-    .with_help(format!("`{x0:?}`s should begin with lowercase"))
-    .with_labels([span1.into()])
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names")
+        .with_help(format!("`{x0:?}`s should begin with lowercase"))
+        .with_labels([span1.into()])
 }
 
 #[derive(Debug, Default, Clone)]

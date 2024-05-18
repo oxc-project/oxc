@@ -13,7 +13,7 @@ use crate::{
 };
 
 fn prefer_includes_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.").with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]

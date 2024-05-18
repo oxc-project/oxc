@@ -20,11 +20,11 @@ use crate::{
 };
 
 mod diagnostics {
-    use oxc_diagnostics::OxcDiagnostic as D;
+    use oxc_diagnostics::OxcDiagnostic;
     use oxc_span::Span;
 
-    pub(super) fn function_error(span: Span, hook_name: &str, func_name: &str) -> D {
-        D::warning(format!(
+    pub(super) fn function_error(span: Span, hook_name: &str, func_name: &str) -> OxcDiagnostic {
+        OxcDiagnostic::warn(format!(
             "eslint-plugin-react-hooks(rules-of-hooks): \
             React Hook {hook_name:?} is called in function {func_name:?} that is neither \
             a React function component nor a custom React Hook function. \
@@ -34,8 +34,8 @@ mod diagnostics {
         .with_label(span)
     }
 
-    pub(super) fn conditional_hook(span: Span, hook_name: &str) -> D {
-        D::warning(format!(
+    pub(super) fn conditional_hook(span: Span, hook_name: &str) -> OxcDiagnostic {
+        OxcDiagnostic::warn(format!(
             "eslint-plugin-react-hooks(rules-of-hooks): \
             React Hook {hook_name:?} is called conditionally. React Hooks must be \
             called in the exact same order in every component render."
@@ -43,8 +43,8 @@ mod diagnostics {
         .with_label(span)
     }
 
-    pub(super) fn loop_hook(span: Span, hook_name: &str) -> D {
-        D::warning(format!(
+    pub(super) fn loop_hook(span: Span, hook_name: &str) -> OxcDiagnostic {
+        OxcDiagnostic::warn(format!(
             "eslint-plugin-react-hooks(rules-of-hooks): \
             React Hook {hook_name:?} may be executed more than once. Possibly \
             because it is called in a loop. React Hooks must be called in the \
@@ -53,8 +53,8 @@ mod diagnostics {
         .with_label(span)
     }
 
-    pub(super) fn top_level_hook(span: Span, hook_name: &str) -> D {
-        D::warning(format!(
+    pub(super) fn top_level_hook(span: Span, hook_name: &str) -> OxcDiagnostic {
+        OxcDiagnostic::warn(format!(
             "eslint-plugin-react-hooks(rules-of-hooks): \
             React Hook {hook_name:?} cannot be called at the top level. React Hooks \
             must be called in a React function component or a custom React \
@@ -63,16 +63,16 @@ mod diagnostics {
         .with_label(span)
     }
 
-    pub(super) fn async_component(span: Span, func_name: &str) -> D {
-        D::warning(format!(
+    pub(super) fn async_component(span: Span, func_name: &str) -> OxcDiagnostic {
+        OxcDiagnostic::warn(format!(
             "eslint-plugin-react-hooks(rules-of-hooks): \
             message: `React Hook {func_name:?} cannot be called in an async function. "
         ))
         .with_label(span)
     }
 
-    pub(super) fn class_component(span: Span, hook_name: &str) -> D {
-        D::warning(format!(
+    pub(super) fn class_component(span: Span, hook_name: &str) -> OxcDiagnostic {
+        OxcDiagnostic::warn(format!(
             "eslint-plugin-react-hooks(rules-of-hooks): \
             React Hook {hook_name:?} cannot be called in a class component. React Hooks \
             must be called in a React function component or a custom React \
@@ -81,8 +81,8 @@ mod diagnostics {
         .with_label(span)
     }
 
-    pub(super) fn generic_error(span: Span, hook_name: &str) -> D {
-        D::warning(format!(
+    pub(super) fn generic_error(span: Span, hook_name: &str) -> OxcDiagnostic {
+        OxcDiagnostic::warn(format!(
             "eslint-plugin-react-hooks(rules-of-hooks): \
             React Hook {hook_name:?} cannot be called inside a callback. React Hooks \
             must be called in a React function component or a custom React \

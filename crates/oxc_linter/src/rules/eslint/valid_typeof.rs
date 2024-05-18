@@ -8,7 +8,7 @@ use phf::{phf_set, Set};
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 fn not_string(x0: Option<&'static str>, span1: Span) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warning(
+    let mut d = OxcDiagnostic::warn(
         "eslint(valid-typeof): Typeof comparisons should be to string literals.",
     )
     .with_labels([span1.into()]);
@@ -19,7 +19,7 @@ fn not_string(x0: Option<&'static str>, span1: Span) -> OxcDiagnostic {
 }
 
 fn invalid_value(x0: Option<&'static str>, span1: Span) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warning("eslint(valid-typeof): Invalid typeof comparison value.")
+    let mut d = OxcDiagnostic::warn("eslint(valid-typeof): Invalid typeof comparison value.")
         .with_labels([span1.into()]);
     if let Some(x) = x0 {
         d = d.with_help(x);

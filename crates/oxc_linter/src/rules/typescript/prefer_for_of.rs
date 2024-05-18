@@ -12,7 +12,7 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, Up
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_for_of_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.")
+    OxcDiagnostic::warn("typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.")
         .with_help("Consider using a for-of loop for this simple iteration.")
         .with_labels([span0.into()])
 }

@@ -8,7 +8,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_amd_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-import(no-amd): Do not use AMD `require` and `define` calls.",
     )
     .with_help(format!("Expected imports instead of AMD {x1}()"))

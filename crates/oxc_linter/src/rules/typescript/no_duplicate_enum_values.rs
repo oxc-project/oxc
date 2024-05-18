@@ -9,7 +9,7 @@ use rustc_hash::FxHashMap;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_duplicate_enum_values_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values",
     )
     .with_help("Duplicate values can lead to bugs that are hard to track down")

@@ -11,13 +11,13 @@ use oxc_syntax::operator::LogicalOperator;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_unsafe_optional_chaining_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining")
+    OxcDiagnostic::warn("eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining")
         .with_help("If this short-circuits with 'undefined' the evaluation will throw TypeError")
         .with_labels([span0.into()])
 }
 
 fn no_unsafe_arithmetic_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint(no-unsafe-optional-chaining): Unsafe arithmetic operation on optional chaining",
     )
     .with_help("This can result in NaN.")

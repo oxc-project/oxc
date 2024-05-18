@@ -8,7 +8,7 @@ use oxc_syntax::operator::UnaryOperator;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_delete_var_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-delete-var): variables should not be deleted")
+    OxcDiagnostic::warn("eslint(no-delete-var): variables should not be deleted")
         .with_labels([span0.into()])
 }
 

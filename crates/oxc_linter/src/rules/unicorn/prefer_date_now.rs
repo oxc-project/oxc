@@ -10,7 +10,7 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_date_now(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`",
     )
     .with_help("Change to `Date.now()`.")
@@ -18,7 +18,7 @@ fn prefer_date_now(span0: Span) -> OxcDiagnostic {
 }
 
 fn prefer_date_now_over_methods(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().{x1}()`"
     ))
     .with_help("Change to `Date.now()`.")
@@ -26,7 +26,7 @@ fn prefer_date_now_over_methods(span0: Span, x1: &str) -> OxcDiagnostic {
 }
 
 fn prefer_date_now_over_number_date_object(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `Number(new Date())`",
     )
     .with_help("Change to `Date.now()`.")
