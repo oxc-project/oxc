@@ -18,10 +18,10 @@ impl<'a> ParserImpl<'a> {
         let has_in = self.ctx.has_in();
         self.ctx = self.ctx.and_in(true);
 
-        let expression = self.parse_assignment_expression_base()?;
+        let expression = self.parse_assignment_expression_or_higher()?;
         let mut arguments = self.ast.new_vec();
         if self.eat(Kind::Comma) && !self.at(Kind::RParen) {
-            arguments.push(self.parse_assignment_expression_base()?);
+            arguments.push(self.parse_assignment_expression_or_higher()?);
         }
 
         self.ctx = self.ctx.and_in(has_in);
@@ -149,7 +149,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Box<'a, TSExportAssignment<'a>>> {
         self.expect(Kind::Eq)?;
 
-        let expression = self.parse_assignment_expression_base()?;
+        let expression = self.parse_assignment_expression_or_higher()?;
         self.asi()?;
 
         Ok(self.ast.alloc(TSExportAssignment { span: self.end_span(start_span), expression }))
@@ -337,7 +337,7 @@ impl<'a> ParserImpl<'a> {
                 .map(ExportDefaultDeclarationKind::FunctionDeclaration)?,
             _ => {
                 let decl = self
-                    .parse_assignment_expression_base()
+                    .parse_assignment_expression_or_higher()
                     .map(ExportDefaultDeclarationKind::from)?;
                 self.asi()?;
                 decl

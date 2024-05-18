@@ -28,7 +28,7 @@ fn main() -> std::io::Result<()> {
     println!("Original:");
     println!("{source_text}");
 
-    let options = CodegenOptions::default();
+    let options = CodegenOptions { enable_source_map: false, enable_typescript: true };
     let printed =
         Codegen::<false>::new("", &source_text, options.clone()).build(&ret.program).source_text;
     println!("Printed:");

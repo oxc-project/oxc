@@ -389,7 +389,7 @@ impl<'a> ParserImpl<'a> {
         let right = if is_for_in {
             self.parse_expression()
         } else {
-            self.parse_assignment_expression_base()
+            self.parse_assignment_expression_or_higher()
         }?;
         self.expect(Kind::RParen)?;
 

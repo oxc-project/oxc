@@ -86,7 +86,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_spread_element(&mut self) -> Result<Box<'a, SpreadElement<'a>>> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
-        let argument = self.parse_assignment_expression_base()?;
+        let argument = self.parse_assignment_expression_or_higher()?;
         Ok(self.ast.spread_element(self.end_span(span), argument))
     }
 
@@ -102,7 +102,7 @@ impl<'a> ParserImpl<'a> {
         let value = Expression::Identifier(self.ast.alloc(identifier.clone()));
         // CoverInitializedName ({ foo = bar })
         let init = if self.eat(Kind::Eq) {
-            let right = self.parse_assignment_expression_base()?;
+            let right = self.parse_assignment_expression_or_higher()?;
             let left = AssignmentTarget::AssignmentTargetIdentifier(self.ast.alloc(identifier));
             Some(self.ast.assignment_expression(
                 self.end_span(span),
@@ -134,7 +134,7 @@ impl<'a> ParserImpl<'a> {
         computed: bool,
     ) -> Result<Box<'a, ObjectProperty<'a>>> {
         self.bump_any(); // bump `:`
-        let value = self.parse_assignment_expression_base()?;
+        let value = self.parse_assignment_expression_or_higher()?;
         Ok(self.ast.object_property(
             self.end_span(span),
             PropertyKind::Init,
@@ -172,8 +172,11 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_computed_property_name(&mut self) -> Result<Expression<'a>> {
         self.bump_any(); // advance `[`
 
-        let expression =
-            self.context(Context::In, Context::empty(), Self::parse_assignment_expression_base)?;
+        let expression = self.context(
+            Context::In,
+            Context::empty(),
+            Self::parse_assignment_expression_or_higher,
+        )?;
 
         self.expect(Kind::RBrack)?;
         Ok(expression)

@@ -42,8 +42,11 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let id = self.parse_ts_enum_member_name()?;
 
-        let initializer =
-            if self.eat(Kind::Eq) { Some(self.parse_assignment_expression_base()?) } else { None };
+        let initializer = if self.eat(Kind::Eq) {
+            Some(self.parse_assignment_expression_or_higher()?)
+        } else {
+            None
+        };
 
         Ok(TSEnumMember { span: self.end_span(span), id, initializer })
     }

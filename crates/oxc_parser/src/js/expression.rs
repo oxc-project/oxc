@@ -11,7 +11,6 @@ use oxc_syntax::{
 };
 
 use super::{
-    function::IsParenthesizedArrowFunction,
     grammar::CoverGrammar,
     list::{ArrayExpressionList, CallArguments, SequenceExpressionList},
     operator::{
@@ -43,7 +42,7 @@ impl<'a> ParserImpl<'a> {
             self.ctx = self.ctx.and_decorator(false);
         }
 
-        let lhs = self.parse_assignment_expression_base()?;
+        let lhs = self.parse_assignment_expression_or_higher()?;
         if !self.at(Kind::Comma) {
             return Ok(lhs);
         }
@@ -923,58 +922,24 @@ impl<'a> ParserImpl<'a> {
         if !self.eat(Kind::Question) {
             return Ok(lhs);
         }
-        let consequent =
-            self.context(Context::In, Context::empty(), Self::parse_assignment_expression_base)?;
+        let consequent = self.context(
+            Context::In,
+            Context::empty(),
+            Self::parse_assignment_expression_or_higher,
+        )?;
         self.expect(Kind::Colon)?;
-        let alternate = self.parse_assignment_expression_base()?;
+        let alternate = self.parse_assignment_expression_or_higher()?;
         Ok(self.ast.conditional_expression(self.end_span(span), lhs, consequent, alternate))
     }
 
-    pub(crate) fn parse_assignment_expression_base(&mut self) -> Result<Expression<'a>> {
-        match self.is_parenthesized_arrow_function() {
-            IsParenthesizedArrowFunction::True => {
-                return self.parse_parenthesized_arrow_function();
-            }
-            IsParenthesizedArrowFunction::Maybe => {
-                let pos = self.cur_token().start;
-                if !self.state.not_parenthesized_arrow.contains(&pos) {
-                    if let Ok((type_parameters, params, return_type, r#async, span)) =
-                        self.try_parse(ParserImpl::parse_parenthesized_arrow_function_head)
-                    {
-                        return self.parse_arrow_function_body(
-                            span,
-                            type_parameters,
-                            params,
-                            return_type,
-                            r#async,
-                        );
-                    }
-                    self.state.not_parenthesized_arrow.insert(pos);
-                }
-            }
-            IsParenthesizedArrowFunction::False => {}
+    pub(crate) fn parse_assignment_expression_or_higher(&mut self) -> Result<Expression<'a>> {
+        if let Some(arrow_expr) = self.try_parse_parenthesized_arrow_function_expression()? {
+            return Ok(arrow_expr);
         }
-
-        let span = self.start_span();
-        if self.cur_kind().is_binding_identifier()
-            && self.peek_at(Kind::Arrow)
-            && !self.peek_token().is_on_new_line
-        {
-            self.parse_single_param_function_expression(span, false, false)
-        } else if self.at_async_no_new_line()
-            && self.peek_kind().is_binding_identifier()
-            && !self.peek_token().is_on_new_line
-            && self.nth_at(2, Kind::Arrow)
-        {
-            self.bump_any(); // bump async
-            let arrow_token = self.peek_token();
-            if arrow_token.is_on_new_line {
-                self.error(diagnostics::no_line_break_is_allowed_before_arrow(arrow_token.span()));
-            }
-            self.parse_single_param_function_expression(span, true, false)
-        } else {
-            self.parse_assignment_expression()
+        if let Some(arrow_expr) = self.try_parse_async_simple_arrow_function_expression()? {
+            return Ok(arrow_expr);
         }
+        self.parse_assignment_expression()
     }
 
     /// `AssignmentExpression`[In, Yield, Await] :
@@ -1011,7 +976,7 @@ impl<'a> ParserImpl<'a> {
 
         self.bump_any();
 
-        let right = self.parse_assignment_expression_base()?;
+        let right = self.parse_assignment_expression_or_higher()?;
         Ok(self.ast.assignment_expression(self.end_span(span), operator, left, right))
     }
 
@@ -1023,7 +988,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Expression<'a>> {
         let mut expressions = self.ast.new_vec_single(first_expression);
         while self.eat(Kind::Comma) {
-            let expression = self.parse_assignment_expression_base()?;
+            let expression = self.parse_assignment_expression_or_higher()?;
             expressions.push(expression);
         }
         Ok(self.ast.sequence_expression(self.end_span(span), expressions))
