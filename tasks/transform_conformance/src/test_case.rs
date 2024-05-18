@@ -69,7 +69,7 @@ impl TestCaseKind {
     }
 }
 
-fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOptions> {
+fn transform_options(options: &BabelOptions) -> Result<TransformOptions, Vec<Error>> {
     TransformOptions::from_babel_options(options)
 }
 
@@ -78,7 +78,7 @@ pub trait TestCase {
 
     fn options(&self) -> &BabelOptions;
 
-    fn transform_options(&self) -> &serde_json::Result<TransformOptions>;
+    fn transform_options(&self) -> &Result<TransformOptions, Vec<Error>>;
 
     fn test(&self, filtered: bool) -> bool;
 
@@ -186,7 +186,7 @@ pub trait TestCase {
 pub struct ConformanceTestCase {
     path: PathBuf,
     options: BabelOptions,
-    transform_options: serde_json::Result<TransformOptions>,
+    transform_options: Result<TransformOptions, Vec<Error>>,
 }
 
 impl TestCase for ConformanceTestCase {
@@ -201,7 +201,7 @@ impl TestCase for ConformanceTestCase {
         &self.options
     }
 
-    fn transform_options(&self) -> &serde_json::Result<TransformOptions> {
+    fn transform_options(&self) -> &Result<TransformOptions, Vec<Error>> {
         &self.transform_options
     }
 
@@ -287,7 +287,7 @@ impl TestCase for ConformanceTestCase {
                 Some(transform_options.clone())
             }
             Err(json_err) => {
-                let error = json_err.to_string();
+                let error = json_err.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n");
                 actual_errors = get_babel_error(&error);
                 None
             }
@@ -350,7 +350,7 @@ impl TestCase for ConformanceTestCase {
 pub struct ExecTestCase {
     path: PathBuf,
     options: BabelOptions,
-    transform_options: serde_json::Result<TransformOptions>,
+    transform_options: Result<TransformOptions, Vec<Error>>,
 }
 
 impl ExecTestCase {
@@ -396,7 +396,7 @@ impl TestCase for ExecTestCase {
         &self.options
     }
 
-    fn transform_options(&self) -> &serde_json::Result<TransformOptions> {
+    fn transform_options(&self) -> &Result<TransformOptions, Vec<Error>> {
         &self.transform_options
     }
 
@@ -421,7 +421,7 @@ impl TestCase for ExecTestCase {
 
 fn get_babel_error(error: &str) -> String {
     match error {
-        "unknown variant `invalidOption`, expected `classic` or `automatic`" => "Runtime must be either \"classic\" or \"automatic\".",
+        "transform-react-jsx: unknown variant `invalidOption`, expected `classic` or `automatic`" => "Runtime must be either \"classic\" or \"automatic\".",
         "Duplicate __self prop found." => "Duplicate __self prop found. You are most likely using the deprecated transform-react-jsx-self Babel plugin. Both __source and __self are automatically set when using the automatic runtime. Please remove transform-react-jsx-source and transform-react-jsx-self from your Babel config.",
         "Duplicate __source prop found." => "Duplicate __source prop found. You are most likely using the deprecated transform-react-jsx-source Babel plugin. Both __source and __self are automatically set when using the automatic runtime. Please remove transform-react-jsx-source and transform-react-jsx-self from your Babel config.",
         "Expected `>` but found `/`" => "Unexpected token, expected \",\"",
