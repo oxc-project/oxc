@@ -29,6 +29,7 @@ pub use crate::{
     config::ESLintConfig,
     context::LintContext,
     options::{AllowWarnDeny, LintOptions},
+    rule::RuleWithSeverity,
     service::{LintService, LintServiceOptions},
 };
 use crate::{
@@ -50,9 +51,8 @@ fn size_asserts() {
     assert_eq_size!(RuleEnum, [u8; 16]);
 }
 
-#[derive(Debug)]
 pub struct Linter {
-    rules: Vec<RuleEnum>,
+    rules: Vec<RuleWithSeverity>,
     options: LintOptions,
     eslint_config: Arc<ESLintConfig>,
 }
@@ -72,8 +72,9 @@ impl Linter {
         Ok(Self { rules, options, eslint_config: Arc::new(eslint_config) })
     }
 
+    #[cfg(test)]
     #[must_use]
-    pub fn with_rules(mut self, rules: Vec<RuleEnum>) -> Self {
+    pub fn with_rules(mut self, rules: Vec<RuleWithSeverity>) -> Self {
         self.rules = rules;
         self
     }
@@ -105,7 +106,9 @@ impl Linter {
         let rules = self
             .rules
             .iter()
-            .map(|rule| (rule, ctx.clone().with_rule_name(rule.name())))
+            .map(|rule| {
+                (rule, ctx.clone().with_rule_name(rule.name()).with_severity(rule.severity))
+            })
             .collect::<Vec<_>>();
 
         for (rule, ctx) in &rules {

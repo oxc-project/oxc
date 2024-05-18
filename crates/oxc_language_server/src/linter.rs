@@ -152,7 +152,6 @@ pub struct FixedContent {
     pub range: Range,
 }
 
-#[derive(Debug)]
 pub struct IsolatedLintHandler {
     linter: Arc<Linter>,
 }
@@ -382,7 +381,6 @@ fn offset_to_position(offset: usize, source_text: &str) -> Option<Position> {
     Some(Position::new(line as u32, column as u32))
 }
 
-#[derive(Debug)]
 pub struct ServerLinter {
     linter: Arc<Linter>,
 }

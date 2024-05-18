@@ -98,6 +98,11 @@ pub enum LintFilter {
         #[bpaf(short('A'), long("allow"), argument("NAME"))]
         String,
     ),
+    Warn(
+        /// Deny the rule or category (emit a warning)
+        #[bpaf(short('W'), long("warn"), argument("NAME"))]
+        String,
+    ),
     Deny(
         /// Deny the rule or category (emit an error)
         #[bpaf(short('D'), long("deny"), argument("NAME"))]
@@ -109,6 +114,7 @@ impl LintFilter {
     fn into_tuple(self) -> (AllowWarnDeny, String) {
         match self {
             Self::Allow(s) => (AllowWarnDeny::Allow, s),
+            Self::Warn(s) => (AllowWarnDeny::Warn, s),
             Self::Deny(s) => (AllowWarnDeny::Deny, s),
         }
     }

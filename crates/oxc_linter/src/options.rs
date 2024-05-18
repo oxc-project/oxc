@@ -1,11 +1,11 @@
-use std::path::PathBuf;
+use std::{convert::From, path::PathBuf};
 
 use rustc_hash::FxHashSet;
 use serde_json::{Number, Value};
 
-use oxc_diagnostics::{Error, OxcDiagnostic};
+use oxc_diagnostics::{Error, OxcDiagnostic, Severity};
 
-use crate::{config::ESLintConfig, rules::RULES, RuleCategory, RuleEnum};
+use crate::{config::ESLintConfig, rules::RULES, RuleCategory, RuleEnum, RuleWithSeverity};
 
 #[derive(Debug)]
 pub struct LintOptions {
@@ -30,7 +30,7 @@ pub struct LintOptions {
 impl Default for LintOptions {
     fn default() -> Self {
         Self {
-            filter: vec![(AllowWarnDeny::Deny, String::from("correctness"))],
+            filter: vec![(AllowWarnDeny::Warn, String::from("correctness"))],
             config_path: None,
             fix: false,
             react_plugin: true,
@@ -190,24 +190,37 @@ impl TryFrom<&Number> for AllowWarnDeny {
     }
 }
 
+impl From<AllowWarnDeny> for Severity {
+    fn from(value: AllowWarnDeny) -> Self {
+        match value {
+            AllowWarnDeny::Allow => Self::Advice,
+            AllowWarnDeny::Warn => Self::Warning,
+            AllowWarnDeny::Deny => Self::Error,
+        }
+    }
+}
+
 impl LintOptions {
     /// # Errors
     ///
     /// * Returns `Err` if there are any errors parsing the configuration file.
-    pub fn derive_rules_and_config(&self) -> Result<(Vec<RuleEnum>, ESLintConfig), Error> {
+    pub fn derive_rules_and_config(&self) -> Result<(Vec<RuleWithSeverity>, ESLintConfig), Error> {
         let config =
             self.config_path.as_ref().map(|path| ESLintConfig::from_file(path)).transpose()?;
 
-        let mut rules: FxHashSet<RuleEnum> = FxHashSet::default();
+        let mut rules: FxHashSet<RuleWithSeverity> = FxHashSet::default();
         let all_rules = self.get_filtered_rules();
 
-        for (allow_warn_deny, name_or_category) in &self.filter {
+        for (severity, name_or_category) in &self.filter {
             let maybe_category = RuleCategory::from(name_or_category.as_str());
-            match allow_warn_deny {
+            match severity {
                 AllowWarnDeny::Deny | AllowWarnDeny::Warn => {
                     match maybe_category {
                         Some(category) => rules.extend(
-                            all_rules.iter().filter(|rule| rule.category() == category).cloned(),
+                            all_rules
+                                .iter()
+                                .filter(|rule| rule.category() == category)
+                                .map(|rule| RuleWithSeverity::new(rule.clone(), *severity)),
                         ),
                         None => {
                             if name_or_category == "all" {
@@ -215,14 +228,14 @@ impl LintOptions {
                                     all_rules
                                         .iter()
                                         .filter(|rule| rule.category() != RuleCategory::Nursery)
-                                        .cloned(),
+                                        .map(|rule| RuleWithSeverity::new(rule.clone(), *severity)),
                                 );
                             } else {
                                 rules.extend(
                                     all_rules
                                         .iter()
                                         .filter(|rule| rule.name() == name_or_category)
-                                        .cloned(),
+                                        .map(|rule| RuleWithSeverity::new(rule.clone(), *severity)),
                                 );
                             }
                         }
@@ -250,7 +263,7 @@ impl LintOptions {
         let mut rules = rules.into_iter().collect::<Vec<_>>();
 
         // for stable diagnostics output ordering
-        rules.sort_unstable_by_key(RuleEnum::id);
+        rules.sort_unstable_by_key(|rule| rule.id());
 
         Ok((rules, config.unwrap_or_default()))
     }

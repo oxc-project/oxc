@@ -1,8 +1,12 @@
-use std::fmt;
+use std::{
+    fmt,
+    hash::{Hash, Hasher},
+    ops::Deref,
+};
 
 use oxc_semantic::SymbolId;
 
-use crate::{context::LintContext, AstNode};
+use crate::{context::LintContext, AllowWarnDeny, AstNode, RuleEnum};
 
 pub trait Rule: Sized + Default + fmt::Debug {
     /// Initialize from eslint json configuration
@@ -79,6 +83,40 @@ impl fmt::Display for RuleCategory {
             Self::Restriction => write!(f, "Restriction"),
             Self::Nursery => write!(f, "Nursery"),
         }
+    }
+}
+
+#[derive(Clone)]
+pub struct RuleWithSeverity {
+    pub rule: RuleEnum,
+    pub severity: AllowWarnDeny,
+}
+
+impl Hash for RuleWithSeverity {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.rule.hash(state);
+    }
+}
+
+impl PartialEq for RuleWithSeverity {
+    fn eq(&self, other: &Self) -> bool {
+        self.rule == other.rule
+    }
+}
+
+impl Eq for RuleWithSeverity {}
+
+impl Deref for RuleWithSeverity {
+    type Target = RuleEnum;
+
+    fn deref(&self) -> &Self::Target {
+        &self.rule
+    }
+}
+
+impl RuleWithSeverity {
+    pub fn new(rule: RuleEnum, severity: AllowWarnDeny) -> Self {
+        Self { rule, severity }
     }
 }
 

@@ -1,7 +1,7 @@
 use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::{AstNodes, JSDocFinder, ScopeTree, Semantic, SymbolTable};
 use oxc_span::SourceType;
 
@@ -9,7 +9,7 @@ use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{Fix, Message},
     javascript_globals::GLOBALS,
-    ESLintConfig, ESLintEnv, ESLintGlobals, ESLintSettings,
+    AllowWarnDeny, ESLintConfig, ESLintEnv, ESLintGlobals, ESLintSettings,
 };
 
 #[derive(Clone)]
@@ -23,11 +23,14 @@ pub struct LintContext<'a> {
     /// Whether or not to apply code fixes during linting.
     fix: bool,
 
-    current_rule_name: &'static str,
-
     file_path: Rc<Path>,
 
     eslint_config: Arc<ESLintConfig>,
+
+    // states
+    current_rule_name: &'static str,
+
+    severity: Severity,
 }
 
 impl<'a> LintContext<'a> {
@@ -39,9 +42,10 @@ impl<'a> LintContext<'a> {
             diagnostics: RefCell::new(vec![]),
             disable_directives: Rc::new(disable_directives),
             fix: false,
-            current_rule_name: "",
             file_path: file_path.into(),
             eslint_config: Arc::new(ESLintConfig::default()),
+            current_rule_name: "",
+            severity: Severity::Warning,
         }
     }
 
@@ -54,6 +58,18 @@ impl<'a> LintContext<'a> {
     #[must_use]
     pub fn with_eslint_config(mut self, eslint_config: &Arc<ESLintConfig>) -> Self {
         self.eslint_config = Arc::clone(eslint_config);
+        self
+    }
+
+    #[must_use]
+    pub fn with_rule_name(mut self, name: &'static str) -> Self {
+        self.current_rule_name = name;
+        self
+    }
+
+    #[must_use]
+    pub fn with_severity(mut self, severity: AllowWarnDeny) -> Self {
+        self.severity = Severity::from(severity);
         self
     }
 
@@ -100,12 +116,6 @@ impl<'a> LintContext<'a> {
         false
     }
 
-    #[must_use]
-    pub fn with_rule_name(mut self, name: &'static str) -> Self {
-        self.current_rule_name = name;
-        self
-    }
-
     /* Diagnostics */
 
     pub fn into_message(self) -> Vec<Message<'a>> {
@@ -114,6 +124,10 @@ impl<'a> LintContext<'a> {
 
     fn add_diagnostic(&self, message: Message<'a>) {
         if !self.disable_directives.contains(self.current_rule_name, message.start()) {
+            let mut message = message;
+            if message.error.severity != self.severity {
+                message.error = message.error.with_severity(self.severity);
+            }
             self.diagnostics.borrow_mut().push(message);
         }
     }

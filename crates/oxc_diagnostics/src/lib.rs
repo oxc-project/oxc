@@ -99,6 +99,12 @@ impl OxcDiagnostic {
     }
 
     #[must_use]
+    pub fn with_severity(mut self, severity: Severity) -> Self {
+        self.inner.severity = severity;
+        self
+    }
+
+    #[must_use]
     pub fn with_help<T: Into<String>>(mut self, help: T) -> Self {
         self.inner.help = Some(help.into());
         self
