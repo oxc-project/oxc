@@ -29,7 +29,7 @@ impl<'a> ParserImpl<'a> {
         let peeked = self.peek_kind();
         // let = foo, let instanceof x, let + 1
         if peeked.is_assignment_operator() || peeked.is_binary_operator() {
-            let expr = self.parse_assignment_expression_base()?;
+            let expr = self.parse_assignment_expression_or_higher()?;
             self.parse_expression_statement(span, expr)
         // let.a = 1, let()[a] = 1
         } else if matches!(peeked, Kind::Dot | Kind::LParen) {
@@ -118,7 +118,7 @@ impl<'a> ParserImpl<'a> {
         };
 
         let init =
-            self.eat(Kind::Eq).then(|| self.parse_assignment_expression_base()).transpose()?;
+            self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher()).transpose()?;
 
         if init.is_none() && decl_ctx.parent == VariableDeclarationParent::Statement {
             // LexicalBinding[In, Yield, Await] :

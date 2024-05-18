@@ -132,7 +132,7 @@ impl<'a> ParserImpl<'a> {
         left: BindingPattern<'a>,
     ) -> Result<BindingPattern<'a>> {
         if self.eat(Kind::Eq) {
-            let expr = self.parse_assignment_expression_base()?;
+            let expr = self.parse_assignment_expression_or_higher()?;
             Ok(self.ast.assignment_pattern(self.end_span(span), left, expr))
         } else {
             Ok(left)

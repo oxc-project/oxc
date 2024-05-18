@@ -467,7 +467,7 @@ impl<'a> ParserImpl<'a> {
         r#abstract: bool,
     ) -> Result<ClassElement<'a>> {
         let value =
-            self.eat(Kind::Eq).then(|| self.parse_assignment_expression_base()).transpose()?;
+            self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher()).transpose()?;
         let r#type = if r#abstract {
             AccessorPropertyType::TSAbstractAccessorProperty
         } else {
