@@ -5,7 +5,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{config::GlobalValue, context::LintContext, rule::Rule, AstNode};
 
 fn no_undef_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-undef): Disallow the use of undeclared variables.")
@@ -59,7 +59,7 @@ impl Rule for NoUndef {
                     continue;
                 }
 
-                if ctx.globals().is_enabled(name.as_str()) {
+                if ctx.globals().get(name.as_str()).is_some_and(GlobalValue::is_on) {
                     continue;
                 }
 

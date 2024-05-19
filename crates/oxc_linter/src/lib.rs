@@ -15,6 +15,7 @@ mod options;
 pub mod partial_loader;
 pub mod rule;
 mod rules;
+mod schema;
 mod service;
 mod utils;
 

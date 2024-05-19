@@ -1,29 +1,58 @@
-mod env;
-mod globals;
 mod rules;
 mod settings;
 
 use std::path::Path;
 
 use oxc_diagnostics::OxcDiagnostic;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
+use schematic::{
+    schema::{JsonSchemaRenderer, SchemaGenerator},
+    Config, ConfigLoader,
+};
 use serde::Deserialize;
 
 use crate::{rules::RuleEnum, AllowWarnDeny, RuleWithSeverity};
 
 pub use self::{
-    env::ESLintEnv, globals::ESLintGlobals, rules::ESLintRules,
-    settings::jsdoc::JSDocPluginSettings, settings::ESLintSettings,
+    rules::ESLintRules,
+    settings::{jsdoc::JSDocPluginSettings, ESLintSettings},
 };
+
+pub type ESLintGlobals = FxHashMap<String, GlobalValue>;
+pub type ESLintEnv = FxHashMap<String, bool>;
+
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Deserialize, Config)]
+#[serde(rename_all = "lowercase")]
+pub enum GlobalValue {
+    Readonly,
+    Writeable,
+    Off,
+}
+
+impl GlobalValue {
+    pub fn is_on(&self) -> bool {
+        matches!(self, Self::Readonly | Self::Writeable)
+    }
+
+    pub fn is_off(&self) -> bool {
+        matches!(self, Self::Off)
+    }
+}
 
 /// ESLint Config
 /// <https://eslint.org/docs/v8.x/use/configure/configuration-files>
-#[derive(Debug, Default, Deserialize)]
-#[serde(default)]
+#[derive(Debug, Deserialize, Config)]
 pub struct ESLintConfig {
-    pub(crate) rules: ESLintRules,
+    // #[serde(skip_serializing)]
+    // pub(crate) rules: ESLintRules,
+    #[serde(skip_serializing)]
     pub(crate) settings: ESLintSettings,
+
+    #[serde(skip_serializing)]
     pub(crate) env: ESLintEnv,
+
+    /// <https://eslint.org/docs/v8.x/use/configure/language-options#using-configuration-files-1>
+    #[serde(skip_serializing)]
     pub(crate) globals: ESLintGlobals,
 }
 
@@ -32,35 +61,11 @@ impl ESLintConfig {
     ///
     /// * Parse Failure
     pub fn from_file(path: &Path) -> Result<Self, OxcDiagnostic> {
-        let mut string = std::fs::read_to_string(path).map_err(|e| {
-            OxcDiagnostic::error(format!("Failed to parse config {path:?} with error {e:?}"))
-        })?;
-
-        // jsonc support
-        json_strip_comments::strip(&mut string).map_err(|err| {
-            OxcDiagnostic::error(format!("Failed to parse jsonc file {path:?}: {err:?}"))
-        })?;
-
-        let json = serde_json::from_str::<serde_json::Value>(&string).map_err(|err| {
-            let guess = mime_guess::from_path(path);
-            let err = match guess.first() {
-                // syntax error
-                Some(mime) if mime.subtype() == "json" => err.to_string(),
-                Some(_) => "Only json configuration is supported".to_string(),
-                None => {
-                    format!(
-                        "{err}, if the configuration is not a json file, please use json instead."
-                    )
-                }
-            };
-            OxcDiagnostic::error(format!("Failed to parse eslint config {path:?}.\n{err}"))
-        })?;
-
-        let config = Self::deserialize(&json).map_err(|err| {
-            OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
-        })?;
-
-        Ok(config)
+        let config = ConfigLoader::<ESLintConfig>::new()
+            .file(path)
+            .and_then(|config| config.load())
+            .map_err(|err| OxcDiagnostic::error(format!("{err}")))?;
+        Ok(config.config)
     }
 
     #[allow(clippy::option_if_let_else)]

@@ -1,11 +1,11 @@
+use schematic::Config;
 use serde::Deserialize;
 
 /// <https://nextjs.org/docs/pages/building-your-application/configuring/eslint#eslint-plugin>
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Config)]
 pub struct NextPluginSettings {
-    #[serde(default)]
-    #[serde(rename = "rootDir")]
-    root_dir: OneOrMany<String>,
+    #[serde(default, rename = "rootDir", skip_serializing)]
+    root_dir: OneOrMany,
 }
 
 impl NextPluginSettings {
@@ -19,14 +19,9 @@ impl NextPluginSettings {
 
 // Deserialize helper types
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Config)]
 #[serde(untagged)]
-enum OneOrMany<T> {
-    One(T),
-    Many(Vec<T>),
-}
-impl<T> Default for OneOrMany<T> {
-    fn default() -> Self {
-        OneOrMany::Many(Vec::new())
-    }
+enum OneOrMany {
+    One(String),
+    Many(Vec<String>),
 }

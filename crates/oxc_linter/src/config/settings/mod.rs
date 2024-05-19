@@ -1,8 +1,10 @@
+use schematic::Config;
+use serde::Deserialize;
+
 use self::{
     jsdoc::JSDocPluginSettings, jsx_a11y::JSXA11yPluginSettings, next::NextPluginSettings,
     react::ReactPluginSettings,
 };
-use serde::Deserialize;
 
 pub mod jsdoc;
 mod jsx_a11y;
@@ -15,16 +17,15 @@ mod react;
 /// TS type is `Object`
 /// <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L53>
 /// But each plugin extends this with their own properties.
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, PartialEq, Clone, Deserialize, Config)]
 pub struct ESLintSettings {
-    #[serde(default)]
-    #[serde(rename = "jsx-a11y")]
+    #[serde(default, rename = "jsx-a11y", skip_serializing)]
     pub jsx_a11y: JSXA11yPluginSettings,
-    #[serde(default)]
+    #[serde(default, skip_serializing)]
     pub next: NextPluginSettings,
-    #[serde(default)]
+    #[serde(default, skip_serializing)]
     pub react: ReactPluginSettings,
-    #[serde(default)]
+    #[serde(default, skip_serializing)]
     pub jsdoc: JSDocPluginSettings,
 }
 

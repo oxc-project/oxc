@@ -1,34 +1,41 @@
 use rustc_hash::FxHashMap;
+use schematic::Config;
 use serde::Deserialize;
 
 /// <https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md>
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Config)]
 pub struct JSDocPluginSettings {
     /// For all rules but NOT apply to `check-access` and `empty-tags` rule
-    #[serde(default, rename = "ignorePrivate")]
+    #[serde(default, rename = "ignorePrivate", skip_serializing)]
     pub ignore_private: bool,
+
     /// For all rules but NOT apply to `empty-tags` rule
-    #[serde(default, rename = "ignoreInternal")]
+    #[serde(default, rename = "ignoreInternal", skip_serializing)]
     pub ignore_internal: bool,
 
     /// Only for `require-(yields|returns|description|example|param|throws)` rule
-    #[serde(default = "default_true", rename = "ignoreReplacesDocs")]
+    #[serde(default = "default_true", rename = "ignoreReplacesDocs", skip_serializing)]
+    #[setting(default = true)]
     pub ignore_replaces_docs: bool,
+
     /// Only for `require-(yields|returns|description|example|param|throws)` rule
-    #[serde(default = "default_true", rename = "overrideReplacesDocs")]
+    #[serde(default = "default_true", rename = "overrideReplacesDocs", skip_serializing)]
+    #[setting(default = true)]
     pub override_replaces_docs: bool,
+
     /// Only for `require-(yields|returns|description|example|param|throws)` rule
-    #[serde(default, rename = "augmentsExtendsReplacesDocs")]
+    #[serde(default, rename = "augmentsExtendsReplacesDocs", skip_serializing)]
     pub augments_extends_replaces_docs: bool,
+
     /// Only for `require-(yields|returns|description|example|param|throws)` rule
-    #[serde(default, rename = "implementsReplacesDocs")]
+    #[serde(default, rename = "implementsReplacesDocs", skip_serializing)]
     pub implements_replaces_docs: bool,
 
     /// Only for `require-param-type` and `require-param-description` rule
-    #[serde(default, rename = "exemptDestructuredRootsFromChecks")]
+    #[serde(default, rename = "exemptDestructuredRootsFromChecks", skip_serializing)]
     pub exempt_destructured_roots_from_checks: bool,
 
-    #[serde(default, rename = "tagNamePreference")]
+    #[serde(default, rename = "tagNamePreference", skip_serializing)]
     tag_name_preference: FxHashMap<String, TagNamePreference>,
     // Not planning to support for now
     // min_lines: number
@@ -70,30 +77,15 @@ pub struct JSDocPluginSettings {
     // }[]
 }
 
-// `Default` attribute does not call custom `default = "path"` function!
-impl Default for JSDocPluginSettings {
-    fn default() -> Self {
-        Self {
-            ignore_private: false,
-            ignore_internal: false,
-            // Exists only for these defaults
-            ignore_replaces_docs: true,
-            override_replaces_docs: true,
-            augments_extends_replaces_docs: false,
-            implements_replaces_docs: false,
-            exempt_destructured_roots_from_checks: false,
-            tag_name_preference: FxHashMap::default(),
-        }
-    }
-}
-
 impl JSDocPluginSettings {
     /// Only for `check-tag-names` rule
     /// Return `Some(reason)` if blocked
     pub fn check_blocked_tag_name(&self, tag_name: &str) -> Option<String> {
         match self.tag_name_preference.get(tag_name) {
             Some(TagNamePreference::FalseOnly(_)) => Some(format!("Unexpected tag `@{tag_name}`.")),
-            Some(TagNamePreference::ObjectWithMessage { message }) => Some(message.to_string()),
+            Some(TagNamePreference::ObjectWithMessage(ObjectWithMessage { message })) => {
+                Some(message.to_string())
+            }
             _ => None,
         }
     }
@@ -106,9 +98,9 @@ impl JSDocPluginSettings {
 
         match self.tag_name_preference.get(original_name) {
             Some(TagNamePreference::TagNameOnly(preferred_name)) => Some(reason(preferred_name)),
-            Some(TagNamePreference::ObjectWithMessageAndReplacement { message, .. }) => {
-                Some(message.to_string())
-            }
+            Some(TagNamePreference::ObjectWithMessageAndReplacement(
+                ObjectWithMessageAndReplacement { message, .. },
+            )) => Some(message.to_string()),
             _ => {
                 // https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md#default-preferred-aliases
                 let aliased_name = match original_name {
@@ -146,9 +138,9 @@ impl JSDocPluginSettings {
             .iter()
             .filter_map(|(_, pref)| match pref {
                 TagNamePreference::TagNameOnly(replacement)
-                | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. } => {
-                    Some(replacement.as_str())
-                }
+                | TagNamePreference::ObjectWithMessageAndReplacement(
+                    ObjectWithMessageAndReplacement { replacement, .. },
+                ) => Some(replacement.as_str()),
                 _ => None,
             })
             .collect()
@@ -160,7 +152,9 @@ impl JSDocPluginSettings {
         match self.tag_name_preference.get(original_name) {
             Some(
                 TagNamePreference::TagNameOnly(replacement)
-                | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. },
+                | TagNamePreference::ObjectWithMessageAndReplacement(
+                    ObjectWithMessageAndReplacement { replacement, .. },
+                ),
             ) => replacement.to_string(),
             _ => original_name.to_string(),
         }
@@ -173,19 +167,32 @@ fn default_true() -> bool {
     true
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Config)]
 #[serde(untagged)]
 enum TagNamePreference {
+    #[serde(skip_serializing)]
     TagNameOnly(String),
-    ObjectWithMessageAndReplacement {
-        message: String,
-        replacement: String,
-    },
-    ObjectWithMessage {
-        message: String,
-    },
+
+    #[serde(skip_serializing)]
+    ObjectWithMessageAndReplacement(ObjectWithMessageAndReplacement),
+
+    #[serde(skip_serializing)]
+    ObjectWithMessage(ObjectWithMessage),
+
+    #[serde(skip_serializing)]
     #[allow(dead_code)]
     FalseOnly(bool), // Should care `true`...?
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Config)]
+struct ObjectWithMessageAndReplacement {
+    message: String,
+    replacement: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Config)]
+struct ObjectWithMessage {
+    message: String,
 }
 
 #[cfg(test)]

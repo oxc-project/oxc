@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{config::GlobalValue, context::LintContext, rule::Rule, AstNode};
 
 fn jsx_no_undef_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX")
@@ -66,7 +66,7 @@ impl Rule for JsxNoUndef {
                         return;
                     }
                 }
-                if ctx.globals().is_enabled(name) {
+                if ctx.globals().get(name).is_some_and(GlobalValue::is_on) {
                     return;
                 }
                 ctx.diagnostic(jsx_no_undef_diagnostic(ident.name.as_str(), ident.span));

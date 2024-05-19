@@ -1,13 +1,12 @@
+use schematic::Config;
 use serde::Deserialize;
 
 /// <https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc->
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Config)]
 pub struct ReactPluginSettings {
-    #[serde(default)]
-    #[serde(rename = "formComponents")]
+    #[serde(default, rename = "formComponents", skip_serializing)]
     form_components: Vec<CustomComponent>,
-    #[serde(default)]
-    #[serde(rename = "linkComponents")]
+    #[serde(default, rename = "linkComponents", skip_serializing)]
     link_components: Vec<CustomComponent>,
     // TODO: More properties should be added
 }
@@ -24,20 +23,31 @@ impl ReactPluginSettings {
 
 // Deserialize helper types
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Config)]
 #[serde(untagged)]
 enum CustomComponent {
+    #[serde(skip_serializing)]
     NameOnly(String),
-    ObjectWithOneAttr {
-        name: String,
-        #[serde(alias = "formAttribute", alias = "linkAttribute")]
-        attribute: String,
-    },
-    ObjectWithManyAttrs {
-        name: String,
-        #[serde(alias = "formAttribute", alias = "linkAttribute")]
-        attributes: Vec<String>,
-    },
+
+    #[serde(skip_serializing)]
+    ObjectWithOneAttr(ObjectWithOneAttr),
+
+    #[serde(skip_serializing)]
+    ObjectWithManyAttrs(ObjectWithManyAttrs),
+}
+
+#[derive(Clone, Debug, PartialEq, Deserialize, Config)]
+struct ObjectWithOneAttr {
+    name: String,
+    #[serde(alias = "formAttribute", alias = "linkAttribute")]
+    attribute: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Deserialize, Config)]
+struct ObjectWithManyAttrs {
+    name: String,
+    #[serde(alias = "formAttribute", alias = "linkAttribute")]
+    attributes: Vec<String>,
 }
 
 fn get_component_attrs_by_name(
@@ -47,10 +57,12 @@ fn get_component_attrs_by_name(
     for item in components {
         let comp = match item {
             CustomComponent::NameOnly(name) => (name, vec![]),
-            CustomComponent::ObjectWithOneAttr { name, attribute } => {
+            CustomComponent::ObjectWithOneAttr(ObjectWithOneAttr { name, attribute }) => {
                 (name, vec![attribute.to_string()])
             }
-            CustomComponent::ObjectWithManyAttrs { name, attributes } => (name, attributes.clone()),
+            CustomComponent::ObjectWithManyAttrs(ObjectWithManyAttrs { name, attributes }) => {
+                (name, attributes.clone())
+            }
         };
 
         if comp.0 == name {

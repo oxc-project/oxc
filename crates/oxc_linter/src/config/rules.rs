@@ -1,9 +1,14 @@
-use crate::AllowWarnDeny;
-use oxc_diagnostics::{Error, OxcDiagnostic};
-use serde::de::{self, Deserializer, Visitor};
-use serde::Deserialize;
 use std::fmt;
 use std::ops::Deref;
+
+use oxc_diagnostics::{Error, OxcDiagnostic};
+use schematic::Config;
+use serde::{
+    de::{self, Deserializer, Visitor},
+    Deserialize,
+};
+
+use crate::AllowWarnDeny;
 
 /// The `rules` field from ESLint config
 ///

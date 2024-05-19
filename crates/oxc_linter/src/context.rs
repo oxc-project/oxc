@@ -106,13 +106,14 @@ impl<'a> LintContext<'a> {
     }
 
     pub fn env_contains_var(&self, var: &str) -> bool {
-        for env in self.env().iter() {
-            let env = GLOBALS.get(env).unwrap_or(&GLOBALS["builtin"]);
-            if env.get(var).is_some() {
-                return true;
+        for (key, value) in self.env() {
+            if *value {
+                let env = GLOBALS.get(key).unwrap_or(&GLOBALS["builtin"]);
+                if env.get(var).is_some() {
+                    return true;
+                }
             }
         }
-
         false
     }
 
