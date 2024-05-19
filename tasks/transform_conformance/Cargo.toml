@@ -29,6 +29,6 @@ oxc_transformer  = { workspace = true }
 oxc_tasks_common = { workspace = true }
 oxc_diagnostics  = { workspace = true }
 
-walkdir    = { workspace = true }
-pico-args  = { workspace = true }
-indexmap   = { workspace = true }
+walkdir   = { workspace = true }
+pico-args = { workspace = true }
+indexmap  = { workspace = true }
