@@ -37,3 +37,21 @@ expression: require_render_return
  4 │                         <div>Hello {this.props.name}</div>
    ╰────
   help: When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the return statement is missing.
+
+  ⚠ eslint-plugin-react(require-render-return): Your render method should have a return statement
+   ╭─[require_render_return.tsx:3:15]
+ 2 │             class Hello extends React.Component {
+ 3 │               render() {
+   ·               ──────
+ 4 │                 function foo() {
+   ╰────
+  help: When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the return statement is missing.
+
+  ⚠ eslint-plugin-react(require-render-return): Your render method should have a return statement
+   ╭─[require_render_return.tsx:3:15]
+ 2 │             class Hello extends React.Component {
+ 3 │               render() {
+   ·               ──────
+ 4 │                 return
+   ╰────
+  help: When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the return statement is missing.
