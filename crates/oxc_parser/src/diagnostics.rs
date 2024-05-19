@@ -402,8 +402,3 @@ pub fn static_constructor(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("TS1089: `static` modifier cannot appear on a constructor declaration.")
         .with_labels([span0.into()])
 }
-
-#[cold]
-pub fn no_line_break_is_allowed_before_arrow(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("No line break is allowed before '=>'.").with_labels([span0.into()])
-}

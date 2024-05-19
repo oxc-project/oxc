@@ -12407,12 +12407,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  69 │     }
     ╰────
 
-  × Expected `(` but found `=>`
+  × Line terminator not permitted before arrow
     ╭─[conformance/es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:72:9]
  71 │     export var v = x
  72 │         => new City(Enum.claw);
-    ·         ─┬
-    ·          ╰── `(` expected
+    ·         ──
  73 │ }
     ╰────
 

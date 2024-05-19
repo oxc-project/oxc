@@ -16,7 +16,7 @@ mod object;
 mod operator;
 mod statement;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Tristate {
     True,
     False,
@@ -31,14 +31,14 @@ pub enum FunctionKind {
     TSDeclaration,
 }
 
-#[derive(Clone, Debug, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum VariableDeclarationParent {
     For,
     Statement,
     Clause,
 }
 
-#[derive(Clone, Debug, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct VariableDeclarationContext {
     pub parent: VariableDeclarationParent,
 }

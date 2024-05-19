@@ -18,7 +18,7 @@ fn main() -> Result<(), String> {
     let now = std::time::Instant::now();
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
     let elapsed_time = now.elapsed();
-    println!("{} seconds.", elapsed_time.as_millis());
+    println!("{}ms.", elapsed_time.as_millis());
 
     println!("AST:");
     println!("{}", serde_json::to_string_pretty(&ret.program).unwrap());

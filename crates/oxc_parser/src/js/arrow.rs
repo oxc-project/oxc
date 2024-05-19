@@ -29,26 +29,16 @@ impl<'a> ParserImpl<'a> {
     pub(super) fn try_parse_async_simple_arrow_function_expression(
         &mut self,
     ) -> Result<Option<Expression<'a>>> {
-        let span = self.start_span();
-        if self.cur_kind().is_binding_identifier()
-            && self.peek_at(Kind::Arrow)
-            && !self.peek_token().is_on_new_line
+        if self.at(Kind::Async)
+            && self.is_un_parenthesized_async_arrow_function_worker() == Tristate::True
         {
-            self.parse_single_param_function_expression(span, false, false).map(Some)
-        } else if self.at_async_no_new_line()
-            && self.peek_kind().is_binding_identifier()
-            && !self.peek_token().is_on_new_line
-            && self.nth_at(2, Kind::Arrow)
-        {
-            self.bump_any(); // bump async
-            let arrow_token = self.peek_token();
-            if arrow_token.is_on_new_line {
-                self.error(diagnostics::no_line_break_is_allowed_before_arrow(arrow_token.span()));
-            }
-            self.parse_single_param_function_expression(span, true, false).map(Some)
-        } else {
-            Ok(None)
+            let span = self.start_span();
+            self.bump_any(); // bump `async`
+            return self
+                .parse_simple_arrow_function_expression(span, /* is_async */ true)
+                .map(Some);
         }
+        Ok(None)
     }
 
     fn is_parenthesized_arrow_function_expression(&mut self) -> Tristate {
@@ -56,10 +46,6 @@ impl<'a> ParserImpl<'a> {
             Kind::LParen | Kind::LAngle | Kind::Async => {
                 self.is_parenthesized_arrow_function_expression_worker()
             }
-            // ERROR RECOVERY TWEAK:
-            // If we see a standalone => try to parse it as an arrow function expression as that's
-            // likely what the user intended to write.
-            Kind::Arrow => Tristate::True,
             _ => Tristate::False,
         }
     }
@@ -189,6 +175,68 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    fn is_un_parenthesized_async_arrow_function_worker(&mut self) -> Tristate {
+        if self.at(Kind::Async) {
+            let first_token = self.peek_token();
+            let first = first_token.kind;
+            // If the "async" is followed by "=>" token then it is not a beginning of an async arrow-function
+            // but instead a simple arrow-function which will be parsed inside "parseAssignmentExpressionOrHigher"
+            if first_token.is_on_new_line || first == Kind::Arrow {
+                return Tristate::False;
+            }
+            // Check for un-parenthesized AsyncArrowFunction
+            if first.is_binding_identifier() {
+                // Arrow before newline is checkedin `parse_simple_arrow_function_expression`
+                if self.nth_at(2, Kind::Arrow) {
+                    return Tristate::True;
+                }
+            }
+        }
+        Tristate::False
+    }
+
+    pub(crate) fn parse_simple_arrow_function_expression(
+        &mut self,
+        span: Span,
+        r#async: bool,
+    ) -> Result<Expression<'a>> {
+        let has_await = self.ctx.has_await();
+        self.ctx = self.ctx.union_await_if(r#async);
+
+        let params = {
+            let params_span = self.start_span();
+            let param = self.parse_binding_identifier()?;
+            let ident = self.ast.binding_pattern_identifier(param);
+            let params_span = self.end_span(params_span);
+            let formal_parameter = self.ast.formal_parameter(
+                params_span,
+                self.ast.binding_pattern(ident, None, false),
+                None,
+                false,
+                false,
+                AstBuilder::new_vec(&self.ast),
+            );
+            self.ast.formal_parameters(
+                params_span,
+                FormalParameterKind::ArrowFormalParameters,
+                self.ast.new_vec_single(formal_parameter),
+                None,
+            )
+        };
+
+        self.ctx = self.ctx.and_await(has_await);
+
+        if self.cur_token().is_on_new_line {
+            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
+        }
+
+        self.expect(Kind::Arrow)?;
+
+        self.parse_arrow_function_body(
+            span, /* type_parameters */ None, params, /* return_type */ None, r#async,
+        )
+    }
+
     fn parse_parenthesized_arrow_function_head(&mut self) -> Result<ArrowFunctionHead<'a>> {
         let span = self.start_span();
         let r#async = self.eat(Kind::Async);
@@ -267,61 +315,6 @@ impl<'a> ParserImpl<'a> {
             self.parse_parenthesized_arrow_function_head()?;
         self.parse_arrow_function_body(span, type_parameters, params, return_type, r#async)
             .map(Some)
-    }
-
-    fn parse_single_param_function_expression(
-        &mut self,
-        span: Span,
-        r#async: bool,
-        generator: bool,
-    ) -> Result<Expression<'a>> {
-        let has_await = self.ctx.has_await();
-        let has_yield = self.ctx.has_yield();
-
-        self.ctx = self.ctx.union_await_if(r#async).union_yield_if(generator);
-        let params_span = self.start_span();
-        let param = self.parse_binding_identifier()?;
-        let ident = self.ast.binding_pattern_identifier(param);
-        let pattern = self.ast.binding_pattern(ident, None, false);
-        let params_span = self.end_span(params_span);
-        let formal_parameter = self.ast.formal_parameter(
-            params_span,
-            pattern,
-            None,
-            false,
-            false,
-            AstBuilder::new_vec(&self.ast),
-        );
-        let params = self.ast.formal_parameters(
-            params_span,
-            FormalParameterKind::ArrowFormalParameters,
-            self.ast.new_vec_single(formal_parameter),
-            None,
-        );
-
-        self.expect(Kind::Arrow)?;
-
-        self.ctx = self.ctx.and_await(r#async).and_yield(generator);
-        let expression = !self.at(Kind::LCurly);
-        let body = if expression {
-            let expr = self.parse_assignment_expression_or_higher()?;
-            let span = expr.span();
-            let expr_stmt = self.ast.expression_statement(span, expr);
-            self.ast.function_body(span, self.ast.new_vec(), self.ast.new_vec_single(expr_stmt))
-        } else {
-            self.parse_function_body()?
-        };
-        self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
-
-        Ok(self.ast.arrow_function_expression(
-            self.end_span(span),
-            expression,
-            r#async,
-            params,
-            body,
-            None,
-            None,
-        ))
     }
 
     fn parse_possible_parenthesized_arrow_function_expression(

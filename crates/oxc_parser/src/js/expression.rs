@@ -932,25 +932,25 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.conditional_expression(self.end_span(span), lhs, consequent, alternate))
     }
 
-    pub(crate) fn parse_assignment_expression_or_higher(&mut self) -> Result<Expression<'a>> {
-        if let Some(arrow_expr) = self.try_parse_parenthesized_arrow_function_expression()? {
-            return Ok(arrow_expr);
-        }
-        if let Some(arrow_expr) = self.try_parse_async_simple_arrow_function_expression()? {
-            return Ok(arrow_expr);
-        }
-        self.parse_assignment_expression()
-    }
-
     /// `AssignmentExpression`[In, Yield, Await] :
-    pub(crate) fn parse_assignment_expression(&mut self) -> Result<Expression<'a>> {
+    pub(crate) fn parse_assignment_expression_or_higher(&mut self) -> Result<Expression<'a>> {
         // [+Yield] YieldExpression
         if self.is_yield_expression() {
             return self.parse_yield_expression();
         }
-
+        // `(x) => {}`
+        if let Some(arrow_expr) = self.try_parse_parenthesized_arrow_function_expression()? {
+            return Ok(arrow_expr);
+        }
+        // `async x => {}`
+        if let Some(arrow_expr) = self.try_parse_async_simple_arrow_function_expression()? {
+            return Ok(arrow_expr);
+        }
         let span = self.start_span();
-
+        // `x => {}`
+        if self.cur_kind().is_binding_identifier() && self.peek_at(Kind::Arrow) {
+            return self.parse_simple_arrow_function_expression(span, /* r#async */ false);
+        }
         let lhs = self.parse_conditional_expression()?;
         self.parse_assignment_expression_recursive(span, lhs)
     }
@@ -1044,10 +1044,13 @@ impl<'a> ParserImpl<'a> {
 
     fn is_yield_expression(&mut self) -> bool {
         if self.at(Kind::Yield) {
+            let peek_token = self.peek_token();
+            if peek_token.kind == Kind::Arrow {
+                return false;
+            }
             if self.ctx.has_yield() {
                 return true;
             }
-            let peek_token = self.peek_token();
             return peek_token.kind.is_after_await_or_yield() && !peek_token.is_on_new_line;
         }
         false
