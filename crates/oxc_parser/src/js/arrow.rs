@@ -2,8 +2,9 @@ use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::precedence::Precedence;
 
-use crate::{diagnostics, lexer::Kind, AstBuilder, ParserImpl};
+use crate::{diagnostics, lexer::Kind, ParserImpl};
 
 use super::Tristate;
 
@@ -34,8 +35,9 @@ impl<'a> ParserImpl<'a> {
         {
             let span = self.start_span();
             self.bump_any(); // bump `async`
+            let expr = self.parse_binary_expression_or_higher(Precedence::lowest())?;
             return self
-                .parse_simple_arrow_function_expression(span, /* is_async */ true)
+                .parse_simple_arrow_function_expression(span, expr, /* async */ true)
                 .map(Some);
         }
         Ok(None)
@@ -186,7 +188,7 @@ impl<'a> ParserImpl<'a> {
             }
             // Check for un-parenthesized AsyncArrowFunction
             if first.is_binding_identifier() {
-                // Arrow before newline is checkedin `parse_simple_arrow_function_expression`
+                // Arrow before newline is checked in `parse_simple_arrow_function_expression`
                 if self.nth_at(2, Kind::Arrow) {
                     return Tristate::True;
                 }
@@ -198,24 +200,24 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_simple_arrow_function_expression(
         &mut self,
         span: Span,
+        ident: Expression<'a>,
         r#async: bool,
     ) -> Result<Expression<'a>> {
         let has_await = self.ctx.has_await();
         self.ctx = self.ctx.union_await_if(r#async);
 
         let params = {
-            let params_span = self.start_span();
-            let param = self.parse_binding_identifier()?;
-            let ident = self.ast.binding_pattern_identifier(param);
-            let params_span = self.end_span(params_span);
-            let formal_parameter = self.ast.formal_parameter(
-                params_span,
-                self.ast.binding_pattern(ident, None, false),
-                None,
-                false,
-                false,
-                AstBuilder::new_vec(&self.ast),
-            );
+            let ident = match ident {
+                Expression::Identifier(ident) => {
+                    let name = ident.name.clone();
+                    BindingIdentifier::new(ident.span, name)
+                }
+                _ => unreachable!(),
+            };
+            let params_span = self.end_span(ident.span);
+            let ident = self.ast.binding_pattern_identifier(ident);
+            let pattern = self.ast.binding_pattern(ident, None, false);
+            let formal_parameter = self.ast.plain_formal_parameter(params_span, pattern);
             self.ast.formal_parameters(
                 params_span,
                 FormalParameterKind::ArrowFormalParameters,
