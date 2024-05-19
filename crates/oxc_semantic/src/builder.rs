@@ -1998,6 +1998,7 @@ impl<'a> SemanticBuilder<'a> {
                     self.current_reference_flag -= ReferenceFlag::Read;
                 }
             }
+            AstKind::MemberExpression(_) => self.current_reference_flag = ReferenceFlag::empty(),
             AstKind::AssignmentTarget(_) => self.current_reference_flag -= ReferenceFlag::Write,
             _ => {}
         }
