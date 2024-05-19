@@ -532,25 +532,26 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_type_arguments_in_expression(
         &mut self,
-    ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        if !matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
-            return None;
+    ) -> Result<Option<Box<'a, TSTypeParameterInstantiation<'a>>>> {
+        if !self.ts_enabled() {
+            return Ok(None);
         }
+
         let span = self.start_span();
+        self.re_lex_ts_l_angle();
+        if !self.at(Kind::LAngle) {
+            return Ok(None);
+        }
 
-        self.try_parse(|p| {
-            p.re_lex_ts_l_angle();
+        let params = TSTypeArgumentList::parse(self, /* in_expression */ true)?.params;
 
-            let params = TSTypeArgumentList::parse(p, true)?.params;
-            let token = p.cur_token();
-            if token.is_on_new_line || token.kind.can_follow_type_arguments_in_expr() {
-                Ok(params)
-            } else {
-                Err(p.unexpected())
-            }
-        })
-        .ok()
-        .map(|types| self.ast.ts_type_arguments(self.end_span(span), types))
+        let token = self.cur_token();
+
+        if token.is_on_new_line || token.kind.can_follow_type_arguments_in_expr() {
+            return Ok(Some(self.ast.ts_type_arguments(self.end_span(span), params)));
+        }
+
+        Err(self.unexpected())
     }
 
     fn parse_ts_tuple_type(&mut self) -> Result<TSType<'a>> {

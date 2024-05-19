@@ -3,7 +3,7 @@ commit: 64d2eeea
 parser_typescript Summary:
 AST Parsed     : 5240/5243 (99.94%)
 Positive Passed: 5233/5243 (99.81%)
-Negative Passed: 1064/4879 (21.81%)
+Negative Passed: 1065/4879 (21.83%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -58,7 +58,6 @@ Expect Syntax Error: "compiler/ambientExternalModuleWithRelativeModuleName.ts"
 Expect Syntax Error: "compiler/ambientGetters.ts"
 Expect Syntax Error: "compiler/ambientPropertyDeclarationInJs.ts"
 Expect Syntax Error: "compiler/ambientStatement1.ts"
-Expect Syntax Error: "compiler/ambiguousGenericAssertion1.ts"
 Expect Syntax Error: "compiler/ambiguousOverload.ts"
 Expect Syntax Error: "compiler/amdDependencyComment1.ts"
 Expect Syntax Error: "compiler/amdDependencyComment2.ts"
@@ -4123,6 +4122,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  26 │     }
     ╰────
 
+  × Unexpected token
+   ╭─[compiler/ambiguousGenericAssertion1.ts:4:10]
+ 3 │ var r2 = < <T>(x: T) => T>f; // valid
+ 4 │ var r3 = <<T>(x: T) => T>f; // ambiguous, appears to the parser as a << operation
+   ·          ──
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/anonymousModules.ts:1:7]
  1 │ module {
@@ -5365,10 +5371,10 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Unexpected token
-   ╭─[compiler/conflictMarkerDiff3Trivia2.ts:3:2]
+   ╭─[compiler/conflictMarkerDiff3Trivia2.ts:3:1]
  2 │   foo() {
  3 │ <<<<<<< B
-   ·  ──
+   · ──
  4 │      a();
    ╰────
 
@@ -5381,10 +5387,10 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Unexpected token
-   ╭─[compiler/conflictMarkerTrivia2.ts:3:2]
+   ╭─[compiler/conflictMarkerTrivia2.ts:3:1]
  2 │   foo() {
  3 │ <<<<<<< B
-   ·  ──
+   · ──
  4 │      a();
    ╰────
 
@@ -5396,10 +5402,10 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Unexpected token
-   ╭─[compiler/conflictMarkerTrivia4.ts:2:2]
+   ╭─[compiler/conflictMarkerTrivia4.ts:2:1]
  1 │ const x = <div>
  2 │ <<<<<<< HEAD
-   ·  ──
+   · ──
    ╰────
 
   × Identifier `y` has already been declared

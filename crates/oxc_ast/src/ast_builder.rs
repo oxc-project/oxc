@@ -1771,6 +1771,20 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
+    pub fn ts_instantiation_expression(
+        &self,
+        span: Span,
+        expression: Expression<'a>,
+        type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
+    ) -> Expression<'a> {
+        Expression::TSInstantiationExpression(self.alloc(TSInstantiationExpression {
+            span,
+            expression,
+            type_parameters,
+        }))
+    }
+
+    #[inline]
     pub fn ts_non_null_expression(&self, span: Span, expression: Expression<'a>) -> Expression<'a> {
         Expression::TSNonNullExpression(self.alloc(TSNonNullExpression { span, expression }))
     }

@@ -359,7 +359,7 @@ impl<'a> ParserImpl<'a> {
         let type_annotation = self.parse_ts_type()?;
         self.expect(Kind::RAngle)?;
         let lhs_span = self.start_span();
-        let expression = self.parse_unary_expression_base(lhs_span)?;
+        let expression = self.parse_simple_unary_expression(lhs_span)?;
         Ok(self.ast.ts_type_assertion(self.end_span(span), type_annotation, expression))
     }
 

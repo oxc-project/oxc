@@ -122,7 +122,7 @@ impl<'a> ParserImpl<'a> {
         let mut extends = self.ast.new_vec();
 
         let span = self.start_span();
-        let mut first_extends = self.parse_lhs_expression()?;
+        let mut first_extends = self.parse_lhs_expression_or_higher()?;
         let first_type_argument;
         if let Expression::TSInstantiationExpression(expr) = first_extends {
             let expr = expr.unbox();
@@ -135,7 +135,7 @@ impl<'a> ParserImpl<'a> {
 
         while self.eat(Kind::Comma) {
             let span = self.start_span();
-            let mut extend = self.parse_lhs_expression()?;
+            let mut extend = self.parse_lhs_expression_or_higher()?;
             let type_argument;
             if let Expression::TSInstantiationExpression(expr) = extend {
                 let expr = expr.unbox();
