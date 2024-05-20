@@ -311,7 +311,7 @@ impl<'a> TypeScriptEnum<'a> {
         self.evaluate(expr, prev_members)
     }
 
-    fn evalaute_ref(
+    fn evaluate_ref(
         &self,
         expr: &Expression<'a>,
         prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
@@ -355,7 +355,7 @@ impl<'a> TypeScriptEnum<'a> {
             Expression::Identifier(_)
             | Expression::ComputedMemberExpression(_)
             | Expression::StaticMemberExpression(_)
-            | Expression::PrivateFieldExpression(_) => self.evalaute_ref(expr, prev_members),
+            | Expression::PrivateFieldExpression(_) => self.evaluate_ref(expr, prev_members),
             Expression::BinaryExpression(expr) => self.eval_binary_expression(expr, prev_members),
             Expression::UnaryExpression(expr) => self.eval_unary_expression(expr, prev_members),
             Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
