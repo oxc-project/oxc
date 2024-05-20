@@ -1538,6 +1538,7 @@ version = "0.0.0"
 dependencies = [
  "convert_case",
  "dashmap",
+ "indexmap",
  "insta",
  "itertools",
  "json-strip-comments",

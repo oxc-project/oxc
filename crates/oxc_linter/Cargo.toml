@@ -43,6 +43,7 @@ convert_case  = { workspace = true }
 language-tags = { workspace = true }
 mime_guess    = { workspace = true }
 url           = { workspace = true }
+indexmap      = { workspace = true }
 schematic = { version = "0.16.0", default_features = false, features = ["config", "schema", "json", "type_serde_json", "type_indexmap", "renderer_json_schema"] }
 
 rust-lapper         = { workspace = true }

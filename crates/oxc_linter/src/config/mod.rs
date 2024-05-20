@@ -3,6 +3,7 @@ mod settings;
 
 use std::path::Path;
 
+use indexmap::IndexMap;
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 use schematic::{
@@ -14,13 +15,13 @@ use serde::Deserialize;
 use crate::{rules::RuleEnum, AllowWarnDeny, RuleWithSeverity};
 
 pub use self::{
-    rules::{ESLintRule, ESLintRules},
+    rules::{parse_eslint_rules_config, ESLintRule, ESLintRules},
     settings::{jsdoc::JSDocPluginSettings, ESLintSettings},
 };
 
 // TODO: map out all the rule names
 // https://github.com/SchemaStore/schemastore/blob/11399c32e4ae7dd7d4004e97e2fa0caede5a1273/src/schemas/json/eslintrc.json#L1414
-pub type ESLintRulesConfig = FxHashMap<String, ESLintRuleConfig>;
+pub type ESLintRulesConfig = IndexMap<String, ESLintRuleConfig>;
 
 // TODO: add deprecated `false`
 // <https://eslint.org/docs/v8.x/use/configure/language-options#using-configuration-files-1>
@@ -55,6 +56,16 @@ pub enum ESLintSeverityString {
     Warn,
     #[serde(rename = "error")]
     E,
+}
+
+impl From<ESLintSeverityString> for AllowWarnDeny {
+    fn from(value: ESLintSeverityString) -> Self {
+        match value {
+            ESLintSeverityString::Off => Self::Allow,
+            ESLintSeverityString::Warn => Self::Warn,
+            ESLintSeverityString::E => Self::Deny,
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Deserialize, Config)]
@@ -108,7 +119,7 @@ impl ESLintConfig {
         // generator.generate("schema.json", JsonSchemaRenderer::default()).unwrap();
 
         Ok(ESLintConfig {
-            rules: ESLintRules::default(),
+            rules: parse_eslint_rules_config(config.rules),
             settings: config.settings,
             env: config.env,
             globals: config.globals,
