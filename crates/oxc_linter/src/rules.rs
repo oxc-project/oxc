@@ -72,6 +72,7 @@ mod eslint {
     pub mod no_irregular_whitespace;
     pub mod no_iterator;
     pub mod no_loss_of_precision;
+    pub mod no_new;
     pub mod no_new_native_nonconstructor;
     pub mod no_new_wrappers;
     pub mod no_nonoctal_decimal_escape;
@@ -438,6 +439,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_irregular_whitespace,
     eslint::no_iterator,
     eslint::no_loss_of_precision,
+    eslint::no_new,
     eslint::no_new_wrappers,
     eslint::no_nonoctal_decimal_escape,
     eslint::no_obj_calls,
