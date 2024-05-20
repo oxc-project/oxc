@@ -1,0 +1,409 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ESLintJsonConfig",
+  "description": "ESLint Config <https://eslint.org/docs/v8.x/use/configure/configuration-files>",
+  "type": "object",
+  "required": [
+    "env",
+    "globals",
+    "rules",
+    "settings"
+  ],
+  "properties": {
+    "env": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      },
+      "propertyNames": {
+        "type": "string"
+      }
+    },
+    "globals": {
+      "description": "<https://eslint.org/docs/v8.x/use/configure/language-options#using-configuration-files-1>",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/GlobalValue"
+      },
+      "propertyNames": {
+        "type": "string"
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ESLintRuleConfig"
+      },
+      "propertyNames": {
+        "type": "string"
+      }
+    },
+    "settings": {
+      "description": "The `settings` field from ESLint config An object containing name-value pairs of information that should be available to all rules  TS type is `Object` <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L53> But each plugin extends this with their own properties.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/ESLintSettings"
+        }
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "CustomComponent": {
+      "title": "CustomComponent",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/ObjectWithOneAttr"
+        },
+        {
+          "$ref": "#/definitions/ObjectWithManyAttrs"
+        }
+      ]
+    },
+    "ESLintRuleConfig": {
+      "title": "ESLintRuleConfig",
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "number"
+          ],
+          "properties": {
+            "number": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "string"
+          ],
+          "properties": {
+            "string": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/ESLintSeverityString"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "vec"
+          ],
+          "properties": {
+            "vec": {
+              "type": "array",
+              "items": {
+                "type": [
+                  "boolean",
+                  "object",
+                  "array",
+                  "number",
+                  "string",
+                  "integer"
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ESLintSettings": {
+      "title": "ESLintSettings",
+      "type": "object",
+      "required": [
+        "jsdoc",
+        "jsx-a11y",
+        "next",
+        "react"
+      ],
+      "properties": {
+        "jsdoc": {
+          "description": "<https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md>",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JSDocPluginSettings"
+            }
+          ]
+        },
+        "jsx-a11y": {
+          "description": "<https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations>",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JSXA11yPluginSettings"
+            }
+          ]
+        },
+        "next": {
+          "description": "<https://nextjs.org/docs/pages/building-your-application/configuring/eslint#eslint-plugin>",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NextPluginSettings"
+            }
+          ]
+        },
+        "react": {
+          "description": "<https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc->",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ReactPluginSettings"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "ESLintSeverityString": {
+      "title": "ESLintSeverityString",
+      "type": "string",
+      "enum": [
+        "off",
+        "warn",
+        "error"
+      ]
+    },
+    "GlobalValue": {
+      "title": "GlobalValue",
+      "type": "string",
+      "enum": [
+        "readonly",
+        "writeable",
+        "off"
+      ]
+    },
+    "JSDocPluginSettings": {
+      "title": "JSDocPluginSettings",
+      "type": "object",
+      "required": [
+        "augmentsExtendsReplacesDocs",
+        "exemptDestructuredRootsFromChecks",
+        "ignoreInternal",
+        "ignorePrivate",
+        "ignoreReplacesDocs",
+        "implementsReplacesDocs",
+        "overrideReplacesDocs",
+        "tagNamePreference"
+      ],
+      "properties": {
+        "augmentsExtendsReplacesDocs": {
+          "description": "Only for `require-(yields|returns|description|example|param|throws)` rule",
+          "type": "boolean"
+        },
+        "exemptDestructuredRootsFromChecks": {
+          "description": "Only for `require-param-type` and `require-param-description` rule",
+          "type": "boolean"
+        },
+        "ignoreInternal": {
+          "description": "For all rules but NOT apply to `empty-tags` rule",
+          "type": "boolean"
+        },
+        "ignorePrivate": {
+          "description": "For all rules but NOT apply to `check-access` and `empty-tags` rule",
+          "type": "boolean"
+        },
+        "ignoreReplacesDocs": {
+          "description": "Only for `require-(yields|returns|description|example|param|throws)` rule",
+          "default": true,
+          "type": "boolean"
+        },
+        "implementsReplacesDocs": {
+          "description": "Only for `require-(yields|returns|description|example|param|throws)` rule",
+          "type": "boolean"
+        },
+        "overrideReplacesDocs": {
+          "description": "Only for `require-(yields|returns|description|example|param|throws)` rule",
+          "default": true,
+          "type": "boolean"
+        },
+        "tagNamePreference": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/TagNamePreference"
+          },
+          "propertyNames": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "JSXA11yPluginSettings": {
+      "title": "JSXA11yPluginSettings",
+      "type": "object",
+      "required": [
+        "components",
+        "polymorphicPropName"
+      ],
+      "properties": {
+        "components": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "propertyNames": {
+            "type": "string"
+          }
+        },
+        "polymorphicPropName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "NextPluginSettings": {
+      "title": "NextPluginSettings",
+      "type": "object",
+      "required": [
+        "rootDir"
+      ],
+      "properties": {
+        "rootDir": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneOrMany"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "ObjectWithManyAttrs": {
+      "title": "ObjectWithManyAttrs",
+      "type": "object",
+      "required": [
+        "attributes",
+        "name"
+      ],
+      "properties": {
+        "attributes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ObjectWithMessage": {
+      "title": "ObjectWithMessage",
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ObjectWithMessageAndReplacement": {
+      "title": "ObjectWithMessageAndReplacement",
+      "type": "object",
+      "required": [
+        "message",
+        "replacement"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "replacement": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ObjectWithOneAttr": {
+      "title": "ObjectWithOneAttr",
+      "type": "object",
+      "required": [
+        "attribute",
+        "name"
+      ],
+      "properties": {
+        "attribute": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "OneOrMany": {
+      "title": "OneOrMany",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "ReactPluginSettings": {
+      "title": "ReactPluginSettings",
+      "type": "object",
+      "required": [
+        "formComponents",
+        "linkComponents"
+      ],
+      "properties": {
+        "formComponents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CustomComponent"
+          }
+        },
+        "linkComponents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CustomComponent"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "TagNamePreference": {
+      "title": "TagNamePreference",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/ObjectWithMessageAndReplacement"
+        },
+        {
+          "$ref": "#/definitions/ObjectWithMessage"
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    }
+  }
+}

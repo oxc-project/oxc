@@ -2,22 +2,13 @@ use std::fmt;
 use std::ops::Deref;
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
-use schematic::Config;
 use serde::{
     de::{self, Deserializer, Visitor},
     Deserialize,
 };
 
+use super::ESLintRuleConfig;
 use crate::AllowWarnDeny;
-
-/// The `rules` field from ESLint config
-///
-/// TS type is `Record<string, RuleConf>`
-///   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
-///   - type RuleConf = SeverityConf | [SeverityConf, ...any[]];
-/// <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L12>
-#[derive(Debug, Clone, Default)]
-pub struct ESLintRules(Vec<ESLintRule>);
 
 #[derive(Debug, Clone)]
 pub struct ESLintRule {
@@ -27,40 +18,13 @@ pub struct ESLintRule {
     pub config: Option<serde_json::Value>,
 }
 
-// Manually implement Deserialize because the type is a bit complex...
-// - Handle single value form and array form
-// - SeverityConf into AllowWarnDeny
-// - Align plugin names
-impl<'de> Deserialize<'de> for ESLintRules {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        struct ESLintRulesVisitor;
-
-        impl<'de> Visitor<'de> for ESLintRulesVisitor {
-            type Value = ESLintRules;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("Record<string, SeverityConf | [SeverityConf, ...any[]]>")
-            }
-
-            fn visit_map<M>(self, mut map: M) -> Result<Self::Value, M::Error>
-            where
-                M: de::MapAccess<'de>,
-            {
-                let mut rules = vec![];
-                while let Some((key, value)) = map.next_entry::<String, serde_json::Value>()? {
-                    let (plugin_name, rule_name) = parse_rule_key(&key);
-                    let (severity, config) = parse_rule_value(&value).map_err(de::Error::custom)?;
-                    rules.push(ESLintRule { plugin_name, rule_name, severity, config });
-                }
-
-                Ok(ESLintRules(rules))
-            }
+impl From<ESLintRuleConfig> for ESLintRule {
+    fn from(value: ESLintRuleConfig) -> Self {
+        match value {
+            ESLintRuleConfig::Number(_) => {}
+            ESLintRuleConfig::String(_) => {}
+            ESLintRuleConfig::Vec(_) => {}
         }
-
-        deserializer.deserialize_any(ESLintRulesVisitor)
     }
 }
 

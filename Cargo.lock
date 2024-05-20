@@ -2359,6 +2359,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8398633a296254d5a500be27633024c38755be6f9157342a236a9aea0462cee4"
 dependencies = [
  "indexmap",
+ "serde_json",
 ]
 
 [[package]]
