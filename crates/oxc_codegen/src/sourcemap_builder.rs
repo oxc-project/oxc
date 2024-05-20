@@ -27,7 +27,6 @@ pub struct SourcemapBuilder {
     original_source: Arc<str>,
     last_generated_update: usize,
     last_position: Option<u32>,
-    last_search_line: usize,
     line_offset_tables: Vec<LineOffsetTable>,
     sourcemap_builder: oxc_sourcemap::SourceMapBuilder,
     generated_line: u32,
@@ -41,7 +40,6 @@ impl Default for SourcemapBuilder {
             original_source: "".into(),
             last_generated_update: 0,
             last_position: None,
-            last_search_line: 0,
             line_offset_tables: vec![],
             sourcemap_builder: oxc_sourcemap::SourceMapBuilder::default(),
             generated_line: 0,
@@ -97,17 +95,10 @@ impl SourcemapBuilder {
 
     #[allow(clippy::cast_possible_truncation)]
     fn search_original_line_and_column(&mut self, position: u32) -> (u32, u32) {
-        let mut original_line = 0;
-        for i in self.last_search_line..self.line_offset_tables.len() {
-            if self.line_offset_tables[i].byte_offset_to_start_of_line > position as usize {
-                original_line = i - 1;
-                break;
-            }
-            if i == self.line_offset_tables.len() - 1 {
-                original_line = i;
-            }
-        }
-        self.last_search_line = original_line;
+        let result = self
+            .line_offset_tables
+            .partition_point(|table| table.byte_offset_to_start_of_line <= position as usize);
+        let original_line = if result > 0 { result - 1 } else { 0 };
         let line = &self.line_offset_tables[original_line];
         let mut original_column = (position as usize) - line.byte_offset_to_start_of_line;
         if original_column >= line.byte_offset_to_first {
@@ -330,6 +321,11 @@ mod test {
         assert_mapping("\nÖÖ\n", &[(0, 0, 0), (1, 1, 0), (3, 1, 1), (5, 1, 2), (6, 2, 0)]);
         assert_mapping("Ö\ra", &[(0, 0, 0), (2, 0, 1), (3, 1, 0), (4, 1, 1)]);
         assert_mapping("Ö\r\na", &[(0, 0, 0), (2, 0, 1), (3, 0, 2), (4, 1, 0), (5, 1, 1)]);
+    }
+
+    #[test]
+    fn builder_with_unordered_position() {
+        assert_mapping("\na\nb", &[(4, 2, 1), (0, 0, 0), (1, 1, 0), (2, 1, 1), (3, 2, 0)]);
     }
 
     fn assert_mapping(source: &str, mappings: &[(u32, u32, u32)]) {
