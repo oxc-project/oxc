@@ -1,13 +1,10 @@
 use std::collections::HashMap;
 
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
-use oxc_span::{Atom, CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{
     context::LintContext,
@@ -18,10 +15,13 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-duplicate-hooks): Disallow duplicate setup and teardown hooks.")]
-#[diagnostic(severity(warning), help("Duplicate {0:?} in describe block."))]
-struct NoDuplicateHooksDiagnostic(CompactStr, #[label] pub Span);
+fn no_duplicate_hooks_diagnostic(x0: &str, span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-jest(no-duplicate-hooks): Disallow duplicate setup and teardown hooks.",
+    )
+    .with_help(format!("Duplicate {x0:?} in describe block."))
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDuplicateHooks;
@@ -173,8 +173,8 @@ impl NoDuplicateHooks {
         };
 
         if *count > 0 {
-            ctx.diagnostic(NoDuplicateHooksDiagnostic(
-                Atom::from(jest_fn_call.name.to_string().as_str()).to_compact_str(),
+            ctx.diagnostic(no_duplicate_hooks_diagnostic(
+                jest_fn_call.name.to_string().as_str(),
                 call_expr.span,
             ));
         } else {
