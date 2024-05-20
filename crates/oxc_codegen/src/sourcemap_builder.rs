@@ -325,7 +325,7 @@ mod test {
 
     #[test]
     fn builder_with_unordered_position() {
-        assert_mapping("ab", &[(0, 0, 0), (2, 0, 2), (1, 0, 1)]);
+        assert_mapping("\na\nb", &[(4, 2, 1), (0, 0, 0), (1, 1, 0), (2, 1, 1), (3, 2, 0)]);
     }
 
     fn assert_mapping(source: &str, mappings: &[(u32, u32, u32)]) {
