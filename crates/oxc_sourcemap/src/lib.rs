@@ -9,6 +9,7 @@ mod sourcemap_visualizer;
 mod token;
 
 pub use concat_sourcemap_builder::ConcatSourceMapBuilder;
+pub use decode::JSONSourceMap;
 pub use error::Error;
 pub use sourcemap::SourceMap;
 pub use sourcemap_builder::SourceMapBuilder;
