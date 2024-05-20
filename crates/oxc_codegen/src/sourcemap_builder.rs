@@ -323,6 +323,11 @@ mod test {
         assert_mapping("Ö\r\na", &[(0, 0, 0), (2, 0, 1), (3, 0, 2), (4, 1, 0), (5, 1, 1)]);
     }
 
+    #[test]
+    fn builder_with_unordered_position() {
+        assert_mapping("ab", &[(0, 0, 0), (2, 0, 2), (1, 0, 1)]);
+    }
+
     fn assert_mapping(source: &str, mappings: &[(u32, u32, u32)]) {
         let mut builder = SourcemapBuilder::default();
         builder.with_name_and_source("x.js", source);
