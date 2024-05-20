@@ -101,6 +101,7 @@ mod eslint {
     pub mod no_var;
     pub mod no_void;
     pub mod no_with;
+    pub mod prefer_exponentiation_operator;
     pub mod radix;
     pub mod require_yield;
     pub mod unicode_bom;
@@ -468,6 +469,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::valid_typeof,
     eslint::no_await_in_loop,
     eslint::no_new_native_nonconstructor,
+    eslint::prefer_exponentiation_operator,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
     typescript::ban_ts_comment,
