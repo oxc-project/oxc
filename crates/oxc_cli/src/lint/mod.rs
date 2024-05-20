@@ -10,7 +10,7 @@ use oxc_span::VALID_EXTENSIONS;
 use crate::{
     command::{LintOptions as CliLintOptions, OutputFormat, OutputOptions, WarningOptions},
     walk::{Extensions, Walk},
-    CliRunResult, LintResult, Runner,
+    CliRunResult, LintResult, MiscOptions, Runner,
 };
 
 pub struct LintRunner {
@@ -34,13 +34,13 @@ impl Runner for LintRunner {
         let CliLintOptions {
             paths,
             filter,
+            basic_options,
             warning_options,
             ignore_options,
             fix_options,
             enable_plugins,
-            config,
-            tsconfig,
             output_options,
+            misc_options,
             ..
         } = self.options;
 
@@ -92,8 +92,12 @@ impl Runner for LintRunner {
         let cwd = std::env::current_dir().unwrap().into_boxed_path();
         let lint_options = LintOptions::default()
             .with_filter(filter)
-            .with_config_path(config)
+            .with_config_path(basic_options.config)
             .with_fix(fix_options.fix)
+            .with_react_plugin(enable_plugins.react_plugin)
+            .with_unicorn_plugin(enable_plugins.unicorn_plugin)
+            .with_typescript_plugin(enable_plugins.typescript_plugin)
+            .with_oxc_plugin(enable_plugins.oxc_plugin)
             .with_import_plugin(enable_plugins.import_plugin)
             .with_jsdoc_plugin(enable_plugins.jsdoc_plugin)
             .with_jest_plugin(enable_plugins.jest_plugin)
@@ -114,6 +118,7 @@ impl Runner for LintRunner {
             }
         };
 
+        let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
             if !path.is_file() {
                 let path = if path.is_relative() { cwd.join(path) } else { path.clone() };
@@ -126,7 +131,7 @@ impl Runner for LintRunner {
         let options = LintServiceOptions { cwd, paths, tsconfig };
         let lint_service = LintService::new(linter, options);
         let mut diagnostic_service =
-            Self::get_diagnostic_service(&warning_options, &output_options);
+            Self::get_diagnostic_service(&warning_options, &output_options, &misc_options);
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn({
@@ -146,7 +151,7 @@ impl Runner for LintRunner {
             number_of_errors: diagnostic_service.errors_count(),
             max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
             deny_warnings: warning_options.deny_warnings,
-            print_summary: diagnostic_service.is_graphical_output(),
+            print_summary: matches!(output_options.format, OutputFormat::Default),
         })
     }
 }
@@ -155,9 +160,11 @@ impl LintRunner {
     fn get_diagnostic_service(
         warning_options: &WarningOptions,
         output_options: &OutputOptions,
+        misc_options: &MiscOptions,
     ) -> DiagnosticService {
         let mut diagnostic_service = DiagnosticService::default()
             .with_quiet(warning_options.quiet)
+            .with_silent(misc_options.silent)
             .with_max_warnings(warning_options.max_warnings);
 
         match output_options.format {
@@ -165,6 +172,7 @@ impl LintRunner {
             OutputFormat::Json => diagnostic_service.set_json_reporter(),
             OutputFormat::Unix => diagnostic_service.set_unix_reporter(),
             OutputFormat::Checkstyle => diagnostic_service.set_checkstyle_reporter(),
+            OutputFormat::Github => diagnostic_service.set_github_reporter(),
         }
         diagnostic_service
     }
@@ -176,7 +184,7 @@ mod test {
     use crate::{lint_command, CliRunResult, LintResult, Runner};
 
     fn test(args: &[&str]) -> LintResult {
-        let mut new_args = vec!["--quiet"];
+        let mut new_args = vec!["--silent"];
         new_args.extend(args);
         let options = lint_command().run_inner(new_args.as_slice()).unwrap().lint_options;
         match LintRunner::new(options).run() {
@@ -290,11 +298,29 @@ mod test {
 
     #[test]
     fn filter_allow_one() {
-        let args = &["-D", "correctness", "-A", "no-debugger", "fixtures/linter/debugger.js"];
+        let args = &["-W", "correctness", "-A", "no-debugger", "fixtures/linter/debugger.js"];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn filter_error() {
+        let args = &["-D", "correctness", "fixtures/linter/debugger.js"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 1);
+    }
+
+    #[test]
+    fn eslintrc_error() {
+        let args = &["-c", "fixtures/linter/eslintrc.json", "fixtures/linter/debugger.js"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 1);
     }
 
     #[test]
@@ -309,7 +335,7 @@ mod test {
     #[test]
     fn eslintrc_no_undef() {
         let args = &[
-            "-D",
+            "-W",
             "no-undef",
             "-c",
             "fixtures/no_undef/eslintrc.json",
@@ -324,7 +350,7 @@ mod test {
     #[test]
     fn eslintrc_no_env() {
         let args = &[
-            "-D",
+            "-W",
             "no-undef",
             "-c",
             "fixtures/eslintrc_env/eslintrc_no_env.json",
@@ -354,7 +380,7 @@ mod test {
         let args = &[
             "-c",
             "fixtures/no_empty_allow_empty_catch/eslintrc.json",
-            "-D",
+            "-W",
             "no-empty",
             "fixtures/no_empty_allow_empty_catch/test.js",
         ];
@@ -369,7 +395,7 @@ mod test {
         let args = &[
             "-c",
             "fixtures/no_empty_disallow_empty_catch/eslintrc.json",
-            "-D",
+            "-W",
             "no-empty",
             "fixtures/no_empty_disallow_empty_catch/test.js",
         ];
@@ -394,7 +420,21 @@ mod test {
         let args = &[
             "-c",
             "fixtures/typescript_eslint/eslintrc.json",
-            "fixtures/typescript_eslint/test.js",
+            "fixtures/typescript_eslint/test.ts",
+        ];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn typescript_eslint_off() {
+        let args = &[
+            "-c",
+            "fixtures/typescript_eslint/eslintrc.json",
+            "--disable-typescript-plugin",
+            "fixtures/typescript_eslint/test.ts",
         ];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);

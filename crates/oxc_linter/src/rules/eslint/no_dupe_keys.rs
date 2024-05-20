@@ -2,20 +2,19 @@ use oxc_ast::{
     ast::{ObjectPropertyKind, PropertyKind},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-dupe-keys): Disallow duplicate keys in object literals")]
-#[diagnostic(severity(warning), help("Consider removing the duplicated key"))]
-struct NoDupeKeysDiagnostic(#[label] pub Span, #[label] pub Span);
+fn no_dupe_keys_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(no-dupe-keys): Disallow duplicate keys in object literals")
+        .with_help("Consider removing the duplicated key")
+        .with_labels([span0.into(), span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDupeKeys;
@@ -42,17 +41,23 @@ declare_oxc_lint!(
 
 impl Rule for NoDupeKeys {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ObjectExpression(obj_expr) = node.kind() else { return };
+        let AstKind::ObjectExpression(obj_expr) = node.kind() else {
+            return;
+        };
         let mut map = FxHashMap::default();
         for prop in &obj_expr.properties {
-            let ObjectPropertyKind::ObjectProperty(prop) = prop else { continue };
-            let Some(name) = prop.key.static_name() else { return };
+            let ObjectPropertyKind::ObjectProperty(prop) = prop else {
+                continue;
+            };
+            let Some(name) = prop.key.static_name() else {
+                return;
+            };
             if let Some((prev_kind, prev_span)) = map.insert(name, (prop.kind, prop.key.span())) {
                 if prev_kind == PropertyKind::Init
                     || prop.kind == PropertyKind::Init
                     || prev_kind == prop.kind
                 {
-                    ctx.diagnostic(NoDupeKeysDiagnostic(prev_span, prop.key.span()));
+                    ctx.diagnostic(no_dupe_keys_diagnostic(prev_span, prop.key.span()));
                 }
             }
         }

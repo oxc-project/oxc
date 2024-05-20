@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use oxc_diagnostics::miette::{miette, LabeledSpan, Severity};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_syntax::module_record::{ImportImportName, RequestedModule};
 
@@ -16,7 +16,7 @@ declare_oxc_lint!(
     ///
     /// Reports if a resolved path is imported more than once.
     NoDuplicates,
-    nursery
+    suspicious
 );
 
 impl Rule for NoDuplicates {
@@ -51,11 +51,7 @@ impl Rule for NoDuplicates {
                         .iter()
                         .map(|requested_module| LabeledSpan::underline(requested_module.span()))
                         .collect::<Vec<_>>();
-                    ctx.diagnostic(miette!(
-                            severity = Severity::Warning,
-                            labels = labels,
-                            "eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places"
-                        ));
+                    ctx.diagnostic(OxcDiagnostic::warn("eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places").with_labels(labels));
                 }
             }
         };

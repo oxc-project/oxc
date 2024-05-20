@@ -39,7 +39,7 @@ impl<'a> Lexer<'a> {
             }
             _ => {
                 self.consume_char();
-                self.error(diagnostics::InvalidCharacter(c, self.unterminated_range()));
+                self.error(diagnostics::invalid_character(c, self.unterminated_range()));
                 Kind::Undetermined
             }
         }
@@ -56,7 +56,7 @@ impl<'a> Lexer<'a> {
         let start = self.offset();
         if self.next_char() != Some('u') {
             let range = Span::new(start, self.offset());
-            self.error(diagnostics::UnicodeEscapeSequence(range));
+            self.error(diagnostics::unicode_escape_sequence(range));
             return;
         }
 
@@ -67,7 +67,7 @@ impl<'a> Lexer<'a> {
 
         let Some(value) = value else {
             let range = Span::new(start, self.offset());
-            self.error(diagnostics::UnicodeEscapeSequence(range));
+            self.error(diagnostics::unicode_escape_sequence(range));
             return;
         };
 
@@ -75,7 +75,7 @@ impl<'a> Lexer<'a> {
         let ch = match value {
             SurrogatePair::Astral(..) | SurrogatePair::HighLow(..) => {
                 let range = Span::new(start, self.offset());
-                self.error(diagnostics::UnicodeEscapeSequence(range));
+                self.error(diagnostics::unicode_escape_sequence(range));
                 return;
             }
             SurrogatePair::CodePoint(code_point) => {
@@ -83,7 +83,7 @@ impl<'a> Lexer<'a> {
                     ch
                 } else {
                     let range = Span::new(start, self.offset());
-                    self.error(diagnostics::UnicodeEscapeSequence(range));
+                    self.error(diagnostics::unicode_escape_sequence(range));
                     return;
                 }
             }
@@ -93,7 +93,7 @@ impl<'a> Lexer<'a> {
             if check_identifier_start { is_identifier_start(ch) } else { is_identifier_part(ch) };
 
         if !is_valid {
-            self.error(diagnostics::InvalidCharacter(ch, self.current_offset()));
+            self.error(diagnostics::invalid_character(ch, self.current_offset()));
             return;
         }
 
@@ -115,7 +115,7 @@ impl<'a> Lexer<'a> {
         };
 
         let Some(value) = value else {
-            // error raised within the parser by `diagnostics::TemplateLiteral`
+            // error raised within the parser by `diagnostics::template_literal`
             *is_valid_escape_sequence = false;
             return;
         };
@@ -220,7 +220,7 @@ impl<'a> Lexer<'a> {
     ) {
         match self.next_char() {
             None => {
-                self.error(diagnostics::UnterminatedString(self.unterminated_range()));
+                self.error(diagnostics::unterminated_string(self.unterminated_range()));
             }
             Some(c) => match c {
                 // \ LineTerminatorSequence
@@ -299,12 +299,12 @@ impl<'a> Lexer<'a> {
                 }
                 '0' if in_template && self.peek().is_some_and(|c| c.is_ascii_digit()) => {
                     self.consume_char();
-                    // error raised within the parser by `diagnostics::TemplateLiteral`
+                    // error raised within the parser by `diagnostics::template_literal`
                     *is_valid_escape_sequence = false;
                 }
                 // NotEscapeSequence :: DecimalDigit but not 0
                 '1'..='9' if in_template => {
-                    // error raised within the parser by `diagnostics::TemplateLiteral`
+                    // error raised within the parser by `diagnostics::template_literal`
                     *is_valid_escape_sequence = false;
                 }
                 other => {

@@ -1,16 +1,12 @@
-use miette::diagnostic;
 use oxc_ast::{
     ast::{
         BinaryExpression, Expression, LogicalExpression, MemberExpression, StaticMemberExpression,
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{
@@ -20,17 +16,22 @@ use crate::{
     AstNode, Fix,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum ExplicitLengthCheckDiagnostic {
-    #[error("eslint-plugin-unicorn(explicit-length-check): Use `.{1} {2}` when checking {1} is not zero.")]
-    #[diagnostic(severity(warning))]
-    NoneZero(#[label] Span, CompactStr, CompactStr, #[help] Option<String>),
-    #[error(
-        "eslint-plugin-unicorn(explicit-length-check): Use `.{1} {2}` when checking {1} is zero."
-    )]
-    #[diagnostic(severity(warning))]
-    Zero(#[label] Span, CompactStr, CompactStr, #[help] Option<String>),
+fn none_zero(span0: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnostic {
+    let mut d = OxcDiagnostic::warn(format!("eslint-plugin-unicorn(explicit-length-check): Use `.{x1} {x2}` when checking {x1} is not zero.")).with_labels([span0.into()]);
+    if let Some(x) = x3 {
+        d = d.with_help(x);
+    }
+    d
 }
+
+fn zero(span0: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnostic {
+    let mut d = OxcDiagnostic::warn(format!("eslint-plugin-unicorn(explicit-length-check): Use `.{x1} {x2}` when checking {x1} is zero."));
+    if let Some(x) = x3 {
+        d = d.with_help(x);
+    }
+    d.with_labels([span0.into()])
+}
+
 #[derive(Debug, Default, Clone)]
 enum NonZero {
     #[default]
@@ -216,10 +217,10 @@ impl ExplicitLengthCheck {
         );
         let property = static_member_expr.property.name.clone();
         let diagnostic = if is_zero_length_check {
-            ExplicitLengthCheckDiagnostic::Zero(
+            zero(
                 span,
-                property.to_compact_str(),
-                check_code.into(),
+                property.as_str(),
+                check_code,
                 if auto_fix {
                     None
                 } else {
@@ -227,10 +228,10 @@ impl ExplicitLengthCheck {
                 },
             )
         } else {
-            ExplicitLengthCheckDiagnostic::NoneZero(
+            none_zero(
                 span,
-                property.to_compact_str(),
-                check_code.into(),
+                property.as_str(),
+                check_code,
                 if auto_fix {
                     None
                 } else {
@@ -378,58 +379,30 @@ fn test() {
             ) {}",
             None,
         ),
-        (
-            "if ( foo.length || !!foo.length || foo.length != 0 || foo.length > 0 || foo.length >= 1 || 0 !== foo.length || 0 != foo.length || 0 < foo.length || 1 <= foo.length ) {}",
-            "if ( foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 ) {}",
-            Some(serde_json::json!([{"non-zero": "not-equal"}]))
-        ),
-        (
-            "const foo = { length: 123 }; if (foo.length) {}",
-            "const foo = { length: 123 }; if (foo.length !== 0) {}",
-            Some(serde_json::json!([{"non-zero": "not-equal"}]))
-        ),
+        ("if ( foo.length || !!foo.length || foo.length != 0 || foo.length > 0 || foo.length >= 1 || 0 !== foo.length || 0 != foo.length || 0 < foo.length || 1 <= foo.length ) {}", "if ( foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 || foo.length !== 0 ) {}", Some(serde_json::json!([{"non-zero": "not-equal"}]))),
+        ("const foo = { length: 123 }; if (foo.length) {}", "const foo = { length: 123 }; if (foo.length !== 0) {}", Some(serde_json::json!([{"non-zero": "not-equal"}]))),
         ("if (foo.bar && foo.bar.length) {}", "if (foo.bar && foo.bar.length > 0) {}", None),
         ("if (foo.length || foo.bar()) {}", "if (foo.length > 0 || foo.bar()) {}", None),
         ("if (!!(!!foo.length)) {}", "if (foo.length > 0) {}", None),
         ("if (!(foo.length === 0)) {}", "if (foo.length > 0) {}", None),
         ("while (foo.length >= 1) {}", "while (foo.length > 0) {}", None),
         ("do {} while (foo.length);", "do {} while (foo.length > 0);", None),
-        (
-            "for (let i = 0; (bar && !foo.length); i ++) {}",
-            "for (let i = 0; (bar && foo.length === 0); i ++) {}",
-            None,
-        ),
+        ("for (let i = 0; (bar && !foo.length); i ++) {}", "for (let i = 0; (bar && foo.length === 0); i ++) {}", None),
         ("const isEmpty = foo.length < 1;", "const isEmpty = foo.length === 0;", None),
         ("bar(foo.length >= 1)", "bar(foo.length > 0)", None),
         // ("const bar = void !foo.length;", "const bar = void (foo.length === 0);", None),
         ("const isNotEmpty = Boolean(foo.length)", "const isNotEmpty = foo.length > 0", None),
-        (
-            "const isNotEmpty = Boolean(foo.length || bar)",
-            "const isNotEmpty = Boolean(foo.length > 0 || bar)",
-            None,
-        ),
+        ("const isNotEmpty = Boolean(foo.length || bar)", "const isNotEmpty = Boolean(foo.length > 0 || bar)", None),
         ("const isEmpty = Boolean(!foo.length)", "const isEmpty = foo.length === 0", None),
         ("const isEmpty = Boolean(foo.length === 0)", "const isEmpty = foo.length === 0", None),
-        (
-            "const isNotEmpty = !Boolean(foo.length === 0)",
-            "const isNotEmpty = foo.length > 0",
-            None,
-        ),
-        (
-            "const isEmpty = !Boolean(!Boolean(foo.length === 0))",
-            "const isEmpty = foo.length === 0",
-            None,
-        ),
+        ("const isNotEmpty = !Boolean(foo.length === 0)", "const isNotEmpty = foo.length > 0", None),
+        ("const isEmpty = !Boolean(!Boolean(foo.length === 0))", "const isEmpty = foo.length === 0", None),
         ("if (foo.size) {}", "if (foo.size > 0) {}", None),
         ("if (foo.size && bar.length) {}", "if (foo.size > 0 && bar.length > 0) {}", None),
         // Space after keywords
         ("function foo() {return!foo.length}", "function foo() {return foo.length === 0}", None),
         ("function foo() {throw!foo.length}", "function foo() {throw foo.length === 0}", None),
-        (
-            "async function foo() {await!foo.length}",
-            "async function foo() {await (foo.length === 0)}",
-            None,
-        ),
+        ("async function foo() {await!foo.length}", "async function foo() {await (foo.length === 0)}", None),
         ("function * foo() {yield!foo.length}", "function * foo() {yield foo.length === 0}", None),
         ("function * foo() {yield*!foo.length}", "function * foo() {yield*foo.length === 0}", None),
         ("delete!foo.length", "delete (foo.length === 0)", None),

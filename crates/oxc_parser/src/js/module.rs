@@ -4,8 +4,8 @@ use oxc_diagnostics::Result;
 use oxc_span::Span;
 
 use super::{
-    function::FunctionKind,
     list::{AssertEntries, ExportNamedSpecifiers, ImportSpecifierList},
+    FunctionKind,
 };
 use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl};
 
@@ -18,10 +18,10 @@ impl<'a> ParserImpl<'a> {
         let has_in = self.ctx.has_in();
         self.ctx = self.ctx.and_in(true);
 
-        let expression = self.parse_assignment_expression_base()?;
+        let expression = self.parse_assignment_expression_or_higher()?;
         let mut arguments = self.ast.new_vec();
         if self.eat(Kind::Comma) && !self.at(Kind::RParen) {
-            arguments.push(self.parse_assignment_expression_base()?);
+            arguments.push(self.parse_assignment_expression_or_higher()?);
         }
 
         self.ctx = self.ctx.and_in(has_in);
@@ -125,11 +125,8 @@ impl<'a> ParserImpl<'a> {
 
     // import { export1 , export2 as alias2 , [...] } from "module-name";
     fn parse_import_specifiers(&mut self) -> Result<Vec<'a, ImportDeclarationSpecifier<'a>>> {
-        let ctx = self.ctx;
-        self.ctx = Context::default();
-        let specifiers = ImportSpecifierList::parse(self)?.import_specifiers;
-        self.ctx = ctx;
-        Ok(specifiers)
+        self.context(Context::empty(), self.ctx, ImportSpecifierList::parse)
+            .map(|x| x.import_specifiers)
     }
 
     /// [Import Attributes](https://tc39.es/proposal-import-attributes)
@@ -142,11 +139,7 @@ impl<'a> ParserImpl<'a> {
             }
         };
         let span = self.start_span();
-        let ctx = self.ctx;
-        self.ctx = Context::default();
-        let with_entries = AssertEntries::parse(self)?.elements;
-        self.ctx = ctx;
-
+        let with_entries = self.context(Context::empty(), self.ctx, AssertEntries::parse)?.elements;
         Ok(Some(WithClause { span: self.end_span(span), attributes_keyword, with_entries }))
     }
 
@@ -156,7 +149,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Box<'a, TSExportAssignment<'a>>> {
         self.expect(Kind::Eq)?;
 
-        let expression = self.parse_assignment_expression_base()?;
+        let expression = self.parse_assignment_expression_or_higher()?;
         self.asi()?;
 
         Ok(self.ast.alloc(TSExportAssignment { span: self.end_span(start_span), expression }))
@@ -225,12 +218,8 @@ impl<'a> ParserImpl<'a> {
         span: Span,
     ) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
         let export_kind = self.parse_import_or_export_kind();
-
-        let ctx = self.ctx;
-        self.ctx = Context::default();
-        let specifiers = ExportNamedSpecifiers::parse(self)?.elements;
-        self.ctx = ctx;
-
+        let specifiers =
+            self.context(Context::empty(), self.ctx, ExportNamedSpecifiers::parse)?.elements;
         let (source, with_clause) = if self.eat(Kind::From) && self.cur_kind().is_literal() {
             let source = self.parse_literal_string()?;
             (Some(source), self.parse_import_attributes()?)
@@ -244,9 +233,9 @@ impl<'a> ParserImpl<'a> {
                 match &specifier.local {
                     // It is a Syntax Error if ReferencedBindings of NamedExports contains any StringLiterals.
                     ModuleExportName::StringLiteral(literal) => {
-                        self.error(diagnostics::ExportNamedString(
-                            specifier.local.to_string(),
-                            specifier.exported.to_string(),
+                        self.error(diagnostics::export_named_string(
+                            &specifier.local.to_string(),
+                            &specifier.exported.to_string(),
                             literal.span,
                         ));
                     }
@@ -258,9 +247,9 @@ impl<'a> ParserImpl<'a> {
                         if match_result.is_reserved_keyword()
                             || match_result.is_future_reserved_keyword()
                         {
-                            self.error(diagnostics::ExportReservedWord(
-                                specifier.local.to_string(),
-                                specifier.exported.to_string(),
+                            self.error(diagnostics::export_reserved_word(
+                                &specifier.local.to_string(),
+                                &specifier.exported.to_string(),
                                 id.span,
                             ));
                         }
@@ -348,7 +337,7 @@ impl<'a> ParserImpl<'a> {
                 .map(ExportDefaultDeclarationKind::FunctionDeclaration)?,
             _ => {
                 let decl = self
-                    .parse_assignment_expression_base()
+                    .parse_assignment_expression_or_higher()
                     .map(ExportDefaultDeclarationKind::from)?;
                 self.asi()?;
                 decl
@@ -431,7 +420,7 @@ impl<'a> ParserImpl<'a> {
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
                 if !literal.is_string_well_formed_unicode() {
-                    self.error(diagnostics::ExportLoneSurrogate(literal.span));
+                    self.error(diagnostics::export_lone_surrogate(literal.span));
                 };
                 Ok(ModuleExportName::StringLiteral(literal))
             }

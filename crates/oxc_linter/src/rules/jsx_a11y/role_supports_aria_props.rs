@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXOpeningElement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_set;
@@ -50,15 +48,16 @@ declare_oxc_lint!(
 #[derive(Debug, Default, Clone)]
 pub struct RoleSupportsAriaProps;
 
-#[derive(Debug, Error, Diagnostic)]
-enum RoleSupportsAriaPropsDiagnostic {
-    #[error("eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute {1} is not supported by the role {2}.")]
-    #[diagnostic(severity(warning), help("Try to remove invalid attribute {1}."))]
-    Default(#[label] Span, String, String),
+fn default(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute {x1} is not supported by the role {x2}."))
+        .with_help(format!("Try to remove invalid attribute {x1}."))
+        .with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute {1} is not supported by the role {2}. This role is implicit on the element {3}.")]
-    #[diagnostic(severity(warning), help("Try to remove invalid attribute {1}."))]
-    IsImplicit(#[label] Span, String, String, String),
+fn is_implicit_diagnostic(span0: Span, x1: &str, x2: &str, x3: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute {x1} is not supported by the role {x2}. This role is implicit on the element {x3}."))
+        .with_help(format!("Try to remove invalid attribute {x1}."))
+        .with_labels([span0.into()])
 }
 
 impl Rule for RoleSupportsAriaProps {
@@ -81,18 +80,9 @@ impl Rule for RoleSupportsAriaProps {
                             let name = get_jsx_attribute_name(&attr.name).to_lowercase();
                             if invalid_props.contains(&&name.as_str()) {
                                 ctx.diagnostic(if is_implicit {
-                                    RoleSupportsAriaPropsDiagnostic::IsImplicit(
-                                        attr.span,
-                                        name,
-                                        role_value.to_string(),
-                                        el_type.clone(),
-                                    )
+                                    is_implicit_diagnostic(attr.span, &name, role_value, &el_type)
                                 } else {
-                                    RoleSupportsAriaPropsDiagnostic::Default(
-                                        attr.span,
-                                        name,
-                                        role_value.to_string(),
-                                    )
+                                    default(attr.span, &name, role_value)
                                 });
                             }
                         }

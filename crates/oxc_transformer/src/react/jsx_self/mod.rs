@@ -1,13 +1,11 @@
-mod diagnostics;
-
 use std::rc::Rc;
 
 use oxc_ast::ast::*;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
+use oxc_traverse::{Ancestor, FinderRet, TraverseCtx};
 
 use crate::context::Ctx;
-
-use self::diagnostics::DuplicateSelfProp;
 
 const SELF: &str = "__self";
 
@@ -46,7 +44,31 @@ impl<'a> ReactJsxSelf<'a> {
     }
 
     pub fn report_error(&self, span: Span) {
-        self.ctx.error(DuplicateSelfProp(span));
+        let error = OxcDiagnostic::warn("Duplicate __self prop found.").with_label(span);
+        self.ctx.error(error);
+    }
+
+    #[allow(clippy::unused_self)]
+    fn is_inside_constructor(&self, ctx: &TraverseCtx<'a>) -> bool {
+        ctx.find_scope_by_flags(|flags| {
+            if flags.is_block() || flags.is_arrow() {
+                return FinderRet::Continue;
+            }
+            FinderRet::Found(flags.is_constructor())
+        })
+        .unwrap_or(false)
+    }
+
+    fn has_no_super_class(ctx: &TraverseCtx<'a>) -> bool {
+        ctx.find_ancestor(|ancestor| match ancestor {
+            Ancestor::ClassBody(class) => FinderRet::Found(class.super_class().is_none()),
+            _ => FinderRet::Continue,
+        })
+        .unwrap_or(true)
+    }
+
+    pub fn can_add_self_attribute(&self, ctx: &TraverseCtx<'a>) -> bool {
+        !self.is_inside_constructor(ctx) || Self::has_no_super_class(ctx)
     }
 }
 

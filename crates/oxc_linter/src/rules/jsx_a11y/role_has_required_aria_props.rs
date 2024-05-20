@@ -3,27 +3,16 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::{phf_map, phf_set};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-jsx-a11y(role-has-required-aria-props): `{role}` role is missing required aria props `{props}`."
-)]
-#[diagnostic(
-    severity(warning),
-    help("Add missing aria props `{props}` to the element with `{role}` role.")
-)]
-struct RoleHasRequiredAriaPropsDiagnostic {
-    #[label]
-    pub span: Span,
-    pub role: String,
-    pub props: String,
+fn role_has_required_aria_props_diagnostic(span: Span, role: &str, props: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(role-has-required-aria-props): `{role}` role is missing required aria props `{props}`."))
+        .with_help(format!("Add missing aria props `{props}` to the element with `{role}` role."))
+        .and_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -61,19 +50,23 @@ static ROLE_TO_REQUIRED_ARIA_PROPS: phf::Map<&'static str, phf::Set<&'static str
 impl Rule for RoleHasRequiredAriaProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
-            let Some(role_prop) = has_jsx_prop_lowercase(jsx_el, "role") else { return };
-            let JSXAttributeItem::Attribute(attr) = role_prop else { return };
-            let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value else { return };
+            let Some(role_prop) = has_jsx_prop_lowercase(jsx_el, "role") else {
+                return;
+            };
+            let JSXAttributeItem::Attribute(attr) = role_prop else {
+                return;
+            };
+            let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value else {
+                return;
+            };
             let roles = role_values.value.split_whitespace();
             for role in roles {
                 if let Some(props) = ROLE_TO_REQUIRED_ARIA_PROPS.get(role) {
                     for prop in props {
                         if has_jsx_prop_lowercase(jsx_el, prop).is_none() {
-                            ctx.diagnostic(RoleHasRequiredAriaPropsDiagnostic {
-                                span: attr.span,
-                                role: role.into(),
-                                props: (*prop).into(),
-                            });
+                            ctx.diagnostic(role_has_required_aria_props_diagnostic(
+                                attr.span, role, prop,
+                            ));
                         }
                     }
                 }

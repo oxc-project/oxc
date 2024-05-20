@@ -1,21 +1,19 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("oxc(double-comparisons): Unexpected double comparisons.")]
-#[diagnostic(
-    severity(warning),
-    help("This logical expression can be simplified. Try using the `{1}` operator instead.")
-)]
-struct DoubleComparisonsDiagnostic(#[label] pub Span, &'static str);
+fn double_comparisons_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("oxc(double-comparisons): Unexpected double comparisons.")
+        .with_help(format!(
+            "This logical expression can be simplified. Try using the `{x1}` operator instead."
+        ))
+        .with_labels([span0.into()])
+}
 
 /// <https://rust-lang.github.io/rust-clippy/master/index.html#/double_comparisons>
 #[derive(Debug, Default, Clone)]
@@ -87,7 +85,7 @@ impl Rule for DoubleComparisons {
             _ => return,
         };
 
-        ctx.diagnostic(DoubleComparisonsDiagnostic(logical_expr.span, new_op));
+        ctx.diagnostic(double_comparisons_diagnostic(logical_expr.span, new_op));
     }
 }
 

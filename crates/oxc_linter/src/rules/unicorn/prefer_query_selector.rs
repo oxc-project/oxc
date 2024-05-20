@@ -1,19 +1,17 @@
-use miette::diagnostic;
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::phf_map;
 
 use crate::{context::LintContext, rule::Rule, utils::is_node_value_not_dom_node, AstNode, Fix};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-query-selector): Prefer `.{0}()` over `.{1}()`.")]
-#[diagnostic(severity(Warning), help("It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors)."))]
-struct PreferQuerySelectorDiagnostic(&'static str, &'static str, #[label] pub Span);
+fn prefer_query_selector_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(prefer-query-selector): Prefer `.{x0}()` over `.{x1}()`."))
+        .with_help("It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).")
+        .with_labels([span2.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferQuerySelector;
@@ -51,7 +49,9 @@ declare_oxc_lint!(
 
 impl Rule for PreferQuerySelector {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
         if call_expr.optional || call_expr.arguments.len() != 1 {
             return;
@@ -81,8 +81,11 @@ impl Rule for PreferQuerySelector {
                 continue;
             }
 
-            let diagnostic =
-                PreferQuerySelectorDiagnostic(preferred_selector, cur_property_name, property_span);
+            let diagnostic = prefer_query_selector_diagnostic(
+                preferred_selector,
+                cur_property_name,
+                property_span,
+            );
 
             if argument_expr.is_null() {
                 return ctx.diagnostic_with_fix(diagnostic, || {
@@ -111,12 +114,7 @@ impl Rule for PreferQuerySelector {
                     let source_text = argument_expr.span().source_text(ctx.source_text());
                     let quotes_symbol = source_text.chars().next().unwrap();
                     let sharp = if cur_property_name.eq(&"getElementById") { "#" } else { "" };
-                    return Fix::new(
-                        format!(
-                            "{preferred_selector}({quotes_symbol}{sharp}{literal_value}{quotes_symbol}"
-                        ),
-                        property_span.merge(&argument_expr.span()),
-                    );
+                    return Fix::new(format!("{preferred_selector}({quotes_symbol}{sharp}{literal_value}{quotes_symbol}"), property_span.merge(&argument_expr.span()));
                 });
             }
 

@@ -4,14 +4,13 @@ use std::{
 };
 
 use oxc_allocator::Allocator;
-use oxc_diagnostics::miette::NamedSource;
-use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, GraphicalTheme};
+use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, GraphicalTheme, NamedSource};
 use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    rules::RULES, ESLintConfig, Fixer, LintOptions, LintService, LintServiceOptions, Linter,
-    RuleEnum,
+    rules::RULES, AllowWarnDeny, ESLintConfig, Fixer, LintOptions, LintService, LintServiceOptions,
+    Linter, RuleEnum, RuleWithSeverity,
 };
 
 #[derive(Eq, PartialEq)]
@@ -199,7 +198,7 @@ impl Tester {
         is_fix: bool,
     ) -> TestResult {
         let allocator = Allocator::default();
-        let rule = self.find_rule().read_json(rule_config);
+        let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
         let options = LintOptions::default()
             .with_fix(is_fix)
             .with_import_plugin(self.import_plugin)
@@ -212,7 +211,7 @@ impl Tester {
             .map_or_else(ESLintConfig::default, |v| ESLintConfig::deserialize(v).unwrap());
         let linter = Linter::from_options(options)
             .unwrap()
-            .with_rules(vec![rule])
+            .with_rules(vec![RuleWithSeverity::new(rule, AllowWarnDeny::Warn)])
             .with_eslint_config(eslint_config);
         let path_to_lint = if self.import_plugin {
             assert!(path.is_none(), "import plugin does not support path");

@@ -1,8 +1,6 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::{phf_map, Map};
@@ -10,10 +8,13 @@ use std::borrow::Cow;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions")]
-#[diagnostic(severity(warning), help("{0:?} has been deprecated in favor of {1:?}"))]
-pub struct DeprecatedFunction(pub String, pub String, #[label] pub Span);
+fn deprecated_function(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions",
+    )
+    .with_help(format!("{x0:?} has been deprecated in favor of {x1:?}"))
+    .with_labels([span2.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct JestConfig {
@@ -127,7 +128,7 @@ impl Rule for NoDeprecatedFunctions {
         if let Some((base_version, replacement)) = DEPRECATED_FUNCTIONS_MAP.get(&node_name) {
             if jest_version_num >= *base_version {
                 ctx.diagnostic_with_fix(
-                    DeprecatedFunction(node_name, (*replacement).to_string(), mem_expr.span()),
+                    deprecated_function(&node_name, replacement, mem_expr.span()),
                     || Fix::new(*replacement, mem_expr.span()),
                 );
             }

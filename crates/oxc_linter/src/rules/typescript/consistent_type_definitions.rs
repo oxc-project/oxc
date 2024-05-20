@@ -2,23 +2,21 @@ use oxc_ast::{
     ast::{ExportDefaultDeclarationKind, TSType},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(consistent-type-definitions):")]
-#[diagnostic(severity(warning), help("Use an `{0}` instead of a `{1}`"))]
-struct ConsistentTypeDefinitionsDiagnostic(
-    &'static str,
-    &'static str,
-    #[label("Use an `{0}` instead of a `{1}`")] pub Span,
-);
+fn consistent_type_definitions_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("typescript-eslint(consistent-type-definitions):")
+        .with_help(format!("Use an `{x0}` instead of a `{x1}`"))
+        .with_labels([LabeledSpan::new_with_span(
+            Some(format!("Use an `{x0}` instead of a `{x1}`")),
+            span2,
+        )])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ConsistentTypeDefinitions {
@@ -97,7 +95,7 @@ impl Rule for ConsistentTypeDefinitions {
                             &ctx.source_text()[body_span.start as usize..body_span.end as usize];
 
                         ctx.diagnostic_with_fix(
-                            ConsistentTypeDefinitionsDiagnostic(
+                            consistent_type_definitions_diagnostic(
                                 "interface",
                                 "type",
                                 Span::new(start, start + 4),
@@ -154,7 +152,7 @@ impl Rule for ConsistentTypeDefinitions {
                     };
 
                     ctx.diagnostic_with_fix(
-                        ConsistentTypeDefinitionsDiagnostic(
+                        consistent_type_definitions_diagnostic(
                             "type",
                             "interface",
                             Span::new(decl.span.start, decl.span.start + 9),
@@ -212,7 +210,7 @@ impl Rule for ConsistentTypeDefinitions {
                 };
 
                 ctx.diagnostic_with_fix(
-                    ConsistentTypeDefinitionsDiagnostic(
+                    consistent_type_definitions_diagnostic(
                         "type",
                         "interface",
                         Span::new(start, start + 9),

@@ -30,11 +30,11 @@ impl<'a> Lexer<'a> {
         loop {
             match self.next_char() {
                 None => {
-                    self.error(diagnostics::UnterminatedRegExp(self.unterminated_range()));
+                    self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
                     return (self.offset(), RegExpFlags::empty());
                 }
                 Some(c) if is_line_terminator(c) => {
-                    self.error(diagnostics::UnterminatedRegExp(self.unterminated_range()));
+                    self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
                     #[allow(clippy::cast_possible_truncation)]
                     let pattern_end = self.offset() - c.len_utf8() as u32;
                     return (pattern_end, RegExpFlags::empty());
@@ -61,11 +61,11 @@ impl<'a> Lexer<'a> {
         while let Some(ch @ ('$' | '_' | 'a'..='z' | 'A'..='Z' | '0'..='9')) = self.peek() {
             self.consume_char();
             let Ok(flag) = RegExpFlags::try_from(ch) else {
-                self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
+                self.error(diagnostics::reg_exp_flag(ch, self.current_offset()));
                 continue;
             };
             if flags.contains(flag) {
-                self.error(diagnostics::RegExpFlagTwice(ch, self.current_offset()));
+                self.error(diagnostics::reg_exp_flag_twice(ch, self.current_offset()));
                 continue;
             }
             flags |= flag;

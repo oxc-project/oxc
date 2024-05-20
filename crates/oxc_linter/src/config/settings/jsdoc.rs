@@ -2,7 +2,7 @@ use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
 /// <https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md>
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize)]
 pub struct JSDocPluginSettings {
     /// For all rules but NOT apply to `check-access` and `empty-tags` rule
     #[serde(default, rename = "ignorePrivate")]
@@ -19,7 +19,7 @@ pub struct JSDocPluginSettings {
     pub override_replaces_docs: bool,
     /// Only for `require-(yields|returns|description|example|param|throws)` rule
     #[serde(default, rename = "augmentsExtendsReplacesDocs")]
-    pub arguments_extends_replaces_docs: bool,
+    pub augments_extends_replaces_docs: bool,
     /// Only for `require-(yields|returns|description|example|param|throws)` rule
     #[serde(default, rename = "implementsReplacesDocs")]
     pub implements_replaces_docs: bool,
@@ -68,6 +68,23 @@ pub struct JSDocPluginSettings {
     //   message?: string;
     //   forceRequireReturn?: boolean;
     // }[]
+}
+
+// `Default` attribute does not call custom `default = "path"` function!
+impl Default for JSDocPluginSettings {
+    fn default() -> Self {
+        Self {
+            ignore_private: false,
+            ignore_internal: false,
+            // Exists only for these defaults
+            ignore_replaces_docs: true,
+            override_replaces_docs: true,
+            augments_extends_replaces_docs: false,
+            implements_replaces_docs: false,
+            exempt_destructured_roots_from_checks: false,
+            tag_name_preference: FxHashMap::default(),
+        }
+    }
 }
 
 impl JSDocPluginSettings {
@@ -185,7 +202,17 @@ mod test {
         assert_eq!(settings.tag_name_preference.len(), 0);
         assert!(settings.ignore_replaces_docs);
         assert!(settings.override_replaces_docs);
-        assert!(!settings.arguments_extends_replaces_docs);
+        assert!(!settings.augments_extends_replaces_docs);
+        assert!(!settings.implements_replaces_docs);
+
+        let settings = JSDocPluginSettings::default();
+
+        assert!(!settings.ignore_private);
+        assert!(!settings.ignore_internal);
+        assert_eq!(settings.tag_name_preference.len(), 0);
+        assert!(settings.ignore_replaces_docs);
+        assert!(settings.override_replaces_docs);
+        assert!(!settings.augments_extends_replaces_docs);
         assert!(!settings.implements_replaces_docs);
     }
 

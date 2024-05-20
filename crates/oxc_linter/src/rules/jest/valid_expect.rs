@@ -2,12 +2,10 @@ use oxc_ast::{
     ast::{Expression, MemberExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -18,10 +16,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(valid-expect): {0:?}")]
-#[diagnostic(severity(warning), help("{1:?}"))]
-struct ValidExpectDiagnostic(CompactStr, &'static str, #[label] Span);
+fn valid_expect_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-jest(valid-expect): {x0:?}"))
+        .with_help(format!("{x1:?}"))
+        .with_labels([span2.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ValidExpect(Box<ValidExpectConfig>);
@@ -111,7 +110,9 @@ impl Rule for ValidExpect {
 impl ValidExpect {
     fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
         let node = possible_jest_node.node;
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
         let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
         else {
             return;
@@ -123,42 +124,44 @@ impl ValidExpect {
         match jest_fn_call.expect_error {
             Some(ExpectError::MatcherNotFound) => {
                 let (error, help) = Message::MatcherNotFound.details();
-                ctx.diagnostic(ValidExpectDiagnostic(error, help, reporting_span));
+                ctx.diagnostic(valid_expect_diagnostic(error, help, reporting_span));
                 return;
             }
             Some(ExpectError::MatcherNotCalled) => {
                 let (error, help) = Message::MatcherNotCalled.details();
-                ctx.diagnostic(ValidExpectDiagnostic(error, help, reporting_span));
+                ctx.diagnostic(valid_expect_diagnostic(error, help, reporting_span));
                 return;
             }
             Some(ExpectError::ModifierUnknown) => {
                 let (error, help) = Message::ModifierUnknown.details();
-                ctx.diagnostic(ValidExpectDiagnostic(error, help, reporting_span));
+                ctx.diagnostic(valid_expect_diagnostic(error, help, reporting_span));
                 return;
             }
             None => {}
         }
 
-        let Some(Expression::CallExpression(call_expr)) = jest_fn_call.head.parent else { return };
+        let Some(Expression::CallExpression(call_expr)) = jest_fn_call.head.parent else {
+            return;
+        };
 
         if call_expr.arguments.len() < self.min_args {
-            let error = CompactStr::from(format!(
+            let error = format!(
                 "Expect takes at most {} argument{} ",
                 self.min_args,
                 if self.min_args > 1 { "s" } else { "" }
-            ));
+            );
             let help = "Remove the extra arguments.";
-            ctx.diagnostic(ValidExpectDiagnostic(error, help, call_expr.span));
+            ctx.diagnostic(valid_expect_diagnostic(&error, help, call_expr.span));
             return;
         }
         if call_expr.arguments.len() > self.max_args {
-            let error = CompactStr::from(format!(
+            let error = format!(
                 "Expect requires at least {} argument{} ",
                 self.max_args,
                 if self.max_args > 1 { "s" } else { "" }
-            ));
+            );
             let help = "Add the missing arguments.";
-            ctx.diagnostic(ValidExpectDiagnostic(error, help, call_expr.span));
+            ctx.diagnostic(valid_expect_diagnostic(&error, help, call_expr.span));
             return;
         }
 
@@ -188,19 +191,25 @@ impl ValidExpect {
         let Some(final_node) = find_promise_call_expression_node(node, ctx, target_node) else {
             return;
         };
-        let Some(parent) = ctx.nodes().parent_node(final_node.id()) else { return };
+        let Some(parent) = ctx.nodes().parent_node(final_node.id()) else {
+            return;
+        };
         if !is_acceptable_return_node(parent, !self.always_await, ctx) {
             let span;
             let (error, help) = if target_node.id() == final_node.id() {
-                let AstKind::CallExpression(call_expr) = target_node.kind() else { return };
+                let AstKind::CallExpression(call_expr) = target_node.kind() else {
+                    return;
+                };
                 span = call_expr.span;
                 Message::AsyncMustBeAwaited.details()
             } else {
-                let AstKind::CallExpression(call_expr) = final_node.kind() else { return };
+                let AstKind::CallExpression(call_expr) = final_node.kind() else {
+                    return;
+                };
                 span = call_expr.span;
                 Message::PromisesWithAsyncAssertionsMustBeAwaited.details()
             };
-            ctx.diagnostic(ValidExpectDiagnostic(error, help, span));
+            ctx.diagnostic(valid_expect_diagnostic(error, help, span));
         }
     }
 }
@@ -246,7 +255,9 @@ fn is_acceptable_return_node<'a, 'b>(
             | AstKind::Argument(_)
             | AstKind::ExpressionStatement(_)
             | AstKind::FunctionBody(_) => {
-                let Some(parent) = ctx.nodes().parent_node(node.id()) else { return false };
+                let Some(parent) = ctx.nodes().parent_node(node.id()) else {
+                    return false;
+                };
                 node = parent;
             }
             AstKind::ArrowFunctionExpression(arrow_expr) => return arrow_expr.expression,
@@ -338,10 +349,18 @@ fn get_parent_if_thenable<'a, 'b>(
     let grandparent =
         ctx.nodes().parent_node(node.id()).and_then(|node| ctx.nodes().parent_node(node.id()));
 
-    let Some(grandparent) = grandparent else { return node };
-    let AstKind::CallExpression(call_expr) = grandparent.kind() else { return node };
-    let Some(member_expr) = call_expr.callee.as_member_expression() else { return node };
-    let Some(name) = member_expr.static_property_name() else { return node };
+    let Some(grandparent) = grandparent else {
+        return node;
+    };
+    let AstKind::CallExpression(call_expr) = grandparent.kind() else {
+        return node;
+    };
+    let Some(member_expr) = call_expr.callee.as_member_expression() else {
+        return node;
+    };
+    let Some(name) = member_expr.static_property_name() else {
+        return node;
+    };
 
     if ["then", "catch"].contains(&name) {
         return get_parent_if_thenable(grandparent, ctx);
@@ -360,25 +379,24 @@ enum Message {
 }
 
 impl Message {
-    fn details(self) -> (CompactStr, &'static str) {
+    fn details(self) -> (&'static str, &'static str) {
         match self {
             Self::MatcherNotFound => (
-                CompactStr::from("Expect must have a corresponding matcher call."),
+                "Expect must have a corresponding matcher call.",
                 "Did you forget add a matcher(e.g. `toBe`, `toBeDefined`)",
             ),
             Self::MatcherNotCalled => (
-                CompactStr::from("Matchers must be called to assert."),
+                "Matchers must be called to assert.",
                 "You need call your matcher, e.g. `expect(true).toBe(true)`.",
             ),
             Self::ModifierUnknown => {
-                (CompactStr::from("Expect has an unknown modifier."), "Is it a spelling mistake?")
+                ("Expect has an unknown modifier.", "Is it a spelling mistake?")
             }
-            Self::AsyncMustBeAwaited => (
-                CompactStr::from("Async assertions must be awaited."),
-                "Add `await` to your assertion.",
-            ),
+            Self::AsyncMustBeAwaited => {
+                ("Async assertions must be awaited.", "Add `await` to your assertion.")
+            }
             Self::PromisesWithAsyncAssertionsMustBeAwaited => (
-                CompactStr::from("Promises which return async assertions must be awaited."),
+                "Promises which return async assertions must be awaited.",
                 "Add `await` to your assertion.",
             ),
         }
@@ -389,9 +407,7 @@ impl Message {
 fn test_1() {
     use crate::tester::Tester;
 
-    let pass = vec![
-        ("test('valid-expect', async () => { await Promise.race([expect(Promise.reject(2)).rejects.not.toBeDefined(), expect(Promise.reject(2)).rejects.not.toBeDefined()]); })", None)
-    ];
+    let pass = vec![("test('valid-expect', async () => { await Promise.race([expect(Promise.reject(2)).rejects.not.toBeDefined(), expect(Promise.reject(2)).rejects.not.toBeDefined()]); })", None)];
     let fail = vec![];
 
     Tester::new(ValidExpect::NAME, pass, fail).with_jest_plugin(true).test();
@@ -432,14 +448,26 @@ fn test() {
         ("test('valid-expect', async () => { await Promise.allSettled([expect(Promise.reject(2)).rejects.not.toBeDefined(), expect(Promise.reject(2)).rejects.not.toBeDefined()]); });", None),
         ("test('valid-expect', async () => { await Promise.any([expect(Promise.reject(2)).rejects.not.toBeDefined(), expect(Promise.reject(2)).rejects.not.toBeDefined()]); });", None),
         ("test('valid-expect', async () => { return expect(Promise.reject(2)).resolves.not.toBeDefined().then(() => console.log('valid-case')); });", None),
-        ("test('valid-expect', async () => { return expect(Promise.reject(2)).resolves.not.toBeDefined().then(() => console.log('valid-case')).then(() => console.log('another valid case')); });", None),
+        (
+            "test('valid-expect', async () => { return expect(Promise.reject(2)).resolves.not.toBeDefined().then(() => console.log('valid-case')).then(() => console.log('another valid case')); });",
+            None,
+        ),
         ("test('valid-expect', async () => { return expect(Promise.reject(2)).resolves.not.toBeDefined().catch(() => console.log('valid-case')); });", None),
-        ("test('valid-expect', async () => { return expect(Promise.reject(2)).resolves.not.toBeDefined().then(() => console.log('valid-case')).catch(() => console.log('another valid case')); });", None),
+        (
+            "test('valid-expect', async () => { return expect(Promise.reject(2)).resolves.not.toBeDefined().then(() => console.log('valid-case')).catch(() => console.log('another valid case')); });",
+            None,
+        ),
         ("test('valid-expect', async () => { return expect(Promise.reject(2)).resolves.not.toBeDefined().then(() => { expect(someMock).toHaveBeenCalledTimes(1); }); });", None),
         ("test('valid-expect', async () => { await expect(Promise.reject(2)).resolves.not.toBeDefined().then(() => console.log('valid-case')); });", None),
-        ("test('valid-expect', async () => { await expect(Promise.reject(2)).resolves.not.toBeDefined().then(() => console.log('valid-case')).then(() => console.log('another valid case')); });", None),
+        (
+            "test('valid-expect', async () => { await expect(Promise.reject(2)).resolves.not.toBeDefined().then(() => console.log('valid-case')).then(() => console.log('another valid case')); });",
+            None,
+        ),
         ("test('valid-expect', async () => { await expect(Promise.reject(2)).resolves.not.toBeDefined().catch(() => console.log('valid-case')); });", None),
-        ("test('valid-expect', async () => { await expect(Promise.reject(2)).resolves.not.toBeDefined().then(() => console.log('valid-case')).catch(() => console.log('another valid case')); });", None),
+        (
+            "test('valid-expect', async () => { await expect(Promise.reject(2)).resolves.not.toBeDefined().then(() => console.log('valid-case')).catch(() => console.log('another valid case')); });",
+            None,
+        ),
         ("test('valid-expect', async () => { await expect(Promise.reject(2)).resolves.not.toBeDefined().then(() => { expect(someMock).toHaveBeenCalledTimes(1); }); });", None),
         (
             "
@@ -449,7 +477,7 @@ fn test() {
                     });
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -459,7 +487,7 @@ fn test() {
                     });
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -467,7 +495,7 @@ fn test() {
                     return expect(functionReturningAPromise()).resolves.toEqual(1).then(() => expect(Promise.resolve(2)).resolves.toBe(1));
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -479,7 +507,7 @@ fn test() {
                     }
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -491,7 +519,7 @@ fn test() {
                     }
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -505,7 +533,7 @@ fn test() {
                     }
                 });
             ",
-            None
+            None,
         ),
         ("expect(1).toBe(2);", Some(serde_json::json!([{ "maxArgs": 2 }]))),
         ("expect(1, '1 !== 2').toBe(2);", Some(serde_json::json!([{ "maxArgs": 2 }]))),
@@ -513,7 +541,7 @@ fn test() {
         ("test('valid-expect', () => { expect(2).not.toBe(2); });", Some(serde_json::json!([{ "asyncMatchers": ["toRejectWith"] }]))),
         ("test('valid-expect', () => { expect(Promise.reject(2)).toRejectWith(2); });", Some(serde_json::json!([{ "asyncMatchers": ["toResolveWith"] }]))),
         ("test('valid-expect', async () => { await expect(Promise.resolve(2)).toResolve(); });", Some(serde_json::json!([{ "asyncMatchers": ["toResolveWith"] }]))),
-        ("test('valid-expect', async () => { expect(Promise.resolve(2)).toResolve(); });", Some(serde_json::json!([{ "asyncMatchers": ["toResolveWith"] }])))
+        ("test('valid-expect', async () => { expect(Promise.resolve(2)).toResolve(); });", Some(serde_json::json!([{ "asyncMatchers": ["toResolveWith"] }]))),
     ];
 
     let fail = vec![
@@ -551,7 +579,7 @@ fn test() {
                     }
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -563,7 +591,7 @@ fn test() {
                     }
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -577,7 +605,7 @@ fn test() {
                     }
                 });
             ",
-            None
+            None,
         ),
         ("test('valid-expect', () => { expect(Promise.resolve(2)).resolves.toBeDefined(); });", None),
         ("test('valid-expect', () => { expect(Promise.resolve(2)).toResolve(); });", None),
@@ -598,7 +626,7 @@ fn test() {
                 expect(Promise.resolve(1)).rejects.toBeDefined();
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -607,7 +635,7 @@ fn test() {
                     expect(Promise.resolve(1)).rejects.toBeDefined();
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -616,7 +644,7 @@ fn test() {
                     return expect(Promise.resolve(1)).rejects.toBeDefined();
                 });
             ",
-            Some(serde_json::json!([{ "alwaysAwait": true }]))
+            Some(serde_json::json!([{ "alwaysAwait": true }])),
         ),
         (
             "
@@ -625,7 +653,7 @@ fn test() {
                     return expect(Promise.resolve(1)).rejects.toBeDefined();
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -634,7 +662,7 @@ fn test() {
                     return expect(Promise.resolve(1)).rejects.toBeDefined();
                 });
             ",
-            Some(serde_json::json!([{ "alwaysAwait": true }]))
+            Some(serde_json::json!([{ "alwaysAwait": true }])),
         ),
         (
             "
@@ -643,7 +671,7 @@ fn test() {
                     return expect(Promise.resolve(1)).toReject();
                 });
             ",
-            Some(serde_json::json!([{ "alwaysAwait": true }]))
+            Some(serde_json::json!([{ "alwaysAwait": true }])),
         ),
         (
             "
@@ -651,7 +679,7 @@ fn test() {
                     Promise.resolve(expect(Promise.resolve(2)).resolves.not.toBeDefined());
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -659,7 +687,7 @@ fn test() {
                     Promise.reject(expect(Promise.resolve(2)).resolves.not.toBeDefined());
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -667,7 +695,7 @@ fn test() {
                     Promise.x(expect(Promise.resolve(2)).resolves.not.toBeDefined());
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -675,7 +703,7 @@ fn test() {
                     Promise.resolve(expect(Promise.resolve(2)).resolves.not.toBeDefined());
                 });
             ",
-            Some(serde_json::json!([{ "alwaysAwait": true }]))
+            Some(serde_json::json!([{ "alwaysAwait": true }])),
         ),
         (
             "
@@ -686,7 +714,7 @@ fn test() {
                 ]);
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -697,7 +725,7 @@ fn test() {
                 ]);
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -708,7 +736,7 @@ fn test() {
                 ]
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -719,7 +747,7 @@ fn test() {
                 ]
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -730,7 +758,7 @@ fn test() {
                 ]
                 });
             ",
-            None
+            None,
         ),
         ("expect(Promise.resolve(2)).resolves.toBe;", None),
         (
@@ -741,7 +769,7 @@ fn test() {
                     });
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -752,7 +780,7 @@ fn test() {
                     });
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -760,8 +788,8 @@ fn test() {
                     await expect(Promise.resolve(1));
                 });
             ",
-            None
-        )
+            None,
+        ),
     ];
 
     Tester::new(ValidExpect::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();

@@ -1,20 +1,18 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::is_empty_stmt, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.")]
-#[diagnostic(
-    severity(warning),
-    help("Consider removing this case or removing the `default` case.")
-)]
-struct NoUselessSwitchCaseDiagnostic(#[label] pub Span);
+fn no_useless_switch_case_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.",
+    )
+    .with_help("Consider removing this case or removing the `default` case.")
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessSwitchCase;
@@ -85,7 +83,7 @@ impl Rule for NoUselessSwitchCase {
         }
 
         for case in useless_cases {
-            ctx.diagnostic(NoUselessSwitchCaseDiagnostic(case.span));
+            ctx.diagnostic(no_useless_switch_case_diagnostic(case.span));
         }
     }
 }

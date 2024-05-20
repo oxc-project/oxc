@@ -1,8 +1,6 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -10,10 +8,11 @@ use crate::{
     context::LintContext, partial_loader::LINT_PARTIAL_LOADER_EXT, rule::Rule, utils::is_empty_stmt,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-empty-file): Empty files are not allowed.")]
-#[diagnostic(severity(warning), help("Delete this file or add some code to it."))]
-struct NoEmptyFileDiagnostic(#[label] pub Span);
+fn no_empty_file_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-empty-file): Empty files are not allowed.")
+        .with_help("Delete this file or add some code to it.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoEmptyFile;
@@ -47,7 +46,9 @@ impl Rule for NoEmptyFile {
         {
             return;
         }
-        let Some(root) = ctx.nodes().root_node() else { return };
+        let Some(root) = ctx.nodes().root_node() else {
+            return;
+        };
         let AstKind::Program(program) = root.kind() else { unreachable!() };
 
         if program.body.iter().any(|node| !is_empty_stmt(node)) {
@@ -58,7 +59,7 @@ impl Rule for NoEmptyFile {
             return;
         }
 
-        ctx.diagnostic(NoEmptyFileDiagnostic(Span::new(0, 0)));
+        ctx.diagnostic(no_empty_file_diagnostic(Span::new(0, 0)));
     }
 }
 

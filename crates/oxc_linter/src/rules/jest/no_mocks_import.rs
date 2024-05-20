@@ -1,22 +1,18 @@
+use oxc_diagnostics::OxcDiagnostic;
+
 use std::path::PathBuf;
 
 use oxc_ast::{ast::Argument, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.")]
-#[diagnostic(
-    severity(warning),
-    help("Instead use `jest.mock` and import from the original module path.")
-)]
-struct NoMocksImportDiagnostic(#[label] pub Span);
+fn no_mocks_import_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(no-mocks-import): Mocks should not be manually imported from a `__mocks__` directory.")
+        .with_help("Instead use `jest.mock` and import from the original module path.")
+        .with_labels([span0.into()])
+}
 
 /// <https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-mocks-import.md>
 #[derive(Debug, Default, Clone)]
@@ -44,7 +40,7 @@ impl Rule for NoMocksImport {
         for import_entry in &module_records.import_entries {
             let module_specifier = import_entry.module_request.name().as_str();
             if contains_mocks_dir(module_specifier) {
-                ctx.diagnostic(NoMocksImportDiagnostic(import_entry.module_request.span()));
+                ctx.diagnostic(no_mocks_import_diagnostic(import_entry.module_request.span()));
             }
         }
 
@@ -67,7 +63,7 @@ impl Rule for NoMocksImport {
             };
 
             if contains_mocks_dir(&string_literal.value) {
-                ctx.diagnostic(NoMocksImportDiagnostic(string_literal.span));
+                ctx.diagnostic(no_mocks_import_diagnostic(string_literal.span));
             }
         }
     }

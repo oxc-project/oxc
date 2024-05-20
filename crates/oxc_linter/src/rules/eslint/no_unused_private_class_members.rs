@@ -1,20 +1,20 @@
 use itertools::Itertools;
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodeId, AstNodes};
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 use oxc_syntax::class::ElementKind;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-unused-private-class-members): '{0}' is defined but never used.")]
-#[diagnostic(severity(warning))]
-struct NoUnusedPrivateClassMembersDiagnostic(CompactStr, #[label] pub Span);
+fn no_unused_private_class_members_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "eslint(no-unused-private-class-members): '{x0}' is defined but never used."
+    ))
+    .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnusedPrivateClassMembers;
@@ -106,8 +106,8 @@ impl Rule for NoUnusedPrivateClassMembers {
                             && ident.element_ids.contains(&element_id)
                     })
                 {
-                    ctx.diagnostic(NoUnusedPrivateClassMembersDiagnostic(
-                        element.name.clone(),
+                    ctx.diagnostic(no_unused_private_class_members_diagnostic(
+                        &element.name,
                         element.span,
                     ));
                 }

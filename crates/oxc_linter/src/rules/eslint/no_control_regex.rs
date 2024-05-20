@@ -3,23 +3,19 @@ use oxc_ast::{
     ast::{Argument, RegExpFlags},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, CompactStr, GetSpan, Span};
+use oxc_span::{Atom, GetSpan, Span};
 use regex::{Matches, Regex};
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-control-regex): Unexpected control character(s)")]
-#[diagnostic(
-    severity(warning),
-    help("Unexpected control character(s) in regular expression: \"{0}\"")
-)]
-struct NoControlRegexDiagnostic(CompactStr, #[label] pub Span);
+fn no_control_regex_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(no-control-regex): Unexpected control character(s)")
+        .with_help(format!("Unexpected control character(s) in regular expression: \"{x0}\""))
+        .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoControlRegex;
@@ -135,7 +131,7 @@ impl Rule for NoControlRegex {
 
             if !violations.is_empty() {
                 let violations = violations.join(", ");
-                context.diagnostic(NoControlRegexDiagnostic(violations.into(), span));
+                context.diagnostic(no_control_regex_diagnostic(&violations, span));
             }
         }
     }
@@ -291,7 +287,6 @@ mod tests {
                 r"let r = new RegExp('\\u000c');",
                 r"let r = new RegExp('\\u000C');",
                 r"let r = new RegExp('\\u001f');",
-
             ],
         )
         .test();

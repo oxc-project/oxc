@@ -1,30 +1,24 @@
-use oxc_ast::{
-    ast::{Argument, ClassElement, Expression, FunctionBody, ObjectPropertyKind},
-    AstKind,
-};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_ast::{ast::Expression, AstKind};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_semantic::{
+    pg::neighbors_filtered_by_edge_weight, AssignmentValue, BasicBlockElement, EdgeType, Register,
+};
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    rules::eslint::array_callback_return::return_checker::{
-        check_statement, StatementReturnStatus,
-    },
     utils::{is_es5_component, is_es6_component},
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-react(require-render-return): Your render method should have a return statement"
-)]
-#[diagnostic(severity(warning), help("When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the return statement is missing."))]
-struct RequireRenderReturnDiagnostic(#[label] pub Span);
+fn require_render_return_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-react(require-render-return): Your render method should have a return statement")
+        .with_help("When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the return statement is missing.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireRenderReturn;
@@ -56,68 +50,136 @@ declare_oxc_lint!(
 
 impl Rule for RequireRenderReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !is_es5_component(node) && !is_es6_component(node) {
+        if !matches!(node.kind(), AstKind::ArrowFunctionExpression(_) | AstKind::Function(_)) {
+            return;
+        }
+        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
+            return;
+        };
+        if !is_render_fn(parent) {
+            return;
+        }
+        if !is_in_es6_component(parent, ctx) && !is_in_es5_component(parent, ctx) {
             return;
         }
 
-        match node.kind() {
-            AstKind::Class(cl) => {
-                if let Some((fn_body, is_arrow_function_expression)) =
-                    cl.body.body.iter().find_map(|ce| match ce {
-                        ClassElement::MethodDefinition(md)
-                            if md.key.is_specific_static_name("render") =>
-                        {
-                            md.value.body.as_ref().map(|v| (v, false))
-                        }
-                        ClassElement::PropertyDefinition(pd)
-                            if pd.key.is_specific_static_name("render") =>
-                        {
-                            if let Some(Expression::ArrowFunctionExpression(ref ae)) = pd.value {
-                                Some((&ae.body, ae.expression))
-                            } else {
-                                None
-                            }
-                        }
-                        _ => None,
-                    })
-                {
-                    if is_arrow_function_expression || has_return_in_fn_body(fn_body) {
-                        return;
-                    }
-
-                    ctx.diagnostic(RequireRenderReturnDiagnostic(fn_body.span));
+        if !contains_return_statement(node, ctx) {
+            match parent.kind() {
+                AstKind::MethodDefinition(method) => {
+                    ctx.diagnostic(require_render_return_diagnostic(method.key.span()));
                 }
-            }
-            AstKind::CallExpression(ce) => {
-                if let Some(Argument::ObjectExpression(obj_expr)) = ce.arguments.first() {
-                    if let Some(fn_body) = obj_expr
-                        .properties
-                        .iter()
-                        .filter_map(|prop| match prop {
-                            ObjectPropertyKind::ObjectProperty(prop)
-                                if prop.key.is_specific_static_name("render") =>
-                            {
-                                if let Expression::FunctionExpression(ae) = &prop.value {
-                                    ae.body.as_ref()
-                                } else {
-                                    None
-                                }
-                            }
-                            _ => None,
-                        })
-                        .find(|fn_body| !has_return_in_fn_body(fn_body))
-                    {
-                        ctx.diagnostic(RequireRenderReturnDiagnostic(fn_body.span));
-                    }
+                AstKind::PropertyDefinition(property) => {
+                    ctx.diagnostic(require_render_return_diagnostic(property.key.span()));
                 }
-            }
-            _ => {}
+                AstKind::ObjectProperty(property) => {
+                    ctx.diagnostic(require_render_return_diagnostic(property.key.span()));
+                }
+                _ => {}
+            };
         }
     }
 }
 
-fn has_return_in_fn_body<'a>(fn_body: &oxc_allocator::Box<'a, FunctionBody<'a>>) -> bool {
-    fn_body.statements.iter().any(|stmt| check_statement(stmt) != StatementReturnStatus::NotReturn)
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+enum FoundReturn {
+    #[default]
+    No,
+    Yes,
+}
+
+const KEEP_WALKING_ON_THIS_PATH: bool = true;
+const STOP_WALKING_ON_THIS_PATH: bool = false;
+
+fn contains_return_statement<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let cfg = ctx.semantic().cfg();
+    let state = neighbors_filtered_by_edge_weight(
+        &cfg.graph,
+        node.cfg_ix(),
+        &|edge| match edge {
+            // We only care about normal edges having a return statement.
+            EdgeType::Normal => None,
+            // For these two type, we flag it as not found.
+            EdgeType::NewFunction | EdgeType::Backedge => Some(FoundReturn::No),
+        },
+        &mut |basic_block_id, _state_going_into_this_rule| {
+            // If its an arrow function with an expression, marked as founded and stop walking.
+            if let AstKind::ArrowFunctionExpression(arrow_expr) = node.kind() {
+                if arrow_expr.expression {
+                    return (FoundReturn::Yes, STOP_WALKING_ON_THIS_PATH);
+                }
+            }
+
+            for entry in cfg.basic_block_by_index(*basic_block_id) {
+                if let BasicBlockElement::Assignment(to_reg, val) = entry {
+                    if matches!(to_reg, Register::Return)
+                        && matches!(val, AssignmentValue::NotImplicitUndefined)
+                    {
+                        return (FoundReturn::Yes, STOP_WALKING_ON_THIS_PATH);
+                    }
+                } else {
+                    // We don't care about other types of instructions.
+                }
+            }
+
+            (FoundReturn::No, KEEP_WALKING_ON_THIS_PATH)
+        },
+    );
+
+    state.iter().any(|&state| state == FoundReturn::Yes)
+}
+
+const RENDER_METHOD_NAME: &str = "render";
+
+fn is_render_fn(node: &AstNode) -> bool {
+    match node.kind() {
+        AstKind::MethodDefinition(method) => {
+            if method.key.is_specific_static_name(RENDER_METHOD_NAME) {
+                return true;
+            }
+        }
+        AstKind::PropertyDefinition(property) => {
+            if property.key.is_specific_static_name(RENDER_METHOD_NAME)
+                && property.value.as_ref().is_some_and(Expression::is_function)
+            {
+                return true;
+            }
+        }
+        AstKind::ObjectProperty(property) => {
+            if property.key.is_specific_static_name(RENDER_METHOD_NAME)
+                && property.value.is_function()
+            {
+                return true;
+            }
+        }
+        _ => {}
+    }
+    false
+}
+
+fn is_in_es5_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+    let Some(ancestors_0) = ctx.nodes().parent_node(node.id()) else { return false };
+    if !matches!(ancestors_0.kind(), AstKind::ObjectExpression(_)) {
+        return false;
+    }
+
+    let Some(ancestors_1) = ctx.nodes().parent_node(ancestors_0.id()) else { return false };
+    if !matches!(ancestors_1.kind(), AstKind::Argument(_)) {
+        return false;
+    }
+
+    let Some(ancestors_2) = ctx.nodes().parent_node(ancestors_1.id()) else { return false };
+
+    is_es5_component(ancestors_2)
+}
+
+fn is_in_es6_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+    let Some(parent) = ctx.nodes().parent_node(node.id()) else { return false };
+    if !matches!(parent.kind(), AstKind::ClassBody(_)) {
+        return false;
+    }
+
+    let Some(grandparent) = ctx.nodes().parent_node(parent.id()) else { return false };
+    is_es6_component(grandparent)
 }
 
 #[test]
@@ -205,6 +267,15 @@ fn test() {
 			          render
 			        }
 			      ",
+        r"
+           class Foo extends Component {
+             render = () => {
+               if (true) {
+                  return <div>Hello</div>;
+                }
+              }
+           }
+        ",
     ];
 
     let fail = vec![
@@ -235,6 +306,22 @@ fn test() {
         	          }
         	        }
         	      ",
+        r"
+            class Hello extends React.Component {
+              render() {
+                function foo() {
+                        return <div>Hello {this.props.name}</div>;
+                    }
+                }
+            }
+         ",
+        r"
+            class Hello extends React.Component {
+              render() {
+                return
+              }
+            }
+         ",
     ];
 
     Tester::new(RequireRenderReturn::NAME, pass, fail).test_and_snapshot();

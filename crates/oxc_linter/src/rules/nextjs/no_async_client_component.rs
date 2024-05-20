@@ -2,22 +2,18 @@ use oxc_ast::{
     ast::{BindingPatternKind, ExportDefaultDeclarationKind, Expression, Statement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{ast_util::get_declaration_of_variable, context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-next(no-async-client-component): Prevent client components from being async functions.")]
-#[diagnostic(
-    severity(warning),
-    help("See: https://nextjs.org/docs/messages/no-async-client-component")
-)]
-struct NoAsyncClientComponentDiagnostic(#[label] pub Span);
+fn no_async_client_component_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-next(no-async-client-component): Prevent client components from being async functions.")
+        .with_help("See: https://nextjs.org/docs/messages/no-async-client-component")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAsyncClientComponent;
@@ -38,7 +34,9 @@ declare_oxc_lint!(
 
 impl Rule for NoAsyncClientComponent {
     fn run_once(&self, ctx: &LintContext) {
-        let Some(root) = ctx.nodes().root_node() else { return };
+        let Some(root) = ctx.nodes().root_node() else {
+            return;
+        };
         let AstKind::Program(program) = root.kind() else { unreachable!() };
 
         if program.directives.iter().any(|directive| directive.directive.as_str() == "use client") {
@@ -57,7 +55,7 @@ impl Rule for NoAsyncClientComponent {
                             .as_ref()
                             .is_some_and(|v| v.name.chars().next().unwrap().is_uppercase())
                     {
-                        ctx.diagnostic(NoAsyncClientComponentDiagnostic(
+                        ctx.diagnostic(no_async_client_component_diagnostic(
                             func_decl.id.as_ref().unwrap().span,
                         ));
                     }
@@ -80,7 +78,7 @@ impl Rule for NoAsyncClientComponent {
                                 // `func.id.name` MUST be > 0 chars
                                 .is_some_and(|v| v.name.chars().next().unwrap().is_uppercase())
                         {
-                            ctx.diagnostic(NoAsyncClientComponentDiagnostic(
+                            ctx.diagnostic(no_async_client_component_diagnostic(
                                 func.id.as_ref().unwrap().span,
                             ));
                         }
@@ -96,7 +94,7 @@ impl Rule for NoAsyncClientComponent {
                                     &var_declarator.init
                                 {
                                     if arrow_expr.r#async {
-                                        ctx.diagnostic(NoAsyncClientComponentDiagnostic(
+                                        ctx.diagnostic(no_async_client_component_diagnostic(
                                             binding_ident.span,
                                         ));
                                     }

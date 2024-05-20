@@ -4,34 +4,37 @@ use oxc_ast::{
     ast::{BindingPatternKind, ObjectPattern},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ModuleRecord};
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::module_record::{ExportExportName, ExportImportName, ImportImportName};
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-enum NamespaceDiagnostic {
-    #[error("eslint-plugin-import(namespace): {1:?} not found in imported namespace {2:?}.")]
-    #[diagnostic(severity(warning))]
-    NoExport(#[label] Span, CompactStr, String),
-    #[error(
-        "eslint-plugin-import(namespace): {1:?} not found in deeply imported namespace {2:?}."
-    )]
-    #[diagnostic(severity(warning))]
-    NoExportInDeeplyImportedNamespace(#[label] Span, CompactStr, String),
-    #[error("eslint-plugin-import(namespace): Unable to validate computed reference to imported namespace {1:?}
-    .")]
-    #[diagnostic(severity(warning))]
-    ComputedReference(#[label] Span, CompactStr),
-    #[error("eslint-plugin-import(namespace): Assignment to member of namespace {1:?}.'")]
-    #[diagnostic(severity(warning))]
-    Assignment(#[label] Span, CompactStr),
+fn no_export(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "eslint-plugin-import(namespace): {x1:?} not found in imported namespace {x2:?}."
+    ))
+    .with_labels([span0.into()])
+}
+
+fn no_export_in_deeply_imported_namespace(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "eslint-plugin-import(namespace): {x1:?} not found in deeply imported namespace {x2:?}."
+    ))
+    .with_labels([span0.into()])
+}
+
+fn computed_reference(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-import(namespace): Unable to validate computed reference to imported namespace {x1:?}.")).with_labels([span0.into()])
+}
+
+fn assignment(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "eslint-plugin-import(namespace): Assignment to member of namespace {x1:?}.'"
+    ))
+    .with_labels([span0.into()])
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/namespace.md>
@@ -47,7 +50,7 @@ declare_oxc_lint!(
     /// Also, will report for computed references (i.e. foo["bar"]()).
     /// Reports on assignment to a member of an imported namespace.
     Namespace,
-    nursery
+    correctness
 );
 
 impl Rule for Namespace {
@@ -82,8 +85,7 @@ impl Rule for Namespace {
                         return;
                     };
 
-                    let Some(loaded_module) =
-                        &loaded_module.loaded_modules.get(&CompactStr::from(source.clone()))
+                    let Some(loaded_module) = &loaded_module.loaded_modules.get(source.as_str())
                     else {
                         return;
                     };
@@ -116,23 +118,17 @@ impl Rule for Namespace {
                                 ctx.nodes().parent_kind(node.id()),
                                 Some(AstKind::SimpleAssignmentTarget(_))
                             ) {
-                                ctx.diagnostic(NamespaceDiagnostic::Assignment(
-                                    member.span(),
-                                    name.clone(),
-                                ));
+                                ctx.diagnostic(assignment(member.span(), name));
                             };
 
                             if !self.allow_computed && member.is_computed() {
-                                return ctx.diagnostic(NamespaceDiagnostic::ComputedReference(
-                                    member.span(),
-                                    name.clone(),
-                                ));
+                                return ctx.diagnostic(computed_reference(member.span(), name));
                             }
 
                             check_deep_namespace_for_node(
                                 node,
                                 &source,
-                                vec![entry.local_name.name().clone()].as_slice(),
+                                vec![entry.local_name.name().to_string()].as_slice(),
                                 &module,
                                 ctx,
                             );
@@ -143,13 +139,7 @@ impl Rule for Namespace {
                             {
                                 check_binding_exported(
                                     &expr.property.name,
-                                    || {
-                                        NamespaceDiagnostic::NoExport(
-                                            expr.property.span,
-                                            expr.property.name.to_compact_str(),
-                                            source.clone(),
-                                        )
-                                    },
+                                    || no_export(expr.property.span, &expr.property.name, &source),
                                     &module,
                                     ctx,
                                 );
@@ -163,7 +153,7 @@ impl Rule for Namespace {
                             check_deep_namespace_for_object_pattern(
                                 pattern,
                                 &source,
-                                vec![entry.local_name.name().clone()].as_slice(),
+                                &[entry.local_name.name().to_string()],
                                 &module,
                                 ctx,
                             );
@@ -199,7 +189,7 @@ fn get_module_request_name(name: &str, module_record: &ModuleRecord) -> Option<S
                 false
             }
             ExportImportName::Name(name_span) => {
-                return name_span.name().as_str() == name
+                name_span.name().as_str() == name
                     && module_record.import_entries.iter().any(|entry| {
                         entry.local_name.name().as_str() == name
                             && entry.import_name.is_namespace_object()
@@ -211,19 +201,19 @@ fn get_module_request_name(name: &str, module_record: &ModuleRecord) -> Option<S
         return entry.module_request.as_ref().map(|name| name.name().to_string());
     };
 
-    return module_record
+    module_record
         .import_entries
         .iter()
         .find(|entry| {
             entry.local_name.name().as_str() == name && entry.import_name.is_namespace_object()
         })
-        .map(|entry| entry.module_request.name().to_string());
+        .map(|entry| entry.module_request.name().to_string())
 }
 
 fn check_deep_namespace_for_node(
     node: &AstNode,
     source: &str,
-    namespaces: &[CompactStr],
+    namespaces: &[String],
     module: &Arc<ModuleRecord>,
     ctx: &LintContext<'_>,
 ) {
@@ -243,7 +233,7 @@ fn check_deep_namespace_for_node(
                 parent_node,
                 source,
                 namespaces.as_slice(),
-                module.loaded_modules.get(&CompactStr::from(module_source)).unwrap().value(),
+                module.loaded_modules.get(module_source.as_str()).unwrap().value(),
                 ctx,
             );
         } else {
@@ -251,13 +241,9 @@ fn check_deep_namespace_for_node(
                 name,
                 || {
                     if namespaces.len() > 1 {
-                        NamespaceDiagnostic::NoExportInDeeplyImportedNamespace(
-                            span,
-                            name.into(),
-                            namespaces.join("."),
-                        )
+                        no_export_in_deeply_imported_namespace(span, name, &namespaces.join("."))
                     } else {
-                        NamespaceDiagnostic::NoExport(span, name.into(), source.to_string())
+                        no_export(span, name, source)
                     }
                 },
                 module,
@@ -270,7 +256,7 @@ fn check_deep_namespace_for_node(
 fn check_deep_namespace_for_object_pattern(
     pattern: &ObjectPattern,
     source: &str,
-    namespaces: &[CompactStr],
+    namespaces: &[String],
     module: &Arc<ModuleRecord>,
     ctx: &LintContext<'_>,
 ) {
@@ -282,12 +268,12 @@ fn check_deep_namespace_for_object_pattern(
         if let BindingPatternKind::ObjectPattern(pattern) = &property.value.kind {
             if let Some(module_source) = get_module_request_name(&name, module) {
                 let mut next_namespaces = namespaces.to_owned();
-                next_namespaces.push(name.clone());
+                next_namespaces.push(name.to_string());
                 check_deep_namespace_for_object_pattern(
                     pattern,
                     source,
                     next_namespaces.as_slice(),
-                    module.loaded_modules.get(&CompactStr::from(module_source)).unwrap().value(),
+                    module.loaded_modules.get(module_source.as_str()).unwrap().value(),
                     ctx,
                 );
                 continue;
@@ -298,17 +284,13 @@ fn check_deep_namespace_for_object_pattern(
             &name,
             || {
                 if namespaces.len() > 1 {
-                    NamespaceDiagnostic::NoExportInDeeplyImportedNamespace(
+                    no_export_in_deeply_imported_namespace(
                         property.key.span(),
-                        name.clone(),
-                        namespaces.join("."),
+                        &name,
+                        &namespaces.join("."),
                     )
                 } else {
-                    NamespaceDiagnostic::NoExport(
-                        property.key.span(),
-                        name.clone(),
-                        source.to_string(),
-                    )
+                    no_export(property.key.span(), &name, source)
                 }
             },
             module,
@@ -319,7 +301,7 @@ fn check_deep_namespace_for_object_pattern(
 
 fn check_binding_exported(
     name: &str,
-    get_diagnostic: impl FnOnce() -> NamespaceDiagnostic,
+    get_diagnostic: impl FnOnce() -> OxcDiagnostic,
     module: &ModuleRecord,
     ctx: &LintContext<'_>,
 ) {
@@ -328,7 +310,7 @@ fn check_binding_exported(
         || module
             .exported_bindings_from_star_export
             .iter()
-            .any(|entry| entry.value().contains(&CompactStr::from(name)))
+            .any(|entry| entry.value().iter().any(|s| s.as_str() == name))
     {
         return;
     }

@@ -1,8 +1,6 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -13,10 +11,11 @@ use crate::{
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-alias-methods): Unexpected alias {0:?}")]
-#[diagnostic(severity(warning), help("Replace {0:?} with its canonical name of {1:?}"))]
-struct NoAliasMethodsDiagnostic(pub &'static str, pub &'static str, #[label] pub Span);
+fn no_alias_methods_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-jest(no-alias-methods): Unexpected alias {x0:?}"))
+        .with_help(format!("Replace {x0:?} with its canonical name of {x1:?}"))
+        .with_labels([span2.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAliasMethods;
@@ -82,7 +81,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                 }
 
                 ctx.diagnostic_with_fix(
-                    NoAliasMethodsDiagnostic(name, canonical_name, matcher.span),
+                    no_alias_methods_diagnostic(name, canonical_name, matcher.span),
                     || Fix::new(canonical_name, Span::new(start, end)),
                 );
             }

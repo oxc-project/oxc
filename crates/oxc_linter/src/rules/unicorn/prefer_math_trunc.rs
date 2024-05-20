@@ -1,18 +1,18 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `{1} 0`.")]
-#[diagnostic(severity(warning))]
-struct PreferMathTruncDiagnostic(#[label] pub Span, pub &'static str);
+fn prefer_math_trunc_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `{x1} 0`."
+    ))
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferMathTrunc;
@@ -116,7 +116,7 @@ impl Rule for PreferMathTrunc {
             }
         };
 
-        ctx.diagnostic(PreferMathTruncDiagnostic(node.kind().span(), operator));
+        ctx.diagnostic(prefer_math_trunc_diagnostic(node.kind().span(), operator));
     }
 }
 

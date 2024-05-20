@@ -2,34 +2,29 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+
 use oxc_span::{GetSpan, Span};
 
 use oxc_macros::declare_oxc_lint;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum JsxKeyDiagnostic {
-    #[error(r#"eslint-plugin-react(jsx-key): Missing "key" prop for element in array."#)]
-    #[diagnostic(severity(warning))]
-    MissingKeyPropForElementInArray(#[label] Span),
+fn missing_key_prop_for_element_in_array(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(r#"eslint-plugin-react(jsx-key): Missing "key" prop for element in array."#)
+        .with_labels([span0.into()])
+}
 
-    #[error(r#"eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator."#)]
-    #[diagnostic(severity(warning), help(r#"Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key)."#))]
-    MissingKeyPropForElementInIterator(
-        #[label("Iterator starts here")] Span,
-        #[label("Element generated here")] Span,
-    ),
+fn missing_key_prop_for_element_in_iterator(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(r#"eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator."#)
+        .with_help(r#"Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key)."#)
+        .with_labels([LabeledSpan::new_with_span(Some("Iterator starts here".into()), span0), LabeledSpan::new_with_span(Some("Element generated here".into()), span1)])
+}
 
-    #[error(
-        r#"eslint-plugin-react(jsx-key): "key" prop must be placed before any `{{...spread}}`"#
-    )]
-    #[diagnostic(severity(warning), help("To avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html"))]
-    KeyPropMustBePlacedBeforeSpread(#[label] Span),
+fn key_prop_must_be_placed_before_spread(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(r#"eslint-plugin-react(jsx-key): "key" prop must be placed before any `{...spread}`"#)
+        .with_help("To avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html")
+        .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -153,7 +148,9 @@ fn is_in_array_or_iter<'a, 'b>(
 fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
     if let Some(outer) = is_in_array_or_iter(node, ctx) {
         if !jsx_elem.opening_element.attributes.iter().any(|attr| {
-            let JSXAttributeItem::Attribute(attr) = attr else { return false };
+            let JSXAttributeItem::Attribute(attr) = attr else {
+                return false;
+            };
 
             let JSXAttributeName::Identifier(attr_ident) = &attr.name else {
                 return false;
@@ -172,7 +169,9 @@ fn check_jsx_element_is_key_before_spread<'a>(jsx_elem: &JSXElement<'a>, ctx: &L
     for (i, attr) in jsx_elem.opening_element.attributes.iter().enumerate() {
         match attr {
             JSXAttributeItem::Attribute(attr) => {
-                let JSXAttributeName::Identifier(ident) = &attr.name else { continue };
+                let JSXAttributeName::Identifier(ident) = &attr.name else {
+                    continue;
+                };
                 if ident.name == "key" {
                     key_idx_span = Some((i, attr.name.span()));
                 }
@@ -186,7 +185,7 @@ fn check_jsx_element_is_key_before_spread<'a>(jsx_elem: &JSXElement<'a>, ctx: &L
 
     if let (Some((key_idx, key_span)), Some(spread_idx)) = (key_idx_span, spread_idx) {
         if key_idx > spread_idx {
-            ctx.diagnostic(JsxKeyDiagnostic::KeyPropMustBePlacedBeforeSpread(key_span));
+            ctx.diagnostic(key_prop_must_be_placed_before_spread(key_span));
         }
     }
 }
@@ -197,12 +196,10 @@ fn check_jsx_fragment<'a>(node: &AstNode<'a>, fragment: &JSXFragment<'a>, ctx: &
     }
 }
 
-fn gen_diagnostic(span: Span, outer: &InsideArrayOrIterator) -> JsxKeyDiagnostic {
+fn gen_diagnostic(span: Span, outer: &InsideArrayOrIterator) -> OxcDiagnostic {
     match outer {
-        InsideArrayOrIterator::Array => JsxKeyDiagnostic::MissingKeyPropForElementInArray(span),
-        InsideArrayOrIterator::Iterator(v) => {
-            JsxKeyDiagnostic::MissingKeyPropForElementInIterator(*v, span)
-        }
+        InsideArrayOrIterator::Array => missing_key_prop_for_element_in_array(span),
+        InsideArrayOrIterator::Iterator(v) => missing_key_prop_for_element_in_iterator(*v, span),
     }
 }
 

@@ -5,24 +5,19 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum JsxNoUselessFragmentDiagnostic {
-    #[error("eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.")]
-    #[diagnostic(severity(warning))]
-    NeedsMoreChildren(#[label] Span),
-    #[error("eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.")]
-    #[diagnostic(severity(warning))]
-    ChildOfHtmlElement(#[label] Span),
+fn needs_more_children(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.").with_labels([span0.into()])
+}
+
+fn child_of_html_element(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.").with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -51,7 +46,7 @@ declare_oxc_lint!(
     /// <div>foo</div>
     /// ```
     JsxNoUselessFragment,
-    correctness
+    pedantic
 );
 
 impl Rule for JsxNoUselessFragment {
@@ -61,7 +56,7 @@ impl Rule for JsxNoUselessFragment {
         Self {
             allow_expressions: value
                 .and_then(|val| val.get("allowExpressions").and_then(serde_json::Value::as_bool))
-                .unwrap_or(true),
+                .unwrap_or(Self::default().allow_expressions),
         }
     }
 
@@ -92,12 +87,12 @@ impl JsxNoUselessFragment {
             && !(self.allow_expressions && is_fragment_with_single_expression(&elem.children))
         {
             let span = elem.opening_element.span;
-            ctx.diagnostic(JsxNoUselessFragmentDiagnostic::NeedsMoreChildren(span));
+            ctx.diagnostic(needs_more_children(span));
         }
 
         if is_child_of_html_element(node, ctx) {
             let span = elem.opening_element.span;
-            ctx.diagnostic(JsxNoUselessFragmentDiagnostic::ChildOfHtmlElement(span));
+            ctx.diagnostic(child_of_html_element(span));
         }
     }
     fn check_fragment(&self, node: &AstNode, elem: &JSXFragment, ctx: &LintContext) {
@@ -106,21 +101,25 @@ impl JsxNoUselessFragment {
             && !(self.allow_expressions && is_fragment_with_single_expression(&elem.children))
         {
             let span = elem.opening_fragment.span;
-            ctx.diagnostic(JsxNoUselessFragmentDiagnostic::NeedsMoreChildren(span));
+            ctx.diagnostic(needs_more_children(span));
         }
 
         if is_child_of_html_element(node, ctx) {
             let span = elem.opening_fragment.span;
-            ctx.diagnostic(JsxNoUselessFragmentDiagnostic::ChildOfHtmlElement(span));
+            ctx.diagnostic(child_of_html_element(span));
         }
     }
 }
 
 fn jsx_elem_has_key_attr(elem: &JSXElement) -> bool {
     elem.opening_element.attributes.iter().any(|attr| {
-        let JSXAttributeItem::Attribute(attr) = attr else { return false };
+        let JSXAttributeItem::Attribute(attr) = attr else {
+            return false;
+        };
 
-        let JSXAttributeName::Identifier(ident) = &attr.name else { return false };
+        let JSXAttributeName::Identifier(ident) = &attr.name else {
+            return false;
+        };
 
         ident.name == "key"
     })
@@ -151,7 +150,9 @@ fn is_child_of_html_element(node: &AstNode, ctx: &LintContext) -> bool {
 }
 
 fn is_html_element(elem_name: &JSXElementName) -> bool {
-    let JSXElementName::Identifier(ident) = elem_name else { return false };
+    let JSXElementName::Identifier(ident) = elem_name else {
+        return false;
+    };
 
     ident.name.starts_with(char::is_lowercase)
 }
@@ -202,7 +203,9 @@ fn is_fragment_with_only_text_and_is_not_child<'a>(
     }
 
     if let Some(JSXChild::Text(_)) = node.first() {
-        let Some(parent) = ctx.nodes().parent_kind(id) else { return false };
+        let Some(parent) = ctx.nodes().parent_kind(id) else {
+            return false;
+        };
         return !matches!(parent, AstKind::JSXElement(_) | AstKind::JSXFragment(_));
     }
 
@@ -236,7 +239,7 @@ fn test() {
         ",
             Some(json!([{ "allowExpressions": true }])),
         ),
-        (r"{1 && <>{1}</>}", Some(json!(["warn", {"allowExpressions": true}]))),
+        (r"{1 && <>{1}</>}", Some(json!([{"allowExpressions": true}]))),
     ];
 
     let fail = vec![

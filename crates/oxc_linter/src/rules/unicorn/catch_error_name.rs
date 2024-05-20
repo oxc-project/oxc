@@ -2,20 +2,17 @@ use oxc_ast::{
     ast::{Argument, BindingPatternKind, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{Atom, CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(catch-error-name): The catch parameter {0:?} should be named {1:?}")]
-#[diagnostic(severity(warning))]
-struct CatchErrorNameDiagnostic(CompactStr, CompactStr, #[label] pub Span);
+fn catch_error_name_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(catch-error-name): The catch parameter {x0:?} should be named {x1:?}")).with_labels([span2.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct CatchErrorName(Box<CatchErrorNameConfig>);
@@ -94,18 +91,18 @@ impl Rule for CatchErrorName {
 
                 if binding_ident.name.starts_with('_') {
                     if symbol_has_references(binding_ident.symbol_id.get(), ctx) {
-                        ctx.diagnostic(CatchErrorNameDiagnostic(
-                            binding_ident.name.to_compact_str(),
-                            self.name.clone(),
+                        ctx.diagnostic(catch_error_name_diagnostic(
+                            binding_ident.name.as_str(),
+                            &self.name,
                             binding_ident.span,
                         ));
                     }
                     return;
                 }
 
-                ctx.diagnostic(CatchErrorNameDiagnostic(
-                    binding_ident.name.to_compact_str(),
-                    self.name.clone(),
+                ctx.diagnostic(catch_error_name_diagnostic(
+                    binding_ident.name.as_str(),
+                    &self.name,
                     binding_ident.span,
                 ));
             }
@@ -141,7 +138,7 @@ impl CatchErrorName {
         &self,
         arg0: &Argument,
         ctx: &LintContext,
-    ) -> Option<CatchErrorNameDiagnostic> {
+    ) -> Option<OxcDiagnostic> {
         let expr = arg0.as_expression()?;
         let expr = expr.without_parenthesized();
 
@@ -154,9 +151,9 @@ impl CatchErrorName {
 
                     if v.name.starts_with('_') {
                         if symbol_has_references(v.symbol_id.get(), ctx) {
-                            ctx.diagnostic(CatchErrorNameDiagnostic(
-                                v.name.to_compact_str(),
-                                self.name.clone(),
+                            ctx.diagnostic(catch_error_name_diagnostic(
+                                v.name.as_str(),
+                                &self.name,
                                 v.span,
                             ));
                         }
@@ -164,11 +161,7 @@ impl CatchErrorName {
                         return None;
                     }
 
-                    return Some(CatchErrorNameDiagnostic(
-                        v.name.to_compact_str(),
-                        self.name.clone(),
-                        v.span,
-                    ));
+                    return Some(catch_error_name_diagnostic(v.name.as_str(), &self.name, v.span));
                 }
             }
         }
@@ -182,9 +175,9 @@ impl CatchErrorName {
 
                     if binding_ident.name.starts_with('_') {
                         if symbol_has_references(binding_ident.symbol_id.get(), ctx) {
-                            ctx.diagnostic(CatchErrorNameDiagnostic(
-                                binding_ident.name.to_compact_str(),
-                                self.name.clone(),
+                            ctx.diagnostic(catch_error_name_diagnostic(
+                                binding_ident.name.as_str(),
+                                &self.name,
                                 binding_ident.span,
                             ));
                         }
@@ -192,9 +185,9 @@ impl CatchErrorName {
                         return None;
                     }
 
-                    return Some(CatchErrorNameDiagnostic(
-                        binding_ident.name.to_compact_str(),
-                        self.name.clone(),
+                    return Some(catch_error_name_diagnostic(
+                        binding_ident.name.as_str(),
+                        &self.name,
                         binding_ident.span,
                     ));
                 }

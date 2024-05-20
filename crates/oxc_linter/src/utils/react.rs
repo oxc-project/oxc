@@ -1,9 +1,9 @@
 use oxc_ast::{
     ast::{
         CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXChild, JSXElement, JSXElementName, JSXExpression, JSXOpeningElement,
+        JSXChild, JSXElement, JSXElementName, JSXExpression, JSXOpeningElement, MemberExpression,
     },
-    AstKind,
+    match_member_expression, AstKind,
 };
 use oxc_semantic::{AstNode, SymbolFlags};
 
@@ -28,7 +28,9 @@ pub fn has_jsx_prop<'a, 'b>(
     node.attributes.iter().find(|attr| match attr {
         JSXAttributeItem::SpreadAttribute(_) => false,
         JSXAttributeItem::Attribute(attr) => {
-            let JSXAttributeName::Identifier(name) = &attr.name else { return false };
+            let JSXAttributeName::Identifier(name) = &attr.name else {
+                return false;
+            };
 
             name.name.as_str() == target_prop
         }
@@ -42,7 +44,9 @@ pub fn has_jsx_prop_lowercase<'a, 'b>(
     node.attributes.iter().find(|attr| match attr {
         JSXAttributeItem::SpreadAttribute(_) => false,
         JSXAttributeItem::Attribute(attr) => {
-            let JSXAttributeName::Identifier(name) = &attr.name else { return false };
+            let JSXAttributeName::Identifier(name) = &attr.name else {
+                return false;
+            };
 
             name.name.as_str().to_lowercase() == target_prop.to_lowercase()
         }
@@ -164,7 +168,9 @@ const PRAGMA: &str = "React";
 const CREATE_CLASS: &str = "createReactClass";
 
 pub fn is_es5_component(node: &AstNode) -> bool {
-    let AstKind::CallExpression(call_expr) = node.kind() else { return false };
+    let AstKind::CallExpression(call_expr) = node.kind() else {
+        return false;
+    };
 
     if let Some(member_expr) = call_expr.callee.as_member_expression() {
         if let Expression::Identifier(ident) = member_expr.object() {
@@ -184,7 +190,9 @@ const COMPONENT: &str = "Component";
 const PURE_COMPONENT: &str = "PureComponent";
 
 pub fn is_es6_component(node: &AstNode) -> bool {
-    let AstKind::Class(class_expr) = node.kind() else { return false };
+    let AstKind::Class(class_expr) = node.kind() else {
+        return false;
+    };
     if let Some(super_class) = &class_expr.super_class {
         if let Some(member_expr) = super_class.as_member_expression() {
             if let Expression::Identifier(ident) = member_expr.object() {
@@ -263,5 +271,77 @@ pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
             _ => Err(()),
         },
         _ => Err(()),
+    }
+}
+
+/// Checks whether the `name` follows the official conventions of React Hooks.
+///
+/// Identifies `use(...)` as a valid hook.
+///
+/// Hook names must start with use followed by a capital letter,
+/// like useState (built-in) or useOnlineStatus (custom).
+pub fn is_react_hook_name(name: &str) -> bool {
+    name.starts_with("use") && name.chars().nth(3).map_or(true, char::is_uppercase)
+    // uncomment this check if react decided to drop the idea of `use` hook.
+    // <https://react.dev/reference/react/use> It is currently in `Canary` builds.
+    // name.starts_with("use") && name.chars().nth(3).is_some_and(char::is_uppercase)
+}
+
+/// Checks whether the `name` follows the official conventions of React Hooks.
+///
+/// Identifies `use(...)` as a valid hook.
+///
+/// Hook names must start with use followed by a capital letter,
+/// like useState (built-in) or useOnlineStatus (custom).
+pub fn is_react_hook(expr: &Expression) -> bool {
+    match expr {
+        match_member_expression!(Expression) => {
+            // SAFETY: We already have checked that `expr` is a member expression using the
+            // `match_member_expression` macro.
+            #[allow(unsafe_code)]
+            let expr = unsafe { expr.as_member_expression().unwrap_unchecked() };
+            let MemberExpression::StaticMemberExpression(static_expr) = expr else { return false };
+
+            let is_valid_property = is_react_hook_name(&static_expr.property.name);
+            let is_valid_namespace = match &static_expr.object {
+                Expression::Identifier(ident) => {
+                    // TODO: test PascalCase
+                    ident.name.chars().next().is_some_and(char::is_uppercase)
+                }
+                _ => false,
+            };
+            is_valid_namespace && is_valid_property
+        }
+        Expression::Identifier(ident) => is_react_hook_name(ident.name.as_str()),
+        _ => false,
+    }
+}
+
+/// Checks if the node is a React component name. React component names must
+/// always start with an uppercase letter.
+pub fn is_react_component_name(name: &str) -> bool {
+    name.chars().next().is_some_and(|c| c.is_ascii_uppercase())
+}
+
+/// Checks if the node is a React component name or React hook,
+/// `is_react_component_name`, `is_react_hook_name`
+pub fn is_react_component_or_hook_name(name: &str) -> bool {
+    is_react_component_name(name) || is_react_hook_name(name)
+}
+
+pub fn is_react_function_call(call: &CallExpression, expected_call: &str) -> bool {
+    let Some(subject) = call.callee_name() else { return false };
+
+    if subject != expected_call {
+        return false;
+    }
+
+    if let Some(member) = call.callee.as_member_expression() {
+        matches! {
+            member.object().get_identifier_reference(),
+            Some(ident) if ident.name.as_str() == PRAGMA
+        }
+    } else {
+        true
     }
 }

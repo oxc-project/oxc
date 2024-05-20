@@ -1,20 +1,17 @@
 use memchr::memmem;
+use oxc_diagnostics::OxcDiagnostic;
 
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-useless-escape): Unnecessary escape character {0:?}")]
-#[diagnostic(severity(warning))]
-struct NoUselessEscapeDiagnostic(char, #[label] pub Span);
+fn no_useless_escape_diagnostic(x0: char, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint(no-useless-escape): Unnecessary escape character {x0:?}"))
+        .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessEscape;
@@ -87,7 +84,7 @@ fn check(ctx: &LintContext<'_>, node_id: AstNodeId, start: u32, offsets: &[usize
 
         if !is_within_jsx_attribute_item(node_id, ctx) {
             let span = Span::new(offset - 1, offset + len);
-            ctx.diagnostic_with_fix(NoUselessEscapeDiagnostic(c, span), || {
+            ctx.diagnostic_with_fix(no_useless_escape_diagnostic(c, span), || {
                 Fix::new(c.to_string(), span)
             });
         }

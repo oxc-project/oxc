@@ -219,6 +219,14 @@ This project was incubated with the assistance of these exceptional mentors and 
 - [quick-lint-js](https://quick-lint-js.com) - [@strager](https://github.com/strager)
 - [elm-review](https://package.elm-lang.org/packages/jfmengels/elm-review/latest) - [@jfmengels](https://github.com/jfmengels)
 
+## ❤️ Sponsors
+
+<p align="center">
+  <a href="https://github.com/sponsors/Boshen">
+    <img src="https://cdn.jsdelivr.net/gh/boshen/sponsors/sponsors.svg" alt="My sponsors" />
+  </a>
+</p>
+
 ## 📖 License
 
 Oxc is free and open-source software licensed under the [MIT License](./LICENSE).

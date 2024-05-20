@@ -1,3 +1,5 @@
+use oxc_diagnostics::OxcDiagnostic;
+
 use std::{collections::HashMap, hash::BuildHasherDefault};
 
 use crate::{
@@ -6,23 +8,15 @@ use crate::{
     utils::{collect_possible_jest_call_node, PossibleJestNode},
 };
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::{FxHashMap, FxHasher};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body."
-)]
-#[diagnostic(
-    severity(warning),
-    help("Too many assertion calls ({0:?}) - maximum allowed is {1:?}")
-)]
-pub struct ExceededMaxAssertion(pub usize, pub usize, #[label] pub Span);
+fn exceeded_max_assertion(x0: usize, x1: usize, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.")
+        .with_help(format!("Too many assertion calls ({x0:?}) - maximum allowed is {x1:?}"))
+        .with_labels([span2.into()])
+}
 
 #[derive(Debug, Clone)]
 pub struct MaxExpects {
@@ -113,7 +107,7 @@ impl MaxExpects {
 
             if let Some(count) = count_map.get(&position) {
                 if count > &self.max {
-                    ctx.diagnostic(ExceededMaxAssertion(*count, self.max, ident.span));
+                    ctx.diagnostic(exceeded_max_assertion(*count, self.max, ident.span));
                 } else {
                     count_map.insert(position, count + 1);
                 }

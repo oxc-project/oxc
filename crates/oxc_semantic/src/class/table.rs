@@ -57,6 +57,10 @@ impl ClassTable {
         std::iter::successors(Some(class_id), |class_id| self.parent_ids.get(class_id).copied())
     }
 
+    pub fn len(&self) -> usize {
+        self.declarations.raw.len()
+    }
+
     pub fn iter_enumerated(&self) -> impl Iterator<Item = (ClassId, &AstNodeId)> + '_ {
         self.declarations.iter_enumerated()
     }

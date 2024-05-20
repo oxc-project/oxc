@@ -43,7 +43,7 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
                 let span = expr.span;
                 match expr.unbox().expression {
                     Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => {
-                        Err(diagnostics::InvalidAssignment(span).into())
+                        Err(diagnostics::invalid_assignment(span))
                     }
                     expr => SimpleAssignmentTarget::cover(expr, p),
                 }
@@ -56,7 +56,10 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
                 Ok(SimpleAssignmentTarget::TSNonNullExpression(expr))
             }
             Expression::TSTypeAssertion(expr) => Ok(SimpleAssignmentTarget::TSTypeAssertion(expr)),
-            expr => Err(diagnostics::InvalidAssignment(expr.span()).into()),
+            Expression::TSInstantiationExpression(expr) => {
+                Ok(SimpleAssignmentTarget::TSInstantiationExpression(expr))
+            }
+            expr => Err(diagnostics::invalid_assignment(expr.span())),
         }
     }
 }
@@ -81,10 +84,10 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                             target: AssignmentTarget::cover(elem.unbox().argument, p)?,
                         });
                         if let Some(span) = expr.trailing_comma {
-                            p.error(diagnostics::BindingRestElementTrailingComma(span));
+                            p.error(diagnostics::binding_rest_element_trailing_comma(span));
                         }
                     } else {
-                        return Err(diagnostics::SpreadLastElement(elem.span).into());
+                        return Err(diagnostics::spread_last_element(elem.span));
                     }
                 }
                 ArrayExpressionElement::Elision(_) => elements.push(None),
@@ -140,7 +143,7 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
                             target: AssignmentTarget::cover(spread.unbox().argument, p)?,
                         });
                     } else {
-                        return Err(diagnostics::SpreadLastElement(spread.span).into());
+                        return Err(diagnostics::spread_last_element(spread.span));
                     }
                 }
             }

@@ -4,10 +4,7 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::{phf_map, phf_set, Map, Set};
@@ -18,20 +15,28 @@ use std::collections::hash_set::HashSet;
 
 use crate::{context::LintContext, rule::Rule, utils::get_jsx_attribute_name, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoUnknownPropertyDiagnostic {
-    #[error("eslint-plugin-react(no-unknown-property): Invalid property found")]
-    #[diagnostic(severity(warning), help("Property '{1}' is only allowed on: {2}"))]
-    InvalidPropOnTag(#[label] Span, String, String),
-    #[error("eslint-plugin-react(no-unknown-property): React does not recognize data-* props with uppercase characters on a DOM element")]
-    #[diagnostic(severity(warning), help("Use '{1}' instead"))]
-    DataLowercaseRequired(#[label] Span, String),
-    #[error("eslint-plugin-react(no-unknown-property): Unknown property found")]
-    #[diagnostic(severity(warning), help("Use '{1}' instead"))]
-    UnknownPropWithStandardName(#[label] Span, String),
-    #[error("eslint-plugin-react(no-unknown-property): Unknown property found")]
-    #[diagnostic(severity(warning), help("Remove unknown property"))]
-    UnknownProp(#[label] Span),
+fn invalid_prop_on_tag(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-react(no-unknown-property): Invalid property found")
+        .with_help(format!("Property '{x1}' is only allowed on: {x2}"))
+        .with_labels([span0.into()])
+}
+
+fn data_lowercase_required(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-react(no-unknown-property): React does not recognize data-* props with uppercase characters on a DOM element")
+        .with_help(format!("Use '{x1}' instead"))
+        .with_labels([span0.into()])
+}
+
+fn unknown_prop_with_standard_name(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-react(no-unknown-property): Unknown property found")
+        .with_help(format!("Use '{x1}' instead"))
+        .with_labels([span0.into()])
+}
+
+fn unknown_prop(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-react(no-unknown-property): Unknown property found")
+        .with_help("Remove unknown property")
+        .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -485,10 +490,7 @@ impl Rule for NoUnknownProperty {
                 };
                 if is_valid_data_attr(actual_name.as_str()) {
                     if self.0.require_data_lowercase && has_uppercase(actual_name.as_str()) {
-                        ctx.diagnostic(NoUnknownPropertyDiagnostic::DataLowercaseRequired(
-                            span,
-                            actual_name.to_lowercase(),
-                        ));
+                        ctx.diagnostic(data_lowercase_required(span, &actual_name.to_lowercase()));
                     }
                     return;
                 };
@@ -498,10 +500,10 @@ impl Rule for NoUnknownProperty {
                 let name = normalize_attribute_case(actual_name.as_str());
                 if let Some(tags) = ATTRIBUTE_TAGS_MAP.get(name) {
                     if !tags.contains(el_type) {
-                        ctx.diagnostic(NoUnknownPropertyDiagnostic::InvalidPropOnTag(
+                        ctx.diagnostic(invalid_prop_on_tag(
                             span,
-                            actual_name.to_string(),
-                            tags.iter().join(", "),
+                            &actual_name,
+                            &tags.iter().join(", "),
                         ));
                     }
                     return;
@@ -516,15 +518,10 @@ impl Rule for NoUnknownProperty {
                     .or_else(|| DOM_ATTRIBUTES_TO_CAMEL.get(name))
                     .map_or_else(
                         || {
-                            ctx.diagnostic(NoUnknownPropertyDiagnostic::UnknownProp(span));
+                            ctx.diagnostic(unknown_prop(span));
                         },
                         |prop| {
-                            ctx.diagnostic(
-                                NoUnknownPropertyDiagnostic::UnknownPropWithStandardName(
-                                    span,
-                                    (*prop).to_string(),
-                                ),
-                            );
+                            ctx.diagnostic(unknown_prop_with_standard_name(span, prop));
                         },
                     );
             });

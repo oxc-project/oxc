@@ -5,6 +5,23 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.0] - 2024-05-14
+
+### Features
+
+- Add scope flags to `TraverseCtx` (#3229)
+- Add `ToJsInt32` trait for f64 (#3132)
+- Add `ToJsString` trait for f64 (#3131)
+
+### Bug Fixes
+
+- Create scope for function nested in class method (#3234)
+
+### Refactor
+
+- Move number related functions to number module (#3130)
+- Use `FxHashMap` for `ModuleRecord::request_modules` (#3124)
+
 ## [0.12.5] - 2024-04-22
 
 ### Features

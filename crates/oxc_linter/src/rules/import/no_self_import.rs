@@ -1,16 +1,16 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-import(no-self-import): module importing itself is not allowed")]
-#[diagnostic(severity(warning))]
-struct NoSelfImportDiagnostic(#[label] pub Span);
+fn no_self_import_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-import(no-self-import): module importing itself is not allowed",
+    )
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoSelfImport;
@@ -28,7 +28,7 @@ declare_oxc_lint!(
     /// const foo = require('./foo')
     /// ```
     NoSelfImport,
-    nursery
+    suspicious
 );
 
 impl Rule for NoSelfImport {
@@ -41,7 +41,7 @@ impl Rule for NoSelfImport {
             };
             if remote_module_record_ref.value().resolved_absolute_path == *resolved_absolute_path {
                 for requested_module in requested_modules {
-                    ctx.diagnostic(NoSelfImportDiagnostic(requested_module.span()));
+                    ctx.diagnostic(no_self_import_diagnostic(requested_module.span()));
                 }
             }
         }

@@ -1,18 +1,17 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.")]
-#[diagnostic(severity(warning), help("Switch to \"||\" or \"??\" operator"))]
-struct PreferLogicalOperatorOverTernaryDiagnostic(#[label] pub Span);
+fn prefer_logical_operator_over_ternary_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.")
+        .with_help("Switch to \"||\" or \"??\" operator")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferLogicalOperatorOverTernary;
@@ -44,10 +43,14 @@ declare_oxc_lint!(
 
 impl Rule for PreferLogicalOperatorOverTernary {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ConditionalExpression(conditional_expression) = node.kind() else { return };
+        let AstKind::ConditionalExpression(conditional_expression) = node.kind() else {
+            return;
+        };
 
         if is_same_node(&conditional_expression.test, &conditional_expression.consequent, ctx) {
-            ctx.diagnostic(PreferLogicalOperatorOverTernaryDiagnostic(conditional_expression.span));
+            ctx.diagnostic(prefer_logical_operator_over_ternary_diagnostic(
+                conditional_expression.span,
+            ));
         }
 
         // `!bar ? foo : bar;`
@@ -55,7 +58,7 @@ impl Rule for PreferLogicalOperatorOverTernary {
             if unary_expression.operator == UnaryOperator::LogicalNot
                 && is_same_node(&unary_expression.argument, &conditional_expression.alternate, ctx)
             {
-                ctx.diagnostic(PreferLogicalOperatorOverTernaryDiagnostic(
+                ctx.diagnostic(prefer_logical_operator_over_ternary_diagnostic(
                     conditional_expression.span,
                 ));
             }

@@ -4,25 +4,20 @@ use crate::{
     rule::Rule,
     utils::{collect_possible_jest_call_node, PossibleJestNode},
 };
+use oxc_diagnostics::OxcDiagnostic;
 
 use oxc_ast::{
     ast::{Argument, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-untyped-mock-factory): Disallow using `jest.mock()` factories without an explicit type parameter.")]
-#[diagnostic(
-    severity(warning),
-    help("Add a type parameter to the mock factory such as `typeof import({0:?})`")
-)]
-struct AddTypeParameterToModuleMockDiagnostic(CompactStr, #[label] pub Span);
+fn add_type_parameter_to_module_mock_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(no-untyped-mock-factory): Disallow using `jest.mock()` factories without an explicit type parameter.")
+        .with_help(format!("Add a type parameter to the mock factory such as `typeof import({x0:?})`"))
+        .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUntypedMockFactory;
@@ -141,8 +136,8 @@ impl NoUntypedMockFactory {
 
         if let Expression::StringLiteral(string_literal) = expr {
             ctx.diagnostic_with_fix(
-                AddTypeParameterToModuleMockDiagnostic(
-                    string_literal.value.to_compact_str(),
+                add_type_parameter_to_module_mock_diagnostic(
+                    string_literal.value.as_str(),
                     property_span,
                 ),
                 || {
@@ -158,8 +153,8 @@ impl NoUntypedMockFactory {
                 },
             );
         } else if let Expression::Identifier(ident) = expr {
-            ctx.diagnostic(AddTypeParameterToModuleMockDiagnostic(
-                ident.name.to_compact_str(),
+            ctx.diagnostic(add_type_parameter_to_module_mock_diagnostic(
+                ident.name.as_str(),
                 property_span,
             ));
         }

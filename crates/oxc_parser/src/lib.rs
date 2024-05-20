@@ -84,7 +84,7 @@ pub use crate::lexer::Kind; // re-export for codegen
 use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, AstBuilder, Trivias};
-use oxc_diagnostics::{Error, Result};
+use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::{ModuleKind, SourceType, Span};
 
 use crate::{
@@ -113,7 +113,7 @@ pub const MAX_LEN: usize = if std::mem::size_of::<usize>() >= 8 {
 /// When `errors.len() > 0`, then program may or may not be empty due to error recovery.
 pub struct ParserReturn<'a> {
     pub program: Program<'a>,
-    pub errors: Vec<Error>,
+    pub errors: Vec<OxcDiagnostic>,
     pub trivias: Trivias,
     pub panicked: bool,
 }
@@ -245,7 +245,7 @@ struct ParserImpl<'a> {
 
     /// All syntax errors from parser and lexer
     /// Note: favor adding to `Diagnostics` instead of raising Err
-    errors: Vec<Error>,
+    errors: Vec<OxcDiagnostic>,
 
     /// The current parsing token
     token: Token,
@@ -287,7 +287,7 @@ impl<'a> ParserImpl<'a> {
             errors: vec![],
             token: Token::default(),
             prev_token_end: 0,
-            state: ParserState::new(allocator),
+            state: ParserState::default(),
             ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
             preserve_parens: options.preserve_parens,
@@ -361,21 +361,21 @@ impl<'a> ParserImpl<'a> {
 
     /// Check for Flow declaration if the file cannot be parsed.
     /// The declaration must be [on the first line before any code](https://flow.org/en/docs/usage/#toc-prepare-your-code-for-flow)
-    fn flow_error(&self) -> Option<Error> {
+    fn flow_error(&self) -> Option<OxcDiagnostic> {
         if self.source_type.is_javascript()
             && (self.source_text.starts_with("// @flow")
                 || self.source_text.starts_with("/* @flow */"))
         {
-            return Some(diagnostics::Flow(Span::new(0, 8)).into());
+            return Some(diagnostics::flow(Span::new(0, 8)));
         }
         None
     }
 
     /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.
     /// Original parsing error is not real - `Lexer::new` substituted "\0" as the source text.
-    fn overlong_error(&self) -> Option<Error> {
+    fn overlong_error(&self) -> Option<OxcDiagnostic> {
         if self.source_text.len() > MAX_LEN {
-            return Some(diagnostics::OverlongSource.into());
+            return Some(diagnostics::overlong_source());
         }
         None
     }
@@ -383,7 +383,7 @@ impl<'a> ParserImpl<'a> {
     /// Return error info at current token
     /// # Panics
     ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is returned
-    fn unexpected(&mut self) -> Error {
+    fn unexpected(&mut self) -> OxcDiagnostic {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
         if self.cur_kind() == Kind::Undetermined {
@@ -391,12 +391,12 @@ impl<'a> ParserImpl<'a> {
                 return error;
             }
         }
-        diagnostics::UnexpectedToken(self.cur_token().span()).into()
+        diagnostics::unexpected_token(self.cur_token().span())
     }
 
     /// Push a Syntax Error
-    fn error<T: Into<Error>>(&mut self, error: T) {
-        self.errors.push(error.into());
+    fn error(&mut self, error: OxcDiagnostic) {
+        self.errors.push(error);
     }
 
     fn ts_enabled(&self) -> bool {
@@ -465,11 +465,7 @@ mod test {
     fn comments() {
         let allocator = Allocator::default();
         let source_type = SourceType::default().with_typescript(true);
-        let sources = [
-            ("// line comment", CommentKind::SingleLine),
-            ("/* line comment */", CommentKind::MultiLine),
-            ("type Foo = ( /* Require properties which are not generated automatically. */ 'bar')", CommentKind::MultiLine),
-        ];
+        let sources = [("// line comment", CommentKind::SingleLine), ("/* line comment */", CommentKind::MultiLine), ("type Foo = ( /* Require properties which are not generated automatically. */ 'bar')", CommentKind::MultiLine)];
         for (source, kind) in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();
             let comments = ret.trivias.comments().collect::<Vec<_>>();

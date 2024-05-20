@@ -2,22 +2,18 @@ use oxc_ast::{
     ast::{ExportDefaultDeclarationKind, Expression, TSInterfaceDeclaration, TSSignature, TSType},
     AstKind, CommentKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.")]
-#[diagnostic(
-    severity(warning),
-    help("The function type form `{0}` is generally preferred when possible for being more succinct.")
-)]
-struct PreferFunctionTypeDiagnostic(String, #[label] pub Span);
+fn prefer_function_type_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.")
+        .with_help(format!("The function type form `{x0}` is generally preferred when possible for being more succinct."))
+        .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferFunctionType;
@@ -134,7 +130,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                 ..type_parameters.span.end as usize];
 
                             ctx.diagnostic_with_fix(
-                                PreferFunctionTypeDiagnostic(suggestion.clone(), decl.span),
+                                prefer_function_type_diagnostic(&suggestion, decl.span),
                                 || {
                                     Fix::new(
                                         format!("type {type_name} = {suggestion};"),
@@ -144,7 +140,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                             );
                         } else {
                             ctx.diagnostic_with_fix(
-                                PreferFunctionTypeDiagnostic(suggestion.clone(), decl.span),
+                                prefer_function_type_diagnostic(&suggestion, decl.span),
                                 || {
                                     let mut is_parent_exported = false;
                                     let mut node_start = interface_decl.span.start;
@@ -224,42 +220,39 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                         }
                     }
 
-                    AstKind::TSTypeAnnotation(ts_type_annotation) => {
-                        match &ts_type_annotation.type_annotation {
-                            TSType::TSUnionType(union_type) => {
-                                union_type.types.iter().for_each(|ts_type| {
-                                    if let TSType::TSTypeLiteral(literal) = ts_type {
-                                        ctx.diagnostic_with_fix(
-                                            PreferFunctionTypeDiagnostic(
-                                                suggestion.clone(),
-                                                decl.span,
-                                            ),
-                                            || {
-                                                Fix::new(
-                                                    format!("({suggestion})"),
-                                                    Span::new(literal.span.start, literal.span.end),
-                                                )
-                                            },
-                                        );
-                                    }
-                                });
-                            }
-
-                            TSType::TSTypeLiteral(literal) => ctx.diagnostic_with_fix(
-                                PreferFunctionTypeDiagnostic(suggestion.clone(), decl.span),
-                                || {
-                                    Fix::new(
-                                        suggestion.to_string(),
-                                        Span::new(literal.span.start, literal.span.end),
-                                    )
-                                },
-                            ),
-
-                            _ => {
-                                ctx.diagnostic(PreferFunctionTypeDiagnostic(suggestion, decl.span));
-                            }
+                    AstKind::TSTypeAnnotation(ts_type_annotation) => match &ts_type_annotation
+                        .type_annotation
+                    {
+                        TSType::TSUnionType(union_type) => {
+                            union_type.types.iter().for_each(|ts_type| {
+                                if let TSType::TSTypeLiteral(literal) = ts_type {
+                                    ctx.diagnostic_with_fix(
+                                        prefer_function_type_diagnostic(&suggestion, decl.span),
+                                        || {
+                                            Fix::new(
+                                                format!("({suggestion})"),
+                                                Span::new(literal.span.start, literal.span.end),
+                                            )
+                                        },
+                                    );
+                                }
+                            });
                         }
-                    }
+
+                        TSType::TSTypeLiteral(literal) => ctx.diagnostic_with_fix(
+                            prefer_function_type_diagnostic(&suggestion, decl.span),
+                            || {
+                                Fix::new(
+                                    suggestion.to_string(),
+                                    Span::new(literal.span.start, literal.span.end),
+                                )
+                            },
+                        ),
+
+                        _ => {
+                            ctx.diagnostic(prefer_function_type_diagnostic(&suggestion, decl.span));
+                        }
+                    },
 
                     AstKind::TSTypeAliasDeclaration(ts_type_alias_decl) => {
                         match &ts_type_alias_decl.type_annotation {
@@ -269,8 +262,8 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                         let body = &literal.members;
                                         if body.len() == 1 {
                                             ctx.diagnostic_with_fix(
-                                                PreferFunctionTypeDiagnostic(
-                                                    suggestion.clone(),
+                                                prefer_function_type_diagnostic(
+                                                    &suggestion,
                                                     decl.span,
                                                 ),
                                                 || {
@@ -294,8 +287,8 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                         let body = &literal.members;
                                         if body.len() == 1 {
                                             ctx.diagnostic_with_fix(
-                                                PreferFunctionTypeDiagnostic(
-                                                    suggestion.clone(),
+                                                prefer_function_type_diagnostic(
+                                                    &suggestion,
                                                     decl.span,
                                                 ),
                                                 || {
@@ -314,7 +307,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                             }
 
                             TSType::TSTypeLiteral(literal) => ctx.diagnostic_with_fix(
-                                PreferFunctionTypeDiagnostic(suggestion.clone(), decl.span),
+                                prefer_function_type_diagnostic(&suggestion, decl.span),
                                 || {
                                     Fix::new(
                                         suggestion.to_string(),
@@ -327,7 +320,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                         }
                     }
 
-                    _ => ctx.diagnostic(PreferFunctionTypeDiagnostic(suggestion, decl.span)),
+                    _ => ctx.diagnostic(prefer_function_type_diagnostic(&suggestion, decl.span)),
                 }
             }
         }

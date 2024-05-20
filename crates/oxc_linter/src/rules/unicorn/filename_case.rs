@@ -1,18 +1,18 @@
 use convert_case::{Case, Casing};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(filename-case): Filename should not be in {1} case")]
-#[diagnostic(severity(warning))]
-struct FilenameCaseDiagnostic(#[label] pub Span, &'static str);
+fn filename_case_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "eslint-plugin-unicorn(filename-case): Filename should not be in {x1} case"
+    ))
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Clone)]
 #[allow(clippy::struct_field_names)]
@@ -96,7 +96,9 @@ impl Rule for FilenameCase {
     }
 
     fn run_once<'a>(&self, ctx: &LintContext<'_>) {
-        let Some(filename) = ctx.file_path().file_stem().and_then(|s| s.to_str()) else { return };
+        let Some(filename) = ctx.file_path().file_stem().and_then(|s| s.to_str()) else {
+            return;
+        };
 
         let mut case_name = None;
 
@@ -118,7 +120,7 @@ impl Rule for FilenameCase {
         }
 
         if let Some(case_name) = case_name {
-            ctx.diagnostic(FilenameCaseDiagnostic(Span::default(), case_name));
+            ctx.diagnostic(filename_case_diagnostic(Span::default(), case_name));
         }
     }
 }

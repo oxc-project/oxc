@@ -1861,6 +1861,9 @@ pub mod walk {
             SimpleAssignmentTarget::TSTypeAssertion(expr) => {
                 visitor.visit_expression(&expr.expression);
             }
+            SimpleAssignmentTarget::TSInstantiationExpression(expr) => {
+                visitor.visit_expression(&expr.expression);
+            }
         }
         visitor.leave_node(kind);
     }

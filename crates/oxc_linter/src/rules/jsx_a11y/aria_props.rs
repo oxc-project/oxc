@@ -1,8 +1,6 @@
 use oxc_ast::{ast::JSXAttributeItem, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -11,10 +9,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(aria-props): Invalid ARIA prop.")]
-#[diagnostic(severity(warning), help("`{1}` is an invalid ARIA attribute."))]
-struct AriaPropsDiagnostic(#[label] pub Span, String);
+fn aria_props_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(aria-props): Invalid ARIA prop.")
+        .with_help(format!("`{x1}` is an invalid ARIA attribute."))
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct AriaProps;
@@ -44,7 +43,7 @@ impl Rule for AriaProps {
         if let AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) = node.kind() {
             let name = get_jsx_attribute_name(&attr.name).to_lowercase();
             if name.starts_with("aria-") && !VALID_ARIA_PROPS.contains(&name) {
-                ctx.diagnostic(AriaPropsDiagnostic(attr.span, name));
+                ctx.diagnostic(aria_props_diagnostic(attr.span, &name));
             }
         }
     }

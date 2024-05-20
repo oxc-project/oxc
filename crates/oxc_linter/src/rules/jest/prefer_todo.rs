@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -19,15 +17,15 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.")]
-#[diagnostic(severity(warning))]
-struct EmptyTest(#[label] pub Span);
+fn empty_test(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.")
+        .with_labels([span0.into()])
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.")]
-#[diagnostic(severity(warning))]
-struct UnImplementedTestDiagnostic(#[label] pub Span);
+fn un_implemented_test_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferTodo;
@@ -82,11 +80,13 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
         if counts == 1 && !filter_todo_case(call_expr) {
             let (content, span) = get_fix_content(call_expr);
-            ctx.diagnostic_with_fix(UnImplementedTestDiagnostic(span), || Fix::new(content, span));
+            ctx.diagnostic_with_fix(un_implemented_test_diagnostic(span), || {
+                Fix::new(content, span)
+            });
         }
 
         if counts > 1 && is_empty_function(call_expr) {
-            ctx.diagnostic_with_fix(EmptyTest(call_expr.span), || {
+            ctx.diagnostic_with_fix(empty_test(call_expr.span), || {
                 let (content, span) = build_code(call_expr, ctx);
                 Fix::new(content, span)
             });

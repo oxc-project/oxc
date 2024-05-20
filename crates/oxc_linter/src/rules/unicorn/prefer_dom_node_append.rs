@@ -1,8 +1,6 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -10,10 +8,11 @@ use oxc_ast::ast::MemberExpression;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.")]
-#[diagnostic(severity(warning), help("Replace `Node#appendChild()` with `Node#append()`."))]
-struct PreferDomNodeAppendDiagnostic(#[label] pub Span);
+fn prefer_dom_node_append_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.")
+        .with_help("Replace `Node#appendChild()` with `Node#append()`.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferDomNodeAppend;
@@ -50,7 +49,9 @@ impl Rule for PreferDomNodeAppend {
             return;
         }
 
-        let Some(member_expr) = call_expr.callee.get_member_expr() else { return };
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
+            return;
+        };
 
         let span = match member_expr {
             MemberExpression::StaticMemberExpression(v) => {
@@ -70,7 +71,7 @@ impl Rule for PreferDomNodeAppend {
             return;
         }
 
-        ctx.diagnostic(PreferDomNodeAppendDiagnostic(span));
+        ctx.diagnostic(prefer_dom_node_append_diagnostic(span));
     }
 }
 

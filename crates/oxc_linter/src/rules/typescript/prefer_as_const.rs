@@ -1,19 +1,17 @@
 use oxc_ast::ast::{Expression, TSLiteral, TSType};
 use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
 
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.")]
-#[diagnostic(severity(warning), help("You should use `as const` instead of type annotation."))]
-struct PreferAsConstDiagnostic(#[label] pub Span);
+fn prefer_as_const_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.")
+        .with_help("You should use `as const` instead of type annotation.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferAsConst;
@@ -119,13 +117,13 @@ fn check_and_report(
         };
         if let Some(span) = error_span {
             if can_fix {
-                ctx.diagnostic_with_fix(PreferAsConstDiagnostic(span), || {
+                ctx.diagnostic_with_fix(prefer_as_const_diagnostic(span), || {
                     let start = span.start;
                     let end = span.end;
                     Fix::new("const", Span::new(start, end))
                 });
             } else {
-                ctx.diagnostic(PreferAsConstDiagnostic(span));
+                ctx.diagnostic(prefer_as_const_diagnostic(span));
             }
         }
     }

@@ -1,11 +1,9 @@
+use oxc_diagnostics::OxcDiagnostic;
+
 // Based on https://github.com/rust-lang/rust-clippy//blob/c9a43b18f11219fa70fe632b29518581fcd589c8/clippy_lints/src/operators/misrefactored_assign_op.rs
 use oxc_ast::{
     ast::{match_member_expression, AssignmentTarget, Expression, SimpleAssignmentTarget},
     AstKind,
-};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -18,10 +16,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation")]
-#[diagnostic(severity(warning), help("Did you mean `{1}`?"))]
-struct MisrefactoredAssignOpDiagnostic(#[label] pub Span, pub String);
+fn misrefactored_assign_op_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation")
+        .with_help(format!("Did you mean `{x1}`?"))
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct MisrefactoredAssignOp;
@@ -64,9 +63,9 @@ impl Rule for MisrefactoredAssignOp {
 
             // lhs op= l op r
             if assignment_target_eq_expr(&assignment_expr.left, &binary_expr.left, ctx) {
-                ctx.diagnostic(MisrefactoredAssignOpDiagnostic(
+                ctx.diagnostic(misrefactored_assign_op_diagnostic(
                     assignment_expr.span,
-                    format!(
+                    &format!(
                         "{} {} {}",
                         assignment_expr.left.span().source_text(ctx.source_text()),
                         assignment_expr.operator.as_str(),
@@ -79,9 +78,9 @@ impl Rule for MisrefactoredAssignOp {
             if is_commutative_operator(binary_expr.operator)
                 && assignment_target_eq_expr(&assignment_expr.left, &binary_expr.right, ctx)
             {
-                ctx.diagnostic(MisrefactoredAssignOpDiagnostic(
+                ctx.diagnostic(misrefactored_assign_op_diagnostic(
                     assignment_expr.span,
-                    format!(
+                    &format!(
                         "{} {} {}",
                         assignment_expr.left.span().source_text(ctx.source_text()),
                         assignment_expr.operator.as_str(),
@@ -125,6 +124,9 @@ fn assignment_target_eq_expr<'a>(
                 is_same_reference(&ts_expr.expression, right_expr, ctx)
             }
             SimpleAssignmentTarget::TSTypeAssertion(ts_expr) => {
+                is_same_reference(&ts_expr.expression, right_expr, ctx)
+            }
+            SimpleAssignmentTarget::TSInstantiationExpression(ts_expr) => {
                 is_same_reference(&ts_expr.expression, right_expr, ctx)
             }
         };

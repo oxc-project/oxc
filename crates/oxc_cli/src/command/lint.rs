@@ -27,7 +27,10 @@ impl LintCommand {
 
 #[derive(Debug, Clone, Bpaf)]
 pub struct LintOptions {
-    #[bpaf(external(lint_filter), map(LintFilter::into_tuple), many)]
+    #[bpaf(external)]
+    pub basic_options: BasicOptions,
+
+    #[bpaf(external(lint_filter), map(LintFilter::into_tuple), many, hide_usage)]
     pub filter: Vec<(AllowWarnDeny, String)>,
 
     #[bpaf(external)]
@@ -52,6 +55,14 @@ pub struct LintOptions {
     #[bpaf(external)]
     pub misc_options: MiscOptions,
 
+    /// Single file, single path or list of paths
+    #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE), map(expand_glob))]
+    pub paths: Vec<PathBuf>,
+}
+
+/// Basic Configuration
+#[derive(Debug, Clone, Bpaf)]
+pub struct BasicOptions {
     /// ESLint configuration file (experimental)
     ///
     /// * only `.json` extension is supported
@@ -61,10 +72,6 @@ pub struct LintOptions {
     /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
-
-    /// Single file, single path or list of paths
-    #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE), map(expand_glob))]
-    pub paths: Vec<PathBuf>,
 }
 
 // This is formatted according to
@@ -72,23 +79,28 @@ pub struct LintOptions {
 /// Allowing / Denying Multiple Lints
 /// For example `-D correctness -A no-debugger` or `-A all -D no-debugger`.
 /// ㅤ
-///  The default category is "-D correctness".
-///  Use "--rules" for rule names.
-///  Use "--help --help" for rule categories.
+///  The default category is `-D correctness`.
+///  Use `--rules` for rule names.
+///  Use `--help --help` for rule categories.
 ///
 /// The categories are:
-///  * correctness - code that is outright wrong or useless
-///  * suspicious  - code that is most likely wrong or useless
-///  * pedantic    - lints which are rather strict or have occasional false positives
-///  * style       - code that should be written in a more idiomatic way
-///  * nursery     - new lints that are still under development
-///  * restriction - lints which prevent the use of language and library features
-///  * all         - all the categories listed above
+///  * `correctness` - code that is outright wrong or useless
+///  * `suspicious`  - code that is most likely wrong or useless
+///  * `pedantic`    - lints which are rather strict or have occasional false positives
+///  * `style`       - code that should be written in a more idiomatic way
+///  * `nursery`     - new lints that are still under development
+///  * `restriction` - lints which prevent the use of language and library features
+///  * `all`         - all the categories listed above
 #[derive(Debug, Clone, Bpaf)]
 pub enum LintFilter {
     Allow(
         /// Allow the rule or category (suppress the lint)
         #[bpaf(short('A'), long("allow"), argument("NAME"))]
+        String,
+    ),
+    Warn(
+        /// Deny the rule or category (emit a warning)
+        #[bpaf(short('W'), long("warn"), argument("NAME"))]
         String,
     ),
     Deny(
@@ -102,6 +114,7 @@ impl LintFilter {
     fn into_tuple(self) -> (AllowWarnDeny, String) {
         match self {
             Self::Allow(s) => (AllowWarnDeny::Allow, s),
+            Self::Warn(s) => (AllowWarnDeny::Warn, s),
             Self::Deny(s) => (AllowWarnDeny::Deny, s),
         }
     }
@@ -135,7 +148,7 @@ pub struct WarningOptions {
 /// Output
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
-    /// Use a specific output format (default, json)
+    /// Use a specific output format (default, json, unix, checkstyle, github)
     #[bpaf(long, short, fallback(OutputFormat::Default), hide_usage)]
     pub format: OutputFormat,
 }
@@ -143,6 +156,9 @@ pub struct OutputOptions {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum OutputFormat {
     Default,
+    /// GitHub Check Annotation
+    /// <https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-a-notice-message>
+    Github,
     Json,
     Unix,
     Checkstyle,
@@ -156,6 +172,7 @@ impl FromStr for OutputFormat {
             "default" => Ok(Self::Default),
             "unix" => Ok(Self::Unix),
             "checkstyle" => Ok(Self::Checkstyle),
+            "github" => Ok(Self::Github),
             _ => Err(format!("'{s}' is not a known format")),
         }
     }
@@ -165,6 +182,22 @@ impl FromStr for OutputFormat {
 #[allow(clippy::struct_field_names)]
 #[derive(Debug, Clone, Bpaf)]
 pub struct EnablePlugins {
+    /// Disable react plugin, which is turned on by default
+    #[bpaf(long("disable-react-plugin"), flag(false, true), hide_usage)]
+    pub react_plugin: bool,
+
+    /// Disable unicorn plugin, which is turned on by default
+    #[bpaf(long("disable-unicorn-plugin"), flag(false, true), hide_usage)]
+    pub unicorn_plugin: bool,
+
+    /// Disable oxc unique rules, which is turned on by default
+    #[bpaf(long("disable-oxc-plugin"), flag(false, true), hide_usage)]
+    pub oxc_plugin: bool,
+
+    /// Disable TypeScript plugin, which is turned on by default
+    #[bpaf(long("disable-typescript-plugin"), flag(false, true), hide_usage)]
+    pub typescript_plugin: bool,
+
     /// Enable the experimental import plugin and detect ESM problems.
     /// It is recommended to use along side with the `--tsconfig` option.
     #[bpaf(switch, hide_usage)]

@@ -1,10 +1,8 @@
+use oxc_diagnostics::OxcDiagnostic;
+
 use std::collections::HashMap;
 
 use oxc_ast::{ast::MemberExpression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodeId, ReferenceId};
 use oxc_span::{GetSpan, Span};
@@ -15,28 +13,23 @@ use crate::{
     utils::{collect_possible_jest_call_node, parse_jest_fn_call, PossibleJestNode},
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-confusing-set-timeout)")]
-#[diagnostic(severity(warning), help("`jest.setTimeout` should be call in `global` scope"))]
-struct NoGlobalSetTimeoutDiagnostic(#[label] pub Span);
+fn no_global_set_timeout_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(no-confusing-set-timeout)")
+        .with_help("`jest.setTimeout` should be call in `global` scope")
+        .with_labels([span0.into()])
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-confusing-set-timeout)")]
-#[diagnostic(
-    severity(warning),
-    help(
-        "Do not call `jest.setTimeout` multiple times, as only the last call will have an effect"
-    )
-)]
-struct NoMultipleSetTimeoutsDiagnostic(#[label] pub Span);
+fn no_multiple_set_timeouts_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(no-confusing-set-timeout)")
+        .with_help("Do not call `jest.setTimeout` multiple times, as only the last call will have an effect")
+        .with_labels([span0.into()])
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-confusing-set-timeout)")]
-#[diagnostic(
-    severity(warning),
-    help("`jest.setTimeout` should be placed before any other jest methods")
-)]
-struct NoUnorderSetTimeoutDiagnostic(#[label] pub Span);
+fn no_unorder_set_timeout_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(no-confusing-set-timeout)")
+        .with_help("`jest.setTimeout` should be placed before any other jest methods")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConfusingSetTimeout;
@@ -173,7 +166,7 @@ fn handle_jest_set_time_out<'a>(
             if is_jest_fn_call(parent_node, id_to_jest_node_map, ctx) {
                 for (jest_reference_id, span) in jest_reference_id_list {
                     if jest_reference_id > &reference_id {
-                        ctx.diagnostic(NoUnorderSetTimeoutDiagnostic(*span));
+                        ctx.diagnostic(no_unorder_set_timeout_diagnostic(*span));
                     }
                 }
             }
@@ -190,11 +183,11 @@ fn handle_jest_set_time_out<'a>(
 
         if expr.property.name == "setTimeout" {
             if !scopes.get_flags(parent_node.scope_id()).is_top() {
-                ctx.diagnostic(NoGlobalSetTimeoutDiagnostic(member_expr.span()));
+                ctx.diagnostic(no_global_set_timeout_diagnostic(member_expr.span()));
             }
 
             if *seen_jest_set_timeout {
-                ctx.diagnostic(NoMultipleSetTimeoutsDiagnostic(member_expr.span()));
+                ctx.diagnostic(no_multiple_set_timeouts_diagnostic(member_expr.span()));
             } else {
                 *seen_jest_set_timeout = true;
             }
@@ -447,7 +440,7 @@ fn test() {
                 jest.setTimeout(800);
                 jest.setTimeout(900);
             ",
-            None
+            None,
         ),
         (
             "

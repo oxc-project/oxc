@@ -5,7 +5,7 @@ use std::{path::PathBuf, sync::Arc};
 
 use itertools::Itertools;
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{miette::NamedSource, Error};
+use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic};
 use oxc_semantic::{print_basic_block, Semantic, SemanticBuilder};
 use oxc_span::SourceType;
 
@@ -168,7 +168,7 @@ impl<'a> SemanticTester<'a> {
         SymbolTester::new_unique(self, self.build(), name)
     }
 
-    fn wrap_diagnostics(&self, diagnostics: Vec<Error>) -> Vec<Error> {
+    fn wrap_diagnostics(&self, diagnostics: Vec<OxcDiagnostic>) -> Vec<Error> {
         let name = "test".to_owned()
             + match (self.source_type.is_javascript(), self.source_type.is_jsx()) {
                 (true, true) => ".jsx",

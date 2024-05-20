@@ -1,20 +1,16 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.")]
-#[diagnostic(
-    severity(warning),
-    help("Only use `process.exit()` in CLI apps. Throw an error instead.")
-)]
-struct NoProcessExitDiagnostic(#[label] pub Span);
+fn no_process_exit_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.")
+        .with_help("Only use `process.exit()` in CLI apps. Throw an error instead.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoProcessExit;
@@ -52,14 +48,16 @@ impl Rule for NoProcessExit {
                     return;
                 }
 
-                ctx.diagnostic(NoProcessExitDiagnostic(expr.span));
+                ctx.diagnostic(no_process_exit_diagnostic(expr.span));
             }
         }
     }
 }
 
 fn has_hashbang(ctx: &LintContext) -> bool {
-    let Some(root) = ctx.nodes().root_node() else { return false };
+    let Some(root) = ctx.nodes().root_node() else {
+        return false;
+    };
     let AstKind::Program(program) = root.kind() else { unreachable!() };
     program.hashbang.is_some()
 }

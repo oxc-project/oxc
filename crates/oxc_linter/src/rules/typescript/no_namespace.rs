@@ -2,22 +2,20 @@ use oxc_ast::{
     ast::{ModifierKind, TSModuleDeclarationKind, TSModuleDeclarationName},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.")]
-#[diagnostic(
-    severity(warning),
-    help("Replace the namespace with an ES2015 module or use `declare module`")
-)]
-struct NoNamespaceDiagnostic(#[label] pub Span);
+fn no_namespace_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.",
+    )
+    .with_help("Replace the namespace with an ES2015 module or use `declare module`")
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNamespace {
@@ -63,8 +61,12 @@ impl Rule for NoNamespace {
 
     #[allow(clippy::cast_possible_truncation)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TSModuleDeclaration(declaration) = node.kind() else { return };
-        let TSModuleDeclarationName::Identifier(ident) = &declaration.id else { return };
+        let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
+            return;
+        };
+        let TSModuleDeclarationName::Identifier(ident) = &declaration.id else {
+            return;
+        };
 
         if ident.name == "global" {
             return;
@@ -96,14 +98,16 @@ impl Rule for NoNamespace {
             }),
         };
         if let Some(span) = span {
-            ctx.diagnostic(NoNamespaceDiagnostic(span));
+            ctx.diagnostic(no_namespace_diagnostic(span));
         }
     }
 }
 
 fn is_declaration(node: &AstNode, ctx: &LintContext) -> bool {
     ctx.nodes().iter_parents(node.id()).any(|node| {
-        let AstKind::TSModuleDeclaration(declaration) = node.kind() else { return false };
+        let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
+            return false;
+        };
         declaration.modifiers.contains(ModifierKind::Declare)
     })
 }

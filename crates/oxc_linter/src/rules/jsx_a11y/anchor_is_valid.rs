@@ -2,10 +2,7 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -16,21 +13,28 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum AnchorIsValidDiagnostic {
-    #[error(
-        "eslint-plugin-jsx-a11y(anchor-is-valid): Missing `href` attribute for the `a` element."
-    )]
-    #[diagnostic(severity(warning), help("Provide an href for the `a` element."))]
-    MissingHrefAttribute(#[label] Span),
+fn missing_href_attribute(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-jsx-a11y(anchor-is-valid): Missing `href` attribute for the `a` element.",
+    )
+    .with_help("Provide an href for the `a` element.")
+    .with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-jsx-a11y(anchor-is-valid): Use an incorrect href for the 'a' element.")]
-    #[diagnostic(severity(warning), help("Provide a correct href for the `a` element."))]
-    IncorrectHref(#[label] Span),
+fn incorrect_href(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-jsx-a11y(anchor-is-valid): Use an incorrect href for the 'a' element.",
+    )
+    .with_help("Provide a correct href for the `a` element.")
+    .with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-jsx-a11y(anchor-is-valid):  The a element has `href` and `onClick`.")]
-    #[diagnostic(severity(warning), help("Use a `button` element instead of an `a` element."))]
-    CantBeAnchor(#[label] Span),
+fn cant_be_anchor(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-jsx-a11y(anchor-is-valid):  The a element has `href` and `onClick`.",
+    )
+    .with_help("Use a `button` element instead of an `a` element.")
+    .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -128,8 +132,12 @@ impl Rule for AnchorIsValid {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
-            let JSXElementName::Identifier(ident) = &jsx_el.opening_element.name else { return };
-            let Some(name) = &get_element_type(ctx, &jsx_el.opening_element) else { return };
+            let JSXElementName::Identifier(ident) = &jsx_el.opening_element.name else {
+                return;
+            };
+            let Some(name) = &get_element_type(ctx, &jsx_el.opening_element) else {
+                return;
+            };
             if name == "a" {
                 if let Option::Some(herf_attr) =
                     has_jsx_prop_lowercase(&jsx_el.opening_element, "href")
@@ -143,19 +151,15 @@ impl Rule for AnchorIsValid {
                                     if has_jsx_prop_lowercase(&jsx_el.opening_element, "onclick")
                                         .is_some()
                                     {
-                                        ctx.diagnostic(AnchorIsValidDiagnostic::CantBeAnchor(
-                                            ident.span,
-                                        ));
+                                        ctx.diagnostic(cant_be_anchor(ident.span));
                                         return;
                                     }
-                                    ctx.diagnostic(AnchorIsValidDiagnostic::IncorrectHref(
-                                        ident.span,
-                                    ));
+                                    ctx.diagnostic(incorrect_href(ident.span));
                                     return;
                                 }
                             }
                             None => {
-                                ctx.diagnostic(AnchorIsValidDiagnostic::IncorrectHref(ident.span));
+                                ctx.diagnostic(incorrect_href(ident.span));
                                 return;
                             }
                         },
@@ -175,7 +179,7 @@ impl Rule for AnchorIsValid {
                 if has_spreed_attr {
                     return;
                 }
-                ctx.diagnostic(AnchorIsValidDiagnostic::MissingHrefAttribute(ident.span));
+                ctx.diagnostic(missing_href_attribute(ident.span));
             }
         }
     }

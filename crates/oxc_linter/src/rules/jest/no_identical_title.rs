@@ -4,10 +4,7 @@ use oxc_ast::{
     ast::{Argument, CallExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
 use oxc_span::{Atom, Span};
@@ -22,15 +19,14 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoIdenticalTitleDiagnostic {
-    #[error("eslint-plugin-jest(no-identical-title): Describe block title is used multiple times in the same describe block.")]
-    #[diagnostic(severity(warning), help("Change the title of describe block."))]
-    DescribeRepeat(#[label] Span),
+fn describe_repeat(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(no-identical-title): Describe block title is used multiple times in the same describe block.")
+        .with_help("Change the title of describe block.")
+        .with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.")]
-    #[diagnostic(severity(warning), help("Change the title of test."))]
-    TestRepeat(#[label] Span),
+fn test_repeat(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.").with_help("Change the title of test.").with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -103,10 +99,10 @@ impl Rule for NoIdenticalTitle {
                 if kind == prev_kind && parent_id == prev_parent {
                     match kind {
                         JestFnKind::General(JestGeneralFnKind::Describe) => {
-                            ctx.diagnostic(NoIdenticalTitleDiagnostic::DescribeRepeat(span));
+                            ctx.diagnostic(describe_repeat(span));
                         }
                         JestFnKind::General(JestGeneralFnKind::Test) => {
-                            ctx.diagnostic(NoIdenticalTitleDiagnostic::TestRepeat(span));
+                            ctx.diagnostic(test_repeat(span));
                         }
                         _ => {}
                     }

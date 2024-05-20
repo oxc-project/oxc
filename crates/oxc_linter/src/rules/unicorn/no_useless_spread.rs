@@ -5,10 +5,8 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -21,32 +19,38 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoUselessSpreadDiagnostic {
-    #[error("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new {1} unnecessarily.")]
-    #[diagnostic(severity(warning), help("Consider removing the spread operator."))]
-    SpreadInList(#[label] Span, &'static str),
-    #[error("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")]
-    #[diagnostic(severity(warning), help("This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.\nFor example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`."))]
-    SpreadInArguments(#[label] Span),
-    #[error("eslint-plugin-unicorn(no-useless-spread): `{1}` accepts an iterable, so it's unnecessary to convert the iterable to an array.")]
-    #[diagnostic(severity(warning), help("Consider removing the spread operator."))]
-    IterableToArray(#[label] Span, String),
-    #[error("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")]
-    #[diagnostic(
-        severity(warning),
-        help("`for…of` can iterate over iterable, it's unnecessary to convert to an array.")
-    )]
-    IterableToArrayInForOf(#[label] Span),
-    #[error("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")]
-    #[diagnostic(severity(warning), help("`yield*` can delegate to another iterable, so it's unnecessary to convert the iterable to an array."))]
-    IterableToArrayInYieldStar(#[label] Span),
-    #[error("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")]
-    #[diagnostic(
-        severity(warning),
-        help("`{1}` returns a new array. Spreading it into an array expression to create a new array is redundant.")
-    )]
-    CloneArray(#[label] Span, String),
+fn spread_in_list(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new {x1} unnecessarily."))
+        .with_help("Consider removing the spread operator.")
+        .with_labels([span0.into()])
+}
+
+fn spread_in_arguments(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.").with_help("This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.\nFor example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.").with_labels([span0.into()])
+}
+
+fn iterable_to_array(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-useless-spread): `{x1}` accepts an iterable, so it's unnecessary to convert the iterable to an array."))
+        .with_help("Consider removing the spread operator.")
+        .with_labels([span0.into()])
+}
+
+fn iterable_to_array_in_for_of(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")
+        .with_help("`for…of` can iterate over iterable, it's unnecessary to convert to an array.")
+        .with_labels([span0.into()])
+}
+
+fn iterable_to_array_in_yield_star(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")
+        .with_help("`yield*` can delegate to another iterable, so it's unnecessary to convert the iterable to an array.")
+        .with_labels([span0.into()])
+}
+
+fn clone_array(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")
+        .with_help(format!("`{x1}` returns a new array. Spreading it into an array expression to create a new array is redundant."))
+        .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -152,17 +156,17 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
                 AstKind::ObjectExpression(_) => {
                     // { ...{ } }
                     if matches!(parent_parent.kind(), AstKind::ObjectExpression(_)) {
-                        ctx.diagnostic(NoUselessSpreadDiagnostic::SpreadInList(span, "object"));
+                        ctx.diagnostic(spread_in_list(span, "object"));
                     }
                 }
                 AstKind::ArrayExpression(_) => match parent_parent.kind() {
                     // ...[ ]
                     AstKind::ArrayExpressionElement(_) => {
-                        ctx.diagnostic(NoUselessSpreadDiagnostic::SpreadInList(span, "array"));
+                        ctx.diagnostic(spread_in_list(span, "array"));
                     }
                     // foo(...[ ])
                     AstKind::Argument(_) => {
-                        ctx.diagnostic(NoUselessSpreadDiagnostic::SpreadInArguments(span));
+                        ctx.diagnostic(spread_in_arguments(span));
                     }
                     _ => {}
                 },
@@ -179,7 +183,9 @@ fn check_useless_iterable_to_array<'a>(
     array_expr: &ArrayExpression<'a>,
     ctx: &LintContext<'a>,
 ) {
-    let Some(parent) = outermost_paren_parent(node, ctx) else { return };
+    let Some(parent) = outermost_paren_parent(node, ctx) else {
+        return;
+    };
 
     if !is_single_array_spread(array_expr) {
         return;
@@ -203,14 +209,14 @@ fn check_useless_iterable_to_array<'a>(
     match parent.kind() {
         AstKind::ForOfStatement(for_of_stmt) => {
             if for_of_stmt.right.without_parenthesized().span() == array_expr.span {
-                ctx.diagnostic(NoUselessSpreadDiagnostic::IterableToArrayInForOf(span));
+                ctx.diagnostic(iterable_to_array_in_for_of(span));
             }
         }
         AstKind::YieldExpression(yield_expr) => {
             if yield_expr.delegate
                 && yield_expr.argument.as_ref().is_some_and(|arg| arg.span() == array_expr.span)
             {
-                ctx.diagnostic(NoUselessSpreadDiagnostic::IterableToArrayInYieldStar(span));
+                ctx.diagnostic(iterable_to_array_in_yield_star(span));
             }
         }
 
@@ -241,9 +247,9 @@ fn check_useless_iterable_to_array<'a>(
             {
                 return;
             }
-            ctx.diagnostic(NoUselessSpreadDiagnostic::IterableToArray(
+            ctx.diagnostic(iterable_to_array(
                 span,
-                get_new_expr_ident_name(new_expr).unwrap_or("unknown").into(),
+                get_new_expr_ident_name(new_expr).unwrap_or("unknown"),
             ));
         }
         AstKind::CallExpression(call_expr) => {
@@ -283,9 +289,9 @@ fn check_useless_iterable_to_array<'a>(
                 return;
             }
 
-            ctx.diagnostic(NoUselessSpreadDiagnostic::IterableToArray(
+            ctx.diagnostic(iterable_to_array(
                 span,
-                get_method_name(call_expr).unwrap_or_else(|| "unknown".into()),
+                &get_method_name(call_expr).unwrap_or_else(|| "unknown".into()),
             ));
         }
         _ => {}
@@ -343,7 +349,7 @@ fn check_useless_array_clone<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintCon
             },
         );
 
-        ctx.diagnostic(NoUselessSpreadDiagnostic::CloneArray(span, method));
+        ctx.diagnostic(clone_array(span, &method));
     }
 
     if let Expression::AwaitExpression(await_expr) = &spread_elem.argument {
@@ -360,10 +366,7 @@ fn check_useless_array_clone<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintCon
             let method_name =
                 call_expr.callee.get_member_expr().unwrap().static_property_name().unwrap();
 
-            ctx.diagnostic(NoUselessSpreadDiagnostic::CloneArray(
-                span,
-                format!("Promise.{method_name}"),
-            ));
+            ctx.diagnostic(clone_array(span, &format!("Promise.{method_name}")));
         }
     }
 }

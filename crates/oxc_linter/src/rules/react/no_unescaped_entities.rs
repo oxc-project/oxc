@@ -1,18 +1,18 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::{phf_map, Map};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react(no-unescaped-entities): `{1}` can be escaped with {2}")]
-#[diagnostic(severity(warning))]
-struct NoUnescapedEntitiesDiagnostic(#[label] pub Span, pub char, pub String);
+fn no_unescaped_entities_diagnostic(span0: Span, x1: char, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "eslint-plugin-react(no-unescaped-entities): `{x1}` can be escaped with {x2}"
+    ))
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnescapedEntities;
@@ -53,13 +53,13 @@ impl Rule for NoUnescapedEntities {
             for (i, char) in source.char_indices() {
                 if let Some(escapes) = DEFAULTS.get(&char) {
                     #[allow(clippy::cast_possible_truncation)]
-                    ctx.diagnostic(NoUnescapedEntitiesDiagnostic(
+                    ctx.diagnostic(no_unescaped_entities_diagnostic(
                         Span::new(
                             jsx_text.span.start + i as u32,
                             jsx_text.span.start + i as u32 + 1,
                         ),
                         char,
-                        escapes.join(" or "),
+                        &escapes.join(" or "),
                     ));
                 }
             }

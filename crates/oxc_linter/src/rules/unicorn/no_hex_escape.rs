@@ -2,21 +2,19 @@ use oxc_ast::{
     ast::{StringLiteral, TemplateLiteral},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-unicorn(no-hex-escape): Use Unicode escapes instead of hexadecimal escapes."
-)]
-#[diagnostic(severity(warning))]
-struct NoHexEscapeDiagnostic(#[label] pub Span);
+fn no_hex_escape_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-unicorn(no-hex-escape): Use Unicode escapes instead of hexadecimal escapes.",
+    )
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoHexEscape;
@@ -75,7 +73,7 @@ impl Rule for NoHexEscape {
             AstKind::StringLiteral(StringLiteral { span, .. }) => {
                 let text = span.source_text(ctx.source_text());
                 if let Some(fixed) = check_escape(&text[1..text.len() - 1]) {
-                    ctx.diagnostic_with_fix(NoHexEscapeDiagnostic(*span), || {
+                    ctx.diagnostic_with_fix(no_hex_escape_diagnostic(*span), || {
                         Fix::new(format!("'{fixed}'"), *span)
                     });
                 }
@@ -83,7 +81,7 @@ impl Rule for NoHexEscape {
             AstKind::TemplateLiteral(TemplateLiteral { quasis, .. }) => {
                 quasis.iter().for_each(|quasi| {
                     if let Some(fixed) = check_escape(quasi.span.source_text(ctx.source_text())) {
-                        ctx.diagnostic_with_fix(NoHexEscapeDiagnostic(quasi.span), || {
+                        ctx.diagnostic_with_fix(no_hex_escape_diagnostic(quasi.span), || {
                             Fix::new(fixed, quasi.span)
                         });
                     }
@@ -92,7 +90,7 @@ impl Rule for NoHexEscape {
             AstKind::RegExpLiteral(regex) => {
                 let text = regex.span.source_text(ctx.source_text());
                 if let Some(fixed) = check_escape(&text[1..text.len() - 1]) {
-                    ctx.diagnostic_with_fix(NoHexEscapeDiagnostic(regex.span), || {
+                    ctx.diagnostic_with_fix(no_hex_escape_diagnostic(regex.span), || {
                         Fix::new(format!("/{fixed}/"), regex.span)
                     });
                 }

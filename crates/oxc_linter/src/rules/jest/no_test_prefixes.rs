@@ -1,10 +1,8 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -16,10 +14,10 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-test-prefixes): Use {0:?} instead.")]
-#[diagnostic(severity(warning))]
-struct NoTestPrefixesDiagnostic(CompactStr, #[label] pub Span);
+fn no_test_prefixes_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-jest(no-test-prefixes): Use {x0:?} instead."))
+        .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoTestPrefixes;
@@ -60,12 +58,16 @@ impl Rule for NoTestPrefixes {
 
 fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
     let node = possible_jest_node.node;
-    let AstKind::CallExpression(call_expr) = node.kind() else { return };
+    let AstKind::CallExpression(call_expr) = node.kind() else {
+        return;
+    };
     let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
         return;
     };
     let ParsedGeneralJestFnCall { kind, name, .. } = &jest_fn_call;
-    let Some(kind) = kind.to_general() else { return };
+    let Some(kind) = kind.to_general() else {
+        return;
+    };
 
     if !matches!(kind, JestGeneralFnKind::Describe | JestGeneralFnKind::Test) {
         return;
@@ -84,14 +86,13 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     };
 
     let preferred_node_name = get_preferred_node_names(&jest_fn_call);
-    let preferred_node_name_cloned = preferred_node_name.clone();
 
-    ctx.diagnostic_with_fix(NoTestPrefixesDiagnostic(preferred_node_name, span), || {
-        Fix::new(preferred_node_name_cloned.to_string(), span)
+    ctx.diagnostic_with_fix(no_test_prefixes_diagnostic(&preferred_node_name, span), || {
+        Fix::new(preferred_node_name, span)
     });
 }
 
-fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> CompactStr {
+fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> String {
     let ParsedGeneralJestFnCall { members, name, .. } = jest_fn_call;
 
     let preferred_modifier = if name.starts_with('f') { "only" } else { "skip" };
@@ -103,9 +104,9 @@ fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> CompactSt
     let name_slice = &name[1..];
 
     if member_names.is_empty() {
-        CompactStr::from(format!("{name_slice}.{preferred_modifier}"))
+        format!("{name_slice}.{preferred_modifier}")
     } else {
-        CompactStr::from(format!("{name_slice}.{preferred_modifier}.{member_names}"))
+        format!("{name_slice}.{preferred_modifier}.{member_names}")
     }
 }
 

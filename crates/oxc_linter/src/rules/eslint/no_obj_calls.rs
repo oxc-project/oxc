@@ -2,23 +2,22 @@ use oxc_ast::{
     ast::{match_member_expression, Expression, IdentifierReference, MemberExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeId};
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
 const GLOBAL_THIS: &str = "globalThis";
 const NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Reflect"];
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-obj-calls): Disallow calling some global objects as functions")]
-#[diagnostic(severity(warning), help("{0} is not a function."))]
-struct NoObjCallsDiagnostic(CompactStr, #[label] pub Span);
+fn no_obj_calls_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(no-obj-calls): Disallow calling some global objects as functions")
+        .with_help(format!("{x0} is not a function."))
+        .with_labels([span1.into()])
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NoObjCalls;
@@ -139,7 +138,7 @@ impl Rule for NoObjCalls {
                     resolve_global_binding(ident, node.scope_id(), ctx)
                 {
                     if is_global_obj(top_level_reference) {
-                        ctx.diagnostic(NoObjCallsDiagnostic(ident.name.to_compact_str(), span));
+                        ctx.diagnostic(no_obj_calls_diagnostic(ident.name.as_str(), span));
                     }
                 }
             }
@@ -148,7 +147,7 @@ impl Rule for NoObjCalls {
                 // handle new globalThis.Math(), globalThis.Math(), etc
                 if let Some(global_member) = global_this_member(callee.to_member_expression()) {
                     if is_global_obj(global_member) {
-                        ctx.diagnostic(NoObjCallsDiagnostic(global_member.into(), span));
+                        ctx.diagnostic(no_obj_calls_diagnostic(global_member, span));
                     }
                 }
             }

@@ -154,11 +154,21 @@ impl<'a> NormalList<'a> for TSInterfaceOrObjectBodyList<'a> {
 
 pub struct TSTypeArgumentList<'a> {
     pub params: Vec<'a, TSType<'a>>,
+    in_expression: bool,
+}
+
+impl<'a> TSTypeArgumentList<'a> {
+    pub fn parse(p: &mut ParserImpl<'a>, in_expression: bool) -> Result<Self> {
+        let mut list = Self::new(p);
+        list.in_expression = in_expression;
+        list.parse_list(p)?;
+        Ok(list)
+    }
 }
 
 impl<'a> SeparatedList<'a> for TSTypeArgumentList<'a> {
     fn new(p: &ParserImpl<'a>) -> Self {
-        Self { params: p.ast.new_vec() }
+        Self { params: p.ast.new_vec(), in_expression: false }
     }
 
     fn open(&self) -> Kind {
@@ -172,6 +182,36 @@ impl<'a> SeparatedList<'a> for TSTypeArgumentList<'a> {
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let ty = p.parse_ts_type()?;
         self.params.push(ty);
+        Ok(())
+    }
+
+    fn parse_list(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
+        p.expect(self.open())?;
+
+        let mut first = true;
+
+        while !p.at(self.close()) && !p.at(Kind::Eof) {
+            if first {
+                first = false;
+            } else {
+                p.expect(self.separator())?;
+                if p.at(self.close()) {
+                    break;
+                }
+            }
+
+            self.parse_element(p)?;
+        }
+
+        if self.in_expression {
+            // `a < b> = c`` is valid but `a < b >= c` is BinaryExpression
+            let kind = p.re_lex_right_angle();
+            if matches!(kind, Kind::GtEq) {
+                return Err(p.unexpected());
+            }
+            p.re_lex_ts_r_angle();
+        }
+        p.expect(self.close())?;
         Ok(())
     }
 }

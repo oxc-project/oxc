@@ -11,20 +11,17 @@ use oxc_ast::{
     ast::{Argument, BinaryExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers"
-)]
-#[diagnostic(severity(warning), help("Prefer using `{0:?}` instead"))]
-struct UseToBeComparison(&'static str, #[label] pub Span);
+fn use_to_be_comparison(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers")
+        .with_help(format!("Prefer using `{x0:?}` instead"))
+        .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferComparisonMatcher;
@@ -116,7 +113,7 @@ impl PreferComparisonMatcher {
             return;
         };
 
-        ctx.diagnostic_with_fix(UseToBeComparison(prefer_matcher_name, matcher.span), || {
+        ctx.diagnostic_with_fix(use_to_be_comparison(prefer_matcher_name, matcher.span), || {
             // This is to handle the case can be transform into the following case:
             // expect(value > 1,).toEqual(true,) => expect(value,).toBeGreaterThan(1,)
             //                 ^              ^

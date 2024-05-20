@@ -1,18 +1,17 @@
+use oxc_diagnostics::OxcDiagnostic;
+
 use serde_json::Value;
 
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(max-lines): {0:?}")]
-#[diagnostic(severity(warning), help("Reduce the number of lines in this file"))]
-struct MaxLinesDiagnostic(CompactStr, #[label] Span);
+fn max_lines_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint(max-lines): {x0:?}"))
+        .with_help("Reduce the number of lines in this file")
+        .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct MaxLines(Box<MaxLinesConfig>);
@@ -122,10 +121,10 @@ impl Rule for MaxLines {
         };
 
         if lines_in_file.saturating_sub(blank_lines).saturating_sub(comment_lines) > self.max {
-            let error = CompactStr::from(format!(
+            let error = format!(
                 "File has too many lines ({}). Maximum allowed is {}.",
                 lines_in_file, self.max,
-            ));
+            );
 
             let start = ctx
                 .source_text()
@@ -133,8 +132,8 @@ impl Rule for MaxLines {
                 .take(self.max)
                 .map(|line| line.chars().count() + 1) // padding 1 each line for '\n'
                 .sum::<usize>();
-            ctx.diagnostic(MaxLinesDiagnostic(
-                error,
+            ctx.diagnostic(max_lines_diagnostic(
+                &error,
                 Span::new(
                     u32::try_from(start).unwrap_or(u32::MIN),
                     u32::try_from(ctx.source_text().len()).unwrap_or(u32::MAX),
@@ -189,18 +188,18 @@ fn test() {
         ),
         (
             "var x;
-			
-				
-				  
+
+
+
 			var y;",
             Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }])),
         ),
         (
             "//a single line comment
 			var xy;
-			 
+
 			var xy;
-			 
+
 			 /* a multiline
 			 really really
 			 long comment*/",
@@ -217,18 +216,18 @@ fn test() {
         ("//a single line comment\nvar xy;\nvar xy;", Some(serde_json::json!([2]))),
         (
             "var x;
-			
-			
-			
+
+
+
 			var y;",
             Some(serde_json::json!([{ "max": 2 }])),
         ),
         (
             "//a single line comment
 			var xy;
-			 
+
 			var xy;
-			 
+
 			 /* a multiline
 			 really really
 			 long comment*/",
@@ -250,9 +249,9 @@ fn test() {
         (
             "//a single line comment
 			var xy;
-			 
+
 			var xy;
-			 
+
 			 /* a multiline
 			 really really
 			 long comment*/",
@@ -283,7 +282,7 @@ fn test() {
         ),
         (
             "A
-			
+
 			",
             Some(serde_json::json!([{ "max": 1 }])),
         ),
@@ -310,7 +309,7 @@ fn test() {
         ),
         (
             "
-			
+
 			var a = 'a',
 			c,
 			x;
@@ -322,7 +321,7 @@ fn test() {
 			var x
 			var c;
 			console.log
-			// some block 
+			// some block
 			// comments",
             Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
         ),
@@ -348,37 +347,37 @@ fn test() {
 			var x
 			var c;
 			console.log
-			/** block 
-			
+			/** block
+
 			 comments */",
             Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
         ),
         (
             "var a = 'a';
-			
-			
+
+
 			// comment",
             Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
         ),
         (
             "var a = 'a';
 			var x
-			
-			
+
+
 			var c;
 			console.log
-			
+
 			",
             Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }])),
         ),
         (
             "var a = 'a';
-			
-			
+
+
 			var x
 			var c;
 			console.log
-			
+
 			",
             Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }])),
         ),
@@ -406,14 +405,14 @@ fn test() {
         (
             "
 			var x = '';
-			
+
 			// comment
-			
+
 			var b = '',
 			c,
 			d,
 			e
-			
+
 			// comment",
             Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": true }])),
         ),

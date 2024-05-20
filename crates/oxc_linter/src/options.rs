@@ -1,21 +1,11 @@
-use std::path::PathBuf;
+use std::{convert::From, path::PathBuf};
 
 use rustc_hash::FxHashSet;
 use serde_json::{Number, Value};
 
-use oxc_diagnostics::Error;
+use oxc_diagnostics::{Error, OxcDiagnostic, Severity};
 
-use crate::{
-    config::{
-        errors::{
-            FailedToParseAllowWarnDenyFromJsonValueError,
-            FailedToParseAllowWarnDenyFromNumberError, FailedToParseAllowWarnDenyFromStringError,
-        },
-        ESLintConfig,
-    },
-    rules::RULES,
-    RuleCategory, RuleEnum,
-};
+use crate::{config::ESLintConfig, rules::RULES, RuleCategory, RuleEnum, RuleWithSeverity};
 
 #[derive(Debug)]
 pub struct LintOptions {
@@ -24,6 +14,11 @@ pub struct LintOptions {
     pub filter: Vec<(AllowWarnDeny, String)>,
     pub config_path: Option<PathBuf>,
     pub fix: bool,
+
+    pub react_plugin: bool,
+    pub unicorn_plugin: bool,
+    pub typescript_plugin: bool,
+    pub oxc_plugin: bool,
     pub import_plugin: bool,
     pub jsdoc_plugin: bool,
     pub jest_plugin: bool,
@@ -35,9 +30,13 @@ pub struct LintOptions {
 impl Default for LintOptions {
     fn default() -> Self {
         Self {
-            filter: vec![(AllowWarnDeny::Deny, String::from("correctness"))],
+            filter: vec![(AllowWarnDeny::Warn, String::from("correctness"))],
             config_path: None,
             fix: false,
+            react_plugin: true,
+            unicorn_plugin: true,
+            typescript_plugin: true,
+            oxc_plugin: true,
             import_plugin: false,
             jsdoc_plugin: false,
             jest_plugin: false,
@@ -66,6 +65,30 @@ impl LintOptions {
     #[must_use]
     pub fn with_fix(mut self, yes: bool) -> Self {
         self.fix = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_react_plugin(mut self, yes: bool) -> Self {
+        self.react_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_unicorn_plugin(mut self, yes: bool) -> Self {
+        self.unicorn_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_typescript_plugin(mut self, yes: bool) -> Self {
+        self.typescript_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_oxc_plugin(mut self, yes: bool) -> Self {
+        self.oxc_plugin = yes;
         self
     }
 
@@ -124,68 +147,80 @@ impl AllowWarnDeny {
 }
 
 impl TryFrom<&str> for AllowWarnDeny {
-    type Error = Error;
+    type Error = OxcDiagnostic;
 
-    fn try_from(s: &str) -> Result<Self, <Self as TryFrom<&str>>::Error> {
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
         match s {
             "allow" | "off" => Ok(Self::Allow),
             "deny" | "error" => Ok(Self::Deny),
             "warn" => Ok(Self::Warn),
-            _ => Err(FailedToParseAllowWarnDenyFromStringError(s.to_string()).into()),
+            _ => Err(OxcDiagnostic::error(format!(
+                r#"Failed to parse rule severity, expected one of "allow", "off", "deny", "error" or "warn", but got {s:?}"#
+            ))),
         }
     }
 }
 
 impl TryFrom<&Value> for AllowWarnDeny {
-    type Error = Error;
+    type Error = OxcDiagnostic;
 
-    fn try_from(value: &Value) -> Result<Self, <Self as TryFrom<&Value>>::Error> {
+    fn try_from(value: &Value) -> Result<Self, OxcDiagnostic> {
         match value {
             Value::String(s) => Self::try_from(s.as_str()),
             Value::Number(n) => Self::try_from(n),
-            _ => Err(FailedToParseAllowWarnDenyFromJsonValueError(value.to_string()).into()),
+            _ => Err(OxcDiagnostic::error(format!(
+                "Failed to parse rule severity, expected a string or a number, but got {value:?}"
+            ))),
         }
     }
 }
 
 impl TryFrom<&Number> for AllowWarnDeny {
-    type Error = Error;
+    type Error = OxcDiagnostic;
 
-    fn try_from(value: &Number) -> Result<Self, <Self as TryFrom<&Number>>::Error> {
+    fn try_from(value: &Number) -> Result<Self, Self::Error> {
         match value.as_i64() {
             Some(0) => Ok(Self::Allow),
             Some(1) => Ok(Self::Warn),
             Some(2) => Ok(Self::Deny),
-            _ => Err(FailedToParseAllowWarnDenyFromNumberError(value.to_string()).into()),
+            _ => Err(OxcDiagnostic::error(format!(
+                r#"Failed to parse rule severity, expected one of `0`, `1` or `2`, but got {value:?}"#
+            ))),
         }
     }
 }
 
-const IMPORT_PLUGIN_NAME: &str = "import";
-const JSDOC_PLUGIN_NAME: &str = "jsdoc";
-const JEST_PLUGIN_NAME: &str = "jest";
-const JSX_A11Y_PLUGIN_NAME: &str = "jsx_a11y";
-const NEXTJS_PLUGIN_NAME: &str = "nextjs";
-const REACT_PERF_PLUGIN_NAME: &str = "react_perf";
+impl From<AllowWarnDeny> for Severity {
+    fn from(value: AllowWarnDeny) -> Self {
+        match value {
+            AllowWarnDeny::Allow => Self::Advice,
+            AllowWarnDeny::Warn => Self::Warning,
+            AllowWarnDeny::Deny => Self::Error,
+        }
+    }
+}
 
 impl LintOptions {
     /// # Errors
     ///
     /// * Returns `Err` if there are any errors parsing the configuration file.
-    pub fn derive_rules_and_config(&self) -> Result<(Vec<RuleEnum>, ESLintConfig), Error> {
+    pub fn derive_rules_and_config(&self) -> Result<(Vec<RuleWithSeverity>, ESLintConfig), Error> {
         let config =
             self.config_path.as_ref().map(|path| ESLintConfig::from_file(path)).transpose()?;
 
-        let mut rules: FxHashSet<RuleEnum> = FxHashSet::default();
+        let mut rules: FxHashSet<RuleWithSeverity> = FxHashSet::default();
         let all_rules = self.get_filtered_rules();
 
-        for (allow_warn_deny, name_or_category) in &self.filter {
+        for (severity, name_or_category) in &self.filter {
             let maybe_category = RuleCategory::from(name_or_category.as_str());
-            match allow_warn_deny {
+            match severity {
                 AllowWarnDeny::Deny | AllowWarnDeny::Warn => {
                     match maybe_category {
                         Some(category) => rules.extend(
-                            all_rules.iter().filter(|rule| rule.category() == category).cloned(),
+                            all_rules
+                                .iter()
+                                .filter(|rule| rule.category() == category)
+                                .map(|rule| RuleWithSeverity::new(rule.clone(), *severity)),
                         ),
                         None => {
                             if name_or_category == "all" {
@@ -193,14 +228,14 @@ impl LintOptions {
                                     all_rules
                                         .iter()
                                         .filter(|rule| rule.category() != RuleCategory::Nursery)
-                                        .cloned(),
+                                        .map(|rule| RuleWithSeverity::new(rule.clone(), *severity)),
                                 );
                             } else {
                                 rules.extend(
                                     all_rules
                                         .iter()
                                         .filter(|rule| rule.name() == name_or_category)
-                                        .cloned(),
+                                        .map(|rule| RuleWithSeverity::new(rule.clone(), *severity)),
                                 );
                             }
                         }
@@ -228,7 +263,7 @@ impl LintOptions {
         let mut rules = rules.into_iter().collect::<Vec<_>>();
 
         // for stable diagnostics output ordering
-        rules.sort_unstable_by_key(RuleEnum::name);
+        rules.sort_unstable_by_key(|rule| rule.id());
 
         Ok((rules, config.unwrap_or_default()))
     }
@@ -238,13 +273,18 @@ impl LintOptions {
         RULES
             .iter()
             .filter(|rule| match rule.plugin_name() {
-                IMPORT_PLUGIN_NAME if !self.import_plugin => false,
-                JSDOC_PLUGIN_NAME if !self.jsdoc_plugin => false,
-                JEST_PLUGIN_NAME if !self.jest_plugin => false,
-                JSX_A11Y_PLUGIN_NAME if !self.jsx_a11y_plugin => false,
-                NEXTJS_PLUGIN_NAME if !self.nextjs_plugin => false,
-                REACT_PERF_PLUGIN_NAME if !self.react_perf_plugin => false,
-                _ => true,
+                "react" => self.react_plugin,
+                "unicorn" => self.unicorn_plugin,
+                "typescript" => self.typescript_plugin,
+                "import" => self.import_plugin,
+                "jsdoc" => self.jsdoc_plugin,
+                "jest" => self.jest_plugin,
+                "jsx_a11y" => self.jsx_a11y_plugin,
+                "nextjs" => self.nextjs_plugin,
+                "react_perf" => self.react_perf_plugin,
+                "oxc" => self.oxc_plugin,
+                "eslint" | "tree_shaking" => true,
+                name => panic!("Unhandled plugin: {name}"),
             })
             .cloned()
             .collect::<Vec<_>>()

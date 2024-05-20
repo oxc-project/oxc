@@ -1,0 +1,22 @@
+name: Release Crates
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - crates/oxc/Cargo.toml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Release crates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: cargo-bins/cargo-binstall@main
+      - run: cargo binstall --no-confirm cargo-release-oxc
+      - run: cargo release-oxc publish

@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 15/15 (100.00%)
-Positive Passed: 15/15 (100.00%)
-Negative Passed: 8/8 (100.00%)
+AST Parsed     : 16/16 (100.00%)
+Positive Passed: 16/16 (100.00%)
+Negative Passed: 9/9 (100.00%)
 
   × Unexpected token
    ╭─[fail/oxc-169.js:2:1]
@@ -98,6 +98,12 @@ Negative Passed: 8/8 (100.00%)
     ·                              ╰── `with` expected
  21 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
     ╰────
+
+  × Unexpected token
+   ╭─[fail/oxc-3320.tsx:1:8]
+ 1 │ m< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< mm< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< m$<{3[  $<{3[ m< m$<{3[
+   ·        ─
+   ╰────
 
   × The keyword 'let' is reserved
    ╭─[fail/oxc.js:1:1]

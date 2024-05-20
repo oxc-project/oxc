@@ -1,8 +1,6 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -14,10 +12,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here, which can cause usability issues for sighted and non-sighted users")]
-#[diagnostic(severity(warning), help("Remove `autofocus` attribute"))]
-struct NoAutofocusDiagnostic(#[label] pub Span);
+fn no_autofocus_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here, which can cause usability issues for sighted and non-sighted users")
+        .with_help("Remove `autofocus` attribute")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAutofocus {
@@ -98,14 +97,14 @@ impl Rule for NoAutofocus {
                 if self.ignore_non_dom {
                     if HTML_TAG.contains(&element_type) {
                         if let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = autofocus {
-                            ctx.diagnostic(NoAutofocusDiagnostic(attr.span));
+                            ctx.diagnostic(no_autofocus_diagnostic(attr.span));
                         }
                     }
                     return;
                 }
 
                 if let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = autofocus {
-                    ctx.diagnostic(NoAutofocusDiagnostic(attr.span));
+                    ctx.diagnostic(no_autofocus_diagnostic(attr.span));
                 }
             }
         }

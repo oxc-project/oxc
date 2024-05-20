@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXElementName},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -16,13 +14,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-next(no-before-interactive-script-outside-document): next/script's `beforeInteractive` strategy should not be used outside of `pages/_document.js`")]
-#[diagnostic(
-    severity(warning),
-    help("See https://nextjs.org/docs/messages/no-before-interactive-script-outside-document")
-)]
-struct NoBeforeInteractiveScriptOutsideDocumentDiagnostic(#[label] pub Span);
+fn no_before_interactive_script_outside_document_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-next(no-before-interactive-script-outside-document): next/script's `beforeInteractive` strategy should not be used outside of `pages/_document.js`")
+        .with_help("See https://nextjs.org/docs/messages/no-before-interactive-script-outside-document")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoBeforeInteractiveScriptOutsideDocument;
@@ -44,7 +40,9 @@ declare_oxc_lint!(
 impl Rule for NoBeforeInteractiveScriptOutsideDocument {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
-            let Some(file_path) = ctx.file_path().to_str() else { return };
+            let Some(file_path) = ctx.file_path().to_str() else {
+                return;
+            };
             if is_in_app_dir(file_path) {
                 return;
             }
@@ -82,7 +80,7 @@ impl Rule for NoBeforeInteractiveScriptOutsideDocument {
                     {
                         return;
                     }
-                    ctx.diagnostic(NoBeforeInteractiveScriptOutsideDocumentDiagnostic(
+                    ctx.diagnostic(no_before_interactive_script_outside_document_diagnostic(
                         strategy.span,
                     ));
                 }

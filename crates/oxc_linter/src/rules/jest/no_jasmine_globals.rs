@@ -4,19 +4,18 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, Fix};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-jasmine-globals): {0:?}")]
-#[diagnostic(severity(warning), help("{1:?}"))]
-struct NoJasmineGlobalsDiagnostic(pub &'static str, pub &'static str, #[label] pub Span);
+fn no_jasmine_globals_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-jest(no-jasmine-globals): {x0:?}"))
+        .with_help(format!("{x1:?}"))
+        .with_labels([span2.into()])
+}
 
 /// <https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-jasmine-globals.md>
 #[derive(Debug, Default, Clone)]
@@ -58,7 +57,7 @@ impl Rule for NoJasmineGlobals {
             for &reference_id in reference_ids {
                 let reference = symbol_table.get_reference(reference_id);
                 if let Some((error, help)) = get_non_jasmine_property_messages(name) {
-                    ctx.diagnostic(NoJasmineGlobalsDiagnostic(error, help, reference.span()));
+                    ctx.diagnostic(no_jasmine_globals_diagnostic(error, help, reference.span()));
                 }
             }
         }
@@ -79,13 +78,15 @@ fn diagnostic_assign_expr<'a>(expr: &'a AssignmentExpression<'a>, ctx: &LintCont
         .as_simple_assignment_target()
         .and_then(SimpleAssignmentTarget::as_member_expression)
     {
-        let Some((span, property_name)) = get_jasmine_property_name(member_expr) else { return };
+        let Some((span, property_name)) = get_jasmine_property_name(member_expr) else {
+            return;
+        };
 
         if property_name == "DEFAULT_TIMEOUT_INTERVAL" {
             // `jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000` we can fix it to `jest.setTimeout(5000)`
             if let Expression::NumericLiteral(number_literal) = &expr.right {
                 ctx.diagnostic_with_fix(
-                    NoJasmineGlobalsDiagnostic(COMMON_ERROR_TEXT, COMMON_HELP_TEXT, span),
+                    no_jasmine_globals_diagnostic(COMMON_ERROR_TEXT, COMMON_HELP_TEXT, span),
                     || {
                         let content = format!("jest.setTimeout({})", number_literal.value);
                         Fix::new(content, expr.span)
@@ -95,17 +96,19 @@ fn diagnostic_assign_expr<'a>(expr: &'a AssignmentExpression<'a>, ctx: &LintCont
             }
         }
 
-        ctx.diagnostic(NoJasmineGlobalsDiagnostic(COMMON_ERROR_TEXT, COMMON_HELP_TEXT, span));
+        ctx.diagnostic(no_jasmine_globals_diagnostic(COMMON_ERROR_TEXT, COMMON_HELP_TEXT, span));
     }
 }
 
 fn diagnostic_call_expr<'a>(expr: &'a CallExpression<'a>, ctx: &LintContext) {
     if let Some(member_expr) = expr.callee.as_member_expression() {
-        let Some((span, property_name)) = get_jasmine_property_name(member_expr) else { return };
+        let Some((span, property_name)) = get_jasmine_property_name(member_expr) else {
+            return;
+        };
 
         JasmineProperty::from_str(property_name).map_or_else(
             || {
-                ctx.diagnostic(NoJasmineGlobalsDiagnostic(
+                ctx.diagnostic(no_jasmine_globals_diagnostic(
                     COMMON_ERROR_TEXT,
                     COMMON_HELP_TEXT,
                     span,
@@ -114,11 +117,12 @@ fn diagnostic_call_expr<'a>(expr: &'a CallExpression<'a>, ctx: &LintContext) {
             |jasmine_property| {
                 let (error, help) = jasmine_property.details();
                 if jasmine_property.available_in_jest_expect() {
-                    ctx.diagnostic_with_fix(NoJasmineGlobalsDiagnostic(error, help, span), || {
-                        Fix::new("expect", member_expr.object().span())
-                    });
+                    ctx.diagnostic_with_fix(
+                        no_jasmine_globals_diagnostic(error, help, span),
+                        || Fix::new("expect", member_expr.object().span()),
+                    );
                 } else {
-                    ctx.diagnostic(NoJasmineGlobalsDiagnostic(error, help, span));
+                    ctx.diagnostic(no_jasmine_globals_diagnostic(error, help, span));
                 }
             },
         );

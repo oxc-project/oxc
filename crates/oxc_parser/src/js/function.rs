@@ -1,35 +1,13 @@
 use std::cell::Cell;
 
 use oxc_allocator::Box;
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
-use super::list::FormalParameterList;
 use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl, StatementContext};
 
-type ArrowFunctionHead<'a> = (
-    Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    Box<'a, FormalParameters<'a>>,
-    Option<Box<'a, TSTypeAnnotation<'a>>>,
-    bool,
-    Span,
-);
-
-#[derive(Debug, Clone, Copy)]
-pub enum IsParenthesizedArrowFunction {
-    True,
-    False,
-    Maybe,
-}
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum FunctionKind {
-    Declaration { single_statement: bool },
-    Expression,
-    DefaultExport,
-    TSDeclaration,
-}
+use super::{list::FormalParameterList, FunctionKind};
 
 impl FunctionKind {
     pub(crate) fn is_id_required(self) -> bool {
@@ -49,15 +27,11 @@ impl<'a> ParserImpl<'a> {
                 && !self.peek_token().is_on_new_line
     }
 
-    pub(crate) fn at_async_no_new_line(&mut self) -> bool {
-        self.at(Kind::Async) && !self.cur_token().escaped() && !self.peek_token().is_on_new_line
-    }
-
     pub(crate) fn parse_function_body(&mut self) -> Result<Box<'a, FunctionBody<'a>>> {
         let span = self.start_span();
         self.expect(Kind::LCurly)?;
 
-        let (directives, statements) = self.with_context(Context::Return, |p| {
+        let (directives, statements) = self.context(Context::Return, Context::empty(), |p| {
             p.parse_directives_and_statements(/* is_top_level */ false)
         })?;
 
@@ -154,12 +128,12 @@ impl<'a> ParserImpl<'a> {
         let decl = self.parse_function_impl(func_kind)?;
         if stmt_ctx.is_single_statement() {
             if decl.r#async {
-                self.error(diagnostics::AsyncFunctionDeclaration(Span::new(
+                self.error(diagnostics::async_function_declaration(Span::new(
                     decl.span.start,
                     decl.params.span.end,
                 )));
             } else if decl.generator {
-                self.error(diagnostics::GeneratorFunctionDeclaration(Span::new(
+                self.error(diagnostics::generator_function_declaration(Span::new(
                     decl.span.start,
                     decl.params.span.end,
                 )));
@@ -215,61 +189,6 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.function_expression(function))
     }
 
-    pub(crate) fn parse_single_param_function_expression(
-        &mut self,
-        span: Span,
-        r#async: bool,
-        generator: bool,
-    ) -> Result<Expression<'a>> {
-        let has_await = self.ctx.has_await();
-        let has_yield = self.ctx.has_yield();
-
-        self.ctx = self.ctx.union_await_if(r#async).union_yield_if(generator);
-        let params_span = self.start_span();
-        let param = self.parse_binding_identifier()?;
-        let ident = self.ast.binding_pattern_identifier(param);
-        let pattern = self.ast.binding_pattern(ident, None, false);
-        let params_span = self.end_span(params_span);
-        let formal_parameter = self.ast.formal_parameter(
-            params_span,
-            pattern,
-            None,
-            false,
-            false,
-            AstBuilder::new_vec(&self.ast),
-        );
-        let params = self.ast.formal_parameters(
-            params_span,
-            FormalParameterKind::ArrowFormalParameters,
-            self.ast.new_vec_single(formal_parameter),
-            None,
-        );
-
-        self.expect(Kind::Arrow)?;
-
-        self.ctx = self.ctx.and_await(r#async).and_yield(generator);
-        let expression = !self.at(Kind::LCurly);
-        let body = if expression {
-            let expr = self.parse_assignment_expression_base()?;
-            let span = expr.span();
-            let expr_stmt = self.ast.expression_statement(span, expr);
-            self.ast.function_body(span, self.ast.new_vec(), self.ast.new_vec_single(expr_stmt))
-        } else {
-            self.parse_function_body()?
-        };
-        self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
-
-        Ok(self.ast.arrow_function_expression(
-            self.end_span(span),
-            expression,
-            r#async,
-            params,
-            body,
-            None,
-            None,
-        ))
-    }
-
     /// Section 15.4 Method Definitions
     /// `ClassElementName` ( `UniqueFormalParameters` ) { `FunctionBody` }
     /// `GeneratorMethod`
@@ -304,7 +223,7 @@ impl<'a> ParserImpl<'a> {
 
         let has_yield = self.ctx.has_yield();
         if !has_yield {
-            self.error(diagnostics::YieldExpression(Span::new(span.start, span.start + 5)));
+            self.error(diagnostics::yield_expression(Span::new(span.start, span.start + 5)));
         }
 
         let mut delegate = false;
@@ -324,7 +243,7 @@ impl<'a> ParserImpl<'a> {
             );
             if !not_assignment_expr || delegate {
                 self.ctx = self.ctx.union_yield_if(true);
-                argument = Some(self.parse_assignment_expression_base()?);
+                argument = Some(self.parse_assignment_expression_or_higher()?);
                 self.ctx = self.ctx.and_yield(has_yield);
             }
         }
@@ -351,196 +270,9 @@ impl<'a> ParserImpl<'a> {
         self.ctx = ctx;
 
         if kind.is_id_required() && id.is_none() {
-            self.error(diagnostics::ExpectFunctionName(self.cur_token().span()));
+            self.error(diagnostics::expect_function_name(self.cur_token().span()));
         }
 
         id
-    }
-
-    pub(crate) fn is_parenthesized_arrow_function_expression(
-        &mut self,
-        r#async: bool,
-    ) -> IsParenthesizedArrowFunction {
-        let offset = u8::from(r#async);
-
-        match self.nth_kind(offset) {
-            Kind::LParen => match self.nth_kind(offset + 1) {
-                // '()' is an arrow expression if followed by an '=>', a type annotation or body.
-                // Otherwise, a parenthesized expression with a missing inner expression
-                Kind::RParen => {
-                    let kind = self.nth_kind(offset + 2);
-                    if self.ts_enabled() && kind == Kind::Colon {
-                        IsParenthesizedArrowFunction::Maybe
-                    } else if matches!(kind, Kind::Arrow | Kind::LCurly) {
-                        IsParenthesizedArrowFunction::True
-                    } else {
-                        IsParenthesizedArrowFunction::False
-                    }
-                }
-                // Rest parameter
-                // '(...ident' is not a parenthesized expression
-                // '(...null' is a parenthesized expression
-                Kind::Dot3 => match self.nth_kind(offset + 1) {
-                    Kind::Ident => IsParenthesizedArrowFunction::True,
-                    kind if kind.is_literal() => IsParenthesizedArrowFunction::False,
-                    _ => IsParenthesizedArrowFunction::Maybe,
-                },
-                // '([ ...', '({ ... } can either be a parenthesized object or array expression or a destructing parameter
-                Kind::LBrack | Kind::LCurly => IsParenthesizedArrowFunction::Maybe,
-                _ if self.nth_kind(offset + 1).is_binding_identifier()
-                    || self.nth_at(offset + 1, Kind::This) =>
-                {
-                    match self.nth_kind(offset + 2) {
-                        // '(a: ' must be a type annotation
-                        Kind::Colon => IsParenthesizedArrowFunction::True,
-                        // * '(a = ': an initializer or a parenthesized assignment expression
-                        // * '(a, ': separator to next parameter or a parenthesized sequence expression
-                        // * '(a)': a single parameter OR a parenthesized expression
-                        Kind::Eq | Kind::Comma | Kind::RParen => {
-                            IsParenthesizedArrowFunction::Maybe
-                        }
-                        // '(a?:' | '(a?,' | '(a?=' | '(a?)'
-                        Kind::Question
-                            if matches!(
-                                self.nth_kind(offset + 3),
-                                Kind::Colon | Kind::Comma | Kind::Eq | Kind::RParen
-                            ) =>
-                        {
-                            IsParenthesizedArrowFunction::True
-                        }
-                        _ => IsParenthesizedArrowFunction::False,
-                    }
-                }
-                _ => IsParenthesizedArrowFunction::False,
-            },
-            Kind::LAngle => {
-                let kind = self.nth_kind(offset + 1);
-
-                // `<const` for const type parameter from TypeScript 5.0
-                if kind == Kind::Const {
-                    return IsParenthesizedArrowFunction::Maybe;
-                }
-
-                if !kind.is_identifier() {
-                    return IsParenthesizedArrowFunction::False;
-                }
-
-                if self.source_type.is_jsx() {
-                    return match self.nth_kind(offset + 2) {
-                        Kind::Extends => {
-                            let third_kind = self.nth_kind(offset + 3);
-                            if matches!(third_kind, Kind::Eq | Kind::RAngle) {
-                                IsParenthesizedArrowFunction::False
-                            } else if third_kind.is_identifier() {
-                                IsParenthesizedArrowFunction::Maybe
-                            } else {
-                                IsParenthesizedArrowFunction::True
-                            }
-                        }
-                        Kind::Eq | Kind::Comma => IsParenthesizedArrowFunction::True,
-                        _ => IsParenthesizedArrowFunction::False,
-                    };
-                }
-
-                IsParenthesizedArrowFunction::Maybe
-            }
-            _ => IsParenthesizedArrowFunction::False,
-        }
-    }
-
-    pub(crate) fn is_parenthesized_arrow_function(&mut self) -> IsParenthesizedArrowFunction {
-        match self.cur_kind() {
-            Kind::LAngle | Kind::LParen => self.is_parenthesized_arrow_function_expression(false),
-            Kind::Async => {
-                let peeked = self.peek_token();
-                if !peeked.is_on_new_line && matches!(peeked.kind, Kind::LAngle | Kind::LParen) {
-                    self.is_parenthesized_arrow_function_expression(true)
-                } else {
-                    IsParenthesizedArrowFunction::False
-                }
-            }
-            _ => IsParenthesizedArrowFunction::False,
-        }
-    }
-
-    pub(crate) fn parse_parenthesized_arrow_function_head(
-        &mut self,
-    ) -> Result<ArrowFunctionHead<'a>> {
-        let span = self.start_span();
-        let r#async = self.eat(Kind::Async);
-
-        let has_await = self.ctx.has_await();
-        self.ctx = self.ctx.union_await_if(r#async);
-
-        let type_parameters = self.parse_ts_type_parameters()?;
-
-        let (this_param, params) =
-            self.parse_formal_parameters(FormalParameterKind::ArrowFormalParameters)?;
-
-        if let Some(this_param) = this_param {
-            // const x = (this: number) => {};
-            self.error(diagnostics::TSArrowFunctionThisParameter(this_param.span));
-        }
-
-        let return_type = self.parse_ts_return_type_annotation()?;
-
-        self.ctx = self.ctx.and_await(has_await);
-
-        if self.cur_token().is_on_new_line {
-            self.error(diagnostics::LineterminatorBeforeArrow(self.cur_token().span()));
-        }
-
-        self.expect(Kind::Arrow)?;
-
-        Ok((type_parameters, params, return_type, r#async, span))
-    }
-
-    /// [ConciseBody](https://tc39.es/ecma262/#prod-ConciseBody)
-    ///     [lookahead ≠ {] `ExpressionBody`[?In, ~Await]
-    ///     { `FunctionBody`[~Yield, ~Await] }
-    /// `ExpressionBody`[In, Await] :
-    ///     `AssignmentExpression`[?In, ~Yield, ?Await]
-    pub(crate) fn parse_arrow_function_body(
-        &mut self,
-        span: Span,
-        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        params: Box<'a, FormalParameters<'a>>,
-        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-        r#async: bool,
-    ) -> Result<Expression<'a>> {
-        let has_await = self.ctx.has_await();
-        let has_yield = self.ctx.has_yield();
-        self.ctx = self.ctx.and_await(r#async).and_yield(false);
-
-        let expression = !self.at(Kind::LCurly);
-        let body = if expression {
-            let expr = self.parse_assignment_expression_base()?;
-            let span = expr.span();
-            let expr_stmt = self.ast.expression_statement(span, expr);
-            self.ast.function_body(span, self.ast.new_vec(), self.ast.new_vec_single(expr_stmt))
-        } else {
-            self.parse_function_body()?
-        };
-
-        self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
-
-        Ok(self.ast.arrow_function_expression(
-            self.end_span(span),
-            expression,
-            r#async,
-            params,
-            body,
-            type_parameters,
-            return_type,
-        ))
-    }
-
-    /// Section [Arrow Function](https://tc39.es/ecma262/#sec-arrow-function-definitions)
-    /// `ArrowFunction`[In, Yield, Await] :
-    ///     `ArrowParameters`[?Yield, ?Await] [no `LineTerminator` here] => `ConciseBody`[?In]
-    pub(crate) fn parse_parenthesized_arrow_function(&mut self) -> Result<Expression<'a>> {
-        let (type_parameters, params, return_type, r#async, span) =
-            self.parse_parenthesized_arrow_function_head()?;
-        self.parse_arrow_function_body(span, type_parameters, params, return_type, r#async)
     }
 }

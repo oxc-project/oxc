@@ -1,30 +1,26 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("pragma and pragmaFrag cannot be set when runtime is automatic.")]
-#[diagnostic(severity(warning), help("Remove `pragma` and `pragmaFrag` options."))]
-pub struct PragmaAndPragmaFragCannotBeSet;
+pub fn pragma_and_pragma_frag_cannot_be_set() -> OxcDiagnostic {
+    OxcDiagnostic::warn("pragma and pragmaFrag cannot be set when runtime is automatic.")
+        .with_help("Remove `pragma` and `pragmaFrag` options.")
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("importSource cannot be set when runtime is classic.")]
-#[diagnostic(severity(warning), help("Remove `importSource` option."))]
-pub struct ImportSourceCannotBeSet;
+pub fn import_source_cannot_be_set() -> OxcDiagnostic {
+    OxcDiagnostic::warn("importSource cannot be set when runtime is classic.")
+        .with_help("Remove `importSource` option.")
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("Namespace tags are not supported by default. React's JSX doesn't support namespace tags. You can set `throwIfNamespace: false` to bypass this warning.")]
-#[diagnostic(severity(warning))]
-pub struct NamespaceDoesNotSupport(#[label] pub Span);
+pub fn namespace_does_not_support(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Namespace tags are not supported by default. React's JSX doesn't support namespace tags. You can set `throwIfNamespace: false` to bypass this warning.")
+.with_labels([span0.into()])
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("Please provide an explicit key value. Using \"key\" as a shorthand for \"key={{true}}\" is not allowed.")]
-#[diagnostic(severity(warning))]
-pub struct ValuelessKey(#[label] pub Span);
+pub fn valueless_key(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Please provide an explicit key value. Using \"key\" as a shorthand for \"key={true}\" is not allowed.")
+.with_labels([span0.into()])
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("Spread children are not supported in React.")]
-#[diagnostic(severity(warning))]
-pub struct SpreadChildrenAreNotSupported(#[label] pub Span);
+pub fn spread_children_are_not_supported(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Spread children are not supported in React.").with_labels([span0.into()])
+}

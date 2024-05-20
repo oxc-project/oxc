@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -19,10 +17,11 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(prefer-expect-resolves): Prefer `await expect(...).resolves` over `expect(await ...)` syntax.")]
-#[diagnostic(severity(warning), help("Use `await expect(...).resolves` instead"))]
-struct ExpectResolves(#[label] pub Span);
+fn expect_resolves(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-expect-resolves): Prefer `await expect(...).resolves` over `expect(await ...)` syntax.")
+        .with_help("Use `await expect(...).resolves` instead")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferExpectResolves;
@@ -108,7 +107,7 @@ impl PreferExpectResolves {
             return;
         };
 
-        ctx.diagnostic_with_fix(ExpectResolves(await_expr.span), || {
+        ctx.diagnostic_with_fix(expect_resolves(await_expr.span), || {
             let content = Self::build_code(&jest_expect_fn_call, call_expr, ident.span, ctx);
             Fix::new(content, call_expr.span)
         });

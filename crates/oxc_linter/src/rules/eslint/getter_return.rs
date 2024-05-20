@@ -5,10 +5,8 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{
     pg::neighbors_filtered_by_edge_weight, AssignmentValue, BasicBlockElement, EdgeType, Register,
@@ -17,10 +15,11 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(getter-return): Expected to always return a value in getter.")]
-#[diagnostic(severity(warning), help("Return a value from all code paths in getter."))]
-struct GetterReturnDiagnostic(#[label] pub Span);
+fn getter_return_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(getter-return): Expected to always return a value in getter.")
+        .with_help("Return a value from all code paths in getter.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct GetterReturn {
@@ -288,6 +287,8 @@ impl GetterReturn {
 
                             return (DefinitelyReturnsOrThrowsOrUnreachable::Yes, false);
                         }
+                        // Ignore irrelevant elements.
+                        BasicBlockElement::Break(_) => {}
                     }
                 }
 
@@ -307,7 +308,7 @@ impl GetterReturn {
 
         // If not, flag it as a diagnostic.
         if !definitely_returns_in_all_codepaths {
-            ctx.diagnostic(GetterReturnDiagnostic(span));
+            ctx.diagnostic(getter_return_diagnostic(span));
         }
     }
 }
@@ -324,64 +325,28 @@ fn test() {
     use crate::tester::Tester;
     let pass = vec![
         ("var foo = { get bar(){return true;} };", None),
-        (
-            "var foo = { get bar() {return;} };",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
-        (
-            "var foo = { get bar(){return true;} };",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
-        (
-            "var foo = { get bar(){if(bar) {return;} return true;} };",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
+        ("var foo = { get bar() {return;} };", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        ("var foo = { get bar(){return true;} };", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        ("var foo = { get bar(){if(bar) {return;} return true;} };", Some(serde_json::json!([{ "allowImplicit": true }]))),
         ("class foo { get bar(){return true;} }", None),
         ("class foo { get bar(){if(baz){return true;} else {return false;} } }", None),
         ("class foo { get(){return true;} }", None),
-        (
-            "class foo { get bar(){return true;} }",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
+        ("class foo { get bar(){return true;} }", Some(serde_json::json!([{ "allowImplicit": true }]))),
         ("class foo { get bar(){return;} }", Some(serde_json::json!([{ "allowImplicit": true }]))),
         ("Object.defineProperty(foo, \"bar\", { get: function () {return true;}});", None),
-        (
-            "Object.defineProperty(foo, \"bar\", { get: function () { ~function (){ return true; }();return true;}});",
-            None,
-        ),
+        ("Object.defineProperty(foo, \"bar\", { get: function () { ~function (){ return true; }();return true;}});", None),
         ("Object.defineProperties(foo, { bar: { get: function () {return true;}} });", None),
-        (
-            "Object.defineProperties(foo, { bar: { get: function () { ~function (){ return true; }(); return true;}} });",
-            None,
-        ),
+        ("Object.defineProperties(foo, { bar: { get: function () { ~function (){ return true; }(); return true;}} });", None),
         ("Reflect.defineProperty(foo, \"bar\", { get: function () {return true;}});", None),
-        (
-            "Reflect.defineProperty(foo, \"bar\", { get: function () { ~function (){ return true; }();return true;}});",
-            None,
-        ),
+        ("Reflect.defineProperty(foo, \"bar\", { get: function () { ~function (){ return true; }();return true;}});", None),
         ("Object.create(foo, { bar: { get() {return true;} } });", None),
         ("Object.create(foo, { bar: { get: function () {return true;} } });", None),
         ("Object.create(foo, { bar: { get: () => {return true;} } });", None),
-        (
-            "Object.defineProperty(foo, \"bar\", { get: function () {return true;}});",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
-        (
-            "Object.defineProperty(foo, \"bar\", { get: function (){return;}});",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
-        (
-            "Object.defineProperties(foo, { bar: { get: function () {return true;}} });",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
-        (
-            "Object.defineProperties(foo, { bar: { get: function () {return;}} });",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
-        (
-            "Reflect.defineProperty(foo, \"bar\", { get: function () {return true;}});",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
+        ("Object.defineProperty(foo, \"bar\", { get: function () {return true;}});", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        ("Object.defineProperty(foo, \"bar\", { get: function (){return;}});", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        ("Object.defineProperties(foo, { bar: { get: function () {return true;}} });", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        ("Object.defineProperties(foo, { bar: { get: function () {return;}} });", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        ("Reflect.defineProperty(foo, \"bar\", { get: function () {return true;}});", Some(serde_json::json!([{ "allowImplicit": true }]))),
         ("var get = function(){};", None),
         ("var get = function(){ return true; };", None),
         ("var foo = { bar(){} };", None),
@@ -397,7 +362,8 @@ fn test() {
         ("foo.create(null, { bar: { get() {} } });", None),
         ("var foo = { get willThrowSoValid() { throw MyException() } };", None),
         ("export abstract class Foo { protected abstract get foobar(): number; }", None),
-        ("class T {
+        (
+            "class T {
             theme: number;
             get type(): number {
                 switch (theme) {
@@ -407,8 +373,11 @@ fn test() {
                  }
                  throw new Error('test')
             }
-        }", None),
-        ("class T {
+        }",
+            None,
+        ),
+        (
+            "class T {
             theme: number;
             get type(): number {
                 switch (theme) {
@@ -417,11 +386,17 @@ fn test() {
                     default: return 3;
                  }
             }
-        }", None),
-        ("const originalClearTimeout = targetWindow.clearTimeout;
+        }",
+            None,
+        ),
+        (
+            "const originalClearTimeout = targetWindow.clearTimeout;
         Object.defineProperty(targetWindow, 'vscodeOriginalClearTimeout', { get: () => originalClearTimeout });
-        ", None),
-        ("class T {
+        ",
+            None,
+        ),
+        (
+            "class T {
             get width(): number | undefined {
                 const val = undefined
                 if (!val) {
@@ -430,8 +405,10 @@ fn test() {
 
                 return val * val;
             }
-        }", None),
-        ("function fn(): void { console.log('test') }", None)
+        }",
+            None,
+        ),
+        ("function fn(): void { console.log('test') }", None),
     ];
 
     let fail = vec![
@@ -441,70 +418,34 @@ fn test() {
         ("var foo = { get bar() { ~function () {return true;}} };", None),
         ("var foo = { get bar() { return; } };", None),
         ("var foo = { get bar() {} };", Some(serde_json::json!([{ "allowImplicit": true }]))),
-        (
-            "var foo = { get bar() {if (baz) {return;}} };",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
+        ("var foo = { get bar() {if (baz) {return;}} };", Some(serde_json::json!([{ "allowImplicit": true }]))),
         ("class foo { get bar(){} }", None),
         ("var foo = class {\n  static get\nbar(){} }", None),
         ("class foo { get bar(){ if (baz) { return true; }}}", None),
         ("class foo { get bar(){ ~function () { return true; }()}}", None),
         ("class foo { get bar(){} }", Some(serde_json::json!([{ "allowImplicit": true }]))),
-        (
-            "class foo { get bar(){if (baz) {return true;} } }",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
+        ("class foo { get bar(){if (baz) {return true;} } }", Some(serde_json::json!([{ "allowImplicit": true }]))),
         ("Object.defineProperty(foo, 'bar', { get: function (){}});", None),
         ("Object.defineProperty(foo, 'bar', { get: function getfoo (){}});", None),
         ("Object.defineProperty(foo, 'bar', { get(){} });", None),
         ("Object.defineProperty(foo, 'bar', { get: () => {}});", None),
         ("Object.defineProperty(foo, \"bar\", { get: function (){if(bar) {return true;}}});", None),
-        (
-            "Object.defineProperty(foo, \"bar\", { get: function (){ ~function () { return true; }()}});",
-            None,
-        ),
+        ("Object.defineProperty(foo, \"bar\", { get: function (){ ~function () { return true; }()}});", None),
         ("Reflect.defineProperty(foo, 'bar', { get: function (){}});", None),
         ("Object.create(foo, { bar: { get: function() {} } })", None),
         ("Object.create(foo, { bar: { get() {} } })", None),
         ("Object.create(foo, { bar: { get: () => {} } })", None),
-        (
-            "Object.defineProperties(foo, { bar: { get: function () {}} });",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
-        (
-            "Object.defineProperties(foo, { bar: { get: function (){if(bar) {return true;}}}});",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
-        (
-            "Object.defineProperties(foo, { bar: { get: function () {~function () { return true; }()}} });",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
-        (
-            "Object.defineProperty(foo, \"bar\", { get: function (){}});",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
-        (
-            "Object.create(foo, { bar: { get: function (){} } });",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
-        (
-            "Reflect.defineProperty(foo, \"bar\", { get: function (){}});",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
+        ("Object.defineProperties(foo, { bar: { get: function () {}} });", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        ("Object.defineProperties(foo, { bar: { get: function (){if(bar) {return true;}}}});", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        ("Object.defineProperties(foo, { bar: { get: function () {~function () { return true; }()}} });", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        ("Object.defineProperty(foo, \"bar\", { get: function (){}});", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        ("Object.create(foo, { bar: { get: function (){} } });", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        ("Reflect.defineProperty(foo, \"bar\", { get: function (){}});", Some(serde_json::json!([{ "allowImplicit": true }]))),
         ("Object?.defineProperty(foo, 'bar', { get: function (){} });", None),
         ("(Object?.defineProperty)(foo, 'bar', { get: function (){} });", None),
-        (
-            "Object?.defineProperty(foo, 'bar', { get: function (){} });",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
-        (
-            "(Object?.defineProperty)(foo, 'bar', { get: function (){} });",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
-        (
-            "(Object?.create)(foo, { bar: { get: function (){} } });",
-            Some(serde_json::json!([{ "allowImplicit": true }])),
-        ),
+        ("Object?.defineProperty(foo, 'bar', { get: function (){} });", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        ("(Object?.defineProperty)(foo, 'bar', { get: function (){} });", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        ("(Object?.create)(foo, { bar: { get: function (){} } });", Some(serde_json::json!([{ "allowImplicit": true }]))),
     ];
 
     Tester::new(GetterReturn::NAME, pass, fail).test_and_snapshot();

@@ -1,18 +1,18 @@
 use lazy_static::lazy_static;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(ban-tslint-comment): tslint comment detected: \"{0}\"")]
-#[diagnostic(severity(warning))]
-struct BanTslintCommentDiagnostic(String, #[label] pub Span);
+fn ban_tslint_comment_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "typescript-eslint(ban-tslint-comment): tslint comment detected: \"{x0}\""
+    ))
+    .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct BanTslintComment;
@@ -47,7 +47,7 @@ impl Rule for BanTslintComment {
                     get_full_comment(source_text_len, span.start, span.end, kind.is_multi_line());
 
                 ctx.diagnostic_with_fix(
-                    BanTslintCommentDiagnostic(raw.trim().to_string(), comment_span),
+                    ban_tslint_comment_diagnostic(raw.trim(), comment_span),
                     || Fix::delete(comment_span),
                 );
             }

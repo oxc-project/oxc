@@ -1,3 +1,5 @@
+commit: 64d2eeea
+
 parser_typescript Summary:
 AST Parsed     : 5240/5243 (99.94%)
 Positive Passed: 5233/5243 (99.81%)
@@ -56,7 +58,6 @@ Expect Syntax Error: "compiler/ambientExternalModuleWithRelativeModuleName.ts"
 Expect Syntax Error: "compiler/ambientGetters.ts"
 Expect Syntax Error: "compiler/ambientPropertyDeclarationInJs.ts"
 Expect Syntax Error: "compiler/ambientStatement1.ts"
-Expect Syntax Error: "compiler/ambiguousGenericAssertion1.ts"
 Expect Syntax Error: "compiler/ambiguousOverload.ts"
 Expect Syntax Error: "compiler/amdDependencyComment1.ts"
 Expect Syntax Error: "compiler/amdDependencyComment2.ts"
@@ -1465,6 +1466,7 @@ Expect Syntax Error: "compiler/reactNamespaceInvalidInput.tsx"
 Expect Syntax Error: "compiler/reactNamespaceMissingDeclaration.tsx"
 Expect Syntax Error: "compiler/reactReduxLikeDeferredInferenceAllowsAssignment.ts"
 Expect Syntax Error: "compiler/readonlyAssignmentInSubclassOfClassExpression.ts"
+Expect Syntax Error: "compiler/readonlyInNonPropertyParameters.ts"
 Expect Syntax Error: "compiler/readonlyMembers.ts"
 Expect Syntax Error: "compiler/readonlyTupleAndArrayElaboration.ts"
 Expect Syntax Error: "compiler/reboundIdentifierOnImportAlias.ts"
@@ -3961,11 +3963,10 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  7 │ orbitol.toExponential()
    ╰────
 
-  × Expected `,` but found `Identifier`
-   ╭─[compiler/ArrowFunctionExpression1.ts:1:17]
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[compiler/ArrowFunctionExpression1.ts:1:10]
  1 │ var v = (public x: string) => { };
-   ·                 ┬
-   ·                 ╰── `,` expected
+   ·          ────────────────
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -4120,6 +4121,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·     ────
  26 │     }
     ╰────
+
+  × Unexpected token
+   ╭─[compiler/ambiguousGenericAssertion1.ts:4:10]
+ 3 │ var r2 = < <T>(x: T) => T>f; // valid
+ 4 │ var r3 = <<T>(x: T) => T>f; // ambiguous, appears to the parser as a << operation
+   ·          ──
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/anonymousModules.ts:1:7]
@@ -4671,8 +4679,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/breakTarget6.ts:2:9]
  1 │ while (true) {
  2 │   break target;
-   ·         ───┬──
-   ·            ╰── This label is used, but not defined
+   ·         ──────
  3 │ }
    ╰────
 
@@ -5364,10 +5371,10 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Unexpected token
-   ╭─[compiler/conflictMarkerDiff3Trivia2.ts:3:2]
+   ╭─[compiler/conflictMarkerDiff3Trivia2.ts:3:1]
  2 │   foo() {
  3 │ <<<<<<< B
-   ·  ──
+   · ──
  4 │      a();
    ╰────
 
@@ -5380,10 +5387,10 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Unexpected token
-   ╭─[compiler/conflictMarkerTrivia2.ts:3:2]
+   ╭─[compiler/conflictMarkerTrivia2.ts:3:1]
  2 │   foo() {
  3 │ <<<<<<< B
-   ·  ──
+   · ──
  4 │      a();
    ╰────
 
@@ -5395,10 +5402,10 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Unexpected token
-   ╭─[compiler/conflictMarkerTrivia4.ts:2:2]
+   ╭─[compiler/conflictMarkerTrivia4.ts:2:1]
  1 │ const x = <div>
  2 │ <<<<<<< HEAD
-   ·  ──
+   · ──
    ╰────
 
   × Identifier `y` has already been declared
@@ -5739,8 +5746,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/continueTarget6.ts:2:12]
  1 │ while (true) {
  2 │   continue target;
-   ·            ───┬──
-   ·               ╰── This label is used, but not defined
+   ·            ──────
  3 │ }
    ╰────
 
@@ -6727,7 +6733,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: Try insert a semicolon here
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[compiler/illegalSuperCallsInConstructor.ts:12:17]
  11 │             get foo() {
  12 │                 super();
@@ -6736,7 +6741,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[compiler/illegalSuperCallsInConstructor.ts:16:17]
  15 │             set foo(v: number) {
  16 │                 super();
@@ -8660,15 +8664,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expected `,` but found `Identifier`
-   ╭─[compiler/readonlyInNonPropertyParameters.ts:8:11]
- 7 │ }
- 8 │ (readonly x) => 0;
-   ·           ┬
-   ·           ╰── `,` expected
- 9 │ // OK to use `readonly` as a name
-   ╰────
-
   × Identifier `bar` has already been declared
    ╭─[compiler/reassignStaticProp.ts:3:12]
  2 │  
@@ -9602,7 +9597,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: either remove this super, or extend the class
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
    ╭─[compiler/superCallFromFunction1.ts:3:5]
  2 │ function foo() {
  3 │     super(value => String(value));
@@ -9611,7 +9605,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
    ╭─[compiler/superCallOutsideConstructor.ts:6:9]
  5 │ class D extends C {
  6 │     x = super(); 
@@ -9700,7 +9693,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
    ╭─[compiler/superErrors.ts:3:13]
  2 │     // super in a non class context
  3 │     var x = super;
@@ -9709,7 +9701,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
    ╭─[compiler/superErrors.ts:4:19]
  3 │     var x = super;
  4 │     var y = () => super;
@@ -9718,7 +9709,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
    ╭─[compiler/superErrors.ts:5:31]
  4 │     var y = () => super;
  5 │     var z = () => () => () => super;
@@ -11152,7 +11142,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: Try insert a semicolon here
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
    ╭─[conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers6.ts:6:16]
  5 │ class D extends C {
  6 │     static c = super();
@@ -12424,7 +12413,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  69 │     }
     ╰────
 
-  × Unexpected token
+  × Line terminator not permitted before arrow
     ╭─[conformance/es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:72:9]
  71 │     export var v = x
  72 │         => new City(Enum.claw);
@@ -12510,7 +12499,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: either remove this super, or extend the class
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
    ╭─[conformance/es6/computedProperties/computedPropertyNames27_ES5.ts:5:7]
  4 │ class C extends Base {
  5 │     [(super(), "prop")]() { }
@@ -12519,7 +12507,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
    ╭─[conformance/es6/computedProperties/computedPropertyNames27_ES6.ts:5:7]
  4 │ class C extends Base {
  5 │     [(super(), "prop")]() { }
@@ -15609,7 +15596,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: either remove this super, or extend the class
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:9:9]
   8 │     fn() {
   9 │         super();
@@ -15618,7 +15604,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:14:9]
  13 │     get foo() {
  14 │         super();
@@ -15627,7 +15612,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:18:9]
  17 │     set foo(v) {
  18 │         super();
@@ -15636,7 +15620,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:22:9]
  21 │     //super call in class member initializer with no base type
  22 │     p = super();
@@ -15645,7 +15628,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:26:9]
  25 │     static fn() {
  26 │         super();
@@ -15654,7 +15636,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:30:16]
  29 │     //super call in static class member initializer with no base type
  30 │     static k = super();
@@ -15663,7 +15644,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:34:9]
  33 │     static get q() {
  34 │         super();
@@ -15672,7 +15652,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:38:9]
  37 │     static set q(n) {
  38 │         super();
@@ -15681,7 +15660,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:58:9]
  57 │     //super call in class member initializer of derived type
  58 │     t = super();
@@ -15690,7 +15668,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:62:9]
  61 │         //super call in class member function of derived type
  62 │         super();
@@ -15699,7 +15676,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:67:9]
  66 │     get foo() {
  67 │         super();
@@ -15708,7 +15684,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:71:9]
  70 │     set foo(n) {
  71 │         super();
@@ -15717,7 +15692,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
      ╭─[conformance/expressions/superPropertyAccess/errorSuperPropertyAccess.ts:127:16]
  126 │ // In object literal
  127 │ var obj = { n: super.wat, p: super.foo() };
@@ -15725,7 +15699,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
      ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
      ╭─[conformance/expressions/superPropertyAccess/errorSuperPropertyAccess.ts:127:30]
  126 │ // In object literal
  127 │ var obj = { n: super.wat, p: super.foo() };
@@ -16401,11 +16374,10 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                  ──────
    ╰────
 
-  × Expected `,` but found `Identifier`
-   ╭─[conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression1.ts:1:17]
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression1.ts:1:10]
  1 │ var v = (public x: string) => { };
-   ·                 ┬
-   ·                 ╰── `,` expected
+   ·          ────────────────
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -17878,8 +17850,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/Statements/BreakStatements/parser_breakTarget6.ts:2:9]
  1 │ while (true) {
  2 │   break target;
-   ·         ───┬──
-   ·            ╰── This label is used, but not defined
+   ·         ──────
  3 │ }
    ╰────
 
@@ -17930,8 +17901,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueTarget6.ts:2:12]
  1 │ while (true) {
  2 │   continue target;
-   ·            ───┬──
-   ·               ╰── This label is used, but not defined
+   ·            ──────
  3 │ }
    ╰────
 
@@ -18218,7 +18188,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: replace with `super()` or `super.prop` or `super[prop]`
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
    ╭─[conformance/parser/ecmascript5/SuperExpressions/parserSuperExpression2.ts:3:5]
  2 │   M() {
  3 │     super<T>(0);
@@ -18653,8 +18622,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/salsa/plainJSBinderErrors.ts:38:19]
  37 │             label: var x = 1
  38 │             break label
-    ·                   ──┬──
-    ·                     ╰── This label is used, but not defined
+    ·                   ─────
  39 │         }
     ╰────
 
@@ -18987,8 +18955,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidDoWhileBreakStatements.ts:11:10]
  10 │ ONE:
  11 │ do break TWO; while (true)
-    ·          ─┬─
-    ·           ╰── This label is used, but not defined
+    ·          ───
  12 │ 
     ╰────
 
@@ -19004,8 +18971,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidDoWhileBreakStatements.ts:30:11]
  29 │ do {
  30 │     break FIVE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  31 │     FIVE:
     ╰────
 
@@ -19013,8 +18979,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidDoWhileBreakStatements.ts:40:11]
  39 │ do {
  40 │     break NINE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  41 │ }while (true)
     ╰────
 
@@ -19031,8 +18996,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidForBreakStatements.ts:11:15]
  10 │ ONE:
  11 │ for(;;) break TWO;
-    ·               ─┬─
-    ·                ╰── This label is used, but not defined
+    ·               ───
  12 │ 
     ╰────
 
@@ -19048,8 +19012,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidForBreakStatements.ts:30:11]
  29 │ for(;;) {
  30 │     break FIVE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  31 │     FIVE:
     ╰────
 
@@ -19057,8 +19020,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidForBreakStatements.ts:39:11]
  38 │ for(;;) {
  39 │     break NINE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  40 │ }
     ╰────
 
@@ -19075,8 +19037,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidForInBreakStatements.ts:11:25]
  10 │ ONE:
  11 │ for (var x in {}) break TWO;
-    ·                         ─┬─
-    ·                          ╰── This label is used, but not defined
+    ·                         ───
  12 │ 
     ╰────
 
@@ -19092,8 +19053,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidForInBreakStatements.ts:30:11]
  29 │ for (var x in {}) {
  30 │     break FIVE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  31 │     FIVE:
     ╰────
 
@@ -19101,8 +19061,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidForInBreakStatements.ts:40:11]
  39 │ for (var x in {}) {
  40 │     break NINE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  41 │ }
     ╰────
 
@@ -19119,8 +19078,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/statements/breakStatements/invalidWhileBreakStatements.ts:8:20]
  7 │ ONE:
  8 │ while (true) break TWO;
-   ·                    ─┬─
-   ·                     ╰── This label is used, but not defined
+   ·                    ───
  9 │ 
    ╰────
 
@@ -19136,8 +19094,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidWhileBreakStatements.ts:27:11]
  26 │ while (true) {
  27 │     break FIVE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  28 │     FIVE:
     ╰────
 
@@ -19145,8 +19102,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/breakStatements/invalidWhileBreakStatements.ts:37:11]
  36 │ while (true) {
  37 │     break NINE;
-    ·           ──┬─
-    ·             ╰── This label is used, but not defined
+    ·           ────
  38 │ }
     ╰────
 
@@ -19163,8 +19119,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidDoWhileContinueStatements.ts:11:13]
  10 │ ONE:
  11 │ do continue TWO; while (true)
-    ·             ─┬─
-    ·              ╰── This label is used, but not defined
+    ·             ───
  12 │ 
     ╰────
 
@@ -19180,8 +19135,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidDoWhileContinueStatements.ts:30:14]
  29 │ do {
  30 │     continue FIVE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  31 │     FIVE:
     ╰────
 
@@ -19189,8 +19143,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidDoWhileContinueStatements.ts:40:14]
  39 │ do {
  40 │     continue NINE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  41 │ }while (true)
     ╰────
 
@@ -19207,8 +19160,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidForContinueStatements.ts:11:18]
  10 │ ONE:
  11 │ for(;;) continue TWO;
-    ·                  ─┬─
-    ·                   ╰── This label is used, but not defined
+    ·                  ───
  12 │ 
     ╰────
 
@@ -19224,8 +19176,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidForContinueStatements.ts:30:14]
  29 │ for(;;) {
  30 │     continue FIVE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  31 │     FIVE:
     ╰────
 
@@ -19233,8 +19184,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidForContinueStatements.ts:39:14]
  38 │ for(;;) {
  39 │     continue NINE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  40 │ }
     ╰────
 
@@ -19251,8 +19201,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidForInContinueStatements.ts:11:28]
  10 │ ONE:
  11 │ for (var x in {}) continue TWO;
-    ·                            ─┬─
-    ·                             ╰── This label is used, but not defined
+    ·                            ───
  12 │ 
     ╰────
 
@@ -19268,8 +19217,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidForInContinueStatements.ts:30:14]
  29 │ for (var x in {}) {
  30 │     continue FIVE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  31 │     FIVE:
     ╰────
 
@@ -19277,8 +19225,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidForInContinueStatements.ts:40:14]
  39 │ for (var x in {}) {
  40 │     continue NINE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  41 │ }
     ╰────
 
@@ -19304,8 +19251,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidWhileContinueStatements.ts:11:23]
  10 │ ONE:
  11 │ while (true) continue TWO;
-    ·                       ─┬─
-    ·                        ╰── This label is used, but not defined
+    ·                       ───
  12 │ 
     ╰────
 
@@ -19321,8 +19267,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidWhileContinueStatements.ts:30:14]
  29 │ while (true) {
  30 │     continue FIVE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  31 │     FIVE:
     ╰────
 
@@ -19330,8 +19275,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/continueStatements/invalidWhileContinueStatements.ts:40:14]
  39 │ while (true) {
  40 │     continue NINE;
-    ·              ──┬─
-    ·                ╰── This label is used, but not defined
+    ·              ────
  41 │ }
     ╰────
 
@@ -19574,13 +19518,324 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  9 │ }
    ╰────
 
-  × Expected `,` but found `Identifier`
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:12:19]
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:3:14]
+ 2 │ 
+ 3 │ function foo(public x, private y) { }
+   ·              ────────
+ 4 │ var f = function foo(public x, private y) { }
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:3:24]
+ 2 │ 
+ 3 │ function foo(public x, private y) { }
+   ·                        ─────────
+ 4 │ var f = function foo(public x, private y) { }
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:4:22]
+ 3 │ function foo(public x, private y) { }
+ 4 │ var f = function foo(public x, private y) { }
+   ·                      ────────
+ 5 │ var f2 = function (public x, private y) { }
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:4:32]
+ 3 │ function foo(public x, private y) { }
+ 4 │ var f = function foo(public x, private y) { }
+   ·                                ─────────
+ 5 │ var f2 = function (public x, private y) { }
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:5:20]
+ 4 │ var f = function foo(public x, private y) { }
+ 5 │ var f2 = function (public x, private y) { }
+   ·                    ────────
+ 6 │ var f3 = (x, private y) => { }
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:5:30]
+ 4 │ var f = function foo(public x, private y) { }
+ 5 │ var f2 = function (public x, private y) { }
+   ·                              ─────────
+ 6 │ var f3 = (x, private y) => { }
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:6:14]
+ 5 │ var f2 = function (public x, private y) { }
+ 6 │ var f3 = (x, private y) => { }
+   ·              ─────────
+ 7 │ var f4 = <T>(public x: T, y: T) => { }
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:7:14]
+ 6 │ var f3 = (x, private y) => { }
+ 7 │ var f4 = <T>(public x: T, y: T) => { }
+   ·              ───────────
+ 8 │ 
+   ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:9:15]
+  8 │ 
+  9 │ function foo2(private x: string, public y: number) { }
+    ·               ─────────────────
+ 10 │ var f5 = function foo(private x: string, public y: number) { }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:9:34]
+  8 │ 
+  9 │ function foo2(private x: string, public y: number) { }
+    ·                                  ────────────────
+ 10 │ var f5 = function foo(private x: string, public y: number) { }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:10:23]
+  9 │ function foo2(private x: string, public y: number) { }
+ 10 │ var f5 = function foo(private x: string, public y: number) { }
+    ·                       ─────────────────
+ 11 │ var f6 = function (private x: string, public y: number) { }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:10:42]
+  9 │ function foo2(private x: string, public y: number) { }
+ 10 │ var f5 = function foo(private x: string, public y: number) { }
+    ·                                          ────────────────
+ 11 │ var f6 = function (private x: string, public y: number) { }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:11:20]
+ 10 │ var f5 = function foo(private x: string, public y: number) { }
+ 11 │ var f6 = function (private x: string, public y: number) { }
+    ·                    ─────────────────
+ 12 │ var f7 = (private x: string, public y: number) => { }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:11:39]
+ 10 │ var f5 = function foo(private x: string, public y: number) { }
+ 11 │ var f6 = function (private x: string, public y: number) { }
+    ·                                       ────────────────
+ 12 │ var f7 = (private x: string, public y: number) => { }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:12:11]
  11 │ var f6 = function (private x: string, public y: number) { }
  12 │ var f7 = (private x: string, public y: number) => { }
-    ·                   ┬
-    ·                   ╰── `,` expected
+    ·           ─────────────────
  13 │ var f8 = <T>(private x: T, public y: T) => { }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:12:30]
+ 11 │ var f6 = function (private x: string, public y: number) { }
+ 12 │ var f7 = (private x: string, public y: number) => { }
+    ·                              ────────────────
+ 13 │ var f8 = <T>(private x: T, public y: T) => { }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:13:14]
+ 12 │ var f7 = (private x: string, public y: number) => { }
+ 13 │ var f8 = <T>(private x: T, public y: T) => { }
+    ·              ────────────
+ 14 │ 
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:13:28]
+ 12 │ var f7 = (private x: string, public y: number) => { }
+ 13 │ var f8 = <T>(private x: T, public y: T) => { }
+    ·                            ───────────
+ 14 │ 
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:16:9]
+ 15 │ class C {
+ 16 │     foo(public x, private y) { }
+    ·         ────────
+ 17 │     foo2(public x: number, private y: string) { }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:16:19]
+ 15 │ class C {
+ 16 │     foo(public x, private y) { }
+    ·                   ─────────
+ 17 │     foo2(public x: number, private y: string) { }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:17:10]
+ 16 │     foo(public x, private y) { }
+ 17 │     foo2(public x: number, private y: string) { }
+    ·          ────────────────
+ 18 │     foo3<T>(public x: T, private y: T) { }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:17:28]
+ 16 │     foo(public x, private y) { }
+ 17 │     foo2(public x: number, private y: string) { }
+    ·                            ─────────────────
+ 18 │     foo3<T>(public x: T, private y: T) { }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:18:13]
+ 17 │     foo2(public x: number, private y: string) { }
+ 18 │     foo3<T>(public x: T, private y: T) { }
+    ·             ───────────
+ 19 │ }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:18:26]
+ 17 │     foo2(public x: number, private y: string) { }
+ 18 │     foo3<T>(public x: T, private y: T) { }
+    ·                          ────────────
+ 19 │ }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:22:6]
+ 21 │ interface I {
+ 22 │     (private x, public y);
+    ·      ─────────
+ 23 │     (private x: string, public y: number);
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:22:17]
+ 21 │ interface I {
+ 22 │     (private x, public y);
+    ·                 ────────
+ 23 │     (private x: string, public y: number);
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:23:6]
+ 22 │     (private x, public y);
+ 23 │     (private x: string, public y: number);
+    ·      ─────────────────
+ 24 │     foo(private x, public y);
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:23:25]
+ 22 │     (private x, public y);
+ 23 │     (private x: string, public y: number);
+    ·                         ────────────────
+ 24 │     foo(private x, public y);
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:24:9]
+ 23 │     (private x: string, public y: number);
+ 24 │     foo(private x, public y);
+    ·         ─────────
+ 25 │     foo(public x: number, y: string);
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:24:20]
+ 23 │     (private x: string, public y: number);
+ 24 │     foo(private x, public y);
+    ·                    ────────
+ 25 │     foo(public x: number, y: string);
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:25:9]
+ 24 │     foo(private x, public y);
+ 25 │     foo(public x: number, y: string);
+    ·         ────────────────
+ 26 │     foo3<T>(x: T, private y: T);
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:26:19]
+ 25 │     foo(public x: number, y: string);
+ 26 │     foo3<T>(x: T, private y: T);
+    ·                   ────────────
+ 27 │ }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:30:9]
+ 29 │ var a: {
+ 30 │     foo(public x, private y);
+    ·         ────────
+ 31 │     foo2(private x: number, public y: string);
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:30:19]
+ 29 │ var a: {
+ 30 │     foo(public x, private y);
+    ·                   ─────────
+ 31 │     foo2(private x: number, public y: string);
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:31:10]
+ 30 │     foo(public x, private y);
+ 31 │     foo2(private x: number, public y: string);
+    ·          ─────────────────
+ 32 │ };
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:31:29]
+ 30 │     foo(public x, private y);
+ 31 │     foo2(private x: number, public y: string);
+    ·                             ────────────────
+ 32 │ };
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:35:9]
+ 34 │ var b = {
+ 35 │     foo(public x, y) { },
+    ·         ────────
+ 36 │     a: function foo(x: number, private y: string) { },
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:36:32]
+ 35 │     foo(public x, y) { },
+ 36 │     a: function foo(x: number, private y: string) { },
+    ·                                ─────────────────
+ 37 │     b: <T>(public x: T, private y: T) => { }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:37:12]
+ 36 │     a: function foo(x: number, private y: string) { },
+ 37 │     b: <T>(public x: T, private y: T) => { }
+    ·            ───────────
+ 38 │ }
+    ╰────
+
+  × A parameter property is only allowed in a constructor implementation.
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:37:25]
+ 36 │     a: function foo(x: number, private y: string) { },
+ 37 │     b: <T>(public x: T, private y: T) => { }
+    ·                         ────────────
+ 38 │ }
     ╰────
 
   × Identifier `x` has already been declared

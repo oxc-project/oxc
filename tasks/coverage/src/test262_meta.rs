@@ -2,16 +2,16 @@ use saphyr::{Yaml, YamlLoader};
 
 #[derive(Debug, Clone, Default)]
 pub struct MetaData {
-    pub description: Box<str>,
-    pub esid: Option<Box<str>>,
-    pub es5id: Option<Box<str>>,
-    pub es6id: Option<Box<str>>,
-    pub info: Box<str>,
+    // pub description: Box<str>,
+    // pub esid: Option<Box<str>>,
+    // pub es5id: Option<Box<str>>,
+    // pub es6id: Option<Box<str>>,
+    // pub info: Box<str>,
     pub features: Box<[Box<str>]>,
     pub includes: Box<[Box<str>]>,
     pub flags: Box<[TestFlag]>,
     pub negative: Option<Negative>,
-    pub locale: Box<[Box<str>]>,
+    // pub locale: Box<[Box<str>]>,
 }
 
 /// Individual test flag.
@@ -90,11 +90,11 @@ impl MetaData {
         let yamls = YamlLoader::load_from_str(s).unwrap_or_default();
         let Some(yaml) = yamls.first() else { return Self::default() };
         Self {
-            description: yaml["description"].as_str().unwrap_or_default().into(),
-            esid: yaml["esid"].as_str().map(Into::into),
-            es5id: yaml["es5id"].as_str().map(Into::into),
-            es6id: yaml["es6id"].as_str().map(Into::into),
-            info: yaml["info"].as_str().unwrap_or_default().into(),
+            // description: yaml["description"].as_str().unwrap_or_default().into(),
+            // esid: yaml["esid"].as_str().map(Into::into),
+            // es5id: yaml["es5id"].as_str().map(Into::into),
+            // es6id: yaml["es6id"].as_str().map(Into::into),
+            // info: yaml["info"].as_str().unwrap_or_default().into(),
             features: Self::get_vec_of_string(&yaml["features"]),
             includes: Self::get_vec_of_string(&yaml["includes"]),
             flags: yaml["flags"]
@@ -109,7 +109,7 @@ impl MetaData {
                 let yaml = &yaml["negative"];
                 (!yaml.is_null() && !yaml.is_badvalue()).then(|| Negative::from_yaml(yaml))
             },
-            locale: Self::get_vec_of_string(&yaml["locale"]),
+            // locale: Self::get_vec_of_string(&yaml["locale"]),
         }
     }
 

@@ -104,7 +104,8 @@ impl Walk {
         // Turning off `follow_links` because:
         // * following symlinks is a really slow syscall
         // * it is super rare to have symlinked source code
-        let inner = inner.ignore(false).git_global(false).follow_links(false).build_parallel();
+        let inner =
+            inner.ignore(false).git_global(false).follow_links(options.symlinks).build_parallel();
         Self { inner, extensions: Extensions::default() }
     }
 
@@ -152,6 +153,7 @@ mod test {
             no_ignore: false,
             ignore_path: OsString::from(".gitignore"),
             ignore_pattern: vec![],
+            symlinks: false,
         };
 
         let mut paths = Walk::new(&fixtures, &ignore_options)

@@ -1,19 +1,18 @@
 use crate::Fix;
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(no-explicit-any): Unexpected any. Specify a different type.")]
-#[diagnostic(severity(warning), help("Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct."))]
-struct NoExplicitAnyDiagnostic(#[label] pub Span);
+fn no_explicit_any_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("typescript-eslint(no-explicit-any): Unexpected any. Specify a different type.")
+        .with_help("Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoExplicitAny {
@@ -90,22 +89,26 @@ declare_oxc_lint!(
 
 impl Rule for NoExplicitAny {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TSAnyKeyword(any) = node.kind() else { return };
+        let AstKind::TSAnyKeyword(any) = node.kind() else {
+            return;
+        };
         if self.ignore_rest_args && Self::is_in_rest(node, ctx) {
             return;
         }
 
         if self.fix_to_unknown {
-            ctx.diagnostic_with_fix(NoExplicitAnyDiagnostic(any.span), || {
+            ctx.diagnostic_with_fix(no_explicit_any_diagnostic(any.span), || {
                 Fix::new("unknown", any.span)
             });
         } else {
-            ctx.diagnostic(NoExplicitAnyDiagnostic(any.span));
+            ctx.diagnostic(no_explicit_any_diagnostic(any.span));
         }
     }
 
     fn from_configuration(value: Value) -> Self {
-        let Some(cfg) = value.get(0) else { return Self::default() };
+        let Some(cfg) = value.get(0) else {
+            return Self::default();
+        };
         let fix_to_unknown = cfg.get("fixToUnknown").and_then(Value::as_bool).unwrap_or(false);
         let ignore_rest_args = cfg.get("ignoreRestArgs").and_then(Value::as_bool).unwrap_or(false);
 

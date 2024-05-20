@@ -1,17 +1,18 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values")]
-#[diagnostic(severity(warning), help("consider to remove the `await`"))]
-struct NoUnnecessaryAwaitDiagnostic(#[label] pub Span);
+fn no_unnecessary_await_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values",
+    )
+    .with_help("consider to remove the `await`")
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnnecessaryAwait;
@@ -55,13 +56,16 @@ impl Rule for NoUnnecessaryAwait {
                     }
                 })
             } {
-                ctx.diagnostic(NoUnnecessaryAwaitDiagnostic(Span::new(
+                ctx.diagnostic(no_unnecessary_await_diagnostic(Span::new(
                     expr.span.start,
                     expr.span.start + 5,
                 )));
             } else {
                 ctx.diagnostic_with_fix(
-                    NoUnnecessaryAwaitDiagnostic(Span::new(expr.span.start, expr.span.start + 5)),
+                    no_unnecessary_await_diagnostic(Span::new(
+                        expr.span.start,
+                        expr.span.start + 5,
+                    )),
                     || {
                         let mut codegen = String::new();
                         codegen.push_str(expr.argument.span().source_text(ctx.source_text()));

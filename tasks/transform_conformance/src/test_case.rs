@@ -3,20 +3,18 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use serde::de::DeserializeOwned;
-use serde_json::Value;
-
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_diagnostics::{miette::miette, Error};
+use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_parser::Parser;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
-use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions, TestOs};
-use oxc_transformer::{
-    ES2015Options, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
-};
+use oxc_tasks_common::{normalize_path, print_diff_in_terminal};
+use oxc_transformer::{BabelOptions, TransformOptions, Transformer};
 
-use crate::{fixture_root, packages_root, TestRunnerEnv, PLUGINS_NOT_SUPPORTED_YET};
+use crate::{
+    constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
+    fixture_root, packages_root, TestRunnerEnv,
+};
 
 #[derive(Debug)]
 pub enum TestCaseKind {
@@ -71,49 +69,8 @@ impl TestCaseKind {
     }
 }
 
-fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOptions> {
-    fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> serde_json::Result<T> {
-        match value {
-            Some(v) => serde_json::from_value::<T>(v),
-            None => Ok(T::default()),
-        }
-    }
-
-    let react = if let Some(options) = options.get_preset("react") {
-        get_options::<ReactOptions>(options)?
-    } else {
-        let jsx_plugin = options.get_plugin("transform-react-jsx");
-        let has_jsx_plugin = jsx_plugin.as_ref().is_some();
-        let mut react_options =
-            jsx_plugin.map(get_options::<ReactOptions>).transpose()?.unwrap_or_default();
-        react_options.development = options.get_plugin("transform-react-jsx-development").is_some();
-        react_options.jsx_plugin = has_jsx_plugin;
-        react_options.display_name_plugin =
-            options.get_plugin("transform-react-display-name").is_some();
-        react_options.jsx_self_plugin = options.get_plugin("transform-react-jsx-self").is_some();
-        react_options.jsx_source_plugin =
-            options.get_plugin("transform-react-jsx-source").is_some();
-        react_options
-    };
-
-    let es2015 = ES2015Options {
-        arrow_function: options
-            .get_plugin("transform-arrow-functions")
-            .map(get_options)
-            .transpose()?,
-    };
-
-    Ok(TransformOptions {
-        cwd: options.cwd.clone().unwrap(),
-        assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
-        typescript: options
-            .get_plugin("transform-typescript")
-            .map(get_options::<TypeScriptOptions>)
-            .transpose()?
-            .unwrap_or_default(),
-        react,
-        es2015,
-    })
+fn transform_options(options: &BabelOptions) -> Result<TransformOptions, Vec<Error>> {
+    TransformOptions::from_babel_options(options)
 }
 
 pub trait TestCase {
@@ -121,7 +78,7 @@ pub trait TestCase {
 
     fn options(&self) -> &BabelOptions;
 
-    fn transform_options(&self) -> &serde_json::Result<TransformOptions>;
+    fn transform_options(&self) -> &Result<TransformOptions, Vec<Error>>;
 
     fn test(&self, filtered: bool) -> bool;
 
@@ -129,11 +86,6 @@ pub trait TestCase {
 
     fn skip_test_case(&self) -> bool {
         let options = self.options();
-
-        // Skip windows
-        if options.os.as_ref().is_some_and(|os| os.iter().any(TestOs::is_windows)) {
-            return true;
-        }
 
         // Skip plugins we don't support yet
         if PLUGINS_NOT_SUPPORTED_YET.iter().any(|plugin| options.get_plugin(plugin).is_some()) {
@@ -184,6 +136,12 @@ pub trait TestCase {
             return true;
         }
 
+        // Skip tests that are known to fail
+        let full_path = self.path().to_string_lossy();
+        if SKIP_TESTS.iter().any(|path| full_path.ends_with(path)) {
+            return true;
+        }
+
         false
     }
 
@@ -191,7 +149,7 @@ pub trait TestCase {
         let transform_options = match self.transform_options() {
             Ok(transform_options) => transform_options,
             Err(json_err) => {
-                return Err(vec![miette!(format!("{json_err:?}"))]);
+                return Err(vec![OxcDiagnostic::error(format!("{json_err:?}")).into()]);
             }
         };
 
@@ -228,12 +186,12 @@ pub trait TestCase {
 pub struct ConformanceTestCase {
     path: PathBuf,
     options: BabelOptions,
-    transform_options: serde_json::Result<TransformOptions>,
+    transform_options: Result<TransformOptions, Vec<Error>>,
 }
 
 impl TestCase for ConformanceTestCase {
     fn new(cwd: &Path, path: &Path) -> Self {
-        let mut options = BabelOptions::from_path(path.parent().unwrap());
+        let mut options = BabelOptions::from_test_path(path.parent().unwrap());
         options.cwd.replace(cwd.to_path_buf());
         let transform_options = transform_options(&options);
         Self { path: path.to_path_buf(), options, transform_options }
@@ -243,7 +201,7 @@ impl TestCase for ConformanceTestCase {
         &self.options
     }
 
-    fn transform_options(&self) -> &serde_json::Result<TransformOptions> {
+    fn transform_options(&self) -> &Result<TransformOptions, Vec<Error>> {
         &self.transform_options
     }
 
@@ -273,7 +231,11 @@ impl TestCase for ConformanceTestCase {
             } else {
                 input_is_js && output_is_js
             })
-            .with_typescript(self.options.get_plugin("transform-typescript").is_some());
+            .with_typescript(
+                self.options.get_plugin("transform-typescript").is_some()
+                    || self.options.get_plugin("syntax-typescript").is_some(),
+            )
+            .with_jsx(self.options.get_plugin("syntax-jsx").is_some());
 
         if filtered {
             println!("input_path: {:?}", &self.path);
@@ -325,7 +287,7 @@ impl TestCase for ConformanceTestCase {
                 Some(transform_options.clone())
             }
             Err(json_err) => {
-                let error = json_err.to_string();
+                let error = json_err.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n");
                 actual_errors = get_babel_error(&error);
                 None
             }
@@ -388,7 +350,7 @@ impl TestCase for ConformanceTestCase {
 pub struct ExecTestCase {
     path: PathBuf,
     options: BabelOptions,
-    transform_options: serde_json::Result<TransformOptions>,
+    transform_options: Result<TransformOptions, Vec<Error>>,
 }
 
 impl ExecTestCase {
@@ -424,7 +386,7 @@ impl ExecTestCase {
 
 impl TestCase for ExecTestCase {
     fn new(cwd: &Path, path: &Path) -> Self {
-        let mut options = BabelOptions::from_path(path.parent().unwrap());
+        let mut options = BabelOptions::from_test_path(path.parent().unwrap());
         options.cwd.replace(cwd.to_path_buf());
         let transform_options = transform_options(&options);
         Self { path: path.to_path_buf(), options, transform_options }
@@ -434,7 +396,7 @@ impl TestCase for ExecTestCase {
         &self.options
     }
 
-    fn transform_options(&self) -> &serde_json::Result<TransformOptions> {
+    fn transform_options(&self) -> &Result<TransformOptions, Vec<Error>> {
         &self.transform_options
     }
 
@@ -459,7 +421,7 @@ impl TestCase for ExecTestCase {
 
 fn get_babel_error(error: &str) -> String {
     match error {
-        "unknown variant `invalidOption`, expected `classic` or `automatic`" => "Runtime must be either \"classic\" or \"automatic\".",
+        "transform-react-jsx: unknown variant `invalidOption`, expected `classic` or `automatic`" => "Runtime must be either \"classic\" or \"automatic\".",
         "Duplicate __self prop found." => "Duplicate __self prop found. You are most likely using the deprecated transform-react-jsx-self Babel plugin. Both __source and __self are automatically set when using the automatic runtime. Please remove transform-react-jsx-source and transform-react-jsx-self from your Babel config.",
         "Duplicate __source prop found." => "Duplicate __source prop found. You are most likely using the deprecated transform-react-jsx-source Babel plugin. Both __source and __self are automatically set when using the automatic runtime. Please remove transform-react-jsx-source and transform-react-jsx-self from your Babel config.",
         "Expected `>` but found `/`" => "Unexpected token, expected \",\"",

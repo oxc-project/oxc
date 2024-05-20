@@ -1,17 +1,16 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-unused-labels): Disallow unused labels")]
-#[diagnostic(severity(warning), help("'{0}:' is defined but never used."))]
-struct NoUnusedLabelsDiagnostic(CompactStr, #[label] pub Span);
+fn no_unused_labels_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(no-unused-labels): Disallow unused labels")
+        .with_help(format!("'{x0}:' is defined but never used."))
+        .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnusedLabels;
@@ -51,7 +50,7 @@ impl Rule for NoUnusedLabels {
                 // TODO: Ignore fix where comments exist between label and statement
                 // e.g. A: /* Comment */ function foo(){}
                 ctx.diagnostic_with_fix(
-                    NoUnusedLabelsDiagnostic(stmt.label.name.to_compact_str(), stmt.label.span),
+                    no_unused_labels_diagnostic(stmt.label.name.as_str(), stmt.label.span),
                     || Fix::delete(stmt.label.span),
                 );
             }
@@ -69,10 +68,7 @@ fn test() {
         ("A: if (a) { foo(); if (b) break A; bar(); }", None),
         ("A: for (var i = 0; i < 10; ++i) { foo(); if (a) break A; bar(); }", None),
         ("A: for (var i = 0; i < 10; ++i) { foo(); if (a) continue A; bar(); }", None),
-        (
-            "A: { B: break B; C: for (var i = 0; i < 10; ++i) { foo(); if (a) break A; if (c) continue C; bar(); } }",
-            None,
-        ),
+        ("A: { B: break B; C: for (var i = 0; i < 10; ++i) { foo(); if (a) break A; if (c) continue C; bar(); } }", None),
         ("A: { var A = 0; console.log(A); break A; console.log(A); }", None),
     ];
 

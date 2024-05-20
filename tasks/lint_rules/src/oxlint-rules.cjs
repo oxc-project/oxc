@@ -33,7 +33,6 @@ const readAllImplementedRuleNames = async () => {
 
       // Ignore no reference rules
       if (prefixedName.startsWith("oxc/")) continue;
-      if (prefixedName.startsWith("deepscan/")) continue;
 
       rules.add(prefixedName);
     }

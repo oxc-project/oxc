@@ -5,6 +5,34 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.0] - 2024-05-14
+
+### Features
+
+- Implement max-classes-per-file (#3241)
+- Add the `rules_of_hooks` rule. (#3071)
+- Report that enum member must have initializer (#3113)
+- Implement no-defaults rule (#3098)
+- Report namespace related errors (#3093)
+
+### Bug Fixes
+
+- Add `cfg` nodes for `ConditionalExpression`s. (#3127)
+- Connect `test` expression of `for` statements to the cfg. (#3122)
+- Revert test code pushed to the main by accident. (#3085)
+- Allow `root_node` to be empty for empty trees. (#3084)
+
+### Refactor
+
+- Clean up more diagnostics usages
+- Remove all usages of `Into<Error>`
+- Remove export of `miette`
+- Clean up redeclaration diagnostic
+- S/OxcDiagnostic::new/OxcDiagnostic::error
+- Unify diagnostic in checker
+- Move number related functions to number module (#3130)
+- Squash nested enums (#3115)
+
 ## [0.12.5] - 2024-04-22
 
 ### Features

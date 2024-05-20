@@ -1,17 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-debugger): `debugger` statement is not allowed")]
-#[diagnostic(severity(warning))]
-struct NoDebuggerDiagnostic(#[label] pub Span);
+fn no_debugger_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(no-debugger): `debugger` statement is not allowed")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDebugger;
@@ -37,7 +35,7 @@ declare_oxc_lint!(
 impl Rule for NoDebugger {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::DebuggerStatement(stmt) = node.kind() {
-            ctx.diagnostic_with_fix(NoDebuggerDiagnostic(stmt.span), || Fix::delete(stmt.span));
+            ctx.diagnostic_with_fix(no_debugger_diagnostic(stmt.span), || Fix::delete(stmt.span));
         }
     }
 }

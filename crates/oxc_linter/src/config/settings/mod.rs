@@ -4,7 +4,7 @@ use self::{
 };
 use serde::Deserialize;
 
-mod jsdoc;
+pub mod jsdoc;
 mod jsx_a11y;
 mod next;
 mod react;

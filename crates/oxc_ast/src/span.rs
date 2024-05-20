@@ -276,6 +276,7 @@ impl<'a> GetSpan for AssignmentTarget<'a> {
             Self::TSSatisfiesExpression(expr) => expr.span,
             Self::TSNonNullExpression(expr) => expr.span,
             Self::TSTypeAssertion(expr) => expr.span,
+            Self::TSInstantiationExpression(expr) => expr.span,
             // `AssignmentTargetPattern`
             Self::ComputedMemberExpression(expr) => expr.span,
             Self::StaticMemberExpression(expr) => expr.span,
@@ -464,6 +465,7 @@ impl<'a> GetSpan for ForStatementLeft<'a> {
             Self::TSSatisfiesExpression(x) => x.span,
             Self::TSNonNullExpression(x) => x.span,
             Self::TSTypeAssertion(x) => x.span,
+            Self::TSInstantiationExpression(x) => x.span,
             Self::ArrayAssignmentTarget(x) => x.span,
             Self::ObjectAssignmentTarget(x) => x.span,
             Self::UsingDeclaration(x) => x.span,
@@ -479,6 +481,7 @@ impl<'a> GetSpan for SimpleAssignmentTarget<'a> {
             Self::TSSatisfiesExpression(expr) => expr.span,
             Self::TSNonNullExpression(expr) => expr.span,
             Self::TSTypeAssertion(expr) => expr.span,
+            Self::TSInstantiationExpression(expr) => expr.span,
             // `MemberExpression`
             Self::ComputedMemberExpression(expr) => expr.span,
             Self::StaticMemberExpression(expr) => expr.span,

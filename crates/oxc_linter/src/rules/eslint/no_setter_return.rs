@@ -1,16 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-setter-return): Setter cannot return a value")]
-struct NoSetterReturnDiagnostic(#[label] pub Span);
+fn no_setter_return_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(no-setter-return): Setter cannot return a value")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoSetterReturn;
@@ -41,9 +40,11 @@ declare_oxc_lint!(
 
 impl Rule for NoSetterReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ReturnStatement(stmt) = node.kind() else { return };
+        let AstKind::ReturnStatement(stmt) = node.kind() else {
+            return;
+        };
         if stmt.argument.is_some() && ctx.scopes().get_flags(node.scope_id()).is_set_accessor() {
-            ctx.diagnostic(NoSetterReturnDiagnostic(stmt.span));
+            ctx.diagnostic(no_setter_return_diagnostic(stmt.span));
         }
     }
 }
@@ -68,10 +69,7 @@ fn test() {
         ("return 1;", None),
         ("return 1;", None),
         ("return 1; function foo(){ return 1; } return 1;", None),
-        (
-            "function foo(){} return 1; var bar = function*(){ return 1; }; return 1; var baz = () => {}; return 1;",
-            None,
-        ),
+        ("function foo(){} return 1; var bar = function*(){ return 1; }; return 1; var baz = () => {}; return 1;", None),
         ("({ set foo(val) { return; } })", None),
         ("({ set foo(val) { if (val) { return; } } })", None),
         ("class A { set foo(val) { return; } }", None),
@@ -118,10 +116,7 @@ fn test() {
         ("(class { set foo(val = (v) => 1) {} })", None),
         ("Object.defineProperty(foo, 'bar', { set(val) { return; } })", None),
         ("Reflect.defineProperty(foo, 'bar', { set(val) { if (val) { return; } } })", None),
-        (
-            "Object.defineProperties(foo, { bar: { set(val) { try { return; } catch(e){} } } })",
-            None,
-        ),
+        ("Object.defineProperties(foo, { bar: { set(val) { try { return; } catch(e){} } } })", None),
         ("Object.create(foo, { bar: { set: function(val) { return; } } })", None),
         ("x = { set(val) { return 1; } }", None),
         ("x = { foo: { set(val) { return 1; } } }", None),
@@ -138,10 +133,7 @@ fn test() {
         ("Object.create(foo, { set: function(val) { return 1; } })", None),
         ("Object.defineProperty(foo, { set: (val) => 1 })", None),
         ("Object.defineProperty(foo, 'bar', { set(val) { function foo() { return 1; } } })", None),
-        (
-            "Reflect.defineProperty(foo, 'bar', { set(val) { var foo = function() { return 1; } } })",
-            None,
-        ),
+        ("Reflect.defineProperty(foo, 'bar', { set(val) { var foo = function() { return 1; } } })", None),
         ("Object.defineProperties(foo, { bar: { set(val) { () => { return 1 }; } } })", None),
         ("Object.create(foo, { bar: { set: (val) => { (val) => 1; } } })", None),
         ("Object.defineProperty(foo, 'bar', 'baz', { set(val) { return 1; } })", None),
@@ -156,44 +148,20 @@ fn test() {
         ("Object.create({ bar: { set(val) { return 1; } } }, foo)", None),
         ("Object.DefineProperty(foo, 'bar', { set(val) { return 1; } })", None),
         ("Reflect.DefineProperty(foo, 'bar', { set(val) { if (val) { return 1; } } })", None),
-        (
-            "Object.DefineProperties(foo, { bar: { set(val) { try { return 1; } catch(e){} } } })",
-            None,
-        ),
+        ("Object.DefineProperties(foo, { bar: { set(val) { try { return 1; } catch(e){} } } })", None),
         ("Object.Create(foo, { bar: { set: function(val) { return 1; } } })", None),
         ("object.defineProperty(foo, 'bar', { set(val) { return 1; } })", None),
         ("reflect.defineProperty(foo, 'bar', { set(val) { if (val) { return 1; } } })", None),
-        (
-            "Reflect.defineProperties(foo, { bar: { set(val) { try { return 1; } catch(e){} } } })",
-            None,
-        ),
+        ("Reflect.defineProperties(foo, { bar: { set(val) { try { return 1; } catch(e){} } } })", None),
         ("object.create(foo, { bar: { set: function(val) { return 1; } } })", None),
         ("Reflect.defineProperty(foo, 'bar', { set(val) { if (val) { return 1; } } })", None),
-        (
-            "/* globals Object:off */ Object.defineProperty(foo, 'bar', { set(val) { return 1; } })",
-            None,
-        ),
-        (
-            "Object.defineProperties(foo, { bar: { set(val) { try { return 1; } catch(e){} } } })",
-            None,
-        ),
+        ("/* globals Object:off */ Object.defineProperty(foo, 'bar', { set(val) { return 1; } })", None),
+        ("Object.defineProperties(foo, { bar: { set(val) { try { return 1; } catch(e){} } } })", None),
         ("let Object; Object.defineProperty(foo, 'bar', { set(val) { return 1; } })", None),
-        (
-            "function f() { Reflect.defineProperty(foo, 'bar', { set(val) { if (val) { return 1; } } }); var Reflect;}",
-            None,
-        ),
-        (
-            "function f(Object) { Object.defineProperties(foo, { bar: { set(val) { try { return 1; } catch(e){} } } }) }",
-            None,
-        ),
-        (
-            "if (x) { const Object = getObject(); Object.create(foo, { bar: { set: function(val) { return 1; } } }) }",
-            None,
-        ),
-        (
-            "x = function Object() { Object.defineProperty(foo, 'bar', { set(val) { return 1; } }) }",
-            None,
-        ),
+        ("function f() { Reflect.defineProperty(foo, 'bar', { set(val) { if (val) { return 1; } } }); var Reflect;}", None),
+        ("function f(Object) { Object.defineProperties(foo, { bar: { set(val) { try { return 1; } catch(e){} } } }) }", None),
+        ("if (x) { const Object = getObject(); Object.create(foo, { bar: { set: function(val) { return 1; } } }) }", None),
+        ("x = function Object() { Object.defineProperty(foo, 'bar', { set(val) { return 1; } }) }", None),
     ];
 
     let fail = vec![
@@ -216,23 +184,11 @@ fn test() {
         ("class A { set a(val) { return 1; } set b(val) { return 1; } }", None),
         ("(class { set a(val) { return 1; } static set b(val) { return 1; } })", None),
         ("({ set a(val) { if(val) { return 1; } else { return 2 }; } })", None),
-        (
-            "class A { set a(val) { switch(val) { case 1: return x; case 2: return y; default: return z } } }",
-            None,
-        ),
-        (
-            "(class { static set a(val) { if (val > 0) { this._val = val; return val; } return false; } })",
-            None,
-        ),
+        ("class A { set a(val) { switch(val) { case 1: return x; case 2: return y; default: return z } } }", None),
+        ("(class { static set a(val) { if (val > 0) { this._val = val; return val; } return false; } })", None),
         ("({ set a(val) { if(val) { return 1; } else { return; }; } })", None),
-        (
-            "class A { set a(val) { switch(val) { case 1: return x; case 2: return; default: return z } } }",
-            None,
-        ),
-        (
-            "(class { static set a(val) { if (val > 0) { this._val = val; return; } return false; } })",
-            None,
-        ),
+        ("class A { set a(val) { switch(val) { case 1: return x; case 2: return; default: return z } } }", None),
+        ("(class { static set a(val) { if (val > 0) { this._val = val; return; } return false; } })", None),
         ("({ set a(val) { function b(){} return b(); } })", None),
         ("class A { set a(val) { return () => {}; } }", None),
         ("(class { set a(val) { function b(){ return 1; } return 2; } })", None),

@@ -60,6 +60,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             .collect::<Vec<_>>()
             .join("/")
     });
+    let ids = rules.iter().enumerate().map(|(i, _)| i).collect::<Vec<_>>();
 
     let expanded = quote! {
         #(#use_stmts)*
@@ -74,6 +75,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
         }
 
         impl RuleEnum {
+            pub fn id(&self) -> usize {
+                match self {
+                    #(Self::#struct_names(_) => #ids),*
+                }
+            }
+
             pub fn name(&self) -> &'static str {
                 match self {
                     #(Self::#struct_names(_) => #struct_names::NAME),*
@@ -98,10 +105,10 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub fn read_json(&self, maybe_value: Option<serde_json::Value>) -> Self {
+            pub fn read_json(&self, value: serde_json::Value) -> Self {
                 match self {
                     #(Self::#struct_names(_) => Self::#struct_names(
-                        maybe_value.map(#struct_names::from_configuration).unwrap_or_default(),
+                        #struct_names::from_configuration(value),
                     )),*
                 }
             }
@@ -127,13 +134,13 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
 
         impl std::hash::Hash for RuleEnum {
             fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-                self.name().hash(state);
+                self.id().hash(state);
             }
         }
 
         impl PartialEq for RuleEnum {
             fn eq(&self, other: &Self) -> bool {
-                self.name() == other.name()
+                self.id() == other.id()
             }
         }
 
@@ -141,7 +148,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
 
         impl Ord for RuleEnum {
             fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-                self.name().cmp(&other.name())
+                self.id().cmp(&other.id())
             }
         }
 

@@ -106,6 +106,10 @@ impl SourceType {
         self.always_strict
     }
 
+    pub fn is_strict(self) -> bool {
+        self.is_module() || self.always_strict
+    }
+
     #[must_use]
     pub fn with_script(mut self, yes: bool) -> Self {
         if yes {

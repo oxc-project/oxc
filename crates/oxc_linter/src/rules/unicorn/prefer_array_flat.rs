@@ -4,10 +4,8 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -20,10 +18,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.")]
-#[diagnostic(severity(warning), help(r"Call `.flat()` on the array instead."))]
-struct PreferArrayFlatDiagnostic(#[label] pub Span);
+fn prefer_array_flat_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.")
+        .with_help(r"Call `.flat()` on the array instead.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferArrayFlat;
@@ -99,7 +98,7 @@ fn check_array_flat_map_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintConte
         return;
     }
 
-    ctx.diagnostic(PreferArrayFlatDiagnostic(call_expr.span));
+    ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
 }
 
 // `array.reduce((a, b) => a.concat(b), [])`
@@ -161,7 +160,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
                     return;
                 }
 
-                ctx.diagnostic(PreferArrayFlatDiagnostic(call_expr.span));
+                ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
             }
         }
     }
@@ -193,7 +192,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
             return;
         }
 
-        ctx.diagnostic(PreferArrayFlatDiagnostic(call_expr.span));
+        ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
     };
 }
 
@@ -208,7 +207,7 @@ fn check_array_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
             if !array_expr.elements.is_empty() {
                 return;
             }
-            ctx.diagnostic(PreferArrayFlatDiagnostic(call_expr.span));
+            ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
         }
     }
 }
@@ -232,7 +231,7 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
                     && (is_call_call
                         || !matches!(call_expr.arguments.get(1), Some(Argument::SpreadElement(_))))
                 {
-                    ctx.diagnostic(PreferArrayFlatDiagnostic(call_expr.span));
+                    ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
                 }
             }
         }

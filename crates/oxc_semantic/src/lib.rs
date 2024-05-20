@@ -333,6 +333,7 @@ mod tests {
                 "let a; let b; let c; a[c[b = c['a']] = 'c'] = 'b'",
                 ReferenceFlag::read(),
             ),
+            (SourceType::default(), "console.log;let a=0;a++", ReferenceFlag::write()),
             // typescript
             (typescript, "let a: number = 1; (a as any) = true", ReferenceFlag::write()),
             (typescript, "let a: number = 1; a = true as any", ReferenceFlag::write()),

@@ -1,17 +1,18 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-code-point): Prefer `{1}` over `{2}`")]
-#[diagnostic(severity(warning), help("Unicode is better supported in `{1}` than `{2}`"))]
-struct PreferCodePointDiagnostic(#[label] pub Span, pub &'static str, pub &'static str);
+fn prefer_code_point_diagnostic(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "eslint-plugin-unicorn(prefer-code-point): Prefer `{x1}` over `{x2}`"
+    ))
+    .with_help(format!("Unicode is better supported in `{x1}` than `{x2}`"))
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferCodePoint;
@@ -44,9 +45,13 @@ declare_oxc_lint!(
 
 impl Rule for PreferCodePoint {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
-        let Some(memb_expr) = call_expr.callee.as_member_expression() else { return };
+        let Some(memb_expr) = call_expr.callee.as_member_expression() else {
+            return;
+        };
 
         if memb_expr.is_computed() || memb_expr.optional() || call_expr.optional {
             return;
@@ -58,7 +63,7 @@ impl Rule for PreferCodePoint {
             _ => return,
         };
 
-        ctx.diagnostic(PreferCodePointDiagnostic(span, replacement, current));
+        ctx.diagnostic(prefer_code_point_diagnostic(span, replacement, current));
     }
 }
 

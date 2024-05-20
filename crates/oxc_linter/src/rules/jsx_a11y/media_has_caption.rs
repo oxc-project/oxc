@@ -2,22 +2,18 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::get_element_type, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element")]
-#[diagnostic(
-    severity(warning),
-    help("Media elements such as <audio> and <video> must have a <track> for captions.")
-)]
-struct MediaHasCaptionDiagnostic(#[label] pub Span);
+fn media_has_caption_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element")
+        .with_help("Media elements such as <audio> and <video> must have a <track> for captions.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct MediaHasCaption(Box<MediaHasCaptionConfig>);
@@ -92,7 +88,9 @@ impl Rule for MediaHasCaption {
         Self(Box::new(config))
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
+        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
+            return;
+        };
 
         let Some(element_name) = get_element_type(ctx, jsx_el) else {
             return;
@@ -137,7 +135,7 @@ impl Rule for MediaHasCaption {
         };
 
         let has_caption = if parent.children.is_empty() {
-            ctx.diagnostic(MediaHasCaptionDiagnostic(parent.opening_element.span));
+            ctx.diagnostic(media_has_caption_diagnostic(parent.opening_element.span));
             false
         } else {
             parent.children.iter().any(|child| match child {
@@ -165,7 +163,7 @@ impl Rule for MediaHasCaption {
         let span = parent.span;
 
         if !has_caption {
-            ctx.diagnostic(MediaHasCaptionDiagnostic(span));
+            ctx.diagnostic(media_has_caption_diagnostic(span));
         }
     }
 }

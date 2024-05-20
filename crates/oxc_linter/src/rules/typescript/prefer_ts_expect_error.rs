@@ -1,23 +1,17 @@
 use oxc_ast::CommentKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::fixer::Fix;
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`"
-)]
-#[diagnostic(
-    severity(warning),
-    help("Use \"@ts-expect-error\" to ensure an error is actually being suppressed.")
-)]
-struct PreferTsExpectErrorDiagnostic(#[label] pub Span);
+fn prefer_ts_expect_error_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`")
+        .with_help("Use \"@ts-expect-error\" to ensure an error is actually being suppressed.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferTsExpectError;
@@ -62,7 +56,7 @@ impl Rule for PreferTsExpectError {
 
             if kind.is_single_line() {
                 let comment_span = Span::new(span.start - 2, span.end);
-                ctx.diagnostic_with_fix(PreferTsExpectErrorDiagnostic(comment_span), || {
+                ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), || {
                     Fix::new(
                         format!("//{}", raw.replace("@ts-ignore", "@ts-expect-error")),
                         comment_span,
@@ -70,7 +64,7 @@ impl Rule for PreferTsExpectError {
                 });
             } else {
                 let comment_span = Span::new(span.start - 2, span.end + 2);
-                ctx.diagnostic_with_fix(PreferTsExpectErrorDiagnostic(comment_span), || {
+                ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), || {
                     Fix::new(
                         format!("/*{}*/", raw.replace("@ts-ignore", "@ts-expect-error")),
                         comment_span,

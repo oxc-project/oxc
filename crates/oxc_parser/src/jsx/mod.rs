@@ -79,11 +79,7 @@ impl<'a> ParserImpl<'a> {
         let name = self.parse_jsx_element_name()?;
         // <Component<TsType> for tsx
         let type_parameters = if self.ts_enabled() {
-            let ctx = self.ctx;
-            self.ctx = Context::default();
-            let args = self.parse_ts_type_arguments()?;
-            self.ctx = ctx;
-            args
+            self.context(Context::default(), self.ctx, Self::parse_ts_type_arguments)?
         } else {
             None
         };
@@ -258,14 +254,13 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_jsx_assignment_expression(&mut self) -> Result<Expression<'a>> {
-        let ctx = self.ctx;
-        self.ctx = Context::default().and_await(ctx.has_await());
-        let expr = self.parse_expression();
-        if let Ok(Expression::SequenceExpression(seq)) = &expr {
-            return Err(diagnostics::JSXExpressionsMayNotUseTheCommaOperator(seq.span).into());
-        }
-        self.ctx = ctx;
-        expr
+        self.context(Context::default().and_await(self.ctx.has_await()), self.ctx, |p| {
+            let expr = p.parse_expression();
+            if let Ok(Expression::SequenceExpression(seq)) = &expr {
+                return Err(diagnostics::jsx_expressions_may_not_use_the_comma_operator(seq.span));
+            }
+            expr
+        })
     }
 
     /// `JSXChildExpression` :

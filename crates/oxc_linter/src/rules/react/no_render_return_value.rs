@@ -1,17 +1,16 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.")]
-#[diagnostic(severity(warning), help("Using the return value is a legacy feature."))]
-struct NoRenderReturnValueDiagnostic(#[label] pub Span);
+fn no_render_return_value_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.")
+        .with_help("Using the return value is a legacy feature.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoRenderReturnValue;
@@ -38,9 +37,15 @@ declare_oxc_lint!(
 
 impl Rule for NoRenderReturnValue {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
-        let Some(member_expr) = call_expr.callee.as_member_expression() else { return };
-        let Expression::Identifier(ident) = member_expr.object() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+        let Some(member_expr) = call_expr.callee.as_member_expression() else {
+            return;
+        };
+        let Expression::Identifier(ident) = member_expr.object() else {
+            return;
+        };
         if ident.name == "ReactDOM" {
             if let Some((property_span, property_name)) = member_expr.static_property_info() {
                 if property_name == "render" {
@@ -52,7 +57,7 @@ impl Rule for NoRenderReturnValue {
                                 | AstKind::ReturnStatement(_)
                                 | AstKind::AssignmentExpression(_)
                         ) {
-                            ctx.diagnostic(NoRenderReturnValueDiagnostic(
+                            ctx.diagnostic(no_render_return_value_diagnostic(
                                 ident.span.merge(&property_span),
                             ));
                         }
@@ -63,7 +68,7 @@ impl Rule for NoRenderReturnValue {
                                 ctx.nodes().kind(ctx.scopes().get_node_id(scope_id))
                             {
                                 if e.expression {
-                                    ctx.diagnostic(NoRenderReturnValueDiagnostic(
+                                    ctx.diagnostic(no_render_return_value_diagnostic(
                                         ident.span.merge(&property_span),
                                     ));
                                 }

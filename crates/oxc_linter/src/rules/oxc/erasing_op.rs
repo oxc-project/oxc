@@ -1,11 +1,9 @@
+use oxc_diagnostics::OxcDiagnostic;
+
 // Based on https://github.com/rust-lang/rust-clippy//blob/00e9372987755dece96561ef2eef0785c8742e55/clippy_lints/src/operators/erasing_op.rs
 use oxc_ast::{
     ast::{BinaryExpression, Expression},
     AstKind,
-};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -13,12 +11,11 @@ use oxc_syntax::operator::BinaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "oxc(erasing-op): Unexpected erasing operation. This expression will always evaluate to zero."
-)]
-#[diagnostic(severity(warning), help("This is most likely not the intended outcome. Consider removing the operation, or directly assigning zero to the variable"))]
-struct ErasingOpDiagnostic(#[label] pub Span);
+fn erasing_op_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("oxc(erasing-op): Unexpected erasing operation. This expression will always evaluate to zero.")
+        .with_help("This is most likely not the intended outcome. Consider removing the operation, or directly assigning zero to the variable")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ErasingOp;
@@ -50,7 +47,9 @@ declare_oxc_lint!(
 
 impl Rule for ErasingOp {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(binary_expression) = node.kind() else { return };
+        let AstKind::BinaryExpression(binary_expression) = node.kind() else {
+            return;
+        };
 
         match binary_expression.operator {
             BinaryOperator::Multiplication | BinaryOperator::BitwiseAnd => {
@@ -82,7 +81,7 @@ fn check_op<'a, 'b>(
     ctx: &LintContext<'a>,
 ) {
     if is_number_value(op, 0.0) {
-        ctx.diagnostic(ErasingOpDiagnostic(binary_expression.span));
+        ctx.diagnostic(erasing_op_diagnostic(binary_expression.span));
     }
 }
 

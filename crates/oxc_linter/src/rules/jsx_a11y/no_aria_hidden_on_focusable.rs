@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -16,10 +14,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(no-aria-hidden-on-focusable): `aria-hidden` must not be true on focusable elements.")]
-#[diagnostic(severity(warning), help("Remove `aria-hidden=\"true\"` from focusable elements or modify the element to be not focusable."))]
-struct NoAriaHiddenOnFocusableDiagnostic(#[label] pub Span);
+fn no_aria_hidden_on_focusable_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(no-aria-hidden-on-focusable): `aria-hidden` must not be true on focusable elements.")
+        .with_help("Remove `aria-hidden=\"true\"` from focusable elements or modify the element to be not focusable.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAriaHiddenOnFocusable;
@@ -45,11 +44,13 @@ declare_oxc_lint!(
 
 impl Rule for NoAriaHiddenOnFocusable {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
+        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
+            return;
+        };
         if let Some(aria_hidden_prop) = has_jsx_prop_lowercase(jsx_el, "aria-hidden") {
             if is_aria_hidden_true(aria_hidden_prop) && is_focusable(ctx, jsx_el) {
                 if let JSXAttributeItem::Attribute(boxed_attr) = aria_hidden_prop {
-                    ctx.diagnostic(NoAriaHiddenOnFocusableDiagnostic(boxed_attr.span));
+                    ctx.diagnostic(no_aria_hidden_on_focusable_diagnostic(boxed_attr.span));
                 }
             }
         }

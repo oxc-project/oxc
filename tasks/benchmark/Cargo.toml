@@ -62,9 +62,8 @@ harness = false
 bench   = false
 
 [dependencies]
-# All optional as `parser_napi` pseudo-benchmark doesn't need any of them,
-# and including them in compilation adds 1 minute to building that benchmark on CI.
-# See `tasks/benchmark/benches/parser_napi.rs`.
+# All `oxc_*` dependencies optional as on CI we build each benchmark separately
+# with only the crates it needs, to speed up the builds
 oxc_allocator    = { workspace = true, optional = true }
 oxc_linter       = { workspace = true, optional = true }
 oxc_minifier     = { workspace = true, optional = true }
@@ -75,9 +74,11 @@ oxc_span         = { workspace = true, optional = true }
 oxc_tasks_common = { workspace = true, optional = true }
 oxc_transformer  = { workspace = true, optional = true }
 oxc_codegen      = { workspace = true, optional = true }
-oxc_sourcemap    = { workspace = true, optional = true }
+oxc_sourcemap    = { workspace = true, features = ["concurrent"], optional = true }
 
-criterion  = { package = "criterion2", version = "0.8.0", default-features = false }
+criterion = { package = "criterion2", version = "0.8.0", default-features = false }
+
+# Only for NAPI benchmark
 serde      = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 
@@ -97,3 +98,29 @@ default = [
 ]
 codspeed = ["criterion/codspeed"]
 codspeed_napi = ["criterion/codspeed", "dep:serde", "dep:serde_json"]
+
+# Features for running each benchmark separately with minimum dependencies that benchmark needs.
+# e.g. `cargo build --release -p oxc_benchmark --bench parser --no-default-features --features parser`
+lexer = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
+parser = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
+transformer = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common", "dep:oxc_transformer"]
+semantic = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_semantic", "dep:oxc_span", "dep:oxc_tasks_common"]
+minifier = ["dep:oxc_allocator", "dep:oxc_minifier", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
+codegen_sourcemap = ["dep:oxc_allocator", "dep:oxc_codegen", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
+sourcemap = [
+  "dep:oxc_allocator",
+  "dep:oxc_codegen",
+  "dep:oxc_parser",
+  "dep:oxc_sourcemap",
+  "dep:oxc_span",
+  "dep:oxc_tasks_common",
+]
+linter = [
+  "dep:oxc_allocator",
+  "dep:oxc_linter",
+  "dep:oxc_parser",
+  "dep:oxc_semantic",
+  "dep:oxc_span",
+  "dep:oxc_tasks_common",
+]
+prettier = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_prettier", "dep:oxc_span", "dep:oxc_tasks_common"]

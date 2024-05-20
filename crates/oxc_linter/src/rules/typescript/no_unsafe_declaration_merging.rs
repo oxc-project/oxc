@@ -1,18 +1,17 @@
 use oxc_ast::{ast::BindingIdentifier, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.")]
-#[diagnostic(severity(warning), help("The TypeScript compiler doesn't check whether properties are initialized, which can cause lead to TypeScript not detecting code that will cause runtime errors."))]
-struct NoUnsafeDeclarationMergingDiagnostic(#[label] Span, #[label] Span);
+fn no_unsafe_declaration_merging_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("typescript-eslint(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.")
+        .with_help("The TypeScript compiler doesn't check whether properties are initialized, which can cause lead to TypeScript not detecting code that will cause runtime errors.")
+        .with_labels([span0.into(), span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnsafeDeclarationMerging;
@@ -74,7 +73,7 @@ fn check_and_diagnostic(
     ctx: &LintContext<'_>,
 ) {
     if scope_ident.name.as_str() == ident.name.as_str() {
-        ctx.diagnostic(NoUnsafeDeclarationMergingDiagnostic(ident.span, scope_ident.span));
+        ctx.diagnostic(no_unsafe_declaration_merging_diagnostic(ident.span, scope_ident.span));
     }
 }
 

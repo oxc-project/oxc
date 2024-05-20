@@ -1,8 +1,6 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -13,12 +11,11 @@ use crate::{
     AstNode, Fix,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-unicorn(no-console-spaces): Do not use {0} spaces with `console.{1}` parameters"
-)]
-#[diagnostic(severity(warning), help("The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added."))]
-struct NoConsoleSpacesDiagnostic(&'static str, String, #[label] pub Span);
+fn no_console_spaces_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-console-spaces): Do not use {x0} spaces with `console.{x1}` parameters"))
+        .with_help("The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.")
+        .with_labels([span2.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConsoleSpaces;
@@ -48,7 +45,9 @@ declare_oxc_lint!(
 
 impl Rule for NoConsoleSpaces {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
         if !is_method_call(
             call_expr,
@@ -134,7 +133,7 @@ fn report_diagnostic(
         literal_raw.trim().to_string()
     };
 
-    ctx.diagnostic_with_fix(NoConsoleSpacesDiagnostic(direction, ident.to_string(), span), || {
+    ctx.diagnostic_with_fix(no_console_spaces_diagnostic(direction, ident, span), || {
         Fix::new(fix, Span::new(start, end))
     });
 }

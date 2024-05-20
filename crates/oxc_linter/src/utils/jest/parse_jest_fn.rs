@@ -218,7 +218,9 @@ fn is_top_most_call_expr<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>
     let mut node = node;
 
     loop {
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else { return true };
+        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
+            return true;
+        };
 
         match parent.kind() {
             AstKind::CallExpression(_) => return false,

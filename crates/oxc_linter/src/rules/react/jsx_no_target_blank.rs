@@ -5,29 +5,29 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, GetSpan, Span};
 use std::ops::Deref;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum JsxNoTargetBlankDiagnostic {
-    #[error("eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations")]
-    #[diagnostic(severity(warning), help("add rel=`noreferrer` to the element"))]
-    TargetBlankWithoutNoreferrer(#[label] Span),
+fn target_blank_without_noreferrer(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
+.with_help("add rel=`noreferrer` to the element")
+.with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations")]
-    #[diagnostic(severity(warning), help("add rel=`noreferrer` or rel=`noopener` to the element"))]
-    TargetBlankWithoutNoopener(#[label] Span),
+fn target_blank_without_noopener(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
+.with_help("add rel=`noreferrer` or rel=`noopener` to the element")
+.with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.")]
-    #[diagnostic(severity(warning), help("add rel=`noreferrer` to the element"))]
-    ExplicitPropsInSpreadAttributes(#[label] Span),
+fn explicit_props_in_spread_attributes(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.")
+.with_help("add rel=`noreferrer` to the element")
+.with_labels([span0.into()])
 }
 
 #[derive(Debug, Clone)]
@@ -60,9 +60,9 @@ impl Default for JsxNoTargetBlank {
 impl JsxNoTargetBlank {
     fn diagnostic(&self, span: Span, ctx: &LintContext) {
         if self.allow_referrer {
-            ctx.diagnostic(JsxNoTargetBlankDiagnostic::TargetBlankWithoutNoopener(span));
+            ctx.diagnostic(target_blank_without_noopener(span));
         } else {
-            ctx.diagnostic(JsxNoTargetBlankDiagnostic::TargetBlankWithoutNoreferrer(span));
+            ctx.diagnostic(target_blank_without_noreferrer(span));
         }
     }
     fn check_is_link(&self, tag_name: &str, ctx: &LintContext) -> bool {
@@ -185,11 +185,7 @@ impl Rule for JsxNoTargetBlank {
                         if (has_href_value && is_href_valid) || rel_valid_tuple.0 {
                             return;
                         }
-                        ctx.diagnostic(
-                            JsxNoTargetBlankDiagnostic::ExplicitPropsInSpreadAttributes(
-                                spread_span,
-                            ),
-                        );
+                        ctx.diagnostic(explicit_props_in_spread_attributes(spread_span));
                         return;
                     }
 
@@ -227,7 +223,6 @@ impl Rule for JsxNoTargetBlank {
                         EnforceDynamicLinksEnum::Never
                     }
                 }),
-
             warn_on_spread_attributes: value
                 .and_then(|val| {
                     val.get("warnOnSpreadAttributes").and_then(serde_json::Value::as_bool)

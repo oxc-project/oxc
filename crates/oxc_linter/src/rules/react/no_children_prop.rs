@@ -2,22 +2,20 @@ use oxc_ast::{
     ast::{Argument, JSXAttributeItem, JSXAttributeName, ObjectPropertyKind},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, utils::is_create_element_call, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react(no-children-prop): Avoid passing children using a prop.")]
-#[diagnostic(
-    severity(warning),
-    help("The canonical way to pass children in React is to use JSX elements")
-)]
-struct NoChildrenPropDiagnostic(#[label] pub Span);
+fn no_children_prop_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-react(no-children-prop): Avoid passing children using a prop.",
+    )
+    .with_help("The canonical way to pass children in React is to use JSX elements")
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoChildrenProp;
@@ -63,9 +61,11 @@ impl Rule for NoChildrenProp {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
-                let JSXAttributeName::Identifier(attr_ident) = &attr.name else { return };
+                let JSXAttributeName::Identifier(attr_ident) = &attr.name else {
+                    return;
+                };
                 if attr_ident.name == "children" {
-                    ctx.diagnostic(NoChildrenPropDiagnostic(attr_ident.span));
+                    ctx.diagnostic(no_children_prop_diagnostic(attr_ident.span));
                 }
             }
             AstKind::CallExpression(call_expr) => {
@@ -80,7 +80,7 @@ impl Rule for NoChildrenProp {
 
                             None
                         }) {
-                            ctx.diagnostic(NoChildrenPropDiagnostic(span));
+                            ctx.diagnostic(no_children_prop_diagnostic(span));
                         }
                     }
                 }

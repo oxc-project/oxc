@@ -2,19 +2,16 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression, Statement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, CompactStr, Span};
+use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, utils::get_node_name};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises")]
-#[diagnostic(severity(warning), help("Prefer {0:?}"))]
-struct UseMockShorthand(CompactStr, #[label] Span);
+fn use_mock_shorthand(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises").with_help(format!("Prefer {x0:?}")).with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferMockPromiseShorthand;
@@ -152,17 +149,14 @@ impl PreferMockPromiseShorthand {
         // if arguments is more than one, just report it instead of fixing it.
         if call_expr.arguments.len() <= 1 {
             ctx.diagnostic_with_fix(
-                UseMockShorthand(Atom::from(prefer_name).to_compact_str(), property_span),
+                use_mock_shorthand(Atom::from(prefer_name).as_str(), property_span),
                 || {
                     let content = Self::fix(prefer_name, call_expr, ctx);
                     Fix::new(content, Span::new(property_span.start, fix_span.end))
                 },
             );
         } else {
-            ctx.diagnostic(UseMockShorthand(
-                Atom::from(prefer_name).to_compact_str(),
-                property_span,
-            ));
+            ctx.diagnostic(use_mock_shorthand(Atom::from(prefer_name).as_str(), property_span));
         }
     }
 

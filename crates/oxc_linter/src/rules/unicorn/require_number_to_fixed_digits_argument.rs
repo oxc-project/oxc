@@ -1,17 +1,16 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(require-number-to-fixed-digits-argument): Number method .toFixed() should have an argument")]
-#[diagnostic(severity(warning), help("It's better to make it clear what the value of the digits argument is when calling Number#toFixed(), instead of relying on the default value of 0."))]
-struct RequireNumberToFixedDigitsArgumentDiagnostic(#[label] pub Span);
+fn require_number_to_fixed_digits_argument_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(require-number-to-fixed-digits-argument): Number method .toFixed() should have an argument")
+        .with_help("It's better to make it clear what the value of the digits argument is when calling Number#toFixed(), instead of relying on the default value of 0.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireNumberToFixedDigitsArgument;
@@ -61,7 +60,7 @@ impl Rule for RequireNumberToFixedDigitsArgument {
                     let parenthesis_span = Span::new(member.span().end, expr.span.end);
 
                     ctx.diagnostic_with_fix(
-                        RequireNumberToFixedDigitsArgumentDiagnostic(parenthesis_span),
+                        require_number_to_fixed_digits_argument_diagnostic(parenthesis_span),
                         || {
                             let modified_code = {
                                 let mut formatter = ctx.codegen();

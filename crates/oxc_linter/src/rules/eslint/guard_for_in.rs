@@ -1,18 +1,17 @@
 use oxc_ast::ast::Statement;
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(guard-for-in): Require `for-in` loops to include an `if` statement")]
-#[diagnostic(severity(warning), help("The body of a for-in should be wrapped in an if statement to filter unwanted properties from the prototype."))]
-struct GuardForInDiagnostic(#[label] pub Span);
+fn guard_for_in_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(guard-for-in): Require `for-in` loops to include an `if` statement")
+        .with_help("The body of a for-in should be wrapped in an if statement to filter unwanted properties from the prototype.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct GuardForIn;
@@ -66,7 +65,7 @@ impl Rule for GuardForIn {
                 }
                 _ => {}
             }
-            ctx.diagnostic(GuardForInDiagnostic(Span::new(
+            ctx.diagnostic(guard_for_in_diagnostic(Span::new(
                 for_in_statement.span.start,
                 for_in_statement.right.span().end + 1,
             )));

@@ -62,6 +62,7 @@ struct TestCase<'a> {
     group_comment: Option<String>,
     config: Option<Cow<'a, str>>,
     settings: Option<Cow<'a, str>>,
+    filename: Option<Cow<'a, str>>,
 }
 
 impl<'a> TestCase<'a> {
@@ -72,6 +73,7 @@ impl<'a> TestCase<'a> {
             config: None,
             settings: None,
             group_comment: None,
+            filename: None,
         };
         test_case.visit_expression(arg);
         test_case
@@ -82,7 +84,7 @@ impl<'a> TestCase<'a> {
         self
     }
 
-    fn code(&self, need_config: bool, need_settings: bool) -> String {
+    fn code(&self, need_config: bool, need_settings: bool, need_filename: bool) -> String {
         self.code
             .as_ref()
             .map(|code| {
@@ -105,12 +107,18 @@ impl<'a> TestCase<'a> {
                     || "None".to_string(),
                     |settings| format!(r#"Some(serde_json::json!({{ "settings": {settings} }}))"#),
                 );
+                let filename = self.filename.as_ref().map_or_else(
+                    || "None".to_string(),
+                    |filename| format!(r#"Some(PathBuf::from("{filename}"))"#),
+                );
                 let code_str = if code.contains('"') {
                     format!("r#\"{}\"#", code.replace("\\\"", "\""))
                 } else {
                     format!("\"{code}\"")
                 };
-                if need_settings {
+                if need_filename {
+                    format!("({code_str}, {config}, {settings}, {filename})")
+                } else if need_settings {
                     format!("({code_str}, {config}, {settings})")
                 } else if need_config {
                     format!("({code_str}, {config})")
@@ -219,6 +227,11 @@ impl<'a> Visit<'a> for TestCase<'a> {
                         self.settings =
                             Some(Cow::Owned(json::convert_config_to_json_literal(setting_text)));
                     }
+                    PropertyKey::StaticIdentifier(ident) if ident.name == "filename" => {
+                        let span = prop.value.span();
+                        let filename = &self.source_text[span.start as usize..span.end as usize];
+                        self.filename = Some(Cow::Owned(filename.to_string()));
+                    }
                     _ => continue,
                 },
                 ObjectPropertyKind::SpreadProperty(_) => continue,
@@ -256,6 +269,7 @@ pub struct Context {
     snake_rule_name: String,
     pass_cases: String,
     fail_cases: String,
+    has_filename: bool,
 }
 
 impl Context {
@@ -270,7 +284,13 @@ impl Context {
             snake_rule_name: underscore_rule_name,
             pass_cases,
             fail_cases,
+            has_filename: false,
         }
+    }
+
+    fn with_filename(mut self) -> Self {
+        self.has_filename = true;
+        self
     }
 }
 
@@ -496,7 +516,6 @@ pub enum RuleKind {
     ReactPerf,
     JSXA11y,
     Oxc,
-    DeepScan,
     NextJS,
     JSDoc,
     Node,
@@ -513,7 +532,6 @@ impl RuleKind {
             "react-perf" => Self::ReactPerf,
             "jsx-a11y" => Self::JSXA11y,
             "oxc" => Self::Oxc,
-            "deepscan" => Self::DeepScan,
             "nextjs" => Self::NextJS,
             "jsdoc" => Self::JSDoc,
             "n" => Self::Node,
@@ -533,7 +551,6 @@ impl Display for RuleKind {
             Self::React => write!(f, "eslint-plugin-react"),
             Self::ReactPerf => write!(f, "eslint-plugin-react-perf"),
             Self::JSXA11y => write!(f, "eslint-plugin-jsx-a11y"),
-            Self::DeepScan => write!(f, "deepscan"),
             Self::Oxc => write!(f, "oxc"),
             Self::NextJS => write!(f, "eslint-plugin-next"),
             Self::JSDoc => write!(f, "eslint-plugin-jsdoc"),
@@ -565,7 +582,7 @@ fn main() {
         RuleKind::JSDoc => format!("{JSDOC_TEST_PATH}/{camel_rule_name}.js"),
         RuleKind::Node => format!("{NODE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::TreeShaking => format!("{TREE_SHAKING_PATH}/{kebab_rule_name}.test.ts"),
-        RuleKind::Oxc | RuleKind::DeepScan => String::new(),
+        RuleKind::Oxc => String::new(),
     };
 
     println!("Reading test file from {rule_test_path}");
@@ -598,12 +615,16 @@ fn main() {
             let fail_has_settings = fail_cases.iter().any(|case| case.settings.is_some());
             let has_settings = pass_has_settings || fail_has_settings;
 
+            let pass_has_filename = pass_cases.iter().any(|case| case.filename.is_some());
+            let fail_has_filename = fail_cases.iter().any(|case| case.filename.is_some());
+            let has_filename = pass_has_filename || fail_has_filename;
+
             let gen_cases_string = |cases: Vec<TestCase>| {
                 let mut codes = vec![];
                 let mut last_comment = String::new();
                 for case in cases {
                     let current_comment = case.group_comment();
-                    let mut code = case.code(has_config, has_settings);
+                    let mut code = case.code(has_config, has_settings, has_filename);
                     if code.is_empty() {
                         continue;
                     }
@@ -613,7 +634,7 @@ fn main() {
                             code = format!(
                                 "// {}\n{}",
                                 &last_comment,
-                                case.code(has_config, has_settings)
+                                case.code(has_config, has_settings, has_filename)
                             );
                         }
                     }
@@ -627,7 +648,7 @@ fn main() {
             let pass_cases = gen_cases_string(pass_cases);
             let fail_cases = gen_cases_string(fail_cases);
 
-            Context::new(plugin_name, &rule_name, pass_cases, fail_cases)
+            Context::new(plugin_name, &rule_name, pass_cases, fail_cases).with_filename()
         }
         Err(_err) => {
             println!("Rule {rule_name} cannot be found in {rule_kind}, use empty template.");

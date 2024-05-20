@@ -5,10 +5,8 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -19,10 +17,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-next(next-script-for-ga): Prefer `next/script` component when using the inline script for Google Analytics.")]
-#[diagnostic(severity(warning), help("See https://nextjs.org/docs/messages/next-script-for-ga"))]
-struct NextScriptForGaDiagnostic(#[label] pub Span);
+fn next_script_for_ga_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-next(next-script-for-ga): Prefer `next/script` component when using the inline script for Google Analytics.")
+        .with_help("See https://nextjs.org/docs/messages/next-script-for-ga")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NextScriptForGa;
@@ -43,7 +42,9 @@ declare_oxc_lint!(
 
 impl Rule for NextScriptForGa {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_opening_element) = node.kind() else { return };
+        let AstKind::JSXOpeningElement(jsx_opening_element) = node.kind() else {
+            return;
+        };
 
         let JSXElementName::Identifier(jsx_opening_element_name) = &jsx_opening_element.name else {
             return;
@@ -59,7 +60,7 @@ impl Rule for NextScriptForGa {
         if let Some(src_prop) = has_jsx_prop_lowercase(jsx_opening_element, "src") {
             if let Some(src_prop_value) = get_string_literal_prop_value(src_prop) {
                 if SUPPORTED_SRCS.iter().any(|s| src_prop_value.contains(s)) {
-                    ctx.diagnostic(NextScriptForGaDiagnostic(jsx_opening_element_name.span));
+                    ctx.diagnostic(next_script_for_ga_diagnostic(jsx_opening_element_name.span));
                     return;
                 }
             }
@@ -69,10 +70,12 @@ impl Rule for NextScriptForGa {
         // https://developers.google.com/analytics/devguides/collection/analyticsjs#the_google_analytics_tag
         // https://developers.google.com/tag-manager/quickstart
         if let Some(danger_value) = get_dangerously_set_inner_html_prop_value(jsx_opening_element) {
-            let Expression::TemplateLiteral(template_literal) = &danger_value.value else { return };
+            let Expression::TemplateLiteral(template_literal) = &danger_value.value else {
+                return;
+            };
             let template_literal = template_literal.quasis[0].value.raw.as_str();
             if SUPPORTED_HTML_CONTENT_URLS.iter().any(|s| template_literal.contains(s)) {
-                ctx.diagnostic(NextScriptForGaDiagnostic(jsx_opening_element_name.span));
+                ctx.diagnostic(next_script_for_ga_diagnostic(jsx_opening_element_name.span));
             }
         }
     }

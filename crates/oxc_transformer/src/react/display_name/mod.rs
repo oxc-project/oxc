@@ -3,6 +3,7 @@ use std::rc::Rc;
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
+use oxc_traverse::{Ancestor, FinderRet, TraverseCtx};
 
 use crate::context::Ctx;
 
@@ -14,10 +15,6 @@ use crate::context::Ctx;
 ///
 /// In: `var bar = createReactClass({});`
 /// Out: `var bar = createReactClass({ displayName: "bar" });`
-///
-/// NOTE: The current implementation uses the top-down approach on `AssignmentExpression`, `VariableDeclaration`,
-/// but can be rewritten with a bottom-up approach.
-/// See <https://github.com/babel/babel/blob/08b0472069cd207f043dd40a4d157addfdd36011/packages/babel-plugin-transform-react-display-name/src/index.ts#L88-L98>
 pub struct ReactDisplayName<'a> {
     ctx: Ctx<'a>,
 }
@@ -30,65 +27,71 @@ impl<'a> ReactDisplayName<'a> {
 
 // Transforms
 impl<'a> ReactDisplayName<'a> {
-    /// `foo = React.createClass({})`
-    pub fn transform_assignment_expression(&self, assign_expr: &mut AssignmentExpression<'a>) {
-        let Some(obj_expr) = Self::get_object_from_create_class(&mut assign_expr.right) else {
+    pub fn transform_call_expression(
+        &self,
+        call_expr: &mut CallExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        let Some(obj_expr) = Self::get_object_from_create_class(call_expr) else {
             return;
         };
-        let name = match &assign_expr.left {
-            AssignmentTarget::AssignmentTargetIdentifier(ident) => ident.name.clone(),
-            target => {
-                if let Some(target) = target.as_member_expression() {
-                    if let Some(name) = target.static_property_name() {
-                        self.ctx.ast.new_atom(name)
-                    } else {
-                        return;
+
+        let name = ctx.find_ancestor(|ancestor| {
+            match ancestor {
+                // `foo = React.createClass({})`
+                Ancestor::AssignmentExpressionRight(assign_expr) => match &assign_expr.left() {
+                    AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                        FinderRet::Found(ident.name.clone())
                     }
-                } else {
-                    return;
+                    target => {
+                        if let Some(target) = target.as_member_expression() {
+                            if let Some(name) = target.static_property_name() {
+                                FinderRet::Found(ctx.ast.new_atom(name))
+                            } else {
+                                FinderRet::Stop
+                            }
+                        } else {
+                            FinderRet::Stop
+                        }
+                    }
+                },
+                // `let foo = React.createClass({})`
+                Ancestor::VariableDeclaratorInit(declarator) => match &declarator.id().kind {
+                    BindingPatternKind::BindingIdentifier(ident) => {
+                        FinderRet::Found(ident.name.clone())
+                    }
+                    _ => FinderRet::Stop,
+                },
+                // `{foo: React.createClass({})}`
+                Ancestor::ObjectPropertyValue(prop) => {
+                    if let Some(name) = prop.key().static_name() {
+                        FinderRet::Found(ctx.ast.new_atom(&name))
+                    } else {
+                        FinderRet::Stop
+                    }
                 }
+                // `export default React.createClass({})`
+                // Uses the current file name as the display name.
+                Ancestor::ExportDefaultDeclarationDeclaration(_) => {
+                    FinderRet::Found(ctx.ast.new_atom(&self.ctx.filename))
+                }
+                // Stop crawling up when hit a statement
+                _ if ancestor.is_via_statement() => FinderRet::Stop,
+                _ => FinderRet::Continue,
             }
-        };
-        self.add_display_name(obj_expr, name);
-    }
+        });
 
-    /// `let foo = React.createClass({})`
-    pub fn transform_variable_declarator(&self, declarator: &mut VariableDeclarator<'a>) {
-        let Some(init_expr) = declarator.init.as_mut() else { return };
-        let Some(obj_expr) = Self::get_object_from_create_class(init_expr) else {
-            return;
-        };
-        let name = match &declarator.id.kind {
-            BindingPatternKind::BindingIdentifier(ident) => ident.name.clone(),
-            _ => return,
-        };
-        self.add_display_name(obj_expr, name);
-    }
-
-    /// `{foo: React.createClass({})}`
-    pub fn transform_object_property(&self, prop: &mut ObjectProperty<'a>) {
-        let Some(obj_expr) = Self::get_object_from_create_class(&mut prop.value) else { return };
-        let Some(name) = prop.key.static_name() else { return };
-        let name = self.ctx.ast.new_atom(&name);
-        self.add_display_name(obj_expr, name);
-    }
-
-    /// `export default React.createClass({})`
-    /// Uses the current file name as the display name.
-    pub fn transform_export_default_declaration(&self, decl: &mut ExportDefaultDeclaration<'a>) {
-        let Some(expr) = decl.declaration.as_expression_mut() else { return };
-        let Some(obj_expr) = Self::get_object_from_create_class(expr) else { return };
-        let name = self.ctx.ast.new_atom(&self.ctx.filename);
-        self.add_display_name(obj_expr, name);
+        if let Some(name) = name {
+            self.add_display_name(obj_expr, name);
+        }
     }
 }
 
 impl<'a> ReactDisplayName<'a> {
     /// Get the object from `React.createClass({})` or `createReactClass({})`
     fn get_object_from_create_class<'b>(
-        e: &'b mut Expression<'a>,
+        call_expr: &'b mut CallExpression<'a>,
     ) -> Option<&'b mut Box<'a, ObjectExpression<'a>>> {
-        let Expression::CallExpression(call_expr) = e else { return None };
         if match &call_expr.callee {
             callee @ match_member_expression!(Expression) => {
                 !callee.to_member_expression().is_specific_member_access("React", "createClass")

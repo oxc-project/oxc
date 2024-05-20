@@ -1,12 +1,10 @@
+use oxc_diagnostics::OxcDiagnostic;
+
 use std::collections::{HashMap, HashSet};
 
 use oxc_ast::{
     ast::{Expression, MethodDefinitionKind},
     AstKind,
-};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{
@@ -16,10 +14,11 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-this-before-super): Expected to always call super() before this/super property access.")]
-#[diagnostic(severity(warning), help("Call super() before this/super property access."))]
-struct NoThisBeforeSuperDiagnostic(#[label] pub Span);
+fn no_this_before_super_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(no-this-before-super): Expected to always call super() before this/super property access.")
+        .with_help("Call super() before this/super property access.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoThisBeforeSuper;
@@ -138,7 +137,7 @@ impl Rule for NoThisBeforeSuper {
                 // so the unwrap() is safe here. The parent node is the
                 // AstKind::MethodDefinition for `constructor`.
                 let parent_span = ctx.nodes().parent_node(node.id()).unwrap().kind().span();
-                ctx.diagnostic(NoThisBeforeSuperDiagnostic(parent_span));
+                ctx.diagnostic(no_this_before_super_diagnostic(parent_span));
             }
         }
     }
@@ -182,7 +181,6 @@ fn test() {
         ("class A { constructor() { this.b(); } }", None),
         ("class A extends null { }", None),
         ("class A extends null { constructor() { } }", None),
-
         // allows `this`/`super` after `super()`.
         ("class A extends B { }", None),
         ("class A extends B { constructor() { super(); } }", None),
@@ -194,31 +192,25 @@ fn test() {
         ("class A extends B { constructor() { foo += super().a; this.c(); } }", None),
         ("class A extends B { constructor() { foo |= super().a; this.c(); } }", None),
         ("class A extends B { constructor() { foo &= super().a; this.c(); } }", None),
-
         // allows `this`/`super` in nested executable scopes, even if before `super()`.
         ("class A extends B { constructor() { class B extends C { constructor() { super(); this.d = 0; } } super(); } }", None),
         ("class A extends B { constructor() { var B = class extends C { constructor() { super(); this.d = 0; } }; super(); } }", None),
         ("class A extends B { constructor() { function c() { this.d(); } super(); } }", None),
         ("class A extends B { constructor() { var c = function c() { this.d(); }; super(); } }", None),
         ("class A extends B { constructor() { var c = () => this.d(); super(); } }", None),
-
         // ignores out of constructors.
         ("class A { b() { this.c = 0; } }", None),
         ("class A extends B { c() { this.d = 0; } }", None),
         ("function a() { this.b = 0; }", None),
-
         // multi code path.
         ("class A extends B { constructor() { if (a) { super(); this.a(); } else { super(); this.b(); } } }", None),
         ("class A extends B { constructor() { if (a) super(); else super(); this.a(); } }", None),
         ("class A extends B { constructor() { try { super(); } finally {} this.a(); } }", None),
-
         // https://github.com/eslint/eslint/issues/5261
         ("class A extends B { constructor(a) { super(); for (const b of a) { this.a(); } } }", None),
         ("class A extends B { constructor(a) { for (const b of a) { foo(b); } super(); } }", None),
-
         // https://github.com/eslint/eslint/issues/5319
         ("class A extends B { constructor(a) { super(); this.a = a && function(){} && this.foo; } }", None),
-
         // https://github.com/eslint/eslint/issues/5394
         (
             r"class A extends Object {
@@ -227,14 +219,15 @@ fn test() {
                     for (let i = 0; i < 0; i++);
                     this;
                 }
-            }", None),
-
+            }",
+            None,
+        ),
         // https://github.com/eslint/eslint/issues/5894
         ("class A { constructor() { return; this; } }", None),
         ("class A extends B { constructor() { return; this; } }", None),
-
         // https://github.com/eslint/eslint/issues/8848
-        (r"
+        (
+            r"
             class A extends B {
                 constructor(props) {
                     super(props);
@@ -247,13 +240,14 @@ fn test() {
                     }
                 }
             }
-        ", None),
-
+        ",
+            None,
+        ),
         // Class field initializers are always evaluated after `super()`.
         ("class C { field = this.toString(); }", None),
         ("class C extends B { field = this.foo(); }", None),
         ("class C extends B { field = this.foo(); constructor() { super(); } }", None),
-        ("class C extends B { field = this.foo(); constructor() { } }", None) // < in this case, initializers are never evaluated.
+        ("class C extends B { field = this.foo(); constructor() { } }", None), // < in this case, initializers are never evaluated.
     ];
 
     let fail = vec![
@@ -280,7 +274,8 @@ fn test() {
         ("class A extends B { constructor() { foo ||= super().a; this.c(); } }", None),
         ("class A extends B { constructor() { foo ??= super().a; this.c(); } }", None),
         ("class A extends B { constructor() { if (foo) { if (bar) { } super(); } this.a(); }}", None),
-        ("class A extends B {
+        (
+            "class A extends B {
                 constructor() {
                     if (foo) {
                     } else {
@@ -288,8 +283,11 @@ fn test() {
                     }
                     this.a();
                 }
-            }", None),
-        ("class A extends B {
+            }",
+            None,
+        ),
+        (
+            "class A extends B {
                 constructor() {
                     try {
                         call();
@@ -297,24 +295,33 @@ fn test() {
                         this.a();
                     }
                 }
-            }", None),
-        ("class A extends B {
+            }",
+            None,
+        ),
+        (
+            "class A extends B {
                 constructor() {
                     while (foo) {
                         super();
                     }
                     this.a();
                 }
-            }", None),
-        ("class A extends B {
+            }",
+            None,
+        ),
+        (
+            "class A extends B {
                 constructor() {
                     while (foo) {
                         this.a();
                         super();
                     }
                 }
-            }", None),
-        ("class A extends B {
+            }",
+            None,
+        ),
+        (
+            "class A extends B {
                 constructor() {
                     while (foo) {
                         if (init) {
@@ -323,7 +330,9 @@ fn test() {
                         }
                     }
                 }
-            }", None),
+            }",
+            None,
+        ),
     ];
 
     Tester::new(NoThisBeforeSuper::NAME, pass, fail).test_and_snapshot();

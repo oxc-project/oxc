@@ -2,28 +2,27 @@ use oxc_ast::{
     ast::{match_assignment_target_pattern, Argument, AssignmentTarget, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::LogicalOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining")]
-#[diagnostic(
-    severity(warning),
-    help("If this short-circuits with 'undefined' the evaluation will throw TypeError")
-)]
-struct NoUnsafeOptionalChainingDiagnostic(#[label] pub Span);
+fn no_unsafe_optional_chaining_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining")
+        .with_help("If this short-circuits with 'undefined' the evaluation will throw TypeError")
+        .with_labels([span0.into()])
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-unsafe-optional-chaining): Unsafe arithmetic operation on optional chaining")]
-#[diagnostic(severity(warning), help("This can result in NaN."))]
-struct NoUnsafeArithmeticDiagnostic(#[label] pub Span);
+fn no_unsafe_arithmetic_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint(no-unsafe-optional-chaining): Unsafe arithmetic operation on optional chaining",
+    )
+    .with_help("This can result in NaN.")
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnsafeOptionalChaining {
@@ -179,10 +178,10 @@ impl NoUnsafeOptionalChaining {
             Expression::ChainExpression(expr) => {
                 match error_type {
                     ErrorType::Usage => {
-                        ctx.diagnostic(NoUnsafeOptionalChainingDiagnostic(expr.span));
+                        ctx.diagnostic(no_unsafe_optional_chaining_diagnostic(expr.span));
                     }
                     ErrorType::Arithmetic => {
-                        ctx.diagnostic(NoUnsafeArithmeticDiagnostic(expr.span));
+                        ctx.diagnostic(no_unsafe_arithmetic_diagnostic(expr.span));
                     }
                 };
             }
@@ -232,10 +231,7 @@ fn test() {
         ("({foo: obj.bar = obj?.baz} = obj);", None),
         ("(foo?.bar, bar)();", None),
         ("(foo?.bar ? baz : qux)();", None),
-        (
-            "\n        async function func() {\n          await obj?.foo();\n          await obj?.foo?.();\n          (await obj?.foo)?.();\n          (await obj?.foo)?.bar;\n          await bar?.baz;\n          await (foo ?? obj?.foo.baz);\n          (await bar?.baz ?? bar).baz;\n          (await bar?.baz ?? await bar).baz;\n          await (foo?.bar ? baz : qux);\n        }\n        ",
-            None,
-        ),
+        ("\n        async function func() {\n          await obj?.foo();\n          await obj?.foo?.();\n          (await obj?.foo)?.();\n          (await obj?.foo)?.bar;\n          await bar?.baz;\n          await (foo ?? obj?.foo.baz);\n          (await bar?.baz ?? bar).baz;\n          (await bar?.baz ?? await bar).baz;\n          await (foo?.bar ? baz : qux);\n        }\n        ", None),
         ("(obj?.foo ?? bar?.baz ?? qux)();", None),
         ("((obj?.foo ?? bar?.baz) || qux)();", None),
         ("((obj?.foo || bar?.baz) || qux)();", None),
@@ -254,10 +250,7 @@ fn test() {
         ("bar **= obj?.foo;", None),
         ("bar *= obj?.boo", None),
         ("bar /= obj?.boo", None),
-        (
-            "async function func() {\n            await obj?.foo + await obj?.bar;\n            await obj?.foo - await obj?.bar;\n            await obj?.foo * await obj?.bar;\n            +await obj?.foo;\n            -await obj?.foo;\n            bar += await obj?.foo;\n            bar -= await obj?.foo;\n            bar %= await obj?.foo;\n            bar **= await obj?.foo;\n            bar *= await obj?.boo;\n            bar /= await obj?.boo;\n        }\n        ",
-            None,
-        ),
+        ("async function func() {\n            await obj?.foo + await obj?.bar;\n            await obj?.foo - await obj?.bar;\n            await obj?.foo * await obj?.bar;\n            +await obj?.foo;\n            -await obj?.foo;\n            bar += await obj?.foo;\n            bar -= await obj?.foo;\n            bar %= await obj?.foo;\n            bar **= await obj?.foo;\n            bar *= await obj?.boo;\n            bar /= await obj?.boo;\n        }\n        ", None),
         ("obj?.foo - bar;", Some(serde_json::json!([{}]))),
         (
             "obj?.foo - bar;",

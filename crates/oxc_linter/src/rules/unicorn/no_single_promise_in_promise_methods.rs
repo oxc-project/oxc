@@ -2,22 +2,18 @@ use oxc_ast::{
     ast::{CallExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.{1}()` is unnecessary.")]
-#[diagnostic(
-    severity(warning),
-    help("Either use the value directly, or switch to `Promise.resolve(…)`.")
-)]
-struct NoSinglePromiseInPromiseMethodsDiagnostic(#[label] Span, pub String);
+fn no_single_promise_in_promise_methods_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.{x1}()` is unnecessary."))
+        .with_help("Either use the value directly, or switch to `Promise.resolve(…)`.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoSinglePromiseInPromiseMethods;
@@ -72,7 +68,7 @@ impl Rule for NoSinglePromiseInPromiseMethods {
             .static_property_info()
             .expect("callee is a static property");
 
-        ctx.diagnostic(NoSinglePromiseInPromiseMethodsDiagnostic(info.0, info.1.to_string()));
+        ctx.diagnostic(no_single_promise_in_promise_methods_diagnostic(info.0, info.1));
     }
 }
 

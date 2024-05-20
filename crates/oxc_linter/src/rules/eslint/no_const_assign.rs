@@ -1,21 +1,20 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-const-assign): Unexpected re-assignment of const variable {0}")]
-#[diagnostic(severity(warning))]
-struct NoConstAssignDiagnostic(
-    CompactStr,
-    #[label("{0} is declared here as const")] pub Span,
-    #[label("{0} is re-assigned here")] pub Span,
-);
+fn no_const_assign_diagnostic(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "eslint(no-const-assign): Unexpected re-assignment of const variable {x0}"
+    ))
+    .with_labels([
+        LabeledSpan::new_with_span(Some(format!("{x0} is declared here as const")), span1),
+        LabeledSpan::new_with_span(Some(format!("{x0} is re-assigned here")), span2),
+    ])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConstAssign;
@@ -43,8 +42,8 @@ impl Rule for NoConstAssign {
         if symbol_table.get_flag(symbol_id).is_const_variable() {
             for reference in symbol_table.get_resolved_references(symbol_id) {
                 if reference.is_write() {
-                    ctx.diagnostic(NoConstAssignDiagnostic(
-                        symbol_table.get_name(symbol_id).into(),
+                    ctx.diagnostic(no_const_assign_diagnostic(
+                        symbol_table.get_name(symbol_id),
                         symbol_table.get_span(symbol_id),
                         reference.span(),
                     ));

@@ -1,22 +1,16 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members."
-)]
-#[diagnostic(
-    severity(warning),
-    help("A class with only static members could just be an object instead.")
-)]
-struct NoStaticOnlyClassDiagnostic(#[label] pub Span);
+fn no_static_only_class_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-static-only-class): Disallow classes that only have static members.")
+        .with_help("A class with only static members could just be an object instead.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoStaticOnlyClass;
@@ -51,7 +45,9 @@ declare_oxc_lint!(
 
 impl Rule for NoStaticOnlyClass {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::Class(class) = node.kind() else { return };
+        let AstKind::Class(class) = node.kind() else {
+            return;
+        };
 
         if class.super_class.is_some() {
             return;
@@ -90,7 +86,7 @@ impl Rule for NoStaticOnlyClass {
             return;
         }
 
-        ctx.diagnostic(NoStaticOnlyClassDiagnostic(class.span));
+        ctx.diagnostic(no_static_only_class_diagnostic(class.span));
     }
 }
 

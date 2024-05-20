@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{match_member_expression, CallExpression, Expression, MemberExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -19,10 +17,12 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.")]
-#[diagnostic(severity(warning))]
-struct UseToHaveLength(#[label] pub Span);
+fn use_to_have_length(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.",
+    )
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferToHaveLength;
@@ -146,7 +146,7 @@ impl PreferToHaveLength {
             return;
         }
 
-        ctx.diagnostic_with_fix(UseToHaveLength(matcher.span), || {
+        ctx.diagnostic_with_fix(use_to_have_length(matcher.span), || {
             let code = Self::build_code(static_mem_expr, kind, property_name, ctx);
             let end = if call_expr.arguments.len() > 0 {
                 call_expr.arguments.first().unwrap().span().start

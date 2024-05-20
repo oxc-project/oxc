@@ -82,13 +82,14 @@ pub fn parse_sync(
         ret.errors
             .iter()
             .flat_map(|error| {
-                let Some(labels) = error.labels() else { return vec![] };
+                let Some(labels) = &error.labels else { return vec![] };
                 labels
+                    .iter()
                     .map(|label| {
                         Diagnostic {
                             start: label.offset(),
                             end: label.offset() + label.len(),
-                            severity: format!("{:?}", error.severity().unwrap_or_default()),
+                            severity: "Error".to_string(),
                             message: format!("{error}"),
                         }
                         .serialize(&serializer)

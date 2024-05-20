@@ -1,21 +1,20 @@
 use oxc_ast::{ast::MemberExpression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoUselessPromiseResolveRejectDiagnostic {
-    #[error("eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `{1} value` over `{1} Promise.resolve(value)`.")]
-    #[diagnostic(severity(warning), help("Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`."))]
-    Resolve(#[label] Span, &'static str),
-    #[error("eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `{1} Promise.reject(error)`.")]
-    #[diagnostic(severity(warning), help("Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`."))]
-    Reject(#[label] Span, &'static str),
+fn resolve(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `{x1} value` over `{x1} Promise.resolve(value)`."))
+        .with_help("Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.")
+        .with_labels([span0.into()])
+}
+
+fn reject(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `{x1} Promise.reject(error)`."))
+        .with_help("Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.")
+        .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -44,8 +43,12 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessPromiseResolveReject {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
-        let Some(member_expr) = call_expr.callee.get_member_expr() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
+            return;
+        };
 
         if !member_expr.object().is_specific_id("Promise") {
             return;
@@ -72,7 +75,9 @@ impl Rule for NoUselessPromiseResolveReject {
             }
         }
 
-        let Some((is_async, function_node)) = get_function_like_node(node, ctx) else { return };
+        let Some((is_async, function_node)) = get_function_like_node(node, ctx) else {
+            return;
+        };
 
         if !(is_async || is_promise_callback(function_node, ctx)) {
             return;
@@ -80,13 +85,13 @@ impl Rule for NoUselessPromiseResolveReject {
 
         match static_member_expr.property.name.as_str() {
             "resolve" => {
-                ctx.diagnostic(NoUselessPromiseResolveRejectDiagnostic::Resolve(
+                ctx.diagnostic(resolve(
                     node.kind().span(),
                     if is_yield { "yield" } else { "return" },
                 ));
             }
             "reject" => {
-                ctx.diagnostic(NoUselessPromiseResolveRejectDiagnostic::Reject(
+                ctx.diagnostic(reject(
                     node.kind().span(),
                     if is_yield { "yield" } else { "return" },
                 ));
@@ -129,14 +134,20 @@ fn is_promise_callback<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) 
         return false;
     };
 
-    let AstKind::CallExpression(call_expr) = parent.kind() else { return false };
+    let AstKind::CallExpression(call_expr) = parent.kind() else {
+        return false;
+    };
 
-    let Some(member_expr) = call_expr.callee.get_member_expr() else { return false };
+    let Some(member_expr) = call_expr.callee.get_member_expr() else {
+        return false;
+    };
 
     if member_expr.is_computed() {
         return false;
     }
-    let Some(static_prop_name) = member_expr.static_property_name() else { return false };
+    let Some(static_prop_name) = member_expr.static_property_name() else {
+        return false;
+    };
 
     if call_expr.arguments.len() == 1 && matches!(static_prop_name, "then" | "catch" | "finally") {
         return true;
@@ -318,7 +329,7 @@ fn test() {
         r"
 			async function foo() {
 				return Promise.reject(bar);
-		    }   
+		    }
 		",
         r"
 			(async function() {

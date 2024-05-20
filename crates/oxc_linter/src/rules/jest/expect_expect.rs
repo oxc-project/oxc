@@ -2,13 +2,12 @@ use oxc_ast::{
     ast::{CallExpression, Expression, Statement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use regex::Regex;
+use rustc_hash::FxHashSet;
 
 use crate::{
     ast_util::get_declaration_of_variable,
@@ -20,10 +19,11 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(expect-expect): Test has no assertions")]
-#[diagnostic(severity(warning), help("Add assertion(s) in this Test"))]
-struct ExpectExpectDiagnostic(#[label] pub Span);
+fn expect_expect_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(expect-expect): Test has no assertions")
+        .with_help("Add assertion(s) in this Test")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ExpectExpect(Box<ExpectExpectConfig>);
@@ -128,10 +128,14 @@ fn run<'a>(
                 }
             }
 
-            let has_assert_function = check_arguments(call_expr, &rule.assert_function_names, ctx);
+            // Record visited nodes to avoid infinite loop.
+            let mut visited: FxHashSet<Span> = FxHashSet::default();
+
+            let has_assert_function =
+                check_arguments(call_expr, &rule.assert_function_names, &mut visited, ctx);
 
             if !has_assert_function {
-                ctx.diagnostic(ExpectExpectDiagnostic(call_expr.callee.span()));
+                ctx.diagnostic(expect_expect_diagnostic(call_expr.callee.span()));
             }
         }
     }
@@ -140,31 +144,52 @@ fn run<'a>(
 fn check_arguments<'a>(
     call_expr: &'a CallExpression<'a>,
     assert_function_names: &[String],
+    visited: &mut FxHashSet<Span>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    call_expr.arguments.iter().any(|argument| {
+    for argument in &call_expr.arguments {
         if let Some(expr) = argument.as_expression() {
-            return check_assert_function_used(expr, assert_function_names, ctx);
+            if check_assert_function_used(expr, assert_function_names, visited, ctx) {
+                return true;
+            }
         }
-        false
-    })
+    }
+    false
 }
 
 fn check_assert_function_used<'a>(
     expr: &'a Expression<'a>,
     assert_function_names: &[String],
+    visited: &mut FxHashSet<Span>,
     ctx: &LintContext<'a>,
 ) -> bool {
+    // If we have visited this node before and didn't find any assert function, we can return
+    // `false` to avoid infinite loop.
+    //
+    // ```javascript
+    // test("should fail", () => {
+    //    function foo() {
+    //      if (condition) {
+    //        foo()
+    //      }
+    //    }
+    //    foo()
+    // })
+    // ```
+    if !visited.insert(expr.span()) {
+        return false;
+    }
+
     match expr {
         Expression::FunctionExpression(fn_expr) => {
             let body = &fn_expr.body;
             if let Some(body) = body {
-                return check_statements(&body.statements, assert_function_names, ctx);
+                return check_statements(&body.statements, assert_function_names, visited, ctx);
             }
         }
         Expression::ArrowFunctionExpression(arrow_expr) => {
             let body = &arrow_expr.body;
-            return check_statements(&body.statements, assert_function_names, ctx);
+            return check_statements(&body.statements, assert_function_names, visited, ctx);
         }
         Expression::CallExpression(call_expr) => {
             let name = get_node_name(&call_expr.callee);
@@ -172,7 +197,13 @@ fn check_assert_function_used<'a>(
                 return true;
             }
 
-            let has_assert_function = check_arguments(call_expr, assert_function_names, ctx);
+            // If CallExpression is not an assert function, we need to check its arguments, it may trigger
+            // another assert function.
+            // ```javascript
+            //  it('should pass', () => somePromise().then(() => expect(true).toBeDefined()))
+            // ```
+            let has_assert_function =
+                check_arguments(call_expr, assert_function_names, visited, ctx);
 
             return has_assert_function;
         }
@@ -186,10 +217,10 @@ fn check_assert_function_used<'a>(
             let Some(body) = &function.body else {
                 return false;
             };
-            return check_statements(&body.statements, assert_function_names, ctx);
+            return check_statements(&body.statements, assert_function_names, visited, ctx);
         }
         Expression::AwaitExpression(expr) => {
-            return check_assert_function_used(&expr.argument, assert_function_names, ctx);
+            return check_assert_function_used(&expr.argument, assert_function_names, visited, ctx);
         }
         _ => {}
     };
@@ -200,11 +231,17 @@ fn check_assert_function_used<'a>(
 fn check_statements<'a>(
     statements: &'a oxc_allocator::Vec<Statement<'a>>,
     assert_function_names: &[String],
+    visited: &mut FxHashSet<Span>,
     ctx: &LintContext<'a>,
 ) -> bool {
     statements.iter().any(|statement| {
         if let Statement::ExpressionStatement(expr_stmt) = statement {
-            return check_assert_function_used(&expr_stmt.expression, assert_function_names, ctx);
+            return check_assert_function_used(
+                &expr_stmt.expression,
+                assert_function_names,
+                visited,
+                ctx,
+            );
         }
         false
     })
@@ -251,18 +288,9 @@ fn test() {
             ",
             Some(serde_json::json!([{ "assertFunctionNames": ["expect", "foo"] }])),
         ),
-        (
-            "it('should return undefined',() => expectSaga(mySaga).returns());",
-            Some(serde_json::json!([{ "assertFunctionNames": ["expectSaga"] }])),
-        ),
-        (
-            "test('verifies expect method call', () => expect$(123));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["expect\\$"] }])),
-        ),
-        (
-            "test('verifies expect method call', () => new Foo().expect(123));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["Foo.expect"] }])),
-        ),
+        ("it('should return undefined',() => expectSaga(mySaga).returns());", Some(serde_json::json!([{ "assertFunctionNames": ["expectSaga"] }]))),
+        ("test('verifies expect method call', () => expect$(123));", Some(serde_json::json!([{ "assertFunctionNames": ["expect\\$"] }]))),
+        ("test('verifies expect method call', () => new Foo().expect(123));", Some(serde_json::json!([{ "assertFunctionNames": ["Foo.expect"] }]))),
         (
             "
         	test('verifies deep expect method call', () => {
@@ -308,46 +336,16 @@ fn test() {
             ",
             Some(serde_json::json!([{ "additionalTestBlockFunctions": ["theoretically"] }])),
         ),
-        (
-            "test('should pass *', () => expect404ToBeLoaded());",
-            Some(serde_json::json!([{ "assertFunctionNames": ["expect*"] }])),
-        ),
-        (
-            "test('should pass *', () => expect.toHaveStatus404());",
-            Some(serde_json::json!([{ "assertFunctionNames": ["expect.**"] }])),
-        ),
-        (
-            "test('should pass', () => tester.foo().expect(123));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["tester.*.expect"] }])),
-        ),
-        (
-            "test('should pass **', () => tester.foo().expect(123));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["**"] }])),
-        ),
-        (
-            "test('should pass *', () => tester.foo().expect(123));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["*"] }])),
-        ),
-        (
-            "test('should pass', () => tester.foo().expect(123));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["tester.**"] }])),
-        ),
-        (
-            "test('should pass', () => tester.foo().expect(123));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["tester.*"] }])),
-        ),
-        (
-            "test('should pass', () => tester.foo().bar().expectIt(456));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["tester.**.expect*"] }])),
-        ),
-        (
-            "test('should pass', () => request.get().foo().expect(456));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["request.**.expect"] }])),
-        ),
-        (
-            "test('should pass', () => request.get().foo().expect(456));",
-            Some(serde_json::json!([{ "assertFunctionNames": ["request.**.e*e*t"] }])),
-        ),
+        ("test('should pass *', () => expect404ToBeLoaded());", Some(serde_json::json!([{ "assertFunctionNames": ["expect*"] }]))),
+        ("test('should pass *', () => expect.toHaveStatus404());", Some(serde_json::json!([{ "assertFunctionNames": ["expect.**"] }]))),
+        ("test('should pass', () => tester.foo().expect(123));", Some(serde_json::json!([{ "assertFunctionNames": ["tester.*.expect"] }]))),
+        ("test('should pass **', () => tester.foo().expect(123));", Some(serde_json::json!([{ "assertFunctionNames": ["**"] }]))),
+        ("test('should pass *', () => tester.foo().expect(123));", Some(serde_json::json!([{ "assertFunctionNames": ["*"] }]))),
+        ("test('should pass', () => tester.foo().expect(123));", Some(serde_json::json!([{ "assertFunctionNames": ["tester.**"] }]))),
+        ("test('should pass', () => tester.foo().expect(123));", Some(serde_json::json!([{ "assertFunctionNames": ["tester.*"] }]))),
+        ("test('should pass', () => tester.foo().bar().expectIt(456));", Some(serde_json::json!([{ "assertFunctionNames": ["tester.**.expect*"] }]))),
+        ("test('should pass', () => request.get().foo().expect(456));", Some(serde_json::json!([{ "assertFunctionNames": ["request.**.expect"] }]))),
+        ("test('should pass', () => request.get().foo().expect(456));", Some(serde_json::json!([{ "assertFunctionNames": ["request.**.e*e*t"] }]))),
         (
             "
         	import { test } from '@jest/globals';
@@ -470,6 +468,18 @@ fn test() {
                     throw new Error('nope')
                 };
                 await foo(asyncFunction()).rejects.toThrow();
+            });
+            "#,
+            None,
+        ),
+        (
+            r#"
+            test("event emitters bound to CLS context", function(t) {
+                t.test("emitter with newListener that removes handler", function(t) {
+                    ee.on("newListener", function handler(event: any) {
+                        this.removeListener("newListener", handler);
+                    });
+                });
             });
             "#,
             None,

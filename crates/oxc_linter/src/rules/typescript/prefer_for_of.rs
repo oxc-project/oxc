@@ -3,20 +3,19 @@ use oxc_ast::ast::{
     VariableDeclarationKind,
 };
 use oxc_ast::{ast::match_member_expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.")]
-#[diagnostic(severity(warning), help("Consider using a for-of loop for this simple iteration."))]
-struct PreferForOfDiagnostic(#[label] pub Span);
+fn prefer_for_of_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.")
+        .with_help("Consider using a for-of loop for this simple iteration.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferForOf;
@@ -110,7 +109,9 @@ impl<'a> ExpressionExt for Expression<'a> {
 
 impl Rule for PreferForOf {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ForStatement(for_stmt) = node.kind() else { return };
+        let AstKind::ForStatement(for_stmt) = node.kind() else {
+            return;
+        };
 
         let Some(ForStatementInit::VariableDeclaration(for_stmt_init)) = &for_stmt.init else {
             return;
@@ -134,7 +135,9 @@ impl Rule for PreferForOf {
             return;
         }
 
-        let Some(Expression::BinaryExpression(test_expr)) = &for_stmt.test else { return };
+        let Some(Expression::BinaryExpression(test_expr)) = &for_stmt.test else {
+            return;
+        };
 
         if !matches!((&test_expr.left, test_expr.operator),
             (Expression::Identifier(id), BinaryOperator::LessThan) if id.name == var_name
@@ -143,7 +146,9 @@ impl Rule for PreferForOf {
         }
 
         let array_name = {
-            let Some(mem_expr) = test_expr.right.as_member_expression() else { return };
+            let Some(mem_expr) = test_expr.right.as_member_expression() else {
+                return;
+            };
             if !matches!(mem_expr.static_property_name(), Some(prop_name) if prop_name == "length")
             {
                 return;
@@ -161,7 +166,9 @@ impl Rule for PreferForOf {
             }
         };
 
-        let Some(update_expr) = &for_stmt.update else { return };
+        let Some(update_expr) = &for_stmt.update else {
+            return;
+        };
         if !update_expr.is_increment_of(var_name) {
             return;
         }
@@ -169,7 +176,9 @@ impl Rule for PreferForOf {
         let nodes = ctx.nodes();
         let body_span = for_stmt.body.span();
 
-        let Some(var_symbol_id) = var_symbol_id else { return };
+        let Some(var_symbol_id) = var_symbol_id else {
+            return;
+        };
         if ctx.semantic().symbol_references(var_symbol_id).any(|reference| {
             let ref_id = reference.node_id();
 
@@ -178,7 +187,9 @@ impl Rule for PreferForOf {
                 return false;
             }
 
-            let Some(ref_parent) = nodes.parent_node(ref_id) else { return true };
+            let Some(ref_parent) = nodes.parent_node(ref_id) else {
+                return true;
+            };
 
             if let Some(ref_grand_parent) = nodes.parent_node(ref_parent.id()) {
                 match ref_grand_parent.kind() {
@@ -195,7 +206,9 @@ impl Rule for PreferForOf {
             }
 
             let parent_kind = ref_parent.kind();
-            let AstKind::MemberExpression(mem_expr) = parent_kind else { return true };
+            let AstKind::MemberExpression(mem_expr) = parent_kind else {
+                return true;
+            };
             match mem_expr.object() {
                 Expression::Identifier(id) => id.name.as_str() != array_name,
                 expr if expr.is_member_expression() => {
@@ -211,7 +224,7 @@ impl Rule for PreferForOf {
         }
 
         let span = for_stmt_init.span.merge(&test_expr.span).merge(&update_expr.span());
-        ctx.diagnostic(PreferForOfDiagnostic(span));
+        ctx.diagnostic(prefer_for_of_diagnostic(span));
     }
 }
 

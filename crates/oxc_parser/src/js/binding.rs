@@ -13,7 +13,7 @@ impl<'a> ParserImpl<'a> {
     pub(super) fn parse_binding_pattern_with_initializer(&mut self) -> Result<BindingPattern<'a>> {
         let span = self.start_span();
         let pattern = self.parse_binding_pattern(true)?;
-        self.with_context(Context::In, |p| p.parse_initializer(span, pattern))
+        self.context(Context::In, Context::empty(), |p| p.parse_initializer(span, pattern))
     }
 
     pub(super) fn parse_binding_pattern(
@@ -68,21 +68,23 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::Question) && self.ts_enabled() {
             let span = self.cur_token().span();
             self.bump_any();
-            self.error(diagnostics::ARestParameterCannotBeOptional(span));
+            self.error(diagnostics::a_rest_parameter_cannot_be_optional(span));
         }
         // The span is not extended to its type_annotation
         let type_annotation = self.parse_ts_type_annotation()?;
         let pattern = self.ast.binding_pattern(kind, type_annotation, false);
         // Rest element does not allow `= initializer`, .
-        let argument =
-            self.with_context(Context::In, |p| p.parse_initializer(init_span, pattern))?;
+        let argument = self
+            .context(Context::In, Context::empty(), |p| p.parse_initializer(init_span, pattern))?;
         let span = self.end_span(span);
 
         if self.at(Kind::Comma) {
             if self.peek_at(Kind::RBrack) {
-                self.error(diagnostics::BindingRestElementTrailingComma(self.cur_token().span()));
+                self.error(diagnostics::binding_rest_element_trailing_comma(
+                    self.cur_token().span(),
+                ));
             } else if !self.ctx.has_ambient() {
-                self.error(diagnostics::BindingRestElementLast(span));
+                self.error(diagnostics::binding_rest_element_last(span));
             }
         }
 
@@ -108,7 +110,7 @@ impl<'a> ParserImpl<'a> {
                 let binding_identifier = BindingIdentifier::new(ident.span, ident.name.clone());
                 let identifier = self.ast.binding_pattern_identifier(binding_identifier);
                 let left = self.ast.binding_pattern(identifier, None, false);
-                self.with_context(Context::In, |p| p.parse_initializer(span, left))?
+                self.context(Context::In, Context::empty(), |p| p.parse_initializer(span, left))?
             } else {
                 return Err(self.unexpected());
             }
@@ -130,7 +132,7 @@ impl<'a> ParserImpl<'a> {
         left: BindingPattern<'a>,
     ) -> Result<BindingPattern<'a>> {
         if self.eat(Kind::Eq) {
-            let expr = self.parse_assignment_expression_base()?;
+            let expr = self.parse_assignment_expression_or_higher()?;
             Ok(self.ast.assignment_pattern(self.end_span(span), left, expr))
         } else {
             Ok(left)

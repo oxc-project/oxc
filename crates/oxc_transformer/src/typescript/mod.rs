@@ -4,14 +4,13 @@ mod diagnostics;
 mod r#enum;
 mod module;
 mod namespace;
+mod options;
 
 use std::rc::Rc;
 
-use serde::Deserialize;
-
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_syntax::scope::ScopeFlags;
+use oxc_traverse::TraverseCtx;
 
 use crate::context::Ctx;
 
@@ -20,13 +19,7 @@ use self::{
     r#enum::TypeScriptEnum,
 };
 
-#[derive(Debug, Default, Clone, Deserialize)]
-#[serde(default, rename_all = "camelCase")]
-pub struct TypeScriptOptions {
-    /// When set to true, the transform will only remove type-only imports (introduced in TypeScript 3.8).
-    /// This should only be used if you are using TypeScript >= 3.8.
-    only_remove_type_imports: bool,
-}
+pub use self::options::TypeScriptOptions;
 
 /// [Preset TypeScript](https://babeljs.io/docs/babel-preset-typescript)
 ///
@@ -61,7 +54,7 @@ pub struct TypeScript<'a> {
 
 impl<'a> TypeScript<'a> {
     pub fn new(options: TypeScriptOptions, ctx: &Ctx<'a>) -> Self {
-        let options = Rc::new(options);
+        let options = Rc::new(options.update_with_comments(ctx));
 
         Self {
             annotations: TypeScriptAnnotations::new(&options, ctx),
@@ -115,8 +108,8 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_formal_parameter(param);
     }
 
-    pub fn transform_function(&mut self, func: &mut Function<'a>, flags: Option<ScopeFlags>) {
-        self.annotations.transform_function(func, flags);
+    pub fn transform_function(&mut self, func: &mut Function<'a>) {
+        self.annotations.transform_function(func);
     }
 
     pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
@@ -184,8 +177,14 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_tagged_template_expression(expr);
     }
 
-    pub fn transform_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
-        self.reference_collector.visit_identifier_reference(ident);
+    pub fn transform_identifier_reference(
+        &mut self,
+        ident: &mut IdentifierReference<'a>,
+        ctx: &TraverseCtx,
+    ) {
+        if !ctx.parent().is_ts_interface_heritage() && !ctx.parent().is_ts_type_reference() {
+            self.reference_collector.visit_identifier_reference(ident);
+        }
     }
 
     pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
@@ -203,5 +202,13 @@ impl<'a> TypeScript<'a> {
         if let ModuleDeclaration::TSExportAssignment(ts_export_assignment) = &mut *module_decl {
             self.transform_ts_export_assignment(ts_export_assignment);
         }
+    }
+
+    pub fn transform_jsx_element(&mut self, elem: &mut JSXElement<'a>) {
+        self.annotations.transform_jsx_element(elem);
+    }
+
+    pub fn transform_jsx_fragment(&mut self, elem: &mut JSXFragment<'a>) {
+        self.annotations.transform_jsx_fragment(elem);
     }
 }

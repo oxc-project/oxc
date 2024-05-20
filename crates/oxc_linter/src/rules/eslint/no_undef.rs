@@ -1,18 +1,17 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-undef): Disallow the use of undeclared variables.")]
-#[diagnostic(severity(warning), help("'{0}' is not defined."))]
-struct NoUndefDiagnostic(CompactStr, #[label] pub Span);
+fn no_undef_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(no-undef): Disallow the use of undeclared variables.")
+        .with_help(format!("'{x0}' is not defined."))
+        .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUndef {
@@ -69,7 +68,7 @@ impl Rule for NoUndef {
                     continue;
                 }
 
-                ctx.diagnostic(NoUndefDiagnostic(name.clone(), reference.span()));
+                ctx.diagnostic(no_undef_diagnostic(name, reference.span()));
             }
         }
     }
@@ -157,7 +156,7 @@ fn test() {
         "class C { static { let a; a; } }",
         "class C { static { a; let a; } }",
         "class C { static { function a() {} a; } }",
-        "class C { static { a; function a() {} } }"
+        "class C { static { a; function a() {} } }",
     ];
 
     let fail = vec![

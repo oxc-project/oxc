@@ -1,4 +1,6 @@
-use std::{collections::HashSet, marker::PhantomData, path::PathBuf, sync::Arc};
+use std::{marker::PhantomData, path::PathBuf, sync::Arc};
+
+use rustc_hash::FxHashSet;
 
 use oxc_span::CompactStr;
 
@@ -92,8 +94,11 @@ impl<'a, T> ModuleGraphVisitorBuilder<'a, T> {
         module: &ModuleRecord,
         visit: V,
     ) -> ModuleGraphVisitResult<T> {
-        let mut visitor =
-            ModuleGraphVisitor { traversed: HashSet::new(), depth: 0, max_depth: self.max_depth };
+        let mut visitor = ModuleGraphVisitor {
+            traversed: FxHashSet::default(),
+            depth: 0,
+            max_depth: self.max_depth,
+        };
         let filter = self.filter.unwrap_or_else(|| Box::new(|_, _| true));
         let event = self.event.unwrap_or_else(|| Box::new(|_, _, _| {}));
         let enter = self.enter.unwrap_or_else(|| Box::new(|_, _| {}));
@@ -120,7 +125,7 @@ impl<'a, T> Default for ModuleGraphVisitorBuilder<'a, T> {
 
 pub struct ModuleGraphVisitResult<T> {
     pub result: T,
-    pub traversed: HashSet<PathBuf>,
+    pub traversed: FxHashSet<PathBuf>,
     pub max_depth: u32,
 }
 
@@ -132,7 +137,7 @@ impl<T> ModuleGraphVisitResult<T> {
 
 #[derive(Debug)]
 struct ModuleGraphVisitor {
-    traversed: HashSet<PathBuf>,
+    traversed: FxHashSet<PathBuf>,
     depth: u32,
     max_depth: u32,
 }

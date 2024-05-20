@@ -8,7 +8,7 @@ use crate::TypeScriptOptions;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
-use oxc_syntax::{operator::AssignmentOperator, scope::ScopeFlags};
+use oxc_syntax::operator::AssignmentOperator;
 use rustc_hash::FxHashSet;
 
 use super::collector::TypeScriptReferenceCollector;
@@ -20,16 +20,44 @@ pub struct TypeScriptAnnotations<'a> {
     /// Assignments to be added to the constructor body
     assignments: Vec<'a, Statement<'a>>,
     has_super_call: bool,
+
+    has_jsx_element: bool,
+    has_jsx_fragment: bool,
+    jsx_element_import_name: String,
+    jsx_fragment_import_name: String,
 }
 
 impl<'a> TypeScriptAnnotations<'a> {
     pub fn new(options: &Rc<TypeScriptOptions>, ctx: &Ctx<'a>) -> Self {
+        let jsx_element_import_name = if options.jsx_pragma.contains('.') {
+            options.jsx_pragma.split('.').next().map(String::from).unwrap()
+        } else {
+            options.jsx_pragma.to_string()
+        };
+
+        let jsx_fragment_import_name = if options.jsx_pragma_frag.contains('.') {
+            options.jsx_pragma_frag.split('.').next().map(String::from).unwrap()
+        } else {
+            options.jsx_pragma_frag.to_string()
+        };
+
         Self {
             has_super_call: false,
             assignments: ctx.ast.new_vec(),
             options: Rc::clone(options),
             ctx: Rc::clone(ctx),
+            has_jsx_element: false,
+            has_jsx_fragment: false,
+            jsx_element_import_name,
+            jsx_fragment_import_name,
         }
+    }
+
+    /// Check if the given name is a JSX pragma or fragment pragma import
+    /// and if the file contains JSX elements or fragments
+    fn is_jsx_imports(&self, name: &str) -> bool {
+        self.has_jsx_element && name == self.jsx_element_import_name
+            || self.has_jsx_fragment && name == self.jsx_fragment_import_name
     }
 
     // Creates `this.name = name`
@@ -108,6 +136,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                                 }
 
                                 references.has_reference(&s.local.name)
+                                    || self.is_jsx_imports(&s.local.name)
                             }
                             ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
                                 if is_type {
@@ -119,6 +148,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                                     return true;
                                 }
                                 references.has_reference(&s.local.name)
+                                    || self.is_jsx_imports(&s.local.name)
                             }
                             ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
                                 if is_type {
@@ -130,6 +160,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                                 }
 
                                 references.has_reference(&s.local.name)
+                                    || self.is_jsx_imports(&s.local.name)
                             }
                         });
                     }
@@ -217,7 +248,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         param.accessibility = None;
     }
 
-    pub fn transform_function(&mut self, func: &mut Function<'a>, _flags: Option<ScopeFlags>) {
+    pub fn transform_function(&mut self, func: &mut Function<'a>) {
         func.this_param = None;
         func.type_parameters = None;
         func.return_type = None;
@@ -356,5 +387,13 @@ impl<'a> TypeScriptAnnotations<'a> {
         expr: &mut TaggedTemplateExpression<'a>,
     ) {
         expr.type_parameters = None;
+    }
+
+    pub fn transform_jsx_element(&mut self, _elem: &mut JSXElement<'a>) {
+        self.has_jsx_element = true;
+    }
+
+    pub fn transform_jsx_fragment(&mut self, _elem: &mut JSXFragment<'a>) {
+        self.has_jsx_fragment = true;
     }
 }

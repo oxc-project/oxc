@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression, Statement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -14,10 +12,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.")]
-#[diagnostic(severity(warning), help("Refactor your code to use `for` loops instead."))]
-struct NoArrayReduceDiagnostic(#[label] pub Span);
+fn no_array_reduce_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.")
+        .with_help("Refactor your code to use `for` loops instead.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Clone)]
 pub struct NoArrayReduce {
@@ -80,7 +79,7 @@ impl Rule for NoArrayReduce {
             if self.allow_simple_operations && is_simple_operation(call_expr) {
                 return;
             }
-            ctx.diagnostic(NoArrayReduceDiagnostic(span));
+            ctx.diagnostic(no_array_reduce_diagnostic(span));
         }
 
         if let Some(member_expr_obj) = member_expr.object().as_member_expression() {
@@ -92,7 +91,7 @@ impl Rule for NoArrayReduce {
                 && (is_prototype_property(member_expr_obj, "reduce", Some("Array"))
                     || is_prototype_property(member_expr_obj, "reduceRight", Some("Array")))
             {
-                ctx.diagnostic(NoArrayReduceDiagnostic(span));
+                ctx.diagnostic(no_array_reduce_diagnostic(span));
             }
         }
     }

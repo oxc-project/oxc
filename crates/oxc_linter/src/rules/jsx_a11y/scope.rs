@@ -1,8 +1,6 @@
 use oxc_ast::{ast::JSXAttributeItem, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -14,10 +12,13 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(scope): The scope prop can only be used on <th> elements")]
-#[diagnostic(severity(warning), help("Must use scope prop only on <th> elements"))]
-struct ScopeDiagnostic(#[label] pub Span);
+fn scope_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-jsx-a11y(scope): The scope prop can only be used on <th> elements",
+    )
+    .with_help("Must use scope prop only on <th> elements")
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct Scope;
@@ -75,7 +76,7 @@ impl Rule for Scope {
             return;
         }
 
-        ctx.diagnostic(ScopeDiagnostic(scope_attribute.span));
+        ctx.diagnostic(scope_diagnostic(scope_attribute.span));
     }
 }
 

@@ -1,25 +1,22 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(no-empty-interface): an empty interface is equivalent to `{{}}`")]
-#[diagnostic(severity(warning))]
-struct NoEmptyInterfaceDiagnostic(#[label] pub Span);
+fn no_empty_interface_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "typescript-eslint(no-empty-interface): an empty interface is equivalent to `{}`",
+    )
+    .with_labels([span0.into()])
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype"
-)]
-#[diagnostic(severity(warning))]
-struct NoEmptyInterfaceExtendDiagnostic(#[label] pub Span);
+fn no_empty_interface_extend_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype").with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoEmptyInterface {
@@ -48,9 +45,10 @@ declare_oxc_lint!(
 
 impl Rule for NoEmptyInterface {
     fn from_configuration(value: Value) -> Self {
-        let allow_single_extends = value.get(0).map_or(true, |config| {
-            config.get("allow_single_extends").and_then(Value::as_bool).unwrap_or_default()
-        });
+        let allow_single_extends =
+            value.get(0).map_or(Self::default().allow_single_extends, |config| {
+                config.get("allow_single_extends").and_then(Value::as_bool).unwrap_or_default()
+            });
 
         Self { allow_single_extends }
     }
@@ -59,12 +57,12 @@ impl Rule for NoEmptyInterface {
             if interface.body.body.is_empty() {
                 match &interface.extends {
                     None => {
-                        ctx.diagnostic(NoEmptyInterfaceDiagnostic(interface.span));
+                        ctx.diagnostic(no_empty_interface_diagnostic(interface.span));
                     }
 
                     Some(extends) if extends.len() == 1 => {
                         if !self.allow_single_extends {
-                            ctx.diagnostic(NoEmptyInterfaceExtendDiagnostic(interface.span));
+                            ctx.diagnostic(no_empty_interface_extend_diagnostic(interface.span));
                         }
                     }
                     _ => {}

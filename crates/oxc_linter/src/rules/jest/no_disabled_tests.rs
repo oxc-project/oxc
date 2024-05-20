@@ -1,8 +1,6 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -55,10 +53,11 @@ declare_oxc_lint!(
     correctness
 );
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-disabled-tests): {0:?}")]
-#[diagnostic(severity(warning), help("{1:?}"))]
-struct NoDisabledTestsDiagnostic(&'static str, &'static str, #[label] pub Span);
+fn no_disabled_tests_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-jest(no-disabled-tests): {x0:?}"))
+        .with_help(format!("{x1:?}"))
+        .with_labels([span2.into()])
+}
 
 enum Message {
     MissingFunction,
@@ -105,7 +104,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                 && members.iter().all(|member| member.is_name_unequal("todo"))
             {
                 let (error, help) = Message::MissingFunction.details();
-                ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
+                ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.span));
                 return;
             }
 
@@ -117,7 +116,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                 } else {
                     Message::DisabledTestWithX.details()
                 };
-                ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.callee.span()));
+                ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.callee.span()));
                 return;
             }
 
@@ -129,7 +128,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                 } else {
                     Message::DisabledTestWithSkip.details()
                 };
-                ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.callee.span()));
+                ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.callee.span()));
             }
         } else if let Expression::Identifier(ident) = &call_expr.callee {
             if ident.name.as_str() == "pending"
@@ -137,7 +136,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
             {
                 // `describe('foo', function () { pending() })`
                 let (error, help) = Message::Pending.details();
-                ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
+                ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.span));
             }
         }
     }
@@ -167,22 +166,10 @@ fn test() {
         ("testSomething()", None),
         ("xitSomethingElse()", None),
         ("xitiViewMap()", None),
-        (
-            "import { pending } from 'actions'; test('foo', () => { expect(pending()).toEqual({}) })",
-            None,
-        ),
-        (
-            "const { pending } = require('actions'); test('foo', () => { expect(pending()).toEqual({}) })",
-            None,
-        ),
-        (
-            "test('foo', () => { const pending = getPending(); expect(pending()).toEqual({}) })",
-            None,
-        ),
-        (
-            "test('foo', () => { expect(pending()).toEqual({}) }); function pending() { return {} }",
-            None,
-        ),
+        ("import { pending } from 'actions'; test('foo', () => { expect(pending()).toEqual({}) })", None),
+        ("const { pending } = require('actions'); test('foo', () => { expect(pending()).toEqual({}) })", None),
+        ("test('foo', () => { const pending = getPending(); expect(pending()).toEqual({}) })", None),
+        ("test('foo', () => { expect(pending()).toEqual({}) }); function pending() { return {} }", None),
         ("import { test } from './test-utils'; test('something');", None),
     ];
 

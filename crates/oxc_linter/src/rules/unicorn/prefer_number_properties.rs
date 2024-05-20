@@ -2,21 +2,18 @@ use oxc_ast::{
     ast::{match_member_expression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-unicorn(prefer-number-properties): Use `Number.{1}` instead of the global `{1}`"
-)]
-#[diagnostic(severity(warning), help("Replace it with `Number.{1}`"))]
-struct PreferNumberPropertiesDiagnostic(#[label] pub Span, pub String);
+fn prefer_number_properties_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(prefer-number-properties): Use `Number.{x1}` instead of the global `{x1}`"))
+        .with_help(format!("Replace it with `Number.{x1}`"))
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferNumberProperties;
@@ -63,15 +60,15 @@ impl Rule for PreferNumberProperties {
                 if GLOBAL_OBJECT_NAMES.contains(ident_name.name.as_str()) {
                     match member_expr.static_property_name() {
                         Some("NaN") => {
-                            ctx.diagnostic(PreferNumberPropertiesDiagnostic(
+                            ctx.diagnostic(prefer_number_properties_diagnostic(
                                 member_expr.span(),
-                                "NaN".to_string(),
+                                "NaN",
                             ));
                         }
                         Some("Infinity") => {
-                            ctx.diagnostic(PreferNumberPropertiesDiagnostic(
+                            ctx.diagnostic(prefer_number_properties_diagnostic(
                                 member_expr.span(),
-                                "Infinity".to_string(),
+                                "Infinity",
                             ));
                         }
                         _ => {}
@@ -80,9 +77,9 @@ impl Rule for PreferNumberProperties {
             }
             AstKind::IdentifierReference(ident_ref) => match ident_ref.name.as_str() {
                 "NaN" | "Infinity" => {
-                    ctx.diagnostic(PreferNumberPropertiesDiagnostic(
+                    ctx.diagnostic(prefer_number_properties_diagnostic(
                         ident_ref.span,
-                        ident_ref.name.to_string(),
+                        &ident_ref.name,
                     ));
                 }
                 _ => {}
@@ -97,9 +94,9 @@ impl Rule for PreferNumberProperties {
 
                 match ident_name.name.as_str() {
                     "NaN" | "Infinity" => {
-                        ctx.diagnostic(PreferNumberPropertiesDiagnostic(
+                        ctx.diagnostic(prefer_number_properties_diagnostic(
                             ident_name.span,
-                            ident_name.name.to_string(),
+                            &ident_name.name,
                         ));
                     }
                     _ => {}
@@ -111,9 +108,9 @@ impl Rule for PreferNumberProperties {
                 };
 
                 if matches!(ident_name, "isNaN" | "isFinite" | "parseFloat" | "parseInt") {
-                    ctx.diagnostic(PreferNumberPropertiesDiagnostic(
+                    ctx.diagnostic(prefer_number_properties_diagnostic(
                         call_expr.callee.span(),
-                        ident_name.to_string(),
+                        ident_name,
                     ));
                 }
             }

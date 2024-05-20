@@ -2,26 +2,18 @@ use oxc_ast::{
     ast::{match_member_expression, ChainElement, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "typescript-eslint(no-non-null-asserted-optional-chain): non-null assertions after an optional chain expression"
-)]
-#[diagnostic(
-    severity(warning),
-    help(
-        "Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong. You should remove the non-null assertion."
-    )
-)]
-struct NoNonNullAssertedOptionalChainDiagnostic(#[label] pub Span, #[label] pub Span);
+fn no_non_null_asserted_optional_chain_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("typescript-eslint(no-non-null-asserted-optional-chain): non-null assertions after an optional chain expression")
+        .with_help("Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong. You should remove the non-null assertion.")
+        .with_labels([span0.into(), span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNonNullAssertedOptionalChain;
@@ -90,7 +82,7 @@ impl Rule for NoNonNullAssertedOptionalChain {
             if let Some(chain_span) = chain_span {
                 let chain_span_end = chain_span.end;
                 let non_null_end = non_null_expr.span.end - 1;
-                ctx.diagnostic(NoNonNullAssertedOptionalChainDiagnostic(
+                ctx.diagnostic(no_non_null_asserted_optional_chain_diagnostic(
                     Span::new(chain_span_end, chain_span_end),
                     Span::new(non_null_end, non_null_end),
                 ));

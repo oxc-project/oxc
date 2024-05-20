@@ -2,24 +2,18 @@ use oxc_ast::{
     ast::{Argument, MemberExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call."
-)]
-#[diagnostic(severity(warning), help("The listener argument should be a function reference."))]
-struct NoInvalidRemoveEventListenerDiagnostic(
-    #[label("`removeEventListener` called here.")] pub Span,
-    #[label("Invalid argument here")] pub Span,
-);
+fn no_invalid_remove_event_listener_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.")
+        .with_help("The listener argument should be a function reference.")
+        .with_labels([LabeledSpan::new_with_span(Some("`removeEventListener` called here.".into()), span0), LabeledSpan::new_with_span(Some("Invalid argument here".into()), span1)])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoInvalidRemoveEventListener;
@@ -49,13 +43,17 @@ declare_oxc_lint!(
 
 impl Rule for NoInvalidRemoveEventListener {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
         if call_expr.optional {
             return;
         }
 
-        let Some(member_expr) = call_expr.callee.get_member_expr() else { return };
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
+            return;
+        };
 
         let remove_event_listener_ident_span = match member_expr {
             MemberExpression::StaticMemberExpression(v) => {
@@ -75,7 +73,9 @@ impl Rule for NoInvalidRemoveEventListener {
             return;
         }
 
-        let Some(listener) = call_expr.arguments.get(1) else { return };
+        let Some(listener) = call_expr.arguments.get(1) else {
+            return;
+        };
 
         if !matches!(
             listener,
@@ -115,7 +115,7 @@ impl Rule for NoInvalidRemoveEventListener {
             listener_span
         };
 
-        ctx.diagnostic(NoInvalidRemoveEventListenerDiagnostic(
+        ctx.diagnostic(no_invalid_remove_event_listener_diagnostic(
             remove_event_listener_ident_span,
             listener_span,
         ));

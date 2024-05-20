@@ -1,10 +1,8 @@
 use oxc_ast::{ast::Argument, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{
     context::LintContext,
@@ -16,10 +14,11 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names")]
-#[diagnostic(severity(warning), help("`{0:?}`s should begin with lowercase"))]
-struct UnexpectedLowercase(CompactStr, #[label] Span);
+fn unexpected_lowercase(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names")
+        .with_help(format!("`{x0:?}`s should begin with lowercase"))
+        .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferLowercaseTitleConfig {
@@ -216,7 +215,7 @@ impl PreferLowercaseTitle {
             }
 
             ctx.diagnostic_with_fix(
-                UnexpectedLowercase(string_expr.value.to_compact_str(), string_expr.span),
+                unexpected_lowercase(string_expr.value.as_str(), string_expr.span),
                 || {
                     let mut content = ctx.codegen();
                     content.print_str(first_char.to_ascii_lowercase().to_string().as_bytes());
@@ -246,7 +245,7 @@ impl PreferLowercaseTitle {
             }
 
             ctx.diagnostic_with_fix(
-                UnexpectedLowercase(template_string.to_compact_str(), template_expr.span),
+                unexpected_lowercase(template_string.as_str(), template_expr.span),
                 || {
                     let mut content = ctx.codegen();
                     content.print_str(first_char.to_ascii_lowercase().to_string().as_bytes());

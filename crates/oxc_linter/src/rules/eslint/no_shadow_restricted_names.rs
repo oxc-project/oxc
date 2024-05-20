@@ -1,17 +1,16 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, globals::PRE_DEFINE_VAR, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.")]
-#[diagnostic(severity(warning), help("Shadowing of global properties '{0}'."))]
-struct NoShadowRestrictedNamesDiagnostic(CompactStr, #[label] pub Span);
+fn no_shadow_restricted_names_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.")
+        .with_help(format!("Shadowing of global properties '{x0}'."))
+        .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoShadowRestrictedNames;
@@ -41,7 +40,7 @@ declare_oxc_lint!(
 #[inline]
 fn check_and_diagnostic(s: &str, span: Span, ctx: &LintContext) {
     if PRE_DEFINE_VAR.contains_key(s) {
-        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(s.into(), span));
+        ctx.diagnostic(no_shadow_restricted_names_diagnostic(s, span));
     }
 }
 
@@ -125,23 +124,32 @@ fn test() {
         ("function Infinity(Infinity) { var Infinity; !function Infinity(Infinity) { try {} catch(Infinity) {} }; }", None),
         ("function arguments(arguments) { var arguments; !function arguments(arguments) { try {} catch(arguments) {} }; }", None),
         ("function eval(eval) { var eval; !function eval(eval) { try {} catch(eval) {} }; }", None),
-        ("var eval = (eval) => { var eval; !function eval(eval) { try {} catch(eval) {} }; }", Some(json!({
-            "parserOptions": {
-                "ecmaVersion": 6
-            }
-        }))),
-        ("var {undefined} = obj; var {a: undefined} = obj; var {a: {b: {undefined}}} = obj; var {a, ...undefined} = obj;", Some(json!({
-            "parserOptions": {
-                "ecmaVersion": 9
-            }
-        }))),
+        (
+            "var eval = (eval) => { var eval; !function eval(eval) { try {} catch(eval) {} }; }",
+            Some(json!({
+                "parserOptions": {
+                    "ecmaVersion": 6
+                }
+            })),
+        ),
+        (
+            "var {undefined} = obj; var {a: undefined} = obj; var {a: {b: {undefined}}} = obj; var {a, ...undefined} = obj;",
+            Some(json!({
+                "parserOptions": {
+                    "ecmaVersion": 9
+                }
+            })),
+        ),
         ("var normal, undefined; undefined = 5;", None),
         ("try {} catch(undefined: undefined) {}", None),
-        ("var [undefined] = [1]", Some(json!({
-            "parserOptions": {
-                "ecmaVersion": 6
-            }
-        }))),
+        (
+            "var [undefined] = [1]",
+            Some(json!({
+                "parserOptions": {
+                    "ecmaVersion": 6
+                }
+            })),
+        ),
         ("class undefined { }", None),
         ("class foo { undefined(undefined) { } }", None),
         ("class foo { #undefined(undefined) { } }", None),

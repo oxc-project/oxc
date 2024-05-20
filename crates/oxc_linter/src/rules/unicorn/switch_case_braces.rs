@@ -1,20 +1,16 @@
 use oxc_ast::{ast::Statement, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(switch-case-braces):  Empty switch case shouldn't have braces and not-empty case should have braces around it.")]
-#[diagnostic(
-    severity(warning),
-    help("There is less visual clutter for empty cases and proper scope for non-empty cases.")
-)]
-struct SwitchCaseBracesDiagnostic(#[label] pub Span);
+fn switch_case_braces_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(switch-case-braces):  Empty switch case shouldn't have braces and not-empty case should have braces around it.")
+        .with_help("There is less visual clutter for empty cases and proper scope for non-empty cases.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct SwitchCaseBraces;
@@ -43,7 +39,9 @@ declare_oxc_lint!(
 
 impl Rule for SwitchCaseBraces {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::SwitchStatement(switch) = node.kind() else { return };
+        let AstKind::SwitchStatement(switch) = node.kind() else {
+            return;
+        };
 
         if switch.cases.is_empty() {
             return;
@@ -55,7 +53,7 @@ impl Rule for SwitchCaseBraces {
                     Statement::BlockStatement(case_block) => {
                         if case_block.body.is_empty() {
                             ctx.diagnostic_with_fix(
-                                SwitchCaseBracesDiagnostic(case_block.span),
+                                switch_case_braces_diagnostic(case_block.span),
                                 || Fix::new("", case_block.span),
                             );
                         }
@@ -72,31 +70,34 @@ impl Rule for SwitchCaseBraces {
                         let case_body_span =
                             Span::new(first_statement.span().start, last_statement.span().end);
 
-                        ctx.diagnostic_with_fix(SwitchCaseBracesDiagnostic(case_body_span), || {
-                            use oxc_codegen::{Context, Gen};
-                            let modified_code = {
-                                let mut formatter = ctx.codegen();
+                        ctx.diagnostic_with_fix(
+                            switch_case_braces_diagnostic(case_body_span),
+                            || {
+                                use oxc_codegen::{Context, Gen};
+                                let modified_code = {
+                                    let mut formatter = ctx.codegen();
 
-                                if let Some(case_test) = &case.test {
-                                    formatter.print_str(b"case ");
-                                    formatter.print_expression(case_test);
-                                } else {
-                                    formatter.print_str(b"default");
-                                }
+                                    if let Some(case_test) = &case.test {
+                                        formatter.print_str(b"case ");
+                                        formatter.print_expression(case_test);
+                                    } else {
+                                        formatter.print_str(b"default");
+                                    }
 
-                                formatter.print_colon();
-                                formatter.print_hard_space();
-                                formatter.print(b'{');
-                                case.consequent
-                                    .iter()
-                                    .for_each(|x| x.gen(&mut formatter, Context::default()));
-                                formatter.print(b'}');
+                                    formatter.print_colon();
+                                    formatter.print_hard_space();
+                                    formatter.print(b'{');
+                                    case.consequent
+                                        .iter()
+                                        .for_each(|x| x.gen(&mut formatter, Context::default()));
+                                    formatter.print(b'}');
 
-                                formatter.into_source_text()
-                            };
+                                    formatter.into_source_text()
+                                };
 
-                            Fix::new(modified_code, case.span)
-                        });
+                                Fix::new(modified_code, case.span)
+                            },
+                        );
 
                         // After first incorrect consequent we have to break to not repeat the work
                         break;
@@ -129,7 +130,6 @@ fn test() {
         "switch(foo) { case 1: { doSomething(); } break; /* <-- This should be between braces */ }",
         "switch(foo) { default: label: {} }",
         "switch(something) { case 1: case 2: { console.log('something'); break; } case 3: console.log('something else'); }",
-
     ];
 
     let fix = vec![

@@ -5,25 +5,19 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint(for-direction): The update clause in this loop moves the variable in the wrong direction"
-)]
-#[diagnostic(severity(warning), help("Use while loop for intended infinite loop"))]
-struct ForDirectionDiagnostic(
-    #[label("This test moves in the wrong direction")] pub Span, /*test clause */
-    #[label("with this update")] pub Span,                       /*update clause */
-);
+fn for_direction_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(for-direction): The update clause in this loop moves the variable in the wrong direction")
+        .with_help("Use while loop for intended infinite loop")
+        .with_labels([LabeledSpan::new_with_span(Some("This test moves in the wrong direction".into()), span0), LabeledSpan::new_with_span(Some("with this update".into()), span1)])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ForDirection;
@@ -56,12 +50,12 @@ impl Rule for ForDirection {
                 };
                 let test_operator = &test.operator;
                 let wrong_direction = match (test_operator, counter_position) {
-                    (BinaryOperator::LessEqualThan | BinaryOperator::LessThan, LEFT) => BACKWARD,
-                    (BinaryOperator::LessEqualThan | BinaryOperator::LessThan, RIGHT) => FORWARD,
-                    (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, LEFT) => {
+                    (BinaryOperator::LessEqualThan | BinaryOperator::LessThan, RIGHT)
+                    | (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, LEFT) => {
                         FORWARD
                     }
-                    (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, RIGHT) => {
+                    (BinaryOperator::LessEqualThan | BinaryOperator::LessThan, LEFT)
+                    | (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, RIGHT) => {
                         BACKWARD
                     }
                     _ => return,
@@ -70,7 +64,7 @@ impl Rule for ForDirection {
                     let update_direction = get_update_direction(update, counter);
                     if update_direction == wrong_direction {
                         let update_span = get_update_span(update);
-                        ctx.diagnostic(ForDirectionDiagnostic(test.span, update_span));
+                        ctx.diagnostic(for_direction_diagnostic(test.span, update_span));
                     }
                 }
             }

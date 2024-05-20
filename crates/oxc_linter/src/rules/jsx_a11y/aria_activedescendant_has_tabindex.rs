@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{JSXAttribute, JSXAttributeItem, JSXElementName},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -17,13 +15,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(aria-activedescendant-has-tabindex): Enforce elements with aria-activedescendant are tabbable.")]
-#[diagnostic(
-    severity(warning),
-    help("An element that manages focus with `aria-activedescendant` must have a tabindex.")
-)]
-struct AriaActivedescendantHasTabindexDiagnostic(#[label] pub Span);
+fn aria_activedescendant_has_tabindex_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(aria-activedescendant-has-tabindex): Enforce elements with aria-activedescendant are tabbable.")
+        .with_help("An element that manages focus with `aria-activedescendant` must have a tabindex.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct AriaActivedescendantHasTabindex;
@@ -91,7 +87,7 @@ impl Rule for AriaActivedescendantHasTabindex {
             return;
         };
 
-        ctx.diagnostic(AriaActivedescendantHasTabindexDiagnostic(identifier.span));
+        ctx.diagnostic(aria_activedescendant_has_tabindex_diagnostic(identifier.span));
     }
 }
 

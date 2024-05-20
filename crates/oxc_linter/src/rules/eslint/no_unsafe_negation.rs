@@ -2,25 +2,19 @@ use oxc_ast::{
     ast::{BinaryExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("Unexpected logical not in the left hand side of '{0}' operator")]
-#[diagnostic(
-    severity(warning),
-    help(
-        "use parenthesis to express the negation of the whole boolean expression, as '!' binds more closely than '{0}'"
-    )
-)]
-struct NoUnsafeNegationDiagnostic(&'static str, #[label] pub Span);
+fn no_unsafe_negation_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected logical not in the left hand side of '{x0}' operator"))
+        .with_help(format!("use parenthesis to express the negation of the whole boolean expression, as '!' binds more closely than '{x0}'"))
+        .with_labels([span1.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnsafeNegation {
@@ -84,7 +78,7 @@ impl NoUnsafeNegation {
     fn report_with_fix(expr: &BinaryExpression, ctx: &LintContext<'_>) {
         use oxc_codegen::{Context, Gen};
         // Diagnostic points at the unexpected negation
-        let diagnostic = NoUnsafeNegationDiagnostic(expr.operator.as_str(), expr.left.span());
+        let diagnostic = no_unsafe_negation_diagnostic(expr.operator.as_str(), expr.left.span());
 
         let fix_producer = || {
             // modify `!a instance of B` to `!(a instanceof B)`

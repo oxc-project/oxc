@@ -1,17 +1,18 @@
 use oxc_ast::{ast::MemberExpression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `{1}` over `{2}`")]
-#[diagnostic(severity(warning), help("Replace with `{1}`"))]
-struct PreferStringTrimStartEndDiagnostic(#[label] pub Span, CompactStr, &'static str);
+fn prefer_string_trim_start_end_diagnostic(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `{x1}` over `{x2}`"
+    ))
+    .with_help(format!("Replace with `{x1}`"))
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferStringTrimStartEnd;
@@ -49,7 +50,9 @@ impl Rule for PreferStringTrimStartEnd {
             return;
         }
 
-        let Some(member_expr) = call_expr.callee.get_member_expr() else { return };
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
+            return;
+        };
 
         let (span, name) = match member_expr {
             MemberExpression::StaticMemberExpression(v) => {
@@ -65,9 +68,9 @@ impl Rule for PreferStringTrimStartEnd {
             return;
         }
 
-        ctx.diagnostic(PreferStringTrimStartEndDiagnostic(
+        ctx.diagnostic(prefer_string_trim_start_end_diagnostic(
             span,
-            name.to_compact_str(),
+            name.as_str(),
             get_replacement(name.as_str()),
         ));
     }

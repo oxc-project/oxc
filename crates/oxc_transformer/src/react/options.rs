@@ -46,7 +46,7 @@ impl ReactJsxRuntime {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-#[serde(default, rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReactOptions {
     #[serde(skip)]
     pub jsx_plugin: bool,

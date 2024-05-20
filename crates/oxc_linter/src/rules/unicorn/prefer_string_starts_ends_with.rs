@@ -2,23 +2,18 @@ use oxc_ast::{
     ast::{Expression, MemberExpression, RegExpFlags, RegExpLiteral},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum PreferStringStartsEndsWithDiagnostic {
-    #[error("eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.")]
-    #[diagnostic(severity(warning))]
-    StartsWith(#[label] Span),
-    #[error("eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#endsWith over a regex with a dollar sign.")]
-    #[diagnostic(severity(warning))]
-    EndsWith(#[label] Span),
+fn starts_with(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.").with_labels([span0.into()])
+}
+
+fn ends_with(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#endsWith over a regex with a dollar sign.").with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -57,7 +52,9 @@ impl Rule for PreferStringStartsEndsWith {
             return;
         }
 
-        let Some(member_expr) = call_expr.callee.get_member_expr() else { return };
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
+            return;
+        };
 
         let MemberExpression::StaticMemberExpression(static_member_expr) = &member_expr else {
             return;
@@ -71,16 +68,16 @@ impl Rule for PreferStringStartsEndsWith {
             return;
         };
 
-        let Some(err_kind) = check_regex(regex) else { return };
+        let Some(err_kind) = check_regex(regex) else {
+            return;
+        };
 
         match err_kind {
             ErrorKind::StartsWith => {
-                ctx.diagnostic(PreferStringStartsEndsWithDiagnostic::StartsWith(
-                    member_expr.span(),
-                ));
+                ctx.diagnostic(starts_with(member_expr.span()));
             }
             ErrorKind::EndsWith => {
-                ctx.diagnostic(PreferStringStartsEndsWithDiagnostic::EndsWith(member_expr.span()));
+                ctx.diagnostic(ends_with(member_expr.span()));
             }
         }
     }
@@ -92,7 +89,10 @@ enum ErrorKind {
 }
 
 fn check_regex(regexp_lit: &RegExpLiteral) -> Option<ErrorKind> {
-    if regexp_lit.regex.flags.intersects(RegExpFlags::I | RegExpFlags::M) {
+    if regexp_lit.regex.flags.intersects(RegExpFlags::M)
+        || (regexp_lit.regex.flags.intersects(RegExpFlags::I | RegExpFlags::M)
+            && is_useless_case_sensitive_regex_flag(regexp_lit))
+    {
         return None;
     }
 
@@ -116,6 +116,14 @@ fn check_regex(regexp_lit: &RegExpLiteral) -> Option<ErrorKind> {
 fn is_simple_string(str: &str) -> bool {
     str.chars()
         .all(|c| !matches!(c, '^' | '$' | '+' | '[' | '{' | '(' | '\\' | '.' | '?' | '*' | '|'))
+}
+
+// `/^#/i` => `true` (the `i` flag is useless)
+// `/^foo/i` => `false` (the `i` flag is not useless)
+fn is_useless_case_sensitive_regex_flag(regexp_lit: &RegExpLiteral) -> bool {
+    // ignore `^` and `$` (start and end of string)
+    let pat = regexp_lit.regex.pattern.trim_start_matches('^').trim_end_matches('$');
+    pat.chars().all(|c| c.is_ascii_alphabetic())
 }
 
 #[test]
@@ -152,6 +160,8 @@ fn test() {
         r"/A|B$/.test(bar)",
         // Additional tests
         r"/^http/i.test(uri)",
+        r"if (/^a/i.test(hex)) {}",
+        r"if (/a$/i.test(hex)) {}",
     ];
 
     let fail = vec![
@@ -196,6 +206,8 @@ fn test() {
         r"/a$/.test(String(unknown))",
         r"const a = /你$/.test('a');",
         r"const a = /^你/.test('a');",
+        r"if (/^#/i.test(hex)) {}",
+        r"if (/#$/i.test(hex)) {}",
     ];
 
     Tester::new(PreferStringStartsEndsWith::NAME, pass, fail).test_and_snapshot();

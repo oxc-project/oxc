@@ -1,17 +1,16 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed")]
-#[diagnostic(severity(warning), help("There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code."))]
-struct EmptyBraceSpacesDiagnostic(#[label] pub Span);
+fn empty_brace_spaces_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed")
+        .with_help("There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct EmptyBraceSpaces;
@@ -46,9 +45,10 @@ impl Rule for EmptyBraceSpaces {
                     && end - start > static_leading_count + 2
                     && !ctx.semantic().trivias().has_comments_between(static_block.span)
                 {
-                    ctx.diagnostic_with_fix(EmptyBraceSpacesDiagnostic(static_block.span), || {
-                        Fix::new("static {}", static_block.span)
-                    });
+                    ctx.diagnostic_with_fix(
+                        empty_brace_spaces_diagnostic(static_block.span),
+                        || Fix::new("static {}", static_block.span),
+                    );
                 }
             }
             AstKind::ObjectExpression(obj) => {
@@ -88,7 +88,7 @@ fn remove_empty_braces_spaces(ctx: &LintContext, is_empty_body: bool, span: Span
 
     if is_empty_body && end - start > 2 && !ctx.semantic().trivias().has_comments_between(span) {
         // length of "{}"
-        ctx.diagnostic_with_fix(EmptyBraceSpacesDiagnostic(span), || Fix::new("{}", span));
+        ctx.diagnostic_with_fix(empty_brace_spaces_diagnostic(span), || Fix::new("{}", span));
     }
 }
 

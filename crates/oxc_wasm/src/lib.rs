@@ -172,7 +172,7 @@ impl Oxc {
             .parse();
 
         self.comments = self.map_comments(&ret.trivias);
-        self.save_diagnostics(ret.errors);
+        self.save_diagnostics(ret.errors.into_iter().map(Error::from).collect::<Vec<_>>());
 
         self.ir = format!("{:#?}", ret.program.body).into();
 
@@ -184,7 +184,9 @@ impl Oxc {
             .build(program);
 
         if run_options.syntax() {
-            self.save_diagnostics(semantic_ret.errors);
+            self.save_diagnostics(
+                semantic_ret.errors.into_iter().map(Error::from).collect::<Vec<_>>(),
+            );
         }
 
         let semantic = Rc::new(semantic_ret.semantic);
@@ -192,7 +194,7 @@ impl Oxc {
         if run_options.lint() && self.diagnostics.borrow().is_empty() {
             let lint_ctx = LintContext::new(path.clone().into_boxed_path(), &semantic);
             let linter_ret = Linter::default().run(lint_ctx);
-            let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
+            let diagnostics = linter_ret.into_iter().map(|e| Error::from(e.error)).collect();
             self.save_diagnostics(diagnostics);
         }
 

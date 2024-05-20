@@ -406,3 +406,12 @@ expression: no_conditional_expect
  4 │                 });
    ╰────
   help: Avoid calling `expect` conditionally`
+
+  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:7:25]
+ 6 │                     if (vnode._nextDom) {
+ 7 │                         expect.fail('vnode should not have _nextDom:' + vnode._nextDom);
+   ·                         ──────
+ 8 │                     }
+   ╰────
+  help: Avoid calling `expect` conditionally`

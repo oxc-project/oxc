@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{Argument, Expression, FunctionBody, Statement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -18,10 +16,11 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(valid-describe-callback): {0:?}")]
-#[diagnostic(severity(warning), help("{1:?}"))]
-struct ValidDescribeCallbackDiagnostic(&'static str, &'static str, #[label] pub Span);
+fn valid_describe_callback_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint-plugin-jest(valid-describe-callback): {x0:?}"))
+        .with_help(format!("{x1:?}"))
+        .with_labels([span2.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ValidDescribeCallback;
@@ -74,7 +73,9 @@ impl Rule for ValidDescribeCallback {
 
 fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
     let node = possible_jest_node.node;
-    let AstKind::CallExpression(call_expr) = node.kind() else { return };
+    let AstKind::CallExpression(call_expr) = node.kind() else {
+        return;
+    };
     let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
         return;
     };
@@ -151,7 +152,7 @@ fn find_first_return_stmt_span(function_body: &FunctionBody) -> Option<Span> {
 
 fn diagnostic(ctx: &LintContext, span: Span, message: Message) {
     let (error, help) = message.details();
-    ctx.diagnostic(ValidDescribeCallbackDiagnostic(error, help, span));
+    ctx.diagnostic(valid_describe_callback_diagnostic(error, help, span));
 }
 
 #[derive(Clone, Copy)]

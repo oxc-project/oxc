@@ -1,16 +1,15 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, disable_directives::DisableRuleComment, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-abusive-eslint-disable): Unexpected `eslint-disable` comment that does not specify any rules to disable.")]
-#[diagnostic(severity(warning), help("Specify the rules you want to disable."))]
-struct NoAbusiveEslintDisableDiagnostic(#[label] pub Span);
+fn no_abusive_eslint_disable_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-abusive-eslint-disable): Unexpected `eslint-disable` comment that does not specify any rules to disable.")
+        .with_help("Specify the rules you want to disable.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAbusiveEslintDisable;
@@ -49,12 +48,12 @@ declare_oxc_lint!(
 impl Rule for NoAbusiveEslintDisable {
     fn run_once(&self, ctx: &LintContext) {
         for span in ctx.disable_directives().disable_all_comments() {
-            ctx.diagnostic(NoAbusiveEslintDisableDiagnostic(*span));
+            ctx.diagnostic(no_abusive_eslint_disable_diagnostic(*span));
         }
 
         for DisableRuleComment { span, rules } in ctx.disable_directives().disable_rule_comments() {
             if rules.is_empty() || !is_valid_rule_name(rules[0]) {
-                ctx.diagnostic(NoAbusiveEslintDisableDiagnostic(*span));
+                ctx.diagnostic(no_abusive_eslint_disable_diagnostic(*span));
             }
         }
     }

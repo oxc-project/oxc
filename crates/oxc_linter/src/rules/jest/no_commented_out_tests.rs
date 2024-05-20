@@ -1,18 +1,19 @@
 use lazy_static::lazy_static;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented")]
-#[diagnostic(severity(warning), help("Remove or uncomment this comment"))]
-struct NoCommentedOutTestsDiagnostic(#[label] pub Span);
+fn no_commented_out_tests_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented",
+    )
+    .with_help("Remove or uncomment this comment")
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoCommentedOutTests;
@@ -62,7 +63,7 @@ impl Rule for NoCommentedOutTests {
         });
 
         for span in commented_tests {
-            ctx.diagnostic(NoCommentedOutTestsDiagnostic(span));
+            ctx.diagnostic(no_commented_out_tests_diagnostic(span));
         }
     }
 }

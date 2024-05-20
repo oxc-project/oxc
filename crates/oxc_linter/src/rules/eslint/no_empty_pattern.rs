@@ -1,20 +1,16 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-empty-pattern): Disallow empty destructuring patterns.")]
-#[diagnostic(
-    severity(warning),
-    help("Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.")
-)]
-struct NoEmptyPatternDiagnostic(&'static str, #[label("Empty {0} binding pattern")] pub Span);
+fn no_empty_pattern_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint(no-empty-pattern): Disallow empty destructuring patterns.")
+        .with_help("Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.")
+        .with_labels([LabeledSpan::new_with_span(Some(format!("Empty {x0} binding pattern")), span1)])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoEmptyPattern;
@@ -84,7 +80,7 @@ impl Rule for NoEmptyPattern {
             AstKind::ObjectPattern(object) if object.is_empty() => ("object", object.span),
             _ => return,
         };
-        ctx.diagnostic(NoEmptyPatternDiagnostic(pattern_type, span));
+        ctx.diagnostic(no_empty_pattern_diagnostic(pattern_type, span));
     }
 }
 

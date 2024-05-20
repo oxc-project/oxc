@@ -1,19 +1,16 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`."
-)]
-#[diagnostic(severity(warning), help("Replace `.innerText` with `.textContent`."))]
-struct PreferDomNodeTextContentDiagnostic(#[label] pub Span);
+fn prefer_dom_node_text_content_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.")
+        .with_help("Replace `.innerText` with `.textContent`.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferDomNodeTextContent;
@@ -47,7 +44,7 @@ impl Rule for PreferDomNodeTextContent {
         if let AstKind::MemberExpression(member_expr) = node.kind() {
             if let Some((span, name)) = member_expr.static_property_info() {
                 if name == "innerText" && !member_expr.is_computed() {
-                    ctx.diagnostic_with_fix(PreferDomNodeTextContentDiagnostic(span), || {
+                    ctx.diagnostic_with_fix(prefer_dom_node_text_content_diagnostic(span), || {
                         Fix::new("textContent", span)
                     });
                 }
@@ -72,7 +69,7 @@ impl Rule for PreferDomNodeTextContent {
                 && (matches!(grand_parent_node_kind, AstKind::ObjectPattern(_))
                     || matches!(grand_parent_node_kind, AstKind::AssignmentTarget(_)))
             {
-                ctx.diagnostic(PreferDomNodeTextContentDiagnostic(identifier.span));
+                ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier.span));
                 return;
             }
         }
@@ -83,7 +80,7 @@ impl Rule for PreferDomNodeTextContent {
                 && matches!(parent_node_kind, AstKind::AssignmentTarget(_))
                 && matches!(grand_parent_node_kind, AstKind::AssignmentExpression(_))
             {
-                ctx.diagnostic(PreferDomNodeTextContentDiagnostic(identifier_ref.span));
+                ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier_ref.span));
             }
         }
     }

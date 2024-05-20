@@ -2,10 +2,7 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -16,15 +13,16 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum HtmlHasLangDiagnostic {
-    #[error("eslint-plugin-jsx-a11y(html-has-lang): Missing lang attribute.")]
-    #[diagnostic(severity(warning), help("Add a lang attribute to the html element whose value represents the primary language of document."))]
-    MissingLangProp(#[label] Span),
+fn missing_lang_prop(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(html-has-lang): Missing lang attribute.")
+        .with_help("Add a lang attribute to the html element whose value represents the primary language of document.")
+        .with_labels([span0.into()])
+}
 
-    #[error("eslint-plugin-jsx-a11y(html-has-lang): Missing value for lang attribute")]
-    #[diagnostic(severity(warning), help("Must have meaningful value for `lang` prop."))]
-    MissingLangValue(#[label] Span),
+fn missing_lang_value(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(html-has-lang): Missing value for lang attribute")
+        .with_help("Must have meaningful value for `lang` prop.")
+        .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -73,10 +71,10 @@ impl Rule for HtmlHasLang {
         };
 
         has_jsx_prop_lowercase(jsx_el, "lang").map_or_else(
-            || ctx.diagnostic(HtmlHasLangDiagnostic::MissingLangProp(identifier.span)),
+            || ctx.diagnostic(missing_lang_prop(identifier.span)),
             |lang_prop| {
                 if !is_valid_lang_prop(lang_prop) {
-                    ctx.diagnostic(HtmlHasLangDiagnostic::MissingLangValue(jsx_el.span));
+                    ctx.diagnostic(missing_lang_value(jsx_el.span));
                 }
             },
         );

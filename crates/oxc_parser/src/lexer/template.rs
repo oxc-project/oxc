@@ -74,7 +74,7 @@ impl<'a> Lexer<'a> {
                 }
             },
             handle_eof: {
-                self.error(diagnostics::UnterminatedString(self.unterminated_range()));
+                self.error(diagnostics::unterminated_string(self.unterminated_range()));
                 return Kind::Undetermined;
             },
         };
@@ -105,7 +105,7 @@ impl<'a> Lexer<'a> {
         if pos.addr() == self.source.end_addr() {
             return cold_branch(|| {
                 self.source.advance_to_end();
-                self.error(diagnostics::UnterminatedString(self.unterminated_range()));
+                self.error(diagnostics::unterminated_string(self.unterminated_range()));
                 Kind::Undetermined
             });
         }
@@ -295,7 +295,7 @@ impl<'a> Lexer<'a> {
                 }
             },
             handle_eof: {
-                self.error(diagnostics::UnterminatedString(self.unterminated_range()));
+                self.error(diagnostics::unterminated_string(self.unterminated_range()));
                 return Kind::Undetermined;
             },
         };

@@ -22,7 +22,8 @@ non_ascii_idents                       = "warn"
 unit-bindings                          = "warn"
 
 [workspace.lints.clippy]
-all = { level = "warn" }
+all        = { level = "warn" }
+empty_docs = { level = "allow", priority = 1 } # from `Tsify`
 # restriction
 dbg_macro     = "warn"
 todo          = "warn"
@@ -71,19 +72,22 @@ cargo_common_metadata   = "allow"                           # TODO: fix this
 
 [workspace.dependencies]
 # publish = true
-oxc             = { version = "0.12.5", path = "crates/oxc" }
-oxc_allocator   = { version = "0.12.5", path = "crates/oxc_allocator" }
-oxc_ast         = { version = "0.12.5", path = "crates/oxc_ast" }
-oxc_codegen     = { version = "0.12.5", path = "crates/oxc_codegen" }
-oxc_diagnostics = { version = "0.12.5", path = "crates/oxc_diagnostics" }
-oxc_index       = { version = "0.12.5", path = "crates/oxc_index" }
-oxc_minifier    = { version = "0.12.5", path = "crates/oxc_minifier" }
-oxc_parser      = { version = "0.12.5", path = "crates/oxc_parser" }
-oxc_semantic    = { version = "0.12.5", path = "crates/oxc_semantic" }
-oxc_span        = { version = "0.12.5", path = "crates/oxc_span" }
-oxc_syntax      = { version = "0.12.5", path = "crates/oxc_syntax" }
-oxc_transformer = { version = "0.12.5", path = "crates/oxc_transformer" }
-oxc_sourcemap   = { version = "0.12.5", path = "crates/oxc_sourcemap" }
+oxc              = { version = "0.13.0", path = "crates/oxc" }
+oxc_allocator    = { version = "0.13.0", path = "crates/oxc_allocator" }
+oxc_ast          = { version = "0.13.0", path = "crates/oxc_ast" }
+oxc_codegen      = { version = "0.13.0", path = "crates/oxc_codegen" }
+oxc_diagnostics  = { version = "0.13.0", path = "crates/oxc_diagnostics" }
+oxc_index        = { version = "0.13.0", path = "crates/oxc_index" }
+oxc_minifier     = { version = "0.13.0", path = "crates/oxc_minifier" }
+oxc_parser       = { version = "0.13.0", path = "crates/oxc_parser" }
+oxc_semantic     = { version = "0.13.0", path = "crates/oxc_semantic" }
+oxc_span         = { version = "0.13.0", path = "crates/oxc_span" }
+oxc_syntax       = { version = "0.13.0", path = "crates/oxc_syntax" }
+oxc_transformer  = { version = "0.13.0", path = "crates/oxc_transformer" }
+oxc_sourcemap    = { version = "0.13.0", path = "crates/oxc_sourcemap" }
+oxc_ast_macros   = { version = "0.13.0", path = "crates/oxc_ast_macros" }
+oxc_traverse     = { version = "0.13.0", path = "crates/oxc_traverse" }
+oxc_module_lexer = { version = "0.13.0", path = "crates/oxc_traverse" }
 
 # publish = false
 oxc_macros       = { path = "crates/oxc_macros" }
@@ -109,6 +113,7 @@ ignore              = "0.4.22"
 itertools           = "0.12.1"
 jemallocator        = "0.5.4"
 lazy_static         = "1.4.0"
+memoffset           = "0.9.1"
 miette              = { version = "7.2.0", features = ["fancy-no-syscall"] }
 mimalloc            = "0.1.41"
 num-bigint          = "0.4.4"
@@ -128,9 +133,9 @@ serde               = "1.0.199"
 serde_json          = "1.0.116"
 syn                 = { version = "2.0.58", default-features = false }
 tempfile            = "3.10.1"
-thiserror           = "1.0.59"
 tokio               = "1"
 tower-lsp           = "0.20.0"
+trybuild            = "1.0.93"
 unicode-id-start    = "1.1.2"
 ureq                = { version = "2.9.6", default-features = false }
 url                 = "2.5.0"
@@ -166,9 +171,11 @@ similar             = "2.5.0"
 textwrap            = "0.16.0"
 unicode-width       = "0.1.12"
 saphyr              = "0.0.1"
+base64-simd         = "0.8"
+cfg-if              = "1.0.0"
 
 [workspace.metadata.cargo-shear]
-ignored = ["napi"]
+ignored = ["napi", "oxc_traverse"]
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,

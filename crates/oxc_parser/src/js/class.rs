@@ -4,7 +4,7 @@ use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
 use super::list::ClassElements;
-use crate::{diagnostics, lexer::Kind, list::NormalList, ParserImpl, StatementContext};
+use crate::{diagnostics, lexer::Kind, list::NormalList, Context, ParserImpl, StatementContext};
 
 type Extends<'a> =
     Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
@@ -22,7 +22,7 @@ impl<'a> ParserImpl<'a> {
         let decl = self.parse_class_declaration(start_span, Modifiers::empty())?;
 
         if stmt_ctx.is_single_statement() {
-            self.error(diagnostics::ClassDeclaration(Span::new(
+            self.error(diagnostics::class_declaration(Span::new(
                 decl.span.start,
                 decl.body.span.start,
             )));
@@ -57,7 +57,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Box<'a, Class<'a>>> {
         self.bump_any(); // advance `class`
 
-        let decorators = self.state.consume_decorators();
+        let decorators = self.consume_decorators();
         let start_span = decorators.iter().next().map_or(start_span, |d| d.span);
 
         let id = if self.cur_kind().is_binding_identifier() && !self.at(Kind::Implements) {
@@ -122,7 +122,7 @@ impl<'a> ParserImpl<'a> {
         let mut extends = self.ast.new_vec();
 
         let span = self.start_span();
-        let mut first_extends = self.parse_lhs_expression()?;
+        let mut first_extends = self.parse_lhs_expression_or_higher()?;
         let first_type_argument;
         if let Expression::TSInstantiationExpression(expr) = first_extends {
             let expr = expr.unbox();
@@ -135,7 +135,7 @@ impl<'a> ParserImpl<'a> {
 
         while self.eat(Kind::Comma) {
             let span = self.start_span();
-            let mut extend = self.parse_lhs_expression()?;
+            let mut extend = self.parse_lhs_expression_or_higher()?;
             let type_argument;
             if let Expression::TSInstantiationExpression(expr) = extend {
                 let expr = expr.unbox();
@@ -253,14 +253,14 @@ impl<'a> ParserImpl<'a> {
 
         if let PropertyKey::PrivateIdentifier(private_ident) = &key {
             if private_ident.name == "constructor" {
-                self.error(diagnostics::PrivateNameConstructor(private_ident.span));
+                self.error(diagnostics::private_name_constructor(private_ident.span));
             }
         }
 
         if accessor {
             self.parse_ts_type_annotation()?;
 
-            return self.parse_class_accessor_property(span, key, computed, r#static);
+            return self.parse_class_accessor_property(span, key, computed, r#static, r#abstract);
         }
 
         // LAngle for start of type parameters `foo<T>`
@@ -281,17 +281,17 @@ impl<'a> ParserImpl<'a> {
             )?;
             if let Some((name, span)) = definition.prop_name() {
                 if r#static && name == "prototype" && !self.ctx.has_ambient() {
-                    self.error(diagnostics::StaticPrototype(span));
+                    self.error(diagnostics::static_prototype(span));
                 }
                 if !r#static && name == "constructor" {
                     if kind == MethodDefinitionKind::Get || kind == MethodDefinitionKind::Set {
-                        self.error(diagnostics::ConstructorGetterSetter(span));
+                        self.error(diagnostics::constructor_getter_setter(span));
                     }
                     if r#async {
-                        self.error(diagnostics::ConstructorAsync(span));
+                        self.error(diagnostics::constructor_async(span));
                     }
                     if generator {
-                        self.error(diagnostics::ConstructorGenerator(span));
+                        self.error(diagnostics::constructor_generator(span));
                     }
                 }
             }
@@ -316,10 +316,10 @@ impl<'a> ParserImpl<'a> {
             )?;
             if let Some((name, span)) = definition.prop_name() {
                 if name == "constructor" {
-                    self.error(diagnostics::FieldConstructor(span));
+                    self.error(diagnostics::field_constructor(span));
                 }
                 if r#static && name == "prototype" && !self.ctx.has_ambient() {
-                    self.error(diagnostics::StaticPrototype(span));
+                    self.error(diagnostics::static_prototype(span));
                 }
             }
             Ok(definition)
@@ -360,18 +360,18 @@ impl<'a> ParserImpl<'a> {
             kind
         };
 
-        let decorators = self.state.consume_decorators();
+        let decorators = self.consume_decorators();
 
         let value = self.parse_method(r#async, generator)?;
 
         if kind == MethodDefinitionKind::Constructor {
             if let Some(this_param) = &value.this_param {
                 // class Foo { constructor(this: number) {} }
-                self.error(diagnostics::TSConstructorThisParameter(this_param.span));
+                self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
             }
 
             if r#static {
-                self.error(diagnostics::StaticConstructor(key.span()));
+                self.error(diagnostics::static_constructor(key.span()));
             }
         }
 
@@ -444,7 +444,7 @@ impl<'a> ParserImpl<'a> {
             accessibility,
             optional,
             definite,
-            decorators: self.state.consume_decorators(),
+            decorators: self.consume_decorators(),
         };
         Ok(ClassElement::PropertyDefinition(self.ast.alloc(property_definition)))
     }
@@ -452,12 +452,8 @@ impl<'a> ParserImpl<'a> {
     /// `ClassStaticBlockStatementList` :
     ///    `StatementList`[~Yield, +Await, ~Return]
     fn parse_class_static_block(&mut self, span: Span) -> Result<ClassElement<'a>> {
-        let has_await = self.ctx.has_await();
-        let has_yield = self.ctx.has_yield();
-        let has_return = self.ctx.has_return();
-        self.ctx = self.ctx.and_await(true).and_yield(false).and_return(false);
-        let block = self.parse_block()?;
-        self.ctx = self.ctx.and_await(has_await).and_yield(has_yield).and_return(has_return);
+        let block =
+            self.context(Context::Await, Context::Yield | Context::Return, Self::parse_block)?;
         Ok(self.ast.static_block(self.end_span(span), block.unbox().body))
     }
 
@@ -468,16 +464,25 @@ impl<'a> ParserImpl<'a> {
         key: PropertyKey<'a>,
         computed: bool,
         r#static: bool,
+        r#abstract: bool,
     ) -> Result<ClassElement<'a>> {
         let value =
-            self.eat(Kind::Eq).then(|| self.parse_assignment_expression_base()).transpose()?;
+            self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher()).transpose()?;
+        let r#type = if r#abstract {
+            AccessorPropertyType::TSAbstractAccessorProperty
+        } else {
+            AccessorPropertyType::AccessorProperty
+        };
+
+        let decorators = self.consume_decorators();
         Ok(self.ast.accessor_property(
+            r#type,
             self.end_span(span),
             key,
             value,
             computed,
             r#static,
-            self.state.consume_decorators(),
+            decorators,
         ))
     }
 }

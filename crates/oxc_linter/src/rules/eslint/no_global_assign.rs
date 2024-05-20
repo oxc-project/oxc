@@ -1,19 +1,19 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-global-assign): Read-only global '{0}' should not be modified.")]
-#[diagnostic(severity(warning))]
-struct NoGlobalAssignDiagnostic(
-    CompactStr,
-    #[label("Read-only global '{0}' should not be modified.")] pub Span,
-);
+fn no_global_assign_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "eslint(no-global-assign): Read-only global '{x0}' should not be modified."
+    ))
+    .with_labels([LabeledSpan::new_with_span(
+        Some(format!("Read-only global '{x0}' should not be modified.")),
+        span1,
+    )])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoGlobalAssign(Box<NoGlobalAssignConfig>);
@@ -57,8 +57,8 @@ impl Rule for NoGlobalAssign {
                 .unwrap_or(&vec![])
                 .iter()
                 .map(serde_json::Value::as_str)
-                .filter(std::option::Option::is_some)
-                .map(|x| CompactStr::from(x.unwrap()))
+                .filter(Option::is_some)
+                .map(|x| x.unwrap().into())
                 .collect::<Vec<CompactStr>>(),
         }))
     }
@@ -70,9 +70,8 @@ impl Rule for NoGlobalAssign {
                 let reference = symbol_table.get_reference(reference_id);
                 if reference.is_write() && symbol_table.is_global_reference(reference_id) {
                     let name = reference.name();
-
                     if !self.excludes.contains(name) && ctx.env_contains_var(name) {
-                        ctx.diagnostic(NoGlobalAssignDiagnostic(name.clone(), reference.span()));
+                        ctx.diagnostic(no_global_assign_diagnostic(name, reference.span()));
                     }
                 }
             }

@@ -1,6 +1,8 @@
+commit: 4bd1b2c2
+
 prettier_babel Summary:
-AST Parsed     : 2097/2097 (100.00%)
-Positive Passed: 1891/2097 (90.18%)
+AST Parsed     : 2099/2099 (100.00%)
+Positive Passed: 1893/2099 (90.19%)
 Expect to Parse: "comments/attachComment-false/array-expression-trailing-comma/input.js"
 Expect to Parse: "comments/basic/array-expression-trailing-comma/input.js"
 Expect to Parse: "comments/basic/object-expression-trailing-comma/input.js"

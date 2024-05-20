@@ -1,26 +1,22 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoNestedTernaryDiagnostic {
-    #[error("eslint-plugin-unicorn(no-nested-ternary): Unexpected nested ternary expression without parentheses.")]
-    #[diagnostic(severity(warning), help("Add parentheses around the nested ternary expression."))]
-    UnparenthesizedNestedTernary(#[label] Span),
-    #[error(
-        "eslint-plugin-unicorn(no-nested-ternary): Unexpected deeply nested ternary expression."
-    )]
-    #[diagnostic(
-        severity(warning),
-        help("Avoid nesting ternary expressions for more than one level.")
-    )]
-    DeeplyNestedTernary(#[label] Span),
+fn unparenthesized_nested_ternary(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-nested-ternary): Unexpected nested ternary expression without parentheses.")
+        .with_help("Add parentheses around the nested ternary expression.")
+        .with_labels([span0.into()])
+}
+
+fn deeply_nested_ternary(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-unicorn(no-nested-ternary): Unexpected deeply nested ternary expression.",
+    )
+    .with_help("Avoid nesting ternary expressions for more than one level.")
+    .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -50,7 +46,9 @@ declare_oxc_lint!(
 
 impl Rule for NoNestedTernary {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ConditionalExpression(cond_expr) = node.kind() else { return };
+        let AstKind::ConditionalExpression(cond_expr) = node.kind() else {
+            return;
+        };
 
         if matches!(&cond_expr.test.get_inner_expression(), Expression::ConditionalExpression(_))
             || matches!(
@@ -88,18 +86,15 @@ impl Rule for NoNestedTernary {
                 if let AstKind::ParenthesizedExpression(_) = parent_node.kind() {
                     return;
                 }
-                ctx.diagnostic_with_fix(
-                    NoNestedTernaryDiagnostic::UnparenthesizedNestedTernary(cond_expr.span),
-                    || {
-                        Fix::new(
-                            format!("({})", cond_expr.span.source_text(ctx.source_text())),
-                            cond_expr.span,
-                        )
-                    },
-                );
+                ctx.diagnostic_with_fix(unparenthesized_nested_ternary(cond_expr.span), || {
+                    Fix::new(
+                        format!("({})", cond_expr.span.source_text(ctx.source_text())),
+                        cond_expr.span,
+                    )
+                });
             }
             2 => {
-                ctx.diagnostic(NoNestedTernaryDiagnostic::DeeplyNestedTernary(cond_expr.span));
+                ctx.diagnostic(deeply_nested_ternary(cond_expr.span));
             }
             _ => unreachable!(),
         }

@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{Argument, BindingPatternKind, CallExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
@@ -17,17 +15,18 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoAccumulatingSpreadDiagnostic {
-    #[error("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")]
-    #[diagnostic(severity(warning), help("It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity."))]
-    LikelyArray(#[label("From this spread")] Span, #[label("For this reduce")] Span),
-    #[error("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")]
-    #[diagnostic(severity(warning), help("It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity."))]
-    LikelyObject(#[label("From this spread")] Span, #[label("For this reduce")] Span),
-    #[error("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")]
-    #[diagnostic(severity(warning), help("Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity."))]
-    Unknown(#[label("From this spread")] Span, #[label("For this reduce")] Span),
+fn likely_array(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()").with_help("It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.").with_labels([LabeledSpan::new_with_span(Some("From this spread".into()), span0), LabeledSpan::new_with_span(Some("For this reduce".into()), span1)])
+}
+
+fn likely_object(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()").with_help("It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.").with_labels([LabeledSpan::new_with_span(Some("From this spread".into()), span0), LabeledSpan::new_with_span(Some("For this reduce".into()), span1)])
+}
+
+fn unknown(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")
+        .with_help("Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_labels([LabeledSpan::new_with_span(Some("From this spread".into()), span0), LabeledSpan::new_with_span(Some("For this reduce".into()), span1)])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -78,18 +77,28 @@ declare_oxc_lint!(
 impl Rule for NoAccumulatingSpread {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // only check spreads on identifiers
-        let AstKind::SpreadElement(spread) = node.kind() else { return };
-        let Expression::Identifier(ref ident) = spread.argument else { return };
+        let AstKind::SpreadElement(spread) = node.kind() else {
+            return;
+        };
+        let Expression::Identifier(ref ident) = spread.argument else {
+            return;
+        };
 
         let nodes = ctx.semantic().nodes();
         let symbols = ctx.semantic().symbols();
 
         // get the AST node + symbol id of the declaration of the identifier
-        let Some(reference_id) = ident.reference_id.get() else { return };
+        let Some(reference_id) = ident.reference_id.get() else {
+            return;
+        };
         let reference = symbols.get_reference(reference_id);
-        let Some(referenced_symbol_id) = reference.symbol_id() else { return };
+        let Some(referenced_symbol_id) = reference.symbol_id() else {
+            return;
+        };
         let declaration_id = symbols.get_declaration(referenced_symbol_id);
-        let Some(declaration) = ctx.semantic().nodes().parent_node(declaration_id) else { return };
+        let Some(declaration) = ctx.semantic().nodes().parent_node(declaration_id) else {
+            return;
+        };
         let AstKind::FormalParameters(params) = declaration.kind() else {
             return;
         };
@@ -126,10 +135,7 @@ impl Rule for NoAccumulatingSpread {
     }
 }
 
-fn get_diagnostic<'a>(
-    call_expr: &'a CallExpression<'a>,
-    spread_span: Span,
-) -> NoAccumulatingSpreadDiagnostic {
+fn get_diagnostic<'a>(call_expr: &'a CallExpression<'a>, spread_span: Span) -> OxcDiagnostic {
     // unwrap is safe because we already checked that this is a reduce call
     let (reduce_call_span, _) = call_expr_method_callee_info(call_expr).unwrap();
 
@@ -143,13 +149,13 @@ fn get_diagnostic<'a>(
             };
 
         if matches!(second_arg, Expression::ObjectExpression(_)) {
-            return NoAccumulatingSpreadDiagnostic::LikelyObject(spread_span, reduce_call_span);
+            return likely_object(spread_span, reduce_call_span);
         } else if matches!(second_arg, Expression::ArrayExpression(_)) {
-            return NoAccumulatingSpreadDiagnostic::LikelyArray(spread_span, reduce_call_span);
+            return likely_array(spread_span, reduce_call_span);
         }
     }
 
-    NoAccumulatingSpreadDiagnostic::Unknown(spread_span, reduce_call_span)
+    unknown(spread_span, reduce_call_span)
 }
 
 fn get_identifier_symbol_id(ident: &BindingPatternKind<'_>) -> Option<SymbolId> {

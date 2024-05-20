@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -19,23 +17,31 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum PreferToBeDiagnostic {
-    #[error("eslint-plugin-jest(prefer-to-be): Use `toBe` when expecting primitive literals.")]
-    #[diagnostic(severity(warning))]
-    UseToBe(#[label] Span),
-    #[error("eslint-plugin-jest(prefer-to-be): Use `toBeUndefined` instead.")]
-    #[diagnostic(severity(warning))]
-    UseToBeUndefined(#[label] Span),
-    #[error("eslint-plugin-jest(prefer-to-be): Use `toBeDefined` instead.")]
-    #[diagnostic(severity(warning))]
-    UseToBeDefined(#[label] Span),
-    #[error("eslint-plugin-jest(prefer-to-be): Use `toBeNull` instead.")]
-    #[diagnostic(severity(warning))]
-    UseToBeNull(#[label] Span),
-    #[error("eslint-plugin-jest(prefer-to-be): Use `toBeNaN` instead.")]
-    #[diagnostic(severity(warning))]
-    UseToBeNaN(#[label] Span),
+fn use_to_be(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-jest(prefer-to-be): Use `toBe` when expecting primitive literals.",
+    )
+    .with_labels([span0.into()])
+}
+
+fn use_to_be_undefined(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-to-be): Use `toBeUndefined` instead.")
+        .with_labels([span0.into()])
+}
+
+fn use_to_be_defined(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-to-be): Use `toBeDefined` instead.")
+        .with_labels([span0.into()])
+}
+
+fn use_to_be_null(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-to-be): Use `toBeNull` instead.")
+        .with_labels([span0.into()])
+}
+
+fn use_to_be_na_n(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-to-be): Use `toBeNaN` instead.")
+        .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -224,7 +230,7 @@ impl PreferToBe {
         let maybe_not_modifier = modifiers.iter().find(|modifier| modifier.is_name_equal("not"));
 
         if kind == &PreferToBeKind::Undefined {
-            ctx.diagnostic_with_fix(PreferToBeDiagnostic::UseToBeUndefined(span), || {
+            ctx.diagnostic_with_fix(use_to_be_undefined(span), || {
                 let new_matcher =
                     if is_cmp_mem_expr { "[\"toBeUndefined\"]()" } else { "toBeUndefined()" };
                 if let Some(not_modifier) = maybe_not_modifier {
@@ -234,7 +240,7 @@ impl PreferToBe {
                 }
             });
         } else if kind == &PreferToBeKind::Defined {
-            ctx.diagnostic_with_fix(PreferToBeDiagnostic::UseToBeDefined(span), || {
+            ctx.diagnostic_with_fix(use_to_be_defined(span), || {
                 let (new_matcher, start) = if is_cmp_mem_expr {
                     ("[\"toBeDefined\"]()", modifiers.first().unwrap().span.end)
                 } else {
@@ -244,17 +250,17 @@ impl PreferToBe {
                 Fix::new(new_matcher.to_string(), Span::new(start, end))
             });
         } else if kind == &PreferToBeKind::Null {
-            ctx.diagnostic_with_fix(PreferToBeDiagnostic::UseToBeNull(span), || {
+            ctx.diagnostic_with_fix(use_to_be_null(span), || {
                 let new_matcher = if is_cmp_mem_expr { "\"toBeNull\"]()" } else { "toBeNull()" };
                 Fix::new(new_matcher.to_string(), Span::new(span.start, end))
             });
         } else if kind == &PreferToBeKind::NaN {
-            ctx.diagnostic_with_fix(PreferToBeDiagnostic::UseToBeNaN(span), || {
+            ctx.diagnostic_with_fix(use_to_be_na_n(span), || {
                 let new_matcher = if is_cmp_mem_expr { "\"toBeNaN\"]()" } else { "toBeNaN()" };
                 Fix::new(new_matcher.to_string(), Span::new(span.start, end))
             });
         } else {
-            ctx.diagnostic_with_fix(PreferToBeDiagnostic::UseToBe(span), || {
+            ctx.diagnostic_with_fix(use_to_be(span), || {
                 let new_matcher = if is_cmp_mem_expr { "\"toBe\"" } else { "toBe" };
                 Fix::new(new_matcher.to_string(), span)
             });

@@ -43,7 +43,7 @@ impl<'a> Lexer<'a> {
             Kind::Str
         } else {
             self.source.advance_to_end();
-            self.error(diagnostics::UnterminatedString(self.unterminated_range()));
+            self.error(diagnostics::unterminated_string(self.unterminated_range()));
             Kind::Undetermined
         }
     }

@@ -1,6 +1,11 @@
 /// Macro to inherit enum variants from another enum.
 ///
+/// (for further details see <https://github.com/oxc-project/oxc/pull/3115>)
+///
+/// # Types which can be inherited
+///
 /// The following types' variants can be inherited:
+///
 /// * `Expression`
 /// * `MemberExpression`
 /// * `AssignmentTarget`
@@ -10,6 +15,8 @@
 /// * `ModuleDeclaration`
 /// * `TSType`
 /// * `TSTypeName`
+///
+/// # Expansion
 ///
 /// ```
 /// inherit_variants! {
@@ -240,12 +247,15 @@ macro_rules! inherit_variants {
                 $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
 
                 /// Inherited from [`MemberExpression`].
+                ///
                 /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
                 ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>) = 48,
                 /// Inherited from [`MemberExpression`].
+                ///
                 /// `MemberExpression[?Yield, ?Await] . IdentifierName`
                 StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>) = 49,
                 /// Inherited from [`MemberExpression`].
+                ///
                 /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
                 PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>) = 50,
 
@@ -303,6 +313,7 @@ macro_rules! inherit_variants {
                 TSSatisfiesExpression,
                 TSNonNullExpression,
                 TSTypeAssertion,
+                TSInstantiationExpression,
                 ArrayAssignmentTarget,
                 ObjectAssignmentTarget,
             ]
@@ -334,6 +345,8 @@ macro_rules! inherit_variants {
                 TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
                 /// Inherited from [`SimpleAssignmentTarget`]
                 TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
+                /// Inherited from [`SimpleAssignmentTarget`]
+                TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 5,
 
                 // Inherited from `MemberExpression`
                 @inherit MemberExpression
@@ -358,7 +371,8 @@ macro_rules! inherit_variants {
                 TSAsExpression,
                 TSSatisfiesExpression,
                 TSNonNullExpression,
-                TSTypeAssertion
+                TSTypeAssertion,
+                TSInstantiationExpression
             ]
         );
     };
@@ -712,7 +726,8 @@ pub(crate) use inherit_variants;
 /// # SAFETY
 /// Both enums must be `#[repr(C, u8)]` or using this macro is unsound.
 ///
-/// # Example
+/// # Expansion
+///
 /// NB: For illustration only - `Statement` and `Declaration` in reality share 9 variants, not 2.
 ///
 /// ```
@@ -828,7 +843,7 @@ macro_rules! shared_enum_variants {
         };
 
         impl<'a> $parent<'a> {
-            #[doc = concat!(" Return if a `", stringify!($parent), "` is a `", stringify!($child), "`.")]
+            #[doc = concat!("Return if a `", stringify!($parent), "` is a `", stringify!($child), "`.")]
             #[inline]
             pub fn $is_child(&self) -> bool {
                 matches!(
@@ -837,7 +852,7 @@ macro_rules! shared_enum_variants {
                 )
             }
 
-            #[doc = concat!(" Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
+            #[doc = concat!("Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
             #[inline]
             pub fn $as_child(&self) -> Option<&$child<'a>> {
                 if self.$is_child() {
@@ -850,7 +865,7 @@ macro_rules! shared_enum_variants {
                 }
             }
 
-            #[doc = concat!(" Convert `&mut ", stringify!($parent), "` to `&mut ", stringify!($child), "`.")]
+            #[doc = concat!("Convert `&mut ", stringify!($parent), "` to `&mut ", stringify!($child), "`.")]
             #[inline]
             pub fn $as_child_mut(&mut self) -> Option<&mut $child<'a>> {
                 if self.$is_child() {
@@ -863,7 +878,7 @@ macro_rules! shared_enum_variants {
                 }
             }
 
-            #[doc = concat!(" Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
+            #[doc = concat!("Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
             #[doc = "# Panic"]
             #[doc = "Panics if not convertible."]
             #[inline]
@@ -871,7 +886,7 @@ macro_rules! shared_enum_variants {
                 self.$as_child().unwrap()
             }
 
-            #[doc = concat!(" Convert `&mut ", stringify!($parent), "` to `&mut ", stringify!($child), "`.")]
+            #[doc = concat!("Convert `&mut ", stringify!($parent), "` to `&mut ", stringify!($child), "`.")]
             #[doc = "# Panic"]
             #[doc = "Panics if not convertible."]
             #[inline]
@@ -883,7 +898,7 @@ macro_rules! shared_enum_variants {
         impl<'a> TryFrom<$parent<'a>> for $child<'a> {
             type Error = ();
 
-            #[doc = concat!(" Convert `", stringify!($parent), "` to `", stringify!($child), "`.")]
+            #[doc = concat!("Convert `", stringify!($parent), "` to `", stringify!($child), "`.")]
             #[inline]
             fn try_from(value: $parent<'a>) -> Result<Self, Self::Error> {
                 // Compiler should implement this as a check of discriminant and then zero-cost transmute,
@@ -896,7 +911,7 @@ macro_rules! shared_enum_variants {
         }
 
         impl<'a> From<$child<'a>> for $parent<'a> {
-            #[doc = concat!(" Convert `", stringify!($child), "` to `", stringify!($parent), "`.")]
+            #[doc = concat!("Convert `", stringify!($child), "` to `", stringify!($parent), "`.")]
             #[inline]
             fn from(value: $child<'a>) -> Self {
                 // Compiler should implement this as zero-cost transmute as discriminants
@@ -916,10 +931,10 @@ pub(crate) use shared_enum_variants;
 /// <https://doc.rust-lang.org/std/mem/fn.discriminant.html>
 macro_rules! discriminant {
     ($ty:ident :: $variant:ident) => {{
-        #[allow(unsafe_code, clippy::ptr_as_ptr, clippy::undocumented_unsafe_blocks)]
+        #[allow(unsafe_code, clippy::undocumented_unsafe_blocks)]
         unsafe {
             let t = std::mem::ManuallyDrop::new($ty::$variant(oxc_allocator::Box::dangling()));
-            *(&t as *const _ as *const u8)
+            *(std::ptr::addr_of!(t).cast::<u8>())
         }
     }};
 }

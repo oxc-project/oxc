@@ -1,19 +1,19 @@
 use oxc_ast::ast::NumericLiteral;
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use std::borrow::Cow;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-loss-of-precision): This number literal will lose precision at runtime.")]
-#[diagnostic(severity(warning))]
-struct NoLossOfPrecisionDiagnostic(#[label] pub Span);
+fn no_loss_of_precision_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint(no-loss-of-precision): This number literal will lose precision at runtime.",
+    )
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoLossOfPrecision;
@@ -41,7 +41,7 @@ impl Rule for NoLossOfPrecision {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::NumericLiteral(node) if Self::lose_precision(node) => {
-                ctx.diagnostic(NoLossOfPrecisionDiagnostic(node.span));
+                ctx.diagnostic(no_loss_of_precision_diagnostic(node.span));
             }
             _ => {}
         }
@@ -211,7 +211,9 @@ impl NoLossOfPrecision {
 
     fn base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {
         let raw = Self::get_raw(node);
-        let Some(raw) = Self::normalize(&raw) else { return true };
+        let Some(raw) = Self::normalize(&raw) else {
+            return true;
+        };
 
         if raw.frac.len() >= 100 {
             return true;
@@ -221,7 +223,9 @@ impl NoLossOfPrecision {
             (false, 0) => node.value.to_string(),
             (false, precision) => format!("{:.1$}", node.value, precision),
         };
-        let Some(stored) = Self::normalize(&stored) else { return true };
+        let Some(stored) = Self::normalize(&stored) else {
+            return true;
+        };
         raw != stored
     }
 

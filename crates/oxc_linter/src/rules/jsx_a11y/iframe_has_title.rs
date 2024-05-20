@@ -2,10 +2,8 @@ use oxc_ast::{
     ast::{JSXAttributeValue, JSXElementName, JSXExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -16,12 +14,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element."
-)]
-#[diagnostic(severity(warning), help("Provide title property for iframe element."))]
-struct IframeHasTitleDiagnostic(#[label] pub Span);
+fn iframe_has_title_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element.")
+        .with_help("Provide title property for iframe element.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct IframeHasTitle;
@@ -71,14 +68,16 @@ impl Rule for IframeHasTitle {
             return;
         };
 
-        let Some(name) = get_element_type(ctx, jsx_el) else { return };
+        let Some(name) = get_element_type(ctx, jsx_el) else {
+            return;
+        };
 
         if name != "iframe" {
             return;
         }
 
         let Some(alt_prop) = has_jsx_prop_lowercase(jsx_el, "title") else {
-            ctx.diagnostic(IframeHasTitleDiagnostic(iden.span));
+            ctx.diagnostic(iframe_has_title_diagnostic(iden.span));
             return;
         };
 
@@ -114,7 +113,7 @@ impl Rule for IframeHasTitle {
             _ => {}
         }
 
-        ctx.diagnostic(IframeHasTitleDiagnostic(iden.span));
+        ctx.diagnostic(iframe_has_title_diagnostic(iden.span));
     }
 }
 

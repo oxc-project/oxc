@@ -2,20 +2,20 @@ use oxc_ast::{
     ast::{Argument, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 use phf::phf_map;
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `{0}` over `{1}`.")]
-#[diagnostic(severity(warning))]
-struct PreferModernDomApisDiagnostic(pub &'static str, CompactStr, #[label] pub Span);
+fn prefer_modern_dom_apis_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `{x0}` over `{x1}`."
+    ))
+    .with_labels([span2.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferModernDomApis;
@@ -85,9 +85,9 @@ impl Rule for PreferModernDomApis {
             && !call_expr.optional
         {
             if let Some(preferred_method) = DISALLOWED_METHODS.get(method) {
-                ctx.diagnostic(PreferModernDomApisDiagnostic(
+                ctx.diagnostic(prefer_modern_dom_apis_diagnostic(
                     preferred_method,
-                    CompactStr::from(method),
+                    method,
                     member_expr.property.span,
                 ));
 
@@ -105,9 +105,9 @@ impl Rule for PreferModernDomApis {
             if let Argument::StringLiteral(lit) = &call_expr.arguments[0] {
                 for (position, replacer) in &POSITION_REPLACERS {
                     if lit.value == position {
-                        ctx.diagnostic(PreferModernDomApisDiagnostic(
+                        ctx.diagnostic(prefer_modern_dom_apis_diagnostic(
                             replacer,
-                            CompactStr::from(method),
+                            method,
                             member_expr.property.span,
                         ));
                     }

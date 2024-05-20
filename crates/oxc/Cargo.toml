@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc"
-version                = "0.12.5"
+version                = "0.13.0"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -39,4 +39,6 @@ semantic    = ["oxc_semantic"]
 transformer = ["oxc_transformer"]
 minifier    = ["oxc_minifier"]
 codegen     = ["oxc_codegen"]
-sourcemap   = ["oxc_sourcemap"]
+
+sourcemap            = ["oxc_sourcemap"]
+sourcemap_concurrent = ["sourcemap", "oxc_sourcemap/concurrent"]

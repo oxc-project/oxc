@@ -3,23 +3,21 @@ use oxc_ast::{
     ast::{BigIntLiteral, NumericLiteral},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.")]
-#[diagnostic(
-    severity(warning),
-    help("Group digits with numeric separators (_) so longer numbers are easier to read.")
-)]
-struct NumericSeparatorsStyleDiagnostic(#[label] pub Span);
+fn numeric_separators_style_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.",
+    )
+    .with_help("Group digits with numeric separators (_) so longer numbers are easier to read.")
+    .with_labels([span0.into()])
+}
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct NumericSeparatorsStyle(Box<NumericSeparatorsStyleConfig>);
@@ -98,9 +96,10 @@ impl Rule for NumericSeparatorsStyle {
                 let formatted = self.format_number(number);
 
                 if formatted != number.raw {
-                    ctx.diagnostic_with_fix(NumericSeparatorsStyleDiagnostic(number.span), || {
-                        Fix::new(formatted, number.span)
-                    });
+                    ctx.diagnostic_with_fix(
+                        numeric_separators_style_diagnostic(number.span),
+                        || Fix::new(formatted, number.span),
+                    );
                 }
             }
             AstKind::BigintLiteral(number) => {
@@ -113,9 +112,10 @@ impl Rule for NumericSeparatorsStyle {
                 let formatted = self.format_bigint(number, raw);
 
                 if formatted.len() != number.span.size() as usize {
-                    ctx.diagnostic_with_fix(NumericSeparatorsStyleDiagnostic(number.span), || {
-                        Fix::new(formatted, number.span)
-                    });
+                    ctx.diagnostic_with_fix(
+                        numeric_separators_style_diagnostic(number.span),
+                        || Fix::new(formatted, number.span),
+                    );
                 }
             }
             _ => {}

@@ -1,8 +1,6 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
+
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -16,10 +14,11 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-focused-tests): Unexpected focused test.")]
-#[diagnostic(severity(warning), help("Remove focus from test."))]
-struct NoFocusedTestsDiagnostic(#[label] pub Span);
+fn no_focused_tests_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jest(no-focused-tests): Unexpected focused test.")
+        .with_help("Remove focus from test.")
+        .with_labels([span0.into()])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoFocusedTests;
@@ -66,7 +65,9 @@ impl Rule for NoFocusedTests {
 
 fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
     let node = possible_jest_node.node;
-    let AstKind::CallExpression(call_expr) = node.kind() else { return };
+    let AstKind::CallExpression(call_expr) = node.kind() else {
+        return;
+    };
     let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
         return;
     };
@@ -76,7 +77,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     }
 
     if name.starts_with('f') {
-        ctx.diagnostic_with_fix(NoFocusedTestsDiagnostic(call_expr.span), || {
+        ctx.diagnostic_with_fix(no_focused_tests_diagnostic(call_expr.span), || {
             let start = call_expr.span.start;
             Fix::delete(Span::new(start, start + 1))
         });
@@ -86,7 +87,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
     let only_node = members.iter().find(|member| member.is_name_equal("only"));
     if let Some(only_node) = only_node {
-        ctx.diagnostic_with_fix(NoFocusedTestsDiagnostic(call_expr.span), || {
+        ctx.diagnostic_with_fix(no_focused_tests_diagnostic(call_expr.span), || {
             let span = only_node.span;
             let start = span.start - 1;
             let end = if matches!(only_node.element, MemberExpressionElement::IdentName(_)) {

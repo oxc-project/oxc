@@ -6,9 +6,8 @@ use std::{
     sync::Arc,
 };
 
-use miette::NamedSource;
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{miette, Error, Severity};
+use oxc_diagnostics::{Error, NamedSource, Severity};
 use oxc_linter::{
     partial_loader::{
         AstroPartialLoader, JavaScriptSource, SveltePartialLoader, VuePartialLoader,
@@ -153,7 +152,6 @@ pub struct FixedContent {
     pub range: Range,
 }
 
-#[derive(Debug)]
 pub struct IsolatedLintHandler {
     linter: Arc<Linter>,
 }
@@ -279,7 +277,10 @@ impl IsolatedLintHandler {
                 let reports = ret
                     .errors
                     .into_iter()
-                    .map(|diagnostic| ErrorReport { error: diagnostic, fixed_content: None })
+                    .map(|diagnostic| ErrorReport {
+                        error: Error::from(diagnostic),
+                        fixed_content: None,
+                    })
                     .collect();
                 return Some(Self::wrap_diagnostics(path, &original_source_text, reports, start));
             };
@@ -294,7 +295,10 @@ impl IsolatedLintHandler {
                 let reports = semantic_ret
                     .errors
                     .into_iter()
-                    .map(|diagnostic| ErrorReport { error: diagnostic, fixed_content: None })
+                    .map(|diagnostic| ErrorReport {
+                        error: Error::from(diagnostic),
+                        fixed_content: None,
+                    })
                     .collect();
                 return Some(Self::wrap_diagnostics(path, &original_source_text, reports, start));
             };
@@ -325,7 +329,7 @@ impl IsolatedLintHandler {
                         },
                     });
 
-                    ErrorReport { error: msg.error, fixed_content }
+                    ErrorReport { error: Error::from(msg.error), fixed_content }
                 })
                 .collect::<Vec<ErrorReport>>();
             let (_, errors_with_position) =
@@ -377,7 +381,6 @@ fn offset_to_position(offset: usize, source_text: &str) -> Option<Position> {
     Some(Position::new(line as u32, column as u32))
 }
 
-#[derive(Debug)]
 pub struct ServerLinter {
     linter: Arc<Linter>,
 }

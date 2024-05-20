@@ -1,10 +1,8 @@
+use oxc_diagnostics::OxcDiagnostic;
+
 use std::collections::HashMap;
 
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
 use oxc_span::Span;
@@ -20,10 +18,13 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-standalone-expect): Expect must be inside of a test block.")]
-#[diagnostic(severity(warning), help("Did you forget to wrap `expect` in a `test` or `it` block?"))]
-struct NoStandaloneExpectDiagnostic(#[label] pub Span);
+fn no_standalone_expect_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "eslint-plugin-jest(no-standalone-expect): Expect must be inside of a test block.",
+    )
+    .with_help("Did you forget to wrap `expect` in a `test` or `it` block?")
+    .with_labels([span0.into()])
+}
 
 /// <https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-standalone-expect.md>
 #[derive(Debug, Default, Clone)]
@@ -122,7 +123,7 @@ impl NoStandaloneExpect {
         )
         .is_none()
         {
-            ctx.diagnostic(NoStandaloneExpectDiagnostic(head.span));
+            ctx.diagnostic(no_standalone_expect_diagnostic(head.span));
         }
     }
 }
@@ -261,17 +262,20 @@ fn test() {
                     expect(value).toBe(true);
                 });
             ",
-            None
+            None,
         ),
         ("it.only('an only', value => { expect(value).toBe(true); });", None),
         ("it.concurrent('an concurrent', value => { expect(value).toBe(true); });", None),
         ("describe.each([1, true])('trues', value => { it('an it', () => expect(value).toBe(true) ); });", None),
-        ("
+        (
+            "
             describe('scenario', () => {
                 const t = Math.random() ? it.only : it;
                 t('testing', () => expect(true));
             });
-        ", Some(serde_json::json!([{ "additionalTestBlockFunctions": ['t'] }]))),
+        ",
+            Some(serde_json::json!([{ "additionalTestBlockFunctions": ['t'] }])),
+        ),
         (
             r"
                 each([
@@ -281,8 +285,10 @@ fn test() {
                 ]).test('returns the result of adding %d to %d', (a, b, expected) => {
                     expect(a + b).toBe(expected);
                 });
-            ", Some(serde_json::json!([{ "additionalTestBlockFunctions": ["each.test"] }])))
-        ];
+            ",
+            Some(serde_json::json!([{ "additionalTestBlockFunctions": ["each.test"] }])),
+        ),
+    ];
 
     let fail = vec![
         ("(() => {})('testing', () => expect(true).toBe(false))", None),
@@ -295,7 +301,7 @@ fn test() {
                     t('testing', () => expect(true).toBe(false));
                 });
             ",
-            None
+            None,
         ),
         (
             "
@@ -304,29 +310,7 @@ fn test() {
                     t('testing', () => expect(true).toBe(false));
                 });
             ",
-            None
-        ),
-        (
-            "
-                each([
-                    [1, 1, 2],
-                    [1, 2, 3],
-                    [2, 1, 3],
-                ]).test('returns the result of adding %d to %d', (a, b, expected) => {
-                    expect(a + b).toBe(expected);
-                });
-            ", None),
-        (
-            "
-                each([
-                    [1, 1, 2],
-                    [1, 2, 3],
-                    [2, 1, 3],
-                ]).test('returns the result of adding %d to %d', (a, b, expected) => {
-                    expect(a + b).toBe(expected);
-                });
-            ",
-            Some(serde_json::json!([{ "additionalTestBlockFunctions": ["each"] }]))
+            None,
         ),
         (
             "
@@ -338,7 +322,31 @@ fn test() {
                     expect(a + b).toBe(expected);
                 });
             ",
-            Some(serde_json::json!([{ "additionalTestBlockFunctions": ["test"] }]))
+            None,
+        ),
+        (
+            "
+                each([
+                    [1, 1, 2],
+                    [1, 2, 3],
+                    [2, 1, 3],
+                ]).test('returns the result of adding %d to %d', (a, b, expected) => {
+                    expect(a + b).toBe(expected);
+                });
+            ",
+            Some(serde_json::json!([{ "additionalTestBlockFunctions": ["each"] }])),
+        ),
+        (
+            "
+                each([
+                    [1, 1, 2],
+                    [1, 2, 3],
+                    [2, 1, 3],
+                ]).test('returns the result of adding %d to %d', (a, b, expected) => {
+                    expect(a + b).toBe(expected);
+                });
+            ",
+            Some(serde_json::json!([{ "additionalTestBlockFunctions": ["test"] }])),
         ),
         ("describe('a test', () => { expect(1).toBe(1); });", None),
         ("describe('a test', () => expect(1).toBe(1));", None),
@@ -353,15 +361,15 @@ fn test() {
                 import { expect as pleaseExpect } from '@jest/globals';
                 describe('a test', () => { pleaseExpect(1).toBe(1); });
             ",
-            None
+            None,
         ),
         (
             "
                 import { expect as pleaseExpect } from '@jest/globals';
                 beforeEach(() => pleaseExpect.hasAssertions());
             ",
-            None
-        )
+            None,
+        ),
     ];
 
     Tester::new(NoStandaloneExpect::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
