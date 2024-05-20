@@ -155,6 +155,7 @@ mod jest {
     pub mod no_deprecated_functions;
     pub mod no_disabled_tests;
     pub mod no_done_callback;
+    pub mod no_duplicate_hooks;
     pub mod no_export;
     pub mod no_focused_tests;
     pub mod no_hooks;
@@ -501,6 +502,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_deprecated_functions,
     jest::no_disabled_tests,
     jest::no_done_callback,
+    jest::no_duplicate_hooks,
     jest::no_export,
     jest::no_focused_tests,
     jest::no_hooks,
