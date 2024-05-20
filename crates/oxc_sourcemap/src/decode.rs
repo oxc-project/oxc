@@ -3,9 +3,9 @@
 use crate::error::{Error, Result};
 use crate::{SourceMap, Token};
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-struct JSONSourceMap {
+pub struct JSONSourceMap {
     // An optional name of the generated code that this source map is associated with.
     file: Option<String>,
     // A string with the encoded mapping data.
@@ -20,8 +20,7 @@ struct JSONSourceMap {
     names: Option<Vec<String>>,
 }
 
-pub fn decode(value: &str) -> Result<SourceMap> {
-    let json: JSONSourceMap = serde_json::from_str(value)?;
+pub fn decode(json: JSONSourceMap) -> Result<SourceMap> {
     let file = json.file.map(Into::into);
     let names =
         json.names.map(|v| v.into_iter().map(Into::into).collect::<Vec<_>>()).unwrap_or_default();
@@ -35,6 +34,10 @@ pub fn decode(value: &str) -> Result<SourceMap> {
         .map(|v| v.into_iter().map(Option::unwrap_or_default).map(Into::into).collect::<Vec<_>>());
     let tokens = decode_mapping(&json.mappings.unwrap_or_default(), names.len(), sources.len())?;
     Ok(SourceMap::new(file, names, source_root, sources, source_contents, tokens, None))
+}
+
+pub fn decode_from_string(value: &str) -> Result<SourceMap> {
+    decode(serde_json::from_str(value)?)
 }
 
 #[allow(clippy::cast_possible_truncation)]
