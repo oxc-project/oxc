@@ -13,7 +13,7 @@ use crate::{
 };
 
 fn no_document_cookie_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly",
     )
     .with_help("Use the Cookie Store API or a cookie library instead")

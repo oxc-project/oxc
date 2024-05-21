@@ -7,13 +7,11 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_class_assign_diagnostic(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
-        "eslint(no-class-assign): Unexpected re-assignment of class {x0}"
-    ))
-    .with_labels([
-        LabeledSpan::new_with_span(Some(format!("{x0} is declared as class here")), span1),
-        LabeledSpan::new_with_span(Some(format!("{x0} is re-assigned here")), span2),
-    ])
+    OxcDiagnostic::warn(format!("eslint(no-class-assign): Unexpected re-assignment of class {x0}"))
+        .with_labels([
+            LabeledSpan::new_with_span(Some(format!("{x0} is declared as class here")), span1),
+            LabeledSpan::new_with_span(Some(format!("{x0} is re-assigned here")), span2),
+        ])
 }
 
 #[derive(Debug, Default, Clone)]

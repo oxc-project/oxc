@@ -1,3 +1,5 @@
+commit: 17ba9aea
+
 parser_test262 Summary:
 AST Parsed     : 45289/45289 (100.00%)
 Positive Passed: 45289/45289 (100.00%)
@@ -2317,14 +2319,14 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ·           ─────
     ╰────
 
-  × Unexpected token
+  × Line terminator not permitted before arrow
     ╭─[language/expressions/arrow-function/syntax/early-errors/asi-restriction-invalid-parenless-parameters-expression-body.js:16:1]
  15 │ var af = x
  16 │ => x;
     · ──
     ╰────
 
-  × Unexpected token
+  × Line terminator not permitted before arrow
     ╭─[language/expressions/arrow-function/syntax/early-errors/asi-restriction-invalid-parenless-parameters.js:18:1]
  17 │ var af = x
  18 │ => {};

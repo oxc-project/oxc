@@ -10,7 +10,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn only_used_in_recursion_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "oxc(only-used-in-recursion): Parameter `{x1}` is only used in recursive calls"
     ))
     .with_help(

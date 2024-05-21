@@ -1,7 +1,9 @@
+commit: 4bd1b2c2
+
 parser_babel Summary:
 AST Parsed     : 2093/2099 (99.71%)
 Positive Passed: 2086/2099 (99.38%)
-Negative Passed: 1363/1501 (90.81%)
+Negative Passed: 1362/1501 (90.74%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -23,6 +25,7 @@ Expect Syntax Error: "es2015/for-of/invalid-let-as-identifier/input.js"
 Expect Syntax Error: "es2015/object/disallow-duplicate-method-params/input.js"
 Expect Syntax Error: "es2015/uncategorised/297/input.js"
 Expect Syntax Error: "es2015/uncategorised/335/input.js"
+Expect Syntax Error: "es2017/async-functions/async-await-as-arrow-binding-identifier/input.js"
 Expect Syntax Error: "es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js"
 Expect Syntax Error: "es2017/trailing-function-commas/7/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/24/input.js"
@@ -4840,12 +4843,6 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  3 │ }
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
-   ╭─[es2017/async-functions/async-await-as-arrow-binding-identifier/input.js:1:7]
- 1 │ async await => {}
-   ·       ─────
-   ╰────
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/async-function-and-non-bmp-character/input.js:1:6]
  1 │ async function𝐬 f() {}
@@ -4995,18 +4992,16 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·                ──────────
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[es2017/async-functions/invalid-escape-sequence-arrow/input.js:1:11]
+  × Keywords cannot contain escape characters
+   ╭─[es2017/async-functions/invalid-escape-sequence-arrow/input.js:1:1]
  1 │ \u0061sync x => { await x }
-   ·           ─
+   · ──────────
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected `,` but found `Identifier`
-   ╭─[es2017/async-functions/invalid-escape-sequence-arrow-list/input.js:1:13]
+  × Keywords cannot contain escape characters
+   ╭─[es2017/async-functions/invalid-escape-sequence-arrow-list/input.js:1:2]
  1 │ (\u0061sync x => { await x })
-   ·             ┬
-   ·             ╰── `,` expected
+   ·  ──────────
    ╰────
 
   × Keywords cannot contain escape characters
@@ -5088,7 +5083,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × No line break is allowed before '=>'.
+  × Line terminator not permitted before arrow
    ╭─[es2017/async-functions/newline-before-arrow/input.js:2:1]
  1 │ async x
  2 │ => x

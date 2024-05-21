@@ -931,10 +931,10 @@ pub(crate) use shared_enum_variants;
 /// <https://doc.rust-lang.org/std/mem/fn.discriminant.html>
 macro_rules! discriminant {
     ($ty:ident :: $variant:ident) => {{
-        #[allow(unsafe_code, clippy::ptr_as_ptr, clippy::undocumented_unsafe_blocks)]
+        #[allow(unsafe_code, clippy::undocumented_unsafe_blocks)]
         unsafe {
             let t = std::mem::ManuallyDrop::new($ty::$variant(oxc_allocator::Box::dangling()));
-            *(&t as *const _ as *const u8)
+            *(std::ptr::addr_of!(t).cast::<u8>())
         }
     }};
 }

@@ -218,18 +218,27 @@ impl<'a> ParserImpl<'a> {
             && !self.cur_token().is_on_new_line
             && self.eat(Kind::Extends)
         {
-            let extends_type =
-                self.with_context(Context::DisallowConditionalTypes, Self::parse_ts_type)?;
+            let extends_type = self.context(
+                Context::DisallowConditionalTypes,
+                Context::empty(),
+                Self::parse_ts_type,
+            )?;
 
             self.expect(Kind::Question)?;
 
-            let true_type =
-                self.without_context(Context::DisallowConditionalTypes, Self::parse_ts_type)?;
+            let true_type = self.context(
+                Context::empty(),
+                Context::DisallowConditionalTypes,
+                Self::parse_ts_type,
+            )?;
 
             self.expect(Kind::Colon)?;
 
-            let false_type =
-                self.without_context(Context::DisallowConditionalTypes, Self::parse_ts_type)?;
+            let false_type = self.context(
+                Context::empty(),
+                Context::DisallowConditionalTypes,
+                Self::parse_ts_type,
+            )?;
 
             return Ok(self.ast.ts_conditional_type(
                 self.end_span(left_span),
@@ -327,8 +336,11 @@ impl<'a> ParserImpl<'a> {
             ));
         }
 
-        let mut left = self
-            .without_context(Context::DisallowConditionalTypes, ParserImpl::parse_ts_basic_type)?;
+        let mut left = self.context(
+            Context::empty(),
+            Context::DisallowConditionalTypes,
+            ParserImpl::parse_ts_basic_type,
+        )?;
 
         while !self.cur_token().is_on_new_line && self.eat(Kind::LBrack) {
             if self.eat(Kind::RBrack) {
@@ -520,25 +532,26 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_type_arguments_in_expression(
         &mut self,
-    ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        if !matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
-            return None;
+    ) -> Result<Option<Box<'a, TSTypeParameterInstantiation<'a>>>> {
+        if !self.ts_enabled() {
+            return Ok(None);
         }
+
         let span = self.start_span();
+        self.re_lex_ts_l_angle();
+        if !self.at(Kind::LAngle) {
+            return Ok(None);
+        }
 
-        self.try_parse(|p| {
-            p.re_lex_ts_l_angle();
+        let params = TSTypeArgumentList::parse(self, /* in_expression */ true)?.params;
 
-            let params = TSTypeArgumentList::parse(p, true)?.params;
-            let token = p.cur_token();
-            if token.is_on_new_line || token.kind.can_follow_type_arguments_in_expr() {
-                Ok(params)
-            } else {
-                Err(p.unexpected())
-            }
-        })
-        .ok()
-        .map(|types| self.ast.ts_type_arguments(self.end_span(span), types))
+        let token = self.cur_token();
+
+        if token.is_on_new_line || token.kind.can_follow_type_arguments_in_expr() {
+            return Ok(Some(self.ast.ts_type_arguments(self.end_span(span), params)));
+        }
+
+        Err(self.unexpected())
     }
 
     fn parse_ts_tuple_type(&mut self) -> Result<TSType<'a>> {
@@ -871,8 +884,11 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_constraint_of_infer_type(&mut self) -> Result<Option<TSType<'a>>> {
         if self.eat(Kind::Extends) {
-            let constraint =
-                self.with_context(Context::DisallowConditionalTypes, Self::parse_ts_type)?;
+            let constraint = self.context(
+                Context::DisallowConditionalTypes,
+                Context::empty(),
+                Self::parse_ts_type,
+            )?;
             if self.ctx.has_disallow_conditional_types() || !self.at(Kind::Question) {
                 return Ok(Some(constraint));
             }
@@ -940,7 +956,7 @@ impl<'a> ParserImpl<'a> {
         if !self.peek_token().is_on_new_line && (asserts || is_predicate) {
             self.parse_ts_type_predicate()
         } else {
-            self.without_context(Context::DisallowConditionalTypes, Self::parse_ts_type)
+            self.context(Context::empty(), Context::DisallowConditionalTypes, Self::parse_ts_type)
         }
     }
 

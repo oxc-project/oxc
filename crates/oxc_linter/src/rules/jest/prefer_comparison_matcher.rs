@@ -18,7 +18,7 @@ use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
 fn use_to_be_comparison(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers")
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers")
         .with_help(format!("Prefer using `{x0:?}` instead"))
         .with_labels([span1.into()])
 }

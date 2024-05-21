@@ -12,7 +12,7 @@ use regex::Regex;
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 fn numeric_separators_style_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.",
     )
     .with_help("Group digits with numeric separators (_) so longer numbers are easier to read.")

@@ -14,7 +14,7 @@ use oxc_ast::{
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn some(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(no-useless-length-check)")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-length-check)")
         .with_help(
             "The non-empty check is useless as `Array#some()` returns `false` for an empty array.",
         )
@@ -22,7 +22,7 @@ fn some(span0: Span) -> OxcDiagnostic {
 }
 
 fn every(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(no-useless-length-check)")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-length-check)")
         .with_help(
             "The empty check is useless as `Array#every()` returns `true` for an empty array.",
         )

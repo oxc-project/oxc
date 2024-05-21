@@ -46,7 +46,7 @@ impl Rule for NoSparseArrays {
             if !violations.is_empty() {
                 if violations.len() < 10 {
                     ctx.diagnostic(
-                        OxcDiagnostic::warning(
+                        OxcDiagnostic::warn(
                             "eslint(no-sparse-arrays): Unexpected comma in middle of array",
                         )
                         .with_help("remove the comma or insert `undefined`")
@@ -63,7 +63,7 @@ impl Rule for NoSparseArrays {
                     };
 
                     ctx.diagnostic(
-                        OxcDiagnostic::warning(format!(
+                        OxcDiagnostic::warn(format!(
                             "eslint(no-sparse-arrays): {} unexpected commas in middle of array",
                             violations.len()
                         ))

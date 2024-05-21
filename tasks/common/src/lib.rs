@@ -1,15 +1,11 @@
 use std::path::{Path, PathBuf};
 
-mod babel;
 mod diff;
 mod request;
+mod snapshot;
 mod test_file;
 
-pub use crate::{
-    babel::{BabelOptions, TestOs},
-    request::agent,
-    test_file::*,
-};
+pub use crate::{request::agent, snapshot::Snapshot, test_file::*};
 pub use diff::print_diff_in_terminal;
 
 /// # Panics

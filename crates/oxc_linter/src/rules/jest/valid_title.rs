@@ -20,7 +20,7 @@ use crate::{
 };
 
 fn valid_title_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint-plugin-jest(valid-title): {x0:?}"))
+    OxcDiagnostic::warn(format!("eslint-plugin-jest(valid-title): {x0:?}"))
         .with_help(format!("{x1:?}"))
         .with_labels([span2.into()])
 }

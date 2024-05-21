@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_caller_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-caller): Disallow the use of arguments.caller or arguments.callee")
+    OxcDiagnostic::warn("eslint(no-caller): Disallow the use of arguments.caller or arguments.callee")
         .with_help("'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them")
         .with_labels([span0.into()])
 }

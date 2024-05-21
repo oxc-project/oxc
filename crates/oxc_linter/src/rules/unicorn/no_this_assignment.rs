@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_this_assignment_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint-plugin-unicorn(no-this-assignment): Do not assign `this` to `{x1}`"
     ))
     .with_help("Reference `this` directly instead of assigning it to a variable.")

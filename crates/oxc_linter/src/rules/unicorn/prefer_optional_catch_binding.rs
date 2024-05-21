@@ -10,7 +10,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_optional_catch_binding_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused").with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]

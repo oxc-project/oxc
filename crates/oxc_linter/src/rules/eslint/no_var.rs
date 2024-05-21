@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_var_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-var): Unexpected var, use let or const instead.")
+    OxcDiagnostic::warn("eslint(no-var): Unexpected var, use let or const instead.")
         .with_help("Replace var with let or const")
         .with_labels([span0.into()])
 }

@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_head_import_in_document_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-next(no-head-import-in-document): Prevent usage of `next/head` in `pages/_document.js`.")
+    OxcDiagnostic::warn("eslint-plugin-next(no-head-import-in-document): Prevent usage of `next/head` in `pages/_document.js`.")
         .with_help("See https://nextjs.org/docs/messages/no-head-import-in-document")
         .with_labels([span0.into()])
 }

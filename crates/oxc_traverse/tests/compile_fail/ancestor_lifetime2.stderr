@@ -4,7 +4,7 @@ error: lifetime may not live long enough
 8  | impl<'a, 'b> Traverse<'a> for Trans<'a, 'b> {
    |          -- lifetime `'b` defined here
 ...
-12 |         ctx: &TraverseCtx<'a>,
+12 |         ctx: &mut TraverseCtx<'a>,
    |              - let's call the lifetime of this reference `'1`
 ...
 15 |             self.program = Some(program);

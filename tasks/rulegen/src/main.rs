@@ -516,7 +516,6 @@ pub enum RuleKind {
     ReactPerf,
     JSXA11y,
     Oxc,
-    DeepScan,
     NextJS,
     JSDoc,
     Node,
@@ -533,7 +532,6 @@ impl RuleKind {
             "react-perf" => Self::ReactPerf,
             "jsx-a11y" => Self::JSXA11y,
             "oxc" => Self::Oxc,
-            "deepscan" => Self::DeepScan,
             "nextjs" => Self::NextJS,
             "jsdoc" => Self::JSDoc,
             "n" => Self::Node,
@@ -553,7 +551,6 @@ impl Display for RuleKind {
             Self::React => write!(f, "eslint-plugin-react"),
             Self::ReactPerf => write!(f, "eslint-plugin-react-perf"),
             Self::JSXA11y => write!(f, "eslint-plugin-jsx-a11y"),
-            Self::DeepScan => write!(f, "deepscan"),
             Self::Oxc => write!(f, "oxc"),
             Self::NextJS => write!(f, "eslint-plugin-next"),
             Self::JSDoc => write!(f, "eslint-plugin-jsdoc"),
@@ -585,7 +582,7 @@ fn main() {
         RuleKind::JSDoc => format!("{JSDOC_TEST_PATH}/{camel_rule_name}.js"),
         RuleKind::Node => format!("{NODE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::TreeShaking => format!("{TREE_SHAKING_PATH}/{kebab_rule_name}.test.ts"),
-        RuleKind::Oxc | RuleKind::DeepScan => String::new(),
+        RuleKind::Oxc => String::new(),
     };
 
     println!("Reading test file from {rule_test_path}");

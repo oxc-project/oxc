@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_new_native_nonconstructor_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint(no-new-native-nonconstructor): `{x0}` cannot be called as a constructor."
     ))
     .with_labels([span1.into()])

@@ -17,13 +17,13 @@ use crate::{
 };
 
 fn this_refs_deprecated(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-react(no-string-refs): Using this.refs is deprecated.")
+    OxcDiagnostic::warn("eslint-plugin-react(no-string-refs): Using this.refs is deprecated.")
         .with_help("Using this.xxx instead of this.refs.xxx")
         .with_labels([span0.into()])
 }
 
 fn string_in_ref_deprecated(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-react(no-string-refs): Using string literals in ref attributes is deprecated.").with_help("Using reference callback instead").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-react(no-string-refs): Using string literals in ref attributes is deprecated.").with_help("Using reference callback instead").with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]

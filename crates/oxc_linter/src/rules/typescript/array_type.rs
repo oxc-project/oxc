@@ -29,19 +29,19 @@ declare_oxc_lint!(
 );
 
 fn generic(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("typescript-eslint(array-type): Array type using '{x0}{x2}[]' is forbidden. Use '{x1}<{x2}>' instead.")).with_labels([span3.into()])
+    OxcDiagnostic::warn(format!("typescript-eslint(array-type): Array type using '{x0}{x2}[]' is forbidden. Use '{x1}<{x2}>' instead.")).with_labels([span3.into()])
 }
 
 fn generic_simple(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("typescript-eslint(array-type): Array type using '{x0}{x2}[]' is forbidden for non-simple types. Use '{x1}<{x2}>' instead.")).with_labels([span3.into()])
+    OxcDiagnostic::warn(format!("typescript-eslint(array-type): Array type using '{x0}{x2}[]' is forbidden for non-simple types. Use '{x1}<{x2}>' instead.")).with_labels([span3.into()])
 }
 
 fn array(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("typescript-eslint(array-type): Array type using '{x1}<{x2}>' is forbidden. Use '{x0}{x2}[]' instead.")).with_labels([span3.into()])
+    OxcDiagnostic::warn(format!("typescript-eslint(array-type): Array type using '{x1}<{x2}>' is forbidden. Use '{x0}{x2}[]' instead.")).with_labels([span3.into()])
 }
 
 fn array_simple(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("typescript-eslint(array-type): Array type using '{x1}<{x2}>' is forbidden for simple types. Use '{x0}{x2}[]' instead.")).with_labels([span3.into()])
+    OxcDiagnostic::warn(format!("typescript-eslint(array-type): Array type using '{x1}<{x2}>' is forbidden for simple types. Use '{x0}{x2}[]' instead.")).with_labels([span3.into()])
 }
 
 #[derive(Debug, Default, Clone)]

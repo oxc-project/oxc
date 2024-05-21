@@ -16,15 +16,15 @@ use crate::{
 };
 
 fn likely_array(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()").with_help("It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.").with_labels([LabeledSpan::new_with_span(Some("From this spread".into()), span0), LabeledSpan::new_with_span(Some("For this reduce".into()), span1)])
+    OxcDiagnostic::warn("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()").with_help("It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.").with_labels([LabeledSpan::new_with_span(Some("From this spread".into()), span0), LabeledSpan::new_with_span(Some("For this reduce".into()), span1)])
 }
 
 fn likely_object(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()").with_help("It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.").with_labels([LabeledSpan::new_with_span(Some("From this spread".into()), span0), LabeledSpan::new_with_span(Some("For this reduce".into()), span1)])
+    OxcDiagnostic::warn("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()").with_help("It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.").with_labels([LabeledSpan::new_with_span(Some("From this spread".into()), span0), LabeledSpan::new_with_span(Some("For this reduce".into()), span1)])
 }
 
 fn unknown(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")
+    OxcDiagnostic::warn("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")
         .with_help("Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
         .with_labels([LabeledSpan::new_with_span(Some("From this spread".into()), span0), LabeledSpan::new_with_span(Some("For this reduce".into()), span1)])
 }

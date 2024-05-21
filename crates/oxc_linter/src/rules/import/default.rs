@@ -7,7 +7,7 @@ use oxc_syntax::module_record::ImportImportName;
 use crate::{context::LintContext, rule::Rule};
 
 fn default_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint-plugin-import(default): No default export found in imported module {x0:?}"
     ))
     .with_help(format!("does {x0:?} have the default export?"))

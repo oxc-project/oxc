@@ -22,19 +22,6 @@ mod import {
     // pub mod no_unused_modules;
 }
 
-mod deepscan {
-    pub mod bad_array_method_on_arguments;
-    pub mod bad_bitwise_operator;
-    pub mod bad_char_at_comparison;
-    pub mod bad_comparison_sequence;
-    pub mod bad_min_max_func;
-    pub mod bad_object_literal_comparison;
-    pub mod bad_replace_all_arg;
-    pub mod missing_throw;
-    pub mod number_arg_out_of_range;
-    pub mod uninvoked_array_callback;
-}
-
 mod eslint {
     pub mod array_callback_return;
     pub mod constructor_super;
@@ -44,6 +31,7 @@ mod eslint {
     pub mod for_direction;
     pub mod getter_return;
     pub mod guard_for_in;
+    pub mod max_classes_per_file;
     pub mod max_lines;
     pub mod max_params;
     pub mod no_array_constructor;
@@ -84,6 +72,7 @@ mod eslint {
     pub mod no_irregular_whitespace;
     pub mod no_iterator;
     pub mod no_loss_of_precision;
+    pub mod no_new;
     pub mod no_new_native_nonconstructor;
     pub mod no_new_wrappers;
     pub mod no_nonoctal_decimal_escape;
@@ -113,8 +102,10 @@ mod eslint {
     pub mod no_var;
     pub mod no_void;
     pub mod no_with;
+    pub mod prefer_exponentiation_operator;
     pub mod radix;
     pub mod require_yield;
+    pub mod symbol_description;
     pub mod unicode_bom;
     pub mod use_isnan;
     pub mod valid_typeof;
@@ -157,6 +148,7 @@ mod jest {
     pub mod no_deprecated_functions;
     pub mod no_disabled_tests;
     pub mod no_done_callback;
+    pub mod no_duplicate_hooks;
     pub mod no_export;
     pub mod no_focused_tests;
     pub mod no_hooks;
@@ -334,13 +326,23 @@ mod jsx_a11y {
 
 mod oxc {
     pub mod approx_constant;
+    pub mod bad_array_method_on_arguments;
+    pub mod bad_bitwise_operator;
+    pub mod bad_char_at_comparison;
+    pub mod bad_comparison_sequence;
+    pub mod bad_min_max_func;
+    pub mod bad_object_literal_comparison;
+    pub mod bad_replace_all_arg;
     pub mod const_comparisons;
     pub mod double_comparisons;
     pub mod erasing_op;
     pub mod misrefactored_assign_op;
+    pub mod missing_throw;
     pub mod no_accumulating_spread;
     pub mod no_barrel_file;
+    pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
+    pub mod uninvoked_array_callback;
 }
 
 mod nextjs {
@@ -387,16 +389,6 @@ mod tree_shaking {
 }
 
 oxc_macros::declare_all_lint_rules! {
-    deepscan::bad_array_method_on_arguments,
-    deepscan::bad_bitwise_operator,
-    deepscan::bad_char_at_comparison,
-    deepscan::bad_comparison_sequence,
-    deepscan::bad_object_literal_comparison,
-    deepscan::bad_min_max_func,
-    deepscan::bad_replace_all_arg,
-    deepscan::missing_throw,
-    deepscan::number_arg_out_of_range,
-    deepscan::uninvoked_array_callback,
     eslint::array_callback_return,
     eslint::constructor_super,
     eslint::default_case_last,
@@ -405,6 +397,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::for_direction,
     eslint::getter_return,
     eslint::guard_for_in,
+    eslint::max_classes_per_file,
     eslint::max_lines,
     eslint::max_params,
     eslint::no_ternary,
@@ -447,6 +440,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_irregular_whitespace,
     eslint::no_iterator,
     eslint::no_loss_of_precision,
+    eslint::no_new,
     eslint::no_new_wrappers,
     eslint::no_nonoctal_decimal_escape,
     eslint::no_obj_calls,
@@ -474,11 +468,13 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_with,
     eslint::radix,
     eslint::require_yield,
+    eslint::symbol_description,
     eslint::unicode_bom,
     eslint::use_isnan,
     eslint::valid_typeof,
     eslint::no_await_in_loop,
     eslint::no_new_native_nonconstructor,
+    eslint::prefer_exponentiation_operator,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
     typescript::ban_ts_comment,
@@ -512,6 +508,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_deprecated_functions,
     jest::no_disabled_tests,
     jest::no_done_callback,
+    jest::no_duplicate_hooks,
     jest::no_export,
     jest::no_focused_tests,
     jest::no_hooks,
@@ -687,13 +684,23 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::role_supports_aria_props,
     jsx_a11y::autocomplete_valid,
     oxc::approx_constant,
+    oxc::bad_array_method_on_arguments,
+    oxc::bad_bitwise_operator,
+    oxc::bad_char_at_comparison,
+    oxc::bad_comparison_sequence,
+    oxc::bad_min_max_func,
+    oxc::bad_object_literal_comparison,
+    oxc::bad_replace_all_arg,
     oxc::const_comparisons,
     oxc::double_comparisons,
     oxc::erasing_op,
     oxc::misrefactored_assign_op,
+    oxc::missing_throw,
     oxc::no_accumulating_spread,
     oxc::no_barrel_file,
+    oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
+    oxc::uninvoked_array_callback,
     nextjs::google_font_display,
     nextjs::google_font_preconnect,
     nextjs::inline_script_id,

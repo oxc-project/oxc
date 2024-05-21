@@ -1,10 +1,10 @@
 use std::path::{Path, PathBuf};
 
+use oxc_transformer::BabelOptions;
 use serde::{de::DeserializeOwned, Deserialize};
 use serde_json::Value;
 
 use oxc_span::SourceType;
-use oxc_tasks_common::BabelOptions;
 
 use crate::{
     project_root,
@@ -128,7 +128,7 @@ impl Case for BabelCase {
     /// # Panics
     fn new(path: PathBuf, code: String) -> Self {
         let dir = project_root().join(FIXTURES_PATH).join(&path);
-        let options = BabelOptions::from_path(dir.parent().unwrap());
+        let options = BabelOptions::from_test_path(dir.parent().unwrap());
         let source_type = SourceType::from_path(&path)
             .unwrap()
             .with_script(true)

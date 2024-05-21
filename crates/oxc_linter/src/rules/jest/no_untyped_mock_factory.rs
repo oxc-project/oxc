@@ -14,7 +14,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 fn add_type_parameter_to_module_mock_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jest(no-untyped-mock-factory): Disallow using `jest.mock()` factories without an explicit type parameter.")
+    OxcDiagnostic::warn("eslint-plugin-jest(no-untyped-mock-factory): Disallow using `jest.mock()` factories without an explicit type parameter.")
         .with_help(format!("Add a type parameter to the mock factory such as `typeof import({x0:?})`"))
         .with_labels([span1.into()])
 }

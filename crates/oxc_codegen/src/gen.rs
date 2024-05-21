@@ -234,20 +234,21 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatement<'a> {
         }
 
         p.print_semicolon();
-        p.print_soft_space();
 
         if let Some(test) = self.test.as_ref() {
+            p.print_soft_space();
             p.print_expression(test);
         }
 
         p.print_semicolon();
-        p.print_soft_space();
 
         if let Some(update) = self.update.as_ref() {
+            p.print_soft_space();
             p.print_expression(update);
         }
 
         p.print(b')');
+        p.print_soft_space();
         self.body.gen(p, ctx);
     }
 }
@@ -600,7 +601,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for UsingDeclaration<'a> {
         p.print_str(b"using");
         p.print_soft_space();
         p.print_list(&self.declarations, ctx);
-        p.print_semicolon_after_statement();
+        p.needs_semicolon = true;
     }
 }
 
@@ -2397,6 +2398,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for AccessorProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
+        if p.options.enable_typescript && self.r#type.is_abstract() {
+            p.print_str(b"abstract ");
+        }
         if self.r#static {
             p.print_str(b"static ");
         }

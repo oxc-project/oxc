@@ -11,7 +11,7 @@ use phf::phf_set;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_typos_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint-plugin-next(no-typos): {x0} may be a typo. Did you mean {x1}?"
     ))
     .with_help("Prevent common typos in Next.js's data fetching functions")

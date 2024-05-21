@@ -7,7 +7,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
 fn no_unnecessary_await_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values",
     )
     .with_help("consider to remove the `await`")

@@ -10,14 +10,14 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_useless_catch_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-useless-catch): Unnecessary try/catch wrapper").with_labels([
+    OxcDiagnostic::warn("eslint(no-useless-catch): Unnecessary try/catch wrapper").with_labels([
         LabeledSpan::new_with_span(Some("is caught here".into()), span0),
         LabeledSpan::new_with_span(Some("and re-thrown here".into()), span1),
     ])
 }
 
 fn no_useless_catch_finalizer_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-useless-catch): Unnecessary catch clause").with_labels([
+    OxcDiagnostic::warn("eslint(no-useless-catch): Unnecessary catch clause").with_labels([
         LabeledSpan::new_with_span(Some("is caught here".into()), span0),
         LabeledSpan::new_with_span(Some("and re-thrown here".into()), span1),
     ])

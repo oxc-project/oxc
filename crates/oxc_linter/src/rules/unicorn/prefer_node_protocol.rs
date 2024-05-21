@@ -11,7 +11,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_node_protocol_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.")
         .with_help(format!("Prefer `node:{x1}` over `{x1}`."))
         .with_labels([span0.into()])
 }

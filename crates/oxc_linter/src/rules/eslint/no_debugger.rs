@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 fn no_debugger_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-debugger): `debugger` statement is not allowed")
+    OxcDiagnostic::warn("eslint(no-debugger): `debugger` statement is not allowed")
         .with_labels([span0.into()])
 }
 

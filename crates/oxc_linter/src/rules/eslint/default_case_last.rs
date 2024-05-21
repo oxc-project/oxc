@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn default_case_last_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint(default-case-last): Enforce default clauses in switch statements to be last",
     )
     .with_labels([LabeledSpan::new_with_span(

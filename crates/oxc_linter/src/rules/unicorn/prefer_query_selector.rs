@@ -8,7 +8,7 @@ use phf::phf_map;
 use crate::{context::LintContext, rule::Rule, utils::is_node_value_not_dom_node, AstNode, Fix};
 
 fn prefer_query_selector_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint-plugin-unicorn(prefer-query-selector): Prefer `.{x0}()` over `.{x1}()`."))
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(prefer-query-selector): Prefer `.{x0}()` over `.{x1}()`."))
         .with_help("It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).")
         .with_labels([span2.into()])
 }

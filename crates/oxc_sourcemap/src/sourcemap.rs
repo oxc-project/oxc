@@ -1,5 +1,5 @@
 use crate::{
-    decode::decode,
+    decode::{decode, decode_from_string, JSONSourceMap},
     encode::encode,
     error::Result,
     token::{Token, TokenChunk},
@@ -45,15 +45,23 @@ impl SourceMap {
         }
     }
 
-    /// Convert `SourceMap` to vlq sourcemap string.
+    /// Convert the vlq sourcemap to to `SourceMap`.
     /// # Errors
     ///
     /// The `serde_json` deserialize Error.
-    pub fn from_json_string(value: &str) -> Result<Self> {
+    pub fn from_json(value: JSONSourceMap) -> Result<Self> {
         decode(value)
     }
 
     /// Convert the vlq sourcemap string to `SourceMap`.
+    /// # Errors
+    ///
+    /// The `serde_json` deserialize Error.
+    pub fn from_json_string(value: &str) -> Result<Self> {
+        decode_from_string(value)
+    }
+
+    /// Convert `SourceMap` to vlq sourcemap string.
     /// # Errors
     ///
     /// The `serde_json` serialization Error.

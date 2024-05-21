@@ -9,7 +9,7 @@ use oxc_ast::ast::MemberExpression;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_dom_node_append_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.")
         .with_help("Replace `Node#appendChild()` with `Node#append()`.")
         .with_labels([span0.into()])
 }

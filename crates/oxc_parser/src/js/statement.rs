@@ -4,9 +4,7 @@ use oxc_diagnostics::Result;
 use oxc_span::{Atom, GetSpan, Span};
 
 use super::{
-    declaration::{VariableDeclarationContext, VariableDeclarationParent},
-    grammar::CoverGrammar,
-    list::SwitchCases,
+    grammar::CoverGrammar, list::SwitchCases, VariableDeclarationContext, VariableDeclarationParent,
 };
 use crate::{diagnostics, lexer::Kind, list::NormalList, Context, ParserImpl, StatementContext};
 
@@ -283,7 +281,8 @@ impl<'a> ParserImpl<'a> {
             return self.parse_for_loop(span, None, r#await);
         }
 
-        let init_expression = self.without_context(Context::In, ParserImpl::parse_expression)?;
+        let init_expression =
+            self.context(Context::empty(), Context::In, ParserImpl::parse_expression)?;
 
         // for (a.b in ...), for ([a] in ..), for ({a} in ..)
         if self.at(Kind::In) || self.at(Kind::Of) {
@@ -308,7 +307,7 @@ impl<'a> ParserImpl<'a> {
         r#await: bool,
     ) -> Result<Statement<'a>> {
         let start_span = self.start_span();
-        let init_declaration = self.without_context(Context::In, |p| {
+        let init_declaration = self.context(Context::empty(), Context::In, |p| {
             let decl_ctx = VariableDeclarationContext::new(VariableDeclarationParent::For);
             p.parse_variable_declaration(start_span, decl_ctx, Modifiers::empty())
         })?;
@@ -359,7 +358,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Statement<'a>> {
         self.expect(Kind::Semicolon)?;
         let test = if !self.at(Kind::Semicolon) && !self.at(Kind::RParen) {
-            Some(self.with_context(Context::In, ParserImpl::parse_expression)?)
+            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expression)?)
         } else {
             None
         };
@@ -367,7 +366,7 @@ impl<'a> ParserImpl<'a> {
         let update = if self.at(Kind::RParen) {
             None
         } else {
-            Some(self.with_context(Context::In, ParserImpl::parse_expression)?)
+            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expression)?)
         };
         self.expect(Kind::RParen)?;
         if r#await {
@@ -388,7 +387,7 @@ impl<'a> ParserImpl<'a> {
         let right = if is_for_in {
             self.parse_expression()
         } else {
-            self.parse_assignment_expression_base()
+            self.parse_assignment_expression_or_higher()
         }?;
         self.expect(Kind::RParen)?;
 
@@ -433,7 +432,7 @@ impl<'a> ParserImpl<'a> {
         let argument = if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
             None
         } else {
-            let expr = self.with_context(Context::In, ParserImpl::parse_expression)?;
+            let expr = self.context(Context::In, Context::empty(), ParserImpl::parse_expression)?;
             self.asi()?;
             Some(expr)
         };

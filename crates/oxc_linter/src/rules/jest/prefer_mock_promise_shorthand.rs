@@ -10,7 +10,7 @@ use oxc_span::{Atom, Span};
 use crate::{context::LintContext, fixer::Fix, rule::Rule, utils::get_node_name};
 
 fn use_mock_shorthand(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises").with_help(format!("Prefer {x0:?}")).with_labels([span1.into()])
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises").with_help(format!("Prefer {x0:?}")).with_labels([span1.into()])
 }
 
 #[derive(Debug, Default, Clone)]

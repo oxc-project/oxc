@@ -11,11 +11,9 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 fn use_to_strict_equal(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
-        "eslint-plugin-jest(prefer-strict-equal): Suggest using `toStrictEqual()`.",
-    )
-    .with_help("Use `toStrictEqual()` instead")
-    .with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-strict-equal): Suggest using `toStrictEqual()`.")
+        .with_help("Use `toStrictEqual()` instead")
+        .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]

@@ -10,8 +10,8 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn bad_min_max_func_diagnostic(x0: f64, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
-        "deepscan(bad-min-max-func): Math.min and Math.max combination leads to constant result",
+    OxcDiagnostic::warn(
+        "oxc(bad-min-max-func): Math.min and Math.max combination leads to constant result",
     )
     .with_help(format!(
         "This evaluates to {x0:?} because of the incorrect `Math.min`/`Math.max` combination"
@@ -19,7 +19,6 @@ fn bad_min_max_func_diagnostic(x0: f64, span1: Span) -> OxcDiagnostic {
     .with_labels([span1.into()])
 }
 
-/// `https://deepscan.io/docs/rules/bad-min-max-func`
 #[derive(Debug, Default, Clone)]
 pub struct BadMinMaxFunc;
 

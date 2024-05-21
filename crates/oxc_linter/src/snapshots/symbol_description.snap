@@ -1,0 +1,15 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: symbol_description
+---
+  ⚠ eslint(symbol-description): Expected Symbol to have a description.
+   ╭─[symbol_description.tsx:1:1]
+ 1 │ Symbol();
+   · ────────
+   ╰────
+
+  ⚠ eslint(symbol-description): Expected Symbol to have a description.
+   ╭─[symbol_description.tsx:1:1]
+ 1 │ Symbol(); Symbol = function () {};
+   · ────────
+   ╰────

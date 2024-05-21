@@ -9,7 +9,7 @@ use std::fmt::Debug;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_eq_null_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-eq-null): Use '===' to compare with null")
+    OxcDiagnostic::warn("eslint(no-eq-null): Use '===' to compare with null")
         .with_help("Disallow `null` comparisons without type-checking operators.")
         .with_labels([span0.into()])
 }

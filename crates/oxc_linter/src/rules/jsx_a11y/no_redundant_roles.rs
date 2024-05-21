@@ -15,7 +15,7 @@ use oxc_span::Span;
 use phf::phf_map;
 
 fn no_redundant_roles_diagnostic(span: Span, element: &str, role: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint-plugin-jsx-a11y(no-redundant-roles): The element `{element}` has an implicit role of `{role}`. Defining this explicitly is redundant and should be avoided."
     ))
     .with_help(format!("Remove the redundant role `{role}` from the element `{element}`."))

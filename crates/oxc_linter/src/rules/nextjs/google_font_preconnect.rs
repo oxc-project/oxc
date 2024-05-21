@@ -12,7 +12,7 @@ use crate::{
 };
 
 fn google_font_preconnect_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(r#"eslint-plugin-next(google-font-preconnect): `rel="preconnect"` is missing from Google Font."#)
+    OxcDiagnostic::warn(r#"eslint-plugin-next(google-font-preconnect): `rel="preconnect"` is missing from Google Font."#)
         .with_help("See: https://nextjs.org/docs/messages/google-font-preconnect")
         .with_labels([span0.into()])
 }

@@ -11,7 +11,7 @@ use rustc_hash::FxHashSet;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_sync_scripts_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-next(no-sync-scripts): Prevent synchronous scripts.")
+    OxcDiagnostic::warn("eslint-plugin-next(no-sync-scripts): Prevent synchronous scripts.")
         .with_help("See https://nextjs.org/docs/messages/no-sync-scripts")
         .with_labels([span0.into()])
 }

@@ -1,6 +1,6 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_ast::ast::RegExpFlags;
+use oxc_ast::ast::{Decorator, RegExpFlags};
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
@@ -294,31 +294,21 @@ impl<'a> ParserImpl<'a> {
         answer
     }
 
-    pub(crate) fn without_context<F, T>(&mut self, flags: Context, cb: F) -> T
+    #[allow(clippy::inline_always)]
+    #[inline(always)] // inline because this is always on a hot path
+    pub(crate) fn context<F, T>(&mut self, add_flags: Context, remove_flags: Context, cb: F) -> T
     where
         F: FnOnce(&mut Self) -> T,
     {
-        let context_flags_to_clear = flags & self.ctx;
-        if !context_flags_to_clear.is_empty() {
-            self.ctx &= !context_flags_to_clear;
-            let result = cb(self);
-            self.ctx |= context_flags_to_clear;
-            return result;
-        }
-        cb(self)
+        let ctx = self.ctx;
+        self.ctx = ctx.difference(remove_flags).union(add_flags);
+        let result = cb(self);
+        self.ctx = ctx;
+        result
     }
 
-    pub(crate) fn with_context<F, T>(&mut self, flags: Context, cb: F) -> T
-    where
-        F: FnOnce(&mut Self) -> T,
-    {
-        let context_flags_to_set = flags & !self.ctx;
-        if !context_flags_to_set.is_empty() {
-            self.ctx |= context_flags_to_set;
-            let result = cb(self);
-            self.ctx &= !context_flags_to_set;
-            return result;
-        }
-        cb(self)
+    pub(crate) fn consume_decorators(&mut self) -> oxc_allocator::Vec<'a, Decorator<'a>> {
+        let decorators = std::mem::take(&mut self.state.decorators);
+        self.ast.new_vec_from_iter(decorators)
     }
 }

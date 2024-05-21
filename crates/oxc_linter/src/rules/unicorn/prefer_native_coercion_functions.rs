@@ -10,11 +10,11 @@ use oxc_span::{Atom, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn function(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint-plugin-unicorn(prefer-native-coercion-functions): The function is equivalent to `{x1}`. Call `{x1}` directly.")).with_labels([span0.into()])
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(prefer-native-coercion-functions): The function is equivalent to `{x1}`. Call `{x1}` directly.")).with_labels([span0.into()])
 }
 
 fn array_callback(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(prefer-native-coercion-functions): The arrow function in the callback of the array is equivalent to `Boolean`. Replace the callback with `Boolean`.")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-native-coercion-functions): The arrow function in the callback of the array is equivalent to `Boolean`. Replace the callback with `Boolean`.")
         .with_labels([span0.into()])
 }
 

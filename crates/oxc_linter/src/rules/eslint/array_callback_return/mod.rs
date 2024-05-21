@@ -18,7 +18,7 @@ use crate::{
 };
 
 fn expect_return(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint(array-callback-return): Missing return on some path for array method {x0:?}"
     ))
     .with_help(format!("Array method {x0:?} needs to have valid return on all code paths"))
@@ -26,7 +26,7 @@ fn expect_return(x0: &str, span1: Span) -> OxcDiagnostic {
 }
 
 fn expect_no_return(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!(
+    OxcDiagnostic::warn(format!(
         "eslint(array-callback-return): Unexpected return for array method {x0:?}"
     ))
     .with_help(format!("Array method {x0:?} expects no useless return from the function"))

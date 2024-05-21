@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, utils::is_empty_stmt, AstNode};
 
 fn no_useless_switch_case_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.",
     )
     .with_help("Consider removing this case or removing the `default` case.")

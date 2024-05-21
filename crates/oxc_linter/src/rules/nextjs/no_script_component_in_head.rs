@@ -10,7 +10,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_script_component_in_head_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-next(no-script-component-in-head): Prevent usage of `next/script` in `next/head` component.")
+    OxcDiagnostic::warn("eslint-plugin-next(no-script-component-in-head): Prevent usage of `next/script` in `next/head` component.")
         .with_help("See https://nextjs.org/docs/messages/no-script-component-in-head")
         .with_labels([span0.into()])
 }

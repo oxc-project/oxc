@@ -13,13 +13,13 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode, Fix};
 
 fn replace_null_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal")
         .with_help("Replace the `null` literal with `undefined`.")
         .with_labels([span0.into()])
 }
 
 fn remove_null_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal")
         .with_help("Remove the `null` literal.")
         .with_labels([span0.into()])
 }

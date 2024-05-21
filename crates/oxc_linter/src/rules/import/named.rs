@@ -7,7 +7,7 @@ use oxc_syntax::module_record::{ExportImportName, ImportImportName};
 use crate::{context::LintContext, rule::Rule};
 
 fn named_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint-plugin-import(named): named import {x0:?} not found"))
+    OxcDiagnostic::warn(format!("eslint-plugin-import(named): named import {x0:?} not found"))
         .with_help(format!("does {x1:?} have the export {x0:?}?"))
         .with_labels([span2.into()])
 }
@@ -53,20 +53,26 @@ impl Rule for Named {
             if remote_module_record.not_esm {
                 continue;
             }
+            let import_span = import_name.span();
+            let import_name = import_name.name();
+            // Check `import { default as foo } from 'bar'`
+            if import_name.as_str() == "default" && remote_module_record.export_default.is_some() {
+                continue;
+            }
             // Check remote bindings
-            if remote_module_record.exported_bindings.contains_key(import_name.name()) {
+            if remote_module_record.exported_bindings.contains_key(import_name) {
                 continue;
             }
             // check re-export
             if remote_module_record
                 .exported_bindings_from_star_export
                 .iter()
-                .any(|entry| entry.value().contains(import_name.name()))
+                .any(|entry| entry.value().contains(import_name))
             {
                 continue;
             }
 
-            ctx.diagnostic(named_diagnostic(import_name.name(), specifier, import_name.span()));
+            ctx.diagnostic(named_diagnostic(import_name, specifier, import_span));
         }
 
         for export_entry in &module_record.indirect_export_entries {
@@ -82,6 +88,9 @@ impl Rule for Named {
                 continue;
             };
             let remote_module_record = remote_module_record_ref.value();
+            if remote_module_record.not_esm {
+                continue;
+            }
             // Check remote bindings
             let name = import_name.name();
             // `export { default as foo } from './source'` <> `export default xxx`
@@ -172,6 +181,7 @@ fn test() {
         // TypeScript export assignment
         "import x from './typescript-export-assign-object'",
         "export { default as foo } from './typescript-export-default'",
+        "import { default as foo } from './typescript-export-default'",
     ];
 
     let fail = vec![

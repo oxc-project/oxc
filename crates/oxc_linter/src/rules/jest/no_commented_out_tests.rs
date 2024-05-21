@@ -8,7 +8,7 @@ use regex::Regex;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_commented_out_tests_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented",
     )
     .with_help("Remove or uncomment this comment")

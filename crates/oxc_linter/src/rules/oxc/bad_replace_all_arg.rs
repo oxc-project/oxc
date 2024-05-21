@@ -15,7 +15,7 @@ use crate::{
 };
 
 fn bad_replace_all_arg_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("deepscan(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.")
+    OxcDiagnostic::warn("oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.")
         .with_help("To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.")
         .with_labels([LabeledSpan::new_with_span(Some("`replaceAll` called here".into()), span0), LabeledSpan::new_with_span(Some("RegExp supplied here".into()), span1)])
 }
@@ -140,17 +140,17 @@ fn test() {
         // resolved vars
         r"
             const foo = /\s+/;
-            
+
             withSpaces.replaceAll(foo, ',');
         ",
         r"
             const foo = /\s+/i;
-            
+
             withSpaces.replaceAll(foo, ',');
         ",
         r"
             const foo = new RegExp('\s+');
-        
+
             withSpaces.replaceAll(foo, ',');
         ",
     ];

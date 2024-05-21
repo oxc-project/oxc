@@ -8,7 +8,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 fn prefer_as_const_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.")
+    OxcDiagnostic::warn("typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.")
         .with_help("You should use `as const` instead of type annotation.")
         .with_labels([span0.into()])
 }

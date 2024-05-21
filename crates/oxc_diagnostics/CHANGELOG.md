@@ -5,6 +5,26 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.0] - 2024-05-14
+
+### Features
+
+- Add `--format github` for github check annotation (#3191)
+
+### Bug Fixes
+
+- Need to escape strings for --format github
+
+### Refactor
+
+- Clean up more diagnostics usages
+- Remove export of `miette`
+- Remove thiserror
+- S/OxcDiagnostic::new/OxcDiagnostic::error
+- One diagnostic struct to eliminate monomorphization of generic types (#3235)
+- One diagnostic struct to eliminate monomorphization of generic types (#3214)
+- Use a trait to implement the reporters (#3190)
+
 ## [0.12.5] - 2024-04-22
 
 ### Features

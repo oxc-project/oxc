@@ -18,7 +18,7 @@ use crate::{
 };
 
 fn expect_resolves(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jest(prefer-expect-resolves): Prefer `await expect(...).resolves` over `expect(await ...)` syntax.")
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-expect-resolves): Prefer `await expect(...).resolves` over `expect(await ...)` syntax.")
         .with_help("Use `await expect(...).resolves` instead")
         .with_labels([span0.into()])
 }

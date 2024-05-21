@@ -1,3 +1,5 @@
+commit: 17ba9aea
+
 prettier_test262 Summary:
 AST Parsed     : 45836/45836 (100.00%)
 Positive Passed: 42686/45836 (93.13%)

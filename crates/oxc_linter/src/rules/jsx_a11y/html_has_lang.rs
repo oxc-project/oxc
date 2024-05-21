@@ -14,17 +14,15 @@ use crate::{
 };
 
 fn missing_lang_prop(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jsx-a11y(html-has-lang): Missing lang attribute.")
+    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(html-has-lang): Missing lang attribute.")
         .with_help("Add a lang attribute to the html element whose value represents the primary language of document.")
         .with_labels([span0.into()])
 }
 
 fn missing_lang_value(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
-        "eslint-plugin-jsx-a11y(html-has-lang): Missing value for lang attribute",
-    )
-    .with_help("Must have meaningful value for `lang` prop.")
-    .with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(html-has-lang): Missing value for lang attribute")
+        .with_help("Must have meaningful value for `lang` prop.")
+        .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]

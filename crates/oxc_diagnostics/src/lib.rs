@@ -87,7 +87,7 @@ impl OxcDiagnostic {
     }
 
     #[must_use]
-    pub fn warning<T: Into<String>>(message: T) -> Self {
+    pub fn warn<T: Into<String>>(message: T) -> Self {
         Self {
             inner: Box::new(OxcDiagnosticInner {
                 message: message.into(),
@@ -96,6 +96,12 @@ impl OxcDiagnostic {
                 severity: Severity::Warning,
             }),
         }
+    }
+
+    #[must_use]
+    pub fn with_severity(mut self, severity: Severity) -> Self {
+        self.inner.severity = severity;
+        self
     }
 
     #[must_use]

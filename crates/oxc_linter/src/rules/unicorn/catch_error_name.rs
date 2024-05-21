@@ -11,7 +11,7 @@ use oxc_span::{Atom, CompactStr, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn catch_error_name_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint-plugin-unicorn(catch-error-name): The catch parameter {x0:?} should be named {x1:?}")).with_labels([span2.into()])
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(catch-error-name): The catch parameter {x0:?} should be named {x1:?}")).with_labels([span2.into()])
 }
 
 #[derive(Debug, Default, Clone)]

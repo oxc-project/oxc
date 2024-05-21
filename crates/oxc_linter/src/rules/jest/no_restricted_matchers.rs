@@ -16,7 +16,7 @@ use rustc_hash::{FxHashMap, FxHasher};
 use std::{collections::HashMap, hash::BuildHasherDefault, path::Path};
 
 fn restricted_chain(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers",
     )
     .with_help(format!("Use of `{x0:?}` is disallowed`"))
@@ -24,7 +24,7 @@ fn restricted_chain(x0: &str, span1: Span) -> OxcDiagnostic {
 }
 
 fn restricted_chain_with_message(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers",
     )
     .with_help(format!("{x0:?}"))

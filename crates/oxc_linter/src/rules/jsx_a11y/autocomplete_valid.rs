@@ -15,7 +15,7 @@ use oxc_span::Span;
 use phf::{phf_map, phf_set};
 
 fn autocomplete_valid_diagnostic(span: Span, autocomplete: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint-plugin-jsx-a11y(autocomplete-valid): `{autocomplete}` is not a valid value for autocomplete."))
+    OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(autocomplete-valid): `{autocomplete}` is not a valid value for autocomplete."))
         .with_help(format!("Change `{autocomplete}` to a valid value for autocomplete."))
         .with_label(span)
 }

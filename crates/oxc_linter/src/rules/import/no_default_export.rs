@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_default_export_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-import(no-default-export): Prefer named exports")
+    OxcDiagnostic::warn("eslint-plugin-import(no-default-export): Prefer named exports")
         .with_labels([span0.into()])
 }
 

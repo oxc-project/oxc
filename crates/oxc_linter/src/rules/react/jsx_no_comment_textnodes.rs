@@ -9,7 +9,7 @@ use regex::Regex;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn jsx_no_comment_textnodes_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-react(jsx-no-comment-textnodes): Comments inside children section of tag should be placed inside braces").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-comment-textnodes): Comments inside children section of tag should be placed inside braces").with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]

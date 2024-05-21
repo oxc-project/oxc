@@ -7,13 +7,13 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode, Fix};
 
 fn uppercase_prefix(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.")
         .with_help(format!("Use lowercase for the number literal prefix `{x1}`."))
         .with_labels([span0.into()])
 }
 
 fn uppercase_exponential_notation(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-unicorn(number-literal-case): Unexpected exponential notation in uppercase.",
     )
     .with_help("Use lowercase for `e` in exponential notations.")
@@ -21,7 +21,7 @@ fn uppercase_exponential_notation(span0: Span) -> OxcDiagnostic {
 }
 
 fn lowercase_hexadecimal_digits(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-unicorn(number-literal-case): Unexpected hexadecimal digits in lowercase.",
     )
     .with_help("Use uppercase for hexadecimal digits.")
@@ -29,7 +29,7 @@ fn lowercase_hexadecimal_digits(span0: Span) -> OxcDiagnostic {
 }
 
 fn uppercase_prefix_and_lowercase_hexadecimal_digits(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.")
         .with_help(format!("Use lowercase for the number literal prefix `{x1}` and uppercase for hexadecimal digits."))
         .with_labels([span0.into()])
 }

@@ -9,7 +9,7 @@ use std::borrow::Cow;
 use crate::{context::LintContext, fixer::Fix, rule::Rule};
 
 fn deprecated_function(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions",
     )
     .with_help(format!("{x0:?} has been deprecated in favor of {x1:?}"))

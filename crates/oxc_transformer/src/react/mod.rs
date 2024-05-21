@@ -52,16 +52,16 @@ impl<'a> React<'a> {
         }
     }
 
-    pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
+    pub fn transform_expression(&mut self, expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) {
         match expr {
             Expression::JSXElement(e) => {
                 if self.options.is_jsx_plugin_enabled() {
-                    *expr = self.jsx.transform_jsx_element(e);
+                    *expr = self.jsx.transform_jsx_element(e, ctx);
                 }
             }
             Expression::JSXFragment(e) => {
                 if self.options.is_jsx_plugin_enabled() {
-                    *expr = self.jsx.transform_jsx_fragment(e);
+                    *expr = self.jsx.transform_jsx_fragment(e, ctx);
                 }
             }
             _ => {}
@@ -78,8 +78,14 @@ impl<'a> React<'a> {
         }
     }
 
-    pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
-        if self.options.is_jsx_self_plugin_enabled() {
+    pub fn transform_jsx_opening_element(
+        &mut self,
+        elem: &mut JSXOpeningElement<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        if self.options.is_jsx_self_plugin_enabled()
+            && self.jsx.jsx_self.can_add_self_attribute(ctx)
+        {
             self.jsx.jsx_self.transform_jsx_opening_element(elem);
         }
         if self.options.is_jsx_source_plugin_enabled() {

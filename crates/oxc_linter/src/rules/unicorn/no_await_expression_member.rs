@@ -7,7 +7,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_await_expression_member_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression")
         .with_help("When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.")
         .with_labels([span0.into()])
 }

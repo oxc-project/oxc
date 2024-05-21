@@ -13,19 +13,19 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn object(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.")
         .with_help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems")
         .with_labels([span0.into()])
 }
 
 fn export(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(no-thenable): Do not export `then`.")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-thenable): Do not export `then`.")
         .with_help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems")
         .with_labels([span0.into()])
 }
 
 fn class(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.")
         .with_help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems")
         .with_labels([span0.into()])
 }

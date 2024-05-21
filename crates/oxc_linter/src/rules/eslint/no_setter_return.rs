@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_setter_return_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-setter-return): Setter cannot return a value")
+    OxcDiagnostic::warn("eslint(no-setter-return): Setter cannot return a value")
         .with_labels([span0.into()])
 }
 

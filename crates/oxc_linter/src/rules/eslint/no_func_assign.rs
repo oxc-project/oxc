@@ -8,7 +8,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_func_assign_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint(no-func-assign): '{x0}' is a function."))
+    OxcDiagnostic::warn(format!("eslint(no-func-assign): '{x0}' is a function."))
         .with_labels([LabeledSpan::new_with_span(Some(format!("{x0} is re-assigned here")), span1)])
 }
 

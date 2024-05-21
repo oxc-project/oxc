@@ -12,7 +12,7 @@ export type ScopeId = number;
 "#;
 
 bitflags! {
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone, Copy, PartialEq)]
     pub struct ScopeFlags: u16 {
         const StrictMode       = 1 << 0;
         const Top              = 1 << 1;
@@ -40,6 +40,10 @@ impl ScopeFlags {
 
     pub fn is_strict_mode(&self) -> bool {
         self.contains(Self::StrictMode)
+    }
+
+    pub fn is_block(&self) -> bool {
+        self.is_empty() || *self == Self::StrictMode
     }
 
     pub fn is_top(&self) -> bool {

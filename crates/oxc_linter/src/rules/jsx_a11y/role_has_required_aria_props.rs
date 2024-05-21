@@ -10,7 +10,7 @@ use oxc_span::Span;
 use phf::{phf_map, phf_set};
 
 fn role_has_required_aria_props_diagnostic(span: Span, role: &str, props: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("eslint-plugin-jsx-a11y(role-has-required-aria-props): `{role}` role is missing required aria props `{props}`."))
+    OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(role-has-required-aria-props): `{role}` role is missing required aria props `{props}`."))
         .with_help(format!("Add missing aria props `{props}` to the element with `{role}` role."))
         .and_label(span)
 }

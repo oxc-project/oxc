@@ -11,7 +11,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_regex_spaces_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-regex-spaces): Spaces are hard to count.")
+    OxcDiagnostic::warn("eslint(no-regex-spaces): Spaces are hard to count.")
         .with_help("Use a quantifier, e.g. {2}")
         .with_labels([span0.into()])
 }

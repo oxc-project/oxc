@@ -1,6 +1,8 @@
+commit: 64d2eeea
+
 codegen_typescript Summary:
 AST Parsed     : 5243/5243 (100.00%)
-Positive Passed: 5228/5243 (99.71%)
+Positive Passed: 5235/5243 (99.85%)
 Typescript failed: "compiler/castExpressionParentheses.ts"
 Default failed: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
 Typescript failed: "compiler/genericTypeAssertions3.ts"
@@ -9,10 +11,3 @@ Default failed: "compiler/jsxMultilineAttributeValuesReact.tsx"
 Default failed: "compiler/typeAliasDeclarationEmit3.ts"
 Default failed: "conformance/constEnums/constEnum4.ts"
 Default failed: "conformance/jsx/tsxReactEmitEntities.tsx"
-Default failed: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInFor.ts"
-Default failed: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.ts"
-Default failed: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.1.ts"
-Default failed: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.2.ts"
-Default failed: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInFor.ts"
-Default failed: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForAwaitOf.ts"
-Default failed: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForOf.1.ts"

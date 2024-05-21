@@ -106,7 +106,7 @@ impl<'a> SeparatedList<'a> for ArrayExpressionList<'a> {
         let element = match p.cur_kind() {
             Kind::Comma => Ok(p.parse_elision()),
             Kind::Dot3 => p.parse_spread_element().map(ArrayExpressionElement::SpreadElement),
-            _ => p.parse_assignment_expression_base().map(ArrayExpressionElement::from),
+            _ => p.parse_assignment_expression_or_higher().map(ArrayExpressionElement::from),
         };
 
         if p.at(Kind::Comma) && p.peek_at(self.close()) {
@@ -188,7 +188,7 @@ impl<'a> SeparatedList<'a> for CallArguments<'a> {
             }
             result
         } else {
-            p.parse_assignment_expression_base().map(Argument::from)
+            p.parse_assignment_expression_or_higher().map(Argument::from)
         };
         self.elements.push(element?);
         Ok(())
@@ -215,7 +215,7 @@ impl<'a> SeparatedList<'a> for SequenceExpressionList<'a> {
     // read everything as expression and map to it to either
     // ParenthesizedExpression or ArrowFormalParameters later
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
-        let element = p.parse_assignment_expression_base()?;
+        let element = p.parse_assignment_expression_or_higher()?;
         self.elements.push(element);
         Ok(())
     }
@@ -264,7 +264,7 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
             }
             _ => {
                 let pattern = p.parse_binding_pattern_with_initializer()?;
-                let decorators = p.state.consume_decorators();
+                let decorators = p.consume_decorators();
                 let formal_parameter = p.ast.formal_parameter(
                     p.end_span(span),
                     pattern,

@@ -19,7 +19,7 @@ use crate::{
 };
 
 fn use_hook(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.",
     )
     .with_help("This should be done within a hook")

@@ -18,7 +18,7 @@ use crate::{
 };
 
 fn use_to_have_length(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.",
     )
     .with_labels([span0.into()])

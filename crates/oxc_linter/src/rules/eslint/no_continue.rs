@@ -6,7 +6,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 fn no_continue_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-continue): Unexpected use of `continue` statement.")
+    OxcDiagnostic::warn("eslint(no-continue): Unexpected use of `continue` statement.")
         .with_help("Do not use the `continue` statement.")
         .with_labels([span0.into()])
 }

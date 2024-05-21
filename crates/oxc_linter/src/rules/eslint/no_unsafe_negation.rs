@@ -11,7 +11,7 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 fn no_unsafe_negation_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(format!("Unexpected logical not in the left hand side of '{x0}' operator"))
+    OxcDiagnostic::warn(format!("Unexpected logical not in the left hand side of '{x0}' operator"))
         .with_help(format!("use parenthesis to express the negation of the whole boolean expression, as '!' binds more closely than '{x0}'"))
         .with_labels([span1.into()])
 }

@@ -29,6 +29,7 @@ pub use crate::{
     config::ESLintConfig,
     context::LintContext,
     options::{AllowWarnDeny, LintOptions},
+    rule::RuleWithSeverity,
     service::{LintService, LintServiceOptions},
 };
 use crate::{
@@ -50,9 +51,8 @@ fn size_asserts() {
     assert_eq_size!(RuleEnum, [u8; 16]);
 }
 
-#[derive(Debug)]
 pub struct Linter {
-    rules: Vec<(/* rule name */ &'static str, RuleEnum)>,
+    rules: Vec<RuleWithSeverity>,
     options: LintOptions,
     eslint_config: Arc<ESLintConfig>,
 }
@@ -69,13 +69,13 @@ impl Linter {
     /// Returns `Err` if there are any errors parsing the configuration file.
     pub fn from_options(options: LintOptions) -> Result<Self, Error> {
         let (rules, eslint_config) = options.derive_rules_and_config()?;
-        let rules = rules.into_iter().map(|rule| (rule.name(), rule)).collect();
         Ok(Self { rules, options, eslint_config: Arc::new(eslint_config) })
     }
 
+    #[cfg(test)]
     #[must_use]
-    pub fn with_rules(mut self, rules: Vec<RuleEnum>) -> Self {
-        self.rules = rules.into_iter().map(|rule| (rule.name(), rule)).collect();
+    pub fn with_rules(mut self, rules: Vec<RuleWithSeverity>) -> Self {
+        self.rules = rules;
         self
     }
 
@@ -101,34 +101,42 @@ impl Linter {
 
     pub fn run<'a>(&self, ctx: LintContext<'a>) -> Vec<Message<'a>> {
         let semantic = Rc::clone(ctx.semantic());
-        let mut ctx = ctx.with_fix(self.options.fix).with_eslint_config(&self.eslint_config);
 
-        for (rule_name, rule) in &self.rules {
-            ctx.with_rule_name(rule_name);
-            rule.run_once(&ctx);
+        let ctx = ctx.with_fix(self.options.fix).with_eslint_config(&self.eslint_config);
+        let rules = self
+            .rules
+            .iter()
+            .map(|rule| {
+                (rule, ctx.clone().with_rule_name(rule.name()).with_severity(rule.severity))
+            })
+            .collect::<Vec<_>>();
+
+        for (rule, ctx) in &rules {
+            rule.run_once(ctx);
         }
 
         for symbol in semantic.symbols().iter() {
-            for (rule_name, rule) in &self.rules {
-                ctx.with_rule_name(rule_name);
-                rule.run_on_symbol(symbol, &ctx);
+            for (rule, ctx) in &rules {
+                rule.run_on_symbol(symbol, ctx);
             }
         }
 
         for node in semantic.nodes().iter() {
-            for (rule_name, rule) in &self.rules {
-                ctx.with_rule_name(rule_name);
-                rule.run(node, &ctx);
+            for (rule, ctx) in &rules {
+                rule.run(node, ctx);
             }
         }
 
-        ctx.into_message()
+        rules.into_iter().flat_map(|(_, ctx)| ctx.into_message()).collect::<Vec<_>>()
     }
 
     /// # Panics
     pub fn print_rules<W: Write>(writer: &mut W) {
-        let default_rules =
-            Linter::default().rules.into_iter().map(|(name, _)| name).collect::<FxHashSet<&str>>();
+        let default_rules = Linter::default()
+            .rules
+            .into_iter()
+            .map(|rule| rule.name())
+            .collect::<FxHashSet<&str>>();
 
         let rules_by_category = RULES.iter().fold(
             FxHashMap::default(),

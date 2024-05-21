@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Fix<'a> {
     pub content: Cow<'a, str>,
     pub span: Span,
@@ -25,10 +25,11 @@ pub struct FixResult<'a> {
     pub messages: Vec<Message<'a>>,
 }
 
+#[derive(Clone)]
 pub struct Message<'a> {
     pub error: OxcDiagnostic,
-    start: u32,
-    end: u32,
+    pub start: u32,
+    pub end: u32,
     pub fix: Option<Fix<'a>>,
     fixed: bool,
 }
@@ -126,55 +127,55 @@ mod test {
     use super::{Fix, FixResult, Fixer, Message};
 
     fn insert_at_end() -> OxcDiagnostic {
-        OxcDiagnostic::warning("End")
+        OxcDiagnostic::warn("End")
     }
 
     fn insert_at_start() -> OxcDiagnostic {
-        OxcDiagnostic::warning("Start")
+        OxcDiagnostic::warn("Start")
     }
 
     fn insert_at_middle() -> OxcDiagnostic {
-        OxcDiagnostic::warning("Multiply")
+        OxcDiagnostic::warn("Multiply")
     }
 
     fn replace_id() -> OxcDiagnostic {
-        OxcDiagnostic::warning("foo")
+        OxcDiagnostic::warn("foo")
     }
 
     fn replace_var() -> OxcDiagnostic {
-        OxcDiagnostic::warning("let")
+        OxcDiagnostic::warn("let")
     }
 
     fn replace_num() -> OxcDiagnostic {
-        OxcDiagnostic::warning("5")
+        OxcDiagnostic::warn("5")
     }
 
     fn remove_start() -> OxcDiagnostic {
-        OxcDiagnostic::warning("removestart")
+        OxcDiagnostic::warn("removestart")
     }
 
     fn remove_middle(span0: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warning("removemiddle").with_labels([span0.into()])
+        OxcDiagnostic::warn("removemiddle").with_labels([span0.into()])
     }
 
     fn remove_end() -> OxcDiagnostic {
-        OxcDiagnostic::warning("removeend")
+        OxcDiagnostic::warn("removeend")
     }
 
     fn reverse_range() -> OxcDiagnostic {
-        OxcDiagnostic::warning("reversed range")
+        OxcDiagnostic::warn("reversed range")
     }
 
     fn no_fix(span0: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warning("nofix").with_labels([span0.into()])
+        OxcDiagnostic::warn("nofix").with_labels([span0.into()])
     }
 
     fn no_fix_1(span0: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warning("nofix1").with_labels([span0.into()])
+        OxcDiagnostic::warn("nofix1").with_labels([span0.into()])
     }
 
     fn no_fix_2(span0: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warning("nofix2").with_labels([span0.into()])
+        OxcDiagnostic::warn("nofix2").with_labels([span0.into()])
     }
 
     const TEST_CODE: &str = "var answer = 6 * 7;";

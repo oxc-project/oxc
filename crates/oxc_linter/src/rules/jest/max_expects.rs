@@ -13,7 +13,7 @@ use oxc_span::Span;
 use rustc_hash::{FxHashMap, FxHasher};
 
 fn exceeded_max_assertion(x0: usize, x1: usize, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.")
+    OxcDiagnostic::warn("eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.")
         .with_help(format!("Too many assertion calls ({x0:?}) - maximum allowed is {x1:?}"))
         .with_labels([span2.into()])
 }

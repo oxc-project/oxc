@@ -17,7 +17,7 @@ use crate::{
 };
 
 fn none_zero(span0: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warning(format!("eslint-plugin-unicorn(explicit-length-check): Use `.{x1} {x2}` when checking {x1} is not zero.")).with_labels([span0.into()]);
+    let mut d = OxcDiagnostic::warn(format!("eslint-plugin-unicorn(explicit-length-check): Use `.{x1} {x2}` when checking {x1} is not zero.")).with_labels([span0.into()]);
     if let Some(x) = x3 {
         d = d.with_help(x);
     }
@@ -25,7 +25,7 @@ fn none_zero(span0: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnost
 }
 
 fn zero(span0: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warning(format!("eslint-plugin-unicorn(explicit-length-check): Use `.{x1} {x2}` when checking {x1} is zero."));
+    let mut d = OxcDiagnostic::warn(format!("eslint-plugin-unicorn(explicit-length-check): Use `.{x1} {x2}` when checking {x1} is zero."));
     if let Some(x) = x3 {
         d = d.with_help(x);
     }

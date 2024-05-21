@@ -13,7 +13,7 @@ use oxc_syntax::{
 use crate::{context::LintContext, rule::Rule};
 
 fn no_cycle_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-import(no-cycle): Dependency cycle detected")
+    OxcDiagnostic::warn("eslint-plugin-import(no-cycle): Dependency cycle detected")
         .with_help(format!("These paths form a cycle: \n{x1}"))
         .with_labels([span0.into()])
 }

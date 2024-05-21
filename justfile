@@ -87,9 +87,9 @@ autoinherit:
   cargo autoinherit
 
 # Test Transform
-test-transform:
-  cargo run -p oxc_transform_conformance
-  cargo run -p oxc_transform_conformance -- --exec
+test-transform *args='':
+  cargo run -p oxc_transform_conformance -- {{args}}
+  cargo run -p oxc_transform_conformance -- --exec  {{args}}
 
 # Build oxlint in release build
 oxlint:
@@ -102,9 +102,6 @@ javascript-globals:
 # Create a new lint rule by providing the ESLint name. See `tasks/rulegen`
 new-rule name:
   cargo run -p rulegen {{name}}
-
-new-deepscan-rule name:
-  cargo run -p rulegen {{name}} deepscan
 
 new-jest-rule name:
   cargo run -p rulegen {{name}} jest

@@ -12,7 +12,7 @@ use crate::{
 };
 
 fn prefer_dom_node_remove_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.")
+    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.")
         .with_help("Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.")
         .with_labels([span0.into()])
 }

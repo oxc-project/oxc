@@ -10,7 +10,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_unsafe_finally_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(no-unsafe-finally): Unsafe finally block")
+    OxcDiagnostic::warn("eslint(no-unsafe-finally): Unsafe finally block")
         .with_help("Control flow inside try or catch blocks will be overwritten by this statement")
         .with_labels([span0.into()])
 }

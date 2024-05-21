@@ -1,6 +1,6 @@
 use std::{
     collections::HashSet,
-    fs::{self, File},
+    fs,
     io::{stdout, Read, Write},
     panic::UnwindSafe,
     path::{Path, PathBuf},
@@ -22,7 +22,7 @@ use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, Span};
-use oxc_tasks_common::normalize_path;
+use oxc_tasks_common::{normalize_path, Snapshot};
 
 use crate::{project_root, AppArgs};
 
@@ -55,10 +55,7 @@ pub struct CoverageReport<'a, T> {
 pub trait Suite<T: Case> {
     fn run(&mut self, name: &str, args: &AppArgs) {
         self.read_test_cases(name, args);
-        let cases = self.get_test_cases_mut();
-        for case in cases {
-            case.run();
-        }
+        self.get_test_cases_mut().par_iter_mut().for_each(Case::run);
         self.run_coverage(name, args);
     }
 
@@ -241,8 +238,9 @@ pub trait Suite<T: Case> {
 
     /// # Errors
     fn snapshot_errors(&self, name: &str, report: &CoverageReport<T>) -> std::io::Result<()> {
-        let path = project_root().join(format!("tasks/coverage/{}.snap", name.to_lowercase()));
-        let mut file = File::create(path).unwrap();
+        let snapshot_path = self.get_test_root();
+        let show_commit = !snapshot_path.to_string_lossy().contains("misc");
+        let snapshot = Snapshot::new(snapshot_path, show_commit);
 
         let mut tests = self
             .get_test_cases()
@@ -252,18 +250,20 @@ pub trait Suite<T: Case> {
 
         tests.sort_by_key(|case| case.path());
 
-        let args = AppArgs { detail: true, ..AppArgs::default() };
-        self.print_coverage(name, &args, report, &mut file)?;
+        let mut out: Vec<u8> = vec![];
 
-        let mut out = String::new();
+        let args = AppArgs { detail: true, ..AppArgs::default() };
+        self.print_coverage(name, &args, report, &mut out)?;
+
         for case in &tests {
             if let TestResult::CorrectError(error, _) = &case.test_result() {
-                out.push_str(error);
+                out.extend(error.as_bytes());
             }
         }
 
-        file.write_all(out.as_bytes())?;
-        file.flush()?;
+        let path = project_root().join(format!("tasks/coverage/{}.snap", name.to_lowercase()));
+        let out = String::from_utf8(out).unwrap();
+        snapshot.save(&path, &out);
         Ok(())
     }
 }

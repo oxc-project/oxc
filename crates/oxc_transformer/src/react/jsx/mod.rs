@@ -9,6 +9,7 @@ use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
     xml_entities::XML_ENTITIES,
 };
+use oxc_traverse::TraverseCtx;
 
 use crate::{context::Ctx, helpers::module_imports::NamedImport};
 
@@ -82,12 +83,20 @@ impl<'a> ReactJsx<'a> {
         self.add_runtime_imports(program);
     }
 
-    pub fn transform_jsx_element(&mut self, e: &JSXElement<'a>) -> Expression<'a> {
-        self.transform_jsx(&JSXElementOrFragment::Element(e))
+    pub fn transform_jsx_element(
+        &mut self,
+        e: &JSXElement<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        self.transform_jsx(&JSXElementOrFragment::Element(e), ctx)
     }
 
-    pub fn transform_jsx_fragment(&mut self, e: &JSXFragment<'a>) -> Expression<'a> {
-        self.transform_jsx(&JSXElementOrFragment::Fragment(e))
+    pub fn transform_jsx_fragment(
+        &mut self,
+        e: &JSXFragment<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx)
     }
 
     fn is_script(&self) -> bool {
@@ -307,7 +316,11 @@ impl<'a> ReactJsx<'a> {
     /// ### Fragment
     /// React.createElement(React.Fragment, null, ...children)
     ///
-    fn transform_jsx<'b>(&mut self, e: &JSXElementOrFragment<'a, 'b>) -> Expression<'a> {
+    fn transform_jsx<'b>(
+        &mut self,
+        e: &JSXElementOrFragment<'a, 'b>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Expression<'a> {
         let is_fragment = e.is_fragment();
         let has_key_after_props_spread = e.has_key_after_props_spread();
         // If has_key_after_props_spread is true, we need to fallback to `createElement` same behavior as classic runtime
@@ -372,7 +385,7 @@ impl<'a> ReactJsx<'a> {
                 }
 
                 // Add attribute to prop object
-                self.transform_jsx_attribute_item(&mut properties, attribute);
+                self.transform_jsx_attribute_item(&mut properties, attribute, ctx);
             }
         }
 
@@ -384,7 +397,7 @@ impl<'a> ReactJsx<'a> {
         if is_automatic {
             let allocator = self.ast().allocator;
             let mut children = Vec::from_iter_in(
-                children.iter().filter_map(|child| self.transform_jsx_child(child)),
+                children.iter().filter_map(|child| self.transform_jsx_child(child, ctx)),
                 allocator,
             );
             let children_len = children.len();
@@ -411,7 +424,9 @@ impl<'a> ReactJsx<'a> {
 
         // React.createElement's second argument
         if !is_fragment && is_classic {
-            if self.options.is_jsx_self_plugin_enabled() {
+            if self.options.is_jsx_self_plugin_enabled()
+                && self.jsx_self.can_add_self_attribute(ctx)
+            {
                 if let Some(span) = self_attr_span {
                     self.jsx_self.report_error(span);
                 } else {
@@ -447,7 +462,7 @@ impl<'a> ReactJsx<'a> {
         if is_automatic {
             // key
             if key_prop.is_some() {
-                arguments.push(Argument::from(self.transform_jsx_attribute_value(key_prop)));
+                arguments.push(Argument::from(self.transform_jsx_attribute_value(key_prop, ctx)));
             } else if is_development {
                 arguments.push(Argument::from(self.ctx.ast.void_0()));
             }
@@ -475,7 +490,9 @@ impl<'a> ReactJsx<'a> {
                 }
 
                 // this
-                if self.options.is_jsx_self_plugin_enabled() {
+                if self.options.is_jsx_self_plugin_enabled()
+                    && self.jsx_self.can_add_self_attribute(ctx)
+                {
                     if let Some(span) = self_attr_span {
                         self.jsx_self.report_error(span);
                     } else {
@@ -489,7 +506,7 @@ impl<'a> ReactJsx<'a> {
             arguments.extend(
                 children
                     .iter()
-                    .filter_map(|child| self.transform_jsx_child(child))
+                    .filter_map(|child| self.transform_jsx_child(child, ctx))
                     .map(Argument::from),
             );
         }
@@ -652,12 +669,13 @@ impl<'a> ReactJsx<'a> {
         &mut self,
         properties: &mut Vec<'a, ObjectPropertyKind<'a>>,
         attribute: &JSXAttributeItem<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         match attribute {
             JSXAttributeItem::Attribute(attr) => {
                 let kind = PropertyKind::Init;
                 let key = self.get_attribute_name(&attr.name);
-                let value = self.transform_jsx_attribute_value(attr.value.as_ref());
+                let value = self.transform_jsx_attribute_value(attr.value.as_ref(), ctx);
                 let object_property =
                     self.ast().object_property(SPAN, kind, key, value, None, false, false, false);
                 let object_property = ObjectPropertyKind::ObjectProperty(object_property);
@@ -680,6 +698,7 @@ impl<'a> ReactJsx<'a> {
     fn transform_jsx_attribute_value(
         &mut self,
         value: Option<&JSXAttributeValue<'a>>,
+        ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         match value {
             Some(JSXAttributeValue::StringLiteral(s)) => {
@@ -688,10 +707,10 @@ impl<'a> ReactJsx<'a> {
                 self.ast().literal_string_expression(literal)
             }
             Some(JSXAttributeValue::Element(e)) => {
-                self.transform_jsx(&JSXElementOrFragment::Element(e))
+                self.transform_jsx(&JSXElementOrFragment::Element(e), ctx)
             }
             Some(JSXAttributeValue::Fragment(e)) => {
-                self.transform_jsx(&JSXElementOrFragment::Fragment(e))
+                self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx)
             }
             Some(JSXAttributeValue::ExpressionContainer(c)) => match &c.expression {
                 e @ match_expression!(JSXExpression) => self.ast().copy(e.to_expression()),
@@ -703,15 +722,23 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
-    fn transform_jsx_child(&mut self, child: &JSXChild<'a>) -> Option<Expression<'a>> {
+    fn transform_jsx_child(
+        &mut self,
+        child: &JSXChild<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
         match child {
             JSXChild::Text(text) => self.transform_jsx_text(text.value.as_str()),
             JSXChild::ExpressionContainer(e) => match &e.expression {
                 e @ match_expression!(JSXExpression) => Some(self.ast().copy(e.to_expression())),
                 JSXExpression::EmptyExpression(_) => None,
             },
-            JSXChild::Element(e) => Some(self.transform_jsx(&JSXElementOrFragment::Element(e))),
-            JSXChild::Fragment(e) => Some(self.transform_jsx(&JSXElementOrFragment::Fragment(e))),
+            JSXChild::Element(e) => {
+                Some(self.transform_jsx(&JSXElementOrFragment::Element(e), ctx))
+            }
+            JSXChild::Fragment(e) => {
+                Some(self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx))
+            }
             JSXChild::Spread(e) => {
                 self.ctx.error(diagnostics::spread_children_are_not_supported(e.span));
                 None

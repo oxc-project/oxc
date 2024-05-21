@@ -17,7 +17,7 @@ use crate::{
 };
 
 fn use_to_contain(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.")
+    OxcDiagnostic::warn("eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.")
         .with_labels([span0.into()])
 }
 
