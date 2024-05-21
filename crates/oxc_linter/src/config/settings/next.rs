@@ -1,7 +1,7 @@
+use schemars::JsonSchema;
 use serde::Deserialize;
 
-/// <https://nextjs.org/docs/pages/building-your-application/configuring/eslint#eslint-plugin>
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, JsonSchema)]
 pub struct NextPluginSettings {
     #[serde(default)]
     #[serde(rename = "rootDir")]
@@ -19,7 +19,7 @@ impl NextPluginSettings {
 
 // Deserialize helper types
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, JsonSchema)]
 #[serde(untagged)]
 enum OneOrMany<T> {
     One(T),

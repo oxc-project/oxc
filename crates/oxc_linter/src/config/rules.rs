@@ -1,16 +1,20 @@
-use crate::AllowWarnDeny;
-use oxc_diagnostics::{Error, OxcDiagnostic};
-use serde::de::{self, Deserializer, Visitor};
-use serde::Deserialize;
-use std::fmt;
-use std::ops::Deref;
+use std::{borrow::Cow, fmt, ops::Deref};
 
-/// The `rules` field from ESLint config
-///
-/// TS type is `Record<string, RuleConf>`
-///   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
-///   - type RuleConf = SeverityConf | [SeverityConf, ...any[]];
-/// <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L12>
+use oxc_diagnostics::{Error, OxcDiagnostic};
+use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
+use serde::{
+    de::{self, Deserializer, Visitor},
+    Deserialize,
+};
+
+use crate::AllowWarnDeny;
+
+// The `rules` field from ESLint config
+//
+// TS type is `Record<string, RuleConf>`
+//   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
+//   - type RuleConf = SeverityConf | [SeverityConf, ...any[]];
+// <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L12>
 #[derive(Debug, Clone, Default)]
 pub struct ESLintRules(Vec<ESLintRule>);
 
@@ -20,6 +24,29 @@ pub struct ESLintRule {
     pub rule_name: String,
     pub severity: AllowWarnDeny,
     pub config: Option<serde_json::Value>,
+}
+
+impl JsonSchema for ESLintRules {
+    fn schema_name() -> String {
+        "ESLintRules".to_owned()
+    }
+
+    fn schema_id() -> Cow<'static, str> {
+        Cow::Borrowed("ESLintRules")
+    }
+
+    fn json_schema(gen: &mut SchemaGenerator) -> Schema {
+        #[allow(unused)]
+        #[derive(Debug, Clone, JsonSchema)]
+        #[serde(untagged)]
+        enum DummyRule {
+            #[schemars(range(min = 0, max = 2.0))]
+            Number(usize),
+            String(String),
+            Array(Vec<serde_json::Value>),
+        }
+        DummyRule::json_schema(gen)
+    }
 }
 
 // Manually implement Deserialize because the type is a bit complex...
