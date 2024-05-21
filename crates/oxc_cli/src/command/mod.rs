@@ -8,10 +8,10 @@ use std::path::PathBuf;
 pub use self::{
     format::{format_command, FormatOptions},
     ignore::IgnoreOptions,
-    lint::{lint_command, LintOptions, OutputFormat, OutputOptions, WarningOptions},
+    lint::{lint_command, lint_options, LintOptions, OutputFormat, OutputOptions, WarningOptions},
 };
 
-use self::{format::format_options, lint::lint_options};
+use self::format::format_options;
 
 const VERSION: &str = match option_env!("OXC_VERSION") {
     Some(v) => v,
