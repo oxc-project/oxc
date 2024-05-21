@@ -18,7 +18,7 @@ workspace = true
 doctest = false
 
 [dependencies]
-bumpalo        = { workspace = true, features = ["collections", "allocator-api2"] }
+bumpalo        = { workspace = true, features = ["allocator-api2", "collections"] }
 allocator-api2 = { workspace = true }
 
 serde = { workspace = true, optional = true }

@@ -36,4 +36,4 @@ wasm-bindgen = { workspace = true, optional = true }
 [features]
 default      = []
 to_js_string = ["dep:ryu-js"]
-serialize    = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_index/serialize", "bitflags/serde"]
+serialize    = ["bitflags/serde", "dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_index/serialize"]

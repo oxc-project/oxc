@@ -46,4 +46,4 @@ rustc-hash = { workspace = true }
 
 [features]
 default   = []
-serialize = ["dep:serde", "oxc_span/serialize", "oxc_syntax/serialize", "dep:tsify", "dep:wasm-bindgen"]
+serialize = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_span/serialize", "oxc_syntax/serialize"]

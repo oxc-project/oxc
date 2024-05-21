@@ -28,4 +28,4 @@ serde        = { workspace = true, features = ["derive"], optional = true }
 
 [features]
 default   = []
-serialize = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "compact_str/serde"]
+serialize = ["compact_str/serde", "dep:serde", "dep:tsify", "dep:wasm-bindgen"]

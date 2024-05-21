@@ -31,7 +31,7 @@ oxc_codegen     = { workspace = true }
 oxc_resolver    = { workspace = true }
 
 rayon         = { workspace = true }
-lazy_static   = { workspace = true }                        # used in oxc_macros
+lazy_static   = { workspace = true } # used in oxc_macros
 serde_json    = { workspace = true }
 serde         = { workspace = true, features = ["derive"] }
 regex         = { workspace = true }

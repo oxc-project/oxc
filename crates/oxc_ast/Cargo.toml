@@ -37,11 +37,11 @@ static_assertions = { workspace = true }
 [features]
 default = []
 serialize = [
-  "oxc_allocator/serialize",
   "dep:serde",
   "dep:serde_json",
   "dep:tsify",
   "dep:wasm-bindgen",
+  "oxc_allocator/serialize",
   "oxc_span/serialize",
   "oxc_syntax/serialize",
   "oxc_syntax/to_js_string",
