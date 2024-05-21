@@ -405,12 +405,27 @@ impl TestCase for ExecTestCase {
     }
 
     fn test(&self, filtered: bool) -> bool {
-        let result = self.transform(&self.path).expect("Transform failed");
-        let target_path = self.write_to_test_files(&result);
-        let passed = Self::run_test(&target_path);
         if filtered {
             println!("input_path: {:?}", &self.path);
             println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
+        }
+
+        let result = match self.transform(&self.path) {
+            Ok(result) => result,
+            Err(error) => {
+                if filtered {
+                    println!(
+                        "Transform Errors:\n{}\n",
+                        error.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n")
+                    );
+                }
+                return false;
+            }
+        };
+        let target_path = self.write_to_test_files(&result);
+        let passed = Self::run_test(&target_path);
+
+        if filtered {
             println!("Transformed:\n{result}\n");
             println!("Test Result:\n{}\n", TestRunnerEnv::get_test_result(&target_path));
         }
