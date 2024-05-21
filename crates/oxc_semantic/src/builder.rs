@@ -17,7 +17,7 @@ use crate::{
     checker::{EarlyErrorJavaScript, EarlyErrorTypeScript},
     class::ClassTableBuilder,
     control_flow::{
-        AssignmentValue, ControlFlowGraph, EdgeType, Register, StatementControlFlowType,
+        AssignmentValue, ControlFlowGraphBuilder, EdgeType, Register, StatementControlFlowType,
     },
     diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
@@ -69,7 +69,7 @@ pub struct SemanticBuilder<'a> {
 
     check_syntax_error: bool,
 
-    pub cfg: ControlFlowGraph,
+    pub cfg: ControlFlowGraphBuilder,
 
     pub class_table_builder: ClassTableBuilder,
 }
@@ -105,7 +105,7 @@ impl<'a> SemanticBuilder<'a> {
             label_builder: LabelBuilder::default(),
             jsdoc: JSDocBuilder::new(source_text, &trivias),
             check_syntax_error: false,
-            cfg: ControlFlowGraph::new(),
+            cfg: ControlFlowGraphBuilder::default(),
             class_table_builder: ClassTableBuilder::new(),
         }
     }
@@ -164,7 +164,7 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::clone(&self.module_record),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.label_builder.unused_node_ids,
-            cfg: self.cfg,
+            cfg: self.cfg.build(),
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
     }
@@ -181,7 +181,7 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::new(ModuleRecord::default()),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.label_builder.unused_node_ids,
-            cfg: self.cfg,
+            cfg: self.cfg.build(),
         }
     }
 
