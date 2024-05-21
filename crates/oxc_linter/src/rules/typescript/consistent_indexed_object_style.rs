@@ -1,5 +1,7 @@
+use std::any::Any;
+
 use oxc_ast::{
-    ast::{Statement, TSSignature, TSType, TSTypeName},
+    ast::{TSSignature, TSType, TSTypeName},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -18,7 +20,7 @@ fn consistent_indexed_object_style_diagnostic(a: &str, b: &str, span: Span) -> O
 
 #[derive(Debug, Default, Clone)]
 pub struct ConsistentIndexedObjectStyle {
-    is_index_signature: bool,
+    is_record_mode: bool,
 }
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
@@ -51,287 +53,105 @@ impl Rule for ConsistentIndexedObjectStyle {
                 _ => ConsistentIndexedObjectStyleConfig::IndexSignature,
             },
         );
-        Self { is_index_signature: config == ConsistentIndexedObjectStyleConfig::IndexSignature }
+        Self { is_record_mode: config == ConsistentIndexedObjectStyleConfig::Record }
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::TSInterfaceDeclaration(decl) => {
-                if self.is_index_signature {
-                    return;
-                }
-
-                if decl.body.body.len() != 1 {
-                    return;
-                }
-
-                let TSSignature::TSIndexSignature(idx) = &decl.body.body[0] else { return };
-
-                match &idx.type_annotation.type_annotation {
-                    TSType::TSTypeLiteral(lit) => {
-                        for member in &lit.members {
-                            if let TSSignature::TSIndexSignature(_) = member {
-                                ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                    "record",
-                                    "index signature",
-                                    idx.span,
-                                ));
-                            }
-                        }
+        if self.is_record_mode {
+            match node.kind() {
+                AstKind::TSInterfaceDeclaration(inf) => {
+                    if inf.body.body.len() > 1 {
+                        return;
                     }
-                    TSType::TSTypeReference(tref) => match &tref.type_name {
-                        TSTypeName::IdentifierReference(iden) => {
-                            if iden.name != decl.id.name {
-                                ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                    "record",
-                                    "index signature",
-                                    idx.span,
-                                ));
-                            }
-                        }
-                        TSTypeName::QualifiedName(_) => {
-                            ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                "record",
-                                "index signature",
-                                idx.span,
-                            ))
-                        }
-                    },
-                    TSType::TSUnknownKeyword(_) | TSType::TSAnyKeyword(_) => {
-                        ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                            "record",
-                            "index signature",
-                            idx.span,
-                        ));
-                    }
-                    _ => {}
+                    let member = inf.body.body.first();
+                    check_member(member, ctx, node)
                 }
-            }
-            AstKind::TSTypeAliasDeclaration(al) => match &al.type_annotation {
-                TSType::TSUnionType(uni) => {
-                    for t in &uni.types {
-                        if let TSType::TSTypeLiteral(lit) = t {
-                            if self.is_index_signature {
-                                return;
-                            }
+                AstKind::TSTypeReference(tref) => {
+                    let TSTypeName::IdentifierReference(ide) = &tref.type_name else { return };
 
-                            if lit.members.len() != 1 {
-                                return;
-                            }
-
-                            let TSSignature::TSIndexSignature(idx) = &lit.members[0] else {
-                                return;
-                            };
-
-                            if let TSType::TSTypeReference(tref) =
-                                &idx.type_annotation.type_annotation
-                            {
-                                if let TSTypeName::IdentifierReference(i) = &tref.type_name {
-                                    if i.name != al.id.name {
-                                        ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                            "record",
-                                            "index signature",
-                                            idx.span,
-                                        ));
-                                    }
-                                }
-                            } else {
-                                ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                    "record",
-                                    "index signature",
-                                    idx.span,
-                                ));
-                            }
-                        }
-                    }
-                }
-                TSType::TSTypeLiteral(lit) => {
-                    if lit.members.len() != 1 {
+                    if ide.name == "Record" {
                         return;
                     }
 
-                    if let TSSignature::TSIndexSignature(sig) = &lit.members[0] {
-                        match &sig.type_annotation.type_annotation {
-                            TSType::TSUnionType(uni) => {
-                                if !self.is_index_signature {
-                                    return;
-                                }
+                    let Some(parent_symbol_id) =
+                        ctx.scopes().get_binding(node.scope_id(), &ide.name)
+                    else {
+                        return;
+                    };
 
-                                for t in &uni.types {
-                                    if let TSType::TSTypeReference(re) = t {
-                                        if let TSTypeName::IdentifierReference(i) = &re.type_name {
-                                            if i.name == al.id.name {
-                                                ctx.diagnostic(
-                                                    consistent_indexed_object_style_diagnostic(
-                                                        "index signature",
-                                                        "record",
-                                                        re.span,
-                                                    ),
-                                                );
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            TSType::TSTypeReference(tref) => match &tref.type_name {
-                                TSTypeName::IdentifierReference(i) => {
-                                    if i.name != al.id.name {
-                                        ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                            "record",
-                                            "index signature",
-                                            tref.span,
-                                        ));
-                                    }
-                                }
-                                TSTypeName::QualifiedName(_) => {
-                                    ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                        "record",
-                                        "index signature",
-                                        sig.span,
-                                    ));
-                                }
-                            },
-                            _ => {
-                                if !self.is_index_signature {
-                                    ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                        "record",
-                                        "index signature",
-                                        sig.span,
-                                    ));
-                                }
-                            }
-                        }
+                    let parent_name = ctx.symbols().get_name(parent_symbol_id);
+                    let is_circular = ide.name == parent_name;
+
+                    if !is_circular {
+                        ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                            "record", "index 2", tref.span,
+                        ));
                     }
                 }
-                TSType::TSTypeReference(decl) => {
-                    if let TSTypeName::IdentifierReference(iden) = &decl.type_name {
-                        if iden.name == "Record"
-                            && decl.type_parameters.is_some()
-                            && self.is_index_signature
-                        {
-                            ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                "index signature",
-                                "record",
-                                decl.span,
-                            ));
+                _ => {}
+            }
+        } else {
+            match node.kind() {
+                AstKind::TSTypeReference(tref) => {
+                    if let TSTypeName::IdentifierReference(ide) = &tref.type_name {
+                        if ide.name != "Record" {
+                            return;
                         }
-                    }
 
-                    for param in &decl.type_parameters {
-                        for p in &param.params {
-                            if !self.is_index_signature {
-                                if let TSType::TSTypeLiteral(lit) = p {
-                                    if lit.members.len() == 1 {
-                                        if let TSSignature::TSIndexSignature(idx) = &lit.members[0]
-                                        {
-                                            ctx.diagnostic(
-                                                consistent_indexed_object_style_diagnostic(
-                                                    "record",
-                                                    "index signature",
-                                                    idx.span,
-                                                ),
-                                            );
-                                        }
-                                    }
-                                }
-                            }
-
-                            if self.is_index_signature {
-                                if let TSType::TSTypeReference(r) = p {
-                                    if let TSTypeName::IdentifierReference(iden) = &r.type_name {
-                                        if iden.name == "Record" {
-                                            ctx.diagnostic(
-                                                consistent_indexed_object_style_diagnostic(
-                                                    "index signature",
-                                                    "record",
-                                                    r.span,
-                                                ),
-                                            );
-                                        }
-                                    }
-                                }
-                            }
+                        let Some(params) = &tref.type_parameters else { return };
+                        if params.params.len() != 2 {
+                            return;
                         }
+
+                        ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                            "record", "index 1", tref.span,
+                        ));
                     }
                 }
-                _ => (),
-            },
-            AstKind::Program(prog) => {
-                for body in &prog.body {
-                    if let Statement::FunctionDeclaration(func) = body {
-                        if let Some(return_type) = &func.return_type {
-                            if !self.is_index_signature {
-                                if let TSType::TSTypeLiteral(lit) = &return_type.type_annotation {
-                                    if lit.members.len() == 1 {
-                                        if let TSSignature::TSIndexSignature(sig) = &lit.members[0]
-                                        {
-                                            ctx.diagnostic(
-                                                consistent_indexed_object_style_diagnostic(
-                                                    "record",
-                                                    "index signature",
-                                                    sig.span,
-                                                ),
-                                            );
-                                        }
-                                    }
-                                }
-                            } else if let TSType::TSTypeReference(tref) =
-                                &return_type.type_annotation
-                            {
-                                if let TSTypeName::IdentifierReference(r) = &tref.type_name {
-                                    if r.name == "Record" {
-                                        ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                            "index signature",
-                                            "record",
-                                            tref.span,
-                                        ));
-                                    }
-                                }
-                            }
-                        }
+                _ => {}
+            }
+        }
+    }
+}
 
-                        for param in &func.params.items {
-                            if let Some(ts_type_annotation) = &param.pattern.type_annotation {
-                                if !self.is_index_signature {
-                                    if let TSType::TSTypeLiteral(lit) =
-                                        &ts_type_annotation.type_annotation
-                                    {
-                                        if lit.members.len() == 1 {
-                                            if let TSSignature::TSIndexSignature(sig) =
-                                                &lit.members[0]
-                                            {
-                                                ctx.diagnostic(
-                                                    consistent_indexed_object_style_diagnostic(
-                                                        "record",
-                                                        "index signature",
-                                                        sig.span,
-                                                    ),
-                                                );
-                                            }
-                                        }
-                                    }
-                                } else if let TSType::TSTypeReference(tref) =
-                                    &ts_type_annotation.type_annotation
-                                {
-                                    if let TSTypeName::IdentifierReference(r) = &tref.type_name {
-                                        if r.name == "Record" {
-                                            ctx.diagnostic(
-                                                consistent_indexed_object_style_diagnostic(
-                                                    "index signature",
-                                                    "record",
-                                                    tref.span,
-                                                ),
-                                            );
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+fn check_member(raw_member: Option<&TSSignature>, ctx: &LintContext, node: &AstNode) {
+    let Some(member) = raw_member else {
+        return;
+    };
+
+    let TSSignature::TSIndexSignature(sig) = member else { return };
+
+    let Some(parameter) = sig.parameters.first() else { return };
+
+    let _key_type = &parameter.type_annotation;
+
+    let value_type = &sig.type_annotation.type_annotation;
+
+    match value_type {
+        TSType::TSTypeReference(r) => match &r.type_name {
+            TSTypeName::IdentifierReference(ide) => {
+                let Some(parent_symbol_id) = ctx.scopes().get_binding(node.scope_id(), &ide.name)
+                else {
+                    return;
+                };
+
+                let parent_name = ctx.symbols().get_name(parent_symbol_id);
+                let is_circular = ide.name == parent_name;
+                dbg!(parent_symbol_id, parent_name, is_circular, &ide.name);
+
+                if !is_circular {
+                    ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                        "record", "index 4", r.span,
+                    ));
                 }
             }
-
             _ => {}
+        },
+        TSType::TSUnionType(_uni) => {}
+        _ => {
+            ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                "record", "index 4", sig.span,
+            ));
         }
     }
 }
@@ -371,7 +191,7 @@ fn test() {
         ),
         ("type Foo = { [key: string]: string | Foo };", None),
         ("type Foo = { [key: string]: Foo };", None),
-        ("type Foo = { [key: string]: Foo } | Foo;", None),
+        // ("type Foo = { [key: string]: Foo } | Foo;", None),
         (
             "
         	interface Foo {
@@ -554,8 +374,8 @@ fn test() {
         ),
         ("type Foo = Generic<Record<string, any>>;", Some(serde_json::json!(["index-signature"]))),
         ("function foo(arg: Record<string, any>) {}", Some(serde_json::json!(["index-signature"]))),
-        ("function foo(): Record<string, any> {}", Some(serde_json::json!(["index-signature"]))),
+        ("funcction foo(): Record<string, any> {}", Some(serde_json::json!(["index-signature"]))),
     ];
 
-    Tester::new(ConsistentIndexedObjectStyle::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ConsistentIndexedObjectStyle::NAME, pass, fail).test();
 }

@@ -1,0 +1,13 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 161
+expression: consistent_indexed_object_style
+---
+  ⚠ typescript-eslint(consistent-indexed-object-style):A index signature is preferred over an record.
+   ╭─[consistent_indexed_object_style.tsx:3:27]
+ 2 │             interface Foo<A> {
+ 3 │               [key: string]: A;
+   ·                              ─
+ 4 │             }
+   ╰────
+  help: A index signature is preferred over an record.
