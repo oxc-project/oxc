@@ -120,17 +120,13 @@ pub enum EdgeType {
     NewFunction,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct ControlFlowGraph {
     pub graph: Graph<usize, EdgeType>,
     pub basic_blocks: Vec<Vec<BasicBlockElement>>,
 }
 
 impl ControlFlowGraph {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     /// # Panics
     pub fn basic_block_by_index(&self, index: NodeIndex) -> &Vec<BasicBlockElement> {
         let idx =
