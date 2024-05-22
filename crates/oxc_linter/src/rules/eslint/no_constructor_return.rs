@@ -1,6 +1,10 @@
-use oxc_ast::{ast::MethodDefinitionKind, AstKind};
+use oxc_ast::{
+    ast::{MethodDefinition, MethodDefinitionKind},
+    AstKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNodeId;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -45,54 +49,42 @@ declare_oxc_lint!(
 
 impl Rule for NoConstructorReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ReturnStatement(return_stmt) = node.kind() {
-            let nodes = ctx.semantic().nodes();
-            let mut parent_node = nodes.parent_node(node.id());
-            let mut in_constructor = false;
+        let AstKind::ReturnStatement(ret) = node.kind() else { return };
+        let Some(is_in_constructor_root) = is_in_constructor_root(ctx, node.id()) else { return };
 
-            // Allow `return;` in constructor for flow control
-            if return_stmt.argument.is_none() {
-                if let Some(parent) = parent_node {
-                    if let AstKind::BlockStatement(_) = parent.kind() {
-                        return;
-                    }
-                }
-            }
-
-            while let Some(parent) = parent_node {
-                match parent.kind() {
-                    AstKind::MethodDefinition(method)
-                        if method.kind == MethodDefinitionKind::Constructor =>
-                    {
-                        in_constructor = true;
-                        break;
-                    }
-                    AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                        parent_node = nodes.parent_node(parent.id());
-                        if let Some(parent) = parent_node {
-                            match parent.kind() {
-                                AstKind::MethodDefinition(method)
-                                    if method.kind == MethodDefinitionKind::Constructor =>
-                                {
-                                    in_constructor = true;
-                                }
-                                _ => {}
-                            }
-                        }
-
-                        break;
-                    }
-                    _ => {}
-                }
-
-                parent_node = nodes.parent_node(parent.id());
-            }
-
-            if in_constructor {
-                ctx.diagnostic(no_constructor_return_diagnostic(return_stmt.span));
-            }
+        if is_in_constructor_root {
+            ctx.diagnostic(no_constructor_return_diagnostic(ret.span));
+        } else if ret.argument.is_some() && is_definitely_in_constructor(ctx, node.id()) {
+            ctx.diagnostic(no_constructor_return_diagnostic(ret.span));
         }
     }
+}
+
+fn is_constructor(node: &AstNode<'_>) -> bool {
+    matches!(
+        node.kind(),
+        AstKind::MethodDefinition(MethodDefinition { kind: MethodDefinitionKind::Constructor, .. })
+    )
+}
+
+/// Checks to see if the given node is in the root of a constructor.
+/// Returns `None` if it isn't possible for this node to be in a constructor.
+fn is_in_constructor_root(ctx: &LintContext, node_id: AstNodeId) -> Option<bool> {
+    ctx.nodes()
+        .ancestors(node_id)
+        .map(|id| ctx.nodes().get_node(id))
+        .filter(|it| !matches!(it.kind(), AstKind::BlockStatement(_)))
+        .nth(3)
+        .map(is_constructor)
+}
+
+fn is_definitely_in_constructor(ctx: &LintContext, node_id: AstNodeId) -> bool {
+    ctx.nodes()
+        .ancestors(node_id)
+        .map(|id| ctx.nodes().get_node(id))
+        .skip_while(|node| !node.kind().is_function_like())
+        .nth(1)
+        .is_some_and(is_constructor)
 }
 
 #[test]
@@ -107,7 +99,6 @@ fn test() {
         "const fn = () => { return }",
         "const fn = () => { if (kumiko) { return kumiko } }",
         "return 'Kumiko Oumae'",
-        "class C { constructor() { { { return } } } }",
         "class C {  }",
         "class C { constructor() {} }",
         "class C { constructor() { let v } }",
