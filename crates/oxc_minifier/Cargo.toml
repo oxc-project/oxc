@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_minifier"
-version                = "0.13.0"
+version                = "0.13.1"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -11,7 +11,7 @@ license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
-include                = ["/src", "/examples"]
+include                = ["/examples", "/src"]
 
 [lints]
 workspace = true

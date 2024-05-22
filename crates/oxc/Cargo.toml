@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc"
-version                = "0.13.0"
+version                = "0.13.1"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -34,11 +34,11 @@ oxc_codegen     = { workspace = true, optional = true }
 oxc_sourcemap   = { workspace = true, optional = true }
 
 [features]
-serialize   = ["oxc_ast/serialize", "oxc_span/serialize", "oxc_syntax/serialize", "oxc_semantic?/serialize"]
+serialize   = ["oxc_ast/serialize", "oxc_semantic?/serialize", "oxc_span/serialize", "oxc_syntax/serialize"]
 semantic    = ["oxc_semantic"]
 transformer = ["oxc_transformer"]
 minifier    = ["oxc_minifier"]
 codegen     = ["oxc_codegen"]
 
 sourcemap            = ["oxc_sourcemap"]
-sourcemap_concurrent = ["sourcemap", "oxc_sourcemap/concurrent"]
+sourcemap_concurrent = ["oxc_sourcemap/concurrent", "sourcemap"]

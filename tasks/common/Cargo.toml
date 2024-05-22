@@ -18,5 +18,5 @@ console = { workspace = true }
 project-root = { workspace = true }
 similar      = { workspace = true }
 
-ureq = { workspace = true, features = ["tls", "json"] }
+ureq = { workspace = true, features = ["json", "tls"] }
 url  = { workspace = true }

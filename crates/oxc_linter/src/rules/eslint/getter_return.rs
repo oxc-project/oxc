@@ -182,7 +182,7 @@ impl GetterReturn {
 
         let output = neighbors_filtered_by_edge_weight(
             &cfg.graph,
-            node.cfg_ix(),
+            node.cfg_id(),
             &|edge| match edge {
                 EdgeType::Normal => None,
                 // We don't need to handle backedges because we would have already visited
@@ -229,7 +229,7 @@ impl GetterReturn {
                 }
 
                 // Scan through the values in this basic block.
-                for entry in cfg.basic_block_by_index(*basic_block_id) {
+                for entry in cfg.basic_block(*basic_block_id) {
                     match entry {
                         // If the element is an assignment.
                         //

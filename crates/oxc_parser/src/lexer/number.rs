@@ -1,6 +1,8 @@
 //! Parsing utilities for converting Javascript numbers to Rust f64
 //! code copied from [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/parser/src/numeric_value.rs)
 
+use static_assertions::const_assert_eq;
+
 use num_bigint::BigInt;
 use num_traits::Num as _;
 use std::borrow::Cow;
@@ -56,58 +58,88 @@ fn parse_float_without_underscores(s: &str) -> Result<f64, &'static str> {
 /// these numbers are usually not long. On x84_64, FMUL has a latency of 4 clock
 /// cycles, which doesn't include addition. Some platorms support mul + add in a
 /// single instruction, but many others do not.
-#[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
+#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_binary(s: &str) -> f64 {
+    // b'0' is 0x30 and b'1' is 0x31.
+    // So we can convert from binary digit to its value with `c & 1`.
+    // This is produces more compact assembly than `c - b'0'`.
+    // https://godbolt.org/z/1vvrK78jf
+    const fn byte_to_value(c: u8) -> u8 {
+        debug_assert!(c == b'0' || c == b'1');
+        c & 1
+    }
+    const_assert_eq!(byte_to_value(b'0'), 0);
+    const_assert_eq!(byte_to_value(b'1'), 1);
+
     debug_assert!(!s.is_empty());
 
     let mut result = 0_u64;
-
     for c in s.as_bytes() {
-        debug_assert!(c != &b'_');
-        #[allow(clippy::cast_lossless)]
-        let value = (c - b'0') as u64;
         result <<= 1;
-        result |= value;
+        result |= byte_to_value(*c) as u64;
     }
-
     result as f64
 }
 
-#[allow(clippy::cast_precision_loss)]
+#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_octal(s: &str) -> f64 {
+    // b'0' is 0x30 and b'7' is 0x37.
+    // So we can convert from any octal digit to its value with `c & 7`.
+    // This is produces more compact assembly than `c - b'0'`.
+    // https://godbolt.org/z/9rYTsMoMM
+    const fn byte_to_value(c: u8) -> u8 {
+        debug_assert!(c >= b'0' && c <= b'7');
+        c & 7
+    }
+    const_assert_eq!(byte_to_value(b'0'), 0);
+    const_assert_eq!(byte_to_value(b'7'), 7);
+
     debug_assert!(!s.is_empty());
 
     let mut result = 0_u64;
-
     for c in s.as_bytes() {
-        debug_assert!(c != &b'_');
-        #[allow(clippy::cast_lossless)]
-        let value = (c - b'0') as u64;
         result <<= 3;
-        result |= value;
+        result |= byte_to_value(*c) as u64;
     }
-
     result as f64
 }
 
 #[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_hex(s: &str) -> f64 {
+    // b'0' is 0x30 and b'9' is 0x39.
+    // b'A' is 0x41 and b'F' is 0x46.
+    // b'a' is 0x61 and b'f' is 0x66.
+    // So we can convert from a digit to its value with `c & 15`,
+    // and from `A-F` or `a-f` to its value with `(c & 15) + 9`.
+    // We could use `(c & 7) + 9` for `A-F`, but we use `(c & 15) + 9`
+    // so that both branches share the same `c & 15` operation.
+    // This is produces more slightly more assembly than explicitly matching all possibilities,
+    // but only because compiler unrolls the loop.
+    // https://godbolt.org/z/5fsdv8rGo
+    const fn byte_to_value(c: u8) -> u8 {
+        debug_assert!(
+            (c >= b'0' && c <= b'9') || (c >= b'A' && c <= b'F') || (c >= b'a' && c <= b'f')
+        );
+        if c < b'A' {
+            c & 15 // 0-9
+        } else {
+            (c & 15) + 9 // A-F or a-f
+        }
+    }
+    const_assert_eq!(byte_to_value(b'0'), 0);
+    const_assert_eq!(byte_to_value(b'9'), 9);
+    const_assert_eq!(byte_to_value(b'A'), 10);
+    const_assert_eq!(byte_to_value(b'F'), 15);
+    const_assert_eq!(byte_to_value(b'a'), 10);
+    const_assert_eq!(byte_to_value(b'f'), 15);
+
     debug_assert!(!s.is_empty());
 
     let mut result = 0_u64;
-
     for c in s.as_bytes() {
-        debug_assert!(c != &b'_');
-        let value = match c {
-            b'0'..=b'9' => c - b'0',
-            b'A'..=b'F' => c - b'A' + 10,
-            b'a'..=b'f' => c - b'a' + 10,
-            _ => unreachable!("invalid hex syntax {}", s),
-        };
         result <<= 4;
-        result |= value as u64;
+        result |= byte_to_value(*c) as u64;
     }
-
     result as f64
 }
 

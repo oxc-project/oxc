@@ -5,6 +5,20 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.1] - 2024-05-22
+
+### Features
+
+- Mutable access to scopes tree + symbol table (#3314)
+- Pass `&mut TraverseCtx` to visitors (#3312)
+
+### Refactor
+
+- Split context code into multiple files (#3367)
+- Move `parent` method etc into `TraverseAncestry` (#3308)
+- `Traverse` produce scopes tree using `Semantic` (#3304)
+- Store `ScopeId` in AST nodes (#3302)
+
 ## [0.13.0] - 2024-05-14
 
 ### Features

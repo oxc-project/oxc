@@ -1,124 +1,14 @@
-use oxc_span::CompactStr;
-use oxc_syntax::operator::{
-    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+use super::{
+    AssignmentValue, AstNodeId, BasicBlockElement, BasicBlockId, CompactStr, ControlFlowGraph,
+    EdgeType, Graph, PreservedExpressionState, PreservedStatementState, Register,
+    StatementControlFlowType,
 };
-use petgraph::{stable_graph::NodeIndex, Graph};
-
-use crate::AstNodeId;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Register {
-    Index(u32),
-    Return,
-}
-
-#[derive(Debug, Clone)]
-pub enum ObjectPropertyAccessBy {
-    PrivateProperty(CompactStr),
-    Property(CompactStr),
-    Expression(Register),
-}
-
-#[derive(Debug, Clone)]
-pub struct CollectionAssignmentValue {
-    pub id: AstNodeId,
-    pub elements: Vec<Register>,
-    pub spreads: Vec<usize>,
-    pub collection_type: CollectionType,
-}
-
-#[derive(Debug, Clone)]
-pub struct CalleeWithArgumentsAssignmentValue {
-    pub id: AstNodeId,
-    pub callee: Register,
-    pub arguments: Vec<Register>,
-    pub spreads: Vec<usize>,
-    pub call_type: CallType,
-}
-
-#[derive(Debug, Clone)]
-pub struct ObjectPropertyAccessAssignmentValue {
-    pub id: AstNodeId,
-    pub access_on: Register,
-    pub access_by: ObjectPropertyAccessBy,
-    pub optional: bool,
-}
-
-#[derive(Debug, Clone)]
-pub struct BinaryAssignmentValue {
-    pub id: AstNodeId,
-    pub a: Register,
-    pub b: Register,
-    pub operator: BinaryOp,
-}
-
-#[derive(Debug, Clone)]
-pub struct UpdateAssignmentValue {
-    pub id: AstNodeId,
-    pub expr: Register,
-    pub op: UpdateOperator,
-    pub prefix: bool,
-}
-
-#[derive(Debug, Clone)]
-pub struct UnaryExpressioneAssignmentValue(pub AstNodeId, pub UnaryOperator, pub Register);
-
-#[derive(Debug, Clone)]
-pub enum AssignmentValue {
-    ImplicitUndefined,
-    NotImplicitUndefined,
-}
-
-#[derive(Debug, Clone)]
-pub enum BinaryOp {
-    BinaryOperator(BinaryOperator),
-    LogicalOperator(LogicalOperator),
-    AssignmentOperator(AssignmentOperator),
-}
-
-#[derive(Debug, Clone)]
-pub enum CollectionType {
-    Array,
-    // Note: we do not currently track object names in objects.
-    Object,
-    JSXElement,
-    JSXFragment,
-    // doesn't use spreads
-    Class,
-    TemplateLiteral,
-}
-
-#[derive(Debug, Clone)]
-pub enum CallType {
-    New,
-    CallExpression,
-    // the callee is the yielded value, arguments are always empty
-    // spreads are always empty
-    Yield,
-    // spreads are always empty
-    TaggedTemplate,
-    // spreads are always empty
-    Import,
-}
-
-#[derive(Debug, Clone)]
-pub enum BasicBlockElement {
-    Unreachable,
-    Assignment(Register, AssignmentValue),
-    Throw(Register),
-    Break(Option<Register>),
-}
-
-#[derive(Debug, Clone)]
-pub enum EdgeType {
-    Normal,
-    Backedge,
-    NewFunction,
-}
 
 #[derive(Debug, Default)]
-pub struct ControlFlowGraph {
+pub struct ControlFlowGraphBuilder {
+    pub graph: Graph<usize, EdgeType>,
     pub basic_blocks: Vec<Vec<BasicBlockElement>>,
+    pub current_node_ix: BasicBlockId,
     // note: this should only land in the big box for all things that take arguments
     // ie: callexpression, arrayexpression, etc
     // todo: add assert that it is used every time?
@@ -134,44 +24,34 @@ pub struct ControlFlowGraph {
     // (start, tail, last_register_used)
     pub saved_stores: Vec<(Vec<BasicBlockElement>, Option<Register>)>,
     pub saved_store: Option<usize>,
-    pub graph: Graph<usize, EdgeType>,
-    pub current_node_ix: NodeIndex,
-    pub basic_blocks_with_breaks: Vec<Vec<NodeIndex>>,
-    pub basic_blocks_with_continues: Vec<Vec<NodeIndex>>,
+    pub basic_blocks_with_breaks: Vec<Vec<BasicBlockId>>,
+    pub basic_blocks_with_continues: Vec<Vec<BasicBlockId>>,
     // node indexes of the basic blocks of switch case conditions
-    pub switch_case_conditions: Vec<Vec<NodeIndex>>,
+    pub switch_case_conditions: Vec<Vec<BasicBlockId>>,
     pub next_label: Option<CompactStr>,
     pub label_to_ast_node_ix: Vec<(CompactStr, AstNodeId)>,
     pub ast_node_to_break_continue: Vec<(AstNodeId, usize, Option<usize>)>,
-    pub after_throw_block: Option<NodeIndex>,
+    pub after_throw_block: Option<BasicBlockId>,
 }
 
-impl ControlFlowGraph {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// # Panics
-    pub fn basic_block_by_index(&self, index: NodeIndex) -> &Vec<BasicBlockElement> {
-        let idx =
-            *self.graph.node_weight(index).expect("expected a valid node index in self.graph");
-        self.basic_blocks.get(idx).expect("expected a valid node index in self.basic_blocks")
-    }
-
-    /// # Panics
-    pub fn basic_block_by_index_mut(&mut self, index: NodeIndex) -> &mut Vec<BasicBlockElement> {
-        let idx =
-            *self.graph.node_weight(index).expect("expected a valid node index in self.graph");
-        self.basic_blocks.get_mut(idx).expect("expected a valid node index in self.basic_blocks")
+impl ControlFlowGraphBuilder {
+    pub fn build(self) -> ControlFlowGraph {
+        ControlFlowGraph { graph: self.graph, basic_blocks: self.basic_blocks }
     }
 
     /// # Panics
     pub fn current_basic_block(&mut self) -> &mut Vec<BasicBlockElement> {
-        self.basic_block_by_index_mut(self.current_node_ix)
+        let idx = *self
+            .graph
+            .node_weight(self.current_node_ix)
+            .expect("expected `self.current_node_ix` to be a valid node index in self.graph");
+        self.basic_blocks
+            .get_mut(idx)
+            .expect("expected `self.current_node_ix` to be a valid node index in self.graph")
     }
 
     #[must_use]
-    pub fn new_basic_block_for_function(&mut self) -> NodeIndex {
+    pub fn new_basic_block_for_function(&mut self) -> BasicBlockId {
         self.basic_blocks.push(Vec::new());
         let basic_block_id = self.basic_blocks.len() - 1;
         let graph_index = self.graph.add_node(basic_block_id);
@@ -186,7 +66,7 @@ impl ControlFlowGraph {
     }
 
     #[must_use]
-    pub fn new_basic_block(&mut self) -> NodeIndex {
+    pub fn new_basic_block(&mut self) -> BasicBlockId {
         self.basic_blocks.push(Vec::new());
         let graph_index = self.graph.add_node(self.basic_blocks.len() - 1);
         self.current_node_ix = graph_index;
@@ -199,7 +79,7 @@ impl ControlFlowGraph {
         graph_index
     }
 
-    pub fn add_edge(&mut self, a: NodeIndex, b: NodeIndex, weight: EdgeType) {
+    pub fn add_edge(&mut self, a: BasicBlockId, b: BasicBlockId, weight: EdgeType) {
         self.graph.add_edge(a, b, weight);
     }
 
@@ -322,8 +202,8 @@ impl ControlFlowGraph {
         &mut self,
         preserved_state: &PreservedStatementState,
         id: AstNodeId,
-        break_jump_position: NodeIndex<u32>,
-        continue_jump_position: Option<NodeIndex<u32>>,
+        break_jump_position: BasicBlockId,
+        continue_jump_position: Option<BasicBlockId>,
     ) {
         let basic_blocks_with_breaks = self
             .basic_blocks_with_breaks
@@ -352,59 +232,4 @@ impl ControlFlowGraph {
             debug_assert_eq!(popped_2.unwrap().0, id);
         }
     }
-}
-
-pub enum StatementControlFlowType {
-    DoesNotUseContinue,
-    UsesContinue,
-}
-
-pub struct PreservedStatementState {
-    put_label: bool,
-}
-
-pub struct PreservedExpressionState {
-    pub use_this_register: Option<Register>,
-    pub store_final_assignments_into_this_array: Vec<Vec<Register>>,
-}
-
-#[must_use]
-fn print_register(register: Register) -> String {
-    match &register {
-        Register::Index(i) => format!("${i}"),
-        Register::Return => "$return".into(),
-    }
-}
-
-#[must_use]
-pub fn print_basic_block(basic_block_elements: &Vec<BasicBlockElement>) -> String {
-    let mut output = String::new();
-    for basic_block in basic_block_elements {
-        match basic_block {
-            BasicBlockElement::Unreachable => output.push_str("Unreachable()\n"),
-            BasicBlockElement::Throw(reg) => {
-                output.push_str(&format!("throw {}\n", print_register(*reg)));
-            }
-
-            BasicBlockElement::Break(Some(reg)) => {
-                output.push_str(&format!("break {}\n", print_register(*reg)));
-            }
-            BasicBlockElement::Break(None) => {
-                output.push_str("break");
-            }
-            BasicBlockElement::Assignment(to, with) => {
-                output.push_str(&format!("{} = ", print_register(*to)));
-
-                match with {
-                    AssignmentValue::ImplicitUndefined => {
-                        output.push_str("<implicit undefined>");
-                    }
-                    AssignmentValue::NotImplicitUndefined => output.push_str("<value>"),
-                }
-
-                output.push('\n');
-            }
-        }
-    }
-    output
 }

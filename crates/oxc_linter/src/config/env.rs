@@ -1,12 +1,9 @@
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
 use serde::Deserialize;
 
-/// Environment
-/// <https://eslint.org/docs/latest/use/configure/language-options#using-configuration-files>
-///
-/// TS type is `Record<string, boolean>`
-/// <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L40>
-#[derive(Debug, Clone, Deserialize)]
+// TODO: list the keys we support
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
 pub struct ESLintEnv(FxHashMap<String, bool>);
 
 impl ESLintEnv {

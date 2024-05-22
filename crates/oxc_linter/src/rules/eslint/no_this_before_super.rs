@@ -7,9 +7,7 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{
-    petgraph::stable_graph::NodeIndex, pg::neighbors_filtered_by_edge_weight, AstNodeId, EdgeType,
-};
+use oxc_semantic::{pg::neighbors_filtered_by_edge_weight, AstNodeId, BasicBlockId, EdgeType};
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -59,8 +57,8 @@ impl Rule for NoThisBeforeSuper {
 
         // first pass -> find super calls and local violations
         let mut wanted_nodes = Vec::new();
-        let mut basic_blocks_with_super_called = HashSet::<NodeIndex>::new();
-        let mut basic_blocks_with_local_violations = HashMap::<NodeIndex, Vec<AstNodeId>>::new();
+        let mut basic_blocks_with_super_called = HashSet::<BasicBlockId>::new();
+        let mut basic_blocks_with_local_violations = HashMap::<BasicBlockId, Vec<AstNodeId>>::new();
         for node in semantic.nodes().iter() {
             match node.kind() {
                 AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
@@ -69,7 +67,7 @@ impl Rule for NoThisBeforeSuper {
                     }
                 }
                 AstKind::Super(_) => {
-                    let basic_block_id = node.cfg_ix();
+                    let basic_block_id = node.cfg_id();
                     if let Some(parent) = semantic.nodes().parent_node(node.id()) {
                         if let AstKind::CallExpression(_) = parent.kind() {
                             // Note: we don't need to worry about also having invalid
@@ -86,7 +84,7 @@ impl Rule for NoThisBeforeSuper {
                     }
                 }
                 AstKind::ThisExpression(_) => {
-                    let basic_block_id = node.cfg_ix();
+                    let basic_block_id = node.cfg_id();
                     if !basic_blocks_with_super_called.contains(&basic_block_id) {
                         basic_blocks_with_local_violations
                             .entry(basic_block_id)
@@ -103,7 +101,7 @@ impl Rule for NoThisBeforeSuper {
         for node in wanted_nodes {
             let output = neighbors_filtered_by_edge_weight(
                 &cfg.graph,
-                node.cfg_ix(),
+                node.cfg_id(),
                 &|edge| match edge {
                     EdgeType::Normal => None,
                     EdgeType::Backedge | EdgeType::NewFunction => {

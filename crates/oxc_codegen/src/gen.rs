@@ -4,7 +4,7 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::{
     identifier::{LS, PS},
-    keyword::is_keyword,
+    keyword::is_reserved_keyword_or_global_object,
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
     precedence::{GetPrecedence, Precedence},
@@ -1735,17 +1735,19 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for AssignmentExpression<'a> {
 
         let identifier_is_keyword = match &self.left {
             AssignmentTarget::AssignmentTargetIdentifier(target) => {
-                is_keyword(target.name.as_str())
+                is_reserved_keyword_or_global_object(target.name.as_str())
             }
             AssignmentTarget::ComputedMemberExpression(expression) => match &expression.object {
-                Expression::Identifier(ident) => is_keyword(ident.name.as_str()),
+                Expression::Identifier(ident) => {
+                    is_reserved_keyword_or_global_object(ident.name.as_str())
+                }
                 _ => false,
             },
             AssignmentTarget::StaticMemberExpression(expression) => {
-                is_keyword(expression.property.name.as_str())
+                is_reserved_keyword_or_global_object(expression.property.name.as_str())
             }
             AssignmentTarget::PrivateFieldExpression(expression) => {
-                is_keyword(expression.field.name.as_str())
+                is_reserved_keyword_or_global_object(expression.field.name.as_str())
             }
             _ => false,
         };

@@ -25,6 +25,7 @@ mod import {
 mod eslint {
     pub mod array_callback_return;
     pub mod constructor_super;
+    pub mod default_case;
     pub mod default_case_last;
     pub mod default_param_last;
     pub mod eqeqeq;
@@ -73,6 +74,7 @@ mod eslint {
     pub mod no_irregular_whitespace;
     pub mod no_iterator;
     pub mod no_loss_of_precision;
+    pub mod no_new;
     pub mod no_new_native_nonconstructor;
     pub mod no_new_wrappers;
     pub mod no_nonoctal_decimal_escape;
@@ -390,6 +392,7 @@ mod tree_shaking {
 oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::constructor_super,
+    eslint::default_case,
     eslint::default_case_last,
     eslint::default_param_last,
     eslint::eqeqeq,
@@ -439,6 +442,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_irregular_whitespace,
     eslint::no_iterator,
     eslint::no_loss_of_precision,
+    eslint::no_new,
     eslint::no_new_wrappers,
     eslint::no_nonoctal_decimal_escape,
     eslint::no_obj_calls,

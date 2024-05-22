@@ -94,7 +94,7 @@ fn contains_return_statement<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
     let cfg = ctx.semantic().cfg();
     let state = neighbors_filtered_by_edge_weight(
         &cfg.graph,
-        node.cfg_ix(),
+        node.cfg_id(),
         &|edge| match edge {
             // We only care about normal edges having a return statement.
             EdgeType::Normal => None,
@@ -109,7 +109,7 @@ fn contains_return_statement<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
                 }
             }
 
-            for entry in cfg.basic_block_by_index(*basic_block_id) {
+            for entry in cfg.basic_block(*basic_block_id) {
                 if let BasicBlockElement::Assignment(to_reg, val) = entry {
                     if matches!(to_reg, Register::Return)
                         && matches!(val, AssignmentValue::NotImplicitUndefined)
