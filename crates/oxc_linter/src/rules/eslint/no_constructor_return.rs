@@ -52,9 +52,9 @@ impl Rule for NoConstructorReturn {
         let AstKind::ReturnStatement(ret) = node.kind() else { return };
         let Some(is_in_constructor_root) = is_in_constructor_root(ctx, node.id()) else { return };
 
-        if is_in_constructor_root {
-            ctx.diagnostic(no_constructor_return_diagnostic(ret.span));
-        } else if ret.argument.is_some() && is_definitely_in_constructor(ctx, node.id()) {
+        if is_in_constructor_root
+            || (ret.argument.is_some() && is_definitely_in_constructor(ctx, node.id()))
+        {
             ctx.diagnostic(no_constructor_return_diagnostic(ret.span));
         }
     }
