@@ -2,6 +2,7 @@ use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
+/// Env
 // TODO: list the keys we support
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 pub struct ESLintEnv(FxHashMap<String, bool>);

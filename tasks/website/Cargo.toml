@@ -20,3 +20,5 @@ bpaf       = { workspace = true, features = ["docgen"] }
 pico-args  = { workspace = true }
 serde_json = { workspace = true }
 schemars   = { workspace = true }
+handlebars = { workspace = true }
+serde      = { workspace = true }
