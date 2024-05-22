@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_constructor_return_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint(no-constructor-return): Unexpected return statement in constructor.",
     )
     .with_labels([span.into()])
@@ -107,6 +107,7 @@ fn test() {
         "const fn = () => { return }",
         "const fn = () => { if (kumiko) { return kumiko } }",
         "return 'Kumiko Oumae'",
+        "class C { constructor() { { { return } } } }",
         "class C {  }",
         "class C { constructor() {} }",
         "class C { constructor() { let v } }",
