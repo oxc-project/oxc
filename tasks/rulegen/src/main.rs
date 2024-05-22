@@ -13,6 +13,7 @@ use oxc_ast::{
         PropertyKey, Statement, StaticMemberExpression, StringLiteral, TaggedTemplateExpression,
         TemplateLiteral,
     },
+    syntax_directed_operations::PropName,
     Visit,
 };
 use oxc_parser::Parser;
@@ -63,6 +64,7 @@ struct TestCase<'a> {
     config: Option<Cow<'a, str>>,
     settings: Option<Cow<'a, str>>,
     filename: Option<Cow<'a, str>>,
+    should_skip: bool,
 }
 
 impl<'a> TestCase<'a> {
@@ -74,6 +76,7 @@ impl<'a> TestCase<'a> {
             settings: None,
             group_comment: None,
             filename: None,
+            should_skip: false,
         };
         test_case.visit_expression(arg);
         test_case
@@ -169,71 +172,92 @@ impl<'a> Visit<'a> for TestCase<'a> {
     fn visit_object_expression(&mut self, expr: &ObjectExpression<'a>) {
         for obj_prop in &expr.properties {
             match obj_prop {
-                ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
-                    PropertyKey::StaticIdentifier(ident) if ident.name == "code" => {
-                        self.code = match &prop.value {
-                            Expression::StringLiteral(s) => Some(s.value.to_string()),
-                            Expression::TaggedTemplateExpression(tag_expr) => {
-                                // There are `dedent`(in eslint-plugin-jest), `outdent`(in eslint-plugin-unicorn) and `noFormat`(in typescript-eslint)
-                                // are known to be used to format test cases for their own purposes.
-                                // We read the quasi of tagged template directly also for the future usage.
-                                tag_expr.quasi.quasi().map(ToString::to_string)
-                            }
-                            Expression::TemplateLiteral(tag_expr) => {
-                                tag_expr.quasi().map(ToString::to_string)
-                            }
-                            // handle code like ["{", "a: 1", "}"].join("\n")
-                            Expression::CallExpression(call_expr) => {
-                                if !call_expr.arguments.first().is_some_and(|arg|  matches!(arg, Argument::StringLiteral(string) if string.value == "\n")) {
+                ObjectPropertyKind::ObjectProperty(prop) => {
+                    let PropertyKey::StaticIdentifier(ident) = &prop.key else { continue };
+                    match ident.name.as_str() {
+                        "code" => {
+                            self.code = match &prop.value {
+                                Expression::StringLiteral(s) => Some(s.value.to_string()),
+                                Expression::TaggedTemplateExpression(tag_expr) => {
+                                    // There are `dedent`(in eslint-plugin-jest), `outdent`(in eslint-plugin-unicorn) and `noFormat`(in typescript-eslint)
+                                    // are known to be used to format test cases for their own purposes.
+                                    // We read the quasi of tagged template directly also for the future usage.
+                                    tag_expr.quasi.quasi().map(ToString::to_string)
+                                }
+                                Expression::TemplateLiteral(tag_expr) => {
+                                    tag_expr.quasi().map(ToString::to_string)
+                                }
+                                // handle code like ["{", "a: 1", "}"].join("\n")
+                                Expression::CallExpression(call_expr) => {
+                                    if !call_expr.arguments.first().is_some_and(|arg|  matches!(arg, Argument::StringLiteral(string) if string.value == "\n")) {
                                     continue;
                                 }
-                                let Expression::StaticMemberExpression(member) = &call_expr.callee
-                                else {
-                                    continue;
-                                };
-                                if member.property.name != "join" {
-                                    continue;
+                                    let Expression::StaticMemberExpression(member) =
+                                        &call_expr.callee
+                                    else {
+                                        continue;
+                                    };
+                                    if member.property.name != "join" {
+                                        continue;
+                                    }
+                                    let Expression::ArrayExpression(array_expr) = &member.object
+                                    else {
+                                        continue;
+                                    };
+                                    Some(
+                                        array_expr
+                                            .elements
+                                            .iter()
+                                            .map(|arg| match arg {
+                                                ArrayExpressionElement::StringLiteral(string) => {
+                                                    string.value.as_str()
+                                                }
+                                                _ => "",
+                                            })
+                                            .collect::<Vec<_>>()
+                                            .join("\n"),
+                                    )
                                 }
-                                let Expression::ArrayExpression(array_expr) = &member.object else {
-                                    continue;
-                                };
-                                Some(
-                                    array_expr
-                                        .elements
-                                        .iter()
-                                        .map(|arg| match arg {
-                                            ArrayExpressionElement::StringLiteral(string) => {
-                                                string.value.as_str()
-                                            }
-                                            _ => "",
-                                        })
-                                        .collect::<Vec<_>>()
-                                        .join("\n"),
-                                )
+                                _ => continue,
                             }
-                            _ => continue,
                         }
+                        "options" => {
+                            let span = prop.value.span();
+                            let option_text =
+                                &self.source_text[span.start as usize..span.end as usize];
+                            self.config =
+                                Some(Cow::Owned(json::convert_config_to_json_literal(option_text)));
+                        }
+                        "settings" => {
+                            let span = prop.value.span();
+                            let setting_text =
+                                &self.source_text[span.start as usize..span.end as usize];
+                            self.settings = Some(Cow::Owned(json::convert_config_to_json_literal(
+                                setting_text,
+                            )));
+                        }
+                        "filename" => {
+                            let span = prop.value.span();
+                            let filename =
+                                &self.source_text[span.start as usize..span.end as usize];
+                            self.filename = Some(Cow::Owned(filename.to_string()));
+                        }
+                        "languageOptions" => {
+                            let Expression::ObjectExpression(expr) = &prop.value else {
+                                continue;
+                            };
+                            // Skip this case if it only contains `ecmaVersion` property
+                            if expr.properties.len() == 1
+                                && expr.properties.iter().any(|prop| {
+                                    prop.prop_name().is_some_and(|(name, _)| name == "ecmaVersion")
+                                })
+                            {
+                                self.should_skip = true;
+                            }
+                        }
+                        _ => continue,
                     }
-                    PropertyKey::StaticIdentifier(ident) if ident.name == "options" => {
-                        let span = prop.value.span();
-                        let option_text = &self.source_text[span.start as usize..span.end as usize];
-                        self.config =
-                            Some(Cow::Owned(json::convert_config_to_json_literal(option_text)));
-                    }
-                    PropertyKey::StaticIdentifier(ident) if ident.name == "settings" => {
-                        let span = prop.value.span();
-                        let setting_text =
-                            &self.source_text[span.start as usize..span.end as usize];
-                        self.settings =
-                            Some(Cow::Owned(json::convert_config_to_json_literal(setting_text)));
-                    }
-                    PropertyKey::StaticIdentifier(ident) if ident.name == "filename" => {
-                        let span = prop.value.span();
-                        let filename = &self.source_text[span.start as usize..span.end as usize];
-                        self.filename = Some(Cow::Owned(filename.to_string()));
-                    }
-                    _ => continue,
-                },
+                }
                 ObjectPropertyKind::SpreadProperty(_) => continue,
             }
         }
@@ -623,6 +647,9 @@ fn main() {
                 let mut codes = vec![];
                 let mut last_comment = String::new();
                 for case in cases {
+                    if case.should_skip {
+                        continue;
+                    }
                     let current_comment = case.group_comment();
                     let mut code = case.code(has_config, has_settings, has_filename);
                     if code.is_empty() {
