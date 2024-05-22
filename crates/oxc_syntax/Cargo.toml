@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_syntax"
-version                = "0.13.0"
+version                = "0.13.1"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -36,4 +36,4 @@ wasm-bindgen = { workspace = true, optional = true }
 [features]
 default      = []
 to_js_string = ["dep:ryu-js"]
-serialize    = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_index/serialize", "bitflags/serde"]
+serialize    = ["bitflags/serde", "dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_index/serialize"]

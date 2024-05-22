@@ -5,6 +5,26 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.1] - 2024-05-22
+
+### Features
+
+- Report errors when options have unknown fields (#3322)
+- Pass `&mut TraverseCtx` to visitors (#3312)
+- Support `from_babel_options` in TransformOptions (#3301)
+- Do not add self attribute in react/jsx plugin (#3287)
+
+### Bug Fixes
+
+- Do no add __self when the jsx is inside constructor (#3258)
+
+### Refactor
+
+- Correct spelling of var name (#3369)
+- S/warning/warn
+- `Traverse` produce scopes tree using `Semantic` (#3304)
+- Improve indentation (#3282)
+
 ## [0.13.0] - 2024-05-14
 
 ### Features

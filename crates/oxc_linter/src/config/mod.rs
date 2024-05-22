@@ -7,6 +7,7 @@ use std::path::Path;
 
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{rules::RuleEnum, AllowWarnDeny, RuleWithSeverity};
@@ -17,8 +18,8 @@ pub use self::{
 };
 
 /// ESLint Config
-/// <https://eslint.org/docs/v8.x/use/configure/configuration-files>
-#[derive(Debug, Default, Deserialize)]
+// <https://eslint.org/docs/v8.x/use/configure/configuration-files>
+#[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct ESLintConfig {
     pub(crate) rules: ESLintRules,

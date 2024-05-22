@@ -1,9 +1,7 @@
-use petgraph::stable_graph::NodeIndex;
-
 use oxc_ast::AstKind;
 use oxc_index::IndexVec;
 
-use crate::scope::ScopeId;
+use crate::{control_flow::BasicBlockId, scope::ScopeId};
 
 pub use oxc_syntax::node::{AstNodeId, NodeFlags};
 
@@ -17,23 +15,28 @@ pub struct AstNode<'a> {
     /// Associated Scope (initialized by binding)
     scope_id: ScopeId,
 
-    /// Associated NodeIndex in CFG (initialized by control_flow)
-    cfg_ix: NodeIndex,
+    /// Associated `BasicBlockId` in CFG (initialized by control_flow)
+    cfg_id: BasicBlockId,
 
     flags: NodeFlags,
 }
 
 impl<'a> AstNode<'a> {
-    pub fn new(kind: AstKind<'a>, scope_id: ScopeId, cfg_ix: NodeIndex, flags: NodeFlags) -> Self {
-        Self { id: AstNodeId::new(0), kind, cfg_ix, scope_id, flags }
+    pub fn new(
+        kind: AstKind<'a>,
+        scope_id: ScopeId,
+        cfg_id: BasicBlockId,
+        flags: NodeFlags,
+    ) -> Self {
+        Self { id: AstNodeId::new(0), kind, cfg_id, scope_id, flags }
     }
 
     pub fn id(&self) -> AstNodeId {
         self.id
     }
 
-    pub fn cfg_ix(&self) -> NodeIndex {
-        self.cfg_ix
+    pub fn cfg_id(&self) -> BasicBlockId {
+        self.cfg_id
     }
 
     pub fn kind(&self) -> AstKind<'a> {

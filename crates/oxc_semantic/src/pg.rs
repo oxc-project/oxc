@@ -1,15 +1,17 @@
-use petgraph::{stable_graph::NodeIndex, visit::EdgeRef, Direction, Graph};
+use petgraph::{visit::EdgeRef, Direction, Graph};
+
+use crate::BasicBlockId;
 
 /// # Panics
 pub fn neighbors_filtered_by_edge_weight<State: Default + Clone, NodeWeight, EdgeWeight, F, G>(
     graph: &Graph<NodeWeight, EdgeWeight>,
-    node: NodeIndex,
+    node: BasicBlockId,
     edge_filter: &F,
     visitor: &mut G,
 ) -> Vec<State>
 where
     F: Fn(&EdgeWeight) -> Option<State>,
-    G: FnMut(&NodeIndex, State) -> (State, bool),
+    G: FnMut(&BasicBlockId, State) -> (State, bool),
 {
     let mut q = vec![];
     let mut final_states = vec![];

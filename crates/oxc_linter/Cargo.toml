@@ -30,26 +30,25 @@ oxc_syntax      = { workspace = true }
 oxc_codegen     = { workspace = true }
 oxc_resolver    = { workspace = true }
 
-rayon         = { workspace = true }
-lazy_static   = { workspace = true }                        # used in oxc_macros
-serde_json    = { workspace = true }
-serde         = { workspace = true, features = ["derive"] }
-regex         = { workspace = true }
-rustc-hash    = { workspace = true }
-phf           = { workspace = true, features = ["macros"] }
-itertools     = { workspace = true }
-dashmap       = { workspace = true }
-convert_case  = { workspace = true }
-language-tags = { workspace = true }
-mime_guess    = { workspace = true }
-url           = { workspace = true }
-
+rayon               = { workspace = true }
+lazy_static         = { workspace = true }
+serde_json          = { workspace = true }
+serde               = { workspace = true, features = ["derive"] }
+regex               = { workspace = true }
+rustc-hash          = { workspace = true }
+phf                 = { workspace = true, features = ["macros"] }
+itertools           = { workspace = true }
+dashmap             = { workspace = true }
+convert_case        = { workspace = true }
+language-tags       = { workspace = true }
+mime_guess          = { workspace = true }
+url                 = { workspace = true }
 rust-lapper         = { workspace = true }
 once_cell           = { workspace = true }
 memchr              = { workspace = true }
 json-strip-comments = { workspace = true }
-
-static_assertions = { workspace = true }
+schemars            = { workspace = true, features = ["indexmap2"] }
+static_assertions   = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
