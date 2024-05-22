@@ -16,19 +16,9 @@ fn default_case_diagnostic(span0: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct DefaultCase(Box<DefaultCaseConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct DefaultCaseConfig {
     comment_pattern: Option<Regex>,
-}
-
-impl Default for DefaultCaseConfig {
-    fn default() -> Self {
-        Self {
-            comment_pattern: Some(
-                RegexBuilder::new(r"^no default$").case_insensitive(true).build().unwrap(),
-            ),
-        }
-    }
 }
 
 impl std::ops::Deref for DefaultCase {
@@ -74,40 +64,31 @@ impl Rule for DefaultCase {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::SwitchStatement(switch) = node.kind() else {
-            return;
-        };
+        if let AstKind::SwitchStatement(switch) = node.kind() {
+            let cases = &switch.cases;
+            if !cases.is_empty() && !cases.iter().any(|case| case.test.is_none()) {
+                if let Some(last_case) = cases.last() {
+                    let has_default_comment = ctx
+                        .semantic()
+                        .trivias()
+                        .comments_range(last_case.span.start..switch.span.end)
+                        .last()
+                        .is_some_and(|(start, comment)| {
+                            let raw = Span::new(*start, comment.end)
+                                .source_text(ctx.semantic().source_text())
+                                .trim();
+                            match &self.comment_pattern {
+                                Some(comment_pattern) => comment_pattern.is_match(raw),
+                                None => raw.eq_ignore_ascii_case("no default"),
+                            }
+                        });
 
-        let cases = &switch.cases;
-
-        // skip test for empty case like the eslint rule does
-        if cases.len() == 0 {
-            return;
-        }
-
-        let default_cases = cases.iter().filter(|v| v.test.is_none()).collect::<Vec<_>>();
-
-        if default_cases.len() == 1 {
-            return;
-        }
-
-        if let Some(last_case) = cases.last() {
-            if let Some((start, comment)) = ctx
-                .semantic()
-                .trivias()
-                .comments_range(last_case.span.start..switch.span.end)
-                .last()
-            {
-                let raw = &ctx.semantic().source_text()[*start as usize..comment.end as usize];
-                if let Some(comment_pattern) = &self.comment_pattern {
-                    if comment_pattern.is_match(raw.trim()) {
-                        return;
+                    if !has_default_comment {
+                        ctx.diagnostic(default_case_diagnostic(switch.span));
                     }
                 }
             }
         }
-
-        ctx.diagnostic(default_case_diagnostic(switch.span));
     }
 }
 
@@ -119,72 +100,72 @@ fn test() {
         ("switch (a) { case 1: break; default: break; }", None),
         ("switch (a) { case 1: break; case 2: default: break; }", None),
         (
-            "switch (a) { case 1: break; default: break; 
-			 //no default 
+            "switch (a) { case 1: break; default: break;
+			 //no default
 			 }",
             None,
         ),
         (
-            "switch (a) { 
-			    case 1: break; 
-			
-			//oh-oh 
+            "switch (a) {
+			    case 1: break;
+
+			//oh-oh
 			 // no default
 			 }",
             None,
         ),
         (
-            "switch (a) { 
-			    case 1: 
-			
+            "switch (a) {
+			    case 1:
+
 			// no default
 			 }",
             None,
         ),
         (
-            "switch (a) { 
-			    case 1: 
-			
+            "switch (a) {
+			    case 1:
+
 			// No default
 			 }",
             None,
         ),
         (
-            "switch (a) { 
-			    case 1: 
-			
+            "switch (a) {
+			    case 1:
+
 			// no deFAUlt
 			 }",
             None,
         ),
         (
-            "switch (a) { 
-			    case 1: 
-			
+            "switch (a) {
+			    case 1:
+
 			// NO DEFAULT
 			 }",
             None,
         ),
         (
-            "switch (a) { 
-			    case 1: a = 4; 
-			
+            "switch (a) {
+			    case 1: a = 4;
+
 			// no default
 			 }",
             None,
         ),
         (
-            "switch (a) { 
-			    case 1: a = 4; 
-			
+            "switch (a) {
+			    case 1: a = 4;
+
 			/* no default */
 			 }",
             None,
         ),
         (
-            "switch (a) { 
-			    case 1: a = 4; break; break; 
-			
+            "switch (a) {
+			    case 1: a = 4; break; break;
+
 			// no default
 			 }",
             None,
@@ -202,27 +183,27 @@ fn test() {
             }])),
         ),
         (
-            "switch (a) { case 1: break; 
-			 // skip default case 
+            "switch (a) { case 1: break;
+			 // skip default case
 			 }",
             Some(serde_json::json!([{
                 "commentPattern": "^skip default"
             }])),
         ),
         (
-            "switch (a) { case 1: break; 
+            "switch (a) { case 1: break;
 			 /*
 			TODO:
 			 throw error in default case
-			*/ 
+			*/
 			 }",
             Some(serde_json::json!([{
                 "commentPattern": "default"
             }])),
         ),
         (
-            "switch (a) { case 1: break; 
-			// 
+            "switch (a) { case 1: break;
+			//
 			 }",
             Some(serde_json::json!([{
                 "commentPattern": ".?"
@@ -233,21 +214,21 @@ fn test() {
     let fail = vec![
         ("switch (a) { case 1: break; }", None),
         (
-            "switch (a) { 
-			 // no default 
+            "switch (a) {
+			 // no default
 			 case 1: break;  }",
             None,
         ),
         (
-            "switch (a) { case 1: break; 
-			 // no default 
-			 // nope 
+            "switch (a) { case 1: break;
+			 // no default
+			 // nope
 			  }",
             None,
         ),
         (
-            "switch (a) { case 1: break; 
-			 // no default 
+            "switch (a) { case 1: break;
+			 // no default
 			 }",
             Some(serde_json::json!([{
                 "commentPattern": "skipped default case"
@@ -255,9 +236,9 @@ fn test() {
         ),
         (
             "switch (a) {
-			case 1: break; 
-			// default omitted intentionally 
-			// TODO: add default case 
+			case 1: break;
+			// default omitted intentionally
+			// TODO: add default case
 			}",
             Some(serde_json::json!([{
                 "commentPattern": "default omitted"
