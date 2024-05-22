@@ -3,7 +3,8 @@ use serde::Deserialize;
 
 use rustc_hash::FxHashMap;
 
-/// <https://eslint.org/docs/v8.x/use/configure/language-options#using-configuration-files-1>
+/// Add or remove global variables.
+// <https://eslint.org/docs/v8.x/use/configure/language-options#using-configuration-files-1>
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 pub struct ESLintGlobals(FxHashMap<String, GlobalValue>);
 

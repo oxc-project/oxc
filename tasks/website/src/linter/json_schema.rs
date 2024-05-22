@@ -1,6 +1,6 @@
 use handlebars::Handlebars;
 use schemars::{
-    schema::{RootSchema, Schema, SchemaObject},
+    schema::{RootSchema, Schema, SchemaObject, SingleOrVec},
     schema_for,
 };
 use serde::Serialize;
@@ -13,7 +13,8 @@ pub fn generate_schema_json() {
 }
 
 pub fn generate_schema_markdown() {
-    let rendered = Renderer::new().render();
+    let root_schema = schema_for!(ESLintConfig);
+    let rendered = Renderer::new(root_schema).render();
     println!("{rendered}");
 }
 
@@ -25,9 +26,11 @@ const ROOT: &str = "
 
 const SECTION: &str = "
 {{#each sections}}
-{{level}} `{{title}}`
+{{level}} {{title}}
 
+{{#if instance_type}}
 type: `{{instance_type}}`
+{{/if}}
 
 {{description}}
 
@@ -46,7 +49,7 @@ struct Root {
 struct Section {
     level: String,
     title: String,
-    instance_type: String,
+    instance_type: Option<String>,
     description: String,
     sections: Vec<Section>,
 }
@@ -57,12 +60,11 @@ struct Renderer {
 }
 
 impl Renderer {
-    fn new() -> Self {
+    fn new(root_schema: RootSchema) -> Self {
         let mut handlebars = Handlebars::new();
         handlebars.register_escape_fn(handlebars::no_escape);
         assert!(handlebars.register_template_string("root", ROOT).is_ok());
         assert!(handlebars.register_template_string("section", SECTION).is_ok());
-        let root_schema = schema_for!(ESLintConfig);
         Self { handlebars, root_schema }
     }
 
@@ -78,10 +80,14 @@ impl Renderer {
         }
     }
 
-    fn get_referenced_schema(&self, reference: &str) -> &SchemaObject {
-        let definitions = &self.root_schema.definitions;
-        let definition = definitions.get(reference.trim_start_matches("#/definitions/"));
-        definition.map(Self::get_schema_object).unwrap()
+    fn get_referenced_schema<'a>(&'a self, object: &'a SchemaObject) -> &'a SchemaObject {
+        if let Some(reference) = &object.reference {
+            let definitions = &self.root_schema.definitions;
+            let definition = definitions.get(reference.trim_start_matches("#/definitions/"));
+            definition.map(Self::get_schema_object).unwrap()
+        } else {
+            object
+        }
     }
 
     fn render_root_schema(&self, root_schema: &RootSchema) -> Root {
@@ -101,23 +107,42 @@ impl Renderer {
         parent_key: Option<&str>,
         schema: &SchemaObject,
     ) -> Vec<Section> {
-        let Some(object) = &schema.object else { return vec![] };
-        object
-            .properties
-            .iter()
-            .map(|(key, schema)| {
-                let key = parent_key.map_or_else(|| key.clone(), |k| format!("{k}.{key}"));
-                self.render_schema(depth + 1, &key, Self::get_schema_object(schema))
-            })
-            .collect::<Vec<_>>()
+        if let Some(array) = &schema.array {
+            return array
+                .items
+                .iter()
+                .map(|item| match item {
+                    SingleOrVec::Single(schema) => {
+                        let schema_object = Self::get_schema_object(schema);
+                        let key = parent_key.map_or_else(String::new, |k| format!("{k}[n]"));
+                        self.render_schema(depth + 1, &key, schema_object)
+                    }
+                    SingleOrVec::Vec(_) => panic!(),
+                })
+                .collect();
+        }
+        if let Some(object) = &schema.object {
+            return object
+                .properties
+                .iter()
+                .map(|(key, schema)| {
+                    let key = parent_key.map_or_else(|| key.clone(), |k| format!("{k}.{key}"));
+                    self.render_schema(depth + 1, &key, Self::get_schema_object(schema))
+                })
+                .collect::<Vec<_>>();
+        }
+        vec![]
     }
 
     fn render_schema(&self, depth: usize, key: &str, schema: &SchemaObject) -> Section {
-        let schema = schema.reference.as_ref().map_or(schema, |r| self.get_referenced_schema(r));
+        let schema = self.get_referenced_schema(schema);
         Section {
             level: "#".repeat(depth),
             title: key.into(),
-            instance_type: serde_json::to_string(&schema.instance_type).unwrap().replace('"', ""),
+            instance_type: schema
+                .instance_type
+                .as_ref()
+                .map(|t| serde_json::to_string_pretty(t).unwrap().replace('"', "")),
             description: schema
                 .metadata
                 .as_ref()

@@ -2,8 +2,9 @@ use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-/// Env
+/// Predefine global variables.
 // TODO: list the keys we support
+// <https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments>
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 pub struct ESLintEnv(FxHashMap<String, bool>);
 

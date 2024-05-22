@@ -1,6 +1,7 @@
 use std::{borrow::Cow, fmt, ops::Deref};
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
+use rustc_hash::FxHashMap;
 use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
 use serde::{
     de::{self, Deserializer, Visitor},
@@ -9,8 +10,6 @@ use serde::{
 
 use crate::AllowWarnDeny;
 
-// The `rules` field from ESLint config
-//
 // TS type is `Record<string, RuleConf>`
 //   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
 //   - type RuleConf = SeverityConf | [SeverityConf, ...any[]];
@@ -45,7 +44,7 @@ impl JsonSchema for ESLintRules {
             String(String),
             Array(Vec<serde_json::Value>),
         }
-        DummyRule::json_schema(gen)
+        gen.subschema_for::<FxHashMap<String, DummyRule>>()
     }
 }
 

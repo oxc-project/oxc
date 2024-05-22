@@ -17,11 +17,41 @@ pub use self::{
     settings::jsdoc::JSDocPluginSettings, settings::ESLintSettings,
 };
 
-/// ESLint Config
-// <https://eslint.org/docs/v8.x/use/configure/configuration-files>
+/// Oxlint Configuration File
+///
+/// This configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).
+///
+/// Usage: `oxlint -c oxlintrc.json`
+///
+/// ::: danger NOTE
+///
+/// Only the `.json` format is supported.
+///
+/// :::
+///
+/// Example
+///
+/// ```json
+/// // oxlintrc.json
+/// {
+///   // Comments are supported.
+///   "env": {
+///       "browser": true
+///   },
+///   "globals": {
+///     "foo": "readonly",
+///   },
+///   "settings": {
+///   },
+///   "rules": {
+///       "eqeqeq": "warn",
+///   },
+///  }
+/// ```
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct ESLintConfig {
+    /// See [Oxlint Rules](./rules)
     pub(crate) rules: ESLintRules,
     pub(crate) settings: ESLintSettings,
     pub(crate) env: ESLintEnv,
