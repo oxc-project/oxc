@@ -10,6 +10,8 @@ use crate::AstNodeId;
 
 pub use builder::ControlFlowGraphBuilder;
 
+pub type BasicBlockId = NodeIndex;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Register {
     Index(u32),
@@ -128,17 +130,15 @@ pub struct ControlFlowGraph {
 
 impl ControlFlowGraph {
     /// # Panics
-    pub fn basic_block_by_index(&self, index: NodeIndex) -> &Vec<BasicBlockElement> {
-        let idx =
-            *self.graph.node_weight(index).expect("expected a valid node index in self.graph");
-        self.basic_blocks.get(idx).expect("expected a valid node index in self.basic_blocks")
+    pub fn basic_block(&self, id: BasicBlockId) -> &Vec<BasicBlockElement> {
+        let ix = *self.graph.node_weight(id).expect("expected a valid node id in self.graph");
+        self.basic_blocks.get(ix).expect("expected a valid node id in self.basic_blocks")
     }
 
     /// # Panics
-    pub fn basic_block_by_index_mut(&mut self, index: NodeIndex) -> &mut Vec<BasicBlockElement> {
-        let idx =
-            *self.graph.node_weight(index).expect("expected a valid node index in self.graph");
-        self.basic_blocks.get_mut(idx).expect("expected a valid node index in self.basic_blocks")
+    pub fn basic_block_mut(&mut self, id: BasicBlockId) -> &mut Vec<BasicBlockElement> {
+        let ix = *self.graph.node_weight(id).expect("expected a valid node id in self.graph");
+        self.basic_blocks.get_mut(ix).expect("expected a valid node id in self.basic_blocks")
     }
 }
 

@@ -1,12 +1,14 @@
 use super::{
-    AssignmentValue, AstNodeId, BasicBlockElement, CompactStr, ControlFlowGraph, EdgeType, Graph,
-    NodeIndex, PreservedExpressionState, PreservedStatementState, Register,
+    AssignmentValue, AstNodeId, BasicBlockElement, BasicBlockId, CompactStr, ControlFlowGraph,
+    EdgeType, Graph, PreservedExpressionState, PreservedStatementState, Register,
     StatementControlFlowType,
 };
 
 #[derive(Debug, Default)]
 pub struct ControlFlowGraphBuilder {
+    pub graph: Graph<usize, EdgeType>,
     pub basic_blocks: Vec<Vec<BasicBlockElement>>,
+    pub current_node_ix: BasicBlockId,
     // note: this should only land in the big box for all things that take arguments
     // ie: callexpression, arrayexpression, etc
     // todo: add assert that it is used every time?
@@ -22,16 +24,14 @@ pub struct ControlFlowGraphBuilder {
     // (start, tail, last_register_used)
     pub saved_stores: Vec<(Vec<BasicBlockElement>, Option<Register>)>,
     pub saved_store: Option<usize>,
-    pub graph: Graph<usize, EdgeType>,
-    pub current_node_ix: NodeIndex,
-    pub basic_blocks_with_breaks: Vec<Vec<NodeIndex>>,
-    pub basic_blocks_with_continues: Vec<Vec<NodeIndex>>,
+    pub basic_blocks_with_breaks: Vec<Vec<BasicBlockId>>,
+    pub basic_blocks_with_continues: Vec<Vec<BasicBlockId>>,
     // node indexes of the basic blocks of switch case conditions
-    pub switch_case_conditions: Vec<Vec<NodeIndex>>,
+    pub switch_case_conditions: Vec<Vec<BasicBlockId>>,
     pub next_label: Option<CompactStr>,
     pub label_to_ast_node_ix: Vec<(CompactStr, AstNodeId)>,
     pub ast_node_to_break_continue: Vec<(AstNodeId, usize, Option<usize>)>,
-    pub after_throw_block: Option<NodeIndex>,
+    pub after_throw_block: Option<BasicBlockId>,
 }
 
 impl ControlFlowGraphBuilder {
@@ -51,7 +51,7 @@ impl ControlFlowGraphBuilder {
     }
 
     #[must_use]
-    pub fn new_basic_block_for_function(&mut self) -> NodeIndex {
+    pub fn new_basic_block_for_function(&mut self) -> BasicBlockId {
         self.basic_blocks.push(Vec::new());
         let basic_block_id = self.basic_blocks.len() - 1;
         let graph_index = self.graph.add_node(basic_block_id);
@@ -66,7 +66,7 @@ impl ControlFlowGraphBuilder {
     }
 
     #[must_use]
-    pub fn new_basic_block(&mut self) -> NodeIndex {
+    pub fn new_basic_block(&mut self) -> BasicBlockId {
         self.basic_blocks.push(Vec::new());
         let graph_index = self.graph.add_node(self.basic_blocks.len() - 1);
         self.current_node_ix = graph_index;
@@ -79,7 +79,7 @@ impl ControlFlowGraphBuilder {
         graph_index
     }
 
-    pub fn add_edge(&mut self, a: NodeIndex, b: NodeIndex, weight: EdgeType) {
+    pub fn add_edge(&mut self, a: BasicBlockId, b: BasicBlockId, weight: EdgeType) {
         self.graph.add_edge(a, b, weight);
     }
 
@@ -202,8 +202,8 @@ impl ControlFlowGraphBuilder {
         &mut self,
         preserved_state: &PreservedStatementState,
         id: AstNodeId,
-        break_jump_position: NodeIndex<u32>,
-        continue_jump_position: Option<NodeIndex<u32>>,
+        break_jump_position: BasicBlockId,
+        continue_jump_position: Option<BasicBlockId>,
     ) {
         let basic_blocks_with_breaks = self
             .basic_blocks_with_breaks
