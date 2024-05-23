@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -37,10 +37,20 @@ impl Rule for NoNew {
             return;
         };
 
-        if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
-            if matches!(parent_node.kind(), AstKind::ExpressionStatement(_)) {
-                ctx.diagnostic(no_new_diagnostic(expr.span));
+        let mut ancestors = ctx.nodes().ancestors(node.id()).skip(1);
+        let Some(node_id) = ancestors.next() else { return };
+
+        let kind = ctx.nodes().kind(node_id);
+        if matches!(kind, AstKind::ExpressionStatement(_)) {
+            ancestors.next(); // skip `FunctionBody`
+            if let Some(node_id) = ancestors.next() {
+                let kind = ctx.nodes().kind(node_id);
+                if matches!(kind, AstKind::ArrowFunctionExpression(e) if e.expression) {
+                    return;
+                }
             }
+            let span = Span::new(expr.span.start, expr.callee.span().end);
+            ctx.diagnostic(no_new_diagnostic(span));
         }
     }
 }
@@ -49,9 +59,13 @@ impl Rule for NoNew {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec!["var a = new Date()", "var a; if (a === new Date()) { a = false; }"];
+    let pass = vec![
+        "var a = new Date()",
+        "var a; if (a === new Date()) { a = false; }",
+        "(() => new Date())",
+    ];
 
-    let fail = vec!["new Date()"];
+    let fail = vec!["new Date()", "(() => { new Date() })"];
 
     Tester::new(NoNew::NAME, pass, fail).test_and_snapshot();
 }
