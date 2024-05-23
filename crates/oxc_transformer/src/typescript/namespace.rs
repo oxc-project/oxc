@@ -5,13 +5,21 @@ use super::{diagnostics::ambient_module_nested, TypeScript};
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, syntax_directed_operations::BoundNames};
 use oxc_span::{Atom, SPAN};
-use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
+use oxc_syntax::{
+    operator::{AssignmentOperator, LogicalOperator},
+    symbol::SymbolFlags,
+};
+use oxc_traverse::TraverseCtx;
 
 // TODO:
 // 1. register scope for the newly created function: <https://github.com/babel/babel/blob/08b0472069cd207f043dd40a4d157addfdd36011/packages/babel-plugin-transform-typescript/src/namespace.ts#L38>
 impl<'a> TypeScript<'a> {
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
-    pub(super) fn transform_program_for_namespace(&self, program: &mut Program<'a>) {
+    pub(super) fn transform_program_for_namespace(
+        &self,
+        program: &mut Program<'a>,
+        ctx: &mut TraverseCtx,
+    ) {
         // namespace declaration is only allowed at the top level
 
         if !has_namespace(program.body.as_slice()) {
@@ -31,7 +39,7 @@ impl<'a> TypeScript<'a> {
                 Statement::TSModuleDeclaration(decl) => {
                     if !decl.modifiers.is_contains_declare() {
                         if let Some(transformed_stmt) =
-                            self.handle_nested(self.ctx.ast.copy(&decl).unbox(), None)
+                            self.handle_nested(self.ctx.ast.copy(&decl).unbox(), None, ctx)
                         {
                             let name = decl.id.name();
                             if names.insert(name.clone()) {
@@ -51,7 +59,7 @@ impl<'a> TypeScript<'a> {
                         {
                             if !decl.modifiers.is_contains_declare() {
                                 if let Some(transformed_stmt) =
-                                    self.handle_nested(self.ctx.ast.copy(decl), None)
+                                    self.handle_nested(self.ctx.ast.copy(decl), None, ctx)
                                 {
                                     let name = decl.id.name();
                                     if names.insert(name.clone()) {
@@ -119,12 +127,15 @@ impl<'a> TypeScript<'a> {
         &self,
         decl: TSModuleDeclaration<'a>,
         parent_export: Option<Expression<'a>>,
+        ctx: &mut TraverseCtx,
     ) -> Option<Statement<'a>> {
         let mut names: FxHashSet<Atom<'a>> = FxHashSet::default();
 
         let real_name = decl.id.name();
 
-        let name = self.ctx.ast.new_atom(&format!("_{}", real_name.clone())); // path.scope.generateUid(realName.name);
+        let name = self.ctx.ast.new_atom(
+            &ctx.generate_uid_in_current_scope(real_name, SymbolFlags::FunctionScopedVariable),
+        );
 
         let namespace_top_level = if let Some(body) = decl.body {
             match body {
@@ -161,7 +172,7 @@ impl<'a> TypeScript<'a> {
                     }
 
                     let module_name = decl.id.name().clone();
-                    if let Some(transformed) = self.handle_nested(decl.unbox(), None) {
+                    if let Some(transformed) = self.handle_nested(decl.unbox(), None, ctx) {
                         is_empty = false;
                         if names.insert(module_name.clone()) {
                             new_stmts.push(Statement::from(
@@ -233,6 +244,7 @@ impl<'a> TypeScript<'a> {
                                     Some(self.ctx.ast.identifier_reference_expression(
                                         IdentifierReference::new(SPAN, name.clone()),
                                     )),
+                                    ctx,
                                 ) {
                                     is_empty = false;
                                     if names.insert(module_name.clone()) {

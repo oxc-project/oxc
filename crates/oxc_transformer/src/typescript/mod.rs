@@ -68,8 +68,8 @@ impl<'a> TypeScript<'a> {
 
 // Transforms
 impl<'a> TypeScript<'a> {
-    pub fn transform_program(&self, program: &mut Program<'a>) {
-        self.transform_program_for_namespace(program);
+    pub fn transform_program(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx) {
+        self.transform_program_for_namespace(program, ctx);
     }
 
     pub fn transform_program_on_exit(&self, program: &mut Program<'a>) {
