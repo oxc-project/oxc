@@ -35,7 +35,18 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
             | AstKind::PropertyDefinition(_)
             // /** This JSDoc should NOT found for `ArrowFunctionExpression` callback */
             // function outer() { inner(() => {}) }
-            | AstKind::CallExpression(_) => return None,
+            | AstKind::CallExpression(_)
+            // /** This JSDoc should NOT found for `ArrowFunctionExpression` callback */
+            // new Promise(() => {})
+            | AstKind::NewExpression(_) => {
+                // /** This JSDoc should NOT found for `VariableDeclaration` */
+                // export const foo = () => {}
+                let parent_node = ctx.nodes().parent_node(current_node.id())?;
+                match parent_node.kind() {
+                    AstKind::ExportDefaultDeclaration(_) | AstKind::ExportNamedDeclaration(_) => return Some(parent_node),
+                    _ => return None
+                }
+            },
             _ => current_node = ctx.nodes().parent_node(current_node.id())?,
         }
     }
