@@ -6,7 +6,7 @@ expression: require_returns
    ╭─[require_returns.tsx:5:14]
  4 │                            */
  5 │ ╭─▶                       function quux (foo) {
- 6 │ │               
+ 6 │ │   
  7 │ │                           return foo;
  8 │ ╰─▶                       }
  9 │                       
@@ -57,7 +57,7 @@ expression: require_returns
    ╭─[require_returns.tsx:5:14]
  4 │                            */
  5 │ ╭─▶                       function quux (foo) {
- 6 │ │               
+ 6 │ │   
  7 │ │                           return foo;
  8 │ ╰─▶                       }
  9 │                       
@@ -201,7 +201,7 @@ expression: require_returns
     ╭─[require_returns.tsx:5:14]
   4 │                            */
   5 │ ╭─▶                       function quux (foo) {
-  6 │ │               
+  6 │ │   
   7 │ │                           return new Promise(function (resolve, reject) {
   8 │ │                             resolve(foo);
   9 │ │                           });
@@ -214,7 +214,7 @@ expression: require_returns
     ╭─[require_returns.tsx:5:14]
   4 │                            */
   5 │ ╭─▶                       function quux (foo) {
-  6 │ │               
+  6 │ │   
   7 │ │                           return new Promise(function (resolve, reject) {
   8 │ │                             setTimeout(() => {
   9 │ │                               resolve(true);
@@ -229,7 +229,7 @@ expression: require_returns
     ╭─[require_returns.tsx:5:14]
   4 │                            */
   5 │ ╭─▶                       function quux (foo) {
-  6 │ │               
+  6 │ │   
   7 │ │                           return new Promise(function (resolve, reject) {
   8 │ │                             foo(resolve);
   9 │ │                           });

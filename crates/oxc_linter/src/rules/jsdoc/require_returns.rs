@@ -59,7 +59,7 @@ declare_oxc_lint!(
     /// function quux () { return foo; }
     /// ```
     RequireReturns,
-    correctness,
+    pedantic,
 );
 
 #[derive(Debug, Clone, Deserialize)]
@@ -342,7 +342,7 @@ fn test() {
 			           * @returns Foo.
 			           */
 			          function quux () {
-			
+
 			            return foo;
 			          }
 			      ",
@@ -438,7 +438,7 @@ fn test() {
 			           * @override
 			           */
 			          function quux (foo) {
-			
+
 			            return foo;
 			          }
 			      ",
@@ -463,7 +463,7 @@ fn test() {
 			           * @constructor
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -475,7 +475,7 @@ fn test() {
 			           * @returns {object}
 			           */
 			          function quux () {
-			
+
 			            return {a: foo};
 			          }
 			      ",
@@ -521,7 +521,7 @@ fn test() {
 			           * @returns {void}
 			           */
 			          const quux = () => {
-			
+
 			          }
 			      ",
             None,
@@ -544,7 +544,7 @@ fn test() {
 			           * @returns {undefined}
 			           */
 			          const quux = () => {
-			
+
 			          }
 			      ",
             None,
@@ -556,7 +556,7 @@ fn test() {
 			           *
 			           */
 			          const quux = () => {
-			
+
 			          }
 			      ",
             None,
@@ -744,7 +744,7 @@ fn test() {
 			          this.bar = true;
 			        }
 			      }
-			
+
 			      export default foo;
 			      ",
             None,
@@ -771,7 +771,7 @@ fn test() {
 			           * @type {MyCallback}
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             Some(serde_json::json!([
@@ -988,7 +988,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			            return new Promise(function (resolve, reject) {
 			              resolve();
 			            });
@@ -1003,7 +1003,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			            return new Promise(function (resolve, reject) {
 			              setTimeout(() => {
 			                resolve();
@@ -1020,7 +1020,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			            return new Promise(function (resolve, reject) {
 			              foo();
 			            });
@@ -1035,7 +1035,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			            return new Promise(function (resolve, reject) {
 			              abc((resolve) => {
 			                resolve(true);
@@ -1052,7 +1052,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			            return new Promise(function (resolve, reject) {
 			              abc(function (resolve) {
 			                resolve(true);
@@ -1145,7 +1145,7 @@ fn test() {
 			           * fail(no @returns)
 			           */
 			          function quux (foo) {
-			
+
 			            return foo;
 			          }
 			      ",
@@ -1204,7 +1204,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			            return foo;
 			          }
 			      ",
@@ -1325,7 +1325,7 @@ fn test() {
 			           * @returns {void}
 			           */
 			          function quux (foo) {
-			
+
 			            return foo;
 			          }
 			      ",
@@ -1440,7 +1440,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			            return new Promise(function (resolve, reject) {
 			              resolve(foo);
 			            });
@@ -1455,7 +1455,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			            return new Promise(function (resolve, reject) {
 			              setTimeout(() => {
 			                resolve(true);
@@ -1472,7 +1472,7 @@ fn test() {
 			           *
 			           */
 			          function quux (foo) {
-			
+
 			            return new Promise(function (resolve, reject) {
 			              foo(resolve);
 			            });
