@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Class, Function, JSXAttributeItem, JSXElementName},
+    ast::{Class, Function, JSXAttributeItem, JSXAttributeValue, JSXElementName},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -46,7 +46,13 @@ impl Rule for NoPageCustomFont {
         if matches!(&element.name, JSXElementName::Identifier(ident) if ident.name != "link") {
             return;
         }
-        let is_custom_font = element.attributes.iter().any(|attr| matches!(&attr, JSXAttributeItem::Attribute(attr) if attr.is_identifier("href") && attr.value.is_some()));
+
+        let is_custom_font = element.attributes.iter().any(|attr| {
+            matches!(&attr,
+              JSXAttributeItem::Attribute(attr) if attr.is_identifier("href") && attr.value.as_ref().is_some_and(|value|
+              matches!(value, JSXAttributeValue::StringLiteral(literal) if literal.value.starts_with("https://fonts.googleapis.com/css"))
+            ))
+        });
 
         if !is_custom_font {
             return;
@@ -238,6 +244,23 @@ fn test() {
 			              href="https://fonts.googleapis.com/css2?family=Krona+One&display=swap"
 			              rel="stylesheet"
 			            />
+			          </Head>
+			        </Html>
+			      )
+			    }"#,
+            None,
+            None,
+            filename.clone(),
+        ),
+        (
+            r#"function a() {
+			      return (
+			        <Html>
+			          <Head>
+                  <link
+                    rel="apple-touch-startup-image"
+                    href="/assets/public/pwa/splash/apple-splash-2048-2732.jpg"
+                  />
 			          </Head>
 			        </Html>
 			      )

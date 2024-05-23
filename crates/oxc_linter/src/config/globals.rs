@@ -1,12 +1,15 @@
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use rustc_hash::FxHashMap;
 
-/// <https://eslint.org/docs/v8.x/use/configure/language-options#using-configuration-files-1>
-#[derive(Debug, Default, Deserialize)]
+/// Add or remove global variables.
+// <https://eslint.org/docs/v8.x/use/configure/language-options#using-configuration-files-1>
+#[derive(Debug, Default, Deserialize, JsonSchema)]
 pub struct ESLintGlobals(FxHashMap<String, GlobalValue>);
 
-#[derive(Debug, Eq, PartialEq, Deserialize)]
+// TODO: support deprecated `false`
+#[derive(Debug, Eq, PartialEq, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum GlobalValue {
     Readonly,

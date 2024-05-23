@@ -12,15 +12,15 @@ mod fixer;
 mod globals;
 mod javascript_globals;
 mod options;
-pub mod partial_loader;
-pub mod rule;
+mod rule;
 mod rules;
 mod service;
 mod utils;
 
-use std::{io::Write, rc::Rc, sync::Arc};
+pub mod partial_loader;
+pub mod table;
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use std::{io::Write, rc::Rc, sync::Arc};
 
 use oxc_diagnostics::Error;
 use oxc_semantic::AstNode;
@@ -29,15 +29,15 @@ pub use crate::{
     config::ESLintConfig,
     context::LintContext,
     options::{AllowWarnDeny, LintOptions},
-    rule::RuleWithSeverity,
+    rule::{RuleCategory, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
 use crate::{
     config::{ESLintEnv, ESLintGlobals, ESLintSettings},
     fixer::Fix,
     fixer::{Fixer, Message},
-    rule::RuleCategory,
-    rules::{RuleEnum, RULES},
+    rules::RuleEnum,
+    table::RuleTable,
 };
 
 #[cfg(target_pointer_width = "64")]
@@ -132,51 +132,12 @@ impl Linter {
 
     /// # Panics
     pub fn print_rules<W: Write>(writer: &mut W) {
-        let default_rules = Linter::default()
-            .rules
-            .into_iter()
-            .map(|rule| rule.name())
-            .collect::<FxHashSet<&str>>();
-
-        let rules_by_category = RULES.iter().fold(
-            FxHashMap::default(),
-            |mut map: FxHashMap<RuleCategory, Vec<&RuleEnum>>, rule| {
-                map.entry(rule.category()).or_default().push(rule);
-                map
-            },
-        );
-
-        let mut default_count = 0;
-
-        for (category, rules) in rules_by_category {
-            writeln!(writer, "## {} ({}):", category, rules.len()).unwrap();
-
-            let rule_width = rules.iter().map(|r| r.name().len()).max().unwrap();
-            let plugin_width = rules.iter().map(|r| r.plugin_name().len()).max().unwrap();
-            let x = "";
-            writeln!(
-                writer,
-                "| {:<rule_width$} | {:<plugin_width$} | Default |",
-                "Rule name", "Source"
-            )
-            .unwrap();
-            writeln!(writer, "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<7} |").unwrap();
-
-            for rule in rules {
-                let rule_name = rule.name();
-                let plugin_name = rule.plugin_name();
-                let (default, default_width) = if default_rules.contains(rule_name) {
-                    default_count += 1;
-                    ("✅", 6)
-                } else {
-                    ("", 7)
-                };
-                writeln!(writer, "| {rule_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} |").unwrap();
-            }
-            writeln!(writer).unwrap();
+        let table = RuleTable::new();
+        for section in table.sections {
+            writeln!(writer, "{}", section.render_markdown_table()).unwrap();
         }
-        writeln!(writer, "Default: {default_count}").unwrap();
-        writeln!(writer, "Total: {}", RULES.len()).unwrap();
+        writeln!(writer, "Default: {}", table.turned_on_by_default_count).unwrap();
+        writeln!(writer, "Total: {}", table.total).unwrap();
     }
 }
 

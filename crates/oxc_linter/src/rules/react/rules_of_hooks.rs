@@ -5,9 +5,9 @@ use oxc_ast::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{
-    petgraph::{self, graph::NodeIndex},
+    petgraph::{self},
     pg::neighbors_filtered_by_edge_weight,
-    AstNodeId, AstNodes, BasicBlockElement, EdgeType, Register,
+    AstNodeId, AstNodes, BasicBlockElement, BasicBlockId, EdgeType, Register,
 };
 use oxc_span::{Atom, CompactStr};
 use oxc_syntax::operator::AssignmentOperator;
@@ -220,18 +220,18 @@ impl Rule for RulesOfHooks {
             return;
         }
 
-        let node_cfg_ix = node.cfg_ix();
-        let func_cfg_ix = parent_func.cfg_ix();
+        let node_cfg_id = node.cfg_id();
+        let func_cfg_id = parent_func.cfg_id();
 
         // there is no branch between us and our parent function
-        if node_cfg_ix == func_cfg_ix {
+        if node_cfg_id == func_cfg_id {
             return;
         }
 
         if !petgraph::algo::has_path_connecting(
             &semantic.cfg().graph,
-            func_cfg_ix,
-            node_cfg_ix,
+            func_cfg_id,
+            node_cfg_id,
             None,
         ) {
             // There should always be a control flow path between a parent and child node.
@@ -246,8 +246,8 @@ impl Rule for RulesOfHooks {
             return ctx.diagnostic(diagnostics::loop_hook(span, hook_name));
         }
 
-        if self.is_conditional(ctx, func_cfg_ix, node_cfg_ix)
-            || self.breaks_early(ctx, func_cfg_ix, node_cfg_ix)
+        if self.is_conditional(ctx, func_cfg_id, node_cfg_id)
+            || self.breaks_early(ctx, func_cfg_id, node_cfg_id)
         {
             #[allow(clippy::needless_return)]
             return ctx.diagnostic(diagnostics::conditional_hook(span, hook_name));
@@ -278,42 +278,42 @@ impl RulesOfHooks {
     fn is_conditional(
         &self,
         ctx: &LintContext,
-        func_cfg_ix: NodeIndex,
-        node_cfg_ix: NodeIndex,
+        func_cfg_id: BasicBlockId,
+        node_cfg_id: BasicBlockId,
     ) -> bool {
         let graph = &ctx.semantic().cfg().graph;
         // All nodes should be reachable from our hook, Otherwise we have a conditional/branching flow.
-        petgraph::algo::dijkstra(graph, func_cfg_ix, Some(node_cfg_ix), |e| match e.weight() {
+        petgraph::algo::dijkstra(graph, func_cfg_id, Some(node_cfg_id), |e| match e.weight() {
             EdgeType::NewFunction => 1,
             EdgeType::Backedge | EdgeType::Normal => 0,
         })
         .into_iter()
         .filter(|(_, val)| *val == 0)
-        .any(|(f, _)| !petgraph::algo::has_path_connecting(graph, f, node_cfg_ix, None))
+        .any(|(f, _)| !petgraph::algo::has_path_connecting(graph, f, node_cfg_id, None))
     }
 
     #[inline(always)]
     fn breaks_early(
         &self,
         ctx: &LintContext,
-        func_cfg_ix: NodeIndex,
-        node_cfg_ix: NodeIndex,
+        func_cfg_id: BasicBlockId,
+        node_cfg_id: BasicBlockId,
     ) -> bool {
         let cfg = ctx.semantic().cfg();
         neighbors_filtered_by_edge_weight(
             &cfg.graph,
-            func_cfg_ix,
+            func_cfg_id,
             &|e| match e {
                 EdgeType::Normal => None,
                 EdgeType::Backedge | EdgeType::NewFunction => Some(State::default()),
             },
-            &mut |ix: &NodeIndex, mut state: State| {
-                if node_cfg_ix == *ix {
+            &mut |id: &BasicBlockId, mut state: State| {
+                if node_cfg_id == *id {
                     return (state, false);
                 }
 
                 let (push, keep_walking) = cfg
-                    .basic_block_by_index(*ix)
+                    .basic_block(*id)
                     .iter()
                     .fold_while((false, true), |acc, it| match it {
                         BasicBlockElement::Break(_) => FoldWhile::Done((true, false)),
@@ -327,7 +327,7 @@ impl RulesOfHooks {
                     .into_inner();
 
                 if push {
-                    state.0.push(*ix);
+                    state.0.push(*id);
                 }
                 (state, keep_walking)
             },
@@ -340,7 +340,7 @@ impl RulesOfHooks {
 }
 
 #[derive(Debug, Default, Clone)]
-struct State(Vec<NodeIndex>);
+struct State(Vec<BasicBlockId>);
 
 fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNode<'a>> {
     nodes.ancestors(node.id()).map(|id| nodes.get_node(id)).find(|it| it.kind().is_function_like())
@@ -380,10 +380,10 @@ fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: AstNodeId) -
                 },
             )
         })
-        .any(|(ix, id)| {
-            id.is_some_and(|name| {
+        .any(|(id, ident)| {
+            ident.is_some_and(|name| {
                 is_react_component_or_hook_name(name.as_str())
-                    || is_memo_or_forward_ref_callback(nodes, ix)
+                    || is_memo_or_forward_ref_callback(nodes, id)
             })
         })
 }

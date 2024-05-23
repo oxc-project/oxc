@@ -54,7 +54,7 @@ fn main() -> std::io::Result<()> {
 
     let mut ast_nodes_by_block = HashMap::<_, Vec<_>>::new();
     for node in semantic.semantic.nodes().iter() {
-        let block = node.cfg_ix();
+        let block = node.cfg_id();
         let block_ix = semantic.semantic.cfg().graph.node_weight(block).unwrap();
         ast_nodes_by_block.entry(*block_ix).or_default().push(node);
     }

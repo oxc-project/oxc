@@ -44,7 +44,7 @@ walkdir        = { workspace = true }
 regex          = { workspace = true }
 phf            = { workspace = true, features = ["macros"] }
 futures        = { workspace = true }
-tokio          = { workspace = true, features = ["rt-multi-thread", "macros"] }
+tokio          = { workspace = true, features = ["macros", "rt-multi-thread"] }
 saphyr         = { workspace = true }
 console        = { workspace = true }
 encoding_rs    = { workspace = true }

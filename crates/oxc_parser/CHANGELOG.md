@@ -5,6 +5,24 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.1] - 2024-05-22
+
+### Performance
+
+- More efficient number parsing (#3342)
+- Use `FxHashSet` for `not_parenthesized_arrow` (#3344)
+- Use bitshifting when parsing known integers (#3296)
+- Dedupe numeric separator check (#3283)
+
+### Refactor
+
+- Improve expression parsing (#3352)
+- Improve `parse_simple_arrow_function_expression` (#3349)
+- Clean up `ParserState` (#3345)
+- Improve is_parenthesized_arrow_function_expression (#3343)
+- Move some structs to js module (#3341)
+- Start porting arrow function parsing from tsc (#3340)
+
 ## [0.13.0] - 2024-05-14
 
 ### Features
