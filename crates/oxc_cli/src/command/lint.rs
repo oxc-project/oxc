@@ -77,20 +77,20 @@ pub struct BasicOptions {
 // This is formatted according to
 // <https://docs.rs/bpaf/latest/bpaf/params/struct.NamedArg.html#method.help>
 /// Allowing / Denying Multiple Lints
-/// For example `-D correctness -A no-debugger` or `-A all -D no-debugger`.
-/// ㅤ
-///  The default category is `-D correctness`.
-///  Use `--rules` for rule names.
-///  Use `--help --help` for rule categories.
 ///
-/// The categories are:
-///  * `correctness` - code that is outright wrong or useless
-///  * `suspicious`  - code that is most likely wrong or useless
-///  * `pedantic`    - lints which are rather strict or have occasional false positives
-///  * `style`       - code that should be written in a more idiomatic way
-///  * `nursery`     - new lints that are still under development
-///  * `restriction` - lints which prevent the use of language and library features
-///  * `all`         - all the categories listed above
+/// Accumulate rules and categories from left to right on the command-line.
+///   For example `-D correctness -A no-debugger` or `-A all -D no-debugger`.
+///   The categories are:
+///   * `correctness` - code that is outright wrong or useless (default)
+///   * `suspicious`  - code that is most likely wrong or useless
+///   * `pedantic`    - lints which are rather strict or have occasional false positives
+///   * `style`       - code that should be written in a more idiomatic way
+///   * `nursery`     - new lints that are still under development
+///   * `restriction` - lints which prevent the use of language and library features
+///   * `all`         - all the categories listed above except nursery
+///
+/// Arguments:
+//  ^ This shows up on the website but not from the cli's `--help`.
 #[derive(Debug, Clone, Bpaf)]
 pub enum LintFilter {
     Allow(
