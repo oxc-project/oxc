@@ -7,6 +7,7 @@ use oxc_syntax::{
     number::{NumberBase, ToJsInt32, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
+use oxc_traverse::TraverseCtx;
 use rustc_hash::FxHashMap;
 
 use crate::context::Ctx;
@@ -37,6 +38,7 @@ impl<'a> TypeScriptEnum<'a> {
         &mut self,
         decl: &Box<'a, TSEnumDeclaration<'a>>,
         is_export: bool,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         if decl.modifiers.contains(ModifierKind::Declare) {
             return None;
@@ -61,7 +63,7 @@ impl<'a> TypeScriptEnum<'a> {
         // Foo[Foo["X"] = 0] = "X";
         let enum_name = decl.id.name.clone();
         let is_already_declared = self.enums.contains_key(&enum_name);
-        let statements = self.transform_ts_enum_members(&decl.members, &enum_name);
+        let statements = self.transform_ts_enum_members(&decl.members, &enum_name, ctx);
         let body = self.ctx.ast.function_body(decl.span, self.ctx.ast.new_vec(), statements);
         let r#type = FunctionType::FunctionExpression;
         let callee = self.ctx.ast.plain_function(r#type, SPAN, None, params, Some(body));
@@ -128,6 +130,7 @@ impl<'a> TypeScriptEnum<'a> {
         &mut self,
         members: &Vec<'a, TSEnumMember<'a>>,
         enum_name: &Atom<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Vec<'a, Statement<'a>> {
         let mut statements = self.ctx.ast.new_vec();
         let mut prev_constant_value = Some(ConstantValue::Number(-1.0));
@@ -153,12 +156,24 @@ impl<'a> TypeScriptEnum<'a> {
                     None => {
                         prev_constant_value = None;
                         let mut new_initializer = self.ctx.ast.copy(initializer);
-                        IdentifierReferenceRename::new(
-                            enum_name.clone(),
-                            previous_enum_members.clone(),
-                            &self.ctx,
-                        )
-                        .visit_expression(&mut new_initializer);
+
+                        // If the initializer is a binding identifier,
+                        // and it is not a binding in the current scope and parent scopes,
+                        // we need to rename it to the enum name. e.g. `d = c` to `d = A.c`
+                        // same behavior in https://github.com/babel/babel/blob/610897a9a96c5e344e77ca9665df7613d2f88358/packages/babel-plugin-transform-typescript/src/enum.ts#L145-L150
+                        let has_binding = matches!(
+                            &new_initializer,
+                            Expression::Identifier(ident) if ctx.scopes().has_binding(ctx.current_scope_id(), &ident.name)
+                        );
+                        if !has_binding {
+                            IdentifierReferenceRename::new(
+                                enum_name.clone(),
+                                previous_enum_members.clone(),
+                                &self.ctx,
+                            )
+                            .visit_expression(&mut new_initializer);
+                        }
+
                         new_initializer
                     }
                     Some(constant_value) => {

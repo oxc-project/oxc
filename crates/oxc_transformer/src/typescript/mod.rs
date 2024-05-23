@@ -136,11 +136,11 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_statements_on_exit(stmts);
     }
 
-    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>) {
+    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>, ctx: &TraverseCtx<'a>) {
         let new_stmt = match stmt {
             match_declaration!(Statement) => {
                 if let Declaration::TSEnumDeclaration(ts_enum_decl) = &stmt.to_declaration() {
-                    self.r#enum.transform_ts_enum(ts_enum_decl, false)
+                    self.r#enum.transform_ts_enum(ts_enum_decl, false, ctx)
                 } else {
                     None
                 }
@@ -150,7 +150,7 @@ impl<'a> TypeScript<'a> {
                     stmt.to_module_declaration_mut()
                 {
                     if let Some(Declaration::TSEnumDeclaration(ts_enum_decl)) = &decl.declaration {
-                        self.r#enum.transform_ts_enum(ts_enum_decl, true)
+                        self.r#enum.transform_ts_enum(ts_enum_decl, true, ctx)
                     } else {
                         None
                     }
@@ -180,7 +180,7 @@ impl<'a> TypeScript<'a> {
     pub fn transform_identifier_reference(
         &mut self,
         ident: &mut IdentifierReference<'a>,
-        ctx: &TraverseCtx,
+        ctx: &TraverseCtx<'a>,
     ) {
         if !ctx.parent().is_ts_interface_heritage() && !ctx.parent().is_ts_type_reference() {
             self.reference_collector.visit_identifier_reference(ident);
