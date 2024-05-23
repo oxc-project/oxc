@@ -45,7 +45,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     RequireRenderReturn,
-    pedantic
+    correctness
 );
 
 impl Rule for RequireRenderReturn {
