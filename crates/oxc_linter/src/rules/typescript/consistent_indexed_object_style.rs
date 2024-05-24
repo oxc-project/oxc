@@ -194,112 +194,112 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // ("type Foo = Record<string, any>;", None),
-        // ("interface Foo {}", None),
-        // (
-        //     "
-        // 	interface Foo {
-        // 	  bar: string;
-        // 	}
-        // 	    ",
-        //     None,
-        // ),
-        // (
-        //     "
-        // 	interface Foo {
-        // 	  bar: string;
-        // 	  [key: string]: any;
-        // 	}
-        // 	    ",
-        //     None,
-        // ),
-        // (
-        //     "
-        // 	interface Foo {
-        // 	  [key: string]: any;
-        // 	  bar: string;
-        // 	}
-        // 	    ",
-        //     None,
-        // ),
-        // ("type Foo = { [key: string]: string | Foo };", None),
-        // ("type Foo = { [key: string]: Foo };", None),
-        // // ("type Foo = { [key: string]: Foo } | Foo;", None),
-        // (
-        //     "
-        // 	interface Foo {
-        // 	  [key: string]: Foo;
-        // 	}
-        // 	    ",
-        //     None,
-        // ),
-        // (
-        //     "
-        // 	interface Foo<T> {
-        // 	  [key: string]: Foo<T>;
-        // 	}
-        // 	    ",
-        //     None,
-        // ),
-        // (
-        //     "
-        // 	interface Foo<T> {
-        // 	  [key: string]: Foo<T> | string;
-        // 	}
-        // 	    ",
-        //     None,
-        // ),
-        // ("type Foo = {};", None),
-        // (
-        //     "
-        // 	type Foo = {
-        // 	  bar: string;
-        // 	  [key: string]: any;
-        // 	};
-        // 	    ",
-        //     None,
-        // ),
-        // (
-        //     "
-        // 	type Foo = {
-        // 	  bar: string;
-        // 	};
-        // 	    ",
-        //     None,
-        // ),
-        // (
-        //     "
-        // 	type Foo = {
-        // 	  [key: string]: any;
-        // 	  bar: string;
-        // 	};
-        // 	    ",
-        //     None,
-        // ),
-        // (
-        //     "
-        // 	type Foo = Generic<{
-        // 	  [key: string]: any;
-        // 	  bar: string;
-        // 	}>;
-        // 	    ",
-        //     None,
-        // ),
-        // ("function foo(arg: { [key: string]: any; bar: string }) {}", None),
-        // ("function foo(): { [key: string]: any; bar: string } {}", None),
-        // ("type Foo = Misc<string, unknown>;", Some(serde_json::json!(["index-signature"]))),
-        // ("type Foo = Record;", Some(serde_json::json!(["index-signature"]))),
-        // ("type Foo = { [key: string]: any };", Some(serde_json::json!(["index-signature"]))),
-        // (
-        //     "type Foo = Generic<{ [key: string]: any }>;",
-        //     Some(serde_json::json!(["index-signature"])),
-        // ),
-        // (
-        //     "function foo(arg: { [key: string]: any }) {}",
-        //     Some(serde_json::json!(["index-signature"])),
-        // ),
-        // ("function foo(): { [key: string]: any } {}", Some(serde_json::json!(["index-signature"]))),
-        // ("type T = A.B;", Some(serde_json::json!(["index-signature"]))),
+        ("type Foo = Record<string, any>;", None),
+        ("interface Foo {}", None),
+        (
+            "
+        	interface Foo {
+        	  bar: string;
+        	}
+        	    ",
+            None,
+        ),
+        (
+            "
+        	interface Foo {
+        	  bar: string;
+        	  [key: string]: any;
+        	}
+        	    ",
+            None,
+        ),
+        (
+            "
+        	interface Foo {
+        	  [key: string]: any;
+        	  bar: string;
+        	}
+        	    ",
+            None,
+        ),
+        ("type Foo = { [key: string]: string | Foo };", None),
+        ("type Foo = { [key: string]: Foo };", None),
+        // ("type Foo = { [key: string]: Foo } | Foo;", None),
+        (
+            "
+        	interface Foo {
+        	  [key: string]: Foo;
+        	}
+        	    ",
+            None,
+        ),
+        (
+            "
+        	interface Foo<T> {
+        	  [key: string]: Foo<T>;
+        	}
+        	    ",
+            None,
+        ),
+        (
+            "
+        	interface Foo<T> {
+        	  [key: string]: Foo<T> | string;
+        	}
+        	    ",
+            None,
+        ),
+        ("type Foo = {};", None),
+        (
+            "
+        	type Foo = {
+        	  bar: string;
+        	  [key: string]: any;
+        	};
+        	    ",
+            None,
+        ),
+        (
+            "
+        	type Foo = {
+        	  bar: string;
+        	};
+        	    ",
+            None,
+        ),
+        (
+            "
+        	type Foo = {
+        	  [key: string]: any;
+        	  bar: string;
+        	};
+        	    ",
+            None,
+        ),
+        (
+            "
+        	type Foo = Generic<{
+        	  [key: string]: any;
+        	  bar: string;
+        	}>;
+        	    ",
+            None,
+        ),
+        ("function foo(arg: { [key: string]: any; bar: string }) {}", None),
+        ("function foo(): { [key: string]: any; bar: string } {}", None),
+        ("type Foo = Misc<string, unknown>;", Some(serde_json::json!(["index-signature"]))),
+        ("type Foo = Record;", Some(serde_json::json!(["index-signature"]))),
+        ("type Foo = { [key: string]: any };", Some(serde_json::json!(["index-signature"]))),
+        (
+            "type Foo = Generic<{ [key: string]: any }>;",
+            Some(serde_json::json!(["index-signature"])),
+        ),
+        (
+            "function foo(arg: { [key: string]: any }) {}",
+            Some(serde_json::json!(["index-signature"])),
+        ),
+        ("function foo(): { [key: string]: any } {}", Some(serde_json::json!(["index-signature"]))),
+        ("type T = A.B;", Some(serde_json::json!(["index-signature"]))),
     ];
 
     let fail = vec![
