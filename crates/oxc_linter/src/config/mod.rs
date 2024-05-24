@@ -13,8 +13,8 @@ use serde::Deserialize;
 use crate::{rules::RuleEnum, AllowWarnDeny, RuleWithSeverity};
 
 pub use self::{
-    env::ESLintEnv, globals::ESLintGlobals, rules::ESLintRules,
-    settings::jsdoc::JSDocPluginSettings, settings::ESLintSettings,
+    env::OxlintEnv, globals::OxlintGlobals, rules::OxlintRules,
+    settings::jsdoc::JSDocPluginSettings, settings::OxlintSettings,
 };
 
 /// Oxlint Configuration File
@@ -50,15 +50,15 @@ pub use self::{
 /// ```
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(default)]
-pub struct ESLintConfig {
+pub struct OxlintConfig {
     /// See [Oxlint Rules](./rules)
-    pub(crate) rules: ESLintRules,
-    pub(crate) settings: ESLintSettings,
-    pub(crate) env: ESLintEnv,
-    pub(crate) globals: ESLintGlobals,
+    pub(crate) rules: OxlintRules,
+    pub(crate) settings: OxlintSettings,
+    pub(crate) env: OxlintEnv,
+    pub(crate) globals: OxlintGlobals,
 }
 
-impl ESLintConfig {
+impl OxlintConfig {
     /// # Errors
     ///
     /// * Parse Failure
@@ -169,20 +169,20 @@ impl ESLintConfig {
 
 #[cfg(test)]
 mod test {
-    use super::ESLintConfig;
+    use super::OxlintConfig;
     use serde::Deserialize;
     use std::env;
 
     #[test]
     fn test_from_file() {
         let fixture_path = env::current_dir().unwrap().join("fixtures/eslint_config.json");
-        let config = ESLintConfig::from_file(&fixture_path).unwrap();
+        let config = OxlintConfig::from_file(&fixture_path).unwrap();
         assert!(!config.rules.is_empty());
     }
 
     #[test]
     fn test_deserialize() {
-        let config = ESLintConfig::deserialize(&serde_json::json!({
+        let config = OxlintConfig::deserialize(&serde_json::json!({
             "rules": {
                 "no-console": "off",
                 "no-debugger": 2,
@@ -212,7 +212,7 @@ mod test {
         }));
         assert!(config.is_ok());
 
-        let ESLintConfig { rules, settings, env, globals } = config.unwrap();
+        let OxlintConfig { rules, settings, env, globals } = config.unwrap();
         assert!(!rules.is_empty());
         assert_eq!(settings.jsx_a11y.polymorphic_prop_name, Some("role".to_string()));
         assert_eq!(env.iter().count(), 1);

@@ -13,7 +13,7 @@ use self::{
 
 /// Shared settings for plugins
 #[derive(Debug, Deserialize, Default, JsonSchema)]
-pub struct ESLintSettings {
+pub struct OxlintSettings {
     #[serde(default)]
     #[serde(rename = "jsx-a11y")]
     pub jsx_a11y: JSXA11yPluginSettings,
@@ -30,12 +30,12 @@ pub struct ESLintSettings {
 
 #[cfg(test)]
 mod test {
-    use super::ESLintSettings;
+    use super::OxlintSettings;
     use serde::Deserialize;
 
     #[test]
     fn test_parse_settings() {
-        let settings = ESLintSettings::deserialize(&serde_json::json!({
+        let settings = OxlintSettings::deserialize(&serde_json::json!({
             "jsx-a11y": {
                 "polymorphicPropName": "role",
                 "components": {
@@ -82,7 +82,7 @@ mod test {
 
     #[test]
     fn test_parse_settings_default() {
-        let settings = ESLintSettings::default();
+        let settings = OxlintSettings::default();
         assert!(settings.jsx_a11y.polymorphic_prop_name.is_none());
         assert!(settings.jsx_a11y.components.is_empty());
     }

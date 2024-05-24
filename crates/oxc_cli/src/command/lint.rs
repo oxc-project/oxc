@@ -63,10 +63,10 @@ pub struct LintOptions {
 /// Basic Configuration
 #[derive(Debug, Clone, Bpaf)]
 pub struct BasicOptions {
-    /// ESLint configuration file (experimental)
-    ///
-    /// * only `.json` extension is supported
-    #[bpaf(long, short, argument("./eslintrc.json"))]
+    /// Oxlint configuration file (experimental)
+    ///  * only `.json` extension is supported
+    ///  * tries to be compatible with the ESLint v8's format
+    #[bpaf(long, short, argument("./oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
     /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
