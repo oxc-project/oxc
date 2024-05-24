@@ -7,15 +7,38 @@ use serde::Serialize;
 
 use oxc_linter::ESLintConfig;
 
-pub fn generate_schema_json() {
-    let schema = schema_for!(ESLintConfig);
-    println!("{}", serde_json::to_string_pretty(&schema).unwrap());
+#[test]
+fn test_schema_json() {
+    let snapshot = generate_schema_json();
+    insta::with_settings!({ prepend_module_to_snapshot => false }, {
+        insta::assert_snapshot!(snapshot);
+    });
 }
 
-pub fn generate_schema_markdown() {
+pub fn print_schema_json() {
+    println!("{}", generate_schema_json());
+}
+
+fn generate_schema_json() -> String {
+    let schema = schema_for!(ESLintConfig);
+    serde_json::to_string_pretty(&schema).unwrap()
+}
+
+#[test]
+fn test_schema_markdown() {
+    let snapshot = generate_schema_markdown();
+    insta::with_settings!({ prepend_module_to_snapshot => false }, {
+        insta::assert_snapshot!(snapshot);
+    });
+}
+
+pub fn print_schema_markdown() {
+    println!("{}", generate_schema_markdown());
+}
+
+fn generate_schema_markdown() -> String {
     let root_schema = schema_for!(ESLintConfig);
-    let rendered = Renderer::new(root_schema).render();
-    println!("{rendered}");
+    Renderer::new(root_schema).render()
 }
 
 const ROOT: &str = "

@@ -1,8 +1,20 @@
 use bpaf::Parser;
 use oxc_cli::lint_options;
 
+#[test]
+fn test_cli() {
+    let snapshot = generate_cli();
+    insta::with_settings!({ prepend_module_to_snapshot => false }, {
+        insta::assert_snapshot!(snapshot);
+    });
+}
+
 // <https://oxc-project.github.io/docs/guide/usage/linter/cli.html>
-pub fn generate_cli() {
+pub fn print_cli() {
+    println!("{}", generate_cli());
+}
+
+fn generate_cli() -> String {
     let markdown = lint_options().to_options().render_markdown("oxlint");
     // Remove the extra header
     let markdown = markdown.trim_start_matches("# oxlint\n");
@@ -32,7 +44,7 @@ pub fn generate_cli() {
         })
         .collect::<Vec<_>>()
         .join("\n");
-    println!(
+    format!(
         "
 <!-- textlint-disable -->
 
@@ -40,5 +52,5 @@ pub fn generate_cli() {
 
 <!-- textlint-enable -->
 "
-    );
+    )
 }

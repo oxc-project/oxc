@@ -2,7 +2,7 @@ use oxc_linter::table::RuleTable;
 
 // `cargo run -p website linter-rules > /path/to/oxc/oxc-project.github.io/src/docs/guide/usage/linter/generated-rules.md`
 // <https://oxc-project.github.io/docs/guide/usage/linter/rules.html>
-pub fn generate_rules() {
+pub fn print_rules() {
     let table = RuleTable::new();
 
     let total = table.total;

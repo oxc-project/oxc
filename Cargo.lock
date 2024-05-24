@@ -2986,6 +2986,7 @@ dependencies = [
  "bpaf",
  "ckb_schemars",
  "handlebars",
+ "insta",
  "oxc_cli",
  "oxc_linter",
  "pico-args",
