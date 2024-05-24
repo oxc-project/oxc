@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{TSInterfaceDeclaration, TSSignature, TSType, TSTypeName},
+    ast::{TSSignature, TSType, TSTypeName},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -80,20 +80,26 @@ impl Rule for ConsistentIndexedObjectStyle {
                             TSTypeName::IdentifierReference(ide) => {
                                 if ide.name != interface_name {
                                     ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                        "record", "index 4", r.span,
+                                        "record",
+                                        "index signature",
+                                        sig.span,
                                     ));
                                 }
                             }
                             _ => {
                                 ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                    "record", "index 42", r.span,
+                                    "record",
+                                    "index signature",
+                                    sig.span,
                                 ));
                             }
                         },
                         TSType::TSUnionType(_uni) => {}
                         _ => {
                             ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                "record", "index 4", sig.span,
+                                "record",
+                                "index signature",
+                                sig.span,
                             ));
                         }
                     }
@@ -129,38 +135,28 @@ impl Rule for ConsistentIndexedObjectStyle {
 
                                 if ide.name != parent_name {
                                     ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                        "record", "index 4", r.span,
+                                        "record",
+                                        "index signature",
+                                        sig.span,
                                     ));
                                 }
                             }
                             _ => {
                                 ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                    "record", "index 7", r.span,
+                                    "record",
+                                    "index signature",
+                                    sig.span,
                                 ));
                             }
                         },
                         TSType::TSUnionType(_uni) => {}
                         _ => {
                             ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                "record", "index 4", sig.span,
+                                "record",
+                                "index signature",
+                                sig.span,
                             ));
                         }
-                    }
-                }
-                AstKind::TSTypeReference(tref) => {
-                    let TSTypeName::IdentifierReference(ide) = &tref.type_name else { return };
-
-                    if ide.name == "Record" {
-                        return;
-                    }
-
-                    let interface_name = &ide.name;
-                    let is_circular = ide.name == interface_name;
-
-                    if !is_circular {
-                        ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                            "record", "index 2", tref.span,
-                        ));
                     }
                 }
                 _ => {}
@@ -179,7 +175,9 @@ impl Rule for ConsistentIndexedObjectStyle {
                         }
 
                         ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                            "record", "index 1", tref.span,
+                            "index signature",
+                            "record",
+                            tref.span,
                         ));
                     }
                 }
@@ -410,5 +408,5 @@ fn test() {
         ("funcction foo(): Record<string, any> {}", Some(serde_json::json!(["index-signature"]))),
     ];
 
-    Tester::new(ConsistentIndexedObjectStyle::NAME, pass, fail).test();
+    Tester::new(ConsistentIndexedObjectStyle::NAME, pass, fail).test_and_snapshot();
 }
