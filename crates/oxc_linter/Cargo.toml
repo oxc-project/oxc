@@ -51,4 +51,5 @@ schemars            = { workspace = true, features = ["indexmap2"] }
 static_assertions   = { workspace = true }
 
 [dev-dependencies]
-insta = { workspace = true }
+insta        = { workspace = true }
+project-root = { workspace = true }

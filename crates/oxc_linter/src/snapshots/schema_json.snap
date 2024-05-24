@@ -1,6 +1,6 @@
 ---
-source: tasks/website/src/linter/json_schema.rs
-expression: snapshot
+source: crates/oxc_linter/src/lib.rs
+expression: json
 ---
 {
   "$schema": "http://json-schema.org/draft-07/schema#",

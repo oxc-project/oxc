@@ -21,6 +21,7 @@
   },
   "files": [
     "bin/oxlint",
+    "configuration_schema.json",
     "README.md"
   ]
 }

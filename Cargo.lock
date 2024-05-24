@@ -1465,6 +1465,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "phf",
+ "project-root",
  "rayon",
  "regex",
  "rust-lapper",

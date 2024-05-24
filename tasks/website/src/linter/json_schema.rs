@@ -7,14 +7,6 @@ use serde::Serialize;
 
 use oxc_linter::OxlintConfig;
 
-#[test]
-fn test_schema_json() {
-    let snapshot = generate_schema_json();
-    insta::with_settings!({ prepend_module_to_snapshot => false }, {
-        insta::assert_snapshot!(snapshot);
-    });
-}
-
 pub fn print_schema_json() {
     println!("{}", generate_schema_json());
 }

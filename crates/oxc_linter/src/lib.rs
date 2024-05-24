@@ -143,12 +143,28 @@ impl Linter {
 
 #[cfg(test)]
 mod test {
-    use super::Linter;
+    use super::{Linter, OxlintConfig};
 
     #[test]
     fn print_rules() {
         let mut writer = Vec::new();
         Linter::print_rules(&mut writer);
         assert!(!writer.is_empty());
+    }
+
+    #[test]
+    fn test_schema_json() {
+        use project_root::get_project_root;
+        use std::fs;
+        let path = get_project_root().unwrap().join("npm/oxlint/configuration_schema.json");
+        let schema = schemars::schema_for!(OxlintConfig);
+        let json = serde_json::to_string_pretty(&schema).unwrap();
+        let existing_json = fs::read_to_string(&path).unwrap_or_default();
+        if existing_json != json {
+            std::fs::write(&path, &json).unwrap();
+        }
+        insta::with_settings!({ prepend_module_to_snapshot => false }, {
+            insta::assert_snapshot!(json);
+        });
     }
 }
