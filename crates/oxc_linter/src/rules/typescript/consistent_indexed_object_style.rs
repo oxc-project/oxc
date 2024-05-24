@@ -244,7 +244,7 @@ fn test() {
         ),
         ("type Foo = { [key: string]: string | Foo };", None),
         ("type Foo = { [key: string]: Foo };", None),
-        // ("type Foo = { [key: string]: Foo } | Foo;", None),
+        ("type Foo = { [key: string]: Foo } | Foo;", None),
         (
             "
         	interface Foo {
