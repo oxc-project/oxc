@@ -140,3 +140,8 @@ upgrade:
 clone-submodule dir url sha:
   git clone --depth=1 {{url}} {{dir}} || true
   cd {{dir}} && git fetch origin {{sha}} && git reset --hard {{sha}}
+
+website path:
+  cargo run -p website -- linter-rules > {{path}}/src/docs/guide/usage/linter/generated-rules.md
+  cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
+  cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
