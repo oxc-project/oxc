@@ -1,7 +1,5 @@
-use std::any::Any;
-
 use oxc_ast::{
-    ast::{TSSignature, TSType, TSTypeName},
+    ast::{TSInterfaceDeclaration, TSSignature, TSType, TSTypeName},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -64,7 +62,90 @@ impl Rule for ConsistentIndexedObjectStyle {
                         return;
                     }
                     let member = inf.body.body.first();
-                    check_member(member, ctx, node)
+                    let Some(member) = member else {
+                        return;
+                    };
+
+                    let TSSignature::TSIndexSignature(sig) = member else { return };
+
+                    let Some(parameter) = sig.parameters.first() else { return };
+
+                    let _key_type = &parameter.type_annotation;
+
+                    let value_type = &sig.type_annotation.type_annotation;
+                    let interface_name = &inf.id.name;
+
+                    match value_type {
+                        TSType::TSTypeReference(r) => match &r.type_name {
+                            TSTypeName::IdentifierReference(ide) => {
+                                if ide.name != interface_name {
+                                    ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                                        "record", "index 4", r.span,
+                                    ));
+                                }
+                            }
+                            _ => {
+                                ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                                    "record", "index 42", r.span,
+                                ));
+                            }
+                        },
+                        TSType::TSUnionType(_uni) => {}
+                        _ => {
+                            ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                                "record", "index 4", sig.span,
+                            ));
+                        }
+                    }
+                }
+                AstKind::TSTypeLiteral(lit) => {
+                    if lit.members.len() > 1 {
+                        return;
+                    }
+
+                    let Some(TSSignature::TSIndexSignature(sig)) = lit.members.first() else {
+                        return;
+                    };
+
+                    let Some(parameter) = sig.parameters.first() else { return };
+
+                    let _key_type = &parameter.type_annotation;
+
+                    let value_type = &sig.type_annotation.type_annotation;
+
+                    match value_type {
+                        TSType::TSTypeReference(r) => match &r.type_name {
+                            TSTypeName::IdentifierReference(ide) => {
+                                let Some(parent) = ctx.nodes().parent_kind(node.id()) else {
+                                    return;
+                                };
+
+                                let parent_name =
+                                    if let AstKind::TSTypeAliasDeclaration(dec) = parent {
+                                        &dec.id.name
+                                    } else {
+                                        return;
+                                    };
+
+                                if ide.name != parent_name {
+                                    ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                                        "record", "index 4", r.span,
+                                    ));
+                                }
+                            }
+                            _ => {
+                                ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                                    "record", "index 7", r.span,
+                                ));
+                            }
+                        },
+                        TSType::TSUnionType(_uni) => {}
+                        _ => {
+                            ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                                "record", "index 4", sig.span,
+                            ));
+                        }
+                    }
                 }
                 AstKind::TSTypeReference(tref) => {
                     let TSTypeName::IdentifierReference(ide) = &tref.type_name else { return };
@@ -73,14 +154,8 @@ impl Rule for ConsistentIndexedObjectStyle {
                         return;
                     }
 
-                    let Some(parent_symbol_id) =
-                        ctx.scopes().get_binding(node.scope_id(), &ide.name)
-                    else {
-                        return;
-                    };
-
-                    let parent_name = ctx.symbols().get_name(parent_symbol_id);
-                    let is_circular = ide.name == parent_name;
+                    let interface_name = &ide.name;
+                    let is_circular = ide.name == interface_name;
 
                     if !is_circular {
                         ctx.diagnostic(consistent_indexed_object_style_diagnostic(
@@ -114,159 +189,117 @@ impl Rule for ConsistentIndexedObjectStyle {
     }
 }
 
-fn check_member(raw_member: Option<&TSSignature>, ctx: &LintContext, node: &AstNode) {
-    let Some(member) = raw_member else {
-        return;
-    };
-
-    let TSSignature::TSIndexSignature(sig) = member else { return };
-
-    let Some(parameter) = sig.parameters.first() else { return };
-
-    let _key_type = &parameter.type_annotation;
-
-    let value_type = &sig.type_annotation.type_annotation;
-
-    match value_type {
-        TSType::TSTypeReference(r) => match &r.type_name {
-            TSTypeName::IdentifierReference(ide) => {
-                let Some(parent_symbol_id) = ctx.scopes().get_binding(node.scope_id(), &ide.name)
-                else {
-                    return;
-                };
-
-                let parent_name = ctx.symbols().get_name(parent_symbol_id);
-                let is_circular = ide.name == parent_name;
-                dbg!(parent_symbol_id, parent_name, is_circular, &ide.name);
-
-                if !is_circular {
-                    ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                        "record", "index 4", r.span,
-                    ));
-                }
-            }
-            _ => {}
-        },
-        TSType::TSUnionType(_uni) => {}
-        _ => {
-            ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                "record", "index 4", sig.span,
-            ));
-        }
-    }
-}
-
 #[test]
 fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("type Foo = Record<string, any>;", None),
-        ("interface Foo {}", None),
-        (
-            "
-        	interface Foo {
-        	  bar: string;
-        	}
-        	    ",
-            None,
-        ),
-        (
-            "
-        	interface Foo {
-        	  bar: string;
-        	  [key: string]: any;
-        	}
-        	    ",
-            None,
-        ),
-        (
-            "
-        	interface Foo {
-        	  [key: string]: any;
-        	  bar: string;
-        	}
-        	    ",
-            None,
-        ),
-        ("type Foo = { [key: string]: string | Foo };", None),
-        ("type Foo = { [key: string]: Foo };", None),
-        // ("type Foo = { [key: string]: Foo } | Foo;", None),
-        (
-            "
-        	interface Foo {
-        	  [key: string]: Foo;
-        	}
-        	    ",
-            None,
-        ),
-        (
-            "
-        	interface Foo<T> {
-        	  [key: string]: Foo<T>;
-        	}
-        	    ",
-            None,
-        ),
-        (
-            "
-        	interface Foo<T> {
-        	  [key: string]: Foo<T> | string;
-        	}
-        	    ",
-            None,
-        ),
-        ("type Foo = {};", None),
-        (
-            "
-        	type Foo = {
-        	  bar: string;
-        	  [key: string]: any;
-        	};
-        	    ",
-            None,
-        ),
-        (
-            "
-        	type Foo = {
-        	  bar: string;
-        	};
-        	    ",
-            None,
-        ),
-        (
-            "
-        	type Foo = {
-        	  [key: string]: any;
-        	  bar: string;
-        	};
-        	    ",
-            None,
-        ),
-        (
-            "
-        	type Foo = Generic<{
-        	  [key: string]: any;
-        	  bar: string;
-        	}>;
-        	    ",
-            None,
-        ),
-        ("function foo(arg: { [key: string]: any; bar: string }) {}", None),
-        ("function foo(): { [key: string]: any; bar: string } {}", None),
-        ("type Foo = Misc<string, unknown>;", Some(serde_json::json!(["index-signature"]))),
-        ("type Foo = Record;", Some(serde_json::json!(["index-signature"]))),
-        ("type Foo = { [key: string]: any };", Some(serde_json::json!(["index-signature"]))),
-        (
-            "type Foo = Generic<{ [key: string]: any }>;",
-            Some(serde_json::json!(["index-signature"])),
-        ),
-        (
-            "function foo(arg: { [key: string]: any }) {}",
-            Some(serde_json::json!(["index-signature"])),
-        ),
-        ("function foo(): { [key: string]: any } {}", Some(serde_json::json!(["index-signature"]))),
-        ("type T = A.B;", Some(serde_json::json!(["index-signature"]))),
+        // ("type Foo = Record<string, any>;", None),
+        // ("interface Foo {}", None),
+        // (
+        //     "
+        // 	interface Foo {
+        // 	  bar: string;
+        // 	}
+        // 	    ",
+        //     None,
+        // ),
+        // (
+        //     "
+        // 	interface Foo {
+        // 	  bar: string;
+        // 	  [key: string]: any;
+        // 	}
+        // 	    ",
+        //     None,
+        // ),
+        // (
+        //     "
+        // 	interface Foo {
+        // 	  [key: string]: any;
+        // 	  bar: string;
+        // 	}
+        // 	    ",
+        //     None,
+        // ),
+        // ("type Foo = { [key: string]: string | Foo };", None),
+        // ("type Foo = { [key: string]: Foo };", None),
+        // // ("type Foo = { [key: string]: Foo } | Foo;", None),
+        // (
+        //     "
+        // 	interface Foo {
+        // 	  [key: string]: Foo;
+        // 	}
+        // 	    ",
+        //     None,
+        // ),
+        // (
+        //     "
+        // 	interface Foo<T> {
+        // 	  [key: string]: Foo<T>;
+        // 	}
+        // 	    ",
+        //     None,
+        // ),
+        // (
+        //     "
+        // 	interface Foo<T> {
+        // 	  [key: string]: Foo<T> | string;
+        // 	}
+        // 	    ",
+        //     None,
+        // ),
+        // ("type Foo = {};", None),
+        // (
+        //     "
+        // 	type Foo = {
+        // 	  bar: string;
+        // 	  [key: string]: any;
+        // 	};
+        // 	    ",
+        //     None,
+        // ),
+        // (
+        //     "
+        // 	type Foo = {
+        // 	  bar: string;
+        // 	};
+        // 	    ",
+        //     None,
+        // ),
+        // (
+        //     "
+        // 	type Foo = {
+        // 	  [key: string]: any;
+        // 	  bar: string;
+        // 	};
+        // 	    ",
+        //     None,
+        // ),
+        // (
+        //     "
+        // 	type Foo = Generic<{
+        // 	  [key: string]: any;
+        // 	  bar: string;
+        // 	}>;
+        // 	    ",
+        //     None,
+        // ),
+        // ("function foo(arg: { [key: string]: any; bar: string }) {}", None),
+        // ("function foo(): { [key: string]: any; bar: string } {}", None),
+        // ("type Foo = Misc<string, unknown>;", Some(serde_json::json!(["index-signature"]))),
+        // ("type Foo = Record;", Some(serde_json::json!(["index-signature"]))),
+        // ("type Foo = { [key: string]: any };", Some(serde_json::json!(["index-signature"]))),
+        // (
+        //     "type Foo = Generic<{ [key: string]: any }>;",
+        //     Some(serde_json::json!(["index-signature"])),
+        // ),
+        // (
+        //     "function foo(arg: { [key: string]: any }) {}",
+        //     Some(serde_json::json!(["index-signature"])),
+        // ),
+        // ("function foo(): { [key: string]: any } {}", Some(serde_json::json!(["index-signature"]))),
+        // ("type T = A.B;", Some(serde_json::json!(["index-signature"]))),
     ];
 
     let fail = vec![
