@@ -228,7 +228,10 @@ impl Rule for ConsistentIndexedObjectStyle {
     }
 }
 
-fn fix_for_index_signature<'a>(ctx: &LintContext<'a>, tref: &TSTypeReference<'a>) -> Option<Fix<'a>> {
+fn fix_for_index_signature<'a>(
+    ctx: &LintContext<'a>,
+    tref: &TSTypeReference<'a>,
+) -> Option<Fix<'a>> {
     let params = &tref.type_parameters.as_ref()?;
 
     let end = tref.span.end;
