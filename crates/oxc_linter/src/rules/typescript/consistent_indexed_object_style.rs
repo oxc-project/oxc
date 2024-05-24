@@ -71,7 +71,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                     match &sig.type_annotation.type_annotation {
                         TSType::TSTypeReference(r) => match &r.type_name {
                             TSTypeName::IdentifierReference(ide) => {
-                                if ide.name != &inf.id.name {
+                                if ide.name != inf.id.name {
                                     ctx.diagnostic(consistent_indexed_object_style_diagnostic(
                                         "record",
                                         "index signature",
@@ -79,7 +79,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                                     ));
                                 }
                             }
-                            _ => {
+                            TSTypeName::QualifiedName(_) => {
                                 ctx.diagnostic(consistent_indexed_object_style_diagnostic(
                                     "record",
                                     "index signature",
@@ -88,7 +88,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                             }
                         },
                         TSType::TSUnionType(uni) => {
-                            for t in uni.types.iter() {
+                            for t in &uni.types {
                                 if let TSType::TSTypeReference(tref) = t {
                                     if let TSTypeName::IdentifierReference(ide) = &tref.type_name {
                                         let Some(AstKind::TSTypeAliasDeclaration(dec)) =
@@ -150,7 +150,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                                     ));
                                 }
                             }
-                            _ => {
+                            TSTypeName::QualifiedName(_) => {
                                 ctx.diagnostic(consistent_indexed_object_style_diagnostic(
                                     "record",
                                     "index signature",
@@ -159,7 +159,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                             }
                         },
                         TSType::TSUnionType(uni) => {
-                            for t in uni.types.iter() {
+                            for t in &uni.types {
                                 if let TSType::TSTypeReference(tref) = t {
                                     if let TSTypeName::IdentifierReference(ide) = &tref.type_name {
                                         let Some(AstKind::TSTypeAliasDeclaration(dec)) =
@@ -192,51 +192,47 @@ impl Rule for ConsistentIndexedObjectStyle {
                 }
                 _ => {}
             }
-        } else {
-            match node.kind() {
-                AstKind::TSTypeReference(tref) => {
-                    if let TSTypeName::IdentifierReference(ide) = &tref.type_name {
-                        if ide.name != "Record" {
-                            return;
-                        }
+        } else if let AstKind::TSTypeReference(tref) = node.kind() {
+            if let TSTypeName::IdentifierReference(ide) = &tref.type_name {
+                if ide.name != "Record" {
+                    return;
+                }
 
-                        let Some(params) = &tref.type_parameters else { return };
-                        if params.params.len() != 2 {
-                            return;
-                        }
+                let Some(params) = &tref.type_parameters else { return };
+                if params.params.len() != 2 {
+                    return;
+                }
 
-                        let fixer = fix_for_index_signature(ctx, tref);
-                        match fixer {
-                            Some(fix) => {
-                                ctx.diagnostic_with_fix(
-                                    consistent_indexed_object_style_diagnostic(
-                                        "index signature",
-                                        "record",
-                                        tref.span,
-                                    ),
-                                    || fix,
-                                );
-                            }
-                            None => {
-                                ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                    "index signature",
-                                    "record",
-                                    tref.span,
-                                ));
-                            }
-                        }
+                let fixer = fix_for_index_signature(ctx, tref);
+                match fixer {
+                    Some(fix) => {
+                        ctx.diagnostic_with_fix(
+                            consistent_indexed_object_style_diagnostic(
+                                "index signature",
+                                "record",
+                                tref.span,
+                            ),
+                            || fix,
+                        );
+                    }
+                    None => {
+                        ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                            "index signature",
+                            "record",
+                            tref.span,
+                        ));
                     }
                 }
-                _ => {}
             }
         }
     }
 }
 
-fn fix_for_index_signature<'a>(ctx: &LintContext<'a>, tref: &TSTypeReference) -> Option<Fix<'a>> {
-    let start = tref.span.start;
+fn fix_for_index_signature<'a>(ctx: &LintContext<'a>, tref: &TSTypeReference<'a>) -> Option<Fix<'a>> {
+    let params = &tref.type_parameters.as_ref()?;
+
     let end = tref.span.end;
-    let Some(params) = &tref.type_parameters else { return None };
+    let start = tref.span.start;
 
     let TSType::TSStringKeyword(first) = &params.params[0] else {
         return None;
@@ -246,6 +242,7 @@ fn fix_for_index_signature<'a>(ctx: &LintContext<'a>, tref: &TSTypeReference) ->
     let params = &ctx.source_text()[(first.span.end + 2) as usize..(end - 1) as usize];
     Some(Fix::new(format!("{{ [key: {key}]: {params} }}"), Span::new(start, end)))
 }
+
 #[test]
 fn test() {
     use crate::tester::Tester;
