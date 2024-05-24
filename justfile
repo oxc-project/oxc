@@ -11,7 +11,7 @@ alias c := coverage
 # or install via `cargo install cargo-binstall`
 # Initialize the project by installing all the necessary tools.
 init:
-  cargo binstall cargo-watch cargo-insta cargo-edit typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
+  cargo binstall cargo-watch cargo-insta typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
 
 # When ready, run the same CI commands
 ready:
@@ -132,10 +132,6 @@ new-react-perf-rule name:
 
 new-n-rule name:
     cargo run -p rulegen {{name}} n
-
-# Upgrade all Rust dependencies
-upgrade:
-  cargo upgrade --incompatible
 
 clone-submodule dir url sha:
   git clone --depth=1 {{url}} {{dir}} || true
