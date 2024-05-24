@@ -68,17 +68,10 @@ impl Rule for ConsistentIndexedObjectStyle {
 
                     let TSSignature::TSIndexSignature(sig) = member else { return };
 
-                    let Some(parameter) = sig.parameters.first() else { return };
-
-                    let _key_type = &parameter.type_annotation;
-
-                    let value_type = &sig.type_annotation.type_annotation;
-                    let interface_name = &inf.id.name;
-
-                    match value_type {
+                    match &sig.type_annotation.type_annotation {
                         TSType::TSTypeReference(r) => match &r.type_name {
                             TSTypeName::IdentifierReference(ide) => {
-                                if ide.name != interface_name {
+                                if ide.name != &inf.id.name {
                                     ctx.diagnostic(consistent_indexed_object_style_diagnostic(
                                         "record",
                                         "index signature",
@@ -94,7 +87,29 @@ impl Rule for ConsistentIndexedObjectStyle {
                                 ));
                             }
                         },
-                        TSType::TSUnionType(_uni) => {}
+                        TSType::TSUnionType(uni) => {
+                            for t in uni.types.iter() {
+                                if let TSType::TSTypeReference(tref) = t {
+                                    if let TSTypeName::IdentifierReference(ide) = &tref.type_name {
+                                        let Some(AstKind::TSTypeAliasDeclaration(dec)) =
+                                            ctx.nodes().parent_kind(node.id())
+                                        else {
+                                            return;
+                                        };
+
+                                        if dec.id.name != ide.name {
+                                            ctx.diagnostic(
+                                                consistent_indexed_object_style_diagnostic(
+                                                    "record",
+                                                    "index signature",
+                                                    sig.span,
+                                                ),
+                                            );
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         _ => {
                             ctx.diagnostic(consistent_indexed_object_style_diagnostic(
                                 "record",
@@ -113,13 +128,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                         return;
                     };
 
-                    let Some(parameter) = sig.parameters.first() else { return };
-
-                    let _key_type = &parameter.type_annotation;
-
-                    let value_type = &sig.type_annotation.type_annotation;
-
-                    match value_type {
+                    match &sig.type_annotation.type_annotation {
                         TSType::TSTypeReference(r) => match &r.type_name {
                             TSTypeName::IdentifierReference(ide) => {
                                 let Some(parent) = ctx.nodes().parent_kind(node.id()) else {
