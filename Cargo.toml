@@ -87,7 +87,7 @@ oxc_transformer  = { version = "0.13.1", path = "crates/oxc_transformer" }
 oxc_sourcemap    = { version = "0.13.1", path = "crates/oxc_sourcemap" }
 oxc_ast_macros   = { version = "0.13.1", path = "crates/oxc_ast_macros" }
 oxc_traverse     = { version = "0.13.1", path = "crates/oxc_traverse" }
-oxc_module_lexer = { version = "0.13.1", path = "crates/oxc_traverse" }
+oxc_module_lexer = { version = "0.13.1", path = "crates/oxc_module_lexer" }
 
 # publish = false
 oxc_macros       = { path = "crates/oxc_macros" }
