@@ -441,7 +441,7 @@ fn is_memo_or_forward_ref_callback(nodes: &AstNodes, node_id: AstNodeId) -> bool
 fn test() {
     ///  Copyright (c) Meta Platforms, Inc. and affiliates.
     /// Most of these tests are sourced from the original react `eslint-plugin-react-hooks` package.
-    /// https://github.com/facebook/react/blob/5b903cdaa94c78e8fabb985d8daca5bd7d266323/packages/eslint-plugin-react-hooks/__tests__/ESLintRulesOfHooks-test.js#L43
+    /// https://github.com/facebook/react/blob/5b903cdaa94c78e8fabb985d8daca5bd7d266323/packages/eslint-plugin-react-hooks/__tests__/ESLintRulesOfHooks-test.js
     use crate::tester::Tester;
 
     let pass = vec![

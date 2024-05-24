@@ -9,6 +9,14 @@ fn test_cli() {
     });
 }
 
+#[test]
+fn test_cli_terminal() {
+    let snapshot = oxc_cli::lint_command().run_inner(&["--help"]).unwrap_err().unwrap_stdout();
+    insta::with_settings!({ prepend_module_to_snapshot => false }, {
+        insta::assert_snapshot!(snapshot);
+    });
+}
+
 // <https://oxc-project.github.io/docs/guide/usage/linter/cli.html>
 pub fn print_cli() {
     println!("{}", generate_cli());

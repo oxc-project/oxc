@@ -9,8 +9,8 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    rules::RULES, AllowWarnDeny, ESLintConfig, Fixer, LintOptions, LintService, LintServiceOptions,
-    Linter, RuleEnum, RuleWithSeverity,
+    rules::RULES, AllowWarnDeny, Fixer, LintOptions, LintService, LintServiceOptions, Linter,
+    OxlintConfig, RuleEnum, RuleWithSeverity,
 };
 
 #[derive(Eq, PartialEq)]
@@ -208,7 +208,7 @@ impl Tester {
             .with_react_perf_plugin(self.react_perf_plugin);
         let eslint_config = eslint_config
             .as_ref()
-            .map_or_else(ESLintConfig::default, |v| ESLintConfig::deserialize(v).unwrap());
+            .map_or_else(OxlintConfig::default, |v| OxlintConfig::deserialize(v).unwrap());
         let linter = Linter::from_options(options)
             .unwrap()
             .with_rules(vec![RuleWithSeverity::new(rule, AllowWarnDeny::Warn)])

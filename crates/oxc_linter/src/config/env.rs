@@ -6,9 +6,9 @@ use serde::Deserialize;
 // TODO: list the keys we support
 // <https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments>
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-pub struct ESLintEnv(FxHashMap<String, bool>);
+pub struct OxlintEnv(FxHashMap<String, bool>);
 
-impl ESLintEnv {
+impl OxlintEnv {
     pub fn from_vec(env: Vec<String>) -> Self {
         let map = env.into_iter().map(|key| (key, true)).collect();
 
@@ -21,7 +21,7 @@ impl ESLintEnv {
     }
 }
 
-impl Default for ESLintEnv {
+impl Default for OxlintEnv {
     fn default() -> Self {
         let mut map = FxHashMap::default();
         map.insert("builtin".to_string(), true);
@@ -32,13 +32,13 @@ impl Default for ESLintEnv {
 
 #[cfg(test)]
 mod test {
-    use super::ESLintEnv;
+    use super::OxlintEnv;
     use itertools::Itertools;
     use serde::Deserialize;
 
     #[test]
     fn test_parse_env() {
-        let env = ESLintEnv::deserialize(&serde_json::json!({
+        let env = OxlintEnv::deserialize(&serde_json::json!({
             "browser": true, "node": true, "es6": false
         }))
         .unwrap();
@@ -50,7 +50,7 @@ mod test {
     }
     #[test]
     fn test_parse_env_default() {
-        let env = ESLintEnv::default();
+        let env = OxlintEnv::default();
         assert_eq!(env.iter().count(), 1);
         assert!(env.iter().contains(&"builtin"));
     }

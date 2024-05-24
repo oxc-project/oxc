@@ -26,14 +26,14 @@ use oxc_diagnostics::Error;
 use oxc_semantic::AstNode;
 
 pub use crate::{
-    config::ESLintConfig,
+    config::OxlintConfig,
     context::LintContext,
     options::{AllowWarnDeny, LintOptions},
     rule::{RuleCategory, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
 use crate::{
-    config::{ESLintEnv, ESLintGlobals, ESLintSettings},
+    config::{OxlintEnv, OxlintGlobals, OxlintSettings},
     fixer::Fix,
     fixer::{Fixer, Message},
     rules::RuleEnum,
@@ -54,7 +54,7 @@ fn size_asserts() {
 pub struct Linter {
     rules: Vec<RuleWithSeverity>,
     options: LintOptions,
-    eslint_config: Arc<ESLintConfig>,
+    eslint_config: Arc<OxlintConfig>,
 }
 
 impl Default for Linter {
@@ -80,7 +80,7 @@ impl Linter {
     }
 
     #[must_use]
-    pub fn with_eslint_config(mut self, eslint_config: ESLintConfig) -> Self {
+    pub fn with_eslint_config(mut self, eslint_config: OxlintConfig) -> Self {
         self.eslint_config = Arc::new(eslint_config);
         self
     }

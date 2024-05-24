@@ -4,26 +4,26 @@ expression: snapshot
 ---
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ESLintConfig",
+  "title": "OxlintConfig",
   "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json`\n\n::: danger NOTE\n\nOnly the `.json` format is supported.\n\n:::\n\nExample\n\n```json\n // oxlintrc.json\n {\n   // Comments are supported.\n   \"env\": {\n       \"browser\": true\n   },\n   \"globals\": {\n     \"foo\": \"readonly\",\n   },\n   \"settings\": {\n   },\n   \"rules\": {\n       \"eqeqeq\": \"warn\",\n   },\n  }\n```",
   "type": "object",
   "properties": {
     "env": {
-      "$ref": "#/definitions/ESLintEnv"
+      "$ref": "#/definitions/OxlintEnv"
     },
     "globals": {
-      "$ref": "#/definitions/ESLintGlobals"
+      "$ref": "#/definitions/OxlintGlobals"
     },
     "rules": {
       "description": "See [Oxlint Rules](./rules)",
       "allOf": [
         {
-          "$ref": "#/definitions/ESLintRules"
+          "$ref": "#/definitions/OxlintRules"
         }
       ]
     },
     "settings": {
-      "$ref": "#/definitions/ESLintSettings"
+      "$ref": "#/definitions/OxlintSettings"
     }
   },
   "definitions": {
@@ -82,44 +82,6 @@ expression: snapshot
           "items": true
         }
       ]
-    },
-    "ESLintEnv": {
-      "description": "Predefine global variables.",
-      "type": "object",
-      "additionalProperties": {
-        "type": "boolean"
-      }
-    },
-    "ESLintGlobals": {
-      "description": "Add or remove global variables.",
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/GlobalValue"
-      }
-    },
-    "ESLintRules": {
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/DummyRule"
-      }
-    },
-    "ESLintSettings": {
-      "description": "Shared settings for plugins",
-      "type": "object",
-      "properties": {
-        "jsdoc": {
-          "$ref": "#/definitions/JSDocPluginSettings"
-        },
-        "jsx-a11y": {
-          "$ref": "#/definitions/JSXA11yPluginSettings"
-        },
-        "next": {
-          "$ref": "#/definitions/NextPluginSettings"
-        },
-        "react": {
-          "$ref": "#/definitions/ReactPluginSettings"
-        }
-      }
     },
     "GlobalValue": {
       "type": "string",
@@ -213,6 +175,44 @@ expression: snapshot
           }
         }
       ]
+    },
+    "OxlintEnv": {
+      "description": "Predefine global variables.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "OxlintGlobals": {
+      "description": "Add or remove global variables.",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/GlobalValue"
+      }
+    },
+    "OxlintRules": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/DummyRule"
+      }
+    },
+    "OxlintSettings": {
+      "description": "Shared settings for plugins",
+      "type": "object",
+      "properties": {
+        "jsdoc": {
+          "$ref": "#/definitions/JSDocPluginSettings"
+        },
+        "jsx-a11y": {
+          "$ref": "#/definitions/JSXA11yPluginSettings"
+        },
+        "next": {
+          "$ref": "#/definitions/NextPluginSettings"
+        },
+        "react": {
+          "$ref": "#/definitions/ReactPluginSettings"
+        }
+      }
     },
     "ReactPluginSettings": {
       "type": "object",

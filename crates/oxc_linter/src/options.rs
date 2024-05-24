@@ -5,7 +5,7 @@ use serde_json::{Number, Value};
 
 use oxc_diagnostics::{Error, OxcDiagnostic, Severity};
 
-use crate::{config::ESLintConfig, rules::RULES, RuleCategory, RuleEnum, RuleWithSeverity};
+use crate::{config::OxlintConfig, rules::RULES, RuleCategory, RuleEnum, RuleWithSeverity};
 
 #[derive(Debug)]
 pub struct LintOptions {
@@ -204,9 +204,9 @@ impl LintOptions {
     /// # Errors
     ///
     /// * Returns `Err` if there are any errors parsing the configuration file.
-    pub fn derive_rules_and_config(&self) -> Result<(Vec<RuleWithSeverity>, ESLintConfig), Error> {
+    pub fn derive_rules_and_config(&self) -> Result<(Vec<RuleWithSeverity>, OxlintConfig), Error> {
         let config =
-            self.config_path.as_ref().map(|path| ESLintConfig::from_file(path)).transpose()?;
+            self.config_path.as_ref().map(|path| OxlintConfig::from_file(path)).transpose()?;
 
         let mut rules: FxHashSet<RuleWithSeverity> = FxHashSet::default();
         let all_rules = self.get_filtered_rules();

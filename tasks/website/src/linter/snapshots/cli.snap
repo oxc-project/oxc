@@ -6,13 +6,13 @@ expression: snapshot
 
 
 ## Usage
- **`oxlint`** \[**`-c`**=_`<./eslintrc.json>`_\] \[**`--fix`**\] \[_`PATH`_\]...
+ **`oxlint`** \[**`-c`**=_`<./oxlintrc.json>`_\] \[**`--fix`**\] \[_`PATH`_\]...
 
 ## Basic Configuration
-- **`-c`**, **`--config`**=_`<./eslintrc.json>`_ &mdash; 
-  ESLint configuration file (experimental)
-
-  * only `.json` extension is supported
+- **`-c`**, **`--config`**=_`<./oxlintrc.json>`_ &mdash; 
+  Oxlint configuration file (experimental)
+* only `.json` extension is supported
+* tries to be compatible with the ESLint v8's format
 - **`    --tsconfig`**=_`<./tsconfig.json>`_ &mdash; 
   TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
 

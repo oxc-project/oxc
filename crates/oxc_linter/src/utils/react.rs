@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_semantic::{AstNode, SymbolFlags};
 
-use crate::{ESLintSettings, LintContext};
+use crate::{LintContext, OxlintSettings};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     if let Some(member_expr) = call_expr.callee.get_member_expr() {
@@ -241,7 +241,7 @@ pub fn get_element_type(context: &LintContext, element: &JSXOpeningElement) -> O
         return None;
     };
 
-    let ESLintSettings { jsx_a11y, .. } = context.settings();
+    let OxlintSettings { jsx_a11y, .. } = context.settings();
 
     let polymorphic_prop = jsx_a11y
         .polymorphic_prop_name

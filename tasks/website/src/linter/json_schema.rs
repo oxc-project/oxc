@@ -5,7 +5,7 @@ use schemars::{
 };
 use serde::Serialize;
 
-use oxc_linter::ESLintConfig;
+use oxc_linter::OxlintConfig;
 
 #[test]
 fn test_schema_json() {
@@ -20,7 +20,7 @@ pub fn print_schema_json() {
 }
 
 fn generate_schema_json() -> String {
-    let schema = schema_for!(ESLintConfig);
+    let schema = schema_for!(OxlintConfig);
     serde_json::to_string_pretty(&schema).unwrap()
 }
 
@@ -37,7 +37,7 @@ pub fn print_schema_markdown() {
 }
 
 fn generate_schema_markdown() -> String {
-    let root_schema = schema_for!(ESLintConfig);
+    let root_schema = schema_for!(OxlintConfig);
     Renderer::new(root_schema).render()
 }
 
