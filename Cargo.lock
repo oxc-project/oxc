@@ -1737,6 +1737,7 @@ dependencies = [
 name = "oxc_traverse"
 version = "0.13.1"
 dependencies = [
+ "compact_str",
  "memoffset",
  "oxc_allocator",
  "oxc_ast",
