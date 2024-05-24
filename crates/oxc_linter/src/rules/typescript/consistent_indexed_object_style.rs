@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{TSSignature, TSType, TSTypeName},
+    ast::{TSSignature, TSType, TSTypeName, TSTypeReference},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 fn consistent_indexed_object_style_diagnostic(a: &str, b: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -196,11 +196,26 @@ impl Rule for ConsistentIndexedObjectStyle {
                             return;
                         }
 
-                        ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                            "index signature",
-                            "record",
-                            tref.span,
-                        ));
+                        let fixer = fix_for_index_signature(ctx, tref);
+                        match fixer {
+                            Some(fix) => {
+                                ctx.diagnostic_with_fix(
+                                    consistent_indexed_object_style_diagnostic(
+                                        "index signature",
+                                        "record",
+                                        tref.span,
+                                    ),
+                                    || fix,
+                                );
+                            }
+                            None => {
+                                ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                                    "index signature",
+                                    "record",
+                                    tref.span,
+                                ));
+                            }
+                        }
                     }
                 }
                 _ => {}
@@ -209,9 +224,35 @@ impl Rule for ConsistentIndexedObjectStyle {
     }
 }
 
+fn fix_for_index_signature<'a>(ctx: &LintContext<'a>, tref: &TSTypeReference) -> Option<Fix<'a>> {
+    let start = tref.span.start;
+    let end = tref.span.end;
+    let Some(params) = &tref.type_parameters else { return None };
+
+    let TSType::TSStringKeyword(first) = &params.params[0] else {
+        return None;
+    };
+
+    let key = &ctx.source_text()[first.span.start as usize..first.span.end as usize];
+    let params = &ctx.source_text()[(first.span.end + 2) as usize..(end - 1) as usize];
+    Some(Fix::new(format!("{{ [key: {key}]: {params} }}"), Span::new(start, end)))
+}
 #[test]
 fn test() {
     use crate::tester::Tester;
+
+    let fix = vec![
+        (
+            "type Foo = Record<string, any>;",
+            "type Foo = { [key: string]: any };",
+            Some(serde_json::json!(["index-signature"])),
+        ),
+        (
+            "type Foo<T> = Record<string, T>;",
+            "type Foo<T> = { [key: string]: T };",
+            Some(serde_json::json!(["index-signature"])),
+        ),
+    ];
 
     let pass = vec![
         ("type Foo = Record<string, any>;", None),
@@ -431,5 +472,5 @@ fn test() {
         ("funcction foo(): Record<string, any> {}", Some(serde_json::json!(["index-signature"]))),
     ];
 
-    Tester::new(ConsistentIndexedObjectStyle::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ConsistentIndexedObjectStyle::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
