@@ -149,7 +149,29 @@ impl Rule for ConsistentIndexedObjectStyle {
                                 ));
                             }
                         },
-                        TSType::TSUnionType(_uni) => {}
+                        TSType::TSUnionType(uni) => {
+                            for t in uni.types.iter() {
+                                if let TSType::TSTypeReference(tref) = t {
+                                    if let TSTypeName::IdentifierReference(ide) = &tref.type_name {
+                                        let Some(AstKind::TSTypeAliasDeclaration(dec)) =
+                                            ctx.nodes().parent_kind(node.id())
+                                        else {
+                                            return;
+                                        };
+
+                                        if dec.id.name != ide.name {
+                                            ctx.diagnostic(
+                                                consistent_indexed_object_style_diagnostic(
+                                                    "record",
+                                                    "index signature",
+                                                    sig.span,
+                                                ),
+                                            );
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         _ => {
                             ctx.diagnostic(consistent_indexed_object_style_diagnostic(
                                 "record",
@@ -365,6 +387,7 @@ fn test() {
         	      ",
             None,
         ),
+        ("type Foo = { [key: string]: string | Bar };", None),
         ("type Foo = { [key: boolean]: any };", None),
         ("type Foo = { readonly [key: string]: any };", None),
         ("type Foo = Generic<{ [key: boolean]: any }>;", None),

@@ -76,6 +76,13 @@ expression: consistent_indexed_object_style
 
   ⚠ typescript-eslint(consistent-indexed-object-style):A record is preferred over an index signature.
    ╭─[consistent_indexed_object_style.tsx:1:14]
+ 1 │ type Foo = { [key: string]: string | Bar };
+   ·              ───────────────────────────
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style):A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:1:14]
  1 │ type Foo = { [key: boolean]: any };
    ·              ───────────────────
    ╰────
