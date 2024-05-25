@@ -1,5 +1,4 @@
 use std::{
-    borrow::Cow,
     collections::HashMap,
     fmt::{self, Display, Formatter},
 };
@@ -56,17 +55,18 @@ const NODE_TEST_PATH: &str =
 const TREE_SHAKING_PATH: &str =
     "https://raw.githubusercontent.com/lukastaegert/eslint-plugin-tree-shaking/master/src/rules";
 
-struct TestCase<'a> {
+struct TestCase {
     source_text: String,
     code: Option<String>,
     group_comment: Option<String>,
-    config: Option<Cow<'a, str>>,
-    settings: Option<Cow<'a, str>>,
-    filename: Option<Cow<'a, str>>,
+    config: Option<String>,
+    settings: Option<String>,
+    filename: Option<String>,
+    language_options: Option<String>,
 }
 
-impl<'a> TestCase<'a> {
-    fn new(source_text: &str, arg: &'a Expression<'a>) -> Self {
+impl TestCase {
+    fn new(source_text: &str, arg: &Expression<'_>) -> Self {
         let mut test_case = Self {
             source_text: source_text.to_string(),
             code: None,
@@ -74,6 +74,7 @@ impl<'a> TestCase<'a> {
             settings: None,
             group_comment: None,
             filename: None,
+            language_options: None,
         };
         test_case.visit_expression(arg);
         test_case
@@ -116,14 +117,19 @@ impl<'a> TestCase<'a> {
                 } else {
                     format!("\"{code}\"")
                 };
-                if need_filename {
+                let code_str = if need_filename {
                     format!("({code_str}, {config}, {settings}, {filename})")
                 } else if need_settings {
                     format!("({code_str}, {config}, {settings})")
                 } else if need_config {
                     format!("({code_str}, {config})")
                 } else {
-                    code_str.to_string()
+                    code_str
+                };
+                if let Some(language_options) = &self.language_options {
+                    format!("{code_str}, // {language_options}")
+                } else {
+                    code_str
                 }
             })
             .unwrap_or_default()
@@ -134,7 +140,7 @@ impl<'a> TestCase<'a> {
     }
 }
 
-impl<'a> Visit<'a> for TestCase<'a> {
+impl<'a> Visit<'a> for TestCase {
     fn visit_expression(&mut self, expr: &Expression<'a>) {
         match expr {
             Expression::StringLiteral(lit) => self.visit_string_literal(lit),
@@ -217,20 +223,24 @@ impl<'a> Visit<'a> for TestCase<'a> {
                     PropertyKey::StaticIdentifier(ident) if ident.name == "options" => {
                         let span = prop.value.span();
                         let option_text = &self.source_text[span.start as usize..span.end as usize];
-                        self.config =
-                            Some(Cow::Owned(json::convert_config_to_json_literal(option_text)));
+                        self.config = Some(json::convert_config_to_json_literal(option_text));
                     }
                     PropertyKey::StaticIdentifier(ident) if ident.name == "settings" => {
                         let span = prop.value.span();
-                        let setting_text =
-                            &self.source_text[span.start as usize..span.end as usize];
-                        self.settings =
-                            Some(Cow::Owned(json::convert_config_to_json_literal(setting_text)));
+                        let setting_text = span.source_text(&self.source_text);
+                        self.settings = Some(json::convert_config_to_json_literal(setting_text));
                     }
                     PropertyKey::StaticIdentifier(ident) if ident.name == "filename" => {
                         let span = prop.value.span();
-                        let filename = &self.source_text[span.start as usize..span.end as usize];
-                        self.filename = Some(Cow::Owned(filename.to_string()));
+                        let filename = span.source_text(&self.source_text);
+                        self.filename = Some(filename.to_string());
+                    }
+                    PropertyKey::StaticIdentifier(ident) if ident.name == "languageOptions" => {
+                        let span = prop.value.span();
+                        let language_options = span.source_text(&self.source_text);
+                        let language_options =
+                            json::convert_config_to_json_literal(language_options);
+                        self.language_options = Some(language_options);
                     }
                     _ => continue,
                 },
@@ -496,7 +506,8 @@ fn find_parser_arguments<'a, 'b>(
                             return Some(&call_expr.arguments);
                         }
                         return None;
-                    } else if arg.is_expression() {
+                    }
+                    if arg.is_expression() {
                         return None;
                     }
                 }

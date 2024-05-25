@@ -16,6 +16,7 @@ pub fn convert_config_to_json_literal(object: &str) -> String {
             let ident = &capture["ident"];
             Cow::Owned(format!(r#""{ident}":"#))
         })
-        .replace('\'', "\"");
+        .replace('\'', "\"")
+        .replace('\n', "");
     add_quote
 }
