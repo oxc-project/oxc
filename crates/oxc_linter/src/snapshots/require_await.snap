@@ -3,9 +3,9 @@ source: crates/oxc_linter/src/tester.rs
 expression: require_await
 ---
   ⚠ eslint(require-await): Async function has no 'await' expression.
-   ╭─[require_await.tsx:1:1]
+   ╭─[require_await.tsx:1:16]
  1 │ async function foo() { doSomething() }
-   · ──────────────────────────────────────
+   ·                ───
    ╰────
 
   ⚠ eslint(require-await): Async function has no 'await' expression.
@@ -27,9 +27,9 @@ expression: require_await
    ╰────
 
   ⚠ eslint(require-await): Async function has no 'await' expression.
-   ╭─[require_await.tsx:1:13]
+   ╭─[require_await.tsx:1:10]
  1 │ ({ async foo() { doSomething() } })
-   ·             ────────────────────
+   ·          ───
    ╰────
 
   ⚠ eslint(require-await): Async function has no 'await' expression.
@@ -51,9 +51,9 @@ expression: require_await
    ╰────
 
   ⚠ eslint(require-await): Async function has no 'await' expression.
-   ╭─[require_await.tsx:1:1]
+   ╭─[require_await.tsx:1:16]
  1 │ async function foo() { async () => { await doSomething() } }
-   · ────────────────────────────────────────────────────────────
+   ·                ───
    ╰────
 
   ⚠ eslint(require-await): Async function has no 'await' expression.

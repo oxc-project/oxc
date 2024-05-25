@@ -1,10 +1,9 @@
 use oxc_ast::{
-    ast::{ArrowFunctionExpression, AwaitExpression, ForOfStatement, Function},
+    ast::{ArrowFunctionExpression, AwaitExpression, ForOfStatement, PropertyKey},
     AstKind, Visit,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::ScopeFlags;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -41,17 +40,29 @@ impl Rule for RequireAwait {
                 return;
             }
 
-            let Some(parent) = ctx.nodes().parent_kind(node.id()) else {
+            let Some(parent) = ctx.nodes().parent_node(node.id()) else {
                 return;
             };
 
-            match parent {
+            match parent.kind() {
                 AstKind::Function(func) => {
                     if func.r#async && !func.generator {
                         let mut finder = AwaitFinder { found: false };
                         finder.visit_function_body(body);
                         if !finder.found {
-                            ctx.diagnostic(require_await_diagnostic(func.span));
+                            if let Some(AstKind::ObjectProperty(p)) =
+                                ctx.nodes().parent_kind(parent.id())
+                            {
+                                if let PropertyKey::StaticIdentifier(iden) = &p.key {
+                                    ctx.diagnostic(require_await_diagnostic(iden.span));
+                                } else {
+                                    ctx.diagnostic(require_await_diagnostic(func.span));
+                                }
+                            } else {
+                                ctx.diagnostic(require_await_diagnostic(
+                                    func.id.as_ref().map_or(func.span, |ident| ident.span),
+                                ));
+                            }
                         }
                     }
                 }
@@ -86,13 +97,8 @@ impl<'a> Visit<'a> for AwaitFinder {
             self.found = true;
         }
     }
-    fn visit_function(&mut self, _func: &Function<'a>, _flags: Option<ScopeFlags>) {
-        return;
-    }
 
-    fn visit_arrow_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {
-        return;
-    }
+    fn visit_arrow_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {}
 }
 
 #[test]
@@ -114,24 +120,24 @@ fn test() {
         "async function foo() { for await (x of xs); }",
         "await foo()",
         "
-			                for await (let num of asyncIterable) {
-			                    console.log(num);
-			                }
-			            ",
+        	                for await (let num of asyncIterable) {
+        	                    console.log(num);
+        	                }
+        	            ",
         "async function* run() { yield * anotherAsyncGenerator() }",
         "async function* run() {
-			                await new Promise(resolve => setTimeout(resolve, 100));
-			                yield 'Hello';
-			                console.log('World');
-			            }
-			            ",
+        	                await new Promise(resolve => setTimeout(resolve, 100));
+        	                yield 'Hello';
+        	                console.log('World');
+        	            }
+        	            ",
         "
         async function foo() {
-            {	
+            {
                 await doSomething()
             }
         }
-			            ",
+        	            ",
         "async function* run() { }",
         "const foo = async function *(){}",
         r#"const foo = async function *(){ console.log("bar") }"#,
