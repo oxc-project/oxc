@@ -128,8 +128,8 @@ jobs:
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
         with:
-          shared-key: benchmark-linter
-          save-cache: ${{ github.ref_name == 'main' }}
+          shared-key: benchmark-linter-cranelift
+          save-cache: true # ${{ github.ref_name == 'main' }}
 
       - name: Build benchmark
         env:
