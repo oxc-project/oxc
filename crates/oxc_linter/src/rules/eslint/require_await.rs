@@ -1,9 +1,10 @@
 use oxc_ast::{
-    ast::{Expression, Statement},
-    AstKind,
+    ast::{ArrowFunctionExpression, AwaitExpression, ForOfStatement, Function},
+    AstKind, Visit,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::ScopeFlags;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -46,13 +47,21 @@ impl Rule for RequireAwait {
 
             match parent {
                 AstKind::Function(func) => {
-                    if func.r#async && !func.generator && !has_await(&body.statements) {
-                        ctx.diagnostic(require_await_diagnostic(func.span));
+                    if func.r#async && !func.generator {
+                        let mut finder = AwaitFinder { found: false };
+                        finder.visit_function_body(body);
+                        if !finder.found {
+                            ctx.diagnostic(require_await_diagnostic(func.span));
+                        }
                     }
                 }
                 AstKind::ArrowFunctionExpression(func) => {
-                    if func.r#async && !has_await(&body.statements) {
-                        ctx.diagnostic(require_await_diagnostic(func.span));
+                    if func.r#async {
+                        let mut finder = AwaitFinder { found: false };
+                        finder.visit_function_body(body);
+                        if !finder.found {
+                            ctx.diagnostic(require_await_diagnostic(func.span));
+                        }
                     }
                 }
                 _ => {}
@@ -61,14 +70,29 @@ impl Rule for RequireAwait {
     }
 }
 
-fn has_await<'a>(statements: &'a [Statement<'a>]) -> bool {
-    statements.iter().any(|statement| match statement {
-        Statement::ExpressionStatement(expr) => {
-            matches!(expr.expression, Expression::AwaitExpression(_))
+struct AwaitFinder {
+    found: bool,
+}
+
+impl<'a> Visit<'a> for AwaitFinder {
+    fn visit_await_expression(&mut self, _expr: &AwaitExpression) {
+        if self.found {
+            return;
         }
-        Statement::ForOfStatement(f) => f.r#await,
-        _ => false,
-    })
+        self.found = true;
+    }
+    fn visit_for_of_statement(&mut self, stmt: &ForOfStatement) {
+        if stmt.r#await {
+            self.found = true;
+        }
+    }
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: Option<ScopeFlags>) {
+        return;
+    }
+
+    fn visit_arrow_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {
+        return;
+    }
 }
 
 #[test]
@@ -100,6 +124,13 @@ fn test() {
 			                yield 'Hello';
 			                console.log('World');
 			            }
+			            ",
+        "
+        async function foo() {
+            {	
+                await doSomething()
+            }
+        }
 			            ",
         "async function* run() { }",
         "const foo = async function *(){}",
