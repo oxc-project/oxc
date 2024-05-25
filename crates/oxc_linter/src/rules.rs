@@ -106,6 +106,7 @@ mod eslint {
     pub mod no_with;
     pub mod prefer_exponentiation_operator;
     pub mod radix;
+    pub mod require_await;
     pub mod require_yield;
     pub mod symbol_description;
     pub mod unicode_bom;
@@ -413,6 +414,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_caller,
     eslint::no_case_declarations,
     eslint::no_class_assign,
+    eslint::require_await,
     eslint::no_compare_neg_zero,
     eslint::no_cond_assign,
     eslint::no_console,
