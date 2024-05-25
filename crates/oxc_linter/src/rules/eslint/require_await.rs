@@ -47,12 +47,12 @@ impl Rule for RequireAwait {
             match parent {
                 AstKind::Function(func) => {
                     if func.r#async && !func.generator && !has_await(&body.statements) {
-                        ctx.diagnostic(require_await_diagnostic(func.span))
+                        ctx.diagnostic(require_await_diagnostic(func.span));
                     }
                 }
                 AstKind::ArrowFunctionExpression(func) => {
                     if func.r#async && !has_await(&body.statements) {
-                        ctx.diagnostic(require_await_diagnostic(func.span))
+                        ctx.diagnostic(require_await_diagnostic(func.span));
                     }
                 }
                 _ => {}
