@@ -136,6 +136,7 @@ jobs:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
         shell: bash
         run: |
+          rustup default nightly
           rustup component add rustc-codegen-cranelift-preview --toolchain nightly
           CARGO_PROFILE_DEV_CODEGEN_BACKEND=cranelift cargo +nightly build -Zcodegen-backend --release -p oxc_benchmark --bench linter \
             --no-default-features --features linter --features codspeed
@@ -297,45 +298,45 @@ jobs:
           # retention-days: 1
 
   # Upload combined benchmark results to CodSpeed
-  upload:
-    name: Upload benchmarks
-    # needs: [benchmark, benchmark-linter, benchmark-napi]
-    needs: [benchmark, benchmark-linter]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Branch
-        uses: taiki-e/checkout-action@v1
+  # upload:
+    # name: Upload benchmarks
+    # # needs: [benchmark, benchmark-linter, benchmark-napi]
+    # needs: [benchmark, benchmark-linter]
+    # runs-on: ubuntu-latest
+    # steps:
+      # - name: Checkout Branch
+        # uses: taiki-e/checkout-action@v1
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: 'https://registry.npmjs.org'
+      # - name: Install Node.js
+        # uses: actions/setup-node@v4
+        # with:
+          # node-version: 20
+          # registry-url: 'https://registry.npmjs.org'
 
-      - name: Create temp dir
-        working-directory: ./tasks/benchmark/codspeed
-        run: |
-          corepack enable
-          pnpm install
-          node create_temp_dir.mjs
+      # - name: Create temp dir
+        # working-directory: ./tasks/benchmark/codspeed
+        # run: |
+          # corepack enable
+          # pnpm install
+          # node create_temp_dir.mjs
 
-      - name: Download artefacts
-        uses: actions/download-artifact@v4
-        with:
-          merge-multiple: true
-          pattern: result-*
-          path: ${{ env.DATA_DIR }} # env.DATA_DIR from `create_temp_dir.mjs`
+      # - name: Download artefacts
+        # uses: actions/download-artifact@v4
+        # with:
+          # merge-multiple: true
+          # pattern: result-*
+          # path: ${{ env.DATA_DIR }} # env.DATA_DIR from `create_temp_dir.mjs`
 
-      - name: Upload to Codspeed
-        working-directory: ./tasks/benchmark/codspeed
-        env:
-          CODSPEED_TOKEN: ${{ secrets.CODSPEED_TOKEN }}
-        run: node upload.mjs
+      # - name: Upload to Codspeed
+        # working-directory: ./tasks/benchmark/codspeed
+        # env:
+          # CODSPEED_TOKEN: ${{ secrets.CODSPEED_TOKEN }}
+        # run: node upload.mjs
 
-      - name: Delete temporary artefacts
-        uses: geekyeggo/delete-artifact@v5
-        with:
-          name: |
-            result-*
-            benchmark-linter
-          failOnError: false
+      # - name: Delete temporary artefacts
+        # uses: geekyeggo/delete-artifact@v5
+        # with:
+          # name: |
+            # result-*
+            # benchmark-linter
+          # failOnError: false
