@@ -33,10 +33,26 @@ declare_oxc_lint!(
     /// Require or disallow the `Record` type.
     ///
     /// ### Why is this bad?
-    ///
+    /// Inconsistent style for indexed object types can harm readability in a project.
     ///
     /// ### Example
+    /// With "record":
+    ///
     /// ```javascript
+    /// // bad
+    /// interface Foo {
+    ///  [key: string]: unknown;
+    ///}
+    /// type Foo = {
+    ///  [key: string]: unknown;
+    ///};
+    /// ```
+    ///
+    /// With "index-signature":
+    ///
+    /// ```javascript
+    /// // bad
+    /// type Foo = Record<string, unknown>;
     /// ```
     ConsistentIndexedObjectStyle,
     style
