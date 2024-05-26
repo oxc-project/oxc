@@ -44,22 +44,17 @@ bb9: {
 }
 
 bb10: {
-
-}
-
-bb11: {
-	Unreachable()
 	$return = <value>
 }
 
-bb12: {
+bb11: {
 
 }
 
-bb13: {
+bb12: {
 	Unreachable()
 }
 
-bb14: {
+bb13: {
 
 }

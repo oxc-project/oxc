@@ -801,7 +801,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let after_conditional_graph_ix = self.cfg.new_basic_block();
         /* cfg */
 
-        self.cfg.put_unreachable();
         self.cfg.add_edge(
             after_consequent_expr_graph_ix,
             after_conditional_graph_ix,
@@ -1078,12 +1077,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg - bb after if statement joins consequent and alternate */
         let after_if_graph_ix = self.cfg.new_basic_block();
 
-        if stmt.alternate.is_some() {
-            self.cfg.put_unreachable();
-        }
-        //  else {
         self.cfg.add_edge(after_consequent_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
-        // }
 
         self.cfg.add_edge(
             before_if_stmt_graph_ix,

@@ -1,4 +1,5 @@
 use petgraph::{visit::EdgeRef, Direction, Graph};
+use rustc_hash::FxHashSet;
 
 use crate::BasicBlockId;
 
@@ -15,6 +16,7 @@ where
 {
     let mut q = vec![];
     let mut final_states = vec![];
+    let mut visited = FxHashSet::default();
 
     // for initial node
     let (new_state, keep_walking_this_path) = visitor(&node, Default::default());
@@ -27,6 +29,10 @@ where
 
     while let Some((graph_ix, state)) = q.pop() {
         let mut edges = 0;
+        if visited.contains(&graph_ix) {
+            continue;
+        }
+        visited.insert(graph_ix);
         for edge in graph.edges_directed(graph_ix, Direction::Outgoing) {
             if let Some(result_of_edge_filtering) = edge_filter(edge.weight()) {
                 final_states.push(result_of_edge_filtering);
