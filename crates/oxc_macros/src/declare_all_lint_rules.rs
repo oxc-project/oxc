@@ -1,5 +1,3 @@
-mod trie;
-
 use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
 use quote::quote;
@@ -7,7 +5,6 @@ use syn::{
     parse::{Parse, ParseStream},
     Result,
 };
-use trie::RulePathTrieBuilder;
 
 pub struct LintRuleMeta {
     name: syn::Ident,
@@ -33,7 +30,6 @@ impl Parse for AllLintRulesMeta {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
         let rules =
             input.parse_terminated(LintRuleMeta::parse, syn::Token![,])?.into_iter().collect();
-
         Ok(Self { rules })
     }
 }
@@ -41,17 +37,9 @@ impl Parse for AllLintRulesMeta {
 #[allow(clippy::cognitive_complexity, clippy::too_many_lines)]
 pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let AllLintRulesMeta { rules } = metadata;
-    // all the top-level module trees
-    let module_tries = {
-        let mut builder = RulePathTrieBuilder::new();
-        for rule in &rules {
-            builder.push(rule);
-        }
-        builder.finish()
-    };
-    let use_stmts = module_tries.iter().map(|node| node.use_stmt(true));
+    let use_stmts = rules.iter().map(|rule| &rule.path).collect::<Vec<_>>();
     let struct_names = rules.iter().map(|rule| &rule.name).collect::<Vec<_>>();
-    let mod_names = rules.iter().map(|node| {
+    let plugin_names = rules.iter().map(|node| {
         node.path
             .segments
             .iter()
@@ -63,7 +51,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let ids = rules.iter().enumerate().map(|(i, _)| i).collect::<Vec<_>>();
 
     let expanded = quote! {
-        #(#use_stmts)*
+        #(pub use self::#use_stmts::#struct_names;)*
 
         use crate::{context::LintContext, rule::{Rule, RuleCategory, RuleMeta}, AstNode};
         use oxc_semantic::SymbolId;
@@ -101,7 +89,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
 
             pub fn plugin_name(&self) -> &str {
                 match self {
-                    #(Self::#struct_names(_) => #mod_names),*
+                    #(Self::#struct_names(_) => #plugin_names),*
                 }
             }
 
