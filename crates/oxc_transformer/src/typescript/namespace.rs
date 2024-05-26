@@ -4,7 +4,7 @@ use super::{diagnostics::ambient_module_nested, TypeScript};
 
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, syntax_directed_operations::BoundNames};
-use oxc_span::{Atom, SPAN};
+use oxc_span::{Atom, CompactStr, SPAN};
 use oxc_syntax::{
     operator::{AssignmentOperator, LogicalOperator},
     symbol::SymbolFlags,
@@ -279,6 +279,11 @@ impl<'a> TypeScript<'a> {
         }
 
         if is_empty {
+            // Delete the scope binding that `ctx.generate_uid_in_current_scope` created above,
+            // as no binding is actually being created
+            let current_scope_id = ctx.current_scope_id();
+            ctx.scopes_mut().remove_binding(current_scope_id, &CompactStr::from(name.as_str()));
+
             return None;
         }
 

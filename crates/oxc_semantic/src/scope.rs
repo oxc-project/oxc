@@ -151,6 +151,10 @@ impl ScopeTree {
         self.bindings[scope_id].insert(name, symbol_id);
     }
 
+    pub fn remove_binding(&mut self, scope_id: ScopeId, name: &CompactStr) {
+        self.bindings[scope_id].shift_remove(name);
+    }
+
     pub(crate) fn add_unresolved_reference(
         &mut self,
         scope_id: ScopeId,
