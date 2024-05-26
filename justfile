@@ -95,6 +95,12 @@ test-transform *args='':
 oxlint:
   cargo build --release --bin oxlint --features allocator
 
+watch-wasm:
+  cargo watch --no-vcs-ignores -i 'npm/oxc-wasm/**' -- just build-wasm
+
+build-wasm:
+  wasm-pack build --out-dir npm/oxc-wasm --target web --dev --scope oxc crates/oxc_wasm
+
 # Generate the JavaScript global variables. See `tasks/javascript_globals`
 javascript-globals:
   cargo run -p javascript_globals
