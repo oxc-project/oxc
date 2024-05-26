@@ -133,6 +133,8 @@ impl<'a> TypeScript<'a> {
 
         let real_name = decl.id.name();
 
+        // TODO: This binding is created in wrong scope.
+        // Needs to be created in scope of function which `transform_namespace` creates below.
         let name = self.ctx.ast.new_atom(
             &ctx.generate_uid_in_current_scope(real_name, SymbolFlags::FunctionScopedVariable),
         );
