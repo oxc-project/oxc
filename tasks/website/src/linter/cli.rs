@@ -1,5 +1,5 @@
 use bpaf::Parser;
-use oxc_cli::lint_options;
+use oxlint::lint_options;
 
 #[test]
 fn test_cli() {
@@ -11,7 +11,7 @@ fn test_cli() {
 
 #[test]
 fn test_cli_terminal() {
-    let snapshot = oxc_cli::lint_command().run_inner(&["--help"]).unwrap_err().unwrap_stdout();
+    let snapshot = oxlint::lint_command().run_inner(&["--help"]).unwrap_err().unwrap_stdout();
     insta::with_settings!({ prepend_module_to_snapshot => false }, {
         insta::assert_snapshot!(snapshot);
     });

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members  = ["crates/*", "napi/*", "tasks/*", "wasm/*"]
+members  = ["apps/*", "crates/*", "napi/*", "tasks/*", "wasm/*"]
 exclude  = ["tasks/lint_rules"]
 
 [workspace.package]

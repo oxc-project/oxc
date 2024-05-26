@@ -93,7 +93,7 @@ test-transform *args='':
 
 # Build oxlint in release build
 oxlint:
-  cargo build --release -p oxc_cli --bin oxlint --features allocator
+  cargo build --release --bin oxlint --features allocator
 
 # Generate the JavaScript global variables. See `tasks/javascript_globals`
 javascript-globals:

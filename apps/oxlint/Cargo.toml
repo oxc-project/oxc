@@ -1,5 +1,5 @@
 [package]
-name                   = "oxc_cli"
+name                   = "oxlint"
 version                = "0.0.0"
 publish                = false
 authors.workspace      = true
@@ -19,18 +19,8 @@ workspace = true
 doctest = false
 
 [[bin]]
-name = "oxc_cli"
-path = "src/main.rs"
-test = false
-
-[[bin]]
 name = "oxlint"
-path = "src/lint/main.rs"
-test = false
-
-[[bin]]
-name = "oxformat"
-path = "src/format/main.rs"
+path = "src/main.rs"
 test = false
 
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
@@ -40,11 +30,8 @@ jemallocator = { workspace = true, optional = true }
 mimalloc = { workspace = true, optional = true }
 
 [dependencies]
-oxc_allocator   = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_linter      = { workspace = true }
-oxc_parser      = { workspace = true }
-oxc_prettier    = { workspace = true }
 oxc_span        = { workspace = true }
 
 glob               = { workspace = true }

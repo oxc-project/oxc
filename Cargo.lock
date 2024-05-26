@@ -1314,27 +1314,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_cli"
-version = "0.0.0"
-dependencies = [
- "bpaf",
- "glob",
- "ignore",
- "jemallocator",
- "miette",
- "mimalloc",
- "oxc_allocator",
- "oxc_diagnostics",
- "oxc_linter",
- "oxc_parser",
- "oxc_prettier",
- "oxc_span",
- "rayon",
- "tempfile",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "oxc_codegen"
 version = "0.13.1"
 dependencies = [
@@ -1749,6 +1728,24 @@ dependencies = [
  "serde-wasm-bindgen",
  "tsify",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "oxlint"
+version = "0.0.0"
+dependencies = [
+ "bpaf",
+ "glob",
+ "ignore",
+ "jemallocator",
+ "miette",
+ "mimalloc",
+ "oxc_diagnostics",
+ "oxc_linter",
+ "oxc_span",
+ "rayon",
+ "tempfile",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -2961,8 +2958,8 @@ dependencies = [
  "ckb_schemars",
  "handlebars",
  "insta",
- "oxc_cli",
  "oxc_linter",
+ "oxlint",
  "pico-args",
  "serde",
  "serde_json",

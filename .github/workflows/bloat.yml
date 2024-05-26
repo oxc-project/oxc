@@ -27,7 +27,7 @@ jobs:
 
       - name: Run
         run: |
-          export CMD="cargo bloat --profile release-debug -p oxc_cli --bin oxlint --features allocator"
+          export CMD="cargo bloat --profile release-debug -p oxlint --features allocator"
 
           # Get largest functions
           export BLOAT_FUNC_CMD="${CMD} -n 10"
