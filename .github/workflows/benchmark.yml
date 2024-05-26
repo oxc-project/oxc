@@ -129,7 +129,7 @@ jobs:
 
       - uses: rui314/setup-mold@v1
 
-      - run: echo -e "[target.x86_64-unknown-linux-gnu]\nlinker = \"clang\"\nrustflags = [\"-C\", \"link-arg=-fuse-ld=mold\"]" >> .cargo/config.toml
+      # - run: echo -e "[target.x86_64-unknown-linux-gnu]\nlinker = \"clang\"\nrustflags = [\"-C\", \"link-arg=-fuse-ld=mold\"]" >> .cargo/config.toml
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
