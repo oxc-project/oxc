@@ -1,0 +1,17 @@
+---
+source: crates/oxc_semantic/tests/integration/cfg.rs
+expression: output.cfg_dot_diagram()
+input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/conditional_expression.js
+---
+digraph {
+    0 [ label = ""]
+    1 [ label = ""]
+    2 [ label = ""]
+    3 [ label = ""]
+    4 [ label = "Unreachable()"]
+    3 -> 4 [ ]
+    1 -> 3 [ ]
+    0 -> 1 [ ]
+    0 -> 2 [ ]
+    2 -> 3 [ ]
+}
