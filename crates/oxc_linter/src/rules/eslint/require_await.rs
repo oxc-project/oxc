@@ -1,9 +1,10 @@
 use oxc_ast::{
-    ast::{ArrowFunctionExpression, AwaitExpression, ForOfStatement, PropertyKey},
+    ast::{ArrowFunctionExpression, AwaitExpression, ForOfStatement, Function, PropertyKey},
     AstKind, Visit,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::ScopeFlags;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -99,6 +100,7 @@ impl<'a> Visit<'a> for AwaitFinder {
     }
 
     fn visit_arrow_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {}
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: Option<ScopeFlags>) {}
 }
 
 #[test]
