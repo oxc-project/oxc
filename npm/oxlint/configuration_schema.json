@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "OxlintConfig",
-  "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json`\n\n::: danger NOTE\n\nOnly the `.json` format is supported.\n\n:::\n\nExample\n\n```json\n // oxlintrc.json\n {\n   // Comments are supported.\n   \"env\": {\n       \"browser\": true\n   },\n   \"globals\": {\n     \"foo\": \"readonly\",\n   },\n   \"settings\": {\n   },\n   \"rules\": {\n       \"eqeqeq\": \"warn\",\n   },\n  }\n```",
+  "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json`\n\n::: danger NOTE\n\nOnly the `.json` format is supported.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json { \"env\": { \"browser\": true }, \"globals\": { \"foo\": \"readonly\" }, \"settings\": { }, \"rules\": { \"eqeqeq\": \"warn\" } } ```",
   "type": "object",
   "properties": {
     "env": {

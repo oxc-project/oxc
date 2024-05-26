@@ -31,21 +31,21 @@ pub use self::{
 ///
 /// Example
 ///
+/// `.oxlintrc.json`
+///
 /// ```json
-/// // oxlintrc.json
 /// {
-///   // Comments are supported.
 ///   "env": {
 ///       "browser": true
 ///   },
 ///   "globals": {
-///     "foo": "readonly",
+///     "foo": "readonly"
 ///   },
 ///   "settings": {
 ///   },
 ///   "rules": {
-///       "eqeqeq": "warn",
-///   },
+///       "eqeqeq": "warn"
+///   }
 ///  }
 /// ```
 #[derive(Debug, Default, Deserialize, JsonSchema)]

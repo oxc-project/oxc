@@ -173,7 +173,7 @@ unicode-width       = "0.1.12"
 saphyr              = "0.0.1"
 base64-simd         = "0.8"
 cfg-if              = "1.0.0"
-schemars            = { version = "0.8.16", package = "ckb_schemars" } # contains fix for stripping newlines in description
+schemars            = { version = "0.8.21" }
 
 [workspace.metadata.cargo-shear]
 ignored = ["napi", "oxc_traverse"]

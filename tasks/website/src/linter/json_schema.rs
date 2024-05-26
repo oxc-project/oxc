@@ -84,7 +84,8 @@ impl Renderer {
     }
 
     fn render(self) -> String {
-        let root = self.render_root_schema(&self.root_schema);
+        let mut root = self.render_root_schema(&self.root_schema);
+        root.sanitize();
         self.handlebars.render("root", &root).unwrap()
     }
 
@@ -166,4 +167,20 @@ impl Renderer {
             sections: self.render_properties(depth, Some(key), schema),
         }
     }
+}
+
+impl Root {
+    fn sanitize(&mut self) {
+        sanitize(&mut self.title);
+    }
+}
+
+fn sanitize(s: &mut String) {
+    let Some(start) = s.find("```json") else { return };
+    let start = start + 7;
+    let end = s[start..].find("```").unwrap();
+    let json: serde_json::Value = serde_json::from_str(&s[start..start + end]).unwrap();
+    let json = serde_json::to_string_pretty(&json).unwrap();
+    let json = format!("\n{json}\n");
+    s.replace_range(start..start + end, &json);
 }
