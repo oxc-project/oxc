@@ -11,6 +11,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   check:
     name: Check version
@@ -97,7 +101,6 @@ jobs:
       # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binary
         if: runner.os == 'Windows'
-        shell: bash
         run: |
           BIN_NAME=oxlint-${{ matrix.code-target }}
           mv target/${{ matrix.target }}/release/oxlint.exe $BIN_NAME.exe
@@ -158,7 +161,6 @@ jobs:
       - name: Publish npm packages as latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        shell: bash
         # NOTE: The trailing slash on $package/ changes it to publishing the directory
         run: |
           for package in npm/oxlint*
@@ -177,7 +179,6 @@ jobs:
           fail_on_unmatched_files: true
 
       - name: wait 3 minutes for smoke test
-        shell: bash
         run: sleep 180s
 
   smoke:
@@ -195,7 +196,6 @@ jobs:
     container: ${{ matrix.container }}
     steps:
       - name: Test
-        shell: sh
         run: |
           touch test.js
           ldd --version || true

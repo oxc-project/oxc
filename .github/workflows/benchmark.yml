@@ -39,6 +39,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   # Build and run benchmarks for all components except linter
   benchmark:
@@ -89,7 +93,6 @@ jobs:
       - name: Build benchmark
         env:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
-        shell: bash
         run: |
           cargo build --release -p oxc_benchmark --bench ${{ matrix.component }} \
             --no-default-features --features ${{ matrix.component }} --features codspeed
@@ -133,7 +136,6 @@ jobs:
       - name: Build benchmark
         env:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
-        shell: bash
         run: |
           cargo build --release -p oxc_benchmark --bench linter \
             --no-default-features --features linter --features codspeed
@@ -172,7 +174,6 @@ jobs:
           path: ./target/codspeed/oxc_benchmark
 
       - name: Fix permission loss
-        shell: bash
         run: |
           ls ./target/codspeed/oxc_benchmark
           chmod +x ./target/codspeed/oxc_benchmark/*
@@ -270,7 +271,6 @@ jobs:
       # - name: Build Rust benchmark
         # env:
           # RUSTFLAGS: "-C debuginfo=2 -C strip=none -g --cfg codspeed"
-        # shell: bash
         # run: |
           # cargo build --release -p oxc_benchmark --bench parser_napi --no-default-features --features codspeed_napi
           # mkdir -p target/codspeed/oxc_benchmark/

@@ -13,6 +13,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   check:
     name: Check version
@@ -82,7 +86,6 @@ jobs:
 
       - name: Build JS
         working-directory: editors/vscode
-        shell: bash
         run: |
           pnpm install
           pnpm run compile
@@ -117,7 +120,6 @@ jobs:
 
       - name: Package Extension
         working-directory: editors/vscode
-        shell: bash
         run: |
           ls ./target/release
           pnpm exec vsce package -o "../../oxc_language_server-${{ matrix.code-target }}.vsix" --target ${{ matrix.code-target }}
