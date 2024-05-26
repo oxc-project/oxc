@@ -17,7 +17,7 @@ doctest = false
 
 [dependencies]
 oxc_linter = { workspace = true }
-oxlint    = { path = "../../apps/oxlint" }
+oxlint     = { path = "../../apps/oxlint" }
 
 bpaf       = { workspace = true, features = ["docgen"] }
 pico-args  = { workspace = true }

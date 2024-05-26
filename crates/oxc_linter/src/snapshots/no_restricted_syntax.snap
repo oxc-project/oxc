@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_restricted_syntax
+---
+  ⚠ Using 'TSEnumDeclaration[const=true]' is not allowed.
+   ╭─[no_restricted_syntax.tsx:1:1]
+ 1 │ const enum Foo { A, B, C }
+   · ─────
+   ╰────
+
+  ⚠ Using 'TSEnumDeclaration[const=true]' is not allowed.
+   ╭─[no_restricted_syntax.tsx:1:1]
+ 1 │ const enum Foo { A, B, C }
+   · ─────
+   ╰────
+
+  ⚠ Please use non-const enums. This project automatically inlines enums
+   ╭─[no_restricted_syntax.tsx:1:1]
+ 1 │ const enum Foo { A, B, C }
+   · ─────
+   ╰────
+
+  ⚠ Using 'AwaitExpression' is not allowed.
+   ╭─[no_restricted_syntax.tsx:1:24]
+ 1 │ async function foo() { await bar(); }
+   ·                        ───────────
+   ╰────
+
+  ⚠ Using 'ObjectExpression > SpreadElement' is not allowed.
+   ╭─[no_restricted_syntax.tsx:1:15]
+ 1 │ const foo = { ...bar }
+   ·               ──────
+   ╰────
+
+  ⚠ Using 'ObjectPattern > RestElement' is not allowed.
+   ╭─[no_restricted_syntax.tsx:1:9]
+ 1 │ const { ...bar } = foo
+   ·         ──────
+   ╰────

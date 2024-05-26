@@ -83,6 +83,7 @@ mod eslint {
     pub mod no_redeclare;
     pub mod no_regex_spaces;
     pub mod no_restricted_globals;
+    pub mod no_restricted_syntax;
     pub mod no_script_url;
     pub mod no_self_assign;
     pub mod no_self_compare;
@@ -485,6 +486,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_await_in_loop,
     eslint::no_new_native_nonconstructor,
     eslint::no_restricted_globals,
+    eslint::no_restricted_syntax,
     eslint::prefer_exponentiation_operator,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
