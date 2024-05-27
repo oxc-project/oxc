@@ -399,6 +399,16 @@ fn test() {
         generate_expect_inline_snaps_code(line, "toThrowErrorMatchingInlineSnapshot")
     }
 
+    #[cfg(target_os = "windows")]
+    let snap_path = "c:\\mock-component.jsx.snap";
+    #[cfg(target_os = "windows")]
+    let another_snap_path = "c:\\another-mock-component.jsx.snaps";
+
+    #[cfg(not(target_os = "windows"))]
+    let snap_path = "/mock-component.jsx.snap";
+    #[cfg(not(target_os = "windows"))]
+    let another_snap_path = "/another-mock-component.jsx.snap";
+
     let tow_match_inline_cases = generate_match_inline_snapshot(2);
     let two_throw_error_match_cases = generate_throw_error_matching_inline_snapshot(2);
     let twenty_match_inline_cases = generate_match_inline_snapshot(20);
@@ -439,29 +449,24 @@ fn test() {
         ),
         (sixty_cases.as_str(), Some(serde_json::json!([{ "maxSize": 61 }])), None, None),
         // '/mock-component.jsx.snap'
-        (
-            twenty_exports_snapshot.as_str(),
-            None,
-            None,
-            Some(PathBuf::from("/mock-component.jsx.snap")),
-        ),
+        (twenty_exports_snapshot.as_str(), None, None, Some(PathBuf::from(snap_path))),
         // '/mock-component.jsx.snap'
         (
             fifty_eight_exports_snapshot.as_str(),
             Some(serde_json::json!([{
                 "allowedSnapshots": {
-                    "/mock-component.jsx.snap": ["a big component 1"]
+                    snap_path.to_string(): ["a big component 1"]
                 }
             }])),
             None,
-            Some(PathBuf::from("/mock-component.jsx.snap")),
+            Some(PathBuf::from(snap_path)),
         ),
         // '/mock-component.jsx.snap'
         (
             twenty_exports_snapshot.as_str(),
             Some(serde_json::json!([{ "maxSize": 21, "inlineMaxSize": 19 }])),
             None,
-            Some(PathBuf::from("/mock-component.jsx.snap")),
+            Some(PathBuf::from(snap_path)),
         ),
     ];
 
@@ -488,65 +493,60 @@ fn test() {
             None,
         ),
         // '/mock-component.jsx.snap'
-        (
-            fifty_two_exports_snapshot.as_str(),
-            None,
-            None,
-            Some(PathBuf::from("/mock-component.jsx.snap")),
-        ),
+        (fifty_two_exports_snapshot.as_str(), None, None, Some(PathBuf::from(snap_path))),
         // '/mock-component.jsx.snap'
         (
             one_hundred_exports_snapshot.as_str(),
             Some(serde_json::json!([{ "maxSize": 70 }])),
             None,
-            Some(PathBuf::from("/mock-component.jsx.snap")),
+            Some(PathBuf::from(snap_path)),
         ),
         // '/mock-component.jsx.snap'
         (
             one_hundred_exports_snapshot.as_str(),
             Some(serde_json::json!([{ "maxSize": 70, "inlineMaxSize": 101 }])),
             None,
-            Some(PathBuf::from("/mock-component.jsx.snap")),
+            Some(PathBuf::from(snap_path)),
         ),
         // '/mock-component.jsx.snap'
         (
             one_exports_snapshot.as_str(),
             Some(serde_json::json!([{ "maxSize": 0 }])),
             None,
-            Some(PathBuf::from("/mock-component.jsx.snap")),
+            Some(PathBuf::from(snap_path)),
         ),
         // '/mock-component.jsx.snap'
         (
             fifty_eight_exports_snapshot.as_str(),
             Some(serde_json::json!([{
                 "allowedSnapshots": {
-                    "/another-mock-component.jsx.snap": [r"a big component \d+"]
+                    another_snap_path.to_string(): [r"a big component \d+"]
                 }
             }])),
             None,
-            Some(PathBuf::from("/mock-component.jsx.snap")),
+            Some(PathBuf::from(snap_path)),
         ),
         // '/mock-component.jsx.snap'
         (
             vec_to_str.as_str(),
             Some(serde_json::json!([{
                 "allowedSnapshots": {
-                    "/mock-component.jsx.snap": [r"a big component \d+"],
+                    snap_path.to_string(): [r"a big component \d+"],
                 },
             }])),
             None,
-            Some(PathBuf::from("/mock-component.jsx.snap")),
+            Some(PathBuf::from(snap_path)),
         ),
         // '/mock-component.jsx.snap'
         (
             vec_to_str.as_str(),
             Some(serde_json::json!([{
                 "allowedSnapshots": {
-                    "/mock-component.jsx.snap": ["a big component 2"],
+                    snap_path.to_string(): ["a big component 2"],
                 },
             }])),
             None,
-            Some(PathBuf::from("/mock-component.jsx.snap")),
+            Some(PathBuf::from(snap_path)),
         ),
     ];
 
