@@ -57,35 +57,37 @@ const isMuslFromChildProcess = () => {
 
 const { platform, arch, env, version, release } = process;
 
+const BIN_NAME = "oxc_language_server";
+
 const PLATFORMS = {
   win32: {
     x64: {
-      musl: "@oxlint/win32-x64/oxlint.exe",
-      gnu: "@oxlint/win32-x64/oxlint.exe",
+      musl: `@oxlint/win32-x64/${BIN_NAME}.exe`,
+      gnu: `@oxlint/win32-x64/${BIN_NAME}.exe`,
     },
     arm64: {
-      musl: "@oxlint/win32-arm64/oxlint.exe",
-      gnu: "@oxlint/win32-arm64/oxlint.exe",
+      musl: `@oxlint/win32-arm64/${BIN_NAME}.exe`,
+      gnu: `@oxlint/win32-arm64/${BIN_NAME}.exe`,
     },
   },
   darwin: {
     x64: {
-      musl: "@oxlint/darwin-x64/oxlint",
-      gnu: "@oxlint/darwin-x64/oxlint",
+      musl: `@oxlint/darwin-x64/${BIN_NAME}`,
+      gnu: `@oxlint/darwin-x64/${BIN_NAME}`,
     },
     arm64: {
-      musl: "@oxlint/darwin-arm64/oxlint",
-      gnu: "@oxlint/darwin-arm64/oxlint",
+      musl: `@oxlint/darwin-arm64/${BIN_NAME}`,
+      gnu: `@oxlint/darwin-arm64/${BIN_NAME}`,
     },
   },
   linux: {
     x64: {
-      musl: "@oxlint/linux-x64-musl/oxlint",
-      gnu: "@oxlint/linux-x64-gnu/oxlint",
+      musl: `@oxlint/linux-x64-musl/${BIN_NAME}`,
+      gnu: `@oxlint/linux-x64-gnu/${BIN_NAME}`,
     },
     arm64: {
-      musl: "@oxlint/linux-arm64-musl/oxlint",
-      gnu: "@oxlint/linux-arm64-gnu/oxlint",
+      musl: `@oxlint/linux-arm64-musl/${BIN_NAME}`,
+      gnu: `@oxlint/linux-arm64-gnu/${BIN_NAME}`,
     },
   },
 };
@@ -119,7 +121,7 @@ if (binPath) {
     target = `${target}-musl`;
   }
   console.error(
-    `The oxlint CLI package doesn't ship with prebuilt binaries for your platform (${target}) yet. ` +
+    `The oxc_language_server CLI package doesn't ship with prebuilt binaries for your platform (${target}) yet. ` +
       "You can create an issue at https://github.com/oxc-project/oxc/issues for support."
   );
   process.exitCode = 1;

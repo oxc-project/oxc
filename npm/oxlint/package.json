@@ -21,6 +21,7 @@
   },
   "files": [
     "bin/oxlint",
+    "bin/oxc_language_server",
     "configuration_schema.json",
     "README.md"
   ]

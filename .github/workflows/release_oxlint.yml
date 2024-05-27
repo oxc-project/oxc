@@ -95,24 +95,35 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - name: Build with cross
+      - name: Build oxlint with cross
         run: cross build --release --target=${{ matrix.target }} --bin oxlint --features allocator
 
-      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
-      - name: Archive Binary
+      - name: Build oxc_language_server with cross
+        run: cross build -p oxc_language_server --bin oxc_language_server --release --target=${{ matrix.target }}
+
+      # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binaries
         if: runner.os == 'Windows'
         run: |
-          BIN_NAME=oxlint-${{ matrix.code-target }}
-          mv target/${{ matrix.target }}/release/oxlint.exe $BIN_NAME.exe
-          7z a $BIN_NAME.zip $BIN_NAME.exe
+          OXLINT_BIN_NAME=oxlint-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxlint.exe $OXLINT_BIN_NAME.exe
+          7z a $OXLINT_BIN_NAME.zip $OXLINT_BIN_NAME.exe
 
-      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
-      - name: Archive Binary
+          OXLS_BIN_NAME=oxc_language_server-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxc_language_server.exe $OXLS_BIN_NAME.exe
+          7z a $OXLS_BIN_NAME.zip $OXLS_BIN_NAME.exe
+
+      # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binaries
         if: runner.os != 'Windows'
         run: |
-          BIN_NAME=oxlint-${{ matrix.code-target }}
-          mv target/${{ matrix.target }}/release/oxlint $BIN_NAME
-          tar czf $BIN_NAME.tar.gz $BIN_NAME
+          OXLINT_BIN_NAME=oxlint-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxlint $OXLINT_BIN_NAME
+          tar czf $OXLINT_BIN_NAME.tar.gz $OXLINT_BIN_NAME
+
+          OXLS_BIN_NAME=oxc_language_server-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxc_language_server $OXLS_BIN_NAME
+          tar czf $OXLS_BIN_NAME.tar.gz $OXLS_BIN_NAME
 
       - name: Upload Binary
         uses: actions/upload-artifact@v4
