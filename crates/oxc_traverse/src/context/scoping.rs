@@ -155,20 +155,20 @@ impl TraverseScoping {
     ///    This would maintain output parity with Babel.
     ///    But building the hash set would add some overhead to semantic.
     ///
-    /// 2. Use a much simpler method, but with less "nicely-named" UIDs:
+    /// 2. Use a much simpler method:
     ///
-    /// * Name all UIDs `_temp0`, `_temp1` etc.
-    /// * During initial semantic pass, check for any existing identifiers matching `_temp\d+`.
-    /// * Find the existing identifier with the largest number after `_temp`.
-    /// * Store that number in a counter which is global across the whole program.
-    /// * To create UIDs, increment the counter and postfix it to `_temp`.
-    /// * If creating or renaming any other identifiers as part of a transform, ensure they don't clash
-    ///   with UIDs already created, and increase the counter if they match `_temp\d+`.
+    /// * During initial semantic pass, check for any existing identifiers starting with `_`.
+    /// * Calculate what is the highest postfix number on `_...` identifiers (e.g. `_foo1`, `_bar8`).
+    /// * Store that highest number in a counter which is global across the whole program.
+    /// * When creating a UID, increment the counter, and make the UID `_<name><counter>`.
     ///
-    /// i.e. if source contains identifiers `_temp1` and `_temp30`, create UIDs named `_temp_31`,
-    /// `_temp32` etc. They'll all be guaranteed to be unique within the program.
-    /// This would make for less nicely-named identifiers, but does that really matter?
-    /// Minification will rename them all anyway.
+    /// i.e. if source contains identifiers `_foo1` and `_bar15`, create UIDs named `_qux16`,
+    /// `_temp17` etc. They'll all be unique within the program.
+    ///
+    /// Minimal cost in semantic, and generating UIDs extremely cheap.
+    ///
+    /// This is a slightly different method from Babel, but hopefully close enough that output will
+    /// match Babel for most (or maybe all) test cases.
     pub fn generate_uid(
         &mut self,
         name: &str,
