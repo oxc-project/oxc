@@ -26,19 +26,12 @@ jobs:
       - name: Clone submodules
         uses: ./.github/actions/clone-submodules
 
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          shared-key: 'codecov'
+          cache-key: codecov
           save-cache: ${{ github.ref_name == 'main' }}
-
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-llvm-cov
-
-      - name: Install llvm-tools-preview for llvm-cov
-        run: rustup component add llvm-tools-preview
+          tools: cargo-llvm-cov
+          components: llvm-tools-preview
 
       - name: Run
         env:

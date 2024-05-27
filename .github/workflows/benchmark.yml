@@ -64,16 +64,11 @@ jobs:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@v1
 
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          shared-key: benchmark-${{ matrix.component }}
+          cache-key: benchmark-${{ matrix.component }}
           save-cache: ${{ github.ref_name == 'main' }}
-
-      - name: Install codspeed
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-codspeed
+          tools: cargo-codspeed
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -137,10 +132,9 @@ jobs:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@v1
 
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          shared-key: benchmark-linter
+          cache-key: benchmark-linter
           save-cache: ${{ github.ref_name == 'main' }}
 
       - uses: mozilla-actions/sccache-action@v0.0.4
@@ -239,10 +233,9 @@ jobs:
       # - name: Checkout Branch
         # uses: taiki-e/checkout-action@v1
 
-      # - name: Install Rust Toolchain
-        # uses: ./.github/actions/rustup
+      # - uses: Boshen/setup-rust@main
         # with:
-          # shared-key: 'benchmark_napi'
+          # shared-key: benchmark_napi
           # save-cache: ${{ github.ref_name == 'main' }}
 
       # - name: Install codspeed

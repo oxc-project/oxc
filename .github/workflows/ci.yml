@@ -54,11 +54,12 @@ jobs:
       SCCACHE_LOCAL_RW_MODE:
     steps:
       - uses: taiki-e/checkout-action@v1
-      - uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
           # warm cache factory for all other CI jobs
           # cache `target` directory to avoid download crates
           save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: warm
       # cache build outputs to speed up compilation
       - uses: mozilla-actions/sccache-action@v0.0.4
         if: ${{ vars.USE_SCCACHE == 'true' }}
@@ -71,38 +72,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          shared-key: 'wasm'
+          cache-key: wasm
           save-cache: ${{ github.ref_name == 'main' }}
-
       - name: Check
         run: |
           rustup target add wasm32-unknown-unknown
           cargo check -p oxc_wasm --target wasm32-unknown-unknown
-
       - name: Build
         run: |
           npx -y wasm-pack build --target web --dev ./crates/oxc_wasm
           npx -y wasm-pack build --target web --dev ./wasm/parser
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Check output types
-        run: |
-          npx -y -p typescript tsc --lib es2020,dom crates/oxc_wasm/pkg/oxc_wasm.d.ts
+        run: npx -y -p typescript tsc --lib es2020,dom crates/oxc_wasm/pkg/oxc_wasm.d.ts
 
   typos:
     name: Spell Check
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-
       - uses: crate-ci/typos@master
         with:
           files: .
@@ -120,14 +113,11 @@ jobs:
             src:
               - 'Cargo.lock'
 
-      - name: Install cargo-deny
-        if: steps.filter.outputs.src == 'true'
-        uses: taiki-e/install-action@cargo-deny
-
-      - uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         if: steps.filter.outputs.src == 'true'
         with:
           restore-cache: false
+          tools: cargo-deny
 
       - if: steps.filter.outputs.src == 'true'
         run: cargo deny check
@@ -145,7 +135,7 @@ jobs:
               - '**/*.rs'
               - '**/Cargo.toml'
               - 'Cargo.lock'
-      - uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
           restore-cache: false
         if: steps.filter.outputs.src == 'true'
@@ -161,13 +151,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-
-      - name: Install Rust
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          fmt: true
+          components: rustfmt
           restore-cache: false
-
       - run: cargo fmt --all -- --check
 
   lint:
@@ -175,28 +162,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-
-      - name: Install Rust
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          clippy: true
-
-      - name: Run Clippy
-        run: cargo lint -- -D warnings
+          components: clippy
+      - run: cargo lint -- -D warnings
 
   doc:
     name: Doc
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-
-      - name: Install Rust
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          docs: true
-
-      - name: Run doc
-        run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
+          components: rust-docs
+      - run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
 
   conformance:
     name: Conformance
@@ -220,12 +199,12 @@ jobs:
             src:
               - '!crates/oxc_linter/**'
 
-      - name: Install Rust Toolchain
+      - uses: Boshen/setup-rust@main
         if: steps.filter.outputs.src == 'true'
-        uses: ./.github/actions/rustup
         with:
-          shared-key: 'conformance'
+          cache-key: conformance
           save-cache: ${{ github.ref_name == 'main' }}
+          tools: just
 
       - uses: mozilla-actions/sccache-action@v0.0.4
 
@@ -243,12 +222,6 @@ jobs:
         with:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Install just
-        if: steps.filter.outputs.src == 'true'
-        uses: taiki-e/install-action@v2
-        with:
-          tool: just
 
       - name: Check Conformance
         if: steps.filter.outputs.src == 'true'
