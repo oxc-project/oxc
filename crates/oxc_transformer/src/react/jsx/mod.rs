@@ -73,10 +73,10 @@ impl<'a> ReactJsx<'a> {
             jsx_self: ReactJsxSelf::new(ctx),
             jsx_source: ReactJsxSource::new(ctx),
             jsx_runtime_importer,
+            import_create_element: None,
             import_jsx: None,
             import_jsxs: None,
             import_fragment: None,
-            import_create_element: None,
         }
     }
 
