@@ -48,7 +48,7 @@ To give you an idea of its capabilities, here is an example from the [vscode] re
 
 ## ⚡️ Performance
 
-- The parser aim to be the fastest Rust-based ready-for-production parser.
+- The parser aims to be the fastest Rust-based ready-for-production parser.
 - The linter is more than 50 times faster than [ESLint], and scales with the number of CPU cores.
 
 <p float="left" align="middle">
