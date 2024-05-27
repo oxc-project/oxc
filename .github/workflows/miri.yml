@@ -28,10 +28,9 @@ jobs:
       - name: Checkout
         uses: taiki-e/checkout-action@v1
 
-      - name: Install Rust
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          shared-key: miri
+          cache-key: miri
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Install Miri

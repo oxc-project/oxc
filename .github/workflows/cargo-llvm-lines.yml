@@ -17,8 +17,7 @@ jobs:
       - name: Checkout
         uses: taiki-e/checkout-action@v1
 
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
 
       - name: Install cargo-llvm-lines
         uses: taiki-e/install-action@v2
