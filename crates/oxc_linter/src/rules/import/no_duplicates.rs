@@ -42,7 +42,7 @@ impl Rule for NoDuplicates {
                 );
                 (resolved_absolute_path, requested_modules)
             })
-            .group_by(|r| r.0.clone());
+            .chunk_by(|r| r.0.clone());
 
         let check_duplicates = |requested_modules: Option<&Vec<&RequestedModule>>| {
             if let Some(requested_modules) = requested_modules {
