@@ -230,14 +230,13 @@ impl<'a> ReactJsx<'a> {
     }
 
     fn add_import_create_element(&mut self, ctx: &mut TraverseCtx) {
-        let source = self.options.import_source.as_ref();
-        if self.is_script() {
-            if self.import_create_element.is_none() {
-                let var_name = self.add_require_statement("react", source.into(), true, ctx);
-                self.import_create_element = Some(var_name);
-            }
-        } else if self.import_create_element.is_none() {
-            let var_name = self.add_import_statement("createElement", source.into(), ctx);
+        if self.import_create_element.is_none() {
+            let source = self.options.import_source.as_ref();
+            let var_name = if self.is_script() {
+                self.add_require_statement("react", source.into(), true, ctx)
+            } else {
+                self.add_import_statement("createElement", source.into(), ctx)
+            };
             self.import_create_element = Some(var_name);
         }
     }
@@ -585,12 +584,14 @@ impl<'a> ReactJsx<'a> {
                 }
             }
             ReactJsxRuntime::Automatic => {
-                // "_React" and "_Fragment" here are temporary. Will be over-written in `update_fragment` after import is added
-                // and correct var name is known.
+                // "_reactJsxRuntime" and "_Fragment" here are temporary. Will be over-written
+                // in `update_fragment` after import is added and correct var name is known.
+                // We have to do like this so that imports are in same order as Babel's output,
+                // in order to pass Babel's tests.
                 if self.is_script() {
-                    self.get_static_member_expression("_React", "Fragment")
+                    self.get_static_member_expression("_reactJsxRuntime", "Fragment")
                 } else {
-                    let ident = IdentifierReference::new(SPAN, self.ctx.ast.new_atom("_Fragment"));
+                    let ident = IdentifierReference::new(SPAN, "_Fragment".into());
                     self.ast().identifier_reference_expression(ident)
                 }
             }
