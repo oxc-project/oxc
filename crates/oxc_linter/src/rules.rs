@@ -349,6 +349,7 @@ mod oxc {
     pub mod missing_throw;
     pub mod no_accumulating_spread;
     pub mod no_barrel_file;
+    pub mod no_const_enum;
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
     pub mod uninvoked_array_callback;
@@ -717,6 +718,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::missing_throw,
     oxc::no_accumulating_spread,
     oxc::no_barrel_file,
+    oxc::no_const_enum,
     oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
     oxc::uninvoked_array_callback,

@@ -1288,6 +1288,13 @@ impl<'a> Modifiers<'a> {
             .map_or(false, |modifiers| modifiers.iter().any(|modifier| modifier.kind == target))
     }
 
+    pub fn find<F>(&self, f: F) -> Option<&Modifier>
+    where
+        F: Fn(&Modifier) -> bool,
+    {
+        self.0.as_ref().and_then(|modifiers| modifiers.iter().find(|modifier| f(modifier)))
+    }
+
     pub fn is_contains_declare(&self) -> bool {
         self.contains(ModifierKind::Declare)
     }
