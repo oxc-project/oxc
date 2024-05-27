@@ -71,7 +71,8 @@ impl Default for SourceType {
 }
 
 /// Valid file extensions
-pub const VALID_EXTENSIONS: [&str; 8] = ["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
+pub const VALID_EXTENSIONS: [&str; 9] =
+    ["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx", "snap"];
 
 impl SourceType {
     pub fn is_script(self) -> bool {
@@ -188,7 +189,7 @@ impl SourceType {
             "mts" if file_name.ends_with(".d.mts") => Language::TypeScriptDefinition,
             "cts" if file_name.ends_with(".d.cts") => Language::TypeScriptDefinition,
             _ => {
-                debug_assert!(matches!(extension, "ts" | "mts" | "cts" | "tsx"));
+                debug_assert!(matches!(extension, "ts" | "mts" | "cts" | "tsx" | "snap"));
                 Language::TypeScript
             }
         };
