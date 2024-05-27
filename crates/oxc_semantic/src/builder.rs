@@ -52,8 +52,6 @@ pub struct SemanticBuilder<'a> {
     // and when we reach a value declaration we set it
     // to value like
     pub namespace_stack: Vec<SymbolId>,
-    /// If true, the current node is in the type definition
-    in_type_definition: bool,
     current_reference_flag: ReferenceFlag,
 
     // builders
@@ -93,7 +91,6 @@ impl<'a> SemanticBuilder<'a> {
             current_node_id: AstNodeId::new(0),
             current_node_flags: NodeFlags::empty(),
             current_symbol_flags: SymbolFlags::empty(),
-            in_type_definition: false,
             current_reference_flag: ReferenceFlag::empty(),
             current_scope_id,
             function_stack: vec![],
@@ -1875,30 +1872,26 @@ impl<'a> SemanticBuilder<'a> {
                     .get_bindings(self.current_scope_id)
                     .get(module_declaration.id.name().as_str());
                 self.namespace_stack.push(*symbol_id.unwrap());
-                self.in_type_definition = true;
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
                 type_alias_declaration.bind(self);
-                self.in_type_definition = true;
             }
             AstKind::TSInterfaceDeclaration(interface_declaration) => {
                 interface_declaration.bind(self);
-                self.in_type_definition = true;
             }
             AstKind::TSEnumDeclaration(enum_declaration) => {
                 enum_declaration.bind(self);
                 // TODO: const enum?
                 self.make_all_namespaces_valuelike();
-                self.in_type_definition = true;
-            }
-            AstKind::TSTypeParameterInstantiation(_) | AstKind::TSTypeAnnotation(_) => {
-                self.in_type_definition = true;
             }
             AstKind::TSEnumMember(enum_member) => {
                 enum_member.bind(self);
             }
             AstKind::TSTypeParameter(type_parameter) => {
                 type_parameter.bind(self);
+            }
+            AstKind::TSTypeName(_) => {
+                self.current_reference_flag = ReferenceFlag::Type;
             }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
@@ -1971,13 +1964,8 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSModuleBlock(_) => {
                 self.namespace_stack.pop();
             }
-            AstKind::TSEnumDeclaration(_)
-            | AstKind::TSTypeAliasDeclaration(_)
-            | AstKind::TSInterfaceDeclaration(_)
-            | AstKind::TSModuleDeclaration(_)
-            | AstKind::TSTypeParameterInstantiation(_)
-            | AstKind::TSTypeAnnotation(_) => {
-                self.in_type_definition = false;
+            AstKind::TSTypeName(_) => {
+                self.current_reference_flag -= ReferenceFlag::Type;
             }
             AstKind::UpdateExpression(_) => {
                 if self.is_not_expression_statement_parent() {
@@ -2030,9 +2018,7 @@ impl<'a> SemanticBuilder<'a> {
 
     /// Resolve reference flags for the current ast node.
     fn resolve_reference_usages(&self) -> ReferenceFlag {
-        if self.in_type_definition {
-            ReferenceFlag::Type
-        } else if self.current_reference_flag.is_write() {
+        if self.current_reference_flag.is_write() || self.current_reference_flag.is_type() {
             self.current_reference_flag
         } else {
             ReferenceFlag::Read
