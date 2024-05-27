@@ -234,8 +234,8 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_identifier_reference(ident, ctx);
     }
 
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.x0_typescript.transform_statement(stmt);
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_statement(stmt, ctx);
     }
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, _ctx: &mut TraverseCtx<'a>) {
