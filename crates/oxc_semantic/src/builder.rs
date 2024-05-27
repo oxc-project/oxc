@@ -1634,6 +1634,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(ident) = &func.id {
             self.visit_binding_identifier(ident);
         }
+
+        if let Some(parameters) = &func.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
+
         self.visit_formal_parameters(&func.params);
         if let Some(body) = &func.body {
             self.visit_function_body(body);
@@ -1646,9 +1651,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // self.cfg.put_x_in_register(AssignmentValue::Function(self.current_node_id));
         /* cfg */
 
-        if let Some(parameters) = &func.type_parameters {
-            self.visit_ts_type_parameter_declaration(parameters);
-        }
         if let Some(annotation) = &func.return_type {
             self.visit_ts_type_annotation(annotation);
         }
@@ -1782,20 +1784,47 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
     }
 
-    fn visit_ts_type_parameter(&mut self, ty: &TSTypeParameter<'a>) {
-        let kind = AstKind::TSTypeParameter(self.alloc(ty));
-        self.enter_scope(ScopeFlags::empty());
+    fn visit_ts_type_parameter_declaration(&mut self, ty: &TSTypeParameterDeclaration<'a>) {
+        let kind = AstKind::TSTypeParameterDeclaration(self.alloc(ty));
+        self.enter_scope(ScopeFlags::TypeParameters);
         ty.scope_id.set(Some(self.current_scope_id));
         self.enter_node(kind);
-        if let Some(constraint) = &ty.constraint {
-            self.visit_ts_type(constraint);
-        }
-
-        if let Some(default) = &ty.default {
-            self.visit_ts_type(default);
+        for ts_parameter in &ty.params {
+            self.visit_ts_type_parameter(ts_parameter);
         }
         self.leave_node(kind);
         self.leave_scope();
+    }
+
+    fn visit_ts_type_alias_declaration(&mut self, decl: &TSTypeAliasDeclaration<'a>) {
+        let kind = AstKind::TSTypeAliasDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        self.enter_scope(ScopeFlags::empty());
+        decl.scope_id.set(Some(self.current_scope_id));
+        self.visit_binding_identifier(&decl.id);
+        if let Some(parameters) = &decl.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
+        self.visit_ts_type(&decl.type_annotation);
+        self.leave_scope();
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_interface_declaration(&mut self, decl: &TSInterfaceDeclaration<'a>) {
+        let kind = AstKind::TSInterfaceDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        self.enter_scope(ScopeFlags::empty());
+        decl.scope_id.set(Some(self.current_scope_id));
+        self.visit_binding_identifier(&decl.id);
+        if let Some(parameters) = &decl.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
+
+        for body_decl in &decl.body.body {
+            self.visit_ts_signature(body_decl);
+        }
+        self.leave_scope();
+        self.leave_node(kind);
     }
 }
 
@@ -1872,6 +1901,9 @@ impl<'a> SemanticBuilder<'a> {
                     .get_bindings(self.current_scope_id)
                     .get(module_declaration.id.name().as_str());
                 self.namespace_stack.push(*symbol_id.unwrap());
+            }
+            AstKind::TSTypeParameterDeclaration(_) => {
+                self.remove_export_flag();
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
                 type_alias_declaration.bind(self);

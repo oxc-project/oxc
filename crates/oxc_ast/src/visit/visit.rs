@@ -1244,12 +1244,12 @@ pub mod walk {
         if let Some(ident) = &func.id {
             visitor.visit_binding_identifier(ident);
         }
+        if let Some(parameters) = &func.type_parameters {
+            visitor.visit_ts_type_parameter_declaration(parameters);
+        }
         visitor.visit_formal_parameters(&func.params);
         if let Some(body) = &func.body {
             visitor.visit_function_body(body);
-        }
-        if let Some(parameters) = &func.type_parameters {
-            visitor.visit_ts_type_parameter_declaration(parameters);
         }
         if let Some(annotation) = &func.return_type {
             visitor.visit_ts_type_annotation(annotation);
@@ -2603,11 +2603,13 @@ pub mod walk {
     ) {
         let kind = AstKind::TSTypeAliasDeclaration(visitor.alloc(decl));
         visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty());
         visitor.visit_binding_identifier(&decl.id);
         if let Some(parameters) = &decl.type_parameters {
             visitor.visit_ts_type_parameter_declaration(parameters);
         }
         visitor.visit_ts_type(&decl.type_annotation);
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -2617,6 +2619,7 @@ pub mod walk {
     ) {
         let kind = AstKind::TSInterfaceDeclaration(visitor.alloc(decl));
         visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty());
         visitor.visit_binding_identifier(&decl.id);
         if let Some(parameters) = &decl.type_parameters {
             visitor.visit_ts_type_parameter_declaration(parameters);
@@ -2624,6 +2627,7 @@ pub mod walk {
         for signature in &decl.body.body {
             visitor.visit_ts_signature(signature);
         }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -2788,7 +2792,6 @@ pub mod walk {
 
     pub fn walk_ts_type_parameter<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSTypeParameter<'a>) {
         let kind = AstKind::TSTypeParameter(visitor.alloc(ty));
-        visitor.enter_scope(ScopeFlags::empty());
         visitor.enter_node(kind);
         if let Some(constraint) = &ty.constraint {
             visitor.visit_ts_type(constraint);
@@ -2798,7 +2801,6 @@ pub mod walk {
             visitor.visit_ts_type(default);
         }
         visitor.leave_node(kind);
-        visitor.leave_scope();
     }
 
     pub fn walk_ts_type_parameter_instantiation<'a, V: Visit<'a>>(
@@ -2818,11 +2820,13 @@ pub mod walk {
         ty: &TSTypeParameterDeclaration<'a>,
     ) {
         let kind = AstKind::TSTypeParameterDeclaration(visitor.alloc(ty));
+        visitor.enter_scope(ScopeFlags::TypeParameters);
         visitor.enter_node(kind);
         for ts_parameter in &ty.params {
             visitor.visit_ts_type_parameter(ts_parameter);
         }
         visitor.leave_node(kind);
+        visitor.leave_scope();
     }
 
     pub fn walk_ts_constructor_type<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSConstructorType<'a>) {

@@ -621,7 +621,7 @@ pub struct TSTypeParameterInstantiation<'a> {
     pub params: Vec<'a, TSType<'a>>,
 }
 
-#[visited_node(scope(ScopeFlags::empty()))]
+#[visited_node()]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -634,7 +634,6 @@ pub struct TSTypeParameter<'a> {
     pub r#in: bool,
     pub out: bool,
     pub r#const: bool,
-    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 impl<'a> TSTypeParameter<'a> {
@@ -647,7 +646,7 @@ impl<'a> TSTypeParameter<'a> {
         out: bool,
         r#const: bool,
     ) -> Self {
-        Self { span, name, constraint, default, r#in, out, r#const, scope_id: Cell::default() }
+        Self { span, name, constraint, default, r#in, out, r#const }
     }
 }
 
@@ -663,18 +662,32 @@ impl<'a> Hash for TSTypeParameter<'a> {
     }
 }
 
-#[visited_node]
-#[derive(Debug, Hash)]
+#[visited_node(scope(ScopeFlags::TypeParameters))]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeParameterDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub params: Vec<'a, TSTypeParameter<'a>>,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
-#[visited_node]
-#[derive(Debug, Hash)]
+impl<'a> TSTypeParameterDeclaration<'a> {
+    pub fn new(span: Span, params: Vec<'a, TSTypeParameter<'a>>) -> Self {
+        Self { span, params, scope_id: Cell::default() }
+    }
+}
+
+impl Hash for TSTypeParameterDeclaration<'_> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.params.hash(state);
+    }
+}
+
+#[visited_node(scope(ScopeFlags::empty()), enter_scope_before(type_annotation))]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeAliasDeclaration<'a> {
@@ -685,6 +698,29 @@ pub struct TSTypeAliasDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     /// Valid Modifiers: `declare`, `export`
     pub modifiers: Modifiers<'a>,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+impl<'a> TSTypeAliasDeclaration<'a> {
+    pub fn new(
+        span: Span,
+        id: BindingIdentifier<'a>,
+        type_annotation: TSType<'a>,
+        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+        modifiers: Modifiers<'a>,
+    ) -> Self {
+        Self { span, id, type_annotation, type_parameters, modifiers, scope_id: Cell::default() }
+    }
+}
+
+impl Hash for TSTypeAliasDeclaration<'_> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.id.hash(state);
+        self.type_annotation.hash(state);
+        self.type_parameters.hash(state);
+        self.modifiers.hash(state);
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -710,8 +746,8 @@ pub struct TSClassImplements<'a> {
 /// Interface Declaration
 ///
 ///   interface `BindingIdentifier` `TypeParameters_opt` `InterfaceExtendsClause_opt` `ObjectType`
-#[visited_node]
-#[derive(Debug, Hash)]
+#[visited_node(scope(ScopeFlags::empty()), enter_scope_before(body))]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSInterfaceDeclaration<'a> {
@@ -723,6 +759,31 @@ pub struct TSInterfaceDeclaration<'a> {
     pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
     /// Valid Modifiers: `export`, `default`, `declare`
     pub modifiers: Modifiers<'a>,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+impl<'a> TSInterfaceDeclaration<'a> {
+    pub fn new(
+        span: Span,
+        id: BindingIdentifier<'a>,
+        body: Box<'a, TSInterfaceBody<'a>>,
+        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
+        modifiers: Modifiers<'a>,
+    ) -> Self {
+        Self { span, id, body, type_parameters, extends, modifiers, scope_id: Cell::default() }
+    }
+}
+
+impl Hash for TSInterfaceDeclaration<'_> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.id.hash(state);
+        self.body.hash(state);
+        self.type_parameters.hash(state);
+        self.extends.hash(state);
+        self.modifiers.hash(state);
+    }
 }
 
 #[visited_node]

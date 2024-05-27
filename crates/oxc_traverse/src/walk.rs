@@ -4366,14 +4366,6 @@ pub(crate) unsafe fn walk_ts_type_parameter<'a, Tr: Traverse<'a>>(
     node: *mut TSTypeParameter<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
-    let mut previous_scope_id = None;
-    if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_TS_TYPE_PARAMETER_SCOPE_ID)
-        as *mut Cell<Option<ScopeId>>))
-        .get()
-    {
-        previous_scope_id = Some(ctx.current_scope_id());
-        ctx.set_current_scope_id(scope_id);
-    }
     traverser.enter_ts_type_parameter(&mut *node, ctx);
     ctx.push_stack(Ancestor::TSTypeParameterName(ancestor::TSTypeParameterWithoutName(node)));
     walk_binding_identifier(
@@ -4395,9 +4387,6 @@ pub(crate) unsafe fn walk_ts_type_parameter<'a, Tr: Traverse<'a>>(
     }
     ctx.pop_stack();
     traverser.exit_ts_type_parameter(&mut *node, ctx);
-    if let Some(previous_scope_id) = previous_scope_id {
-        ctx.set_current_scope_id(previous_scope_id);
-    }
 }
 
 pub(crate) unsafe fn walk_ts_type_parameter_declaration<'a, Tr: Traverse<'a>>(
@@ -4405,6 +4394,15 @@ pub(crate) unsafe fn walk_ts_type_parameter_declaration<'a, Tr: Traverse<'a>>(
     node: *mut TSTypeParameterDeclaration<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
+    let mut previous_scope_id = None;
+    if let Some(scope_id) = (*((node as *mut u8)
+        .add(ancestor::OFFSET_TS_TYPE_PARAMETER_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+    {
+        previous_scope_id = Some(ctx.current_scope_id());
+        ctx.set_current_scope_id(scope_id);
+    }
     traverser.enter_ts_type_parameter_declaration(&mut *node, ctx);
     ctx.push_stack(Ancestor::TSTypeParameterDeclarationParams(
         ancestor::TSTypeParameterDeclarationWithoutParams(node),
@@ -4417,6 +4415,9 @@ pub(crate) unsafe fn walk_ts_type_parameter_declaration<'a, Tr: Traverse<'a>>(
     }
     ctx.pop_stack();
     traverser.exit_ts_type_parameter_declaration(&mut *node, ctx);
+    if let Some(previous_scope_id) = previous_scope_id {
+        ctx.set_current_scope_id(previous_scope_id);
+    }
 }
 
 pub(crate) unsafe fn walk_ts_type_alias_declaration<'a, Tr: Traverse<'a>>(
@@ -4434,6 +4435,15 @@ pub(crate) unsafe fn walk_ts_type_alias_declaration<'a, Tr: Traverse<'a>>(
             as *mut BindingIdentifier,
         ctx,
     );
+    let mut previous_scope_id = None;
+    if let Some(scope_id) = (*((node as *mut u8)
+        .add(ancestor::OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+    {
+        previous_scope_id = Some(ctx.current_scope_id());
+        ctx.set_current_scope_id(scope_id);
+    }
     ctx.retag_stack(AncestorType::TSTypeAliasDeclarationTypeAnnotation);
     walk_ts_type(
         traverser,
@@ -4450,6 +4460,9 @@ pub(crate) unsafe fn walk_ts_type_alias_declaration<'a, Tr: Traverse<'a>>(
     }
     ctx.pop_stack();
     traverser.exit_ts_type_alias_declaration(&mut *node, ctx);
+    if let Some(previous_scope_id) = previous_scope_id {
+        ctx.set_current_scope_id(previous_scope_id);
+    }
 }
 
 pub(crate) unsafe fn walk_ts_class_implements<'a, Tr: Traverse<'a>>(
@@ -4492,6 +4505,15 @@ pub(crate) unsafe fn walk_ts_interface_declaration<'a, Tr: Traverse<'a>>(
             as *mut BindingIdentifier,
         ctx,
     );
+    let mut previous_scope_id = None;
+    if let Some(scope_id) = (*((node as *mut u8)
+        .add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+    {
+        previous_scope_id = Some(ctx.current_scope_id());
+        ctx.set_current_scope_id(scope_id);
+    }
     ctx.retag_stack(AncestorType::TSInterfaceDeclarationBody);
     walk_ts_interface_body(
         traverser,
@@ -4517,6 +4539,9 @@ pub(crate) unsafe fn walk_ts_interface_declaration<'a, Tr: Traverse<'a>>(
     }
     ctx.pop_stack();
     traverser.exit_ts_interface_declaration(&mut *node, ctx);
+    if let Some(previous_scope_id) = previous_scope_id {
+        ctx.set_current_scope_id(previous_scope_id);
+    }
 }
 
 pub(crate) unsafe fn walk_ts_interface_body<'a, Tr: Traverse<'a>>(

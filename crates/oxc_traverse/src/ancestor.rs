@@ -9246,7 +9246,6 @@ pub(crate) const OFFSET_TS_TYPE_PARAMETER_DEFAULT: usize = offset_of!(TSTypePara
 pub(crate) const OFFSET_TS_TYPE_PARAMETER_IN: usize = offset_of!(TSTypeParameter, r#in);
 pub(crate) const OFFSET_TS_TYPE_PARAMETER_OUT: usize = offset_of!(TSTypeParameter, out);
 pub(crate) const OFFSET_TS_TYPE_PARAMETER_CONST: usize = offset_of!(TSTypeParameter, r#const);
-pub(crate) const OFFSET_TS_TYPE_PARAMETER_SCOPE_ID: usize = offset_of!(TSTypeParameter, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -9287,14 +9286,6 @@ impl<'a> TSTypeParameterWithoutName<'a> {
     #[inline]
     pub fn r#const(&self) -> &bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_CONST) as *const bool) }
-    }
-
-    #[inline]
-    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
     }
 }
 
@@ -9338,14 +9329,6 @@ impl<'a> TSTypeParameterWithoutConstraint<'a> {
     pub fn r#const(&self) -> &bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_CONST) as *const bool) }
     }
-
-    #[inline]
-    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
 }
 
 #[repr(transparent)]
@@ -9388,20 +9371,14 @@ impl<'a> TSTypeParameterWithoutDefault<'a> {
     pub fn r#const(&self) -> &bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_CONST) as *const bool) }
     }
-
-    #[inline]
-    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
 }
 
 pub(crate) const OFFSET_TS_TYPE_PARAMETER_DECLARATION_SPAN: usize =
     offset_of!(TSTypeParameterDeclaration, span);
 pub(crate) const OFFSET_TS_TYPE_PARAMETER_DECLARATION_PARAMS: usize =
     offset_of!(TSTypeParameterDeclaration, params);
+pub(crate) const OFFSET_TS_TYPE_PARAMETER_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSTypeParameterDeclaration, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -9416,6 +9393,14 @@ impl<'a> TSTypeParameterDeclarationWithoutParams<'a> {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_DECLARATION_SPAN) as *const Span)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_SPAN: usize =
@@ -9428,6 +9413,8 @@ pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_PARAMETERS: usize =
     offset_of!(TSTypeAliasDeclaration, type_parameters);
 pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_MODIFIERS: usize =
     offset_of!(TSTypeAliasDeclaration, modifiers);
+pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSTypeAliasDeclaration, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -9462,6 +9449,14 @@ impl<'a> TSTypeAliasDeclarationWithoutId<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_MODIFIERS)
                 as *const Modifiers<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -9503,6 +9498,14 @@ impl<'a> TSTypeAliasDeclarationWithoutTypeAnnotation<'a> {
                 as *const Modifiers<'a>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -9540,6 +9543,14 @@ impl<'a> TSTypeAliasDeclarationWithoutTypeParameters<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_MODIFIERS)
                 as *const Modifiers<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -9599,6 +9610,8 @@ pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_EXTENDS: usize =
     offset_of!(TSInterfaceDeclaration, extends);
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_MODIFIERS: usize =
     offset_of!(TSInterfaceDeclaration, modifiers);
+pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSInterfaceDeclaration, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -9641,6 +9654,14 @@ impl<'a> TSInterfaceDeclarationWithoutId<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_MODIFIERS)
                 as *const Modifiers<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -9686,6 +9707,14 @@ impl<'a> TSInterfaceDeclarationWithoutBody<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_MODIFIERS)
                 as *const Modifiers<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -9735,6 +9764,14 @@ impl<'a> TSInterfaceDeclarationWithoutTypeParameters<'a> {
                 as *const Modifiers<'a>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -9778,6 +9815,14 @@ impl<'a> TSInterfaceDeclarationWithoutExtends<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_MODIFIERS)
                 as *const Modifiers<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }

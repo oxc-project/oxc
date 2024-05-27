@@ -1605,7 +1605,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         params: Vec<'a, TSTypeParameter<'a>>,
     ) -> Box<'a, TSTypeParameterDeclaration<'a>> {
-        self.alloc(TSTypeParameterDeclaration { span, params })
+        self.alloc(TSTypeParameterDeclaration::new(span, params))
     }
 
     #[inline]
@@ -1829,14 +1829,14 @@ impl<'a> AstBuilder<'a> {
         extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
         modifiers: Modifiers<'a>,
     ) -> Declaration<'a> {
-        Declaration::TSInterfaceDeclaration(self.alloc(TSInterfaceDeclaration {
+        Declaration::TSInterfaceDeclaration(self.alloc(TSInterfaceDeclaration::new(
             span,
             id,
             body,
             type_parameters,
             extends,
             modifiers,
-        }))
+        )))
     }
 
     #[inline]
@@ -1848,13 +1848,13 @@ impl<'a> AstBuilder<'a> {
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         modifiers: Modifiers<'a>,
     ) -> Declaration<'a> {
-        Declaration::TSTypeAliasDeclaration(self.alloc(TSTypeAliasDeclaration {
+        Declaration::TSTypeAliasDeclaration(self.alloc(TSTypeAliasDeclaration::new(
             span,
             id,
             type_annotation,
             type_parameters,
             modifiers,
-        }))
+        )))
     }
 
     #[inline]
