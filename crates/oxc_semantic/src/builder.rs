@@ -332,23 +332,19 @@ impl<'a> SemanticBuilder<'a> {
         let parent_scope_id =
             self.scope.get_parent_id(current_scope_id).unwrap_or(current_scope_id);
 
-        // If closest scope that has TypeParameters flag is found, try to resolve the reference from there.
+        // Find the symbol in the type parameters of the parent scope's children
         // type Array<T> = T[];
         //           ^^^ TypeParameters
         let symbol_id = {
-            // Find the closest scope that flag is TypeParameters
-            let mut scope_ids = vec![];
-            for (scope_id, scope_flags) in
-                self.scope.flags().iter_enumerated().skip(usize::from(current_scope_id) + 1)
-            {
-                if !scope_flags.is_type_parameters() {
-                    break;
-                }
-                scope_ids.push(scope_id);
-            }
-
-            // Get the symbol from the closest scope that has TypeParameters flag
-            scope_ids.iter().rev().find_map(|scope_id| self.scope.get_binding(*scope_id, &name))
+            self.scope.get_child_ids(current_scope_id).and_then(|child_ids| {
+                child_ids.iter().rev().find_map(|scope_id| {
+                    if self.scope.get_flags(*scope_id).is_type_parameters() {
+                        self.scope.get_binding(*scope_id, &name)
+                    } else {
+                        None
+                    }
+                })
+            })
         };
 
         if let Some(symbol_id) =
@@ -1818,36 +1814,36 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
     }
 
-    fn visit_ts_type_alias_declaration(&mut self, decl: &TSTypeAliasDeclaration<'a>) {
-        let kind = AstKind::TSTypeAliasDeclaration(self.alloc(decl));
-        self.enter_node(kind);
-        self.enter_scope(ScopeFlags::empty());
-        decl.scope_id.set(Some(self.current_scope_id));
-        self.visit_binding_identifier(&decl.id);
-        if let Some(parameters) = &decl.type_parameters {
-            self.visit_ts_type_parameter_declaration(parameters);
-        }
-        self.visit_ts_type(&decl.type_annotation);
-        self.leave_scope();
-        self.leave_node(kind);
-    }
+    // fn visit_ts_type_alias_declaration(&mut self, decl: &TSTypeAliasDeclaration<'a>) {
+    //     let kind = AstKind::TSTypeAliasDeclaration(self.alloc(decl));
+    //     self.enter_node(kind);
+    //     self.enter_scope(ScopeFlags::empty());
+    //     decl.scope_id.set(Some(self.current_scope_id));
+    //     self.visit_binding_identifier(&decl.id);
+    //     if let Some(parameters) = &decl.type_parameters {
+    //         self.visit_ts_type_parameter_declaration(parameters);
+    //     }
+    //     self.visit_ts_type(&decl.type_annotation);
+    //     self.leave_scope();
+    //     self.leave_node(kind);
+    // }
 
-    fn visit_ts_interface_declaration(&mut self, decl: &TSInterfaceDeclaration<'a>) {
-        let kind = AstKind::TSInterfaceDeclaration(self.alloc(decl));
-        self.enter_node(kind);
-        self.enter_scope(ScopeFlags::empty());
-        decl.scope_id.set(Some(self.current_scope_id));
-        self.visit_binding_identifier(&decl.id);
-        if let Some(parameters) = &decl.type_parameters {
-            self.visit_ts_type_parameter_declaration(parameters);
-        }
+    // fn visit_ts_interface_declaration(&mut self, decl: &TSInterfaceDeclaration<'a>) {
+    //     let kind = AstKind::TSInterfaceDeclaration(self.alloc(decl));
+    //     self.enter_node(kind);
+    //     self.enter_scope(ScopeFlags::empty());
+    //     decl.scope_id.set(Some(self.current_scope_id));
+    //     self.visit_binding_identifier(&decl.id);
+    //     if let Some(parameters) = &decl.type_parameters {
+    //         self.visit_ts_type_parameter_declaration(parameters);
+    //     }
 
-        for body_decl in &decl.body.body {
-            self.visit_ts_signature(body_decl);
-        }
-        self.leave_scope();
-        self.leave_node(kind);
-    }
+    //     for body_decl in &decl.body.body {
+    //         self.visit_ts_signature(body_decl);
+    //     }
+    //     self.leave_scope();
+    //     self.leave_node(kind);
+    // }
 }
 
 impl<'a> SemanticBuilder<'a> {
