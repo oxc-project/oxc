@@ -351,6 +351,7 @@ mod oxc {
     pub mod no_async_await;
     pub mod no_barrel_file;
     pub mod no_const_enum;
+    pub mod no_rest_spread_properties;
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
     pub mod uninvoked_array_callback;
@@ -715,6 +716,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::const_comparisons,
     oxc::double_comparisons,
     oxc::erasing_op,
+    oxc::no_rest_spread_properties,
     oxc::misrefactored_assign_op,
     oxc::missing_throw,
     oxc::no_accumulating_spread,
