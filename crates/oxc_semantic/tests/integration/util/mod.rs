@@ -141,6 +141,15 @@ impl<'a> SemanticTester<'a> {
         )
     }
 
+    /// Find first symbol by name in the source code.
+    ///
+    /// ## Fails
+    /// 1. No symbol with the given name exists,
+    #[allow(dead_code)]
+    pub fn has_symbol(&self, name: &str) -> SymbolTester {
+        SymbolTester::new_first_binding(self, self.build(), name)
+    }
+
     /// Tests that a symbol with the given name exists at the top-level scope and provides a
     /// wrapper for writing assertions about the found symbol.
     ///

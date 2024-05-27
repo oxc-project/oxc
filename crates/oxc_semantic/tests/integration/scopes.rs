@@ -1,4 +1,4 @@
-use oxc_semantic::ScopeFlags;
+use oxc_semantic::{ScopeFlags, SymbolFlags};
 
 use crate::util::{Expect, SemanticTester};
 
@@ -135,4 +135,107 @@ fn test_catch_clause_parameters() {
     .has_root_symbol("a")
     .has_number_of_references(1)
     .test();
+}
+
+#[test]
+fn test_multiple_ts_type_alias_declaration() {
+    let tester = SemanticTester::ts(
+        "
+        type A<AB> = AB
+        type B<AB> = AB
+    ",
+    );
+
+    tester
+        .has_symbol("AB")
+        .contains_flags(SymbolFlags::TypeParameter)
+        .has_number_of_references(1)
+        .test();
+}
+
+#[test]
+fn test_function_with_type_parameter() {
+    let tester = SemanticTester::ts(
+        "
+        function mdl<M>() {
+            function mdl2() {
+                function mdl3() {
+                    return '' as M;
+                }
+            }
+        }
+        function kfc<K>() {
+            function kfc2<K>() {
+                function kfc3<K>() {
+                    return '' as K;
+                }
+            }
+        }
+        ",
+    );
+
+    tester.has_symbol("M").has_number_of_references(1).test();
+    tester.has_symbol("K").has_number_of_references(0).test();
+}
+
+#[test]
+fn test_class_with_type_parameter() {
+    let tester = SemanticTester::ts(
+        "
+        class Cls<T, D, F = Array<T>> {
+            a: T;
+            method<K>(b: T | K) {}
+            func() {
+                type D = T;
+                return null as D
+            }
+        }
+        ",
+    );
+
+    tester.has_symbol("T").has_number_of_references(4).test();
+    tester.has_symbol("K").has_number_of_references(1).test();
+    tester.has_symbol("D").has_number_of_references(0).test();
+}
+
+#[test]
+fn test_ts_mapped_type() {
+    let tester = SemanticTester::ts(
+        "
+        type M<T> = { [K in keyof T]: T[K] };
+        ",
+    );
+
+    tester.has_symbol("T").has_number_of_references(2).test();
+    tester.has_symbol("K").has_number_of_references(1).test();
+}
+
+#[test]
+fn test_ts_interface_declaration_with_type_parameter() {
+    let tester = SemanticTester::ts(
+        "
+        type A = any;
+        interface ITA<A> {
+            a: A;
+        }
+        interface ITB<B> {
+            b: B;
+        }
+        ",
+    );
+
+    tester.has_symbol("A").has_number_of_references(0).test();
+    tester.has_symbol("B").has_number_of_references(1).test();
+}
+
+#[test]
+fn test_ts_infer_type() {
+    let tester = SemanticTester::ts(
+        "
+        type T = T extends infer U ? U : never;
+        ",
+    );
+
+    tester.has_symbol("T").has_number_of_references(1).test();
+    tester.has_symbol("U").has_number_of_references(1).test();
 }

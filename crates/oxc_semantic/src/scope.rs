@@ -87,6 +87,10 @@ impl ScopeTree {
         &self.unresolved_references[self.root_scope_id()]
     }
 
+    pub fn flags(&self) -> &IndexVec<ScopeId, ScopeFlags> {
+        &self.flags
+    }
+
     pub fn get_flags(&self, scope_id: ScopeId) -> ScopeFlags {
         self.flags[scope_id]
     }

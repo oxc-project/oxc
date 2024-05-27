@@ -1,6 +1,6 @@
 //! Semantic Builder
 
-use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
+use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc, vec};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
@@ -328,10 +328,32 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn resolve_reference_ids(&mut self, name: CompactStr, reference_ids: Vec<ReferenceId>) {
+        let current_scope_id = self.current_scope_id;
         let parent_scope_id =
-            self.scope.get_parent_id(self.current_scope_id).unwrap_or(self.current_scope_id);
+            self.scope.get_parent_id(current_scope_id).unwrap_or(current_scope_id);
 
-        if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, &name) {
+        // If closest scope that has TypeParameters flag is found, try to resolve the reference from there.
+        // type Array<T> = T[];
+        //           ^^^ TypeParameters
+        let symbol_id = {
+            // Find the closest scope that flag is TypeParameters
+            let mut scope_ids = vec![];
+            for (scope_id, scope_flags) in
+                self.scope.flags().iter_enumerated().skip(usize::from(current_scope_id) + 1)
+            {
+                if !scope_flags.is_type_parameters() {
+                    break;
+                }
+                scope_ids.push(scope_id);
+            }
+
+            // Get the symbol from the closest scope that has TypeParameters flag
+            scope_ids.iter().rev().find_map(|scope_id| self.scope.get_binding(*scope_id, &name))
+        };
+
+        if let Some(symbol_id) =
+            symbol_id.or_else(|| self.scope.get_binding(current_scope_id, &name))
+        {
             for reference_id in &reference_ids {
                 self.symbols.references[*reference_id].set_symbol_id(symbol_id);
             }
