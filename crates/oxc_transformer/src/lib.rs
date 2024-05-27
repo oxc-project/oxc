@@ -92,8 +92,8 @@ impl<'a> Transformer<'a> {
 }
 
 impl<'a> Traverse<'a> for Transformer<'a> {
-    fn enter_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.x0_typescript.transform_program(program);
+    fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_program(program, ctx);
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
