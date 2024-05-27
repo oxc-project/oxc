@@ -1,7 +1,7 @@
 use std::hash::BuildHasherDefault;
 
 use indexmap::IndexMap;
-use oxc_ast::{ast::Expression, syntax_directed_operations::GatherNodeParts};
+
 use oxc_index::IndexVec;
 use oxc_span::CompactStr;
 pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
@@ -151,6 +151,10 @@ impl ScopeTree {
         self.bindings[scope_id].insert(name, symbol_id);
     }
 
+    pub fn remove_binding(&mut self, scope_id: ScopeId, name: &CompactStr) {
+        self.bindings[scope_id].shift_remove(name);
+    }
+
     pub(crate) fn add_unresolved_reference(
         &mut self,
         scope_id: ScopeId,
@@ -174,31 +178,5 @@ impl ScopeTree {
         scope_id: ScopeId,
     ) -> &mut UnresolvedReferences {
         &mut self.unresolved_references[scope_id]
-    }
-
-    // TODO:
-    // <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L543>
-    pub fn generate_uid_based_on_node(&self, expr: &Expression) -> CompactStr {
-        let mut parts = std::vec::Vec::with_capacity(1);
-        expr.gather(&mut |part| parts.push(part));
-        let name = parts.join("$");
-        let name = name.trim_start_matches('_');
-        self.generate_uid(name)
-    }
-
-    // <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L495>
-    pub fn generate_uid(&self, name: &str) -> CompactStr {
-        for i in 0.. {
-            let name = Self::internal_generate_uid(name, i);
-            if !self.has_binding(ScopeId::new(0), &name) {
-                return name;
-            }
-        }
-        unreachable!()
-    }
-
-    // <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L523>
-    fn internal_generate_uid(name: &str, i: i32) -> CompactStr {
-        CompactStr::from(if i > 1 { format!("_{name}{i}") } else { format!("_{name}") })
     }
 }

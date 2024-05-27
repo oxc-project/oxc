@@ -22,10 +22,9 @@ jobs:
       - name: Checkout
         uses: taiki-e/checkout-action@v1
 
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          shared-key: 'wasm'
+          cache-key: 'wasm'
 
       - name: Install pnpm
         working-directory: website

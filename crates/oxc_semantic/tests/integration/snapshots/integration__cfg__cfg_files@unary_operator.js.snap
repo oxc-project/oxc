@@ -1,0 +1,8 @@
+---
+source: crates/oxc_semantic/tests/integration/cfg.rs
+expression: output.basic_blocks_printed()
+input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/unary_operator.js
+---
+bb0: {
+
+}

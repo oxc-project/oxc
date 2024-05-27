@@ -122,7 +122,7 @@ impl RuleWithSeverity {
 
 #[cfg(test)]
 mod test {
-    use crate::RULES;
+    use crate::rules::RULES;
 
     #[test]
     fn ensure_documentation() {

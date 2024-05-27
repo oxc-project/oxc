@@ -1,0 +1,267 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OxlintConfig",
+  "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json`\n\n::: danger NOTE\n\nOnly the `.json` format is supported.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json { \"env\": { \"browser\": true }, \"globals\": { \"foo\": \"readonly\" }, \"settings\": { }, \"rules\": { \"eqeqeq\": \"warn\" } } ```",
+  "type": "object",
+  "properties": {
+    "env": {
+      "$ref": "#/definitions/OxlintEnv"
+    },
+    "globals": {
+      "$ref": "#/definitions/OxlintGlobals"
+    },
+    "rules": {
+      "description": "See [Oxlint Rules](./rules)",
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintRules"
+        }
+      ]
+    },
+    "settings": {
+      "$ref": "#/definitions/OxlintSettings"
+    }
+  },
+  "definitions": {
+    "CustomComponent": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "required": [
+            "attribute",
+            "name"
+          ],
+          "properties": {
+            "attribute": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "attributes",
+            "name"
+          ],
+          "properties": {
+            "attributes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "DummyRule": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": true
+        }
+      ]
+    },
+    "GlobalValue": {
+      "type": "string",
+      "enum": [
+        "readonly",
+        "writeable",
+        "off"
+      ]
+    },
+    "JSDocPluginSettings": {
+      "type": "object",
+      "properties": {
+        "augmentsExtendsReplacesDocs": {
+          "description": "Only for `require-(yields|returns|description|example|param|throws)` rule",
+          "default": false,
+          "type": "boolean"
+        },
+        "exemptDestructuredRootsFromChecks": {
+          "description": "Only for `require-param-type` and `require-param-description` rule",
+          "default": false,
+          "type": "boolean"
+        },
+        "ignoreInternal": {
+          "description": "For all rules but NOT apply to `empty-tags` rule",
+          "default": false,
+          "type": "boolean"
+        },
+        "ignorePrivate": {
+          "description": "For all rules but NOT apply to `check-access` and `empty-tags` rule",
+          "default": false,
+          "type": "boolean"
+        },
+        "ignoreReplacesDocs": {
+          "description": "Only for `require-(yields|returns|description|example|param|throws)` rule",
+          "default": true,
+          "type": "boolean"
+        },
+        "implementsReplacesDocs": {
+          "description": "Only for `require-(yields|returns|description|example|param|throws)` rule",
+          "default": false,
+          "type": "boolean"
+        },
+        "overrideReplacesDocs": {
+          "description": "Only for `require-(yields|returns|description|example|param|throws)` rule",
+          "default": true,
+          "type": "boolean"
+        },
+        "tagNamePreference": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/TagNamePreference"
+          }
+        }
+      }
+    },
+    "JSXA11yPluginSettings": {
+      "type": "object",
+      "properties": {
+        "components": {
+          "default": {},
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "polymorphicPropName": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "NextPluginSettings": {
+      "type": "object",
+      "properties": {
+        "rootDir": {
+          "$ref": "#/definitions/OneOrMany_for_String"
+        }
+      }
+    },
+    "OneOrMany_for_String": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "OxlintEnv": {
+      "description": "Predefine global variables.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "OxlintGlobals": {
+      "description": "Add or remove global variables.",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/GlobalValue"
+      }
+    },
+    "OxlintRules": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/DummyRule"
+      }
+    },
+    "OxlintSettings": {
+      "description": "Shared settings for plugins",
+      "type": "object",
+      "properties": {
+        "jsdoc": {
+          "$ref": "#/definitions/JSDocPluginSettings"
+        },
+        "jsx-a11y": {
+          "$ref": "#/definitions/JSXA11yPluginSettings"
+        },
+        "next": {
+          "$ref": "#/definitions/NextPluginSettings"
+        },
+        "react": {
+          "$ref": "#/definitions/ReactPluginSettings"
+        }
+      }
+    },
+    "ReactPluginSettings": {
+      "type": "object",
+      "properties": {
+        "formComponents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CustomComponent"
+          }
+        },
+        "linkComponents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CustomComponent"
+          }
+        }
+      }
+    },
+    "TagNamePreference": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "required": [
+            "message",
+            "replacement"
+          ],
+          "properties": {
+            "message": {
+              "type": "string"
+            },
+            "replacement": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "message"
+          ],
+          "properties": {
+            "message": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    }
+  }
+}

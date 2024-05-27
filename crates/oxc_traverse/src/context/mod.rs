@@ -1,7 +1,11 @@
 use oxc_allocator::{Allocator, Box};
 use oxc_ast::AstBuilder;
 use oxc_semantic::{ScopeTree, SymbolTable};
-use oxc_syntax::scope::{ScopeFlags, ScopeId};
+use oxc_span::CompactStr;
+use oxc_syntax::{
+    scope::{ScopeFlags, ScopeId},
+    symbol::SymbolFlags,
+};
 
 use crate::ancestor::{Ancestor, AncestorType};
 
@@ -268,6 +272,25 @@ impl<'a> TraverseCtx<'a> {
         F: Fn(ScopeFlags) -> FinderRet<O>,
     {
         self.scoping.find_scope_by_flags(finder)
+    }
+
+    /// Generate UID.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_uid`.
+    pub fn generate_uid(
+        &mut self,
+        name: &str,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> CompactStr {
+        self.scoping.generate_uid(name, scope_id, flags)
+    }
+
+    /// Generate UID in current scope.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_uid_in_current_scope`.
+    pub fn generate_uid_in_current_scope(&mut self, name: &str, flags: SymbolFlags) -> CompactStr {
+        self.scoping.generate_uid_in_current_scope(name, flags)
     }
 }
 

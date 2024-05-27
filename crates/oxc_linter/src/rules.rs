@@ -25,6 +25,7 @@ mod import {
 mod eslint {
     pub mod array_callback_return;
     pub mod constructor_super;
+    pub mod default_case;
     pub mod default_case_last;
     pub mod default_param_last;
     pub mod eqeqeq;
@@ -81,6 +82,7 @@ mod eslint {
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
     pub mod no_regex_spaces;
+    pub mod no_restricted_globals;
     pub mod no_script_url;
     pub mod no_self_assign;
     pub mod no_self_compare;
@@ -97,6 +99,7 @@ mod eslint {
     pub mod no_unused_labels;
     pub mod no_unused_private_class_members;
     pub mod no_useless_catch;
+    pub mod no_useless_concat;
     pub mod no_useless_escape;
     pub mod no_useless_rename;
     pub mod no_var;
@@ -104,6 +107,7 @@ mod eslint {
     pub mod no_with;
     pub mod prefer_exponentiation_operator;
     pub mod radix;
+    pub mod require_await;
     pub mod require_yield;
     pub mod symbol_description;
     pub mod unicode_bom;
@@ -117,6 +121,7 @@ mod typescript {
     pub mod ban_ts_comment;
     pub mod ban_tslint_comment;
     pub mod ban_types;
+    pub mod consistent_indexed_object_style;
     pub mod consistent_type_definitions;
     pub mod no_duplicate_enum_values;
     pub mod no_empty_interface;
@@ -234,6 +239,7 @@ mod unicorn {
     pub mod no_instanceof_array;
     pub mod no_invalid_remove_event_listener;
     pub mod no_lonely_if;
+    pub mod no_magic_array_flat_depth;
     pub mod no_negated_condition;
     pub mod no_nested_ternary;
     pub mod no_new_array;
@@ -381,6 +387,8 @@ mod jsdoc {
     pub mod require_property_description;
     pub mod require_property_name;
     pub mod require_property_type;
+    pub mod require_returns;
+    pub mod require_returns_description;
     pub mod require_yields;
 }
 
@@ -391,6 +399,7 @@ mod tree_shaking {
 oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::constructor_super,
+    eslint::default_case,
     eslint::default_case_last,
     eslint::default_param_last,
     eslint::eqeqeq,
@@ -409,6 +418,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_caller,
     eslint::no_case_declarations,
     eslint::no_class_assign,
+    eslint::require_await,
     eslint::no_compare_neg_zero,
     eslint::no_cond_assign,
     eslint::no_console,
@@ -463,6 +473,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_useless_catch,
     eslint::no_useless_escape,
     eslint::no_useless_rename,
+    eslint::no_useless_concat,
     eslint::no_var,
     eslint::no_void,
     eslint::no_with,
@@ -474,6 +485,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::valid_typeof,
     eslint::no_await_in_loop,
     eslint::no_new_native_nonconstructor,
+    eslint::no_restricted_globals,
     eslint::prefer_exponentiation_operator,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
@@ -482,6 +494,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_enum_initializers,
     typescript::ban_types,
     typescript::consistent_type_definitions,
+    typescript::consistent_indexed_object_style,
     typescript::no_duplicate_enum_values,
     typescript::no_empty_interface,
     typescript::no_explicit_any,
@@ -560,6 +573,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_instanceof_array,
     unicorn::no_invalid_remove_event_listener,
     unicorn::no_lonely_if,
+    unicorn::no_magic_array_flat_depth,
     unicorn::no_negated_condition,
     unicorn::no_nested_ternary,
     unicorn::no_new_array,
@@ -732,6 +746,8 @@ oxc_macros::declare_all_lint_rules! {
     jsdoc::require_property_type,
     jsdoc::require_property_name,
     jsdoc::require_property_description,
+    jsdoc::require_returns,
+    jsdoc::require_returns_description,
     jsdoc::require_yields,
     tree_shaking::no_side_effects_in_initialization,
 }

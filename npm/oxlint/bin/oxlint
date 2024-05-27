@@ -57,57 +57,40 @@ const isMuslFromChildProcess = () => {
 
 const { platform, arch, env, version, release } = process;
 
-let binPath;
+const PLATFORMS = {
+  win32: {
+    x64: {
+      musl: "@oxlint/win32-x64/oxlint.exe",
+      gnu: "@oxlint/win32-x64/oxlint.exe",
+    },
+    arm64: {
+      musl: "@oxlint/win32-arm64/oxlint.exe",
+      gnu: "@oxlint/win32-arm64/oxlint.exe",
+    },
+  },
+  darwin: {
+    x64: {
+      musl: "@oxlint/darwin-x64/oxlint",
+      gnu: "@oxlint/darwin-x64/oxlint",
+    },
+    arm64: {
+      musl: "@oxlint/darwin-arm64/oxlint",
+      gnu: "@oxlint/darwin-arm64/oxlint",
+    },
+  },
+  linux: {
+    x64: {
+      musl: "@oxlint/linux-x64-musl/oxlint",
+      gnu: "@oxlint/linux-x64-gnu/oxlint",
+    },
+    arm64: {
+      musl: "@oxlint/linux-arm64-musl/oxlint",
+      gnu: "@oxlint/linux-arm64-gnu/oxlint",
+    },
+  },
+};
 
-switch (platform) {
-  case "win32": {
-    switch (arch) {
-      case "x64": {
-        binPath = "@oxlint/win32-x64/oxlint.exe";
-        break;
-      }
-      case "arm64": {
-        binPath = "@oxlint/win32-arm64/oxlint.exe";
-        break;
-      }
-    }
-    break;
-  }
-  case "darwin": {
-    switch (arch) {
-      case "x64": {
-        binPath = "@oxlint/darwin-x64/oxlint";
-        break;
-      }
-      case "arm64": {
-        binPath = "@oxlint/darwin-arm64/oxlint";
-        break;
-      }
-    }
-    break;
-  }
-  case "linux": {
-    switch (arch) {
-      case "x64": {
-        if (isMusl()) {
-          binPath = "@oxlint/linux-x64-musl/oxlint";
-        } else {
-          binPath = "@oxlint/linux-x64-gnu/oxlint";
-        }
-        break;
-      }
-      case "arm64": {
-        if (isMusl()) {
-          binPath = "@oxlint/linux-arm64-musl/oxlint";
-        } else {
-          binPath = "@oxlint/linux-arm64-gnu/oxlint";
-        }
-        break;
-      }
-    }
-    break;
-  }
-}
+let binPath = PLATFORMS[platform]?.[arch]?.[isMusl() ? "musl" : "gnu"];
 
 if (binPath) {
   const result = require("child_process").spawnSync(
@@ -122,7 +105,7 @@ if (binPath) {
         JS_RUNTIME_NAME: release.name,
         NODE_PACKAGE_MANAGER: detectPackageManager(),
       },
-    },
+    }
   );
 
   if (result.error) {
@@ -137,7 +120,7 @@ if (binPath) {
   }
   console.error(
     `The oxlint CLI package doesn't ship with prebuilt binaries for your platform (${target}) yet. ` +
-    "You can create an issue at https://github.com/oxc-project/oxc/issues for support.",
+      "You can create an issue at https://github.com/oxc-project/oxc/issues for support."
   );
   process.exitCode = 1;
 }

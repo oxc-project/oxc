@@ -1,0 +1,879 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: require_returns
+---
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:14]
+ 4 │                            */
+ 5 │ ╭─▶                       function quux (foo) {
+ 6 │ │   
+ 7 │ │                           return foo;
+ 8 │ ╰─▶                       }
+ 9 │                       
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux (foo) {
+  6 │ │                           someLabel: {
+  7 │ │                             return foo;
+  8 │ │                           }
+  9 │ ╰─▶                       }
+ 10 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:26]
+ 4 │                            */
+ 5 │ ╭─▶                       const foo = () => ({
+ 6 │ │                           bar: 'baz'
+ 7 │ ╰─▶                       })
+ 8 │                       
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:26]
+ 4 │                        */
+ 5 │                       const foo = bar=>({ bar })
+   ·                                   ──────────────
+ 6 │                   
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:26]
+ 4 │                        */
+ 5 │                       const foo = bar => bar.baz()
+   ·                                   ────────────────
+ 6 │                   
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:14]
+ 4 │                            */
+ 5 │ ╭─▶                       function quux (foo) {
+ 6 │ │   
+ 7 │ │                           return foo;
+ 8 │ ╰─▶                       }
+ 9 │                       
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:14]
+ 4 │                            */
+ 5 │ ╭─▶                       async function quux() {
+ 6 │ ╰─▶                       }
+ 7 │                       
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:27]
+ 4 │                        */
+ 5 │                       const quux = async function () {}
+   ·                                    ────────────────────
+ 6 │                   
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:27]
+ 4 │                        */
+ 5 │                       const quux = async () => {}
+   ·                                    ──────────────
+ 6 │                   
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:15]
+ 4 │                         */
+ 5 │                        async function quux () {}
+   ·                        ─────────────────────────
+ 6 │                   
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:14]
+ 4 │                            */
+ 5 │ ╭─▶                       function quux () {
+ 6 │ ╰─▶                       }
+ 7 │                       
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:6:20]
+ 5 │                          */
+ 6 │ ╭─▶                     get name() {
+ 7 │ │                         return this._name;
+ 8 │ ╰─▶                     }
+ 9 │                       }
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:14]
+ 4 │                            */
+ 5 │ ╭─▶                       async function quux () {
+ 6 │ ╰─▶                       }
+ 7 │                       
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Duplicate `@returns` tags.
+   ╭─[require_returns.tsx:4:17]
+ 3 │                        * @returns {undefined}
+ 4 │                        * @returns {void}
+   ·                          ────────
+ 5 │                        */
+   ╰────
+  help: Remove redundunt `@returns` tag.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:14]
+ 4 │                            */
+ 5 │ ╭─▶                       function quux (foo) {
+ 6 │ │                           return 'bar';
+ 7 │ ╰─▶                       }
+ 8 │                       
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:10]
+ 4 │                        */
+ 5 │ ╭─▶                   async function foo(a) {
+ 6 │ │                       return;
+ 7 │ ╰─▶                   }
+ 8 │                       
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:10]
+ 4 │                        */
+ 5 │ ╭─▶                   async function foo(a) {
+ 6 │ │                       return Promise.all(a);
+ 7 │ ╰─▶                   }
+ 8 │                       
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:4:19]
+ 3 │                         /** gets bar */
+ 4 │ ╭─▶                     get bar() {
+ 5 │ │                         return 0;
+ 6 │ ╰─▶                     }
+ 7 │                       }
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:6:25]
+ 5 │                            */
+ 6 │ ╭─▶                       constructor() {
+ 7 │ │                           return new Map();
+ 8 │ ╰─▶                       }
+ 9 │                         }
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:6:20]
+ 5 │                          */
+ 6 │ ╭─▶                     get Test() {
+ 7 │ │                         return 0;
+ 8 │ ╰─▶                     }
+ 9 │                       }
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux (foo) {
+  6 │ │   
+  7 │ │                           return new Promise(function (resolve, reject) {
+  8 │ │                             resolve(foo);
+  9 │ │                           });
+ 10 │ ╰─▶                       }
+ 11 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux (foo) {
+  6 │ │   
+  7 │ │                           return new Promise(function (resolve, reject) {
+  8 │ │                             setTimeout(() => {
+  9 │ │                               resolve(true);
+ 10 │ │                             });
+ 11 │ │                           });
+ 12 │ ╰─▶                       }
+ 13 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux (foo) {
+  6 │ │   
+  7 │ │                           return new Promise(function (resolve, reject) {
+  8 │ │                             foo(resolve);
+  9 │ │                           });
+ 10 │ ╰─▶                       }
+ 11 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             while(true) {
+  8 │ │                               resolve(true);
+  9 │ │                             }
+ 10 │ │                           });
+ 11 │ ╰─▶                       }
+ 12 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             do {
+  8 │ │                               resolve(true);
+  9 │ │                             }
+ 10 │ │                             while(true)
+ 11 │ │                           });
+ 12 │ ╰─▶                       }
+ 13 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             if (true) {
+  8 │ │                               resolve(true);
+  9 │ │                             }
+ 10 │ │                             return;
+ 11 │ │                           });
+ 12 │ ╰─▶                       }
+ 13 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             if (resolve(true)) {
+  8 │ │                               return;
+  9 │ │                             }
+ 10 │ │                             return;
+ 11 │ │                           });
+ 12 │ ╰─▶                       }
+ 13 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             if (true) {
+  8 │ │                               resolve(true);
+  9 │ │                             }
+ 10 │ │                           });
+ 11 │ ╰─▶                       }
+ 12 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             true ? resolve(true) : null;
+  8 │ │                             return;
+  9 │ │                           });
+ 10 │ ╰─▶                       }
+ 11 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           var a = {};
+  7 │ │                           return new Promise((resolve, reject) => {
+  8 │ │                             with (a) {
+  9 │ │                               resolve(true);
+ 10 │ │                             }
+ 11 │ │                           });
+ 12 │ ╰─▶                       }
+ 13 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           var a = {};
+  7 │ │                           return new Promise((resolve, reject) => {
+  8 │ │                             try {
+  9 │ │                               resolve(true);
+ 10 │ │                             } catch (err) {}
+ 11 │ │                           });
+ 12 │ ╰─▶                       }
+ 13 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           var a = {};
+  7 │ │                           return new Promise((resolve, reject) => {
+  8 │ │                             try {
+  9 │ │                             } catch (err) {
+ 10 │ │                               resolve(true);
+ 11 │ │                             }
+ 12 │ │                           });
+ 13 │ ╰─▶                       }
+ 14 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           var a = {};
+  7 │ │                           return new Promise((resolve, reject) => {
+  8 │ │                             try {
+  9 │ │                             } catch (err) {
+ 10 │ │                             } finally {
+ 11 │ │                               resolve(true);
+ 12 │ │                             }
+ 13 │ │                           });
+ 14 │ ╰─▶                       }
+ 15 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           var a = {};
+  7 │ │                           return new Promise((resolve, reject) => {
+  8 │ │                             switch (a) {
+  9 │ │                             case 'abc':
+ 10 │ │                               resolve(true);
+ 11 │ │                             }
+ 12 │ │                           });
+ 13 │ ╰─▶                       }
+ 14 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             if (true) {
+  8 │ │                               resolve();
+  9 │ │                             } else {
+ 10 │ │                               resolve(true);
+ 11 │ │                             }
+ 12 │ │                           });
+ 13 │ ╰─▶                       }
+ 14 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             for (let i = 0; i < 5 ; i++) {
+  8 │ │                               resolve(true);
+  9 │ │                             }
+ 10 │ │                           });
+ 11 │ ╰─▶                       }
+ 12 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             for (const i of obj) {
+  8 │ │                               resolve(true);
+  9 │ │                             }
+ 10 │ │                           });
+ 11 │ ╰─▶                       }
+ 12 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             for (const i in obj) {
+  8 │ │                               resolve(true);
+  9 │ │                             }
+ 10 │ │                           });
+ 11 │ ╰─▶                       }
+ 12 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             if (true) {
+  8 │ │                               return;
+  9 │ │                             } else {
+ 10 │ │                               resolve(true);
+ 11 │ │                             }
+ 12 │ │                           });
+ 13 │ ╰─▶                       }
+ 14 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             function a () {
+  8 │ │                               resolve(true);
+  9 │ │                             }
+ 10 │ │                             a();
+ 11 │ │                           });
+ 12 │ ╰─▶                       }
+ 13 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             return () => {
+  8 │ │                               identifierForCoverage;
+  9 │ │                               resolve(true);
+ 10 │ │                             };
+ 11 │ │                           });
+ 12 │ ╰─▶                       }
+ 13 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             a || resolve(true);
+  8 │ │                           });
+  9 │ ╰─▶                       }
+ 10 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             (r = resolve(true));
+  8 │ │                           });
+  9 │ ╰─▶                       }
+ 10 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             a + (resolve(true));
+  8 │ │                           });
+  9 │ ╰─▶                       }
+ 10 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             a, resolve(true);
+  8 │ │                           });
+  9 │ ╰─▶                       }
+ 10 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             +resolve();
+  8 │ │                             [...resolve()];
+  9 │ │                             [...+resolve(true)];
+ 10 │ │                           });
+ 11 │ ╰─▶                       }
+ 12 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise(function * (resolve, reject) {
+  7 │ │                             yield resolve(true)
+  8 │ │                           });
+  9 │ ╰─▶                       }
+ 10 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise(async function (resolve, reject) {
+  7 │ │                             await resolve(true)
+  8 │ │                           });
+  9 │ ╰─▶                       }
+ 10 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             someLabel: {
+  8 │ │                               resolve(true);
+  9 │ │                             }
+ 10 │ │                           });
+ 11 │ ╰─▶                       }
+ 12 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             var obj = {
+  8 │ │                               [someKey]: 'val',
+  9 │ │                               anotherKey: resolve(true)
+ 10 │ │                             }
+ 11 │ │                           });
+ 12 │ ╰─▶                       }
+ 13 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             var obj = {
+  8 │ │                               [resolve(true)]: 'val',
+  9 │ │                             }
+ 10 │ │                           });
+ 11 │ ╰─▶                       }
+ 12 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             `abc${resolve(true)}`;
+  8 │ │                           });
+  9 │ ╰─▶                       }
+ 10 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             tagTemp`abc${resolve(true)}`;
+  8 │ │                           });
+  9 │ ╰─▶                       }
+ 10 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             a.b[resolve(true)].c;
+  8 │ │                           });
+  9 │ ╰─▶                       }
+ 10 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             abc?.[resolve(true)].d?.e(resolve(true));
+  8 │ │                           });
+  9 │ ╰─▶                       }
+ 10 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             const [a = resolve(true)] = arr;
+  8 │ │                           });
+  9 │ ╰─▶                       }
+ 10 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             const {a = resolve(true)} = obj;
+  8 │ │                           });
+  9 │ ╰─▶                       }
+ 10 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             import(resolve(true));
+  8 │ │                           });
+  9 │ ╰─▶                       }
+ 10 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             class A {
+  8 │ │                               method1 () {
+  9 │ │                                 resolve();
+ 10 │ │                               }
+ 11 │ │                               @dec(function () {
+ 12 │ │                                 resolve()
+ 13 │ │                               })
+ 14 │ │                               method2 () {
+ 15 │ │                                 resolve(true);
+ 16 │ │                               }
+ 17 │ │                             }
+ 18 │ │                           });
+ 19 │ ╰─▶                       }
+ 20 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             class A {
+  8 │ │                               method1 () {
+  9 │ │                                 resolve();
+ 10 │ │                               }
+ 11 │ │                               @dec(function () {
+ 12 │ │                                 resolve(true)
+ 13 │ │                               })
+ 14 │ │                               method2 () {}
+ 15 │ │                             }
+ 16 │ │                           });
+ 17 │ ╰─▶                       }
+ 18 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             const a = class {
+  8 │ │                               [b] () {
+  9 │ │                                 resolve();
+ 10 │ │                               }
+ 11 │ │                               method1 () {
+ 12 │ │                                 resolve(true);
+ 13 │ │                               }
+ 14 │ │                               method2 () {}
+ 15 │ │                             }
+ 16 │ │                           });
+ 17 │ ╰─▶                       }
+ 18 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:14]
+  4 │                            */
+  5 │ ╭─▶                       function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             const a = class {
+  8 │ │                               [b] () {
+  9 │ │                                 resolve(true);
+ 10 │ │                               }
+ 11 │ │                             }
+ 12 │ │                           });
+ 13 │ ╰─▶                       }
+ 14 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+    ╭─[require_returns.tsx:5:21]
+  4 │                            */
+  5 │ ╭─▶                       export function quux () {
+  6 │ │                           return new Promise((resolve, reject) => {
+  7 │ │                             resolve(true);
+  8 │ │                           });
+  9 │ ╰─▶                       }
+ 10 │                       
+    ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:14]
+ 4 │                            */
+ 5 │ ╭─▶                       function quux () {
+ 6 │ │                           return new Promise();
+ 7 │ ╰─▶                       }
+ 8 │                       
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:14]
+ 4 │                            */
+ 5 │ ╭─▶                       async function quux () {
+ 6 │ │                           return new Promise();
+ 7 │ ╰─▶                       }
+ 8 │                       
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:14]
+ 4 │                            */
+ 5 │ ╭─▶                       async function quux () {
+ 6 │ │                           return new Promise((resolve, reject) => {});
+ 7 │ ╰─▶                       }
+ 8 │                       
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:17]
+ 4 │                    */
+ 5 │                   export function readFixture(path: string): void;
+   ·                          ─────────────────────────────────────────
+ 6 │                   
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:17]
+ 4 │                    */
+ 5 │                   export function readFixture(path: string);
+   ·                          ───────────────────────────────────
+ 6 │                   
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:10]
+ 4 │                        */
+ 5 │ ╭─▶                   async function foo(a) {
+ 6 │ │                       return Promise.all(a);
+ 7 │ ╰─▶                   }
+ 8 │                       
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.
+
+  ⚠ eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.
+   ╭─[require_returns.tsx:5:25]
+ 4 │                        */
+ 5 │ ╭─▶                   export default async function demo() {
+ 6 │ │                       return true;
+ 7 │ ╰─▶                   }
+ 8 │                       
+   ╰────
+  help: Add `@returns` tag to the JSDoc comment.

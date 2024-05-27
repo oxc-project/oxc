@@ -11,7 +11,7 @@ alias c := coverage
 # or install via `cargo install cargo-binstall`
 # Initialize the project by installing all the necessary tools.
 init:
-  cargo binstall cargo-watch cargo-insta cargo-edit typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
+  cargo binstall cargo-watch cargo-insta typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
 
 # When ready, run the same CI commands
 ready:
@@ -93,7 +93,13 @@ test-transform *args='':
 
 # Build oxlint in release build
 oxlint:
-  cargo build --release -p oxc_cli --bin oxlint --features allocator
+  cargo build --release --bin oxlint --features allocator
+
+watch-wasm:
+  cargo watch --no-vcs-ignores -i 'npm/oxc-wasm/**' -- just build-wasm
+
+build-wasm:
+  wasm-pack build --out-dir npm/oxc-wasm --target web --dev --scope oxc crates/oxc_wasm
 
 # Generate the JavaScript global variables. See `tasks/javascript_globals`
 javascript-globals:
@@ -133,10 +139,11 @@ new-react-perf-rule name:
 new-n-rule name:
     cargo run -p rulegen {{name}} n
 
-# Upgrade all Rust dependencies
-upgrade:
-  cargo upgrade --incompatible
-
 clone-submodule dir url sha:
   git clone --depth=1 {{url}} {{dir}} || true
   cd {{dir}} && git fetch origin {{sha}} && git reset --hard {{sha}}
+
+website path:
+  cargo run -p website -- linter-rules > {{path}}/src/docs/guide/usage/linter/generated-rules.md
+  cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
+  cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md

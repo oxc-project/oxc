@@ -12,11 +12,19 @@ workspace = true
 name = "website"
 test = false
 
+[lib]
+doctest = false
+
 [dependencies]
 oxc_linter = { workspace = true }
-oxc_cli    = { path = "../../crates/oxc_cli" }
+oxlint    = { path = "../../apps/oxlint" }
 
 bpaf       = { workspace = true, features = ["docgen"] }
 pico-args  = { workspace = true }
 serde_json = { workspace = true }
 schemars   = { workspace = true }
+handlebars = { workspace = true }
+serde      = { workspace = true }
+
+[dev-dependencies]
+insta = { workspace = true }

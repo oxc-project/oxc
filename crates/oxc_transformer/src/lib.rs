@@ -13,6 +13,7 @@ mod compiler_assumptions;
 mod context;
 mod options;
 // Presets: <https://babel.dev/docs/presets>
+mod env;
 mod es2015;
 mod react;
 mod typescript;
@@ -31,8 +32,9 @@ use oxc_span::SourceType;
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
 pub use crate::{
-    compiler_assumptions::CompilerAssumptions, es2015::ES2015Options, options::BabelOptions,
-    options::TransformOptions, react::ReactOptions, typescript::TypeScriptOptions,
+    compiler_assumptions::CompilerAssumptions, env::EnvOptions, es2015::ES2015Options,
+    options::BabelOptions, options::TransformOptions, react::ReactOptions,
+    typescript::TypeScriptOptions,
 };
 
 use crate::{
@@ -92,8 +94,8 @@ impl<'a> Transformer<'a> {
 }
 
 impl<'a> Traverse<'a> for Transformer<'a> {
-    fn enter_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.x0_typescript.transform_program(program);
+    fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_program(program, ctx);
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -234,8 +236,8 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_identifier_reference(ident, ctx);
     }
 
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.x0_typescript.transform_statement(stmt);
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_statement(stmt, ctx);
     }
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, _ctx: &mut TraverseCtx<'a>) {

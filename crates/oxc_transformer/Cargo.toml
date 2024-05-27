@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_transformer"
-version                = "0.13.0"
+version                = "0.13.1"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -26,11 +26,13 @@ oxc_diagnostics = { workspace = true }
 oxc_syntax      = { workspace = true, features = ["to_js_string"] }
 oxc_traverse    = { workspace = true }
 
-rustc-hash = { workspace = true }
-indexmap   = { workspace = true }
-serde      = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
-ropey      = { workspace = true }
+dashmap         = { workspace = true }
+indexmap        = { workspace = true }
+serde           = { workspace = true, features = ["derive"] }
+serde_json      = { workspace = true }
+ropey           = { workspace = true }
+rustc-hash      = { workspace = true }
+browserslist-rs = { version = "0.15.0", features = ["wasm_bindgen"] }
 
 [dev-dependencies]
 oxc_parser  = { workspace = true }

@@ -4,7 +4,7 @@ A-ast:
 
 A-cli:
 - changed-files:
-  - any-glob-to-any-file: ['crates/oxc_cli/**']
+  - any-glob-to-any-file: ['apps/oxlint/**']
 
 A-prettier:
 - changed-files:
