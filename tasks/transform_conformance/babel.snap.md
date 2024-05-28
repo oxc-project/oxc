@@ -1,6 +1,6 @@
 commit: 4bd1b2c2
 
-Passed: 473/930
+Passed: 474/930
 
 # All Passed:
 * babel-preset-react
@@ -445,13 +445,12 @@ Passed: 473/930
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (130/154)
+# babel-plugin-transform-typescript (131/154)
 * enum/mix-references/input.ts
 * enum/ts5.0-const-foldable/input.ts
 * exports/declared-types/input.ts
 * imports/type-only-export-specifier-2/input.ts
 * namespace/empty-removed/input.ts
-* namespace/mutable-fail/input.ts
 * namespace/namespace-flag/input.ts
 * namespace/nested/input.ts
 * namespace/nested-destructuring/input.ts

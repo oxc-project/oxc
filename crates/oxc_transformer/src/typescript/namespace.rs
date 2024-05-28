@@ -1,6 +1,9 @@
 use rustc_hash::FxHashSet;
 
-use super::{diagnostics::ambient_module_nested, TypeScript};
+use super::{
+    diagnostics::{ambient_module_nested, namespace_exporting_non_const},
+    TypeScript,
+};
 
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, syntax_directed_operations::BoundNames};
@@ -238,6 +241,11 @@ impl<'a> TypeScript<'a> {
                                 );
                             }
                             Declaration::VariableDeclaration(var_decl) => {
+                                var_decl.declarations.iter().for_each(|decl| {
+                                    if !decl.kind.is_const() {
+                                        self.ctx.error(namespace_exporting_non_const(decl.span));
+                                    }
+                                });
                                 is_empty = false;
                                 let stmts = self.handle_variable_declaration(var_decl, &name);
                                 new_stmts.extend(stmts);
