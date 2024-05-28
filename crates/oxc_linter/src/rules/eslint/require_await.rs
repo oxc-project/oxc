@@ -1,5 +1,6 @@
 use oxc_ast::{
     ast::{ArrowFunctionExpression, AwaitExpression, ForOfStatement, Function, PropertyKey},
+    visit::walk::walk_for_of_statement,
     AstKind, Visit,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -96,6 +97,8 @@ impl<'a> Visit<'a> for AwaitFinder {
     fn visit_for_of_statement(&mut self, stmt: &ForOfStatement) {
         if stmt.r#await {
             self.found = true;
+        } else {
+            walk_for_of_statement(self, stmt);
         }
     }
 
@@ -144,6 +147,14 @@ fn test() {
         "const foo = async function *(){}",
         r#"const foo = async function *(){ console.log("bar") }"#,
         r#"async function* run() { console.log("bar") }"#,
+        "
+        const foo = async (
+         ): Promise<string> => {
+           for (const bar of baz) {
+             x(await y(z));
+           }
+        };
+        ",
     ];
 
     let fail = vec![
