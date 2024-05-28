@@ -1,7 +1,7 @@
 use rustc_hash::FxHashSet;
 
 use super::{
-    diagnostics::{ambient_module_nested, namespace_exporting_non_const},
+    diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
     TypeScript,
 };
 
@@ -41,6 +41,10 @@ impl<'a> TypeScript<'a> {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !decl.modifiers.is_contains_declare() {
+                        if !self.options.allow_namespaces {
+                            self.ctx.error(namespace_not_supported(decl.span));
+                        }
+
                         if let Some(transformed_stmt) =
                             self.handle_nested(self.ctx.ast.copy(&decl).unbox(), None, ctx)
                         {
@@ -61,6 +65,10 @@ impl<'a> TypeScript<'a> {
                             &export_decl.declaration
                         {
                             if !decl.modifiers.is_contains_declare() {
+                                if !self.options.allow_namespaces {
+                                    self.ctx.error(namespace_not_supported(decl.span));
+                                }
+
                                 if let Some(transformed_stmt) =
                                     self.handle_nested(self.ctx.ast.copy(decl), None, ctx)
                                 {
