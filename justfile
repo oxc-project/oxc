@@ -93,7 +93,7 @@ test-transform *args='':
 
 # Build oxlint in release build
 oxlint:
-  cargo build --release --bin oxlint --features allocator
+  cargo oxlint
 
 watch-wasm:
   cargo watch --no-vcs-ignores -i 'npm/oxc-wasm/**' -- just build-wasm
