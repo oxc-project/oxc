@@ -197,32 +197,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "browserslist-rs"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "405bbd46590a441abe5db3e5c8af005aa42e640803fecb51912703e93e4ce8d3"
-dependencies = [
- "ahash",
- "anyhow",
- "chrono",
- "either",
- "getrandom",
- "indexmap",
- "itertools 0.12.1",
- "js-sys",
- "nom",
- "once_cell",
- "quote",
- "serde",
- "serde-wasm-bindgen 0.4.5",
- "serde_json",
- "string_cache",
- "string_cache_codegen",
- "thiserror",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "bstr"
 version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1363,6 +1337,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc-browserslist"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "91de9a02bb914863061e4ffe2277fc547a03a39ad75417108d8a180007f9420d"
+dependencies = [
+ "ahash",
+ "anyhow",
+ "chrono",
+ "either",
+ "getrandom",
+ "indexmap",
+ "itertools 0.12.1",
+ "js-sys",
+ "nom",
+ "once_cell",
+ "quote",
+ "serde",
+ "serde-wasm-bindgen 0.4.5",
+ "serde_json",
+ "string_cache",
+ "string_cache_codegen",
+ "thiserror",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "oxc_allocator"
 version = "0.13.1"
 dependencies = [
@@ -1788,9 +1788,9 @@ dependencies = [
 name = "oxc_transformer"
 version = "0.13.1"
 dependencies = [
- "browserslist-rs",
  "dashmap",
  "indexmap",
+ "oxc-browserslist",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
