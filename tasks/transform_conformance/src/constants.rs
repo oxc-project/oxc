@@ -88,5 +88,8 @@ pub(crate) const SKIP_TESTS: &[&str] = &[
     // The output is valid and semantically correct
     // but does not match Babel's expected output
     "typescript/test/fixtures/namespace/canonical/input.ts",
+    "typescript/test/fixtures/namespace/nested-shorthand-export/input.ts",
     "react-jsx-development/test/fixtures/cross-platform/self-inside-arrow/input.mjs",
+    // Babel outputs is not correct
+    "typescript/test/fixtures/namespace/nested-destructuring/input.ts",
 ];
