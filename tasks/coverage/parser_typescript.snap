@@ -3,7 +3,7 @@ commit: 64d2eeea
 parser_typescript Summary:
 AST Parsed     : 5240/5243 (99.94%)
 Positive Passed: 5233/5243 (99.81%)
-Negative Passed: 1065/4879 (21.83%)
+Negative Passed: 1064/4879 (21.81%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -1388,6 +1388,7 @@ Expect Syntax Error: "compiler/paramterDestrcuturingDeclaration.ts"
 Expect Syntax Error: "compiler/parenthesizedJSDocCastDoesNotNarrow.ts"
 Expect Syntax Error: "compiler/parseCommaSeparatedNewlineNumber.ts"
 Expect Syntax Error: "compiler/parseCommaSeparatedNewlineString.ts"
+Expect Syntax Error: "compiler/parseJsxExtends2.ts"
 Expect Syntax Error: "compiler/parseTypes.ts"
 Expect Syntax Error: "compiler/parseUnaryExpressionNoTypeAssertionInJsx1.ts"
 Expect Syntax Error: "compiler/parseUnaryExpressionNoTypeAssertionInJsx3.ts"
@@ -8515,14 +8516,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  4 │ !< {:>
    ·     ─
  5 │ 
-   ╰────
-
-  × Unexpected token
-   ╭─[compiler/parseJsxExtends2.ts:8:22]
- 7 │     // Error: T is not declared.
- 8 │     return <T extends/>
-   ·                      ─
- 9 │ }
    ╰────
 
   × Unexpected token
