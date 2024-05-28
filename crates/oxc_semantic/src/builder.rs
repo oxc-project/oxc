@@ -1820,36 +1820,36 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
     }
 
-    // fn visit_ts_type_alias_declaration(&mut self, decl: &TSTypeAliasDeclaration<'a>) {
-    //     let kind = AstKind::TSTypeAliasDeclaration(self.alloc(decl));
-    //     self.enter_node(kind);
-    //     self.enter_scope(ScopeFlags::empty());
-    //     decl.scope_id.set(Some(self.current_scope_id));
-    //     self.visit_binding_identifier(&decl.id);
-    //     if let Some(parameters) = &decl.type_parameters {
-    //         self.visit_ts_type_parameter_declaration(parameters);
-    //     }
-    //     self.visit_ts_type(&decl.type_annotation);
-    //     self.leave_scope();
-    //     self.leave_node(kind);
-    // }
+    fn visit_ts_type_alias_declaration(&mut self, decl: &TSTypeAliasDeclaration<'a>) {
+        let kind = AstKind::TSTypeAliasDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        self.enter_scope(ScopeFlags::empty());
+        decl.scope_id.set(Some(self.current_scope_id));
+        self.visit_binding_identifier(&decl.id);
+        if let Some(parameters) = &decl.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
+        self.visit_ts_type(&decl.type_annotation);
+        self.leave_scope();
+        self.leave_node(kind);
+    }
 
-    // fn visit_ts_interface_declaration(&mut self, decl: &TSInterfaceDeclaration<'a>) {
-    //     let kind = AstKind::TSInterfaceDeclaration(self.alloc(decl));
-    //     self.enter_node(kind);
-    //     self.enter_scope(ScopeFlags::empty());
-    //     decl.scope_id.set(Some(self.current_scope_id));
-    //     self.visit_binding_identifier(&decl.id);
-    //     if let Some(parameters) = &decl.type_parameters {
-    //         self.visit_ts_type_parameter_declaration(parameters);
-    //     }
+    fn visit_ts_interface_declaration(&mut self, decl: &TSInterfaceDeclaration<'a>) {
+        let kind = AstKind::TSInterfaceDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        self.enter_scope(ScopeFlags::empty());
+        decl.scope_id.set(Some(self.current_scope_id));
+        self.visit_binding_identifier(&decl.id);
+        if let Some(parameters) = &decl.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
 
-    //     for body_decl in &decl.body.body {
-    //         self.visit_ts_signature(body_decl);
-    //     }
-    //     self.leave_scope();
-    //     self.leave_node(kind);
-    // }
+        for body_decl in &decl.body.body {
+            self.visit_ts_signature(body_decl);
+        }
+        self.leave_scope();
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
