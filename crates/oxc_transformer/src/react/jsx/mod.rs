@@ -474,7 +474,7 @@ impl<'a> ReactJsx<'a> {
 
         self.add_import(e, has_key_after_props_spread, need_jsxs, ctx);
 
-        if matches!(e, JSXElementOrFragment::Fragment(_)) {
+        if is_fragment {
             self.update_fragment(arguments.first_mut().unwrap());
         }
 
