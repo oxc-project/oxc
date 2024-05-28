@@ -588,6 +588,8 @@ impl<'a> ReactJsx<'a> {
                 // in `update_fragment` after import is added and correct var name is known.
                 // We have to do like this so that imports are in same order as Babel's output,
                 // in order to pass Babel's tests.
+                // TODO(improve-on-babel): Remove this workaround if output doesn't need to match
+                // Babel's exactly.
                 if self.is_script() {
                     self.get_static_member_expression("_reactJsxRuntime", "Fragment")
                 } else {
