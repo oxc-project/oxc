@@ -190,12 +190,19 @@ fn test_class_with_type_parameter() {
                 return null as D
             }
         }
+
+        type B = any;
+        class ClassB<B> {
+            b: B;
+        }
         ",
     );
 
     tester.has_symbol("T").has_number_of_references(4).test();
     tester.has_symbol("K").has_number_of_references(1).test();
     tester.has_symbol("D").has_number_of_references(0).test();
+    // type B is not referenced
+    tester.has_symbol("B").has_number_of_references(0).test();
 }
 
 #[test]
