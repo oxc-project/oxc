@@ -44,6 +44,7 @@ impl<'a> TypeScriptEnum<'a> {
             return None;
         }
 
+        let is_not_top_scope = !ctx.scopes().get_flags(ctx.current_scope_id()).is_top();
         let span = decl.span;
         let ident = decl.id.clone();
         let kind = self.ctx.ast.binding_pattern_identifier(ident);
@@ -69,7 +70,7 @@ impl<'a> TypeScriptEnum<'a> {
         let callee = self.ctx.ast.plain_function(r#type, SPAN, None, params, Some(body));
         let callee = Expression::FunctionExpression(callee);
 
-        let arguments = if is_export && !is_already_declared {
+        let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
             let object_expr = self.ctx.ast.object_expression(SPAN, self.ctx.ast.new_vec(), None);
             self.ctx.ast.new_vec_single(Argument::from(object_expr))
@@ -97,8 +98,11 @@ impl<'a> TypeScriptEnum<'a> {
             return Some(self.ctx.ast.expression_statement(SPAN, expr));
         }
 
-        let kind =
-            if is_export { VariableDeclarationKind::Let } else { VariableDeclarationKind::Var };
+        let kind = if is_export || is_not_top_scope {
+            VariableDeclarationKind::Let
+        } else {
+            VariableDeclarationKind::Var
+        };
         let decls = {
             let mut decls = self.ctx.ast.new_vec();
 
