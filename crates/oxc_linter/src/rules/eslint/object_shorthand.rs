@@ -1,35 +1,50 @@
+use oxc_ast::{
+    ast::{Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyKind},
+    AstKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn expected_all_properties_shorthanded(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(object-shorthand): Expected shorthand for all properties.").with_labels([span0.into()])
+    OxcDiagnostic::warning("eslint(object-shorthand): Expected shorthand for all properties.")
+        .with_labels([span0.into()])
 }
 
 fn expected_literal_method_longform(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(object-shorthand): Expected longform method syntax for string literal keys.").with_labels([span0.into()])
+    OxcDiagnostic::warning(
+        "eslint(object-shorthand): Expected longform method syntax for string literal keys.",
+    )
+    .with_labels([span0.into()])
 }
 
 fn expected_property_shorthand(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(object-shorthand): Expected property shorthand.").with_labels([span0.into()])
+    OxcDiagnostic::warning("eslint(object-shorthand): Expected property shorthand.")
+        .with_labels([span0.into()])
 }
 
 fn expected_property_longform(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(object-shorthand): Expected longform property syntax.").with_labels([span0.into()])
+    OxcDiagnostic::warning("eslint(object-shorthand): Expected longform property syntax.")
+        .with_labels([span0.into()])
 }
 
 fn expected_method_shorthand(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(object-shorthand): Expected method shorthand.").with_labels([span0.into()])
+    OxcDiagnostic::warning("eslint(object-shorthand): Expected method shorthand.")
+        .with_labels([span0.into()])
 }
 
 fn expected_method_longform(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(object-shorthand): Expected longform method syntax.").with_labels([span0.into()])
+    OxcDiagnostic::warning("eslint(object-shorthand): Expected longform method syntax.")
+        .with_labels([span0.into()])
 }
 
 fn unexpected_mix(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(object-shorthand): Unexpected mix of shorthand and non-shorthand properties.").with_labels([span0.into()])
+    OxcDiagnostic::warning(
+        "eslint(object-shorthand): Unexpected mix of shorthand and non-shorthand properties.",
+    )
+    .with_labels([span0.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -37,7 +52,12 @@ pub struct ObjectShorthand(Box<ObjectShorthandConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct ObjectShorthandConfig {
-    shorthand_type: ShorthandType,
+    apply_to_methods: bool,
+    apply_to_properties: bool,
+    apply_never: bool,
+    apply_consistent: bool,
+    apply_consistent_as_needed: bool,
+
     avoid_quotes: bool,
     ignore_constructors: bool,
     avoid_explicit_return_arrows: bool,
@@ -87,11 +107,22 @@ impl Rule for ObjectShorthand {
         let obj1 = value.get(0);
         let obj2 = value.get(1);
 
+        let shorthand_type =
+            obj1.and_then(serde_json::Value::as_str).map(ShorthandType::from).unwrap_or_default();
+
         Self(Box::new(ObjectShorthandConfig {
-            shorthand_type: obj1
-                .and_then(serde_json::Value::as_str)
-                .map(ShorthandType::from)
-                .unwrap_or_default(),
+            apply_to_methods: matches!(
+                shorthand_type,
+                ShorthandType::Methods | ShorthandType::Always
+            ),
+            apply_to_properties: matches!(
+                shorthand_type,
+                ShorthandType::Properties | ShorthandType::Always
+            ),
+            apply_never: matches!(shorthand_type, ShorthandType::Never),
+            apply_consistent: matches!(shorthand_type, ShorthandType::Consistent),
+            apply_consistent_as_needed: matches!(shorthand_type, ShorthandType::ConsistentAsNeeded),
+
             avoid_quotes: obj2
                 .and_then(|v| v.get("avoidQuotes"))
                 .and_then(serde_json::Value::as_bool)
@@ -111,7 +142,132 @@ impl Rule for ObjectShorthand {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::ObjectProperty(property) = node.kind() {
+            let is_concise_property = property.shorthand || property.method;
+
+            // Ignore getters and setters
+            if property.kind != PropertyKind::Init {
+                return;
+            }
+
+            // Ignore computed properties, unless they are functions
+            if property.computed && !is_property_value_function(property) {
+                return;
+            }
+
+            if is_concise_property {
+                if property.method
+                    && (self.apply_never
+                        || self.avoid_quotes && is_property_key_string_literal(property))
+                {
+                    // from { x() {} } to { x: function() {} }
+                    // TODO: implement
+                } else if self.apply_never {
+                    // from { x } to { x: x }
+                    // TODO: implement
+                }
+            } else if self.apply_to_methods && is_property_value_anonymous_function(property) {
+                // from { x: function() {} }   to { x() {} }
+                // from { [x]: function() {} } to { [x]() {} }
+                // from { x: () => {} }        to { x() {} }
+                // from { [x]: () => {} }      to { [x]() {} }
+                Self::check_longform_methods(&self, property, ctx);
+            } else if self.apply_to_properties {
+                // from { x: x }   to { x }
+                // from { "x": x } to { x }
+                Self::check_longform_properties(&self, property, ctx);
+            }
+        } else if let AstKind::ObjectExpression(obj_expr) = node.kind() {
+            if self.apply_consistent {
+                Self::check_consistency(obj_expr, false, ctx);
+            } else if self.apply_consistent_as_needed {
+                Self::check_consistency(obj_expr, true, ctx);
+            }
+        }
+    }
+}
+
+impl ObjectShorthand {
+    fn check_longform_methods(&self, property: &ObjectProperty, ctx: &LintContext<'_>) {
+        // TODO: self.ignore_constructors
+        // TODO: self.methods_ignore_pattern
+
+        if self.avoid_quotes && is_property_key_string_literal(property) {
+            return;
+        }
+
+        if let Expression::FunctionExpression(func) = &property.value.without_parenthesized() {
+            ctx.diagnostic(expected_method_shorthand(func.span));
+        }
+
+        if self.avoid_explicit_return_arrows {
+            if let Expression::ArrowFunctionExpression(func) =
+                &property.value.without_parenthesized()
+            {
+                if !func.expression {
+                    ctx.diagnostic(expected_method_shorthand(func.span));
+                }
+            }
+        }
+    }
+
+    fn check_longform_properties(&self, property: &ObjectProperty, ctx: &LintContext<'_>) {
+        let Expression::Identifier(value_identifier) = &property.value.without_parenthesized()
+        else {
+            return;
+        };
+
+        if let Some(property_name) = property.key.name() {
+            // from { x: x } to { x }
+            if property_name == value_identifier.name {
+                if ctx.semantic().trivias().has_comments_between(Span::new(
+                    property.key.span().start,
+                    value_identifier.span.end,
+                )) {
+                    ctx.diagnostic(expected_property_shorthand(property.span));
+                } else {
+                    // TODO: fixer
+                    ctx.diagnostic(expected_property_shorthand(property.span));
+                }
+            }
+        } else if let Some(Expression::StringLiteral(key_literal)) = &property.key.as_expression() {
+            // from { "x": x } to { x }
+            if !self.avoid_quotes && key_literal.value == value_identifier.name {
+                if ctx.semantic().trivias().has_comments_between(Span::new(
+                    key_literal.span.start,
+                    value_identifier.span.end,
+                )) {
+                    ctx.diagnostic(expected_property_shorthand(property.span));
+                } else {
+                    // TODO: fixer
+                    ctx.diagnostic(expected_property_shorthand(property.span));
+                }
+            }
+        }
+    }
+
+    fn check_consistency(
+        obj_expr: &ObjectExpression,
+        check_redundancy: bool,
+        ctx: &LintContext<'_>,
+    ) {
+        let properties = obj_expr.properties.iter().filter(|p| can_property_have_shorthand(p));
+
+        if properties.clone().count() > 0 {
+            let shorthand_properties = properties.clone().filter(|p| is_shorthand_property(p));
+
+            if shorthand_properties.clone().count() != properties.clone().count() {
+                if shorthand_properties.count() > 0 {
+                    ctx.diagnostic(unexpected_mix(obj_expr.span));
+                } else if check_redundancy {
+                    if properties.clone().all(|p| is_redundant_property(p)) {
+                        ctx.diagnostic(expected_all_properties_shorthanded(obj_expr.span));
+                    }
+                }
+            }
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone)]
@@ -135,6 +291,56 @@ impl ShorthandType {
             "never" => Self::Never,
             _ => Self::Always,
         }
+    }
+}
+
+fn is_property_value_function(property: &ObjectProperty) -> bool {
+    matches!(
+        property.value,
+        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
+    )
+}
+
+fn is_property_value_anonymous_function(property: &ObjectProperty) -> bool {
+    match &property.value {
+        Expression::FunctionExpression(func) => func.id.is_none(),
+        Expression::ArrowFunctionExpression(_) => true,
+        _ => false,
+    }
+}
+
+fn is_property_key_string_literal(property: &ObjectProperty) -> bool {
+    matches!(property.key.as_expression(), Some(Expression::StringLiteral(_)))
+}
+
+fn is_shorthand_property(property: &ObjectPropertyKind) -> bool {
+    match property {
+        ObjectPropertyKind::ObjectProperty(property) => property.shorthand || property.method,
+        _ => false,
+    }
+}
+
+fn is_redundant_property(property: &ObjectPropertyKind) -> bool {
+    match property {
+        ObjectPropertyKind::ObjectProperty(property) => match &property.value {
+            Expression::FunctionExpression(func) => func.id.is_none(),
+            Expression::Identifier(value_identifier) => {
+                if let Some(property_name) = property.key.name() {
+                    property_name == value_identifier.name
+                } else {
+                    false
+                }
+            }
+            _ => false,
+        },
+        _ => false,
+    }
+}
+
+fn can_property_have_shorthand(property: &ObjectPropertyKind) -> bool {
+    match property {
+        ObjectPropertyKind::ObjectProperty(property) => property.kind == PropertyKind::Init,
+        _ => false,
     }
 }
 
