@@ -336,15 +336,21 @@ impl<'a> SemanticBuilder<'a> {
         // type Array<T> = T[];
         //           ^^^ TypeParameters
         let symbol_id = {
-            self.scope.get_child_ids(current_scope_id).and_then(|child_ids| {
-                child_ids.iter().rev().find_map(|scope_id| {
-                    if self.scope.get_flags(*scope_id).is_type_parameters() {
-                        self.scope.get_binding(*scope_id, &name)
-                    } else {
-                        None
-                    }
+            let has_type_reference =
+                reference_ids.iter().any(|id| self.symbols.references[*id].is_type());
+            if has_type_reference {
+                self.scope.get_child_ids(current_scope_id).and_then(|child_ids| {
+                    child_ids.iter().rev().find_map(|scope_id| {
+                        if self.scope.get_flags(*scope_id).is_type_parameters() {
+                            self.scope.get_binding(*scope_id, &name)
+                        } else {
+                            None
+                        }
+                    })
                 })
-            })
+            } else {
+                None
+            }
         };
 
         if let Some(symbol_id) =
