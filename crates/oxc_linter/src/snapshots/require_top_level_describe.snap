@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 161
 expression: require_top_level_describe
 ---
   ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
@@ -88,7 +87,7 @@ expression: require_top_level_describe
    ·                 ───────────────────────────
  5 │             
    ╰────
-  help: There should not be more than 2 describe"s" at the top level.
+  help: There should not be more than 2 describes at the top level.
 
   ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
     ╭─[require_top_level_describe.tsx:11:17]
@@ -100,7 +99,7 @@ expression: require_top_level_describe
  15 │ ╰─▶                 });
  16 │                 
     ╰────
-  help: There should not be more than 2 describe"s" at the top level.
+  help: There should not be more than 2 describes at the top level.
 
   ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
     ╭─[require_top_level_describe.tsx:17:17]
@@ -112,7 +111,7 @@ expression: require_top_level_describe
  21 │ ╰─▶                 });
  22 │                 
     ╰────
-  help: There should not be more than 2 describe"s" at the top level.
+  help: There should not be more than 2 describes at the top level.
 
   ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
    ╭─[require_top_level_describe.tsx:3:17]
@@ -121,7 +120,7 @@ expression: require_top_level_describe
    ·                 ─────────────────────────
  4 │                 describe('three', () => {});
    ╰────
-  help: There should not be more than 1 describe"" at the top level.
+  help: There should not be more than 1 describe at the top level.
 
   ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
    ╭─[require_top_level_describe.tsx:4:17]
@@ -130,4 +129,4 @@ expression: require_top_level_describe
    ·                 ───────────────────────────
  5 │             
    ╰────
-  help: There should not be more than 1 describe"" at the top level.
+  help: There should not be more than 1 describe at the top level.

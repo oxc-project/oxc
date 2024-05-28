@@ -19,7 +19,7 @@ fn too_many_describes(max: usize, repeat: &str, span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block",
     )
-    .with_help(format!("There should not be more than {max:?} describe{repeat:?} at the top level."))
+    .with_help(format!("There should not be more than {max:?} describe{repeat} at the top level."))
     .with_labels([span0.into()])
 }
 
