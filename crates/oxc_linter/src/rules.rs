@@ -348,6 +348,7 @@ mod oxc {
     pub mod misrefactored_assign_op;
     pub mod missing_throw;
     pub mod no_accumulating_spread;
+    pub mod no_async_await;
     pub mod no_barrel_file;
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
@@ -719,6 +720,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::no_barrel_file,
     oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
+    oxc::no_async_await,
     oxc::uninvoked_array_callback,
     nextjs::google_font_display,
     nextjs::google_font_preconnect,
