@@ -201,6 +201,7 @@ fn test_class_with_type_parameter() {
     tester.has_symbol("T").has_number_of_references(4).test();
     tester.has_symbol("K").has_number_of_references(1).test();
     tester.has_symbol("D").has_number_of_references(0).test();
+
     // type B is not referenced
     tester.has_symbol("B").has_number_of_references(0).test();
 }
@@ -210,11 +211,17 @@ fn test_ts_mapped_type() {
     let tester = SemanticTester::ts(
         "
         type M<T> = { [K in keyof T]: T[K] };
+
+        type Y = any;
+        type X<T> = { [Y in keyof T]: T[Y] };
         ",
     );
 
     tester.has_symbol("T").has_number_of_references(2).test();
     tester.has_symbol("K").has_number_of_references(1).test();
+
+    // type Y is not referenced
+    tester.has_symbol("Y").has_number_of_references(0).test();
 }
 
 #[test]
@@ -231,8 +238,10 @@ fn test_ts_interface_declaration_with_type_parameter() {
         ",
     );
 
-    tester.has_symbol("A").has_number_of_references(0).test();
     tester.has_symbol("B").has_number_of_references(1).test();
+
+    // type A is not referenced
+    tester.has_symbol("A").has_number_of_references(0).test();
 }
 
 #[test]
@@ -240,9 +249,15 @@ fn test_ts_infer_type() {
     let tester = SemanticTester::ts(
         "
         type T = T extends infer U ? U : never;
+        
+        type C = any;
+        type K = K extends infer C ? K : never;
         ",
     );
 
     tester.has_symbol("T").has_number_of_references(1).test();
     tester.has_symbol("U").has_number_of_references(1).test();
+
+    // type C is not referenced
+    tester.has_symbol("C").has_number_of_references(0).test();
 }
