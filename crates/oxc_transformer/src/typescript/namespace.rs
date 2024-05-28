@@ -196,6 +196,13 @@ impl<'a> TypeScript<'a> {
                     names.insert(enum_decl.id.name.clone());
                     new_stmts.push(Statement::TSEnumDeclaration(enum_decl));
                 }
+                Statement::VariableDeclaration(decl) => {
+                    is_empty = false;
+                    decl.bound_names(&mut |id| {
+                        names.insert(id.name.clone());
+                    });
+                    new_stmts.push(Statement::VariableDeclaration(decl));
+                }
                 Statement::ExportNamedDeclaration(export_decl) => {
                     let export_decl = export_decl.unbox();
                     if let Some(decl) = export_decl.declaration {
