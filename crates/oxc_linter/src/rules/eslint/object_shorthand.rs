@@ -9,39 +9,39 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn expected_all_properties_shorthanded(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(object-shorthand): Expected shorthand for all properties.")
+    OxcDiagnostic::warn("eslint(object-shorthand): Expected shorthand for all properties.")
         .with_labels([span0.into()])
 }
 
 fn expected_literal_method_longform(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint(object-shorthand): Expected longform method syntax for string literal keys.",
     )
     .with_labels([span0.into()])
 }
 
 fn expected_property_shorthand(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(object-shorthand): Expected property shorthand.")
+    OxcDiagnostic::warn("eslint(object-shorthand): Expected property shorthand.")
         .with_labels([span0.into()])
 }
 
 fn expected_property_longform(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(object-shorthand): Expected longform property syntax.")
+    OxcDiagnostic::warn("eslint(object-shorthand): Expected longform property syntax.")
         .with_labels([span0.into()])
 }
 
 fn expected_method_shorthand(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(object-shorthand): Expected method shorthand.")
+    OxcDiagnostic::warn("eslint(object-shorthand): Expected method shorthand.")
         .with_labels([span0.into()])
 }
 
 fn expected_method_longform(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning("eslint(object-shorthand): Expected longform method syntax.")
+    OxcDiagnostic::warn("eslint(object-shorthand): Expected longform method syntax.")
         .with_labels([span0.into()])
 }
 
 fn unexpected_mix(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warning(
+    OxcDiagnostic::warn(
         "eslint(object-shorthand): Unexpected mix of shorthand and non-shorthand properties.",
     )
     .with_labels([span0.into()])
