@@ -378,9 +378,9 @@ dependencies = [
 
 [[package]]
 name = "criterion2"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43b57a5b1bf6ed08b671717cf7ce07d3dea4efa30f54d0b64abce48d8299818f"
+checksum = "b05a0f6ef5d7bc5c62d49e823079028b883b2f5321b881f92c1ab317c3427db4"
 dependencies = [
  "anes",
  "bpaf",
@@ -388,7 +388,7 @@ dependencies = [
  "ciborium",
  "codspeed",
  "colored",
- "itertools 0.12.1",
+ "itertools 0.13.0",
  "num-traits",
  "oorandom",
  "serde",
