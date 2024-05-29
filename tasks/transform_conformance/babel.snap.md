@@ -1,6 +1,6 @@
 commit: 4bd1b2c2
 
-Passed: 475/928
+Passed: 476/928
 
 # All Passed:
 * babel-preset-react
@@ -467,8 +467,7 @@ Passed: 475/928
 * optimize-const-enums/merged-exported/input.ts
 * regression/15768/input.ts
 
-# babel-plugin-transform-react-jsx (140/142)
-* autoImport/complicated-scope-module/input.js
+# babel-plugin-transform-react-jsx (141/142)
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 
 # babel-plugin-transform-react-jsx-development (9/10)
