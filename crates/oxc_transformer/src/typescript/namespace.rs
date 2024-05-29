@@ -10,6 +10,7 @@ use oxc_ast::{ast::*, syntax_directed_operations::BoundNames};
 use oxc_span::{Atom, CompactStr, SPAN};
 use oxc_syntax::{
     operator::{AssignmentOperator, LogicalOperator},
+    scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
 };
 use oxc_traverse::TraverseCtx;
@@ -150,9 +151,13 @@ impl<'a> TypeScript<'a> {
             &ctx.generate_uid_in_current_scope(real_name, SymbolFlags::FunctionScopedVariable),
         );
 
+        // Reuse TSModuleBlock's scope id in transformed function.
+        let mut scope_id = None;
+
         let namespace_top_level = if let Some(body) = decl.body {
             match body {
                 TSModuleDeclarationBody::TSModuleBlock(mut block) => {
+                    scope_id = block.scope_id.get();
                     self.ctx.ast.move_statement_vec(&mut block.body)
                 }
                 // We handle `namespace X.Y {}` as if it was
@@ -312,7 +317,7 @@ impl<'a> TypeScript<'a> {
             return None;
         }
 
-        Some(self.transform_namespace(&name, real_name, new_stmts, parent_export))
+        Some(self.transform_namespace(&name, real_name, new_stmts, parent_export, scope_id, ctx))
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
@@ -342,6 +347,8 @@ impl<'a> TypeScript<'a> {
         real_name: &Atom<'a>,
         stmts: Vec<'a, Statement<'a>>,
         parent_export: Option<Expression<'a>>,
+        scope_id: Option<ScopeId>,
+        ctx: &mut TraverseCtx,
     ) -> Statement<'a> {
         // `(function (_N) { var x; })(N || (N = {}))`;
         //  ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -369,6 +376,11 @@ impl<'a> TypeScript<'a> {
                 params,
                 Some(body),
             );
+            if let Some(scope_id) = scope_id {
+                function.scope_id.set(Some(scope_id));
+                *ctx.scopes_mut().get_flags_mut(scope_id) =
+                    ScopeFlags::Function | ScopeFlags::StrictMode;
+            }
             let function_expr = self.ctx.ast.function_expression(function);
             self.ctx.ast.parenthesized_expression(SPAN, function_expr)
         };
