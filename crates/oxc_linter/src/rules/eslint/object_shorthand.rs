@@ -159,7 +159,7 @@ impl Rule for ObjectShorthand {
                     // TODO: implement
                 } else if self.apply_never {
                     // from { x } to { x: x }
-                    // TODO: implement
+                    Self::check_shorthand_properties(&self, property, ctx);
                 }
             } else if self.apply_to_methods && is_property_value_anonymous_function(property) {
                 // from { x: function() {} }   to { x() {} }
@@ -207,16 +207,29 @@ impl ObjectShorthand {
         }
     }
 
+    fn check_shorthand_properties(&self, property: &ObjectProperty, ctx: &LintContext<'_>) {
+        if let Some(property_name) = property.key.name() {
+            ctx.diagnostic_with_fix(expected_property_longform(property.span), || {
+                Fix::new(
+                    property_name.to_string() + ": " + &property_name.to_string(),
+                    property.span,
+                )
+            });
+        }
+    }
+
     fn check_longform_properties(&self, property: &ObjectProperty, ctx: &LintContext<'_>) {
+        if self.avoid_quotes {
+            return;
+        }
+
         let Expression::Identifier(value_identifier) = &property.value.without_parenthesized()
         else {
             return;
         };
 
         if let Some(property_name) = property.key.name() {
-            // from { x: x } to { x }
-            // from { "x": x } to { x }
-            if !self.avoid_quotes && property_name == value_identifier.name {
+            if property_name == value_identifier.name {
                 if ctx.semantic().trivias().has_comments_between(Span::new(
                     property.key.span().start,
                     value_identifier.span.end,
@@ -608,6 +621,13 @@ fn test_never() {
     let fail = vec![];
 
     let fix = vec![
+        ("var x = {y}", "var x = {y: y}", Some(json!(["never"]))),
+        ("var x = {y: {x}}", "var x = {y: {x: x}}", Some(json!(["never"]))),
+        (
+            "var x = {foo, bar: baz, ...qux}",
+            "var x = {foo: foo, bar: baz, ...qux}",
+            Some(json!(["never"])),
+        ),
         (
             "({ [(foo)]() { return; } })",
             "({ [(foo)]: function() { return; } })",
@@ -634,6 +654,7 @@ fn test_never() {
             Some(json!(["never"])),
         ),
         ("({ *foo() { return; } })", "({ foo: function*() { return; } })", Some(json!(["never"]))),
+        ("({ async* a() {} })", "({ a: async function*() {} })", Some(json!(["never"]))),
         (
             "({ async foo() { return; } })",
             "({ foo: async function() { return; } })",
@@ -646,13 +667,11 @@ fn test_never() {
         ),
         ("var x = {y() {}}", "var x = {y: function() {}}", Some(json!(["never"]))),
         ("var x = {*y() {}}", "var x = {y: function*() {}}", Some(json!(["never"]))),
-        ("var x = {y}", "var x = {y: y}", Some(json!(["never"]))),
         (
             "var x = {y, a: b, *x(){}}",
             "var x = {y: y, a: b, x: function*(){}}",
             Some(json!(["never"])),
         ),
-        ("var x = {y: {x}}", "var x = {y: {x: x}}", Some(json!(["never"]))),
         (
             "var x = {ConstructorFunction(){}, a: b}",
             "var x = {ConstructorFunction: function(){}, a: b}",
@@ -663,15 +682,9 @@ fn test_never() {
             "var x = {notConstructorFunction: function(){}, b: c}",
             Some(json!(["never"])),
         ),
-        (
-            "var x = {foo, bar: baz, ...qux}",
-            "var x = {foo: foo, bar: baz, ...qux}",
-            Some(json!(["never"])),
-        ),
-        ("({ async* a() {} })", "({ a: async function*() {} })", Some(json!(["never"]))),
     ];
 
-    Tester::new(ObjectShorthand::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(ObjectShorthand::NAME, pass, fail).expect_fix(fix).test();
 }
 
 #[test]
