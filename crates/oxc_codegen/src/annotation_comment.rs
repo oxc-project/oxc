@@ -21,7 +21,7 @@ pub fn get_leading_annotate_comment<'a, const MINIFY: bool>(
         CommentKind::SingleLine => comment.end(),
         CommentKind::MultiLine => comment.end() + 2,
     };
-    let source_code = codegen.try_get_sourcecode()?;
+    let source_code = codegen.source_code();
     let content_between = &source_code[real_end as usize..node_start as usize];
     // Used for VariableDeclaration (Rollup only respects "const" and only for the first one)
     if content_between.chars().all(|ch| ch.is_ascii_whitespace()) {
@@ -40,18 +40,16 @@ pub fn print_comment<const MINIFY: bool>(
     comment: Comment,
     p: &mut Codegen<{ MINIFY }>,
 ) -> Option<()> {
-    let content =
-        p.try_get_sourcecode()?[comment_start as usize..comment.end() as usize].to_string();
     match comment.kind() {
         CommentKind::SingleLine => {
             p.print_str("//");
-            p.print_str(content);
+            p.print_range_of_source_code(comment_start as usize..comment.end() as usize);
             p.print_soft_newline();
             p.print_indent();
         }
         CommentKind::MultiLine => {
             p.print_str("/*");
-            p.print_str(content);
+            p.print_range_of_source_code(comment_start as usize..comment.end() as usize);
             p.print_str("*/");
             p.print_soft_space();
         }

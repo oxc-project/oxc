@@ -14,7 +14,7 @@ mod gen;
 mod gen_ts;
 mod operator;
 
-use std::{ops::Range, str::from_utf8_unchecked};
+use std::str::from_utf8_unchecked;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -143,13 +143,6 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.code.extend_from_slice(s.as_ref());
     }
 
-    /// This method to avoid rustc borrow checker issue.
-    /// Since if you want to print a range of source code, you need to borrow the source code
-    /// immutable first, and call the [Self::print_str] which is a mutable borrow.
-    pub fn print_range_of_source_code(&mut self, range: Range<usize>) {
-        self.code.extend_from_slice(&self.source_code[range].as_bytes());
-    }
-
     /// In some scenario, we want to move the comment that should be codegened to another position.
     /// ```js
     ///  /* @__NO_SIDE_EFFECTS__ */ export const a = function() {
@@ -176,7 +169,10 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     }
 
     pub fn source_code(&self) -> &str {
-        self.source_code
+        elf.source_code
+    }
+    pub fn try_get_sourcecode(&self) -> Option<&str> {
+        self.comment_gen_related.as_ref().map(|comment_gen_related| comment_gen_related.source_code)
     }
 
     pub fn try_take_moved_comment(&mut self, node_start: u32) -> Option<(u32, Comment)> {

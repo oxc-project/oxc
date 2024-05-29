@@ -179,7 +179,7 @@ pub trait TestCase {
             .build(transformed_program);
 
         result.map(|()| {
-            Codegen::<false>::new(source_text.len(), CodegenOptions::default(), None)
+            Codegen::<false>::new(&source_text, CodegenOptions::default(), None)
                 .build(transformed_program)
         })
     }
@@ -252,7 +252,7 @@ impl TestCase for ConformanceTestCase {
         let result = transformer.build(program);
         if result.is_ok() {
             transformed_code =
-                Codegen::<false>::new(input.len(), CodegenOptions::default(), None).build(program);
+                Codegen::<false>::new(&input, CodegenOptions::default(), None).build(program);
         } else {
             actual_errors =
                 result.err().unwrap().iter().map(std::string::ToString::to_string).collect();
@@ -268,12 +268,12 @@ impl TestCase for ConformanceTestCase {
                 }
                 // The transformation should be equal to input.js If output.js does not exist.
                 let program = Parser::new(&allocator, &input, source_type).parse().program;
-                Codegen::<false>::new(input.len(), CodegenOptions::default(), None).build(&program)
+                Codegen::<false>::new(&input, CodegenOptions::default(), None).build(&program)
             },
             |output| {
                 // Get expected code by parsing the source text, so we can get the same code generated result.
                 let program = Parser::new(&allocator, &output, source_type).parse().program;
-                Codegen::<false>::new(output.len(), CodegenOptions::default(), None).build(&program)
+                Codegen::<false>::new(&output, CodegenOptions::default(), None).build(&program)
             },
         );
 
@@ -333,7 +333,7 @@ impl ExecTestCase {
         let source_type = SourceType::from_path(&target_path).unwrap();
         let transformed_program =
             Parser::new(&allocator, &source_text, source_type).parse().program;
-        let result = Codegen::<false>::new(source_text.len(), CodegenOptions::default(), None)
+        let result = Codegen::<false>::new(&source_text, CodegenOptions::default(), None)
             .build(&transformed_program);
 
         fs::write(&target_path, result).unwrap();

@@ -12,11 +12,10 @@ fn test(source_text: &str, expected: &str, options: Option<CodegenOptions>) {
     let program = allocator.alloc(program);
     let options = options.unwrap_or_default();
     let result = Codegen::<false>::new(
-        source_text.len(),
+        &source_text,
         options,
         Some(CommentGenRelated {
             trivials: parse_return.trivias.into(),
-            source_code: source_text,
             move_comment_map: HashMap::default(),
         }),
     )
@@ -34,7 +33,7 @@ fn test_ts(source_text: &str, expected: &str, is_typescript_definition: bool) {
     let program = parse_return.program;
     let program = allocator.alloc(program);
     let result = Codegen::<false>::new(
-        source_text.len(),
+        &source_text,
         CodegenOptions { enable_typescript: true, ..Default::default() },
         None,
     )
