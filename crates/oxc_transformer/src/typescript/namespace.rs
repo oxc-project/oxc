@@ -207,6 +207,13 @@ impl<'a> TypeScript<'a> {
                     });
                     new_stmts.push(Statement::ClassDeclaration(decl));
                 }
+                Statement::FunctionDeclaration(decl) => {
+                    is_empty = false;
+                    decl.bound_names(&mut |id| {
+                        names.insert(id.name.clone());
+                    });
+                    new_stmts.push(Statement::FunctionDeclaration(decl));
+                }
                 Statement::TSEnumDeclaration(enum_decl) => {
                     is_empty = false;
                     names.insert(enum_decl.id.name.clone());
