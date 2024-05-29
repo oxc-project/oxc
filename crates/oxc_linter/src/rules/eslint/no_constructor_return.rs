@@ -50,11 +50,13 @@ declare_oxc_lint!(
 impl Rule for NoConstructorReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ReturnStatement(ret) = node.kind() else { return };
+        if ret.argument.is_none() {
+            return;
+        }
+
         let Some(is_in_constructor_root) = is_in_constructor_root(ctx, node.id()) else { return };
 
-        if is_in_constructor_root
-            || (ret.argument.is_some() && is_definitely_in_constructor(ctx, node.id()))
-        {
+        if is_in_constructor_root || is_definitely_in_constructor(ctx, node.id()) {
             ctx.diagnostic(no_constructor_return_diagnostic(ret.span));
         }
     }
@@ -108,10 +110,11 @@ fn test() {
         "class C { constructor() { function fn() { return true } } }",
         "class C { constructor() { this.fn = function () { return true } } }",
         "class C { constructor() { this.fn = () => { return true } } }",
+        "class C { constructor() { return } }",
+        "class C { constructor() { { return } } }",
     ];
 
     let fail = vec![
-        "class C { constructor() { return } }",
         "class C { constructor() { return '' } }",
         "class C { constructor(a) { if (!a) { return '' } else { a() } } }",
     ];

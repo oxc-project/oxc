@@ -4,12 +4,6 @@ expression: no_constructor_return
 ---
   ⚠ eslint(no-constructor-return): Unexpected return statement in constructor.
    ╭─[no_constructor_return.tsx:1:27]
- 1 │ class C { constructor() { return } }
-   ·                           ──────
-   ╰────
-
-  ⚠ eslint(no-constructor-return): Unexpected return statement in constructor.
-   ╭─[no_constructor_return.tsx:1:27]
  1 │ class C { constructor() { return '' } }
    ·                           ─────────
    ╰────
