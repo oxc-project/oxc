@@ -133,6 +133,7 @@ impl Case for SourcemapCase {
             self.path.to_string_lossy().as_ref(),
             source_text,
             codegen_options,
+            None,
         )
         .build(&ret.program);
 

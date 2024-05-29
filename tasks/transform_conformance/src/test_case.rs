@@ -175,7 +175,7 @@ pub trait TestCase {
         .build(&mut program);
 
         result.map(|()| {
-            Codegen::<false>::new("", &source_text, CodegenOptions::default())
+            Codegen::<false>::new("", &source_text, CodegenOptions::default(), None)
                 .build(&program)
                 .source_text
         })
@@ -262,7 +262,7 @@ impl TestCase for ConformanceTestCase {
                     let result = transformer.build(&mut program);
                     if result.is_ok() {
                         transformed_code =
-                            Codegen::<false>::new("", &input, codegen_options.clone())
+                            Codegen::<false>::new("", &input, codegen_options.clone(), None)
                                 .build(&program)
                                 .source_text;
                     } else {
@@ -306,7 +306,7 @@ impl TestCase for ConformanceTestCase {
             |output| {
                 // Get expected code by parsing the source text, so we can get the same code generated result.
                 let program = Parser::new(&allocator, &output, source_type).parse().program;
-                Codegen::<false>::new("", &output, codegen_options.clone())
+                Codegen::<false>::new("", &output, codegen_options.clone(), None)
                     .build(&program)
                     .source_text
             },
@@ -374,7 +374,7 @@ impl ExecTestCase {
         let source_type = SourceType::from_path(&target_path).unwrap();
         let transformed_program =
             Parser::new(&allocator, &source_text, source_type).parse().program;
-        let result = Codegen::<false>::new("", &source_text, CodegenOptions::default())
+        let result = Codegen::<false>::new("", &source_text, CodegenOptions::default(), None)
             .build(&transformed_program)
             .source_text;
 

@@ -8,14 +8,18 @@
 //! Code adapted from
 //! * [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer.go)
 
+mod annotation_comment;
 mod context;
 mod gen;
 mod gen_ts;
 mod operator;
 mod sourcemap_builder;
 
+use std::ops::Range;
+
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
+use oxc_ast::{Comment, TriviasMap};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
     identifier::is_identifier_part,
@@ -32,13 +36,16 @@ pub use crate::{
 };
 // use crate::mangler::Mangler;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct CodegenOptions {
     /// Pass in the filename to enable source map support.
     pub enable_source_map: bool,
 
     /// Enable TypeScript code generation.
     pub enable_typescript: bool,
+
+    /// Enable preserve annotate comments, like `/* #__PURE__ */` and `/* #__NO_SIDE_EFFECTS__ */`.
+    pub preserve_annotate_comments: bool,
 }
 
 pub struct CodegenReturn {
@@ -46,7 +53,7 @@ pub struct CodegenReturn {
     pub source_map: Option<oxc_sourcemap::SourceMap>,
 }
 
-pub struct Codegen<const MINIFY: bool> {
+pub struct Codegen<'a, const MINIFY: bool> {
     #[allow(unused)]
     options: CodegenOptions,
 
@@ -72,6 +79,16 @@ pub struct Codegen<const MINIFY: bool> {
     indentation: u8,
 
     sourcemap_builder: Option<SourcemapBuilder>,
+    comment_gen_related: Option<CommentGenRelated>,
+    source_code: &'a str,
+}
+
+pub struct CommentGenRelated {
+    pub trivials: TriviasMap,
+    /// The key of map is the node start position,
+    /// the first element of value is the start of the comment
+    /// the second element of value includes the end of the comment and comment kind.
+    pub move_comment_map: rustc_hash::FxHashMap<u32, (u32, Comment)>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -81,16 +98,21 @@ pub enum Separator {
     None,
 }
 
-impl<const MINIFY: bool> Codegen<MINIFY> {
-    pub fn new(source_name: &str, source_text: &str, options: CodegenOptions) -> Self {
+impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
+    pub fn new(
+        source_name: &str,
+        source_code: &'a str,
+        options: CodegenOptions,
+        comment_gen_related: Option<CommentGenRelated>,
+    ) -> Self {
         // Initialize the output code buffer to reduce memory reallocation.
         // Minification will reduce by at least half of the original size.
-        let source_len = source_text.len();
+        let source_len = source_code.len();
         let capacity = if MINIFY { source_len / 2 } else { source_len };
 
         let sourcemap_builder = options.enable_source_map.then(|| {
             let mut sourcemap_builder = SourcemapBuilder::default();
-            sourcemap_builder.with_name_and_source(source_name, source_text);
+            sourcemap_builder.with_name_and_source(source_name, source_code);
             sourcemap_builder
         });
 
@@ -108,6 +130,8 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             start_of_default_export: 0,
             indentation: 0,
             sourcemap_builder,
+            comment_gen_related,
+            source_code,
         }
     }
 
@@ -143,9 +167,53 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
         self.code.push(ch);
     }
 
-    /// Push a string into the buffer
-    pub fn print_str(&mut self, s: &[u8]) {
-        self.code.extend_from_slice(s);
+    /// Push a single character into the buffer
+    pub fn print_str<T: AsRef<[u8]>>(&mut self, s: T) {
+        self.code.extend_from_slice(s.as_ref());
+    }
+
+    /// This method to avoid rustc borrow checker issue.
+    /// Since if you want to print a range of source code, you need to borrow the source code
+    /// immutable first, and call the [Self::print_str] which is a mutable borrow.
+    pub fn print_range_of_source_code(&mut self, range: Range<usize>) {
+        self.code.extend_from_slice(&self.source_code[range].as_bytes());
+    }
+
+    /// In some scenario, we want to move the comment that should be codegened to another position.
+    /// ```js
+    ///  /* @__NO_SIDE_EFFECTS__ */ export const a = function() {
+    ///
+    ///  }, b = 10000;
+    ///
+    /// ```
+    /// should generate such output:
+    /// ```js
+    ///   export const /* @__NO_SIDE_EFFECTS__ */ a = function() {
+    ///
+    ///  }, b = 10000;
+    /// ```
+    pub fn move_comment(&mut self, postion: u32, full_comment_info: (u32, Comment)) {
+        if let Some(comment_gen_related) = &mut self.comment_gen_related {
+            comment_gen_related.move_comment_map.insert(postion, full_comment_info);
+        }
+    }
+
+    pub fn try_get_leading_comment(&self, start: u32) -> Option<(&u32, &Comment)> {
+        self.comment_gen_related.as_ref().and_then(|comment_gen_related| {
+            comment_gen_related.trivials.range(0..start).next_back()
+        })
+    }
+
+    pub fn try_take_moved_comment(&mut self, node_start: u32) -> Option<(u32, Comment)> {
+        self.comment_gen_related.as_mut().and_then(|comment_gen_related| {
+            comment_gen_related.move_comment_map.remove(&node_start)
+        })
+    }
+
+    pub fn try_get_leading_comment_from_move_map(&self, start: u32) -> Option<&(u32, Comment)> {
+        self.comment_gen_related
+            .as_ref()
+            .and_then(|comment_gen_related| comment_gen_related.move_comment_map.get(&start))
     }
 
     fn print_soft_space(&mut self) {
