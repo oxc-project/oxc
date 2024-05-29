@@ -23,8 +23,9 @@ oxc_ast       = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_syntax    = { workspace = true }
-
-bitflags = { workspace = true }
+once_cell     = { workspace = true }
+daachorse   = { workspace = true }
+bitflags      = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }

@@ -29,12 +29,14 @@ fn main() -> std::io::Result<()> {
     println!("{source_text}");
 
     let codegen_options = CodegenOptions::default();
-    let printed = Codegen::<false>::new(source_text.len(), codegen_options).build(&ret.program);
+    let printed = Codegen::<false>::new(&source_text, codegen_options, ret.trivias.into())
+        .build(&ret.program);
     println!("Printed:");
     println!("{printed}");
 
     let ret = Parser::new(&allocator, &printed, source_type).parse();
-    let minified = Codegen::<true>::new(source_text.len(), codegen_options).build(&ret.program);
+    let minified =
+        Codegen::<true>::new(&source_text, codegen_options, ret.trivias.into()).build(&ret.program);
     println!("Minified:");
     println!("{minified}");
 

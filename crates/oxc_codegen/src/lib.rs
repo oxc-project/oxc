@@ -8,6 +8,7 @@
 //! Code adapted from
 //! * [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer.go)
 
+mod annotation_comment;
 mod context;
 mod gen;
 mod gen_ts;
@@ -17,6 +18,7 @@ use std::str::from_utf8_unchecked;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
+use oxc_ast::{Trivias, TriviasMap};
 use oxc_span::Atom;
 use oxc_syntax::{
     identifier::is_identifier_part,
@@ -35,9 +37,10 @@ pub use crate::{
 #[derive(Debug, Default, Clone, Copy)]
 pub struct CodegenOptions {
     pub enable_typescript: bool,
+    pub preserve_annotate_comments: bool,
 }
 
-pub struct Codegen<const MINIFY: bool> {
+pub struct Codegen<'a, const MINIFY: bool> {
     #[allow(unused)]
     options: CodegenOptions,
 
@@ -61,6 +64,8 @@ pub struct Codegen<const MINIFY: bool> {
 
     /// Track the current indentation level
     indentation: u8,
+    trivials: TriviasMap,
+    source_code: &'a str,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -70,10 +75,11 @@ pub enum Separator {
     None,
 }
 
-impl<const MINIFY: bool> Codegen<MINIFY> {
-    pub fn new(source_len: usize, options: CodegenOptions) -> Self {
+impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
+    pub fn new(source_code: &'a str, options: CodegenOptions, trivials: TriviasMap) -> Self {
         // Initialize the output code buffer to reduce memory reallocation.
         // Minification will reduce by at least half of the original size.
+        let source_len = source_code.len();
         let capacity = if MINIFY { source_len / 2 } else { source_len };
         Self {
             options,
@@ -88,6 +94,8 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
             indentation: 0,
+            trivials,
+            source_code,
         }
     }
 
@@ -119,8 +127,8 @@ impl<const MINIFY: bool> Codegen<MINIFY> {
     }
 
     /// Push a string into the buffer
-    pub fn print_str(&mut self, s: &[u8]) {
-        self.code.extend_from_slice(s);
+    pub fn print_str<T: AsRef<[u8]>>(&mut self, s: T) {
+        self.code.extend_from_slice(s.as_ref());
     }
 
     fn print_soft_space(&mut self) {
