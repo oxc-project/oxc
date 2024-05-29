@@ -279,7 +279,7 @@ mod tests {
     fn test_switch_always_explicit() {
         // Return Explicit
         let always_explicit = r#"
-    function() {
+    function d() {
       switch (a) {
         case "C":
           switch (b) {
@@ -299,7 +299,7 @@ mod tests {
     #[test]
     fn test_switch_always_implicit() {
         let always_implicit = r#"
-    function() {
+    function d() {
       switch (a) {
         case "C":
           switch (b) {
@@ -319,7 +319,7 @@ mod tests {
     #[test]
     fn test_switch_always_mixed() {
         let always_mixed = r#"
-        function() {
+        function d() {
           switch (a) {
             case "C":
               switch (b) {

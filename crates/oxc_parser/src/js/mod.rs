@@ -25,7 +25,7 @@ pub enum Tristate {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum FunctionKind {
-    Declaration { single_statement: bool },
+    Declaration,
     Expression,
     DefaultExport,
     TSDeclaration,
