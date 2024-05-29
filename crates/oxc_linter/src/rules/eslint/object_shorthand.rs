@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 fn expected_all_properties_shorthanded(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(object-shorthand): Expected shorthand for all properties.")
@@ -192,6 +192,7 @@ impl ObjectShorthand {
         }
 
         if let Expression::FunctionExpression(func) = &property.value.without_parenthesized() {
+            // TODO: fixer
             ctx.diagnostic(expected_method_shorthand(func.span));
         }
 
@@ -222,8 +223,9 @@ impl ObjectShorthand {
                 )) {
                     ctx.diagnostic(expected_property_shorthand(property.span));
                 } else {
-                    // TODO: fixer
-                    ctx.diagnostic(expected_property_shorthand(property.span));
+                    ctx.diagnostic_with_fix(expected_property_shorthand(property.span), || {
+                        Fix::new(property_name.to_string(), property.span)
+                    });
                 }
             }
         }
@@ -307,14 +309,14 @@ fn is_shorthand_property(property: &ObjectProperty) -> bool {
 
 fn is_redundant_property(property: &ObjectProperty) -> bool {
     match &property.value {
-            Expression::FunctionExpression(func) => func.id.is_none(),
-            Expression::Identifier(value_identifier) => {
-                if let Some(property_name) = property.key.name() {
-                    property_name == value_identifier.name
-                } else {
-                    false
-                }
+        Expression::FunctionExpression(func) => func.id.is_none(),
+        Expression::Identifier(value_identifier) => {
+            if let Some(property_name) = property.key.name() {
+                property_name == value_identifier.name
+            } else {
+                false
             }
+        }
         _ => false,
     }
 }
