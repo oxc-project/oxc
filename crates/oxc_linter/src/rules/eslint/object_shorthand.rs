@@ -146,13 +146,7 @@ impl Rule for ObjectShorthand {
         if let AstKind::ObjectProperty(property) = node.kind() {
             let is_concise_property = property.shorthand || property.method;
 
-            // Ignore getters and setters
-            if property.kind != PropertyKind::Init {
-                return;
-            }
-
-            // Ignore computed properties, unless they are functions
-            if property.computed && !is_property_value_function(property) {
+            if !can_property_have_shorthand(property) {
                 return;
             }
 
@@ -220,22 +214,10 @@ impl ObjectShorthand {
 
         if let Some(property_name) = property.key.name() {
             // from { x: x } to { x }
-            if property_name == value_identifier.name {
+            // from { "x": x } to { x }
+            if !self.avoid_quotes && property_name == value_identifier.name {
                 if ctx.semantic().trivias().has_comments_between(Span::new(
                     property.key.span().start,
-                    value_identifier.span.end,
-                )) {
-                    ctx.diagnostic(expected_property_shorthand(property.span));
-                } else {
-                    // TODO: fixer
-                    ctx.diagnostic(expected_property_shorthand(property.span));
-                }
-            }
-        } else if let Some(Expression::StringLiteral(key_literal)) = &property.key.as_expression() {
-            // from { "x": x } to { x }
-            if !self.avoid_quotes && key_literal.value == value_identifier.name {
-                if ctx.semantic().trivias().has_comments_between(Span::new(
-                    key_literal.span.start,
                     value_identifier.span.end,
                 )) {
                     ctx.diagnostic(expected_property_shorthand(property.span));
@@ -252,7 +234,13 @@ impl ObjectShorthand {
         check_redundancy: bool,
         ctx: &LintContext<'_>,
     ) {
-        let properties = obj_expr.properties.iter().filter(|p| can_property_have_shorthand(p));
+        let properties =
+            obj_expr.properties.iter().filter_map(|property_kind| match property_kind {
+                ObjectPropertyKind::ObjectProperty(property) => {
+                    can_property_have_shorthand(property).then(|| property)
+                }
+                _ => None,
+            });
 
         if properties.clone().count() > 0 {
             let shorthand_properties = properties.clone().filter(|p| is_shorthand_property(p));
@@ -313,16 +301,12 @@ fn is_property_key_string_literal(property: &ObjectProperty) -> bool {
     matches!(property.key.as_expression(), Some(Expression::StringLiteral(_)))
 }
 
-fn is_shorthand_property(property: &ObjectPropertyKind) -> bool {
-    match property {
-        ObjectPropertyKind::ObjectProperty(property) => property.shorthand || property.method,
-        _ => false,
-    }
+fn is_shorthand_property(property: &ObjectProperty) -> bool {
+    property.shorthand || property.method
 }
 
-fn is_redundant_property(property: &ObjectPropertyKind) -> bool {
-    match property {
-        ObjectPropertyKind::ObjectProperty(property) => match &property.value {
+fn is_redundant_property(property: &ObjectProperty) -> bool {
+    match &property.value {
             Expression::FunctionExpression(func) => func.id.is_none(),
             Expression::Identifier(value_identifier) => {
                 if let Some(property_name) = property.key.name() {
@@ -331,17 +315,22 @@ fn is_redundant_property(property: &ObjectPropertyKind) -> bool {
                     false
                 }
             }
-            _ => false,
-        },
         _ => false,
     }
 }
 
-fn can_property_have_shorthand(property: &ObjectPropertyKind) -> bool {
-    match property {
-        ObjectPropertyKind::ObjectProperty(property) => property.kind == PropertyKind::Init,
-        _ => false,
+fn can_property_have_shorthand(property: &ObjectProperty) -> bool {
+    // Ignore getters and setters
+    if property.kind != PropertyKind::Init {
+        return false;
     }
+
+    // Ignore computed properties, unless they are functions
+    if property.computed && !is_property_value_function(property) {
+        return false;
+    }
+
+    return true;
 }
 
 #[test]
