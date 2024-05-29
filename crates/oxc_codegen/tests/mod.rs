@@ -1,7 +1,8 @@
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions, CommentGenRelated};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
+use rustc_hash::FxHashMap as HashMap;
 
 fn test(source_text: &str, expected: &str, options: Option<CodegenOptions>) {
     let allocator = Allocator::default();
@@ -10,8 +11,16 @@ fn test(source_text: &str, expected: &str, options: Option<CodegenOptions>) {
     let program = parse_return.program;
     let program = allocator.alloc(program);
     let options = options.unwrap_or_default();
-    let result =
-        Codegen::<false>::new(source_text, options, parse_return.trivias.into()).build(program);
+    let result = Codegen::<false>::new(
+        source_text.len(),
+        options,
+        Some(CommentGenRelated {
+            trivials: parse_return.trivias.into(),
+            source_code: &source_text,
+            move_comment_map: HashMap::default(),
+        }),
+    )
+    .build(program);
     assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
 }
 
@@ -25,9 +34,9 @@ fn test_ts(source_text: &str, expected: &str, is_typescript_definition: bool) {
     let program = parse_return.program;
     let program = allocator.alloc(program);
     let result = Codegen::<false>::new(
-        &source_text,
+        source_text.len(),
         CodegenOptions { enable_typescript: true, ..Default::default() },
-        parse_return.trivias.into(),
+        None,
     )
     .build(program);
     assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
@@ -214,9 +223,9 @@ fn annotate_comment() {
 					/* #__NO_SIDE_EFFECTS__ */ async () => {},
 					/* #__NO_SIDE_EFFECTS__ */ async (y) => (y),
 				])",
-        r"x([/* #__NO_SIDE_EFFECTS__ */y => y, /* #__NO_SIDE_EFFECTS__ */() => {
-}, /* #__NO_SIDE_EFFECTS__ */y => y, /* #__NO_SIDE_EFFECTS__ */async y => y, /* #__NO_SIDE_EFFECTS__ */async() => {
-}, /* #__NO_SIDE_EFFECTS__ */async y => y,]);
+        r"x([/* #__NO_SIDE_EFFECTS__ */ y => y, /* #__NO_SIDE_EFFECTS__ */ () => {
+}, /* #__NO_SIDE_EFFECTS__ */ y => y, /* #__NO_SIDE_EFFECTS__ */ async y => y, /* #__NO_SIDE_EFFECTS__ */ async() => {
+}, /* #__NO_SIDE_EFFECTS__ */ async y => y,]);
 ",
     );
 
@@ -230,9 +239,9 @@ fn annotate_comment() {
 					/* #__NO_SIDE_EFFECTS__ */ async () => {},
 					/* #__NO_SIDE_EFFECTS__ */ async (y) => (y),
 				])",
-        r"x([/* #__NO_SIDE_EFFECTS__ */y => y, /* #__NO_SIDE_EFFECTS__ */() => {
-}, /* #__NO_SIDE_EFFECTS__ */y => y, /* #__NO_SIDE_EFFECTS__ */async y => y, /* #__NO_SIDE_EFFECTS__ */async() => {
-}, /* #__NO_SIDE_EFFECTS__ */async y => y,]);
+        r"x([/* #__NO_SIDE_EFFECTS__ */ y => y, /* #__NO_SIDE_EFFECTS__ */ () => {
+}, /* #__NO_SIDE_EFFECTS__ */ y => y, /* #__NO_SIDE_EFFECTS__ */ async y => y, /* #__NO_SIDE_EFFECTS__ */ async() => {
+}, /* #__NO_SIDE_EFFECTS__ */ async y => y,]);
 ",
     );
 
@@ -294,27 +303,76 @@ async function* d() {
 /* @__NO_SIDE_EFFECTS__ */ export function* b() {}
 /* @__NO_SIDE_EFFECTS__ */ export async function c() {}
 /* @__NO_SIDE_EFFECTS__ */ export async function* d() {}        ",
-        r"/* @__NO_SIDE_EFFECTS__ */export function a() {
+        r"/* @__NO_SIDE_EFFECTS__ */ export function a() {
 }
-/* @__NO_SIDE_EFFECTS__ */export function* b() {
+/* @__NO_SIDE_EFFECTS__ */ export function* b() {
 }
-/* @__NO_SIDE_EFFECTS__ */export async function c() {
+/* @__NO_SIDE_EFFECTS__ */ export async function c() {
 }
-/* @__NO_SIDE_EFFECTS__ */export async function* d() {
+/* @__NO_SIDE_EFFECTS__ */ export async function* d() {
 }
+",
+    );
+
+    // // Only "c0" and "c2" should have "no side effects" (Rollup only respects "const" and only for the first one)
+    test_comment_helper(
+        r"
+    					/* #__NO_SIDE_EFFECTS__ */ export var v0 = function() {}, v1 = function() {}
+    					/* #__NO_SIDE_EFFECTS__ */ export let l0 = function() {}, l1 = function() {}
+    					/* #__NO_SIDE_EFFECTS__ */ export const c0 = function() {}, c1 = function() {}
+    					/* #__NO_SIDE_EFFECTS__ */ export var v2 = () => {}, v3 = () => {}
+    					/* #__NO_SIDE_EFFECTS__ */ export let l2 = () => {}, l3 = () => {}
+    					/* #__NO_SIDE_EFFECTS__ */ export const c2 = () => {}, c3 = () => {}
+    ",
+        r"export var v0 = function() {
+}, v1 = function() {
+};
+export let l0 = function() {
+}, l1 = function() {
+};
+export const c0 = /* #__NO_SIDE_EFFECTS__ */ function() {
+}, c1 = function() {
+};
+export var v2 = () => {
+}, v3 = () => {
+};
+export let l2 = () => {
+}, l3 = () => {
+};
+export const c2 = /* #__NO_SIDE_EFFECTS__ */ () => {
+}, c3 = () => {
+};
 ",
     );
 
     // Only "c0" and "c2" should have "no side effects" (Rollup only respects "const" and only for the first one)
     test_comment_helper(
         r"
-					/* #__NO_SIDE_EFFECTS__ */ export var v0 = function() {}, v1 = function() {}
-					/* #__NO_SIDE_EFFECTS__ */ export let l0 = function() {}, l1 = function() {}
-					/* #__NO_SIDE_EFFECTS__ */ export const c0 = function() {}, c1 = function() {}
-					/* #__NO_SIDE_EFFECTS__ */ export var v2 = () => {}, v3 = () => {}
-					/* #__NO_SIDE_EFFECTS__ */ export let l2 = () => {}, l3 = () => {}
-					/* #__NO_SIDE_EFFECTS__ */ export const c2 = () => {}, c3 = () => {}
+/* #__NO_SIDE_EFFECTS__ */ var v0 = function() {}, v1 = function() {}
+/* #__NO_SIDE_EFFECTS__ */ let l0 = function() {}, l1 = function() {}
+/* #__NO_SIDE_EFFECTS__ */ const c0 = function() {}, c1 = function() {}
+/* #__NO_SIDE_EFFECTS__ */ var v2 = () => {}, v3 = () => {}
+/* #__NO_SIDE_EFFECTS__ */ let l2 = () => {}, l3 = () => {}
+/* #__NO_SIDE_EFFECTS__ */ const c2 = () => {}, c3 = () => {}
+    ",
+        r"var v0 = function() {
+}, v1 = function() {
+};
+let l0 = function() {
+}, l1 = function() {
+};
+const c0 = /* #__NO_SIDE_EFFECTS__ */ function() {
+}, c1 = function() {
+};
+var v2 = () => {
+}, v3 = () => {
+};
+let l2 = () => {
+}, l3 = () => {
+};
+const c2 = /* #__NO_SIDE_EFFECTS__ */ () => {
+}, c3 = () => {
+};
 ",
-        r"",
     );
 }

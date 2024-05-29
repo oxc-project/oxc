@@ -1,3 +1,4 @@
+use bitflags::Flags;
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -20,7 +21,7 @@ pub trait Gen<const MINIFY: bool> {
 
 /// the [GenComment] trait only generate annotate comments like `/* @__PURE__ */` and `/* @__NO_SIDE_EFFECTS__ */`.
 pub trait GenComment<const MINIFY: bool> {
-    fn gen_comment(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {}
+    fn gen_comment(&self, _p: &mut Codegen<{ MINIFY }>, ctx: &mut Context) {}
 }
 
 pub trait GenExpr<const MINIFY: bool> {
@@ -599,6 +600,20 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclaration<'a> {
         if p.options.enable_typescript && self.modifiers.contains(ModifierKind::Declare) {
             p.print_str(b"declare ");
         }
+
+        if p.options.preserve_annotate_comments {
+            if matches!(self.kind, VariableDeclarationKind::Const) {
+                if let Some(declarator) = self.declarations.first() {
+                    if let Some(ref init) = declarator.init {
+                        if let Some(leading_annotate_comment) =
+                            get_leading_annotate_comment(self.span.start, p)
+                        {
+                            p.move_comment(init.span().start, leading_annotate_comment);
+                        }
+                    }
+                }
+            }
+        }
         p.print_str(match self.kind {
             VariableDeclarationKind::Const => "const",
             VariableDeclarationKind::Let => "let",
@@ -623,11 +638,11 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclarator<'a> {
 }
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, mut ctx: Context) {
         if !p.options.enable_typescript && self.is_typescript_syntax() {
             return;
         }
-        self.gen_comment(p, ctx);
+        self.gen_comment(p, &mut ctx);
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         p.wrap(wrap, |p| {
@@ -820,12 +835,30 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportAttribute<'a> {
 }
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, mut ctx: Context) {
         if !p.options.enable_typescript && self.is_typescript_syntax() {
             return;
         }
-        if matches!(self.declaration, Some(Declaration::FunctionDeclaration(_))) {
-            gen_comment(self.span.start, p);
+        if p.options.preserve_annotate_comments {
+            match &self.declaration {
+                Some(Declaration::FunctionDeclaration(_)) => {
+                    gen_comment(self.span.start, p);
+                }
+                Some(Declaration::VariableDeclaration(var_decl))
+                    if matches!(var_decl.kind, VariableDeclarationKind::Const) =>
+                {
+                    if let Some(declarator) = var_decl.declarations.first() {
+                        if let Some(ref init) = declarator.init {
+                            if let Some(leading_annotate_comment) =
+                                get_leading_annotate_comment(self.span.start, p)
+                            {
+                                p.move_comment(init.span().start, leading_annotate_comment);
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            };
         }
         p.print_str(b"export ");
         match &self.declaration {
@@ -924,8 +957,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclarationKind<'a> {
 }
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        self.gen_comment(p, ctx);
+    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, mut ctx: Context) {
+        self.gen_comment(p, &mut ctx);
         match self {
             Self::BooleanLiteral(lit) => lit.gen(p, ctx),
             Self::NullLiteral(lit) => lit.gen(p, ctx),
@@ -978,7 +1011,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
 }
 
 impl<'a, const MINIFY: bool> GenComment<MINIFY> for Expression<'_> {
-    fn gen_comment(&self, codegen: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+    fn gen_comment(&self, codegen: &mut Codegen<{ MINIFY }>, ctx: &mut Context) {
         match self {
             Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
                 gen_comment(self.span().start, codegen);
@@ -989,7 +1022,7 @@ impl<'a, const MINIFY: bool> GenComment<MINIFY> for Expression<'_> {
 }
 
 impl<'a, const MINIFY: bool> GenComment<MINIFY> for Function<'_> {
-    fn gen_comment(&self, codegen: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+    fn gen_comment(&self, codegen: &mut Codegen<{ MINIFY }>, ctx: &mut Context) {
         gen_comment(self.span.start, codegen);
     }
 }

@@ -6,6 +6,8 @@ bitflags! {
         /// [In]
         const In          = 1 << 0;
         const FORBID_CALL = 1 << 1;
+        /// Using this field carefully, make sure use them paired.
+        const FORCE_INSERT_LEADING = 1 << 2;
     }
 }
 

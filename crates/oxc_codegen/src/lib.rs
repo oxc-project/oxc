@@ -18,7 +18,7 @@ use std::str::from_utf8_unchecked;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_ast::{Trivias, TriviasMap};
+use oxc_ast::{Comment, Trivias, TriviasMap};
 use oxc_span::Atom;
 use oxc_syntax::{
     identifier::is_identifier_part,
@@ -64,8 +64,7 @@ pub struct Codegen<'a, const MINIFY: bool> {
 
     /// Track the current indentation level
     indentation: u8,
-    trivials: TriviasMap,
-    source_code: &'a str,
+    comment_gen_related: Option<CommentGenRelated<'a>>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -75,11 +74,23 @@ pub enum Separator {
     None,
 }
 
+pub struct CommentGenRelated<'a> {
+    pub trivials: TriviasMap,
+    pub source_code: &'a str,
+    /// The key of map is the node start position,
+    /// the first element of value is the start of the comment
+    /// the second element of value includes the end of the comment and comment kind.
+    pub move_comment_map: rustc_hash::FxHashMap<u32, (u32, Comment)>,
+}
+
 impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
-    pub fn new(source_code: &'a str, options: CodegenOptions, trivials: TriviasMap) -> Self {
+    pub fn new(
+        source_len: usize,
+        options: CodegenOptions,
+        comment_gen_related: Option<CommentGenRelated<'a>>,
+    ) -> Self {
         // Initialize the output code buffer to reduce memory reallocation.
         // Minification will reduce by at least half of the original size.
-        let source_len = source_code.len();
         let capacity = if MINIFY { source_len / 2 } else { source_len };
         Self {
             options,
@@ -94,8 +105,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
             indentation: 0,
-            trivials,
-            source_code,
+            comment_gen_related,
         }
     }
 
@@ -129,6 +139,49 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     /// Push a string into the buffer
     pub fn print_str<T: AsRef<[u8]>>(&mut self, s: T) {
         self.code.extend_from_slice(s.as_ref());
+    }
+
+    /// In some scenario, we want to move the comment that should be codegened to another position.
+    /// ```js
+    ///  /* @__NO_SIDE_EFFECTS__ */ export const a = function() {
+    ///
+    ///  }, b = 10000;
+    ///
+    /// ```
+    /// should generate such output:
+    /// ```js
+    ///   export const /* @__NO_SIDE_EFFECTS__ */ a = function() {
+    ///
+    ///  }, b = 10000;
+    /// ```
+    pub fn move_comment(&mut self, postion: u32, full_comment_info: (u32, Comment)) {
+        if let Some(comment_gen_related) = &mut self.comment_gen_related {
+            comment_gen_related.move_comment_map.insert(postion, full_comment_info);
+        }
+    }
+
+    pub fn try_get_leading_comment(&self, start: u32) -> Option<(&u32, &Comment)> {
+        self.comment_gen_related.as_ref().and_then(|comment_gen_related| {
+            comment_gen_related.trivials.comments().range(0..start).rev().next()
+        })
+    }
+
+    pub fn try_get_sourcecode(&self) -> Option<&str> {
+        self.comment_gen_related
+            .as_ref()
+            .and_then(|comment_gen_related| Some(comment_gen_related.source_code))
+    }
+
+    pub fn try_take_moved_comment(&mut self, node_start: u32) -> Option<(u32, Comment)> {
+        self.comment_gen_related.as_mut().and_then(|comment_gen_related| {
+            comment_gen_related.move_comment_map.remove(&node_start)
+        })
+    }
+
+    pub fn try_get_leading_comment_from_move_map(&self, start: u32) -> Option<&(u32, Comment)> {
+        self.comment_gen_related
+            .as_ref()
+            .and_then(|comment_gen_related| comment_gen_related.move_comment_map.get(&start))
     }
 
     fn print_soft_space(&mut self) {
