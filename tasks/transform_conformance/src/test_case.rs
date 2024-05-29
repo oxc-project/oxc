@@ -261,10 +261,9 @@ impl TestCase for ConformanceTestCase {
                     );
                     let result = transformer.build(&mut program);
                     if result.is_ok() {
-                        transformed_code =
-                            Codegen::<false>::new("", &input, codegen_options.clone(), None)
-                                .build(&program)
-                                .source_text;
+                        transformed_code = Codegen::<false>::new("", &input, codegen_options, None)
+                            .build(&program)
+                            .source_text;
                     } else {
                         let error = result
                             .err()
@@ -306,7 +305,7 @@ impl TestCase for ConformanceTestCase {
             |output| {
                 // Get expected code by parsing the source text, so we can get the same code generated result.
                 let program = Parser::new(&allocator, &output, source_type).parse().program;
-                Codegen::<false>::new("", &output, codegen_options.clone(), None)
+                Codegen::<false>::new("", &output, codegen_options, None)
                     .build(&program)
                     .source_text
             },

@@ -19,7 +19,7 @@ use std::ops::Range;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_ast::{Comment, TriviasMap};
+use oxc_ast::{Comment, Trivias};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
     identifier::is_identifier_part,
@@ -27,6 +27,7 @@ use oxc_syntax::{
     precedence::Precedence,
     symbol::SymbolId,
 };
+use rustc_hash::FxHashMap;
 use sourcemap_builder::SourcemapBuilder;
 
 pub use crate::{
@@ -84,11 +85,11 @@ pub struct Codegen<'a, const MINIFY: bool> {
 }
 
 pub struct CommentGenRelated {
-    pub trivials: TriviasMap,
+    pub trivials: Trivias,
     /// The key of map is the node start position,
     /// the first element of value is the start of the comment
     /// the second element of value includes the end of the comment and comment kind.
-    pub move_comment_map: rustc_hash::FxHashMap<u32, (u32, Comment)>,
+    pub move_comment_map: FxHashMap<u32, (u32, Comment)>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -176,7 +177,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     /// Since if you want to print a range of source code, you need to borrow the source code
     /// immutable first, and call the [Self::print_str] which is a mutable borrow.
     pub fn print_range_of_source_code(&mut self, range: Range<usize>) {
-        self.code.extend_from_slice(&self.source_code[range].as_bytes());
+        self.code.extend_from_slice(self.source_code[range].as_bytes());
     }
 
     /// In some scenario, we want to move the comment that should be codegened to another position.
@@ -192,15 +193,15 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     ///
     ///  }, b = 10000;
     /// ```
-    pub fn move_comment(&mut self, postion: u32, full_comment_info: (u32, Comment)) {
+    pub fn move_comment(&mut self, position: u32, full_comment_info: (u32, Comment)) {
         if let Some(comment_gen_related) = &mut self.comment_gen_related {
-            comment_gen_related.move_comment_map.insert(postion, full_comment_info);
+            comment_gen_related.move_comment_map.insert(position, full_comment_info);
         }
     }
 
     pub fn try_get_leading_comment(&self, start: u32) -> Option<(&u32, &Comment)> {
         self.comment_gen_related.as_ref().and_then(|comment_gen_related| {
-            comment_gen_related.trivials.range(0..start).next_back()
+            comment_gen_related.trivials.comments_range(0..start).next_back()
         })
     }
 

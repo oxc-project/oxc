@@ -72,7 +72,7 @@ fn get_normal_result(
     let options = CodegenOptions::default();
     let allocator = Allocator::default();
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
-    let source_text1 = Codegen::<false>::new("", source_text, options.clone(), None)
+    let source_text1 = Codegen::<false>::new("", source_text, options, None)
         .build(&parse_result1.program)
         .source_text;
     let parse_result2 = Parser::new(&allocator, &source_text1, source_type).parse();
@@ -115,7 +115,7 @@ fn get_minify_result(
     let options = CodegenOptions::default();
     let allocator = Allocator::default();
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
-    let source_text1 = Codegen::<true>::new("", source_text, options.clone(), None)
+    let source_text1 = Codegen::<true>::new("", source_text, options, None)
         .build(&parse_result1.program)
         .source_text;
     let parse_result2 = Parser::new(&allocator, source_text1.as_str(), source_type).parse();
@@ -159,7 +159,7 @@ fn get_typescript_result(
         CodegenOptions { enable_source_map: false, enable_typescript: true, ..Default::default() };
     let allocator = Allocator::default();
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
-    let source_text1 = Codegen::<false>::new("", source_text, options.clone(), None)
+    let source_text1 = Codegen::<false>::new("", source_text, options, None)
         .build(&parse_result1.program)
         .source_text;
     let parse_result2 = Parser::new(&allocator, &source_text1, source_type).parse();

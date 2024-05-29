@@ -998,7 +998,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclarationKind<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        self.gen_comment(p, ctx);
         match self {
             Self::BooleanLiteral(lit) => lit.gen(p, ctx),
             Self::NullLiteral(lit) => lit.gen(p, ctx),
@@ -1052,14 +1051,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
     }
 }
 
-impl<const MINIFY: bool> GenComment<MINIFY> for Expression<'_> {
+impl<const MINIFY: bool> GenComment<MINIFY> for ArrowFunctionExpression<'_> {
     fn gen_comment(&self, codegen: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        match self {
-            Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
-                gen_comment(self.span().start, codegen);
-            }
-            _ => {}
-        }
+        gen_comment(self.span.start, codegen);
     }
 }
 
@@ -1598,6 +1592,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyKey<'a> {
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ArrowFunctionExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         p.wrap(precedence > Precedence::Assign, |p| {
+            self.gen_comment(p, ctx);
             if self.r#async {
                 p.add_source_mapping(self.span.start);
                 p.print_str(b"async");

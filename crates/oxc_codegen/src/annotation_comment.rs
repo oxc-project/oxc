@@ -11,7 +11,7 @@ static MATCHER: Lazy<DoubleArrayAhoCorasick<usize>> = Lazy::new(|| {
     DoubleArrayAhoCorasick::new(patterns).unwrap()
 });
 
-pub fn get_leading_annotate_comment<'a, const MINIFY: bool>(
+pub fn get_leading_annotate_comment<const MINIFY: bool>(
     node_start: u32,
     codegen: &mut Codegen<{ MINIFY }>,
 ) -> Option<(u32, Comment)> {
@@ -39,7 +39,7 @@ pub fn print_comment<const MINIFY: bool>(
     comment_start: u32,
     comment: Comment,
     p: &mut Codegen<{ MINIFY }>,
-) -> Option<()> {
+) {
     match comment.kind {
         CommentKind::SingleLine => {
             p.print_str("//");
@@ -54,7 +54,6 @@ pub fn print_comment<const MINIFY: bool>(
             p.print_soft_space();
         }
     }
-    Some(())
 }
 
 pub fn gen_comment<const MINIFY: bool>(node_start: u32, codegen: &mut Codegen<{ MINIFY }>) {
