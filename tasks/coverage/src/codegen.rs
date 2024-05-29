@@ -73,10 +73,10 @@ fn get_normal_result(
     let allocator = Allocator::default();
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
     let source_text1 =
-        Codegen::<false>::new(source_text.len(), options).build(&parse_result1.program);
+        Codegen::<false>::new(source_text.len(), options, None).build(&parse_result1.program);
     let parse_result2 = Parser::new(&allocator, &source_text1, source_type).parse();
     let source_text2 =
-        Codegen::<false>::new(source_text1.len(), options).build(&parse_result2.program);
+        Codegen::<false>::new(source_text1.len(), options, None).build(&parse_result2.program);
     let result = source_text1 == source_text2;
 
     if !result {
@@ -114,10 +114,10 @@ fn get_minify_result(
     let allocator = Allocator::default();
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
     let source_text1 =
-        Codegen::<true>::new(source_text.len(), options).build(&parse_result1.program);
+        Codegen::<true>::new(source_text.len(), options, None).build(&parse_result1.program);
     let parse_result2 = Parser::new(&allocator, source_text1.as_str(), source_type).parse();
     let source_text2 =
-        Codegen::<true>::new(source_text1.len(), options).build(&parse_result2.program);
+        Codegen::<true>::new(source_text1.len(), options, None).build(&parse_result2.program);
     let result = source_text1 == source_text2;
 
     if !result {
@@ -151,14 +151,14 @@ fn get_typescript_result(
     source_text: &str,
     source_type: SourceType,
 ) -> bool {
-    let options = CodegenOptions { enable_typescript: true };
+    let options = CodegenOptions { enable_typescript: true, ..Default::default() };
     let allocator = Allocator::default();
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
     let source_text1 =
-        Codegen::<false>::new(source_text.len(), options).build(&parse_result1.program);
+        Codegen::<false>::new(source_text.len(), options, None).build(&parse_result1.program);
     let parse_result2 = Parser::new(&allocator, &source_text1, source_type).parse();
     let source_text2 =
-        Codegen::<false>::new(source_text1.len(), options).build(&parse_result2.program);
+        Codegen::<false>::new(source_text1.len(), options, None).build(&parse_result2.program);
     let result = source_text1 == source_text2;
 
     if !result {

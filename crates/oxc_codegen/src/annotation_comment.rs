@@ -1,16 +1,14 @@
 use std::usize;
 
-use bitflags::Flags;
 use daachorse::DoubleArrayAhoCorasick;
 use once_cell::sync::Lazy;
 use oxc_ast::{Comment, CommentKind};
-use oxc_span::GetSpan;
 
-use crate::{Codegen, Context};
+use crate::Codegen;
 static MATCHER: Lazy<DoubleArrayAhoCorasick<usize>> = Lazy::new(|| {
     let patterns = vec!["#__NO_SIDE_EFFECTS__", "@__NO_SIDE_EFFECTS__", "@__PURE__", "#__PURE__"];
-    let pma = DoubleArrayAhoCorasick::new(patterns).unwrap();
-    pma
+
+    DoubleArrayAhoCorasick::new(patterns).unwrap()
 });
 
 pub fn get_leading_annotate_comment<'a, const MINIFY: bool>(
@@ -61,12 +59,9 @@ pub fn print_comment<const MINIFY: bool>(
     Some(())
 }
 
-pub fn gen_comment<const MINIFY: bool>(
-    node_start: u32,
-    codegen: &mut Codegen<{ MINIFY }>,
-) -> Option<()> {
+pub fn gen_comment<const MINIFY: bool>(node_start: u32, codegen: &mut Codegen<{ MINIFY }>) {
     if !codegen.options.preserve_annotate_comments {
-        return Some(());
+        return;
     }
     if let Some((comment_start, comment)) = codegen.try_take_moved_comment(node_start) {
         print_comment::<MINIFY>(comment_start, comment, codegen);
@@ -75,5 +70,4 @@ pub fn gen_comment<const MINIFY: bool>(
     if let Some((comment_start, comment)) = maybe_leading_annotate_comment {
         print_comment::<MINIFY>(comment_start, comment, codegen);
     }
-    Some(())
 }

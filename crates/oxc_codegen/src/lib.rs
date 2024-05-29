@@ -18,7 +18,7 @@ use std::str::from_utf8_unchecked;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_ast::{Comment, Trivias, TriviasMap};
+use oxc_ast::{Comment, TriviasMap};
 use oxc_span::Atom;
 use oxc_syntax::{
     identifier::is_identifier_part,
@@ -162,14 +162,13 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     pub fn try_get_leading_comment(&self, start: u32) -> Option<(&u32, &Comment)> {
         self.comment_gen_related.as_ref().and_then(|comment_gen_related| {
-            comment_gen_related.trivials.comments().range(0..start).rev().next()
+            comment_gen_related.trivials.comments().range(0..start).next_back()
         })
     }
 
     pub fn try_get_sourcecode(&self) -> Option<&str> {
         self.comment_gen_related
-            .as_ref()
-            .and_then(|comment_gen_related| Some(comment_gen_related.source_code))
+            .as_ref().map(|comment_gen_related| comment_gen_related.source_code)
     }
 
     pub fn try_take_moved_comment(&mut self, node_start: u32) -> Option<(u32, Comment)> {

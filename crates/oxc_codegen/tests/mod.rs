@@ -16,7 +16,7 @@ fn test(source_text: &str, expected: &str, options: Option<CodegenOptions>) {
         options,
         Some(CommentGenRelated {
             trivials: parse_return.trivias.into(),
-            source_code: &source_text,
+            source_code: source_text,
             move_comment_map: HashMap::default(),
         }),
     )

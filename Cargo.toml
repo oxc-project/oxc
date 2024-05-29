@@ -83,6 +83,7 @@ oxc_prettier       = { path = "crates/oxc_prettier" }
 oxc_tasks_common    = { path = "tasks/common" }
 oxc_language_server = { path = "crates/oxc_language_server" }
 
+daachorse                 = { version = "1.0.0" }
 assert-unchecked          = { version = "0.1.2" }
 bpaf                      = { version = "0.9.9" }
 bitflags                  = { version = "2.4.2" }
@@ -136,7 +137,7 @@ language-tags             = { version = "0.3.2" }
 tsify                     = { version = "0.4.5" }
 wasm-bindgen              = { version = "0.2" }
 serde-wasm-bindgen        = { version = "0.6.4" }
-
+once_cell                 = "1.19.0"
 [profile.release.package.oxc_wasm]
 opt-level = 'z'
 

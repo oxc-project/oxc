@@ -151,7 +151,7 @@ impl<'a> LintContext<'a> {
 
     #[allow(clippy::unused_self)]
     pub fn codegen(&self) -> Codegen<false> {
-        Codegen::<false>::new(0, CodegenOptions::default())
+        Codegen::<false>::new(0, CodegenOptions::default(), None)
     }
 
     /* JSDoc */
