@@ -187,7 +187,7 @@ jobs:
       SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
       SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
       SCCACHE_REGION: auto
-      RUSTC_WRAPPER: sccache
+      RUSTC_WRAPPER: ${{ vars.USE_SCCACHE == 'true' && 'sccache' || '' }}
       CARGO_INCREMENTAL: 0
     steps:
       - uses: taiki-e/checkout-action@v1
