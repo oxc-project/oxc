@@ -17,7 +17,7 @@ fn bench_codegen_sourcemap(criterion: &mut Criterion) {
             let codegen_options =
                 CodegenOptions { enable_source_map: true, ..CodegenOptions::default() };
             b.iter_with_large_drop(|| {
-                Codegen::<false>::new(file.file_name.as_str(), source_text, codegen_options.clone())
+                Codegen::<false>::new(file.file_name.as_str(), source_text, codegen_options, None)
                     .build(&program)
                     .source_map
             });

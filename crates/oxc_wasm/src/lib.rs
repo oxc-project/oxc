@@ -274,9 +274,9 @@ impl Oxc {
             ..CodegenOptions::default()
         };
         self.codegen_text = if minifier_options.whitespace() {
-            Codegen::<true>::new("", source_text, codegen_options).build(program).source_text
+            Codegen::<true>::new("", source_text, codegen_options, None).build(program).source_text
         } else {
-            Codegen::<false>::new("", source_text, codegen_options).build(program).source_text
+            Codegen::<false>::new("", source_text, codegen_options, None).build(program).source_text
         };
 
         Ok(())
