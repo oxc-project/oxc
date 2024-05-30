@@ -1,9 +1,13 @@
 use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-use oxc_transformer::{TransformOptions, Transformer};
+use oxc_transformer::{
+    ArrowFunctionsOptions, ES2015Options, ReactOptions, TransformOptions, Transformer,
+    TypeScriptOptions,
+};
 
 use crate::{
     babel::BabelCase,
@@ -14,16 +18,62 @@ use crate::{
 };
 
 /// Runs the transformer and make sure it doesn't crash.
-/// TODO: add codegen to turn on idempotency test.
 fn get_result(source_text: &str, source_type: SourceType, source_path: &Path) -> TestResult {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let mut program = ret.program;
-    let options = TransformOptions::default();
-    let _ =
-        Transformer::new(&allocator, source_path, source_type, source_text, &ret.trivias, options)
-            .build(&mut program);
-    TestResult::Passed
+    let filename = source_path.file_name().unwrap().to_string_lossy();
+    let options = TransformOptions {
+        typescript: TypeScriptOptions::default(),
+        es2015: ES2015Options { arrow_function: Some(ArrowFunctionsOptions::default()) },
+        react: ReactOptions {
+            jsx_plugin: true,
+            jsx_self_plugin: true,
+            jsx_source_plugin: true,
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+    let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
+    let mut program = parse_result1.program;
+    let _ = Transformer::new(
+        &allocator,
+        source_path,
+        source_type,
+        source_text,
+        &parse_result1.trivias,
+        options.clone(),
+    )
+    .build(&mut program);
+
+    let source_text1 =
+        Codegen::<false>::new(&filename, source_text, CodegenOptions::default(), None)
+            .build(&program)
+            .source_text;
+
+    let parse_result2 = Parser::new(&allocator, &source_text1, source_type).parse();
+    let mut program = parse_result2.program;
+
+    let _ = Transformer::new(
+        &allocator,
+        source_path,
+        source_type,
+        &source_text1,
+        &parse_result2.trivias,
+        options,
+    )
+    .build(&mut program);
+
+    let source_text2 =
+        Codegen::<false>::new(&filename, &source_text1, CodegenOptions::default(), None)
+            .build(&program)
+            .source_text;
+
+    let result = source_text1 == source_text2;
+
+    if result {
+        TestResult::Passed
+    } else {
+        TestResult::Mismatch(source_text1.clone(), source_text2)
+    }
 }
 
 pub struct TransformerTest262Case {

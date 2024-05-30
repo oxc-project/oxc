@@ -32,8 +32,12 @@ use oxc_span::SourceType;
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
 pub use crate::{
-    compiler_assumptions::CompilerAssumptions, env::EnvOptions, es2015::ES2015Options,
-    options::BabelOptions, options::TransformOptions, react::ReactOptions,
+    compiler_assumptions::CompilerAssumptions,
+    env::EnvOptions,
+    es2015::{ArrowFunctionsOptions, ES2015Options},
+    options::BabelOptions,
+    options::TransformOptions,
+    react::ReactOptions,
     typescript::TypeScriptOptions,
 };
 
