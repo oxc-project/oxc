@@ -54,9 +54,7 @@ impl Rule for NoConstructorReturn {
             return;
         }
 
-        let Some(is_in_constructor_root) = is_in_constructor_root(ctx, node.id()) else { return };
-
-        if is_in_constructor_root || is_definitely_in_constructor(ctx, node.id()) {
+        if is_definitely_in_constructor(ctx, node.id()) {
             ctx.diagnostic(no_constructor_return_diagnostic(ret.span));
         }
     }
@@ -67,17 +65,6 @@ fn is_constructor(node: &AstNode<'_>) -> bool {
         node.kind(),
         AstKind::MethodDefinition(MethodDefinition { kind: MethodDefinitionKind::Constructor, .. })
     )
-}
-
-/// Checks to see if the given node is in the root of a constructor.
-/// Returns `None` if it isn't possible for this node to be in a constructor.
-fn is_in_constructor_root(ctx: &LintContext, node_id: AstNodeId) -> Option<bool> {
-    ctx.nodes()
-        .ancestors(node_id)
-        .map(|id| ctx.nodes().get_node(id))
-        .filter(|it| !matches!(it.kind(), AstKind::BlockStatement(_)))
-        .nth(3)
-        .map(is_constructor)
 }
 
 fn is_definitely_in_constructor(ctx: &LintContext, node_id: AstNodeId) -> bool {
