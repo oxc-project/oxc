@@ -227,6 +227,8 @@ impl<'a> TypeScript<'a> {
                     new_stmts.push(Statement::VariableDeclaration(decl));
                 }
                 Statement::ExportNamedDeclaration(export_decl) => {
+                    // NB: `ExportNamedDeclaration` with no declaration (e.g. `export {x}`) is not
+                    // legal syntax in TS namespaces
                     let export_decl = export_decl.unbox();
                     if let Some(decl) = export_decl.declaration {
                         if decl.modifiers().is_some_and(Modifiers::is_contains_declare) {
@@ -294,13 +296,6 @@ impl<'a> TypeScript<'a> {
                             }
                             _ => {}
                         }
-                    } else {
-                        let stmt = self.ctx.ast.module_declaration(
-                            ModuleDeclaration::ExportNamedDeclaration(
-                                self.ctx.ast.alloc(export_decl),
-                            ),
-                        );
-                        new_stmts.push(stmt);
                     }
                 }
                 stmt => {
