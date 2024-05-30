@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use regex::Regex;
 use rustc_hash::{FxHashMap, FxHasher};
 use std::{collections::HashMap, hash::BuildHasherDefault, ops::Deref, path::Path};
@@ -196,7 +196,7 @@ impl NoLargeSnapshots {
                 return;
             };
 
-            let span = Self::get_span_from_expression(first_arg_expr);
+            let span = first_arg_expr.span();
             self.report_in_span(span, ctx);
         }
     }
@@ -291,61 +291,6 @@ impl NoLargeSnapshots {
         let end = ctx.source_text()[start..end].lines().count();
 
         end - start
-    }
-
-    fn get_span_from_expression(expr: &Expression) -> Span {
-        match expr {
-            Expression::BooleanLiteral(bool_literal) => bool_literal.span,
-            Expression::NullLiteral(null_literal) => null_literal.span,
-            Expression::NumericLiteral(numeric_literal) => numeric_literal.span,
-            Expression::BigintLiteral(bigint_literal) => bigint_literal.span,
-            Expression::RegExpLiteral(regexp_literal) => regexp_literal.span,
-            Expression::StringLiteral(string_literal) => string_literal.span,
-            Expression::TemplateLiteral(template_literal) => template_literal.span,
-
-            Expression::Identifier(ident) => ident.span,
-
-            Expression::MetaProperty(meta_property) => meta_property.span,
-            Expression::Super(super_expr) => super_expr.span,
-
-            Expression::ArrayExpression(array_expr) => array_expr.span,
-            Expression::ArrowFunctionExpression(arrow_func_expr) => arrow_func_expr.span,
-            Expression::AssignmentExpression(assignment_expr) => assignment_expr.span,
-            Expression::AwaitExpression(await_expr) => await_expr.span,
-            Expression::BinaryExpression(binary_expr) => binary_expr.span,
-            Expression::CallExpression(call_expr) => call_expr.span,
-            Expression::ChainExpression(chain_expr) => chain_expr.span,
-            Expression::ClassExpression(class_expr) => class_expr.span,
-            Expression::ConditionalExpression(conditional_expr) => conditional_expr.span,
-            Expression::FunctionExpression(func_expr) => func_expr.span,
-            Expression::ImportExpression(import_expr) => import_expr.span,
-            Expression::LogicalExpression(logical_expr) => logical_expr.span,
-            Expression::NewExpression(new_expr) => new_expr.span,
-            Expression::ObjectExpression(object_expr) => object_expr.span,
-            Expression::ParenthesizedExpression(parenthesized_expr) => parenthesized_expr.span,
-            Expression::SequenceExpression(sequence_expr) => sequence_expr.span,
-            Expression::TaggedTemplateExpression(tagged_temp_expr) => tagged_temp_expr.span,
-            Expression::ThisExpression(this_expr) => this_expr.span,
-            Expression::UnaryExpression(unary_expr) => unary_expr.span,
-            Expression::UpdateExpression(update_expr) => update_expr.span,
-            Expression::YieldExpression(yield_expr) => yield_expr.span,
-            Expression::PrivateInExpression(private_in_expr) => private_in_expr.span,
-
-            Expression::JSXElement(jsx_element) => jsx_element.span,
-            Expression::JSXFragment(jsx_fragment) => jsx_fragment.span,
-
-            Expression::TSAsExpression(ts_as_expr) => ts_as_expr.span,
-            Expression::TSSatisfiesExpression(ts_satisfies_expr) => ts_satisfies_expr.span,
-            Expression::TSTypeAssertion(ts_type_assertion) => ts_type_assertion.span,
-            Expression::TSNonNullExpression(ts_non_null_expr) => ts_non_null_expr.span,
-            Expression::TSInstantiationExpression(ts_instantiation_expr) => {
-                ts_instantiation_expr.span
-            }
-
-            Expression::ComputedMemberExpression(computed_mem_expr) => computed_mem_expr.span,
-            Expression::StaticMemberExpression(static_mem_expr) => static_mem_expr.span,
-            Expression::PrivateFieldExpression(private_field_expr) => private_field_expr.span,
-        }
     }
 
     #[allow(clippy::unnecessary_wraps)]
