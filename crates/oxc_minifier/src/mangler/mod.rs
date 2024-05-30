@@ -147,7 +147,7 @@ impl ManglerBuilder {
 
         let mut freq_iter = frequencies.iter();
         // 2. "N number of vars are going to be assigned names of the same length"
-        for (_, slice_of_same_len_strings_group) in &names.into_iter().group_by(CompactStr::len) {
+        for (_, slice_of_same_len_strings_group) in &names.into_iter().chunk_by(CompactStr::len) {
             // 1. "The most frequent vars get the shorter names"
             // (freq_iter is sorted by frequency from highest to lowest,
             //  so taking means take the N most frequent symbols remaining)

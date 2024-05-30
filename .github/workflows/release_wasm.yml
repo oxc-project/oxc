@@ -51,10 +51,9 @@ jobs:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          shared-key: 'wasm'
+          cache-key: 'wasm'
 
       - name: Build
         working-directory: wasm/parser

@@ -1,9 +1,0 @@
----
-source: crates/oxc_semantic/tests/cfg.rs
-expression: output.cfg_dot_diagram()
-input_file: crates/oxc_semantic/tests/cfg_fixtures/template_string.js
----
-digraph {
-    0 [ label = ""]
-}
-

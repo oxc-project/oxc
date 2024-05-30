@@ -123,7 +123,7 @@ fn is_simple_string(str: &str) -> bool {
 fn is_useless_case_sensitive_regex_flag(regexp_lit: &RegExpLiteral) -> bool {
     // ignore `^` and `$` (start and end of string)
     let pat = regexp_lit.regex.pattern.trim_start_matches('^').trim_end_matches('$');
-    pat.chars().all(|c| c.is_ascii_alphabetic())
+    pat.chars().any(|c| c.is_ascii_alphabetic())
 }
 
 #[test]
@@ -154,6 +154,7 @@ fn test() {
         r"/foo.$/.test(bar)",
         r"/\^foo/.test(bar)",
         r"/^foo/i.test(bar)",
+        r"/^foo0/i.test(bar)",
         r"/^foo/m.test(bar)",
         r"/^foo/im.test(bar)",
         r"/^A|B/.test(bar)",

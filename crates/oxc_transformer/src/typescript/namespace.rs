@@ -1,17 +1,29 @@
 use rustc_hash::FxHashSet;
 
-use super::{diagnostics::ambient_module_nested, TypeScript};
+use super::{
+    diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
+    TypeScript,
+};
 
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, syntax_directed_operations::BoundNames};
-use oxc_span::{Atom, SPAN};
-use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
+use oxc_span::{Atom, CompactStr, SPAN};
+use oxc_syntax::{
+    operator::{AssignmentOperator, LogicalOperator},
+    scope::{ScopeFlags, ScopeId},
+    symbol::SymbolFlags,
+};
+use oxc_traverse::TraverseCtx;
 
 // TODO:
 // 1. register scope for the newly created function: <https://github.com/babel/babel/blob/08b0472069cd207f043dd40a4d157addfdd36011/packages/babel-plugin-transform-typescript/src/namespace.ts#L38>
 impl<'a> TypeScript<'a> {
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
-    pub(super) fn transform_program_for_namespace(&self, program: &mut Program<'a>) {
+    pub(super) fn transform_program_for_namespace(
+        &self,
+        program: &mut Program<'a>,
+        ctx: &mut TraverseCtx,
+    ) {
         // namespace declaration is only allowed at the top level
 
         if !has_namespace(program.body.as_slice()) {
@@ -30,8 +42,12 @@ impl<'a> TypeScript<'a> {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !decl.modifiers.is_contains_declare() {
+                        if !self.options.allow_namespaces {
+                            self.ctx.error(namespace_not_supported(decl.span));
+                        }
+
                         if let Some(transformed_stmt) =
-                            self.handle_nested(self.ctx.ast.copy(&decl).unbox(), None)
+                            self.handle_nested(self.ctx.ast.copy(&decl).unbox(), None, ctx)
                         {
                             let name = decl.id.name();
                             if names.insert(name.clone()) {
@@ -50,8 +66,12 @@ impl<'a> TypeScript<'a> {
                             &export_decl.declaration
                         {
                             if !decl.modifiers.is_contains_declare() {
+                                if !self.options.allow_namespaces {
+                                    self.ctx.error(namespace_not_supported(decl.span));
+                                }
+
                                 if let Some(transformed_stmt) =
-                                    self.handle_nested(self.ctx.ast.copy(decl), None)
+                                    self.handle_nested(self.ctx.ast.copy(decl), None, ctx)
                                 {
                                     let name = decl.id.name();
                                     if names.insert(name.clone()) {
@@ -119,16 +139,25 @@ impl<'a> TypeScript<'a> {
         &self,
         decl: TSModuleDeclaration<'a>,
         parent_export: Option<Expression<'a>>,
+        ctx: &mut TraverseCtx,
     ) -> Option<Statement<'a>> {
         let mut names: FxHashSet<Atom<'a>> = FxHashSet::default();
 
         let real_name = decl.id.name();
 
-        let name = self.ctx.ast.new_atom(&format!("_{}", real_name.clone())); // path.scope.generateUid(realName.name);
+        // TODO: This binding is created in wrong scope.
+        // Needs to be created in scope of function which `transform_namespace` creates below.
+        let name = self.ctx.ast.new_atom(
+            &ctx.generate_uid_in_current_scope(real_name, SymbolFlags::FunctionScopedVariable),
+        );
+
+        // Reuse TSModuleBlock's scope id in transformed function.
+        let mut scope_id = None;
 
         let namespace_top_level = if let Some(body) = decl.body {
             match body {
                 TSModuleDeclarationBody::TSModuleBlock(mut block) => {
+                    scope_id = block.scope_id.get();
                     self.ctx.ast.move_statement_vec(&mut block.body)
                 }
                 // We handle `namespace X.Y {}` as if it was
@@ -161,7 +190,7 @@ impl<'a> TypeScript<'a> {
                     }
 
                     let module_name = decl.id.name().clone();
-                    if let Some(transformed) = self.handle_nested(decl.unbox(), None) {
+                    if let Some(transformed) = self.handle_nested(decl.unbox(), None, ctx) {
                         is_empty = false;
                         if names.insert(module_name.clone()) {
                             new_stmts.push(Statement::from(
@@ -178,10 +207,24 @@ impl<'a> TypeScript<'a> {
                     });
                     new_stmts.push(Statement::ClassDeclaration(decl));
                 }
+                Statement::FunctionDeclaration(decl) => {
+                    is_empty = false;
+                    decl.bound_names(&mut |id| {
+                        names.insert(id.name.clone());
+                    });
+                    new_stmts.push(Statement::FunctionDeclaration(decl));
+                }
                 Statement::TSEnumDeclaration(enum_decl) => {
                     is_empty = false;
                     names.insert(enum_decl.id.name.clone());
                     new_stmts.push(Statement::TSEnumDeclaration(enum_decl));
+                }
+                Statement::VariableDeclaration(decl) => {
+                    is_empty = false;
+                    decl.bound_names(&mut |id| {
+                        names.insert(id.name.clone());
+                    });
+                    new_stmts.push(Statement::VariableDeclaration(decl));
                 }
                 Statement::ExportNamedDeclaration(export_decl) => {
                     let export_decl = export_decl.unbox();
@@ -218,6 +261,11 @@ impl<'a> TypeScript<'a> {
                                 );
                             }
                             Declaration::VariableDeclaration(var_decl) => {
+                                var_decl.declarations.iter().for_each(|decl| {
+                                    if !decl.kind.is_const() {
+                                        self.ctx.error(namespace_exporting_non_const(decl.span));
+                                    }
+                                });
                                 is_empty = false;
                                 let stmts = self.handle_variable_declaration(var_decl, &name);
                                 new_stmts.extend(stmts);
@@ -233,6 +281,7 @@ impl<'a> TypeScript<'a> {
                                     Some(self.ctx.ast.identifier_reference_expression(
                                         IdentifierReference::new(SPAN, name.clone()),
                                     )),
+                                    ctx,
                                 ) {
                                     is_empty = false;
                                     if names.insert(module_name.clone()) {
@@ -267,10 +316,15 @@ impl<'a> TypeScript<'a> {
         }
 
         if is_empty {
+            // Delete the scope binding that `ctx.generate_uid_in_current_scope` created above,
+            // as no binding is actually being created
+            let current_scope_id = ctx.current_scope_id();
+            ctx.scopes_mut().remove_binding(current_scope_id, &CompactStr::from(name.as_str()));
+
             return None;
         }
 
-        Some(self.transform_namespace(&name, real_name, new_stmts, parent_export))
+        Some(self.transform_namespace(&name, real_name, new_stmts, parent_export, scope_id, ctx))
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
@@ -300,6 +354,8 @@ impl<'a> TypeScript<'a> {
         real_name: &Atom<'a>,
         stmts: Vec<'a, Statement<'a>>,
         parent_export: Option<Expression<'a>>,
+        scope_id: Option<ScopeId>,
+        ctx: &mut TraverseCtx,
     ) -> Statement<'a> {
         // `(function (_N) { var x; })(N || (N = {}))`;
         //  ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -327,6 +383,11 @@ impl<'a> TypeScript<'a> {
                 params,
                 Some(body),
             );
+            if let Some(scope_id) = scope_id {
+                function.scope_id.set(Some(scope_id));
+                *ctx.scopes_mut().get_flags_mut(scope_id) =
+                    ScopeFlags::Function | ScopeFlags::StrictMode;
+            }
             let function_expr = self.ctx.ast.function_expression(function);
             self.ctx.ast.parenthesized_expression(SPAN, function_expr)
         };

@@ -7,6 +7,7 @@ use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{CompactStr, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
+    symbol::SymbolFlags,
     xml_entities::XML_ENTITIES,
 };
 use oxc_traverse::TraverseCtx;
@@ -39,13 +40,14 @@ pub struct ReactJsx<'a> {
     pub(super) jsx_source: ReactJsxSource<'a>,
 
     // States
-    require_jsx_runtime: bool,
     jsx_runtime_importer: CompactStr,
 
-    import_jsx: bool,
-    import_jsxs: bool,
-    import_fragment: bool,
-    import_create_element: bool,
+    // Doubles as var name for require react
+    import_create_element: Option<CompactStr>,
+    // Doubles as var name for require JSX
+    import_jsx: Option<CompactStr>,
+    import_jsxs: Option<CompactStr>,
+    import_fragment: Option<CompactStr>,
 }
 
 // Transforms
@@ -70,12 +72,11 @@ impl<'a> ReactJsx<'a> {
             ctx: Rc::clone(ctx),
             jsx_self: ReactJsxSelf::new(ctx),
             jsx_source: ReactJsxSource::new(ctx),
-            require_jsx_runtime: false,
             jsx_runtime_importer,
-            import_jsx: false,
-            import_jsxs: false,
-            import_fragment: false,
-            import_create_element: false,
+            import_create_element: None,
+            import_jsx: None,
+            import_jsxs: None,
+            import_fragment: None,
         }
     }
 
@@ -86,7 +87,7 @@ impl<'a> ReactJsx<'a> {
     pub fn transform_jsx_element(
         &mut self,
         e: &JSXElement<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         self.transform_jsx(&JSXElementOrFragment::Element(e), ctx)
     }
@@ -94,7 +95,7 @@ impl<'a> ReactJsx<'a> {
     pub fn transform_jsx_fragment(
         &mut self,
         e: &JSXFragment<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx)
     }
@@ -154,95 +155,120 @@ impl<'a> ReactJsx<'a> {
         e: &JSXElementOrFragment<'a, 'b>,
         has_key_after_props_spread: bool,
         need_jsxs: bool,
+        ctx: &mut TraverseCtx,
     ) {
         if self.options.runtime.is_classic() {
             return;
         }
         match e {
             JSXElementOrFragment::Element(_) if has_key_after_props_spread => {
-                self.add_import_create_element();
+                self.add_import_create_element(ctx);
             }
-            JSXElementOrFragment::Element(_) if need_jsxs => self.add_import_jsxs(),
-            JSXElementOrFragment::Element(_) => self.add_import_jsx(),
+            JSXElementOrFragment::Element(_) if need_jsxs => self.add_import_jsxs(ctx),
+            JSXElementOrFragment::Element(_) => self.add_import_jsx(ctx),
             JSXElementOrFragment::Fragment(_) => {
-                self.add_import_fragment();
+                self.add_import_fragment(ctx);
                 if need_jsxs {
-                    self.add_import_jsxs();
+                    self.add_import_jsxs(ctx);
                 }
             }
         }
     }
 
-    fn add_require_jsx_runtime(&mut self) {
-        if !self.require_jsx_runtime {
-            self.require_jsx_runtime = true;
-            let variable_name =
-                if self.options.development { "_reactJsxDevRuntime" } else { "_reactJsxRuntime" };
-            self.add_require_statement(variable_name, self.jsx_runtime_importer.clone(), false);
+    fn add_require_jsx_runtime(&mut self, ctx: &mut TraverseCtx) {
+        if self.import_jsx.is_none() {
+            let var_name =
+                if self.options.development { "reactJsxDevRuntime" } else { "reactJsxRuntime" };
+            let var_name =
+                self.add_require_statement(var_name, self.jsx_runtime_importer.clone(), false, ctx);
+            self.import_jsx = Some(var_name);
         }
     }
 
-    fn add_import_jsx(&mut self) {
+    fn add_import_jsx(&mut self, ctx: &mut TraverseCtx) {
         if self.is_script() {
-            self.add_require_jsx_runtime();
+            self.add_require_jsx_runtime(ctx);
         } else if self.options.development {
-            self.add_import_jsx_dev();
-        } else if !self.import_jsx {
-            self.import_jsx = true;
-            self.add_import_statement("jsx", "_jsx", self.jsx_runtime_importer.clone());
+            self.add_import_jsx_dev(ctx);
+        } else if self.import_jsx.is_none() {
+            let var_name = self.add_import_statement("jsx", self.jsx_runtime_importer.clone(), ctx);
+            self.import_jsx = Some(var_name);
         }
     }
 
-    fn add_import_jsxs(&mut self) {
+    fn add_import_jsxs(&mut self, ctx: &mut TraverseCtx) {
         if self.is_script() {
-            self.add_require_jsx_runtime();
+            self.add_require_jsx_runtime(ctx);
         } else if self.options.development {
-            self.add_import_jsx_dev();
-        } else if !self.import_jsxs {
-            self.import_jsxs = true;
-            self.add_import_statement("jsxs", "_jsxs", self.jsx_runtime_importer.clone());
+            self.add_import_jsx_dev(ctx);
+        } else if self.import_jsxs.is_none() {
+            let var_name =
+                self.add_import_statement("jsxs", self.jsx_runtime_importer.clone(), ctx);
+            self.import_jsxs = Some(var_name);
         }
     }
 
-    fn add_import_jsx_dev(&mut self) {
+    fn add_import_jsx_dev(&mut self, ctx: &mut TraverseCtx) {
         if self.is_script() {
-            self.add_require_jsx_runtime();
-        } else if !self.import_jsx {
-            self.import_jsx = true;
-            self.add_import_statement("jsxDEV", "_jsxDEV", self.jsx_runtime_importer.clone());
+            self.add_require_jsx_runtime(ctx);
+        } else if self.import_jsx.is_none() {
+            let var_name =
+                self.add_import_statement("jsxDEV", self.jsx_runtime_importer.clone(), ctx);
+            self.import_jsx = Some(var_name);
         }
     }
 
-    fn add_import_fragment(&mut self) {
+    fn add_import_fragment(&mut self, ctx: &mut TraverseCtx) {
         if self.is_script() {
-            self.add_require_jsx_runtime();
-        } else if !self.import_fragment {
-            self.import_fragment = true;
-            self.add_import_statement("Fragment", "_Fragment", self.jsx_runtime_importer.clone());
-            self.add_import_jsx();
+            self.add_require_jsx_runtime(ctx);
+        } else if self.import_fragment.is_none() {
+            let var_name =
+                self.add_import_statement("Fragment", self.jsx_runtime_importer.clone(), ctx);
+            self.import_fragment = Some(var_name);
+            self.add_import_jsx(ctx);
         }
     }
 
-    fn add_import_create_element(&mut self) {
-        if !self.import_create_element {
-            self.import_create_element = true;
+    fn add_import_create_element(&mut self, ctx: &mut TraverseCtx) {
+        if self.import_create_element.is_none() {
             let source = self.options.import_source.as_ref();
-            if self.is_script() {
-                self.add_require_statement("_react", source.into(), true);
+            let var_name = if self.is_script() {
+                self.add_require_statement("react", source.into(), true, ctx)
             } else {
-                self.add_import_statement("createElement", "_createElement", source.into());
-            }
+                self.add_import_statement("createElement", source.into(), ctx)
+            };
+            self.import_create_element = Some(var_name);
         }
     }
 
-    fn add_import_statement(&mut self, imported: &str, local: &str, source: CompactStr) {
-        let import = NamedImport::new(imported.into(), Some(local.into()));
+    fn add_import_statement(
+        &mut self,
+        name: &str,
+        source: CompactStr,
+        ctx: &mut TraverseCtx,
+    ) -> CompactStr {
+        let root_scope_id = ctx.scopes().root_scope_id();
+        let local = ctx.generate_uid(name, root_scope_id, SymbolFlags::FunctionScopedVariable);
+
+        let import = NamedImport::new(name.into(), Some(local.clone()));
         self.ctx.module_imports.add_import(source, import);
+        local
     }
 
-    fn add_require_statement(&mut self, variable_name: &str, source: CompactStr, front: bool) {
-        let import = NamedImport::new(variable_name.into(), None);
+    fn add_require_statement(
+        &mut self,
+        variable_name: &str,
+        source: CompactStr,
+        front: bool,
+        ctx: &mut TraverseCtx,
+    ) -> CompactStr {
+        let root_scope_id = ctx.scopes().root_scope_id();
+        let variable_name =
+            ctx.generate_uid(variable_name, root_scope_id, SymbolFlags::FunctionScopedVariable);
+
+        let import = NamedImport::new(variable_name.clone(), None);
         self.ctx.module_imports.add_require(source, import, front);
+        variable_name
     }
 }
 
@@ -319,7 +345,7 @@ impl<'a> ReactJsx<'a> {
     fn transform_jsx<'b>(
         &mut self,
         e: &JSXElementOrFragment<'a, 'b>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let is_fragment = e.is_fragment();
         let has_key_after_props_spread = e.has_key_after_props_spread();
@@ -446,7 +472,11 @@ impl<'a> ReactJsx<'a> {
             }
         }
 
-        self.add_import(e, has_key_after_props_spread, need_jsxs);
+        self.add_import(e, has_key_after_props_spread, need_jsxs, ctx);
+
+        if is_fragment {
+            self.update_fragment(arguments.first_mut().unwrap());
+        }
 
         // If runtime is automatic that means we always to add `{ .. }` as the second argument even if it's empty
         if is_automatic || !properties.is_empty() {
@@ -554,18 +584,36 @@ impl<'a> ReactJsx<'a> {
                 }
             }
             ReactJsxRuntime::Automatic => {
+                // "_reactJsxRuntime" and "_Fragment" here are temporary. Will be over-written
+                // in `update_fragment` after import is added and correct var name is known.
+                // We have to do like this so that imports are in same order as Babel's output,
+                // in order to pass Babel's tests.
+                // TODO(improve-on-babel): Remove this workaround if output doesn't need to match
+                // Babel's exactly.
                 if self.is_script() {
-                    let object_name = if self.options.development {
-                        "_reactJsxDevRuntime"
-                    } else {
-                        "_reactJsxRuntime"
-                    };
-                    self.get_static_member_expression(object_name, "Fragment")
+                    self.get_static_member_expression("_reactJsxRuntime", "Fragment")
                 } else {
                     let ident = IdentifierReference::new(SPAN, "_Fragment".into());
                     self.ast().identifier_reference_expression(ident)
                 }
             }
+        }
+    }
+
+    fn update_fragment(&self, arg: &mut Argument<'a>) {
+        if self.options.runtime != ReactJsxRuntime::Automatic {
+            return;
+        }
+
+        if self.is_script() {
+            let Argument::StaticMemberExpression(member_expr) = arg else { unreachable!() };
+            let Expression::Identifier(id) = &mut member_expr.object else {
+                unreachable!();
+            };
+            id.name = self.ctx.ast.new_atom(self.import_jsx.as_ref().unwrap());
+        } else {
+            let Argument::Identifier(id) = arg else { unreachable!() };
+            id.name = self.ctx.ast.new_atom(self.import_fragment.as_ref().unwrap());
         }
     }
 
@@ -581,36 +629,29 @@ impl<'a> ReactJsx<'a> {
                 }
             }
             ReactJsxRuntime::Automatic => {
-                let name = if self.is_script() {
-                    if has_key_after_props_spread {
-                        "createElement"
-                    } else if self.options.development {
-                        "jsxDEV"
-                    } else if jsxs {
-                        "jsxs"
-                    } else {
-                        "jsx"
-                    }
-                } else if has_key_after_props_spread {
-                    "_createElement"
-                } else if self.options.development {
-                    "_jsxDEV"
-                } else if jsxs {
-                    "_jsxs"
-                } else {
-                    "_jsx"
-                };
                 if self.is_script() {
-                    let object_ident_name = if has_key_after_props_spread {
-                        "_react"
-                    } else if self.options.development {
-                        "_reactJsxDevRuntime"
+                    let (object_ident_name, property_name) = if has_key_after_props_spread {
+                        (self.import_create_element.as_ref().unwrap(), "createElement")
                     } else {
-                        "_reactJsxRuntime"
+                        let property_name = if self.options.development {
+                            "jsxDEV"
+                        } else if jsxs {
+                            "jsxs"
+                        } else {
+                            "jsx"
+                        };
+                        (self.import_jsx.as_ref().unwrap(), property_name)
                     };
-                    self.get_static_member_expression(object_ident_name, name)
+                    self.get_static_member_expression(object_ident_name, property_name)
                 } else {
-                    let ident = IdentifierReference::new(SPAN, name.into());
+                    let name = if has_key_after_props_spread {
+                        self.import_create_element.as_ref().unwrap()
+                    } else if jsxs && !self.options.development {
+                        self.import_jsxs.as_ref().unwrap()
+                    } else {
+                        self.import_jsx.as_ref().unwrap()
+                    };
+                    let ident = IdentifierReference::new(SPAN, self.ctx.ast.new_atom(name));
                     self.ast().identifier_reference_expression(ident)
                 }
             }
@@ -669,7 +710,7 @@ impl<'a> ReactJsx<'a> {
         &mut self,
         properties: &mut Vec<'a, ObjectPropertyKind<'a>>,
         attribute: &JSXAttributeItem<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         match attribute {
             JSXAttributeItem::Attribute(attr) => {
@@ -698,7 +739,7 @@ impl<'a> ReactJsx<'a> {
     fn transform_jsx_attribute_value(
         &mut self,
         value: Option<&JSXAttributeValue<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         match value {
             Some(JSXAttributeValue::StringLiteral(s)) => {
@@ -725,7 +766,7 @@ impl<'a> ReactJsx<'a> {
     fn transform_jsx_child(
         &mut self,
         child: &JSXChild<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         match child {
             JSXChild::Text(text) => self.transform_jsx_text(text.value.as_str()),

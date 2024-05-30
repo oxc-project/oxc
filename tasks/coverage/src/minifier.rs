@@ -100,5 +100,7 @@ fn minify(source_text: &str, source_type: SourceType, options: MinifierOptions) 
     let program = Parser::new(&allocator, source_text, source_type).parse().program;
     let program = allocator.alloc(program);
     Minifier::new(options).build(&allocator, program);
-    Codegen::<true>::new("", source_text, CodegenOptions::default()).build(program).source_text
+    Codegen::<true>::new("", source_text, CodegenOptions::default(), None)
+        .build(program)
+        .source_text
 }

@@ -46,7 +46,7 @@ impl<'a> ParserImpl<'a> {
     fn is_parenthesized_arrow_function_expression(&mut self) -> Tristate {
         match self.cur_kind() {
             Kind::LParen | Kind::LAngle | Kind::Async => {
-                self.is_parenthesized_arrow_function_expression_worker()
+                self.lookahead(Self::is_parenthesized_arrow_function_expression_worker)
             }
             _ => Tristate::False,
         }
@@ -156,10 +156,13 @@ impl<'a> ParserImpl<'a> {
 
                 // JSX overrides
                 if self.source_type.is_jsx() {
-                    return match self.nth_kind(offset + 2) {
+                    // <const Ident extends Ident>
+                    //  ^^^^^ Optional
+                    offset += if second == Kind::Const { 3 } else { 2 };
+                    return match self.nth_kind(offset) {
                         Kind::Extends => {
-                            let third = self.nth_kind(offset + 3);
-                            if matches!(third, Kind::Eq | Kind::RAngle) {
+                            let third = self.nth_kind(offset + 1);
+                            if matches!(third, Kind::Eq | Kind::RAngle | Kind::Slash) {
                                 Tristate::False
                             } else if third.is_binding_identifier() {
                                 Tristate::Maybe

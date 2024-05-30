@@ -52,7 +52,7 @@ impl<'a> React<'a> {
         }
     }
 
-    pub fn transform_expression(&mut self, expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) {
+    pub fn transform_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
             Expression::JSXElement(e) => {
                 if self.options.is_jsx_plugin_enabled() {

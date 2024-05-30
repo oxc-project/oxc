@@ -39,6 +39,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   # Build and run benchmarks for all components except linter
   benchmark:
@@ -51,7 +55,7 @@ jobs:
           - lexer
           - parser
           - transformer
-          - semantic
+          # - semantic # Too flaky
           - minifier
           - codegen_sourcemap
           - sourcemap
@@ -60,16 +64,11 @@ jobs:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@v1
 
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          shared-key: benchmark-${{ matrix.component }}
+          cache-key: benchmark-${{ matrix.component }}
           save-cache: ${{ github.ref_name == 'main' }}
-
-      - name: Install codspeed
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-codspeed
+          tools: cargo-codspeed
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -89,7 +88,6 @@ jobs:
       - name: Build benchmark
         env:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
-        shell: bash
         run: |
           cargo build --release -p oxc_benchmark --bench ${{ matrix.component }} \
             --no-default-features --features ${{ matrix.component }} --features codspeed
@@ -120,20 +118,31 @@ jobs:
   build-linter:
     name: Build Linter Benchmark
     runs-on: ubuntu-latest
+    env:
+      # https://github.com/mozilla/sccache/blob/main/docs/S3.md
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+      SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+      SCCACHE_REGION: auto
+      RUSTC_WRAPPER: ${{ vars.USE_SCCACHE == 'true' && 'sccache' || '' }}
+      CARGO_INCREMENTAL: 0
+      SCCACHE_LOCAL_RW_MODE:
     steps:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@v1
 
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          shared-key: benchmark-linter
+          cache-key: benchmark-linter
           save-cache: ${{ github.ref_name == 'main' }}
+
+      - uses: mozilla-actions/sccache-action@v0.0.4
+        if: ${{ vars.USE_SCCACHE == 'true' }}
 
       - name: Build benchmark
         env:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
-        shell: bash
         run: |
           cargo build --release -p oxc_benchmark --bench linter \
             --no-default-features --features linter --features codspeed
@@ -172,7 +181,6 @@ jobs:
           path: ./target/codspeed/oxc_benchmark
 
       - name: Fix permission loss
-        shell: bash
         run: |
           ls ./target/codspeed/oxc_benchmark
           chmod +x ./target/codspeed/oxc_benchmark/*
@@ -225,10 +233,9 @@ jobs:
       # - name: Checkout Branch
         # uses: taiki-e/checkout-action@v1
 
-      # - name: Install Rust Toolchain
-        # uses: ./.github/actions/rustup
+      # - uses: Boshen/setup-rust@main
         # with:
-          # shared-key: 'benchmark_napi'
+          # shared-key: benchmark_napi
           # save-cache: ${{ github.ref_name == 'main' }}
 
       # - name: Install codspeed
@@ -270,7 +277,6 @@ jobs:
       # - name: Build Rust benchmark
         # env:
           # RUSTFLAGS: "-C debuginfo=2 -C strip=none -g --cfg codspeed"
-        # shell: bash
         # run: |
           # cargo build --release -p oxc_benchmark --bench parser_napi --no-default-features --features codspeed_napi
           # mkdir -p target/codspeed/oxc_benchmark/

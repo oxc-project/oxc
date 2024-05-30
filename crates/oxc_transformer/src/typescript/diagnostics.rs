@@ -15,3 +15,13 @@ pub fn ambient_module_nested(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Ambient modules cannot be nested in other modules or namespaces.")
         .with_label(span0)
 }
+
+pub fn namespace_exporting_non_const(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript")
+        .with_label(span0)
+}
+
+pub fn namespace_not_supported(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Namespace not marked type-only declare. Non-declarative namespaces are only supported experimentally in Babel. To enable and review caveats see: https://babeljs.io/docs/en/babel-plugin-transform-typescript")
+        .with_label(span0)
+}

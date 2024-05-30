@@ -175,7 +175,7 @@ pub trait TestCase {
         .build(&mut program);
 
         result.map(|()| {
-            Codegen::<false>::new("", &source_text, CodegenOptions::default())
+            Codegen::<false>::new("", &source_text, CodegenOptions::default(), None)
                 .build(&program)
                 .source_text
         })
@@ -261,10 +261,9 @@ impl TestCase for ConformanceTestCase {
                     );
                     let result = transformer.build(&mut program);
                     if result.is_ok() {
-                        transformed_code =
-                            Codegen::<false>::new("", &input, codegen_options.clone())
-                                .build(&program)
-                                .source_text;
+                        transformed_code = Codegen::<false>::new("", &input, codegen_options, None)
+                            .build(&program)
+                            .source_text;
                     } else {
                         let error = result
                             .err()
@@ -306,7 +305,7 @@ impl TestCase for ConformanceTestCase {
             |output| {
                 // Get expected code by parsing the source text, so we can get the same code generated result.
                 let program = Parser::new(&allocator, &output, source_type).parse().program;
-                Codegen::<false>::new("", &output, codegen_options.clone())
+                Codegen::<false>::new("", &output, codegen_options, None)
                     .build(&program)
                     .source_text
             },
@@ -374,7 +373,7 @@ impl ExecTestCase {
         let source_type = SourceType::from_path(&target_path).unwrap();
         let transformed_program =
             Parser::new(&allocator, &source_text, source_type).parse().program;
-        let result = Codegen::<false>::new("", &source_text, CodegenOptions::default())
+        let result = Codegen::<false>::new("", &source_text, CodegenOptions::default(), None)
             .build(&transformed_program)
             .source_text;
 
@@ -405,12 +404,27 @@ impl TestCase for ExecTestCase {
     }
 
     fn test(&self, filtered: bool) -> bool {
-        let result = self.transform(&self.path).expect("Transform failed");
-        let target_path = self.write_to_test_files(&result);
-        let passed = Self::run_test(&target_path);
         if filtered {
             println!("input_path: {:?}", &self.path);
             println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
+        }
+
+        let result = match self.transform(&self.path) {
+            Ok(result) => result,
+            Err(error) => {
+                if filtered {
+                    println!(
+                        "Transform Errors:\n{}\n",
+                        error.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n")
+                    );
+                }
+                return false;
+            }
+        };
+        let target_path = self.write_to_test_files(&result);
+        let passed = Self::run_test(&target_path);
+
+        if filtered {
             println!("Transformed:\n{result}\n");
             println!("Test Result:\n{}\n", TestRunnerEnv::get_test_result(&target_path));
         }

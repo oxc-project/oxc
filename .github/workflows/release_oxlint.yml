@@ -77,6 +77,9 @@ jobs:
 
     name: Package ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: taiki-e/checkout-action@v1
 
@@ -91,25 +94,35 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - name: Build with cross
-        run: cross build -p oxc_cli --bin oxlint --release --target=${{ matrix.target }} --features allocator
+      - name: Build oxlint with cross
+        run: cross build --release --target=${{ matrix.target }} --bin oxlint --features allocator
 
-      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
-      - name: Archive Binary
+      - name: Build oxc_language_server with cross
+        run: cross build -p oxc_language_server --bin oxc_language_server --release --target=${{ matrix.target }}
+
+      # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binaries
         if: runner.os == 'Windows'
-        shell: bash
         run: |
-          BIN_NAME=oxlint-${{ matrix.code-target }}
-          mv target/${{ matrix.target }}/release/oxlint.exe $BIN_NAME.exe
-          7z a $BIN_NAME.zip $BIN_NAME.exe
+          OXLINT_BIN_NAME=oxlint-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxlint.exe $OXLINT_BIN_NAME.exe
+          7z a $OXLINT_BIN_NAME.zip $OXLINT_BIN_NAME.exe
 
-      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
-      - name: Archive Binary
+          OXLS_BIN_NAME=oxc_language_server-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxc_language_server.exe $OXLS_BIN_NAME.exe
+          7z a $OXLS_BIN_NAME.zip $OXLS_BIN_NAME.exe
+
+      # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binaries
         if: runner.os != 'Windows'
         run: |
-          BIN_NAME=oxlint-${{ matrix.code-target }}
-          mv target/${{ matrix.target }}/release/oxlint $BIN_NAME
-          tar czf $BIN_NAME.tar.gz $BIN_NAME
+          OXLINT_BIN_NAME=oxlint-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxlint $OXLINT_BIN_NAME
+          tar czf $OXLINT_BIN_NAME.tar.gz $OXLINT_BIN_NAME
+
+          OXLS_BIN_NAME=oxc_language_server-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxc_language_server $OXLS_BIN_NAME
+          tar czf $OXLS_BIN_NAME.tar.gz $OXLS_BIN_NAME
 
       - name: Upload Binary
         uses: actions/upload-artifact@v4
@@ -158,7 +171,6 @@ jobs:
       - name: Publish npm packages as latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        shell: bash
         # NOTE: The trailing slash on $package/ changes it to publishing the directory
         run: |
           for package in npm/oxlint*
@@ -177,7 +189,6 @@ jobs:
           fail_on_unmatched_files: true
 
       - name: wait 3 minutes for smoke test
-        shell: bash
         run: sleep 180s
 
   smoke:
@@ -195,7 +206,6 @@ jobs:
     container: ${{ matrix.container }}
     steps:
       - name: Test
-        shell: sh
         run: |
           touch test.js
           ldd --version || true

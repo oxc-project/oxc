@@ -9,7 +9,7 @@ use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{Fix, Message},
     javascript_globals::GLOBALS,
-    AllowWarnDeny, ESLintConfig, ESLintEnv, ESLintGlobals, ESLintSettings,
+    AllowWarnDeny, OxlintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
 
 #[derive(Clone)]
@@ -25,7 +25,7 @@ pub struct LintContext<'a> {
 
     file_path: Rc<Path>,
 
-    eslint_config: Arc<ESLintConfig>,
+    eslint_config: Arc<OxlintConfig>,
 
     // states
     current_rule_name: &'static str,
@@ -43,7 +43,7 @@ impl<'a> LintContext<'a> {
             disable_directives: Rc::new(disable_directives),
             fix: false,
             file_path: file_path.into(),
-            eslint_config: Arc::new(ESLintConfig::default()),
+            eslint_config: Arc::new(OxlintConfig::default()),
             current_rule_name: "",
             severity: Severity::Warning,
         }
@@ -56,7 +56,7 @@ impl<'a> LintContext<'a> {
     }
 
     #[must_use]
-    pub fn with_eslint_config(mut self, eslint_config: &Arc<ESLintConfig>) -> Self {
+    pub fn with_eslint_config(mut self, eslint_config: &Arc<OxlintConfig>) -> Self {
         self.eslint_config = Arc::clone(eslint_config);
         self
     }
@@ -93,15 +93,15 @@ impl<'a> LintContext<'a> {
         &self.file_path
     }
 
-    pub fn settings(&self) -> &ESLintSettings {
+    pub fn settings(&self) -> &OxlintSettings {
         &self.eslint_config.settings
     }
 
-    pub fn globals(&self) -> &ESLintGlobals {
+    pub fn globals(&self) -> &OxlintGlobals {
         &self.eslint_config.globals
     }
 
-    pub fn env(&self) -> &ESLintEnv {
+    pub fn env(&self) -> &OxlintEnv {
         &self.eslint_config.env
     }
 
@@ -158,7 +158,7 @@ impl<'a> LintContext<'a> {
 
     #[allow(clippy::unused_self)]
     pub fn codegen(&self) -> Codegen<false> {
-        Codegen::<false>::new("", "", CodegenOptions::default())
+        Codegen::<false>::new("", "", CodegenOptions::default(), None)
     }
 
     /* JSDoc */

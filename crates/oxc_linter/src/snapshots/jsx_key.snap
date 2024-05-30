@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 161
 expression: jsx_key
 ---
   ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in array.
@@ -124,15 +125,6 @@ expression: jsx_key
  1 │ [1, 2, 3]?.map(x => <><OxcCompilerHello /></>)
    ·            ─┬─      ─┬
    ·             │        ╰── Element generated here
-   ·             ╰── Iterator starts here
-   ╰────
-  help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).
-
-  ⚠ eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator.
-   ╭─[jsx_key.tsx:1:12]
- 1 │ [1, 2, 3]?.map(x => <><OxcCompilerHello /></>)
-   ·            ─┬─         ────────┬───────
-   ·             │                  ╰── Element generated here
    ·             ╰── Iterator starts here
    ╰────
   help: Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key).

@@ -68,7 +68,7 @@ impl Rule for NoGlobalAssign {
         for reference_id_list in ctx.scopes().root_unresolved_references().values() {
             for &reference_id in reference_id_list {
                 let reference = symbol_table.get_reference(reference_id);
-                if reference.is_write() && symbol_table.is_global_reference(reference_id) {
+                if reference.is_write() {
                     let name = reference.name();
                     if !self.excludes.contains(name) && ctx.env_contains_var(name) {
                         ctx.diagnostic(no_global_assign_diagnostic(name, reference.span()));

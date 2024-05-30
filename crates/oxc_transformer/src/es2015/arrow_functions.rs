@@ -13,6 +13,7 @@ pub struct ArrowFunctionsOptions {
     /// * Wrap the generated function in .bind(this) and keeps uses of this inside the function as-is, instead of using a renamed this.
     /// * Add a runtime check to ensure the functions are not instantiated.
     /// * Add names to arrow functions.
+    #[serde(default)]
     pub spec: bool,
 }
 

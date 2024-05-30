@@ -25,7 +25,8 @@ oxc_semantic  = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_syntax    = { workspace = true }
 
-memoffset = { workspace = true }
+compact_str = { workspace = true }
+memoffset   = { workspace = true }
 
 [dev-dependencies]
 trybuild = { workspace = true }

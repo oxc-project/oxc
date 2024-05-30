@@ -1,6 +1,7 @@
 use std::{borrow::Cow, fmt, ops::Deref};
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
+use rustc_hash::FxHashMap;
 use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
 use serde::{
     de::{self, Deserializer, Visitor},
@@ -9,14 +10,12 @@ use serde::{
 
 use crate::AllowWarnDeny;
 
-// The `rules` field from ESLint config
-//
 // TS type is `Record<string, RuleConf>`
 //   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
 //   - type RuleConf = SeverityConf | [SeverityConf, ...any[]];
 // <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L12>
 #[derive(Debug, Clone, Default)]
-pub struct ESLintRules(Vec<ESLintRule>);
+pub struct OxlintRules(Vec<ESLintRule>);
 
 #[derive(Debug, Clone)]
 pub struct ESLintRule {
@@ -26,13 +25,13 @@ pub struct ESLintRule {
     pub config: Option<serde_json::Value>,
 }
 
-impl JsonSchema for ESLintRules {
+impl JsonSchema for OxlintRules {
     fn schema_name() -> String {
-        "ESLintRules".to_owned()
+        "OxlintRules".to_owned()
     }
 
     fn schema_id() -> Cow<'static, str> {
-        Cow::Borrowed("ESLintRules")
+        Cow::Borrowed("OxlintRules")
     }
 
     fn json_schema(gen: &mut SchemaGenerator) -> Schema {
@@ -45,7 +44,7 @@ impl JsonSchema for ESLintRules {
             String(String),
             Array(Vec<serde_json::Value>),
         }
-        DummyRule::json_schema(gen)
+        gen.subschema_for::<FxHashMap<String, DummyRule>>()
     }
 }
 
@@ -53,15 +52,15 @@ impl JsonSchema for ESLintRules {
 // - Handle single value form and array form
 // - SeverityConf into AllowWarnDeny
 // - Align plugin names
-impl<'de> Deserialize<'de> for ESLintRules {
+impl<'de> Deserialize<'de> for OxlintRules {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        struct ESLintRulesVisitor;
+        struct OxlintRulesVisitor;
 
-        impl<'de> Visitor<'de> for ESLintRulesVisitor {
-            type Value = ESLintRules;
+        impl<'de> Visitor<'de> for OxlintRulesVisitor {
+            type Value = OxlintRules;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                 formatter.write_str("Record<string, SeverityConf | [SeverityConf, ...any[]]>")
@@ -78,11 +77,11 @@ impl<'de> Deserialize<'de> for ESLintRules {
                     rules.push(ESLintRule { plugin_name, rule_name, severity, config });
                 }
 
-                Ok(ESLintRules(rules))
+                Ok(OxlintRules(rules))
             }
         }
 
-        deserializer.deserialize_any(ESLintRulesVisitor)
+        deserializer.deserialize_any(OxlintRulesVisitor)
     }
 }
 
@@ -146,7 +145,7 @@ fn parse_rule_value(
     }
 }
 
-impl Deref for ESLintRules {
+impl Deref for OxlintRules {
     type Target = Vec<ESLintRule>;
 
     fn deref(&self) -> &Self::Target {
@@ -160,12 +159,12 @@ fn failed_to_parse_rule_value(value: &str, err: &str) -> OxcDiagnostic {
 
 #[cfg(test)]
 mod test {
-    use super::ESLintRules;
+    use super::OxlintRules;
     use serde::Deserialize;
 
     #[test]
     fn test_parse_rules() {
-        let rules = ESLintRules::deserialize(&serde_json::json!({
+        let rules = OxlintRules::deserialize(&serde_json::json!({
             "no-console": "off",
             "foo/no-unused-vars": [1],
             "dummy": ["error", "arg1", "args2"],
@@ -201,7 +200,7 @@ mod test {
 
     #[test]
     fn test_parse_rules_default() {
-        let rules = ESLintRules::default();
+        let rules = OxlintRules::default();
         assert!(rules.is_empty());
     }
 }

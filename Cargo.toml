@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members  = ["crates/*", "napi/*", "tasks/*", "wasm/*"]
+members  = ["apps/*", "crates/*", "napi/*", "tasks/*", "wasm/*"]
 exclude  = ["tasks/lint_rules"]
 
 [workspace.package]
@@ -87,7 +87,7 @@ oxc_transformer  = { version = "0.13.1", path = "crates/oxc_transformer" }
 oxc_sourcemap    = { version = "0.13.1", path = "crates/oxc_sourcemap" }
 oxc_ast_macros   = { version = "0.13.1", path = "crates/oxc_ast_macros" }
 oxc_traverse     = { version = "0.13.1", path = "crates/oxc_traverse" }
-oxc_module_lexer = { version = "0.13.1", path = "crates/oxc_traverse" }
+oxc_module_lexer = { version = "0.13.1", path = "crates/oxc_module_lexer" }
 
 # publish = false
 oxc_macros       = { path = "crates/oxc_macros" }
@@ -110,7 +110,7 @@ flate2              = "1.0.29"
 futures             = "0.3.30"
 glob                = "0.3.1"
 ignore              = "0.4.22"
-itertools           = "0.12.1"
+itertools           = "0.13.0"
 jemallocator        = "0.5.4"
 lazy_static         = "1.4.0"
 memoffset           = "0.9.1"
@@ -173,7 +173,10 @@ unicode-width       = "0.1.12"
 saphyr              = "0.0.1"
 base64-simd         = "0.8"
 cfg-if              = "1.0.0"
-schemars            = "0.8.20"
+schemars            = "0.8.21"
+oxc-browserslist    = "0.16.1"
+criterion2          = { version = "0.9.0", default-features = false }
+daachorse                 = { version = "1.0.0" }
 
 [workspace.metadata.cargo-shear]
 ignored = ["napi", "oxc_traverse"]

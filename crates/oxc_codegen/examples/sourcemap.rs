@@ -26,10 +26,11 @@ fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
-    let codegen_options = CodegenOptions { enable_source_map: true, enable_typescript: true };
+    let codegen_options =
+        CodegenOptions { enable_source_map: true, enable_typescript: true, ..Default::default() };
 
     let CodegenReturn { source_text, source_map } =
-        Codegen::<false>::new(path.to_string_lossy().as_ref(), &source_text, codegen_options)
+        Codegen::<false>::new(path.to_string_lossy().as_ref(), &source_text, codegen_options, None)
             .build(&ret.program);
 
     if let Some(source_map) = source_map {

@@ -28,14 +28,16 @@ fn main() -> std::io::Result<()> {
     println!("Original:");
     println!("{source_text}");
 
-    let options = CodegenOptions { enable_source_map: false, enable_typescript: true };
+    let options =
+        CodegenOptions { enable_source_map: false, enable_typescript: true, ..Default::default() };
     let printed =
-        Codegen::<false>::new("", &source_text, options.clone()).build(&ret.program).source_text;
+        Codegen::<false>::new("", &source_text, options, None).build(&ret.program).source_text;
     println!("Printed:");
     println!("{printed}");
 
     let ret = Parser::new(&allocator, &printed, source_type).parse();
-    let minified = Codegen::<true>::new("", &source_text, options).build(&ret.program).source_text;
+    let minified =
+        Codegen::<true>::new("", &source_text, options, None).build(&ret.program).source_text;
     println!("Minified:");
     println!("{minified}");
 

@@ -9,9 +9,10 @@ fn main() {
     let task = command.as_deref().unwrap_or("default");
 
     match task {
-        "linter-json-schema" => linter::generate_json_schema(),
-        "linter-cli" => linter::generate_cli(),
-        "linter-rules" => linter::generate_rules(),
+        "linter-schema-json" => linter::print_schema_json(),
+        "linter-schema-markdown" => linter::print_schema_markdown(),
+        "linter-cli" => linter::print_cli(),
+        "linter-rules" => linter::print_rules(),
         _ => println!("Missing task command."),
     }
 }
