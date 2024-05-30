@@ -48,6 +48,7 @@ mod eslint {
     pub mod no_const_assign;
     pub mod no_constant_binary_expression;
     pub mod no_constant_condition;
+    pub mod no_constructor_return;
     pub mod no_continue;
     pub mod no_control_regex;
     pub mod no_debugger;
@@ -493,6 +494,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_new_native_nonconstructor,
     eslint::no_restricted_globals,
     eslint::prefer_exponentiation_operator,
+    eslint::no_constructor_return,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
     typescript::ban_ts_comment,
