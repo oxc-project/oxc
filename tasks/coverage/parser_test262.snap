@@ -3587,12 +3587,28 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     · ───
     ╰────
 
+  × Expected function name
+    ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-asyncfunctionexpression.js:16:16]
+ 15 │ 
+ 16 │ async function () {} = 1;
+    ·                ─
+    ╰────
+  help: Function name is required in function declaration or named export
+
   × Unexpected token
     ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-asyncfunctionexpression.js:16:22]
  15 │ 
  16 │ async function () {} = 1;
     ·                      ─
     ╰────
+
+  × Expected function name
+    ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-asyncgeneratorexpression.js:16:16]
+ 15 │ 
+ 16 │ async function () {} = 1;
+    ·                ─
+    ╰────
+  help: Function name is required in function declaration or named export
 
   × Unexpected token
     ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-asyncgeneratorexpression.js:16:22]
@@ -3608,12 +3624,28 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ·          ─
     ╰────
 
+  × Expected function name
+    ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-functionexpression.js:16:9]
+ 15 │ 
+ 16 │ function() {} = 1;
+    ·         ─
+    ╰────
+  help: Function name is required in function declaration or named export
+
   × Unexpected token
     ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-functionexpression.js:16:15]
  15 │ 
  16 │ function() {} = 1;
     ·               ─
     ╰────
+
+  × Expected function name
+    ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-generatorexpression.js:16:12]
+ 15 │ 
+ 16 │ function * () {} = 1;
+    ·            ─
+    ╰────
+  help: Function name is required in function declaration or named export
 
   × Unexpected token
     ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-generatorexpression.js:16:18]
@@ -28777,6 +28809,15 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  22 │     while (false);
     ╰────
   help: Wrap this declaration in a block statement
+
+  × Expected function name
+    ╭─[language/statements/expression/S12.4_A1.js:19:9]
+ 18 │ //CHECK#1
+ 19 │ function(){}();
+    ·         ─
+ 20 │ //
+    ╰────
+  help: Function name is required in function declaration or named export
 
   × Empty parenthesized expression
     ╭─[language/statements/expression/S12.4_A1.js:19:13]

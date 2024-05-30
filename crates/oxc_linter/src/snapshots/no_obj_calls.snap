@@ -108,9 +108,9 @@ expression: no_obj_calls
   help: Reflect is not a function.
 
   ⚠ eslint(no-obj-calls): Disallow calling some global objects as functions
-   ╭─[no_obj_calls.tsx:1:25]
- 1 │ function() { JSON.parse(Atomics()) }
-   ·                         ─────────
+   ╭─[no_obj_calls.tsx:1:27]
+ 1 │ function d() { JSON.parse(Atomics()) }
+   ·                           ─────────
    ╰────
   help: Atomics is not a function.
 

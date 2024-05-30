@@ -1383,32 +1383,32 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·            ────
    ╰────
 
-  × Expected `(` but found `null`
+  × Expected `Identifier` but found `null`
    ╭─[core/uncategorised/401/input.js:1:10]
  1 │ function null() { }
    ·          ──┬─
-   ·            ╰── `(` expected
+   ·            ╰── `Identifier` expected
    ╰────
 
-  × Expected `(` but found `true`
+  × Expected `Identifier` but found `true`
    ╭─[core/uncategorised/402/input.js:1:10]
  1 │ function true() { }
    ·          ──┬─
-   ·            ╰── `(` expected
+   ·            ╰── `Identifier` expected
    ╰────
 
-  × Expected `(` but found `false`
+  × Expected `Identifier` but found `false`
    ╭─[core/uncategorised/403/input.js:1:10]
  1 │ function false() { }
    ·          ──┬──
-   ·            ╰── `(` expected
+   ·            ╰── `Identifier` expected
    ╰────
 
-  × Expected `(` but found `if`
+  × Expected `Identifier` but found `if`
    ╭─[core/uncategorised/404/input.js:1:10]
  1 │ function if() { }
    ·          ─┬
-   ·           ╰── `(` expected
+   ·           ╰── `Identifier` expected
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -3667,11 +3667,11 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expected `(` but found `default`
+  × Expected `Identifier` but found `default`
    ╭─[es2015/uncategorised/226/input.js:1:10]
  1 │ function default() {}
    ·          ───┬───
-   ·             ╰── `(` expected
+   ·             ╰── `Identifier` expected
    ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -4238,18 +4238,18 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·                     ╰── `:` expected
    ╰────
 
-  × Expected `(` but found `enum`
+  × Expected `Identifier` but found `enum`
    ╭─[es2015/uncategorised/376/input.js:1:10]
  1 │ function enum() {}
    ·          ──┬─
-   ·            ╰── `(` expected
+   ·            ╰── `Identifier` expected
    ╰────
 
-  × Expected `(` but found `enum`
+  × Expected `Identifier` but found `enum`
    ╭─[es2015/uncategorised/377/input.js:1:10]
  1 │ function enum() {}
    ·          ──┬─
-   ·            ╰── `(` expected
+   ·            ╰── `Identifier` expected
    ╰────
 
   × Expected `{` but found `enum`
@@ -5009,6 +5009,13 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  1 │ \u0061sync function() { await x }
    · ──────────
    ╰────
+
+  × Expected function name
+   ╭─[es2017/async-functions/invalid-escape-sequence-function/input.js:1:20]
+ 1 │ \u0061sync function() { await x }
+   ·                    ─
+   ╰────
+  help: Function name is required in function declaration or named export
 
   × Keywords cannot contain escape characters
    ╭─[es2017/async-functions/invalid-escape-sequence-function-list/input.js:1:2]
@@ -7126,6 +7133,15 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·      ─────
    ╰────
 
+  × Expected function name
+   ╭─[esprima/es2015-generator/generator-parameter-binding-element/input.js:2:13]
+ 1 │ (function*() {
+ 2 │     function(x = yield 3) {}
+   ·             ─
+ 3 │ })
+   ╰────
+  help: Function name is required in function declaration or named export
+
   × A 'yield' expression is only allowed in a generator body.
    ╭─[esprima/es2015-generator/generator-parameter-binding-element/input.js:2:18]
  1 │ (function*() {
@@ -7142,6 +7158,15 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·                     ╰── yield expression not allowed in formal parameter
  3 │ })
    ╰────
+
+  × Expected function name
+   ╭─[esprima/es2015-generator/generator-parameter-binding-property/input.js:2:13]
+ 1 │ (function*() {
+ 2 │     function({x: y = yield 3}) {}
+   ·             ─
+ 3 │ })
+   ╰────
+  help: Function name is required in function declaration or named export
 
   × A 'yield' expression is only allowed in a generator body.
    ╭─[esprima/es2015-generator/generator-parameter-binding-property/input.js:2:22]
@@ -7160,6 +7185,15 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  3 │ })
    ╰────
 
+  × Expected function name
+   ╭─[esprima/es2015-generator/generator-parameter-computed-property-name/input.js:2:13]
+ 1 │ (function*() {
+ 2 │     function({[yield 3]: y}) {}
+   ·             ─
+ 3 │ })
+   ╰────
+  help: Function name is required in function declaration or named export
+
   × A 'yield' expression is only allowed in a generator body.
    ╭─[esprima/es2015-generator/generator-parameter-computed-property-name/input.js:2:16]
  1 │ (function*() {
@@ -7177,6 +7211,15 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  3 │ })
    ╰────
 
+  × Expected function name
+   ╭─[esprima/es2015-generator/generator-parameter-invalid-binding-element/input.js:2:14]
+ 1 │ (function*() {
+ 2 │     function*(x = yield 3) {}
+   ·              ─
+ 3 │ })
+   ╰────
+  help: Function name is required in function declaration or named export
+
   × yield expression not allowed in formal parameter
    ╭─[esprima/es2015-generator/generator-parameter-invalid-binding-element/input.js:2:19]
  1 │ (function*() {
@@ -7186,6 +7229,15 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  3 │ })
    ╰────
 
+  × Expected function name
+   ╭─[esprima/es2015-generator/generator-parameter-invalid-binding-property/input.js:2:14]
+ 1 │ (function*() {
+ 2 │     function*({x: y = yield 3}) {}
+   ·              ─
+ 3 │ })
+   ╰────
+  help: Function name is required in function declaration or named export
+
   × yield expression not allowed in formal parameter
    ╭─[esprima/es2015-generator/generator-parameter-invalid-binding-property/input.js:2:23]
  1 │ (function*() {
@@ -7194,6 +7246,15 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·                          ╰── yield expression not allowed in formal parameter
  3 │ })
    ╰────
+
+  × Expected function name
+   ╭─[esprima/es2015-generator/generator-parameter-invalid-computed-property-name/input.js:2:14]
+ 1 │ (function*() {
+ 2 │     function*({[yield 3]: y}) {}
+   ·              ─
+ 3 │ })
+   ╰────
+  help: Function name is required in function declaration or named export
 
   × yield expression not allowed in formal parameter
    ╭─[esprima/es2015-generator/generator-parameter-invalid-computed-property-name/input.js:2:17]

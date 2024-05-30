@@ -102,13 +102,13 @@ impl Rule for RequireYields {
         // This rule checks generator function should have JSDoc `@yields` tag.
         // By default, this rule only checks:
         // ```
-        // function*() { yield withValue; }
+        // function*d() { yield withValue; }
         // ```
         //
         // If `config.forceRequireYields` is `true`, also checks:
         // ```
-        // function*() {}
-        // function*() { yield; }
+        // function*d() {}
+        // function*d() { yield; }
         // ```
         //
         // If generator function does not have JSDoc, it will be skipped.
@@ -673,7 +673,7 @@ fn test() {
         			           * @generator
         			           * @yields
         			           */
-                        function*() {yield 1;}
+                        function*d() {yield 1;}
         			      ",
             Some(serde_json::json!([
               {
@@ -853,7 +853,7 @@ fn test() {
       			           * @function
       			           * @generator
       			           */
-                        function*() {}
+                        function*d() {}
       			      ",
             Some(serde_json::json!([
               {
@@ -1446,7 +1446,7 @@ fn test() {
         			           * fail(`@generator`+missing `@yields`, with config)
         			           * @generator
         			           */
-                        function*() {}
+                        function*d() {}
         			      ",
             Some(serde_json::json!([{ "withGeneratorTag": true, }])),
             None,
