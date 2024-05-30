@@ -202,8 +202,6 @@ impl NoLargeSnapshots {
     }
 
     fn report_in_expr_stmt(&self, expr_stmt: &ExpressionStatement, ctx: &LintContext) {
-        self.check_all_paths_are_absolute();
-
         let line_count = Self::get_line_count(expr_stmt.span, ctx);
         let allowed = match &expr_stmt.expression {
             Expression::AssignmentExpression(assignment_expr) => {
@@ -237,8 +235,6 @@ impl NoLargeSnapshots {
     }
 
     fn report_in_span(&self, span: Span, ctx: &LintContext) {
-        self.check_all_paths_are_absolute();
-
         let line_count = Self::get_line_count(span, ctx);
 
         if line_count > self.inline_max_size {
@@ -272,15 +268,6 @@ impl NoLargeSnapshots {
                 Err(_) => snapshot_name == allowed_snapshot,
             }
         })
-    }
-
-    fn check_all_paths_are_absolute(&self) {
-        let all_paths_are_absolute =
-            self.allowed_snapshots.keys().all(|p| Path::new(p).is_absolute());
-
-        assert!(all_paths_are_absolute,
-                "All paths for allowedSnapshots must be absolute. You can use JS config and `path.resolve`",
-            );
     }
 
     fn get_line_count(span: Span, ctx: &LintContext) -> usize {
