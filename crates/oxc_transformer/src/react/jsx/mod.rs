@@ -48,6 +48,8 @@ pub struct ReactJsx<'a> {
     import_jsx: Option<CompactStr>,
     import_jsxs: Option<CompactStr>,
     import_fragment: Option<CompactStr>,
+
+    can_add_filename_statement: bool,
 }
 
 // Transforms
@@ -77,6 +79,7 @@ impl<'a> ReactJsx<'a> {
             import_jsx: None,
             import_jsxs: None,
             import_fragment: None,
+            can_add_filename_statement: false,
         }
     }
 
@@ -117,7 +120,7 @@ impl<'a> ReactJsx<'a> {
                 self.ctx.error(diagnostics::import_source_cannot_be_set());
             }
 
-            if self.options.is_jsx_source_plugin_enabled() {
+            if self.can_add_filename_statement {
                 program.body.insert(0, self.jsx_source.get_var_file_name_statement());
             }
 
@@ -138,7 +141,7 @@ impl<'a> ReactJsx<'a> {
             .rposition(|stmt| matches!(stmt, Statement::ImportDeclaration(_)))
             .map_or(0, |i| i + 1);
 
-        if self.options.is_jsx_source_plugin_enabled() {
+        if self.can_add_filename_statement {
             program.body.insert(index, self.jsx_source.get_var_file_name_statement());
             // If source type is module then we need to add the import statement after the var file name statement
             // Follow the same behavior as babel
@@ -464,6 +467,7 @@ impl<'a> ReactJsx<'a> {
                 if let Some(span) = source_attr_span {
                     self.jsx_source.report_error(span);
                 } else {
+                    self.can_add_filename_statement = true;
                     let (line, column) = get_line_column(e.span().start, self.ctx.source_text);
                     properties.push(
                         self.jsx_source.get_object_property_kind_for_jsx_plugin(line, column),
@@ -513,6 +517,7 @@ impl<'a> ReactJsx<'a> {
                     if let Some(span) = source_attr_span {
                         self.jsx_source.report_error(span);
                     } else {
+                        self.can_add_filename_statement = true;
                         let (line, column) = get_line_column(e.span().start, self.ctx.source_text);
                         let expr = self.jsx_source.get_source_object(line, column);
                         arguments.push(Argument::from(expr));
