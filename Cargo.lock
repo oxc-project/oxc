@@ -1330,14 +1330,13 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "0.16.1"
+version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c59f18c010ac5438cc6e9cad4433c763e8b3da3caeef9708fe822c903eb6aba3"
+checksum = "d9ac5d28a5ca1f5e4c789adeb83fc1aadf3362075d50b7aef87710a014089084"
 dependencies = [
  "chrono",
  "either",
  "getrandom",
- "indexmap",
  "itertools 0.13.0",
  "js-sys",
  "nom",
