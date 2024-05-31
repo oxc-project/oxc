@@ -380,6 +380,36 @@ impl<'a> TypeScriptAnnotations<'a> {
                 }
             }
         }
+
+        if stmt.consequent.is_typescript_syntax() {
+            stmt.consequent =
+                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
+        }
+
+        if stmt.alternate.as_ref().is_some_and(Statement::is_typescript_syntax) {
+            stmt.alternate = None;
+        }
+    }
+
+    pub fn transform_for_statement(&mut self, stmt: &mut ForStatement<'a>) {
+        if stmt.body.is_typescript_syntax() {
+            stmt.body =
+                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
+        }
+    }
+
+    pub fn transform_while_statement(&mut self, stmt: &mut WhileStatement<'a>) {
+        if stmt.body.is_typescript_syntax() {
+            stmt.body =
+                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
+        }
+    }
+
+    pub fn transform_do_while_statement(&mut self, stmt: &mut DoWhileStatement<'a>) {
+        if stmt.body.is_typescript_syntax() {
+            stmt.body =
+                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
+        }
     }
 
     pub fn transform_tagged_template_expression(

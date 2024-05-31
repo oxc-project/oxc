@@ -1502,6 +1502,18 @@ pub enum Statement<'a> {
 }
 
 impl<'a> Statement<'a> {
+    pub fn is_typescript_syntax(&self) -> bool {
+        match self {
+            match_declaration!(Self) => {
+                self.as_declaration().is_some_and(Declaration::is_typescript_syntax)
+            }
+            match_module_declaration!(Self) => {
+                self.as_module_declaration().is_some_and(ModuleDeclaration::is_typescript_syntax)
+            }
+            _ => false,
+        }
+    }
+
     pub fn is_iteration_statement(&self) -> bool {
         matches!(
             self,
@@ -2951,6 +2963,17 @@ macro_rules! match_module_declaration {
 pub use match_module_declaration;
 
 impl<'a> ModuleDeclaration<'a> {
+    pub fn is_typescript_syntax(&self) -> bool {
+        match self {
+            ModuleDeclaration::ImportDeclaration(_) => false,
+            ModuleDeclaration::ExportDefaultDeclaration(decl) => decl.is_typescript_syntax(),
+            ModuleDeclaration::ExportNamedDeclaration(decl) => decl.is_typescript_syntax(),
+            ModuleDeclaration::ExportAllDeclaration(decl) => decl.is_typescript_syntax(),
+            ModuleDeclaration::TSNamespaceExportDeclaration(_)
+            | ModuleDeclaration::TSExportAssignment(_) => true,
+        }
+    }
+
     pub fn is_import(&self) -> bool {
         matches!(self, Self::ImportDeclaration(_))
     }

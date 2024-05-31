@@ -170,6 +170,18 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_if_statement(stmt);
     }
 
+    pub fn transform_while_statement(&mut self, stmt: &mut WhileStatement<'a>) {
+        self.annotations.transform_while_statement(stmt);
+    }
+
+    pub fn transform_do_while_statement(&mut self, stmt: &mut DoWhileStatement<'a>) {
+        self.annotations.transform_do_while_statement(stmt);
+    }
+
+    pub fn transform_for_statement(&mut self, stmt: &mut ForStatement<'a>) {
+        self.annotations.transform_for_statement(stmt);
+    }
+
     pub fn transform_tagged_template_expression(
         &mut self,
         expr: &mut TaggedTemplateExpression<'a>,
