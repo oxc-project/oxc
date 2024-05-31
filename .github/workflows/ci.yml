@@ -76,6 +76,18 @@ jobs:
           workspace-copy: true
           drive-size: 8GB
 
+      - name: Install Rust
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        env:
+          CARGO_HOME: ${{ env.DEV_DRIVE }}/.cargo
+          RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
+        shell: bash
+        run: |
+          sed -i -e 's/profile = "default"/profile = "minimal"/g' rust-toolchain.toml
+          rustup set profile minimal
+          rustup show
+          git restore .
+
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
@@ -92,10 +104,6 @@ jobs:
           RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
         shell: bash
         run: |
-          sed -i -e 's/profile = "default"/profile = "minimal"/g' rust-toolchain.toml
-          rustup set profile minimal
-          rustup show
-          git restore .
           cargo test --no-run
           cargo test
           cargo ck
