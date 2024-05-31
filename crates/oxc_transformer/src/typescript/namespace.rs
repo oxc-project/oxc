@@ -105,15 +105,11 @@ impl<'a> TypeScript<'a> {
                 }
                 // Collect bindings from class, function, variable and enum declarations
                 Statement::FunctionDeclaration(ref decl) => {
-                    if let Some(ident) = &decl.id {
-                        names.insert(ident.name.clone());
-                    }
+                    names.insert(decl.id.as_ref().unwrap().name.clone());
                     new_stmts.push(stmt);
                 }
                 Statement::ClassDeclaration(ref decl) => {
-                    if let Some(ident) = &decl.id {
-                        names.insert(ident.name.clone());
-                    }
+                    names.insert(decl.id.as_ref().unwrap().name.clone());
                     new_stmts.push(stmt);
                 }
                 Statement::TSEnumDeclaration(ref decl) => {
@@ -196,15 +192,11 @@ impl<'a> TypeScript<'a> {
                     }
                 }
                 Statement::ClassDeclaration(ref decl) => {
-                    decl.bound_names(&mut |id| {
-                        names.insert(id.name.clone());
-                    });
+                    names.insert(decl.id.as_ref().unwrap().name.clone());
                     new_stmts.push(stmt);
                 }
                 Statement::FunctionDeclaration(ref decl) => {
-                    decl.bound_names(&mut |id| {
-                        names.insert(id.name.clone());
-                    });
+                    names.insert(decl.id.as_ref().unwrap().name.clone());
                     new_stmts.push(stmt);
                 }
                 Statement::TSEnumDeclaration(ref enum_decl) => {
