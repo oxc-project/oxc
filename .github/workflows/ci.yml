@@ -79,8 +79,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
-          save-if: ${{ github.ref_name == 'main' }}
-          shared-key: warm
+          save-if: true # ${{ github.ref_name == 'main' }}
+          shared-key: windows-latest
         env:
           CARGO_HOME: ${{ env.DEV_DRIVE }}/.cargo
           RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
