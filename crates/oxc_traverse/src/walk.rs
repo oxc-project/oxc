@@ -1934,10 +1934,10 @@ pub(crate) unsafe fn walk_switch_statement<'a, Tr: Traverse<'a>>(
         walk_switch_case(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack();
-    traverser.exit_switch_statement(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_switch_statement(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_switch_case<'a, Tr: Traverse<'a>>(
@@ -2503,10 +2503,10 @@ pub(crate) unsafe fn walk_class<'a, Tr: Traverse<'a>>(
         }
     }
     ctx.pop_stack();
-    traverser.exit_class(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_class(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_class_body<'a, Tr: Traverse<'a>>(
@@ -3644,10 +3644,10 @@ pub(crate) unsafe fn walk_ts_enum_declaration<'a, Tr: Traverse<'a>>(
         walk_ts_enum_member(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack();
-    traverser.exit_ts_enum_declaration(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_ts_enum_declaration(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_ts_enum_member<'a, Tr: Traverse<'a>>(
@@ -4842,10 +4842,10 @@ pub(crate) unsafe fn walk_ts_module_declaration<'a, Tr: Traverse<'a>>(
         walk_ts_module_declaration_body(traverser, field as *mut _, ctx);
     }
     ctx.pop_stack();
-    traverser.exit_ts_module_declaration(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_ts_module_declaration(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_ts_module_declaration_name<'a, Tr: Traverse<'a>>(
