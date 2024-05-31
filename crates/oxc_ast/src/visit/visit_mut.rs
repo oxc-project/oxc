@@ -2728,6 +2728,7 @@ pub mod walk_mut {
             TSModuleDeclarationName::Identifier(ident) => visitor.visit_identifier_name(ident),
             TSModuleDeclarationName::StringLiteral(lit) => visitor.visit_string_literal(lit),
         }
+        visitor.enter_scope(ScopeFlags::TsModuleBlock);
         match &mut decl.body {
             Some(TSModuleDeclarationBody::TSModuleDeclaration(decl)) => {
                 visitor.visit_ts_module_declaration(decl);
@@ -2737,6 +2738,7 @@ pub mod walk_mut {
             }
             None => {}
         }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -2745,11 +2747,9 @@ pub mod walk_mut {
         block: &mut TSModuleBlock<'a>,
     ) {
         let kind = AstType::TSModuleBlock;
-        visitor.enter_scope(ScopeFlags::TsModuleBlock);
         visitor.enter_node(kind);
         visitor.visit_statements(&mut block.body);
         visitor.leave_node(kind);
-        visitor.leave_scope();
     }
 
     pub fn walk_ts_type_alias_declaration_mut<'a, V: VisitMut<'a>>(

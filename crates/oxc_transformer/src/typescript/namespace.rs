@@ -144,14 +144,11 @@ impl<'a> TypeScript<'a> {
         );
 
         // Reuse TSModuleBlock's scope id in transformed function.
-        let mut scope_id = None;
+        let scope_id = decl.scope_id.get();
 
         let namespace_top_level = if let Some(body) = decl.body {
             match body {
-                TSModuleDeclarationBody::TSModuleBlock(block) => {
-                    scope_id = block.scope_id.get();
-                    block.unbox().body
-                }
+                TSModuleDeclarationBody::TSModuleBlock(block) => block.unbox().body,
                 // We handle `namespace X.Y {}` as if it was
                 //   namespace X {
                 //     export namespace Y {}

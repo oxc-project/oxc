@@ -1495,7 +1495,7 @@ impl<'a> AstBuilder<'a> {
         kind: TSModuleDeclarationKind,
         modifiers: Modifiers<'a>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        self.alloc(TSModuleDeclaration { span, id, body, kind, modifiers })
+        self.alloc(TSModuleDeclaration::new(span, id, body, kind, modifiers))
     }
 
     #[inline]
@@ -1734,7 +1734,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         body: Vec<'a, Statement<'a>>,
     ) -> Box<'a, TSModuleBlock<'a>> {
-        self.alloc(TSModuleBlock::new(span, body))
+        self.alloc(TSModuleBlock { span, body })
     }
 
     #[inline]

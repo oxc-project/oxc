@@ -10662,6 +10662,8 @@ pub(crate) const OFFSET_TS_MODULE_DECLARATION_BODY: usize = offset_of!(TSModuleD
 pub(crate) const OFFSET_TS_MODULE_DECLARATION_KIND: usize = offset_of!(TSModuleDeclaration, kind);
 pub(crate) const OFFSET_TS_MODULE_DECLARATION_MODIFIERS: usize =
     offset_of!(TSModuleDeclaration, modifiers);
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSModuleDeclaration, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -10694,6 +10696,14 @@ impl<'a> TSModuleDeclarationWithoutId<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_MODIFIERS)
                 as *const Modifiers<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -10731,11 +10741,18 @@ impl<'a> TSModuleDeclarationWithoutBody<'a> {
                 as *const Modifiers<'a>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 pub(crate) const OFFSET_TS_MODULE_BLOCK_SPAN: usize = offset_of!(TSModuleBlock, span);
 pub(crate) const OFFSET_TS_MODULE_BLOCK_BODY: usize = offset_of!(TSModuleBlock, body);
-pub(crate) const OFFSET_TS_MODULE_BLOCK_SCOPE_ID: usize = offset_of!(TSModuleBlock, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -10745,14 +10762,6 @@ impl<'a> TSModuleBlockWithoutBody<'a> {
     #[inline]
     pub fn span(&self) -> &Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
     }
 }
 
