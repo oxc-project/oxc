@@ -253,12 +253,10 @@ impl<'a> TypeScript<'a> {
                         }
                     }
                 }
-                stmt => {
-                    if let Some(decl) = stmt.as_declaration() {
-                        if decl.is_typescript_syntax() {
-                            continue;
-                        }
-                    }
+                Statement::TSTypeAliasDeclaration(_)
+                | Statement::TSInterfaceDeclaration(_)
+                | Statement::TSImportEqualsDeclaration(_) => {}
+                _ => {
                     new_stmts.push(stmt);
                 }
             }
