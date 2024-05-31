@@ -292,7 +292,7 @@ impl<'a> TypeScript<'a> {
     //                         ^^^^^^^
     fn create_variable_declaration(&self, name: &Atom<'a>) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
-        let declarator = {
+        let declarations = {
             let ident = BindingIdentifier::new(SPAN, name.clone());
             let pattern_kind = self.ctx.ast.binding_pattern_identifier(ident);
             let binding = self.ctx.ast.binding_pattern(pattern_kind, None, false);
@@ -302,7 +302,7 @@ impl<'a> TypeScript<'a> {
         Declaration::VariableDeclaration(self.ctx.ast.variable_declaration(
             SPAN,
             kind,
-            declarator,
+            declarations,
             Modifiers::empty(),
         ))
     }
