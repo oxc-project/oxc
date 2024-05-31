@@ -10,10 +10,13 @@ use self::walk_mut::*;
 
 /// Syntax tree traversal to mutate an exclusive borrow of a syntax tree in place.
 pub trait VisitMut<'a>: Sized {
-    fn enter_node(&mut self, _kind: AstType) {}
-    fn leave_node(&mut self, _kind: AstType) {}
+    #[allow(unused_variables)]
+    fn enter_node(&mut self, kind: AstType) {}
+    #[allow(unused_variables)]
+    fn leave_node(&mut self, kind: AstType) {}
 
-    fn enter_scope(&mut self, _flags: ScopeFlags) {}
+    #[allow(unused_variables)]
+    fn enter_scope(&mut self, flags: ScopeFlags) {}
     fn leave_scope(&mut self) {}
 
     fn visit_program(&mut self, program: &mut Program<'a>) {

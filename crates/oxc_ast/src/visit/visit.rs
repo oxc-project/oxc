@@ -13,10 +13,13 @@ use walk::*;
 
 /// Syntax tree traversal
 pub trait Visit<'a>: Sized {
-    fn enter_node(&mut self, _kind: AstKind<'a>) {}
-    fn leave_node(&mut self, _kind: AstKind<'a>) {}
+    #[allow(unused_variables)]
+    fn enter_node(&mut self, kind: AstKind<'a>) {}
+    #[allow(unused_variables)]
+    fn leave_node(&mut self, kind: AstKind<'a>) {}
 
-    fn enter_scope(&mut self, _flags: ScopeFlags) {}
+    #[allow(unused_variables)]
+    fn enter_scope(&mut self, flags: ScopeFlags) {}
     fn leave_scope(&mut self) {}
 
     fn alloc<T>(&self, t: &T) -> &'a T {
