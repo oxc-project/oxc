@@ -73,7 +73,6 @@ impl<'a> TSEnumDeclaration<'a> {
 
 impl<'a> Hash for TSEnumDeclaration<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.id.hash(state);
         self.members.hash(state);
         self.modifiers.hash(state);
@@ -653,7 +652,6 @@ impl<'a> TSTypeParameter<'a> {
 
 impl<'a> Hash for TSTypeParameter<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.name.hash(state);
         self.constraint.hash(state);
         self.default.hash(state);
@@ -952,7 +950,6 @@ impl<'a> TSModuleBlock<'a> {
 
 impl<'a> Hash for TSModuleBlock<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.body.hash(state);
     }
 }
