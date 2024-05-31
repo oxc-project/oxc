@@ -2288,11 +2288,8 @@ pub struct BindingRestElement<'a> {
 
 /// Function Definitions
 #[visited_node(
+    // TODO: `ScopeFlags::Function` is not correct if this is a `MethodDefinition`
     scope(ScopeFlags::Function),
-    // Don't create scope if this is a method - `MethodDefinition` already created one.
-    // `ctx.ancestor(2).unwrap()` not `ctx.parent()` because this code is inserted
-    // into `walk_function` *after* `Function` is added to stack.
-    scope_if(!matches!(ctx.ancestor(2).unwrap(), Ancestor::MethodDefinitionValue(_))),
     strict_if(self.body.as_ref().is_some_and(|body| body.has_use_strict_directive()))
 )]
 #[derive(Debug)]
@@ -2784,11 +2781,7 @@ impl<'a> ClassElement<'a> {
     }
 }
 
-#[visited_node(
-    scope(self.kind.scope_flags()),
-    strict_if(self.value.is_strict()),
-    enter_scope_before(value)
-)]
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
