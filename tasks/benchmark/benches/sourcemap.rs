@@ -22,7 +22,8 @@ fn bench_sourcemap(criterion: &mut Criterion) {
                 let CodegenReturn { source_map, source_text } = Codegen::<false>::new(
                     file.file_name.as_str(),
                     source_text,
-                    codegen_options.clone(),
+                    codegen_options,
+                    None,
                 )
                 .build(&program);
                 let line = source_text.matches('\n').count() as u32;

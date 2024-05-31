@@ -37,7 +37,7 @@ fn main() {
         .build(&mut program)
         .unwrap();
 
-    let printed = Codegen::<false>::new("", &source_text, CodegenOptions::default())
+    let printed = Codegen::<false>::new("", &source_text, CodegenOptions::default(), None)
         .build(&program)
         .source_text;
     println!("Transformed:\n");

@@ -371,6 +371,9 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                 writer.write_all(error.as_bytes())?;
             }
             TestResult::Mismatch(ast_string, expected_ast_string) => {
+                writer.write_all(
+                    format!("Mismatch: {:?}\n", normalize_path(self.path())).as_bytes(),
+                )?;
                 if args.diff {
                     self.print_diff(writer, ast_string.as_str(), expected_ast_string.as_str())?;
                     println!("Mismatch: {:?}", normalize_path(self.path()));

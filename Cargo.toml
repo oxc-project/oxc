@@ -174,8 +174,9 @@ saphyr              = "0.0.1"
 base64-simd         = "0.8"
 cfg-if              = "1.0.0"
 schemars            = "0.8.21"
-oxc-browserslist    = "0.16.0"
+oxc-browserslist    = "0.16.2"
 criterion2          = { version = "0.9.0", default-features = false }
+daachorse                 = { version = "1.0.0" }
 
 [workspace.metadata.cargo-shear]
 ignored = ["napi", "oxc_traverse"]
@@ -194,13 +195,6 @@ opt-level = 'z'
 opt-level     = 3
 lto           = "fat"
 codegen-units = 1
-strip         = "symbols"
-debug         = false
+strip         = "symbols" # set to `false` for debug information
+debug         = false # set to `true` for debug information
 panic         = "abort" # Let it crash and force ourselves to write safe Rust.
-
-# Use the `--profile release-debug` flag to show symbols in release mode.
-# e.g. `cargo build --profile release-debug`
-[profile.release-debug]
-inherits = "release"
-strip    = false
-debug    = true

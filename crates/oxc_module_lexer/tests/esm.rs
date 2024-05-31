@@ -728,7 +728,7 @@ import { g } from './test-circular2.js';
 
 #[test]
 fn comments() {
-    let source = " /*\n                   VERSION\n                 */\nimport util from 'util';\n\n//\nfunction x() {\n}\n\n/**/\n// '\n/* / */\n/*\n\n   * export { b }\n\\*/\nexport { a }\n\n      function () {\n/***/\n      }\n    ";
+    let source = " /*\n                   VERSION\n                 */\nimport util from 'util';\n\n//\nfunction x() {\n}\n\n/**/\n// '\n/* / */\n/*\n\n   * export { b }\n\\*/\nexport { a }\n\n      function d() {\n/***/\n      }\n    ";
     let ModuleLexer { imports, exports, .. } = parse(source);
     assert_eq!(imports.len(), 1);
     assert_eq!(source.slice(imports[0].s, imports[0].e), "util");

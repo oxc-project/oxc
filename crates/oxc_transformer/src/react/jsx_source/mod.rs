@@ -20,8 +20,6 @@ const FILE_NAME_VAR: &str = "_jsxFileName";
 ///
 /// In: `<sometag />`
 /// Out: `<sometag __source={ { fileName: 'this/file.js', lineNumber: 10, columnNumber: 1 } } />`
-///
-/// TODO: get lineNumber and columnNumber from somewhere
 pub struct ReactJsxSource<'a> {
     ctx: Ctx<'a>,
 }

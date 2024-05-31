@@ -16857,6 +16857,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·           ╰── `(` expected
    ╰────
 
+  × Expected function name
+   ╭─[conformance/parser/ecmascript5/ErrorRecovery/parserEqualsGreaterThanAfterFunction2.ts:1:10]
+ 1 │ function (a => b;
+   ·          ─
+   ╰────
+  help: Function name is required in function declaration or named export
+
   × Expected `,` but found `=>`
    ╭─[conformance/parser/ecmascript5/ErrorRecovery/parserEqualsGreaterThanAfterFunction2.ts:1:13]
  1 │ function (a => b;

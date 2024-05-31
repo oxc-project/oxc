@@ -199,7 +199,7 @@ fn test() {
         ("let obj = Intl();", None),
         ("let newObj = new Reflect();", None),
         ("let obj = Reflect();", None),
-        ("function() { JSON.parse(Atomics()) }", None),
+        ("function d() { JSON.parse(Atomics()) }", None),
         // reference test cases
         ("let j = JSON; j();", None),
         ("let a = JSON; let b = a; let c = b; b();", None),

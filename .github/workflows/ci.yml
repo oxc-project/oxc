@@ -164,6 +164,7 @@ jobs:
       - uses: taiki-e/checkout-action@v1
       - uses: Boshen/setup-rust@main
         with:
+          cache-key: warm
           components: clippy
       - run: cargo lint -- -D warnings
 
@@ -174,6 +175,7 @@ jobs:
       - uses: taiki-e/checkout-action@v1
       - uses: Boshen/setup-rust@main
         with:
+          cache-key: warm
           components: rust-docs
       - run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
 
@@ -187,7 +189,7 @@ jobs:
       SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
       SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
       SCCACHE_REGION: auto
-      RUSTC_WRAPPER: sccache
+      RUSTC_WRAPPER: ${{ vars.USE_SCCACHE == 'true' && 'sccache' || '' }}
       CARGO_INCREMENTAL: 0
     steps:
       - uses: taiki-e/checkout-action@v1
