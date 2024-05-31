@@ -1627,6 +1627,7 @@ impl<'a> Declaration<'a> {
             Self::VariableDeclaration(decl) => decl.is_typescript_syntax(),
             Self::FunctionDeclaration(func) => func.is_typescript_syntax(),
             Self::ClassDeclaration(class) => class.is_typescript_syntax(),
+            Self::UsingDeclaration(_) => false,
             _ => true,
         }
     }
