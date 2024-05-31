@@ -5,8 +5,8 @@ use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_transformer::{
-    ArrowFunctionsOptions, ES2015Options, ReactOptions, TransformOptions, Transformer,
-    TypeScriptOptions,
+    ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, TransformOptions,
+    Transformer, TypeScriptOptions,
 };
 
 use crate::{
@@ -21,7 +21,7 @@ use crate::{
 fn get_result(source_text: &str, source_type: SourceType, source_path: &Path) -> TestResult {
     let allocator = Allocator::default();
     let filename = source_path.file_name().unwrap().to_string_lossy();
-    let options = TransformOptions {
+    let mut options = TransformOptions {
         typescript: TypeScriptOptions::default(),
         es2015: ES2015Options { arrow_function: Some(ArrowFunctionsOptions::default()) },
         react: ReactOptions {
@@ -34,7 +34,7 @@ fn get_result(source_text: &str, source_type: SourceType, source_path: &Path) ->
     };
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = parse_result1.program;
-    let _ = Transformer::new(
+    let result = Transformer::new(
         &allocator,
         source_path,
         source_type,
@@ -43,6 +43,26 @@ fn get_result(source_text: &str, source_type: SourceType, source_path: &Path) ->
         options.clone(),
     )
     .build(&mut program);
+
+    let err_message =
+        result.map_err(|err| err.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n"));
+
+    // We don't know what runtime to use, so we need to check if the error message is about that.
+    // If it is, we can just switch to classic and try again.
+    if err_message.is_err_and(|err_message| {
+        err_message.contains("pragma and pragmaFrag cannot be set when runtime is automatic.")
+    }) {
+        options.react.runtime = ReactJsxRuntime::Classic;
+        _ = Transformer::new(
+            &allocator,
+            source_path,
+            source_type,
+            source_text,
+            &parse_result1.trivias,
+            options.clone(),
+        )
+        .build(&mut program);
+    }
 
     let source_text1 =
         Codegen::<false>::new(&filename, source_text, CodegenOptions::default(), None)
