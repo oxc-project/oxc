@@ -83,12 +83,8 @@ impl<'a> TypeScript<'a> {
                                                 SPAN,
                                                 declaration,
                                             );
-                                        let export_named_decl =
-                                            ModuleDeclaration::ExportNamedDeclaration(
-                                                export_named_decl,
-                                            );
                                         let stmt =
-                                            self.ctx.ast.module_declaration(export_named_decl);
+                                            Statement::ExportNamedDeclaration(export_named_decl);
                                         new_stmts.push(stmt);
                                     }
                                     new_stmts.push(transformed_stmt);
