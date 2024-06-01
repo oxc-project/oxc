@@ -42,3 +42,5 @@ codegen     = ["oxc_codegen"]
 
 sourcemap            = ["oxc_sourcemap"]
 sourcemap_concurrent = ["oxc_sourcemap/concurrent", "sourcemap"]
+
+wasm = ["oxc_transformer/wasm"]

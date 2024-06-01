@@ -32,8 +32,12 @@ serde            = { workspace = true, features = ["derive"] }
 serde_json       = { workspace = true }
 ropey            = { workspace = true }
 rustc-hash       = { workspace = true }
-oxc-browserslist = { workspace = true, features = ["wasm_bindgen"] }
+oxc-browserslist = { workspace = true }
 
 [dev-dependencies]
 oxc_parser  = { workspace = true }
 oxc_codegen = { workspace = true }
+
+[features]
+default = []
+wasm    = ["oxc-browserslist/wasm_bindgen"]
