@@ -335,9 +335,9 @@ dependencies = [
 
 [[package]]
 name = "criterion2"
-version = "0.9.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b05a0f6ef5d7bc5c62d49e823079028b883b2f5321b881f92c1ab317c3427db4"
+checksum = "f22174bed309c964c1720148dfe793f285cc02fd8b13c91205d485f73468d94d"
 dependencies = [
  "anes",
  "bpaf",
@@ -345,13 +345,10 @@ dependencies = [
  "ciborium",
  "codspeed",
  "colored",
- "itertools 0.13.0",
  "num-traits",
  "oorandom",
  "serde",
- "serde_derive",
  "serde_json",
- "tinytemplate",
  "walkdir",
 ]
 
@@ -2552,16 +2549,6 @@ name = "time-core"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef927ca75afb808a4d64dd374f00a2adf8d0fcff8e7b184af886c3c87ec4a3f3"
-
-[[package]]
-name = "tinytemplate"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be4d6b5f19ff7664e8c98d03e2139cb510db9b0a60b55f8e8709b689d939b6bc"
-dependencies = [
- "serde",
- "serde_json",
-]
 
 [[package]]
 name = "tinyvec"
