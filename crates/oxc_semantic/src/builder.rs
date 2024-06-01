@@ -140,7 +140,8 @@ impl<'a> SemanticBuilder<'a> {
 
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
         if self.source_type.is_typescript_definition() {
-            self.scope.add_scope(None, ScopeFlags::Top);
+            let scope_id = self.scope.add_scope(None, ScopeFlags::Top);
+            program.scope_id.set(Some(scope_id));
         } else {
             self.visit_program(program);
 
