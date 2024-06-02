@@ -22,6 +22,23 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 - Rename function params (#3487)
 - Remove defunct hashing of `Span` (#3486)
 
+## [0.13.2] - 2024-06-02
+
+### Features
+
+- Add `oxc/no-const-enum` rule (#3435)
+
+### Bug Fixes
+
+- UsingDeclaration is not a typescript syntax (#3482)
+
+### Refactor
+
+- Update scope attrs (#3494)
+- Move scope from `TSModuleBlock` to `TSModuleDeclaration` (#3488)
+- Rename function params (#3487)
+- Remove defunct hashing of `Span` (#3486)
+
 ## [0.13.1] - 2024-05-22
 
 ### Bug Fixes

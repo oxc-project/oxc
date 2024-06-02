@@ -19,6 +19,20 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 - Move scope from `TSModuleBlock` to `TSModuleDeclaration` (#3488)
 
+## [0.13.2] - 2024-06-02
+
+### Features
+
+- Add `TraverseCtx::generate_uid` (#3394)
+
+### Bug Fixes
+
+- Exit scope early if enter it late (#3493)
+
+### Refactor
+
+- Move scope from `TSModuleBlock` to `TSModuleDeclaration` (#3488)
+
 ## [0.13.1] - 2024-05-22
 
 ### Features

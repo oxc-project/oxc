@@ -13,6 +13,14 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 - Parse const extends in arrow functions correctly (#3450)
 - Fix lexer error while parsing parenthesized arrow expressions (#3400)
 
+## [0.13.2] - 2024-06-02
+
+### Bug Fixes
+
+- Should parser error when function declaration has no name (#3461)
+- Parse const extends in arrow functions correctly (#3450)
+- Fix lexer error while parsing parenthesized arrow expressions (#3400)
+
 ## [0.13.1] - 2024-05-22
 
 ### Performance

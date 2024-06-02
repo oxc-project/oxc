@@ -11,3 +11,9 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 - Should parser error when function declaration has no name (#3461)
 
+## [0.13.2] - 2024-06-02
+
+### Bug Fixes
+
+- Should parser error when function declaration has no name (#3461)
+

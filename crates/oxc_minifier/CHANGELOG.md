@@ -11,6 +11,12 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 - Preserve annotate comment (#3465)
 
+## [0.13.2] - 2024-06-02
+
+### Features
+
+- Preserve annotate comment (#3465)
+
 ## [0.13.1] - 2024-05-22
 
 ### Features

@@ -11,6 +11,12 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 - Get &str from Atom<'a> with lifetime of 'a (#3420)
 
+## [0.13.2] - 2024-06-02
+
+### Features
+
+- Get &str from Atom<'a> with lifetime of 'a (#3420)
+
 ## [0.13.0] - 2024-05-14
 
 ### Features
