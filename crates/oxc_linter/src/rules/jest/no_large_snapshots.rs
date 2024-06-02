@@ -272,12 +272,8 @@ impl NoLargeSnapshots {
 
     fn get_line_count(span: Span, ctx: &LintContext) -> usize {
         let start = span.start as usize;
-        let start = if start == 0 { 1 } else { start };
         let end = span.end as usize;
-        let end = ctx.source_text()[start..end].lines().count();
-        let start = ctx.source_text()[..start].lines().count();
-
-        end - start
+        ctx.source_text()[start..=end].lines().count() - 1
     }
 
     #[allow(clippy::unnecessary_wraps)]
