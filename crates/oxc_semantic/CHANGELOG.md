@@ -5,6 +5,25 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.2] - 2024-06-02
+
+### Features
+
+- Add `TraverseCtx::generate_uid` (#3394)
+- Implement require-returns rule (#3218)
+
+### Bug Fixes
+
+- Set program scope_id for TS definition files (#3496)
+- Use UIDs in TS namespace transforms (#3395)
+- Memorize visited block id in `neighbors_filtered_by_edge_weight` (#3407)
+
+### Refactor
+
+- Move scope from `TSModuleBlock` to `TSModuleDeclaration` (#3488)
+- Use a simpler way to resolve reference for ReferenceFlag::Type (#3430)
+- Compile less test binaries to speed up CI (#3414)
+
 ## [0.13.1] - 2024-05-22
 
 ### Refactor
