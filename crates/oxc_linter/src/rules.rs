@@ -162,6 +162,7 @@ mod jest {
     pub mod no_identical_title;
     pub mod no_interpolation_in_snapshots;
     pub mod no_jasmine_globals;
+    pub mod no_large_snapshots;
     pub mod no_mocks_import;
     pub mod no_restricted_jest_methods;
     pub mod no_restricted_matchers;
@@ -536,6 +537,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_identical_title,
     jest::no_interpolation_in_snapshots,
     jest::no_jasmine_globals,
+    jest::no_large_snapshots,
     jest::no_mocks_import,
     jest::no_restricted_jest_methods,
     jest::no_restricted_matchers,
