@@ -1,9 +1,11 @@
+use std::cell::{Cell, RefCell};
+
 use lazy_static::lazy_static;
 use oxc_ast::{
     ast::{Expression, IdentifierReference, StaticMemberExpression},
     AstKind, CommentKind,
 };
-use oxc_semantic::AstNodeId;
+use oxc_semantic::{AstNode, AstNodeId, SymbolId};
 use oxc_span::{CompactStr, GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator, UnaryOperator};
 use rustc_hash::FxHashSet;
@@ -11,6 +13,50 @@ use rustc_hash::FxHashSet;
 use crate::LintContext;
 
 mod pure_functions;
+
+pub struct NodeListenerOptions<'a, 'b> {
+    pub checked_mutated_nodes: RefCell<FxHashSet<SymbolId>>,
+    pub ctx: &'b LintContext<'a>,
+    pub has_valid_this: Cell<bool>,
+    pub called_with_new: Cell<bool>,
+    pub whitelist_modules: Option<&'b Vec<WhitelistModule>>,
+    pub whitelist_functions: Option<&'b Vec<String>>,
+}
+
+impl<'a, 'b> NodeListenerOptions<'a, 'b> {
+    pub fn new(ctx: &'b LintContext<'a>) -> Self {
+        Self {
+            checked_mutated_nodes: RefCell::new(FxHashSet::default()),
+            ctx,
+            has_valid_this: Cell::new(false),
+            called_with_new: Cell::new(false),
+            whitelist_modules: None,
+            whitelist_functions: None,
+        }
+    }
+    pub fn with_whitelist_modules(self, whitelist_modules: &'b Vec<WhitelistModule>) -> Self {
+        Self { whitelist_modules: Some(whitelist_modules), ..self }
+    }
+    pub fn with_whitelist_functions(self, whitelist_functions: &'b Vec<String>) -> Self {
+        Self { whitelist_functions: Some(whitelist_functions), ..self }
+    }
+    pub fn insert_mutated_node(&self, symbol_id: SymbolId) -> bool {
+        self.checked_mutated_nodes.borrow_mut().insert(symbol_id)
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct WhitelistModule {
+    pub name: String,
+    pub functions: ModuleFunctions,
+}
+
+#[derive(Debug, Clone, Default)]
+pub enum ModuleFunctions {
+    #[default]
+    All,
+    Specific(Vec<String>),
+}
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Value {
@@ -127,11 +173,16 @@ impl GetSpan for FunctionName<'_> {
     }
 }
 
-pub fn is_pure_function(function_name: &FunctionName, ctx: &LintContext) -> bool {
-    if has_pure_notation(function_name.span(), ctx) {
+pub fn is_pure_function(function_name: &FunctionName, options: &NodeListenerOptions) -> bool {
+    if has_pure_notation(function_name.span(), options.ctx) {
         return true;
     }
     let name = flatten_member_expr_if_possible(function_name);
+
+    if options.whitelist_functions.is_some_and(|whitelist| whitelist.contains(&name.to_string())) {
+        return true;
+    }
+
     PURE_FUNCTIONS_SET.contains(name.as_str())
 }
 
@@ -249,6 +300,44 @@ pub fn get_leading_tree_shaking_comment<'a>(span: Span, ctx: &LintContext<'a>) -
     }
 
     Some(comment_text)
+}
+
+pub fn is_local_variable_a_whitelisted_module(
+    node: &AstNode,
+    name: &str,
+    options: &NodeListenerOptions,
+) -> bool {
+    let Some(AstKind::ImportDeclaration(parent)) = options.ctx.nodes().parent_kind(node.id())
+    else {
+        return false;
+    };
+    let module_name = parent.source.value.as_str();
+    is_function_side_effect_free(name, module_name, options)
+}
+
+pub fn is_function_side_effect_free(
+    name: &str,
+    module_name: &str,
+    options: &NodeListenerOptions,
+) -> bool {
+    let Some(whitelist_modules) = options.whitelist_modules else {
+        return false;
+    };
+    for module in whitelist_modules {
+        let is_module_match =
+            module.name == module_name || module.name == "#local" && module_name.starts_with('.');
+
+        if is_module_match {
+            match &module.functions {
+                ModuleFunctions::All => return true,
+                ModuleFunctions::Specific(functions) => {
+                    return functions.contains(&name.to_string())
+                }
+            }
+        }
+    }
+
+    false
 }
 
 /// Port from <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/463fa1f0bef7caa2b231a38b9c3557051f506c92/src/rules/no-side-effects-in-initialization.ts#L136-L161>

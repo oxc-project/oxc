@@ -1303,3 +1303,33 @@ expression: no_side_effects_in_initialization
  1 │ function* x(){yield ext()}; x()
    ·                     ───
    ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling member function
+   ╭─[no_side_effects_in_initialization.tsx:1:1]
+ 1 │ Object.freeze({})
+   · ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling imported function
+   ╭─[no_side_effects_in_initialization.tsx:1:9]
+ 1 │ import {createContext, createRef} from 'react'; createContext(); createRef();
+   ·         ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling imported function
+   ╭─[no_side_effects_in_initialization.tsx:1:24]
+ 1 │ import {createContext, createRef} from 'react'; createContext(); createRef();
+   ·                        ─────────
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling member function
+   ╭─[no_side_effects_in_initialization.tsx:1:25]
+ 1 │ import _ from 'lodash'; _.cloneDeep({});
+   ·                         ───────────
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling member function
+   ╭─[no_side_effects_in_initialization.tsx:1:33]
+ 1 │ import * as React from 'react'; React.createRef();
+   ·                                 ───────────────
+   ╰────
