@@ -1,0 +1,51 @@
+name: Prepare Release Crates
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - prepare-release
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  pull-requests: write
+  contents: write
+
+env:
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  prepare_release:
+    name: Prepare Release Crates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: cargo-bins/cargo-binstall@main
+
+      - uses: Boshen/setup-rust@main
+        with:
+          cache-key: warm
+          tools: cargo-release-oxc
+
+      - run: cargo release-oxc update --patch
+
+      - uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: Publish crates
+          committer: Boshen <Boshen@users.noreply.github.com>
+          author: Boshen <Boshen@users.noreply.github.com>
+          branch: release/crates
+          branch-suffix: timestamp
+          title: Publish crates
+          body: Automated Release
+          assignees: Boshen
+          reviewers: Boshen
+
