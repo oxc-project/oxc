@@ -71,7 +71,7 @@ jobs:
       # Unsung heros of the internet, who led me here to speed up window's slowness:
       # https://github.com/actions/cache/issues/752#issuecomment-1847036770
       # https://github.com/astral-sh/uv/blob/502e04200d52de30d3159894833b3db4f0d6644d/.github/workflows/ci.yml#L158
-      - uses: samypr100/setup-dev-drive@v2
+      - uses: samypr100/setup-dev-drive@v3
         with:
           workspace-copy: true
           drive-size: 8GB
