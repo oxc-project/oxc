@@ -49,6 +49,17 @@ pub struct CodegenOptions {
     pub preserve_annotate_comments: bool,
 }
 
+impl CodegenOptions {
+    #[must_use]
+    pub fn with_typescript(mut self, yes: bool) -> Self {
+        if yes {
+            self.enable_typescript = true;
+        }
+
+        self
+    }
+}
+
 pub struct CodegenReturn {
     pub source_text: String,
     pub source_map: Option<oxc_sourcemap::SourceMap>,

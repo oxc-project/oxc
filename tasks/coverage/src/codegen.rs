@@ -21,16 +21,12 @@ fn get_result(
 ) -> TestResult {
     let normal_result = get_normal_result(case_name, file_name, source_text, source_type);
     let minify_result = get_minify_result(case_name, file_name, source_text, source_type);
-    let typescript_result = get_typescript_result(case_name, file_name, source_text, source_type);
 
     if !normal_result {
         return TestResult::CodegenError("Default");
     }
     if !minify_result {
         return TestResult::CodegenError("Minify");
-    }
-    if !typescript_result {
-        return TestResult::CodegenError("Typescript");
     }
 
     TestResult::Passed
@@ -69,7 +65,7 @@ fn get_normal_result(
     source_text: &str,
     source_type: SourceType,
 ) -> bool {
-    let options = CodegenOptions::default();
+    let options = CodegenOptions::default().with_typescript(source_type.is_typescript());
     let allocator = Allocator::default();
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
     let source_text1 = Codegen::<false>::new("", source_text, options, None)
@@ -112,7 +108,7 @@ fn get_minify_result(
     source_text: &str,
     source_type: SourceType,
 ) -> bool {
-    let options = CodegenOptions::default();
+    let options = CodegenOptions::default().with_typescript(source_type.is_typescript());
     let allocator = Allocator::default();
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
     let source_text1 = Codegen::<true>::new("", source_text, options, None)
@@ -140,50 +136,6 @@ fn get_minify_result(
             source_text,
             &parse_result1,
             &source_text1,
-            &parse_result2,
-            &source_text2,
-        );
-    }
-
-    result
-}
-
-/// TypeScript idempotency test
-fn get_typescript_result(
-    case_name: &str,
-    file_name: &Path,
-    source_text: &str,
-    source_type: SourceType,
-) -> bool {
-    let options =
-        CodegenOptions { enable_source_map: false, enable_typescript: true, ..Default::default() };
-    let allocator = Allocator::default();
-    let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
-    let source_text1 = Codegen::<false>::new("", source_text, options, None)
-        .build(&parse_result1.program)
-        .source_text;
-    let parse_result2 = Parser::new(&allocator, &source_text1, source_type).parse();
-    let source_text2 = Codegen::<false>::new("", &source_text1, options, None)
-        .build(&parse_result2.program)
-        .source_text;
-    let result = source_text1 == source_text2;
-
-    if !result {
-        let parse_result1 = format!(
-            "Panicked: {:#?}\nErrors:\n{:#?}\nProgram:\n{:#?}",
-            parse_result1.panicked, parse_result1.errors, parse_result1.program
-        );
-        let parse_result2 = format!(
-            "Panicked: {:#?}\nErrors:\n{:#?}\nProgram:\n{:#?}",
-            parse_result2.panicked, parse_result2.errors, parse_result2.program
-        );
-        write_failure(
-            case_name,
-            file_name,
-            "typescript",
-            source_text,
-            &parse_result1,
-            &source_text1.clone(),
             &parse_result2,
             &source_text2,
         );
