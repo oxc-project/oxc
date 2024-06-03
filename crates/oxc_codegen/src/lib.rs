@@ -461,16 +461,9 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         print_semicolon_first: bool,
     ) {
         if let Some(directives) = directives {
-            if directives.is_empty() {
-                if let Some(Statement::ExpressionStatement(s)) = statements.first() {
-                    if matches!(s.expression.get_inner_expression(), Expression::StringLiteral(_)) {
-                        self.print_semicolon();
-                    }
-                }
-            } else {
-                for directive in directives {
-                    directive.gen(self, ctx);
-                }
+            for directive in directives {
+                self.print_indent();
+                directive.gen(self, ctx);
                 self.print_soft_newline();
             }
         }

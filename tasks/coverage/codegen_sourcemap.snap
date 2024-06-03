@@ -424,8 +424,8 @@ Invalid Character `[`
 (11:43-12:2) " {\n " --> (1:43-2:0) " {"
 (12:2-12:3) " " --> (2:0-2:1) "\n"
 (12:3-12:14) "(function()" --> (2:1-2:13) "\t(function()"
-(12:14-13:0) " {" --> (2:13-3:0) " {"
-(13:0-15:0) "\n'use strict';\n" --> (3:0-4:2) "\n'use strict';\n\t"
+(12:14-13:0) " {" --> (2:13-3:2) " {\n\t"
+(13:0-15:0) "\n'use strict';\n" --> (3:2-4:2) "\t'use strict';\n\t"
 (15:0-15:4) "\nvar" --> (4:2-4:6) "\tvar"
 (15:4-15:14) " _assign =" --> (4:6-4:16) " _assign ="
 (15:14-15:22) " require" --> (4:16-4:24) " require"
@@ -5257,8 +5257,8 @@ Invalid Character `[`
 
 
 - string-literal-newline/input.js
-(0:0-3:0) "\"before\\\nafter\";\n" --> (0:0-1:7) "'before\\\nafter'"
-(3:0-6:1) "\n\"before\\\n\\\nafter\";\n" --> (1:7-4:1) ";'before\\\n\\\nafter';\n"
+(0:0-3:0) "\"before\\\nafter\";\n" --> (0:0-2:0) "'before\\\nafter';"
+(3:0-6:1) "\n\"before\\\n\\\nafter\";\n" --> (2:0-5:1) "\n'before\\\n\\\nafter';\n"
 
 
 
