@@ -1135,88 +1135,46 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::TryStatement(self.alloc(stmt));
         self.enter_node(kind);
 
-        let parent_after_throw_block_ix = self.cfg.after_throw_block;
-
-        let try_stmt_pre_start_ix = self.cfg.current_node_ix;
-
-        let try_stmt_start_ix = self.cfg.new_basic_block_normal();
-        self.cfg.add_edge(try_stmt_pre_start_ix, try_stmt_start_ix, EdgeType::Normal);
-        let try_after_throw_block_ix = self.cfg.new_basic_block_normal();
-
-        self.cfg.current_node_ix = try_stmt_start_ix;
-
-        // every statement created with this active adds an edge from that node to this node
-        //
-        // NOTE: we oversimplify here, realistically even in between basic blocks we
-        // do throwsy things which could cause problems, but for the most part simply
-        // pointing the end of every basic block to the catch block is enough
-        self.cfg.after_throw_block = Some(try_after_throw_block_ix);
-        // The one case that needs to be handled specially is if the first statement in the
-        // try block throws. In that case, it is not sufficient to rely on an edge after that
-        // statement, because the catch will run before that edge is taken.
-        self.cfg.add_edge(try_stmt_pre_start_ix, try_after_throw_block_ix, EdgeType::Normal);
+        /* cfg */
+        let before_try_statement_graph_ix = self.cfg.current_node_ix;
+        let error_harness =
+            stmt.handler.as_ref().map(|_| self.cfg.attach_error_harness(ErrorEdgeKind::Explicit));
+        let before_try_block_graph_ix = self.cfg.new_basic_block_normal();
         /* cfg */
 
         self.visit_block_statement(&stmt.block);
 
         /* cfg */
-        let end_of_try_block_ix = self.cfg.current_node_ix;
-        self.cfg.add_edge(end_of_try_block_ix, try_after_throw_block_ix, EdgeType::Normal);
-        self.cfg.after_throw_block = parent_after_throw_block_ix;
-
-        let start_of_finally_err_block_ix = if stmt.finalizer.is_some() {
-            if stmt.handler.is_some() {
-                // try-catch-finally
-                Some(self.cfg.new_basic_block_normal())
-            } else {
-                // try-finally
-                Some(try_after_throw_block_ix)
-            }
-        } else {
-            // try-catch
-            None
-        };
+        let after_try_block_graph_ix = self.cfg.current_node_ix;
+        if let Some(error_harness) = error_harness {
+            self.cfg.release_error_harness(error_harness);
+        }
         /* cfg */
 
         let catch_block_end_ix = if let Some(handler) = &stmt.handler {
             /* cfg */
-            let catch_after_throw_block_ix = if stmt.finalizer.is_some() {
-                start_of_finally_err_block_ix
-            } else {
-                parent_after_throw_block_ix
+            let Some(error_harness) = error_harness else {
+                unreachable!("we only create an error harness if we have a catch block.");
             };
-            self.cfg.after_throw_block = catch_after_throw_block_ix;
-
-            let catch_block_start_ix = try_after_throw_block_ix;
-            self.cfg.current_node_ix = catch_block_start_ix;
-
-            if let Some(catch_after_throw_block_ix) = catch_after_throw_block_ix {
-                self.cfg.add_edge(
-                    catch_block_start_ix,
-                    catch_after_throw_block_ix,
-                    EdgeType::Normal,
-                );
-            }
+            // TODO: we shouldn't directly change the current node index.
+            let catch_block_start_ix = self.cfg.new_basic_block_normal();
+            self.cfg.add_edge(error_harness, catch_block_start_ix, EdgeType::Normal);
             /* cfg */
 
             self.visit_catch_clause(handler);
 
             /* cfg */
-            Some(self.cfg.current_node_ix)
+            let catch_block_end_ix = self.cfg.current_node_ix;
+            self.cfg.current_node_ix = after_try_block_graph_ix;
+            Some(catch_block_end_ix)
             /* cfg */
         } else {
             None
         };
 
-        // Restore the after_throw_block
-        self.cfg.after_throw_block = parent_after_throw_block_ix;
-
         if let Some(finalizer) = &stmt.finalizer {
             /* cfg */
-            let finally_err_block_start_ix =
-                start_of_finally_err_block_ix.expect("this try statement has a finally_err block");
-
-            self.cfg.current_node_ix = finally_err_block_start_ix;
+            let start_finally_graph_ix = self.cfg.new_basic_block_normal();
             /* cfg */
 
             self.visit_finally_clause(finalizer);
@@ -1229,32 +1187,35 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
             // The end_of_try_block has an outgoing edge to finally_succ also
             // for when the try block completes successfully.
-            self.cfg.add_edge(end_of_try_block_ix, finally_succ_block_start_ix, EdgeType::Normal);
-
+            // self.cfg.add_edge(end_of_try_block_ix, finally_succ_block_start_ix, EdgeType::Normal);
+            //
             // The end_of_catch_block has an outgoing edge to finally_succ for
             // when the catch block in a try-catch-finally completes successfully.
-            if let Some(end_of_catch_block_ix) = catch_block_end_ix {
-                // try-catch-finally
-                self.cfg.add_edge(
-                    end_of_catch_block_ix,
-                    finally_succ_block_start_ix,
-                    EdgeType::Normal,
-                );
-            }
+            // if let Some(end_of_catch_block_ix) = catch_block_end_ix {
+            //     // try-catch-finally
+            //     self.cfg.add_edge(
+            //         end_of_catch_block_ix,
+            //         finally_succ_block_start_ix,
+            //         EdgeType::Normal,
+            //     );
+            // }
             /* cfg */
 
             // TODO: Is it intentional that we visit this twice?
-            self.visit_finally_clause(finalizer);
+            // self.visit_finally_clause(finalizer);
         }
 
         /* cfg */
-        let try_statement_block_end_ix = self.cfg.current_node_ix;
         let after_try_statement_block_ix = self.cfg.new_basic_block_normal();
         self.cfg.add_edge(
-            try_statement_block_end_ix,
-            after_try_statement_block_ix,
+            before_try_statement_graph_ix,
+            before_try_block_graph_ix,
             EdgeType::Normal,
         );
+        self.cfg.add_edge(after_try_block_graph_ix, after_try_statement_block_ix, EdgeType::Normal);
+        if let Some(catch_block_end_ix) = catch_block_end_ix {
+            self.cfg.add_edge(catch_block_end_ix, after_try_statement_block_ix, EdgeType::Normal);
+        }
         /* cfg */
 
         self.leave_node(kind);

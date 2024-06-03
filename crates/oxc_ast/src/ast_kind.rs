@@ -588,7 +588,7 @@ impl<'a> AstKind<'a> {
             Self::PrivateIdentifier(x) => format!("PrivateIdentifier({})", x.name).into(),
 
             Self::NumericLiteral(n) => format!("NumericLiteral({})", n.value).into(),
-            Self::StringLiteral(s) => format!("NumericLiteral({})", s.value).into(),
+            Self::StringLiteral(s) => format!("StringLiteral({})", s.value).into(),
             Self::BooleanLiteral(b) => format!("BooleanLiteral({})", b.value).into(),
             Self::NullLiteral(_) => "NullLiteral".into(),
             Self::BigintLiteral(b) => format!("BigintLiteral({})", b.raw).into(),
