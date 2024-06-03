@@ -1,6 +1,6 @@
 commit: 4bd1b2c2
 
-Passed: 480/928
+Passed: 478/926
 
 # All Passed:
 * babel-preset-react
@@ -445,7 +445,7 @@ Passed: 480/928
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (136/152)
+# babel-plugin-transform-typescript (134/150)
 * enum/mix-references/input.ts
 * enum/ts5.0-const-foldable/input.ts
 * exports/declared-types/input.ts

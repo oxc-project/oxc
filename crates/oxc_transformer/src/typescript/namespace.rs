@@ -30,7 +30,7 @@ impl<'a> TypeScript<'a> {
             return;
         }
 
-        // Collect all binding names. Such as function name and class name.
+        // Collect function/class/enum/namespace binding names
         let mut names: FxHashSet<Atom<'a>> = FxHashSet::default();
 
         // Recreate the statements vec for memory efficiency.
@@ -59,12 +59,11 @@ impl<'a> TypeScript<'a> {
                         }
                     }
                     new_stmts.push(Statement::TSModuleDeclaration(decl));
+                    continue;
                 }
-                match_module_declaration!(Statement) => {
-                    if let Statement::ExportNamedDeclaration(export_decl) = &stmt {
-                        if let Some(Declaration::TSModuleDeclaration(decl)) =
-                            &export_decl.declaration
-                        {
+                Statement::ExportNamedDeclaration(ref export_decl) => {
+                    match &export_decl.declaration {
+                        Some(Declaration::TSModuleDeclaration(decl)) => {
                             if !decl.modifiers.is_contains_declare() {
                                 if !self.options.allow_namespaces {
                                     self.ctx.error(namespace_not_supported(decl.span));
@@ -91,37 +90,32 @@ impl<'a> TypeScript<'a> {
                                     continue;
                                 }
                             }
-                        }
-                    }
 
-                    stmt.to_module_declaration().bound_names(&mut |id| {
-                        names.insert(id.name.clone());
-                    });
-                    new_stmts.push(stmt);
+                            if let TSModuleDeclarationName::Identifier(id) = &decl.id {
+                                names.insert(id.name.clone());
+                            }
+                        }
+                        Some(decl) => match decl {
+                            Declaration::FunctionDeclaration(_)
+                            | Declaration::ClassDeclaration(_)
+                            | Declaration::TSEnumDeclaration(_) => {
+                                names.insert(decl.id().as_ref().unwrap().name.clone());
+                            }
+                            _ => {}
+                        },
+                        _ => {}
+                    }
                 }
-                // Collect bindings from class, function, variable and enum declarations
-                Statement::FunctionDeclaration(ref decl) => {
-                    names.insert(decl.id.as_ref().unwrap().name.clone());
-                    new_stmts.push(stmt);
+                // Collect bindings from class, function and enum declarations
+                Statement::FunctionDeclaration(_)
+                | Statement::ClassDeclaration(_)
+                | Statement::TSEnumDeclaration(_) => {
+                    names.insert(stmt.to_declaration().id().as_ref().unwrap().name.clone());
                 }
-                Statement::ClassDeclaration(ref decl) => {
-                    names.insert(decl.id.as_ref().unwrap().name.clone());
-                    new_stmts.push(stmt);
-                }
-                Statement::TSEnumDeclaration(ref decl) => {
-                    names.insert(decl.id.name.clone());
-                    new_stmts.push(stmt);
-                }
-                Statement::VariableDeclaration(ref decl) => {
-                    decl.bound_names(&mut |id| {
-                        names.insert(id.name.clone());
-                    });
-                    new_stmts.push(stmt);
-                }
-                _ => {
-                    new_stmts.push(stmt);
-                }
+                _ => {}
             }
+
+            new_stmts.push(stmt);
         }
 
         program.body = new_stmts;
@@ -185,24 +179,7 @@ impl<'a> TypeScript<'a> {
                         }
                         new_stmts.push(transformed);
                     }
-                }
-                Statement::ClassDeclaration(ref decl) => {
-                    names.insert(decl.id.as_ref().unwrap().name.clone());
-                    new_stmts.push(stmt);
-                }
-                Statement::FunctionDeclaration(ref decl) => {
-                    names.insert(decl.id.as_ref().unwrap().name.clone());
-                    new_stmts.push(stmt);
-                }
-                Statement::TSEnumDeclaration(ref enum_decl) => {
-                    names.insert(enum_decl.id.name.clone());
-                    new_stmts.push(stmt);
-                }
-                Statement::VariableDeclaration(ref decl) => {
-                    decl.bound_names(&mut |id| {
-                        names.insert(id.name.clone());
-                    });
-                    new_stmts.push(stmt);
+                    continue;
                 }
                 Statement::ExportNamedDeclaration(export_decl) => {
                     // NB: `ExportNamedDeclaration` with no declaration (e.g. `export {x}`) is not
@@ -252,14 +229,20 @@ impl<'a> TypeScript<'a> {
                             _ => {}
                         }
                     }
+                    continue;
+                }
+                // Collect bindings from class, function and enum declarations
+                Statement::ClassDeclaration(_)
+                | Statement::FunctionDeclaration(_)
+                | Statement::TSEnumDeclaration(_) => {
+                    names.insert(stmt.to_declaration().id().as_ref().unwrap().name.clone());
                 }
                 Statement::TSTypeAliasDeclaration(_)
                 | Statement::TSInterfaceDeclaration(_)
-                | Statement::TSImportEqualsDeclaration(_) => {}
-                _ => {
-                    new_stmts.push(stmt);
-                }
+                | Statement::TSImportEqualsDeclaration(_) => continue,
+                _ => {}
             }
+            new_stmts.push(stmt);
         }
 
         if new_stmts.is_empty() {
