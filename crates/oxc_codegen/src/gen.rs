@@ -1339,7 +1339,9 @@ fn print_unquoted_str<const MINIFY: bool>(s: &str, quote: char, p: &mut Codegen<
             '\u{a0}' => {
                 p.print_str(b"\\xA0");
             }
-            _ => p.print_str(c.escape_default().to_string().as_bytes()),
+            _ => {
+                p.print_str(c.encode_utf8([0; 4].as_mut()).as_bytes());
+            }
         }
     }
 }
