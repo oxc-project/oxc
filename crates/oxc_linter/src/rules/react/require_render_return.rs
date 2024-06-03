@@ -100,9 +100,10 @@ fn contains_return_statement<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
             // We only care about normal edges having a return statement.
             EdgeType::Jump | EdgeType::Normal => None,
             // For these two type, we flag it as not found.
-            EdgeType::Unreachable | EdgeType::NewFunction | EdgeType::Backedge => {
-                Some(FoundReturn::No)
-            }
+            EdgeType::Unreachable
+            | EdgeType::Error
+            | EdgeType::NewFunction
+            | EdgeType::Backedge => Some(FoundReturn::No),
         },
         &mut |basic_block_id, _state_going_into_this_rule| {
             // If its an arrow function with an expression, marked as founded and stop walking.

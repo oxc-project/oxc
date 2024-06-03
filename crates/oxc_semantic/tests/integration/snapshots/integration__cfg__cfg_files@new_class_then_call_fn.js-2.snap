@@ -4,5 +4,7 @@ expression: output.cfg_dot_diagram()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/new_class_then_call_fn.js
 ---
 digraph {
-    0 [ label = "VariableDeclaration" ]
+    0 [ label = "" ]
+    1 [ label = "VariableDeclaration" ]
+    1 -> 0 [ label = Error ]
 }

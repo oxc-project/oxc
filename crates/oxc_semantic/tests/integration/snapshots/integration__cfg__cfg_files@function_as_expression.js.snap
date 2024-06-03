@@ -4,15 +4,15 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/function_as_expression.js
 ---
 bb0: {
-	statement
+
 }
 
 bb1: {
-
+	statement
 }
 
 bb2: {
-	statement
+
 }
 
 bb3: {
@@ -20,7 +20,7 @@ bb3: {
 }
 
 bb4: {
-
+	statement
 }
 
 bb5: {
@@ -28,7 +28,7 @@ bb5: {
 }
 
 bb6: {
-	statement
+
 }
 
 bb7: {
@@ -36,7 +36,7 @@ bb7: {
 }
 
 bb8: {
-	statement
+
 }
 
 bb9: {
@@ -52,15 +52,15 @@ bb11: {
 }
 
 bb12: {
-	statement
+
 }
 
 bb13: {
-
+	statement
 }
 
 bb14: {
-	statement
+
 }
 
 bb15: {
@@ -68,7 +68,7 @@ bb15: {
 }
 
 bb16: {
-
+	statement
 }
 
 bb17: {
@@ -76,11 +76,11 @@ bb17: {
 }
 
 bb18: {
-	statement
+
 }
 
 bb19: {
-
+	statement
 }
 
 bb20: {
@@ -100,7 +100,7 @@ bb23: {
 }
 
 bb24: {
-	statement
+
 }
 
 bb25: {
@@ -108,5 +108,53 @@ bb25: {
 }
 
 bb26: {
+
+}
+
+bb27: {
+	statement
+}
+
+bb28: {
+
+}
+
+bb29: {
+
+}
+
+bb30: {
+
+}
+
+bb31: {
+
+}
+
+bb32: {
+	statement
+}
+
+bb33: {
+
+}
+
+bb34: {
+
+}
+
+bb35: {
+	statement
+}
+
+bb36: {
+
+}
+
+bb37: {
+
+}
+
+bb38: {
 
 }

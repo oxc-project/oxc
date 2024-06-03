@@ -5,4 +5,6 @@ input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/string.js
 ---
 digraph {
     0 [ label = "" ]
+    1 [ label = "" ]
+    1 -> 0 [ label = Error ]
 }

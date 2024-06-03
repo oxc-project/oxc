@@ -16,6 +16,8 @@ pub struct ControlFlowGraphBuilder<'a> {
     pub basic_blocks: Vec<BasicBlock>,
     pub current_node_ix: BasicBlockId,
     ctx_stack: Vec<Ctx<'a>>,
+    /// Contains the error unwinding path as a stack of `BasicBlockId`s
+    error_path: Vec<BasicBlockId>,
     // note: this should only land in the big box for all things that take arguments
     // ie: callexpression, arrayexpression, etc
     // todo: add assert that it is used every time?
@@ -55,33 +57,36 @@ impl<'a> ControlFlowGraphBuilder<'a> {
             .expect("expected `self.current_node_ix` to be a valid node index in self.graph")
     }
 
-    #[must_use]
-    pub fn new_basic_block_for_function(&mut self) -> BasicBlockId {
+    pub(self) fn new_basic_block(&mut self) -> BasicBlockId {
+        // current length would be the index of block we are adding on the next line.
+        let basic_block_ix = self.basic_blocks.len();
         self.basic_blocks.push(BasicBlock::new());
-        let basic_block_id = self.basic_blocks.len() - 1;
-        let graph_index = self.graph.add_node(basic_block_id);
-        self.current_node_ix = graph_index;
-
-        // todo: get smarter about what can throw, ie: return can't throw but it's expression can
-        if let Some(after_throw_block) = self.after_throw_block {
-            self.add_edge(graph_index, after_throw_block, EdgeType::NewFunction);
-        }
-
-        graph_index
+        self.graph.add_node(basic_block_ix)
     }
 
     #[must_use]
-    pub fn new_basic_block(&mut self) -> BasicBlockId {
-        self.basic_blocks.push(BasicBlock::new());
-        let graph_index = self.graph.add_node(self.basic_blocks.len() - 1);
-        self.current_node_ix = graph_index;
+    pub fn new_basic_block_function(&mut self) -> BasicBlockId {
+        // we might want to differentiate between function blocks and normal blocks down the road.
+        self.new_basic_block_normal()
+    }
+
+    /// # Panics if there is no error harness to attach to.
+    #[must_use]
+    pub fn new_basic_block_normal(&mut self) -> BasicBlockId {
+        let graph_ix = self.new_basic_block();
+        self.current_node_ix = graph_ix;
+
+        // add an error edge to this block.
+        let error_graph_ix =
+            self.error_path.last().expect("normal basic blocks need an error harness to attach to");
+        self.add_edge(graph_ix, *error_graph_ix, EdgeType::Error);
 
         // todo: get smarter about what can throw, ie: return can't throw but it's expression can
-        if let Some(after_throw_block) = self.after_throw_block {
-            self.add_edge(graph_index, after_throw_block, EdgeType::Normal);
-        }
+        // if let Some(after_throw_block) = self.after_throw_block {
+        //     self.add_edge(graph_ix, after_throw_block, EdgeType::Normal);
+        // }
 
-        graph_index
+        graph_ix
     }
 
     pub fn add_edge(&mut self, a: BasicBlockId, b: BasicBlockId, weight: EdgeType) {
@@ -94,6 +99,27 @@ impl<'a> ControlFlowGraphBuilder<'a> {
 
     pub fn push_return(&mut self, kind: ReturnInstructionKind, node: AstNodeId) {
         self.push_instruction(InstructionKind::Return(kind), Some(node));
+    }
+
+    /// Creates and push a new `BasicBlockId` onto `self.error_path` stack.
+    /// Returns the `BasicBlockId` of the created error harness block.
+    pub fn attach_error_harness(&mut self) -> BasicBlockId {
+        let graph_ix = self.new_basic_block();
+        self.error_path.push(graph_ix);
+        graph_ix
+    }
+
+    /// # Panics if there is no error harness pushed onto the stack,
+    /// Or last harness doesn't match the expected `BasicBlockId`.
+    pub fn release_error_harness(&mut self, expect: BasicBlockId) {
+        let harness = self
+            .error_path
+            .pop()
+            .expect("there is no error harness in the `self.error_path` stack");
+        assert_eq!(
+            harness, expect,
+            "expected harness doesn't match the last harness pushed onto the stack."
+        );
     }
 
     pub fn append_throw(&mut self, node: AstNodeId) {
@@ -131,7 +157,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
 
     pub fn append_unreachable(&mut self) {
         let current_node_ix = self.current_node_ix;
-        let basic_block_with_unreachable_graph_ix = self.new_basic_block();
+        let basic_block_with_unreachable_graph_ix = self.new_basic_block_normal();
         self.add_edge(
             current_node_ix,
             basic_block_with_unreachable_graph_ix,

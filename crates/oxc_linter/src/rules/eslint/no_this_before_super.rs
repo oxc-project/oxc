@@ -104,9 +104,10 @@ impl Rule for NoThisBeforeSuper {
                 node.cfg_id(),
                 &|edge| match edge {
                     EdgeType::Jump | EdgeType::Normal => None,
-                    EdgeType::Unreachable | EdgeType::Backedge | EdgeType::NewFunction => {
-                        Some(DefinitelyCallsThisBeforeSuper::No)
-                    }
+                    EdgeType::Unreachable
+                    | EdgeType::Error
+                    | EdgeType::Backedge
+                    | EdgeType::NewFunction => Some(DefinitelyCallsThisBeforeSuper::No),
                 },
                 &mut |basic_block_id, _| {
                     let super_called = basic_blocks_with_super_called.contains(basic_block_id);

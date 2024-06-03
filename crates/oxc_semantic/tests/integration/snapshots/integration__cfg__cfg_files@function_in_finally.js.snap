@@ -4,16 +4,16 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/function_in_finally.js
 ---
 bb0: {
-	statement
+
 }
 
 bb1: {
 	statement
-	statement
 }
 
 bb2: {
-
+	statement
+	statement
 }
 
 bb3: {
@@ -21,25 +21,37 @@ bb3: {
 }
 
 bb4: {
-	statement
+
 }
 
 bb5: {
-	unreachable
+
 }
 
 bb6: {
-
-}
-
-bb7: {
-
-}
-
-bb8: {
 	statement
 }
 
+bb7: {
+	unreachable
+}
+
+bb8: {
+
+}
+
 bb9: {
+
+}
+
+bb10: {
+
+}
+
+bb11: {
+	statement
+}
+
+bb12: {
 
 }

@@ -4,5 +4,7 @@ expression: output.cfg_dot_diagram()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/new_and_meta.js
 ---
 digraph {
-    0 [ label = "ExpressionStatement" ]
+    0 [ label = "" ]
+    1 [ label = "ExpressionStatement" ]
+    1 -> 0 [ label = Error ]
 }
