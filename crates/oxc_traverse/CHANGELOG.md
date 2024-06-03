@@ -5,6 +5,20 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.2] - 2024-06-03
+
+### Features
+
+- Add `TraverseCtx::generate_uid` (#3394)
+
+### Bug Fixes
+
+- Exit scope early if enter it late (#3493)
+
+### Refactor
+
+- Move scope from `TSModuleBlock` to `TSModuleDeclaration` (#3488)
+
 ## [0.13.1] - 2024-05-22
 
 ### Features
