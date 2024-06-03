@@ -20,7 +20,7 @@ bb3: {
 }
 
 bb4: {
-	statement
+
 }
 
 bb5: {
@@ -29,15 +29,15 @@ bb5: {
 
 bb6: {
 	statement
-	break
 }
 
 bb7: {
-	unreachable
+	statement
+	break
 }
 
 bb8: {
-
+	unreachable
 }
 
 bb9: {
@@ -45,34 +45,13 @@ bb9: {
 }
 
 bb10: {
-	unreachable
+
 }
 
 bb11: {
-	statement
+
 }
 
 bb12: {
-	statement
-	break
-}
-
-bb13: {
-	unreachable
-}
-
-bb14: {
-
-}
-
-bb15: {
-
-}
-
-bb16: {
-
-}
-
-bb17: {
 
 }

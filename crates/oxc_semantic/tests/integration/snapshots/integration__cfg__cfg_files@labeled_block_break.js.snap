@@ -12,26 +12,26 @@ bb1: {
 }
 
 bb2: {
-	statement
+
 }
 
 bb3: {
-	statement
-	statement
 	statement
 }
 
 bb4: {
 	statement
-	break <label>
+	statement
+	statement
 }
 
 bb5: {
-	unreachable
+	statement
+	break <label>
 }
 
 bb6: {
-
+	unreachable
 }
 
 bb7: {
@@ -39,5 +39,9 @@ bb7: {
 }
 
 bb8: {
+
+}
+
+bb9: {
 
 }

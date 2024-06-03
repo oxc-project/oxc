@@ -254,7 +254,7 @@ fn has_conditional_path_accept_throw(
     let graph = &cfg.graph;
     // All nodes should be able to reach the hook node, Otherwise we have a conditional/branching flow.
     algo::dijkstra(graph, from, Some(to), |e| match e.weight() {
-        EdgeType::NewFunction | EdgeType::Error(_) => 1,
+        EdgeType::NewFunction | EdgeType::Error(_) | EdgeType::Finalize => 1,
         EdgeType::Jump | EdgeType::Unreachable | EdgeType::Backedge | EdgeType::Normal => 0,
     })
     .into_iter()

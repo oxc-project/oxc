@@ -184,7 +184,7 @@ impl GetterReturn {
             &cfg.graph,
             node.cfg_id(),
             &|edge| match edge {
-                EdgeType::Jump | EdgeType::Normal=> None,
+                EdgeType::Jump | EdgeType::Normal => None,
                 // We don't need to handle backedges because we would have already visited
                 // them on the forward pass
                 | EdgeType::Backedge
@@ -196,6 +196,7 @@ impl GetterReturn {
                 // TODO: For now we ignore the error path to simplify this rule, We can also
                 // analyze the error path as a nice to have addition.
                 | EdgeType::Error(_)
+                | EdgeType::Finalize
                 // By returning Some(X),
                 // we signal that we don't walk to this path any farther.
                 //

@@ -102,6 +102,7 @@ fn contains_return_statement<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
             // For these two type, we flag it as not found.
             EdgeType::Unreachable
             | EdgeType::Error(_)
+            | EdgeType::Finalize
             | EdgeType::NewFunction
             | EdgeType::Backedge => Some(FoundReturn::No),
         },

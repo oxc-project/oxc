@@ -21,6 +21,8 @@ pub struct ControlFlowGraphBuilder<'a> {
     ctx_stack: Vec<Ctx<'a>>,
     /// Contains the error unwinding path represented as a stack of `ErrorHarness`es
     error_path: Vec<ErrorHarness>,
+    /// Stack of finalizers, the top most element is always the appropiate one for current node.
+    finalizers: Vec<BasicBlockId>,
     // note: this should only land in the big box for all things that take arguments
     // ie: callexpression, arrayexpression, etc
     // todo: add assert that it is used every time?
@@ -84,10 +86,9 @@ impl<'a> ControlFlowGraphBuilder<'a> {
             self.error_path.last().expect("normal basic blocks need an error harness to attach to");
         self.add_edge(graph_ix, *error_graph_ix, EdgeType::Error(*error_edge_kind));
 
-        // todo: get smarter about what can throw, ie: return can't throw but it's expression can
-        // if let Some(after_throw_block) = self.after_throw_block {
-        //     self.add_edge(graph_ix, after_throw_block, EdgeType::Normal);
-        // }
+        if let Some(finalizer) = self.finalizers.last() {
+            self.add_edge(graph_ix, *finalizer, EdgeType::Finalize);
+        }
 
         graph_ix
     }
@@ -122,6 +123,24 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         assert_eq!(
             harness.1, expect,
             "expected harness doesn't match the last harness pushed onto the stack."
+        );
+    }
+
+    /// Creates and push a new `BasicBlockId` onto `self.finalizers` stack.
+    /// Returns the `BasicBlockId` of the created finalizer block.
+    pub fn attach_finalizer(&mut self) -> BasicBlockId {
+        let graph_ix = self.new_basic_block();
+        self.finalizers.push(graph_ix);
+        graph_ix
+    }
+
+    /// # Panics if last finalizer doesn't match the expected `BasicBlockId`.
+    pub fn release_finalizer(&mut self, expect: BasicBlockId) {
+        // return early if there is no finalizer.
+        let Some(finalizer) = self.finalizers.pop() else { return };
+        assert_eq!(
+            finalizer, expect,
+            "expected finalizer doesn't match the last finalizer pushed onto the stack."
         );
     }
 

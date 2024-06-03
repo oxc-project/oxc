@@ -1139,6 +1139,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let before_try_statement_graph_ix = self.cfg.current_node_ix;
         let error_harness =
             stmt.handler.as_ref().map(|_| self.cfg.attach_error_harness(ErrorEdgeKind::Explicit));
+        let before_finalizer_graph_ix =
+            stmt.finalizer.as_ref().map(|_| self.cfg.attach_finalizer());
         let before_try_block_graph_ix = self.cfg.new_basic_block_normal();
         /* cfg */
 
@@ -1146,16 +1148,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         let after_try_block_graph_ix = self.cfg.current_node_ix;
-        if let Some(error_harness) = error_harness {
-            self.cfg.release_error_harness(error_harness);
-        }
         /* cfg */
 
         let catch_block_end_ix = if let Some(handler) = &stmt.handler {
             /* cfg */
             let Some(error_harness) = error_harness else {
-                unreachable!("we only create an error harness if we have a catch block.");
+                unreachable!("we always create an error harness if we have a catch block.");
             };
+            self.cfg.release_error_harness(error_harness);
             // TODO: we shouldn't directly change the current node index.
             let catch_block_start_ix = self.cfg.new_basic_block_normal();
             self.cfg.add_edge(error_harness, catch_block_start_ix, EdgeType::Normal);
@@ -1174,35 +1174,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         if let Some(finalizer) = &stmt.finalizer {
             /* cfg */
+            let Some(before_finalizer_graph_ix) = before_finalizer_graph_ix else {
+                unreachable!("we always create a finalizer when there is a finally block.");
+            };
+            self.cfg.release_finalizer(before_finalizer_graph_ix);
             let start_finally_graph_ix = self.cfg.new_basic_block_normal();
+            self.cfg.add_edge(before_finalizer_graph_ix, start_finally_graph_ix, EdgeType::Normal);
             /* cfg */
 
             self.visit_finally_clause(finalizer);
-
-            /* cfg */
-            // append an unreachable after the finally_err block
-            self.cfg.append_unreachable();
-
-            let finally_succ_block_start_ix = self.cfg.new_basic_block_normal();
-
-            // The end_of_try_block has an outgoing edge to finally_succ also
-            // for when the try block completes successfully.
-            // self.cfg.add_edge(end_of_try_block_ix, finally_succ_block_start_ix, EdgeType::Normal);
-            //
-            // The end_of_catch_block has an outgoing edge to finally_succ for
-            // when the catch block in a try-catch-finally completes successfully.
-            // if let Some(end_of_catch_block_ix) = catch_block_end_ix {
-            //     // try-catch-finally
-            //     self.cfg.add_edge(
-            //         end_of_catch_block_ix,
-            //         finally_succ_block_start_ix,
-            //         EdgeType::Normal,
-            //     );
-            // }
-            /* cfg */
-
-            // TODO: Is it intentional that we visit this twice?
-            // self.visit_finally_clause(finalizer);
         }
 
         /* cfg */
