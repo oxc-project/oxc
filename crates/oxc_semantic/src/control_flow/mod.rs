@@ -165,11 +165,20 @@ pub enum LabeledInstruction {
 #[derive(Debug, Clone)]
 pub enum EdgeType {
     Jump,
-    Error,
+    Error(ErrorEdgeKind),
     Normal,
     Backedge,
     NewFunction,
     Unreachable,
+}
+
+#[derive(Default, Debug, Clone, Copy)]
+pub enum ErrorEdgeKind {
+    /// Error kind for edges between a block which can throw, to it's respective catch block.
+    Explicit,
+    /// Any block that can throw would have an implicit error block connected using this kind.
+    #[default]
+    Implicit,
 }
 
 #[derive(Debug)]
@@ -241,7 +250,7 @@ impl ControlFlowGraph {
         let graph = &self.graph;
         // All nodes should be able to reach the `to` node, Otherwise we have a conditional/branching flow.
         petgraph::algo::dijkstra(graph, from, Some(to), |e| match e.weight() {
-            EdgeType::NewFunction | EdgeType::Error => 1,
+            EdgeType::NewFunction | EdgeType::Error(_) => 1,
             EdgeType::Jump | EdgeType::Unreachable | EdgeType::Backedge | EdgeType::Normal => 0,
         })
         .into_iter()

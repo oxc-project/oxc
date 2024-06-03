@@ -6,5 +6,5 @@ input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/unary_operator.js
 digraph {
     0 [ label = "" ]
     1 [ label = "ExpressionStatement\nExpressionStatement\nExpressionStatement" ]
-    1 -> 0 [ label = Error ]
+    1 -> 0 [ label = Error(Implicit) ]
 }

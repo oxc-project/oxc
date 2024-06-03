@@ -17,7 +17,8 @@ use crate::{
     checker::{EarlyErrorJavaScript, EarlyErrorTypeScript},
     class::ClassTableBuilder,
     control_flow::{
-        ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, Register, ReturnInstructionKind,
+        ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, Register,
+        ReturnInstructionKind,
     },
     diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
@@ -450,7 +451,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg */
-        let error_harness = self.cfg.attach_error_harness();
+        let error_harness = self.cfg.attach_error_harness(ErrorEdgeKind::Implicit);
         let _program_basic_block = self.cfg.new_basic_block_normal();
         /* cfg - must be above directives as directives are in cfg */
 
@@ -1364,7 +1365,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let preserved = self.cfg.preserve_expression_state();
 
         let before_function_graph_ix = self.cfg.current_node_ix;
-        let error_harness = self.cfg.attach_error_harness();
+        let error_harness = self.cfg.attach_error_harness(ErrorEdgeKind::Implicit);
         let function_graph_ix = self.cfg.new_basic_block_function();
         self.cfg.ctx(None).new_function();
         /* cfg */
@@ -1475,7 +1476,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         let preserved = self.cfg.preserve_expression_state();
         let current_node_ix = self.cfg.current_node_ix;
-        let error_harness = self.cfg.attach_error_harness();
+        let error_harness = self.cfg.attach_error_harness(ErrorEdgeKind::Implicit);
         let function_graph_ix = self.cfg.new_basic_block_function();
         self.cfg.ctx(None).new_function();
         /* cfg */

@@ -6,9 +6,12 @@ use context::Ctx;
 pub use context::{CtxCursor, CtxFlags};
 
 use super::{
-    AstNodeId, BasicBlock, BasicBlockId, CompactStr, ControlFlowGraph, EdgeType, Graph,
-    Instruction, InstructionKind, LabeledInstruction, PreservedExpressionState, Register,
+    AstNodeId, BasicBlock, BasicBlockId, CompactStr, ControlFlowGraph, EdgeType, ErrorEdgeKind,
+    Graph, Instruction, InstructionKind, LabeledInstruction, PreservedExpressionState, Register,
 };
+
+#[derive(Debug, Default)]
+struct ErrorHarness(ErrorEdgeKind, BasicBlockId);
 
 #[derive(Debug, Default)]
 pub struct ControlFlowGraphBuilder<'a> {
@@ -16,8 +19,8 @@ pub struct ControlFlowGraphBuilder<'a> {
     pub basic_blocks: Vec<BasicBlock>,
     pub current_node_ix: BasicBlockId,
     ctx_stack: Vec<Ctx<'a>>,
-    /// Contains the error unwinding path as a stack of `BasicBlockId`s
-    error_path: Vec<BasicBlockId>,
+    /// Contains the error unwinding path represented as a stack of `ErrorHarness`es
+    error_path: Vec<ErrorHarness>,
     // note: this should only land in the big box for all things that take arguments
     // ie: callexpression, arrayexpression, etc
     // todo: add assert that it is used every time?
@@ -77,9 +80,9 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         self.current_node_ix = graph_ix;
 
         // add an error edge to this block.
-        let error_graph_ix =
+        let ErrorHarness(error_edge_kind, error_graph_ix) =
             self.error_path.last().expect("normal basic blocks need an error harness to attach to");
-        self.add_edge(graph_ix, *error_graph_ix, EdgeType::Error);
+        self.add_edge(graph_ix, *error_graph_ix, EdgeType::Error(*error_edge_kind));
 
         // todo: get smarter about what can throw, ie: return can't throw but it's expression can
         // if let Some(after_throw_block) = self.after_throw_block {
@@ -103,9 +106,9 @@ impl<'a> ControlFlowGraphBuilder<'a> {
 
     /// Creates and push a new `BasicBlockId` onto `self.error_path` stack.
     /// Returns the `BasicBlockId` of the created error harness block.
-    pub fn attach_error_harness(&mut self) -> BasicBlockId {
+    pub fn attach_error_harness(&mut self, kind: ErrorEdgeKind) -> BasicBlockId {
         let graph_ix = self.new_basic_block();
-        self.error_path.push(graph_ix);
+        self.error_path.push(ErrorHarness(kind, graph_ix));
         graph_ix
     }
 
@@ -117,7 +120,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
             .pop()
             .expect("there is no error harness in the `self.error_path` stack");
         assert_eq!(
-            harness, expect,
+            harness.1, expect,
             "expected harness doesn't match the last harness pushed onto the stack."
         );
     }

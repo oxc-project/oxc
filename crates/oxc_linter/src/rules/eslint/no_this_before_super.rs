@@ -105,7 +105,7 @@ impl Rule for NoThisBeforeSuper {
                 &|edge| match edge {
                     EdgeType::Jump | EdgeType::Normal => None,
                     EdgeType::Unreachable
-                    | EdgeType::Error
+                    | EdgeType::Error(_)
                     | EdgeType::Backedge
                     | EdgeType::NewFunction => Some(DefinitelyCallsThisBeforeSuper::No),
                 },

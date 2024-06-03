@@ -6,5 +6,5 @@ input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/new_class_then_ca
 digraph {
     0 [ label = "" ]
     1 [ label = "VariableDeclaration" ]
-    1 -> 0 [ label = Error ]
+    1 -> 0 [ label = Error(Implicit) ]
 }
