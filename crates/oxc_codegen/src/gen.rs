@@ -2221,7 +2221,11 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeValue<'a> {
         match self {
             Self::Fragment(fragment) => fragment.gen(p, ctx),
             Self::Element(el) => el.gen(p, ctx),
-            Self::StringLiteral(lit) => lit.gen(p, ctx),
+            Self::StringLiteral(lit) => {
+                p.print(b'"');
+                print_unquoted_str(&lit.value, '"', p);
+                p.print(b'"');
+            }
             Self::ExpressionContainer(expr_container) => expr_container.gen(p, ctx),
         }
     }
