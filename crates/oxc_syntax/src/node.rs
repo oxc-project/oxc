@@ -5,6 +5,13 @@ define_index_type! {
     pub struct AstNodeId = usize;
 }
 
+impl AstNodeId {
+    #[inline]
+    pub fn dummy() -> Self {
+        Self::new(0)
+    }
+}
+
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"

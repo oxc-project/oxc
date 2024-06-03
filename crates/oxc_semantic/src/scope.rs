@@ -104,12 +104,25 @@ impl ScopeTree {
         self.get_binding(self.root_scope_id(), name)
     }
 
+    pub fn add_root_unresolved_reference(&mut self, name: CompactStr, reference_id: ReferenceId) {
+        self.add_unresolved_reference(self.root_scope_id(), name, reference_id);
+    }
+
     pub fn has_binding(&self, scope_id: ScopeId, name: &str) -> bool {
         self.bindings[scope_id].get(name).is_some()
     }
 
     pub fn get_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
         self.bindings[scope_id].get(name).copied()
+    }
+
+    pub fn find_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
+        for scope_id in self.ancestors(scope_id) {
+            if let Some(symbol_id) = self.bindings[scope_id].get(name) {
+                return Some(*symbol_id);
+            }
+        }
+        None
     }
 
     pub fn get_bindings(&self, scope_id: ScopeId) -> &Bindings {
