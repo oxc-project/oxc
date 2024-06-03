@@ -133,36 +133,37 @@ impl<'a> TypeScript<'a> {
         parent_export: Option<Expression<'a>>,
         ctx: &mut TraverseCtx,
     ) -> Option<Statement<'a>> {
+        // Skip empty declaration e.g. `namespace x;`
+        let body = decl.body?;
+
         let mut names: FxHashSet<Atom<'a>> = FxHashSet::default();
 
-        let real_name = decl.id.name();
+        let TSModuleDeclarationName::Identifier(IdentifierName { name: real_name, .. }) = decl.id
+        else {
+            return None;
+        };
 
-        // TODO: This binding is created in wrong scope.
-        // Needs to be created in scope of function which `transform_namespace` creates below.
-        let name = self.ctx.ast.new_atom(
-            &ctx.generate_uid_in_current_scope(real_name, SymbolFlags::FunctionScopedVariable),
-        );
+        // Reuse `TSModuleDeclaration`'s scope in transformed function
+        let scope_id = decl.scope_id.get().unwrap();
+        let name = self.ctx.ast.new_atom(&ctx.generate_uid(
+            &real_name,
+            scope_id,
+            SymbolFlags::FunctionScopedVariable,
+        ));
 
-        // Reuse TSModuleBlock's scope id in transformed function.
-        let scope_id = decl.scope_id.get();
-
-        let namespace_top_level = if let Some(body) = decl.body {
-            match body {
-                TSModuleDeclarationBody::TSModuleBlock(block) => block.unbox().body,
-                // We handle `namespace X.Y {}` as if it was
-                //   namespace X {
-                //     export namespace Y {}
-                //   }
-                TSModuleDeclarationBody::TSModuleDeclaration(declaration) => {
-                    let declaration = Declaration::TSModuleDeclaration(declaration);
-                    let export_named_decl =
-                        self.ctx.ast.plain_export_named_declaration_declaration(SPAN, declaration);
-                    let stmt = Statement::ExportNamedDeclaration(export_named_decl);
-                    self.ctx.ast.new_vec_single(stmt)
-                }
+        let namespace_top_level = match body {
+            TSModuleDeclarationBody::TSModuleBlock(block) => block.unbox().body,
+            // We handle `namespace X.Y {}` as if it was
+            //   namespace X {
+            //     export namespace Y {}
+            //   }
+            TSModuleDeclarationBody::TSModuleDeclaration(declaration) => {
+                let declaration = Declaration::TSModuleDeclaration(declaration);
+                let export_named_decl =
+                    self.ctx.ast.plain_export_named_declaration_declaration(SPAN, declaration);
+                let stmt = Statement::ExportNamedDeclaration(export_named_decl);
+                self.ctx.ast.new_vec_single(stmt)
             }
-        } else {
-            self.ctx.ast.new_vec()
         };
 
         let mut new_stmts = self.ctx.ast.new_vec();
@@ -172,6 +173,7 @@ impl<'a> TypeScript<'a> {
                 Statement::TSModuleDeclaration(decl) => {
                     if decl.id.is_string_literal() {
                         self.ctx.error(ambient_module_nested(decl.span));
+                        continue;
                     }
 
                     let module_name = decl.id.name().clone();
@@ -228,6 +230,7 @@ impl<'a> TypeScript<'a> {
                             Declaration::TSModuleDeclaration(module_decl) => {
                                 if module_decl.id.is_string_literal() {
                                     self.ctx.error(ambient_module_nested(module_decl.span));
+                                    continue;
                                 }
 
                                 let module_name = module_decl.id.name().clone();
@@ -268,7 +271,7 @@ impl<'a> TypeScript<'a> {
             return None;
         }
 
-        Some(self.transform_namespace(&name, real_name, new_stmts, parent_export, scope_id, ctx))
+        Some(self.transform_namespace(name, real_name, new_stmts, parent_export, scope_id, ctx))
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
@@ -292,13 +295,14 @@ impl<'a> TypeScript<'a> {
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     //                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    #[allow(clippy::needless_pass_by_value)]
     fn transform_namespace(
         &self,
-        arg_name: &Atom<'a>,
-        real_name: &Atom<'a>,
+        arg_name: Atom<'a>,
+        real_name: Atom<'a>,
         stmts: Vec<'a, Statement<'a>>,
         parent_export: Option<Expression<'a>>,
-        scope_id: Option<ScopeId>,
+        scope_id: ScopeId,
         ctx: &mut TraverseCtx,
     ) -> Statement<'a> {
         // `(function (_N) { var x; })(N || (N = {}))`;
@@ -306,10 +310,8 @@ impl<'a> TypeScript<'a> {
         let callee = {
             let body = self.ctx.ast.function_body(SPAN, self.ctx.ast.new_vec(), stmts);
             let params = {
-                let ident = self.ctx.ast.binding_pattern_identifier(BindingIdentifier::new(
-                    SPAN,
-                    self.ctx.ast.new_atom(arg_name),
-                ));
+                let ident =
+                    self.ctx.ast.binding_pattern_identifier(BindingIdentifier::new(SPAN, arg_name));
                 let pattern = self.ctx.ast.binding_pattern(ident, None, false);
                 let items =
                     self.ctx.ast.new_vec_single(self.ctx.ast.plain_formal_parameter(SPAN, pattern));
@@ -327,11 +329,9 @@ impl<'a> TypeScript<'a> {
                 params,
                 Some(body),
             );
-            if let Some(scope_id) = scope_id {
-                function.scope_id.set(Some(scope_id));
-                *ctx.scopes_mut().get_flags_mut(scope_id) =
-                    ScopeFlags::Function | ScopeFlags::StrictMode;
-            }
+            function.scope_id.set(Some(scope_id));
+            *ctx.scopes_mut().get_flags_mut(scope_id) =
+                ScopeFlags::Function | ScopeFlags::StrictMode;
             let function_expr = self.ctx.ast.function_expression(function);
             self.ctx.ast.parenthesized_expression(SPAN, function_expr)
         };
@@ -354,7 +354,7 @@ impl<'a> TypeScript<'a> {
                         self.ctx.ast.static_member(
                             SPAN,
                             parent_export,
-                            self.ctx.ast.identifier_name(SPAN, real_name),
+                            IdentifierName::new(SPAN, real_name.clone()),
                             false,
                         ),
                     )
@@ -380,7 +380,7 @@ impl<'a> TypeScript<'a> {
                     IdentifierReference::new(SPAN, real_name.clone()),
                 );
                 let assign_right = {
-                    let property = self.ctx.ast.identifier_name(SPAN, real_name);
+                    let property = IdentifierName::new(SPAN, real_name.clone());
                     let logical_left =
                         self.ctx.ast.static_member_expression(SPAN, parent_export, property, false);
                     let op = LogicalOperator::Or;
