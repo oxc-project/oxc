@@ -37,9 +37,12 @@ impl TestCaseKind {
             return Some(Self::Exec(ExecTestCase::new(cwd, path)));
         }
 
-        // named `input.[ext]``
-        if path.file_stem().is_some_and(|name| name == "input")
-            && path.extension().is_some_and(|ext| VALID_EXTENSIONS.contains(&ext.to_str().unwrap()))
+        // named `input.[ext]` or `input.d.ts`
+        if (path.file_stem().is_some_and(|name| name == "input")
+            && path
+                .extension()
+                .is_some_and(|ext| VALID_EXTENSIONS.contains(&ext.to_str().unwrap())))
+            || path.file_name().is_some_and(|name| name == "input.d.ts")
         {
             return Some(Self::Transform(ConformanceTestCase::new(cwd, path)));
         }
@@ -156,11 +159,15 @@ pub trait TestCase {
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
 
-        let source_type = SourceType::from_path(path).unwrap().with_typescript(
-            // Some babel test cases have a js extension, but contain typescript code.
-            // Therefore, if the typescript plugin exists, enable the typescript.
-            self.options().get_plugin("transform-typescript").is_some(),
-        );
+        // Some babel test cases have a js extension, but contain typescript code.
+        // Therefore, if the typescript plugin exists, enable typescript.
+        let mut source_type = SourceType::from_path(path).unwrap();
+        if !source_type.is_typescript()
+            && (self.options().get_plugin("transform-typescript").is_some()
+                || self.options().get_plugin("syntax-typescript").is_some())
+        {
+            source_type = source_type.with_typescript(true);
+        }
 
         let ret = Parser::new(&allocator, &source_text, source_type).parse();
         let mut program = ret.program;
@@ -224,18 +231,20 @@ impl TestCase for ConformanceTestCase {
             .as_ref()
             .is_some_and(|path| path.extension().and_then(std::ffi::OsStr::to_str) == Some("js"));
 
-        let source_type = SourceType::from_path(&self.path)
+        let mut source_type = SourceType::from_path(&self.path)
             .unwrap()
             .with_script(if self.options.source_type.is_some() {
                 !self.options.is_module()
             } else {
                 input_is_js && output_is_js
             })
-            .with_typescript(
-                self.options.get_plugin("transform-typescript").is_some()
-                    || self.options.get_plugin("syntax-typescript").is_some(),
-            )
             .with_jsx(self.options.get_plugin("syntax-jsx").is_some());
+        if !source_type.is_typescript()
+            && (self.options.get_plugin("transform-typescript").is_some()
+                || self.options.get_plugin("syntax-typescript").is_some())
+        {
+            source_type = source_type.with_typescript(true);
+        }
 
         if filtered {
             println!("input_path: {:?}", &self.path);
