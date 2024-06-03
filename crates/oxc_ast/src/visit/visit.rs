@@ -13,10 +13,13 @@ use walk::*;
 
 /// Syntax tree traversal
 pub trait Visit<'a>: Sized {
-    fn enter_node(&mut self, _kind: AstKind<'a>) {}
-    fn leave_node(&mut self, _kind: AstKind<'a>) {}
+    #[allow(unused_variables)]
+    fn enter_node(&mut self, kind: AstKind<'a>) {}
+    #[allow(unused_variables)]
+    fn leave_node(&mut self, kind: AstKind<'a>) {}
 
-    fn enter_scope(&mut self, _flags: ScopeFlags) {}
+    #[allow(unused_variables)]
+    fn enter_scope(&mut self, flags: ScopeFlags) {}
     fn leave_scope(&mut self) {}
 
     fn alloc<T>(&self, t: &T) -> &'a T {
@@ -2576,6 +2579,7 @@ pub mod walk {
             TSModuleDeclarationName::Identifier(ident) => visitor.visit_identifier_name(ident),
             TSModuleDeclarationName::StringLiteral(lit) => visitor.visit_string_literal(lit),
         }
+        visitor.enter_scope(ScopeFlags::TsModuleBlock);
         match &decl.body {
             Some(TSModuleDeclarationBody::TSModuleDeclaration(decl)) => {
                 visitor.visit_ts_module_declaration(decl);
@@ -2585,16 +2589,15 @@ pub mod walk {
             }
             None => {}
         }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
     pub fn walk_ts_module_block<'a, V: Visit<'a>>(visitor: &mut V, block: &TSModuleBlock<'a>) {
         let kind = AstKind::TSModuleBlock(visitor.alloc(block));
-        visitor.enter_scope(ScopeFlags::TsModuleBlock);
         visitor.enter_node(kind);
         visitor.visit_statements(&block.body);
         visitor.leave_node(kind);
-        visitor.leave_scope();
     }
 
     pub fn walk_ts_type_alias_declaration<'a, V: Visit<'a>>(

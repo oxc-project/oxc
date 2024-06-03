@@ -2,10 +2,15 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{ModuleFunctions, NodeListenerOptions, WhitelistModule},
+};
 
-use self::listener_map::{ListenerMap, NodeListenerOptions};
+use self::listener_map::ListenerMap;
 
 mod listener_map;
 
@@ -75,7 +80,21 @@ fn throw(span0: Span) -> OxcDiagnostic {
 
 /// <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/master/src/rules/no-side-effects-in-initialization.ts>
 #[derive(Debug, Default, Clone)]
-pub struct NoSideEffectsInInitialization;
+pub struct NoSideEffectsInInitialization(Box<NoSideEffectsInInitiallizationOptions>);
+
+impl std::ops::Deref for NoSideEffectsInInitialization {
+    type Target = NoSideEffectsInInitiallizationOptions;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct NoSideEffectsInInitiallizationOptions {
+    functions: Vec<String>,
+    modules: Vec<WhitelistModule>,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -94,17 +113,118 @@ declare_oxc_lint!(
     /// const x = { [globalFunction()]: "myString" }; // Cannot determine side-effects of calling global function
     /// export default 42;
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///     "tree-shaking/no-side-effects-in-initialization": [
+    ///       2,
+    ///       {
+    ///         "noSideEffectsWhenCalled": [
+    ///           // If you want to mark a function call as side-effect free
+    ///           { "function": "Object.freeze" },
+    ///           {
+    ///             "module": "react",
+    ///             "functions": ["createContext", "createRef"]
+    ///           },
+    ///           {
+    ///             "module": "zod",
+    ///             "functions": ["array", "string", "nativeEnum", "number", "object", "optional"]
+    ///           },
+    ///           {
+    ///             "module": "my/local/module",
+    ///             "functions": ["foo", "bar", "baz"]
+    ///           },
+    ///           // If you want to whitelist all functions of a module
+    ///           {
+    ///             "module": "lodash",
+    ///             "functions": "*"
+    ///           }
+    ///         ]
+    ///       }
+    ///     ]
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// ### Magic Comments
+    ///
+    /// Besides the configuration, you can also use magic comments to mark a function call as side effect free.
+    ///
+    /// By default, imported functions are assumed to have side-effects, unless they are marked with a magic comment:
+    ///
+    /// ```js
+    /// import { /* tree-shaking no-side-effects-when-called */ x } from "./some-file";
+    /// x();
+    /// ```
+    ///
+    /// `@__PURE__` is also supported:
+    ///
+    /// ```js
+    /// import {x} from "./some-file";
+    /// /*@__PURE__*/ x();
+    /// ```
     NoSideEffectsInInitialization,
     nursery
 );
 
 impl Rule for NoSideEffectsInInitialization {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let mut functions = vec![];
+        let mut modules = vec![];
+
+        if let Value::Array(arr) = value {
+            for obj in arr {
+                let Value::Object(obj) = obj else {
+                    continue;
+                };
+
+                // { "function": "Object.freeze" }
+                if let Some(name) = obj.get("function").and_then(Value::as_str) {
+                    functions.push(name.to_string());
+                    continue;
+                }
+
+                // { "module": "react", "functions": ["createContext", "createRef"] }
+                // { "module": "react", "functions": "*" }
+                if let Some(name) = obj.get("module").and_then(Value::as_str) {
+                    let functions = match obj.get("functions") {
+                        Some(Value::Array(arr)) => {
+                            let val = arr
+                                .iter()
+                                .filter_map(Value::as_str)
+                                .map(String::from)
+                                .collect::<Vec<_>>();
+                            Some(ModuleFunctions::Specific(val))
+                        }
+                        Some(Value::String(str)) => {
+                            if str == "*" {
+                                Some(ModuleFunctions::All)
+                            } else {
+                                None
+                            }
+                        }
+                        _ => None,
+                    };
+                    if let Some(functions) = functions {
+                        modules.push(WhitelistModule { name: name.to_string(), functions });
+                    }
+                }
+            }
+        }
+
+        Self(Box::new(NoSideEffectsInInitiallizationOptions { functions, modules }))
+    }
     fn run_once(&self, ctx: &LintContext) {
         let Some(root) = ctx.nodes().root_node() else {
             return;
         };
         let AstKind::Program(program) = root.kind() else { unreachable!() };
-        let node_listener_options = NodeListenerOptions::new(ctx);
+        let node_listener_options = NodeListenerOptions::new(ctx)
+            .with_whitelist_functions(&self.functions)
+            .with_whitelist_modules(&self.modules);
         program.report_effects(&node_listener_options);
     }
 }
@@ -669,6 +789,47 @@ fn test() {
         // YieldExpression when called
         "function* x(){yield ext()}; x()",
     ];
+
+    // test options
+    let pass_with_options = vec![
+        (
+            "Object.freeze({})",
+            Some(serde_json::json!([
+                { "function": "Object.freeze" },
+            ])),
+        ),
+        (
+            "import {createContext, createRef} from 'react'; createContext(); createRef();",
+            Some(serde_json::json!([
+                { "module": "react", "functions": ["createContext", "createRef"] },
+            ])),
+        ),
+        (
+            "import _ from 'lodash'; _.cloneDeep({});",
+            Some(serde_json::json!([
+                { "module": "lodash", "functions": "*" },
+            ])),
+        ),
+        (
+            "import * as React from 'react'; React.createRef();",
+            Some(serde_json::json!([
+                { "module": "react", "functions": "*" },
+            ])),
+        ),
+    ];
+
+    let fail_with_options = vec![
+        ("Object.freeze({})", None),
+        ("import {createContext, createRef} from 'react'; createContext(); createRef();", None),
+        ("import _ from 'lodash'; _.cloneDeep({});", None),
+        ("import * as React from 'react'; React.createRef();", None),
+    ];
+
+    let pass =
+        pass.into_iter().map(|case| (case, None)).chain(pass_with_options).collect::<Vec<_>>();
+
+    let fail =
+        fail.into_iter().map(|case| (case, None)).chain(fail_with_options).collect::<Vec<_>>();
 
     Tester::new(NoSideEffectsInInitialization::NAME, pass, fail).test_and_snapshot();
 }

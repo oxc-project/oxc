@@ -140,7 +140,8 @@ impl<'a> SemanticBuilder<'a> {
 
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
         if self.source_type.is_typescript_definition() {
-            self.scope.add_scope(None, ScopeFlags::Top);
+            let scope_id = self.scope.add_scope(None, ScopeFlags::Top);
+            program.scope_id.set(Some(scope_id));
         } else {
             self.visit_program(program);
 
@@ -1772,14 +1773,26 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
-    fn visit_ts_module_block(&mut self, block: &TSModuleBlock<'a>) {
-        let kind = AstKind::TSModuleBlock(self.alloc(block));
-        self.enter_scope(ScopeFlags::TsModuleBlock);
-        block.scope_id.set(Some(self.current_scope_id));
+    fn visit_ts_module_declaration(&mut self, decl: &TSModuleDeclaration<'a>) {
+        let kind = AstKind::TSModuleDeclaration(self.alloc(decl));
         self.enter_node(kind);
-        self.visit_statements(&block.body);
-        self.leave_node(kind);
+        match &decl.id {
+            TSModuleDeclarationName::Identifier(ident) => self.visit_identifier_name(ident),
+            TSModuleDeclarationName::StringLiteral(lit) => self.visit_string_literal(lit),
+        }
+        self.enter_scope(ScopeFlags::TsModuleBlock);
+        decl.scope_id.set(Some(self.current_scope_id));
+        match &decl.body {
+            Some(TSModuleDeclarationBody::TSModuleDeclaration(decl)) => {
+                self.visit_ts_module_declaration(decl);
+            }
+            Some(TSModuleDeclarationBody::TSModuleBlock(block)) => {
+                self.visit_ts_module_block(block);
+            }
+            None => {}
+        }
         self.leave_scope();
+        self.leave_node(kind);
     }
 
     fn visit_ts_type_parameter(&mut self, ty: &TSTypeParameter<'a>) {

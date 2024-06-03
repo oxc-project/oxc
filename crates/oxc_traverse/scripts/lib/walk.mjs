@@ -69,6 +69,7 @@ function generateWalkForStruct(type, types) {
                 `\`visited_node\` attr says to enter scope before field '${enterFieldName}' `
                 + `in '${type.name}', but that field is not visited`
             );
+            if (scopeEnterField === visitedFields[0]) scopeEnterField = undefined;
         }
 
         // TODO: Maybe this isn't quite right. `scope_id` fields are `Cell<Option<ScopeId>>`,
@@ -203,8 +204,9 @@ function generateWalkForStruct(type, types) {
             ${enterScopeCode}
             traverser.enter_${typeSnakeName}(&mut *node, ctx);
             ${fieldsCodes.join('\n')}
+            ${enterScopeCode ? '' : exitScopeCode}
             traverser.exit_${typeSnakeName}(&mut *node, ctx);
-            ${exitScopeCode}
+            ${enterScopeCode ? exitScopeCode : ''}
         }
     `.replace(/\n\s*\n+/g, '\n');
 }

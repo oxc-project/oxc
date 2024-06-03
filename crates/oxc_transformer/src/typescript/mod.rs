@@ -69,7 +69,14 @@ impl<'a> TypeScript<'a> {
 // Transforms
 impl<'a> TypeScript<'a> {
     pub fn transform_program(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx) {
-        self.transform_program_for_namespace(program, ctx);
+        if self.ctx.source_type.is_typescript_definition() {
+            // Output empty file for TS definitions
+            program.directives.clear();
+            program.hashbang = None;
+            program.body.clear();
+        } else {
+            self.transform_program_for_namespace(program, ctx);
+        }
     }
 
     pub fn transform_program_on_exit(&self, program: &mut Program<'a>) {
@@ -168,6 +175,18 @@ impl<'a> TypeScript<'a> {
 
     pub fn transform_if_statement(&mut self, stmt: &mut IfStatement<'a>) {
         self.annotations.transform_if_statement(stmt);
+    }
+
+    pub fn transform_while_statement(&mut self, stmt: &mut WhileStatement<'a>) {
+        self.annotations.transform_while_statement(stmt);
+    }
+
+    pub fn transform_do_while_statement(&mut self, stmt: &mut DoWhileStatement<'a>) {
+        self.annotations.transform_do_while_statement(stmt);
+    }
+
+    pub fn transform_for_statement(&mut self, stmt: &mut ForStatement<'a>) {
+        self.annotations.transform_for_statement(stmt);
     }
 
     pub fn transform_tagged_template_expression(

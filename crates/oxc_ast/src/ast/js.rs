@@ -73,7 +73,6 @@ impl<'a> Program<'a> {
 
 impl<'a> Hash for Program<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.source_type.hash(state);
         self.directives.hash(state);
         self.hashbang.hash(state);
@@ -455,7 +454,6 @@ pub struct IdentifierReference<'a> {
 
 impl<'a> Hash for IdentifierReference<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.name.hash(state);
     }
 }
@@ -481,7 +479,6 @@ pub struct BindingIdentifier<'a> {
 
 impl<'a> Hash for BindingIdentifier<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.name.hash(state);
     }
 }
@@ -1502,6 +1499,18 @@ pub enum Statement<'a> {
 }
 
 impl<'a> Statement<'a> {
+    pub fn is_typescript_syntax(&self) -> bool {
+        match self {
+            match_declaration!(Self) => {
+                self.as_declaration().is_some_and(Declaration::is_typescript_syntax)
+            }
+            match_module_declaration!(Self) => {
+                self.as_module_declaration().is_some_and(ModuleDeclaration::is_typescript_syntax)
+            }
+            _ => false,
+        }
+    }
+
     pub fn is_iteration_statement(&self) -> bool {
         matches!(
             self,
@@ -1568,7 +1577,6 @@ impl<'a> BlockStatement<'a> {
 
 impl<'a> Hash for BlockStatement<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.body.hash(state);
     }
 }
@@ -1615,6 +1623,7 @@ impl<'a> Declaration<'a> {
             Self::VariableDeclaration(decl) => decl.is_typescript_syntax(),
             Self::FunctionDeclaration(func) => func.is_typescript_syntax(),
             Self::ClassDeclaration(class) => class.is_typescript_syntax(),
+            Self::UsingDeclaration(_) => false,
             _ => true,
         }
     }
@@ -1821,7 +1830,6 @@ impl<'a> ForStatement<'a> {
 
 impl<'a> Hash for ForStatement<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.init.hash(state);
         self.test.hash(state);
         self.update.hash(state);
@@ -1883,7 +1891,6 @@ impl<'a> ForInStatement<'a> {
 
 impl<'a> Hash for ForInStatement<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.left.hash(state);
         self.right.hash(state);
         self.body.hash(state);
@@ -1919,7 +1926,6 @@ impl<'a> ForOfStatement<'a> {
 
 impl<'a> Hash for ForOfStatement<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.r#await.hash(state);
         self.left.hash(state);
         self.right.hash(state);
@@ -2020,7 +2026,6 @@ impl<'a> SwitchStatement<'a> {
 
 impl<'a> Hash for SwitchStatement<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.discriminant.hash(state);
         self.cases.hash(state);
     }
@@ -2103,7 +2108,6 @@ impl<'a> CatchClause<'a> {
 
 impl<'a> Hash for CatchClause<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.param.hash(state);
         self.body.hash(state);
     }
@@ -2284,11 +2288,8 @@ pub struct BindingRestElement<'a> {
 
 /// Function Definitions
 #[visited_node(
+    // TODO: `ScopeFlags::Function` is not correct if this is a `MethodDefinition`
     scope(ScopeFlags::Function),
-    // Don't create scope if this is a method - `MethodDefinition` already created one.
-    // `ctx.ancestor(2).unwrap()` not `ctx.parent()` because this code is inserted
-    // into `walk_function` *after* `Function` is added to stack.
-    scope_if(!matches!(ctx.ancestor(2).unwrap(), Ancestor::MethodDefinitionValue(_))),
     strict_if(self.body.as_ref().is_some_and(|body| body.has_use_strict_directive()))
 )]
 #[derive(Debug)]
@@ -2389,7 +2390,6 @@ impl<'a> Function<'a> {
 impl<'a> Hash for Function<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.r#type.hash(state);
-        self.span.hash(state);
         self.id.hash(state);
         self.generator.hash(state);
         self.r#async.hash(state);
@@ -2559,7 +2559,6 @@ impl<'a> ArrowFunctionExpression<'a> {
 
 impl<'a> Hash for ArrowFunctionExpression<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.expression.hash(state);
         self.r#async.hash(state);
         self.params.hash(state);
@@ -2651,7 +2650,6 @@ impl<'a> Class<'a> {
 impl<'a> Hash for Class<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.r#type.hash(state);
-        self.span.hash(state);
         self.decorators.hash(state);
         self.id.hash(state);
         self.super_class.hash(state);
@@ -2783,11 +2781,7 @@ impl<'a> ClassElement<'a> {
     }
 }
 
-#[visited_node(
-    scope(self.kind.scope_flags()),
-    strict_if(self.value.is_strict()),
-    enter_scope_before(value)
-)]
+#[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
@@ -2908,7 +2902,6 @@ impl<'a> StaticBlock<'a> {
 
 impl<'a> Hash for StaticBlock<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.body.hash(state);
     }
 }
@@ -2951,6 +2944,17 @@ macro_rules! match_module_declaration {
 pub use match_module_declaration;
 
 impl<'a> ModuleDeclaration<'a> {
+    pub fn is_typescript_syntax(&self) -> bool {
+        match self {
+            ModuleDeclaration::ImportDeclaration(_) => false,
+            ModuleDeclaration::ExportDefaultDeclaration(decl) => decl.is_typescript_syntax(),
+            ModuleDeclaration::ExportNamedDeclaration(decl) => decl.is_typescript_syntax(),
+            ModuleDeclaration::ExportAllDeclaration(decl) => decl.is_typescript_syntax(),
+            ModuleDeclaration::TSNamespaceExportDeclaration(_)
+            | ModuleDeclaration::TSExportAssignment(_) => true,
+        }
+    }
+
     pub fn is_import(&self) -> bool {
         matches!(self, Self::ImportDeclaration(_))
     }

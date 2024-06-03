@@ -10,10 +10,13 @@ use self::walk_mut::*;
 
 /// Syntax tree traversal to mutate an exclusive borrow of a syntax tree in place.
 pub trait VisitMut<'a>: Sized {
-    fn enter_node(&mut self, _kind: AstType) {}
-    fn leave_node(&mut self, _kind: AstType) {}
+    #[allow(unused_variables)]
+    fn enter_node(&mut self, kind: AstType) {}
+    #[allow(unused_variables)]
+    fn leave_node(&mut self, kind: AstType) {}
 
-    fn enter_scope(&mut self, _flags: ScopeFlags) {}
+    #[allow(unused_variables)]
+    fn enter_scope(&mut self, flags: ScopeFlags) {}
     fn leave_scope(&mut self) {}
 
     fn visit_program(&mut self, program: &mut Program<'a>) {
@@ -2725,6 +2728,7 @@ pub mod walk_mut {
             TSModuleDeclarationName::Identifier(ident) => visitor.visit_identifier_name(ident),
             TSModuleDeclarationName::StringLiteral(lit) => visitor.visit_string_literal(lit),
         }
+        visitor.enter_scope(ScopeFlags::TsModuleBlock);
         match &mut decl.body {
             Some(TSModuleDeclarationBody::TSModuleDeclaration(decl)) => {
                 visitor.visit_ts_module_declaration(decl);
@@ -2734,6 +2738,7 @@ pub mod walk_mut {
             }
             None => {}
         }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -2742,11 +2747,9 @@ pub mod walk_mut {
         block: &mut TSModuleBlock<'a>,
     ) {
         let kind = AstType::TSModuleBlock;
-        visitor.enter_scope(ScopeFlags::TsModuleBlock);
         visitor.enter_node(kind);
         visitor.visit_statements(&mut block.body);
         visitor.leave_node(kind);
-        visitor.leave_scope();
     }
 
     pub fn walk_ts_type_alias_declaration_mut<'a, V: VisitMut<'a>>(

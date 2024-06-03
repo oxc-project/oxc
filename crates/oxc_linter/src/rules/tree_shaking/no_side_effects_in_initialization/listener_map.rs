@@ -15,45 +15,19 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_semantic::{AstNode, SymbolId};
+use oxc_semantic::{AstNode, AstNodeId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{LogicalOperator, UnaryOperator};
-use rustc_hash::FxHashSet;
-use std::{cell::Cell, cell::RefCell};
 
 use crate::{
     ast_util::{get_declaration_of_variable, get_symbol_id_of_variable},
     utils::{
         calculate_binary_operation, calculate_logical_operation, calculate_unary_operation,
-        get_write_expr, has_comment_about_side_effect_check, has_pure_notation, is_pure_function,
-        no_effects, FunctionName, Value,
+        get_write_expr, has_comment_about_side_effect_check, has_pure_notation,
+        is_function_side_effect_free, is_local_variable_a_whitelisted_module, is_pure_function,
+        no_effects, FunctionName, NodeListenerOptions, Value,
     },
-    LintContext,
 };
-
-pub struct NodeListenerOptions<'a, 'b> {
-    checked_mutated_nodes: RefCell<FxHashSet<SymbolId>>,
-    ctx: &'b LintContext<'a>,
-    has_valid_this: Cell<bool>,
-    called_with_new: Cell<bool>,
-}
-
-impl<'a, 'b> NodeListenerOptions<'a, 'b> {
-    fn insert_mutated_node(&self, symbol_id: SymbolId) -> bool {
-        self.checked_mutated_nodes.borrow_mut().insert(symbol_id)
-    }
-}
-
-impl<'a, 'b> NodeListenerOptions<'a, 'b> {
-    pub fn new(ctx: &'b LintContext<'a>) -> Self {
-        Self {
-            checked_mutated_nodes: RefCell::new(FxHashSet::default()),
-            ctx,
-            has_valid_this: Cell::new(false),
-            called_with_new: Cell::new(false),
-        }
-    }
-}
 
 pub trait ListenerMap {
     fn report_effects(&self, _options: &NodeListenerOptions) {}
@@ -276,21 +250,28 @@ impl<'a> ListenerMap for AstNode<'a> {
                 class.report_effects_when_called(options);
             }
             AstKind::ImportDefaultSpecifier(specifier) => {
-                if !has_comment_about_side_effect_check(specifier.span, options.ctx) {
-                    options.ctx.diagnostic(super::call_import(specifier.span));
-                }
+                report_on_imported_call(
+                    specifier.local.span,
+                    &specifier.local.name,
+                    self.id(),
+                    options,
+                );
             }
             AstKind::ImportSpecifier(specifier) => {
-                let span = specifier.local.span;
-                if !has_comment_about_side_effect_check(span, options.ctx) {
-                    options.ctx.diagnostic(super::call_import(span));
-                }
+                report_on_imported_call(
+                    specifier.local.span,
+                    &specifier.local.name,
+                    self.id(),
+                    options,
+                );
             }
             AstKind::ImportNamespaceSpecifier(specifier) => {
-                let span = specifier.local.span;
-                if !has_comment_about_side_effect_check(span, options.ctx) {
-                    options.ctx.diagnostic(super::call_import(span));
-                }
+                report_on_imported_call(
+                    specifier.local.span,
+                    &specifier.local.name,
+                    self.id(),
+                    options,
+                );
             }
             _ => {}
         }
@@ -322,6 +303,24 @@ impl<'a> ListenerMap for AstNode<'a> {
             _ => {}
         }
     }
+}
+
+fn report_on_imported_call(
+    span: Span,
+    name: &str,
+    node_id: AstNodeId,
+    options: &NodeListenerOptions,
+) {
+    if has_comment_about_side_effect_check(span, options.ctx) {
+        return;
+    }
+    let Some(AstKind::ImportDeclaration(decl)) = options.ctx.nodes().parent_kind(node_id) else {
+        return;
+    };
+    if is_function_side_effect_free(name, &decl.source.value, options) {
+        return;
+    }
+    options.ctx.diagnostic(super::call_import(span));
 }
 
 impl<'a> ListenerMap for Declaration<'a> {
@@ -1053,11 +1052,7 @@ impl<'a> ListenerMap for CallExpression<'a> {
         let ctx = options.ctx;
         if let Expression::Identifier(ident) = &self.callee {
             if let Some(node) = get_declaration_of_variable(ident, ctx) {
-                let Some(parent) = ctx.nodes().parent_kind(node.id()) else {
-                    return;
-                };
-                // TODO: `isLocalVariableAWhitelistedModule`
-                if matches!(parent, AstKind::ImportDeclaration(_)) {
+                if is_local_variable_a_whitelisted_module(node, ident.name.as_str(), options) {
                     return;
                 }
                 options.ctx.diagnostic(super::call_return_value(self.span));
@@ -1120,7 +1115,7 @@ impl<'a> ListenerMap for IdentifierReference<'a> {
     }
 
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
-        if is_pure_function(&FunctionName::Identifier(self), options.ctx) {
+        if is_pure_function(&FunctionName::Identifier(self), options) {
             return;
         }
 
@@ -1249,31 +1244,43 @@ impl<'a> ListenerMap for StaticMemberExpression<'a> {
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
         self.report_effects(options);
 
-        let mut node = &self.object;
+        let mut root_member_expr = &self.object;
         loop {
-            match node {
+            match root_member_expr {
                 Expression::ComputedMemberExpression(expr) => {
-                    node = &expr.object;
+                    root_member_expr = &expr.object;
                 }
-                Expression::StaticMemberExpression(expr) => node = &expr.object,
-                Expression::PrivateInExpression(expr) => node = &expr.right,
+                Expression::StaticMemberExpression(expr) => root_member_expr = &expr.object,
+                Expression::PrivateInExpression(expr) => root_member_expr = &expr.right,
                 _ => {
                     break;
                 }
             }
         }
 
-        let Expression::Identifier(ident) = node else {
-            options.ctx.diagnostic(super::call_member(node.span()));
+        let Expression::Identifier(ident) = root_member_expr else {
+            options.ctx.diagnostic(super::call_member(root_member_expr.span()));
             return;
         };
 
-        if get_declaration_of_variable(ident, options.ctx)
-            .is_some_and(|_| !has_pure_notation(self.span, options.ctx))
-            || !is_pure_function(&FunctionName::StaticMemberExpr(self), options.ctx)
-        {
-            options.ctx.diagnostic(super::call_member(self.span));
+        let Some(node) = get_declaration_of_variable(ident, options.ctx) else {
+            // If the variable is not declared, it is a global variable.
+            // `ext.x()`
+            if !is_pure_function(&FunctionName::StaticMemberExpr(self), options) {
+                options.ctx.diagnostic(super::call_member(self.span));
+            }
+            return;
+        };
+
+        if is_local_variable_a_whitelisted_module(node, &ident.name, options) {
+            return;
+        };
+
+        if has_pure_notation(self.span, options.ctx) {
+            return;
         }
+
+        options.ctx.diagnostic(super::call_member(self.span));
     }
     fn report_effects_when_assigned(&self, options: &NodeListenerOptions) {
         self.report_effects(options);

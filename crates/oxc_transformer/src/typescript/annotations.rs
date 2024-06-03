@@ -337,18 +337,20 @@ impl<'a> TypeScriptAnnotations<'a> {
 
         // Add assignments after super calls
         if !self.assignments.is_empty() {
-            let mut super_indexes = vec![];
-            for (index, stmt) in stmts.iter().rev().enumerate() {
-                if matches!(stmt, Statement::ExpressionStatement(stmt) if stmt.expression.is_super_call_expression())
-                {
-                    super_indexes.push(index);
+            let has_super_call = stmts.iter().any(|stmt| {
+                matches!(stmt, Statement::ExpressionStatement(stmt) if stmt.expression.is_super_call_expression())
+            });
+            if has_super_call {
+                let mut new_stmts = self.ctx.ast.new_vec();
+                for stmt in stmts.drain(..) {
+                    let is_super_call = matches!(stmt, Statement::ExpressionStatement(ref stmt) if stmt.expression.is_super_call_expression());
+                    new_stmts.push(stmt);
+                    if is_super_call {
+                        new_stmts.extend(self.ctx.ast.copy(&self.assignments));
+                    }
                 }
-            }
-            if !super_indexes.is_empty() {
                 self.has_super_call = true;
-                for index in super_indexes.iter().rev() {
-                    stmts.splice((index + 1)..=*index, self.ctx.ast.copy(&self.assignments));
-                }
+                *stmts = new_stmts;
             }
         }
     }
@@ -379,6 +381,36 @@ impl<'a> TypeScriptAnnotations<'a> {
                         )));
                 }
             }
+        }
+
+        if stmt.consequent.is_typescript_syntax() {
+            stmt.consequent =
+                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
+        }
+
+        if stmt.alternate.as_ref().is_some_and(Statement::is_typescript_syntax) {
+            stmt.alternate = None;
+        }
+    }
+
+    pub fn transform_for_statement(&mut self, stmt: &mut ForStatement<'a>) {
+        if stmt.body.is_typescript_syntax() {
+            stmt.body =
+                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
+        }
+    }
+
+    pub fn transform_while_statement(&mut self, stmt: &mut WhileStatement<'a>) {
+        if stmt.body.is_typescript_syntax() {
+            stmt.body =
+                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
+        }
+    }
+
+    pub fn transform_do_while_statement(&mut self, stmt: &mut DoWhileStatement<'a>) {
+        if stmt.body.is_typescript_syntax() {
+            stmt.body =
+                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
         }
     }
 

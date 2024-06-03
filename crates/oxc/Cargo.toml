@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc"
-version                = "0.13.1"
+version                = "0.13.2"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -42,3 +42,5 @@ codegen     = ["oxc_codegen"]
 
 sourcemap            = ["oxc_sourcemap"]
 sourcemap_concurrent = ["oxc_sourcemap/concurrent", "sourcemap"]
+
+wasm = ["oxc_transformer/wasm"]

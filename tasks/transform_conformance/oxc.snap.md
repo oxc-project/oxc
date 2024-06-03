@@ -1,6 +1,6 @@
 commit: 4bd1b2c2
 
-Passed: 2/2
+Passed: 3/3
 
 # All Passed:
 * babel-plugin-transform-typescript

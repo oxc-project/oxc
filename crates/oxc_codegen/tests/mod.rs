@@ -44,7 +44,7 @@ fn string() {
     test("let x = ''", "let x = '';\n", None);
     test(r"let x = '\b'", "let x = '\\b';\n", None);
     test(r"let x = '\f'", "let x = '\\f';\n", None);
-    test("let x = '\t'", "let x = '\\t';\n", None);
+    test("let x = '\t'", "let x = '\t';\n", None);
     test(r"let x = '\v'", "let x = '\\v';\n", None);
     test("let x = '\\n'", "let x = '\\n';\n", None);
     test("let x = '\\''", "let x = \"'\";\n", None);
@@ -389,4 +389,12 @@ const c2 = /* #__NO_SIDE_EFFECTS__ */ () => {
 };
 ",
     );
+}
+
+#[test]
+fn unicode_escape() {
+    test("console.log('你好');", "console.log('你好');\n", None);
+    test("console.log('こんにちは');", "console.log('こんにちは');\n", None);
+    test("console.log('안녕하세요');", "console.log('안녕하세요');\n", None);
+    test("console.log('🧑‍🤝‍🧑');", "console.log('🧑‍🤝‍🧑');\n", None);
 }

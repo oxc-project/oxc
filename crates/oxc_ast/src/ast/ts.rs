@@ -73,7 +73,6 @@ impl<'a> TSEnumDeclaration<'a> {
 
 impl<'a> Hash for TSEnumDeclaration<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.id.hash(state);
         self.members.hash(state);
         self.modifiers.hash(state);
@@ -653,7 +652,6 @@ impl<'a> TSTypeParameter<'a> {
 
 impl<'a> Hash for TSTypeParameter<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
         self.name.hash(state);
         self.constraint.hash(state);
         self.default.hash(state);
@@ -870,8 +868,8 @@ pub enum TSTypePredicateName<'a> {
     This(TSThisType),
 }
 
-#[visited_node]
-#[derive(Debug, Hash)]
+#[visited_node(scope(ScopeFlags::TsModuleBlock), enter_scope_before(body))]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSModuleDeclaration<'a> {
@@ -891,6 +889,28 @@ pub struct TSModuleDeclaration<'a> {
     pub kind: TSModuleDeclarationKind,
     /// Valid Modifiers: `declare`, `export`
     pub modifiers: Modifiers<'a>,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+impl<'a> TSModuleDeclaration<'a> {
+    pub fn new(
+        span: Span,
+        id: TSModuleDeclarationName<'a>,
+        body: Option<TSModuleDeclarationBody<'a>>,
+        kind: TSModuleDeclarationKind,
+        modifiers: Modifiers<'a>,
+    ) -> Self {
+        Self { span, id, body, kind, modifiers, scope_id: Cell::default() }
+    }
+}
+
+impl<'a> Hash for TSModuleDeclaration<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+        self.body.hash(state);
+        self.kind.hash(state);
+        self.modifiers.hash(state);
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -933,28 +953,14 @@ pub enum TSModuleDeclarationBody<'a> {
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>),
 }
 
-#[visited_node(scope(ScopeFlags::TsModuleBlock))]
-#[derive(Debug)]
+#[visited_node]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSModuleBlock<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
-    pub scope_id: Cell<Option<ScopeId>>,
-}
-
-impl<'a> TSModuleBlock<'a> {
-    pub fn new(span: Span, body: Vec<'a, Statement<'a>>) -> Self {
-        Self { span, body, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> Hash for TSModuleBlock<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
-        self.body.hash(state);
-    }
 }
 
 #[visited_node]

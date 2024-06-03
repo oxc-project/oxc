@@ -5,6 +5,38 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.2] - 2024-06-03
+
+### Features
+
+- Turn on idempotency testing for transformer (#3470)
+- Preserve annotate comment (#3465)
+- Report error that do not allow namespaces (#3448)
+- Report error for namespace exporting non-const (#3447)
+- If within a block scope, use let to declare enum name (#3446)
+- If binding exists, variable declarations are not created for namespace name (#3445)
+- Support `targets` option of preset-env (#3371)
+- If the binding exists, the identifier reference is not renamed (#3387)
+
+### Bug Fixes
+
+- Add filename statement only after inserting the source object (#3469)
+- Variable declarations are not created when a function has a binding with the same name (#3460)
+- Use UIDs for React imports (#3431)
+- Use UIDs in TS namespace transforms (#3395)
+
+### Refactor
+
+- Move scope from `TSModuleBlock` to `TSModuleDeclaration` (#3488)
+- Use a memory-safe implementation instead (#3481)
+- Explicit skip TS statements in TS namespace transform (#3479)
+- Shorter code in TS namespace transform (#3478)
+- Panic on illegal cases in TS namespace transform (#3477)
+- Rename var (#3476)
+- Shorten code in TS namespace transform (#3468)
+- Remove unreachable code from TS namespace transform (#3475)
+- Reuse TSModuleBlock's scope id (#3459)
+
 ## [0.13.1] - 2024-05-22
 
 ### Features

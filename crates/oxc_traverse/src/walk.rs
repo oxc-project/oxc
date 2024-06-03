@@ -1934,10 +1934,10 @@ pub(crate) unsafe fn walk_switch_statement<'a, Tr: Traverse<'a>>(
         walk_switch_case(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack();
-    traverser.exit_switch_statement(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_switch_statement(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_switch_case<'a, Tr: Traverse<'a>>(
@@ -2503,10 +2503,10 @@ pub(crate) unsafe fn walk_class<'a, Tr: Traverse<'a>>(
         }
     }
     ctx.pop_stack();
-    traverser.exit_class(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_class(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_class_body<'a, Tr: Traverse<'a>>(
@@ -3644,10 +3644,10 @@ pub(crate) unsafe fn walk_ts_enum_declaration<'a, Tr: Traverse<'a>>(
         walk_ts_enum_member(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack();
-    traverser.exit_ts_enum_declaration(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_ts_enum_declaration(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_ts_enum_member<'a, Tr: Traverse<'a>>(
@@ -4826,6 +4826,15 @@ pub(crate) unsafe fn walk_ts_module_declaration<'a, Tr: Traverse<'a>>(
             as *mut TSModuleDeclarationName,
         ctx,
     );
+    let mut previous_scope_id = None;
+    if let Some(scope_id) = (*((node as *mut u8)
+        .add(ancestor::OFFSET_TS_MODULE_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+    {
+        previous_scope_id = Some(ctx.current_scope_id());
+        ctx.set_current_scope_id(scope_id);
+    }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_BODY)
         as *mut Option<TSModuleDeclarationBody>)
     {
@@ -4833,6 +4842,9 @@ pub(crate) unsafe fn walk_ts_module_declaration<'a, Tr: Traverse<'a>>(
         walk_ts_module_declaration_body(traverser, field as *mut _, ctx);
     }
     ctx.pop_stack();
+    if let Some(previous_scope_id) = previous_scope_id {
+        ctx.set_current_scope_id(previous_scope_id);
+    }
     traverser.exit_ts_module_declaration(&mut *node, ctx);
 }
 
@@ -4875,14 +4887,6 @@ pub(crate) unsafe fn walk_ts_module_block<'a, Tr: Traverse<'a>>(
     node: *mut TSModuleBlock<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
-    let mut previous_scope_id = None;
-    if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_BLOCK_SCOPE_ID)
-        as *mut Cell<Option<ScopeId>>))
-        .get()
-    {
-        previous_scope_id = Some(ctx.current_scope_id());
-        ctx.set_current_scope_id(scope_id);
-    }
     traverser.enter_ts_module_block(&mut *node, ctx);
     ctx.push_stack(Ancestor::TSModuleBlockBody(ancestor::TSModuleBlockWithoutBody(node)));
     walk_statements(
@@ -4892,9 +4896,6 @@ pub(crate) unsafe fn walk_ts_module_block<'a, Tr: Traverse<'a>>(
     );
     ctx.pop_stack();
     traverser.exit_ts_module_block(&mut *node, ctx);
-    if let Some(previous_scope_id) = previous_scope_id {
-        ctx.set_current_scope_id(previous_scope_id);
-    }
 }
 
 pub(crate) unsafe fn walk_ts_type_literal<'a, Tr: Traverse<'a>>(

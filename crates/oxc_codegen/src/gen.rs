@@ -1339,7 +1339,9 @@ fn print_unquoted_str<const MINIFY: bool>(s: &str, quote: char, p: &mut Codegen<
             '\u{a0}' => {
                 p.print_str(b"\\xA0");
             }
-            _ => p.print_str(c.escape_default().to_string().as_bytes()),
+            _ => {
+                p.print_str(c.encode_utf8([0; 4].as_mut()).as_bytes());
+            }
         }
     }
 }
@@ -2219,7 +2221,11 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeValue<'a> {
         match self {
             Self::Fragment(fragment) => fragment.gen(p, ctx),
             Self::Element(el) => el.gen(p, ctx),
-            Self::StringLiteral(lit) => lit.gen(p, ctx),
+            Self::StringLiteral(lit) => {
+                p.print(b'"');
+                print_unquoted_str(&lit.value, '"', p);
+                p.print(b'"');
+            }
             Self::ExpressionContainer(expr_container) => expr_container.gen(p, ctx),
         }
     }
