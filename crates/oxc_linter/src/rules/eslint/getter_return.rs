@@ -197,6 +197,7 @@ impl GetterReturn {
                 // analyze the error path as a nice to have addition.
                 | EdgeType::Error(_)
                 | EdgeType::Finalize
+                | EdgeType::Join
                 // By returning Some(X),
                 // we signal that we don't walk to this path any farther.
                 //

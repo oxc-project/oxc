@@ -36,7 +36,7 @@ digraph {
     7 -> 10 [ label = "Jump" ]
     11 -> 2 [ label = "Error(Implicit)" ]
     3 -> 5 [ label = "Normal" ]
-    5 -> 11 [ label = "Normal" ]
+    10 -> 11 [ label = "Join" ]
     12 -> 0 [ label = "Error(Implicit)" ]
     1 -> 12 [ label = "Normal" ]
 }

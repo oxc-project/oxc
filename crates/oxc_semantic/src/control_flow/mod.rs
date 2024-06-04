@@ -164,14 +164,24 @@ pub enum LabeledInstruction {
 
 #[derive(Debug, Clone)]
 pub enum EdgeType {
+    /// Conditional jumps
     Jump,
+    /// Normal control flow path
     Normal,
+    /// Cyclic aka loops
     Backedge,
+    /// Marks start of a function subgraph
     NewFunction,
-
-    Unreachable,
+    /// Finally
     Finalize,
+    /// Error Path
     Error(ErrorEdgeKind),
+
+    // misc edges
+    Unreachable,
+    /// Used to mark the end of a finalizer or catch block. It is an experimental approach might
+    /// move to their respective edge kind enums or removed altogether.
+    Join,
 }
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -252,7 +262,7 @@ impl ControlFlowGraph {
         let graph = &self.graph;
         // All nodes should be able to reach the `to` node, Otherwise we have a conditional/branching flow.
         petgraph::algo::dijkstra(graph, from, Some(to), |e| match e.weight() {
-            EdgeType::NewFunction | EdgeType::Error(_) | EdgeType::Finalize => 1,
+            EdgeType::NewFunction | EdgeType::Error(_) | EdgeType::Finalize | EdgeType::Join => 1,
             EdgeType::Jump | EdgeType::Unreachable | EdgeType::Backedge | EdgeType::Normal => 0,
         })
         .into_iter()

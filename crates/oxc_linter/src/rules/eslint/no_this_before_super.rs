@@ -7,7 +7,10 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{pg::neighbors_filtered_by_edge_weight, AstNodeId, BasicBlockId, EdgeType};
+use oxc_semantic::{
+    petgraph::visit::EdgeRef, pg::neighbors_filtered_by_edge_weight, AstNodeId, BasicBlockId,
+    ControlFlowGraph, EdgeType,
+};
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -48,6 +51,7 @@ enum DefinitelyCallsThisBeforeSuper {
     #[default]
     No,
     Yes,
+    Maybe(BasicBlockId),
 }
 
 impl Rule for NoThisBeforeSuper {
@@ -96,15 +100,25 @@ impl Rule for NoThisBeforeSuper {
             }
         }
 
-        // second pass, walk cfg for wanted nodes and propagate
-        // cross-block super calls:
-        for node in wanted_nodes {
-            let output = neighbors_filtered_by_edge_weight(
+        fn analyze(
+            cfg: &ControlFlowGraph,
+            id: BasicBlockId,
+            basic_blocks_with_super_called: &HashSet<oxc_semantic::petgraph::prelude::NodeIndex>,
+            basic_blocks_with_local_violations: &HashMap<
+                oxc_semantic::petgraph::prelude::NodeIndex,
+                Vec<AstNodeId>,
+            >,
+            follow_join: bool,
+        ) -> Vec<DefinitelyCallsThisBeforeSuper> {
+            dbg!("analyze", id);
+            neighbors_filtered_by_edge_weight(
                 &cfg.graph,
-                node.cfg_id(),
+                id,
                 &|edge| match edge {
                     EdgeType::Jump | EdgeType::Normal => None,
+                    EdgeType::Join if follow_join => None,
                     EdgeType::Unreachable
+                    | EdgeType::Join
                     | EdgeType::Error(_)
                     | EdgeType::Finalize
                     | EdgeType::Backedge
@@ -118,18 +132,95 @@ impl Rule for NoThisBeforeSuper {
                     }
 
                     if super_called {
-                        (DefinitelyCallsThisBeforeSuper::No, false)
+                        if cfg.graph.edges(*basic_block_id).any(|it| {
+                            matches!(
+                                it.weight(),
+                                EdgeType::Error(oxc_semantic::ErrorEdgeKind::Explicit)
+                                    | EdgeType::Finalize
+                            )
+                        }) {
+                            (DefinitelyCallsThisBeforeSuper::Maybe(*basic_block_id), false)
+                        } else {
+                            (DefinitelyCallsThisBeforeSuper::No, false)
+                        }
                     } else {
-                        (DefinitelyCallsThisBeforeSuper::No, true)
+                        if cfg.graph.edges(*basic_block_id).any(|it| {
+                            !matches!(
+                                it.weight(),
+                                EdgeType::Error(_)
+                                    | EdgeType::Finalize
+                            )
+                        }) {
+                            (DefinitelyCallsThisBeforeSuper::No, true)
+                        } else {
+                            (DefinitelyCallsThisBeforeSuper::Maybe(*basic_block_id), false)
+                        }
                     }
                 },
-            );
+            )
+        }
 
+        fn check_for_violation(
+            cfg: &ControlFlowGraph,
+            output: Vec<DefinitelyCallsThisBeforeSuper>,
+            basic_blocks_with_super_called: &HashSet<oxc_semantic::petgraph::prelude::NodeIndex>,
+            basic_blocks_with_local_violations: &HashMap<
+                oxc_semantic::petgraph::prelude::NodeIndex,
+                Vec<AstNodeId>,
+            >,
+        ) -> bool {
+            dbg!("HERE");
             // Deciding whether we definitely call this before super in all
             // codepaths is as simple as seeing if any individual codepath
             // definitely calls this before super.
-            let violation_in_any_codepath =
-                output.into_iter().any(|y| matches!(y, DefinitelyCallsThisBeforeSuper::Yes));
+            output.into_iter().any(|y| match y {
+                DefinitelyCallsThisBeforeSuper::Yes => true,
+                DefinitelyCallsThisBeforeSuper::No => false,
+                DefinitelyCallsThisBeforeSuper::Maybe(id) => cfg.graph.edges(id).any(|edge| {
+                    let weight = edge.weight();
+                    dbg!("maybe", id, weight);
+                    let is_explicit_error =
+                        matches!(weight, EdgeType::Error(oxc_semantic::ErrorEdgeKind::Explicit));
+                    if is_explicit_error || matches!(weight, EdgeType::Finalize) {
+                        dbg!("IT");
+                        check_for_violation(
+                            cfg,
+                            analyze(
+                                cfg,
+                                edge.target(),
+                                basic_blocks_with_super_called,
+                                basic_blocks_with_local_violations,
+                                is_explicit_error,
+                            ),
+                            basic_blocks_with_super_called,
+                            basic_blocks_with_local_violations,
+                        )
+                    } else {
+                        dbg!("NO", id);
+                        false
+                    }
+                }),
+            })
+        }
+
+        // second pass, walk cfg for wanted nodes and propagate
+        // cross-block super calls:
+        for node in wanted_nodes {
+            dbg!("----------------next---------------");
+            let output = analyze(
+                cfg,
+                node.cfg_id(),
+                &basic_blocks_with_super_called,
+                &basic_blocks_with_local_violations,
+                false,
+            );
+
+            let violation_in_any_codepath = check_for_violation(
+                cfg,
+                output,
+                &basic_blocks_with_super_called,
+                &basic_blocks_with_local_violations,
+            );
 
             // If not, flag it as a diagnostic.
             if violation_in_any_codepath {

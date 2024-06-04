@@ -1156,7 +1156,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 unreachable!("we always create an error harness if we have a catch block.");
             };
             self.cfg.release_error_harness(error_harness);
-            // TODO: we shouldn't directly change the current node index.
             let catch_block_start_ix = self.cfg.new_basic_block_normal();
             self.cfg.add_edge(error_harness, catch_block_start_ix, EdgeType::Normal);
             /* cfg */
@@ -1165,6 +1164,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
             /* cfg */
             let catch_block_end_ix = self.cfg.current_node_ix;
+            // TODO: we shouldn't directly change the current node index.
             self.cfg.current_node_ix = after_try_block_graph_ix;
             Some(catch_block_end_ix)
             /* cfg */
@@ -1172,7 +1172,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             None
         };
 
-        if let Some(finalizer) = &stmt.finalizer {
+        let finally_block_end_ix = if let Some(finalizer) = &stmt.finalizer {
             /* cfg */
             let Some(before_finalizer_graph_ix) = before_finalizer_graph_ix else {
                 unreachable!("we always create a finalizer when there is a finally block.");
@@ -1183,7 +1183,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             /* cfg */
 
             self.visit_finally_clause(finalizer);
-        }
+
+            /* cfg */
+            let finally_block_end_ix = self.cfg.current_node_ix;
+            // TODO: we shouldn't directly change the current node index.
+            self.cfg.current_node_ix = after_try_block_graph_ix;
+            Some(finally_block_end_ix)
+            /* cfg */
+        } else {
+            None
+        };
 
         /* cfg */
         let after_try_statement_block_ix = self.cfg.new_basic_block_normal();
@@ -1192,9 +1201,25 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             before_try_block_graph_ix,
             EdgeType::Normal,
         );
-        self.cfg.add_edge(after_try_block_graph_ix, after_try_statement_block_ix, EdgeType::Normal);
         if let Some(catch_block_end_ix) = catch_block_end_ix {
-            self.cfg.add_edge(catch_block_end_ix, after_try_statement_block_ix, EdgeType::Normal);
+            if let Some(_) = finally_block_end_ix {
+                // self.cfg.add_edge(
+                //     catch_block_end_ix,
+                //     finally_block_end_ix,
+                //     EdgeType::Normal,
+                // );
+            } else {
+                self.cfg.add_edge(
+                    after_try_block_graph_ix,
+                    after_try_statement_block_ix,
+                    EdgeType::Normal,
+                );
+
+                self.cfg.add_edge(catch_block_end_ix, after_try_statement_block_ix, EdgeType::Join);
+            }
+        }
+        if let Some(finally_block_end_ix) = finally_block_end_ix {
+            self.cfg.add_edge(finally_block_end_ix, after_try_statement_block_ix, EdgeType::Join);
         }
         /* cfg */
 

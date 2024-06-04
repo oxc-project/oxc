@@ -1,10 +1,11 @@
 use oxc_ast::{
-    ast::{ArrowFunctionExpression, Function},
+    ast::{ArrowFunctionExpression, Expression, ExpressionStatement, Function},
     AstKind,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{
-    algo, petgraph::visit::Control, AstNodeId, AstNodes, BasicBlockId, EdgeType, InstructionKind,
+    algo, petgraph::visit::Control, AstNodeId, AstNodes, EdgeType, ErrorEdgeKind, Instruction,
+    InstructionKind,
 };
 use oxc_span::{Atom, CompactStr};
 use oxc_syntax::operator::AssignmentOperator;
@@ -238,7 +239,7 @@ impl Rule for RulesOfHooks {
             return ctx.diagnostic(diagnostics::loop_hook(span, hook_name));
         }
 
-        if has_conditional_path_accept_throw(ctx, func_cfg_id, node_cfg_id) {
+        if has_conditional_path_accept_throw(ctx, parent_func, node) {
             #[allow(clippy::needless_return)]
             return ctx.diagnostic(diagnostics::conditional_hook(span, hook_name));
         }
@@ -247,20 +248,59 @@ impl Rule for RulesOfHooks {
 
 fn has_conditional_path_accept_throw(
     ctx: &LintContext<'_>,
-    from: BasicBlockId,
-    to: BasicBlockId,
+    from: &AstNode<'_>,
+    to: &AstNode<'_>,
 ) -> bool {
+    let from_graph_id = from.cfg_id();
+    let to_graph_id = to.cfg_id();
+    let nodes = ctx.semantic().nodes();
     let cfg = ctx.semantic().cfg();
     let graph = &cfg.graph;
+    if graph
+        .edges(to_graph_id)
+        .any(|it| matches!(it.weight(), EdgeType::Error(ErrorEdgeKind::Explicit)))
+    {
+        let paths = algo::all_simple_paths::<Vec<_>, _>(graph, from_graph_id, to_graph_id, 0, None);
+        if paths
+            .flatten()
+            .flat_map(|id| cfg.basic_block(id).instructions())
+            .filter_map(|it| match it {
+                Instruction { kind: InstructionKind::Statement, node_id: Some(node_id) } => {
+                    let r = Some(nodes.get_node(*node_id));
+                    dbg!(&r);
+                    r
+                }
+                _ => None,
+            })
+            .filter(|it| it.id() != to.id())
+            .any(|it| {
+                matches!(
+                    it.kind(),
+                    AstKind::ExpressionStatement(ExpressionStatement {
+                        expression: Expression::CallExpression(_),
+                        ..
+                    })
+                )
+            })
+        {
+            return true;
+        }
+    }
     // All nodes should be able to reach the hook node, Otherwise we have a conditional/branching flow.
-    algo::dijkstra(graph, from, Some(to), |e| match e.weight() {
-        EdgeType::NewFunction | EdgeType::Error(_) | EdgeType::Finalize => 1,
-        EdgeType::Jump | EdgeType::Unreachable | EdgeType::Backedge | EdgeType::Normal => 0,
+    algo::dijkstra(graph, from_graph_id, Some(to_graph_id), |e| match e.weight() {
+        EdgeType::NewFunction | EdgeType::Error(ErrorEdgeKind::Implicit) => 1,
+        EdgeType::Error(ErrorEdgeKind::Explicit)
+        | EdgeType::Join
+        | EdgeType::Finalize
+        | EdgeType::Jump
+        | EdgeType::Unreachable
+        | EdgeType::Backedge
+        | EdgeType::Normal => 0,
     })
     .into_iter()
     .filter(|(_, val)| *val == 0)
     .any(|(f, _)| {
-        !cfg.is_reachabale_filtered(f, to, |it| {
+        !cfg.is_reachabale_filtered(f, to_graph_id, |it| {
             if cfg
                 .basic_block(it)
                 .instructions()
