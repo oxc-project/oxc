@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{Atom, CompactStr, GetSpan, Span, SPAN};
+use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
     symbol::SymbolFlags,
@@ -40,7 +40,7 @@ pub struct ReactJsx<'a> {
     pub(super) jsx_source: ReactJsxSource<'a>,
 
     // States
-    jsx_runtime_importer: CompactStr,
+    jsx_runtime_importer: Atom<'a>,
 
     // Doubles as var name for require react
     import_create_element: Option<Atom<'a>>,
@@ -60,9 +60,9 @@ impl<'a> ReactJsx<'a> {
             if options.import_source == "react" || default_runtime.is_classic() {
                 let source =
                     if options.development { "react/jsx-dev-runtime" } else { "react/jsx-runtime" };
-                CompactStr::from(source)
+                Atom::from(source)
             } else {
-                CompactStr::from(format!(
+                ctx.ast.new_atom(&format!(
                     "{}/jsx-{}runtime",
                     options.import_source,
                     if options.development { "dev-" } else { "" }
@@ -234,11 +234,11 @@ impl<'a> ReactJsx<'a> {
 
     fn add_import_create_element(&mut self, ctx: &mut TraverseCtx<'a>) {
         if self.import_create_element.is_none() {
-            let source = self.options.import_source.as_ref();
+            let source = ctx.ast.new_atom(&self.options.import_source);
             let var_name = if self.is_script() {
-                self.add_require_statement("react", source.into(), true, ctx)
+                self.add_require_statement("react", source, true, ctx)
             } else {
-                self.add_import_statement("createElement", source.into(), ctx)
+                self.add_import_statement("createElement", source, ctx)
             };
             self.import_create_element = Some(var_name);
         }
@@ -246,34 +246,34 @@ impl<'a> ReactJsx<'a> {
 
     fn add_import_statement(
         &mut self,
-        name: &str,
-        source: CompactStr,
+        name: &'static str,
+        source: Atom<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Atom<'a> {
         let root_scope_id = ctx.scopes().root_scope_id();
         let symbol_id = ctx.generate_uid(name, root_scope_id, SymbolFlags::FunctionScopedVariable);
-        let local = &ctx.symbols().names[symbol_id];
+        let local = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
 
-        let import = NamedImport::new(name.into(), Some(local.clone()));
+        let import = NamedImport::new(Atom::from(name), Some(local.clone()));
         self.ctx.module_imports.add_import(source, import);
-        ctx.ast.new_atom(local)
+        local
     }
 
     fn add_require_statement(
         &mut self,
         variable_name: &str,
-        source: CompactStr,
+        source: Atom<'a>,
         front: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Atom<'a> {
         let root_scope_id = ctx.scopes().root_scope_id();
         let symbol_id =
             ctx.generate_uid(variable_name, root_scope_id, SymbolFlags::FunctionScopedVariable);
-        let variable_name = &ctx.symbols().names[symbol_id];
+        let variable_name = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
 
         let import = NamedImport::new(variable_name.clone(), None);
         self.ctx.module_imports.add_require(source, import, front);
-        ctx.ast.new_atom(variable_name)
+        variable_name
     }
 }
 
