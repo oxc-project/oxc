@@ -91,12 +91,12 @@ pub struct Codegen<'a, const MINIFY: bool> {
     indentation: u8,
 
     sourcemap_builder: Option<SourcemapBuilder>,
-    comment_gen_related: Option<CommentGenRelated>,
+    comment_gen_related: Option<CommentGenRelated<'a>>,
     source_code: &'a str,
 }
 
-pub struct CommentGenRelated {
-    pub trivials: Trivias,
+pub struct CommentGenRelated<'a> {
+    pub trivials: &'a Trivias,
     /// The key of map is the node start position,
     /// the first element of value is the start of the comment
     /// the second element of value includes the end of the comment and comment kind.
@@ -115,7 +115,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         source_name: &str,
         source_code: &'a str,
         options: CodegenOptions,
-        comment_gen_related: Option<CommentGenRelated>,
+        comment_gen_related: Option<CommentGenRelated<'a>>,
     ) -> Self {
         // Initialize the output code buffer to reduce memory reallocation.
         // Minification will reduce by at least half of the original size.
