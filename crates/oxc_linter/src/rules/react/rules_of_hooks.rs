@@ -1,11 +1,10 @@
 use oxc_ast::{
-    ast::{ArrowFunctionExpression, Expression, ExpressionStatement, Function},
+    ast::{ArrowFunctionExpression, Function},
     AstKind,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{
-    algo, petgraph::visit::Control, AstNodeId, AstNodes, EdgeType, ErrorEdgeKind, Instruction,
-    InstructionKind,
+    algo, petgraph::visit::Control, AstNodeId, AstNodes, EdgeType, ErrorEdgeKind, InstructionKind,
 };
 use oxc_span::{Atom, CompactStr};
 use oxc_syntax::operator::AssignmentOperator;
@@ -253,38 +252,41 @@ fn has_conditional_path_accept_throw(
 ) -> bool {
     let from_graph_id = from.cfg_id();
     let to_graph_id = to.cfg_id();
-    let nodes = ctx.semantic().nodes();
     let cfg = ctx.semantic().cfg();
     let graph = &cfg.graph;
     if graph
         .edges(to_graph_id)
         .any(|it| matches!(it.weight(), EdgeType::Error(ErrorEdgeKind::Explicit)))
     {
-        let paths = algo::all_simple_paths::<Vec<_>, _>(graph, from_graph_id, to_graph_id, 0, None);
-        if paths
-            .flatten()
-            .flat_map(|id| cfg.basic_block(id).instructions())
-            .filter_map(|it| match it {
-                Instruction { kind: InstructionKind::Statement, node_id: Some(node_id) } => {
-                    let r = Some(nodes.get_node(*node_id));
-                    dbg!(&r);
-                    r
-                }
-                _ => None,
-            })
-            .filter(|it| it.id() != to.id())
-            .any(|it| {
-                matches!(
-                    it.kind(),
-                    AstKind::ExpressionStatement(ExpressionStatement {
-                        expression: Expression::CallExpression(_),
-                        ..
-                    })
-                )
-            })
-        {
-            return true;
-        }
+        // TODO: We are simplifing here, There is a real need for a trait like `MayThrow` that
+        // would provide a method `may_throw`, since not everything may throw and break the control flow.
+        return true;
+        // let paths = algo::all_simple_paths::<Vec<_>, _>(graph, from_graph_id, to_graph_id, 0, None);
+        // if paths
+        //     .flatten()
+        //     .flat_map(|id| cfg.basic_block(id).instructions())
+        //     .filter_map(|it| match it {
+        //         Instruction { kind: InstructionKind::Statement, node_id: Some(node_id) } => {
+        //             let r = Some(nodes.get_node(*node_id));
+        //             dbg!(&r);
+        //             r
+        //         }
+        //         _ => None,
+        //     })
+        //     .filter(|it| it.id() != to.id())
+        //     .any(|it| {
+        //         // TODO: it.may_throw()
+        //         matches!(
+        //             it.kind(),
+        //             AstKind::ExpressionStatement(ExpressionStatement {
+        //                 expression: Expression::CallExpression(_),
+        //                 ..
+        //             })
+        //         )
+        //     })
+        // {
+        //     // return true;
+        // }
     }
     // All nodes should be able to reach the hook node, Otherwise we have a conditional/branching flow.
     algo::dijkstra(graph, from_graph_id, Some(to_graph_id), |e| match e.weight() {
