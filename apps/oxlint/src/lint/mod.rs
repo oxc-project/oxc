@@ -89,15 +89,21 @@ impl Runner for LintRunner {
 
         let number_of_files = paths.len();
 
-        let config_path = if let Ok(mut path) = env::current_dir() {
-            path.push("oxlintrc.json");
-            if path.exists() {
-                Some(path)
-            } else {
-                basic_options.config
+        let config_path = match basic_options.config {
+            None => {
+                match env::current_dir() {
+                    Ok(mut path) => {
+                        path.push("oxlintrc.json");
+                        if path.exists() {
+                            Some(path)
+                        } else {
+                            basic_options.config
+                        }
+                    }
+                    _ => basic_options.config
+                }
             }
-        } else {
-            basic_options.config
+            _ => basic_options.config
         };
 
         let cwd = std::env::current_dir().unwrap().into_boxed_path();
