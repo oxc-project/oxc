@@ -61,12 +61,12 @@ fn string() {
     test("let x = '\x071'", "let x = '\\x071';\n", None);
     test("let x = '\\7'", "let x = '\\x07';\n", None);
     test("let x = '\\7!'", "let x = '\\x07!';\n", None);
-    // test( "let x = '\\01'", "let x = '\x01';\n", None);
-    // test( "let x = '\x10'", "let x = '\x10';\n", None);
-    // test( "let x = '\\x10'", "let x = '\x10';\n", None);
+    test("let x = '\\01'", "let x = '\x01';\n", None);
+    test("let x = '\x10'", "let x = '\x10';\n", None);
+    test("let x = '\\x10'", "let x = '\x10';\n", None);
     test("let x = '\x1B'", "let x = '\\x1B';\n", None);
     test("let x = '\\x1B'", "let x = '\\x1B';\n", None);
-    // test( r#"let x = '\uABCD'"#, r#"let x = "\uABCD";"#, None);
+    test("let x = '\\uABCD'", "let x = 'ꯍ';\n", None);
     // test( "let x = '\\uABCD'", r#"let x = '\uABCD';\n"#, None);
     // test( r#"let x = '\U000123AB'"#, r#"let x = '\U000123AB';\n"#, None);
     // test( "let x = '\\u{123AB}'", r#"let x = '\U000123AB';\n"#, None);
