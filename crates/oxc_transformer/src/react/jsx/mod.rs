@@ -7,7 +7,7 @@ use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
-    symbol::SymbolFlags,
+    symbol::{SymbolFlags, SymbolId},
     xml_entities::XML_ENTITIES,
 };
 use oxc_traverse::TraverseCtx;
@@ -43,13 +43,18 @@ pub struct ReactJsx<'a> {
     jsx_runtime_importer: Atom<'a>,
 
     // Doubles as var name for require react
-    import_create_element: Option<Atom<'a>>,
+    import_create_element: Option<BoundIdentifier<'a>>,
     // Doubles as var name for require JSX
-    import_jsx: Option<Atom<'a>>,
-    import_jsxs: Option<Atom<'a>>,
-    import_fragment: Option<Atom<'a>>,
+    import_jsx: Option<BoundIdentifier<'a>>,
+    import_jsxs: Option<BoundIdentifier<'a>>,
+    import_fragment: Option<BoundIdentifier<'a>>,
 
     can_add_filename_statement: bool,
+}
+
+pub struct BoundIdentifier<'a> {
+    pub name: Atom<'a>,
+    pub symbol_id: SymbolId,
 }
 
 // Transforms
@@ -182,9 +187,9 @@ impl<'a> ReactJsx<'a> {
         if self.import_jsx.is_none() {
             let var_name =
                 if self.options.development { "reactJsxDevRuntime" } else { "reactJsxRuntime" };
-            let var_name =
+            let id =
                 self.add_require_statement(var_name, self.jsx_runtime_importer.clone(), false, ctx);
-            self.import_jsx = Some(var_name);
+            self.import_jsx = Some(id);
         }
     }
 
@@ -194,8 +199,8 @@ impl<'a> ReactJsx<'a> {
         } else if self.options.development {
             self.add_import_jsx_dev(ctx);
         } else if self.import_jsx.is_none() {
-            let var_name = self.add_import_statement("jsx", self.jsx_runtime_importer.clone(), ctx);
-            self.import_jsx = Some(var_name);
+            let id = self.add_import_statement("jsx", self.jsx_runtime_importer.clone(), ctx);
+            self.import_jsx = Some(id);
         }
     }
 
@@ -205,9 +210,8 @@ impl<'a> ReactJsx<'a> {
         } else if self.options.development {
             self.add_import_jsx_dev(ctx);
         } else if self.import_jsxs.is_none() {
-            let var_name =
-                self.add_import_statement("jsxs", self.jsx_runtime_importer.clone(), ctx);
-            self.import_jsxs = Some(var_name);
+            let id = self.add_import_statement("jsxs", self.jsx_runtime_importer.clone(), ctx);
+            self.import_jsxs = Some(id);
         }
     }
 
@@ -215,9 +219,8 @@ impl<'a> ReactJsx<'a> {
         if self.is_script() {
             self.add_require_jsx_runtime(ctx);
         } else if self.import_jsx.is_none() {
-            let var_name =
-                self.add_import_statement("jsxDEV", self.jsx_runtime_importer.clone(), ctx);
-            self.import_jsx = Some(var_name);
+            let id = self.add_import_statement("jsxDEV", self.jsx_runtime_importer.clone(), ctx);
+            self.import_jsx = Some(id);
         }
     }
 
@@ -225,9 +228,8 @@ impl<'a> ReactJsx<'a> {
         if self.is_script() {
             self.add_require_jsx_runtime(ctx);
         } else if self.import_fragment.is_none() {
-            let var_name =
-                self.add_import_statement("Fragment", self.jsx_runtime_importer.clone(), ctx);
-            self.import_fragment = Some(var_name);
+            let id = self.add_import_statement("Fragment", self.jsx_runtime_importer.clone(), ctx);
+            self.import_fragment = Some(id);
             self.add_import_jsx(ctx);
         }
     }
@@ -235,12 +237,12 @@ impl<'a> ReactJsx<'a> {
     fn add_import_create_element(&mut self, ctx: &mut TraverseCtx<'a>) {
         if self.import_create_element.is_none() {
             let source = ctx.ast.new_atom(&self.options.import_source);
-            let var_name = if self.is_script() {
+            let id = if self.is_script() {
                 self.add_require_statement("react", source, true, ctx)
             } else {
                 self.add_import_statement("createElement", source, ctx)
             };
-            self.import_create_element = Some(var_name);
+            self.import_create_element = Some(id);
         }
     }
 
@@ -249,14 +251,14 @@ impl<'a> ReactJsx<'a> {
         name: &'static str,
         source: Atom<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Atom<'a> {
+    ) -> BoundIdentifier<'a> {
         let root_scope_id = ctx.scopes().root_scope_id();
         let symbol_id = ctx.generate_uid(name, root_scope_id, SymbolFlags::FunctionScopedVariable);
         let local = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
 
-        let import = NamedImport::new(Atom::from(name), Some(local.clone()));
+        let import = NamedImport::new(Atom::from(name), Some(local.clone()), symbol_id);
         self.ctx.module_imports.add_import(source, import);
-        local
+        BoundIdentifier { name: local, symbol_id }
     }
 
     fn add_require_statement(
@@ -265,15 +267,15 @@ impl<'a> ReactJsx<'a> {
         source: Atom<'a>,
         front: bool,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Atom<'a> {
+    ) -> BoundIdentifier<'a> {
         let root_scope_id = ctx.scopes().root_scope_id();
         let symbol_id =
             ctx.generate_uid(variable_name, root_scope_id, SymbolFlags::FunctionScopedVariable);
         let variable_name = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
 
-        let import = NamedImport::new(variable_name.clone(), None);
+        let import = NamedImport::new(variable_name.clone(), None, symbol_id);
         self.ctx.module_imports.add_require(source, import, front);
-        variable_name
+        BoundIdentifier { name: variable_name, symbol_id }
     }
 }
 
@@ -615,16 +617,18 @@ impl<'a> ReactJsx<'a> {
             return;
         }
 
-        if self.is_script() {
+        let (id, local_id) = if self.is_script() {
             let Argument::StaticMemberExpression(member_expr) = arg else { unreachable!() };
             let Expression::Identifier(id) = &mut member_expr.object else {
                 unreachable!();
             };
-            id.name = self.import_jsx.as_ref().unwrap().clone();
+            (id, self.import_jsx.as_ref().unwrap())
         } else {
             let Argument::Identifier(id) = arg else { unreachable!() };
-            id.name = self.import_fragment.as_ref().unwrap().clone();
-        }
+            (id, self.import_fragment.as_ref().unwrap())
+        };
+        id.name = local_id.name.clone();
+        // TODO: Set `reference_id`
     }
 
     fn get_create_element(&self, has_key_after_props_spread: bool, jsxs: bool) -> Expression<'a> {
@@ -640,11 +644,8 @@ impl<'a> ReactJsx<'a> {
             }
             ReactJsxRuntime::Automatic => {
                 if self.is_script() {
-                    let (object_ident_name, property_name) = if has_key_after_props_spread {
-                        (
-                            self.import_create_element.as_ref().unwrap().clone(),
-                            Atom::from("createElement"),
-                        )
+                    let (object_id, property_name) = if has_key_after_props_spread {
+                        (self.import_create_element.as_ref().unwrap(), Atom::from("createElement"))
                     } else {
                         let property_name = if self.options.development {
                             Atom::from("jsxDEV")
@@ -653,18 +654,20 @@ impl<'a> ReactJsx<'a> {
                         } else {
                             Atom::from("jsx")
                         };
-                        (self.import_jsx.as_ref().unwrap().clone(), property_name)
+                        (self.import_jsx.as_ref().unwrap(), property_name)
                     };
-                    self.get_static_member_expression(object_ident_name, property_name)
+                    // TODO: Set `reference_id`
+                    self.get_static_member_expression(object_id.name.clone(), property_name)
                 } else {
-                    let name = if has_key_after_props_spread {
-                        self.import_create_element.as_ref().unwrap().clone()
+                    let id = if has_key_after_props_spread {
+                        self.import_create_element.as_ref().unwrap()
                     } else if jsxs && !self.options.development {
-                        self.import_jsxs.as_ref().unwrap().clone()
+                        self.import_jsxs.as_ref().unwrap()
                     } else {
-                        self.import_jsx.as_ref().unwrap().clone()
+                        self.import_jsx.as_ref().unwrap()
                     };
-                    let ident = IdentifierReference::new(SPAN, name);
+                    // TODO: Set `reference_id`
+                    let ident = IdentifierReference::new(SPAN, id.name.clone());
                     self.ast().identifier_reference_expression(ident)
                 }
             }

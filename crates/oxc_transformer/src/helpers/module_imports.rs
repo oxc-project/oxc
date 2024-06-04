@@ -1,18 +1,20 @@
 use indexmap::IndexMap;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, SPAN};
+use oxc_syntax::symbol::SymbolId;
 
 pub struct NamedImport<'a> {
     imported: Atom<'a>,
     local: Option<Atom<'a>>, // Not used in `require`
+    symbol_id: SymbolId,
 }
 
 impl<'a> NamedImport<'a> {
-    pub fn new(imported: Atom<'a>, local: Option<Atom<'a>>) -> Self {
-        Self { imported, local }
+    pub fn new(imported: Atom<'a>, local: Option<Atom<'a>>, symbol_id: SymbolId) -> Self {
+        Self { imported, local, symbol_id }
     }
 }
 
@@ -89,7 +91,11 @@ impl<'a> ModuleImports<'a> {
             ImportDeclarationSpecifier::ImportSpecifier(self.ast.alloc(ImportSpecifier {
                 span: SPAN,
                 imported: ModuleExportName::Identifier(IdentifierName::new(SPAN, name.imported)),
-                local: BindingIdentifier::new(SPAN, local),
+                local: BindingIdentifier {
+                    span: SPAN,
+                    name: local,
+                    symbol_id: Cell::new(Some(name.symbol_id)),
+                },
                 import_kind: ImportOrExportKind::Value,
             }))
         }));
@@ -120,7 +126,11 @@ impl<'a> ModuleImports<'a> {
         };
         let name = names.into_iter().next().unwrap();
         let id = {
-            let ident = BindingIdentifier::new(SPAN, name.imported);
+            let ident = BindingIdentifier {
+                span: SPAN,
+                name: name.imported,
+                symbol_id: Cell::new(Some(name.symbol_id)),
+            };
             self.ast.binding_pattern(self.ast.binding_pattern_identifier(ident), None, false)
         };
         let decl = {
