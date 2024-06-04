@@ -89,10 +89,21 @@ impl Runner for LintRunner {
 
         let number_of_files = paths.len();
 
+        let config_path = if let Ok(mut path) = env::current_dir() {
+            path.push("oxlintrc.json");
+            if path.exists() {
+                Some(path)
+            } else {
+                basic_options.config
+            }
+        } else {
+            basic_options.config
+        };
+
         let cwd = std::env::current_dir().unwrap().into_boxed_path();
         let lint_options = LintOptions::default()
             .with_filter(filter)
-            .with_config_path(basic_options.config)
+            .with_config_path(config_path)
             .with_fix(fix_options.fix)
             .with_react_plugin(enable_plugins.react_plugin)
             .with_unicorn_plugin(enable_plugins.unicorn_plugin)
