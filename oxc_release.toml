@@ -1,8 +1,4 @@
 # Configuration file for [cargo release oxc](https://github.com/oxc-project/cargo-release-oxc)
 [[releases]]
-name = "crates"
-versioned_files = [
-  "Cargo.toml",
-  "npm/oxc-parser/package.json",
-  "wasm/parser/package.json"
-]
+name            = "crates"
+versioned_files = ["Cargo.toml", "npm/oxc-parser/package.json", "wasm/parser/package.json"]
