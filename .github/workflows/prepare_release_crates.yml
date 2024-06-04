@@ -29,13 +29,14 @@ jobs:
           cache-key: warm
           tools: cargo-release-oxc
 
-      - run: cargo ck
-
       - name: Run
         id: run
         run: |
           VERSION=`cargo release-oxc update --release crates`
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+
+      # update `Cargo.lock`
+      - run: cargo ck
 
       - uses: peter-evans/create-pull-request@v6
         with:
