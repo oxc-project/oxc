@@ -8,9 +8,16 @@ on:
     paths:
       - crates/oxc/Cargo.toml
 
+permissions:
+  contents: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-D warnings"
 
 jobs:
   release:
@@ -36,5 +43,7 @@ jobs:
 
       - name: Tag and Push
         run: |
+          git config user.name Boshen
+          git config user.email Boshen@users.noreply.github.com
           git tag ${{ steps.run.outputs.TAG }}
           git push origin tag ${{ steps.run.outputs.TAG }}
