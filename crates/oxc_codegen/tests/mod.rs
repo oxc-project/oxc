@@ -16,7 +16,7 @@ fn test(source_text: &str, expected: &str, options: Option<CodegenOptions>) {
         source_text,
         options,
         Some(oxc_codegen::CommentGenRelated {
-            trivials: parse_return.trivias,
+            trivials: &parse_return.trivias,
             move_comment_map: FxHashMap::default(),
         }),
     )
