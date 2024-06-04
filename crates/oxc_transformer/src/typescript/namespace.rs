@@ -139,11 +139,8 @@ impl<'a> TypeScript<'a> {
 
         // Reuse `TSModuleDeclaration`'s scope in transformed function
         let scope_id = decl.scope_id.get().unwrap();
-        let name = self.ctx.ast.new_atom(&ctx.generate_uid(
-            &real_name,
-            scope_id,
-            SymbolFlags::FunctionScopedVariable,
-        ));
+        let symbol_id = ctx.generate_uid(&real_name, scope_id, SymbolFlags::FunctionScopedVariable);
+        let name = self.ctx.ast.new_atom(ctx.symbols().get_name(symbol_id));
 
         let namespace_top_level = match body {
             TSModuleDeclarationBody::TSModuleBlock(block) => block.unbox().body,

@@ -6,7 +6,7 @@ use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SPAN};
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
-    symbol::SymbolFlags,
+    symbol::{SymbolFlags, SymbolId},
 };
 
 use super::FinderRet;
@@ -169,24 +169,18 @@ impl TraverseScoping {
     ///
     /// This is a slightly different method from Babel, but hopefully close enough that output will
     /// match Babel for most (or maybe all) test cases.
-    pub fn generate_uid(
-        &mut self,
-        name: &str,
-        scope_id: ScopeId,
-        flags: SymbolFlags,
-    ) -> CompactStr {
+    pub fn generate_uid(&mut self, name: &str, scope_id: ScopeId, flags: SymbolFlags) -> SymbolId {
         // Get name for UID
         let name = CompactStr::new(&self.find_uid_name(name));
 
         // Add binding to scope
-        let symbol_id = self.symbols.create_symbol(SPAN, name.as_str(), flags, scope_id);
-        self.scopes.add_binding(scope_id, name.clone(), symbol_id);
-
-        name
+        let symbol_id = self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id);
+        self.scopes.add_binding(scope_id, name, symbol_id);
+        symbol_id
     }
 
     /// Generate UID in current scope.
-    pub fn generate_uid_in_current_scope(&mut self, name: &str, flags: SymbolFlags) -> CompactStr {
+    pub fn generate_uid_in_current_scope(&mut self, name: &str, flags: SymbolFlags) -> SymbolId {
         self.generate_uid(name, self.current_scope_id, flags)
     }
 }

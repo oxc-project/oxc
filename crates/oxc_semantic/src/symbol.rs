@@ -117,12 +117,12 @@ impl SymbolTable {
     pub fn create_symbol(
         &mut self,
         span: Span,
-        name: &str,
+        name: CompactStr,
         flag: SymbolFlags,
         scope_id: ScopeId,
     ) -> SymbolId {
         _ = self.spans.push(span);
-        _ = self.names.push(CompactStr::from(name));
+        _ = self.names.push(name);
         _ = self.flags.push(flag);
         _ = self.scope_ids.push(scope_id);
         _ = self.resolved_references.push(vec![]);

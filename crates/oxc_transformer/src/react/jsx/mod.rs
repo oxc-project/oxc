@@ -251,11 +251,12 @@ impl<'a> ReactJsx<'a> {
         ctx: &mut TraverseCtx,
     ) -> CompactStr {
         let root_scope_id = ctx.scopes().root_scope_id();
-        let local = ctx.generate_uid(name, root_scope_id, SymbolFlags::FunctionScopedVariable);
+        let symbol_id = ctx.generate_uid(name, root_scope_id, SymbolFlags::FunctionScopedVariable);
+        let local = &ctx.symbols().names[symbol_id];
 
         let import = NamedImport::new(name.into(), Some(local.clone()));
         self.ctx.module_imports.add_import(source, import);
-        local
+        local.clone()
     }
 
     fn add_require_statement(
@@ -266,12 +267,13 @@ impl<'a> ReactJsx<'a> {
         ctx: &mut TraverseCtx,
     ) -> CompactStr {
         let root_scope_id = ctx.scopes().root_scope_id();
-        let variable_name =
+        let symbol_id =
             ctx.generate_uid(variable_name, root_scope_id, SymbolFlags::FunctionScopedVariable);
+        let variable_name = &ctx.symbols().names[symbol_id];
 
         let import = NamedImport::new(variable_name.clone(), None);
         self.ctx.module_imports.add_require(source, import, front);
-        variable_name
+        variable_name.clone()
     }
 }
 
