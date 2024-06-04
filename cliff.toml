@@ -5,7 +5,7 @@
 # changelog header
 header = """
 # Changelog\n
-All notable changes to this crate will be documented in this file.
+All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.\n
@@ -18,11 +18,20 @@ body = """
 {% else -%}
     ## [Unreleased]
 {% endif -%}
+{% for commit in commits | filter(attribute="breaking", value=true) %}
+  - **BREAKING** {{ commit.scope }}: {{ commit.message | trim }}
+{% endfor -%}
 {% for group, commits in commits | group_by(attribute="group") %}
     ### {{ group | striptags | trim | upper_first }}
-    {% for commit in commits %}
-        - {{ commit.message | upper_first }}\
-    {% endfor %}
+    {% for commit in commits | filter(attribute="breaking", value=false) | filter(attribute="scope") | sort(attribute="scope") %}
+      * {{commit.scope}}: {{ commit.message | trim }}
+    {%- endfor -%}
+    {%- for commit in commits | filter(attribute="breaking", value=false) %}
+        {%- if commit.scope -%}
+        {% else -%}
+          - {{ commit.message | trim }} |
+        {%- endif -%}
+    {%- endfor %}
 {% endfor %}\n
 """
 # remove the leading and trailing whitespace from the templates
@@ -49,8 +58,6 @@ commit_parsers = [
 protect_breaking_commits = false
 # filter out the commits that are not matched by commit parsers
 filter_commits = true
-# regex for matching git tags
-tag_pattern = "crates_v[0-9].*"
 # sort the tags topologically
 topo_order = false
 # sort the commits inside sections by oldest/newest order
