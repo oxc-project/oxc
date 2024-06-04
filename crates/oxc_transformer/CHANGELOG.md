@@ -5,6 +5,24 @@ All notable changes to this crate will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.3] - 2024-06-04
+
+### Bug Fixes
+
+- JSX set `symbol_id` on imports (#3523)
+- TS namespace transform do not track var decl names (#3501)
+- Use correct scope for TS namespaces (#3489)
+- Output empty file for TS definition files (#3500)
+
+### Performance
+
+- React JSX reduce allocations (#3522)
+- React JSX reuse same `Atom`s (#3521)
+
+### Refactor
+
+- `generate_uid` return `SymbolId` (#3520)
+
 ## [0.13.2] - 2024-06-03
 
 ### Features
