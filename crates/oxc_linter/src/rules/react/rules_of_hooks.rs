@@ -258,7 +258,7 @@ fn has_conditional_path_accept_throw(
         .edges(to_graph_id)
         .any(|it| matches!(it.weight(), EdgeType::Error(ErrorEdgeKind::Explicit)))
     {
-        // TODO: We are simplifing here, There is a real need for a trait like `MayThrow` that
+        // TODO: We are simplifying here, There is a real need for a trait like `MayThrow` that
         // would provide a method `may_throw`, since not everything may throw and break the control flow.
         return true;
         // let paths = algo::all_simple_paths::<Vec<_>, _>(graph, from_graph_id, to_graph_id, 0, None);
