@@ -21,7 +21,7 @@ pub struct ControlFlowGraphBuilder<'a> {
     ctx_stack: Vec<Ctx<'a>>,
     /// Contains the error unwinding path represented as a stack of `ErrorHarness`es
     error_path: Vec<ErrorHarness>,
-    /// Stack of finalizers, the top most element is always the appropiate one for current node.
+    /// Stack of finalizers, the top most element is always the appropriate one for current node.
     finalizers: Vec<BasicBlockId>,
     // note: this should only land in the big box for all things that take arguments
     // ie: callexpression, arrayexpression, etc
