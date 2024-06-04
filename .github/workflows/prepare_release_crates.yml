@@ -41,12 +41,12 @@ jobs:
       - uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: Publish crates
+          commit-message: Release crates
           committer: Boshen <Boshen@users.noreply.github.com>
           author: Boshen <Boshen@users.noreply.github.com>
           branch: release/crates
           branch-suffix: timestamp
-          title: Publish crates v${{ steps.run.outputs.VERSION }}
+          title: Release crates v${{ steps.run.outputs.VERSION }}
           body: Automated Release
           assignees: Boshen
           reviewers: Boshen
