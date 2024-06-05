@@ -17,7 +17,7 @@ fn test_cli_terminal() {
     });
 }
 
-// <https://oxc-project.github.io/docs/guide/usage/linter/cli.html>
+// <https://oxc.rs/docs/guide/usage/linter/cli.html>
 pub fn print_cli() {
     println!("{}", generate_cli());
 }

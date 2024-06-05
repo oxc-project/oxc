@@ -208,9 +208,9 @@ If you are unable to contribute by code, you can still participate by:
 
 ## 📚 Learning Resources
 
-- My small tutorial on [how to write a JavaScript Parser in Rust](https://oxc-project.github.io/docs/learn/parser_in_rust/intro.html)
-- My small article [Pursuit of Performance on Building a JavaScript Compiler](https://oxc-project.github.io/docs/learn/performance.html)
-- [And more](https://oxc-project.github.io/docs/learn/references.html)
+- My small tutorial on [how to write a JavaScript Parser in Rust](https://oxc.rs/docs/learn/parser_in_rust/intro.html)
+- My small article [Pursuit of Performance on Building a JavaScript Compiler](https://oxc.rs/docs/learn/performance.html)
+- [And more](https://oxc.rs/docs/learn/references.html)
 
 ## 🤝 Credits
 
@@ -252,7 +252,7 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0
 [playground-url]: https://oxc-project.github.io/oxc/playground
 [website-badge]: https://img.shields.io/badge/Website-blue
-[website-url]: https://oxc-project.github.io
+[website-url]: https://oxc.rs
 [crate-oxc-url]: https://crates.io/crates/oxc
 [crate-ast-url]: https://crates.io/crates/oxc_ast
 [crate-parser-url]: https://crates.io/crates/oxc_parser
