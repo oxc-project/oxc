@@ -92,7 +92,11 @@ impl Runner for LintRunner {
         let config_path = basic_options.config.or_else(|| {
             env::current_dir().ok().and_then(|mut path| {
                 path.push("oxlintrc.json");
-                path.exists().then(|| path)
+                if path.exists() {
+                    Some(path)
+                } else {
+                    None
+                }
             })
         });
 
