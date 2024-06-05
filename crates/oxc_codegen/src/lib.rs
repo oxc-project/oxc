@@ -469,9 +469,10 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
                 }
             } else {
                 for directive in directives {
+                    self.print_indent();
                     directive.gen(self, ctx);
+                    self.print_soft_newline();
                 }
-                self.print_soft_newline();
             }
         }
         for stmt in statements {
