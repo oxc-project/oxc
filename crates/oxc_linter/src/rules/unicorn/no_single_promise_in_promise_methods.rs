@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan as _, Span};
+use oxc_span::{GetSpan, Span};
 
 use crate::{ast_util::is_method_call, context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
