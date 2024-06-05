@@ -1073,12 +1073,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             );
         }
 
-        if let Some(last) = switch_case_conditions.last() {
-            self.cfg.add_edge(*last, self.cfg.current_node_ix, EdgeType::Normal);
+        let end_of_switch_case_statement = self.cfg.new_basic_block_normal();
+
+        if let Some(last) = ends_of_switch_cases.last() {
+            self.cfg.add_edge(*last, end_of_switch_case_statement, EdgeType::Normal);
         }
 
-        let current_node_ix = self.cfg.current_node_ix;
-        self.cfg.ctx(None).mark_break(current_node_ix).resolve();
+        self.cfg.ctx(None).mark_break(end_of_switch_case_statement).resolve();
         /* cfg */
 
         self.leave_scope();
