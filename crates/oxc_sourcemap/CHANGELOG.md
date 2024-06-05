@@ -44,10 +44,10 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.11.0] - 2024-03-30
 
+### Features
+- add oxc sourcemap crate (#2825) |
+
 ### Bug Fixes
 
 * codegen: sourcemap token name should be original name (#2843)
-
-### Features
-- add oxc sourcemap crate (#2825) |
 

@@ -33,6 +33,19 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.13.0] - 2024-05-14
 
+### Features
+
+* ast: add type to AccessorProperty to support TSAbractAccessorProperty (#3256)
+
+### Bug Fixes
+
+* parser: parse `DecoratorCallExpression` when `Arguments` contains `MemberExpression` (#3265)
+* parser: correctly parse cls.fn<C> = x (#3208)
+
+### Performance
+
+* lexer: improve comment building performance by using a vec instead of btreemap (#3186)
+
 ### Refactor
 
 * ast: squash nested enums (#3115)
@@ -43,27 +56,7 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * parser,diagnostic: one diagnostic struct to eliminate monomorphization of generic types (#3214)
 * syntax: move number related functions to number module (#3130)- run fmt |
 
-### Bug Fixes
-
-* parser: parse `DecoratorCallExpression` when `Arguments` contains `MemberExpression` (#3265)
-* parser: correctly parse cls.fn<C> = x (#3208)
-
-### Features
-
-* ast: add type to AccessorProperty to support TSAbractAccessorProperty (#3256)
-
-### Performance
-
-* lexer: improve comment building performance by using a vec instead of btreemap (#3186)
-
 ## [0.12.5] - 2024-04-22
-
-### Performance
-
-* ast: box typescript enum variants. (#3065)
-* ast: box enum variants (#3058)
-* ast: box `ImportDeclarationSpecifier` enum variants (#3061)
-* ast: reduce indirection in AST types (#3051)
 
 ### Features
 
@@ -72,6 +65,13 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 ### Bug Fixes
 
 * parser: fix comment typos (#3036)
+
+### Performance
+
+* ast: box typescript enum variants. (#3065)
+* ast: box enum variants (#3058)
+* ast: box `ImportDeclarationSpecifier` enum variants (#3061)
+* ast: reduce indirection in AST types (#3051)
 
 ## [0.12.3] - 2024-04-11
 
@@ -86,14 +86,14 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * parser: add support for empty module declaration (#2834)
 * parser: fix failed to parse `JSXChild` after `JSXEmptyExpression` (#2726)
 
+### Performance
+
+* parser: faster lexing JSX identifiers (#2557)
+
 ### Refactor
 
 * ast: add walk_mut functions (#2776)
 * ast: add walk functions to Visit trait. (#2791)
-
-### Performance
-
-* parser: faster lexing JSX identifiers (#2557)
 
 ## [0.10.0] - 2024-03-14
 
@@ -103,11 +103,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ### Features
 - merge features `serde` and `wasm` to `serialize` (#2716) |- miette v7 (#2465) |
-
-### Refactor
-
-* ast: refactor `Trivias` API - have less noise around it (#2692)
-* parser: improve parsing of `BindingPattern` in TypeScript (#2624)- rename `CompactString` to `CompactStr` (#2619) |
 
 ### Bug Fixes
 
@@ -119,16 +114,21 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * parser: fix span start for return type in function type (#2660)
 * parser: parse named rest element in type tuple (#2655)
 
+### Refactor
+
+* ast: refactor `Trivias` API - have less noise around it (#2692)
+* parser: improve parsing of `BindingPattern` in TypeScript (#2624)- rename `CompactString` to `CompactStr` (#2619) |
+
 ## [0.9.0] - 2024-03-05
 
 - **BREAKING** ast: align TSImportType with ESTree (#2578)
 
-### Performance
+### Features
 
-* parser: inline `end_span` and `parse_identifier_kind` which are on the hot path (#2612)
-* parser: lex JSXText with memchr (#2558)
-* parser: faster lexing template strings (#2541)
-* parser: lex JSX strings with `memchr` (#2528)
+* ast: add `AssignmentTargetRest` (#2601)
+* ast: add "abstract" type to `MethodDefinition` and `PropertyDefinition` (#2536)
+* napi/parser: expose `preserveParans` option (#2582)
+* parser: parse decorators properly (#2603)
 
 ### Bug Fixes
 
@@ -144,12 +144,12 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * parser: set span end for TSEnumDeclaration (#2573)
 * parser: don't parse null as a literal type (#2572)
 
-### Features
+### Performance
 
-* ast: add `AssignmentTargetRest` (#2601)
-* ast: add "abstract" type to `MethodDefinition` and `PropertyDefinition` (#2536)
-* napi/parser: expose `preserveParans` option (#2582)
-* parser: parse decorators properly (#2603)
+* parser: inline `end_span` and `parse_identifier_kind` which are on the hot path (#2612)
+* parser: lex JSXText with memchr (#2558)
+* parser: faster lexing template strings (#2541)
+* parser: lex JSX strings with `memchr` (#2528)
 
 ### Refactor
 
@@ -177,6 +177,13 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * parser: fix missing end span from `TSTypeAliasDeclaration` (#2485)
 * parser: incorrect parsing of class accessor property name (#2386)
 
+### Performance
+
+* parser: `byte_search` macro always unroll main loop (#2439)
+* parser: consume multi-line comments faster (#2377)
+* parser: consume single-line comments faster (#2374)
+* parser: optimize lexing strings (#2366)
+
 ### Refactor
 
 * ast: s/TSThisKeyword/TSThisType to align with estree
@@ -188,24 +195,21 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * parser: add methods to `Source` + `SourcePosition` (#2373)
 * parser: extend `byte_search` macro (#2372)- remove `panic!` from examples (#2454) |
 
-### Performance
-
-* parser: `byte_search` macro always unroll main loop (#2439)
-* parser: consume multi-line comments faster (#2377)
-* parser: consume single-line comments faster (#2374)
-* parser: optimize lexing strings (#2366)
-
 ## [0.7.0] - 2024-02-09
+
+### Features
+
+* semantic: report parameter related errors for setter/getter (#2316)
+
+### Bug Fixes
+
+* parser: remove erroneous debug assertion (#2356)
 
 ### Performance
 
 * parser: lex strings as bytes (#2357)
 * parser: eat whitespace after line break (#2353)
 * parser: lex identifiers as bytes not chars (#2352)
-
-### Bug Fixes
-
-* parser: remove erroneous debug assertion (#2356)
 
 ### Refactor
 
@@ -217,10 +221,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * parser: wrapper type for parser (#2339)
 * parser: lexer replace `Chars` with `Source` (#2288)
 * parser: name byte handler functions (#2301)
-
-### Features
-
-* semantic: report parameter related errors for setter/getter (#2316)
 
 ## [0.6.0] - 2024-02-03
 
@@ -237,6 +237,14 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * parser: correct MAX_LEN for 32-bit systems (#2204)
 * parser: fix crash on TSTemplateLiteralType in function return position (#2089)
 * parser: restore regex flag parsing (#2007)
+
+### Performance
+
+* parser: faster offset calculation (#2215)
+* parser: pad `Token` to 16 bytes (#2211)
+* parser: lexer byte handlers consume ASCII chars faster (#2046)
+* parser: lexer match byte not char (#2025)
+* parser: reduce `Token` size from 16 to 12 bytes (#2010)
 
 ### Refactor
 
@@ -256,15 +264,20 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * parser: remove noop code (#2028)
 * parser: remove extraneous code from regex parsing (#2008)
 
-### Performance
-
-* parser: faster offset calculation (#2215)
-* parser: pad `Token` to 16 bytes (#2211)
-* parser: lexer byte handlers consume ASCII chars faster (#2046)
-* parser: lexer match byte not char (#2025)
-* parser: reduce `Token` size from 16 to 12 bytes (#2010)
-
 ## [0.5.0] - 2024-01-12
+
+### Features
+
+* linter: no-irregular-whitespace rule (#1835)
+
+### Bug Fixes
+
+* parser: unexpected ts type annotation in get/set (#1942)
+* parser: fix incorrectly identified directives (#1885)
+* parser: terminate parsing if an EmptyParenthesizedExpression error occurs (#1874)
+* parser: error on source larger than 4 GiB (#1860)
+* parser: await in jsx expression
+* parser: false postive for "Missing initializer in const declaration" in declare + namespace (#1724)
 
 ### Refactor
 
@@ -278,19 +291,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * parser: parse BigInt lazily (#1924)
 * parser: report `this` parameter error (#1788)
 
-### Bug Fixes
-
-* parser: unexpected ts type annotation in get/set (#1942)
-* parser: fix incorrectly identified directives (#1885)
-* parser: terminate parsing if an EmptyParenthesizedExpression error occurs (#1874)
-* parser: error on source larger than 4 GiB (#1860)
-* parser: await in jsx expression
-* parser: false postive for "Missing initializer in const declaration" in declare + namespace (#1724)
-
-### Features
-
-* linter: no-irregular-whitespace rule (#1835)
-
 ## [0.4.0] - 2023-12-08
 
 ### Features
@@ -301,11 +301,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * prettier: print directives (#1497)
 * prettier: print leading comments with newlines (#1434)
 
-### Refactor
-
-* parser: remove duplicated code
-* rust: move to workspace lint table (#1444)
-
 ### Bug Fixes
 
 * parser: correct `import_kind` of `TSImportEqualsDeclaration` (#1449)
@@ -313,12 +308,12 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * parser: Disallow ReservedWord in NamedExports (#1230)
 * parser: ASI of async class member (#1214)
 
+### Refactor
+
+* parser: remove duplicated code
+* rust: move to workspace lint table (#1444)
+
 ## [0.3.0] - 2023-11-06
-
-### Bug Fixes
-
-* ast: jsx attribute value and text child should be jsx string (#1089)
-* linter: revert changes to JSX attribute strings (#1101)- ts parsing error (#940) |
 
 ### Features
 
@@ -327,6 +322,11 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * parser: TypeScript 5.2 (#811)
 * transformer: implement some of needs_explicit_esm for typescript (#1047)
 
+### Bug Fixes
+
+* ast: jsx attribute value and text child should be jsx string (#1089)
+* linter: revert changes to JSX attribute strings (#1101)- ts parsing error (#940) |
+
 ### Refactor
 
 * ast: clean up some methods
@@ -334,6 +334,15 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * clippy: allow clippy::too_many_lines
 
 ## [0.2.0] - 2023-09-14
+
+### Features
+
+* ast: add `SymbolId` and `ReferenceId` (#755)
+
+### Bug Fixes
+
+* parser: parse [+In] in object binding initializer (#874)
+* parser,semantic: make semantic own `Trivias` (#711)
 
 ### Performance
 
@@ -345,17 +354,8 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * parser: lazily build trivia map instead of build in-place (#903)
 * parser: remove an extra branch from `parse_member_expression_rhs` hot path (#896)
 
-### Bug Fixes
-
-* parser: parse [+In] in object binding initializer (#874)
-* parser,semantic: make semantic own `Trivias` (#711)
-
 ### Refactor
 
 * ast: use `atom` for `Directive` and `Hashbang` (#701)
 * benchmark: use codspeed for all benchmarks (#839)- clean up fuzzer, move it to repo root (#872) |- improve code coverage a little bit |
-
-### Features
-
-* ast: add `SymbolId` and `ReferenceId` (#755)
 

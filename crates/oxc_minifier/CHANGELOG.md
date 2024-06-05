@@ -33,12 +33,12 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.10.0] - 2024-03-14
 
-### Refactor
-- remove unused dependencies (#2718) |- make `CompactStr` immutable (#2620) |- rename `CompactString` to `CompactStr` (#2619) |
-
 ### Features
 
 * span: remove `From<String>` and `From<Cow>` API because they create memory leak (#2628)
+
+### Refactor
+- remove unused dependencies (#2718) |- make `CompactStr` immutable (#2620) |- rename `CompactString` to `CompactStr` (#2619) |
 
 ## [0.9.0] - 2024-03-05
 
@@ -49,15 +49,15 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.8.0] - 2024-02-26
 
-### Refactor
-
-* ast: s/NumberLiteral/NumericLiteral to align with estree
-* ast: s/ArrowExpression/ArrowFunctionExpression to align estree- remove `panic!` from examples (#2454) |- remove global allocator from non-user facing apps (#2401) |
-
 ### Features
 
 * Codegen: Improve codegen (#2460)
 * codegen: configurable typescript codegen (#2443)
+
+### Refactor
+
+* ast: s/NumberLiteral/NumericLiteral to align with estree
+* ast: s/ArrowExpression/ArrowFunctionExpression to align estree- remove `panic!` from examples (#2454) |- remove global allocator from non-user facing apps (#2401) |
 
 ## [0.7.0] - 2024-02-09
 

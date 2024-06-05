@@ -17,15 +17,15 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.13.0] - 2024-05-14
 
-### Bug Fixes
-
-* traverse: create scope for function nested in class method (#3234)
-
 ### Features
 
 * syntax: add `ToJsInt32` trait for f64 (#3132)
 * syntax: add `ToJsString` trait for f64 (#3131)
 * traverse: add scope flags to `TraverseCtx` (#3229)
+
+### Bug Fixes
+
+* traverse: create scope for function nested in class method (#3234)
 
 ### Refactor
 
@@ -60,6 +60,10 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.11.0] - 2024-03-30
 
+### Features
+
+* semantic: distinguish type imports in ModuleRecord (#2785)
+
 ### Bug Fixes
 
 * linter/import: ignore export declaration in no-duplicates (#2863)
@@ -67,10 +71,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 ### Refactor
 
 * semantic: distinguish whether requested_modules is type imports/exports (#2848)
-
-### Features
-
-* semantic: distinguish type imports in ModuleRecord (#2785)
 
 ## [0.10.0] - 2024-03-14
 
@@ -91,16 +91,16 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.8.0] - 2024-02-26
 
-### Bug Fixes
-
-* linter: improve import/no-named-as-default (#2494)
-
 ### Features
 
 * Codegen: Improve codegen (#2460)
 * linter: handle cjs `module.exports.foo = bar` and `exports.foo = bar` (#2492)
 * semantic: add static property, ElementKind::Getter, ElementKind::Setter in ClassTable (#2445)
 * syntax: implement `Debug` for `ModuleRecord` (#2488)
+
+### Bug Fixes
+
+* linter: improve import/no-named-as-default (#2494)
 
 ### Refactor
 
@@ -120,16 +120,16 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * ast: TypeScript definition for wasm target (#2158)
 * transformer/typescript: remove import if only have type reference (#2001)
 
+### Bug Fixes
+
+* codegen: add parenthesis in binary expression by precedence (#2067)
+
 ### Refactor
 
 * parser: make `is_identifier` methods consistent
 * syntax: don't re-export `unicode_id_start`
 * syntax: ASCII tables static not const (#2128)
 * syntax: reformat identifier byte tables (#2111)
-
-### Bug Fixes
-
-* codegen: add parenthesis in binary expression by precedence (#2067)
 
 ## [0.5.0] - 2024-01-12
 
@@ -175,10 +175,10 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * minifier: initialize conditions folding (#658)
 * syntax: add loaded_modules to ModuleRecord
 
-### Refactor
-- improve code coverage a little bit |- improve code coverage in various places (#721) |
-
 ### Performance
 
 * linter: reduce mallocs (#654)
+
+### Refactor
+- improve code coverage a little bit |- improve code coverage in various places (#721) |
 

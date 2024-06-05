@@ -17,6 +17,14 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.13.0] - 2024-05-14
 
+### Features
+
+* linter: add `--format github` for github check annotation (#3191)
+
+### Bug Fixes
+
+* diagnostics: need to escape strings for --format github
+
 ### Refactor
 
 * diagnostics: remove export of `miette`
@@ -25,14 +33,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * diagnostics: use a trait to implement the reporters (#3190)
 * linter,diagnostic: one diagnostic struct to eliminate monomorphization of generic types (#3235)
 * parser,diagnostic: one diagnostic struct to eliminate monomorphization of generic types (#3214)- clean up more diagnostics usages |
-
-### Bug Fixes
-
-* diagnostics: need to escape strings for --format github
-
-### Features
-
-* linter: add `--format github` for github check annotation (#3191)
 
 ## [0.12.5] - 2024-04-22
 

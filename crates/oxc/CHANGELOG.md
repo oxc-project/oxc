@@ -29,13 +29,13 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.5.0] - 2024-01-12
 
-### Refactor
-
-* formatter,linter,codegen: remove oxc_formatter (#1968)
-
 ### Features
 
 * playground: visualize symbol (#1886)
+
+### Refactor
+
+* formatter,linter,codegen: remove oxc_formatter (#1968)
 
 ## [0.4.0] - 2023-12-08
 

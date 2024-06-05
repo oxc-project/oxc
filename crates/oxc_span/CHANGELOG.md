@@ -13,14 +13,14 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.13.0] - 2024-05-14
 
+### Features
+
+* transformer/jsx-source: get the correct lineNumber and columnNumber from the span. (#3142)
+
 ### Refactor
 
 * ast: add `is_strict` methods (#3227)
 * parser,diagnostic: one diagnostic struct to eliminate monomorphization of generic types (#3214)
-
-### Features
-
-* transformer/jsx-source: get the correct lineNumber and columnNumber from the span. (#3142)
 
 ## [0.12.5] - 2024-04-22
 
@@ -71,13 +71,13 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.3.0] - 2023-11-06
 
-### Refactor
-
-* transformer: add an empty SPAN utility for creating AST nodes (#1067)
-
 ### Features
 
 * linter: support react/no-render-return-value (#1042)
+
+### Refactor
+
+* transformer: add an empty SPAN utility for creating AST nodes (#1067)
 
 ### Testing
 

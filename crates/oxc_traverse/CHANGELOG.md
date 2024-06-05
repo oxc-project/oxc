@@ -13,6 +13,10 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.13.2] - 2024-06-03
 
+### Features
+
+* transformer: add `TraverseCtx::generate_uid` (#3394)
+
 ### Bug Fixes
 
 * traverse: exit scope early if enter it late (#3493)
@@ -21,11 +25,12 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 * ast: move scope from `TSModuleBlock` to `TSModuleDeclaration` (#3488)
 
+## [0.13.1] - 2024-05-22
+
 ### Features
 
-* transformer: add `TraverseCtx::generate_uid` (#3394)
-
-## [0.13.1] - 2024-05-22
+* traverse: mutable access to scopes tree + symbol table (#3314)
+* traverse: pass `&mut TraverseCtx` to visitors (#3312)
 
 ### Refactor
 
@@ -34,12 +39,13 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * traverse: move `parent` method etc into `TraverseAncestry` (#3308)
 * traverse: `Traverse` produce scopes tree using `Semantic` (#3304)
 
+## [0.13.0] - 2024-05-14
+
 ### Features
 
-* traverse: mutable access to scopes tree + symbol table (#3314)
-* traverse: pass `&mut TraverseCtx` to visitors (#3312)
-
-## [0.13.0] - 2024-05-14
+* ast: add type to AccessorProperty to support TSAbractAccessorProperty (#3256)
+* transform: `oxc_traverse` crate (#3169)
+* traverse: add scope flags to `TraverseCtx` (#3229)
 
 ### Bug Fixes
 
@@ -48,11 +54,9 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * traverse: allow `TraverseCtx::find_ancestor` closure to return AST node (#3236)
 * traverse: create scope for function nested in class method (#3234)
 
-### Features
+### Documentation
 
-* ast: add type to AccessorProperty to support TSAbractAccessorProperty (#3256)
-* transform: `oxc_traverse` crate (#3169)
-* traverse: add scope flags to `TraverseCtx` (#3229)
+* transform: improve docs for `TraverseCtx::ancestors_depth` (#3194)
 
 ### Refactor
 
@@ -60,8 +64,4 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * transform: `retag_stack` use `AncestorType` (#3173)
 * traverse: simplify build script (#3231)
 * traverse: do not expose `TraverseCtx::new` (#3226)
-
-### Documentation
-
-* transform: improve docs for `TraverseCtx::ancestors_depth` (#3194)
 

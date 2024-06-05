@@ -7,14 +7,14 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.13.3] - 2024-06-04
 
-### Refactor
-
-* codegen: reduce allocation for print_unquoted_str (#3525)
-
 ### Bug Fixes
 
 * codegen: should be double quote for jsx attribute value (#3516)
 * codegen: wrong escape string (#3514)
+
+### Refactor
+
+* codegen: reduce allocation for print_unquoted_str (#3525)
 
 ## [0.13.2] - 2024-06-03
 
@@ -28,14 +28,14 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 * syntax: export `is_reserved_keyword` and `is_global_object` method (#3384)
 
+### Bug Fixes
+
+* codegen: using declaration in for statement (#3285)
+
 ### Refactor
 
 * parser: start porting arrow function parsing from tsc (#3340)
 * sourcemap: using binary search to search original position (#3360)
-
-### Bug Fixes
-
-* codegen: using declaration in for statement (#3285)
 
 ## [0.13.0] - 2024-05-14
 
@@ -67,33 +67,33 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.12.1] - 2024-04-03
 
-### Refactor
-
-* codegen: make codegen sourcemap builder clearer (#2894)
-
 ### Bug Fixes
 
 * sourcemap: using serde_json::to_string to quote sourcemap string (#2889)
 
+### Refactor
+
+* codegen: make codegen sourcemap builder clearer (#2894)
+
 ## [0.11.0] - 2024-03-30
+
+### Features
+
+* transformer: numeric separator plugin. (#2795)- add oxc sourcemap crate (#2825) |- SourcemapVisualizer (#2773) |
 
 ### Bug Fixes
 
 * codegen: sourcemap token name should be original name (#2843)
 * parser: add support for empty module declaration (#2834)
 
-### Features
-
-* transformer: numeric separator plugin. (#2795)- add oxc sourcemap crate (#2825) |- SourcemapVisualizer (#2773) |
-
-### Refactor
-
-* sourcemap: change sourcemap name to take a reference (#2779)
-
 ### Performance
 
 * codegen: avoid unnecessary copy (#2727)
 * sourcemap: remove unnecessary binary search (#2728)
+
+### Refactor
+
+* sourcemap: change sourcemap name to take a reference (#2779)
 
 ## [0.10.0] - 2024-03-14
 
@@ -108,20 +108,11 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 - **BREAKING** ast: align TSImportType with ESTree (#2578)
 
-### Refactor
-
-* codegen: clean up API around building sourcemaps (#2602)
-
 ### Features
 
 * ast: add `AssignmentTargetRest` (#2601)
 * ast: add "abstract" type to `MethodDefinition` and `PropertyDefinition` (#2536)
 * codegen: add sourcemap (#2565)
-
-### Performance
-
-* codegen: speed up generating sourcemap mappings (#2597)
-* codegen: speed up building sourcemap line tables (#2591)
 
 ### Bug Fixes
 
@@ -129,7 +120,21 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * codegen: correct sourcemaps when Windows line breaks + unicode (#2584)
 * codegen: correct sourcemaps when unicode chars (#2583)
 
+### Performance
+
+* codegen: speed up generating sourcemap mappings (#2597)
+* codegen: speed up building sourcemap line tables (#2591)
+
+### Refactor
+
+* codegen: clean up API around building sourcemaps (#2602)
+
 ## [0.8.0] - 2024-02-26
+
+### Features
+
+* Codegen: Improve codegen (#2460)
+* codegen: configurable typescript codegen (#2443)
 
 ### Bug Fixes
 
@@ -144,21 +149,16 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * ast: s/NumberLiteral/NumericLiteral to align with estree
 * ast: s/ArrowExpression/ArrowFunctionExpression to align estree- remove `panic!` from examples (#2454) |
 
+## [0.7.0] - 2024-02-09
+
 ### Features
 
-* Codegen: Improve codegen (#2460)
-* codegen: configurable typescript codegen (#2443)
-
-## [0.7.0] - 2024-02-09
+* codegen: avoid printing comma in ArrayAssignmentTarget if the elements is empty (#2331)
 
 ### Bug Fixes
 
 * codegen: format new expession + import expression with the correct parentheses (#2346)
 * codegen: format new expression + call expression with the correct parentheses (#2330)
-
-### Features
-
-* codegen: avoid printing comma in ArrayAssignmentTarget if the elements is empty (#2331)
 
 ### Refactor
 
@@ -166,19 +166,19 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.6.0] - 2024-02-03
 
-### Bug Fixes
-
-* codegen: print space before with clause in import (#2278)
-* codegen: print necessary spaces for `ExportAllDeclaration` (#2190)
-* codegen: print `Directive` original string (#2157)
-* codegen: add parenthesis in binary expression by precedence (#2067)
-
 ### Features
 
 * codegen: keep shorthand in ObjectPattern and ObjectProperty (#2265)
 * codegen: change back to read raw (#2222)
 * codegen: print TemplateLiteral with `print_str` (#2207)
 * codegen: move string test to codegen (#2150)
+
+### Bug Fixes
+
+* codegen: print space before with clause in import (#2278)
+* codegen: print necessary spaces for `ExportAllDeclaration` (#2190)
+* codegen: print `Directive` original string (#2157)
+* codegen: add parenthesis in binary expression by precedence (#2067)
 
 ### Refactor
 
@@ -202,12 +202,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.3.0] - 2023-11-06
 
-### Bug Fixes
-
-* ast: jsx attribute value and text child should be jsx string (#1089)
-* codegen: fix some typescript codegen problems (#989)
-* linter: revert changes to JSX attribute strings (#1101)
-
 ### Features
 
 * codegen: indent inner class (#1085)
@@ -221,6 +215,12 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * transformer: implement some of needs_explicit_esm for typescript (#1047)
 * transformer: add utils to make logical_assignment_operators pass (#1017)
 * transformer: ES2020 Nullish Coalescing Operator (#1004)- support filter exec snap (#1084) |- adjust the order of print semicolon (#1003) |
+
+### Bug Fixes
+
+* ast: jsx attribute value and text child should be jsx string (#1089)
+* codegen: fix some typescript codegen problems (#989)
+* linter: revert changes to JSX attribute strings (#1101)
 
 ### Refactor
 

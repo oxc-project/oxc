@@ -19,14 +19,14 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.1.1] - 2024-01-06
 
+### Features
+
+* vscode: support lint vue file (#1842)
+
 ### Bug Fixes
 
 * lsp: make the server available in nvim-lspconfig (#1823)
 * vscode: change all names to oxc_language_server
-
-### Features
-
-* vscode: support lint vue file (#1842)
 
 ## [0.0.22] - 2023-12-25
 
@@ -36,14 +36,14 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.0.21] - 2023-12-18
 
-### Bug Fixes
-
-* vscode: report problem more accurately  (#1681)
-
 ### Features
 
 * linter: add  jsx-a11y settings (#1668)
 * vscode: use icon to represent enabled status (#1675)- add option to control enable/disable oxc linter (#1665) |
+
+### Bug Fixes
+
+* vscode: report problem more accurately  (#1681)
 
 ## [0.0.20] - 2023-12-13
 

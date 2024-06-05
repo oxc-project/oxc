@@ -21,14 +21,13 @@ body = """
 {% for commit in commits | filter(attribute="breaking", value=true) %}
   - **BREAKING** {{ commit.scope }}: {{ commit.message | trim }}
 {% endfor -%}
-{% for group, commits in commits | group_by(attribute="group") %}
+{% for group, commits in commits | sort(attribute="group") | group_by(attribute="group") %}
     ### {{ group | striptags | trim | upper_first }}
     {% for commit in commits | filter(attribute="breaking", value=false) | filter(attribute="scope") | sort(attribute="scope") %}
       * {{commit.scope}}: {{ commit.message | trim }}
     {%- endfor -%}
     {%- for commit in commits | filter(attribute="breaking", value=false) %}
-        {%- if commit.scope -%}
-        {% else -%}
+        {%- if not commit.scope -%}
           - {{ commit.message | trim }} |
         {%- endif -%}
     {%- endfor %}
@@ -46,10 +45,10 @@ filter_unconventional = true
 split_commits = false
 # regex for parsing and grouping commits
 commit_parsers = [
-  { message = "^doc", group = "<!-- 3 -->Documentation" },
   { message = "^feat", group = "<!-- 0 -->Features" },
   { message = "^fix", group = "<!-- 1 -->Bug Fixes" },
   { message = "^perf", group = "<!-- 2 -->Performance" },
+  { message = "^doc", group = "<!-- 3 -->Documentation" },
   { message = "^refactor", group = "<!-- 4 -->Refactor" },
   { message = "^style", group = "<!-- 5 -->Styling" },
   { message = "^test", group = "<!-- 6 -->Testing" },
@@ -61,7 +60,7 @@ filter_commits = true
 # sort the tags topologically
 topo_order = false
 # sort the commits inside sections by oldest/newest order
-sort_commits = "oldest"
+sort_commits = "newest"
 
 # https://git-cliff.org/docs/configuration/bump
 [bump]

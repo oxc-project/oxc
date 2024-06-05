@@ -25,18 +25,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.13.2] - 2024-06-03
 
-### Refactor
-
-* ast: move scope from `TSModuleBlock` to `TSModuleDeclaration` (#3488)
-* transformer: explicit skip TS statements in TS namespace transform (#3479)
-* transformer: shorter code in TS namespace transform (#3478)
-* transformer: panic on illegal cases in TS namespace transform (#3477)
-* transformer: rename var (#3476)
-* transformer: shorten code in TS namespace transform (#3468)
-* transformer: remove unreachable code from TS namespace transform (#3475)
-* transformer/typescript: use a memory-safe implementation instead (#3481)
-* typescript/namespace: reuse TSModuleBlock's scope id (#3459)
-
 ### Features
 
 * oxc_codegen: preserve annotate comment (#3465)
@@ -55,14 +43,19 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * transformer/jsx-source: add filename statement only after inserting the source object (#3469)
 * transformer/typescript: variable declarations are not created when a function has a binding with the same name (#3460)
 
-## [0.13.1] - 2024-05-22
-
 ### Refactor
 
-* diagnostics: s/warning/warn
-* transformer: correct spelling of var name (#3369)
-* transformer: improve indentation (#3282)
-* traverse: `Traverse` produce scopes tree using `Semantic` (#3304)
+* ast: move scope from `TSModuleBlock` to `TSModuleDeclaration` (#3488)
+* transformer: explicit skip TS statements in TS namespace transform (#3479)
+* transformer: shorter code in TS namespace transform (#3478)
+* transformer: panic on illegal cases in TS namespace transform (#3477)
+* transformer: rename var (#3476)
+* transformer: shorten code in TS namespace transform (#3468)
+* transformer: remove unreachable code from TS namespace transform (#3475)
+* transformer/typescript: use a memory-safe implementation instead (#3481)
+* typescript/namespace: reuse TSModuleBlock's scope id (#3459)
+
+## [0.13.1] - 2024-05-22
 
 ### Features
 
@@ -74,6 +67,13 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 ### Bug Fixes
 
 * transformer: do no add __self when the jsx is inside constructor (#3258)
+
+### Refactor
+
+* diagnostics: s/warning/warn
+* transformer: correct spelling of var name (#3369)
+* transformer: improve indentation (#3282)
+* traverse: `Traverse` produce scopes tree using `Semantic` (#3304)
 
 ## [0.13.0] - 2024-05-14
 
@@ -89,6 +89,12 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * transformer/react: support development mode (#3143)
 * transformer/react: enable jsx plugin when development is true (#3141)
 
+### Bug Fixes
+
+* transform: implement `transform-react-display-name` with bottom-up lookup (#3183)
+* transformer: correctly jsx-self inside arrow-function (#3224)
+* transformer/arrow-functions: should not transform `this` in class (#3129)
+
 ### Refactor
 
 * ast: squash nested enums (#3115)
@@ -99,12 +105,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * transformer: remove no-op scopes code (#3210)
 * transformer: remove the requirement of `Semantic` (#3140)
 * transformer/typescript: reimplementation of Enum conversion based on Babel (#3102)- remove all usages of `Into<Error>` |
-
-### Bug Fixes
-
-* transform: implement `transform-react-display-name` with bottom-up lookup (#3183)
-* transformer: correctly jsx-self inside arrow-function (#3224)
-* transformer/arrow-functions: should not transform `this` in class (#3129)
 
 ## [0.12.5] - 2024-04-22
 
@@ -164,10 +164,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.12.1] - 2024-04-03
 
-### Bug Fixes
-
-* transformer: add serde "derive" feature to fix compile error
-
 ### Features
 
 * transformer: add compiler assumptions (#2872)
@@ -175,7 +171,17 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * transformer: add react plugins (#2867)
 * transformer: add `transform-typescript` boilerplate (#2866)
 
+### Bug Fixes
+
+* transformer: add serde "derive" feature to fix compile error
+
 ## [0.11.0] - 2024-03-30
+
+### Features
+
+* transformer: numeric separator plugin. (#2795)
+* transformer: add transform literal for numeric literals. (#2797)
+* transformer/typescript: remove `verbatim_module_syntax` option (#2796)
 
 ### Bug Fixes
 
@@ -189,17 +195,7 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * sourcemap: change sourcemap name to take a reference (#2779)
 * transformer: pass options via context. (#2794)
 
-### Features
-
-* transformer: numeric separator plugin. (#2795)
-* transformer: add transform literal for numeric literals. (#2797)
-* transformer/typescript: remove `verbatim_module_syntax` option (#2796)
-
 ## [0.10.0] - 2024-03-14
-
-### Refactor
-
-* ast: refactor `Trivias` API - have less noise around it (#2692)- rename `CompactString` to `CompactStr` (#2619) |
 
 ### Features
 
@@ -210,7 +206,17 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 * ast: parse `with_clause` in re-export declaration (#2634)
 
+### Refactor
+
+* ast: refactor `Trivias` API - have less noise around it (#2692)- rename `CompactString` to `CompactStr` (#2619) |
+
 ## [0.9.0] - 2024-03-05
+
+### Features
+
+* ast: add "abstract" type to `MethodDefinition` and `PropertyDefinition` (#2536)
+* transformer: call build module record (#2529)
+* transformer/typescript: support transform constructor method (#2551)
 
 ### Bug Fixes
 
@@ -221,12 +227,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 * codegen: clean up API around building sourcemaps (#2602)
 * transformer/typescript: improve implementation of remove import/export (#2530)
-
-### Features
-
-* ast: add "abstract" type to `MethodDefinition` and `PropertyDefinition` (#2536)
-* transformer: call build module record (#2529)
-* transformer/typescript: support transform constructor method (#2551)
 
 ## [0.8.0] - 2024-02-26
 
@@ -271,6 +271,10 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * transformer/typescript: remove import if only have type reference (#2001)
 * transfrom: transform-json-strings (#2168)
 
+### Bug Fixes
+
+* transformer: always create valid identifiers (#2131)
+
 ### Refactor
 
 * ast: improve simple_assignment_target_identifier and simple_assignment_target_member_expression method (#2153)
@@ -279,10 +283,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * transformer/decorators: optimizing code with ast.private_field (#2249)
 * transformer/decorators: align the implementation of all versions (#2159)
 * transformer/typescript: move the ExportNamedDeclaration logic to its function (#2074)
-
-### Bug Fixes
-
-* transformer: always create valid identifiers (#2131)
 
 ## [0.5.0] - 2024-01-12
 
@@ -325,18 +325,18 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * transformer/react-jsx: support `pragma` option (#1180)
 * transformer/react-jsx: support `@jsxImportSource` annotation (#1179)
 
-### Refactor
-
-* rust: move to workspace lint table (#1444)
-* transformer/react-jsx: use extend instead of for-in with push (#1236)
-* transformer/react-jsx: improve SpreadChildrenAreNotSupported error implementation (#1235)
-
 ### Bug Fixes
 
 * transformer/react-jsx: missing import jsxs in nested fragment (#1218)
 * transformer/react-jsx: missing default options when plugin without config (#1219)
 * transformer/react-jsx: undetectable comments in multiline comments (#1211)
 * transformer/react-jsx: no need to wrap the Array when there is only one correct child element (#1205)
+
+### Refactor
+
+* rust: move to workspace lint table (#1444)
+* transformer/react-jsx: use extend instead of for-in with push (#1236)
+* transformer/react-jsx: improve SpreadChildrenAreNotSupported error implementation (#1235)
 
 ## [0.3.0] - 2023-11-06
 
@@ -378,6 +378,13 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * transformer/react: implement fixup_whitespace_and_decode_entities (#1091)
 * transformer_conformance: read plugins options from babel `options.json` (#1006)
 
+### Bug Fixes
+
+* ast: jsx attribute value and text child should be jsx string (#1089)
+* linter: revert changes to JSX attribute strings (#1101)
+* transformer: fix position of inserted react import statement (#1082)
+* transformer/react_jsx: add imports to the top body (#1087)
+
 ### Refactor
 
 * ast: clean up some methods
@@ -390,11 +397,4 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * transformer: add an empty SPAN utility for creating AST nodes (#1067)
 * transformer: add TransformerCtx struct for easier access to symbols and scopes
 * transformer: clean up the transformer constructor code
-
-### Bug Fixes
-
-* ast: jsx attribute value and text child should be jsx string (#1089)
-* linter: revert changes to JSX attribute strings (#1101)
-* transformer: fix position of inserted react import statement (#1082)
-* transformer/react_jsx: add imports to the top body (#1087)
 

@@ -52,16 +52,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * tasks/website: start generating linter config markdown from json schema (#3386)
 * website: generate linter configuration page
 
-### Refactor
-
-* diagnostics: s/warning/warn
-* linter: rename variable names prefix `ESLint` to `Oxlint`
-* linter: remove unnecessary check in `eslint/no-global-assign` (#3391)
-* linter: find return statement by using CFG in `react/require-render-return` (#3353)
-* linter: remove `with_rule_name` from the tight loop (#3335)
-* linter: merge deepscan rules into oxc rules (#3327)
-* semantic/cfg: alias petgraph's `NodeIndex` as `BasicBlockId`. (#3380)
-
 ### Bug Fixes
 
 * linter: `no-new` false positive when return from arrow expression (#3393)
@@ -81,7 +71,22 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 * linter: use `usize` for `RuleEnum` hash (#3336)
 
+### Refactor
+
+* diagnostics: s/warning/warn
+* linter: rename variable names prefix `ESLint` to `Oxlint`
+* linter: remove unnecessary check in `eslint/no-global-assign` (#3391)
+* linter: find return statement by using CFG in `react/require-render-return` (#3353)
+* linter: remove `with_rule_name` from the tight loop (#3335)
+* linter: merge deepscan rules into oxc rules (#3327)
+* semantic/cfg: alias petgraph's `NodeIndex` as `BasicBlockId`. (#3380)
+
 ## [0.3.5] - 2024-05-15
+
+### Features
+
+* linter: add use-isnan fixer for (in)equality operations (#3284)
+* linter/eslint: Implement fixer for unicode-bom rule (#3259)
 
 ### Bug Fixes
 
@@ -91,11 +96,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 * linter: rewrite react/require-render-return (#3276)
 
-### Features
-
-* linter: add use-isnan fixer for (in)equality operations (#3284)
-* linter/eslint: Implement fixer for unicode-bom rule (#3259)
-
 ## [0.3.4] - 2024-05-13
 
 ### Features
@@ -104,12 +104,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter/eslint: Implement max-classes-per-file (#3241)
 
 ## [0.3.3] - 2024-05-13
-
-### Bug Fixes
-
-* linter: handle `import { default as foo }` in import/named (#3255)
-* linter/default: ignore unsupported files (e.g. .vue)
-* parser: correctly parse cls.fn<C> = x (#3208)
 
 ### Features
 
@@ -127,6 +121,12 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter/import: improve multiple exports error message (#3160)
 * linter/react: add the `rules_of_hooks` rule. (#3071)
 * linter/tree-shaking: add `isPureFunction` (#3175)
+
+### Bug Fixes
+
+* linter: handle `import { default as foo }` in import/named (#3255)
+* linter/default: ignore unsupported files (e.g. .vue)
+* parser: correctly parse cls.fn<C> = x (#3208)
 
 ### Refactor
 
@@ -189,11 +189,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.3.0] - 2024-04-22
 
-### Bug Fixes
-
-* linter: support `-D all -D nursery`
-* linter: fix crashing with `unwrap` in import/no-cycle (#3035)
-
 ### Features
 
 * ast: add `CatchParameter` node (#3049)
@@ -205,15 +200,20 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: support eslint globals (#3038)
 * linter/tree-shaking: support `ExportDefaultDeclaration` (#3052)
 
-### Refactor
+### Bug Fixes
 
-* linter: improve the ergonomics around `ESlintConfig` (#3037)
-* linter/import/no_cycle: use ModuleGraphVisitor. (#3064)
+* linter: support `-D all -D nursery`
+* linter: fix crashing with `unwrap` in import/no-cycle (#3035)
 
 ### Performance
 
 * ast: box typescript enum variants. (#3065)
 * ast: box enum variants (#3058)
+
+### Refactor
+
+* linter: improve the ergonomics around `ESlintConfig` (#3037)
+* linter/import/no_cycle: use ModuleGraphVisitor. (#3064)
 
 ## [0.2.18] - 2024-04-19
 
@@ -244,13 +244,13 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: typescript-eslint/consistent-type-definitions (#2885)
 * linter/tree-shaking: support part BinaryExpression (#2922)
 
-### Refactor
-
-* semantic/jsdoc: Rework JSDoc struct for better Span handling (#2917)
-
 ### Bug Fixes
 
 * linter: import/no-cycle ignore type-only imports (#2924)
+
+### Refactor
+
+* semantic/jsdoc: Rework JSDoc struct for better Span handling (#2917)
 
 ## [0.2.16] - 2024-04-08
 
@@ -275,12 +275,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.2.15] - 2024-03-30
 
-### Bug Fixes
-
-* linter/import: ignore export declaration in no-duplicates (#2863)
-* linter/import: false positive for indirect export in namespace (#2862)
-* linter/max-lines: only report codes that exceed the line limit (#2778)
-
 ### Features
 
 * cli: add tsconfig file validation in LintRunner (#2850)
@@ -295,6 +289,12 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter/tree-shaking: pass CallExpression cases (#2839)
 * linter/tree-shaking: check CallExpression when called (#2809)
 * linter/tree-shaking: detect CallExpression in MemberExpression (#2772)
+
+### Bug Fixes
+
+* linter/import: ignore export declaration in no-duplicates (#2863)
+* linter/import: false positive for indirect export in namespace (#2862)
+* linter/max-lines: only report codes that exceed the line limit (#2778)
 
 ### Refactor
 
@@ -380,21 +380,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.2.11] - 2024-02-26
 
-### Bug Fixes
-
-* linter: Correct configuration file parsing for jsx-no-useless-fragment (#2512)
-* linter: improve import/no-named-as-default (#2494)
-* linter: fix import plugin hanging when ignored modules are imported (#2478)
-* linter: Handle cases where createElement is an Identifier in is_create_element_call (#2474)
-* semantic: Refactor jsdoc finding (#2437)
-
-### Refactor
-
-* ast: remove `TSEnumBody` (#2509)
-* ast: s/TSThisKeyword/TSThisType to align with estree
-* ast: s/NumberLiteral/NumericLiteral to align with estree
-* ast: s/ArrowExpression/ArrowFunctionExpression to align estree
-
 ### Features
 
 * linter: handle cjs `module.exports = {} as default export (#2493)
@@ -411,6 +396,21 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: add boilerplace code for import/namespace,no_deprecated,no_unused_modules (#2470)
 * linter: typescript-eslint: prefer-function-type (#2337)
 
+### Bug Fixes
+
+* linter: Correct configuration file parsing for jsx-no-useless-fragment (#2512)
+* linter: improve import/no-named-as-default (#2494)
+* linter: fix import plugin hanging when ignored modules are imported (#2478)
+* linter: Handle cases where createElement is an Identifier in is_create_element_call (#2474)
+* semantic: Refactor jsdoc finding (#2437)
+
+### Refactor
+
+* ast: remove `TSEnumBody` (#2509)
+* ast: s/TSThisKeyword/TSThisType to align with estree
+* ast: s/NumberLiteral/NumericLiteral to align with estree
+* ast: s/ArrowExpression/ArrowFunctionExpression to align estree
+
 ## [0.2.10] - 2024-02-21
 
 ### Features
@@ -418,21 +418,16 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * codegen: configurable typescript codegen (#2443)
 * linter: eslint no-nonoctal-decimal-escape (#2428)
 
+### Bug Fixes
+
+* semantic: incorrect reference flag for MemberExpression assign (#2433)
+
 ### Refactor
 
 * linter: simplify getting ImportDefaultSpecifier (#2453)
 * linter: improve implementation of no_dupe_class_members based on ClassTable (#2446)- remove `panic!` from examples (#2454) |
 
-### Bug Fixes
-
-* semantic: incorrect reference flag for MemberExpression assign (#2433)
-
 ## [0.2.9] - 2024-02-18
-
-### Refactor
-
-* linter: get arrow expression by scope_id in no_render_return_value (#2424)
-* linter/config: Use serde::Deserialize for config parsing (#2325)
 
 ### Features
 
@@ -453,6 +448,11 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 * lint/no_var_requires: quicker way to check if the `IdentifierReference` point to a global variable (#2376)
 
+### Refactor
+
+* linter: get arrow expression by scope_id in no_render_return_value (#2424)
+* linter/config: Use serde::Deserialize for config parsing (#2325)
+
 ## [0.2.8] - 2024-02-06
 
 ### Features
@@ -462,15 +462,23 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: Implement no_this_before_super with cfg (#2254)
 * semantic: apply ImportSpecifier's binder and remove ModuleDeclaration's binder (#2307)- add typescript-eslint rule array-type (#2292) |
 
-### Refactor
-
-* ast: fix BigInt memory leak by removing it (#2293)
-
 ### Bug Fixes
 
 * linter: fix no_dupe_keys false postive on similar key names (#2291)
 
+### Refactor
+
+* ast: fix BigInt memory leak by removing it (#2293)
+
 ## [0.2.7] - 2024-02-03
+
+### Features
+
+* ast: remove generator property from ArrowFunction (#2260)
+* linter: complete custom components setting (#2234)
+* linter: implement @next/next/no-before-interactive-script-outsi… (#2203)
+* linter: implement @next/next/no-unwanted-polyfillio (#2197)
+* semantic: track cfg index per ast node (#2210)
 
 ### Bug Fixes
 
@@ -484,23 +492,7 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 * linter: remove Regex and change error position (#2188)- use our forked version of miette::Reporter for tests (#2266) |- move all miette usages to `oxc_diagnostics` |
 
-### Features
-
-* ast: remove generator property from ArrowFunction (#2260)
-* linter: complete custom components setting (#2234)
-* linter: implement @next/next/no-before-interactive-script-outsi… (#2203)
-* linter: implement @next/next/no-unwanted-polyfillio (#2197)
-* semantic: track cfg index per ast node (#2210)
-
 ## [0.2.6] - 2024-01-26
-
-### Refactor
-
-* linter: move settings and env to the config module (#2181)
-
-### Bug Fixes
-
-* linter: Rename react_perf/jsx_no_new_function_as_props to jsx_no_new_function_as_prop (#2175)
 
 ### Features
 
@@ -508,18 +500,26 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * semantic: cfg prototype (#2019)
 * transfrom: transform-json-strings (#2168)
 
+### Bug Fixes
+
+* linter: Rename react_perf/jsx_no_new_function_as_props to jsx_no_new_function_as_prop (#2175)
+
+### Refactor
+
+* linter: move settings and env to the config module (#2181)
+
 ## [0.2.5] - 2024-01-25
+
+### Features
+
+* linter: eslint-plugin-jest: prefer-called-with (#2163)
+* linter: eslint: no-void (#2162)
 
 ### Bug Fixes
 
 * codegen: print `Directive` original string (#2157)
 * linter: use correct rule name (#2169)
 * linter: explicit-length-check inside ternary (#2165)
-
-### Features
-
-* linter: eslint-plugin-jest: prefer-called-with (#2163)
-* linter: eslint: no-void (#2162)
 
 ## [0.2.3] - 2024-01-23
 
@@ -545,10 +545,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.2.2] - 2024-01-20
 
-### Refactor
-
-* linter: perfect the scope linter (#2092)
-
 ### Features
 
 * linter: improve no_redeclare rule implementation (#2084)- expose linter RULES and use it for listing (#2083) |
@@ -558,13 +554,11 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: eslint-plugin-import no-named-as-default-member rule (#2071)
 * linter: s/consistent-type-export/consistent-type-exports (#2065)
 
-## [0.2.1] - 2024-01-16
-
 ### Refactor
 
-* linter: move `LintSettings` to its own file (#2052)
-* linter: remove the `LintSettings` parameter from `LintContext::new`. (#2051)
-* linter: move away from tuples for test cases (#2011)
+* linter: perfect the scope linter (#2092)
+
+## [0.2.1] - 2024-01-16
 
 ### Features
 
@@ -582,6 +576,12 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: false positive for filename_case where filename doesn't have a proper casing (#2032)
 * linter: keep rules disabled if the rule is not enabled in the config (#2031)
 * linter: fix false positive for `erasing-op` in `0/0` case (#2009)
+
+### Refactor
+
+* linter: move `LintSettings` to its own file (#2052)
+* linter: remove the `LintSettings` parameter from `LintContext::new`. (#2051)
+* linter: move away from tuples for test cases (#2011)
 
 ## [0.2.0] - 2024-01-12
 
@@ -621,23 +621,15 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: disable no-unused-labels for svelte (#1919)
 * linter: <script> part of svelte file (#1918)
 
-### Refactor
-
-* linter: rename *_partial_loader files (#1916)
-
 ### Bug Fixes
 
 * linter: change no-var to restriction
 
+### Refactor
+
+* linter: rename *_partial_loader files (#1916)
+
 ## [0.1.1] - 2024-01-06
-
-### Bug Fixes
-
-* linter: fix vue parser not working for multiple scripts after <template> (#1904)
-* linter: do not check empty file for vue / astro files (#1900)
-* linter: error rule config in media_has_caption (#1864)
-* linter: unexpected unwrap panic (#1856)
-* linter: ignore false positives in eslint-plugin-react(jsx-key) (#1858)
 
 ### Features
 
@@ -662,16 +654,24 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: refine jsx-a11y settings (#1816)
 * linter: eslint-plugin-jsx-a11y lang (#1812)
 
+### Bug Fixes
+
+* linter: fix vue parser not working for multiple scripts after <template> (#1904)
+* linter: do not check empty file for vue / astro files (#1900)
+* linter: error rule config in media_has_caption (#1864)
+* linter: unexpected unwrap panic (#1856)
+* linter: ignore false positives in eslint-plugin-react(jsx-key) (#1858)
+
+### Performance
+
+* semantic: check duplicate parameters in Binder of FormalParameters (#1840)
+
 ### Refactor
 
 * linter: get js code slice from vue source code (#1876)
 * linter: extract common code (#1848)
 * linter: Simplify Parent Node Access in MediaHasCaption Rule (#1829)
 * semantic: improve ClassTable implmention and merge properties and methods to elements (#1902)
-
-### Performance
-
-* semantic: check duplicate parameters in Binder of FormalParameters (#1840)
 
 ## [0.0.22] - 2023-12-25
 
@@ -724,11 +724,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: add eslint-plugin-import(export) rule (#1654)
 * linter: eslint-plugin-unicorn prefer-dom-node-text-content(style) (#1658)
 
-### Refactor
-
-* linter: use fxHashMap in jsx-a11y settings (#1707)
-* linter: make some jest rules report more detailed (#1666)- use `new_without_config` for `jsx_key` (#1685) |
-
 ### Bug Fixes
 
 * linter: prefer-string-starts-ends-with: ignore `i` and `m` modifiers. (#1688)
@@ -739,25 +734,26 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 * linter/react: find class node by symbols in get_parent_es6_component (#1657)
 
-## [0.0.20] - 2023-12-13
-
 ### Refactor
 
-* linter: separate out the category in the output of `--rules`
+* linter: use fxHashMap in jsx-a11y settings (#1707)
+* linter: make some jest rules report more detailed (#1666)- use `new_without_config` for `jsx_key` (#1685) |
 
-### Bug Fixes
-
-* linter: improve the span message for no-accumulating-spread- improve span for no accumulating spread (#1644) |- remove escapes in no array reduce test cases (#1647) |- remove escapes in prefer regexp test test cases (#1645) |
+## [0.0.20] - 2023-12-13
 
 ### Features
 
 * linter: eslint-plugin-unicorn prefer-modern-dom-apis(style) (#1646)
 
-## [0.0.19] - 2023-12-08
-
 ### Bug Fixes
 
-* linter: improve the key span for jsx-key
+* linter: improve the span message for no-accumulating-spread- improve span for no accumulating spread (#1644) |- remove escapes in no array reduce test cases (#1647) |- remove escapes in prefer regexp test test cases (#1645) |
+
+### Refactor
+
+* linter: separate out the category in the output of `--rules`
+
+## [0.0.19] - 2023-12-08
 
 ### Features
 
@@ -783,6 +779,10 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: eslint-plugin-unicorn prefer-native-coercion-functions (pedantic) (#1507)
 * linter: eslint-plugin-jsx-a11y anchor_is_valid (correctness) (#1477)- eslint-plugin-unicorn (recommended) prefer-node-protocol (#1618) |
 
+### Bug Fixes
+
+* linter: improve the key span for jsx-key
+
 ### Refactor
 - improve pattern match of prefer-reflect-apply (#1630) |
 
@@ -804,6 +804,10 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: eslint-plugin-unicorn/no-abusive-eslint-disable (#1125)
 * prettier: print leading comments with newlines (#1434)
 
+### Bug Fixes
+
+* linter: detect assert function in Await Expression (#1202)
+
 ### Refactor
 
 * lint: replace `parse_jest_fn_*` methods in eslint-plugin-jest(no-standalone-expect) rule (#1231)
@@ -816,10 +820,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: remove unused logic in `resolve_to_jest_fn` (#1208)
 * rust: move to workspace lint table (#1444)
 
-### Bug Fixes
-
-* linter: detect assert function in Await Expression (#1202)
-
 ## [0.0.17] - 2023-11-09
 
 ### Bug Fixes
@@ -827,10 +827,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: fix handling of repeated eslint-disable comments (#1200)
 
 ## [0.0.16] - 2023-11-08
-
-### Refactor
-
-* linter: reduce the lookup times of Call Expression in Jest rules (#1184)- change jest rule's category (#1155) |- split parse_jest_fn_call (#1152) |
 
 ### Features
 
@@ -845,6 +841,10 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 * linter: fix covered span of eslint-disable-next-line comments (#1128)
 * linter/jsx_key: ignore ObjectProterty nodes (#1139)
+
+### Refactor
+
+* linter: reduce the lookup times of Call Expression in Jest rules (#1184)- change jest rule's category (#1155) |- split parse_jest_fn_call (#1152) |
 
 ## [0.0.15] - 2023-10-30
 
@@ -877,13 +877,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.0.14] - 2023-10-23
 
-### Bug Fixes
-
-* linter: point to the opening fragment for jsx_no_useless_fragment
-* linter: incorrect reporting for jsx_key (#1020)
-* linter: fix panic with `strip_prefix` (#1013)
-* linter: fix clippy
-
 ### Features
 
 * linter: eslint-plugin-react: jsx-no-duplicate-props (#1024)
@@ -900,16 +893,19 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * minifier: re-enable mangler (#972)
 * transformer: finish 2016 exponentiation operator (#996)
 
+### Bug Fixes
+
+* linter: point to the opening fragment for jsx_no_useless_fragment
+* linter: incorrect reporting for jsx_key (#1020)
+* linter: fix panic with `strip_prefix` (#1013)
+* linter: fix clippy
+
 ### Refactor
 
 * clippy: allow clippy::too_many_lines
 * clippy: allow struct_excessive_bools
 
 ## [0.0.13] - 2023-09-29
-
-### Bug Fixes
-
-* linter: improve error span for no-thenable
 
 ### Features
 
@@ -933,18 +929,16 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * syntax: add loaded_modules to ModuleRecord
 * transformer: logical assignment operators (#923)- add jest/no-interpolation-in-snapshots rule (#867) |
 
+### Bug Fixes
+
+* linter: improve error span for no-thenable
+
 ### Performance
 
 * linter: early bail out if not jest fn (#885)
 * parser: lazily build trivia map instead of build in-place (#903)
 
 ## [0.0.12] - 2023-09-06
-
-### Bug Fixes
-
-* cli: spawn linting in another thread so diagnostics can be printed immediately
-* linter: fix incorrect behaviour for "-D correctness -A rule-name"
-* linter: no-var-requires not warning if has bindings in ancestors (#799)
 
 ### Features
 
@@ -954,24 +948,24 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: eslint-plugin-jest/expect-expect (#802)
 * linter_plugin: Add linter plugin crate (#798)
 
-### Refactor
+### Bug Fixes
 
-* linter: remove complicated linter service setup
-* linter: clean up Test a bit
-* linter: less a global hashmap to reduce rule timer macro expansion (#822)
+* cli: spawn linting in another thread so diagnostics can be printed immediately
+* linter: fix incorrect behaviour for "-D correctness -A rule-name"
+* linter: no-var-requires not warning if has bindings in ancestors (#799)
 
 ### Performance
 
 * linter: parse ts-directive manually (#845)
 * linter: swap the order of checks for no_caller (#844)
 
-## [0.0.11] - 2023-08-27
-
 ### Refactor
 
-* linter: move the label message to help
-* linter: extract `is_valid_jest_call` (#781)
-* linter: clean up tester with fixes (#773)
+* linter: remove complicated linter service setup
+* linter: clean up Test a bit
+* linter: less a global hashmap to reduce rule timer macro expansion (#822)
+
+## [0.0.11] - 2023-08-27
 
 ### Features
 
@@ -984,6 +978,12 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 * linter: show the escaped span for no-useless-escape (#790)
 
+### Refactor
+
+* linter: move the label message to help
+* linter: extract `is_valid_jest_call` (#781)
+* linter: clean up tester with fixes (#773)
+
 ## [0.0.10] - 2023-08-21
 
 ### Bug Fixes
@@ -991,6 +991,22 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * cli: fix a race condition where the program will hang
 
 ## [0.0.8] - 2023-08-21
+
+### Features
+
+* linter: implement eslint-plugin-unicorn/no-instanceof-array (#752)
+* linter: add no-commented-out-tests (#723)
+* linter: implement typescript-eslint/ban-ts-comment (#741)
+* linter: implement @eslint/no-shadow-restricted-names (#617) (#728)
+* linter: implement @typescript-eslint/no-duplicate-enum-values (#726)
+* linter: valid-describe-callback(eslint-plugin-jest) (#706)
+* linter: implement @typescript-eslint/prefer-as-const (#707)
+* linter: @typescript-eslint/no-namespace (#703)
+* linter: implement `no-undef` (#672)
+* linter: add no-extra-boolean-cast rule (#677)
+* linter: enable module record builder
+* linter: no-focused-test(eslint-jest-plugin) (#609)
+* resolver: add tracing (#710)- vscode extension (#690) |
 
 ### Bug Fixes
 
@@ -1015,35 +1031,7 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * cli,linter: move LintOptions from cli to linter (#753)
 * linter: manually declare lint rules because `cargo fmt` breaks (#671)
 
-### Features
-
-* linter: implement eslint-plugin-unicorn/no-instanceof-array (#752)
-* linter: add no-commented-out-tests (#723)
-* linter: implement typescript-eslint/ban-ts-comment (#741)
-* linter: implement @eslint/no-shadow-restricted-names (#617) (#728)
-* linter: implement @typescript-eslint/no-duplicate-enum-values (#726)
-* linter: valid-describe-callback(eslint-plugin-jest) (#706)
-* linter: implement @typescript-eslint/prefer-as-const (#707)
-* linter: @typescript-eslint/no-namespace (#703)
-* linter: implement `no-undef` (#672)
-* linter: add no-extra-boolean-cast rule (#677)
-* linter: enable module record builder
-* linter: no-focused-test(eslint-jest-plugin) (#609)
-* resolver: add tracing (#710)- vscode extension (#690) |
-
 ## [0.0.7] - 2023-07-29
-
-### Performance
-
-* linter: reduce mallocs (#654)
-
-### Bug Fixes
-
-* linter: improve the span for no-inner-declarations
-* linter: change no-control-regex to severity warning
-* linter: make disable directives work with plugin rule names
-* linter: change no-var-requires to severity warning
-* linter: change severity of `no-this-alias` from error to warning- no return await error (#539) |
 
 ### Features
 
@@ -1060,6 +1048,18 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: implement eslint rule `no-return-await` (#529)
 * linter: no disabled tests(eslint-jest-plugin) (#507)
 * linter: implement `no-misused-new` (#525)- add eslint/no-obj-calls (#508) |
+
+### Bug Fixes
+
+* linter: improve the span for no-inner-declarations
+* linter: change no-control-regex to severity warning
+* linter: make disable directives work with plugin rule names
+* linter: change no-var-requires to severity warning
+* linter: change severity of `no-this-alias` from error to warning- no return await error (#539) |
+
+### Performance
+
+* linter: reduce mallocs (#654)
 
 ### Refactor
 
@@ -1079,16 +1079,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.0.5] - 2023-07-01
 
-### Refactor
-
-* linter: improve span for no-case-declarations
-* linter: remove redundant backticks from no-constant-binary-expression's error message
-
-### Bug Fixes
-
-* linter: fix no_useless_escape crashing on unicode boundaries
-* linter: fix error message for no_dupe_keys
-
 ### Features
 
 * linter: implement no-prototype-builtins
@@ -1101,6 +1091,16 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * linter: implement no-unsafe-finally
 * linter: implement no-unsafe-optional-chaining
 * linter: implement no-useless-catch
+
+### Bug Fixes
+
+* linter: fix no_useless_escape crashing on unicode boundaries
+* linter: fix error message for no_dupe_keys
+
+### Refactor
+
+* linter: improve span for no-case-declarations
+* linter: remove redundant backticks from no-constant-binary-expression's error message
 
 ## [0.0.4] - 2023-06-28
 

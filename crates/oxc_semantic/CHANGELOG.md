@@ -13,6 +13,11 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.13.2] - 2024-06-03
 
+### Features
+
+* linter/jsdoc: Implement require-returns rule (#3218)
+* transformer: add `TraverseCtx::generate_uid` (#3394)
+
 ### Bug Fixes
 
 * linter: memorize visited block id in `neighbors_filtered_by_edge_weight` (#3407)
@@ -23,11 +28,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 * ast: move scope from `TSModuleBlock` to `TSModuleDeclaration` (#3488)
 * semantic: use a simpler way to resolve reference for ReferenceFlag::Type (#3430)- compile less test binaries to speed up CI (#3414) |
-
-### Features
-
-* linter/jsdoc: Implement require-returns rule (#3218)
-* transformer: add `TraverseCtx::generate_uid` (#3394)
 
 ## [0.13.1] - 2024-05-22
 
@@ -46,6 +46,13 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * semantic: report that enum member must have initializer (#3113)
 * semantic: report namespace related errors (#3093)
 
+### Bug Fixes
+
+* semantic: add `cfg` nodes for `ConditionalExpression`s. (#3127)
+* semantic: connect `test` expression of `for` statements to the cfg. (#3122)
+* semantic: revert test code pushed to the main by accident. (#3085)
+* semantic: allow `root_node` to be empty for empty trees. (#3084)
+
 ### Refactor
 
 * ast: squash nested enums (#3115)
@@ -55,34 +62,27 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * semantic: unify diagnostic in checker
 * syntax: move number related functions to number module (#3130)- clean up more diagnostics usages |- remove all usages of `Into<Error>` |
 
-### Bug Fixes
-
-* semantic: add `cfg` nodes for `ConditionalExpression`s. (#3127)
-* semantic: connect `test` expression of `for` statements to the cfg. (#3122)
-* semantic: revert test code pushed to the main by accident. (#3085)
-* semantic: allow `root_node` to be empty for empty trees. (#3084)
-
 ## [0.12.5] - 2024-04-22
-
-### Bug Fixes
-
-* semantic: correctly resolve identifiers inside catch parameter initializers (#3050)
-* semantic: correctly resolve identifiers inside parameter initializers (#3046)
 
 ### Features
 
 * ast: add `CatchParameter` node (#3049)
 * semantic: add root node to the `AstNodes` structure. (#3032)
 
-## [0.12.4] - 2024-04-19
-
 ### Bug Fixes
 
-* semantic/jsdoc: Skip parsing `@` inside of backticks (#3017)
+* semantic: correctly resolve identifiers inside catch parameter initializers (#3050)
+* semantic: correctly resolve identifiers inside parameter initializers (#3046)
+
+## [0.12.4] - 2024-04-19
 
 ### Features
 
 * semantic/jsdoc: Handle optional type syntax for type name part (#2960)
+
+### Bug Fixes
+
+* semantic/jsdoc: Skip parsing `@` inside of backticks (#3017)
 
 ## [0.12.3] - 2024-04-11
 
@@ -92,13 +92,13 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ## [0.12.2] - 2024-04-08
 
-### Bug Fixes
-
-* semantic: symbols inside functions and classes incorrectly flagged as exported (#2896)
-
 ### Features
 
 * linter: Implement jsdoc/check-access (#2642)
+
+### Bug Fixes
+
+* semantic: symbols inside functions and classes incorrectly flagged as exported (#2896)
 
 ## [0.12.1] - 2024-04-03
 
@@ -107,6 +107,11 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * semantic: flag function expressions with `SymbolFlags::Function` (#2891)
 
 ## [0.11.0] - 2024-03-30
+
+### Features
+
+* semantic: distinguish type imports in ModuleRecord (#2785)
+* semantic/jsdoc: Add `Span` for JSDoc, JSDocTag (#2815)
 
 ### Bug Fixes
 
@@ -120,18 +125,7 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * semantic: distinguish whether requested_modules is type imports/exports (#2848)
 * semantic/jsdoc: JSDocTag parser rework (#2765)
 
-### Features
-
-* semantic: distinguish type imports in ModuleRecord (#2785)
-* semantic/jsdoc: Add `Span` for JSDoc, JSDocTag (#2815)
-
 ## [0.10.0] - 2024-03-14
-
-### Refactor
-
-* ast: refactor `Trivias` API - have less noise around it (#2692)
-* ast: import `Tsify` to shorten code (#2665)
-* ast: shorten manual TS defs (#2638)- remove unused dependencies (#2718) |- reduce `cfg_attr` boilerplate with `SerAttrs` derive (#2669) |- "wasm" feature enable "serde" feature (#2639) |- make `CompactStr` immutable (#2620) |- rename `CompactString` to `CompactStr` (#2619) |
 
 ### Features
 
@@ -143,7 +137,18 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * semantic/jsdoc: Support multibyte chars (#2694)
 * semantic/jsdoc: Fix up builder (#2623)
 
+### Refactor
+
+* ast: refactor `Trivias` API - have less noise around it (#2692)
+* ast: import `Tsify` to shorten code (#2665)
+* ast: shorten manual TS defs (#2638)- remove unused dependencies (#2718) |- reduce `cfg_attr` boilerplate with `SerAttrs` derive (#2669) |- "wasm" feature enable "serde" feature (#2639) |- make `CompactStr` immutable (#2620) |- rename `CompactString` to `CompactStr` (#2619) |
+
 ## [0.9.0] - 2024-03-05
+
+### Features
+
+* linter: remove all commonjs logic for import plugin (#2537)
+* transformer: call build module record (#2529)
 
 ### Bug Fixes
 
@@ -154,20 +159,7 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 * semantic/jsdoc: Misc fixes for JSDoc related things (#2531)- replace InlinableString with CompactString for `Atom` (#2517) |
 
-### Features
-
-* linter: remove all commonjs logic for import plugin (#2537)
-* transformer: call build module record (#2529)
-
 ## [0.8.0] - 2024-02-26
-
-### Bug Fixes
-
-* linter: improve import/no-named-as-default (#2494)
-* semantic: add export symbol flag to identifiers in export declarations (#2508)
-* semantic: Should return nearest JSDoc (#2490)
-* semantic: Refactor jsdoc finding (#2437)
-* semantic: incorrect reference flag for MemberExpression assign (#2433)
 
 ### Features
 
@@ -177,6 +169,18 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * semantic: add check for duplicate class elements in checker (#2455)
 * semantic: add static property, ElementKind::Getter, ElementKind::Setter in ClassTable (#2445)
 
+### Bug Fixes
+
+* linter: improve import/no-named-as-default (#2494)
+* semantic: add export symbol flag to identifiers in export declarations (#2508)
+* semantic: Should return nearest JSDoc (#2490)
+* semantic: Refactor jsdoc finding (#2437)
+* semantic: incorrect reference flag for MemberExpression assign (#2433)
+
+### Performance
+
+* semantic: reduce visit parent nodes in resolve_reference_usages (#2419)
+
 ### Refactor
 
 * ast: s/NumberLiteral/NumericLiteral to align with estree
@@ -184,10 +188,6 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * semantic: delete the redundant code in binder (#2423)
 * semantic: reduce allocation in resolve_references_for_current_scope (#2414)
 * semantic: check directive by current_scope_id (#2411)- remove `panic!` from examples (#2454) |
-
-### Performance
-
-* semantic: reduce visit parent nodes in resolve_reference_usages (#2419)
 
 ## [0.7.0] - 2024-02-09
 
@@ -257,13 +257,9 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * semantic: add SymbolFlags::Function for FunctionDeclaration (#1713)
 * transform: support es2015 new target (#1967)
 
-### Refactor
+### Bug Fixes
 
-* semantic: improve ClassTable implmention and merge properties and methods to elements (#1902)
-* semantic: improve check function declaration implementation (#1854)
-* semantic: rename `add_node_id` to `add_current_node_id_to_current_scope` (#1847)
-* semantic: improve check private identifier implementation (#1794)
-* semantic: remove unused methods from `AstNode`
+* semantic: remove duplicate errors in ModuleDeclaration::ImportDeclaration (#1846)
 
 ### Performance
 
@@ -272,9 +268,13 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * semantic: just need to find the AstKind::FormalParameter in is_in_formal_parameters (#1852)
 * semantic: reduce calls to span() (#1851)
 
-### Bug Fixes
+### Refactor
 
-* semantic: remove duplicate errors in ModuleDeclaration::ImportDeclaration (#1846)
+* semantic: improve ClassTable implmention and merge properties and methods to elements (#1902)
+* semantic: improve check function declaration implementation (#1854)
+* semantic: rename `add_node_id` to `add_current_node_id_to_current_scope` (#1847)
+* semantic: improve check private identifier implementation (#1794)
+* semantic: remove unused methods from `AstNode`
 
 ## [0.4.0] - 2023-12-08
 
@@ -305,6 +305,10 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * transformer: finish 2016 exponentiation operator (#996)
 * transformer/react: read comment pragma @jsxRuntime classic / automatic (#1133)
 
+### Bug Fixes
+
+* semantic: make ExportDeclaration span accurate (#928)
+
 ### Refactor
 
 * ast: fix the lifetime annotations around Vist and VisitMut (#973)
@@ -314,15 +318,7 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 * semantic: add scoping test cases (#954)
 
-### Bug Fixes
-
-* semantic: make ExportDeclaration span accurate (#928)
-
 ## [0.2.0] - 2023-09-14
-
-### Performance
-
-* parser: lazily build trivia map instead of build in-place (#903)
 
 ### Features
 
@@ -337,6 +333,10 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 * parser,semantic: make semantic own `Trivias` (#711)
 * semantic: symbol of identifier of top level function declaration should be in the root scope (#843)
 * semantic: nested references (#661)
+
+### Performance
+
+* parser: lazily build trivia map instead of build in-place (#903)
 
 ### Testing
 
