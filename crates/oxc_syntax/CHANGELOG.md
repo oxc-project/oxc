@@ -5,6 +5,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.14.0] - 2024-06-05
+
+### Bug Fixes
+
+* transformer: JSX set `reference_id` on refs to imports (#3524)
+
 ## [0.13.1] - 2024-05-22
 
 ### Features
