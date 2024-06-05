@@ -6,6 +6,11 @@ pub fn pragma_and_pragma_frag_cannot_be_set() -> OxcDiagnostic {
         .with_help("Remove `pragma` and `pragmaFrag` options.")
 }
 
+pub fn invalid_pragma() -> OxcDiagnostic {
+    OxcDiagnostic::warn("pragma and pragmaFrag must be of the form `foo` or `foo.bar`.")
+        .with_help("Fix `pragma` and `pragmaFrag` options.")
+}
+
 pub fn import_source_cannot_be_set() -> OxcDiagnostic {
     OxcDiagnostic::warn("importSource cannot be set when runtime is classic.")
         .with_help("Remove `importSource` option.")
