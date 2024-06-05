@@ -130,32 +130,45 @@ impl<'a> Pragma<'a> {
 // Transforms
 impl<'a> ReactJsx<'a> {
     pub fn new(options: &Rc<ReactOptions>, ctx: &Ctx<'a>) -> Self {
-        let default_runtime = options.runtime;
-        let jsx_runtime_importer =
-            if options.import_source == "react" || default_runtime.is_classic() {
-                let source =
-                    if options.development { "react/jsx-dev-runtime" } else { "react/jsx-runtime" };
-                Atom::from(source)
-            } else {
-                ctx.ast.new_atom(&format!(
-                    "{}/jsx-{}runtime",
-                    options.import_source,
-                    if options.development { "dev-" } else { "" }
-                ))
-            };
-
-        // Parse pragmas
-        let (pragma, pragma_frag) = match options.runtime {
+        // Parse pragmas + import source
+        let (pragma, pragma_frag, jsx_runtime_importer) = match options.runtime {
             ReactJsxRuntime::Classic => {
+                if options.import_source.is_some() {
+                    ctx.error(diagnostics::import_source_cannot_be_set());
+                }
                 let pragma = Pragma::parse(options.pragma.as_ref(), "createElement", ctx);
                 let pragma_frag = Pragma::parse(options.pragma_frag.as_ref(), "Fragment", ctx);
-                (Some(pragma), Some(pragma_frag))
+
+                (Some(pragma), Some(pragma_frag), Atom::empty())
             }
             ReactJsxRuntime::Automatic => {
                 if options.pragma.is_some() || options.pragma_frag.is_some() {
                     ctx.error(diagnostics::pragma_and_pragma_frag_cannot_be_set());
                 }
-                (None, None)
+
+                let jsx_runtime_importer = match options.import_source.as_ref() {
+                    Some(import_source) => {
+                        let mut import_source = import_source.as_str();
+                        if import_source.is_empty() {
+                            ctx.error(diagnostics::invalid_import_source());
+                            import_source = "react";
+                        }
+                        ctx.ast.new_atom(&format!(
+                            "{}/jsx-{}runtime",
+                            import_source,
+                            if options.development { "dev-" } else { "" }
+                        ))
+                    }
+                    None => {
+                        if options.development {
+                            Atom::from("react/jsx-dev-runtime")
+                        } else {
+                            Atom::from("react/jsx-runtime")
+                        }
+                    }
+                };
+
+                (None, None, jsx_runtime_importer)
             }
         };
 
@@ -208,14 +221,9 @@ impl<'a> ReactJsx<'a> {
 impl<'a> ReactJsx<'a> {
     pub fn add_runtime_imports(&mut self, program: &mut Program<'a>) {
         if self.options.runtime.is_classic() {
-            if self.options.import_source != "react" {
-                self.ctx.error(diagnostics::import_source_cannot_be_set());
-            }
-
             if self.can_add_filename_statement {
                 program.body.insert(0, self.jsx_source.get_var_file_name_statement());
             }
-
             return;
         }
 
@@ -316,7 +324,9 @@ impl<'a> ReactJsx<'a> {
 
     fn add_import_create_element(&mut self, ctx: &mut TraverseCtx<'a>) {
         if self.import_create_element.is_none() {
-            let source = ctx.ast.new_atom(&self.options.import_source);
+            let source = ctx
+                .ast
+                .new_atom(self.options.import_source.as_ref().map_or("react", |source| source));
             let id = if self.is_script() {
                 self.add_require_statement("react", source, true, ctx)
             } else {

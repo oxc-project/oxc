@@ -16,6 +16,11 @@ pub fn import_source_cannot_be_set() -> OxcDiagnostic {
         .with_help("Remove `importSource` option.")
 }
 
+pub fn invalid_import_source() -> OxcDiagnostic {
+    OxcDiagnostic::warn("import_source cannot be an empty string")
+        .with_help("Fix `importSource` option.")
+}
+
 pub fn namespace_does_not_support(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Namespace tags are not supported by default. React's JSX doesn't support namespace tags. You can set `throwIfNamespace: false` to bypass this warning.")
 .with_labels([span0.into()])
