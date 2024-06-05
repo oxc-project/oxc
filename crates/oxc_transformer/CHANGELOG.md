@@ -5,6 +5,25 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.14.0] - 2024-06-05
+
+### Performance
+
+* transformer: avoid fragment update where possible (#3535)
+* transformer: JSX parse pragma only once (#3534)
+
+### Refactor
+
+* transformer/typescript: replace reference collector with symbols references (#3533)
+
+### Features
+
+* transformer/typescript: handle namespace directive correctly (#3532)
+
+### Bug Fixes
+
+* transformer: JSX set `reference_id` on refs to imports (#3524)
+
 ## [0.13.3] - 2024-06-04
 
 ### Bug Fixes
