@@ -1,7 +1,9 @@
 use oxc_allocator::{Allocator, Box};
 use oxc_ast::AstBuilder;
 use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_span::CompactStr;
 use oxc_syntax::{
+    reference::{ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
@@ -285,6 +287,55 @@ impl<'a> TraverseCtx<'a> {
     /// This is a shortcut for `ctx.scoping.generate_uid_in_current_scope`.
     pub fn generate_uid_in_current_scope(&mut self, name: &str, flags: SymbolFlags) -> SymbolId {
         self.scoping.generate_uid_in_current_scope(name, flags)
+    }
+
+    /// Create a reference bound to a `SymbolId`.
+    ///
+    /// This is a shortcut for `ctx.scoping.create_bound_reference`.
+    pub fn create_bound_reference(
+        &mut self,
+        name: CompactStr,
+        symbol_id: SymbolId,
+        flag: ReferenceFlag,
+    ) -> ReferenceId {
+        self.scoping.create_bound_reference(name, symbol_id, flag)
+    }
+
+    /// Create an unbound reference.
+    ///
+    /// This is a shortcut for `ctx.scoping.create_unbound_reference`.
+    pub fn create_unbound_reference(
+        &mut self,
+        name: CompactStr,
+        flag: ReferenceFlag,
+    ) -> ReferenceId {
+        self.scoping.create_unbound_reference(name, flag)
+    }
+
+    /// Create a reference optionally bound to a `SymbolId`.
+    ///
+    /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_reference`
+    /// or `TraverseCtx::create_unbound_reference`.
+    ///
+    /// This is a shortcut for `ctx.scoping.create_reference`.
+    pub fn create_reference(
+        &mut self,
+        name: CompactStr,
+        symbol_id: Option<SymbolId>,
+        flag: ReferenceFlag,
+    ) -> ReferenceId {
+        self.scoping.create_reference(name, symbol_id, flag)
+    }
+
+    /// Create reference in current scope, looking up binding for `name`,
+    ///
+    /// This is a shortcut for `ctx.scoping.create_reference_in_current_scope`.
+    pub fn create_reference_in_current_scope(
+        &mut self,
+        name: CompactStr,
+        flag: ReferenceFlag,
+    ) -> ReferenceId {
+        self.scoping.create_reference_in_current_scope(name, flag)
     }
 }
 
