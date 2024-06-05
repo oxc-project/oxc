@@ -41,6 +41,7 @@ pub struct ReactJsx<'a> {
     pub(super) jsx_source: ReactJsxSource<'a>,
 
     // States
+    react_importer: Atom<'a>,
     jsx_runtime_importer: Atom<'a>,
 
     // Doubles as var name for require react
@@ -131,7 +132,7 @@ impl<'a> Pragma<'a> {
 impl<'a> ReactJsx<'a> {
     pub fn new(options: &Rc<ReactOptions>, ctx: &Ctx<'a>) -> Self {
         // Parse pragmas + import source
-        let (pragma, pragma_frag, jsx_runtime_importer) = match options.runtime {
+        let (pragma, pragma_frag, react_importer, jsx_runtime_importer) = match options.runtime {
             ReactJsxRuntime::Classic => {
                 if options.import_source.is_some() {
                     ctx.error(diagnostics::import_source_cannot_be_set());
@@ -139,36 +140,38 @@ impl<'a> ReactJsx<'a> {
                 let pragma = Pragma::parse(options.pragma.as_ref(), "createElement", ctx);
                 let pragma_frag = Pragma::parse(options.pragma_frag.as_ref(), "Fragment", ctx);
 
-                (Some(pragma), Some(pragma_frag), Atom::empty())
+                (Some(pragma), Some(pragma_frag), Atom::empty(), Atom::empty())
             }
             ReactJsxRuntime::Automatic => {
                 if options.pragma.is_some() || options.pragma_frag.is_some() {
                     ctx.error(diagnostics::pragma_and_pragma_frag_cannot_be_set());
                 }
 
-                let jsx_runtime_importer = match options.import_source.as_ref() {
-                    Some(import_source) => {
-                        let mut import_source = import_source.as_str();
-                        if import_source.is_empty() {
+                let (react_importer, jsx_runtime_importer) =
+                    if let Some(import_source) = options.import_source.as_ref() {
+                        let react_importer = if import_source.is_empty() {
                             ctx.error(diagnostics::invalid_import_source());
-                            import_source = "react";
-                        }
-                        ctx.ast.new_atom(&format!(
+                            Atom::from("react")
+                        } else {
+                            ctx.ast.new_atom(import_source)
+                        };
+                        let jsx_runtime_importer = ctx.ast.new_atom(&format!(
                             "{}/jsx-{}runtime",
-                            import_source,
+                            react_importer,
                             if options.development { "dev-" } else { "" }
-                        ))
-                    }
-                    None => {
-                        if options.development {
+                        ));
+                        (react_importer, jsx_runtime_importer)
+                    } else {
+                        let react_importer = Atom::from("react");
+                        let jsx_runtime_importer = if options.development {
                             Atom::from("react/jsx-dev-runtime")
                         } else {
                             Atom::from("react/jsx-runtime")
-                        }
-                    }
-                };
+                        };
+                        (react_importer, jsx_runtime_importer)
+                    };
 
-                (None, None, jsx_runtime_importer)
+                (None, None, react_importer, jsx_runtime_importer)
             }
         };
 
@@ -177,6 +180,7 @@ impl<'a> ReactJsx<'a> {
             ctx: Rc::clone(ctx),
             jsx_self: ReactJsxSelf::new(ctx),
             jsx_source: ReactJsxSource::new(ctx),
+            react_importer,
             jsx_runtime_importer,
             import_create_element: None,
             import_jsx: None,
@@ -324,13 +328,10 @@ impl<'a> ReactJsx<'a> {
 
     fn add_import_create_element(&mut self, ctx: &mut TraverseCtx<'a>) {
         if self.import_create_element.is_none() {
-            let source = ctx
-                .ast
-                .new_atom(self.options.import_source.as_ref().map_or("react", |source| source));
             let id = if self.is_script() {
-                self.add_require_statement("react", source, true, ctx)
+                self.add_require_statement("react", self.react_importer.clone(), true, ctx)
             } else {
-                self.add_import_statement("createElement", source, ctx)
+                self.add_import_statement("createElement", self.react_importer.clone(), ctx)
             };
             self.import_create_element = Some(id);
         }
