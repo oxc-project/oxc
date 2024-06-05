@@ -1,4 +1,7 @@
 mod builder;
+mod dot;
+
+use core::fmt;
 
 use oxc_span::CompactStr;
 use oxc_syntax::operator::{
@@ -156,43 +159,30 @@ pub struct PreservedExpressionState {
     pub store_final_assignments_into_this_array: Vec<Vec<Register>>,
 }
 
-#[must_use]
-fn print_register(register: Register) -> String {
-    match &register {
-        Register::Index(i) => format!("${i}"),
-        Register::Return => "$return".into(),
+impl fmt::Display for Register {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Index(i) => write!(f, "${i}"),
+            Self::Return => write!(f, "$return"),
+        }
     }
 }
 
-#[must_use]
-pub fn print_basic_block(basic_block_elements: &Vec<BasicBlockElement>) -> String {
-    let mut output = String::new();
-    for basic_block in basic_block_elements {
-        match basic_block {
-            BasicBlockElement::Unreachable => output.push_str("Unreachable()\n"),
-            BasicBlockElement::Throw(reg) => {
-                output.push_str(&format!("throw {}\n", print_register(*reg)));
-            }
-
-            BasicBlockElement::Break(Some(reg)) => {
-                output.push_str(&format!("break {}\n", print_register(*reg)));
-            }
-            BasicBlockElement::Break(None) => {
-                output.push_str("break");
-            }
-            BasicBlockElement::Assignment(to, with) => {
-                output.push_str(&format!("{} = ", print_register(*to)));
-
-                match with {
-                    AssignmentValue::ImplicitUndefined => {
-                        output.push_str("<implicit undefined>");
-                    }
-                    AssignmentValue::NotImplicitUndefined => output.push_str("<value>"),
-                }
-
-                output.push('\n');
+impl fmt::Display for BasicBlockElement {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Unreachable => f.write_str("Unreachable()"),
+            Self::Throw(reg) => write!(f, "throw {reg}"),
+            Self::Break(Some(reg)) => write!(f, "break {reg}"),
+            Self::Break(None) => f.write_str("break"),
+            Self::Assignment(to, with) => {
+                // output.push_str(&format!("{} = ", print_register(*to)));
+                let value = match with {
+                    AssignmentValue::ImplicitUndefined => "<implicit undefined>",
+                    AssignmentValue::NotImplicitUndefined => "<value>",
+                };
+                write!(f, "{to} = {value}")
             }
         }
     }
-    output
 }
