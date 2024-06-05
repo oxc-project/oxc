@@ -25,14 +25,16 @@ The Oxidation Compiler is creating a collection of high-performance tools for Ja
 
 Oxc is building a parser, linter, formatter, transpiler, minifier, resolver ... all written in Rust.
 
+See more at [oxc-project.github.io](https://oxc-project.github.io)!
+
 ## 🙋Who's using Oxc?
 
 - [Rolldown] uses the [oxc][docs-oxc-url] crate for parsing.
-- [Rspack][rspack], [Rolldown][rolldown], and [Biome][biome] uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
+- [Rolldown][rolldown], [Rspack][rspack], and [Biome][biome] uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
 
 ## ⚡️ Linter Quick Start
 
-The linter is ready to catch mistakes for you. It comes with 91 rules turned on by default (out of 300 in total) and no configuration is required.
+The linter is ready to catch mistakes for you. It comes with 91 rules turned on by default (out of 340+ in total) and no configuration is required.
 
 To get started, run [oxlint][npm-oxlint] or via `npx`:
 
@@ -56,7 +58,7 @@ To give you an idea of its capabilities, here is an example from the [vscode] re
   <img src="https://raw.githubusercontent.com/Boshen/bench-javascript-linter/main/bar-graph.svg" width="49%">
 </p>
 
-## ⌨️ Programming Usage
+## ⌨️ Rust, Node.js and Wasm Usage
 
 ### Rust
 
@@ -219,11 +221,11 @@ This project was incubated with the assistance of these exceptional mentors and 
 - [quick-lint-js](https://quick-lint-js.com) - [@strager](https://github.com/strager)
 - [elm-review](https://package.elm-lang.org/packages/jfmengels/elm-review/latest) - [@jfmengels](https://github.com/jfmengels)
 
-## ❤️ Sponsors
+## ❤ Who's [Sponsoring Oxc](https://github.com/sponsors/Boshen)?
 
 <p align="center">
   <a href="https://github.com/sponsors/Boshen">
-    <img src="https://cdn.jsdelivr.net/gh/boshen/sponsors/sponsors.svg" alt="My sponsors" />
+    <img src="https://raw.githubusercontent.com/Boshen/sponsors/main/sponsors.svg" alt="My sponsors" />
   </a>
 </p>
 
