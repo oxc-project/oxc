@@ -57,15 +57,6 @@ impl Rule for NoSinglePromiseInPromiseMethods {
             return;
         };
 
-        // if !is_method_call(
-        //     call_expr,
-        //     Some(&["Promise"]),
-        //     Some(&["all", "any", "race"]),
-        //     Some(1),
-        //     Some(1),
-        // ) {
-        //     return false;
-        // }
         if !is_promise_method_with_single_argument(call_expr) {
             return;
         }
@@ -85,10 +76,6 @@ impl Rule for NoSinglePromiseInPromiseMethods {
         if !first.is_expression() {
             return;
         }
-
-        // if !is_promise_method_with_single_element_array(call_expr) {
-        //     return;
-        // }
 
         let info = call_expr
             .callee
