@@ -2,10 +2,7 @@ commit: 64d2eeea
 
 transformer_typescript Summary:
 AST Parsed     : 5243/5243 (100.00%)
-Positive Passed: 5237/5243 (99.89%)
+Positive Passed: 5240/5243 (99.94%)
 Mismatch: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
 Mismatch: "compiler/jsxComplexSignatureHasApplicabilityError.tsx"
-Mismatch: "compiler/jsxEmptyExpressionNotCountedAsChild.tsx"
-Mismatch: "compiler/sourceMapValidationClasses.ts"
-Mismatch: "compiler/styledComponentsInstantiaionLimitNotReached.ts"
 Mismatch: "compiler/tsxReactPropsInferenceSucceedsOnIntersections.tsx"

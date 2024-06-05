@@ -280,15 +280,34 @@ impl<'a> TypeScript<'a> {
         &self,
         arg_name: Atom<'a>,
         real_name: Atom<'a>,
-        stmts: Vec<'a, Statement<'a>>,
+        mut stmts: Vec<'a, Statement<'a>>,
         parent_export: Option<Expression<'a>>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx,
     ) -> Statement<'a> {
+        let mut directives = self.ctx.ast.new_vec();
+
+        // Check if the namespace has a `use strict` directive
+        if stmts.first().is_some_and(|stmt| {
+            matches!(stmt, Statement::ExpressionStatement(es) if
+                matches!(&es.expression, Expression::StringLiteral(literal) if
+                literal.value == "use strict")
+            )
+        }) {
+            stmts.remove(0);
+            let directive = self.ctx.ast.new_atom("use strict");
+            let directive = Directive {
+                span: SPAN,
+                expression: StringLiteral::new(SPAN, directive.clone()),
+                directive,
+            };
+            directives.push(directive);
+        }
+
         // `(function (_N) { var x; })(N || (N = {}))`;
         //  ^^^^^^^^^^^^^^^^^^^^^^^^^^
         let callee = {
-            let body = self.ctx.ast.function_body(SPAN, self.ctx.ast.new_vec(), stmts);
+            let body = self.ctx.ast.function_body(SPAN, directives, stmts);
             let params = {
                 let ident =
                     self.ctx.ast.binding_pattern_identifier(BindingIdentifier::new(SPAN, arg_name));

@@ -1,12 +1,13 @@
 mod diagnostics;
 
-use std::rc::Rc;
+use std::{cell::Cell, rc::Rc};
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{Atom, GetSpan, Span, SPAN};
+use oxc_span::{Atom, CompactStr, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
+    reference::{ReferenceFlag, ReferenceId},
     symbol::{SymbolFlags, SymbolId},
     xml_entities::XML_ENTITIES,
 };
@@ -49,12 +50,53 @@ pub struct ReactJsx<'a> {
     import_jsxs: Option<BoundIdentifier<'a>>,
     import_fragment: Option<BoundIdentifier<'a>>,
 
+    pragma: Option<Pragma<'a>>,
+    pragma_frag: Option<Pragma<'a>>,
+
     can_add_filename_statement: bool,
 }
 
 pub struct BoundIdentifier<'a> {
     pub name: Atom<'a>,
     pub symbol_id: SymbolId,
+}
+
+impl<'a> BoundIdentifier<'a> {
+    /// Create `IdentifierReference` referencing this binding which is read from
+    fn create_read_reference(&self, ctx: &mut TraverseCtx) -> IdentifierReference<'a> {
+        let reference_id = ctx.create_bound_reference(
+            self.name.to_compact_str(),
+            self.symbol_id,
+            ReferenceFlag::Read,
+        );
+        create_read_identifier_reference(SPAN, self.name.clone(), Some(reference_id))
+    }
+}
+
+struct Pragma<'a> {
+    object: Atom<'a>,
+    property: Option<Atom<'a>>,
+}
+
+impl<'a> Pragma<'a> {
+    fn parse(pragma: &str, ast: &AstBuilder<'a>) -> Self {
+        let mut parts = pragma.split('.');
+        let object = ast.new_atom(parts.next().unwrap());
+        let property = parts.next().map(|property| {
+            assert!(parts.next().is_none(), "Invalid pragma");
+            ast.new_atom(property)
+        });
+        Self { object, property }
+    }
+
+    fn create_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        let object = get_read_identifier_reference(SPAN, self.object.clone(), ctx);
+        if let Some(property) = self.property.as_ref() {
+            create_static_member_expression(object, property.clone(), ctx)
+        } else {
+            ctx.ast.identifier_reference_expression(object)
+        }
+    }
 }
 
 // Transforms
@@ -74,6 +116,16 @@ impl<'a> ReactJsx<'a> {
                 ))
             };
 
+        // Parse pragmas
+        let (pragma, pragma_frag) = match options.runtime {
+            ReactJsxRuntime::Classic => {
+                let pragma = Pragma::parse(&options.pragma, &ctx.ast);
+                let pragma_frag = Pragma::parse(&options.pragma_frag, &ctx.ast);
+                (Some(pragma), Some(pragma_frag))
+            }
+            ReactJsxRuntime::Automatic => (None, None),
+        };
+
         Self {
             options: Rc::clone(options),
             ctx: Rc::clone(ctx),
@@ -84,6 +136,8 @@ impl<'a> ReactJsx<'a> {
             import_jsx: None,
             import_jsxs: None,
             import_fragment: None,
+            pragma,
+            pragma_frag,
             can_add_filename_statement: false,
         }
     }
@@ -362,12 +416,13 @@ impl<'a> ReactJsx<'a> {
         let is_development = self.options.development;
 
         let mut arguments = self.ast().new_vec();
-        arguments.push(Argument::from(match e {
+        let (argument_expr, fragment_needs_update) = match e {
             JSXElementOrFragment::Element(e) => {
-                self.transform_element_name(&e.opening_element.name)
+                (self.transform_element_name(&e.opening_element.name, ctx), false)
             }
-            JSXElementOrFragment::Fragment(_) => self.get_fragment(),
-        }));
+            JSXElementOrFragment::Fragment(_) => self.get_fragment(ctx),
+        };
+        arguments.push(Argument::from(argument_expr));
 
         // The key prop in `<div key={true} />`
         let mut key_prop = None;
@@ -482,8 +537,8 @@ impl<'a> ReactJsx<'a> {
 
         self.add_import(e, has_key_after_props_spread, need_jsxs, ctx);
 
-        if is_fragment {
-            self.update_fragment(arguments.first_mut().unwrap());
+        if fragment_needs_update {
+            self.update_fragment(arguments.first_mut().unwrap(), ctx);
         }
 
         // If runtime is automatic that means we always to add `{ .. }` as the second argument even if it's empty
@@ -550,11 +605,15 @@ impl<'a> ReactJsx<'a> {
             );
         }
 
-        let callee = self.get_create_element(has_key_after_props_spread, need_jsxs);
+        let callee = self.get_create_element(has_key_after_props_spread, need_jsxs, ctx);
         self.ast().call_expression(SPAN, callee, arguments, false, None)
     }
 
-    fn transform_element_name(&self, name: &JSXElementName<'a>) -> Expression<'a> {
+    fn transform_element_name(
+        &self,
+        name: &JSXElementName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
         match name {
             JSXElementName::Identifier(ident) => {
                 if ident.name == "this" {
@@ -563,12 +622,12 @@ impl<'a> ReactJsx<'a> {
                     let string = StringLiteral::new(SPAN, ident.name.clone());
                     self.ast().literal_string_expression(string)
                 } else {
-                    let ident = IdentifierReference::new(SPAN, ident.name.clone());
+                    let ident = get_read_identifier_reference(ident.span, ident.name.clone(), ctx);
                     self.ctx.ast.identifier_reference_expression(ident)
                 }
             }
             JSXElementName::MemberExpression(member_expr) => {
-                self.transform_jsx_member_expression(member_expr)
+                self.transform_jsx_member_expression(member_expr, ctx)
             }
             JSXElementName::NamespacedName(name) => {
                 if self.options.throw_if_namespace {
@@ -581,42 +640,56 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
-    fn get_fragment(&self) -> Expression<'a> {
+    /// Create fragment expression.
+    /// `bool` returned is flag for whether identifier is temporary and `update_fragment`
+    /// needs to be called later.
+    fn get_fragment(&mut self, ctx: &mut TraverseCtx<'a>) -> (Expression<'a>, bool) {
         match self.options.runtime {
             ReactJsxRuntime::Classic => {
-                if self.options.pragma_frag == "React.Fragment" {
-                    let object = self.get_react_references();
-                    let property = IdentifierName::new(SPAN, "Fragment".into());
-                    self.ast().static_member_expression(SPAN, object, property, false)
-                } else {
-                    self.get_call_expression_callee(self.options.pragma_frag.as_ref())
-                }
+                let expr = self.pragma_frag.as_ref().unwrap().create_expression(ctx);
+                (expr, false) // false = does not need update
             }
             ReactJsxRuntime::Automatic => {
-                // "_reactJsxRuntime" and "_Fragment" here are temporary. Will be over-written
-                // in `update_fragment` after import is added and correct var name is known.
+                // Use existing import if exists. Otherwise create temporary identifiers,
+                // and signal to over-write them later in `update_fragment` after import is added
+                // and correct var name is known. Correct `reference_id` will also be set then.
                 // We have to do like this so that imports are in same order as Babel's output,
                 // in order to pass Babel's tests.
                 // TODO(improve-on-babel): Remove this workaround if output doesn't need to match
                 // Babel's exactly.
                 if self.is_script() {
-                    self.get_static_member_expression(
-                        Atom::from("_reactJsxRuntime"),
-                        Atom::from("Fragment"),
-                    )
+                    if let Some(id) = self.import_jsx.as_ref() {
+                        let expr = create_static_member_expression(
+                            id.create_read_reference(ctx),
+                            Atom::from("Fragment"),
+                            ctx,
+                        );
+                        (expr, false) // false = does not need update
+                    } else {
+                        let expr = create_static_member_expression(
+                            create_read_identifier_reference(SPAN, Atom::empty(), None),
+                            Atom::from("Fragment"),
+                            ctx,
+                        );
+                        (expr, true) // true = needs update
+                    }
                 } else {
-                    let ident = IdentifierReference::new(SPAN, Atom::from("_Fragment"));
-                    self.ast().identifier_reference_expression(ident)
+                    #[allow(clippy::collapsible_else_if)]
+                    if let Some(id) = self.import_fragment.as_ref() {
+                        let ident = id.create_read_reference(ctx);
+                        let expr = ctx.ast.identifier_reference_expression(ident);
+                        (expr, false) // false = does not need update
+                    } else {
+                        let ident = create_read_identifier_reference(SPAN, Atom::empty(), None);
+                        let expr = ctx.ast.identifier_reference_expression(ident);
+                        (expr, true) // true = needs update
+                    }
                 }
             }
         }
     }
 
-    fn update_fragment(&self, arg: &mut Argument<'a>) {
-        if self.options.runtime != ReactJsxRuntime::Automatic {
-            return;
-        }
-
+    fn update_fragment(&self, arg: &mut Argument<'a>, ctx: &mut TraverseCtx<'a>) {
         let (id, local_id) = if self.is_script() {
             let Argument::StaticMemberExpression(member_expr) = arg else { unreachable!() };
             let Expression::Identifier(id) = &mut member_expr.object else {
@@ -627,21 +700,23 @@ impl<'a> ReactJsx<'a> {
             let Argument::Identifier(id) = arg else { unreachable!() };
             (id, self.import_fragment.as_ref().unwrap())
         };
+
         id.name = local_id.name.clone();
-        // TODO: Set `reference_id`
+        id.reference_id = Cell::new(Some(ctx.create_bound_reference(
+            CompactStr::from(local_id.name.as_str()),
+            local_id.symbol_id,
+            ReferenceFlag::Read,
+        )));
     }
 
-    fn get_create_element(&self, has_key_after_props_spread: bool, jsxs: bool) -> Expression<'a> {
+    fn get_create_element(
+        &self,
+        has_key_after_props_spread: bool,
+        jsxs: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
         match self.options.runtime {
-            ReactJsxRuntime::Classic => {
-                if self.options.pragma == "React.createElement" {
-                    let object = self.get_react_references();
-                    let property = IdentifierName::new(SPAN, "createElement".into());
-                    self.ast().static_member_expression(SPAN, object, property, false)
-                } else {
-                    self.get_call_expression_callee(self.options.pragma.as_ref())
-                }
-            }
+            ReactJsxRuntime::Classic => self.pragma.as_ref().unwrap().create_expression(ctx),
             ReactJsxRuntime::Automatic => {
                 if self.is_script() {
                     let (object_id, property_name) = if has_key_after_props_spread {
@@ -656,8 +731,8 @@ impl<'a> ReactJsx<'a> {
                         };
                         (self.import_jsx.as_ref().unwrap(), property_name)
                     };
-                    // TODO: Set `reference_id`
-                    self.get_static_member_expression(object_id.name.clone(), property_name)
+                    let ident = object_id.create_read_reference(ctx);
+                    create_static_member_expression(ident, property_name, ctx)
                 } else {
                     let id = if has_key_after_props_spread {
                         self.import_create_element.as_ref().unwrap()
@@ -666,54 +741,29 @@ impl<'a> ReactJsx<'a> {
                     } else {
                         self.import_jsx.as_ref().unwrap()
                     };
-                    // TODO: Set `reference_id`
-                    let ident = IdentifierReference::new(SPAN, id.name.clone());
+                    let ident = id.create_read_reference(ctx);
                     self.ast().identifier_reference_expression(ident)
                 }
             }
         }
     }
 
-    fn get_react_references(&self) -> Expression<'a> {
-        let ident = IdentifierReference::new(SPAN, "React".into());
-        self.ast().identifier_reference_expression(ident)
-    }
-
-    fn get_static_member_expression(
+    fn transform_jsx_member_expression(
         &self,
-        object_ident_name: Atom<'a>,
-        property_name: Atom<'a>,
+        expr: &JSXMemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let property = IdentifierName::new(SPAN, property_name);
-        let ident = IdentifierReference::new(SPAN, object_ident_name);
-        let object = self.ast().identifier_reference_expression(ident);
-        self.ast().static_member_expression(SPAN, object, property, false)
-    }
-
-    /// Get the callee from `pragma` and `pragmaFrag`
-    fn get_call_expression_callee(&self, literal_callee: &str) -> Expression<'a> {
-        let mut callee = literal_callee.split('.');
-        let member = self.ast().new_atom(callee.next().unwrap());
-        if let Some(property_name) = callee.next() {
-            self.get_static_member_expression(member, self.ast().new_atom(property_name))
-        } else {
-            let ident = IdentifierReference::new(SPAN, member);
-            self.ast().identifier_reference_expression(ident)
-        }
-    }
-
-    fn transform_jsx_member_expression(&self, expr: &JSXMemberExpression<'a>) -> Expression<'a> {
         let object = match &expr.object {
             JSXMemberExpressionObject::Identifier(ident) => {
                 if ident.name == "this" {
                     self.ast().this_expression(SPAN)
                 } else {
-                    let ident = IdentifierReference::new(SPAN, ident.name.clone());
+                    let ident = get_read_identifier_reference(ident.span, ident.name.clone(), ctx);
                     self.ast().identifier_reference_expression(ident)
                 }
             }
             JSXMemberExpressionObject::MemberExpression(expr) => {
-                self.transform_jsx_member_expression(expr)
+                self.transform_jsx_member_expression(expr, ctx)
             }
         };
         let property = IdentifierName::new(SPAN, expr.property.name.clone());
@@ -909,4 +959,40 @@ impl<'a> ReactJsx<'a> {
             String::from_utf8_unchecked(buffer)
         }
     }
+}
+
+/// Create `IdentifierReference` for var name in current scope which is read from
+fn get_read_identifier_reference<'a>(
+    span: Span,
+    name: Atom<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) -> IdentifierReference<'a> {
+    let reference_id =
+        ctx.create_reference_in_current_scope(name.to_compact_str(), ReferenceFlag::Read);
+    create_read_identifier_reference(span, name, Some(reference_id))
+}
+
+/// Create `IdentifierReference` which is read from
+#[inline]
+fn create_read_identifier_reference(
+    span: Span,
+    name: Atom,
+    reference_id: Option<ReferenceId>,
+) -> IdentifierReference {
+    IdentifierReference {
+        span,
+        name,
+        reference_id: Cell::new(reference_id),
+        reference_flag: ReferenceFlag::Read,
+    }
+}
+
+fn create_static_member_expression<'a>(
+    object_ident: IdentifierReference<'a>,
+    property_name: Atom<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> Expression<'a> {
+    let object = ctx.ast.identifier_reference_expression(object_ident);
+    let property = IdentifierName::new(SPAN, property_name);
+    ctx.ast.static_member_expression(SPAN, object, property, false)
 }

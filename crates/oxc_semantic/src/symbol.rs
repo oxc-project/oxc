@@ -145,6 +145,10 @@ impl SymbolTable {
         &self.references[reference_id]
     }
 
+    pub fn get_reference_mut(&mut self, reference_id: ReferenceId) -> &mut Reference {
+        &mut self.references[reference_id]
+    }
+
     pub fn has_binding(&self, reference_id: ReferenceId) -> bool {
         self.references[reference_id].symbol_id().is_some()
     }

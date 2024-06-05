@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to this crate will be documented in this file.
+All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
@@ -9,183 +9,176 @@ and this project does not adhere to [Semantic Versioning](https://semver.org/spe
 
 ### Features
 
-- Export `is_reserved_keyword` and `is_global_object` method (#3384)
+* syntax: export `is_reserved_keyword` and `is_global_object` method (#3384)
 
 ### Bug Fixes
 
-- Do no add __self when the jsx is inside constructor (#3258)
+* transformer: do no add __self when the jsx is inside constructor (#3258)
 
 ## [0.13.0] - 2024-05-14
 
-### Features
-
-- Add scope flags to `TraverseCtx` (#3229)
-- Add `ToJsInt32` trait for f64 (#3132)
-- Add `ToJsString` trait for f64 (#3131)
-
 ### Bug Fixes
 
-- Create scope for function nested in class method (#3234)
+* traverse: create scope for function nested in class method (#3234)
+
+### Features
+
+* syntax: add `ToJsInt32` trait for f64 (#3132)
+* syntax: add `ToJsString` trait for f64 (#3131)
+* traverse: add scope flags to `TraverseCtx` (#3229)
 
 ### Refactor
 
-- Move number related functions to number module (#3130)
-- Use `FxHashMap` for `ModuleRecord::request_modules` (#3124)
+* syntax: move number related functions to number module (#3130)
+* syntax: use `FxHashMap` for `ModuleRecord::request_modules` (#3124)
 
 ## [0.12.5] - 2024-04-22
 
 ### Features
 
-- Module graph visitor. (#3062)
+* syntax: module graph visitor. (#3062)
 
 ### Bug Fixes
 
-- Correctly resolve identifiers inside parameter initializers (#3046)
+* semantic: correctly resolve identifiers inside parameter initializers (#3046)
 
 ### Refactor
 
-- Implement same traits on all fieldless enums (#3031)
+* ast: implement same traits on all fieldless enums (#3031)
 
 ## [0.12.2] - 2024-04-08
 
 ### Bug Fixes
 
-- Symbols inside functions and classes incorrectly flagged as exported (#2896)
+* semantic: symbols inside functions and classes incorrectly flagged as exported (#2896)
 
-## [0.11.1] - 2024-04-03
+## [0.12.1] - 2024-04-03
 
 ### Features
 
-- Add compiler assumptions (#2872)
+* transformer: add compiler assumptions (#2872)
 
 ## [0.11.0] - 2024-03-30
 
-### Features
-
-- Distinguish type imports in ModuleRecord (#2785)
-
 ### Bug Fixes
 
-- Ignore export declaration in no-duplicates (#2863)
+* linter/import: ignore export declaration in no-duplicates (#2863)
 
 ### Refactor
 
-- Distinguish whether requested_modules is type imports/exports (#2848)
+* semantic: distinguish whether requested_modules is type imports/exports (#2848)
+
+### Features
+
+* semantic: distinguish type imports in ModuleRecord (#2785)
 
 ## [0.10.0] - 2024-03-14
 
 ### Features
 
-- Merge features `serde` and `wasm` to `serialize` (#2716)
-- Resolve ESM star exports (#2682)
+* linter: resolve ESM star exports (#2682)- merge features `serde` and `wasm` to `serialize` (#2716) |
 
 ### Refactor
 
-- Derive `SerAttrs` on all AST types (#2698)
-- Reduce `cfg_attr` boilerplate with `SerAttrs` derive (#2669)
-- Import `Tsify` to shorten code (#2665)
-- "wasm" feature enable "serde" feature (#2639)
-- Shorten manual TS defs (#2638)
-- Rename `CompactString` to `CompactStr` (#2619)
+* ast: import `Tsify` to shorten code (#2665)
+* ast: shorten manual TS defs (#2638)- derive `SerAttrs` on all AST types (#2698) |- reduce `cfg_attr` boilerplate with `SerAttrs` derive (#2669) |- "wasm" feature enable "serde" feature (#2639) |- rename `CompactString` to `CompactStr` (#2619) |
 
 ## [0.9.0] - 2024-03-05
 
 ### Features
 
-- Remove all commonjs logic for import plugin (#2537)
+* linter: remove all commonjs logic for import plugin (#2537)
 
 ## [0.8.0] - 2024-02-26
 
-### Features
-
-- Handle cjs `module.exports.foo = bar` and `exports.foo = bar` (#2492)
-- Implement `Debug` for `ModuleRecord` (#2488)
-- Improve codegen (#2460)
-- Add static property, ElementKind::Getter, ElementKind::Setter in ClassTable (#2445)
-
 ### Bug Fixes
 
-- Improve import/no-named-as-default (#2494)
+* linter: improve import/no-named-as-default (#2494)
+
+### Features
+
+* Codegen: Improve codegen (#2460)
+* linter: handle cjs `module.exports.foo = bar` and `exports.foo = bar` (#2492)
+* semantic: add static property, ElementKind::Getter, ElementKind::Setter in ClassTable (#2445)
+* syntax: implement `Debug` for `ModuleRecord` (#2488)
 
 ### Refactor
 
-- Get arrow expression by scope_id in no_render_return_value (#2424)
+* linter: get arrow expression by scope_id in no_render_return_value (#2424)
 
 ## [0.7.0] - 2024-02-09
 
 ### Bug Fixes
 
-- Remove unnecessary SymbolFlags::Import (#2311)
+* semantic: remove unnecessary SymbolFlags::Import (#2311)
 
 ## [0.6.0] - 2024-02-03
 
 ### Features
 
-- Remove serde skip for symbol_id and reference_id (#2220)
-- TypeScript definition for wasm target (#2158)
-- Remove import if only have type reference (#2001)
-
-### Bug Fixes
-
-- Add parenthesis in binary expression by precedence (#2067)
+* ast: remove serde skip for symbol_id and reference_id (#2220)
+* ast: TypeScript definition for wasm target (#2158)
+* transformer/typescript: remove import if only have type reference (#2001)
 
 ### Refactor
 
-- Don't re-export `unicode_id_start`
-- Make `is_identifier` methods consistent
-- ASCII tables static not const (#2128)
-- Reformat identifier byte tables (#2111)
+* parser: make `is_identifier` methods consistent
+* syntax: don't re-export `unicode_id_start`
+* syntax: ASCII tables static not const (#2128)
+* syntax: reformat identifier byte tables (#2111)
+
+### Bug Fixes
+
+* codegen: add parenthesis in binary expression by precedence (#2067)
 
 ## [0.5.0] - 2024-01-12
 
 ### Features
 
-- Allow reserved keyword defined in ts module block (#1907)
-- Visualize symbol (#1886)
-- Improve check super implementation, reduce access nodes (#1827)
-- Add ClassTable (#1793)
-- Add eslint-plugin-import(export) rule (#1654)
+* linter: add eslint-plugin-import(export) rule (#1654)
+* playground: visualize symbol (#1886)
+* semantic: allow reserved keyword defined in ts module block (#1907)
+* semantic: improve check super implementation, reduce access nodes (#1827)
+* semantic: add ClassTable (#1793)
 
 ### Refactor
 
-- Improve ClassTable implmention and merge properties and methods to elements (#1902)
+* semantic: improve ClassTable implmention and merge properties and methods to elements (#1902)
 
 ## [0.4.0] - 2023-12-08
 
 ### Features
 
-- Binaryish expressions with parens (#1597)
-- Check parens for `(let)[a] = 1` (#1585)
-- Support quoteProps option in PropertyKey (#1578)
+* prettier: binaryish expressions with parens (#1597)
+* prettier: check parens for `(let)[a] = 1` (#1585)
+* prettier: support quoteProps option in PropertyKey (#1578)
 
 ### Refactor
 
-- Move to workspace lint table (#1444)
+* rust: move to workspace lint table (#1444)
 
 ## [0.3.0] - 2023-11-06
 
 ### Features
 
-- Escape xhtml in jsx attributes (#1088)
-- Read plugins options from babel `options.json` (#1006)
-- Check non-simple lhs expression of assignment expression (#994)
-- Partially re-enable minifier (#963)
-- Logical assignment operators (#923)
+* minifier: partially re-enable minifier (#963)
+* semantic: check non-simple lhs expression of assignment expression (#994)
+* transformer: logical assignment operators (#923)
+* transformer/jsx: escape xhtml in jsx attributes (#1088)
+* transformer_conformance: read plugins options from babel `options.json` (#1006)
 
 ## [0.2.0] - 2023-09-14
 
 ### Features
 
-- Add loaded_modules to ModuleRecord
-- Add `SymbolId` and `ReferenceId` (#755)
-- Initialize conditions folding (#658)
+* ast: add `SymbolId` and `ReferenceId` (#755)
+* minifier: initialize conditions folding (#658)
+* syntax: add loaded_modules to ModuleRecord
+
+### Refactor
+- improve code coverage a little bit |- improve code coverage in various places (#721) |
 
 ### Performance
 
-- Reduce mallocs (#654)
-
-### Refactor
-
-- Improve code coverage a little bit
-- Improve code coverage in various places (#721)
+* linter: reduce mallocs (#654)
 

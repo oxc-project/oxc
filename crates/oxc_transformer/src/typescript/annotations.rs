@@ -9,9 +9,8 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
+use oxc_traverse::TraverseCtx;
 use rustc_hash::FxHashSet;
-
-use super::collector::TypeScriptReferenceCollector;
 
 pub struct TypeScriptAnnotations<'a> {
     #[allow(dead_code)]
@@ -25,6 +24,7 @@ pub struct TypeScriptAnnotations<'a> {
     has_jsx_fragment: bool,
     jsx_element_import_name: String,
     jsx_fragment_import_name: String,
+    type_identifier_names: FxHashSet<Atom<'a>>,
 }
 
 impl<'a> TypeScriptAnnotations<'a> {
@@ -50,6 +50,7 @@ impl<'a> TypeScriptAnnotations<'a> {
             has_jsx_fragment: false,
             jsx_element_import_name,
             jsx_fragment_import_name,
+            type_identifier_names: FxHashSet::default(),
         }
     }
 
@@ -82,19 +83,20 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     // Remove type only imports/exports
     pub fn transform_program_on_exit(
-        &self,
+        &mut self,
         program: &mut Program<'a>,
-        references: &TypeScriptReferenceCollector,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        let mut type_names = FxHashSet::default();
         let mut module_count = 0;
         let mut removed_count = 0;
+
+        // let mut type_identifier_names = self.type_identifier_names.clone();
 
         program.body.retain_mut(|stmt| {
             // fix namespace/export-type-only/input.ts
             // The namespace is type only. So if its name appear in the ExportNamedDeclaration, we should remove it.
             if let Statement::TSModuleDeclaration(decl) = stmt {
-                type_names.insert(decl.id.name().clone());
+                self.type_identifier_names.insert(decl.id.name().clone());
                 return false;
             }
 
@@ -106,7 +108,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                 ModuleDeclaration::ExportNamedDeclaration(decl) => {
                     decl.specifiers.retain(|specifier| {
                         !(specifier.export_kind.is_type()
-                            || type_names.contains(specifier.exported.name()))
+                            || self.type_identifier_names.contains(specifier.exported.name()))
                     });
 
                     decl.export_kind.is_type()
@@ -116,6 +118,9 @@ impl<'a> TypeScriptAnnotations<'a> {
                                 .as_ref()
                                 .is_some_and(Declaration::is_typescript_syntax))
                             && decl.specifiers.is_empty())
+                }
+                ModuleDeclaration::ExportAllDeclaration(decl) => {
+                    return !decl.export_kind.is_type()
                 }
                 ModuleDeclaration::ImportDeclaration(decl) => {
                     let is_type = decl.import_kind.is_type();
@@ -127,7 +132,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                         specifiers.retain(|specifier| match specifier {
                             ImportDeclarationSpecifier::ImportSpecifier(s) => {
                                 if is_type || s.import_kind.is_type() {
-                                    type_names.insert(s.local.name.clone());
+                                    self.type_identifier_names.insert(s.local.name.clone());
                                     return false;
                                 }
 
@@ -135,32 +140,31 @@ impl<'a> TypeScriptAnnotations<'a> {
                                     return true;
                                 }
 
-                                references.has_reference(&s.local.name)
-                                    || self.is_jsx_imports(&s.local.name)
+                                self.has_value_reference(&s.local.name, ctx)
                             }
                             ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
                                 if is_type {
-                                    type_names.insert(s.local.name.clone());
+                                    self.type_identifier_names.insert(s.local.name.clone());
                                     return false;
                                 }
 
                                 if self.options.only_remove_type_imports {
                                     return true;
                                 }
-                                references.has_reference(&s.local.name)
-                                    || self.is_jsx_imports(&s.local.name)
+
+                                self.has_value_reference(&s.local.name, ctx)
                             }
                             ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
                                 if is_type {
-                                    type_names.insert(s.local.name.clone());
+                                    self.type_identifier_names.insert(s.local.name.clone());
+                                    return false;
                                 }
 
                                 if self.options.only_remove_type_imports {
                                     return true;
                                 }
 
-                                references.has_reference(&s.local.name)
-                                    || self.is_jsx_imports(&s.local.name)
+                                self.has_value_reference(&s.local.name, ctx)
                             }
                         });
                     }
@@ -427,5 +431,33 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_jsx_fragment(&mut self, _elem: &mut JSXFragment<'a>) {
         self.has_jsx_fragment = true;
+    }
+
+    pub fn transform_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
+        let is_type = decl.export_kind.is_type();
+        for specifier in &decl.specifiers {
+            if is_type || specifier.export_kind.is_type() {
+                self.type_identifier_names.insert(specifier.local.name().clone());
+            }
+        }
+    }
+
+    pub fn has_value_reference(&self, name: &Atom<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        if let Some(symbol_id) = ctx.scopes().get_root_binding(name) {
+            if ctx.symbols().get_flag(symbol_id).is_export()
+                && !self.type_identifier_names.contains(name)
+            {
+                return true;
+            }
+            if ctx
+                .symbols()
+                .get_resolved_references(symbol_id)
+                .any(|reference| !reference.is_type())
+            {
+                return true;
+            }
+        }
+
+        self.is_jsx_imports(name)
     }
 }

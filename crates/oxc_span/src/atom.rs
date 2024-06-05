@@ -24,6 +24,13 @@ pub const MAX_INLINE_LEN: usize = 16;
 #[cfg_attr(feature = "serialize", serde(transparent))]
 pub struct Atom<'a>(&'a str);
 
+impl Atom<'static> {
+    #[inline]
+    pub const fn empty() -> Self {
+        Atom("")
+    }
+}
+
 impl<'a> Atom<'a> {
     #[inline]
     pub fn as_str(&self) -> &'a str {
