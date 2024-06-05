@@ -222,7 +222,16 @@ mod test {
         let result = test(args);
         assert!(result.number_of_rules > 0);
         assert!(result.number_of_warnings > 0);
-        assert_eq!(result.number_of_errors, 0);
+        assert_eq!(result.number_of_errors, 1);
+    }
+
+    #[test]
+    fn default_path() {
+        let args = &["fixtures/default_path/test.js"];
+        let result = test(args);
+        assert!(result.number_of_rules > 0);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 1);
     }
 
     #[test]

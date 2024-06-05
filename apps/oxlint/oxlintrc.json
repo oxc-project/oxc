@@ -1,0 +1,5 @@
+{
+    "rules": {
+        "no-delete-var": "error"
+    }
+}
