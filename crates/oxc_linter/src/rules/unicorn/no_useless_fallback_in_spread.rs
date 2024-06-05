@@ -2,15 +2,17 @@ use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::LogicalOperator;
 
-use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
+use crate::{
+    ast_util::outermost_paren_parent, context::LintContext, fixer::Fix, rule::Rule, AstNode,
+};
 
-fn no_useless_fallback_in_spread_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_useless_fallback_in_spread_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals")
         .with_help("Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.")
-        .with_labels([span0.into()])
+        .with_labels([span.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -75,7 +77,29 @@ impl Rule for NoUselessFallbackInSpread {
             return;
         }
 
-        ctx.diagnostic(no_useless_fallback_in_spread_diagnostic(spread_element.span));
+        let diagnostic = no_useless_fallback_in_spread_diagnostic(spread_element.span);
+
+        if can_fix(&logical_expression.left) {
+            ctx.diagnostic_with_fix(diagnostic, || {
+                let left_text = logical_expression.left.span().source_text(ctx.source_text());
+                Fix::new(format!("...{left_text}"), spread_element.span)
+            });
+        } else {
+            ctx.diagnostic(diagnostic);
+        }
+    }
+}
+
+fn can_fix(left: &Expression<'_>) -> bool {
+    const BANNED_IDENTIFIERS: [&str; 3] = ["undefined", "NaN", "Infinity"];
+    match left.without_parenthesized() {
+        Expression::Identifier(ident) => !BANNED_IDENTIFIERS.contains(&ident.name.as_str()),
+        Expression::LogicalExpression(expr) => can_fix(&expr.left),
+        Expression::ObjectExpression(_)
+        | Expression::CallExpression(_)
+        | Expression::StaticMemberExpression(_)
+        | Expression::ComputedMemberExpression(_) => true,
+        _ => false,
     }
 }
 
@@ -131,5 +155,15 @@ fn test() {
         r"const object = {...(document.all || {})}",
     ];
 
-    Tester::new(NoUselessFallbackInSpread::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        //
+        (r"const object = {...(foo || {})}", r"const object = {...foo}"),
+        (r"const object = {...(foo() || {})}", r"const object = {...foo()}"),
+        (r"const object = {...((foo && {}) || {})}", "const object = {...(foo && {})}"),
+        (r"const object = {...(0 || {})}", r"const object = {...(0 || {})}"),
+        (r"const object = {...(NaN || {})}", r"const object = {...(NaN || {})}"),
+        (r"const object = {...(Infinity || {})}", r"const object = {...(Infinity || {})}"),
+    ];
+
+    Tester::new(NoUselessFallbackInSpread::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
