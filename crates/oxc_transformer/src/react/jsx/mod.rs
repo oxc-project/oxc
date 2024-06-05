@@ -416,12 +416,13 @@ impl<'a> ReactJsx<'a> {
         let is_development = self.options.development;
 
         let mut arguments = self.ast().new_vec();
-        arguments.push(Argument::from(match e {
+        let (argument_expr, fragment_needs_update) = match e {
             JSXElementOrFragment::Element(e) => {
-                self.transform_element_name(&e.opening_element.name, ctx)
+                (self.transform_element_name(&e.opening_element.name, ctx), false)
             }
             JSXElementOrFragment::Fragment(_) => self.get_fragment(ctx),
-        }));
+        };
+        arguments.push(Argument::from(argument_expr));
 
         // The key prop in `<div key={true} />`
         let mut key_prop = None;
@@ -536,7 +537,7 @@ impl<'a> ReactJsx<'a> {
 
         self.add_import(e, has_key_after_props_spread, need_jsxs, ctx);
 
-        if is_fragment {
+        if fragment_needs_update {
             self.update_fragment(arguments.first_mut().unwrap(), ctx);
         }
 
@@ -639,41 +640,56 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
-    fn get_fragment(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    /// Create fragment expression.
+    /// `bool` returned is flag for whether identifier is temporary and `update_fragment`
+    /// needs to be called later.
+    fn get_fragment(&mut self, ctx: &mut TraverseCtx<'a>) -> (Expression<'a>, bool) {
         match self.options.runtime {
-            ReactJsxRuntime::Classic => self.pragma_frag.as_ref().unwrap().create_expression(ctx),
+            ReactJsxRuntime::Classic => {
+                let expr = self.pragma_frag.as_ref().unwrap().create_expression(ctx);
+                (expr, false) // false = does not need update
+            }
             ReactJsxRuntime::Automatic => {
-                // "_reactJsxRuntime" and "_Fragment" here are temporary. Will be over-written
-                // in `update_fragment` after import is added and correct var name is known,
-                // and correct `reference_id` will be set then.
+                // Use existing import if exists. Otherwise create temporary identifiers,
+                // and signal to over-write them later in `update_fragment` after import is added
+                // and correct var name is known. Correct `reference_id` will also be set then.
                 // We have to do like this so that imports are in same order as Babel's output,
                 // in order to pass Babel's tests.
                 // TODO(improve-on-babel): Remove this workaround if output doesn't need to match
                 // Babel's exactly.
                 if self.is_script() {
-                    create_static_member_expression(
-                        create_read_identifier_reference(
-                            SPAN,
-                            Atom::from("_reactJsxRuntime"),
-                            None,
-                        ),
-                        Atom::from("Fragment"),
-                        ctx,
-                    )
+                    if let Some(id) = self.import_jsx.as_ref() {
+                        let expr = create_static_member_expression(
+                            id.create_read_reference(ctx),
+                            Atom::from("Fragment"),
+                            ctx,
+                        );
+                        (expr, false) // false = does not need update
+                    } else {
+                        let expr = create_static_member_expression(
+                            create_read_identifier_reference(SPAN, Atom::empty(), None),
+                            Atom::from("Fragment"),
+                            ctx,
+                        );
+                        (expr, true) // true = needs update
+                    }
                 } else {
-                    let ident =
-                        create_read_identifier_reference(SPAN, Atom::from("_Fragment"), None);
-                    self.ast().identifier_reference_expression(ident)
+                    #[allow(clippy::collapsible_else_if)]
+                    if let Some(id) = self.import_fragment.as_ref() {
+                        let ident = id.create_read_reference(ctx);
+                        let expr = ctx.ast.identifier_reference_expression(ident);
+                        (expr, false) // false = does not need update
+                    } else {
+                        let ident = create_read_identifier_reference(SPAN, Atom::empty(), None);
+                        let expr = ctx.ast.identifier_reference_expression(ident);
+                        (expr, true) // true = needs update
+                    }
                 }
             }
         }
     }
 
     fn update_fragment(&self, arg: &mut Argument<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.runtime != ReactJsxRuntime::Automatic {
-            return;
-        }
-
         let (id, local_id) = if self.is_script() {
             let Argument::StaticMemberExpression(member_expr) = arg else { unreachable!() };
             let Expression::Identifier(id) = &mut member_expr.object else {
