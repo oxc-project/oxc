@@ -583,11 +583,8 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
             AstKind::PropertyDefinition(def) => {
                 return def.type_annotation.is_some();
             }
-            AstKind::ExpressionStatement(_) => {
-                let Some(expr_parent) = get_parent_node(ctx.nodes().get_node(ancestor), ctx) else {
-                    return false;
-                };
-                if !matches!(expr_parent.kind(), AstKind::FunctionBody(_)) {
+            AstKind::ExpressionStatement(expr) => {
+                if !matches!(expr.expression, Expression::ArrowFunctionExpression(_)) {
                     return false;
                 }
             }
@@ -1627,19 +1624,19 @@ fn test() {
             None,
             None,
         ),
-        // (
-        //     "
-        // 	let anyValue: any;
-        // 	function foo(): any {
-        // 	  anyValue = () => () => console.log('aa');
-        // 	}
-        // 	      ",
-        //     Some(
-        //         serde_json::json!([        {          "allowTypedFunctionExpressions": true,        },      ]),
-        //     ),
-        //     None,
-        //     None,
-        // ),
+        (
+            "
+        	let anyValue: any;
+        	function foo(): any {
+        	  anyValue = () => () => console.log('aa');
+        	}
+        	      ",
+            Some(
+                serde_json::json!([        {          "allowTypedFunctionExpressions": true,        },      ]),
+            ),
+            None,
+            None,
+        ),
         (
             "
         	class Foo {

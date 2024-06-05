@@ -173,6 +173,15 @@ expression: explicit_function_return_type
   help: Require explicit return types on functions and class methods.
 
   ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:4:32]
+ 3 │             function foo(): any {
+ 4 │               anyValue = () => () => console.log('aa');
+   ·                                   ──
+ 5 │             }
+   ╰────
+  help: Require explicit return types on functions and class methods.
+
+  ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:4:35]
  3 │               foo(): any {
  4 │                 const bar = () => () => {
