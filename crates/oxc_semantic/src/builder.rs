@@ -448,12 +448,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             flags
         });
         program.scope_id.set(Some(self.current_scope_id));
-        self.enter_node(kind);
 
         /* cfg */
         let error_harness = self.cfg.attach_error_harness(ErrorEdgeKind::Implicit);
         let _program_basic_block = self.cfg.new_basic_block_normal();
         /* cfg - must be above directives as directives are in cfg */
+
+        self.enter_node(kind);
 
         for directive in &program.directives {
             self.visit_directive(directive);
