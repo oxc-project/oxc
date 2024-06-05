@@ -34,7 +34,6 @@ digraph {
     1 -> 2 [ label = "Normal" ]
     2 -> 3 [ label = "Normal" ]
     8 -> 2 [ label = "Backedge" ]
-    8 -> 9 [ label = "Normal" ]
     2 -> 9 [ label = "Normal" ]
     5 -> 2 [ label = "Jump" ]
 }

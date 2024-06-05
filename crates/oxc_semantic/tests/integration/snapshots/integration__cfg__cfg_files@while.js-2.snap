@@ -32,7 +32,6 @@ digraph {
     3 -> 4 [ label = "Normal" ]
     4 -> 7 [ label = "Normal" ]
     8 -> 4 [ label = "Backedge" ]
-    8 -> 9 [ label = "Normal" ]
     4 -> 9 [ label = "Normal" ]
     10 -> 2 [ label = "Error(Implicit)" ]
     9 -> 10 [ label = "Unreachable" , style = "dotted" ]
