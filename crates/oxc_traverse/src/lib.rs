@@ -60,6 +60,8 @@
 //! scheme could very easily be derailed entirely by a single mistake, so in my opinion, it's unwise
 //! to edit by hand.
 
+use std::path::PathBuf;
+
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_semantic::SemanticBuilder;
@@ -147,6 +149,7 @@ pub fn traverse_mut<'a, Tr: Traverse<'a>>(
 ) {
     let semantic = SemanticBuilder::new(source_text, source_type)
         .with_check_syntax_error(true)
+        .build_module_record(PathBuf::default(), program)
         .build(program)
         .semantic;
     let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();

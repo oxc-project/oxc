@@ -60,6 +60,10 @@ impl Reference {
         self.symbol_id = Some(symbol_id);
     }
 
+    pub fn flag_mut(&mut self) -> &mut ReferenceFlag {
+        &mut self.flag
+    }
+
     /// Returns `true` if the identifier value was read. This is not mutually
     /// exclusive with [`#is_write`]
     pub fn is_read(&self) -> bool {
