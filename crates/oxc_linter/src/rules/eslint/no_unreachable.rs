@@ -139,6 +139,17 @@ fn test() {
         } finally {
         }
         ",
+        "
+        switch (authType) {
+          case 1:
+            return a();
+          case 2:
+            return b();
+          case 3:
+            return c();
+        }
+        d();
+        "
     ];
 
     let fail = vec![
