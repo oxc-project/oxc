@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use oxc_ast::{
     ast::{BindingPattern, BindingPatternKind, Expression, FormalParameters, MethodDefinitionKind},
     AstKind,
@@ -8,8 +9,9 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, JSDoc};
 use oxc_span::Span;
 use regex::Regex;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
+use std::sync::Mutex;
 
 use crate::{
     context::LintContext,
@@ -90,6 +92,11 @@ fn default_check_types_pattern() -> String {
     "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$".to_string() // spellchecker:disable-line
 }
 
+// For perf, cache regex is needed
+lazy_static! {
+    static ref REGEX_CACHE: Mutex<FxHashMap<String, Regex>> = Mutex::new(FxHashMap::default());
+}
+
 impl Rule for RequireParam {
     fn from_configuration(value: serde_json::Value) -> Self {
         value
@@ -159,8 +166,12 @@ impl Rule for RequireParam {
         let shallow_tags =
             tags_to_check.iter().filter(|(name, _)| !name.contains('.')).collect::<Vec<_>>();
 
-        let check_types_regex = Regex::new(config.check_types_pattern.as_str())
-            .expect("`config.checkTypesPattern` should be a valid regex pattern");
+        let mut regex_cache = REGEX_CACHE.lock().unwrap();
+        let check_types_regex =
+            regex_cache.entry(config.check_types_pattern.clone()).or_insert_with(|| {
+                Regex::new(config.check_types_pattern.as_str())
+                    .expect("`config.checkTypesPattern` should be a valid regex pattern")
+            });
 
         let mut violations = vec![];
         for (idx, param) in params_to_check.iter().enumerate() {
@@ -400,7 +411,7 @@ fn is_name_equal(a: &str, b: &str) -> bool {
         match (a_chars.next(), b_chars.next()) {
             (Some(ac), Some(bc)) if ac == bc => continue,
             (None, None) => return true, // Both done
-            _ => return false,           // Either one is done
+            _ => return false,           // Either one is done, or not equal
         }
     }
 }
