@@ -12,7 +12,11 @@ use oxc_traverse::TraverseCtx;
 
 use crate::context::Ctx;
 
-pub use self::{display_name::ReactDisplayName, jsx::ReactJsx, options::ReactOptions};
+pub use self::{
+    display_name::ReactDisplayName,
+    jsx::ReactJsx,
+    options::{ReactJsxRuntime, ReactOptions},
+};
 
 /// [Preset React](https://babel.dev/docs/babel-preset-react)
 ///

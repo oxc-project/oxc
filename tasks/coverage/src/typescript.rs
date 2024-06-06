@@ -81,6 +81,10 @@ impl TypeScriptCase {
     pub fn set_result(&mut self, result: TestResult) {
         self.result = result;
     }
+
+    pub fn meta(&self) -> &TypeScriptTestMeta {
+        &self.meta
+    }
 }
 
 impl Case for TypeScriptCase {
@@ -133,8 +137,8 @@ impl Case for TypeScriptCase {
     }
 }
 
-struct TypeScriptTestMeta {
-    pub tests: Vec<TestUnitData>,
+pub struct TypeScriptTestMeta {
+    pub(self) tests: Vec<TestUnitData>,
     pub options: CompilerOptions,
     error_files: Vec<String>,
 }
@@ -224,7 +228,7 @@ struct TestUnitData {
 
 #[derive(Debug)]
 #[allow(unused)]
-struct CompilerOptions {
+pub struct CompilerOptions {
     pub modules: Vec<String>,
     pub targets: Vec<String>,
     pub strict: bool,

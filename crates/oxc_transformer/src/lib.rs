@@ -37,7 +37,7 @@ pub use crate::{
     es2015::{ArrowFunctionsOptions, ES2015Options},
     options::BabelOptions,
     options::TransformOptions,
-    react::ReactOptions,
+    react::{ReactJsxRuntime, ReactOptions},
     typescript::TypeScriptOptions,
 };
 
