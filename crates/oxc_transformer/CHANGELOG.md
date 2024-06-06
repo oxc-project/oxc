@@ -2,6 +2,37 @@
 
 All notable changes to this package will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
+
+## [0.13.4] - 2024-06-06
+
+### Features
+
+* coverage/transformer: handle @jsx option (#3553)
+* transformer/typescript: handle namespace directive correctly (#3532)
+
+### Bug Fixes
+
+* transformer: store `react_importer` in `Bindings` in JSX transform (#3551)
+* transformer: correct spans for JSX transform (#3549)
+* transformer: JSX set `reference_id` on refs to imports (#3524)
+
+### Performance
+
+* transformer: avoid fragment update where possible (#3535)
+* transformer: JSX parse pragma only once (#3534)
+
+### Refactor
+
+* transformer: pass `Rc`s by value (#3550)
+* transformer: remove `update_fragment` from JSX transform (#3541)
+* transformer: combine import and usage in JSX transform (#3540)
+* transformer/typescript: replace reference collector with symbols references (#3533)
+
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
