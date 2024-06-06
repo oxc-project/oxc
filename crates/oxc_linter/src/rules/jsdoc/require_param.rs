@@ -102,7 +102,7 @@ impl Rule for RequireParam {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Collected targets from `FormalParameters`
         let params_to_check = match node.kind() {
-            AstKind::Function(func) => collect_params(&func.params),
+            AstKind::Function(func) if !func.is_typescript_syntax() => collect_params(&func.params),
             AstKind::ArrowFunctionExpression(arrow_func) => collect_params(&arrow_func.params),
             // If not a function, skip
             _ => return,
@@ -117,8 +117,6 @@ impl Rule for RequireParam {
         };
 
         let config = &self.0;
-        let check_types_regex = Regex::new(config.check_types_pattern.as_str())
-            .expect("`config.checkTypesPattern` should be a valid regex pattern");
         let settings = &ctx.settings().jsdoc;
 
         // If config disabled checking, skip
@@ -160,6 +158,9 @@ impl Rule for RequireParam {
         let tags_to_check = collect_tags(&jsdocs, &settings.resolve_tag_name("param"));
         let shallow_tags =
             tags_to_check.iter().filter(|(name, _)| !name.contains('.')).collect::<Vec<_>>();
+
+        let check_types_regex = Regex::new(config.check_types_pattern.as_str())
+            .expect("`config.checkTypesPattern` should be a valid regex pattern");
 
         let mut violations = vec![];
         for (idx, param) in params_to_check.iter().enumerate() {
