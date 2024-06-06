@@ -20,13 +20,13 @@ pub struct ES2015<'a> {
 }
 
 impl<'a> ES2015<'a> {
-    pub fn new(options: ES2015Options, ctx: &Ctx<'a>) -> Self {
+    pub fn new(options: ES2015Options, ctx: Ctx<'a>) -> Self {
         Self {
             arrow_functions: ArrowFunctions::new(
                 options.arrow_function.clone().unwrap_or_default(),
-                ctx,
+                Rc::clone(&ctx),
             ),
-            ctx: Rc::clone(ctx),
+            ctx,
             options,
         }
     }

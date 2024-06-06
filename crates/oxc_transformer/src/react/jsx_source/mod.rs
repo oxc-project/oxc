@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
@@ -25,8 +23,8 @@ pub struct ReactJsxSource<'a> {
 }
 
 impl<'a> ReactJsxSource<'a> {
-    pub fn new(ctx: &Ctx<'a>) -> Self {
-        Self { ctx: Rc::clone(ctx) }
+    pub fn new(ctx: Ctx<'a>) -> Self {
+        Self { ctx }
     }
 
     pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {

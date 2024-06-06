@@ -299,14 +299,14 @@ impl<'a> Pragma<'a> {
 
 // Transforms
 impl<'a> ReactJsx<'a> {
-    pub fn new(options: &Rc<ReactOptions>, ctx: &Ctx<'a>) -> Self {
+    pub fn new(options: Rc<ReactOptions>, ctx: Ctx<'a>) -> Self {
         let bindings = match options.runtime {
             ReactJsxRuntime::Classic => {
                 if options.import_source.is_some() {
                     ctx.error(diagnostics::import_source_cannot_be_set());
                 }
-                let pragma = Pragma::parse(options.pragma.as_ref(), "createElement", ctx);
-                let pragma_frag = Pragma::parse(options.pragma_frag.as_ref(), "Fragment", ctx);
+                let pragma = Pragma::parse(options.pragma.as_ref(), "createElement", &ctx);
+                let pragma_frag = Pragma::parse(options.pragma_frag.as_ref(), "Fragment", &ctx);
                 Bindings::Classic(ClassicBindings { pragma, pragma_frag })
             }
             ReactJsxRuntime::Automatic => {
@@ -338,14 +338,14 @@ impl<'a> ReactJsx<'a> {
 
                 if ctx.source_type.is_script() {
                     Bindings::AutomaticScript(AutomaticScriptBindings::new(
-                        Rc::clone(ctx),
-                        Rc::clone(options),
+                        Rc::clone(&ctx),
+                        Rc::clone(&options),
                         jsx_runtime_importer,
                     ))
                 } else {
                     Bindings::AutomaticModule(AutomaticModuleBindings::new(
-                        Rc::clone(ctx),
-                        Rc::clone(options),
+                        Rc::clone(&ctx),
+                        Rc::clone(&options),
                         jsx_runtime_importer,
                     ))
                 }
@@ -353,9 +353,9 @@ impl<'a> ReactJsx<'a> {
         };
 
         Self {
-            options: Rc::clone(options),
-            ctx: Rc::clone(ctx),
-            jsx_self: ReactJsxSelf::new(ctx),
+            options,
+            ctx: Rc::clone(&ctx),
+            jsx_self: ReactJsxSelf::new(Rc::clone(&ctx)),
             jsx_source: ReactJsxSource::new(ctx),
             bindings,
             can_add_filename_statement: false,

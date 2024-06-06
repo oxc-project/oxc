@@ -48,14 +48,14 @@ pub struct TypeScript<'a> {
 }
 
 impl<'a> TypeScript<'a> {
-    pub fn new(options: TypeScriptOptions, ctx: &Ctx<'a>) -> Self {
-        let options = Rc::new(options.update_with_comments(ctx));
+    pub fn new(options: TypeScriptOptions, ctx: Ctx<'a>) -> Self {
+        let options = Rc::new(options.update_with_comments(&ctx));
 
         Self {
-            annotations: TypeScriptAnnotations::new(&options, ctx),
-            r#enum: TypeScriptEnum::new(ctx),
+            annotations: TypeScriptAnnotations::new(&options, Rc::clone(&ctx)),
+            r#enum: TypeScriptEnum::new(Rc::clone(&ctx)),
             options,
-            ctx: Rc::clone(ctx),
+            ctx,
         }
     }
 }

@@ -74,9 +74,9 @@ impl<'a> Transformer<'a> {
         ));
         Self {
             ctx: Rc::clone(&ctx),
-            x0_typescript: TypeScript::new(options.typescript, &ctx),
-            x1_react: React::new(options.react, &ctx),
-            x3_es2015: ES2015::new(options.es2015, &ctx),
+            x0_typescript: TypeScript::new(options.typescript, Rc::clone(&ctx)),
+            x1_react: React::new(options.react, Rc::clone(&ctx)),
+            x3_es2015: ES2015::new(options.es2015, ctx),
         }
     }
 

@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
@@ -39,9 +37,9 @@ pub struct ArrowFunctions<'a> {
 }
 
 impl<'a> ArrowFunctions<'a> {
-    pub fn new(options: ArrowFunctionsOptions, ctx: &Ctx<'a>) -> Self {
+    pub fn new(options: ArrowFunctionsOptions, ctx: Ctx<'a>) -> Self {
         Self {
-            ctx: Rc::clone(ctx),
+            ctx,
             _options: options,
             uid: 0,
             has_this: false,
