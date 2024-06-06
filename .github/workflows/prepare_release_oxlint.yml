@@ -1,7 +1,10 @@
-name: Prepare Release Crates
+name: Prepare Release Oxlint
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - prepare-release-oxlint
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,7 +16,7 @@ permissions:
 
 jobs:
   prepare_release:
-    name: Prepare Release Crates
+    name: Prepare Release Oxlint
     uses: ./.github/workflows/reusable_prepare_release.yml
     with:
-      name: crates
+      name: oxlint
