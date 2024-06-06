@@ -504,13 +504,6 @@ impl<'a> ReactJsx<'a> {
         let is_development = self.options.development;
 
         let mut arguments = self.ast().new_vec();
-        let (argument_expr, fragment_needs_update) = match e {
-            JSXElementOrFragment::Element(e) => {
-                (self.transform_element_name(&e.opening_element.name, ctx), false)
-            }
-            JSXElementOrFragment::Fragment(_) => self.get_fragment(ctx),
-        };
-        arguments.push(Argument::from(argument_expr));
 
         // The key prop in `<div key={true} />`
         let mut key_prop = None;
@@ -623,9 +616,17 @@ impl<'a> ReactJsx<'a> {
             }
         }
 
-        if fragment_needs_update {
-            self.update_fragment(arguments.first_mut().unwrap(), ctx);
-        }
+        // It would be better to push to `arguments` earlier, rather than use `insert`.
+        // But we have to do it here to replicate the same import order as Babel, in order to pass
+        // Babel's conformance tests.
+        // TODO(improve-on-babel): Change this if we can handle differing output in tests.
+        let argument_expr = match e {
+            JSXElementOrFragment::Element(e) => {
+                self.transform_element_name(&e.opening_element.name, ctx)
+            }
+            JSXElementOrFragment::Fragment(_) => self.get_fragment(ctx),
+        };
+        arguments.insert(0, Argument::from(argument_expr));
 
         // If runtime is automatic that means we always to add `{ .. }` as the second argument even if it's empty
         if is_automatic || !properties.is_empty() {
@@ -726,54 +727,19 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
-    /// Create fragment expression.
-    /// `bool` returned is flag for whether identifier is temporary and `update_fragment`
-    /// needs to be called later.
-    fn get_fragment(&mut self, ctx: &mut TraverseCtx<'a>) -> (Expression<'a>, bool) {
-        match &self.bindings {
-            Bindings::Classic(bindings) => {
-                let expr = bindings.pragma_frag.create_expression(ctx);
-                let needs_update = false;
-                (expr, needs_update)
-            }
+    fn get_fragment(&mut self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        match &mut self.bindings {
+            Bindings::Classic(bindings) => bindings.pragma_frag.create_expression(ctx),
             Bindings::AutomaticScript(bindings) => {
-                let (object_ident, needs_update) = match bindings.require_jsx.as_ref() {
-                    Some(id) => (id.create_read_reference(ctx), false),
-                    None => (create_read_identifier_reference(SPAN, Atom::empty(), None), true),
-                };
+                let object_ident = bindings.require_jsx(ctx);
                 let property_name = Atom::from("Fragment");
-                let expr = create_static_member_expression(object_ident, property_name, ctx);
-                (expr, needs_update)
+                create_static_member_expression(object_ident, property_name, ctx)
             }
             Bindings::AutomaticModule(bindings) => {
-                let (ident, needs_update) = match bindings.import_fragment.as_ref() {
-                    Some(id) => (id.create_read_reference(ctx), false),
-                    None => (create_read_identifier_reference(SPAN, Atom::empty(), None), true),
-                };
-                let expr = ctx.ast.identifier_reference_expression(ident);
-                (expr, needs_update)
+                let ident = bindings.import_fragment(ctx);
+                ctx.ast.identifier_reference_expression(ident)
             }
         }
-    }
-
-    fn update_fragment(&mut self, arg: &mut Argument<'a>, ctx: &mut TraverseCtx<'a>) {
-        let (id, new_id) = match &mut self.bindings {
-            Bindings::AutomaticScript(bindings) => {
-                let Argument::StaticMemberExpression(member_expr) = arg else { unreachable!() };
-                let Expression::Identifier(id) = &mut member_expr.object else {
-                    unreachable!();
-                };
-                (id, bindings.require_jsx(ctx))
-            }
-            Bindings::AutomaticModule(bindings) => {
-                let Argument::Identifier(id) = arg else { unreachable!() };
-                (id, bindings.import_fragment(ctx))
-            }
-            Bindings::Classic(_) => unreachable!(),
-        };
-
-        id.name = new_id.name;
-        id.reference_id = new_id.reference_id;
     }
 
     fn get_create_element(
