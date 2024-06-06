@@ -1,6 +1,6 @@
 commit: 4bd1b2c2
 
-Passed: 478/926
+Passed: 469/926
 
 # All Passed:
 * babel-preset-react
@@ -445,11 +445,20 @@ Passed: 478/926
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (134/150)
+# babel-plugin-transform-typescript (125/150)
+* cast/multiple-assert-and-assign/input.ts
+* class/accessor-allowDeclareFields-false/input.ts
+* class/accessor-allowDeclareFields-true/input.ts
+* class/methods/input.ts
+* class/private-method-override/input.ts
 * enum/mix-references/input.ts
 * enum/ts5.0-const-foldable/input.ts
 * exports/declared-types/input.ts
+* exports/default-function/input.ts
+* exports/interface/input.ts
 * imports/type-only-export-specifier-2/input.ts
+* lvalues/as-expression/input.ts
+* lvalues/type-assertion/input.ts
 * optimize-const-enums/custom-values/input.ts
 * optimize-const-enums/custom-values-exported/input.ts
 * optimize-const-enums/declare/input.ts

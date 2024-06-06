@@ -53,10 +53,14 @@ fn get_result(
     )
     .build(&mut program);
 
-    let source_text1 =
-        Codegen::<false>::new(&filename, source_text, CodegenOptions::default(), None)
-            .build(&program)
-            .source_text;
+    let source_text1 = Codegen::<false>::new(
+        &filename,
+        source_text,
+        CodegenOptions::default().with_typescript(true),
+        None,
+    )
+    .build(&program)
+    .source_text;
 
     let parse_result2 = Parser::new(&allocator, &source_text1, source_type).parse();
     let mut program = parse_result2.program;
@@ -71,10 +75,14 @@ fn get_result(
     )
     .build(&mut program);
 
-    let source_text2 =
-        Codegen::<false>::new(&filename, &source_text1, CodegenOptions::default(), None)
-            .build(&program)
-            .source_text;
+    let source_text2 = Codegen::<false>::new(
+        &filename,
+        &source_text1,
+        CodegenOptions::default().with_typescript(true),
+        None,
+    )
+    .build(&program)
+    .source_text;
 
     let result = source_text1 == source_text2;
 

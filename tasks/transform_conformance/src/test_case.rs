@@ -182,9 +182,14 @@ pub trait TestCase {
         .build(&mut program);
 
         result.map(|()| {
-            Codegen::<false>::new("", &source_text, CodegenOptions::default(), None)
-                .build(&program)
-                .source_text
+            Codegen::<false>::new(
+                "",
+                &source_text,
+                CodegenOptions::default().with_typescript(true),
+                None,
+            )
+            .build(&program)
+            .source_text
         })
     }
 }
@@ -251,7 +256,7 @@ impl TestCase for ConformanceTestCase {
             println!("output_path: {output_path:?}");
         }
 
-        let codegen_options = CodegenOptions::default();
+        let codegen_options = CodegenOptions::default().with_typescript(true);
         let mut transformed_code = String::new();
         let mut actual_errors = String::new();
 
@@ -382,9 +387,14 @@ impl ExecTestCase {
         let source_type = SourceType::from_path(&target_path).unwrap();
         let transformed_program =
             Parser::new(&allocator, &source_text, source_type).parse().program;
-        let result = Codegen::<false>::new("", &source_text, CodegenOptions::default(), None)
-            .build(&transformed_program)
-            .source_text;
+        let result = Codegen::<false>::new(
+            "",
+            &source_text,
+            CodegenOptions::default().with_typescript(true),
+            None,
+        )
+        .build(&transformed_program)
+        .source_text;
 
         fs::write(&target_path, result).unwrap();
 
