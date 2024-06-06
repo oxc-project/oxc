@@ -8,5 +8,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Refactor
 
-* cli: move crates/oxc_cli to apps/oxlint (#3413)
+- 21505e8 cli: Move crates/oxc_cli to apps/oxlint (#3413) (Boshen)
 

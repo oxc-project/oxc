@@ -8,59 +8,59 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Refactor
 
-* traverse: `generate_uid` return `SymbolId` (#3520)
+- 7bbd3da traverse: `generate_uid` return `SymbolId` (#3520) (overlookmotel)
 
 ## [0.13.2] - 2024-06-03
 
 ### Features
 
-* transformer: add `TraverseCtx::generate_uid` (#3394)
+- bcdc658 transformer: Add `TraverseCtx::generate_uid` (#3394) (overlookmotel)
 
 ### Bug Fixes
 
-* traverse: exit scope early if enter it late (#3493)
+- 3967a15 traverse: Exit scope early if enter it late (#3493) (overlookmotel)
 
 ### Refactor
 
-* ast: move scope from `TSModuleBlock` to `TSModuleDeclaration` (#3488)
+- 55bbde2 ast: Move scope from `TSModuleBlock` to `TSModuleDeclaration` (#3488) (overlookmotel)
 
 ## [0.13.1] - 2024-05-22
 
 ### Features
 
-* traverse: mutable access to scopes tree + symbol table (#3314)
-* traverse: pass `&mut TraverseCtx` to visitors (#3312)
+- 0c09047 traverse: Mutable access to scopes tree + symbol table (#3314) (overlookmotel)
+- 421107a traverse: Pass `&mut TraverseCtx` to visitors (#3312) (overlookmotel)
 
 ### Refactor
 
-* ast: store `ScopeId` in AST nodes (#3302)
-* traverse: split context code into multiple files (#3367)
-* traverse: move `parent` method etc into `TraverseAncestry` (#3308)
-* traverse: `Traverse` produce scopes tree using `Semantic` (#3304)
+- 723a46f ast: Store `ScopeId` in AST nodes (#3302) (overlookmotel)
+- 2b5b3fd traverse: Split context code into multiple files (#3367) (overlookmotel)
+- f8b5e1e traverse: Move `parent` method etc into `TraverseAncestry` (#3308) (overlookmotel)
+- 05c71d2 traverse: `Traverse` produce scopes tree using `Semantic` (#3304) (overlookmotel)
 
 ## [0.13.0] - 2024-05-14
 
 ### Features
 
-* ast: add type to AccessorProperty to support TSAbractAccessorProperty (#3256)
-* transform: `oxc_traverse` crate (#3169)
-* traverse: add scope flags to `TraverseCtx` (#3229)
+- eefb66f ast: Add type to AccessorProperty to support TSAbractAccessorProperty (#3256) (Dunqing)
+- be87ca8 transform: `oxc_traverse` crate (#3169) (overlookmotel)
+- 46c02ae traverse: Add scope flags to `TraverseCtx` (#3229) (overlookmotel)
 
 ### Bug Fixes
 
-* parser: correctly parse cls.fn<C> = x (#3208)
-* traverse: create scopes for functions (#3273)
-* traverse: allow `TraverseCtx::find_ancestor` closure to return AST node (#3236)
-* traverse: create scope for function nested in class method (#3234)
+- 0ba7778 parser: Correctly parse cls.fn<C> = x (#3208) (Dunqing)
+- 6fd7a3c traverse: Create scopes for functions (#3273) (overlookmotel)
+- a23ba71 traverse: Allow `TraverseCtx::find_ancestor` closure to return AST node (#3236) (overlookmotel)
+- 4e20b04 traverse: Create scope for function nested in class method (#3234) (overlookmotel)
 
 ### Documentation
 
-* transform: improve docs for `TraverseCtx::ancestors_depth` (#3194)
+- a4f881f transform: Improve docs for `TraverseCtx::ancestors_depth` (#3194) (overlookmotel)
 
 ### Refactor
 
-* ast: order AST type fields in visitation order (#3228)
-* transform: `retag_stack` use `AncestorType` (#3173)
-* traverse: simplify build script (#3231)
-* traverse: do not expose `TraverseCtx::new` (#3226)
+- 4208733 ast: Order AST type fields in visitation order (#3228) (overlookmotel)
+- 762677e transform: `retag_stack` use `AncestorType` (#3173) (overlookmotel)
+- ec41dba traverse: Simplify build script (#3231) (overlookmotel)
+- 132db7d traverse: Do not expose `TraverseCtx::new` (#3226) (overlookmotel)
 

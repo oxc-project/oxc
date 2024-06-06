@@ -8,61 +8,61 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Features
 
-* vscode: allow config path configuration (#2172)
+- d5b378a vscode: Allow config path configuration (#2172) (Julien Tanay)
 
 ## [0.2.0] - 2024-01-12
 
 ### Features
 
-* lsp: support vue, astro and svelte (#1923)
+- fe48bfa lsp: Support vue, astro and svelte (#1923) (IWANABETHATGUY)
 
 ## [0.1.1] - 2024-01-06
 
 ### Features
 
-* vscode: support lint vue file (#1842)
+- 665f818 vscode: Support lint vue file (#1842) (Wenzhe Wang)
 
 ### Bug Fixes
 
-* lsp: make the server available in nvim-lspconfig (#1823)
-* vscode: change all names to oxc_language_server
+- c1bac34 lsp: Make the server available in nvim-lspconfig (#1823) (IWANABETHATGUY)
+- ff0d0e0 vscode: Change all names to oxc_language_server (Boshen)
 
 ## [0.0.22] - 2023-12-25
 
 ### Bug Fixes
 
-* vscode: don't lint files in .gitignore and .eslintignore (#1765)
+- fc7c857 vscode: Don't lint files in .gitignore and .eslintignore (#1765) (IWANABETHATGUY)
 
 ## [0.0.21] - 2023-12-18
 
 ### Features
 
-* linter: add  jsx-a11y settings (#1668)
-* vscode: use icon to represent enabled status (#1675)- add option to control enable/disable oxc linter (#1665) |
+- 6a90cd4 linter: Add  jsx-a11y settings (#1668) (msdlisper)
+- 37d5152 vscode: Use icon to represent enabled status (#1675) (IWANABETHATGUY)- e529b38 Add option to control enable/disable oxc linter (#1665) (IWANABETHATGUY)
 
 ### Bug Fixes
 
-* vscode: report problem more accurately  (#1681)
+- ef08892 vscode: Report problem more accurately  (#1681) (IWANABETHATGUY)
 
 ## [0.0.20] - 2023-12-13
 
 ### Features
 
-* vscode: add a option to control oxc lint timing (#1659)
+- e63576d vscode: Add a option to control oxc lint timing (#1659) (IWANABETHATGUY)
 
 ### Bug Fixes
 
-* vscode: fix the broken package path
+- e2d5763 vscode: Fix the broken package path (Boshen)
 
 ## [0.0.19] - 2023-12-08
 
 ### Bug Fixes
 
-* oxc_vscode: vscode extension - check on file change (not on file save)  (#1525)
+- 8251a34 oxc_vscode: Vscode extension - check on file change (not on file save)  (#1525) (IWANABETHATGUY)
 
 ## [0.0.18] - 2023-11-22
 
 ### Refactor
 
-* rust: move to workspace lint table (#1444)
+- 1a576f6 rust: Move to workspace lint table (#1444) (Boshen)
 

@@ -13,22 +13,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 # template for the changelog body
 # https://keats.github.io/tera/docs/#introduction
 body = """
+{% macro print_commit(commit) -%}
+  - {{ commit.id | truncate(length=7, end="") }} \
+    {% if commit.scope %}{{ commit.scope }}: {% endif %}\
+    {% if commit.breaking %}[**BREAKING**] {% endif %}\
+    {{ commit.message | trim | upper_first }}\
+    {% if commit.author.name %} ({{ commit.author.name }}){% endif %}\
+{% endmacro -%}
+
 {% if version -%}
     ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
 {% else -%}
     ## [Unreleased]
 {% endif -%}
+
 {% for commit in commits | filter(attribute="breaking", value=true) %}
-  - **BREAKING** {{ commit.scope }}: {{ commit.message | trim }}
+   {{ self::print_commit(commit=commit) }}
 {% endfor -%}
+
 {% for group, commits in commits | sort(attribute="group") | group_by(attribute="group") %}
     ### {{ group | striptags | trim | upper_first }}
     {% for commit in commits | filter(attribute="breaking", value=false) | filter(attribute="scope") | sort(attribute="scope") %}
-      * {{commit.scope}}: {{ commit.message | trim }}
+        {{ self::print_commit(commit=commit) }}
     {%- endfor -%}
     {%- for commit in commits | filter(attribute="breaking", value=false) %}
         {%- if not commit.scope -%}
-          - {{ commit.message | trim }} |
+          {{ self::print_commit(commit=commit) }}
         {%- endif -%}
     {%- endfor %}
 {% endfor %}\n

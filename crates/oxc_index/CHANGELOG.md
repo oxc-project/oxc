@@ -8,22 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Bug Fixes
 
-* index: add `example_generated` to create the docs. (#3106)
+- 51de41c index: Add `example_generated` to create the docs. (#3106) (Ali Rezvani)
 
 ## [0.10.0] - 2024-03-14
 
 ### Features
-- merge features `serde` and `wasm` to `serialize` (#2716) |
+- 697b6b7 Merge features `serde` and `wasm` to `serialize` (#2716) (Boshen)
 
 ## [0.5.0] - 2024-01-12
 
 ### Features
 
-* playground: visualize symbol (#1886)
+- f1b433b playground: Visualize symbol (#1886) (Dunqing)
 
 ## [0.4.0] - 2023-12-08
 
 ### Refactor
 
-* rust: move to workspace lint table (#1444)
+- 1a576f6 rust: Move to workspace lint table (#1444) (Boshen)
 

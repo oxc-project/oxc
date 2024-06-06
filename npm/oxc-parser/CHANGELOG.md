@@ -8,15 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Features
 
-* napi/parser: add more linux-musl targets
+- 839e7c5 napi/parser: Add more linux-musl targets (Boshen)
 
 ## [0.5.0] - 2024-01-12
 
 ### Documentation
-- fix oxc-parser README demo error (#1993) |
+- b1de10f Fix oxc-parser README demo error (#1993) (luhc228)
 
 ## [0.4.0] - 2023-12-08
 
 ### Refactor
-- change @oxidation-compiler/napi to oxc-parser (#1209) |
+- 90ff0dd Change @oxidation-compiler/napi to oxc-parser (#1209) (Boshen)
 

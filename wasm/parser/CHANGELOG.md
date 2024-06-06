@@ -8,16 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Refactor
 
-* parser,diagnostic: one diagnostic struct to eliminate monomorphization of generic types (#3214)
+- 2064ae9 parser,diagnostic: One diagnostic struct to eliminate monomorphization of generic types (#3214) (Boshen)
 
 ## [0.10.0] - 2024-03-14
 
 ### Features
-- merge features `serde` and `wasm` to `serialize` (#2716) |
+- 697b6b7 Merge features `serde` and `wasm` to `serialize` (#2716) (Boshen)
 
 ## [0.6.0] - 2024-02-03
 
 ### Features
 
-* wasm/parser: improve FFI (#2232)- setup wasm parser for npm (#2221) |
+- 9c6c17b wasm/parser: Improve FFI (#2232) (Boshen)- 5ac61f0 Setup wasm parser for npm (#2221) (Boshen)
 

@@ -8,18 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Bug Fixes
 
-* parser: should parser error when function declaration has no name (#3461)
+- 350cd91 parser: Should parser error when function declaration has no name (#3461) (Dunqing)
 
 ## [0.13.0] - 2024-05-14
 
 ### Refactor
 
-* ast: squash nested enums (#3115)
+- 7e1fe36 ast: Squash nested enums (#3115) (overlookmotel)
 
 ## [0.11.0] - 2024-03-30
 
 ### Refactor
 
-* ast: add walk_mut functions (#2776)
-* ast: add walk functions to Visit trait. (#2791)
+- fc38783 ast: Add walk_mut functions (#2776) (Ali Rezvani)
+- 198eea0 ast: Add walk functions to Visit trait. (#2791) (Ali Rezvani)
 
