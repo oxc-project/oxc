@@ -31,7 +31,7 @@ body = """
           - {{ commit.message | trim }} |
         {%- endif -%}
     {%- endfor %}
-{% endfor %}\n
+{% endfor %}
 """
 # remove the leading and trailing whitespace from the templates
 trim = true
