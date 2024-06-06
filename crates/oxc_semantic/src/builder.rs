@@ -829,20 +829,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // connect before for statement to the iterable expression
         self.cfg.add_edge(before_for_stmt_graph_ix, start_prepare_cond_graph_ix, EdgeType::Normal);
         // connect the end of the iterable expression to the basic block with back edge
-        self.cfg.add_edge(
-            end_of_prepare_cond_graph_ix,
-            iteration_graph_ix,
-            EdgeType::Normal,
-        );
+        self.cfg.add_edge(end_of_prepare_cond_graph_ix, iteration_graph_ix, EdgeType::Normal);
         // connect the basic block with back edge to the start of the body
         self.cfg.add_edge(iteration_graph_ix, body_graph_ix, EdgeType::Jump);
         // connect the end of the body back to the basic block
         // with back edge for the next iteration
-        self.cfg.add_edge(
-            end_of_body_graph_ix,
-            iteration_graph_ix,
-            EdgeType::Backedge,
-        );
+        self.cfg.add_edge(end_of_body_graph_ix, iteration_graph_ix, EdgeType::Backedge);
         // connect the basic block with back edge to the basic block after the for loop
         // for when there are no more iterations left in the iterable
         self.cfg.add_edge(iteration_graph_ix, after_for_graph_ix, EdgeType::Normal);
@@ -897,20 +889,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // connect before for statement to the iterable expression
         self.cfg.add_edge(before_for_stmt_graph_ix, start_prepare_cond_graph_ix, EdgeType::Normal);
         // connect the end of the iterable expression to the basic block with back edge
-        self.cfg.add_edge(
-            end_of_prepare_cond_graph_ix,
-            iteration_graph_ix,
-            EdgeType::Normal,
-        );
+        self.cfg.add_edge(end_of_prepare_cond_graph_ix, iteration_graph_ix, EdgeType::Normal);
         // connect the basic block with back edge to the start of the body
         self.cfg.add_edge(iteration_graph_ix, body_graph_ix, EdgeType::Jump);
         // connect the end of the body back to the basic block
         // with back edge for the next iteration
-        self.cfg.add_edge(
-            end_of_body_graph_ix,
-            iteration_graph_ix,
-            EdgeType::Backedge,
-        );
+        self.cfg.add_edge(end_of_body_graph_ix, iteration_graph_ix, EdgeType::Backedge);
         // connect the basic block with back edge to the basic block after the for loop
         // for when there are no more iterations left in the iterable
         self.cfg.add_edge(iteration_graph_ix, after_for_graph_ix, EdgeType::Normal);
