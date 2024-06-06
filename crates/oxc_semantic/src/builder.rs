@@ -1210,7 +1210,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                     EdgeType::Normal,
                 );
 
-                self.cfg.add_edge(catch_block_end_ix, after_try_statement_block_ix, EdgeType::Normal);
+                self.cfg.add_edge(
+                    catch_block_end_ix,
+                    after_try_statement_block_ix,
+                    EdgeType::Normal,
+                );
             }
         }
         if let Some(finally_block_end_ix) = finally_block_end_ix {
