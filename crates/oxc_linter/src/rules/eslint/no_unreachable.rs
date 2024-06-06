@@ -55,7 +55,7 @@ impl Rule for NoUnreachable {
             unreachable!()
         };
 
-        if !ctx.semantic().cfg().is_reachabale(parent.cfg_id(), node.cfg_id()) {
+        if !ctx.semantic().cfg().is_reachabale_deepscan(parent.cfg_id(), node.cfg_id(), nodes) {
             return ctx.diagnostic(no_unreachable_diagnostic(node.kind().span()));
         }
     }
@@ -164,48 +164,48 @@ fn test() {
     ];
 
     let fail = vec![
-        // //[{ messageId: "unreachableCode", type: "VariableDeclaration" }]
-        // "function foo() { return x; var x = 1; }",
-        // //[{ messageId: "unreachableCode", type: "VariableDeclaration" }]
-        // "function foo() { return x; var x, y = 1; }",
-        // "while (true) { break; var x = 1; }",
-        // //[{ messageId: "unreachableCode", type: "VariableDeclaration" }]
-        // "while (true) { continue; var x = 1; }",
-        // //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "function foo() { return; x = 1; }",
-        // //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "function foo() { throw error; x = 1; }",
-        // //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "while (true) { break; x = 1; }",
-        // //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "while (true) { continue; x = 1; }",
-        // //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "function foo() { switch (foo) { case 1: return; x = 1; } }",
-        // //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "function foo() { switch (foo) { case 1: throw e; x = 1; } }",
-        // //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "while (true) { switch (foo) { case 1: break; x = 1; } }",
-        // //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "while (true) { switch (foo) { case 1: continue; x = 1; } }",
-        // //[{ messageId: "unreachableCode", type: "VariableDeclaration" }]
-        // "var x = 1; throw 'uh oh'; var y = 2;",
-        // // [{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "function foo() { var x = 1; if (x) { return; } else { throw e; } x = 2; }",
-        // //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "function foo() { var x = 1; if (x) return; else throw -1; x = 2; }",
-        // //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "function foo() { var x = 1; try { return; } finally {} x = 2; }",
-        // //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "function foo() { var x = 1; try { } finally { return; } x = 2; }",
-        // //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "function foo() { var x = 1; do { return; } while (x); x = 2; }",
-        // // [{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "function foo() { var x = 1; while (x) { if (x) break; else continue; x = 2; } }",
-        // //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "function foo() { var x = 1; for (;;) { if (x) continue; } x = 2; }",
-        // //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
-        // "function foo() { var x = 1; while (true) { } x = 2; }",
-        // "function foo() { var x = 1; do { } while (true); x = 2; }",
+        //[{ messageId: "unreachableCode", type: "VariableDeclaration" }]
+        "function foo() { return x; var x = 1; }",
+        //[{ messageId: "unreachableCode", type: "VariableDeclaration" }]
+        "function foo() { return x; var x, y = 1; }",
+        "while (true) { break; var x = 1; }",
+        //[{ messageId: "unreachableCode", type: "VariableDeclaration" }]
+        "while (true) { continue; var x = 1; }",
+        //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "function foo() { return; x = 1; }",
+        //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "function foo() { throw error; x = 1; }",
+        //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "while (true) { break; x = 1; }",
+        //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "while (true) { continue; x = 1; }",
+        //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "function foo() { switch (foo) { case 1: return; x = 1; } }",
+        //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "function foo() { switch (foo) { case 1: throw e; x = 1; } }",
+        //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "while (true) { switch (foo) { case 1: break; x = 1; } }",
+        //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "while (true) { switch (foo) { case 1: continue; x = 1; } }",
+        //[{ messageId: "unreachableCode", type: "VariableDeclaration" }]
+        "var x = 1; throw 'uh oh'; var y = 2;",
+        // [{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "function foo() { var x = 1; if (x) { return; } else { throw e; } x = 2; }",
+        //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "function foo() { var x = 1; if (x) return; else throw -1; x = 2; }",
+        //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "function foo() { var x = 1; try { return; } finally {} x = 2; }",
+        //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "function foo() { var x = 1; try { } finally { return; } x = 2; }",
+        //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "function foo() { var x = 1; do { return; } while (x); x = 2; }",
+        // [{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "function foo() { var x = 1; while (x) { if (x) break; else continue; x = 2; } }",
+        //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "function foo() { var x = 1; for (;;) { if (x) continue; } x = 2; }",
+        //[{ messageId: "unreachableCode", type: "ExpressionStatement" }]
+        "function foo() { var x = 1; while (true) { } x = 2; }",
+        "function foo() { var x = 1; do { } while (true); x = 2; }",
     ];
 
     Tester::new(NoUnreachable::NAME, pass, fail).test_and_snapshot();
