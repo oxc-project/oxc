@@ -44,7 +44,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoConstructorReturn,
-    correctness
+    pedantic
 );
 
 impl Rule for NoConstructorReturn {
