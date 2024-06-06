@@ -65,7 +65,7 @@ struct ClassicBindings<'a> {
 
 struct AutomaticScriptBindings<'a> {
     ctx: Ctx<'a>,
-    options: Rc<ReactOptions>,
+    react_importer: Atom<'a>,
     jsx_runtime_importer: Atom<'a>,
     require_create_element: Option<BoundIdentifier<'a>>,
     require_jsx: Option<BoundIdentifier<'a>>,
@@ -73,11 +73,15 @@ struct AutomaticScriptBindings<'a> {
 }
 
 impl<'a> AutomaticScriptBindings<'a> {
-    fn new(ctx: Ctx<'a>, options: Rc<ReactOptions>, jsx_runtime_importer: Atom<'a>) -> Self {
-        let is_development = options.development;
+    fn new(
+        ctx: Ctx<'a>,
+        react_importer: Atom<'a>,
+        jsx_runtime_importer: Atom<'a>,
+        is_development: bool,
+    ) -> Self {
         Self {
             ctx,
-            options,
+            react_importer,
             jsx_runtime_importer,
             require_create_element: None,
             require_jsx: None,
@@ -87,7 +91,7 @@ impl<'a> AutomaticScriptBindings<'a> {
 
     fn require_create_element(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
         if self.require_create_element.is_none() {
-            let source = get_import_source(&self.options, ctx);
+            let source = self.react_importer.clone();
             let id = self.add_require_statement("react", source, true, ctx);
             self.require_create_element = Some(id);
         }
@@ -125,30 +129,37 @@ impl<'a> AutomaticScriptBindings<'a> {
 
 struct AutomaticModuleBindings<'a> {
     ctx: Ctx<'a>,
-    options: Rc<ReactOptions>,
+    react_importer: Atom<'a>,
     jsx_runtime_importer: Atom<'a>,
     import_create_element: Option<BoundIdentifier<'a>>,
     import_fragment: Option<BoundIdentifier<'a>>,
     import_jsx: Option<BoundIdentifier<'a>>,
     import_jsxs: Option<BoundIdentifier<'a>>,
+    is_development: bool,
 }
 
 impl<'a> AutomaticModuleBindings<'a> {
-    fn new(ctx: Ctx<'a>, options: Rc<ReactOptions>, jsx_runtime_importer: Atom<'a>) -> Self {
+    fn new(
+        ctx: Ctx<'a>,
+        react_importer: Atom<'a>,
+        jsx_runtime_importer: Atom<'a>,
+        is_development: bool,
+    ) -> Self {
         Self {
             ctx,
-            options,
+            react_importer,
             jsx_runtime_importer,
             import_create_element: None,
             import_fragment: None,
             import_jsx: None,
             import_jsxs: None,
+            is_development,
         }
     }
 
     fn import_create_element(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
         if self.import_create_element.is_none() {
-            let source = get_import_source(&self.options, ctx);
+            let source = self.react_importer.clone();
             let id = self.add_import_statement("createElement", source, ctx);
             self.import_create_element = Some(id);
         }
@@ -164,7 +175,7 @@ impl<'a> AutomaticModuleBindings<'a> {
 
     fn import_jsx(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
         if self.import_jsx.is_none() {
-            if self.options.development {
+            if self.is_development {
                 self.add_import_jsx_dev(ctx);
             } else {
                 self.import_jsx = Some(self.add_jsx_import_statement("jsx", ctx));
@@ -175,7 +186,7 @@ impl<'a> AutomaticModuleBindings<'a> {
 
     fn import_jsxs(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
         if self.import_jsxs.is_none() {
-            if self.options.development {
+            if self.is_development {
                 self.add_import_jsx_dev(ctx);
             } else {
                 self.import_jsxs = Some(self.add_jsx_import_statement("jsxs", ctx));
@@ -214,13 +225,6 @@ impl<'a> AutomaticModuleBindings<'a> {
         let import = NamedImport::new(Atom::from(name), Some(local.clone()), symbol_id);
         self.ctx.module_imports.add_import(source, import);
         BoundIdentifier { name: local, symbol_id }
-    }
-}
-
-fn get_import_source<'a>(options: &Rc<ReactOptions>, ctx: &mut TraverseCtx<'a>) -> Atom<'a> {
-    match options.import_source.as_ref() {
-        Some(source) => ctx.ast.new_atom(source),
-        None => Atom::from("react"),
     }
 }
 
@@ -314,39 +318,47 @@ impl<'a> ReactJsx<'a> {
                     ctx.error(diagnostics::pragma_and_pragma_frag_cannot_be_set());
                 }
 
-                let jsx_runtime_importer = match options.import_source.as_ref() {
+                let is_development = options.development;
+                #[allow(clippy::single_match_else)]
+                let (react_importer, jsx_runtime_importer) = match options.import_source.as_ref() {
                     Some(import_source) => {
-                        let mut import_source = import_source.as_str();
-                        if import_source.is_empty() {
+                        let react_importer = if import_source.is_empty() {
                             ctx.error(diagnostics::invalid_import_source());
-                            import_source = "react";
-                        }
-                        ctx.ast.new_atom(&format!(
+                            Atom::from("react")
+                        } else {
+                            ctx.ast.new_atom(import_source)
+                        };
+                        let jsx_runtime_importer = ctx.ast.new_atom(&format!(
                             "{}/jsx-{}runtime",
-                            import_source,
-                            if options.development { "dev-" } else { "" }
-                        ))
+                            react_importer,
+                            if is_development { "dev-" } else { "" }
+                        ));
+                        (react_importer, jsx_runtime_importer)
                     }
                     None => {
-                        if options.development {
+                        let react_importer = Atom::from("react");
+                        let jsx_runtime_importer = if is_development {
                             Atom::from("react/jsx-dev-runtime")
                         } else {
                             Atom::from("react/jsx-runtime")
-                        }
+                        };
+                        (react_importer, jsx_runtime_importer)
                     }
                 };
 
                 if ctx.source_type.is_script() {
                     Bindings::AutomaticScript(AutomaticScriptBindings::new(
                         Rc::clone(&ctx),
-                        Rc::clone(&options),
+                        react_importer,
                         jsx_runtime_importer,
+                        is_development,
                     ))
                 } else {
                     Bindings::AutomaticModule(AutomaticModuleBindings::new(
                         Rc::clone(&ctx),
-                        Rc::clone(&options),
+                        react_importer,
                         jsx_runtime_importer,
+                        is_development,
                     ))
                 }
             }
