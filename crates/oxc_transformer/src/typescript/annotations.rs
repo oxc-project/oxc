@@ -28,7 +28,7 @@ pub struct TypeScriptAnnotations<'a> {
 }
 
 impl<'a> TypeScriptAnnotations<'a> {
-    pub fn new(options: &Rc<TypeScriptOptions>, ctx: Ctx<'a>) -> Self {
+    pub fn new(options: Rc<TypeScriptOptions>, ctx: Ctx<'a>) -> Self {
         let jsx_element_import_name = if options.jsx_pragma.contains('.') {
             options.jsx_pragma.split('.').next().map(String::from).unwrap()
         } else {
@@ -44,7 +44,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         Self {
             has_super_call: false,
             assignments: ctx.ast.new_vec(),
-            options: Rc::clone(options),
+            options,
             ctx,
             has_jsx_element: false,
             has_jsx_fragment: false,

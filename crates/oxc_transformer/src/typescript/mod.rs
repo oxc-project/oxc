@@ -52,7 +52,7 @@ impl<'a> TypeScript<'a> {
         let options = Rc::new(options.update_with_comments(&ctx));
 
         Self {
-            annotations: TypeScriptAnnotations::new(&options, Rc::clone(&ctx)),
+            annotations: TypeScriptAnnotations::new(Rc::clone(&options), Rc::clone(&ctx)),
             r#enum: TypeScriptEnum::new(Rc::clone(&ctx)),
             options,
             ctx,

@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use serde::Deserialize;
 
-use crate::context::Ctx;
+use crate::context::TransformCtx;
 
 fn default_for_jsx_pragma() -> Cow<'static, str> {
     Cow::Borrowed("React.createElement")
@@ -54,7 +54,7 @@ impl TypeScriptOptions {
     /// otherwise `JSDoc` could be used instead.
     ///
     /// This behavior is aligned with babel.
-    pub(crate) fn update_with_comments(mut self, ctx: &Ctx) -> Self {
+    pub(crate) fn update_with_comments(mut self, ctx: &TransformCtx) -> Self {
         for (_, span) in ctx.trivias.comments() {
             let mut comment = span.source_text(ctx.source_text).trim_start();
             // strip leading jsdoc comment `*` and then whitespaces
