@@ -68,8 +68,8 @@ struct ClassicBindings<'a> {
 
 struct AutomaticScriptBindings<'a> {
     ctx: Ctx<'a>,
-    react_importer: Atom<'a>,
     jsx_runtime_importer: Atom<'a>,
+    react_importer_len: u32,
     require_create_element: Option<BoundIdentifier<'a>>,
     require_jsx: Option<BoundIdentifier<'a>>,
     is_development: bool,
@@ -78,14 +78,14 @@ struct AutomaticScriptBindings<'a> {
 impl<'a> AutomaticScriptBindings<'a> {
     fn new(
         ctx: Ctx<'a>,
-        react_importer: Atom<'a>,
         jsx_runtime_importer: Atom<'a>,
+        react_importer_len: u32,
         is_development: bool,
     ) -> Self {
         Self {
             ctx,
-            react_importer,
             jsx_runtime_importer,
+            react_importer_len,
             require_create_element: None,
             require_jsx: None,
             is_development,
@@ -94,7 +94,7 @@ impl<'a> AutomaticScriptBindings<'a> {
 
     fn require_create_element(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
         if self.require_create_element.is_none() {
-            let source = self.react_importer.clone();
+            let source = get_import_source(&self.jsx_runtime_importer, self.react_importer_len);
             let id = self.add_require_statement("react", source, true, ctx);
             self.require_create_element = Some(id);
         }
@@ -132,8 +132,8 @@ impl<'a> AutomaticScriptBindings<'a> {
 
 struct AutomaticModuleBindings<'a> {
     ctx: Ctx<'a>,
-    react_importer: Atom<'a>,
     jsx_runtime_importer: Atom<'a>,
+    react_importer_len: u32,
     import_create_element: Option<BoundIdentifier<'a>>,
     import_fragment: Option<BoundIdentifier<'a>>,
     import_jsx: Option<BoundIdentifier<'a>>,
@@ -144,14 +144,14 @@ struct AutomaticModuleBindings<'a> {
 impl<'a> AutomaticModuleBindings<'a> {
     fn new(
         ctx: Ctx<'a>,
-        react_importer: Atom<'a>,
         jsx_runtime_importer: Atom<'a>,
+        react_importer_len: u32,
         is_development: bool,
     ) -> Self {
         Self {
             ctx,
-            react_importer,
             jsx_runtime_importer,
+            react_importer_len,
             import_create_element: None,
             import_fragment: None,
             import_jsx: None,
@@ -162,7 +162,7 @@ impl<'a> AutomaticModuleBindings<'a> {
 
     fn import_create_element(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
         if self.import_create_element.is_none() {
-            let source = self.react_importer.clone();
+            let source = get_import_source(&self.jsx_runtime_importer, self.react_importer_len);
             let id = self.add_import_statement("createElement", source, ctx);
             self.import_create_element = Some(id);
         }
@@ -229,6 +229,11 @@ impl<'a> AutomaticModuleBindings<'a> {
         self.ctx.module_imports.add_import(source, import);
         BoundIdentifier { name: local, symbol_id }
     }
+}
+
+#[inline]
+fn get_import_source<'a>(jsx_runtime_importer: &Atom<'a>, react_importer_len: u32) -> Atom<'a> {
+    Atom::from(&jsx_runtime_importer.as_str()[..react_importer_len as usize])
 }
 
 #[derive(Clone)]
@@ -326,45 +331,47 @@ impl<'a> ReactJsx<'a> {
                 }
 
                 let is_development = options.development;
-                #[allow(clippy::single_match_else)]
-                let (react_importer, jsx_runtime_importer) = match options.import_source.as_ref() {
+                #[allow(clippy::single_match_else, clippy::cast_possible_truncation)]
+                let (jsx_runtime_importer, source_len) = match options.import_source.as_ref() {
                     Some(import_source) => {
-                        let react_importer = if import_source.is_empty() {
-                            ctx.error(diagnostics::invalid_import_source());
-                            Atom::from("react")
-                        } else {
-                            ctx.ast.new_atom(import_source)
+                        let mut import_source = &**import_source;
+                        let source_len = match u32::try_from(import_source.len()) {
+                            Ok(0) | Err(_) => {
+                                ctx.error(diagnostics::invalid_import_source());
+                                import_source = "react";
+                                import_source.len() as u32
+                            }
+                            Ok(source_len) => source_len,
                         };
                         let jsx_runtime_importer = ctx.ast.new_atom(&format!(
                             "{}/jsx-{}runtime",
-                            react_importer,
+                            import_source,
                             if is_development { "dev-" } else { "" }
                         ));
-                        (react_importer, jsx_runtime_importer)
+                        (jsx_runtime_importer, source_len)
                     }
                     None => {
-                        let react_importer = Atom::from("react");
                         let jsx_runtime_importer = if is_development {
                             Atom::from("react/jsx-dev-runtime")
                         } else {
                             Atom::from("react/jsx-runtime")
                         };
-                        (react_importer, jsx_runtime_importer)
+                        (jsx_runtime_importer, "react".len() as u32)
                     }
                 };
 
                 if ctx.source_type.is_script() {
                     Bindings::AutomaticScript(AutomaticScriptBindings::new(
                         Rc::clone(&ctx),
-                        react_importer,
                         jsx_runtime_importer,
+                        source_len,
                         is_development,
                     ))
                 } else {
                     Bindings::AutomaticModule(AutomaticModuleBindings::new(
                         Rc::clone(&ctx),
-                        react_importer,
                         jsx_runtime_importer,
+                        source_len,
                         is_development,
                     ))
                 }
