@@ -1546,13 +1546,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_statement(&stmt.body);
 
         /* cfg - after body basic block */
-        let after_body_graph_ix = self.cfg.new_basic_block();
+        let after_body_graph_ix = self.cfg.current_node_ix;
+        let after_while_graph_ix = self.cfg.new_basic_block();
 
         self.cfg.add_edge(before_while_stmt_graph_ix, condition_graph_ix, EdgeType::Normal);
         self.cfg.add_edge(condition_graph_ix, body_graph_ix, EdgeType::Normal);
-        self.cfg.add_edge(body_graph_ix, after_body_graph_ix, EdgeType::Normal);
-        self.cfg.add_edge(body_graph_ix, condition_graph_ix, EdgeType::Backedge);
-        self.cfg.add_edge(condition_graph_ix, after_body_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(after_body_graph_ix, condition_graph_ix, EdgeType::Backedge);
+        self.cfg.add_edge(condition_graph_ix, after_while_graph_ix, EdgeType::Normal);
 
         self.cfg.restore_state(
             &statement_state,

@@ -26,8 +26,7 @@ digraph {
     7 -> 8 [ label = Normal ]
     0 -> 1 [ label = Normal ]
     1 -> 2 [ label = Normal ]
-    2 -> 9 [ label = Normal ]
-    2 -> 1 [ label = Backedge ]
+    8 -> 1 [ label = Backedge ]
     1 -> 9 [ label = Normal ]
     5 -> 1 [ label = Normal ]
 }
