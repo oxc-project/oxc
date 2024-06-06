@@ -127,6 +127,18 @@ fn test() {
             }
         };
         ",
+        r#"
+        while (true) {
+            try {
+                a();
+            } catch (err) {
+                b();
+            } finally {
+                c();
+            }
+            d();
+        }
+        "#,
     ];
 
     let fail = vec![

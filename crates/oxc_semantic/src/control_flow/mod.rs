@@ -305,10 +305,7 @@ impl ControlFlowGraph {
                     return filter_result;
                 }
                 let unreachable = graph.edges_connecting(a, b).all(|edge| {
-                    matches!(
-                        edge.weight(),
-                        EdgeType::NewFunction | EdgeType::Unreachable | EdgeType::Join
-                    )
+                    matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
                 });
 
                 if unreachable {
