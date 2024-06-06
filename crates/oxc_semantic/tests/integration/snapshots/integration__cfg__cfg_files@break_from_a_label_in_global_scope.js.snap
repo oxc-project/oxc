@@ -5,9 +5,13 @@ input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/break_from_a_labe
 ---
 bb0: {
 	statement
+	break <label>
 }
 
 bb1: {
 	unreachable
-	break <label>
+}
+
+bb2: {
+
 }

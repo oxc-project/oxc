@@ -19,11 +19,11 @@ bb2: {
 
 bb3: {
 	statement
+	break <label>
 }
 
 bb4: {
 	unreachable
-	break <label>
 }
 
 bb5: {
@@ -31,5 +31,9 @@ bb5: {
 }
 
 bb6: {
+
+}
+
+bb7: {
 
 }

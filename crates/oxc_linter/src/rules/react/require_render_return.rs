@@ -98,7 +98,7 @@ fn contains_return_statement<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
         node.cfg_id(),
         &|edge| match edge {
             // We only care about normal edges having a return statement.
-            EdgeType::Normal => None,
+            EdgeType::Jump | EdgeType::Normal => None,
             // For these two type, we flag it as not found.
             EdgeType::Unreachable | EdgeType::NewFunction | EdgeType::Backedge => {
                 Some(FoundReturn::No)
@@ -122,6 +122,7 @@ fn contains_return_statement<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
                     }
                     InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined)
                     | InstructionKind::Break(_)
+                    | InstructionKind::Continue(_)
                     | InstructionKind::Statement => {}
                 }
             }

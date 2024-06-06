@@ -14,7 +14,7 @@ use petgraph::{
 
 use crate::AstNodeId;
 
-pub use builder::ControlFlowGraphBuilder;
+pub use builder::{ControlFlowGraphBuilder, CtxCursor, CtxFlags};
 pub use dot::{DebugDot, DebugDotContext, DisplayDot};
 
 pub type BasicBlockId = NodeIndex;
@@ -146,7 +146,8 @@ pub enum InstructionKind {
     Unreachable,
     Statement,
     Return(ReturnInstructionKind),
-    Break(BreakInstructionKind),
+    Break(LabeledInstruction),
+    Continue(LabeledInstruction),
     Throw,
 }
 
@@ -157,13 +158,14 @@ pub enum ReturnInstructionKind {
 }
 
 #[derive(Debug, Clone)]
-pub enum BreakInstructionKind {
+pub enum LabeledInstruction {
     Labeled,
     Unlabeled,
 }
 
 #[derive(Debug, Clone)]
 pub enum EdgeType {
+    Jump,
     Normal,
     Backedge,
     NewFunction,
@@ -212,15 +214,6 @@ impl ControlFlowGraph {
         })
         .is_err()
     }
-}
-
-pub enum StatementControlFlowType {
-    DoesNotUseContinue,
-    UsesContinue,
-}
-
-pub struct PreservedStatementState {
-    put_label: bool,
 }
 
 pub struct PreservedExpressionState {

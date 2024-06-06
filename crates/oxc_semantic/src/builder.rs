@@ -17,8 +17,7 @@ use crate::{
     checker::{EarlyErrorJavaScript, EarlyErrorTypeScript},
     class::ClassTableBuilder,
     control_flow::{
-        ControlFlowGraphBuilder, EdgeType, Register, ReturnInstructionKind,
-        StatementControlFlowType,
+        ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, Register, ReturnInstructionKind,
     },
     diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
@@ -28,7 +27,7 @@ use crate::{
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
-    BreakInstructionKind, Semantic,
+    Semantic,
 };
 
 pub struct SemanticBuilder<'a> {
@@ -68,7 +67,7 @@ pub struct SemanticBuilder<'a> {
 
     check_syntax_error: bool,
 
-    pub cfg: ControlFlowGraphBuilder,
+    pub cfg: ControlFlowGraphBuilder<'a>,
 
     pub class_table_builder: ClassTableBuilder,
 }
@@ -469,22 +468,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         stmt.scope_id.set(Some(self.current_scope_id));
         self.enter_node(kind);
 
-        /* cfg */
-        let statement_state = self
-            .cfg
-            .preserve_state(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
-        /* cfg */
-
         self.visit_statements(&stmt.body);
-
-        /* cfg */
-        self.cfg.restore_state(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
-        /* cfg */
 
         self.leave_node(kind);
         self.leave_scope();
@@ -496,56 +480,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         let node_id = self.current_node_id;
-        let statement_state = self
-            .cfg
-            .preserve_state(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
         /* cfg */
 
         if let Some(ref break_target) = stmt.label {
             self.visit_label_identifier(break_target);
-
-            /* cfg */
-            if let Some(label_found) =
-                self.cfg.label_to_ast_node_ix.iter().rev().find(|x| x.0 == break_target.name)
-            {
-                let (_, break_, _) = self.cfg.ast_node_to_break_continue.iter().rev().find(|x| x.0 == label_found.1)
-                                                .expect("expected a corresponding break/continue array for a found label owning ast node");
-                self.cfg.basic_blocks_with_breaks[*break_].push(self.cfg.current_node_ix);
-            } else {
-                self.cfg
-                    .basic_blocks_with_breaks
-                    .last_mut()
-                    .expect(
-                        "expected there to be a stack of control flows that a break can belong to",
-                    )
-                    .push(self.cfg.current_node_ix);
-            }
-            /* cfg */
         }
+
         /* cfg */
-        else {
-            self.cfg
-                .basic_blocks_with_breaks
-                .last_mut()
-                .expect("expected there to be a stack of control flows that a break can belong to")
-                .push(self.cfg.current_node_ix);
-        }
-        self.cfg.append_unreachable();
-
-        self.cfg.push_break(
-            if stmt.label.is_some() {
-                BreakInstructionKind::Labeled
-            } else {
-                BreakInstructionKind::Unlabeled
-            },
-            node_id,
-        );
-        self.cfg.restore_state(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
+        self.cfg.append_break(node_id, stmt.label.as_ref().map(|it| it.name.as_str()));
         /* cfg */
 
         self.leave_node(kind);
@@ -556,67 +498,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg */
-        let statement_state = self
-            .cfg
-            .preserve_state(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        let node_id = self.current_node_id;
         /* cfg */
 
         if let Some(continue_target) = &stmt.label {
             self.visit_label_identifier(continue_target);
-            /* cfg */
-            if let Some(label_found) =
-                self.cfg.label_to_ast_node_ix.iter().rev().find(|x| x.0 == continue_target.name)
-            {
-                let (_, _, continue_) = self.cfg.ast_node_to_break_continue.iter().rev().find(|x| x.0 == label_found.1)
-                                        .expect("expected a corresponding break/continue array for a found label owning ast node");
-                if let Some(continue_) = continue_ {
-                    self.cfg.basic_blocks_with_breaks[*continue_].push(self.cfg.current_node_ix);
-                } else {
-                    self.cfg
-                    .basic_blocks_with_breaks
-                    .last_mut()
-                    .expect(
-                        "expected there to be a stack of control flows that a break can belong to",
-                    )
-                    .push(self.cfg.current_node_ix);
-                }
-            } else {
-                self.cfg
-                    .basic_blocks_with_breaks
-                    .last_mut()
-                    .expect(
-                        "expected there to be a stack of control flows that a break can belong to",
-                    )
-                    .push(self.cfg.current_node_ix);
-            }
-            /* cfg */
         }
-        /* cfg */
-        else {
-            self.cfg
-                .basic_blocks_with_breaks
-                .last_mut()
-                .expect("expected there to be a stack of control flows that a break can belong to")
-                .push(self.cfg.current_node_ix);
-        }
-        self.cfg.append_unreachable();
-        /* cfg */
 
         /* cfg */
-        let current_node_ix = self.cfg.current_node_ix;
-        // todo: assert on this instead when continues which
-        // aren't in iterations are nonrecoverable errors
-        if let Some(continues) = self.cfg.basic_blocks_with_continues.last_mut() {
-            continues.push(current_node_ix);
-        }
-        self.cfg.append_unreachable();
-
-        self.cfg.restore_state(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
+        self.cfg.append_continue(node_id, stmt.label.as_ref().map(|it| it.name.as_str()));
         /* cfg */
 
         self.leave_node(kind);
@@ -642,8 +532,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         let before_do_while_stmt_graph_ix = self.cfg.current_node_ix;
         let start_body_graph_ix = self.cfg.new_basic_block();
-        let statement_state =
-            self.cfg.preserve_state(self.current_node_id, StatementControlFlowType::UsesContinue);
+
+        self.cfg.ctx(None).default().allow_break().allow_continue();
         /* cfg */
 
         self.visit_statement(&stmt.body);
@@ -669,16 +559,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // end of condition to after start of body
         self.cfg.add_edge(end_of_condition_graph_ix, start_body_graph_ix, EdgeType::Backedge);
 
-        self.cfg.restore_state(
-            &statement_state,
-            self.current_node_id,
-            // all basic blocks are break here so we connect them to the
-            // basic block after the do-while statement
-            end_do_while_graph_ix,
-            // all basic blocks are continues here so we connect them to the
-            // basic block of the condition
-            Some(start_of_condition_graph_ix),
-        );
+        self.cfg
+            .ctx(None)
+            .mark_break(end_do_while_graph_ix)
+            .mark_continue(start_of_condition_graph_ix)
+            .resolve_with_upper_label();
         /* cfg */
 
         self.leave_node(kind);
@@ -688,22 +573,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::ExpressionStatement(self.alloc(stmt));
         self.enter_node(kind);
 
-        /* cfg */
-        let statement_state = self
-            .cfg
-            .preserve_state(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
-        /* cfg */
-
         self.visit_expression(&stmt.expression);
-
-        /* cfg */
-        self.cfg.restore_state(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
-        /* cfg */
 
         self.leave_node(kind);
     }
@@ -853,8 +723,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         let before_body_graph_ix = self.cfg.new_basic_block();
-        let statement_state =
-            self.cfg.preserve_state(self.current_node_id, StatementControlFlowType::UsesContinue);
+
+        self.cfg.ctx(None).default().allow_break().allow_continue();
         /* cfg */
 
         self.visit_statement(&stmt.body);
@@ -868,18 +738,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.cfg.add_edge(update_graph_ix, test_graph_ix, EdgeType::Backedge);
         self.cfg.add_edge(after_test_graph_ix, after_for_stmt, EdgeType::Normal);
 
-        self.cfg.restore_state(
-            &statement_state,
-            self.current_node_id,
-            // all basic blocks are break here so we connect them to the
-            // basic block after the for statement
-            self.cfg.current_node_ix,
-            // all basic blocks are continues here so we connect them to the
-            // basic block of the condition
-            Some(test_graph_ix),
-        );
-
+        self.cfg
+            .ctx(None)
+            .mark_break(after_for_stmt)
+            .mark_continue(test_graph_ix)
+            .resolve_with_upper_label();
         /* cfg */
+
         self.leave_node(kind);
         if is_lexical_declaration {
             self.leave_scope();
@@ -923,8 +788,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // this basic block is always empty since there's no update condition in a for-in loop.
         let basic_block_with_backedge_graph_ix = self.cfg.new_basic_block();
         let body_graph_ix = self.cfg.new_basic_block();
-        let statement_state =
-            self.cfg.preserve_state(self.current_node_id, StatementControlFlowType::UsesContinue);
+
+        self.cfg.ctx(None).default().allow_break().allow_continue();
         /* cfg */
 
         self.visit_statement(&stmt.body);
@@ -953,16 +818,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // for when there are no more iterations left in the iterable
         self.cfg.add_edge(basic_block_with_backedge_graph_ix, after_for_graph_ix, EdgeType::Normal);
 
-        self.cfg.restore_state(
-            &statement_state,
-            self.current_node_id,
-            // all basic blocks are break here so we connect them to the
-            // basic block after the for-in statement
-            self.cfg.current_node_ix,
-            // all basic blocks are continues here so we connect them to the
-            // basic block of the condition
-            Some(basic_block_with_backedge_graph_ix),
-        );
+        self.cfg
+            .ctx(None)
+            .mark_break(after_for_graph_ix)
+            .mark_continue(basic_block_with_backedge_graph_ix)
+            .resolve_with_upper_label();
         /* cfg */
 
         self.leave_node(kind);
@@ -993,8 +853,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // this basic block is always empty since there's no update condition in a for-of loop.
         let basic_block_with_backedge_graph_ix = self.cfg.new_basic_block();
         let body_graph_ix = self.cfg.new_basic_block();
-        let statement_state =
-            self.cfg.preserve_state(self.current_node_id, StatementControlFlowType::UsesContinue);
+
+        self.cfg.ctx(None).default().allow_break().allow_continue();
         /* cfg */
 
         self.visit_statement(&stmt.body);
@@ -1023,16 +883,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // for when there are no more iterations left in the iterable
         self.cfg.add_edge(basic_block_with_backedge_graph_ix, after_for_graph_ix, EdgeType::Normal);
 
-        self.cfg.restore_state(
-            &statement_state,
-            self.current_node_id,
-            // all basic blocks are break here so we connect them to the
-            // basic block after the for-of statement
-            self.cfg.current_node_ix,
-            // all basic blocks are continues here so we connect them to the
-            // basic block of the condition
-            Some(basic_block_with_backedge_graph_ix),
-        );
+        self.cfg
+            .ctx(None)
+            .mark_break(after_for_graph_ix)
+            .mark_continue(basic_block_with_backedge_graph_ix)
+            .resolve_with_upper_label();
         /* cfg */
 
         self.leave_node(kind);
@@ -1048,13 +903,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_expression(&stmt.test);
 
         /* cfg */
-        let statement_state = self
-            .cfg
-            .preserve_state(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
-
         let before_if_stmt_graph_ix = self.cfg.current_node_ix;
-
-        // if statement basic block
         let before_consequent_stmt_graph_ix = self.cfg.new_basic_block();
         /* cfg */
 
@@ -1099,8 +948,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         } else {
             self.cfg.add_edge(before_if_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
         }
-
-        self.cfg.restore_state(&statement_state, self.current_node_id, after_if_graph_ix, None);
         /* cfg */
 
         self.leave_node(kind);
@@ -1111,9 +958,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg */
-        let statement_state = self
-            .cfg
-            .preserve_state(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        let label = &stmt.label.name;
+        let ctx = self.cfg.ctx(Some(label.as_str())).default().allow_break();
+        if stmt.body.is_iteration_statement() {
+            ctx.allow_continue();
+        }
         /* cfg */
 
         self.visit_label_identifier(&stmt.label);
@@ -1125,13 +974,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_statement(&stmt.body);
 
         /* cfg */
-        self.cfg.restore_state(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
+        let after_body_graph_ix = self.cfg.current_node_ix;
+        let after_labeled_stmt_graph_ix = self.cfg.new_basic_block();
+        self.cfg.add_edge(after_body_graph_ix, after_labeled_stmt_graph_ix, EdgeType::Normal);
 
+        self.cfg.ctx(Some(label.as_str())).mark_break(after_labeled_stmt_graph_ix).resolve();
         /* cfg */
 
         self.leave_node(kind);
@@ -1143,9 +990,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         let node_id = self.current_node_id;
-        let statement_state = self
-            .cfg
-            .preserve_state(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
         /* cfg */
 
         let ret_kind = if let Some(arg) = &stmt.argument {
@@ -1161,13 +1005,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg - append unreachable after return */
         self.cfg.append_unreachable();
-
-        self.cfg.restore_state(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
         /* cfg */
 
         self.leave_node(kind);
@@ -1183,9 +1020,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         let discriminant_graph_ix = self.cfg.current_node_ix;
         self.cfg.switch_case_conditions.push(vec![]);
-        let statement_state = self
-            .cfg
-            .preserve_state(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+
+        self.cfg.ctx(None).default().allow_break();
         let mut ends_of_switch_cases = vec![];
         /* cfg */
 
@@ -1233,12 +1069,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.cfg.add_edge(*last, self.cfg.current_node_ix, EdgeType::Normal);
         }
 
-        self.cfg.restore_state(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
+        let current_node_ix = self.cfg.current_node_ix;
+        self.cfg.ctx(None).mark_break(current_node_ix).resolve();
         /* cfg */
 
         self.leave_scope();
@@ -1280,9 +1112,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         let node_id = self.current_node_id;
-        let statement_state = self
-            .cfg
-            .preserve_state(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
         /* cfg */
 
         self.visit_expression(&stmt.argument);
@@ -1290,12 +1119,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         self.cfg.push_throw(node_id);
-        self.cfg.restore_state(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
         /* cfg */
 
         self.leave_node(kind);
@@ -1363,10 +1186,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // block, both for finally_succ and finally_err.
 
         /* cfg */
-        let statement_state = self
-            .cfg
-            .preserve_state(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
-
         // TODO: support unwinding finally/catch blocks that aren't in this function
         // even if something throws.
         let parent_after_throw_block_ix = self.cfg.after_throw_block;
@@ -1489,13 +1308,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             after_try_statement_block_ix,
             EdgeType::Normal,
         );
-
-        self.cfg.restore_state(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
         /* cfg */
 
         self.leave_node(kind);
@@ -1537,8 +1349,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg - body basic block */
         let body_graph_ix = self.cfg.new_basic_block();
-        let statement_state =
-            self.cfg.preserve_state(self.current_node_id, StatementControlFlowType::UsesContinue);
+
+        self.cfg.ctx(None).default().allow_break().allow_continue();
         /* cfg */
 
         self.visit_statement(&stmt.body);
@@ -1552,16 +1364,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.cfg.add_edge(after_body_graph_ix, condition_graph_ix, EdgeType::Backedge);
         self.cfg.add_edge(condition_graph_ix, after_while_graph_ix, EdgeType::Normal);
 
-        self.cfg.restore_state(
-            &statement_state,
-            self.current_node_id,
-            // all basic blocks are break here so we connect them to the
-            // basic block after the while statement
-            after_body_graph_ix,
-            // all basic blocks are continues here so we connect them to the
-            // basic block of the condition
-            Some(condition_graph_ix),
-        );
+        self.cfg
+            .ctx(None)
+            .mark_break(after_while_graph_ix)
+            .mark_continue(condition_graph_ix)
+            .resolve_with_upper_label();
         /* cfg */
         self.leave_node(kind);
     }
@@ -1572,9 +1379,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg - condition basic block */
         let before_with_stmt_graph_ix = self.cfg.current_node_ix;
-        let statement_state = self
-            .cfg
-            .preserve_state(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+
         let condition_graph_ix = self.cfg.new_basic_block();
         /* cfg */
 
@@ -1593,13 +1398,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.cfg.add_edge(condition_graph_ix, body_graph_ix, EdgeType::Normal);
         self.cfg.add_edge(body_graph_ix, after_body_graph_ix, EdgeType::Normal);
         self.cfg.add_edge(condition_graph_ix, after_body_graph_ix, EdgeType::Normal);
-
-        self.cfg.restore_state(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
         /* cfg */
 
         self.leave_node(kind);
@@ -1621,6 +1419,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         let before_function_graph_ix = self.cfg.current_node_ix;
         let function_graph_ix = self.cfg.new_basic_block_for_function();
+        self.cfg.ctx(None).new_function();
         /* cfg */
 
         // We add a new basic block to the cfg before entering the node
@@ -1641,6 +1440,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         self.cfg.restore_expression_state(preserved);
+        self.cfg.ctx(None).resolve_expect(CtxFlags::FUNCTION);
         let after_function_graph_ix = self.cfg.new_basic_block();
         self.cfg.add_edge(before_function_graph_ix, after_function_graph_ix, EdgeType::Normal);
         /* cfg */
@@ -1728,6 +1528,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let preserved = self.cfg.preserve_expression_state();
         let current_node_ix = self.cfg.current_node_ix;
         let function_graph_ix = self.cfg.new_basic_block_for_function();
+        self.cfg.ctx(None).new_function();
         /* cfg */
 
         // We add a new basic block to the cfg before entering the node
@@ -1747,6 +1548,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         self.cfg.restore_expression_state(preserved);
+        self.cfg.ctx(None).resolve_expect(CtxFlags::FUNCTION);
         self.cfg.current_node_ix = current_node_ix;
         /* cfg */
         if let Some(parameters) = &expr.type_parameters {
@@ -1814,8 +1616,9 @@ impl<'a> SemanticBuilder<'a> {
         match kind {
             AstKind::ReturnStatement(_)
             | AstKind::BreakStatement(_)
+            | AstKind::ContinueStatement(_)
             | AstKind::ThrowStatement(_) => { /* These types have their own `InstructionKind`. */ }
-            _ if kind.is_statement() => {
+            it if it.is_statement() => {
                 self.cfg.enter_statement(self.current_node_id);
             }
             _ => { /* ignore the rest */ }

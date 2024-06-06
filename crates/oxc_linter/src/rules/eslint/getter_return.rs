@@ -184,7 +184,7 @@ impl GetterReturn {
             &cfg.graph,
             node.cfg_id(),
             &|edge| match edge {
-                EdgeType::Normal => None,
+                EdgeType::Jump | EdgeType::Normal => None,
                 // We don't need to handle backedges because we would have already visited
                 // them on the forward pass
                 | EdgeType::Backedge
@@ -269,6 +269,7 @@ impl GetterReturn {
                         }
                         // Ignore irrelevant elements.
                         | InstructionKind::Break(_)
+                        | InstructionKind::Continue(_)
                         | InstructionKind::Statement => {}
                     }
                 }

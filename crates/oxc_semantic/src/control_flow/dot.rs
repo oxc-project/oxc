@@ -1,10 +1,13 @@
-use oxc_ast::{ast::BreakStatement, AstKind};
+use oxc_ast::{
+    ast::{BreakStatement, ContinueStatement},
+    AstKind,
+};
 use oxc_syntax::node::AstNodeId;
 use petgraph::dot::{Config, Dot};
 
 use crate::{
-    AstNode, AstNodes, BasicBlock, BreakInstructionKind, ControlFlowGraph, EdgeType, Instruction,
-    InstructionKind, ReturnInstructionKind,
+    AstNode, AstNodes, BasicBlock, ControlFlowGraph, EdgeType, Instruction, InstructionKind,
+    LabeledInstruction, ReturnInstructionKind,
 };
 
 pub trait DisplayDot {
@@ -71,8 +74,10 @@ impl DisplayDot for Instruction {
             InstructionKind::Statement => "statement",
             InstructionKind::Unreachable => "unreachable",
             InstructionKind::Throw => "throw",
-            InstructionKind::Break(BreakInstructionKind::Labeled) => "break <label>",
-            InstructionKind::Break(BreakInstructionKind::Unlabeled) => "break",
+            InstructionKind::Break(LabeledInstruction::Labeled) => "break <label>",
+            InstructionKind::Break(LabeledInstruction::Unlabeled) => "break",
+            InstructionKind::Continue(LabeledInstruction::Labeled) => "continue <label>",
+            InstructionKind::Continue(LabeledInstruction::Unlabeled) => "continue",
             InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined) => {
                 "return <implicit undefined>"
             }
@@ -127,7 +132,7 @@ impl DebugDot for Instruction {
             }
             InstructionKind::Unreachable => "unreachable".to_string(),
             InstructionKind::Throw => "throw".to_string(),
-            InstructionKind::Break(BreakInstructionKind::Labeled) => {
+            InstructionKind::Break(LabeledInstruction::Labeled) => {
                 let Some(AstKind::BreakStatement(BreakStatement { label: Some(label), .. })) =
                     self.node_id.map(|id| ctx.0.get_node(id)).map(AstNode::kind)
                 else {
@@ -137,7 +142,19 @@ impl DebugDot for Instruction {
                 };
                 format!("break <{}>", label.name)
             }
-            InstructionKind::Break(BreakInstructionKind::Unlabeled) => "break".to_string(),
+            InstructionKind::Break(LabeledInstruction::Unlabeled) => "break".to_string(),
+            InstructionKind::Continue(LabeledInstruction::Labeled) => {
+                let Some(AstKind::ContinueStatement(ContinueStatement {
+                    label: Some(label), ..
+                })) = self.node_id.map(|id| ctx.0.get_node(id)).map(AstNode::kind)
+                else {
+                    unreachable!(
+                        "Expected a label node to be associated with an labeled continue instruction. {:?}", ctx.0.kind(self.node_id.unwrap())
+                    )
+                };
+                format!("continue <{}>", label.name)
+            }
+            InstructionKind::Continue(LabeledInstruction::Unlabeled) => "continue".to_string(),
             InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined) => {
                 "return <implicit undefined>".to_string()
             }

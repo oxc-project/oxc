@@ -286,7 +286,7 @@ impl RulesOfHooks {
         // All nodes should be reachable from our hook, Otherwise we have a conditional/branching flow.
         petgraph::algo::dijkstra(graph, func_cfg_id, Some(node_cfg_id), |e| match e.weight() {
             EdgeType::NewFunction => 1,
-            EdgeType::Unreachable | EdgeType::Backedge | EdgeType::Normal => 0,
+            EdgeType::Jump | EdgeType::Unreachable | EdgeType::Backedge | EdgeType::Normal => 0,
         })
         .into_iter()
         .filter(|(_, val)| *val == 0)
@@ -305,7 +305,7 @@ impl RulesOfHooks {
             &cfg.graph,
             func_cfg_id,
             &|e| match e {
-                EdgeType::Normal => None,
+                EdgeType::Jump | EdgeType::Normal => None,
                 EdgeType::Unreachable | EdgeType::Backedge | EdgeType::NewFunction => {
                     Some(State::default())
                 }
@@ -324,7 +324,9 @@ impl RulesOfHooks {
                         InstructionKind::Unreachable
                         | InstructionKind::Throw
                         | InstructionKind::Return(_) => FoldWhile::Continue((acc.0, false)),
-                        InstructionKind::Statement => FoldWhile::Continue(acc),
+                        InstructionKind::Statement | InstructionKind::Continue(_) => {
+                            FoldWhile::Continue(acc)
+                        }
                     })
                     .into_inner();
 

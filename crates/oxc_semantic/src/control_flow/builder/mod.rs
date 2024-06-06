@@ -1,16 +1,21 @@
-use crate::{BreakInstructionKind, ReturnInstructionKind};
+mod context;
+
+use crate::ReturnInstructionKind;
+use context::Ctx;
+
+pub use context::{CtxCursor, CtxFlags};
 
 use super::{
     AstNodeId, BasicBlock, BasicBlockId, CompactStr, ControlFlowGraph, EdgeType, Graph,
-    Instruction, InstructionKind, PreservedExpressionState, PreservedStatementState, Register,
-    StatementControlFlowType,
+    Instruction, InstructionKind, LabeledInstruction, PreservedExpressionState, Register,
 };
 
 #[derive(Debug, Default)]
-pub struct ControlFlowGraphBuilder {
+pub struct ControlFlowGraphBuilder<'a> {
     pub graph: Graph<usize, EdgeType>,
     pub basic_blocks: Vec<BasicBlock>,
     pub current_node_ix: BasicBlockId,
+    ctx_stack: Vec<Ctx<'a>>,
     // note: this should only land in the big box for all things that take arguments
     // ie: callexpression, arrayexpression, etc
     // todo: add assert that it is used every time?
@@ -34,7 +39,7 @@ pub struct ControlFlowGraphBuilder {
     pub after_throw_block: Option<BasicBlockId>,
 }
 
-impl ControlFlowGraphBuilder {
+impl<'a> ControlFlowGraphBuilder<'a> {
     pub fn build(self) -> ControlFlowGraph {
         ControlFlowGraph { graph: self.graph, basic_blocks: self.basic_blocks }
     }
@@ -95,8 +100,32 @@ impl ControlFlowGraphBuilder {
         self.push_instruction(InstructionKind::Throw, Some(node));
     }
 
-    pub fn push_break(&mut self, kind: BreakInstructionKind, node: AstNodeId) {
+    pub fn append_break(&mut self, node: AstNodeId, label: Option<&'a str>) {
+        let kind = match label {
+            Some(_) => LabeledInstruction::Labeled,
+            None => LabeledInstruction::Unlabeled,
+        };
+
+        let bb = self.current_node_ix;
+
         self.push_instruction(InstructionKind::Break(kind), Some(node));
+        self.append_unreachable();
+
+        self.ctx(label).r#break(bb);
+    }
+
+    pub fn append_continue(&mut self, node: AstNodeId, label: Option<&'a str>) {
+        let kind = match label {
+            Some(_) => LabeledInstruction::Labeled,
+            None => LabeledInstruction::Unlabeled,
+        };
+
+        let bb = self.current_node_ix;
+
+        self.push_instruction(InstructionKind::Continue(kind), Some(node));
+        self.append_unreachable();
+
+        self.ctx(label).r#continue(bb);
     }
 
     pub fn append_unreachable(&mut self) {
@@ -134,83 +163,6 @@ impl ControlFlowGraphBuilder {
         self.use_this_register = preserved_state.use_this_register.take();
         self.store_final_assignments_into_this_array =
             preserved_state.store_final_assignments_into_this_array;
-    }
-
-    // note: could use type specialization rather than an enum
-    #[must_use]
-    #[allow(clippy::needless_pass_by_value)]
-    pub fn preserve_state(
-        &mut self,
-        id: AstNodeId,
-        control_flow_type: StatementControlFlowType,
-    ) -> PreservedStatementState {
-        let mut pss = PreservedStatementState { put_label: false };
-
-        match control_flow_type {
-            StatementControlFlowType::DoesNotUseContinue => {
-                self.basic_blocks_with_breaks.push(vec![]);
-                if let Some(next_label) = &self.next_label.take() {
-                    self.label_to_ast_node_ix.push((next_label.clone(), id));
-                    pss.put_label = true;
-                    self.ast_node_to_break_continue.push((
-                        id,
-                        self.basic_blocks_with_breaks.len() - 1,
-                        None,
-                    ));
-                }
-            }
-            StatementControlFlowType::UsesContinue => {
-                self.basic_blocks_with_breaks.push(vec![]);
-                self.basic_blocks_with_continues.push(vec![]);
-                if let Some(next_label) = &self.next_label.take() {
-                    self.label_to_ast_node_ix.push((next_label.clone(), id));
-                    pss.put_label = true;
-                    self.ast_node_to_break_continue.push((
-                        id,
-                        self.basic_blocks_with_breaks.len() - 1,
-                        None,
-                    ));
-                }
-            }
-        }
-
-        pss
-    }
-
-    /// # Panics
-    pub fn restore_state(
-        &mut self,
-        preserved_state: &PreservedStatementState,
-        id: AstNodeId,
-        break_jump_position: BasicBlockId,
-        continue_jump_position: Option<BasicBlockId>,
-    ) {
-        let basic_blocks_with_breaks = self
-            .basic_blocks_with_breaks
-            .pop()
-            .expect("expected there to be a breaks array for this statement");
-
-        for break_ in basic_blocks_with_breaks {
-            // can this always be self.current_node_ix?
-            self.add_edge(break_, break_jump_position, EdgeType::Normal);
-        }
-
-        if let Some(continue_jump_position) = continue_jump_position {
-            let basic_blocks_with_continues = self.basic_blocks_with_continues.pop().expect(
-                "expect there to be a basic block with continue directive for this statement",
-            );
-
-            for continue_ in basic_blocks_with_continues {
-                self.add_edge(continue_, continue_jump_position, EdgeType::Normal);
-            }
-        }
-
-        if preserved_state.put_label {
-            let popped = self.label_to_ast_node_ix.pop();
-            let popped_2 = self.ast_node_to_break_continue.pop();
-            debug_assert_eq!(popped.unwrap().1, id);
-            debug_assert_eq!(popped_2.unwrap().0, id);
-        }
     }
 
     pub fn enter_statement(&mut self, stmt: AstNodeId) {

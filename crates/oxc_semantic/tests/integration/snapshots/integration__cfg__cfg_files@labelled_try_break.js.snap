@@ -18,7 +18,7 @@ bb2: {
 }
 
 bb3: {
-
+	break <label>
 }
 
 bb4: {
@@ -27,7 +27,6 @@ bb4: {
 
 bb5: {
 	unreachable
-	break <label>
 }
 
 bb6: {
@@ -35,22 +34,25 @@ bb6: {
 }
 
 bb7: {
-
+	break <label>
 }
 
 bb8: {
 	unreachable
-	break <label>
 }
 
 bb9: {
-	return <value>
+
 }
 
 bb10: {
-	unreachable
+	return <value>
 }
 
 bb11: {
+	unreachable
+}
+
+bb12: {
 
 }

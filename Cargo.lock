@@ -1637,6 +1637,7 @@ dependencies = [
 name = "oxc_semantic"
 version = "0.13.3"
 dependencies = [
+ "bitflags 2.5.0",
  "indexmap",
  "insta",
  "itertools 0.13.0",

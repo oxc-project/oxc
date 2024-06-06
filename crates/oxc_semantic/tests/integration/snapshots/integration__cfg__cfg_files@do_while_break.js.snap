@@ -21,11 +21,11 @@ bb3: {
 
 bb4: {
 	statement
+	break
 }
 
 bb5: {
 	unreachable
-	break
 }
 
 bb6: {
@@ -46,11 +46,11 @@ bb9: {
 
 bb10: {
 	statement
+	break
 }
 
 bb11: {
 	unreachable
-	break
 }
 
 bb12: {

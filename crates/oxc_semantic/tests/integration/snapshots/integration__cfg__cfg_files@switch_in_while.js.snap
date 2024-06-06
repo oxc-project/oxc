@@ -22,7 +22,7 @@ bb3: {
 
 bb4: {
 	statement
-	statement
+	continue
 }
 
 bb5: {
@@ -30,17 +30,13 @@ bb5: {
 }
 
 bb6: {
-	unreachable
+
 }
 
 bb7: {
-
-}
-
-bb8: {
 	statement
 }
 
-bb9: {
+bb8: {
 
 }
