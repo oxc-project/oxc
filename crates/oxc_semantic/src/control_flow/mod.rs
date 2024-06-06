@@ -265,24 +265,24 @@ impl ControlFlowGraph {
         to: BasicBlockId,
         nodes: &AstNodes,
     ) -> bool {
-        self.is_reachabale_filtered_deepscan(from, to, &|_| Control::Continue, nodes)
+        self.is_reachabale_filtered_deepscan(from, to, /* &|_| Control::Continue, */ nodes)
     }
 
-    pub fn is_reachabale_filtered_deepscan<F: Fn(BasicBlockId) -> Control<bool>>(
+    pub fn is_reachabale_filtered_deepscan(
         &self,
         from: BasicBlockId,
         to: BasicBlockId,
-        filter: &F,
+        // filter: &F,
         nodes: &AstNodes,
     ) -> bool {
-        self.is_reachabale_filtered_deepscan_impl(from, to, filter, nodes)
+        self.is_reachabale_filtered_deepscan_impl(from, to, /* filter, */ nodes)
     }
 
-    fn is_reachabale_with_infinite_loop<F: Fn(BasicBlockId) -> Control<bool>>(
+    fn is_reachabale_with_infinite_loop(
         &self,
         from: BasicBlockId,
         to: BasicBlockId,
-        filter: &F,
+        // filter: &F,
         loop_test: BasicBlockId,
     ) -> (bool, bool) {
         if from == to {
@@ -308,10 +308,10 @@ impl ControlFlowGraph {
                 }
             }
             DfsEvent::TreeEdge(a, b) => {
-                let filter_result = filter(a);
-                if !matches!(filter_result, Control::Continue) {
-                    return filter_result;
-                }
+                // let filter_result = filter(a);
+                // if !matches!(filter_result, Control::Continue) {
+                //     return filter_result;
+                // }
                 let unreachable = !graph.edges_connecting(a, b).any(|edge| {
                     !matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
                 });
@@ -412,11 +412,11 @@ impl ControlFlowGraph {
         }
     }
 
-    pub(self) fn is_reachabale_filtered_deepscan_impl<F: Fn(BasicBlockId) -> Control<bool>>(
+    pub(self) fn is_reachabale_filtered_deepscan_impl(
         &self,
         from: BasicBlockId,
         to: BasicBlockId,
-        filter: &F,
+        // filter: &F,
         nodes: &AstNodes,
     ) -> bool {
         if from == to {
@@ -429,8 +429,9 @@ impl ControlFlowGraph {
                     Control::Break(true)
                 } else if let Some((loop_jump, loop_end)) = self.is_infinite_loop_start(node, nodes)
                 {
-                    let (found, seen_break) =
-                        self.is_reachabale_with_infinite_loop(loop_jump, to, filter, loop_end);
+                    let (found, seen_break) = self.is_reachabale_with_infinite_loop(
+                        loop_jump, to, /* filter,  */ loop_end,
+                    );
                     if found {
                         Control::Break(true)
                     } else if !seen_break {
@@ -443,10 +444,10 @@ impl ControlFlowGraph {
                 }
             }
             DfsEvent::TreeEdge(a, b) => {
-                let filter_result = filter(a);
-                if !matches!(filter_result, Control::Continue) {
-                    return filter_result;
-                }
+                // let filter_result = filter(a);
+                // if !matches!(filter_result, Control::Continue) {
+                //     return filter_result;
+                // }
                 let unreachable = !graph.edges_connecting(a, b).any(|edge| {
                     !matches!(
                         edge.weight(),
