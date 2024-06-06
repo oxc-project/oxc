@@ -649,6 +649,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_statement(&stmt.body);
 
         /* cfg - condition basic block */
+        let after_body_graph_ix = self.cfg.current_node_ix;
         let start_of_condition_graph_ix = self.cfg.new_basic_block();
         /* cfg */
 
@@ -659,18 +660,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         let end_do_while_graph_ix = self.cfg.new_basic_block();
 
-        // before do while to start of condition basic block
-        self.cfg.add_edge(
-            before_do_while_stmt_graph_ix,
-            start_of_condition_graph_ix,
-            EdgeType::Normal,
-        );
+        // before do while to start of body basic block
+        self.cfg.add_edge(before_do_while_stmt_graph_ix, start_body_graph_ix, EdgeType::Normal);
         // body of do-while to start of condition
-        self.cfg.add_edge(start_body_graph_ix, start_of_condition_graph_ix, EdgeType::Backedge);
+        self.cfg.add_edge(after_body_graph_ix, start_of_condition_graph_ix, EdgeType::Normal);
         // end of condition to after do while
         self.cfg.add_edge(end_of_condition_graph_ix, end_do_while_graph_ix, EdgeType::Normal);
         // end of condition to after start of body
-        self.cfg.add_edge(end_of_condition_graph_ix, start_body_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(end_of_condition_graph_ix, start_body_graph_ix, EdgeType::Backedge);
 
         self.cfg.restore_state(
             &statement_state,
