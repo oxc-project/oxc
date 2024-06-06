@@ -7,15 +7,28 @@ on:
         required: true
         type: string
         description: "The name defined in oxc_release.toml"
+    outputs:
+      pull-request-number:
+        value: ${{ jobs.run.outputs.pull-request-number }}
+      version:
+        value: ${{ jobs.run.outputs.version }}
 
 env:
   CARGO_INCREMENTAL: 0
   RUSTFLAGS: "-D warnings"
 
+permissions:
+  pull-requests: write
+  contents: write
+  actions: write
+
 jobs:
   run:
-    name: Prepare Release Crates
+    name: Prepare Release
     runs-on: ubuntu-latest
+    outputs:
+      pull-request-number: ${{ steps.pr.outputs.pull-request-number }}
+      version: ${{ steps.version.outputs.VERSION }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,6 +72,7 @@ jobs:
       - run: cargo check
 
       - uses: peter-evans/create-pull-request@v6
+        id: pr
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: Release ${{ inputs.name }}
@@ -66,6 +80,7 @@ jobs:
           author: Boshen <Boshen@users.noreply.github.com>
           branch: release/${{ inputs.name }}
           branch-suffix: timestamp
+          base: main
           title: Release ${{ inputs.name }} v${{ steps.version.outputs.VERSION }}
           body: ${{ steps.changelog.outputs.CHANGELOG }}
           assignees: Boshen
