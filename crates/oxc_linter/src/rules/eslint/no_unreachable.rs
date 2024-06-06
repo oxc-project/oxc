@@ -110,6 +110,14 @@ fn test() {
           }
         }
         ",
+        "
+        try {
+            throw 'error';
+        } catch (err) {
+            b();
+        }
+        c();
+        ",
     ];
 
     let fail = vec![
