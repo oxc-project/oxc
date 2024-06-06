@@ -1,14 +1,13 @@
 mod builder;
 mod dot;
 
-use itertools::Itertools;
 use oxc_span::CompactStr;
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
 use petgraph::{
     stable_graph::NodeIndex,
-    visit::{depth_first_search, Dfs, DfsEvent, Walker},
+    visit::{depth_first_search, Control, DfsEvent},
     Graph,
 };
 
@@ -192,19 +191,28 @@ impl ControlFlowGraph {
     }
 
     pub fn is_reachabale(&self, from: BasicBlockId, to: BasicBlockId) -> bool {
+        if from == to {
+            return true;
+        }
         let graph = &self.graph;
-        let mut dfs = Dfs::empty(graph);
-        dfs.reset(graph);
-        dfs.move_to(from);
-        dfs.iter(graph)
-            .take_while_inclusive(|it| {
-                !self
-                    .basic_block(*it)
-                    .instructions()
-                    .iter()
-                    .any(|it| matches!(it, Instruction { kind: InstructionKind::Unreachable, .. }))
-            })
-            .any(|x| x == to)
+        depth_first_search(&self.graph, Some(from), |event| match event {
+            DfsEvent::TreeEdge(a, b) => {
+                let unreachable = graph.edges_connecting(a, b).all(|edge| {
+                    matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
+                });
+
+                if unreachable {
+                    Control::Prune
+                } else if b == to {
+                    return Control::Break(true);
+                } else {
+                    Control::Continue
+                }
+            }
+            _ => Control::Continue,
+        })
+        .break_value()
+        .unwrap_or(false)
     }
 
     pub fn is_cyclic(&self, node: BasicBlockId) -> bool {
@@ -213,6 +221,18 @@ impl ControlFlowGraph {
             _ => Ok(()),
         })
         .is_err()
+    }
+
+    pub fn has_conditional_path(&self, from: BasicBlockId, to: BasicBlockId) -> bool {
+        let graph = &self.graph;
+        // All nodes should be able to reach the `to` node, Otherwise we have a conditional/branching flow.
+        petgraph::algo::dijkstra(graph, from, Some(to), |e| match e.weight() {
+            EdgeType::NewFunction => 1,
+            EdgeType::Jump | EdgeType::Unreachable | EdgeType::Backedge | EdgeType::Normal => 0,
+        })
+        .into_iter()
+        .filter(|(_, val)| *val == 0)
+        .any(|(f, _)| !self.is_reachabale(f, to))
     }
 }
 

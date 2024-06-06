@@ -111,7 +111,8 @@ fn main() -> std::io::Result<()> {
                     }
                 });
                 format!(
-                    "xlabel = \"nodes [{}]\\l\", label = \"bb{}\n{}\"",
+                    "xlabel = \"nodes{} [{}]\\l\", label = \"bb{}\n{}\"",
+                    node.1,
                     nodes,
                     node.1,
                     semantic.semantic.cfg().basic_blocks[*node.1]

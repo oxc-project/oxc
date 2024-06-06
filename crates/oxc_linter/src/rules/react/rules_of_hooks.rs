@@ -228,12 +228,7 @@ impl Rule for RulesOfHooks {
             return;
         }
 
-        if !petgraph::algo::has_path_connecting(
-            &semantic.cfg().graph,
-            func_cfg_id,
-            node_cfg_id,
-            None,
-        ) {
+        if !ctx.semantic().cfg().is_reachabale(func_cfg_id, node_cfg_id) {
             // There should always be a control flow path between a parent and child node.
             // If there is none it means we always do an early exit before reaching our hook call.
             // In some cases it might mean that we are operating on an invalid `cfg` but in either
