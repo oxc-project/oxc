@@ -128,15 +128,15 @@ fn test() {
         };
         ",
         "
-        while (true) {
-            try {
-                a();
-            } catch (err) {
-                b();
-            } finally {
+        try {
+            for (const a of b) {
                 c();
             }
-            d();
+        
+            while (true) {
+                d();
+            }
+        } finally {
         }
         ",
     ];

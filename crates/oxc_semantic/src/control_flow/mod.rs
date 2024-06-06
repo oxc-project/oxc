@@ -284,13 +284,21 @@ impl ControlFlowGraph {
         to: BasicBlockId,
         filter: &F,
         loop_test: BasicBlockId,
-    ) -> bool {
+    ) -> (bool, bool) {
         if from == to {
-            return true;
+            return (true, false);
         }
         let graph = &self.graph;
+        let mut seen_break = false;
         depth_first_search(&self.graph, Some(from), |event| match event {
             DfsEvent::Discover(node, _) => {
+                if !seen_break {
+                    seen_break = self
+                        .basic_block(node)
+                        .instructions()
+                        .last()
+                        .is_some_and(|it| matches!(it.kind, InstructionKind::Break(_)));
+                }
                 if loop_test == node {
                     Control::Prune
                 } else if node == to {
@@ -319,7 +327,7 @@ impl ControlFlowGraph {
             _ => Control::Continue,
         })
         .break_value()
-        .unwrap_or(false)
+        .map_or((false, false), |it| (it, seen_break))
     }
 
     pub(self) fn is_infinite_loop_start(
@@ -423,9 +431,15 @@ impl ControlFlowGraph {
                     Control::Break(true)
                 } else if let Some((loop_jump, loop_end)) = self.is_infinite_loop_start(node, nodes)
                 {
-                    Control::Break(
-                        self.is_reachabale_with_infinite_loop(loop_jump, to, filter, loop_end),
-                    )
+                    let (found, seen_break) =
+                        self.is_reachabale_with_infinite_loop(loop_jump, to, filter, loop_end);
+                    if found {
+                        Control::Break(true)
+                    } else if !seen_break {
+                        Control::Prune
+                    } else {
+                        Control::Continue
+                    }
                 } else {
                     Control::Continue
                 }
