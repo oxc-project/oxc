@@ -127,7 +127,7 @@ fn test() {
             }
         };
         ",
-        r#"
+        "
         while (true) {
             try {
                 a();
@@ -138,7 +138,7 @@ fn test() {
             }
             d();
         }
-        "#,
+        ",
     ];
 
     let fail = vec![
