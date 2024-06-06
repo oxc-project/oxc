@@ -4,7 +4,7 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/switch_in_while.js
 ---
 bb0: {
-
+	statement
 }
 
 bb1: {
@@ -12,7 +12,8 @@ bb1: {
 }
 
 bb2: {
-
+	statement
+	statement
 }
 
 bb3: {
@@ -20,15 +21,16 @@ bb3: {
 }
 
 bb4: {
-
+	statement
+	statement
 }
 
 bb5: {
-	Unreachable()
+	unreachable
 }
 
 bb6: {
-	Unreachable()
+	unreachable
 }
 
 bb7: {
@@ -36,7 +38,7 @@ bb7: {
 }
 
 bb8: {
-
+	statement
 }
 
 bb9: {

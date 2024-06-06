@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{
     petgraph::{self},
     pg::neighbors_filtered_by_edge_weight,
-    AstNodeId, AstNodes, BasicBlockElement, BasicBlockId, EdgeType, Register,
+    AstNodeId, AstNodes, BasicBlockId, EdgeType, Instruction, InstructionKind,
 };
 use oxc_span::{Atom, CompactStr};
 use oxc_syntax::operator::AssignmentOperator;
@@ -281,15 +281,16 @@ impl RulesOfHooks {
         func_cfg_id: BasicBlockId,
         node_cfg_id: BasicBlockId,
     ) -> bool {
-        let graph = &ctx.semantic().cfg().graph;
+        let cfg = ctx.semantic().cfg();
+        let graph = &cfg.graph;
         // All nodes should be reachable from our hook, Otherwise we have a conditional/branching flow.
         petgraph::algo::dijkstra(graph, func_cfg_id, Some(node_cfg_id), |e| match e.weight() {
             EdgeType::NewFunction => 1,
-            EdgeType::Backedge | EdgeType::Normal => 0,
+            EdgeType::Unreachable | EdgeType::Backedge | EdgeType::Normal => 0,
         })
         .into_iter()
         .filter(|(_, val)| *val == 0)
-        .any(|(f, _)| !petgraph::algo::has_path_connecting(graph, f, node_cfg_id, None))
+        .any(|(f, _)| !cfg.is_reachabale(f, node_cfg_id))
     }
 
     #[inline(always)]
@@ -305,7 +306,9 @@ impl RulesOfHooks {
             func_cfg_id,
             &|e| match e {
                 EdgeType::Normal => None,
-                EdgeType::Backedge | EdgeType::NewFunction => Some(State::default()),
+                EdgeType::Unreachable | EdgeType::Backedge | EdgeType::NewFunction => {
+                    Some(State::default())
+                }
             },
             &mut |id: &BasicBlockId, mut state: State| {
                 if node_cfg_id == *id {
@@ -314,15 +317,14 @@ impl RulesOfHooks {
 
                 let (push, keep_walking) = cfg
                     .basic_block(*id)
+                    .instructions
                     .iter()
-                    .fold_while((false, true), |acc, it| match it {
-                        BasicBlockElement::Break(_) => FoldWhile::Done((true, false)),
-                        BasicBlockElement::Unreachable
-                        | BasicBlockElement::Throw(_)
-                        | BasicBlockElement::Assignment(Register::Return, _) => {
-                            FoldWhile::Continue((acc.0, false))
-                        }
-                        BasicBlockElement::Assignment(_, _) => FoldWhile::Continue(acc),
+                    .fold_while((false, true), |acc, Instruction { kind, .. }| match kind {
+                        InstructionKind::Break(_) => FoldWhile::Done((true, false)),
+                        InstructionKind::Unreachable
+                        | InstructionKind::Throw
+                        | InstructionKind::Return(_) => FoldWhile::Continue((acc.0, false)),
+                        InstructionKind::Statement => FoldWhile::Continue(acc),
                     })
                     .into_inner();
 

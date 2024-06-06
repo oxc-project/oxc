@@ -8,7 +8,7 @@ bb0: {
 }
 
 bb1: {
-
+	statement
 }
 
 bb2: {
@@ -16,11 +16,11 @@ bb2: {
 }
 
 bb3: {
-
+	statement
 }
 
 bb4: {
-	Unreachable()
+	unreachable
 	break
 }
 
@@ -29,7 +29,7 @@ bb5: {
 }
 
 bb6: {
-
+	statement
 }
 
 bb7: {
@@ -37,11 +37,11 @@ bb7: {
 }
 
 bb8: {
-
+	statement
 }
 
 bb9: {
-	Unreachable()
+	unreachable
 	break
 }
 
@@ -50,19 +50,25 @@ bb10: {
 }
 
 bb11: {
-	$return = <value>
+	statement
+	statement
+	statement
+	statement
+	return <value>
 }
 
 bb12: {
-
+	unreachable
 }
 
 bb13: {
-	Unreachable()
+
 }
 
 bb14: {
-
+	statement
+	statement
+	statement
 }
 
 bb15: {
@@ -70,30 +76,20 @@ bb15: {
 }
 
 bb16: {
-
+	statement
+	return <value>
 }
 
 bb17: {
-	$return = <value>
+	unreachable
+	statement
+	return <value>
 }
 
 bb18: {
-
+	unreachable
 }
 
 bb19: {
-	Unreachable()
-	$return = <value>
-}
-
-bb20: {
-
-}
-
-bb21: {
-	Unreachable()
-}
-
-bb22: {
 
 }

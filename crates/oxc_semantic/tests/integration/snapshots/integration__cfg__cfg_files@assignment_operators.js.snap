@@ -4,7 +4,7 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/assignment_operators.js
 ---
 bb0: {
-
+	statement
 }
 
 bb1: {
@@ -12,7 +12,7 @@ bb1: {
 }
 
 bb2: {
-
+	statement
 }
 
 bb3: {
@@ -20,7 +20,7 @@ bb3: {
 }
 
 bb4: {
-
+	statement
 }
 
 bb5: {
@@ -28,5 +28,6 @@ bb5: {
 }
 
 bb6: {
-
+	statement
+	statement
 }

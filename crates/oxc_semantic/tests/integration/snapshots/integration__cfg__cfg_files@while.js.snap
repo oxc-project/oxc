@@ -8,7 +8,7 @@ bb0: {
 }
 
 bb1: {
-
+	statement
 }
 
 bb2: {
@@ -24,29 +24,22 @@ bb4: {
 }
 
 bb5: {
-	$return = <value>
+	statement
+	return <value>
 }
 
 bb6: {
-
+	unreachable
 }
 
 bb7: {
-	Unreachable()
+	return <value>
 }
 
 bb8: {
-	$return = <value>
+	unreachable
 }
 
 bb9: {
-
-}
-
-bb10: {
-	Unreachable()
-}
-
-bb11: {
 
 }

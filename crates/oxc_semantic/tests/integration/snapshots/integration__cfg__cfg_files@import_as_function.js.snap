@@ -4,9 +4,9 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/import_as_function.js
 ---
 bb0: {
-
+	statement
 }
 
 bb1: {
-
+	statement
 }

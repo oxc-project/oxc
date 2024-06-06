@@ -4,27 +4,27 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/do_while_break.js
 ---
 bb0: {
-
+	statement
 }
 
 bb1: {
-
+	statement
 }
 
 bb2: {
-
+	statement
 }
 
 bb3: {
-
+	statement
 }
 
 bb4: {
-
+	statement
 }
 
 bb5: {
-	Unreachable()
+	unreachable
 	break
 }
 
@@ -37,19 +37,19 @@ bb7: {
 }
 
 bb8: {
-	Unreachable()
+	unreachable
 }
 
 bb9: {
-
+	statement
 }
 
 bb10: {
-
+	statement
 }
 
 bb11: {
-	Unreachable()
+	unreachable
 	break
 }
 

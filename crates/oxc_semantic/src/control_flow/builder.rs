@@ -1,13 +1,15 @@
+use crate::{BreakInstructionKind, ReturnInstructionKind};
+
 use super::{
-    AssignmentValue, AstNodeId, BasicBlockElement, BasicBlockId, CompactStr, ControlFlowGraph,
-    EdgeType, Graph, PreservedExpressionState, PreservedStatementState, Register,
+    AstNodeId, BasicBlock, BasicBlockId, CompactStr, ControlFlowGraph, EdgeType, Graph,
+    Instruction, InstructionKind, PreservedExpressionState, PreservedStatementState, Register,
     StatementControlFlowType,
 };
 
 #[derive(Debug, Default)]
 pub struct ControlFlowGraphBuilder {
     pub graph: Graph<usize, EdgeType>,
-    pub basic_blocks: Vec<Vec<BasicBlockElement>>,
+    pub basic_blocks: Vec<BasicBlock>,
     pub current_node_ix: BasicBlockId,
     // note: this should only land in the big box for all things that take arguments
     // ie: callexpression, arrayexpression, etc
@@ -21,8 +23,6 @@ pub struct ControlFlowGraphBuilder {
     // computed member expressions are only executed when we reach
     // that part of the chain, so we keep this vec to patch them in later
     pub should_save_stores_for_patching: bool,
-    // (start, tail, last_register_used)
-    pub saved_stores: Vec<(Vec<BasicBlockElement>, Option<Register>)>,
     pub saved_store: Option<usize>,
     pub basic_blocks_with_breaks: Vec<Vec<BasicBlockId>>,
     pub basic_blocks_with_continues: Vec<Vec<BasicBlockId>>,
@@ -40,7 +40,7 @@ impl ControlFlowGraphBuilder {
     }
 
     /// # Panics
-    pub fn current_basic_block(&mut self) -> &mut Vec<BasicBlockElement> {
+    pub fn current_basic_block(&mut self) -> &mut BasicBlock {
         let idx = *self
             .graph
             .node_weight(self.current_node_ix)
@@ -52,7 +52,7 @@ impl ControlFlowGraphBuilder {
 
     #[must_use]
     pub fn new_basic_block_for_function(&mut self) -> BasicBlockId {
-        self.basic_blocks.push(Vec::new());
+        self.basic_blocks.push(BasicBlock::new());
         let basic_block_id = self.basic_blocks.len() - 1;
         let graph_index = self.graph.add_node(basic_block_id);
         self.current_node_ix = graph_index;
@@ -67,7 +67,7 @@ impl ControlFlowGraphBuilder {
 
     #[must_use]
     pub fn new_basic_block(&mut self) -> BasicBlockId {
-        self.basic_blocks.push(Vec::new());
+        self.basic_blocks.push(BasicBlock::new());
         let graph_index = self.graph.add_node(self.basic_blocks.len() - 1);
         self.current_node_ix = graph_index;
 
@@ -83,56 +83,36 @@ impl ControlFlowGraphBuilder {
         self.graph.add_edge(a, b, weight);
     }
 
-    #[must_use]
-    pub fn new_register(&mut self) -> Register {
-        let register = Register::Index(self.next_free_register);
-        self.next_free_register += 1;
-        register
+    pub fn push_statement(&mut self, stmt: AstNodeId) {
+        self.push_instruction(InstructionKind::Statement, Some(stmt));
     }
 
-    /// # Panics
-    pub fn put_x_in_register(&mut self, asmt_value: AssignmentValue) {
-        let register = self.use_this_register.take().unwrap_or_else(|| self.new_register());
-
-        let basic_block_element = BasicBlockElement::Assignment(register, asmt_value);
-
-        if self.should_save_stores_for_patching {
-            let saved_store = &mut self.saved_stores[self.saved_store.expect(
-                "there must be at least one saved store if should_save_stores_for_patching is true",
-            )];
-
-            saved_store.0.push(basic_block_element);
-            saved_store.1 = Some(register);
-        } else {
-            self.current_basic_block().push(basic_block_element);
-        }
-        // used for storing the object base for MemberExpressions
-        if let Some(arr) = self.store_assignments_into_this_array.last_mut() {
-            arr.push(register);
-        }
-
-        if let Some(arr) = self.store_final_assignments_into_this_array.last_mut() {
-            arr.push(register);
-        }
+    pub fn push_return(&mut self, kind: ReturnInstructionKind, node: AstNodeId) {
+        self.push_instruction(InstructionKind::Return(kind), Some(node));
     }
 
-    pub fn put_throw(&mut self, throw_expr: Register) {
-        self.current_basic_block().push(BasicBlockElement::Throw(throw_expr));
+    pub fn push_throw(&mut self, node: AstNodeId) {
+        self.push_instruction(InstructionKind::Throw, Some(node));
     }
 
-    pub fn put_break(&mut self, label: Option<Register>) {
-        self.current_basic_block().push(BasicBlockElement::Break(label));
+    pub fn push_break(&mut self, kind: BreakInstructionKind, node: AstNodeId) {
+        self.push_instruction(InstructionKind::Break(kind), Some(node));
     }
 
-    pub fn put_unreachable(&mut self) {
+    pub fn append_unreachable(&mut self) {
         let current_node_ix = self.current_node_ix;
         let basic_block_with_unreachable_graph_ix = self.new_basic_block();
-        self.add_edge(current_node_ix, basic_block_with_unreachable_graph_ix, EdgeType::Normal);
-        self.current_basic_block().push(BasicBlockElement::Unreachable);
+        self.add_edge(
+            current_node_ix,
+            basic_block_with_unreachable_graph_ix,
+            EdgeType::Unreachable,
+        );
+        self.push_instruction(InstructionKind::Unreachable, None);
     }
 
-    pub fn put_undefined(&mut self) {
-        self.put_x_in_register(AssignmentValue::ImplicitUndefined);
+    #[inline]
+    pub(self) fn push_instruction(&mut self, kind: InstructionKind, node_id: Option<AstNodeId>) {
+        self.current_basic_block().instructions.push(Instruction { kind, node_id });
     }
 
     #[must_use]
@@ -159,7 +139,7 @@ impl ControlFlowGraphBuilder {
     // note: could use type specialization rather than an enum
     #[must_use]
     #[allow(clippy::needless_pass_by_value)]
-    pub fn before_statement(
+    pub fn preserve_state(
         &mut self,
         id: AstNodeId,
         control_flow_type: StatementControlFlowType,
@@ -198,7 +178,7 @@ impl ControlFlowGraphBuilder {
     }
 
     /// # Panics
-    pub fn after_statement(
+    pub fn restore_state(
         &mut self,
         preserved_state: &PreservedStatementState,
         id: AstNodeId,
@@ -231,5 +211,9 @@ impl ControlFlowGraphBuilder {
             debug_assert_eq!(popped.unwrap().1, id);
             debug_assert_eq!(popped_2.unwrap().0, id);
         }
+    }
+
+    pub fn enter_statement(&mut self, stmt: AstNodeId) {
+        self.push_statement(stmt);
     }
 }

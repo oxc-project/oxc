@@ -4,12 +4,11 @@ expression: output.cfg_dot_diagram()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/simple_spread.js
 ---
 digraph {
-    0 [ label = ""]
-    1 [ label = "$return = <value>"]
-    2 [ label = ""]
-    3 [ label = "Unreachable()"]
-    4 [ label = ""]
-    0 -> 1 [ ]
-    2 -> 3 [ ]
-    0 -> 4 [ ]
+    0 [ label = "" ]
+    1 [ label = "return <value>" ]
+    2 [ label = "unreachable" ]
+    3 [ label = "" ]
+    0 -> 1 [ label = NewFunction ]
+    1 -> 2 [ label = Unreachable , style = "dotted" ]
+    0 -> 3 [ label = Normal ]
 }

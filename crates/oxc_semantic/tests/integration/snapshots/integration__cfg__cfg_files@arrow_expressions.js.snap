@@ -4,13 +4,14 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/arrow_expressions.js
 ---
 bb0: {
-
+	statement
+	statement
 }
 
 bb1: {
-
+	statement
 }
 
 bb2: {
-
+	statement
 }

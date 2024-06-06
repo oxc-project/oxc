@@ -4,7 +4,8 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/infix_operators.js
 ---
 bb0: {
-
+	statement
+	statement
 }
 
 bb1: {

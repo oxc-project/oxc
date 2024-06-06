@@ -8,17 +8,13 @@ bb0: {
 }
 
 bb1: {
-	$return = <value>
+	return <value>
 }
 
 bb2: {
-
+	unreachable
 }
 
 bb3: {
-	Unreachable()
-}
-
-bb4: {
 
 }

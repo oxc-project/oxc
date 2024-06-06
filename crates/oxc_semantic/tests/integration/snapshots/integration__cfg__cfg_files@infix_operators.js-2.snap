@@ -4,10 +4,10 @@ expression: output.cfg_dot_diagram()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/infix_operators.js
 ---
 digraph {
-    0 [ label = ""]
-    1 [ label = ""]
-    2 [ label = ""]
-    0 -> 1 [ ]
-    0 -> 2 [ ]
-    1 -> 2 [ ]
+    0 [ label = "ExpressionStatement\nExpressionStatement" ]
+    1 [ label = "" ]
+    2 [ label = "" ]
+    0 -> 1 [ label = Normal ]
+    0 -> 2 [ label = Normal ]
+    1 -> 2 [ label = Normal ]
 }

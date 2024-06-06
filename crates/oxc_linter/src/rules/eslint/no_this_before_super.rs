@@ -104,7 +104,7 @@ impl Rule for NoThisBeforeSuper {
                 node.cfg_id(),
                 &|edge| match edge {
                     EdgeType::Normal => None,
-                    EdgeType::Backedge | EdgeType::NewFunction => {
+                    EdgeType::Unreachable | EdgeType::Backedge | EdgeType::NewFunction => {
                         Some(DefinitelyCallsThisBeforeSuper::No)
                     }
                 },
