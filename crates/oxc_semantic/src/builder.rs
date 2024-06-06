@@ -1218,7 +1218,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             }
         }
         if let Some(finally_block_end_ix) = finally_block_end_ix {
-            self.cfg.add_edge(finally_block_end_ix, after_try_statement_block_ix, EdgeType::Join);
+            if catch_block_end_ix.is_some() {
+                self.cfg.add_edge(
+                    finally_block_end_ix,
+                    after_try_statement_block_ix,
+                    EdgeType::Normal,
+                );
+            } else {
+                self.cfg.add_edge(
+                    finally_block_end_ix,
+                    after_try_statement_block_ix,
+                    EdgeType::Join,
+                );
+            }
         }
         /* cfg */
 
