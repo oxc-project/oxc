@@ -42,7 +42,7 @@ The Oxidation Compiler is creating a suite of high-performance tools for JavaScr
 
 This is the linter for oxc.
 
-See [usage instructions](https://oxc-project.github.io/docs/guide/usage/linter.html).
+See [usage instructions](https://oxc.rs/docs/guide/usage/linter.html).
 
 Run
 

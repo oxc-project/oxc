@@ -1265,12 +1265,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for RegExpLiteral<'a> {
 }
 
 fn print_unquoted_str<const MINIFY: bool>(s: &str, quote: char, p: &mut Codegen<{ MINIFY }>) {
-    let mut chars = s.chars();
+    let mut chars = s.chars().peekable();
 
     while let Some(c) = chars.next() {
         match c {
             '\x00' => {
-                if chars.clone().next().is_some_and(|next| next.is_ascii_digit()) {
+                if chars.peek().is_some_and(|&next| next.is_ascii_digit()) {
                     p.print_str(b"\\x00");
                 } else {
                     p.print_str(b"\\0");
@@ -1325,7 +1325,7 @@ fn print_unquoted_str<const MINIFY: bool>(s: &str, quote: char, p: &mut Codegen<
                 }
             }
             '$' => {
-                if chars.clone().next().is_some_and(|next| next == '{') {
+                if chars.peek().is_some_and(|&next| next == '{') {
                     p.print_str(b"\\$");
                 } else {
                     p.print_str(b"$");

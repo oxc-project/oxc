@@ -1,21 +1,31 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
+use oxc_syntax::reference::ReferenceFlag;
+use oxc_traverse::TraverseCtx;
 
 use super::TypeScript;
 
 impl<'a> TypeScript<'a> {
-    fn transform_ts_type_name(&self, type_name: &mut TSTypeName<'a>) -> Expression<'a> {
+    fn transform_ts_type_name(
+        &self,
+        type_name: &mut TSTypeName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
         match type_name {
-            TSTypeName::IdentifierReference(reference) => {
-                self.ctx.ast.identifier_reference_expression(IdentifierReference::new(
-                    SPAN,
-                    reference.name.clone(),
-                ))
+            TSTypeName::IdentifierReference(ident) => {
+                ident.reference_flag = ReferenceFlag::Read;
+                if let Some(reference_id) = ident.reference_id.get() {
+                    let reference = ctx.symbols_mut().get_reference_mut(reference_id);
+                    *reference.flag_mut() = ReferenceFlag::Read;
+                } else {
+                    unreachable!()
+                }
+                self.ctx.ast.identifier_reference_expression(ctx.ast.copy(ident))
             }
             TSTypeName::QualifiedName(qualified_name) => self.ctx.ast.static_member_expression(
                 SPAN,
-                self.transform_ts_type_name(&mut qualified_name.left),
+                self.transform_ts_type_name(&mut qualified_name.left, ctx),
                 qualified_name.right.clone(),
                 false,
             ),
@@ -33,6 +43,7 @@ impl<'a> TypeScript<'a> {
     pub fn transform_ts_import_equals(
         &self,
         decl: &mut Box<'a, TSImportEqualsDeclaration<'a>>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Var;
         let decls = {
@@ -43,7 +54,7 @@ impl<'a> TypeScript<'a> {
 
             let init = match &mut decl.module_reference {
                 type_name @ match_ts_type_name!(TSModuleReference) => {
-                    self.transform_ts_type_name(&mut *type_name.to_ts_type_name_mut())
+                    self.transform_ts_type_name(&mut *type_name.to_ts_type_name_mut(), ctx)
                 }
                 TSModuleReference::ExternalModuleReference(reference) => {
                     if self.ctx.source_type.is_module() {

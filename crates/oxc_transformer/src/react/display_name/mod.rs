@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
@@ -20,8 +18,8 @@ pub struct ReactDisplayName<'a> {
 }
 
 impl<'a> ReactDisplayName<'a> {
-    pub fn new(ctx: &Ctx<'a>) -> Self {
-        Self { ctx: Rc::clone(ctx) }
+    pub fn new(ctx: Ctx<'a>) -> Self {
+        Self { ctx }
     }
 }
 

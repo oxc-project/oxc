@@ -4,7 +4,10 @@ use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-use oxc_transformer::{TransformOptions, Transformer};
+use oxc_transformer::{
+    ArrowFunctionsOptions, ES2015Options, ReactOptions, TransformOptions, Transformer,
+    TypeScriptOptions,
+};
 
 // Instruction:
 // create a `test.js`,
@@ -32,7 +35,17 @@ fn main() {
     println!("{source_text}\n");
 
     let mut program = ret.program;
-    let transform_options = TransformOptions::default();
+    let transform_options = TransformOptions {
+        typescript: TypeScriptOptions::default(),
+        es2015: ES2015Options { arrow_function: Some(ArrowFunctionsOptions::default()) },
+        react: ReactOptions {
+            jsx_plugin: true,
+            jsx_self_plugin: true,
+            jsx_source_plugin: true,
+            ..Default::default()
+        },
+        ..Default::default()
+    };
     Transformer::new(&allocator, path, source_type, &source_text, &ret.trivias, transform_options)
         .build(&mut program)
         .unwrap();

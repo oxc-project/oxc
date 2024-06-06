@@ -117,12 +117,12 @@ impl SymbolTable {
     pub fn create_symbol(
         &mut self,
         span: Span,
-        name: &str,
+        name: CompactStr,
         flag: SymbolFlags,
         scope_id: ScopeId,
     ) -> SymbolId {
         _ = self.spans.push(span);
-        _ = self.names.push(CompactStr::from(name));
+        _ = self.names.push(name);
         _ = self.flags.push(flag);
         _ = self.scope_ids.push(scope_id);
         _ = self.resolved_references.push(vec![]);
@@ -143,6 +143,10 @@ impl SymbolTable {
 
     pub fn get_reference(&self, reference_id: ReferenceId) -> &Reference {
         &self.references[reference_id]
+    }
+
+    pub fn get_reference_mut(&mut self, reference_id: ReferenceId) -> &mut Reference {
+        &mut self.references[reference_id]
     }
 
     pub fn has_binding(&self, reference_id: ReferenceId) -> bool {

@@ -24,24 +24,29 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: cargo-bins/cargo-binstall@main
-
       - uses: Boshen/setup-rust@main
         with:
           cache-key: warm
           tools: cargo-release-oxc
 
-      - run: cargo release-oxc update --patch
+      - name: Run
+        id: run
+        run: |
+          VERSION=`cargo release-oxc update --release crates`
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+
+      # update `Cargo.lock`
+      - run: cargo ck
 
       - uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: Publish crates
+          commit-message: Release crates
           committer: Boshen <Boshen@users.noreply.github.com>
           author: Boshen <Boshen@users.noreply.github.com>
           branch: release/crates
           branch-suffix: timestamp
-          title: Publish crates
+          title: Release crates v${{ steps.run.outputs.VERSION }}
           body: Automated Release
           assignees: Boshen
           reviewers: Boshen

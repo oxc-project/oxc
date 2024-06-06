@@ -74,11 +74,11 @@ jobs:
             target: aarch64-unknown-linux-musl
             code-target: linux-arm64-musl
 
-          - os: macos-latest
+          - os: macos-13
             target: x86_64-apple-darwin
             code-target: darwin-x64
 
-          - os: macos-latest
+          - os: macos-14 # M1
             target: aarch64-apple-darwin
             code-target: darwin-arm64
 

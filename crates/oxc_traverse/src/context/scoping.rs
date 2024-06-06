@@ -2,11 +2,12 @@ use std::str;
 
 use compact_str::{format_compact, CompactString};
 
-use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_semantic::{AstNodeId, Reference, ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SPAN};
 use oxc_syntax::{
+    reference::{ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId},
-    symbol::SymbolFlags,
+    symbol::{SymbolFlags, SymbolId},
 };
 
 use super::FinderRet;
@@ -169,25 +170,72 @@ impl TraverseScoping {
     ///
     /// This is a slightly different method from Babel, but hopefully close enough that output will
     /// match Babel for most (or maybe all) test cases.
-    pub fn generate_uid(
-        &mut self,
-        name: &str,
-        scope_id: ScopeId,
-        flags: SymbolFlags,
-    ) -> CompactStr {
+    pub fn generate_uid(&mut self, name: &str, scope_id: ScopeId, flags: SymbolFlags) -> SymbolId {
         // Get name for UID
         let name = CompactStr::new(&self.find_uid_name(name));
 
         // Add binding to scope
-        let symbol_id = self.symbols.create_symbol(SPAN, name.as_str(), flags, scope_id);
-        self.scopes.add_binding(scope_id, name.clone(), symbol_id);
-
-        name
+        let symbol_id = self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id);
+        self.scopes.add_binding(scope_id, name, symbol_id);
+        symbol_id
     }
 
     /// Generate UID in current scope.
-    pub fn generate_uid_in_current_scope(&mut self, name: &str, flags: SymbolFlags) -> CompactStr {
+    pub fn generate_uid_in_current_scope(&mut self, name: &str, flags: SymbolFlags) -> SymbolId {
         self.generate_uid(name, self.current_scope_id, flags)
+    }
+
+    /// Create a reference bound to a `SymbolId`
+    pub fn create_bound_reference(
+        &mut self,
+        name: CompactStr,
+        symbol_id: SymbolId,
+        flag: ReferenceFlag,
+    ) -> ReferenceId {
+        let reference =
+            Reference::new_with_symbol_id(SPAN, name, AstNodeId::dummy(), symbol_id, flag);
+        let reference_id = self.symbols.create_reference(reference);
+        self.symbols.resolved_references[symbol_id].push(reference_id);
+        reference_id
+    }
+
+    /// Create an unbound reference
+    pub fn create_unbound_reference(
+        &mut self,
+        name: CompactStr,
+        flag: ReferenceFlag,
+    ) -> ReferenceId {
+        let reference = Reference::new(SPAN, name.clone(), AstNodeId::dummy(), flag);
+        let reference_id = self.symbols.create_reference(reference);
+        self.scopes.add_root_unresolved_reference(name, reference_id);
+        reference_id
+    }
+
+    /// Create a reference optionally bound to a `SymbolId`.
+    ///
+    /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_reference`
+    /// or `TraverseCtx::create_unbound_reference`.
+    pub fn create_reference(
+        &mut self,
+        name: CompactStr,
+        symbol_id: Option<SymbolId>,
+        flag: ReferenceFlag,
+    ) -> ReferenceId {
+        if let Some(symbol_id) = symbol_id {
+            self.create_bound_reference(name, symbol_id, flag)
+        } else {
+            self.create_unbound_reference(name, flag)
+        }
+    }
+
+    /// Create reference in current scope, looking up binding for `name`
+    pub fn create_reference_in_current_scope(
+        &mut self,
+        name: CompactStr,
+        flag: ReferenceFlag,
+    ) -> ReferenceId {
+        let symbol_id = self.scopes.find_binding(self.current_scope_id, name.as_str());
+        self.create_reference(name, symbol_id, flag)
     }
 }
 

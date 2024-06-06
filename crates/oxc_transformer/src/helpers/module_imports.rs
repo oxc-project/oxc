@@ -1,18 +1,20 @@
 use indexmap::IndexMap;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{CompactStr, SPAN};
+use oxc_span::{Atom, SPAN};
+use oxc_syntax::symbol::SymbolId;
 
-pub struct NamedImport {
-    imported: CompactStr,
-    local: Option<CompactStr>, // Not used in `require`
+pub struct NamedImport<'a> {
+    imported: Atom<'a>,
+    local: Option<Atom<'a>>, // Not used in `require`
+    symbol_id: SymbolId,
 }
 
-impl NamedImport {
-    pub fn new(imported: CompactStr, local: Option<CompactStr>) -> NamedImport {
-        Self { imported, local }
+impl<'a> NamedImport<'a> {
+    pub fn new(imported: Atom<'a>, local: Option<Atom<'a>>, symbol_id: SymbolId) -> Self {
+        Self { imported, local, symbol_id }
     }
 }
 
@@ -23,13 +25,13 @@ pub enum ImportKind {
 }
 
 #[derive(Hash, Eq, PartialEq)]
-pub struct ImportType {
+pub struct ImportType<'a> {
     kind: ImportKind,
-    source: CompactStr,
+    source: Atom<'a>,
 }
 
-impl ImportType {
-    fn new(kind: ImportKind, source: CompactStr) -> Self {
+impl<'a> ImportType<'a> {
+    fn new(kind: ImportKind, source: Atom<'a>) -> Self {
         Self { kind, source }
     }
 }
@@ -39,7 +41,7 @@ impl ImportType {
 pub struct ModuleImports<'a> {
     ast: AstBuilder<'a>,
 
-    imports: RefCell<IndexMap<ImportType, std::vec::Vec<NamedImport>>>,
+    imports: RefCell<IndexMap<ImportType<'a>, std::vec::Vec<NamedImport<'a>>>>,
 }
 
 impl<'a> ModuleImports<'a> {
@@ -49,7 +51,7 @@ impl<'a> ModuleImports<'a> {
     }
 
     /// Add `import { named_import } from 'source'`
-    pub fn add_import(&self, source: CompactStr, import: NamedImport) {
+    pub fn add_import(&self, source: Atom<'a>, import: NamedImport<'a>) {
         self.imports
             .borrow_mut()
             .entry(ImportType::new(ImportKind::Import, source))
@@ -58,7 +60,7 @@ impl<'a> ModuleImports<'a> {
     }
 
     /// Add `var named_import from 'source'`
-    pub fn add_require(&self, source: CompactStr, import: NamedImport, front: bool) {
+    pub fn add_require(&self, source: Atom<'a>, import: NamedImport<'a>, front: bool) {
         let len = self.imports.borrow().len();
         self.imports
             .borrow_mut()
@@ -73,55 +75,62 @@ impl<'a> ModuleImports<'a> {
     pub fn get_import_statements(&self) -> Vec<'a, Statement<'a>> {
         self.ast.new_vec_from_iter(self.imports.borrow_mut().drain(..).map(
             |(import_type, names)| match import_type.kind {
-                ImportKind::Import => self.get_named_import(&import_type.source, names),
-                ImportKind::Require => self.get_require(&import_type.source, names),
+                ImportKind::Import => self.get_named_import(import_type.source, names),
+                ImportKind::Require => self.get_require(import_type.source, names),
             },
         ))
     }
 
     fn get_named_import(
         &self,
-        source: &CompactStr,
-        names: std::vec::Vec<NamedImport>,
+        source: Atom<'a>,
+        names: std::vec::Vec<NamedImport<'a>>,
     ) -> Statement<'a> {
         let specifiers = self.ast.new_vec_from_iter(names.into_iter().map(|name| {
+            let local = name.local.unwrap_or_else(|| name.imported.clone());
             ImportDeclarationSpecifier::ImportSpecifier(self.ast.alloc(ImportSpecifier {
                 span: SPAN,
-                imported: ModuleExportName::Identifier(IdentifierName::new(
-                    SPAN,
-                    self.ast.new_atom(name.imported.as_str()),
-                )),
-                local: BindingIdentifier::new(
-                    SPAN,
-                    self.ast.new_atom(name.local.unwrap_or(name.imported).as_str()),
-                ),
+                imported: ModuleExportName::Identifier(IdentifierName::new(SPAN, name.imported)),
+                local: BindingIdentifier {
+                    span: SPAN,
+                    name: local,
+                    symbol_id: Cell::new(Some(name.symbol_id)),
+                },
                 import_kind: ImportOrExportKind::Value,
             }))
         }));
         let import_stmt = self.ast.import_declaration(
             SPAN,
             Some(specifiers),
-            self.ast.string_literal(SPAN, source.as_str()),
+            StringLiteral::new(SPAN, source),
             None,
             ImportOrExportKind::Value,
         );
         self.ast.module_declaration(ModuleDeclaration::ImportDeclaration(import_stmt))
     }
 
-    fn get_require(&self, source: &CompactStr, names: std::vec::Vec<NamedImport>) -> Statement<'a> {
+    fn get_require(
+        &self,
+        source: Atom<'a>,
+        names: std::vec::Vec<NamedImport<'a>>,
+    ) -> Statement<'a> {
         let var_kind = VariableDeclarationKind::Var;
         let callee = {
-            let ident = IdentifierReference::new(SPAN, "require".into());
+            let ident = IdentifierReference::new(SPAN, Atom::from("require"));
             self.ast.identifier_reference_expression(ident)
         };
         let args = {
-            let string = self.ast.string_literal(SPAN, source.as_str());
+            let string = StringLiteral::new(SPAN, source);
             let arg = Argument::from(self.ast.literal_string_expression(string));
             self.ast.new_vec_single(arg)
         };
         let name = names.into_iter().next().unwrap();
         let id = {
-            let ident = BindingIdentifier::new(SPAN, self.ast.new_atom(&name.imported));
+            let ident = BindingIdentifier {
+                span: SPAN,
+                name: name.imported,
+                symbol_id: Cell::new(Some(name.symbol_id)),
+            };
             self.ast.binding_pattern(self.ast.binding_pattern_identifier(ident), None, false)
         };
         let decl = {

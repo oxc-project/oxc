@@ -30,15 +30,15 @@ pub struct React<'a> {
 
 // Constructors
 impl<'a> React<'a> {
-    pub fn new(options: ReactOptions, ctx: &Ctx<'a>) -> Self {
+    pub fn new(options: ReactOptions, ctx: Ctx<'a>) -> Self {
         let mut options = options;
         if options.is_jsx_plugin_enabled() {
-            options.update_with_comments(ctx);
+            options.update_with_comments(&ctx);
         }
         let options = Rc::new(options);
         Self {
             options: Rc::clone(&options),
-            jsx: ReactJsx::new(&options, ctx),
+            jsx: ReactJsx::new(options, Rc::clone(&ctx)),
             display_name: ReactDisplayName::new(ctx),
         }
     }
