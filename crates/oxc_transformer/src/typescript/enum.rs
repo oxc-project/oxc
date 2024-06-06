@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut};
 use oxc_span::{Atom, SPAN};
@@ -173,7 +171,7 @@ impl<'a> TypeScriptEnum<'a> {
                             IdentifierReferenceRename::new(
                                 enum_name.clone(),
                                 previous_enum_members.clone(),
-                                &self.ctx,
+                                ctx,
                             )
                             .visit_expression(&mut new_initializer);
                         }
@@ -507,23 +505,23 @@ impl<'a> TypeScriptEnum<'a> {
 ///   d = A.c,
 /// }
 /// ```
-struct IdentifierReferenceRename<'a> {
+struct IdentifierReferenceRename<'a, 'b> {
     enum_name: Atom<'a>,
-    ctx: Ctx<'a>,
+    ctx: &'b TraverseCtx<'a>,
     previous_enum_members: FxHashMap<Atom<'a>, ConstantValue>,
 }
 
-impl IdentifierReferenceRename<'_> {
-    fn new<'a>(
+impl<'a, 'b> IdentifierReferenceRename<'a, 'b> {
+    fn new(
         enum_name: Atom<'a>,
         previous_enum_members: FxHashMap<Atom<'a>, ConstantValue>,
-        ctx: &Ctx<'a>,
-    ) -> IdentifierReferenceRename<'a> {
-        IdentifierReferenceRename { enum_name, ctx: Rc::clone(ctx), previous_enum_members }
+        ctx: &'b TraverseCtx<'a>,
+    ) -> Self {
+        IdentifierReferenceRename { enum_name, ctx, previous_enum_members }
     }
 }
 
-impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a> {
+impl<'a, 'b> VisitMut<'a> for IdentifierReferenceRename<'a, 'b> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         let new_expr = match expr {
             match_member_expression!(Expression) => {

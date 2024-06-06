@@ -13,7 +13,10 @@ use oxc_syntax::{
 };
 use oxc_traverse::TraverseCtx;
 
-use crate::{context::Ctx, helpers::module_imports::NamedImport};
+use crate::{
+    context::{Ctx, TransformCtx},
+    helpers::module_imports::NamedImport,
+};
 
 use super::utils::get_line_column;
 pub use super::{
@@ -256,7 +259,11 @@ impl<'a> Pragma<'a> {
     /// Parse `options.pragma` or `options.pragma_frag`.
     ///
     /// If provided option is invalid, raise an error and use default.
-    fn parse(pragma: Option<&String>, default_property_name: &'static str, ctx: &Ctx<'a>) -> Self {
+    fn parse(
+        pragma: Option<&String>,
+        default_property_name: &'static str,
+        ctx: &TransformCtx<'a>,
+    ) -> Self {
         if let Some(pragma) = pragma {
             let mut parts = pragma.split('.');
 
@@ -282,7 +289,7 @@ impl<'a> Pragma<'a> {
         }
     }
 
-    fn invalid(default_property_name: &'static str, ctx: &Ctx<'a>) -> Self {
+    fn invalid(default_property_name: &'static str, ctx: &TransformCtx<'a>) -> Self {
         ctx.error(diagnostics::invalid_pragma());
         Self::default(default_property_name)
     }
