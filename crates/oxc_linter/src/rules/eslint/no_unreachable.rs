@@ -104,7 +104,7 @@ fn test() {
           for (let i = 1; i <= 10; i++) {
             b();
           }
-        
+
           for (let i = 1; i <= 10; i++) {
             c();
           }
@@ -117,6 +117,15 @@ fn test() {
             b();
         }
         c();
+        ",
+        "
+        export const getPagePreviewText = (page) => {
+            if (!a) {
+                return '';
+            }
+            while (a && b > c && d-- > 0) {
+            }
+        };
         ",
     ];
 
