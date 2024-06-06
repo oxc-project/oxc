@@ -31,47 +31,53 @@ bb5: {
 bb6: {
 	statement
 	statement
-	condition
 }
 
 bb7: {
+	condition
+}
+
+bb8: {
 	statement
 	statement
 	break
 }
 
-bb8: {
+bb9: {
 	unreachable
 }
 
-bb9: {
+bb10: {
 	statement
+}
+
+bb11: {
 	condition
 }
 
-bb10: {
+bb12: {
 	statement
 	statement
 	continue
 }
 
-bb11: {
+bb13: {
 	unreachable
 }
 
-bb12: {
-
-}
-
-bb13: {
-	statement
-	statement
-}
-
 bb14: {
-	statement
+
 }
 
 bb15: {
+	statement
+	statement
+}
+
+bb16: {
+	statement
+}
+
+bb17: {
 
 }
