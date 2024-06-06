@@ -318,8 +318,6 @@ impl ControlFlowGraph {
 
                 if unreachable {
                     Control::Prune
-                } else if b == to {
-                    return Control::Break(true);
                 } else {
                     Control::Continue
                 }
