@@ -237,12 +237,12 @@ impl Rule for RulesOfHooks {
         }
 
         // Is this node cyclic?
-        if self.is_cyclic(ctx, node, parent_func) {
+        if semantic.cfg().is_cyclic(node_cfg_id) {
             return ctx.diagnostic(diagnostics::loop_hook(span, hook_name));
         }
 
-        if self.is_conditional(ctx, func_cfg_id, node_cfg_id)
-            || self.breaks_early(ctx, func_cfg_id, node_cfg_id)
+        if Self::is_conditional(ctx, func_cfg_id, node_cfg_id)
+            || Self::breaks_early(ctx, func_cfg_id, node_cfg_id)
         {
             #[allow(clippy::needless_return)]
             return ctx.diagnostic(diagnostics::conditional_hook(span, hook_name));
@@ -252,26 +252,8 @@ impl Rule for RulesOfHooks {
 
 // TODO: all `dijkstra` algorithms can be merged together for better performance.
 impl RulesOfHooks {
-    #![allow(clippy::unused_self, clippy::inline_always)]
-    #[inline(always)]
-    fn is_cyclic(&self, ctx: &LintContext, node: &AstNode, func: &AstNode) -> bool {
-        // TODO: use cfg instead
-        ctx.nodes().ancestors(node.id()).take_while(|id| *id != func.id()).any(|id| {
-            let maybe_loop = ctx.nodes().kind(id);
-            matches! {
-                maybe_loop,
-                | AstKind::DoWhileStatement(_)
-                | AstKind::ForInStatement(_)
-                | AstKind::ForOfStatement(_)
-                | AstKind::ForStatement(_)
-                | AstKind::WhileStatement(_)
-            }
-        })
-    }
-
-    #[inline(always)]
+    #[inline]
     fn is_conditional(
-        &self,
         ctx: &LintContext,
         func_cfg_id: BasicBlockId,
         node_cfg_id: BasicBlockId,
@@ -288,9 +270,8 @@ impl RulesOfHooks {
         .any(|(f, _)| !cfg.is_reachabale(f, node_cfg_id))
     }
 
-    #[inline(always)]
+    #[inline]
     fn breaks_early(
-        &self,
         ctx: &LintContext,
         func_cfg_id: BasicBlockId,
         node_cfg_id: BasicBlockId,
