@@ -32,6 +32,7 @@ digraph {
     3 -> 7 [ label = "Normal" ]
     9 -> 0 [ label = "Error(Implicit)" ]
     8 -> 9 [ label = "Normal" ]
+    3 -> 9 [ label = "Normal" ]
     10 -> 0 [ label = "Error(Implicit)" ]
     1 -> 2 [ label = "Normal" ]
     2 -> 3 [ label = "Normal" ]
