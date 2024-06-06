@@ -396,6 +396,7 @@ mod jsdoc {
     pub mod require_property_type;
     pub mod require_returns;
     pub mod require_returns_description;
+    pub mod require_returns_type;
     pub mod require_yields;
 }
 
@@ -762,6 +763,7 @@ oxc_macros::declare_all_lint_rules! {
     jsdoc::require_property_description,
     jsdoc::require_returns,
     jsdoc::require_returns_description,
+    jsdoc::require_returns_type,
     jsdoc::require_yields,
     tree_shaking::no_side_effects_in_initialization,
 }
