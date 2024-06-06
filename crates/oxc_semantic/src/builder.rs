@@ -958,11 +958,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.cfg.add_edge(after_consequent_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
 
-        self.cfg.add_edge(
-            before_if_stmt_graph_ix,
-            before_consequent_stmt_graph_ix,
-            EdgeType::Jump,
-        );
+        self.cfg.add_edge(before_if_stmt_graph_ix, before_consequent_stmt_graph_ix, EdgeType::Jump);
 
         if let Some((start_of_alternate_stmt_graph_ix, after_alternate_stmt_graph_ix)) =
             else_graph_ix
