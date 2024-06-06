@@ -14,14 +14,6 @@ fn default_for_import_source() -> Cow<'static, str> {
     Cow::Borrowed("react")
 }
 
-fn default_for_pragma() -> Cow<'static, str> {
-    Cow::Borrowed("React.createElement")
-}
-
-fn default_for_pragma_frag() -> Cow<'static, str> {
-    Cow::Borrowed("React.Fragment")
-}
-
 /// Decides which runtime to use.
 ///
 /// Auto imports the functions that JSX transpiles to.
@@ -101,14 +93,14 @@ pub struct ReactOptions {
     /// Note that the @jsx React.DOM pragma has been deprecated as of React v0.12
     ///
     /// Defaults to `React.createElement`.
-    #[serde(default = "default_for_pragma")]
-    pub pragma: Cow<'static, str>,
+    #[serde(default)]
+    pub pragma: Option<String>,
 
     /// Replace the component used when compiling JSX fragments. It should be a valid JSX tag name.
     ///
     /// Defaults to `React.Fragment`.
-    #[serde(default = "default_for_pragma_frag")]
-    pub pragma_frag: Cow<'static, str>,
+    #[serde(default)]
+    pub pragma_frag: Option<String>,
 
     /// `useBuiltIns` is deprecated in Babel 8.
     ///
@@ -133,8 +125,8 @@ impl Default for ReactOptions {
             throw_if_namespace: default_as_true(),
             pure: default_as_true(),
             import_source: default_for_import_source(),
-            pragma: default_for_pragma(),
-            pragma_frag: default_for_pragma_frag(),
+            pragma: None,
+            pragma_frag: None,
             use_built_ins: None,
             use_spread: None,
         }
@@ -187,20 +179,20 @@ impl ReactOptions {
 
             // read jsxImportSource
             if let Some(import_source) = comment.strip_prefix("jsxImportSource").map(str::trim) {
-                self.import_source = Cow::from(import_source.to_string());
+                self.import_source = Cow::Owned(import_source.to_string());
                 continue;
             }
 
             // read jsxFrag
             if let Some(pragma_frag) = comment.strip_prefix("jsxFrag").map(str::trim) {
-                self.pragma_frag = Cow::from(pragma_frag.to_string());
+                self.pragma_frag = Some(pragma_frag.to_string());
                 continue;
             }
 
             // Put this condition at the end to avoid breaking @jsxXX
             // read jsx
             if let Some(pragma) = comment.strip_prefix("jsx").map(str::trim) {
-                self.pragma = Cow::from(pragma.to_string());
+                self.pragma = Some(pragma.to_string());
             }
         }
     }

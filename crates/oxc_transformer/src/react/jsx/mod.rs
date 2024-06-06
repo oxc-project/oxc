@@ -79,14 +79,42 @@ struct Pragma<'a> {
 }
 
 impl<'a> Pragma<'a> {
-    fn parse(pragma: &str, ast: &AstBuilder<'a>) -> Self {
-        let mut parts = pragma.split('.');
-        let object = ast.new_atom(parts.next().unwrap());
-        let property = parts.next().map(|property| {
-            assert!(parts.next().is_none(), "Invalid pragma");
-            ast.new_atom(property)
-        });
-        Self { object, property }
+    /// Parse `options.pragma` or `options.pragma_frag`.
+    ///
+    /// If provided option is invalid, raise an error and use default.
+    fn parse(pragma: Option<&String>, default_property_name: &'static str, ctx: &Ctx<'a>) -> Self {
+        if let Some(pragma) = pragma {
+            let mut parts = pragma.split('.');
+
+            let object_name = parts.next().unwrap();
+            if object_name.is_empty() {
+                return Self::invalid(default_property_name, ctx);
+            }
+
+            let property = match parts.next() {
+                Some(property_name) => {
+                    if property_name.is_empty() || parts.next().is_some() {
+                        return Self::invalid(default_property_name, ctx);
+                    }
+                    Some(ctx.ast.new_atom(property_name))
+                }
+                None => None,
+            };
+
+            let object = ctx.ast.new_atom(object_name);
+            Self { object, property }
+        } else {
+            Self::default(default_property_name)
+        }
+    }
+
+    fn invalid(default_property_name: &'static str, ctx: &Ctx<'a>) -> Self {
+        ctx.error(diagnostics::invalid_pragma());
+        Self::default(default_property_name)
+    }
+
+    fn default(default_property_name: &'static str) -> Self {
+        Self { object: Atom::from("React"), property: Some(Atom::from(default_property_name)) }
     }
 
     fn create_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
@@ -119,11 +147,16 @@ impl<'a> ReactJsx<'a> {
         // Parse pragmas
         let (pragma, pragma_frag) = match options.runtime {
             ReactJsxRuntime::Classic => {
-                let pragma = Pragma::parse(&options.pragma, &ctx.ast);
-                let pragma_frag = Pragma::parse(&options.pragma_frag, &ctx.ast);
+                let pragma = Pragma::parse(options.pragma.as_ref(), "createElement", ctx);
+                let pragma_frag = Pragma::parse(options.pragma_frag.as_ref(), "Fragment", ctx);
                 (Some(pragma), Some(pragma_frag))
             }
-            ReactJsxRuntime::Automatic => (None, None),
+            ReactJsxRuntime::Automatic => {
+                if options.pragma.is_some() || options.pragma_frag.is_some() {
+                    ctx.error(diagnostics::pragma_and_pragma_frag_cannot_be_set());
+                }
+                (None, None)
+            }
         };
 
         Self {
@@ -183,13 +216,6 @@ impl<'a> ReactJsx<'a> {
                 program.body.insert(0, self.jsx_source.get_var_file_name_statement());
             }
 
-            return;
-        }
-
-        if self.options.pragma != "React.createElement"
-            || self.options.pragma_frag != "React.Fragment"
-        {
-            self.ctx.error(diagnostics::pragma_and_pragma_frag_cannot_be_set());
             return;
         }
 
