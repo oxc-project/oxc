@@ -16,7 +16,7 @@ bb2: {
 }
 
 bb3: {
-
+	condition
 }
 
 bb4: {
@@ -33,7 +33,7 @@ bb6: {
 }
 
 bb7: {
-
+	condition
 }
 
 bb8: {
@@ -49,7 +49,7 @@ bb10: {
 }
 
 bb11: {
-
+	condition
 }
 
 bb12: {

@@ -31,6 +31,7 @@ bb5: {
 bb6: {
 	statement
 	statement
+	condition
 }
 
 bb7: {
@@ -45,6 +46,7 @@ bb8: {
 
 bb9: {
 	statement
+	condition
 }
 
 bb10: {

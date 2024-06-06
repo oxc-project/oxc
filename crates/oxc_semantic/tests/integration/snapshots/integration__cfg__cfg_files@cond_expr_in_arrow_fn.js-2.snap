@@ -7,7 +7,7 @@ digraph {
     0 [ label = "" ]
     1 [ label = "VariableDeclaration" ]
     2 [ label = "" ]
-    3 [ label = "ExpressionStatement" ]
+    3 [ label = "ExpressionStatement\nCondition(CallExpression)" ]
     4 [ label = "" ]
     5 [ label = "" ]
     6 [ label = "" ]
@@ -18,7 +18,7 @@ digraph {
     5 -> 2 [ label = "Error(Implicit)" ]
     6 -> 2 [ label = "Error(Implicit)" ]
     4 -> 6 [ label = "Normal" ]
-    3 -> 4 [ label = "Normal" ]
+    3 -> 4 [ label = "Jump" ]
     3 -> 5 [ label = "Normal" ]
     5 -> 6 [ label = "Normal" ]
 }

@@ -569,7 +569,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let start_of_condition_graph_ix = self.cfg.new_basic_block_normal();
         /* cfg */
 
+        self.record_ast_nodes();
         self.visit_expression(&stmt.test);
+        let test_node = self.retrieve_recorded_ast_nodes().into_iter().next();
+        self.cfg.append_condition(test_node);
 
         /* cfg */
         let end_of_condition_graph_ix = self.cfg.current_node_ix;
@@ -675,7 +678,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::ConditionalExpression(self.alloc(expr));
         self.enter_node(kind);
 
+        self.record_ast_nodes();
         self.visit_expression(&expr.test);
+        let test_node = self.retrieve_recorded_ast_nodes().into_iter().next();
+        self.cfg.append_condition(test_node);
 
         /* cfg */
         let before_conditional_expr_graph_ix = self.cfg.current_node_ix;
@@ -706,7 +712,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.cfg.add_edge(
             before_conditional_expr_graph_ix,
             before_consequent_expr_graph_ix,
-            EdgeType::Normal,
+            EdgeType::Jump,
         );
 
         self.cfg.add_edge(
@@ -735,7 +741,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let test_graph_ix = self.cfg.new_basic_block_normal();
         /* cfg */
         if let Some(test) = &stmt.test {
+            self.record_ast_nodes();
             self.visit_expression(test);
+            let test_node = self.retrieve_recorded_ast_nodes().into_iter().next();
+            self.cfg.append_condition(test_node);
         }
 
         /* cfg */
@@ -916,7 +925,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::IfStatement(self.alloc(stmt));
         self.enter_node(kind);
 
+        self.record_ast_nodes();
         self.visit_expression(&stmt.test);
+        let test_node = self.retrieve_recorded_ast_nodes().into_iter().next();
+        self.cfg.append_condition(test_node);
 
         /* cfg */
         let before_if_stmt_graph_ix = self.cfg.current_node_ix;
@@ -949,7 +961,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.cfg.add_edge(
             before_if_stmt_graph_ix,
             before_consequent_stmt_graph_ix,
-            EdgeType::Normal,
+            EdgeType::Jump,
         );
 
         if let Some((start_of_alternate_stmt_graph_ix, after_alternate_stmt_graph_ix)) =
@@ -1274,7 +1286,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let condition_graph_ix = self.cfg.new_basic_block_normal();
         /* cfg */
 
+        self.record_ast_nodes();
         self.visit_expression(&stmt.test);
+        let test_node = self.retrieve_recorded_ast_nodes().into_iter().next();
+        self.cfg.append_condition(test_node);
 
         /* cfg - body basic block */
         let body_graph_ix = self.cfg.new_basic_block_normal();

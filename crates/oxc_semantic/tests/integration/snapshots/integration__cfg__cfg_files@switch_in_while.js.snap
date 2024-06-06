@@ -12,7 +12,7 @@ bb1: {
 }
 
 bb2: {
-
+	condition
 }
 
 bb3: {

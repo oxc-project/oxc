@@ -9,6 +9,7 @@ bb0: {
 
 bb1: {
 	statement
+	condition
 }
 
 bb2: {

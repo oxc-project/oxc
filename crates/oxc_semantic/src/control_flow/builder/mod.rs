@@ -145,6 +145,10 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         );
     }
 
+    pub fn append_condition(&mut self, node: Option<AstNodeId>) {
+        self.push_instruction(InstructionKind::Condition, node);
+    }
+
     pub fn append_iteration(&mut self, node: Option<AstNodeId>, kind: IterationInstructionKind) {
         self.push_instruction(InstructionKind::Iteration(kind), node);
     }

@@ -10,7 +10,7 @@ digraph {
     3 [ label = "WhileStatement" ]
     4 [ label = "" ]
     5 [ label = "" ]
-    6 [ label = "" ]
+    6 [ label = "Condition(LogicalExpression)" ]
     7 [ label = "BlockStatement\nreturn <value>" ]
     8 [ label = "unreachable" ]
     9 [ label = "return <value>" ]

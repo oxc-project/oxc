@@ -1,17 +1,19 @@
 mod builder;
 mod dot;
 
+use itertools::Itertools;
+use oxc_ast::AstKind;
 use oxc_span::CompactStr;
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
 use petgraph::{
     stable_graph::NodeIndex,
-    visit::{depth_first_search, Control, DfsEvent},
-    Graph,
+    visit::{depth_first_search, Control, DfsEvent, EdgeRef},
+    Direction, Graph,
 };
 
-use crate::AstNodeId;
+use crate::{AstNodeId, AstNodes};
 
 pub use builder::{ControlFlowGraphBuilder, CtxCursor, CtxFlags};
 pub use dot::{DebugDot, DebugDotContext, DisplayDot};
@@ -148,6 +150,7 @@ pub enum InstructionKind {
     Break(LabeledInstruction),
     Continue(LabeledInstruction),
     Throw,
+    Condition,
     Iteration(IterationInstructionKind),
 }
 #[derive(Debug, Clone)]

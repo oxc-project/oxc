@@ -17,6 +17,7 @@ bb2: {
 
 bb3: {
 	statement
+	condition
 }
 
 bb4: {

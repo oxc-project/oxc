@@ -23,6 +23,7 @@ bb4: {
 	statement
 	statement
 	statement
+	condition
 }
 
 bb5: {

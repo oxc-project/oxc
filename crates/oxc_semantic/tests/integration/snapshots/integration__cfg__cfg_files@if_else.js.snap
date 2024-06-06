@@ -24,7 +24,7 @@ bb4: {
 }
 
 bb5: {
-
+	condition
 }
 
 bb6: {
