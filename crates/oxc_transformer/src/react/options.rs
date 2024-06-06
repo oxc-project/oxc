@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use serde::Deserialize;
 
 use crate::Ctx;
@@ -7,11 +5,6 @@ use crate::Ctx;
 #[inline]
 fn default_as_true() -> bool {
     true
-}
-
-#[inline]
-fn default_for_import_source() -> Cow<'static, str> {
-    Cow::Borrowed("react")
 }
 
 /// Decides which runtime to use.
@@ -75,15 +68,15 @@ pub struct ReactOptions {
     /// Defaults to `true`.
     #[serde(default = "default_as_true")]
     pub pure: bool,
-    //
+
     // React Automatic Runtime
     //
     /// Replaces the import source when importing functions.
     ///
     /// Defaults to `react`.
-    #[serde(default = "default_for_import_source")]
-    pub import_source: Cow<'static, str>,
-    //
+    #[serde(default)]
+    pub import_source: Option<String>,
+
     // React Classic Runtime
     //
     /// Replace the function used when compiling JSX expressions.
@@ -124,7 +117,7 @@ impl Default for ReactOptions {
             development: false,
             throw_if_namespace: default_as_true(),
             pure: default_as_true(),
-            import_source: default_for_import_source(),
+            import_source: None,
             pragma: None,
             pragma_frag: None,
             use_built_ins: None,
@@ -179,7 +172,7 @@ impl ReactOptions {
 
             // read jsxImportSource
             if let Some(import_source) = comment.strip_prefix("jsxImportSource").map(str::trim) {
-                self.import_source = Cow::Owned(import_source.to_string());
+                self.import_source = Some(import_source.to_string());
                 continue;
             }
 
