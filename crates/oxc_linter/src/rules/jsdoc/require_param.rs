@@ -2,7 +2,7 @@ use oxc_ast::{
     ast::{BindingPattern, BindingPatternKind, Expression, FormalParameters, MethodDefinitionKind},
     AstKind,
 };
-use oxc_diagnostics::LabeledSpan;
+// use oxc_diagnostics::LabeledSpan;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, JSDoc};
@@ -19,6 +19,12 @@ use crate::{
         should_ignore_as_private,
     },
 };
+
+fn require_param_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.")
+        .with_help("Add `@param` tag with name.")
+        .and_label(span)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireParam(Box<RequireParamConfig>);
@@ -162,7 +168,7 @@ impl Rule for RequireParam {
         let check_types_regex = Regex::new(config.check_types_pattern.as_str())
             .expect("`config.checkTypesPattern` should be a valid regex pattern");
 
-        let mut violations = vec![];
+        // let mut violations = vec![];
         for (idx, param) in params_to_check.iter().enumerate() {
             match param {
                 ParamKind::Single(param) => {
@@ -171,7 +177,9 @@ impl Rule for RequireParam {
                     }
 
                     if !tags_to_check.iter().any(|(name, _)| **name == param.name) {
-                        violations.push(param.span);
+                        // violations.push(param.span);
+                        ctx.diagnostic(require_param_diagnostic(param.span));
+                        return;
                     }
                 }
                 ParamKind::Nested(params) => {
@@ -226,24 +234,26 @@ impl Rule for RequireParam {
                             .iter()
                             .any(|(name, _)| is_name_equal(name, &full_param_name))
                         {
-                            violations.push(param.span);
+                            // violations.push(param.span);
+                            ctx.diagnostic(require_param_diagnostic(param.span));
+                            return;
                         }
                     }
                 }
             }
         }
 
-        if !violations.is_empty() {
-            let labels = violations
-                .iter()
-                .map(|span| LabeledSpan::new_with_span(None, *span))
-                .collect::<Vec<_>>();
-            ctx.diagnostic(
-                OxcDiagnostic::warn("eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.")
-                    .with_help("Add `@param` tag with name.")
-                    .with_labels(labels),
-            );
-        }
+        // if !violations.is_empty() {
+        //     let labels = violations
+        //         .iter()
+        //         .map(|span| LabeledSpan::new_with_span(None, *span))
+        //         .collect::<Vec<_>>();
+        //     ctx.diagnostic(
+        //         OxcDiagnostic::warn("eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.")
+        //             .with_help("Add `@param` tag with name.")
+        //             .with_labels(labels),
+        //     );
+        // }
     }
 }
 
