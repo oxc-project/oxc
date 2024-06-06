@@ -96,8 +96,9 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         self.push_instruction(InstructionKind::Return(kind), Some(node));
     }
 
-    pub fn push_throw(&mut self, node: AstNodeId) {
+    pub fn append_throw(&mut self, node: AstNodeId) {
         self.push_instruction(InstructionKind::Throw, Some(node));
+        self.append_unreachable();
     }
 
     pub fn append_break(&mut self, node: AstNodeId, label: Option<&'a str>) {

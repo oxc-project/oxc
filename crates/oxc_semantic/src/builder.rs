@@ -1118,7 +1118,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // todo - append unreachable after throw statement
 
         /* cfg */
-        self.cfg.push_throw(node_id);
+        self.cfg.append_throw(node_id);
         /* cfg */
 
         self.leave_node(kind);

@@ -1,13 +1,10 @@
-use itertools::{FoldWhile, Itertools};
 use oxc_ast::{
     ast::{ArrowFunctionExpression, Function},
     AstKind,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{
-    petgraph::{self},
-    pg::neighbors_filtered_by_edge_weight,
-    AstNodeId, AstNodes, BasicBlockId, EdgeType, Instruction, InstructionKind,
+    algo, petgraph::visit::Control, AstNodeId, AstNodes, BasicBlockId, EdgeType, InstructionKind,
 };
 use oxc_span::{Atom, CompactStr};
 use oxc_syntax::operator::AssignmentOperator;
@@ -241,86 +238,42 @@ impl Rule for RulesOfHooks {
             return ctx.diagnostic(diagnostics::loop_hook(span, hook_name));
         }
 
-        if Self::is_conditional(ctx, func_cfg_id, node_cfg_id)
-            || Self::breaks_early(ctx, func_cfg_id, node_cfg_id)
-        {
+        if has_conditional_path_accept_throw(ctx, func_cfg_id, node_cfg_id) {
             #[allow(clippy::needless_return)]
             return ctx.diagnostic(diagnostics::conditional_hook(span, hook_name));
         }
     }
 }
 
-// TODO: all `dijkstra` algorithms can be merged together for better performance.
-impl RulesOfHooks {
-    #[inline]
-    fn is_conditional(
-        ctx: &LintContext,
-        func_cfg_id: BasicBlockId,
-        node_cfg_id: BasicBlockId,
-    ) -> bool {
-        let cfg = ctx.semantic().cfg();
-        let graph = &cfg.graph;
-        // All nodes should be reachable from our hook, Otherwise we have a conditional/branching flow.
-        petgraph::algo::dijkstra(graph, func_cfg_id, Some(node_cfg_id), |e| match e.weight() {
-            EdgeType::NewFunction => 1,
-            EdgeType::Jump | EdgeType::Unreachable | EdgeType::Backedge | EdgeType::Normal => 0,
+fn has_conditional_path_accept_throw(
+    ctx: &LintContext<'_>,
+    from: BasicBlockId,
+    to: BasicBlockId,
+) -> bool {
+    let cfg = ctx.semantic().cfg();
+    let graph = &cfg.graph;
+    // All nodes should be able to reach the hook node, Otherwise we have a conditional/branching flow.
+    algo::dijkstra(graph, from, Some(to), |e| match e.weight() {
+        EdgeType::NewFunction => 1,
+        EdgeType::Jump | EdgeType::Unreachable | EdgeType::Backedge | EdgeType::Normal => 0,
+    })
+    .into_iter()
+    .filter(|(_, val)| *val == 0)
+    .any(|(f, _)| {
+        !cfg.is_reachabale_filtered(f, to, |it| {
+            if cfg
+                .basic_block(it)
+                .instructions()
+                .iter()
+                .any(|i| matches!(i.kind, InstructionKind::Throw))
+            {
+                Control::Break(true)
+            } else {
+                Control::Continue
+            }
         })
-        .into_iter()
-        .filter(|(_, val)| *val == 0)
-        .any(|(f, _)| !cfg.is_reachabale(f, node_cfg_id))
-    }
-
-    #[inline]
-    fn breaks_early(
-        ctx: &LintContext,
-        func_cfg_id: BasicBlockId,
-        node_cfg_id: BasicBlockId,
-    ) -> bool {
-        let cfg = ctx.semantic().cfg();
-        neighbors_filtered_by_edge_weight(
-            &cfg.graph,
-            func_cfg_id,
-            &|e| match e {
-                EdgeType::Jump | EdgeType::Normal => None,
-                EdgeType::Unreachable | EdgeType::Backedge | EdgeType::NewFunction => {
-                    Some(State::default())
-                }
-            },
-            &mut |id: &BasicBlockId, mut state: State| {
-                if node_cfg_id == *id {
-                    return (state, false);
-                }
-
-                let (push, keep_walking) = cfg
-                    .basic_block(*id)
-                    .instructions
-                    .iter()
-                    .fold_while((false, true), |acc, Instruction { kind, .. }| match kind {
-                        InstructionKind::Break(_) => FoldWhile::Done((true, false)),
-                        InstructionKind::Unreachable
-                        | InstructionKind::Throw
-                        | InstructionKind::Return(_) => FoldWhile::Continue((acc.0, false)),
-                        InstructionKind::Statement | InstructionKind::Continue(_) => {
-                            FoldWhile::Continue(acc)
-                        }
-                    })
-                    .into_inner();
-
-                if push {
-                    state.0.push(*id);
-                }
-                (state, keep_walking)
-            },
-        )
-        .iter()
-        .flat_map(|it| it.0.iter())
-        .next()
-        .is_some()
-    }
+    })
 }
-
-#[derive(Debug, Default, Clone)]
-struct State(Vec<BasicBlockId>);
 
 fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNode<'a>> {
     nodes.ancestors(node.id()).map(|id| nodes.get_node(id)).find(|it| it.kind().is_function_like())

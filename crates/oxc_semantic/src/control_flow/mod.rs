@@ -191,12 +191,25 @@ impl ControlFlowGraph {
     }
 
     pub fn is_reachabale(&self, from: BasicBlockId, to: BasicBlockId) -> bool {
+        self.is_reachabale_filtered(from, to, |_| Control::Continue)
+    }
+
+    pub fn is_reachabale_filtered<F: Fn(BasicBlockId) -> Control<bool>>(
+        &self,
+        from: BasicBlockId,
+        to: BasicBlockId,
+        filter: F,
+    ) -> bool {
         if from == to {
             return true;
         }
         let graph = &self.graph;
         depth_first_search(&self.graph, Some(from), |event| match event {
             DfsEvent::TreeEdge(a, b) => {
+                let filter_result = filter(a);
+                if !matches!(filter_result, Control::Continue) {
+                    return filter_result;
+                }
                 let unreachable = graph.edges_connecting(a, b).all(|edge| {
                     matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
                 });

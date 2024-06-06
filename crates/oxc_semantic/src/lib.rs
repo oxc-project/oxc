@@ -16,6 +16,7 @@ mod symbol;
 use std::{rc::Rc, sync::Arc};
 
 pub use petgraph;
+pub use petgraph::algo;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 use class::ClassTable;
