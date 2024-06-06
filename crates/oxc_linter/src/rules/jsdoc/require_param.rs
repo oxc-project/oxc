@@ -202,7 +202,10 @@ impl Rule for RequireParam {
                             continue;
                         }
 
-                        let full_param_name = format!("{root_name}.{}", param.name);
+                        let mut full_param_name = root_name.to_string();
+                        full_param_name.push('.');
+                        full_param_name.push_str(&param.name);
+
                         for (name, type_part) in &tags_to_check {
                             if !is_name_equal(name, &full_param_name) {
                                 continue;
@@ -281,20 +284,20 @@ fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
 
                     match get_param_name(&prop.value, false) {
                         ParamKind::Single(param) => {
-                            collected.push(Param { name: format!("{name}"), ..param });
+                            collected.push(Param { name: name.to_string(), ..param });
                         }
                         ParamKind::Nested(params) => {
                             collected.push(Param {
                                 span: prop.span,
-                                name: format!("{name}"),
+                                name: name.to_string(),
                                 is_rest: false,
                             });
 
                             for param in params {
-                                collected.push(Param {
-                                    name: format!("{name}.{}", param.name),
-                                    ..param
-                                });
+                                let mut name = name.to_string();
+                                name.push('.');
+                                name.push_str(&param.name);
+                                collected.push(Param { name, ..param });
                             }
                         }
                     }
@@ -313,7 +316,10 @@ fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
                 let mut collected = vec![];
 
                 for (idx, elm) in arr_pat.elements.iter().enumerate() {
-                    let name = format!("\"{idx}\"");
+                    let mut name = String::new();
+                    name.push('"');
+                    name.push_str(&idx.to_string());
+                    name.push('"');
 
                     if let Some(pat) = elm {
                         match get_param_name(pat, false) {
