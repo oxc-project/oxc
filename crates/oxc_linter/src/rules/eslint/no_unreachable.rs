@@ -47,17 +47,17 @@ impl Rule for NoUnreachable {
         }
 
         let nodes = ctx.nodes();
-        let Some(_parent) = nodes
+        let Some(parent) = nodes
             .ancestors(node.id())
             .map(|id| nodes.get_node(id))
             .find_or_last(|it| it.kind().is_function_like())
         else {
             unreachable!()
         };
-        // HACK: test with noop
-        // if !ctx.semantic().cfg().is_reachabale_deepscan(parent.cfg_id(), node.cfg_id(), nodes) {
-        //     return ctx.diagnostic(no_unreachable_diagnostic(node.kind().span()));
-        // }
+
+        if !ctx.semantic().cfg().is_reachabale(parent.cfg_id(), node.cfg_id()) {
+            return ctx.diagnostic(no_unreachable_diagnostic(node.kind().span()));
+        }
     }
 }
 
