@@ -4,7 +4,7 @@ use std::{cell::Cell, rc::Rc};
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{Atom, CompactStr, GetSpan, Span, SPAN};
+use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
     reference::{ReferenceFlag, ReferenceId},
@@ -41,21 +41,190 @@ pub struct ReactJsx<'a> {
     pub(super) jsx_source: ReactJsxSource<'a>,
 
     // States
-    jsx_runtime_importer: Atom<'a>,
-
-    // Doubles as var name for require react
-    import_create_element: Option<BoundIdentifier<'a>>,
-    // Doubles as var name for require JSX
-    import_jsx: Option<BoundIdentifier<'a>>,
-    import_jsxs: Option<BoundIdentifier<'a>>,
-    import_fragment: Option<BoundIdentifier<'a>>,
-
-    pragma: Option<Pragma<'a>>,
-    pragma_frag: Option<Pragma<'a>>,
-
+    bindings: Bindings<'a>,
     can_add_filename_statement: bool,
 }
 
+/// Bindings for different import options
+enum Bindings<'a> {
+    Classic(ClassicBindings<'a>),
+    AutomaticScript(AutomaticScriptBindings<'a>),
+    AutomaticModule(AutomaticModuleBindings<'a>),
+}
+impl<'a> Bindings<'a> {
+    #[inline]
+    fn is_classic(&self) -> bool {
+        matches!(self, Self::Classic(_))
+    }
+}
+
+struct ClassicBindings<'a> {
+    pragma: Pragma<'a>,
+    pragma_frag: Pragma<'a>,
+}
+
+struct AutomaticScriptBindings<'a> {
+    ctx: Ctx<'a>,
+    options: Rc<ReactOptions>,
+    jsx_runtime_importer: Atom<'a>,
+    require_create_element: Option<BoundIdentifier<'a>>,
+    require_jsx: Option<BoundIdentifier<'a>>,
+    is_development: bool,
+}
+
+impl<'a> AutomaticScriptBindings<'a> {
+    fn new(ctx: Ctx<'a>, options: Rc<ReactOptions>, jsx_runtime_importer: Atom<'a>) -> Self {
+        let is_development = options.development;
+        Self {
+            ctx,
+            options,
+            jsx_runtime_importer,
+            require_create_element: None,
+            require_jsx: None,
+            is_development,
+        }
+    }
+
+    fn require_create_element(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
+        if self.require_create_element.is_none() {
+            let source = get_import_source(&self.options, ctx);
+            let id = self.add_require_statement("react", source, true, ctx);
+            self.require_create_element = Some(id);
+        }
+        self.require_create_element.as_ref().unwrap().create_read_reference(ctx)
+    }
+
+    fn require_jsx(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
+        if self.require_jsx.is_none() {
+            let var_name =
+                if self.is_development { "reactJsxDevRuntime" } else { "reactJsxRuntime" };
+            let id =
+                self.add_require_statement(var_name, self.jsx_runtime_importer.clone(), false, ctx);
+            self.require_jsx = Some(id);
+        };
+        self.require_jsx.as_ref().unwrap().create_read_reference(ctx)
+    }
+
+    fn add_require_statement(
+        &mut self,
+        variable_name: &str,
+        source: Atom<'a>,
+        front: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> BoundIdentifier<'a> {
+        let root_scope_id = ctx.scopes().root_scope_id();
+        let symbol_id =
+            ctx.generate_uid(variable_name, root_scope_id, SymbolFlags::FunctionScopedVariable);
+        let variable_name = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
+
+        let import = NamedImport::new(variable_name.clone(), None, symbol_id);
+        self.ctx.module_imports.add_require(source, import, front);
+        BoundIdentifier { name: variable_name, symbol_id }
+    }
+}
+
+struct AutomaticModuleBindings<'a> {
+    ctx: Ctx<'a>,
+    options: Rc<ReactOptions>,
+    jsx_runtime_importer: Atom<'a>,
+    import_create_element: Option<BoundIdentifier<'a>>,
+    import_fragment: Option<BoundIdentifier<'a>>,
+    import_jsx: Option<BoundIdentifier<'a>>,
+    import_jsxs: Option<BoundIdentifier<'a>>,
+}
+
+impl<'a> AutomaticModuleBindings<'a> {
+    fn new(ctx: Ctx<'a>, options: Rc<ReactOptions>, jsx_runtime_importer: Atom<'a>) -> Self {
+        Self {
+            ctx,
+            options,
+            jsx_runtime_importer,
+            import_create_element: None,
+            import_fragment: None,
+            import_jsx: None,
+            import_jsxs: None,
+        }
+    }
+
+    fn import_create_element(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
+        if self.import_create_element.is_none() {
+            let source = get_import_source(&self.options, ctx);
+            let id = self.add_import_statement("createElement", source, ctx);
+            self.import_create_element = Some(id);
+        }
+        self.import_create_element.as_ref().unwrap().create_read_reference(ctx)
+    }
+
+    fn import_fragment(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
+        if self.import_fragment.is_none() {
+            self.import_fragment = Some(self.add_jsx_import_statement("Fragment", ctx));
+        }
+        self.import_fragment.as_ref().unwrap().create_read_reference(ctx)
+    }
+
+    fn import_jsx(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
+        if self.import_jsx.is_none() {
+            if self.options.development {
+                self.add_import_jsx_dev(ctx);
+            } else {
+                self.import_jsx = Some(self.add_jsx_import_statement("jsx", ctx));
+            };
+        }
+        self.import_jsx.as_ref().unwrap().create_read_reference(ctx)
+    }
+
+    fn import_jsxs(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
+        if self.import_jsxs.is_none() {
+            if self.options.development {
+                self.add_import_jsx_dev(ctx);
+            } else {
+                self.import_jsxs = Some(self.add_jsx_import_statement("jsxs", ctx));
+            };
+        }
+        self.import_jsxs.as_ref().unwrap().create_read_reference(ctx)
+    }
+
+    // Inline so that compiler can see in `import_jsx` and `import_jsxs` that fields
+    // are always `Some` after calling this function, and can elide the `unwrap()`s
+    #[inline]
+    fn add_import_jsx_dev(&mut self, ctx: &mut TraverseCtx<'a>) {
+        let id = self.add_jsx_import_statement("jsxDEV", ctx);
+        self.import_jsx = Some(id.clone());
+        self.import_jsxs = Some(id);
+    }
+
+    fn add_jsx_import_statement(
+        &mut self,
+        name: &'static str,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> BoundIdentifier<'a> {
+        self.add_import_statement(name, self.jsx_runtime_importer.clone(), ctx)
+    }
+
+    fn add_import_statement(
+        &mut self,
+        name: &'static str,
+        source: Atom<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> BoundIdentifier<'a> {
+        let root_scope_id = ctx.scopes().root_scope_id();
+        let symbol_id = ctx.generate_uid(name, root_scope_id, SymbolFlags::FunctionScopedVariable);
+        let local = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
+
+        let import = NamedImport::new(Atom::from(name), Some(local.clone()), symbol_id);
+        self.ctx.module_imports.add_import(source, import);
+        BoundIdentifier { name: local, symbol_id }
+    }
+}
+
+fn get_import_source<'a>(options: &Rc<ReactOptions>, ctx: &mut TraverseCtx<'a>) -> Atom<'a> {
+    match options.import_source.as_ref() {
+        Some(source) => ctx.ast.new_atom(source),
+        None => Atom::from("react"),
+    }
+}
+
+#[derive(Clone)]
 pub struct BoundIdentifier<'a> {
     pub name: Atom<'a>,
     pub symbol_id: SymbolId,
@@ -73,6 +242,7 @@ impl<'a> BoundIdentifier<'a> {
     }
 }
 
+/// Pragma used in classic mode
 struct Pragma<'a> {
     object: Atom<'a>,
     property: Option<Atom<'a>>,
@@ -130,16 +300,14 @@ impl<'a> Pragma<'a> {
 // Transforms
 impl<'a> ReactJsx<'a> {
     pub fn new(options: &Rc<ReactOptions>, ctx: &Ctx<'a>) -> Self {
-        // Parse pragmas + import source
-        let (pragma, pragma_frag, jsx_runtime_importer) = match options.runtime {
+        let bindings = match options.runtime {
             ReactJsxRuntime::Classic => {
                 if options.import_source.is_some() {
                     ctx.error(diagnostics::import_source_cannot_be_set());
                 }
                 let pragma = Pragma::parse(options.pragma.as_ref(), "createElement", ctx);
                 let pragma_frag = Pragma::parse(options.pragma_frag.as_ref(), "Fragment", ctx);
-
-                (Some(pragma), Some(pragma_frag), Atom::empty())
+                Bindings::Classic(ClassicBindings { pragma, pragma_frag })
             }
             ReactJsxRuntime::Automatic => {
                 if options.pragma.is_some() || options.pragma_frag.is_some() {
@@ -168,7 +336,19 @@ impl<'a> ReactJsx<'a> {
                     }
                 };
 
-                (None, None, jsx_runtime_importer)
+                if ctx.source_type.is_script() {
+                    Bindings::AutomaticScript(AutomaticScriptBindings::new(
+                        Rc::clone(ctx),
+                        Rc::clone(options),
+                        jsx_runtime_importer,
+                    ))
+                } else {
+                    Bindings::AutomaticModule(AutomaticModuleBindings::new(
+                        Rc::clone(ctx),
+                        Rc::clone(options),
+                        jsx_runtime_importer,
+                    ))
+                }
             }
         };
 
@@ -177,13 +357,7 @@ impl<'a> ReactJsx<'a> {
             ctx: Rc::clone(ctx),
             jsx_self: ReactJsxSelf::new(ctx),
             jsx_source: ReactJsxSource::new(ctx),
-            jsx_runtime_importer,
-            import_create_element: None,
-            import_jsx: None,
-            import_jsxs: None,
-            import_fragment: None,
-            pragma,
-            pragma_frag,
+            bindings,
             can_add_filename_statement: false,
         }
     }
@@ -220,7 +394,7 @@ impl<'a> ReactJsx<'a> {
 // Add imports
 impl<'a> ReactJsx<'a> {
     pub fn add_runtime_imports(&mut self, program: &mut Program<'a>) {
-        if self.options.runtime.is_classic() {
+        if self.bindings.is_classic() {
             if self.can_add_filename_statement {
                 program.body.insert(0, self.jsx_source.get_var_file_name_statement());
             }
@@ -244,129 +418,6 @@ impl<'a> ReactJsx<'a> {
         }
 
         program.body.splice(index..index, imports);
-    }
-
-    fn add_import<'b>(
-        &mut self,
-        e: &JSXElementOrFragment<'a, 'b>,
-        has_key_after_props_spread: bool,
-        need_jsxs: bool,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if self.options.runtime.is_classic() {
-            return;
-        }
-        match e {
-            JSXElementOrFragment::Element(_) if has_key_after_props_spread => {
-                self.add_import_create_element(ctx);
-            }
-            JSXElementOrFragment::Element(_) if need_jsxs => self.add_import_jsxs(ctx),
-            JSXElementOrFragment::Element(_) => self.add_import_jsx(ctx),
-            JSXElementOrFragment::Fragment(_) => {
-                self.add_import_fragment(ctx);
-                if need_jsxs {
-                    self.add_import_jsxs(ctx);
-                }
-            }
-        }
-    }
-
-    fn add_require_jsx_runtime(&mut self, ctx: &mut TraverseCtx<'a>) {
-        if self.import_jsx.is_none() {
-            let var_name =
-                if self.options.development { "reactJsxDevRuntime" } else { "reactJsxRuntime" };
-            let id =
-                self.add_require_statement(var_name, self.jsx_runtime_importer.clone(), false, ctx);
-            self.import_jsx = Some(id);
-        }
-    }
-
-    fn add_import_jsx(&mut self, ctx: &mut TraverseCtx<'a>) {
-        if self.is_script() {
-            self.add_require_jsx_runtime(ctx);
-        } else if self.options.development {
-            self.add_import_jsx_dev(ctx);
-        } else if self.import_jsx.is_none() {
-            let id = self.add_import_statement("jsx", self.jsx_runtime_importer.clone(), ctx);
-            self.import_jsx = Some(id);
-        }
-    }
-
-    fn add_import_jsxs(&mut self, ctx: &mut TraverseCtx<'a>) {
-        if self.is_script() {
-            self.add_require_jsx_runtime(ctx);
-        } else if self.options.development {
-            self.add_import_jsx_dev(ctx);
-        } else if self.import_jsxs.is_none() {
-            let id = self.add_import_statement("jsxs", self.jsx_runtime_importer.clone(), ctx);
-            self.import_jsxs = Some(id);
-        }
-    }
-
-    fn add_import_jsx_dev(&mut self, ctx: &mut TraverseCtx<'a>) {
-        if self.is_script() {
-            self.add_require_jsx_runtime(ctx);
-        } else if self.import_jsx.is_none() {
-            let id = self.add_import_statement("jsxDEV", self.jsx_runtime_importer.clone(), ctx);
-            self.import_jsx = Some(id);
-        }
-    }
-
-    fn add_import_fragment(&mut self, ctx: &mut TraverseCtx<'a>) {
-        if self.is_script() {
-            self.add_require_jsx_runtime(ctx);
-        } else if self.import_fragment.is_none() {
-            let id = self.add_import_statement("Fragment", self.jsx_runtime_importer.clone(), ctx);
-            self.import_fragment = Some(id);
-            self.add_import_jsx(ctx);
-        }
-    }
-
-    fn add_import_create_element(&mut self, ctx: &mut TraverseCtx<'a>) {
-        if self.import_create_element.is_none() {
-            let source = match self.options.import_source.as_ref() {
-                Some(source) => ctx.ast.new_atom(source),
-                None => Atom::from("react"),
-            };
-            let id = if self.is_script() {
-                self.add_require_statement("react", source, true, ctx)
-            } else {
-                self.add_import_statement("createElement", source, ctx)
-            };
-            self.import_create_element = Some(id);
-        }
-    }
-
-    fn add_import_statement(
-        &mut self,
-        name: &'static str,
-        source: Atom<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> BoundIdentifier<'a> {
-        let root_scope_id = ctx.scopes().root_scope_id();
-        let symbol_id = ctx.generate_uid(name, root_scope_id, SymbolFlags::FunctionScopedVariable);
-        let local = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
-
-        let import = NamedImport::new(Atom::from(name), Some(local.clone()), symbol_id);
-        self.ctx.module_imports.add_import(source, import);
-        BoundIdentifier { name: local, symbol_id }
-    }
-
-    fn add_require_statement(
-        &mut self,
-        variable_name: &str,
-        source: Atom<'a>,
-        front: bool,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> BoundIdentifier<'a> {
-        let root_scope_id = ctx.scopes().root_scope_id();
-        let symbol_id =
-            ctx.generate_uid(variable_name, root_scope_id, SymbolFlags::FunctionScopedVariable);
-        let variable_name = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
-
-        let import = NamedImport::new(variable_name.clone(), None, symbol_id);
-        self.ctx.module_imports.add_require(source, import, front);
-        BoundIdentifier { name: variable_name, symbol_id }
     }
 }
 
@@ -448,7 +499,7 @@ impl<'a> ReactJsx<'a> {
         let is_fragment = e.is_fragment();
         let has_key_after_props_spread = e.has_key_after_props_spread();
         // If has_key_after_props_spread is true, we need to fallback to `createElement` same behavior as classic runtime
-        let is_classic = self.options.runtime.is_classic() || has_key_after_props_spread;
+        let is_classic = self.bindings.is_classic() || has_key_after_props_spread;
         let is_automatic = !is_classic;
         let is_development = self.options.development;
 
@@ -572,8 +623,6 @@ impl<'a> ReactJsx<'a> {
             }
         }
 
-        self.add_import(e, has_key_after_props_spread, need_jsxs, ctx);
-
         if fragment_needs_update {
             self.update_fragment(arguments.first_mut().unwrap(), ctx);
         }
@@ -681,106 +730,84 @@ impl<'a> ReactJsx<'a> {
     /// `bool` returned is flag for whether identifier is temporary and `update_fragment`
     /// needs to be called later.
     fn get_fragment(&mut self, ctx: &mut TraverseCtx<'a>) -> (Expression<'a>, bool) {
-        match self.options.runtime {
-            ReactJsxRuntime::Classic => {
-                let expr = self.pragma_frag.as_ref().unwrap().create_expression(ctx);
-                (expr, false) // false = does not need update
+        match &self.bindings {
+            Bindings::Classic(bindings) => {
+                let expr = bindings.pragma_frag.create_expression(ctx);
+                let needs_update = false;
+                (expr, needs_update)
             }
-            ReactJsxRuntime::Automatic => {
-                // Use existing import if exists. Otherwise create temporary identifiers,
-                // and signal to over-write them later in `update_fragment` after import is added
-                // and correct var name is known. Correct `reference_id` will also be set then.
-                // We have to do like this so that imports are in same order as Babel's output,
-                // in order to pass Babel's tests.
-                // TODO(improve-on-babel): Remove this workaround if output doesn't need to match
-                // Babel's exactly.
-                if self.is_script() {
-                    if let Some(id) = self.import_jsx.as_ref() {
-                        let expr = create_static_member_expression(
-                            id.create_read_reference(ctx),
-                            Atom::from("Fragment"),
-                            ctx,
-                        );
-                        (expr, false) // false = does not need update
-                    } else {
-                        let expr = create_static_member_expression(
-                            create_read_identifier_reference(SPAN, Atom::empty(), None),
-                            Atom::from("Fragment"),
-                            ctx,
-                        );
-                        (expr, true) // true = needs update
-                    }
-                } else {
-                    #[allow(clippy::collapsible_else_if)]
-                    if let Some(id) = self.import_fragment.as_ref() {
-                        let ident = id.create_read_reference(ctx);
-                        let expr = ctx.ast.identifier_reference_expression(ident);
-                        (expr, false) // false = does not need update
-                    } else {
-                        let ident = create_read_identifier_reference(SPAN, Atom::empty(), None);
-                        let expr = ctx.ast.identifier_reference_expression(ident);
-                        (expr, true) // true = needs update
-                    }
-                }
+            Bindings::AutomaticScript(bindings) => {
+                let (object_ident, needs_update) = match bindings.require_jsx.as_ref() {
+                    Some(id) => (id.create_read_reference(ctx), false),
+                    None => (create_read_identifier_reference(SPAN, Atom::empty(), None), true),
+                };
+                let property_name = Atom::from("Fragment");
+                let expr = create_static_member_expression(object_ident, property_name, ctx);
+                (expr, needs_update)
+            }
+            Bindings::AutomaticModule(bindings) => {
+                let (ident, needs_update) = match bindings.import_fragment.as_ref() {
+                    Some(id) => (id.create_read_reference(ctx), false),
+                    None => (create_read_identifier_reference(SPAN, Atom::empty(), None), true),
+                };
+                let expr = ctx.ast.identifier_reference_expression(ident);
+                (expr, needs_update)
             }
         }
     }
 
-    fn update_fragment(&self, arg: &mut Argument<'a>, ctx: &mut TraverseCtx<'a>) {
-        let (id, local_id) = if self.is_script() {
-            let Argument::StaticMemberExpression(member_expr) = arg else { unreachable!() };
-            let Expression::Identifier(id) = &mut member_expr.object else {
-                unreachable!();
-            };
-            (id, self.import_jsx.as_ref().unwrap())
-        } else {
-            let Argument::Identifier(id) = arg else { unreachable!() };
-            (id, self.import_fragment.as_ref().unwrap())
+    fn update_fragment(&mut self, arg: &mut Argument<'a>, ctx: &mut TraverseCtx<'a>) {
+        let (id, new_id) = match &mut self.bindings {
+            Bindings::AutomaticScript(bindings) => {
+                let Argument::StaticMemberExpression(member_expr) = arg else { unreachable!() };
+                let Expression::Identifier(id) = &mut member_expr.object else {
+                    unreachable!();
+                };
+                (id, bindings.require_jsx(ctx))
+            }
+            Bindings::AutomaticModule(bindings) => {
+                let Argument::Identifier(id) = arg else { unreachable!() };
+                (id, bindings.import_fragment(ctx))
+            }
+            Bindings::Classic(_) => unreachable!(),
         };
 
-        id.name = local_id.name.clone();
-        id.reference_id = Cell::new(Some(ctx.create_bound_reference(
-            CompactStr::from(local_id.name.as_str()),
-            local_id.symbol_id,
-            ReferenceFlag::Read,
-        )));
+        id.name = new_id.name;
+        id.reference_id = new_id.reference_id;
     }
 
     fn get_create_element(
-        &self,
+        &mut self,
         has_key_after_props_spread: bool,
         jsxs: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        match self.options.runtime {
-            ReactJsxRuntime::Classic => self.pragma.as_ref().unwrap().create_expression(ctx),
-            ReactJsxRuntime::Automatic => {
-                if self.is_script() {
-                    let (object_id, property_name) = if has_key_after_props_spread {
-                        (self.import_create_element.as_ref().unwrap(), Atom::from("createElement"))
-                    } else {
-                        let property_name = if self.options.development {
-                            Atom::from("jsxDEV")
-                        } else if jsxs {
-                            Atom::from("jsxs")
-                        } else {
-                            Atom::from("jsx")
-                        };
-                        (self.import_jsx.as_ref().unwrap(), property_name)
-                    };
-                    let ident = object_id.create_read_reference(ctx);
-                    create_static_member_expression(ident, property_name, ctx)
+        match &mut self.bindings {
+            Bindings::Classic(bindings) => bindings.pragma.create_expression(ctx),
+            Bindings::AutomaticScript(bindings) => {
+                let (ident, property_name) = if has_key_after_props_spread {
+                    (bindings.require_create_element(ctx), Atom::from("createElement"))
                 } else {
-                    let id = if has_key_after_props_spread {
-                        self.import_create_element.as_ref().unwrap()
-                    } else if jsxs && !self.options.development {
-                        self.import_jsxs.as_ref().unwrap()
+                    let property_name = if bindings.is_development {
+                        Atom::from("jsxDEV")
+                    } else if jsxs {
+                        Atom::from("jsxs")
                     } else {
-                        self.import_jsx.as_ref().unwrap()
+                        Atom::from("jsx")
                     };
-                    let ident = id.create_read_reference(ctx);
-                    self.ast().identifier_reference_expression(ident)
-                }
+                    (bindings.require_jsx(ctx), property_name)
+                };
+                create_static_member_expression(ident, property_name, ctx)
+            }
+            Bindings::AutomaticModule(bindings) => {
+                let ident = if has_key_after_props_spread {
+                    bindings.import_create_element(ctx)
+                } else if jsxs {
+                    bindings.import_jsxs(ctx)
+                } else {
+                    bindings.import_jsx(ctx)
+                };
+                self.ast().identifier_reference_expression(ident)
             }
         }
     }
