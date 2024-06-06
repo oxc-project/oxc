@@ -179,8 +179,8 @@ pub enum EdgeType {
 
     // misc edges
     Unreachable,
-    /// Used to mark the end of a finalizer or catch block. It is an experimental approach might
-    /// move to their respective edge kind enums or removed altogether.
+    /// Used to mark the end of a finalizer. It is an experimental approach might
+    /// move to it's respective edge kind enum or get removed altogether.
     Join,
 }
 
