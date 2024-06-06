@@ -68,6 +68,6 @@ jobs:
           branch: release/crates
           branch-suffix: timestamp
           title: Release crates v${{ steps.version.outputs.VERSION }}
-          body: Automated Release \n ${{ steps.changelog.outputs.CHANGELOG }}
+          body: ${{ steps.changelog.outputs.CHANGELOG }}
           assignees: Boshen
           reviewers: Boshen
