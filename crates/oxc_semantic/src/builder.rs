@@ -17,8 +17,8 @@ use crate::{
     checker::{EarlyErrorJavaScript, EarlyErrorTypeScript},
     class::ClassTableBuilder,
     control_flow::{
-        ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, Register,
-        ReturnInstructionKind,
+        ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind,
+        IterationInstructionKind, Register, ReturnInstructionKind,
     },
     diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
@@ -71,6 +71,8 @@ pub struct SemanticBuilder<'a> {
     pub cfg: ControlFlowGraphBuilder<'a>,
 
     pub class_table_builder: ClassTableBuilder,
+
+    ast_nodes_records: Vec<Vec<AstNodeId>>,
 }
 
 pub struct SemanticBuilderReturn<'a> {
@@ -105,6 +107,7 @@ impl<'a> SemanticBuilder<'a> {
             check_syntax_error: false,
             cfg: ControlFlowGraphBuilder::default(),
             class_table_builder: ClassTableBuilder::new(),
+            ast_nodes_records: Vec::new(),
         }
     }
 
@@ -207,11 +210,26 @@ impl<'a> SemanticBuilder<'a> {
         } else {
             self.nodes.add_node(ast_node, Some(self.current_node_id))
         };
+        self.record_ast_node();
     }
 
     fn pop_ast_node(&mut self) {
         if let Some(parent_id) = self.nodes.parent_id(self.current_node_id) {
             self.current_node_id = parent_id;
+        }
+    }
+
+    fn record_ast_nodes(&mut self) {
+        self.ast_nodes_records.push(Vec::new());
+    }
+
+    fn retrieve_recorded_ast_nodes(&mut self) -> Vec<AstNodeId> {
+        self.ast_nodes_records.pop().expect("there is no ast nodes record to stop.")
+    }
+
+    fn record_ast_node(&mut self) {
+        if let Some(records) = self.ast_nodes_records.last_mut() {
+            records.push(self.current_node_id);
         }
     }
 
@@ -741,7 +759,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let after_body_graph_ix = self.cfg.current_node_ix;
         let after_for_stmt = self.cfg.new_basic_block_normal();
         self.cfg.add_edge(before_for_graph_ix, test_graph_ix, EdgeType::Normal);
-        self.cfg.add_edge(after_test_graph_ix, before_body_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(after_test_graph_ix, before_body_graph_ix, EdgeType::Jump);
         self.cfg.add_edge(after_body_graph_ix, update_graph_ix, EdgeType::Backedge);
         self.cfg.add_edge(update_graph_ix, test_graph_ix, EdgeType::Backedge);
         self.cfg.add_edge(after_test_graph_ix, after_for_stmt, EdgeType::Normal);
@@ -749,7 +767,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.cfg
             .ctx(None)
             .mark_break(after_for_stmt)
-            .mark_continue(test_graph_ix)
+            .mark_continue(update_graph_ix)
             .resolve_with_upper_label();
         /* cfg */
 
@@ -782,6 +800,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             stmt.scope_id.set(Some(self.current_scope_id));
         }
         self.enter_node(kind);
+
         self.visit_for_statement_left(&stmt.left);
 
         /* cfg */
@@ -789,12 +808,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let start_prepare_cond_graph_ix = self.cfg.new_basic_block_normal();
         /* cfg */
 
+        self.record_ast_nodes();
         self.visit_expression(&stmt.right);
+        let right_node = self.retrieve_recorded_ast_nodes().into_iter().next();
 
         /* cfg */
         let end_of_prepare_cond_graph_ix = self.cfg.current_node_ix;
-        // this basic block is always empty since there's no update condition in a for-in loop.
-        let basic_block_with_backedge_graph_ix = self.cfg.new_basic_block_normal();
+        let iteration_graph_ix = self.cfg.new_basic_block_normal();
+        self.cfg.append_iteration(right_node, IterationInstructionKind::In);
         let body_graph_ix = self.cfg.new_basic_block_normal();
 
         self.cfg.ctx(None).default().allow_break().allow_continue();
@@ -810,26 +831,26 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // connect the end of the iterable expression to the basic block with back edge
         self.cfg.add_edge(
             end_of_prepare_cond_graph_ix,
-            basic_block_with_backedge_graph_ix,
+            iteration_graph_ix,
             EdgeType::Normal,
         );
         // connect the basic block with back edge to the start of the body
-        self.cfg.add_edge(basic_block_with_backedge_graph_ix, body_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(iteration_graph_ix, body_graph_ix, EdgeType::Jump);
         // connect the end of the body back to the basic block
         // with back edge for the next iteration
         self.cfg.add_edge(
             end_of_body_graph_ix,
-            basic_block_with_backedge_graph_ix,
+            iteration_graph_ix,
             EdgeType::Backedge,
         );
         // connect the basic block with back edge to the basic block after the for loop
         // for when there are no more iterations left in the iterable
-        self.cfg.add_edge(basic_block_with_backedge_graph_ix, after_for_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(iteration_graph_ix, after_for_graph_ix, EdgeType::Normal);
 
         self.cfg
             .ctx(None)
             .mark_break(after_for_graph_ix)
-            .mark_continue(basic_block_with_backedge_graph_ix)
+            .mark_continue(iteration_graph_ix)
             .resolve_with_upper_label();
         /* cfg */
 
@@ -847,6 +868,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             stmt.scope_id.set(Some(self.current_scope_id));
         }
         self.enter_node(kind);
+
         self.visit_for_statement_left(&stmt.left);
 
         /* cfg */
@@ -854,12 +876,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let start_prepare_cond_graph_ix = self.cfg.new_basic_block_normal();
         /* cfg */
 
+        self.record_ast_nodes();
         self.visit_expression(&stmt.right);
+        let right_node = self.retrieve_recorded_ast_nodes().into_iter().next();
 
         /* cfg */
         let end_of_prepare_cond_graph_ix = self.cfg.current_node_ix;
-        // this basic block is always empty since there's no update condition in a for-of loop.
-        let basic_block_with_backedge_graph_ix = self.cfg.new_basic_block_normal();
+        let iteration_graph_ix = self.cfg.new_basic_block_normal();
+        self.cfg.append_iteration(right_node, IterationInstructionKind::Of);
         let body_graph_ix = self.cfg.new_basic_block_normal();
 
         self.cfg.ctx(None).default().allow_break().allow_continue();
@@ -875,26 +899,26 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // connect the end of the iterable expression to the basic block with back edge
         self.cfg.add_edge(
             end_of_prepare_cond_graph_ix,
-            basic_block_with_backedge_graph_ix,
+            iteration_graph_ix,
             EdgeType::Normal,
         );
         // connect the basic block with back edge to the start of the body
-        self.cfg.add_edge(basic_block_with_backedge_graph_ix, body_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(iteration_graph_ix, body_graph_ix, EdgeType::Jump);
         // connect the end of the body back to the basic block
         // with back edge for the next iteration
         self.cfg.add_edge(
             end_of_body_graph_ix,
-            basic_block_with_backedge_graph_ix,
+            iteration_graph_ix,
             EdgeType::Backedge,
         );
         // connect the basic block with back edge to the basic block after the for loop
         // for when there are no more iterations left in the iterable
-        self.cfg.add_edge(basic_block_with_backedge_graph_ix, after_for_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(iteration_graph_ix, after_for_graph_ix, EdgeType::Normal);
 
         self.cfg
             .ctx(None)
             .mark_break(after_for_graph_ix)
-            .mark_continue(basic_block_with_backedge_graph_ix)
+            .mark_continue(iteration_graph_ix)
             .resolve_with_upper_label();
         /* cfg */
 
@@ -1281,7 +1305,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let after_while_graph_ix = self.cfg.new_basic_block_normal();
 
         self.cfg.add_edge(before_while_stmt_graph_ix, condition_graph_ix, EdgeType::Normal);
-        self.cfg.add_edge(condition_graph_ix, body_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(condition_graph_ix, body_graph_ix, EdgeType::Jump);
         self.cfg.add_edge(after_body_graph_ix, condition_graph_ix, EdgeType::Backedge);
         self.cfg.add_edge(condition_graph_ix, after_while_graph_ix, EdgeType::Normal);
 

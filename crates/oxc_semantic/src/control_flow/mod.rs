@@ -148,8 +148,8 @@ pub enum InstructionKind {
     Break(LabeledInstruction),
     Continue(LabeledInstruction),
     Throw,
+    Iteration(IterationInstructionKind),
 }
-
 #[derive(Debug, Clone)]
 pub enum ReturnInstructionKind {
     ImplicitUndefined,
@@ -160,6 +160,12 @@ pub enum ReturnInstructionKind {
 pub enum LabeledInstruction {
     Labeled,
     Unlabeled,
+}
+
+#[derive(Debug, Clone)]
+pub enum IterationInstructionKind {
+    Of,
+    In,
 }
 
 #[derive(Debug, Clone)]

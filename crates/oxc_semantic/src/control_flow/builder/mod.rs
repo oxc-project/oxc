@@ -7,7 +7,8 @@ pub use context::{CtxCursor, CtxFlags};
 
 use super::{
     AstNodeId, BasicBlock, BasicBlockId, CompactStr, ControlFlowGraph, EdgeType, ErrorEdgeKind,
-    Graph, Instruction, InstructionKind, LabeledInstruction, PreservedExpressionState, Register,
+    Graph, Instruction, InstructionKind, IterationInstructionKind, LabeledInstruction,
+    PreservedExpressionState, Register,
 };
 
 #[derive(Debug, Default)]
@@ -142,6 +143,10 @@ impl<'a> ControlFlowGraphBuilder<'a> {
             finalizer, expect,
             "expected finalizer doesn't match the last finalizer pushed onto the stack."
         );
+    }
+
+    pub fn append_iteration(&mut self, node: Option<AstNodeId>, kind: IterationInstructionKind) {
+        self.push_instruction(InstructionKind::Iteration(kind), node);
     }
 
     pub fn append_throw(&mut self, node: AstNodeId) {
