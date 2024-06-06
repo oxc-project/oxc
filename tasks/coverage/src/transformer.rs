@@ -84,7 +84,6 @@ fn get_result(
     .build(&program)
     .source_text;
 
-    // println!("\n\n{:?}\n{:?}\n\n", source_text1, source_text2);
     let result = source_text1 == source_text2;
 
     if result {
