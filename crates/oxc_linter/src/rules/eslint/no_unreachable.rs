@@ -132,7 +132,7 @@ fn test() {
             for (const a of b) {
                 c();
             }
-        
+
             while (true) {
                 d();
             }
@@ -149,7 +149,17 @@ fn test() {
             return c();
         }
         d();
+        ",
         "
+        try {
+          a();
+        } catch (e) {
+          b();
+        } finally {
+          c();
+        }
+        d();
+            ",
     ];
 
     let fail = vec![
