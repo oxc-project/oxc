@@ -241,8 +241,8 @@ impl ControlFlowGraph {
                 if !matches!(filter_result, Control::Continue) {
                     return filter_result;
                 }
-                let unreachable = graph.edges_connecting(a, b).all(|edge| {
-                    matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
+                let unreachable = !graph.edges_connecting(a, b).any(|edge| {
+                    !matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
                 });
 
                 if unreachable {
@@ -312,8 +312,8 @@ impl ControlFlowGraph {
                 if !matches!(filter_result, Control::Continue) {
                     return filter_result;
                 }
-                let unreachable = graph.edges_connecting(a, b).all(|edge| {
-                    matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
+                let unreachable = !graph.edges_connecting(a, b).any(|edge| {
+                    !matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
                 });
 
                 if unreachable {
@@ -447,8 +447,8 @@ impl ControlFlowGraph {
                 if !matches!(filter_result, Control::Continue) {
                     return filter_result;
                 }
-                let unreachable = graph.edges_connecting(a, b).all(|edge| {
-                    matches!(
+                let unreachable = !graph.edges_connecting(a, b).any(|edge| {
+                    !matches!(
                         edge.weight(),
                         EdgeType::NewFunction | EdgeType::Unreachable | EdgeType::Join
                     )
