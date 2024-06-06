@@ -393,8 +393,16 @@ fn should_ignore_as_custom_skip(jsdoc: &JSDoc) -> bool {
 /// Compare to string param names without quotes
 /// e.g. `foo."bar"`
 fn is_name_equal(a: &str, b: &str) -> bool {
-    a.chars().filter(|c| *c != '"').collect::<Vec<_>>()
-        == b.chars().filter(|c| *c != '"').collect::<Vec<_>>()
+    let mut a_chars = a.chars().filter(|&c| c != '"');
+    let mut b_chars = b.chars().filter(|&c| c != '"');
+
+    loop {
+        match (a_chars.next(), b_chars.next()) {
+            (Some(ac), Some(bc)) if ac == bc => continue,
+            (None, None) => return true, // Both done
+            _ => return false,           // Either one is done
+        }
+    }
 }
 
 #[test]
