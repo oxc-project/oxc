@@ -38,7 +38,11 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
             | AstKind::CallExpression(_)
             // /** This JSDoc should NOT found for `ArrowFunctionExpression` callback */
             // new Promise(() => {})
-            | AstKind::NewExpression(_) => {
+            | AstKind::NewExpression(_)
+            // /** This JSDoc should NOT found for inner `Function` */
+            // function outer() { return function inner() {} }
+            | AstKind::ReturnStatement(_)
+            => {
                 // /** This JSDoc should NOT found for `VariableDeclaration` */
                 // export const foo = () => {}
                 let parent_node = ctx.nodes().parent_node(current_node.id())?;
