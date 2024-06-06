@@ -87,7 +87,7 @@ fn default_true() -> bool {
     true
 }
 fn default_check_types_pattern() -> String {
-    "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$".to_string()
+    "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$".to_string() // spellchecker:disable-line
 }
 
 impl Rule for RequireParam {

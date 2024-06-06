@@ -18,6 +18,9 @@ extend-exclude = [
   "tasks/prettier_conformance/prettier",
 ]
 
+[default]
+extend-ignore-re = ["(?Rm)^.*(#|//)\\s*spellchecker:disable-line$"]
+
 [default.extend-words]
 trivias   = "trivias"
 trivia    = "trivia"
