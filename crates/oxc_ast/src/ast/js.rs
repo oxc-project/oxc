@@ -8,7 +8,7 @@ use std::{cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, Vec};
 use oxc_ast_macros::visited_node;
-use oxc_span::{Atom, CompactStr, SourceType, Span};
+use oxc_span::{Atom, CompactStr, GetSpan, SourceType, Span};
 use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -524,6 +524,11 @@ pub struct ArrayExpression<'a> {
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
     #[cfg_attr(feature = "serialize", serde(skip))]
     pub trailing_comma: Option<Span>,
+}
+impl GetSpan for ArrayExpression<'_> {
+    fn span(&self) -> Span {
+        self.span
+    }
 }
 
 inherit_variants! {
