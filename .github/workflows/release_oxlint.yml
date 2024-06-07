@@ -39,7 +39,6 @@ jobs:
     if: needs.check.outputs.version_changed == 'true'
     env:
       version: ${{ needs.check.outputs.version }}
-      OXC_VERSION: ${{ needs.check.outputs.version }}
     strategy:
       matrix:
         include:
@@ -141,16 +140,45 @@ jobs:
       contents: write # for softprops/action-gh-release@v1
       id-token: write # for `npm publish --provenance`
     steps:
-      - uses: taiki-e/checkout-action@v1
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
         with:
-          node-version: 20
-          registry-url: 'https://registry.npmjs.org'
+          fetch-depth: 0 # for changelog
 
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4
+      - uses: Boshen/setup-rust@main
+        with:
+          restore-cache: false
+          tools: cargo-release-oxc
+
+      - name: Run
+        id: run
+        run: |
+          {
+            echo 'OUTPUT<<EOF'
+            cargo release-oxc changelog --release ${{ inputs.name }}
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - name: Save Version
+        id: version
+        run: |
+          {
+            echo 'VERSION<<EOF'
+            # Last line is the version
+            echo '${{ steps.run.outputs.OUTPUT }}' | tail -n 1
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - name: Save Changelog
+        id: changelog
+        run: |
+          {
+            echo 'CHANGELOG<<EOF'
+            # Remove the last line
+            echo '${{ steps.run.outputs.OUTPUT }}' | head -n -1
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - uses: actions/download-artifact@v4
         with:
           merge-multiple: true
 
@@ -161,6 +189,11 @@ jobs:
 
       - name: Untar
         run: ls *.gz | xargs -i tar xf {}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Generate npm packages
         run: |
@@ -182,14 +215,16 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: oxlint v${{ needs.check.outputs.version }}
-          tag_name: oxlint_v${{ needs.check.outputs.version }}
+          body: ${{ steps.changelog.outputs.CHANGELOG }}
           draft: true
           files: oxlint-*
+          name: oxlint v${{ steps.version.outputs.VERSION }}
+          tag_name: oxlint_v${{ steps.version.outputs.VERSION }}
           fail_on_unmatched_files: true
+          target_commitish: ${{ github.sha }}
 
-      - name: wait 3 minutes for smoke test
-        run: sleep 180s
+      - name: wait 1 minute for smoke test
+        run: sleep 60s
 
   smoke:
     needs: publish
