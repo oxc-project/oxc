@@ -9,11 +9,11 @@ use oxc_syntax::operator::{
 };
 use petgraph::{
     stable_graph::NodeIndex,
-    visit::{depth_first_search, Control, DfsEvent, EdgeRef},
+    visit::{depth_first_search, Control, DfsEvent, EdgeRef, Time, Visitable},
     Direction, Graph,
 };
 
-use crate::{AstNodeId, AstNodes};
+use crate::{pg::dfs_visitor, AstNodeId, AstNodes};
 
 pub use builder::{ControlFlowGraphBuilder, CtxCursor, CtxFlags};
 pub use dot::{DebugDot, DebugDotContext, DisplayDot};
@@ -284,46 +284,56 @@ impl ControlFlowGraph {
         to: BasicBlockId,
         // filter: &F,
         loop_test: BasicBlockId,
+        discovered: &mut <Graph<usize, EdgeType> as Visitable>::Map,
+        finished: &mut <Graph<usize, EdgeType> as Visitable>::Map,
+        time: &mut Time,
     ) -> (bool, bool) {
         if from == to {
             return (true, false);
         }
         let graph = &self.graph;
         let mut seen_break = false;
-        depth_first_search(&self.graph, Some(from), |event| match event {
-            DfsEvent::Discover(node, _) => {
-                if !seen_break {
-                    seen_break = self
-                        .basic_block(node)
-                        .instructions()
-                        .last()
-                        .is_some_and(|it| matches!(it.kind, InstructionKind::Break(_)));
+        dfs_visitor(
+            graph,
+            from,
+            &mut |event, _, _, _| match event {
+                DfsEvent::Discover(node, _) => {
+                    if !seen_break {
+                        seen_break = self
+                            .basic_block(node)
+                            .instructions()
+                            .last()
+                            .is_some_and(|it| matches!(it.kind, InstructionKind::Break(_)));
+                    }
+                    if loop_test == node {
+                        Control::Prune
+                    } else if node == to {
+                        Control::Break(true)
+                    } else {
+                        Control::Continue
+                    }
                 }
-                if loop_test == node {
-                    Control::Prune
-                } else if node == to {
-                    Control::Break(true)
-                } else {
-                    Control::Continue
-                }
-            }
-            DfsEvent::TreeEdge(a, b) => {
-                // let filter_result = filter(a);
-                // if !matches!(filter_result, Control::Continue) {
-                //     return filter_result;
-                // }
-                let unreachable = !graph.edges_connecting(a, b).any(|edge| {
-                    !matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
-                });
+                DfsEvent::TreeEdge(a, b) => {
+                    // let filter_result = filter(a);
+                    // if !matches!(filter_result, Control::Continue) {
+                    //     return filter_result;
+                    // }
+                    let unreachable = !graph.edges_connecting(a, b).any(|edge| {
+                        !matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
+                    });
 
-                if unreachable {
-                    Control::Prune
-                } else {
-                    Control::Continue
+                    if unreachable {
+                        Control::Prune
+                    } else {
+                        Control::Continue
+                    }
                 }
-            }
-            _ => Control::Continue,
-        })
+                _ => Control::Continue,
+            },
+            discovered,
+            finished,
+            time,
+        )
         .break_value()
         .map_or((false, false), |it| (it, seen_break))
     }
@@ -423,48 +433,59 @@ impl ControlFlowGraph {
             return true;
         }
         let graph = &self.graph;
-        depth_first_search(&self.graph, Some(from), |event| match event {
-            DfsEvent::Discover(node, _) => {
-                if node == to {
-                    Control::Break(true)
-                } else if let Some((loop_jump, loop_end)) = self.is_infinite_loop_start(node, nodes)
-                {
-                    let (found, seen_break) = self.is_reachabale_with_infinite_loop(
-                        loop_jump, to, /* filter,  */ loop_end,
-                    );
-                    if found {
+        let time = &mut Time(0);
+        let discovered = &mut graph.visit_map();
+        let finished = &mut graph.visit_map();
+        dfs_visitor(
+            &self.graph,
+            from,
+            &mut |event, discovered, finished, time| match event {
+                DfsEvent::Discover(node, _) => {
+                    if node == to {
                         Control::Break(true)
-                    } else if !seen_break {
-                        Control::Prune
+                    } else if let Some((loop_jump, loop_end)) =
+                        self.is_infinite_loop_start(node, nodes)
+                    {
+                        let (found, seen_break) = self.is_reachabale_with_infinite_loop(
+                            loop_jump, to, /* filter,  */ loop_end, discovered, finished, time,
+                        );
+                        if found {
+                            Control::Break(true)
+                        } else if !seen_break {
+                            Control::Prune
+                        } else {
+                            Control::Continue
+                        }
                     } else {
                         Control::Continue
                     }
-                } else {
-                    Control::Continue
                 }
-            }
-            DfsEvent::TreeEdge(a, b) => {
-                // let filter_result = filter(a);
-                // if !matches!(filter_result, Control::Continue) {
-                //     return filter_result;
-                // }
-                let unreachable = !graph.edges_connecting(a, b).any(|edge| {
-                    !matches!(
-                        edge.weight(),
-                        EdgeType::NewFunction | EdgeType::Unreachable | EdgeType::Join
-                    )
-                });
+                DfsEvent::TreeEdge(a, b) => {
+                    // let filter_result = filter(a);
+                    // if !matches!(filter_result, Control::Continue) {
+                    //     return filter_result;
+                    // }
+                    let unreachable = !graph.edges_connecting(a, b).any(|edge| {
+                        !matches!(
+                            edge.weight(),
+                            EdgeType::NewFunction | EdgeType::Unreachable | EdgeType::Join
+                        )
+                    });
 
-                if unreachable {
-                    Control::Prune
-                } else if b == to {
-                    return Control::Break(true);
-                } else {
-                    Control::Continue
+                    if unreachable {
+                        Control::Prune
+                    } else if b == to {
+                        return Control::Break(true);
+                    } else {
+                        Control::Continue
+                    }
                 }
-            }
-            _ => Control::Continue,
-        })
+                _ => Control::Continue,
+            },
+            discovered,
+            finished,
+            time,
+        )
         .break_value()
         .unwrap_or(false)
     }

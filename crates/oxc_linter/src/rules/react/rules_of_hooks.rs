@@ -254,10 +254,7 @@ fn has_conditional_path_accept_throw(
     let to_graph_id = to.cfg_id();
     let cfg = ctx.semantic().cfg();
     let graph = &cfg.graph;
-    if graph
-        .edges(to_graph_id)
-        .any(|it| matches!(it.weight(), EdgeType::Error))
-    {
+    if graph.edges(to_graph_id).any(|it| matches!(it.weight(), EdgeType::Error)) {
         // TODO: We are simplifying here, There is a real need for a trait like `MayThrow` that
         // would provide a method `may_throw`, since not everything may throw and break the control flow.
         return true;

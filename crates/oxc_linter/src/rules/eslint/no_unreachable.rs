@@ -2,7 +2,10 @@ use itertools::Itertools;
 use oxc_ast::{ast::VariableDeclarationKind, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
+use oxc_semantic::{
+    petgraph::visit::{depth_first_search, Control, DfsEvent},
+    AstNode, EdgeType,
+};
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule};
@@ -25,6 +28,33 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnreachable {
+    // fn run_once(&self, ctx: &LintContext) {
+    //     let Some(root) = ctx.nodes().root_node() else { unreachable!() };
+    //     let AstKind::Program(program) = root.kind() else { unreachable!() };
+    //     let graph = &ctx.semantic().cfg().graph;
+    //     let result = depth_first_search(graph, Some(root.cfg_id()), |event| match event {
+    //         DfsEvent::TreeEdge(a, b) => {
+    //             let unreachable = !graph.edges_connecting(a, b).any(|edge| {
+    //                 !matches!(
+    //                     edge.weight(),
+    //                     EdgeType::NewFunction | EdgeType::Unreachable | EdgeType::Join
+    //                 )
+    //             });
+    //
+    //             if unreachable {
+    //                 Control::Prune
+    //             } else if b == to {
+    //                 return Control::Break(true);
+    //             } else {
+    //                 Control::Continue
+    //             }
+    //         }
+    //         _ => Control::Continue,
+    //     });
+    //     dbg!(result);
+    //     panic!();
+    // }
+
     fn run(&self, node: &AstNode, ctx: &LintContext) {
         // exit early if we are not visiting a statement.
         if !node.kind().is_statement() {
