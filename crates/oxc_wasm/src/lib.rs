@@ -172,6 +172,8 @@ impl Oxc {
             .parse();
 
         self.comments = self.map_comments(&ret.trivias);
+        let trivias = Rc::new(ret.trivias);
+
         self.save_diagnostics(ret.errors.into_iter().map(Error::from).collect::<Vec<_>>());
 
         self.ir = format!("{:#?}", ret.program.body).into();
@@ -179,7 +181,7 @@ impl Oxc {
         let program = allocator.alloc(ret.program);
 
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
-            .with_trivias(ret.trivias)
+            .with_trivias(Rc::clone(&trivias))
             .with_check_syntax_error(true)
             .build(program);
 
@@ -229,15 +231,9 @@ impl Oxc {
 
         if run_options.transform() {
             let options = TransformOptions::default();
-            let result = Transformer::new(
-                &allocator,
-                &path,
-                source_type,
-                source_text,
-                semantic.trivias(),
-                options,
-            )
-            .build(program);
+            let result =
+                Transformer::new(&allocator, &path, source_type, source_text, trivias, options)
+                    .build(program);
             if let Err(errs) = result {
                 self.save_diagnostics(errs);
             }

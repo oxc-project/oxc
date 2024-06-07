@@ -17,7 +17,7 @@ pub type Ctx<'a> = Rc<TransformCtx<'a>>;
 pub struct TransformCtx<'a> {
     errors: RefCell<Vec<OxcDiagnostic>>,
 
-    pub trivias: &'a Trivias,
+    pub trivias: Rc<Trivias>,
 
     pub ast: AstBuilder<'a>,
 
@@ -42,7 +42,7 @@ impl<'a> TransformCtx<'a> {
         source_path: &Path,
         source_type: SourceType,
         source_text: &'a str,
-        trivias: &'a Trivias,
+        trivias: Rc<Trivias>,
         options: &TransformOptions,
     ) -> Self {
         let filename = source_path

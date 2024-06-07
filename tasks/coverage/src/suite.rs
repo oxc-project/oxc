@@ -5,6 +5,7 @@ use std::{
     panic::UnwindSafe,
     path::{Path, PathBuf},
     process::{Command, Stdio},
+    rc::Rc,
 };
 
 use console::Style;
@@ -327,7 +328,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
         let program = allocator.alloc(parser_ret.program);
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
-            .with_trivias(parser_ret.trivias)
+            .with_trivias(Rc::new(parser_ret.trivias))
             .with_check_syntax_error(true)
             .build_module_record(PathBuf::new(), program)
             .build(program);
