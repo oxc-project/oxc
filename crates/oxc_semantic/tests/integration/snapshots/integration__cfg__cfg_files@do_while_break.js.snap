@@ -4,7 +4,7 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/do_while_break.js
 ---
 bb0: {
-
+	statement
 }
 
 bb1: {
@@ -20,38 +20,30 @@ bb3: {
 }
 
 bb4: {
-
+	statement
 }
 
 bb5: {
 	statement
-}
-
-bb6: {
-	statement
-}
-
-bb7: {
-	statement
 	break
 }
 
-bb8: {
+bb6: {
 	unreachable
 }
 
-bb9: {
+bb7: {
 	condition
 }
 
+bb8: {
+
+}
+
+bb9: {
+
+}
+
 bb10: {
-
-}
-
-bb11: {
-
-}
-
-bb12: {
 
 }

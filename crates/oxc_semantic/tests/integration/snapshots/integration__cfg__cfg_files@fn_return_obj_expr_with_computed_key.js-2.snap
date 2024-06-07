@@ -5,16 +5,10 @@ input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/fn_return_obj_exp
 ---
 digraph {
     0 [ label = "" ]
-    1 [ label = "" ]
-    2 [ label = "" ]
-    3 [ label = "return <value>" ]
-    4 [ label = "unreachable" ]
-    5 [ label = "" ]
-    1 -> 0 [ label = "Error(Implicit)" ]
-    3 -> 2 [ label = "Error(Implicit)" ]
-    1 -> 3 [ label = "NewFunction" ]
-    4 -> 2 [ label = "Error(Implicit)" ]
-    3 -> 4 [ label = "Unreachable" , style = "dotted" ]
-    5 -> 0 [ label = "Error(Implicit)" ]
-    1 -> 5 [ label = "Normal" ]
+    1 [ label = "return <value>" ]
+    2 [ label = "unreachable" ]
+    3 [ label = "" ]
+    0 -> 1 [ label = "NewFunction" ]
+    1 -> 2 [ label = "Unreachable" , style = "dotted" ]
+    0 -> 3 [ label = "Normal" ]
 }

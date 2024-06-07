@@ -8,7 +8,8 @@ bb0: {
 }
 
 bb1: {
-
+	statement
+	statement
 }
 
 bb2: {
@@ -16,68 +17,59 @@ bb2: {
 }
 
 bb3: {
-	statement
-	statement
+	iteration <in>
 }
 
 bb4: {
-
+	statement
+	statement
 }
 
 bb5: {
-	iteration <in>
+	condition
 }
 
 bb6: {
 	statement
 	statement
+	break
 }
 
 bb7: {
-	condition
+	unreachable
 }
 
 bb8: {
 	statement
-	statement
-	break
 }
 
 bb9: {
-	unreachable
-}
-
-bb10: {
-	statement
-}
-
-bb11: {
 	condition
 }
 
-bb12: {
+bb10: {
 	statement
 	statement
 	continue
 }
 
-bb13: {
+bb11: {
 	unreachable
 }
 
-bb14: {
+bb12: {
 
+}
+
+bb13: {
+	statement
+	statement
+}
+
+bb14: {
+	statement
 }
 
 bb15: {
-	statement
-	statement
-}
-
-bb16: {
-	statement
-}
-
-bb17: {
 
 }

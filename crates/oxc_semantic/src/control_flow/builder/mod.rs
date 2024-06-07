@@ -11,7 +11,7 @@ use super::{
     PreservedExpressionState, Register,
 };
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 struct ErrorHarness(ErrorEdgeKind, BasicBlockId);
 
 #[derive(Debug, Default)]
@@ -87,10 +87,10 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         self.current_node_ix = graph_ix;
 
         // add an error edge to this block.
-        let ErrorHarness(error_edge_kind, error_graph_ix) =
-            self.error_path.last().expect("normal basic blocks need an error harness to attach to");
-        self.add_edge(graph_ix, *error_graph_ix, EdgeType::Error(*error_edge_kind));
-
+        if let Some(ErrorHarness(error_edge_kind, error_graph_ix)) = self.error_path.last() {
+            //.expect("normal basic blocks need an error harness to attach to");
+            self.add_edge(graph_ix, *error_graph_ix, EdgeType::Error(*error_edge_kind));
+        }
         if let Some(finalizer) = self.finalizers.last() {
             self.add_edge(graph_ix, *finalizer, EdgeType::Finalize);
         }

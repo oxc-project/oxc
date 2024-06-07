@@ -4,10 +4,11 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/labelled_try_break.js
 ---
 bb0: {
-
+	statement
 }
 
 bb1: {
+	statement
 	statement
 }
 
@@ -17,16 +18,15 @@ bb2: {
 
 bb3: {
 	statement
-	statement
+	return <value>
 }
 
 bb4: {
-
+	unreachable
 }
 
 bb5: {
-	statement
-	return <value>
+	break <label>
 }
 
 bb6: {
@@ -34,25 +34,17 @@ bb6: {
 }
 
 bb7: {
-	break <label>
+
 }
 
 bb8: {
-	unreachable
-}
-
-bb9: {
-
-}
-
-bb10: {
 	return <value>
 }
 
-bb11: {
+bb9: {
 	unreachable
 }
 
-bb12: {
+bb10: {
 
 }

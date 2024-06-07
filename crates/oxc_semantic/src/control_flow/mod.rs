@@ -193,13 +193,13 @@ pub enum EdgeType {
     Join,
 }
 
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum ErrorEdgeKind {
     /// Error kind for edges between a block which can throw, to it's respective catch block.
     Explicit,
-    /// Any block that can throw would have an implicit error block connected using this kind.
-    #[default]
-    Implicit,
+    // /// Any block that can throw would have an implicit error block connected using this kind.
+    // #[default]
+    // Implicit,
 }
 
 #[derive(Debug)]

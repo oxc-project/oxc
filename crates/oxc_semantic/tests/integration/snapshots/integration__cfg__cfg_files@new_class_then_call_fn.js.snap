@@ -4,9 +4,5 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/new_class_then_call_fn.js
 ---
 bb0: {
-
-}
-
-bb1: {
 	statement
 }

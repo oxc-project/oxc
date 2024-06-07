@@ -4,11 +4,7 @@ expression: output.cfg_dot_diagram()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/import_as_function.js
 ---
 digraph {
-    0 [ label = "" ]
+    0 [ label = "ExpressionStatement" ]
     1 [ label = "ExpressionStatement" ]
-    2 [ label = "" ]
-    3 [ label = "ExpressionStatement" ]
-    1 -> 0 [ label = "Error(Implicit)" ]
-    3 -> 2 [ label = "Error(Implicit)" ]
-    1 -> 3 [ label = "NewFunction" ]
+    0 -> 1 [ label = "NewFunction" ]
 }

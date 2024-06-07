@@ -468,7 +468,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         program.scope_id.set(Some(self.current_scope_id));
 
         /* cfg */
-        let error_harness = self.cfg.attach_error_harness(ErrorEdgeKind::Implicit);
+        // let error_harness = self.cfg.attach_error_harness(ErrorEdgeKind::Implicit);
         let _program_basic_block = self.cfg.new_basic_block_normal();
         /* cfg - must be above directives as directives are in cfg */
 
@@ -481,7 +481,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_statements(&program.body);
 
         /* cfg */
-        self.cfg.release_error_harness(error_harness);
+        // self.cfg.release_error_harness(error_harness);
         /* cfg */
 
         self.leave_node(kind);
@@ -1373,7 +1373,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let preserved = self.cfg.preserve_expression_state();
 
         let before_function_graph_ix = self.cfg.current_node_ix;
-        let error_harness = self.cfg.attach_error_harness(ErrorEdgeKind::Implicit);
+        // let error_harness = self.cfg.attach_error_harness(ErrorEdgeKind::Implicit);
         let function_graph_ix = self.cfg.new_basic_block_function();
         self.cfg.ctx(None).new_function();
         /* cfg */
@@ -1397,7 +1397,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         self.cfg.restore_expression_state(preserved);
         self.cfg.ctx(None).resolve_expect(CtxFlags::FUNCTION);
-        self.cfg.release_error_harness(error_harness);
+        // self.cfg.release_error_harness(error_harness);
         let after_function_graph_ix = self.cfg.new_basic_block_normal();
         self.cfg.add_edge(before_function_graph_ix, after_function_graph_ix, EdgeType::Normal);
         /* cfg */
@@ -1484,7 +1484,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         let preserved = self.cfg.preserve_expression_state();
         let current_node_ix = self.cfg.current_node_ix;
-        let error_harness = self.cfg.attach_error_harness(ErrorEdgeKind::Implicit);
+        // let error_harness = self.cfg.attach_error_harness(ErrorEdgeKind::Implicit);
         let function_graph_ix = self.cfg.new_basic_block_function();
         self.cfg.ctx(None).new_function();
         /* cfg */
@@ -1507,7 +1507,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         self.cfg.restore_expression_state(preserved);
         self.cfg.ctx(None).resolve_expect(CtxFlags::FUNCTION);
-        self.cfg.release_error_harness(error_harness);
+        // self.cfg.release_error_harness(error_harness);
         self.cfg.current_node_ix = current_node_ix;
         /* cfg */
         if let Some(parameters) = &expr.type_parameters {
