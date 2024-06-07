@@ -86,8 +86,8 @@ impl TransformOptions {
                             ReactOptions::default()
                         })
                 };
-            react_options.development = options.has_plugin("transform-react-jsx-development");
-            react_options.jsx_plugin = has_jsx_plugin || has_jsx_development_plugin;
+            react_options.development = has_jsx_development_plugin;
+            react_options.jsx_plugin = has_jsx_plugin;
             react_options.display_name_plugin = options.has_plugin("transform-react-display-name");
             react_options.jsx_self_plugin = options.has_plugin("transform-react-jsx-self");
             react_options.jsx_source_plugin = options.has_plugin("transform-react-jsx-source");

@@ -8,7 +8,8 @@ bb0: {
 }
 
 bb1: {
-
+	statement
+	statement
 }
 
 bb2: {
@@ -20,11 +21,11 @@ bb3: {
 }
 
 bb4: {
-
+	statement
 }
 
 bb5: {
-
+	statement
 }
 
 bb6: {

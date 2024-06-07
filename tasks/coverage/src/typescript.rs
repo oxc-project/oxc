@@ -81,6 +81,10 @@ impl TypeScriptCase {
     pub fn set_result(&mut self, result: TestResult) {
         self.result = result;
     }
+
+    pub fn meta(&self) -> &TypeScriptTestMeta {
+        &self.meta
+    }
 }
 
 impl Case for TypeScriptCase {
@@ -96,7 +100,15 @@ impl Case for TypeScriptCase {
             .with_module(is_module)
             .with_jsx(!compiler_options.jsx.is_empty())
             .with_typescript_definition(compiler_options.declaration);
-        Self { path, code, source_type, result: TestResult::ToBeRun, meta }
+        Self {
+            path,
+            // FIXME: current skip multi-file test cases, if doesn't skip in the future, need to handle multi-file test cases
+            // Use meta.tests[0].content.clone() instead of code to get without meta options code
+            code: meta.tests[0].content.clone(),
+            source_type,
+            result: TestResult::ToBeRun,
+            meta,
+        }
     }
 
     fn code(&self) -> &str {
@@ -125,8 +137,8 @@ impl Case for TypeScriptCase {
     }
 }
 
-struct TypeScriptTestMeta {
-    pub tests: Vec<TestUnitData>,
+pub struct TypeScriptTestMeta {
+    pub(self) tests: Vec<TestUnitData>,
     pub options: CompilerOptions,
     error_files: Vec<String>,
 }
@@ -216,7 +228,7 @@ struct TestUnitData {
 
 #[derive(Debug)]
 #[allow(unused)]
-struct CompilerOptions {
+pub struct CompilerOptions {
     pub modules: Vec<String>,
     pub targets: Vec<String>,
     pub strict: bool,

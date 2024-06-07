@@ -2,228 +2,227 @@
 
 All notable changes to this package will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
 ## [0.13.3] - 2024-06-04
 
-### Refactor
-
-* codegen: reduce allocation for print_unquoted_str (#3525)
-
 ### Bug Fixes
 
-* codegen: should be double quote for jsx attribute value (#3516)
-* codegen: wrong escape string (#3514)
+- 98c9029 codegen: Should be double quote for jsx attribute value (#3516) (Dunqing)
+- d8063b6 codegen: Wrong escape string (#3514) (Dunqing)
+
+### Refactor
+
+- ddac2a0 codegen: Reduce allocation for print_unquoted_str (#3525) (Dunqing)
 
 ## [0.13.2] - 2024-06-03
 
 ### Features
 
-* oxc_codegen: preserve annotate comment (#3465)
+- 0cdb45a oxc_codegen: Preserve annotate comment (#3465) (IWANABETHATGUY)
 
 ## [0.13.1] - 2024-05-22
 
 ### Features
 
-* syntax: export `is_reserved_keyword` and `is_global_object` method (#3384)
-
-### Refactor
-
-* parser: start porting arrow function parsing from tsc (#3340)
-* sourcemap: using binary search to search original position (#3360)
+- e2dd8ac syntax: Export `is_reserved_keyword` and `is_global_object` method (#3384) (Boshen)
 
 ### Bug Fixes
 
-* codegen: using declaration in for statement (#3285)
+- a12ed0f codegen: Using declaration in for statement (#3285) (Don Isaac)
+
+### Refactor
+
+- 9ced605 parser: Start porting arrow function parsing from tsc (#3340) (Boshen)
+- e879685 sourcemap: Using binary search to search original position (#3360) (underfin)
 
 ## [0.13.0] - 2024-05-14
 
 ### Features
 
-* ast: add type to AccessorProperty to support TSAbractAccessorProperty (#3256)
+- eefb66f ast: Add type to AccessorProperty to support TSAbractAccessorProperty (#3256) (Dunqing)
 
 ### Bug Fixes
 
-* parser: correctly parse cls.fn<C> = x (#3208)
+- 0ba7778 parser: Correctly parse cls.fn<C> = x (#3208) (Dunqing)
 
 ### Refactor
 
-* ast: squash nested enums (#3115)
-* ast: remove duplicate `TSNamedTupleMember` representation (#3101)
-* syntax: move number related functions to number module (#3130)
+- 7e1fe36 ast: Squash nested enums (#3115) (overlookmotel)
+- 0185eb2 ast: Remove duplicate `TSNamedTupleMember` representation (#3101) (overlookmotel)
+- a8af5de syntax: Move number related functions to number module (#3130) (Boshen)
 
 ## [0.12.5] - 2024-04-22
 
 ### Features
 
-* ast: add `CatchParameter` node (#3049)
+- 92d709b ast: Add `CatchParameter` node (#3049) (Boshen)
 
 ## [0.12.4] - 2024-04-19
 
 ### Features
 
-* codegen: correctly print type-only imports/exports (#2993)
+- fd5002b codegen: Correctly print type-only imports/exports (#2993) (Dunqing)
 
 ## [0.12.1] - 2024-04-03
 
-### Refactor
-
-* codegen: make codegen sourcemap builder clearer (#2894)
-
 ### Bug Fixes
 
-* sourcemap: using serde_json::to_string to quote sourcemap string (#2889)
+- 28fae2e sourcemap: Using serde_json::to_string to quote sourcemap string (#2889) (underfin)
+
+### Refactor
+
+- 114f68e codegen: Make codegen sourcemap builder clearer (#2894) (underfin)
 
 ## [0.11.0] - 2024-03-30
 
-### Bug Fixes
-
-* codegen: sourcemap token name should be original name (#2843)
-* parser: add support for empty module declaration (#2834)
-
 ### Features
 
-* transformer: numeric separator plugin. (#2795)- add oxc sourcemap crate (#2825) |- SourcemapVisualizer (#2773) |
+- 243131d transformer: Numeric separator plugin. (#2795) (Ali Rezvani)- b199cb8 Add oxc sourcemap crate (#2825) (underfin)- a2cfc86 SourcemapVisualizer (#2773) (underfin)
 
-### Refactor
+### Bug Fixes
 
-* sourcemap: change sourcemap name to take a reference (#2779)
+- 6177c2f codegen: Sourcemap token name should be original name (#2843) (underfin)
+- b76b02d parser: Add support for empty module declaration (#2834) (Ali Rezvani)
 
 ### Performance
 
-* codegen: avoid unnecessary copy (#2727)
-* sourcemap: remove unnecessary binary search (#2728)
+- 2be5f9d codegen: Avoid unnecessary copy (#2727) (underfin)
+- d7004da sourcemap: Remove unnecessary binary search (#2728) (underfin)
+
+### Refactor
+
+- d9b77d8 sourcemap: Change sourcemap name to take a reference (#2779) (underfin)
 
 ## [0.10.0] - 2024-03-14
 
-- **BREAKING** ast: rename BigintLiteral to BigIntLiteral (#2659)
+- c3477de ast: [**BREAKING**] Rename BigintLiteral to BigIntLiteral (#2659) (Arnaud Barré)
 
 ### Bug Fixes
 
-* codegen: `CallExpression` sourcemap (#2717)
-* parser: parse named rest element in type tuple (#2655)
+- 9609c34 codegen: `CallExpression` sourcemap (#2717) (underfin)
+- b453a07 parser: Parse named rest element in type tuple (#2655) (Arnaud Barré)
 
 ## [0.9.0] - 2024-03-05
 
-- **BREAKING** ast: align TSImportType with ESTree (#2578)
-
-### Refactor
-
-* codegen: clean up API around building sourcemaps (#2602)
+- f66059e ast: [**BREAKING**] Align TSImportType with ESTree (#2578) (Arnaud Barré)
 
 ### Features
 
-* ast: add `AssignmentTargetRest` (#2601)
-* ast: add "abstract" type to `MethodDefinition` and `PropertyDefinition` (#2536)
-* codegen: add sourcemap (#2565)
+- 20c7bf7 ast: Add `AssignmentTargetRest` (#2601) (Boshen)
+- 3efbbb2 ast: Add "abstract" type to `MethodDefinition` and `PropertyDefinition` (#2536) (Boshen)
+- 8bb1084 codegen: Add sourcemap (#2565) (Boshen)
+
+### Bug Fixes
+
+- ea30fd5 codegen: Fix adding mapping to sourcemaps (#2590) (overlookmotel)
+- fe29fa4 codegen: Correct sourcemaps when Windows line breaks + unicode (#2584) (overlookmotel)
+- 517026b codegen: Correct sourcemaps when unicode chars (#2583) (overlookmotel)
 
 ### Performance
 
-* codegen: speed up generating sourcemap mappings (#2597)
-* codegen: speed up building sourcemap line tables (#2591)
+- b7f5c63 codegen: Speed up generating sourcemap mappings (#2597) (overlookmotel)
+- 42fa8eb codegen: Speed up building sourcemap line tables (#2591) (overlookmotel)
 
-### Bug Fixes
+### Refactor
 
-* codegen: fix adding mapping to sourcemaps (#2590)
-* codegen: correct sourcemaps when Windows line breaks + unicode (#2584)
-* codegen: correct sourcemaps when unicode chars (#2583)
+- ef932a3 codegen: Clean up API around building sourcemaps (#2602) (Boshen)
 
 ## [0.8.0] - 2024-02-26
 
+### Features
+
+- 6b3b260 Codegen: Improve codegen (#2460) (Andrew McClenaghan)
+- e6d536c codegen: Configurable typescript codegen (#2443) (Andrew McClenaghan)
+
 ### Bug Fixes
 
-* codegen: remove redundant semicolon in PropertyDefinition (#2511)
-* codegen: when `async` is on the left-hand side of a for-of, wrap it in parentheses (#2407)
-* codegen: lower the level of precedence in TaggedTemplateExpression (#2391)
+- 4327916 codegen: Remove redundant semicolon in PropertyDefinition (#2511) (Dunqing)
+- b5deb9a codegen: When `async` is on the left-hand side of a for-of, wrap it in parentheses (#2407) (Dunqing)
+- 384d5ac codegen: Lower the level of precedence in TaggedTemplateExpression (#2391) (Wenzhe Wang)
 
 ### Refactor
 
-* ast: remove `TSEnumBody` (#2509)
-* ast: s/TSThisKeyword/TSThisType to align with estree
-* ast: s/NumberLiteral/NumericLiteral to align with estree
-* ast: s/ArrowExpression/ArrowFunctionExpression to align estree- remove `panic!` from examples (#2454) |
-
-### Features
-
-* Codegen: Improve codegen (#2460)
-* codegen: configurable typescript codegen (#2443)
+- 540f917 ast: Remove `TSEnumBody` (#2509) (Boshen)
+- 9087f71 ast: S/TSThisKeyword/TSThisType to align with estree (Boshen)
+- d08abc6 ast: S/NumberLiteral/NumericLiteral to align with estree (Boshen)
+- e6b391a ast: S/ArrowExpression/ArrowFunctionExpression to align estree (Boshen)- a2c173d Remove `panic!` from examples (#2454) (Boshen)
 
 ## [0.7.0] - 2024-02-09
 
-### Bug Fixes
-
-* codegen: format new expession + import expression with the correct parentheses (#2346)
-* codegen: format new expression + call expression with the correct parentheses (#2330)
-
 ### Features
 
-* codegen: avoid printing comma in ArrayAssignmentTarget if the elements is empty (#2331)
+- 55011e2 codegen: Avoid printing comma in ArrayAssignmentTarget if the elements is empty (#2331) (Dunqing)
+
+### Bug Fixes
+
+- 2eb489e codegen: Format new expession + import expression with the correct parentheses (#2346) (Dunqing)
+- 721f6cb codegen: Format new expression + call expression with the correct parentheses (#2330) (Boshen)
 
 ### Refactor
 
-* ast: fix BigInt memory leak by removing it (#2293)
+- 1822cfe ast: Fix BigInt memory leak by removing it (#2293) (Boshen)
 
 ## [0.6.0] - 2024-02-03
 
-### Bug Fixes
-
-* codegen: print space before with clause in import (#2278)
-* codegen: print necessary spaces for `ExportAllDeclaration` (#2190)
-* codegen: print `Directive` original string (#2157)
-* codegen: add parenthesis in binary expression by precedence (#2067)
-
 ### Features
 
-* codegen: keep shorthand in ObjectPattern and ObjectProperty (#2265)
-* codegen: change back to read raw (#2222)
-* codegen: print TemplateLiteral with `print_str` (#2207)
-* codegen: move string test to codegen (#2150)
+- 8ac0202 codegen: Keep shorthand in ObjectPattern and ObjectProperty (#2265) (Dunqing)
+- fa555ce codegen: Change back to read raw (#2222) (Wenzhe Wang)
+- 9333264 codegen: Print TemplateLiteral with `print_str` (#2207) (Wenzhe Wang)
+- 1ee6d8c codegen: Move string test to codegen (#2150) (Wenzhe Wang)
+
+### Bug Fixes
+
+- 0c225a4 codegen: Print space before with clause in import (#2278) (Wenzhe Wang)
+- d34650a codegen: Print necessary spaces for `ExportAllDeclaration` (#2190) (Yunfei He)
+- 989ab88 codegen: Print `Directive` original string (#2157) (underfin)
+- 29dc5e6 codegen: Add parenthesis in binary expression by precedence (#2067) (Wenzhe Wang)
 
 ### Refactor
 
-* ast: rename RestElement to BindingRestElement (#2116)
+- 766ca63 ast: Rename RestElement to BindingRestElement (#2116) (Dunqing)
 
 ## [0.5.0] - 2024-01-12
 
 ### Refactor
 
-* formatter,linter,codegen: remove oxc_formatter (#1968)
+- a6717db formatter,linter,codegen: Remove oxc_formatter (#1968) (Boshen)
 
 ## [0.4.0] - 2023-12-08
 
 ### Features
 
-* ast: implement new proposal-import-attributes (#1476)
+- 9ff0ffc ast: Implement new proposal-import-attributes (#1476) (magic-akari)
 
 ### Refactor
 
-* rust: move to workspace lint table (#1444)
+- 1a576f6 rust: Move to workspace lint table (#1444) (Boshen)
 
 ## [0.3.0] - 2023-11-06
 
-### Bug Fixes
-
-* ast: jsx attribute value and text child should be jsx string (#1089)
-* codegen: fix some typescript codegen problems (#989)
-* linter: revert changes to JSX attribute strings (#1101)
-
 ### Features
 
-* codegen: indent inner class (#1085)
-* codegen: json strings proposal (#1039)
-* codegen: beauty class print (#995)
-* codegen: implement the basics of non-minifying codegen (#987)
-* codegen: move minifying printer to codegen crate (#985)
-* codegen: initialize the codegen crate and struct (#983)
-* playground: add transform and minify (#993)
-* transformer: implement some of jsx decode entities (#1086)
-* transformer: implement some of needs_explicit_esm for typescript (#1047)
-* transformer: add utils to make logical_assignment_operators pass (#1017)
-* transformer: ES2020 Nullish Coalescing Operator (#1004)- support filter exec snap (#1084) |- adjust the order of print semicolon (#1003) |
+- cef78ac codegen: Indent inner class (#1085) (Wenzhe Wang)
+- 854b55a codegen: Json strings proposal (#1039) (Boshen)
+- 6c18b3e codegen: Beauty class print (#995) (Wenzhe Wang)
+- e0ca09b codegen: Implement the basics of non-minifying codegen (#987) (Boshen)
+- 809f050 codegen: Move minifying printer to codegen crate (#985) (Boshen)
+- f28d96c codegen: Initialize the codegen crate and struct (#983) (Boshen)
+- 2e2b758 playground: Add transform and minify (#993) (Boshen)
+- e8a4e81 transformer: Implement some of jsx decode entities (#1086) (Boshen)
+- af1a76b transformer: Implement some of needs_explicit_esm for typescript (#1047) (Boshen)
+- dfee853 transformer: Add utils to make logical_assignment_operators pass (#1017) (Boshen)
+- 678db1d transformer: ES2020 Nullish Coalescing Operator (#1004) (Boshen)- 094dfa5 Support filter exec snap (#1084) (Wenzhe Wang)- 0e91044 Adjust the order of print semicolon (#1003) (Wenzhe Wang)
+
+### Bug Fixes
+
+- 6295f9c ast: Jsx attribute value and text child should be jsx string (#1089) (Boshen)
+- f32bf27 codegen: Fix some typescript codegen problems (#989) (Boshen)
+- a455c81 linter: Revert changes to JSX attribute strings (#1101) (Boshen)
 
 ### Refactor
 
-* minifier: make the minifier api only accept an ast (#990)
-* rust: change `RefCell.clone().into_inner()` to `RefCell.get()`
+- 801d78a minifier: Make the minifier api only accept an ast (#990) (Boshen)
+- 110059f rust: Change `RefCell.clone().into_inner()` to `RefCell.get()` (Boshen)
 

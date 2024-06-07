@@ -7,46 +7,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  pull-requests: write
-  contents: write
-
-env:
-  CARGO_INCREMENTAL: 0
-  RUSTFLAGS: "-D warnings"
-
 jobs:
   prepare_release:
     name: Prepare Release Crates
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: Boshen/setup-rust@main
-        with:
-          cache-key: warm
-          tools: cargo-release-oxc
-
-      - name: Run
-        id: run
-        run: |
-          VERSION=`cargo release-oxc update --release crates`
-          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
-
-      # update `Cargo.lock`
-      - run: cargo ck
-
-      - uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: Release crates
-          committer: Boshen <Boshen@users.noreply.github.com>
-          author: Boshen <Boshen@users.noreply.github.com>
-          branch: release/crates
-          branch-suffix: timestamp
-          title: Release crates v${{ steps.run.outputs.VERSION }}
-          body: Automated Release
-          assignees: Boshen
-          reviewers: Boshen
+    uses: ./.github/workflows/reusable_prepare_release.yml
+    with:
+      name: crates

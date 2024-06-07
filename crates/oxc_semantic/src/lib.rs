@@ -16,6 +16,7 @@ mod symbol;
 use std::{rc::Rc, sync::Arc};
 
 pub use petgraph;
+pub use petgraph::algo;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 use class::ClassTable;
@@ -31,9 +32,10 @@ use rustc_hash::FxHashSet;
 
 pub use crate::{
     control_flow::{
-        print_basic_block, AssignmentValue, BasicBlockElement, BasicBlockId, BinaryAssignmentValue,
-        BinaryOp, CallType, CalleeWithArgumentsAssignmentValue, CollectionAssignmentValue,
-        ControlFlowGraph, EdgeType, ObjectPropertyAccessAssignmentValue, Register,
+        AssignmentValue, BasicBlock, BasicBlockId, BinaryAssignmentValue, BinaryOp, CallType,
+        CalleeWithArgumentsAssignmentValue, CollectionAssignmentValue, ControlFlowGraph, DebugDot,
+        DebugDotContext, DisplayDot, EdgeType, Instruction, InstructionKind, LabeledInstruction,
+        ObjectPropertyAccessAssignmentValue, Register, ReturnInstructionKind,
         UnaryExpressioneAssignmentValue, UpdateAssignmentValue,
     },
     node::{AstNode, AstNodeId, AstNodes},

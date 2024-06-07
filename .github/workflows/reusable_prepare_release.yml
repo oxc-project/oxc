@@ -1,0 +1,86 @@
+name: Prepare Release
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        required: true
+        type: string
+        description: "The name defined in oxc_release.toml"
+    outputs:
+      pull-request-number:
+        value: ${{ jobs.run.outputs.pull-request-number }}
+      version:
+        value: ${{ jobs.run.outputs.version }}
+
+env:
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-D warnings"
+
+permissions:
+  pull-requests: write
+  contents: write
+  actions: write
+
+jobs:
+  run:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    outputs:
+      pull-request-number: ${{ steps.pr.outputs.pull-request-number }}
+      version: ${{ steps.version.outputs.VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: Boshen/setup-rust@main
+        with:
+          cache-key: warm
+          tools: cargo-release-oxc
+
+      - name: Run
+        id: run
+        run: |
+          {
+            echo 'OUTPUT<<EOF'
+            cargo release-oxc update --release ${{ inputs.name }}
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - name: Save Version
+        id: version
+        run: |
+          {
+            echo 'VERSION<<EOF'
+            # Last line is the version
+            echo '${{ steps.run.outputs.OUTPUT }}' | tail -n 1
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - name: Save Changelog
+        id: changelog
+        run: |
+          {
+            echo 'CHANGELOG<<EOF'
+            # Remove the last line
+            echo '${{ steps.run.outputs.OUTPUT }}' | head -n -1
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      # update `Cargo.lock`
+      - run: cargo check
+
+      - uses: peter-evans/create-pull-request@v6
+        id: pr
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: Release ${{ inputs.name }}
+          committer: Boshen <Boshen@users.noreply.github.com>
+          author: Boshen <Boshen@users.noreply.github.com>
+          branch: release/${{ inputs.name }}
+          branch-suffix: timestamp
+          base: main
+          title: Release ${{ inputs.name }} v${{ steps.version.outputs.VERSION }}
+          body: ${{ steps.changelog.outputs.CHANGELOG }}
+          assignees: Boshen

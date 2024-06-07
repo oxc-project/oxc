@@ -3,7 +3,8 @@ use oxc_diagnostics::OxcDiagnostic;
 
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{
-    pg::neighbors_filtered_by_edge_weight, AssignmentValue, BasicBlockElement, EdgeType, Register,
+    pg::neighbors_filtered_by_edge_weight, EdgeType, Instruction, InstructionKind,
+    ReturnInstructionKind,
 };
 use oxc_span::{GetSpan, Span};
 
@@ -97,9 +98,11 @@ fn contains_return_statement<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
         node.cfg_id(),
         &|edge| match edge {
             // We only care about normal edges having a return statement.
-            EdgeType::Normal => None,
+            EdgeType::Jump | EdgeType::Normal => None,
             // For these two type, we flag it as not found.
-            EdgeType::NewFunction | EdgeType::Backedge => Some(FoundReturn::No),
+            EdgeType::Unreachable | EdgeType::NewFunction | EdgeType::Backedge => {
+                Some(FoundReturn::No)
+            }
         },
         &mut |basic_block_id, _state_going_into_this_rule| {
             // If its an arrow function with an expression, marked as founded and stop walking.
@@ -109,19 +112,18 @@ fn contains_return_statement<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
                 }
             }
 
-            for entry in cfg.basic_block(*basic_block_id) {
-                match entry {
-                    BasicBlockElement::Assignment(to_reg, val) => {
-                        if matches!(to_reg, Register::Return)
-                            && matches!(val, AssignmentValue::NotImplicitUndefined)
-                        {
-                            return (FoundReturn::Yes, STOP_WALKING_ON_THIS_PATH);
-                        }
+            for Instruction { kind, .. } in cfg.basic_block(*basic_block_id).instructions() {
+                match kind {
+                    InstructionKind::Return(ReturnInstructionKind::NotImplicitUndefined) => {
+                        return (FoundReturn::Yes, STOP_WALKING_ON_THIS_PATH);
                     }
-                    BasicBlockElement::Unreachable | BasicBlockElement::Throw(_) => {
+                    InstructionKind::Unreachable | InstructionKind::Throw => {
                         return (FoundReturn::No, STOP_WALKING_ON_THIS_PATH);
                     }
-                    BasicBlockElement::Break(_) => {}
+                    InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined)
+                    | InstructionKind::Break(_)
+                    | InstructionKind::Continue(_)
+                    | InstructionKind::Statement => {}
                 }
             }
 

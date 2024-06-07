@@ -52,7 +52,7 @@ impl<'a> TypeScript<'a> {
         let options = Rc::new(options.update_with_comments(&ctx));
 
         Self {
-            annotations: TypeScriptAnnotations::new(&options, Rc::clone(&ctx)),
+            annotations: TypeScriptAnnotations::new(Rc::clone(&options), Rc::clone(&ctx)),
             r#enum: TypeScriptEnum::new(Rc::clone(&ctx)),
             options,
             ctx,
@@ -107,6 +107,10 @@ impl<'a> TypeScript<'a> {
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
         self.annotations.transform_expression(expr);
+    }
+
+    pub fn transform_simple_assignment_target(&mut self, target: &mut SimpleAssignmentTarget<'a>) {
+        self.annotations.transform_simple_assignment_target(target);
     }
 
     pub fn transform_formal_parameter(&mut self, param: &mut FormalParameter<'a>) {

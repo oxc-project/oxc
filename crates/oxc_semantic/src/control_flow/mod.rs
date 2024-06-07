@@ -1,14 +1,20 @@
 mod builder;
+mod dot;
 
 use oxc_span::CompactStr;
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
-use petgraph::{stable_graph::NodeIndex, Graph};
+use petgraph::{
+    stable_graph::NodeIndex,
+    visit::{depth_first_search, Control, DfsEvent},
+    Graph,
+};
 
 use crate::AstNodeId;
 
-pub use builder::ControlFlowGraphBuilder;
+pub use builder::{ControlFlowGraphBuilder, CtxCursor, CtxFlags};
+pub use dot::{DebugDot, DebugDotContext, DisplayDot};
 
 pub type BasicBlockId = NodeIndex;
 
@@ -107,92 +113,143 @@ pub enum CallType {
     Import,
 }
 
+#[derive(Debug)]
+pub struct BasicBlock {
+    pub instructions: Vec<Instruction>,
+}
+
+impl BasicBlock {
+    fn new() -> Self {
+        BasicBlock { instructions: Vec::new() }
+    }
+
+    pub fn instructions(&self) -> &Vec<Instruction> {
+        &self.instructions
+    }
+}
+
 #[derive(Debug, Clone)]
-pub enum BasicBlockElement {
+pub struct Instruction {
+    pub kind: InstructionKind,
+    pub node_id: Option<AstNodeId>,
+}
+
+impl Instruction {
+    pub fn new(kind: InstructionKind, node_id: Option<AstNodeId>) -> Self {
+        Self { kind, node_id }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum InstructionKind {
     Unreachable,
-    Assignment(Register, AssignmentValue),
-    Throw(Register),
-    Break(Option<Register>),
+    Statement,
+    Return(ReturnInstructionKind),
+    Break(LabeledInstruction),
+    Continue(LabeledInstruction),
+    Throw,
+}
+
+#[derive(Debug, Clone)]
+pub enum ReturnInstructionKind {
+    ImplicitUndefined,
+    NotImplicitUndefined,
+}
+
+#[derive(Debug, Clone)]
+pub enum LabeledInstruction {
+    Labeled,
+    Unlabeled,
 }
 
 #[derive(Debug, Clone)]
 pub enum EdgeType {
+    Jump,
     Normal,
     Backedge,
     NewFunction,
+    Unreachable,
 }
 
 #[derive(Debug)]
 pub struct ControlFlowGraph {
     pub graph: Graph<usize, EdgeType>,
-    pub basic_blocks: Vec<Vec<BasicBlockElement>>,
+    pub basic_blocks: Vec<BasicBlock>,
 }
 
 impl ControlFlowGraph {
     /// # Panics
-    pub fn basic_block(&self, id: BasicBlockId) -> &Vec<BasicBlockElement> {
+    pub fn basic_block(&self, id: BasicBlockId) -> &BasicBlock {
         let ix = *self.graph.node_weight(id).expect("expected a valid node id in self.graph");
         self.basic_blocks.get(ix).expect("expected a valid node id in self.basic_blocks")
     }
 
     /// # Panics
-    pub fn basic_block_mut(&mut self, id: BasicBlockId) -> &mut Vec<BasicBlockElement> {
+    pub fn basic_block_mut(&mut self, id: BasicBlockId) -> &mut BasicBlock {
         let ix = *self.graph.node_weight(id).expect("expected a valid node id in self.graph");
         self.basic_blocks.get_mut(ix).expect("expected a valid node id in self.basic_blocks")
     }
-}
 
-pub enum StatementControlFlowType {
-    DoesNotUseContinue,
-    UsesContinue,
-}
+    pub fn is_reachabale(&self, from: BasicBlockId, to: BasicBlockId) -> bool {
+        self.is_reachabale_filtered(from, to, |_| Control::Continue)
+    }
 
-pub struct PreservedStatementState {
-    put_label: bool,
+    pub fn is_reachabale_filtered<F: Fn(BasicBlockId) -> Control<bool>>(
+        &self,
+        from: BasicBlockId,
+        to: BasicBlockId,
+        filter: F,
+    ) -> bool {
+        if from == to {
+            return true;
+        }
+        let graph = &self.graph;
+        depth_first_search(&self.graph, Some(from), |event| match event {
+            DfsEvent::TreeEdge(a, b) => {
+                let filter_result = filter(a);
+                if !matches!(filter_result, Control::Continue) {
+                    return filter_result;
+                }
+                let unreachable = graph.edges_connecting(a, b).all(|edge| {
+                    matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
+                });
+
+                if unreachable {
+                    Control::Prune
+                } else if b == to {
+                    return Control::Break(true);
+                } else {
+                    Control::Continue
+                }
+            }
+            _ => Control::Continue,
+        })
+        .break_value()
+        .unwrap_or(false)
+    }
+
+    pub fn is_cyclic(&self, node: BasicBlockId) -> bool {
+        depth_first_search(&self.graph, Some(node), |event| match event {
+            DfsEvent::BackEdge(_, id) if id == node => Err(()),
+            _ => Ok(()),
+        })
+        .is_err()
+    }
+
+    pub fn has_conditional_path(&self, from: BasicBlockId, to: BasicBlockId) -> bool {
+        let graph = &self.graph;
+        // All nodes should be able to reach the `to` node, Otherwise we have a conditional/branching flow.
+        petgraph::algo::dijkstra(graph, from, Some(to), |e| match e.weight() {
+            EdgeType::NewFunction => 1,
+            EdgeType::Jump | EdgeType::Unreachable | EdgeType::Backedge | EdgeType::Normal => 0,
+        })
+        .into_iter()
+        .filter(|(_, val)| *val == 0)
+        .any(|(f, _)| !self.is_reachabale(f, to))
+    }
 }
 
 pub struct PreservedExpressionState {
     pub use_this_register: Option<Register>,
     pub store_final_assignments_into_this_array: Vec<Vec<Register>>,
-}
-
-#[must_use]
-fn print_register(register: Register) -> String {
-    match &register {
-        Register::Index(i) => format!("${i}"),
-        Register::Return => "$return".into(),
-    }
-}
-
-#[must_use]
-pub fn print_basic_block(basic_block_elements: &Vec<BasicBlockElement>) -> String {
-    let mut output = String::new();
-    for basic_block in basic_block_elements {
-        match basic_block {
-            BasicBlockElement::Unreachable => output.push_str("Unreachable()\n"),
-            BasicBlockElement::Throw(reg) => {
-                output.push_str(&format!("throw {}\n", print_register(*reg)));
-            }
-
-            BasicBlockElement::Break(Some(reg)) => {
-                output.push_str(&format!("break {}\n", print_register(*reg)));
-            }
-            BasicBlockElement::Break(None) => {
-                output.push_str("break");
-            }
-            BasicBlockElement::Assignment(to, with) => {
-                output.push_str(&format!("{} = ", print_register(*to)));
-
-                match with {
-                    AssignmentValue::ImplicitUndefined => {
-                        output.push_str("<implicit undefined>");
-                    }
-                    AssignmentValue::NotImplicitUndefined => output.push_str("<value>"),
-                }
-
-                output.push('\n');
-            }
-        }
-    }
-    output
 }

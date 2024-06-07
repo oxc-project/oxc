@@ -4,10 +4,14 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/break_from_a_label_in_global_scope.js
 ---
 bb0: {
-
+	statement
+	break <label>
 }
 
 bb1: {
-	Unreachable()
-	break $0
+	unreachable
+}
+
+bb2: {
+
 }

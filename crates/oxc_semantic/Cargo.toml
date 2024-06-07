@@ -31,6 +31,8 @@ phf        = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 serde      = { workspace = true, features = ["derive"], optional = true }
 petgraph   = { workspace = true }
+itertools  = { workspace = true }
+bitflags   = { workspace = true }
 
 tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
@@ -38,7 +40,6 @@ wasm-bindgen = { workspace = true, optional = true }
 [dev-dependencies]
 oxc_parser = { workspace = true }
 
-itertools  = { workspace = true }
 indexmap   = { workspace = true }
 insta      = { workspace = true, features = ["glob"] }
 phf        = { workspace = true, features = ["macros"] }

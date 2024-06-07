@@ -4,8 +4,10 @@ expression: output.cfg_dot_diagram()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/break_from_a_label_in_global_scope.js
 ---
 digraph {
-    0 [ label = ""]
-    1 [ label = "Unreachable()\nbreak $0"]
-    0 -> 1 [ ]
-    0 -> 1 [ ]
+    0 [ label = "LabeledStatement\nbreak <A>" ]
+    1 [ label = "unreachable" ]
+    2 [ label = "" ]
+    0 -> 1 [ label = Unreachable , style = "dotted" ]
+    1 -> 2 [ label = Normal ]
+    0 -> 2 [ label = Jump ]
 }

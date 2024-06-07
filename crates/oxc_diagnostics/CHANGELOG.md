@@ -2,89 +2,88 @@
 
 All notable changes to this package will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
 ## [0.13.1] - 2024-05-22
 
 ### Features
 
-* cli: add `--silent` to disable all diagnostics printing (#3338)
+- 17f4b19 cli: Add `--silent` to disable all diagnostics printing (#3338) (Boshen)
 
 ### Refactor
 
-* diagnostics: s/warning/warn
+- c9d84af diagnostics: S/warning/warn (Boshen)
 
 ## [0.13.0] - 2024-05-14
 
-### Refactor
+### Features
 
-* diagnostics: remove export of `miette`
-* diagnostics: remove thiserror
-* diagnostics: s/OxcDiagnostic::new/OxcDiagnostic::error
-* diagnostics: use a trait to implement the reporters (#3190)
-* linter,diagnostic: one diagnostic struct to eliminate monomorphization of generic types (#3235)
-* parser,diagnostic: one diagnostic struct to eliminate monomorphization of generic types (#3214)- clean up more diagnostics usages |
+- ed3fa39 linter: Add `--format github` for github check annotation (#3191) (Boshen)
 
 ### Bug Fixes
 
-* diagnostics: need to escape strings for --format github
+- b86ef7d diagnostics: Need to escape strings for --format github (Boshen)
 
-### Features
+### Refactor
 
-* linter: add `--format github` for github check annotation (#3191)
+- dbde5b3 diagnostics: Remove export of `miette` (Boshen)
+- 551632a diagnostics: Remove thiserror (Boshen)
+- 312f74b diagnostics: S/OxcDiagnostic::new/OxcDiagnostic::error (Boshen)
+- 82bd97d diagnostics: Use a trait to implement the reporters (#3190) (Boshen)
+- f6f7adc linter,diagnostic: One diagnostic struct to eliminate monomorphization of generic types (#3235) (Boshen)
+- 2064ae9 parser,diagnostic: One diagnostic struct to eliminate monomorphization of generic types (#3214) (Boshen)- 893af23 Clean up more diagnostics usages (Boshen)
 
 ## [0.12.5] - 2024-04-22
 
 ### Features
 
-* cli: implement `--format checkstyle` (#3044)
-* cli: implement `--format unix` (#3039)
+- ee1c0e5 cli: Implement `--format checkstyle` (#3044) (Boshen)
+- 4425b96 cli: Implement `--format unix` (#3039) (Boshen)
 
 ## [0.12.3] - 2024-04-11
 
 ### Bug Fixes
 
-* cli: if format is json do not print summary information (#2899) (#2925)
+- 6eba02f cli: If format is json do not print summary information (#2899) (#2925) (Kalven Schraut)
 
 ## [0.10.0] - 2024-03-14
 
 ### Features
-- miette v7 (#2465) |
+- 265b2fb Miette v7 (#2465) (Boshen)
 
 ## [0.8.0] - 2024-02-26
 
 ### Features
 
-* cli,diagnostics: add json reporter (#2451)
-* diagnostics: implement json reporter (#2452)
+- 195d76e cli,diagnostics: Add json reporter (#2451) (Boshen)
+- d0d0d9d diagnostics: Implement json reporter (#2452) (Boshen)
 
 ## [0.6.0] - 2024-02-03
 
 ### Refactor
-- move all miette usages to `oxc_diagnostics` |
+- 87b9978 Move all miette usages to `oxc_diagnostics` (Boshen)
 
 ## [0.5.0] - 2024-01-12
 
 ### Bug Fixes
 
-* diagnostics: always print without considering the `--max-warnings` option (#1996)
+- ea22d3c diagnostics: Always print without considering the `--max-warnings` option (#1996) (Boshen)
 
 ## [0.4.0] - 2023-12-08
 
 ### Refactor
 
-* rust: move to workspace lint table (#1444)
+- 1a576f6 rust: Move to workspace lint table (#1444) (Boshen)
 
 ## [0.2.0] - 2023-09-14
 
 ### Bug Fixes
 
-* cli: fix race condition when resolving paths
-* deps: use one version of `textwrap`
+- de7735d cli: Fix race condition when resolving paths (Boshen)
+- ba8ef7b deps: Use one version of `textwrap` (Boshen)
 
 ### Refactor
 
-* cli,diagnostics: implement DiagnosticService (#762)
-* cli,linter: move path processing logic from cli to linter (#766)
+- 2751240 cli,diagnostics: Implement DiagnosticService (#762) (Boshen)
+- a9a6bb8 cli,linter: Move path processing logic from cli to linter (#766) (Boshen)
 

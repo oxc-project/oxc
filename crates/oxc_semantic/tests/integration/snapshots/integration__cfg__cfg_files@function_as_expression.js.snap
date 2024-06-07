@@ -4,7 +4,7 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/function_as_expression.js
 ---
 bb0: {
-
+	statement
 }
 
 bb1: {
@@ -12,7 +12,7 @@ bb1: {
 }
 
 bb2: {
-
+	statement
 }
 
 bb3: {
@@ -28,7 +28,7 @@ bb5: {
 }
 
 bb6: {
-
+	statement
 }
 
 bb7: {
@@ -36,7 +36,7 @@ bb7: {
 }
 
 bb8: {
-
+	statement
 }
 
 bb9: {
@@ -44,7 +44,7 @@ bb9: {
 }
 
 bb10: {
-
+	statement
 }
 
 bb11: {
@@ -52,7 +52,7 @@ bb11: {
 }
 
 bb12: {
-
+	statement
 }
 
 bb13: {
@@ -60,7 +60,7 @@ bb13: {
 }
 
 bb14: {
-
+	statement
 }
 
 bb15: {
@@ -76,7 +76,7 @@ bb17: {
 }
 
 bb18: {
-
+	statement
 }
 
 bb19: {
@@ -92,7 +92,7 @@ bb21: {
 }
 
 bb22: {
-
+	statement
 }
 
 bb23: {
@@ -100,7 +100,7 @@ bb23: {
 }
 
 bb24: {
-
+	statement
 }
 
 bb25: {

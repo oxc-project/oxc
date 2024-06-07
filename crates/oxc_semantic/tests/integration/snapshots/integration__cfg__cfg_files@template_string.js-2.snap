@@ -4,5 +4,5 @@ expression: output.cfg_dot_diagram()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/template_string.js
 ---
 digraph {
-    0 [ label = ""]
+    0 [ label = "ExpressionStatement" ]
 }

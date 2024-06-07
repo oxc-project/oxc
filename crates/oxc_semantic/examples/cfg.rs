@@ -3,7 +3,7 @@ use std::{collections::HashMap, env, path::Path, sync::Arc};
 use itertools::Itertools;
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
-use oxc_semantic::{print_basic_block, SemanticBuilder};
+use oxc_semantic::{DebugDot, DisplayDot, EdgeType, SemanticBuilder};
 use oxc_span::SourceType;
 use petgraph::dot::{Config, Dot};
 
@@ -64,7 +64,7 @@ fn main() -> std::io::Result<()> {
         .cfg()
         .basic_blocks
         .iter()
-        .map(print_basic_block)
+        .map(DisplayDot::display_dot)
         .enumerate()
         .map(|(i, it)| {
             format!(
@@ -88,21 +88,38 @@ fn main() -> std::io::Result<()> {
         Dot::with_attr_getters(
             &semantic.semantic.cfg().graph,
             &[Config::EdgeNoLabel, Config::NodeNoLabel],
-            &|_graph, edge| format!("label = {:?}", edge.weight()),
-            &|_graph, node| format!(
-                "xlabel = {:?}, label = {:?}",
+            &|_graph, edge| {
+                let weight = edge.weight();
+                let label = format!("label = {weight:?}");
+                if matches!(weight, EdgeType::Unreachable) {
+                    format!("{label}, style = \"dotted\"")
+                } else {
+                    label
+                }
+            },
+            &|_graph, node| {
+                let nodes = ast_nodes_by_block.get(node.1).map_or("None".to_string(), |nodes| {
+                    let nodes: Vec<_> =
+                        nodes.iter().map(|node| format!("{}", node.kind().debug_name())).collect();
+                    if nodes.len() > 1 {
+                        format!(
+                            "{}\\l",
+                            nodes.into_iter().map(|it| format!("\\l    {it}")).join("")
+                        )
+                    } else {
+                        nodes.into_iter().join("")
+                    }
+                });
                 format!(
-                    "bb{} [{}]",
+                    "xlabel = \"nodes{} [{}]\\l\", label = \"bb{}\n{}\"",
                     node.1,
-                    print_basic_block(&semantic.semantic.cfg().basic_blocks[*node.1],).trim()
-                ),
-                ast_nodes_by_block
-                    .get(node.1)
-                    .map(|nodes| {
-                        nodes.iter().map(|node| format!("{}", node.kind().debug_name())).join("\n")
-                    })
-                    .unwrap_or_default()
-            )
+                    nodes,
+                    node.1,
+                    semantic.semantic.cfg().basic_blocks[*node.1]
+                        .debug_dot(semantic.semantic.nodes().into())
+                        .trim()
+                )
+            }
         )
     );
     std::fs::write(dot_file_path, cfg_dot_diagram)?;

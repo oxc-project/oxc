@@ -103,8 +103,8 @@ impl Rule for NoThisBeforeSuper {
                 &cfg.graph,
                 node.cfg_id(),
                 &|edge| match edge {
-                    EdgeType::Normal => None,
-                    EdgeType::Backedge | EdgeType::NewFunction => {
+                    EdgeType::Jump | EdgeType::Normal => None,
+                    EdgeType::Unreachable | EdgeType::Backedge | EdgeType::NewFunction => {
                         Some(DefinitelyCallsThisBeforeSuper::No)
                     }
                 },

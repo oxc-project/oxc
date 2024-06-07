@@ -4,5 +4,5 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/template_string.js
 ---
 bb0: {
-
+	statement
 }

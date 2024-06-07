@@ -6,12 +6,11 @@ use std::{path::PathBuf, sync::Arc};
 use itertools::Itertools;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic};
-use oxc_semantic::{print_basic_block, Semantic, SemanticBuilder};
+use oxc_semantic::{DebugDot, DisplayDot, Semantic, SemanticBuilder};
 use oxc_span::SourceType;
 
 pub use class_tester::ClassTester;
 pub use expect::Expect;
-use petgraph::dot::{Config, Dot};
 pub use symbol_tester::SymbolTester;
 
 pub struct SemanticTester<'a> {
@@ -111,7 +110,7 @@ impl<'a> SemanticTester<'a> {
             .cfg()
             .basic_blocks
             .iter()
-            .map(print_basic_block)
+            .map(DisplayDot::display_dot)
             .enumerate()
             .map(|(i, it)| {
                 format!(
@@ -123,22 +122,8 @@ impl<'a> SemanticTester<'a> {
     }
 
     pub fn cfg_dot_diagram(&self) -> String {
-        let built = self.build();
-        format!(
-            "{:?}",
-            Dot::with_attr_getters(
-                &built.cfg().graph,
-                &[Config::EdgeNoLabel, Config::NodeNoLabel],
-                &|_graph, _edge| String::new(),
-                // todo: We currently do not print edge types into cfg dot diagram
-                // so they aren't snapshotted, but we could by uncommenting this.
-                // &|_graph, edge| format!("label = {:?}", edge.weight()),
-                &|_graph, node| format!(
-                    "label = {:?}",
-                    print_basic_block(&built.cfg().basic_blocks[*node.1],).trim()
-                )
-            )
-        )
+        let semantic = self.build();
+        semantic.cfg().debug_dot(semantic.nodes().into())
     }
 
     /// Tests that a symbol with the given name exists at the top-level scope and provides a

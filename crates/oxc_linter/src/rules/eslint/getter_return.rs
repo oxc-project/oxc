@@ -9,7 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{
-    pg::neighbors_filtered_by_edge_weight, AssignmentValue, BasicBlockElement, EdgeType, Register,
+    pg::neighbors_filtered_by_edge_weight, EdgeType, InstructionKind, ReturnInstructionKind,
 };
 use oxc_span::Span;
 
@@ -184,13 +184,15 @@ impl GetterReturn {
             &cfg.graph,
             node.cfg_id(),
             &|edge| match edge {
-                EdgeType::Normal => None,
+                EdgeType::Jump | EdgeType::Normal => None,
                 // We don't need to handle backedges because we would have already visited
                 // them on the forward pass
                 | EdgeType::Backedge
                 // We don't need to visit NewFunction edges because it's not going to be evaluated
                 // immediately, and we are only doing a pass over things that will be immediately evaluated
                 | EdgeType::NewFunction
+                // Unreachable nodes aren't reachable so we don't follow them.
+                | EdgeType::Unreachable
                 // By returning Some(X),
                 // we signal that we don't walk to this path any farther.
                 //
@@ -229,49 +231,28 @@ impl GetterReturn {
                 }
 
                 // Scan through the values in this basic block.
-                for entry in cfg.basic_block(*basic_block_id) {
-                    match entry {
-                        // If the element is an assignment.
-                        //
-                        // Everything you can write in javascript that would have
-                        // the function continue are expressed as assignments in the cfg.
-                        BasicBlockElement::Assignment(to_reg, val) => {
-                            // If the assignment is to the return register.
-                            //
-                            // The return register is a special register that return statements
-                            // assign the returned value to.
-                            if matches!(to_reg, Register::Return) {
+                for entry in cfg.basic_block(*basic_block_id).instructions() {
+                    match entry.kind {
+                        // If the element is a return.
                                 // `allow_implicit` allows returning without a value to not
-                                // fail the rule. We check for this by checking if the value
-                                // being returned in the cfg this is expressed as
-                                // `AssignmentValue::ImplicitUndefined`.
-                                //
-                                // There is an assumption being made here that returning an
-                                // `undefined` will put the `undefined` directly into the
-                                // return and will not put the `undefined` into an immediate
-                                // register and return the register. However, the tests for
-                                // this rule enforce that this invariant is not broken.
-                                if !self.allow_implicit
-                                    && matches!(val, AssignmentValue::ImplicitUndefined)
-                                {
-                                    // Return false as the second argument to signify we should
-                                    // not continue walking this branch, as we know a return
-                                    // is the end of this path.
-                                    return (DefinitelyReturnsOrThrowsOrUnreachable::No, false);
-                                }
+                                // fail the rule.
+                                // Return false as the second argument to signify we should
+                                // not continue walking this branch, as we know a return
+                                // is the end of this path.
+                        InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined) if !self.allow_implicit => {
+                                return (DefinitelyReturnsOrThrowsOrUnreachable::No, false);
+                        }
                                 // Otherwise, we definitely returned since we assigned
                                 // to the return register.
                                 //
                                 // Return false as the second argument to signify we should
                                 // not continue walking this branch, as we know a return
                                 // is the end of this path.
-                                return (DefinitelyReturnsOrThrowsOrUnreachable::Yes, false);
-                            }
-                        }
+                        | InstructionKind::Return(_)
                         // Throws are classified as returning.
                         //
                         // todo: test with catching...
-                        BasicBlockElement::Throw(_) |
+                        | InstructionKind::Throw
                         // Although the unreachable code is not returned, it will never be executed.
                         // There is no point in checking it for return.
                         //
@@ -283,12 +264,13 @@ impl GetterReturn {
                         // return -1;
                         // ```
                         // Make return useless.
-                        BasicBlockElement::Unreachable => {
-
-                            return (DefinitelyReturnsOrThrowsOrUnreachable::Yes, false);
+                        | InstructionKind::Unreachable =>{
+                                return (DefinitelyReturnsOrThrowsOrUnreachable::Yes, false);
                         }
                         // Ignore irrelevant elements.
-                        BasicBlockElement::Break(_) => {}
+                        | InstructionKind::Break(_)
+                        | InstructionKind::Continue(_)
+                        | InstructionKind::Statement => {}
                     }
                 }
 

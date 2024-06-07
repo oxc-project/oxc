@@ -353,7 +353,7 @@ impl<'a> Expression<'a> {
         matches!(self, Expression::Identifier(_))
     }
 
-    pub fn get_identifier_reference(&self) -> Option<&IdentifierReference> {
+    pub fn get_identifier_reference(&self) -> Option<&IdentifierReference<'a>> {
         match self.get_inner_expression() {
             Expression::Identifier(ident) => Some(ident),
             _ => None,

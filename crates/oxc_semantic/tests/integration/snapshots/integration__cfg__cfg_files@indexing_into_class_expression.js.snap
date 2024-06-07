@@ -4,5 +4,6 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/indexing_into_class_expression.js
 ---
 bb0: {
-
+	statement
+	statement
 }
