@@ -27,23 +27,35 @@ pub use self::{
 /// * [plugin-transform-react-jsx-source](https://babel.dev/docs/babel-plugin-transform-react-jsx-source)
 /// * [plugin-transform-react-display-name](https://babeljs.io/docs/babel-plugin-transform-react-display-name)
 pub struct React<'a> {
-    options: Rc<ReactOptions>,
     jsx: ReactJsx<'a>,
     display_name: ReactDisplayName<'a>,
+    jsx_plugin: bool,
+    display_name_plugin: bool,
+    jsx_self_plugin: bool,
+    jsx_source_plugin: bool,
 }
 
 // Constructors
 impl<'a> React<'a> {
-    pub fn new(options: ReactOptions, ctx: Ctx<'a>) -> Self {
-        let mut options = options;
-        if options.is_jsx_plugin_enabled() {
+    pub fn new(mut options: ReactOptions, ctx: Ctx<'a>) -> Self {
+        if options.jsx_plugin || options.development {
             options.update_with_comments(&ctx);
+            options.conform();
         }
-        let options = Rc::new(options);
+        let ReactOptions {
+            jsx_plugin,
+            display_name_plugin,
+            jsx_self_plugin,
+            jsx_source_plugin,
+            ..
+        } = options;
         Self {
-            options: Rc::clone(&options),
             jsx: ReactJsx::new(options, Rc::clone(&ctx)),
             display_name: ReactDisplayName::new(ctx),
+            jsx_plugin,
+            display_name_plugin,
+            jsx_self_plugin,
+            jsx_source_plugin,
         }
     }
 }
@@ -51,24 +63,22 @@ impl<'a> React<'a> {
 // Transforms
 impl<'a> React<'a> {
     pub fn transform_program_on_exit(&mut self, program: &mut Program<'a>) {
-        if self.options.is_jsx_plugin_enabled() {
+        if self.jsx_plugin {
             self.jsx.transform_program_on_exit(program);
         }
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        match expr {
-            Expression::JSXElement(e) => {
-                if self.options.is_jsx_plugin_enabled() {
+        if self.jsx_plugin {
+            match expr {
+                Expression::JSXElement(e) => {
                     *expr = self.jsx.transform_jsx_element(e, ctx);
                 }
-            }
-            Expression::JSXFragment(e) => {
-                if self.options.is_jsx_plugin_enabled() {
+                Expression::JSXFragment(e) => {
                     *expr = self.jsx.transform_jsx_fragment(e, ctx);
                 }
+                _ => {}
             }
-            _ => {}
         }
     }
 
@@ -77,7 +87,7 @@ impl<'a> React<'a> {
         call_expr: &mut CallExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) {
-        if self.options.display_name_plugin {
+        if self.display_name_plugin {
             self.display_name.transform_call_expression(call_expr, ctx);
         }
     }
@@ -87,12 +97,10 @@ impl<'a> React<'a> {
         elem: &mut JSXOpeningElement<'a>,
         ctx: &TraverseCtx<'a>,
     ) {
-        if self.options.is_jsx_self_plugin_enabled()
-            && self.jsx.jsx_self.can_add_self_attribute(ctx)
-        {
+        if self.jsx_self_plugin && self.jsx.jsx_self.can_add_self_attribute(ctx) {
             self.jsx.jsx_self.transform_jsx_opening_element(elem);
         }
-        if self.options.is_jsx_source_plugin_enabled() {
+        if self.jsx_source_plugin {
             self.jsx.jsx_source.transform_jsx_opening_element(elem);
         }
     }

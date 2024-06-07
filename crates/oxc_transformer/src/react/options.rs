@@ -127,16 +127,12 @@ impl Default for ReactOptions {
 }
 
 impl ReactOptions {
-    pub fn is_jsx_plugin_enabled(&self) -> bool {
-        self.jsx_plugin || self.development
-    }
-
-    pub fn is_jsx_self_plugin_enabled(&self) -> bool {
-        self.jsx_self_plugin || self.development
-    }
-
-    pub fn is_jsx_source_plugin_enabled(&self) -> bool {
-        self.jsx_source_plugin || self.development
+    pub fn conform(&mut self) {
+        if self.development {
+            self.jsx_plugin = true;
+            self.jsx_self_plugin = true;
+            self.jsx_source_plugin = true;
+        }
     }
 
     /// Scan through all comments and find the following pragmas

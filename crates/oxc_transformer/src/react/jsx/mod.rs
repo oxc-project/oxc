@@ -36,7 +36,7 @@ pub use super::{
 /// * <https://babeljs.io/docs/babel-plugin-transform-react-jsx>
 /// * <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-react-jsx>
 pub struct ReactJsx<'a> {
-    options: Rc<ReactOptions>,
+    options: ReactOptions,
 
     ctx: Ctx<'a>,
 
@@ -310,7 +310,7 @@ impl<'a> Pragma<'a> {
 
 // Transforms
 impl<'a> ReactJsx<'a> {
-    pub fn new(options: Rc<ReactOptions>, ctx: Ctx<'a>) -> Self {
+    pub fn new(options: ReactOptions, ctx: Ctx<'a>) -> Self {
         let bindings = match options.runtime {
             ReactJsxRuntime::Classic => {
                 if options.import_source.is_some() {
@@ -612,9 +612,7 @@ impl<'a> ReactJsx<'a> {
 
         // React.createElement's second argument
         if !is_fragment && is_classic {
-            if self.options.is_jsx_self_plugin_enabled()
-                && self.jsx_self.can_add_self_attribute(ctx)
-            {
+            if self.options.jsx_self_plugin && self.jsx_self.can_add_self_attribute(ctx) {
                 if let Some(span) = self_attr_span {
                     self.jsx_self.report_error(span);
                 } else {
@@ -622,7 +620,7 @@ impl<'a> ReactJsx<'a> {
                 }
             }
 
-            if self.options.is_jsx_source_plugin_enabled() {
+            if self.options.jsx_source_plugin {
                 if let Some(span) = source_attr_span {
                     self.jsx_source.report_error(span);
                 } else {
@@ -678,7 +676,7 @@ impl<'a> ReactJsx<'a> {
             // Fragment doesn't have source and self
             if !is_fragment {
                 // { __source: { fileName, lineNumber, columnNumber } }
-                if self.options.is_jsx_source_plugin_enabled() {
+                if self.options.jsx_source_plugin {
                     if let Some(span) = source_attr_span {
                         self.jsx_source.report_error(span);
                     } else {
@@ -690,9 +688,7 @@ impl<'a> ReactJsx<'a> {
                 }
 
                 // this
-                if self.options.is_jsx_self_plugin_enabled()
-                    && self.jsx_self.can_add_self_attribute(ctx)
-                {
+                if self.options.jsx_self_plugin && self.jsx_self.can_add_self_attribute(ctx) {
                     if let Some(span) = self_attr_span {
                         self.jsx_self.report_error(span);
                     } else {
