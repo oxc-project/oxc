@@ -619,11 +619,3 @@ fn test() {
     ];
     Tester::new(NoUselessSpread::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
-
-#[test]
-fn test_debug() {
-    use crate::tester::Tester;
-
-    let fix = vec![(r"new Map(...[...iterable])", r"new Map(...iterable)")];
-    Tester::new(NoUselessSpread::NAME, vec!["let x = 1"], vec![]).expect_fix(fix).test();
-}
