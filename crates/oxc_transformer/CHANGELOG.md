@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.4] - 2024-06-07
+
+### Features
+
+- 646b993 coverage/transformer: Handle @jsx option (#3553) (Dunqing)
+- a939ddd transformer/typescript: Remove more typescript ast nodes (#3563) (Dunqing)
+- e8a20f8 transformer/typescript: Remove typescript ast nodes (#3559) (Dunqing)
+- ee9a215 transformer/typescript: Handle namespace directive correctly (#3532) (Dunqing)
+
+### Bug Fixes
+
+- f6939cb transformer: Store `react_importer` in `Bindings` in JSX transform (#3551) (overlookmotel)
+- 7982b93 transformer: Correct spans for JSX transform (#3549) (overlookmotel)
+- c00598b transformer: JSX set `reference_id` on refs to imports (#3524) (overlookmotel)
+
+### Performance
+
+- 37cdc13 transformer: Faster checks if JSX plugin enabled (#3577) (overlookmotel)
+- 9f467b8 transformer: Avoid fragment update where possible (#3535) (overlookmotel)
+- ac394f0 transformer: JSX parse pragma only once (#3534) (overlookmotel)
+
+### Refactor
+
+- f2113ae transformer: Reduce cloning and referencing `Rc`s (#3576) (overlookmotel)
+- 0948124 transformer: Pass `Rc`s by value (#3550) (overlookmotel)
+- e4d74ac transformer: Remove `update_fragment` from JSX transform (#3541) (overlookmotel)
+- 73b7864 transformer: Combine import and usage in JSX transform (#3540) (overlookmotel)
+- 6978269 transformer/typescript: Replace reference collector with symbols references (#3533) (Dunqing)
+
 ## [0.13.3] - 2024-06-04
 
 ### Bug Fixes
