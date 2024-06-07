@@ -17,7 +17,7 @@ pub fn import_source_cannot_be_set() -> OxcDiagnostic {
 }
 
 pub fn invalid_import_source() -> OxcDiagnostic {
-    OxcDiagnostic::warn("import_source cannot be an empty string")
+    OxcDiagnostic::warn("importSource cannot be an empty string or longer than u32::MAX bytes")
         .with_help("Fix `importSource` option.")
 }
 
