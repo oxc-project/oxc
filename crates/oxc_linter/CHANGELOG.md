@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.4.3] - 2024-06-07
+
+### Features
+
+- 1fb9d23 linter: Add fixer for no-useless-fallback-in-spread rule (#3544) (Don Isaac)
+- 6506d08 linter: Add fixer for no-single-promise-in-promise-methods (#3531) (Don Isaac)
+- daf559f linter: Eslint-plugin-jest/no-large-snapshot (#3436) (cinchen)
+- 4c17bc6 linter: Eslint/no-constructor-return (#3321) (谭光志)
+- 4a075cc linter/jsdoc: Implement require-param rule (#3554) (Yuji Sugiura)
+- 747500a linter/jsdoc: Implement require-returns-type rule (#3458) (Yuji Sugiura)
+- 6b39654 linter/tree-shaking: Support options (#3504) (Wang Wenzhe)
+- 0cdb45a oxc_codegen: Preserve annotate comment (#3465) (IWANABETHATGUY)
+
+### Bug Fixes
+
+- b188778 linter/eslint: Fix `require-await` false positives in `ForOfStatement`. (#3457) (rzvxa)
+- 350cd91 parser: Should parser error when function declaration has no name (#3461) (Dunqing)
+
 ## [0.4.2] - 2024-05-28
 
 ### Features
