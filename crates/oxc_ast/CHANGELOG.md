@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.4] - 2024-06-07
+
+### Features
+
+- a939ddd transformer/typescript: Remove more typescript ast nodes (#3563) (Dunqing)
+- e8a20f8 transformer/typescript: Remove typescript ast nodes (#3559) (Dunqing)
+
 ## [0.13.2] - 2024-06-03
 
 ### Features

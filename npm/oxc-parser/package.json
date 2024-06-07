@@ -1,6 +1,6 @@
 {
   "name": "oxc-parser",
-  "version": "0.13.3",
+  "version": "0.13.4",
   "description": "Oxc Parser Node API",
   "keywords": [
     "Parser"
