@@ -165,6 +165,14 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_simple_assignment_target(node);
     }
 
+    fn enter_assignment_target(
+        &mut self,
+        node: &mut AssignmentTarget<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x0_typescript.transform_assignment_target(node);
+    }
+
     fn enter_formal_parameter(
         &mut self,
         param: &mut FormalParameter<'a>,

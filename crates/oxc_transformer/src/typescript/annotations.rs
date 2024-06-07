@@ -180,7 +180,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                                 .as_ref()
                                 .is_some_and(|specifiers| specifiers.is_empty()))
                 }
-                _ => false,
+                _ => module_decl.is_typescript_syntax(),
             };
 
             if need_delete {
@@ -265,6 +265,23 @@ impl<'a> TypeScriptAnnotations<'a> {
         }
     }
 
+    pub fn transform_assignment_target(&mut self, target: &mut AssignmentTarget<'a>) {
+        if let Some(new_target) = target
+            .get_expression()
+            .map(Expression::get_inner_expression)
+            .and_then(|expr| match expr {
+                match_member_expression!(Expression) => {
+                    Some(self.ctx.ast.simple_assignment_target_member_expression(
+                        self.ctx.ast.copy(expr.as_member_expression().unwrap()),
+                    ))
+                }
+                _ => None,
+            })
+        {
+            *target = new_target;
+        }
+    }
+
     pub fn transform_formal_parameter(&mut self, param: &mut FormalParameter<'a>) {
         param.accessibility = None;
     }
@@ -283,15 +300,17 @@ impl<'a> TypeScriptAnnotations<'a> {
         // Collects parameter properties so that we can add an assignment
         // for each of them in the constructor body.
         if def.kind == MethodDefinitionKind::Constructor {
-            for param in &def.value.params.items {
-                if !param.is_public() {
-                    continue;
+            for param in def.value.params.items.as_mut_slice() {
+                if param.is_public() {
+                    if let Some(id) = param.pattern.get_identifier() {
+                        let assignment = self.create_this_property_assignment(id);
+                        self.assignments.push(assignment);
+                    }
                 }
 
-                if let Some(id) = param.pattern.get_identifier() {
-                    let assignment = self.create_this_property_assignment(id);
-                    self.assignments.push(assignment);
-                }
+                param.readonly = false;
+                param.accessibility = None;
+                param.r#override = false;
             }
         }
 

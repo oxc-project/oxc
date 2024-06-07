@@ -2,6 +2,4 @@ commit: 4bd1b2c2
 
 transformer_babel Summary:
 AST Parsed     : 2099/2099 (100.00%)
-Positive Passed: 2097/2099 (99.90%)
-Mismatch: "typescript/class/parameter-properties/input.ts"
-Mismatch: "typescript/export/as-namespace/input.ts"
+Positive Passed: 2099/2099 (100.00%)

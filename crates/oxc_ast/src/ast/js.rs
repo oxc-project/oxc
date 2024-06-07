@@ -1136,6 +1136,9 @@ impl<'a> AssignmentTarget<'a> {
     pub fn get_identifier(&self) -> Option<&str> {
         self.as_simple_assignment_target().and_then(|it| it.get_identifier())
     }
+    pub fn get_expression(&self) -> Option<&Expression<'a>> {
+        self.as_simple_assignment_target().and_then(|it| it.get_expression())
+    }
 }
 
 /// Macro for matching `AssignmentTarget`'s variants.
