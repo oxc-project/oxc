@@ -171,7 +171,7 @@ impl NoThisBeforeSuper {
                 EdgeType::Join if follow_join => None,
                 EdgeType::Unreachable
                 | EdgeType::Join
-                | EdgeType::Error(_)
+                | EdgeType::Error
                 | EdgeType::Finalize
                 | EdgeType::Backedge
                 | EdgeType::NewFunction => Some(DefinitelyCallsThisBeforeSuper::No),
@@ -187,13 +187,11 @@ impl NoThisBeforeSuper {
                     // If super is called but we are in a try-catch(-finally) block mark it as a
                     // maybe, since we might throw on super call and still call this in
                     // `catch`/`finally` block(s).
-                    if cfg.graph.edges(*basic_block_id).any(|it| {
-                        matches!(
-                            it.weight(),
-                            EdgeType::Error(oxc_semantic::ErrorEdgeKind::Explicit)
-                                | EdgeType::Finalize
-                        )
-                    }) {
+                    if cfg
+                        .graph
+                        .edges(*basic_block_id)
+                        .any(|it| matches!(it.weight(), EdgeType::Error | EdgeType::Finalize))
+                    {
                         (DefinitelyCallsThisBeforeSuper::Maybe(*basic_block_id), false)
                     // Otherwise we know for sure that super is called in this branch before
                     // reaching a this expression.
@@ -205,7 +203,7 @@ impl NoThisBeforeSuper {
                 } else if cfg
                     .graph
                     .edges(*basic_block_id)
-                    .any(|it| !matches!(it.weight(), EdgeType::Error(_) | EdgeType::Finalize))
+                    .any(|it| !matches!(it.weight(), EdgeType::Error | EdgeType::Finalize))
                 {
                     (DefinitelyCallsThisBeforeSuper::No, true)
                 // Otherwise we mark it as a `Maybe` so we can analyze error/finalize paths separately.
@@ -233,8 +231,7 @@ impl NoThisBeforeSuper {
             DefinitelyCallsThisBeforeSuper::No => false,
             DefinitelyCallsThisBeforeSuper::Maybe(id) => cfg.graph.edges(id).any(|edge| {
                 let weight = edge.weight();
-                let is_explicit_error =
-                    matches!(weight, EdgeType::Error(oxc_semantic::ErrorEdgeKind::Explicit));
+                let is_explicit_error = matches!(weight, EdgeType::Error);
                 if is_explicit_error || matches!(weight, EdgeType::Finalize) {
                     Self::check_for_violation(
                         cfg,

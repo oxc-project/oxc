@@ -184,7 +184,7 @@ pub enum EdgeType {
     /// Finally
     Finalize,
     /// Error Path
-    Error(ErrorEdgeKind),
+    Error,
 
     // misc edges
     Unreachable,
@@ -481,7 +481,7 @@ impl ControlFlowGraph {
         let graph = &self.graph;
         // All nodes should be able to reach the `to` node, Otherwise we have a conditional/branching flow.
         petgraph::algo::dijkstra(graph, from, Some(to), |e| match e.weight() {
-            EdgeType::NewFunction | EdgeType::Error(_) | EdgeType::Finalize | EdgeType::Join => 1,
+            EdgeType::NewFunction | EdgeType::Error | EdgeType::Finalize | EdgeType::Join => 1,
             EdgeType::Jump | EdgeType::Unreachable | EdgeType::Backedge | EdgeType::Normal => 0,
         })
         .into_iter()

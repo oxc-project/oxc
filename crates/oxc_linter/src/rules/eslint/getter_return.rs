@@ -195,7 +195,7 @@ impl GetterReturn {
                 | EdgeType::Unreachable
                 // TODO: For now we ignore the error path to simplify this rule, We can also
                 // analyze the error path as a nice to have addition.
-                | EdgeType::Error(_)
+                | EdgeType::Error
                 | EdgeType::Finalize
                 | EdgeType::Join
                 // By returning Some(X),
