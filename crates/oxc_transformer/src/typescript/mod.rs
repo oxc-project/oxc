@@ -109,6 +109,10 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_expression(expr);
     }
 
+    pub fn transform_simple_assignment_target(&mut self, target: &mut SimpleAssignmentTarget<'a>) {
+        self.annotations.transform_simple_assignment_target(target);
+    }
+
     pub fn transform_formal_parameter(&mut self, param: &mut FormalParameter<'a>) {
         self.annotations.transform_formal_parameter(param);
     }

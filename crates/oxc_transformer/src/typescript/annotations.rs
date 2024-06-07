@@ -122,6 +122,9 @@ impl<'a> TypeScriptAnnotations<'a> {
                 ModuleDeclaration::ExportAllDeclaration(decl) => {
                     return !decl.export_kind.is_type()
                 }
+                ModuleDeclaration::ExportDefaultDeclaration(decl) => {
+                    return !decl.is_typescript_syntax()
+                }
                 ModuleDeclaration::ImportDeclaration(decl) => {
                     let is_type = decl.import_kind.is_type();
 
@@ -228,7 +231,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         body.body.retain(|elem| match elem {
             ClassElement::MethodDefinition(method) => {
                 matches!(method.r#type, MethodDefinitionType::MethodDefinition)
-                    || !method.value.is_typescript_syntax()
+                    && !method.value.is_typescript_syntax()
             }
             ClassElement::PropertyDefinition(prop) => {
                 if prop.value.as_ref().is_some_and(Expression::is_typescript_syntax)
@@ -239,13 +242,27 @@ impl<'a> TypeScriptAnnotations<'a> {
                     matches!(prop.r#type, PropertyDefinitionType::PropertyDefinition)
                 }
             }
+            ClassElement::AccessorProperty(prop) => {
+                matches!(prop.r#type, AccessorPropertyType::AccessorProperty)
+            }
             ClassElement::TSIndexSignature(_) => false,
-            _ => true,
+            ClassElement::StaticBlock(_) => true,
         });
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
-        *expr = self.ctx.ast.copy(expr.get_inner_expression());
+        if expr.is_typescript_syntax() {
+            *expr = self.ctx.ast.copy(expr.get_inner_expression());
+        }
+    }
+
+    pub fn transform_simple_assignment_target(&mut self, target: &mut SimpleAssignmentTarget<'a>) {
+        if let Some(expr) = target.get_expression() {
+            if let Some(ident) = expr.get_inner_expression().get_identifier_reference() {
+                let ident = self.ctx.ast.alloc(self.ctx.ast.copy(ident));
+                *target = SimpleAssignmentTarget::AssignmentTargetIdentifier(ident);
+            }
+        }
     }
 
     pub fn transform_formal_parameter(&mut self, param: &mut FormalParameter<'a>) {

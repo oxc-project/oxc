@@ -157,6 +157,14 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x3_es2015.transform_expression_on_exit(expr);
     }
 
+    fn enter_simple_assignment_target(
+        &mut self,
+        node: &mut SimpleAssignmentTarget<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x0_typescript.transform_simple_assignment_target(node);
+    }
+
     fn enter_formal_parameter(
         &mut self,
         param: &mut FormalParameter<'a>,
