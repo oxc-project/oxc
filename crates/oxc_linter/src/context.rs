@@ -141,12 +141,12 @@ impl<'a> LintContext<'a> {
 
     /// Report a lint rule violation.
     ///
-    /// Use [`LintContext::diagnostic_with_fix`] to provide an automatic [`Fix`].
+    /// Use [`LintContext::diagnostic_with_fix`] to provide an automatic fix.
     pub fn diagnostic(&self, diagnostic: OxcDiagnostic) {
         self.add_diagnostic(Message::new(diagnostic, None));
     }
 
-    /// Report a lint rule violation and provide an automatic [`Fix`].
+    /// Report a lint rule violation and provide an automatic fix.
     pub fn diagnostic_with_fix<F: FnOnce() -> Fix<'a>>(&self, diagnostic: OxcDiagnostic, fix: F) {
         if self.fix {
             self.add_diagnostic(Message::new(diagnostic, Some(fix())));
