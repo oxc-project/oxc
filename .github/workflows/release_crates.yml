@@ -24,7 +24,7 @@ jobs:
     name: Release crates
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: actions/checkout@v4 # required for git tag push
 
       - uses: Boshen/setup-rust@main
         with:
