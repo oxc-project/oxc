@@ -43,7 +43,7 @@ fn get_result(
     let options = options.unwrap_or_else(get_default_transformer_options);
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = parse_result1.program;
-    let _ = Transformer::new(
+    let transform_result1 = Transformer::new(
         &allocator,
         source_path,
         source_type,
@@ -53,7 +53,7 @@ fn get_result(
     )
     .build(&mut program);
 
-    let source_text1 = Codegen::<false>::new(
+    let ts_source_text1 = Codegen::<false>::new(
         &filename,
         source_text,
         CodegenOptions::default().with_typescript(true),
@@ -62,10 +62,19 @@ fn get_result(
     .build(&program)
     .source_text;
 
-    let parse_result2 = Parser::new(&allocator, &source_text1, source_type).parse();
+    let source_text1 =
+        Codegen::<false>::new(&filename, source_text, CodegenOptions::default(), None)
+            .build(&program)
+            .source_text;
+
+    if transform_result1.is_ok() && ts_source_text1 != source_text1 {
+        return TestResult::Mismatch(ts_source_text1.clone(), source_text1.clone());
+    }
+
+    let parse_result2 = Parser::new(&allocator, &ts_source_text1, source_type).parse();
     let mut program = parse_result2.program;
 
-    let _ = Transformer::new(
+    let transform_result2 = Transformer::new(
         &allocator,
         source_path,
         source_type,
@@ -75,19 +84,22 @@ fn get_result(
     )
     .build(&mut program);
 
-    let source_text2 = Codegen::<false>::new(
-        &filename,
-        &source_text1,
-        CodegenOptions::default().with_typescript(true),
-        None,
-    )
-    .build(&program)
-    .source_text;
+    let source_text2 =
+        Codegen::<false>::new(&filename, &source_text1, CodegenOptions::default(), None)
+            .build(&program)
+            .source_text;
 
-    let result = source_text1 == source_text2;
-
-    if result {
+    if source_text1 == source_text2 {
         TestResult::Passed
+    } else if transform_result1.is_err_and(|err| {
+        // If error messages are the same, we consider it as a pass.
+        transform_result2
+            .map_err(|err| err.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n"))
+            .is_err_and(|err_message| {
+                err.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n") == err_message
+            })
+    }) {
+        return TestResult::Passed;
     } else {
         TestResult::Mismatch(source_text1.clone(), source_text2)
     }

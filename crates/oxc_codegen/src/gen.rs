@@ -2405,8 +2405,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
         }
         if let Some(body) = &self.value.body {
             body.gen(p, ctx);
-        }
-        if p.options.enable_typescript {
+        } else if p.options.enable_typescript {
             p.print_semicolon_after_statement();
         }
     }
