@@ -260,7 +260,7 @@ fn check_useless_iterable_to_array<'a>(
             }
             ctx.diagnostic_with_fix(
                 iterable_to_array(span, get_new_expr_ident_name(new_expr).unwrap_or("unknown")),
-                || fix_by_removing_spread(ctx, &new_expr.arguments[0], &spread_elem),
+                || fix_by_removing_spread(ctx, &new_expr.arguments[0], spread_elem),
             );
         }
         AstKind::CallExpression(call_expr) => {
@@ -305,7 +305,7 @@ fn check_useless_iterable_to_array<'a>(
                     span,
                     &get_method_name(call_expr).unwrap_or_else(|| "unknown".into()),
                 ),
-                || fix_by_removing_spread(ctx, array_expr, &spread_elem),
+                || fix_by_removing_spread(ctx, array_expr, spread_elem),
             );
         }
         _ => {}
@@ -364,7 +364,7 @@ fn check_useless_array_clone<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintCon
         );
 
         ctx.diagnostic_with_fix(clone_array(span, &method), || {
-            fix_by_removing_spread(ctx, array_expr, &spread_elem)
+            fix_by_removing_spread(ctx, array_expr, spread_elem)
         });
     }
 
@@ -383,7 +383,7 @@ fn check_useless_array_clone<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintCon
                 call_expr.callee.get_member_expr().unwrap().static_property_name().unwrap();
 
             ctx.diagnostic_with_fix(clone_array(span, &format!("Promise.{method_name}")), || {
-                fix_by_removing_spread(ctx, array_expr, &spread_elem)
+                fix_by_removing_spread(ctx, array_expr, spread_elem)
             });
         }
     }

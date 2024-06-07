@@ -229,8 +229,8 @@ impl Tester {
                     expected, fixed_str,
                     r#"Expected "{source}" to be fixed into "{expected}""#
                 ),
-                TestResult::Passed => panic!("Expected a fix, but test passed: {}", source),
-                TestResult::Failed => panic!("Expected a fix, but test failed: {}", source),
+                TestResult::Passed => panic!("Expected a fix, but test passed: {source}"),
+                TestResult::Failed => panic!("Expected a fix, but test failed: {source}"),
             }
         }
     }
