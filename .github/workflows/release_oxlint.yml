@@ -16,7 +16,6 @@ jobs:
     name: Check version
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.version.outputs.version }}
       version_changed: ${{ steps.version.outputs.changed }}
     steps:
       - uses: taiki-e/checkout-action@v1
@@ -37,8 +36,6 @@ jobs:
   build:
     needs: check
     if: needs.check.outputs.version_changed == 'true'
-    env:
-      version: ${{ needs.check.outputs.version }}
     strategy:
       matrix:
         include:
@@ -154,7 +151,7 @@ jobs:
         run: |
           {
             echo 'OUTPUT<<EOF'
-            cargo release-oxc changelog --release ${{ inputs.name }}
+            cargo release-oxc changelog --release oxlint
             echo EOF
           } >> $GITHUB_OUTPUT
 
