@@ -100,7 +100,7 @@ impl<'a> SemanticBuilder<'a> {
             symbols: SymbolTable::default(),
             module_record: Arc::new(ModuleRecord::default()),
             label_builder: LabelBuilder::default(),
-            jsdoc: JSDocBuilder::new(source_text, &trivias),
+            jsdoc: JSDocBuilder::new(source_text, trivias),
             check_syntax_error: false,
             cfg: ControlFlowGraphBuilder::default(),
             class_table_builder: ClassTableBuilder::new(),
@@ -109,8 +109,9 @@ impl<'a> SemanticBuilder<'a> {
 
     #[must_use]
     pub fn with_trivias(mut self, trivias: Trivias) -> Self {
-        self.trivias = Rc::new(trivias);
-        self.jsdoc = JSDocBuilder::new(self.source_text, &self.trivias);
+        let trivias = Rc::new(trivias);
+        self.trivias = Rc::clone(&trivias);
+        self.jsdoc = JSDocBuilder::new(self.source_text, trivias);
         self
     }
 

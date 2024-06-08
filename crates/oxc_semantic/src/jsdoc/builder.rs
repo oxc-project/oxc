@@ -15,10 +15,10 @@ pub struct JSDocBuilder<'a> {
 }
 
 impl<'a> JSDocBuilder<'a> {
-    pub fn new(source_text: &'a str, trivias: &Rc<Trivias>) -> Self {
+    pub fn new(source_text: &'a str, trivias: Rc<Trivias>) -> Self {
         Self {
             source_text,
-            trivias: Rc::clone(trivias),
+            trivias,
             attached_docs: BTreeMap::default(),
             leading_comments_seen: FxHashSet::default(),
         }
